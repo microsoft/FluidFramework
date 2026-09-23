@@ -14,7 +14,11 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
-import type { IApplicationProjection } from "./externalSeedFile.js";
+import {
+	projectionKey,
+	projectionManifestBlobName,
+	type IApplicationProjection,
+} from "./externalSeedFile.js";
 import type { INativeBaseline } from "./nativeSeedBaseline.js";
 import {
 	createSeedBaselineDescriptor,
@@ -48,8 +52,10 @@ export function forward<T extends object>(source: T, overrides: Partial<T>): T {
 
 /** Reconstruction identity retained with pending state to detect a different source or codec. */
 export interface IProvenance {
-	/** Versioned application format identifying the materialization rules. */
-	format: string;
+	/**
+	 * Application-internal materialization rules, independent of the external format and native schema.
+	 */
+	materializationProfile: string;
 	/** Original persisted snapshot version, when the loader exposes one. */
 	sourceVersion?: string;
 	/** Source checkpoint before the loader applies the sequenced operation suffix. */
@@ -70,6 +76,8 @@ interface IPendingProjection {
 	baseline?: ISeedBaselineDescriptor;
 	/** Native-summary descriptor bytes, bound to their source blob ID for offline restoration. */
 	retainedBaseline?: IRetainedSeedBaseline;
+	/** Optional application metadata bytes retained only for the same source blob. */
+	applicationManifest?: { readonly blobId: string; readonly content: string };
 	/** Loaded source checkpoint/version, separate from genesis identity; version may be unavailable from a driver. */
 	loadedFrom?: { version?: string; sequenceNumber: number };
 	/** Native runtime pending state, forwarded unchanged to the delegated runtime. */
@@ -91,8 +99,10 @@ function isPendingProjection(value: unknown): value is IPendingProjection {
  * This reference uses an HTML payload; this is not a proposed generic SDK codec interface.
  */
 export interface IProjector {
-	/** Versioned format governing accepted seed input and deterministic construction. */
-	format: string;
+	/**
+	 * Application-internal rule identity, never selected from external metadata or the SharedTree namespace.
+	 */
+	readonly materializationProfile: string;
 	/** Recognize native state that must load normally rather than being regenerated from a projection. */
 	isNative(context: IContainerContext): boolean;
 	/** Read source bytes, optionally reusing retained bytes whose persisted blob IDs still match. */
@@ -116,6 +126,8 @@ export interface IProjectionLoad {
 	provenance?: IProvenance;
 	/** Immutable genesis agreement, computed for a seed or read from a native summary sidecar. */
 	baseline?: ISeedBaselineDescriptor;
+	/** Opaque, optional application metadata to preserve in projections; never a native rule selector. */
+	applicationManifest?: { readonly blobId: string; readonly content: string };
 }
 
 /**
@@ -173,12 +185,12 @@ export function seedRuntimeFactory(
 				if (
 					provenance !== undefined &&
 					(provenance.fingerprint !== baseline.fingerprint ||
-						provenance.format !== projector.format)
+						provenance.materializationProfile !== projector.materializationProfile)
 				) {
 					throw new Error("Pending state genesis fingerprint or projector version mismatch");
 				}
 				provenance = {
-					format: projector.format,
+					materializationProfile: projector.materializationProfile,
 					sourceVersion: original.getLoadedFromVersion()?.id ?? provenance?.sourceVersion,
 					sourceSequenceNumber: original.deltaManager.initialSequenceNumber,
 					fingerprint: baseline.fingerprint,
@@ -187,7 +199,7 @@ export function seedRuntimeFactory(
 					baselineDescriptor = createSeedBaselineDescriptor(
 						seed,
 						provenance.sourceSequenceNumber,
-						provenance.format,
+						provenance.materializationProfile,
 						provenance.fingerprint,
 					);
 				}
@@ -291,7 +303,7 @@ export function seedRuntimeFactory(
 					pending?.retainedBaseline,
 				);
 				baselineDescriptor = retainedBaseline.descriptor;
-				if (baselineDescriptor.profileVersion !== projector.format) {
+				if (baselineDescriptor.profileVersion !== projector.materializationProfile) {
 					throw new Error("Unsupported persisted seed baseline profile");
 				}
 			}
@@ -341,12 +353,30 @@ export function seedRuntimeFactory(
 					},
 				});
 			}
+			const manifestId =
+				original.baseSnapshot.trees[projectionKey]?.blobs[projectionManifestBlobName];
+			const cachedManifest = pending?.applicationManifest;
+			const retainedManifest = projected
+				? seed?.manifest
+				: manifestId !== undefined && cachedManifest?.blobId === manifestId
+					? cachedManifest.content
+					: undefined;
+			const applicationManifest =
+				manifestId === undefined
+					? undefined
+					: Object.freeze({
+							blobId: manifestId,
+							content:
+								retainedManifest ??
+								Buffer.from(await original.storage.readBlob(manifestId)).toString("utf8"),
+						});
 			const load: IProjectionLoad = {
 				original,
 				context,
 				projected,
 				provenance,
 				baseline: baselineDescriptor,
+				applicationManifest,
 			};
 			options.observe?.(load, original);
 			const runtime = await delegate(load, existing);
@@ -367,6 +397,7 @@ export function seedRuntimeFactory(
 				seed,
 				baseline: baselineDescriptor,
 				retainedBaseline,
+				applicationManifest,
 				loadedFrom,
 				runtime: runtime.getPendingLocalState(props),
 			});

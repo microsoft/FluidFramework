@@ -10,10 +10,13 @@ import type {
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 
-import { createProjectionManifest, projectionKey } from "../externalSeedFile.js";
-import { format } from "../htmlSeedFormat.js";
+import {
+	createProjectionManifest,
+	projectionKey,
+	projectionManifestBlobName,
+} from "../externalSeedFile.js";
 import { buildNativeBaseline } from "../nativeSeedBaseline.js";
-import { htmlProjector } from "../sampleRuntimeFactory.js";
+import { htmlMaterializationProfile, htmlProjector } from "../sampleRuntimeFactory.js";
 import { forward, seedRuntimeFactory } from "../seedRuntimeAdapter.js";
 
 // Validate context forwarding and the decisions made before any native runtime can load.
@@ -79,14 +82,18 @@ describe("Seed projection reference: forwarding", () => {
 							first: { trees: {}, blobs: { "document.html": "first" } },
 							second: { trees: {}, blobs: { "document.html": "second" } },
 						},
-						blobs: { "manifest.work": "manifest" },
+						blobs: { [projectionManifestBlobName]: "manifest" },
 					},
 				},
 			},
 			deltaManager: { initialSequenceNumber: 0 },
 			pendingLocalState: {
 				type: "seed-projection-pending/1",
-				provenance: { format, fingerprint: "wrong", sourceSequenceNumber: 0 },
+				provenance: {
+					materializationProfile: htmlMaterializationProfile,
+					fingerprint: "wrong",
+					sourceSequenceNumber: 0,
+				},
 				seed: {
 					manifestId: "manifest",
 					partBlobIds: { first: "first", second: "second" },

@@ -17,8 +17,11 @@ export type UnPromise<T> = T extends Promise<infer U> ? U : T;
  */
 export type OverrideFactory<T, P extends keyof T> = (T: T) => T[P];
 
-/** Overrides either replace a property or recursively wrap a method's eventual return value. */
-type NestedOverrides<T> = {
+/**
+ * Overrides either replace a property or recursively wrap a method's eventual return value.
+ * @internal
+ */
+export type NestedOverrides<T> = {
 	[P in keyof T]?: T[P] extends (...args: any) => any
 		? NestedOverrides<UnPromise<ReturnType<T[P]>>> | OverrideFactory<T, P>
 		: OverrideFactory<T, P>;

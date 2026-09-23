@@ -9,15 +9,18 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	loadContainerRuntime,
-	type IAdditionalSummaryTree,
+	type IApplicationProjectionSummary,
 	type ISummaryGenerationContext,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreFactory,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import type { ITree } from "@fluidframework/tree";
 
 import {
@@ -25,7 +28,6 @@ import {
 	readApplicationProjection,
 	type HtmlPartId,
 } from "./externalSeedFile.js";
-import { format } from "./htmlSeedFormat.js";
 import { viewConfiguration, type HtmlView } from "./htmlTreeSchema.js";
 import { IncrementalHtmlProjection } from "./incrementalHtmlProjection.js";
 import {
@@ -42,8 +44,15 @@ import {
 } from "./seedRuntimeAdapter.js";
 import {
 	seedBaselineBlobName,
+	type ISeedBaselineDescriptor,
 	type SeedBaselineMismatchError,
 } from "./seedBaselineFingerprint.js";
+
+/**
+ * Application-internal identity of the deterministic HTML-to-SharedTree rules.
+ * It is not the external HTML format, the native schema namespace, or a Fluid codec version.
+ */
+export const htmlMaterializationProfile = "reference-html-materialization/1";
 
 /** Live application surface exposed by each independently loaded sample runtime. */
 export interface IHtmlEntryPoint {
@@ -58,32 +67,60 @@ export interface IHtmlEntryPoint {
  * The baseline already contains each store and channel: loading realizes them but never initializes
  * another graph or assigns aliases. This factory does not determine the number of store instances.
  */
-const dataStoreFactory: IFluidDataStoreFactory = {
-	type: storeType,
-	get IFluidDataStoreFactory() {
-		return this;
-	},
-	async instantiateDataStore(context, existing) {
-		if (!existing) {
-			throw new Error("The baseline already contains the datastore and SharedTree");
+function createDataStoreFactory(baseline: ISeedBaselineDescriptor): IFluidDataStoreFactory {
+	const identityContent = JSON.stringify(baseline);
+	const appendIdentity = (summary: ISummaryTreeWithStats): ISummaryTreeWithStats => {
+		if (summary.summary.tree[seedBaselineBlobName] !== undefined) {
+			throw new Error("The native application identity path is reserved");
 		}
-		const runtime = new FluidDataStoreRuntime(
-			context,
-			new Map([[treeFactory.type, treeFactory]]),
-			existing,
-			async (dataStore) => {
-				const channel = (await dataStore.getChannel(treeId)) as unknown as ITree;
-				const view = channel.viewWith(viewConfiguration);
-				runtime.once("dispose", () => view.dispose());
-				return {
-					view,
-					sessionId: dataStore.idCompressor?.localSessionId,
-				} satisfies IHtmlEntryPoint;
-			},
-		);
-		return runtime;
-	},
-};
+		addBlobToSummary(summary, seedBaselineBlobName, identityContent);
+		return summary;
+	};
+	/**
+	 * Extend the public data-store summary surface without adding a data structure or emitting operations.
+	 * Whole-store incremental handles retain the same immutable identity from the accepted parent.
+	 */
+	class HtmlDataStoreRuntime extends FluidDataStoreRuntime {
+		public override async summarize(
+			...args: Parameters<FluidDataStoreRuntime["summarize"]>
+		): Promise<ISummaryTreeWithStats> {
+			const summary = await super.summarize(...args);
+			return appendIdentity(summary);
+		}
+
+		public override getAttachSummary(
+			...args: Parameters<FluidDataStoreRuntime["getAttachSummary"]>
+		): ISummaryTreeWithStats {
+			return appendIdentity(super.getAttachSummary(...args));
+		}
+	}
+	return {
+		type: storeType,
+		get IFluidDataStoreFactory() {
+			return this;
+		},
+		async instantiateDataStore(context, existing) {
+			if (!existing) {
+				throw new Error("The baseline already contains the datastore and SharedTree");
+			}
+			const runtime = new HtmlDataStoreRuntime(
+				context,
+				new Map([[treeFactory.type, treeFactory]]),
+				existing,
+				async (dataStore) => {
+					const channel = (await dataStore.getChannel(treeId)) as unknown as ITree;
+					const view = channel.viewWith(viewConfiguration);
+					runtime.once("dispose", () => view.dispose());
+					return {
+						view,
+						sessionId: dataStore.idCompressor?.localSessionId,
+					} satisfies IHtmlEntryPoint;
+				},
+			);
+			return runtime;
+		},
+	};
+}
 
 /**
  * Resolve the persisted root alias in the native graph materialized by {@link htmlProjector}.
@@ -104,10 +141,10 @@ async function entryPoint(runtime: IContainerRuntime): Promise<IHtmlEntryPoint> 
  * using the same external-reader contract and build the native baseline at the unchanged checkpoint.
  * The implementation details live in readApplicationProjection and buildNativeBaseline; the adapter
  * overlays native state at the original checkpoint while the Loader owns op replay. See "Runtime-owned conversion"
- * in docs/content/Architecture/Application-Seed-Projection/Fluid-Design.md from the repository root.
+ * in docs/content/Architecture/Application-Projections/Fluid-Design.md from the repository root.
  */
 export const htmlProjector: IProjector = {
-	format,
+	materializationProfile: htmlMaterializationProfile,
 	isNative: (context) => context.baseSnapshot?.blobs[".metadata"] !== undefined,
 	async readSeed(context, retained) {
 		if (context.baseSnapshot === undefined) {
@@ -141,6 +178,8 @@ export function sampleRuntimeFactory(
 	options: {
 		/** Disable materialization to validate that graduated snapshots load as ordinary native state. */
 		allowProjection?: boolean;
+		/** Select application rules in the runtime factory, never from external content or the native schema. */
+		projector?: IProjector;
 		/** Receive a completed load's contexts, runtime, and model for workflow assertions. */
 		observe?: (observation: IAppObservation) => void;
 		/** Test-only callback instrumentation/failure injection at the summarizer's checkpoint. */
@@ -163,17 +202,21 @@ export function sampleRuntimeFactory(
 	} = {},
 ): IRuntimeFactory {
 	return seedRuntimeFactory(
-		htmlProjector,
+		options.projector ?? htmlProjector,
 		async (load, existing) => {
+			const baseline = load.baseline;
+			if (baseline === undefined) {
+				throw new Error("The sample requires a seed baseline fingerprint");
+			}
 			let summarizeProjection = (
 				_context: ISummaryGenerationContext,
-			): IAdditionalSummaryTree => {
+			): IApplicationProjectionSummary => {
 				throw new Error("Projection tree must be realized before summarization");
 			};
 			const runtime = await loadContainerRuntime({
 				context: load.context,
 				existing,
-				registryEntries: [[storeType, Promise.resolve(dataStoreFactory)]],
+				registryEntries: [[storeType, Promise.resolve(createDataStoreFactory(baseline))]],
 				oldestSupportedClient: "2.0.0",
 				runtimeOptions: {
 					...options.transportOptions,
@@ -205,26 +248,15 @@ export function sampleRuntimeFactory(
 			// Realize on EVERY client, including the noninteractive summarizer. No model
 			// initialization, alias creation or DDS writes occur here.
 			const app = await entryPoint(runtime);
-			const baseline = load.baseline;
-			if (baseline === undefined) {
-				throw new Error("The sample requires a seed baseline fingerprint");
-			}
-			const projection = new IncrementalHtmlProjection(app.view, options.onSerializePart);
+			const projection = new IncrementalHtmlProjection(app.view, options.onSerializePart, {
+				manifest: load.applicationManifest?.content,
+			});
 			runtime.once("dispose", () => projection.dispose());
 			summarizeProjection = (context) => {
 				const result = projection.summarize(context);
 				const onAccepted = result.onAccepted;
 				return {
-					summary: {
-						...result.summary,
-						tree: {
-							...result.summary.tree,
-							[seedBaselineBlobName]: {
-								type: SummaryType.Blob,
-								content: JSON.stringify(baseline),
-							},
-						},
-					},
+					summary: result.summary,
 					onAccepted:
 						onAccepted === undefined
 							? undefined

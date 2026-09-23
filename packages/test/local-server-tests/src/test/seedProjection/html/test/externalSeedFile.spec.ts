@@ -12,10 +12,11 @@ import {
 	createSeedSummary,
 	createProjectionManifest,
 	projectionKey,
+	projectionManifestBlobName,
 	readApplicationProjection,
 	type IApplicationProjection,
 } from "../externalSeedFile.js";
-import { format } from "../htmlSeedFormat.js";
+import { externalHtmlFormat } from "../htmlSeedFormat.js";
 import { createLocalSeedBackend } from "../../harness/index.js";
 
 /** Construct an ID-only storage view so reader tests cannot accidentally depend on native DDS state. */
@@ -28,7 +29,7 @@ function projectionSnapshot(): ISnapshotTree {
 					first: { trees: {}, blobs: { "document.html": "first-id" } },
 					second: { trees: {}, blobs: { "document.html": "second-id" } },
 				},
-				blobs: { "manifest.work": "manifest-id" },
+				blobs: { [projectionManifestBlobName]: "manifest-id" },
 			},
 		},
 	};
@@ -132,8 +133,9 @@ describe("Seed projection reference: external file contract", () => {
 						inspection.readBlob,
 					);
 					assert.deepEqual(projection.parts, parts);
+					assert(projection.manifest !== undefined);
 					assert.deepEqual(JSON.parse(projection.manifest), {
-						format,
+						format: externalHtmlFormat,
 						parts: { first: "first/document.html", second: "second/document.html" },
 					});
 				} finally {
@@ -174,7 +176,7 @@ describe("Seed projection reference: external file contract", () => {
 					retained: {
 						...retainedProjection(),
 						manifest: JSON.stringify({
-							format,
+							format: externalHtmlFormat,
 							parts: { first: "../other", second: "second/document.html" },
 						}),
 					},

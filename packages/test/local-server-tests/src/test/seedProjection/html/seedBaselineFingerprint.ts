@@ -14,9 +14,13 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { projectionKey, type IApplicationProjection } from "./externalSeedFile.js";
+import type { IApplicationProjection } from "./externalSeedFile.js";
+import { storeId } from "./nativeSeedBaseline.js";
 
-/** Application metadata, deliberately outside native DDS state and its canonical hash. */
+/**
+ * Immutable compatibility metadata in the native data-store summary, outside exported application content.
+ * The initial native hash is computed before this blob is written, so it does not hash itself.
+ */
 export const seedBaselineBlobName = "seed-baseline.json";
 export const seedBaselineMetadataKey = "seedBaseline";
 export const seedBaselineHashVersion = "native-snapshot-sha256/1";
@@ -30,7 +34,9 @@ const loaderMessageTypes = new Set<string>(
 export interface ISeedBaselineDescriptor {
 	/** Digest of immutable source blob identities and the original source checkpoint. */
 	readonly seedId: string;
-	/** Versioned materialization profile used to produce the native genesis. */
+	/**
+	 * Application-owned rule identity, independent of the external format and native schema.
+	 */
 	readonly profileVersion: string;
 	/** Version of native snapshot canonicalization and hashing. */
 	readonly hashVersion: string;
@@ -111,13 +117,26 @@ export function sameSeedBaseline(
 	);
 }
 
-/** Native reload reads persisted genesis identity; it must never hash today's edited tree as a new genesis. */
+/**
+ * Locate the internal application identity beside the native SharedTree channel.
+ * Readable projections do not carry or select the materialization profile.
+ */
+export function getSeedBaselineBlobId(snapshot: ISnapshotTree): string | undefined {
+	return snapshot.trees[".channels"]?.trees[storeId]?.trees[".channels"]?.blobs[
+		seedBaselineBlobName
+	];
+}
+
+/**
+ * Read persisted genesis identity from native state, never from exported application content.
+ * Old snapshots without this internal identity require explicit conversion.
+ */
 export async function readSeedBaselineDescriptor(
 	snapshot: ISnapshotTree,
 	readBlob: IDocumentStorageService["readBlob"],
 	retained?: IRetainedSeedBaseline,
 ): Promise<IRetainedSeedBaseline> {
-	const blobId = snapshot.trees[projectionKey]?.blobs[seedBaselineBlobName];
+	const blobId = getSeedBaselineBlobId(snapshot);
 	if (blobId === undefined) {
 		throw new Error("Native snapshot is missing its seed baseline fingerprint");
 	}

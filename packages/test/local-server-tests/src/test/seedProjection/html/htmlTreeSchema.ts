@@ -5,10 +5,16 @@
 
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 
-import { format, serializeHtml, type HtmlNode } from "./htmlSeedFormat.js";
+import { serializeHtml, type HtmlNode } from "./htmlSeedFormat.js";
 import type { IHtmlParts } from "./externalSeedFile.js";
 
-const schemaFactory = new SchemaFactory(format);
+/**
+ * Persisted SharedTree type namespace.
+ * Keep this value stable independently of the external HTML format and materialization rules.
+ */
+export const htmlSchemaNamespace = "fluid-html-reference/2";
+
+const schemaFactory = new SchemaFactory(htmlSchemaNamespace);
 
 /** Collaborative attribute values for one element, keyed by validated attribute name. */
 export class HtmlAttributes extends schemaFactory.map("Attributes", schemaFactory.string) {}

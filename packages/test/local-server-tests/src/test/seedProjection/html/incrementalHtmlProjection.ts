@@ -4,7 +4,7 @@
  */
 
 import type {
-	IAdditionalSummaryTree,
+	IApplicationProjectionSummary,
 	ISummaryGenerationContext,
 } from "@fluidframework/container-runtime/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -17,6 +17,7 @@ import {
 	htmlPartIds,
 	projectionGroup,
 	projectionKey,
+	projectionManifestBlobName,
 	type HtmlPartId,
 } from "./externalSeedFile.js";
 import { serializeHtml } from "./htmlSeedFormat.js";
@@ -53,11 +54,14 @@ export class IncrementalHtmlProjection {
 	private unsubscribeRoot: () => void;
 	private readonly unsubscribeView: () => void;
 	private accepted: IAcceptedProjection | undefined;
+	private readonly manifest: string | undefined;
 
 	public constructor(
 		private readonly view: HtmlView,
 		private readonly onSerialize?: (part: HtmlPartId) => void,
+		metadata: { readonly manifest?: string } = { manifest: createProjectionManifest() },
 	) {
+		this.manifest = metadata.manifest;
 		this.unsubscribeRoot = this.subscribeRoot();
 		this.unsubscribeView = view.events.on("rootChanged", () => {
 			this.unsubscribeRoot();
@@ -100,7 +104,7 @@ export class IncrementalHtmlProjection {
 	 * Capturing counters is constant work per part, not a traversal or byte-comparison of unchanged HTML.
 	 * The runtime calls onAccepted only for this proposal after adopting its actual native/GC/storage parent.
 	 */
-	public summarize(context: ISummaryGenerationContext): IAdditionalSummaryTree {
+	public summarize(context: ISummaryGenerationContext): IApplicationProjectionSummary {
 		const captured = { ...this.revisions };
 		const canReuse =
 			context.trackState &&
@@ -108,7 +112,9 @@ export class IncrementalHtmlProjection {
 			this.accepted !== undefined &&
 			sameParent(this.accepted.context, context.previousSummary);
 		const projection = new SummaryTreeBuilder({ groupId: projectionGroup });
-		projection.addBlob("manifest.work", createProjectionManifest());
+		if (this.manifest !== undefined) {
+			projection.addBlob(projectionManifestBlobName, this.manifest);
+		}
 		for (const part of htmlPartIds) {
 			if (canReuse && this.accepted?.revisions[part] === captured[part]) {
 				projection.addHandle(part, SummaryType.Tree, `/${projectionKey}/${part}`);

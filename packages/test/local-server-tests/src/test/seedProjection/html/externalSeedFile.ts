@@ -10,7 +10,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { calculateStats, SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import { format, parseHtml } from "./htmlSeedFormat.js";
+import { externalHtmlFormat, parseHtml } from "./htmlSeedFormat.js";
 
 /** Application-root child containing readable content in both seed and native summaries. */
 export const projectionKey = "applicationProjection";
@@ -18,6 +18,11 @@ export const projectionKey = "applicationProjection";
 export const projectionGroup = "application-projection";
 /** Runtime code package recorded in seed protocol metadata and resolved by the application's code loader. */
 export const codeDetails = { package: "seed-projection-reference/2" };
+
+/**
+ * Optional application-owned metadata, not a Loader or container-runtime requirement.
+ */
+export const projectionManifestBlobName = "manifest.json";
 
 /** Stable application part names; each owns one subtree in storage and one subtree in SharedTree. */
 export type HtmlPartId = "first" | "second";
@@ -35,7 +40,7 @@ export interface IHtmlParts {
 /** Serialize the fixed versioned manifest without inspecting or rendering either HTML part. */
 export function createProjectionManifest(): string {
 	return JSON.stringify({
-		format,
+		format: externalHtmlFormat,
 		parts: { first: "first/document.html", second: "second/document.html" },
 	});
 }
@@ -45,12 +50,12 @@ export function createProjectionManifest(): string {
  * Storage IDs bind retained bytes to a specific snapshot; they are not native DDS identities.
  */
 export interface IApplicationProjection {
-	/** Storage blob ID of manifest.work in the inspected snapshot. */
-	manifestId: string;
+	/** Storage blob ID of the optional application manifest in the inspected snapshot. */
+	manifestId?: string;
 	/** Storage blob IDs for each part's document.html in the inspected snapshot. */
 	partBlobIds: Record<HtmlPartId, string>;
-	/** Original UTF-8 manifest JSON, including the versioned format and two part paths. */
-	manifest: string;
+	/** Original application-owned manifest JSON, when the producer supplied it. */
+	manifest?: string;
 	/** Original UTF-8 HTML payloads; reading does not canonicalize or materialize either part. */
 	parts: IHtmlParts;
 }
@@ -60,9 +65,14 @@ export interface IApplicationProjection {
  * Equal parts produce byte-identical output; this does not allocate IDs or inspect a live runtime.
  * The caller supplies supported HTML (validated during creation or canonicalized by the live model).
  */
-export function createApplicationProjection(parts: IHtmlParts): ISummaryTree {
+export function createApplicationProjection(
+	parts: IHtmlParts,
+	options: { includeManifest?: boolean } = {},
+): ISummaryTree {
 	const projection = new SummaryTreeBuilder({ groupId: projectionGroup });
-	projection.addBlob("manifest.work", createProjectionManifest());
+	if (options.includeManifest !== false) {
+		projection.addBlob(projectionManifestBlobName, createProjectionManifest());
+	}
 	for (const partId of htmlPartIds) {
 		const part = new SummaryTreeBuilder();
 		part.addBlob("document.html", parts[partId]);
@@ -78,7 +88,10 @@ export function createApplicationProjection(parts: IHtmlParts): ISummaryTree {
  * The envelope and fixed code package are a reference protocol, not a stable public file format.
  * For identical HTML the result is identical; file identity is allocated by storage, not here.
  */
-export function createSeedSummary(parts: IHtmlParts): ISummaryTree {
+export function createSeedSummary(
+	parts: IHtmlParts,
+	options: { includeManifest?: boolean } = {},
+): ISummaryTree {
 	for (const partId of htmlPartIds) parseHtml(parts[partId]);
 	const protocol = new SummaryTreeBuilder();
 	protocol.addBlob(
@@ -102,7 +115,9 @@ export function createSeedSummary(parts: IHtmlParts): ISummaryTree {
 			],
 		]),
 	);
-	const projection = createApplicationProjection(parts);
+	const projection = createApplicationProjection(parts, {
+		includeManifest: options.includeManifest,
+	});
 	const app = new SummaryTreeBuilder();
 	app.addWithStats(projectionKey, { summary: projection, stats: calculateStats(projection) });
 	const seed = new SummaryTreeBuilder();
@@ -117,7 +132,8 @@ export function createSeedSummary(parts: IHtmlParts): ISummaryTree {
  * `.app`), and its readBlob callback. The same operation reads the initial seed and later native
  * summaries, even if loading groups omitted the payload bytes from the downloaded snapshot.
  * A retained payload may avoid reads during pending-state restoration, but its IDs must match.
- * Invalid or unsupported manifests fail explicitly rather than being interpreted as another format.
+ * The two HTML paths are the application's contract; no manifest is required.
+ * If supplied, the optional manifest is validated by this reader, not by generic infrastructure.
  */
 export async function readApplicationProjection(
 	snapshot: ISnapshotTree,
@@ -128,40 +144,47 @@ export async function readApplicationProjection(
 	} = {},
 ): Promise<IApplicationProjection> {
 	const projectionTree: ISnapshotTree | undefined = snapshot.trees[projectionKey];
-	const manifestId: string | undefined = projectionTree?.blobs["manifest.work"];
+	const manifestId: string | undefined = projectionTree?.blobs[projectionManifestBlobName];
 	const firstId: string | undefined = projectionTree?.trees.first?.blobs["document.html"];
 	const secondId: string | undefined = projectionTree?.trees.second?.blobs["document.html"];
-	if (manifestId === undefined || firstId === undefined || secondId === undefined) {
+	if (firstId === undefined || secondId === undefined) {
 		throw new Error("Not a supported seed envelope");
+	}
+	if (projectionTree?.blobs["manifest.work"] !== undefined) {
+		throw new Error("Legacy manifest.work requires explicit application conversion");
 	}
 	const { retained } = options;
 	if (
 		retained !== undefined &&
 		(retained.manifestId !== manifestId ||
+			(retained.manifestId === undefined) !== (retained.manifest === undefined) ||
 			retained.partBlobIds.first !== firstId ||
 			retained.partBlobIds.second !== secondId)
 	) {
 		throw new Error("Retained seed does not belong to this source snapshot");
 	}
 	const manifest =
-		retained?.manifest ?? Buffer.from(await readBlob(manifestId)).toString("utf8");
-	const parsed: unknown = JSON.parse(manifest);
-	if (
-		typeof parsed !== "object" ||
-		parsed === null ||
-		!("format" in parsed) ||
-		parsed.format !== format ||
-		!("parts" in parsed) ||
-		typeof parsed.parts !== "object" ||
-		parsed.parts === null ||
-		!("first" in parsed.parts) ||
-		parsed.parts.first !== "first/document.html" ||
-		!("second" in parsed.parts) ||
-		parsed.parts.second !== "second/document.html" ||
-		Object.keys(parsed.parts).length !== 2 ||
-		Object.keys(parsed).length !== 2
-	) {
-		throw new Error("Unsupported manifest version or contents");
+		manifestId === undefined
+			? undefined
+			: (retained?.manifest ?? Buffer.from(await readBlob(manifestId)).toString("utf8"));
+	if (manifest !== undefined) {
+		const parsed: unknown = JSON.parse(manifest);
+		if (
+			typeof parsed !== "object" ||
+			parsed === null ||
+			!("format" in parsed) ||
+			parsed.format !== externalHtmlFormat ||
+			!("parts" in parsed) ||
+			typeof parsed.parts !== "object" ||
+			parsed.parts === null ||
+			!("first" in parsed.parts) ||
+			parsed.parts.first !== "first/document.html" ||
+			!("second" in parsed.parts) ||
+			parsed.parts.second !== "second/document.html" ||
+			Object.keys(parsed.parts).length !== 2
+		) {
+			throw new Error("Unsupported manifest version or contents");
+		}
 	}
 	const [first, second] = await Promise.all([
 		retained?.parts.first ??

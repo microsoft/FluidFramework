@@ -786,11 +786,15 @@ export interface ISummaryGenerationContext {
 }
 
 /**
- * Application content and optional acceptance bookkeeping captured at one summary checkpoint.
+ * An application projection and optional acceptance bookkeeping captured at one summary checkpoint.
+ * The application defines the projection's contents; the runtime requires no manifest or content-format identifier.
  * @legacy @beta
  */
-export interface IAdditionalSummaryTree {
-	/** A fresh tree that will not subsequently be mutated. It may specify a `groupId`. */
+export interface IApplicationProjectionSummary {
+	/**
+	 * A fresh application-owned tree that will not subsequently be mutated.
+	 * It may specify a `groupId`; its payload format is opaque to the runtime.
+	 */
 	readonly summary: ISummaryTree;
 	/**
 	 * Synchronously promote the state captured when this tree was generated, not current mutable state.
@@ -806,7 +810,7 @@ export interface IAdditionalSummaryTree {
 
 interface IPendingSummaryGeneration {
 	readonly context: ISummaryGenerationContext;
-	readonly onAccepted: IAdditionalSummaryTree["onAccepted"];
+	readonly onAccepted: IApplicationProjectionSummary["onAccepted"];
 }
 
 /**
@@ -845,6 +849,7 @@ export interface ISummaryGenerationOptions {
 		/**
 		 * A single, nonempty path segment unchanged by URI encoding. Dot-prefixed names, `gc`, and JavaScript prototype
 		 * property names are reserved. The key must not collide with native root entries.
+		 * The application selects this key; `applicationProjection` is a convention, not a runtime requirement.
 		 */
 		readonly key: string;
 		/**
@@ -865,7 +870,7 @@ export interface ISummaryGenerationOptions {
 		 * context.previousSummary. Newly loaded application revisions are not automatically comparable
 		 * to revisions captured by a previous runtime instance.
 		 */
-		readonly summarize: (context: ISummaryGenerationContext) => IAdditionalSummaryTree;
+		readonly summarize: (context: ISummaryGenerationContext) => IApplicationProjectionSummary;
 	};
 }
 

@@ -34,7 +34,7 @@ import { ChannelCollection } from "../channelCollection.js";
 import {
 	ContainerRuntime,
 	loadContainerRuntime,
-	type IAdditionalSummaryTree,
+	type IApplicationProjectionSummary,
 	type ISummaryGenerationContext,
 	type ISummaryGenerationOptions,
 } from "../containerRuntime.js";
@@ -553,6 +553,34 @@ describe("Runtime summary generation options", () => {
 		assert.equal(summary.tree.application, undefined);
 	});
 
+	for (const includeManifest of [false, true]) {
+		it(`accepts opaque application content at a chosen root (manifest ${includeManifest})`, async () => {
+			const createProjection = (): ISummaryTree => {
+				const projection = additionalTree("application-owned content");
+				if (includeManifest) {
+					projection.tree["manifest.json"] = {
+						type: SummaryType.Blob,
+						content: '{"chosenByApplication":true,"layoutRevision":"custom"}',
+					};
+				}
+				return projection;
+			};
+			const expectedProjection = createProjection();
+			const { runtime } = await createRuntime({
+				additionalRootTree: {
+					key: "readerContent",
+					summarize: () => ({ summary: createProjection() }),
+				},
+			});
+			const attached = runtime.createSummary();
+			assert.deepEqual(attached.tree.readerContent, expectedProjection);
+			assert.equal(attached.tree.applicationProjection, undefined);
+			const { summary } = await runtime.summarize(untrackedSummary);
+			assert.deepEqual(summary.tree.readerContent, expectedProjection);
+			assert.equal(summary.tree.applicationProjection, undefined);
+		});
+	}
+
 	// Each summary must get a fresh checkpoint-specific root sibling, not a one-time or DDS-nested projection.
 	it("calls the callback synchronously for every attach and normal summary, preserving groupId", async () => {
 		let checkpoint = 0;
@@ -759,7 +787,7 @@ describe("Runtime summary generation options", () => {
 		const { runtime } = await createRuntime({
 			additionalRootTree: {
 				key: "application",
-				summarize: (): IAdditionalSummaryTree =>
+				summarize: (): IApplicationProjectionSummary =>
 					Object.assign(Promise.resolve(), { summary: additionalTree() }),
 			},
 		});

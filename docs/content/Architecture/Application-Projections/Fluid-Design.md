@@ -1,7 +1,7 @@
-# Application Seed Projection: Implemented Fluid Design
+# Application Projections: Implemented Fluid Design
 
 This document describes the implemented Fluid contracts and why the runtime changes are required.
-The [architecture and roadmap](../Application-Seed-Projection.md) separates the wider application/storage direction, attachment proposals, portable downloads, Markdown integration, and at-rest summarization.
+The [architecture and roadmap](../Application-Projections.md) separates the wider application/storage direction, attachment proposals, portable downloads, Markdown integration, and at-rest summarization.
 The [usage guide](./Usage.md) explains application integration; the [reference README](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md) explains how to run the example.
 Sample-application and test-harness structure belongs in the [local design](../../../../packages/test/local-server-tests/src/test/seedProjection/DESIGN.md), not in the runtime contract.
 
@@ -20,7 +20,7 @@ blobs; an outer portable-download archive is a separate storage concern.
 
 | Component                  | Implemented behavior                                                                                                                                               |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| External creation/readback | Versioned manifest and two HTML blobs; the same external reader consumes seed and accepted native snapshots without loading a runtime.                             |
+| External creation/readback | Two HTML blobs and optional application-owned metadata; the same external reader consumes seed and accepted native snapshots without loading a runtime.            |
 | Deterministic bootstrap    | Bounded HTML codec, typed SharedTree schema, native DDS/compressor serializers, complete single-store fixture envelope, stable initial identities and fingerprint. |
 | Runtime-owned loading      | Seed-aware factory, coherent snapshot/storage overlay, retained source provenance, no initialization writes, and pending-state reconstruction.                     |
 | Native summaries           | Full structural native/GC state through the first tracked accepted summary, then incremental generation in the same runtime.                                       |
@@ -66,9 +66,25 @@ unspecified production-readiness claim.
 
 ## File format and native baseline
 
-`fluid-html-reference/2` stores `manifest.work`, `first/document.html`, and `second/document.html` under
-`applicationProjection`. `HtmlDocument.first` and `.second` are distinct SharedTree child arrays. The pure codec rejects
-unsupported HTML rather than silently dropping content. Creation and external reading import no DDS/runtime.
+The HTML application stores `first/document.html` and `second/document.html` under `applicationProjection`.
+Its optional `manifest.json` uses the example-specific format identifier `reference-html-parts/1`.
+That file and identifier are application choices, not a required Fluid manifest or a selector for native reconstruction.
+The sample also accepts manifest-free content and preserves application metadata without treating it as runtime configuration.
+`HtmlDocument.first` and `.second` are distinct SharedTree child arrays.
+The pure codec rejects unsupported HTML rather than silently dropping content.
+Creation and external reading import no DDS/runtime.
+
+The three identities are independent:
+
+| Identity                    | Sample choice                                                     | Meaning                                                                        |
+| --------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| External application format | `externalHtmlFormat = "reference-html-parts/1"`                   | Interpretation of the sample's optional application manifest.                  |
+| Materialization rules       | `htmlMaterializationProfile = "reference-html-materialization/1"` | Application-internal deterministic reconstruction contract.                    |
+| SharedTree namespace        | `htmlSchemaNamespace = "fluid-html-reference/2"`                  | Stable native schema identifiers, preserved independently of the other labels. |
+
+`IProjector.materializationProfile` is supplied by application code, never selected from external metadata.
+Clients must agree on the profile even when two profiles happen to produce identical native bytes for a particular input.
+The same schema can support different reconstruction rules; native schema naming is not a materialization-version scheme.
 
 `nativeSeedBaseline.ts` is a test-internal fixture builder, not a new public native-file encoder. Real SharedTree and
 compressor serializers own their formats. The fixture specifies the enclosing runtime/store/channel envelope, including
@@ -85,10 +101,19 @@ an operation-level compatibility check.
 
 ## Baseline proof on operation packets
 
-`seedBaselineFingerprint.ts` defines a descriptor containing `seedId`, `profileVersion`, `hashVersion`, and
-`baselineHash`. It is derived from the original seed provenance and persisted in
-`applicationProjection/seed-baseline.json`, outside the native graph being hashed. Clients loading later native
-summaries retain that original genesis descriptor; they do not hash the edited model as a new baseline.
+`seedBaselineFingerprint.ts` defines a descriptor containing `seedId`, `profileVersion`, `hashVersion`, and `baselineHash`.
+`profileVersion` carries the application's internal materialization identity, not an external manifest version.
+The descriptor is derived from the original seed provenance and persisted at `.channels/document/.channels/seed-baseline.json`, outside the readable application projection.
+Clients loading later native summaries retain that original genesis descriptor; they do not hash the edited model as a new baseline.
+
+The sample's `FluidDataStoreRuntime` subclass appends this immutable native blob through public `summarize` and `getAttachSummary` overrides.
+`addBlobToSummary` includes its statistics, and whole-store incremental handles retain it in subsequent summaries.
+The canonical initial native hash is computed before adding this descriptor, avoiding a circular hash.
+There is no extra DDS, initialization operation, or private runtime interception.
+The descriptor remains native/protocol metadata, not secret storage.
+
+Earlier prototype files using `manifest.work` or only an exported baseline descriptor are rejected explicitly.
+This revision does not silently reinterpret those layouts or implement migration.
 
 The factory adapter adds `seedBaseline` metadata to **every physical outgoing runtime operation packet** after native
 grouping, compression, and chunking. Repeating the proof deliberately avoids fragile "already sent once" state:
@@ -115,8 +140,21 @@ back. The invalid packet itself never enters native processing.
 
 This detects incompatible reconstruction, not malicious peers or incompatible operations before the service sequences
 them. The reference exercises real Loader dispatch, transport modes, reconnect, pending recovery, and descriptor
-persistence through native reloads. Maximum-packet-size overhead and mixed-version deployment/recovery remain separate
-validation work. No new public ContainerRuntime API is required for this application-level protocol.
+persistence through native reloads.
+Mixed-version deployment/recovery remains separate validation work.
+No new public ContainerRuntime API is required for this application-level protocol.
+
+### Packet-size accounting: agreed follow-up
+
+Exact packet-budget accounting for metadata added after native batching remains a documented follow-up, not a property established by this reference.
+Native Outbox admission estimates content size plus a fixed per-message overhead; it does not plan the final stamped transport representation.
+A read-only core probe with a synthetic 1,024-byte cap admitted an estimate of 1,023 bytes, while adding a valid descriptor grew event-data JSON from 942 to 1,223 UTF-8 bytes, before further transport framing.
+This is evidence of missing headroom accounting, not a measurement of a production service limit.
+
+Do not add a late throwing guard in the application wrapper as a substitute.
+The native path can already have popped a batch and emitted intermediate chunks before registering pending-operation ownership.
+A safe fix needs native packet planning/accounting and failure-safe pending ownership before transport effects.
+This reference does not implement that broader native transport work.
 
 ## First full summary, then incremental native state
 
@@ -136,99 +174,23 @@ The lifecycle asserts that the same seed-loaded runtime's second accepted summar
 This proves structural incremental reuse, not that the first full forest encoding has primed every SharedTree
 chunk-level encoding optimization.
 
-## Why the runtime and GC changes are required
+## Runtime and GC implementation
 
-The seed adapter supplies a loading view, not a persisted native summary.
-Consequently, the normal rule "unchanged content can refer to its previous summary path" is initially unsafe: the native paths in that view have never been uploaded.
-Always forcing full output would avoid those invalid handles, but would fail the requirement that later summaries be incremental.
-The solution must establish a real accepted baseline and then switch all summary participants to that same baseline.
+The generic [summary-generation and acceptance design](../../../../packages/runtime/container-runtime/Summary-Generation.md) owns full output versus tracking, proposal-correlated GC state, coordinated acceptance, and recovery generations.
+It explains the late-acknowledgment failure that a single pending GC slot cannot handle, and links the runtime/GC implementation to its focused regressions.
+Those capabilities do not depend on seeds, HTML, an application manifest, or a specific schema.
 
-### Separate full output from tracking and GC execution
-
-`ContainerRuntime.getEffectiveFullTree()` combines an explicit full-tree request, the unconditional `forceFullTree` option, and the temporary `fullTreeUntilFirstAck` policy.
-The effective value reaches native descendants, GC serialization, and the application callback.
-It controls the **representation written to storage**, not whether the attempt should be tracked for later acceptance.
-
-`GCSummaryStateTracker.summarize()` therefore receives both `trackState` and `fullTree`.
-A tracked full attempt captures the GC state, tombstones, and deleted-node list even though it emits blobs rather than previous-summary handles.
-Without that capture, the first full summary could be accepted without giving GC a baseline for the next incremental summary.
-Untracked generation emits complete GC data and cannot overwrite a submitted proposal's pending state.
-
-`fullTree` is also different from `fullGC`.
-The former disables summary-handle reuse; the latter requests regeneration of the reachability graph during GC execution.
-Writing the full stored GC representation does not by itself rerun reachability discovery, change sweep policy, or inline attachment payloads.
-
-### Keep generation, submission, and acceptance separate
-
-The GC tracker previously had a single pending generated value.
-That is not enough when an earlier proposal can be acknowledged after a retry or another generation.
-Consider proposal A containing GC state G1, followed by an attempt B containing G2.
-If A's ACK adopted the most recently generated G2, a later "unchanged G2" handle would resolve against A's stored G1.
-The comparison baseline and the handle's storage parent would disagree.
-
-The implementation uses three distinct states:
-
-| State               | Owner and transition                                                                                    | Why it is separate                                                                |
-| ------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Current generation  | `GCSummaryStateTracker.wipSummaryData` captures the tracked attempt.                                    | A failed or abandoned generation must not replace an already submitted proposal.  |
-| Submitted proposals | `completeSummary(proposalHandle, referenceSequenceNumber)` moves captured data into `pendingSummaries`. | The proposal handle identifies exactly which captured state an ACK accepts.       |
-| Accepted baseline   | `refreshLatestSummary(result, proposalHandle)` adopts only the matching tracked proposal.               | Incremental comparisons and `/gc` handles must describe the same accepted parent. |
-
-`ContainerRuntime` calls the GC completion and cleanup hooks alongside the native summarizer-node hooks.
-The `finally` cleanup drops only work in progress, leaving submitted proposals available for delayed ACKs.
-Proposal handles, rather than sequence numbers alone, distinguish retries at the same checkpoint.
-Retirement removes older-checkpoint proposals consistently with native tracking; it does not discard another proposal merely because its checkpoint is equal.
-
-### Adopt one proposal across all participants
-
-`ContainerRuntime.refreshLatestSummaryAck()` serializes acceptance work and blocks a new generation while acceptance is in progress.
-For a locally tracked proposal, the order is:
-
-1. Refresh the native summarizer nodes.
-2. Verify that the captured application generation matches the acknowledged proposal and checkpoint.
-3. Refresh that proposal's GC state.
-4. Record the accepted storage parent: proposal handle, ACK handle, and reference sequence number.
-5. Invoke that proposal's synchronous application `onAccepted` callback.
-6. End temporary full-tree forcing if the accepted generation was full.
-
-A remote/untracked ACK does not manufacture a local baseline.
-The existing fetch-latest/close handling remains applicable to a newer remote summary.
-Duplicate ACKs do not invoke an already-promoted application callback again.
-If native, GC, or application adoption fails, the runtime closes rather than attempting incremental reuse from inconsistent state.
-This is fail-closed coordination, **not transactional rollback** of already adopted native state.
-
-### Correlate GC recovery with the accepted checkpoint
-
-GC auto-recovery separately requests a full reachability run and waits for a summary containing that recovery to be accepted.
-A later recovery request must not be cleared by the delayed ACK of an earlier summary.
-Each request increments a local recovery generation; a completed run exposes that generation to summary capture.
-Only acceptance of a proposal carrying the current completed generation clears the request.
-
-`IGCSummaryTrackingData.recoveryGeneration` is in-memory bookkeeping, not a new stored GC field.
-The existing GC blob layout and handle paths remain unchanged.
-These changes coordinate persistence and recovery; they do not introduce a new GC reachability model.
-
-### Source and regression map
-
-| Implementation                                                                                                                                                                                                    | Responsibility                                                                                                      | Focused evidence                                                                                                                                                                                                                                                              |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`containerRuntime.ts`](../../../../packages/runtime/container-runtime/src/containerRuntime.ts): `ISummaryGenerationOptions`, `getEffectiveFullTree`, `addAdditionalRootTreeToSummary`, `refreshLatestSummaryAck` | Full-output policy, synchronous root participation, proposal-specific capture, and coordinated acceptance.          | [`containerRuntime.summaryGeneration.spec.ts`](../../../../packages/runtime/container-runtime/src/test/containerRuntime.summaryGeneration.spec.ts): retry/ACK ordering, delayed GC adoption, remote ACKs, full-tree propagation, callback failures, and handle preconditions. |
-| [`gcSummaryStateTracker.ts`](../../../../packages/runtime/container-runtime/src/gc/gcSummaryStateTracker.ts): `summarize`, `completeSummary`, `clearSummary`, `refreshLatestSummary`                              | Track full attempts without emitting handles; separate current work from submitted proposals and accepted GC state. | [`gcSummaryStateTracker.spec.ts`](../../../../packages/runtime/container-runtime/src/test/gc/gcSummaryStateTracker.spec.ts): A's state is adopted after B and abandoned/untracked work, then B can be adopted independently.                                                  |
-| [`garbageCollection.ts`](../../../../packages/runtime/container-runtime/src/gc/garbageCollection.ts): summary hooks and `autoRecovery`                                                                            | Forward full-output policy and proposal identity; clear only the recovery covered by the accepted proposal.         | [`garbageCollection.spec.ts`](../../../../packages/runtime/container-runtime/src/test/gc/garbageCollection.spec.ts): early and older recovery ACKs retain the request; a matching post-GC ACK clears it.                                                                      |
-| [`gcDefinitions.ts`](../../../../packages/runtime/container-runtime/src/gc/gcDefinitions.ts): `IGarbageCollector`                                                                                                 | Define completion/cleanup hooks and proposal-aware refresh at the runtime/GC boundary.                              | The runtime and GC suites exercise the common lifecycle rather than a seed-only special path.                                                                                                                                                                                 |
-
+This application uses them because its materialized loading view is not yet a stored native parent.
 The [reference scenarios](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md#what-the-scenario-checks) separately verify real storage upload/ACK, native handle reuse, skipped HTML serialization, and unchanged persisted part IDs.
-Runtime tests establish the contract; the sample application demonstrates one use of it.
 
 ## Incremental application projection
 
-`additionalRootTree` adds an application-owned child beside `.channels`, with key validation, statistics, group
-metadata, and explicit failure propagation. The key is currently application-selected; a uniform discovery convention
-and optional application-authored `AGENTS.md` remain
-[open design questions](../Application-Seed-Projection.md#projection-discovery-open-design).
+`additionalRootTree` adds an application-owned child beside `.channels`, with key validation, statistics, group metadata, and explicit failure propagation.
+The key remains application-selected; `applicationProjection` is a convention.
+The [discovery contract](../Application-Projections.md#projection-discovery) permits optional application-owned manifests and `AGENTS.md` without requiring either or interpreting their contents.
 
 The synchronous callback receives `ISummaryGenerationContext`: checkpoint, effective full-tree/tracking mode, and the
-exact accepted parent. It returns `IAdditionalSummaryTree`, containing a tree and optional proposal-specific
+exact accepted parent. It returns `IApplicationProjectionSummary`, containing a tree and optional proposal-specific
 `onAccepted` callback. Callbacks must not mutate the model, run asynchronous work, or start schema upgrades.
 Capture uses the summarizer's sequenced state while incoming processing is paused, not an interactive client's
 optimistic pending edits. The root callback also runs when unchanged native descendants reuse handles.
@@ -241,7 +203,7 @@ dirty.
 An unchanged part with a matching accepted parent becomes a subtree handle at
 `/applicationProjection/first` or `/applicationProjection/second`. The storage driver resolves that path in the upload's
 accepted parent. This avoids both HTML encoding and payload upload; it is not a content hash or a virtual blob ID.
-The small fixed manifest is regenerated.
+The optional application manifest is preserved byte-for-byte, including custom metadata; manifest absence remains absence.
 
 Unaccepted attempts cannot become reuse baselines. Unknown parents, full requests, and untracked generation emit
 complete projection content. A newly loaded instance conservatively establishes its own accepted dirty-counter baseline
@@ -255,7 +217,7 @@ Both parts remain readable through the external reader, including when loading g
 
 Implemented coverage includes independent interactive/summarizer loads from a seed, op-suffix replay, native loads with
 conversion disabled, storage refetch, and pending-state restoration with seed-body reads denied. The pending envelope
-retains original manifest/part bytes and their storage IDs; regenerated native blobs are not serialized into host
+retains original application metadata/part bytes and their storage IDs; regenerated native blobs are not serialized into host
 caches. Tests cover initial `ISnapshot` and tree-only loads, restoring either through the snapshot-based loader path.
 
 Memorylicious uses one real `LocalDeltaConnectionServer` and local-driver for clients, storage, sequencing, and ACKs.

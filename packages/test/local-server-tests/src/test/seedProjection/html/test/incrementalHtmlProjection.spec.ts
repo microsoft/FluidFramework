@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
-	IAdditionalSummaryTree,
+	IApplicationProjectionSummary,
 	ISummaryGenerationContext,
 } from "@fluidframework/container-runtime/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -58,13 +58,13 @@ function changePart(view: HtmlView, part: HtmlPartId, value: string): void {
 }
 
 /** Adopt the captured state as if the runtime had successfully refreshed this proposal's native/GC/parent state. */
-function accept(result: IAdditionalSummaryTree, context: ISummaryContext): void {
+function accept(result: IApplicationProjectionSummary, context: ISummaryContext): void {
 	assert(result.onAccepted !== undefined);
 	result.onAccepted(context);
 }
 
 /** Assert the representation has no HTML payload for this part and references its original subtree path. */
-function assertHandle(result: IAdditionalSummaryTree, part: HtmlPartId): void {
+function assertHandle(result: IApplicationProjectionSummary, part: HtmlPartId): void {
 	assert.deepEqual(result.summary.tree[part], {
 		type: SummaryType.Handle,
 		handleType: SummaryType.Tree,

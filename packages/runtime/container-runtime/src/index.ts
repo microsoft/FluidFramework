@@ -14,7 +14,7 @@ export {
 	type LoadContainerRuntimeParams,
 	type ISummaryGenerationOptions,
 	type ISummaryGenerationContext,
-	type IAdditionalSummaryTree,
+	type IApplicationProjectionSummary,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,

@@ -2,11 +2,11 @@
 
 This document describes the executable reference and how its tests establish the application-seed
 workflow. The cross-package
-[Fluid design](../../../../../../docs/content/Architecture/Application-Seed-Projection/Fluid-Design.md)
+[Fluid design](../../../../../../docs/content/Architecture/Application-Projections/Fluid-Design.md)
 owns runtime contracts, GC implementation rationale, and summary acceptance semantics. The
-[architecture](../../../../../../docs/content/Architecture/Application-Seed-Projection.md) owns
+[architecture](../../../../../../docs/content/Architecture/Application-Projections.md) owns
 broader application/storage proposals; the
-[usage guide](../../../../../../docs/content/Architecture/Application-Seed-Projection/Usage.md) owns
+[usage guide](../../../../../../docs/content/Architecture/Application-Projections/Usage.md) owns
 consumer responsibilities.
 
 ## Boundaries
@@ -28,16 +28,16 @@ remain here: their reusable ideas do not make their present source a format-inde
 `html/test/` owns its unit/integration cases, HTML-specific assertions, and the adapter that
 connects this application to the common harness.
 
-| Module                                                                   | Responsibility                                                                                      |
-| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| [`html/externalSeedFile.ts`](html/externalSeedFile.ts)                   | Pure creation/readback contract and application summary subtree.                                    |
-| [`html/htmlSeedFormat.ts`](html/htmlSeedFormat.ts)                       | Restricted parser and canonical serializer; explicitly not a browser HTML parser.                   |
-| [`html/htmlTreeSchema.ts`](html/htmlTreeSchema.ts)                       | Recursive element/attribute/ordered-child/text schema and synchronous native conversion.            |
-| [`html/nativeSeedBaseline.ts`](html/nativeSeedBaseline.ts)               | Complete native fixture envelope; actual DDS/compressor serializers own their codecs.               |
-| [`html/seedRuntimeAdapter.ts`](html/seedRuntimeAdapter.ts)               | Context forwarding, coherent snapshot/storage overlay, original source, and pending reconstruction. |
-| [`html/seedBaselineFingerprint.ts`](html/seedBaselineFingerprint.ts)     | Genesis descriptor, operation-packet proof, mismatch evidence, and native-summary sidecar.          |
-| [`html/sampleRuntimeFactory.ts`](html/sampleRuntimeFactory.ts)           | Data-store registration and model realization on every client, including summarizers.               |
-| [`html/incrementalHtmlProjection.ts`](html/incrementalHtmlProjection.ts) | Per-part dirtiness, captured revisions, and accepted-parent subtree handles.                        |
+| Module                                                                   | Responsibility                                                                                       |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| [`html/externalSeedFile.ts`](html/externalSeedFile.ts)                   | Pure creation/readback contract and application summary subtree.                                     |
+| [`html/htmlSeedFormat.ts`](html/htmlSeedFormat.ts)                       | Restricted parser and canonical serializer; explicitly not a browser HTML parser.                    |
+| [`html/htmlTreeSchema.ts`](html/htmlTreeSchema.ts)                       | Recursive element/attribute/ordered-child/text schema and synchronous native conversion.             |
+| [`html/nativeSeedBaseline.ts`](html/nativeSeedBaseline.ts)               | Complete native fixture envelope; actual DDS/compressor serializers own their codecs.                |
+| [`html/seedRuntimeAdapter.ts`](html/seedRuntimeAdapter.ts)               | Context forwarding, coherent snapshot/storage overlay, original source, and pending reconstruction.  |
+| [`html/seedBaselineFingerprint.ts`](html/seedBaselineFingerprint.ts)     | Genesis descriptor, operation-packet proof, mismatch evidence, and internal native-identity reading. |
+| [`html/sampleRuntimeFactory.ts`](html/sampleRuntimeFactory.ts)           | Internal materialization profile, native data-store identity persistence, and model realization.     |
+| [`html/incrementalHtmlProjection.ts`](html/incrementalHtmlProjection.ts) | Per-part dirtiness, captured revisions, and accepted-parent subtree handles.                         |
 
 The disconnected construction mock only hosts baseline construction/serialization. It is never the
 collaboration or summary service. The baseline determines the store count; registering a factory
@@ -109,6 +109,12 @@ cases exercise real transport and native reload in addition to protocol units. T
 [README](README.md#what-the-scenario-checks) summarizes scenario coverage and provides normal and
 current-source commands. The source preloader is test tooling only; it is not an application loading
 layer or a replacement for package/API validation.
+
+[`applicationIdentity.spec.ts`](html/test/applicationIdentity.spec.ts) verifies that external format,
+internal materialization rules, and native schema names are independent.
+The real lifecycle cases preserve optional application metadata or manifest absence
+through summaries, native reload, and pending-state restoration.
+The baseline descriptor lives in native data-store state, not in the readable projection.
 
 No images, mixed-DDS Markdown implementation, browser UI, or real ODSP/Tinylicious run is
 demonstrated here.

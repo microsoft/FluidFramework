@@ -85,7 +85,7 @@ export interface IAckSummaryResult {
 }
 
 // @beta @legacy
-export interface IAdditionalSummaryTree {
+export interface IApplicationProjectionSummary {
     readonly onAccepted?: (context: ISummaryContext) => void;
     readonly summary: ISummaryTree;
 }
@@ -325,7 +325,7 @@ export interface ISummaryGenerationContext {
 export interface ISummaryGenerationOptions {
     readonly additionalRootTree?: {
         readonly key: string;
-        readonly summarize: (context: ISummaryGenerationContext) => IAdditionalSummaryTree;
+        readonly summarize: (context: ISummaryGenerationContext) => IApplicationProjectionSummary;
     };
     readonly forceFullTree?: boolean;
     readonly fullTreeUntilFirstAck?: boolean;

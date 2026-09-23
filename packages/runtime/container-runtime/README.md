@@ -36,14 +36,15 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 <!-- prettier-ignore-end -->
 <!-- markdown-magic:end -->
 
-## Application seed projection
+## Summary generation and acceptance
 
-The [application-seed design](../../../docs/content/Architecture/Application-Seed-Projection/Fluid-Design.md) explains
-the summary-generation options, first-full-to-incremental transition, and proposal-correlated native, garbage-collection,
-and application acceptance state.
-It includes the rationale and source/test map for these runtime changes.
-The [architecture overview](../../../docs/content/Architecture/Application-Seed-Projection.md) distinguishes implemented
-contracts from application and storage proposals; the executable reference remains in the local-server test package.
+Summary generation distinguishes full output, state tracking, and adoption of an acknowledged proposal.
+Native state, garbage-collection state, and registered application projection callbacks must agree on the accepted parent
+before reusing summary handles.
+Full structural output does not imply a full GC reachability run.
+See [Summary Generation](Summary-Generation.md) for these generic runtime/GC contracts and their source/test map.
+[Application projections](../../../docs/content/Architecture/Application-Projections.md) are one use of these capabilities,
+not a dependency of the GC implementation.
 
 ## Data Virtualization For DataStores (Work in Progress)
 

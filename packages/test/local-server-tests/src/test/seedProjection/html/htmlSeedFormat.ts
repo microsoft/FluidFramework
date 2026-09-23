@@ -7,7 +7,7 @@
  * This is a deliberately restricted, versioned format, NOT a browser HTML parser.
  * No error recovery, scripts, comments, URLs, styles, namespaces, or implicit closing tags.
  */
-export const format = "fluid-html-reference/2";
+export const externalHtmlFormat = "reference-html-parts/1";
 const tags = new Set(["div", "p", "span", "strong", "em", "ul", "li", "h1", "h2", "br"]);
 // The reference format accepts only these names and lowercase data-* keys.
 const attributeNamePattern = /^(?:id|class|title|data-[a-z][a-z0-9-]*)$/u;

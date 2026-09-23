@@ -30,6 +30,7 @@ export {
 export { MockStorage } from "./mockStorage.js";
 export {
 	type IWrapObjectAndOverrideOptions,
+	type NestedOverrides,
 	type OverrideFactory,
 	type UnPromise,
 	wrapObjectAndOverride,

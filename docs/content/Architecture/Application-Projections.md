@@ -1,4 +1,4 @@
-# Application Seed Projection
+# Application Projections
 
 **This document describes the wider direction, including work outside this repository and unimplemented proposals.**
 This contributor-facing design spans application integration, ContainerRuntime, garbage collection, and storage.
@@ -6,12 +6,15 @@ It is not owned by the test harness and does not promise production support for 
 
 ## Documentation map
 
-- [Implemented Fluid design](./Application-Seed-Projection/Fluid-Design.md): runtime contracts, implementation rationale, acceptance/reuse mechanics, and remaining SDK work.
-- [Application usage](./Application-Seed-Projection/Usage.md): external creation/readback and application integration responsibilities.
+- [Implemented Fluid design](./Application-Projections/Fluid-Design.md): runtime integration, acceptance/reuse mechanics, and remaining SDK work.
+- [Application usage](./Application-Projections/Usage.md): external creation/readback and application integration responsibilities.
 - [Executable reference](../../../packages/test/local-server-tests/src/test/seedProjection/README.md): run commands and scenario coverage.
 - [Reference structure](../../../packages/test/local-server-tests/src/test/seedProjection/DESIGN.md): sample application, test harness, instrumentation, and test boundaries.
 
 ## Goal and implemented foundation
+
+Application projections connect application-owned representations and native collaborative state in both directions: load application content into the native model, and publish readable application content from that model.
+A **seed** is the initial-file case, not the name of the whole capability.
 
 Enable applications outside Fluid to create and read collaborative files through a documented application format.
 Creators supply application content, feature metadata, and assets; readers consume application state at a summary
@@ -55,16 +58,27 @@ Use these priorities to evaluate the next work; none implies an external service
 
 ## Representations and authority
 
-| Representation | Contents                                                                                        | Authority                                                                                                                           |
-| -------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Seed summary   | Loader-valid envelope, versioned application manifest, HTML/Markdown parts and feature metadata | Defines the initial state; accepted operations extend it before a native summary exists.                                            |
-| Native summary | Runtime/DDS state plus application projection at the same checkpoint                            | Native state and subsequent operations are authoritative; the projection is a read representation, not an alternative write target. |
+| Representation | Contents                                                                                                 | Authority                                                                                                                           |
+| -------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Seed summary   | Loader-valid envelope and application-defined initial content, with any metadata the application chooses | Defines the initial state; accepted operations extend it before a native summary exists.                                            |
+| Native summary | Runtime/DDS state plus application projection at the same checkpoint                                     | Native state and subsequent operations are authoritative; the projection is a read representation, not an alternative write target. |
 
-The general application manifest identifies its format, ordered parts, supported non-HTML features, and eventually asset
-references. A materialization profile pins parser/normalization, schema, defaults, identifiers, and asset binding.
-Production applications must define their own versioned feature coverage; readable HTML or Markdown need not be a
-lossless application backup. Never reconstruct an existing collaborative document from its projection while retaining
-the old operation stream.
+Applications define their own content layout, feature coverage, and optional manifest.
+The runtime does not require a manifest name, schema, format identifier, or version.
+Readable HTML or Markdown need not be a lossless application backup.
+Never reconstruct an existing collaborative document from its projection while retaining the old operation stream.
+
+### Three independent application contracts
+
+| Contract                               | Owner                                       | Independence requirement                                                                                                                                                                       |
+| -------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| External content and optional manifest | Application and its file producers/readers. | A custom `manifest.json`, another metadata layout, or no manifest is valid from the generic runtime's perspective. The application reader, not Fluid, interprets any external format identity. |
+| Deterministic materialization profile  | Application runtime integration.            | Identify the reconstruction rules and enforce agreement between clients. Do not derive this identity from an external manifest or expose it as required application content.                   |
+| Native DDS schema identities           | Application's native model definition.      | Choose schema namespaces and evolution independently. The same schema can support different materialization rules, and a materialization policy can cover more than one schema.                |
+
+Runtime support can compare compatibility evidence without defining what an application's profile means.
+The profile belongs to native/internal compatibility state, not the readable projection's content contract.
+Native snapshot and protocol metadata are not secret storage; keeping them outside the application representation is a separation of responsibilities, not a confidentiality guarantee.
 
 **Seeds and projections are uncompressed trees of application blobs**, not nested archives. ZIP is only an option for
 the outer portable download containing the full file state: snapshot, blobs, operation tail, metadata, and attachments.
@@ -86,21 +100,23 @@ The format should expose the snapshot tree, blobs as files, checkpoint metadata,
 It must support **shared references**: multiple leaves can reference one image payload. ZIP is a possible outer package,
 not a requirement; use documented manifest/reference records, not archive or filesystem symlinks.
 
-A stable entry point locates the application manifest. References from the selected snapshot must resolve within the
+A stable entry point locates the application projection; the application defines how readers find its content and optional metadata.
+References from the selected snapshot must resolve within the
 download without requiring earlier server summaries or knowledge of DDS encodings. Native DDS blobs remain opaque to
 application-format readers. This is separate from the reference's storage-backed reader, which resolves actual summary
 blob IDs through a driver.
 
-## Projection discovery (open design)
+## Projection discovery
 
-The runtime currently lets applications choose a nonreserved root key; the reference uses `applicationProjection`.
-A uniform key would simplify discovery. A versioned manifest should identify the format, rather than relying on a
-unique directory name to encode it. Agreeing on a shared convention is separate from hard-coding that path in Fluid.
+**The application chooses the projection root key.**
+`applicationProjection` is the recommended convention used by this reference, not a fixed runtime key.
+An external reader follows the application's discovery contract; the runtime does not infer an application format from the directory name.
 
-An application-supplied `AGENTS.md` could explain the projection's format, authority, checkpoint semantics, and
-supported operations to readers of an interchange download. It should be ordinary reusable application content, not a
-special executable runtime hook or a replacement for the machine-readable manifest. These points remain open for
-discussion: the reference does not add that file or mandate a shared root key.
+An application may include a `manifest.json`, `AGENTS.md`, or other documentation alongside its content.
+Their names, schemas, and presence are application choices; Fluid requires and interprets none of them.
+An optional `AGENTS.md` is ordinary reusable content that can explain format, authority, checkpoint semantics, and supported operations.
+It is not an executable runtime hook, and it does not replace whatever machine-readable contract the application chooses.
+The reference does not need to add such a file merely to exercise the convention.
 
 ## Required: image support and payload ownership (not implemented)
 

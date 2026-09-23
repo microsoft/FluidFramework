@@ -19,6 +19,7 @@ import {
 	ContainerMessageType,
 } from "@fluidframework/container-runtime/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
+import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
 import {
 	MessageType,
 	type IDocumentMessage,
@@ -39,20 +40,25 @@ import {
 	codeDetails,
 	createSeedSummary,
 	projectionKey,
+	projectionManifestBlobName,
 	readApplicationProjection,
 } from "../externalSeedFile.js";
+import { externalHtmlFormat } from "../htmlSeedFormat.js";
 import { HtmlElement, HtmlText, viewHtmlParts } from "../htmlTreeSchema.js";
 import {
 	createLocalSeedBackend,
 	type IInspectableStorageAdapter,
 } from "../../harness/index.js";
 import {
+	htmlMaterializationProfile,
+	htmlProjector,
 	sampleRuntimeFactory,
 	type IAppObservation,
 	type IHtmlEntryPoint,
 } from "../sampleRuntimeFactory.js";
 import {
 	seedBaselineBlobName,
+	getSeedBaselineBlobId,
 	seedBaselineMetadataKey,
 	type SeedBaselineMismatchError,
 } from "../seedBaselineFingerprint.js";
@@ -318,6 +324,150 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 		}
 		return result.summaryVersion;
 	}
+
+	it("loads manifest-free HTML without writes and retains identity in an accepted native summary", async () => {
+		const url = await backend.create(createSeedSummary(parts, { includeManifest: false }));
+		const first = await open(url);
+		assert.equal(writes.length, 0);
+		assert.equal(
+			first.observation.provenance?.materializationProfile,
+			htmlMaterializationProfile,
+		);
+		assert(first.observation.original.baseSnapshot !== undefined);
+		assert.equal(getSeedBaselineBlobId(first.observation.original.baseSnapshot), undefined);
+		const version = await acceptedSummary(first.container);
+		transportOptions = { allowProjection: false };
+		const native = await open(url, undefined, version);
+		assert.equal(native.observation.projected, false);
+		assert.deepEqual(native.observation.baseline, first.observation.baseline);
+		assert.deepEqual(viewHtmlParts(native.app.view), parts);
+		assert(native.observation.original.baseSnapshot !== undefined);
+		assert(getSeedBaselineBlobId(native.observation.original.baseSnapshot) !== undefined);
+		assert.equal(
+			native.observation.original.baseSnapshot.trees[projectionKey]?.blobs[
+				projectionManifestBlobName
+			],
+			undefined,
+			"Native publication must preserve the application's choice not to supply a manifest",
+		);
+	});
+
+	it("preserves custom application metadata without using it to select materialization rules", async () => {
+		const manifest = JSON.stringify({
+			format: externalHtmlFormat,
+			parts: { first: "first/document.html", second: "second/document.html" },
+			metadata: {
+				title: "Application-owned content",
+				materializationProfile: "not-a-native-rule-selector",
+				schemaNamespace: "not-a-native-schema-selector",
+			},
+		});
+		const seed = createSeedSummary(parts);
+		const app: SummaryObject | undefined = seed.tree[".app"];
+		assert(app?.type === SummaryType.Tree);
+		const projection: SummaryObject | undefined = app.tree[projectionKey];
+		assert(projection?.type === SummaryType.Tree);
+		projection.tree[projectionManifestBlobName] = {
+			type: SummaryType.Blob,
+			content: manifest,
+		};
+		const url = await backend.create(seed);
+		const first = await open(url);
+		assert.equal(first.observation.baseline?.profileVersion, htmlMaterializationProfile);
+		assert.equal(writes.length, 0);
+		text(first.app, "first").text = "edited native content";
+		const version = await acceptedSummary(first.container);
+		const inspection = await backend.inspect(url, version);
+		try {
+			const exported = await readApplicationProjection(
+				inspection.snapshot.snapshotTree,
+				inspection.readBlob,
+			);
+			assert.equal(exported.manifest, manifest);
+		} finally {
+			inspection.dispose();
+		}
+		transportOptions = { allowProjection: false };
+		const native = await open(url, undefined, version);
+		assert.equal(native.observation.projected, false);
+		assert.equal(native.observation.applicationManifest?.content, manifest);
+		assert.equal(native.observation.baseline?.profileVersion, htmlMaterializationProfile);
+	});
+
+	it("rejects different materialization profiles with identical native schema and baseline bytes", async () => {
+		const url = await backend.create(createSeedSummary(parts));
+		const first = await open(url);
+		transportOptions = {
+			projector: {
+				...htmlProjector,
+				materializationProfile: "alternative-internal-rules/1",
+			},
+		};
+		const other = await open(url);
+		await tracker.ensureSynchronized();
+		assert.equal(writes.length, 0);
+		assert.deepEqual(viewHtmlParts(first.app.view), viewHtmlParts(other.app.view));
+		assert.equal(
+			first.observation.baseline?.baselineHash,
+			other.observation.baseline?.baselineHash,
+		);
+		assert.notEqual(
+			first.observation.baseline?.profileVersion,
+			other.observation.baseline?.profileVersion,
+		);
+		const closed = new Promise<void>((resolve) =>
+			other.container.once("closed", () => resolve()),
+		);
+		text(first.app, "first").text = "requires the first client's rules";
+		await bounded(closed);
+		assert.equal(text(other.app, "first").text, "one");
+		const failure = failures.find(
+			(entry) => entry.expected.profileVersion === "alternative-internal-rules/1",
+		);
+		assert(failure !== undefined);
+		assert.deepEqual(failure.received, first.observation.baseline);
+	});
+
+	it("rejects an incompatible internal profile before constructing a native-only runtime", async () => {
+		const url = await backend.create(createSeedSummary(parts));
+		const first = await open(url);
+		const version = await acceptedSummary(first.container);
+		const previousLoads = observations.length;
+		transportOptions = {
+			allowProjection: false,
+			projector: {
+				...htmlProjector,
+				materializationProfile: "different-native-consumer-rules/1",
+			},
+		};
+		await assert.rejects(
+			loader().resolve({ url, headers: { [LoaderHeader.version]: version } }),
+			/Unsupported persisted seed baseline profile/,
+		);
+		assert.equal(observations.length, previousLoads);
+	});
+
+	it("restores native-only pending edits with the original internal descriptor and no projection fallback", async () => {
+		const url = await backend.create(createSeedSummary(parts));
+		const first = await open(url);
+		const version = await acceptedSummary(first.container);
+		transportOptions = { allowProjection: false };
+		const writer = await open(url, undefined, version);
+		const peer = await open(url, undefined, version);
+		await tracker.ensureSynchronized();
+		writer.container.disconnect();
+		text(writer.app, "second").text = "native pending draft";
+		assert(writer.container.getPendingLocalState !== undefined);
+		const pending = await writer.container.getPendingLocalState();
+		assert(pending !== undefined);
+		writer.container.close();
+		writer.container.dispose();
+		const restored = await open(url, pending);
+		await tracker.ensureSynchronized(peer.container, restored.container);
+		assert.equal(restored.observation.projected, false);
+		assert.deepEqual(restored.observation.baseline, first.observation.baseline);
+		assert.equal(text(peer.app, "second").text, "native pending draft");
+	});
 
 	for (const mode of ["legacy", "ungrouped", "grouped", "compressed", "chunked"] as const) {
 		it(`validates the first real edit and every later packet through ${mode} transport`, async () => {
@@ -660,7 +810,7 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 				assert.equal(b.observation.projected, false);
 				assert("retainedBaseline" in recovery);
 				assert.deepEqual(recovery.retainedBaseline, {
-					blobId: source.baseSnapshot.trees[projectionKey]?.blobs[seedBaselineBlobName],
+					blobId: getSeedBaselineBlobId(source.baseSnapshot),
 					descriptor: b.observation.baseline,
 				});
 			}
@@ -754,7 +904,7 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 		}
 	});
 
-	it("persists genesis proof outside DDS state and reloads it without recomputing edited genesis", async () => {
+	it("persists genesis proof only in native data-store state and reloads it without recomputing edited genesis", async () => {
 		const url = await backend.create(createSeedSummary(parts));
 		const a = await open(url);
 		text(a.app, "first").text = "changed before summary";
@@ -762,9 +912,13 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 		const version = await acceptedSummary(a.container);
 		const inspection = await backend.inspect(url, version);
 		try {
-			const descriptorId =
-				inspection.snapshot.snapshotTree.trees[projectionKey]?.blobs[seedBaselineBlobName];
+			const descriptorId = getSeedBaselineBlobId(inspection.snapshot.snapshotTree);
 			assert(descriptorId !== undefined);
+			assert.equal(
+				inspection.snapshot.snapshotTree.trees[projectionKey]?.blobs[seedBaselineBlobName],
+				undefined,
+				"Readable application content must not contain the compatibility descriptor",
+			);
 			const stored: unknown = JSON.parse(
 				Buffer.from(await inspection.readBlob(descriptorId)).toString(),
 			);

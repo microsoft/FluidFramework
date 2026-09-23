@@ -1,8 +1,8 @@
-# Using Application Seeds and Readable Projections
+# Using Application Projections
 
 **Audience: application developers and external file producers.** This guide explains how to use the reference's
 pattern, not how its runtime internals work.
-See the [Fluid design](./Fluid-Design.md) for maintainer details, the [architecture](../Application-Seed-Projection.md) for the wider roadmap, and the [reference README](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md) for running the example.
+See the [Fluid design](./Fluid-Design.md) for maintainer details, the [architecture](../Application-Projections.md) for the wider roadmap, and the [reference README](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md) for running the example.
 
 The code here is an executable reference in a test package, not a published application SDK. Its restricted HTML codec
 and single-store native snapshot builder are fixtures. Adapt the pattern to your application's supported schema and
@@ -84,8 +84,9 @@ try {
 }
 ```
 
-`readApplicationProjection()` locates the manifest and part blob IDs in one stored snapshot, checks the supported manifest, and reads the two UTF-8 HTML bodies.
-It returns the HTML together with manifest bytes and storage IDs; the helper above exposes only the application content that an export, preview, or indexing tool needs.
+`readApplicationProjection()` follows this sample application's two fixed HTML paths in one stored snapshot and reads their UTF-8 bodies.
+If an application manifest is present, this application-specific reader validates it and retains its bytes.
+It returns the HTML together with optional manifest bytes and storage IDs; the helper above exposes only the application content that an export, preview, or indexing tool needs.
 
 **Use the identical `readStoredHtmlParts()` helper before and after collaboration.**
 Immediately after creation it reads seed content.
@@ -97,12 +98,13 @@ This is stored-checkpoint readback, not a live view.
 Edits that have only been sequenced as operations are invisible until a summary publishes their projection.
 Reading never replays those operations, rebuilds a native model, or triggers a summary.
 
-The reference's initial envelope contains `.protocol` and `.app/applicationProjection`. Snapshot consumers receive the
-app-root view after the driver unwraps `.app`. `manifest.work` identifies `fluid-html-reference/2` and these two paths:
+The reference's initial envelope contains `.protocol` and `.app/applicationProjection`.
+Snapshot consumers receive the app-root view after the driver unwraps `.app`.
+By default, this HTML application's creator adds the following optional `manifest.json`:
 
 ```json
 {
-	"format": "fluid-html-reference/2",
+	"format": "reference-html-parts/1",
 	"parts": {
 		"first": "first/document.html",
 		"second": "second/document.html"
@@ -110,8 +112,15 @@ app-root view after the driver unwraps `.app`. `manifest.work` identifies `fluid
 }
 ```
 
-Each part is a separate summary subtree. Another language can encode this envelope, but this reference contract is not
-a claim that every production storage service accepts an identical file-upload format.
+`reference-html-parts/1` is this example application's external format label, not a Fluid format, native schema identifier, or materialization profile.
+Other applications decide their own content and metadata contracts.
+Fluid neither requires `manifest.json` nor interprets a manifest schema or external format identity.
+For this sample, `createSeedSummary(parts, { includeManifest: false })` omits the manifest entirely; the fixed HTML paths still support creation, collaboration, summaries, and readback.
+If present, application metadata is preserved byte-for-byte, including custom metadata; absence remains absence.
+
+Each part is a separate summary subtree.
+Another language can encode this sample envelope, but this is not a claim that every production storage service accepts an identical file-upload format.
+Older prototype `manifest.work` files require explicit conversion; they are not silently treated as manifest-free input.
 
 ## Other languages and direct service access
 
@@ -122,9 +131,10 @@ The integration still has two layers:
 | Layer                       | Required work                                                                                                                                                                                                                                      |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Service-specific transport  | Authenticate, select a snapshot version/checkpoint, decode that service's snapshot envelope, and resolve its blob IDs. Request projection groups and any required asset bodies rather than assuming the default load response includes everything. |
-| Application-content reading | Find the agreed projection root, read its manifest, and resolve its named application parts. Return HTML or another application's representation, not DDS state.                                                                                   |
+| Application-content reading | Find the agreed projection root and follow that application's content contract, with or without a manifest. Return HTML or another application's representation, not DDS state.                                                                    |
 
-For this reference, normalize the downloaded tree to its application-root view, find `applicationProjection/manifest.work`, and follow the part paths to their blob IDs and UTF-8 bodies.
+For this reference, normalize the downloaded tree to its application-root view and locate the fixed `first/document.html` and `second/document.html` paths under `applicationProjection`.
+Resolve those paths' blob IDs to UTF-8 bodies; `manifest.json` is optional application metadata, not a Fluid discovery requirement.
 The JavaScript [`ISnapshotTree`](../../../../packages/common/driver-definitions/src/protocol/storage.ts) and [storage interfaces](../../../../packages/common/driver-definitions/src/storage.ts) describe the normalized tree/blob boundary used by `readApplicationProjection()`; they are not a language-neutral specification of an ODSP REST response.
 An application can provide equivalent schema definitions, parsing helpers, and examples for other languages while leaving service authentication and envelope decoding to the transport integration.
 The current reference supplies TypeScript source and a bounded sample envelope, not a Rust SDK or a newly supported REST download format.
@@ -132,7 +142,7 @@ The current reference supplies TypeScript source and a bounded sample envelope, 
 A full external download intentionally includes content that an interactive native load can omit.
 When image support is added, it must also obtain every referenced image/attachment needed by the application representation; requesting snapshot loading groups alone is not a guarantee that attachment bodies are included.
 If content is missing, fetch it using the selected snapshot's references or report an incomplete download rather than silently omitting it.
-The proposed [portable interchange format](../Application-Seed-Projection.md#desirable-interoperability-a-documented-interchange-file-format) would simplify this work, but is not required for a service-specific implementation.
+The proposed [portable interchange format](../Application-Projections.md#desirable-interoperability-a-documented-interchange-file-format) would simplify this work, but is not required for a service-specific implementation.
 
 ## Load the reference as an application
 
@@ -151,8 +161,8 @@ accepted summaries.
 
 ## Build your own application integration
 
-1. **Define your content/profile contract.** Specify supported syntax/features, schema, identifiers, defaults, and codec
-   versions. Reject unsupported profiles rather than silently producing a different model.
+1. **Define independent application contracts.** Choose the external representation and any optional manifest, the internal deterministic materialization profile, and native schema identities separately.
+   Do not derive a profile or schema namespace from external metadata.
 2. **Provide deterministic native construction.** Use DDS-owned factories/serializers and a complete graph containing
    the required stores, aliases, handles, and shared identity state. `nativeSeedBaseline.ts` demonstrates one fixed
    SharedTree graph; it is not a general native-file encoder.
@@ -171,6 +181,10 @@ accepted summaries.
 `IncrementalHtmlProjection` is the reference for step 5: two native subtrees map to two HTML subtrees. It returns a
 previous-summary handle before invoking an unchanged part's serializer. Native state becomes incremental after the
 first accepted full summary in the same runtime; an unconditional `forceFullTree` override is not needed for this flow.
+
+The HTML example uses `reference-html-materialization/1` as its internal rule identity and retains `fluid-html-reference/2` as its independent SharedTree namespace.
+Neither is part of the external producer/reader contract.
+The profile describes reconstruction rules, not the schema alone: two profiles can use the same schema, and application metadata cannot select a different profile.
 
 ### Baseline agreement and recovery
 
