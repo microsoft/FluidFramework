@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let transport_config = configured_transport(maximum_connections.as_deref())?;
     let live_cache = match env::var("SEA_EXPERIMENTAL_LIVE_CACHE") {
         Ok(value) => configured_live_cache(Some(&value))?,
-        Err(env::VarError::NotPresent) => false,
+        Err(env::VarError::NotPresent) => configured_live_cache(None)?,
         Err(error) => return Err(error.into()),
     };
     let host = Arc::new(BuiltInSeaHost::new_with_live_cache(
@@ -224,11 +224,11 @@ fn print_shutdown_outcome(
     );
 }
 
-/// Parses an explicit experimental activation without accepting misspelled values.
+/// Defaults built-in recovery to the experimental cache while preserving a strict rollback switch.
 fn configured_live_cache(value: Option<&str>) -> Result<bool, &'static str> {
     match value {
-        None | Some("false") => Ok(false),
-        Some("true") => Ok(true),
+        Some("false") => Ok(false),
+        None | Some("true") => Ok(true),
         Some(_) => Err("invalid SEA_EXPERIMENTAL_LIVE_CACHE; expected true or false"),
     }
 }
@@ -236,8 +236,8 @@ fn configured_live_cache(value: Option<&str>) -> Result<bool, &'static str> {
 #[cfg(test)]
 mod tests {
     #[test]
-    fn activation_is_default_off_and_strict() {
-        assert_eq!(super::configured_live_cache(None), Ok(false));
+    fn activation_is_default_on_with_explicit_off_and_strict_values() {
+        assert_eq!(super::configured_live_cache(None), Ok(true));
         assert_eq!(super::configured_live_cache(Some("false")), Ok(false));
         assert_eq!(super::configured_live_cache(Some("true")), Ok(true));
         for invalid in ["", "1", "TRUE", " true", "yes"] {

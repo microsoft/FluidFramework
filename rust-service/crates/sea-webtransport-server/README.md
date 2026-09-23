@@ -15,15 +15,19 @@ cargo run -p sea-webtransport-server -- \
 | --- | --- | --- |
 | `SEA_STORAGE_MODE` | `memory`, `buffered-file`, `durable-file` | `durable-file` |
 | `SEA_MAX_CONNECTIONS` | Integer from 1 through 4096 | 16 per listener |
-| `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `false` |
+| `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `true` |
 
 Invalid connection limits fail startup; `MAX_CONNECTIONS` reports the effective value.
 Limits apply independently to QUIC and WebSocket and do not bound total memory or guarantee throughput.
 An optional fifth argument is a shutdown-marker path used by process harnesses.
-Explicit live-cache activation prints `EXPERIMENTAL_LIVE_CACHE=true`.
+Enabled live caching, including the default, prints `EXPERIMENTAL_LIVE_CACHE=true`.
 It configures document recovery for all backend modes and both transports without changing clients.
-`BuiltInSeaHost::new_with_live_cache` exposes the same opt-in to library callers; existing constructors remain disabled.
+`BuiltInSeaHost::new` also enables the cache.
+Set `SEA_EXPERIMENTAL_LIVE_CACHE=false`, or use `BuiltInSeaHost::new_with_live_cache(..., false)`, to restore storage-backed delivery.
+Generic `BuiltInSeaHost::with_storage` and direct Rust/WASM sequencer construction remain storage-backed unless separately opted in.
 This experiment has unbounded stalled-reader retention and is not a production resource policy.
+Default-on is a controlled-use rollout accepting that risk, not merely a fixed memory overhead.
+Transport timeouts do not establish a cache-retention bound for every reader path.
 Invalid activation values fail startup rather than silently selecting a default.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.

@@ -316,6 +316,46 @@ Checkpoint 1 remains not started.
 Its first required work includes the opt-in cache and neutral revocation boundary, coherent handoff, terminal invalidation observation, reader-driven retained work, and aligned comparison fixtures.
 No factory, lag policy, production behavior, merge, or push was introduced.
 
+## Checkpoint 1a: Built-In Server Default-On Rollout (Complete)
+
+On 2026-09-23, the user authorized the proposed scoped default-on rollout after discussing stalled-reader retention.
+This explicitly accepts the risk that a stalled live reader can retain unbounded subsequent history, not only the modest measured RSS increase.
+The native server and `BuiltInSeaHost::new` now default to cached delivery for built-in memory, buffered-file, and durable-file backends.
+`SEA_EXPERIMENTAL_LIVE_CACHE=false` and `BuiltInSeaHost::new_with_live_cache(..., false)` preserve rollback.
+Generic `BuiltInSeaHost::with_storage` and direct Rust/WASM sequencer recovery remain unchanged.
+No lag thresholds, factory, automatic shedding, or production resource guarantee are added.
+
+The clean checkpoint-start revision is `78bcd86e0ebf0e48c4c68967717a0c9d31cd4ef1`, following checkpoint 1 commit `2cb7012c030a15c47a7935b243b68464435483db`.
+The intervening benchmark temporary-storage commit is preserved and excluded from this default-only change.
+The same isolated worktree and branch are used.
+Historical checkpoint entries below retain their original default-off decisions; this section supersedes that default only for the stated server surfaces.
+Benchmarks continue to set the cache state explicitly, so default-on does not change comparison identities.
+No additional performance acceptance campaign is required or claimed.
+Validation and fresh independent Standard review remain completion gates.
+No merge, push, or checkpoint-2 implementation is authorized.
+
+Coordinator validation passed: workspace formatting, strict all-target/all-feature Clippy and rustdoc, workspace build, 272 Rust tests, documentation check, focused repository policy, and repository `pnpm build:fast`.
+The configuration regression checks unset/true/false and rejects malformed values.
+`env -u SEA_EXPERIMENTAL_LIVE_CACHE ./test.sh` passed the complete generated-WASM/Fluid/SharedTree/browser suite, with activation markers observed for WebTransport, WebSocketStream, and ordinary WebSocket.
+The separate `SEA_EXPERIMENTAL_LIVE_CACHE=false SEA_BROWSER_SKIP_BUILD=1 tests/webtransport-browser/run-test.sh` rollback matrix passed all three transports with no activation markers.
+Existing generic-registry and direct-sequencer tests remain part of the workspace suite.
+Logs and command records are retained at `/workspaces/FluidFramework-session-resource-policy-measurements/20260923-checkpoint1a-validation/`.
+The reviewer must inspect these results rather than treating this account as independent execution.
+
+Fresh independent Standard reviewer `checkpoint-one-a-standard` returned **No actionable findings**.
+The complete six-file snapshot patch SHA-256 is `05004bd0a59b5246c17453621a4813662dcd00ae3a4809c0de735f43249fb918`, against fixed base and HEAD `78bcd86e0ebf0e48c4c68967717a0c9d31cd4ef1`.
+The reviewer inspected the full diff, baseline/current configuration and construction paths, direct/WASM defaults, explicit benchmark selection, and validation logs.
+It verified all frozen/current source hashes; the coordinator verified them again before this completion bookkeeping.
+There are no findings, missing source inputs, or requested reproductions.
+Browser evidence covers all three transports on durable-file storage; native tests cover all three storage modes, not every browser/backend cross-product.
+The reviewer ran only read-only inspection, not tests/builds or nested agents.
+No new performance or resource-bound claim is made.
+Implementation and validation are complete.
+The user separately authorized committing the reviewed six-file rollout on 2026-09-23.
+The coordinator verified that only plan/report completion bookkeeping changed after review; implementation hashes and the starting HEAD remained unchanged.
+The commit records this completion entry; its exact identity is returned in the completion response rather than embedded in its own tree.
+No merge, push, running-deployment change, or checkpoint-2 work is included.
+
 ## Checkpoint 1: Minimal Cache (Complete With Explicit Exceptions)
 
 Authorized on 2026-09-23 after checkpoint 0 committed as `c9ce497936d6ecbbacb3e529dd64bf5706816638`.

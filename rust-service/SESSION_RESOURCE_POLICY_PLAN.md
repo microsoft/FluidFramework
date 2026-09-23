@@ -5,6 +5,7 @@ Revised: 2026-09-23 to separate cache performance, wrapper overhead, lifecycle c
 Status: checkpoints 0 and 1 completed; checkpoint 1 used approved base `c41a02a33d5ec09f737b912e6b60d0eae1f88ecb`.
 The user accepted the checkpoint-1 performance tradeoff and missing-raw-evidence exceptions on 2026-09-23; required validation and independent review passed.
 Checkpoints 2 through 5 are not authorized.
+Checkpoint 1a is complete: the built-in server cache defaults on for controlled use with an explicit off switch and accepted unbounded-retention risk.
 Decisions, frozen measurements, validation, and review are tracked in the cumulative [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md).
 Historical comparison baseline: `6231d99841a116edc0827ad9c37d1c4bf392f4f3`.
 Implementation starts from an explicitly recorded, approved revision of `rust-service`, not from the live-buffer experiment.
@@ -116,7 +117,9 @@ Backend invalidation must wake and terminate live observations without another s
 An actively polled read must still drive retained accepted work after submitter cancellation, without adding a task per document merely for fan-out.
 
 Before lag shedding exists, a stalled reader can retain unbounded history.
-Keep that experimental path opt-in under controlled workload, duration, and memory stop guards; do not describe it as production-safe.
+Except for the authorized checkpoint-1a built-in server rollout, keep that experimental path opt-in under controlled workload, duration, and memory stop guards; do not describe it as production-safe.
+The built-in server default accepts unbounded stalled-reader retention for controlled use, not a fixed RSS overhead or a production safety guarantee.
+Generic storage hosts and direct Rust/WASM construction remain storage-backed by default.
 Measure actual retained allocation capacity, including oversized backing slices, rather than assuming payload length equals retained memory.
 Do not build the old multi-stage resource ledger just to run this experiment.
 
@@ -301,7 +304,7 @@ Do not copy code into main merely to delete it in a subsequent checkpoint.
 Checkpoints 0 and 1 are complete; decisions, evidence limitations, performance exceptions, validation, and review are recorded in the cumulative implementation report.
 Checkpoints 2 through 5 remain not started.
 Commit each coherent stage only after its exit checks, applicable canonical validation, and independent review pass; record authorization before making commits.
-Keep incomplete paths opt-in and preserve a baseline path for comparison.
+Keep incomplete paths opt-in except for the scoped checkpoint-1a rollout, and preserve an explicit storage-backed baseline path for comparison.
 Do not add the next layer to rescue an unexplained regression in the current layer.
 
 ### 0. Freeze The Cache Experiment
@@ -326,6 +329,19 @@ Exit condition: the cache hypothesis, reader ownership and future revocation bou
 Exit condition: correctness gates pass and repeated measurements meet the frozen cache-benefit criteria with no unacceptable no-reader regression.
 Commit the proven optimization as explicitly experimental if it still permits unbounded lag retention.
 If the benefit is not demonstrated, record the result and revisit the cache design before checkpoint 2.
+
+### 1a. Enable The Built-In Server Cache By Default
+
+- Default the native server and `BuiltInSeaHost::new` to cached delivery for all built-in backends.
+- Preserve strict `SEA_EXPERIMENTAL_LIVE_CACHE=false` and the explicit host-constructor override for rollback.
+- Leave generic storage hosts and direct Rust/WASM construction unchanged.
+- Record acceptance of unbounded stalled-reader retention separately from checkpoint 1's CPU/RSS tradeoff.
+- Validate unset/on/off configuration, default-path browser/Fluid behavior, and rollback behavior; run applicable canonical gates and independent Standard review.
+- Preserve explicit cache selection in comparisons; do not allow the changed default to select both benchmark sides implicitly.
+- Keep checkpoints 2 through 4 unchanged, with checkpoint 4 still responsible for automatic per-cache lag enforcement.
+
+Exit condition: default-on and explicit-off behavior are validated and reviewed, the accepted limitation and rollback are documented, and no new production resource guarantee is claimed.
+No new performance acceptance campaign is required for this default-only change.
 
 ### 2. Implement And Measure Pass-Through Interception
 

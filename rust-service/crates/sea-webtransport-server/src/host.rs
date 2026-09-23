@@ -277,14 +277,17 @@ impl BuiltInSeaHost {
         Ok(())
     }
     /// Creates an empty archive registry rooted at `root`.
+    ///
+    /// Enables the experimental live cache. Stalled readers can retain unbounded history.
+    /// Use [`Self::new_with_live_cache`] with `false` for storage-backed delivery.
     #[must_use]
     pub fn new(root: PathBuf, mode: StorageMode) -> Self {
-        Self::new_with_live_cache(root, mode, false)
+        Self::new_with_live_cache(root, mode, true)
     }
 
     /// Selects the experimental shared live cache for every recovered document.
     ///
-    /// This is a benchmark opt-in, not a production resource policy.
+    /// This is a controlled-use delivery optimization, not a production resource policy.
     /// Stalled subscriptions can retain unbounded history until closed or revoked.
     #[must_use]
     pub fn new_with_live_cache(root: PathBuf, mode: StorageMode, enabled: bool) -> Self {
@@ -309,6 +312,7 @@ impl BuiltInSeaHost {
 
     /// Hosts any storage implementation without backend-specific transport dispatch.
     /// The caller owns any synchronous factory construction required by the backend.
+    /// Keeps storage-backed delivery; custom backends need not support cache invalidation.
     #[must_use]
     pub fn with_storage<Storage: SeaStorage + 'static>(storage: Storage) -> Self {
         let documents: Arc<dyn HostedDocuments> = Arc::new(DocumentRegistry::new(storage));
