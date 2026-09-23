@@ -176,8 +176,8 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 
 	/**
 	 * Attempts to send changes to the Guest if the Guest is behind the Host's main branch.
-	 * If the Guest is already up to date, or if an update is already in progress,
-	 * this method has no effect other than logging.
+	 * If the Guest is already up to date, no update is sent and any pending synchronization promise is resolved and cleared.
+	 * If an update is awaiting acknowledgment, no additional update is sent.
 	 *
 	 * @remarks
 	 * Updating the Guest is asynchronous, so the Guest can still be behind the Host's main branch

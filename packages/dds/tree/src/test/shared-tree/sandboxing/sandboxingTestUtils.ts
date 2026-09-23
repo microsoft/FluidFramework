@@ -115,7 +115,7 @@ export const handleArrayConfig = new TreeViewConfiguration({
 const activeTeardowns = new Set<() => void>();
 
 /**
- * Disposes sessions created by tests in the current file.
+ * Disposes all active sessions created through this module's setup helpers.
  *
  * @param ignoreErrors - Whether disposal errors should be ignored.
  */
