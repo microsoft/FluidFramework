@@ -63,6 +63,23 @@ describe("AudienceHistoryTable Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
+	it("Defines column headers using native table semantics", () => {
+		render(<AudienceHistoryTable audienceHistoryItems={[]} />);
+
+		const expectedColumnNames = ["Event", "Client ID", "Time"];
+		const columnHeaders = screen.getAllByRole("columnheader");
+		assert.equal(columnHeaders.length, expectedColumnNames.length);
+
+		for (const [index, columnHeader] of columnHeaders.entries()) {
+			assert.equal(columnHeader.tagName, "TH");
+			assert.equal(columnHeader.getAttribute("scope"), "col");
+			assert.match(
+				columnHeader.textContent ?? "",
+				new RegExp(expectedColumnNames[index], "i"),
+			);
+		}
+	});
+
 	// user-event can exceed the package's five-second timeout under full-suite jsdom load.
 	// The test timeout has been increased to accommodate it.
 	it("Can tab/arrow navigate through AudienceHistoryTable", async () => {

@@ -12,8 +12,16 @@ import type { TransformedAudienceHistoryData } from "./AudienceView.js";
 import { clientIdTooltipText } from "./TooltipTexts.js";
 import { LabelCellLayout } from "./utility-components/index.js";
 
-const { Table, TableBody, TableCell, TableHeader, TableRow, makeStyles, tokens } =
-	FluentReactComponents;
+const {
+	Table,
+	TableBody,
+	TableCell,
+	TableHeader,
+	TableHeaderCell,
+	TableRow,
+	makeStyles,
+	tokens,
+} = FluentReactComponents;
 const {
 	ArrowExitRegular,
 	ArrowJoinRegular,
@@ -74,8 +82,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): ReactEle
 			<TableHeader>
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
-						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
-						<TableCell key={columnIndex}>
+						<TableHeaderCell key={columnIndex} scope="col">
 							{column.columnKey === "event" && (
 								<LabelCellLayout icon={<DoorArrowLeftRegular />}>
 									{column.label}
@@ -94,7 +101,7 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): ReactEle
 							{column.columnKey === "time" && (
 								<LabelCellLayout icon={<Clock12Regular />}>{column.label}</LabelCellLayout>
 							)}
-						</TableCell>
+						</TableHeaderCell>
 					))}
 				</TableRow>
 			</TableHeader>
