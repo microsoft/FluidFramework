@@ -24,6 +24,7 @@ import {
 	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
+import { NodeMoveType } from "./crossFieldQueries.js";
 import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
@@ -43,6 +44,8 @@ import {
 	getAttachFieldForDetach,
 	getChangeHandler,
 	getDetachFieldForAttach,
+	getFirstAttachField,
+	getFirstDetachField,
 	getOldRootIdFromNewRootId,
 	nodeChangeFromId,
 	normalizeNodeId,
@@ -73,6 +76,11 @@ export function minimizeModularChangeset(
 
 class ModularChangeMinimizer {
 	private readonly builtNodeIds: ChangeAtomIdBTree<true>;
+
+	/**
+	 * This contains the set of root IDs associated with built nodes.
+	 * Note that this includes both IDs for built roots as well as the detach IDs for nodes detached from another build tree.
+	 */
 	private readonly builtRootIds: ChangeAtomIdRangeMap<true>;
 	private readonly outputAttachStates: ChangeAtomIdBTree<NodeAttachState>;
 	private readonly rootIdToNodeId: ChangeAtomIdBTree<NodeId>;
@@ -92,6 +100,7 @@ class ModularChangeMinimizer {
 		const residualChange = filterEdits(
 			this.change,
 			this.filterEditsForResidualChange.bind(this),
+			this.filterRenamesForResidualChange.bind(this),
 			this.fieldKinds,
 		);
 
@@ -124,13 +133,8 @@ class ModularChangeMinimizer {
 		return fieldId.nodeId !== undefined && this.isNodeDetachedInOutput(fieldId.nodeId);
 	}
 
-	private shouldSquashDetach(
-		fieldId: FieldId,
-		inputRootId: ChangeAtomId | undefined,
-	): boolean {
-		// `inputRootId === undefined` indicates that this is a move of a transiently attached built root.
-		// In that case, we convert the move to an insert at the final location, discarding the detach portion.
-		return this.isNodeIdInBuiltTree(fieldId.nodeId) && inputRootId === undefined;
+	private shouldSquashDetach(fieldId: FieldId): boolean {
+		return this.isNodeIdInBuiltTree(fieldId.nodeId);
 	}
 
 	private shouldSquashAttach(
@@ -148,6 +152,8 @@ class ModularChangeMinimizer {
 		countProcessed = isMoveOfBuiltRootEntry.length;
 
 		const isAttachOfBuiltRoot = isMoveOfBuiltRootEntry?.value ?? false;
+
+		// XXX: This should now already be handled by the builtRootIds check.
 		const isMoveFromBuiltTree =
 			endpoint?.nodeId !== undefined && this.isNodeIdInBuiltTree(endpoint.nodeId);
 
@@ -172,9 +178,6 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = shouldSquashAttachEntry.length;
 
-		const isBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
-		countProcessed = isBuiltRootEntry.length;
-
 		return {
 			value: isInDetachedTree || shouldSquashAttachEntry.value,
 			length: countProcessed,
@@ -184,34 +187,18 @@ class ModularChangeMinimizer {
 	private shouldDropDetach(
 		fieldId: FieldId,
 		detachId: ChangeAtomId,
-		rootInputId: ChangeAtomId | undefined,
 		count: number,
 		endpoint: FieldId | undefined,
 	): RangeQueryResult<boolean> {
 		let countProcessed = count;
-		if (this.shouldSquashDetach(fieldId, rootInputId)) {
+		if (this.shouldSquashDetach(fieldId)) {
 			return { value: true, length: countProcessed };
-		}
-
-		if (rootInputId !== undefined) {
-			// `inputRootId` is defined when this detach represents the rename of a detached root.
-			const isDetachOfBuiltRootEntry = this.builtRootIds.getFirst(rootInputId, countProcessed);
-			countProcessed = isDetachOfBuiltRootEntry.length;
-			const isDetachOfBuiltRoot = isDetachOfBuiltRootEntry.value !== undefined;
-			if (isDetachOfBuiltRoot)
-				// If this is a rename of a built node, either it ends detached, or is moved elsewhere.
-				// If moved, we squash the detach away, leaving only an attach at the destination.
-				// If detached, the build is not used, so we drop the rename.
-				return {
-					value: true,
-					length: countProcessed,
-				};
 		}
 
 		if (endpoint !== undefined) {
 			const shouldDropAttachEntry = this.shouldDropAttach(
 				endpoint,
-				rootInputId ?? detachId,
+				detachId,
 				countProcessed,
 				fieldId,
 			);
@@ -243,16 +230,39 @@ class ModularChangeMinimizer {
 		};
 	}
 
+	private filterRenamesForBuildChange(
+		oldId: ChangeAtomId,
+		_newId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<EditFilterStatus> {
+		const shouldSquashEntry = this.shouldSquashRename(oldId, count);
+		return {
+			value: shouldSquashEntry.value ? EditFilterStatus.Preserve : EditFilterStatus.Remove,
+			length: shouldSquashEntry.length,
+		};
+	}
+
+	private shouldSquashRename(
+		inputRootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<boolean> {
+		let countProcessed = count;
+		const isRenameOfBuiltRootEntry = this.builtRootIds.getFirst(inputRootId, count);
+		countProcessed = isRenameOfBuiltRootEntry.length;
+		return {
+			value: isRenameOfBuiltRootEntry.value === true,
+			length: countProcessed,
+		};
+	}
+
 	private filterDetachForBuildChange(
 		fieldId: FieldId,
 		detachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<EditFilterStatus> {
 		let countProcessed = count;
-		const inputIdEntry = firstDetachIdFromAttachId(this.change.rootNodes, detachId, count);
-		countProcessed = inputIdEntry.length;
 
-		if (!this.shouldSquashDetach(fieldId, inputIdEntry.value)) {
+		if (!this.shouldSquashDetach(fieldId)) {
 			return {
 				value: EditFilterStatus.Remove,
 				length: countProcessed,
@@ -332,6 +342,58 @@ class ModularChangeMinimizer {
 		};
 	}
 
+	private filterRenamesForResidualChange(
+		oldId: ChangeAtomId,
+		newId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<EditFilterStatus> {
+		const result = this.shouldDropRename(oldId, count);
+		return {
+			...result,
+			value: result.value ? EditFilterStatus.Remove : EditFilterStatus.Preserve,
+		};
+	}
+
+	private shouldDropRename(inputId: ChangeAtomId, count: number): RangeQueryResult<boolean> {
+		let countProcessed = count;
+		const shouldSquashEntry = this.shouldSquashRename(inputId, countProcessed);
+		countProcessed = shouldSquashEntry.length;
+
+		if (shouldSquashEntry.value) {
+			return { value: true, length: countProcessed };
+		}
+
+		const attachEntry = getAttachFieldForDetach(
+			this.change.crossFieldKeys,
+			this.change.rootNodes,
+			inputId,
+			countProcessed,
+		);
+		countProcessed = attachEntry.length;
+
+		if (attachEntry.value !== undefined) {
+			const detachEntry = getFirstDetachField(
+				this.change.crossFieldKeys,
+				inputId,
+				countProcessed,
+			);
+			countProcessed = detachEntry.length;
+
+			const willDropAttachEntry = this.shouldDropAttach(
+				attachEntry.value,
+				inputId,
+				countProcessed,
+				detachEntry.value,
+			);
+			countProcessed = willDropAttachEntry.length;
+
+			return { value: willDropAttachEntry.value, length: countProcessed };
+		}
+
+		// We can safely discard any rename which does not have an associated attach which is preserved.
+		return { value: true, length: countProcessed };
+	}
+
 	private filterDetachForResidualChange(
 		fieldId: FieldId,
 		detachId: ChangeAtomId,
@@ -356,22 +418,13 @@ class ModularChangeMinimizer {
 		const shouldDropEntry = this.shouldDropDetach(
 			fieldId,
 			detachId,
-			inputRootIdEntry.value,
 			countProcessed,
 			moveEndpointEntry.value,
 		);
 		countProcessed = shouldDropEntry.length;
 
-		if (shouldDropEntry.value) {
-			return {
-				value: EditFilterStatus.Remove,
-				length: countProcessed,
-			};
-		}
-
 		return {
-			value: EditFilterStatus.Preserve,
-
+			value: shouldDropEntry.value ? EditFilterStatus.Remove : EditFilterStatus.Preserve,
 			length: countProcessed,
 		};
 	}
@@ -414,7 +467,6 @@ class ModularChangeMinimizer {
 			const willDropEndpointEntry = this.shouldDropDetach(
 				moveEndpointEntry.value,
 				id,
-				inputIdEntry.value,
 				countProcessed,
 				fieldId,
 			);
@@ -437,6 +489,7 @@ class ModularChangeMinimizer {
 		const changeForBuilds = filterEdits(
 			this.change,
 			this.filterEditsForBuildChange.bind(this),
+			this.filterRenamesForBuildChange.bind(this),
 			this.fieldKinds,
 		);
 
@@ -614,7 +667,14 @@ function getNodeInfo(
 		setInChangeAtomIdMap(rootIdToNodeId, rootId, normalizeNodeId(nodeId, change.nodeAliases));
 
 		if (builtRootIds.getFirst(rootId, 1).value) {
-			addBuiltNodeIdsRecursive(nodeId, change.nodeChanges, change.nodeAliases, builtNodeIds);
+			addBuiltNodeIdsRecursive(
+				nodeId,
+				change.nodeChanges,
+				change.nodeAliases,
+				fieldKinds,
+				builtNodeIds,
+				builtRootIds,
+			);
 		}
 	}
 
@@ -625,18 +685,36 @@ function addBuiltNodeIdsRecursive(
 	nodeId: NodeId,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
 	nodeAliases: ChangeAtomIdBTree<NodeId>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	builtNodeIds: ChangeAtomIdBTree<true>,
+	builtRootIds: ChangeAtomIdRangeMap<true>,
 ): void {
 	const nodeChangeset = nodeChangeFromId(nodes, nodeAliases, nodeId);
 	setInChangeAtomIdMap(builtNodeIds, nodeId, true);
 	if (nodeChangeset.fieldChanges !== undefined) {
 		for (const fieldChange of nodeChangeset.fieldChanges.values()) {
-			const children = getChangeHandler(new Map(), fieldChange.fieldKind).getNestedChanges(
-				fieldChange.change,
-			);
-
+			const changeHandler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+			const children = changeHandler.getNestedChanges(fieldChange.change);
 			for (const { nodeId: childNodeId } of children) {
-				addBuiltNodeIdsRecursive(childNodeId, nodes, nodeAliases, builtNodeIds);
+				addBuiltNodeIdsRecursive(
+					childNodeId,
+					nodes,
+					nodeAliases,
+					fieldKinds,
+					builtNodeIds,
+					builtRootIds,
+				);
+			}
+
+			const nodeMoves = changeHandler.getCrossFieldKeys(fieldChange.change);
+			for (const nodeMove of nodeMoves) {
+				if (nodeMove.key.target === NodeMoveType.Detach) {
+					builtRootIds.set(
+						makeChangeAtomId(nodeMove.key.localId, nodeMove.key.revision),
+						1,
+						true,
+					);
+				}
 			}
 		}
 	}

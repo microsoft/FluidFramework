@@ -42,13 +42,13 @@ import {
 import {
 	cloneRootTable,
 	getFieldKind,
-	getNodeParent,
 	type RenameDescription,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import {
 	addNodeRename,
 	getChangeHandler,
+	getNodeParent,
 	newRootTable,
 	normalizeFieldId,
 	normalizeNodeId,
