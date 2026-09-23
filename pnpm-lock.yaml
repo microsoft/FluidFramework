@@ -11316,8 +11316,6 @@ importers:
         specifier: catalog:TypeScript
         version: 6.0.3
 
-  packages/framework/quill-react/lib.check: {}
-
   packages/framework/react:
     dependencies:
       '@fluidframework/aqueduct':
@@ -11438,8 +11436,6 @@ importers:
       typescript:
         specifier: catalog:TypeScript
         version: 6.0.3
-
-  packages/framework/react/lib.check: {}
 
   packages/framework/request-handler:
     dependencies:
@@ -16031,8 +16027,6 @@ importers:
       typescript:
         specifier: catalog:TypeScript
         version: 6.0.3
-
-  packages/tools/devtools/devtools-view/lib.check: {}
 
   packages/tools/fetch-tool:
     dependencies:
