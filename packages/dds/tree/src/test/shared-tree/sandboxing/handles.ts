@@ -35,8 +35,9 @@ import {
 
 /**
  * Copies structured-clone messages and replaces handles without changing the input.
- * Decoding restores authorized handles without binding or resolving them.
+ * {@link HandleCodec.decode} restores authorized handles without binding or resolving them.
  * Decoded buffers remain placeholders until blob-response validation.
+ * Callers must perform semantic validation after decoding; this layer checks only transport structure.
  */
 abstract class HandleCodec {
 	public encode(value: unknown): unknown {
@@ -109,7 +110,7 @@ abstract class HandleCodec {
 
 /**
  * Copies outgoing semantic data into null-prototype records before validation.
- * Local handles remain opaque leaves; buffers become identity-checked markers.
+ * Local handles remain opaque leaves; buffers become identity-checked markers via {@link createBufferMarker}.
  */
 export function normalizeTransportData(value: unknown): unknown {
 	return copyData(value, (handle) => handle);
@@ -220,7 +221,9 @@ function defineDataProperty(target: object, key: string, value: unknown): void {
 }
 
 /**
- * Owns the handles authorized for one Guest. Entries live until session disposal.
+ * Owns the handles authorized for one Guest. Entries live until {@link HostHandleCodec.dispose}.
+ * Equivalent handle paths share a token; returned tokens restore the original Host handles.
+ * {@link HostHandleCodec.bindHandles} is separate from decoding so callers can first validate and apply the change locally.
  */
 export class HostHandleCodec extends HandleCodec {
 	private readonly handles: IFluidHandle[] = [];
@@ -300,7 +303,9 @@ export class HostHandleCodec extends HandleCodec {
 }
 
 /**
- * A Guest-local handle. Only the Host performs Fluid attachment.
+ * Session-local proxy whose {@link GuestHandle.get} resolves blob content through the Host.
+ * Caches one resolution promise, including failures, for concurrent and repeated calls.
+ * Its {@link GuestHandle.absolutePath} provides session-local identity, not a Host URL. Only the Host performs Fluid attachment.
  */
 class GuestHandle extends FluidHandleBase<ArrayBuffer> {
 	public readonly isAttached = false;
@@ -325,7 +330,9 @@ class GuestHandle extends FluidHandleBase<ArrayBuffer> {
 }
 
 /**
- * Restores Guest proxies and resolves blobs independently of tree synchronization.
+ * Restores {@link GuestHandle} proxies and resolves blobs independently of tree synchronization.
+ * Caches one proxy per {@link HandleToken} and permits sending only proxies created by this codec.
+ * {@link GuestHandleCodec.dispose} rejects pending requests and clears the session's proxy tables.
  */
 export class GuestHandleCodec extends HandleCodec {
 	private readonly sessionId = uuid();

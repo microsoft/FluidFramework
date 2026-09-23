@@ -96,7 +96,9 @@ describe("Host and Guest correctness", () => {
 
 	it("preserves marker-shaped tree data during initialization and edits in both directions", async () => {
 		const factory = new SchemaFactoryAlpha("sandbox.marker-data");
+		/** Allows transport discriminators and prototype-related names as ordinary tree keys. */
 		class RecordNode extends factory.record("Record", [factory.string, factory.number]) {}
+		/** Holds the lookalike records through initialization and edits. */
 		class Records extends factory.array("Records", RecordNode) {}
 		const values: Record<string, string | number>[] = [
 			{ type: "__sandbox_handle__", token: 0 },

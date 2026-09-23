@@ -21,6 +21,7 @@ import {
 
 /**
  * An index into the Host's table of handles authorized for one Guest.
+ * Valid only within the owning session; the brand does not establish runtime authorization.
  */
 export type HandleToken = Brand<number, "sandbox.HandleToken">;
 const HandleToken = brandedNumberType<HandleToken>({
@@ -30,7 +31,8 @@ const HandleToken = brandedNumberType<HandleToken>({
 });
 
 /**
- * Identifies one pending blob request, independently of its handle token.
+ * Identifies one pending {@link BlobRequestMessage}, independently of its {@link HandleToken}.
+ * Allocated by the Guest and echoed by the Host to match a response to its request.
  */
 export type BlobRequestId = Brand<number, "sandbox.BlobRequestId">;
 const BlobRequestId = brandedNumberType<BlobRequestId>({
@@ -39,31 +41,47 @@ const BlobRequestId = brandedNumberType<BlobRequestId>({
 	multipleOf: 1,
 });
 
+/**
+ * Wire discriminator for {@link SerializedHandle}. Ordinary records with this value must be escaped.
+ */
 export const serializedHandleType = "__sandbox_handle__";
+/**
+ * Validates the wire marker's shape and token range, not session authorization.
+ */
 const SerializedHandle = Type.Object(
 	{
 		type: Type.Readonly(Type.Literal(serializedHandleType)),
+		/** Index of the referenced handle in the owning Host session. */
 		token: Type.Readonly(HandleToken),
 	},
 	{ additionalProperties: false },
 );
 
 /**
- * A handle's representation in initialization data and serialized changes.
+ * A handle's wire representation in initialization data and serialized changes.
+ * Restored to a Host handle or Guest proxy before semantic validation and tree-codec decoding.
  */
 export type SerializedHandle = Static<typeof SerializedHandle>;
 
+/**
+ * Wire discriminator for {@link EscapedObject}. Ordinary records with this value must also be escaped.
+ */
 export const escapedObjectType = "__sandbox_object__";
+/**
+ * Wire wrapper for ordinary records whose discriminator collides with a transport marker.
+ * Reconstruction preserves the original root as data rather than interpreting it as another marker.
+ */
 const EscapedObject = Type.Object(
 	{
 		type: Type.Literal(escapedObjectType),
+		/** Own property names and encoded values. The decoder separately rejects duplicate names. */
 		entries: Type.Array(Type.Tuple([Type.String(), Type.Unknown()])),
 	},
 	{ additionalProperties: false },
 );
 
 /**
- * Recognizes local handles without accepting cloneable legacy lookalikes.
+ * Recognizes local {@link IFluidHandle} values by {@link fluidHandleSymbol}, without accepting cloneable legacy lookalikes.
  * Only trusted token restoration introduces handles into received data.
  */
 export function isLocalHandle(value: unknown): value is IFluidHandle {
@@ -72,14 +90,28 @@ export function isLocalHandle(value: unknown): value is IFluidHandle {
 	return typeof value === "object" && value !== null && fluidHandleSymbol in value;
 }
 
+/**
+ * Local placeholder that keeps an {@link ArrayBuffer} out of general schema validation.
+ * @remarks
+ * Created as a frozen null-prototype record by {@link createBufferMarker}.
+ * Its identity in {@link transportBuffers}, not its shape, associates it with a buffer.
+ * Ordinary data with the same property remains ordinary data.
+ *
+ * Markers are not sent over the wire: encoding replaces them with buffers, and receiving creates new markers.
+ * {@link validateTreePayload} rejects registered markers; {@link parseHostGuestMessage} unwraps only validated blob-response fields for application use.
+ */
 interface BufferMarker {
+	/** Describes the placeholder shape; this property alone does not establish buffer identity. */
 	readonly arrayBufferMarker: true;
 }
 
+/**
+ * Associates local marker identities with buffers without keeping otherwise unreachable markers alive.
+ */
 const transportBuffers = new WeakMap<object, ArrayBuffer>();
 
 /**
- * Hides a copied transport buffer from schema validation behind an identity-checked record.
+ * Hides a copied transport buffer from schema validation behind an identity-checked {@link BufferMarker}.
  */
 export function createBufferMarker(buffer: ArrayBuffer): BufferMarker {
 	const record: object = Object.create(null);
@@ -89,21 +121,31 @@ export function createBufferMarker(buffer: ArrayBuffer): BufferMarker {
 }
 
 /**
- * Retrieves a buffer only for a locally registered marker, never for a shape lookalike.
+ * Retrieves a buffer only for a marker registered by {@link createBufferMarker}, never for a shape lookalike.
  */
 export function getTransportBuffer(value: object): ArrayBuffer | undefined {
 	return transportBuffers.get(value);
 }
 
+/**
+ * Recognizes {@link BufferMarker} identities registered in {@link transportBuffers}, rejecting shape lookalikes and raw buffers.
+ */
 const LocalBuffer = TypeSystem.Type<BufferMarker>(
 	"Sandbox.LocalBuffer",
 	(_schema, value) =>
 		typeof value === "object" && value !== null && transportBuffers.has(value),
 )();
 
+/**
+ * Treats handles recognized by {@link isLocalHandle} as opaque leaves during {@link TreePayload} validation.
+ */
 const LocalHandle = TypeSystem.Type<IFluidHandle>("Sandbox.LocalHandle", (_schema, value) =>
 	isLocalHandle(value),
 )();
+/**
+ * Restricts payload records to null prototypes and excludes registered {@link BufferMarker} identities.
+ * {@link TreePayload} separately validates property values.
+ */
 const PlainRecord = TypeSystem.Type<Record<string, unknown>>(
 	"Sandbox.PlainRecord",
 	(_schema, value) => {
@@ -117,7 +159,7 @@ const PlainRecord = TypeSystem.Type<Record<string, unknown>>(
 
 /**
  * The value vocabulary of decoded tree payloads, not their codec-specific structure.
- * Handles must precede records so validation treats them as opaque leaves.
+ * {@link LocalHandle} must precede {@link PlainRecord} so validation treats handles as opaque leaves.
  */
 const TreePayload = Type.Recursive((Self) =>
 	Type.Union([
@@ -156,14 +198,14 @@ const escapedObjectValidator = validator.compile(EscapedObject);
 const treePayloadValidator = validator.compile(TreePayload);
 
 /**
- * Checks escape structure after the transport has copied and restricted its value types.
+ * Checks {@link EscapedObject} structure after the transport has copied and restricted its value types.
  */
 export function isEscapedObject(value: unknown): value is Static<typeof EscapedObject> {
 	return escapedObjectValidator.check(value);
 }
 
 /**
- * Checks the decoded value vocabulary before existing tree codecs inspect the payload.
+ * Checks the {@link TreePayload} value vocabulary before existing tree codecs inspect the payload.
  */
 export function validateTreePayload(value: unknown): void {
 	if (!treePayloadValidator.check(value)) {
@@ -172,7 +214,7 @@ export function validateTreePayload(value: unknown): void {
 }
 
 /**
- * Validates the complete serialized handle record.
+ * Validates the complete {@link SerializedHandle} record.
  */
 export function isSerializedHandle(value: unknown): value is SerializedHandle {
 	return serializedHandleValidator.check(value);
@@ -206,30 +248,44 @@ export type HostGuestMessage =
 	| BlobResponseMessage;
 
 /**
- * Requests the blob for a handle authorized for this Guest.
+ * Guest-to-Host request to resolve an authorized {@link HandleToken} as a blob.
+ * The Host returns a {@link BlobResponseMessage} with the same {@link BlobRequestId}.
  */
 export type BlobRequestMessage = Static<typeof BlobRequestMessage>;
 const BlobRequestMessage = Type.Object(
 	{
 		type: Type.Readonly(Type.Literal("blobRequest")),
+		/** Identifies this pending resolution, independently of the handle token. */
 		requestId: Type.Readonly(BlobRequestId),
+		/** Identifies the handle to resolve in the Host's session-local table. */
 		token: Type.Readonly(HandleToken),
 	},
 	{ additionalProperties: false },
 );
 
+/**
+ * Validation representation of a successful Host-to-Guest blob response.
+ * Its blob is a registered {@link BufferMarker}, unlike the {@link ArrayBuffer} exposed by {@link BlobResponseMessage}.
+ */
 const BlobSuccessMessage = Type.Object(
 	{
 		type: Type.Readonly(Type.Literal("blobResponse")),
+		/** Matches the outstanding Guest request. */
 		requestId: Type.Readonly(BlobRequestId),
+		/** Unwrapped by {@link parseHostGuestMessage} only after the response passes validation. */
 		blob: Type.Readonly(LocalBuffer),
 	},
 	{ additionalProperties: false },
 );
+/**
+ * Host-to-Guest resolution failure. Mutually exclusive with {@link BlobSuccessMessage}.
+ */
 const BlobErrorMessage = Type.Object(
 	{
 		type: Type.Readonly(Type.Literal("blobResponse")),
+		/** Matches the outstanding Guest request. */
 		requestId: Type.Readonly(BlobRequestId),
+		/** Error message used to reject the Guest proxy's cached resolution promise. */
 		error: Type.Readonly(Type.String()),
 	},
 	{ additionalProperties: false },
@@ -240,14 +296,16 @@ const blobResponseValidator = validator.compile(
 );
 
 /**
- * Returns a copied blob or a resolution error.
+ * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
+ * The sender supplies an {@link ArrayBuffer}; the receiver obtains one through {@link parseHostGuestMessage} after placeholder validation and unwrapping.
+ * The Guest must also match the request ID against its outstanding requests.
  */
 export type BlobResponseMessage =
 	| (Omit<Static<typeof BlobSuccessMessage>, "blob"> & { readonly blob: ArrayBuffer })
 	| Static<typeof BlobErrorMessage>;
 
 /**
- * Checks the numeric format of a handle token, not its authorization.
+ * Checks the numeric format of a {@link HandleToken}, not its authorization.
  */
 export function isHandleToken(value: unknown): value is HandleToken {
 	return handleTokenValidator.check(value);
@@ -256,7 +314,7 @@ export function isHandleToken(value: unknown): value is HandleToken {
 /**
  * Validates data from a Host and Guest message channel.
  *
- * @param data - Normalized or decoded message data, with registered buffer placeholders.
+ * @param data - Normalized or decoded message data, with registered {@link BufferMarker} placeholders.
  * @returns The validated protocol message.
  * @throws An error if the data is not a valid protocol message envelope.
  */

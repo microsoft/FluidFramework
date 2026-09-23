@@ -24,6 +24,9 @@ import {
 } from "./common.js";
 import { GuestHandleCodec, HostHandleCodec, normalizeTransportData } from "./handles.js";
 
+/**
+ * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.
+ */
 type _DistinctIds =
 	| requireFalse<isAssignableTo<HandleToken, BlobRequestId>>
 	| requireFalse<isAssignableTo<BlobRequestId, HandleToken>>
