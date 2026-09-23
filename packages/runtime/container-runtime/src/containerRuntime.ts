@@ -4403,10 +4403,16 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			summaryLogger.sendTelemetryEvent({
-				eventName: "SummarizeTelemetry",
-				details: telemetryContext.serialize(),
-			});
+			try {
+				if (this.summarizerNode.isSummaryInProgress?.() !== true) {
+					this.garbageCollector.clearSummary();
+				}
+			} finally {
+				summaryLogger.sendTelemetryEvent({
+					eventName: "SummarizeTelemetry",
+					details: telemetryContext.serialize(),
+				});
+			}
 		}
 	}
 
@@ -4948,6 +4954,7 @@ export class ContainerRuntime
 
 			try {
 				this.summarizerNode.completeSummary(handle);
+				this.garbageCollector.completeSummary(handle, summaryRefSeqNum);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -4959,6 +4966,7 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+			this.garbageCollector.clearSummary();
 
 			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
 			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
@@ -5535,7 +5543,7 @@ export class ContainerRuntime
 		}
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(result);
+		await this.garbageCollector.refreshLatestSummary(result, proposalHandle);
 
 		// If we here, the ack was tracked by this client. Update the summary context of the last ack.
 		this.lastAckedSummaryContext = {
