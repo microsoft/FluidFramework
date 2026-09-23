@@ -6,7 +6,10 @@
 import type { IDisposable } from "@fluidframework/core-interfaces";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
-import type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import type {
+	ContainerDevtoolsProps,
+	FluidContainerDevtoolsProps,
+} from "./ContainerDevtools.js";
 import type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
 
 /**
@@ -50,4 +53,21 @@ export interface IFluidDevtools extends IDisposable {
 	 * @remarks Will no-op if no such Container is registered.
 	 */
 	closeContainerDevtools(containerKey: ContainerKey): void;
+}
+
+/**
+ * {@link IFluidDevtools} with support for containers created by a
+ * {@link @fluidframework/driver-definitions#ServiceClient}.
+ * @remarks Obtain an instance with {@link initializeDevtoolsAlpha}.
+ * @alpha
+ * @sealed
+ */
+export interface FluidDevtoolsAlpha extends IFluidDevtools {
+	/**
+	 * Registers a low-level container or a service client's container with the Devtools.
+	 * @param props - The container, its unique Devtools key, and optional data to visualize.
+	 * @remarks To remove the container from the Devtools, call {@link IFluidDevtools.closeContainerDevtools}.
+	 * @throws If Devtools has been disposed or the container key is already registered.
+	 */
+	registerContainerDevtools(props: ContainerDevtoolsProps | FluidContainerDevtoolsProps): void;
 }

@@ -13,6 +13,38 @@ If you don't have `pnpm` installed, you will need to do so first.
 pnpm i
 ```
 
+## DOMPurify browser script
+
+`static/dompurify/purify.min.js` is a checked-in copy of DOMPurify's browser distribution. Its source is `dist/purify.min.js` in the official `dompurify` npm package. The website build does not generate this file.
+
+`docusaurus.config.ts` loads this script before `static/trusted-types-policy.js`. The Trusted Types policy uses `DOMPurify.sanitize` to sanitize HTML.
+
+The website serves this checked-in file directly. Updating the dependency in `package.json` does not update the script that browsers receive.
+
+### Update DOMPurify
+
+Keep the package dependency, lockfile, and checked-in browser script consistent.
+
+1. Update the `dompurify` dependency to the selected version.
+2. Regenerate `pnpm-lock.yaml` with pnpm.
+3. Confirm the installed version and the lockfile resolution.
+4. Copy `dist/purify.min.js` from that installed package into `static/dompurify/purify.min.js`.
+5. Preserve the upstream license notice and apply the repository's formatting.
+6. Build the website and check navigation, search, HTML sanitization, and Mermaid diagrams.
+
+For example, from the `website` directory, copy and format the installed distribution with PowerShell:
+
+```powershell
+Copy-Item .\node_modules\dompurify\dist\purify.min.js .\static\dompurify\purify.min.js
+pnpm exec prettier --write .\static\dompurify\purify.min.js
+```
+
+Do not manually modify DOMPurify's implementation.
+
+The update to 3.4.15 changed `package.json`, regenerated `pnpm-lock.yaml`, and replaced the checked-in browser distribution. The lockfile resolves both the direct dependency and Mermaid's DOMPurify dependency to 3.4.15.
+
+TODO: AB#84053 - Investigate using the installed DOMPurify dependency directly instead of maintaining a checked-in copy. Preserve its load order before the Trusted Types policy. This follow-up does not block dependency updates.
+
 ## Local Development
 
 There are two options for local testing.
@@ -303,7 +335,7 @@ For an overview of Docusaurus's versioning functionality, see [here](https://doc
 We currently offer versioned documentation for each of our supported major versions.
 This documentation is intended to be kept up-to-date with the most recent release of each major version series.
 
-For now, this means we publish documentation (including generated API documentation) for versions `1.x` and `2.x`.
+For now, this means we publish documentation (including generated API documentation) for versions `1.x`, `2.x`, and `3.x`.
 
 -   We also support generating API documentation for the local repo code in local development only.
     See [Local API docs build](#local-api-docs-build), but these are not intended to be published.
@@ -322,8 +354,8 @@ These steps are based on Docusaurus's tutorial [here](https://docusaurus.io/docs
 
 Note: generating the API documentation for the new "current" version will fail if the release branch for that version has not yet been created.
 
-1. Run `npx --no-install docusaurus docs:version v<current-major-version-number>` from the root of this directory.
-   E.g., `... docusaurus docs:version v2` when prepping for `v3` documentation.
+1. Run `npx --no-install docusaurus docs:version <current-major-version-number>` from the root of this directory.
+   E.g., `... docusaurus docs:version 2` when prepping for `v3` documentation.
     - This will copy the contents of `docs` into `versioned_docs` under the specified version ID.
     - This will also generate a sidebar configuration for the copied version under `versioned_sidebars`.
 1. Update `config/docs-versions.mjs` to update the version ID for the "current" version, and add the newly frozen version to the `otherVersions` list.
@@ -386,51 +418,89 @@ import { YoutubeVideo } from "@site/src/components/youtubeVideo";
 
 The following npm scripts are supported in this directory:
 
-<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS:includeHeading=FALSE) -->
-
+<!-- markdown-magic:begin {
+  "transform": "package-scripts",
+  "includeHeading": false,
+  "scriptDescriptions": {
+    "build": "Build everything: the API documentation, the website, the tests, etc.",
+    "build:api-documentation": "Download API model artifacts and generate API documentation.",
+    "prebuild:docusaurus": "Runs pre-site build metadata generation.",
+    "build:docusaurus": "Build the website with Docusaurus. Note that 3 documentation suite versions taxes Docusaurus and causes it to run out of memory. The default heap limit is increased to accommodate this.",
+    "build:generate-content": "Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`.",
+    "build:markdown-magic": "Run `markdown-magic` to generate / embed contents in Markdown files.",
+    "build:site": "Build the site, including API documentation.",
+    "build:test": "TSC build of the test code as a sanity check.",
+    "check-links": "Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`.",
+    "ci:check-links": "`check-links` variant for CI. Serves the site before running checks.",
+    "clean": "Clean up generated artifacts (build output, etc.).",
+    "clean:api-documentation": "Clean up generate API documentation content.",
+    "clean:doc-models": "Clean up downloaded API model artifacts.",
+    "clean:docusaurus": "Run Docusaurus's \"clean\".",
+    "clean:test": "Clean up generated test output",
+    "clean:versions-json": "Clean up generated `versions.json` file.",
+    "download-doc-models": "Download API model artifacts published from our release branches.",
+    "eslint": "Run `eslint`.",
+    "eslint:fix": "Run `eslint` with auto-fix enabled.",
+    "format": "Fix formatting issues with `prettier`.",
+    "generate-api-documentation": "Generate API documentation from downloaded API model artifacts.",
+    "preinstall": "Ensure developer is using `pnpm`.",
+    "lint": "Check for linter violations.",
+    "lint:fix": "Auto-fix linter violations.",
+    "prettier": "Check for formatting issues with `prettier`.",
+    "prettier:fix": "Fix formatting issues with `prettier`.",
+    "rebuild": "Clean up existing generated artifacts and re-run the build.",
+    "serve": "Serves the built website using Docusaurus.",
+    "serve-with-azure-emulation": "Serves the built website using Docusaurus, including Azure service emulation for our Azure functions.",
+    "prestart": "Runs pre-site build metadata generation.",
+    "start": "Runs the website in watch mode with Docusaurus.",
+    "pretest": "Install necessary `playwright` dependencies before running tests.",
+    "test": "Run all tests (`playwright` UX tests and `vitest` unit tests)",
+    "test:site": "Run UX tests using `playwright`",
+    "test:unit": "Run unit tests using `vitest`"
+  }
+} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-| Script | Description |
-|--------|-------------|
-| `build` | Build everything: the API documentation, the website, the tests, etc. |
-| `build:api-documentation` | Download API model artifacts and generate API documentation. |
-| `prebuild:docusaurus` | Runs pre-site build metadata generation. |
-| `build:docusaurus` | Build the website with Docusaurus. |
-| `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
-| `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
-| `build:search` | `pagefind --site build` |
-| `build:site` | Build the site, including API documentation. |
-| `build:test` | TSC build of the test code as a sanity check. |
-| `check-links` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
-| `ci:check-links` | `check-links` variant for CI. Serves the site before running checks. |
-| `clean` | Clean up generated artifacts (build output, etc.). |
-| `clean:api-documentation` | Clean up generate API documentation content. |
-| `clean:doc-models` | Clean up downloaded API model artifacts. |
-| `clean:docusaurus` | Run Docusaurus's "clean". |
-| `clean:test` | Clean up generated test output |
-| `clean:versions-json` | Clean up generated `versions.json` file. |
-| `download-doc-models` | Download API model artifacts published from our release branches. |
-| `eslint` | Run `eslint`. |
-| `eslint:fix` | Run `eslint` with auto-fix enabled. |
-| `format` | Fix formatting issues with `prettier`. |
-| `generate-api-documentation` | Generate API documentation from downloaded API model artifacts. |
-| `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` |
-| `lint` | Check for linter violations. |
-| `lint:fix` | Auto-fix linter violations. |
-| `preinstall` | Ensure developer is using `pnpm`. |
-| `prettier` | Check for formatting issues with `prettier`. |
-| `prettier:fix` | Fix formatting issues with `prettier`. |
-| `rebuild` | Clean up existing generated artifacts and re-run the build. |
-| `serve` | Serves the built website using Docusaurus. |
-| `serve-with-azure-emulation` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
-| `prestart` | Runs pre-site build metadata generation. |
-| `start` | Runs the website in watch mode with Docusaurus. |
-| `pretest` | Install necessary `playwright` dependencies before running tests. |
-| `test` | Run all tests (`playwright` UX tests and `vitest` unit tests) |
-| `test:site` | Run UX tests using `playwright` |
-| `test:unit` | Run unit tests using `vitest` |
+| Script Name | Script Body | Description |
+| - | - | - |
+| `build` | `concurrently npm:build:site npm:build:test` | Build everything: the API documentation, the website, the tests, etc. |
+| `build:api-documentation` | `npm run download-doc-models && npm run generate-api-documentation` | Download API model artifacts and generate API documentation. |
+| `prebuild:docusaurus` | `npm run generate-versions` | Runs pre-site build metadata generation. |
+| `build:docusaurus` | `cross-env NODE_OPTIONS=--max-old-space-size=8192 docusaurus build` | Build the website with Docusaurus. Note that 3 documentation suite versions taxes Docusaurus and causes it to run out of memory. The default heap limit is increased to accommodate this. |
+| `build:generate-content` | `concurrently npm:build:markdown-magic npm:build:api-documentation` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
+| `build:markdown-magic` | `markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
+| `build:search` | `pagefind --site build` | |
+| `build:site` | `npm run build:generate-content && npm run build:docusaurus && npm run build:search` | Build the site, including API documentation. |
+| `build:test` | `tsc --project test/tsconfig.json --pretty --noEmit` | TSC build of the test code as a sanity check. |
+| `check-links` | `linkcheck http://127.0.0.1:3000 --skip-file skipped-urls.txt` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
+| `ci:check-links` | `start-server-and-test "npm run serve -- --host 127.0.0.1 --no-open" http://127.0.0.1:3000 check-links` | `check-links` variant for CI. Serves the site before running checks. |
+| `clean` | `concurrently "npm:clean:*"` | Clean up generated artifacts (build output, etc.). |
+| `clean:api-documentation` | `node ./infra/clean-api-documentation.mjs` | Clean up generate API documentation content. |
+| `clean:doc-models` | `rimraf --glob .doc-models` | Clean up downloaded API model artifacts. |
+| `clean:docusaurus` | `docusaurus clear` | Run Docusaurus's "clean". |
+| `clean:test` | `rimraf --glob test-results` | Clean up generated test output |
+| `clean:versions-json` | `rimraf --glob ./versions.json` | Clean up generated `versions.json` file. |
+| `download-doc-models` | `node ./infra/download-doc-models.mjs` | Download API model artifacts published from our release branches. |
+| `eslint` | `eslint . --format stylish` | Run `eslint`. |
+| `eslint:fix` | `eslint . --format stylish --fix` | Run `eslint` with auto-fix enabled. |
+| `format` | `npm run prettier:fix` | Fix formatting issues with `prettier`. |
+| `generate-api-documentation` | `dotenv -- node ./infra/generate-api-documentation.mjs` | Generate API documentation from downloaded API model artifacts. |
+| `generate-versions` | `dotenv -- node ./infra/generate-versions.mjs` | |
+| `preinstall` | `node ../scripts/only-pnpm.cjs` | Ensure developer is using `pnpm`. |
+| `lint` | `concurrently npm:eslint npm:prettier` | Check for linter violations. |
+| `lint:fix` | `npm run eslint:fix && npm run prettier:fix` | Auto-fix linter violations. |
+| `prettier` | `prettier --check . --cache --ignore-path ../.prettierignore` | Check for formatting issues with `prettier`. |
+| `prettier:fix` | `prettier --write . --cache --ignore-path ../.prettierignore` | Fix formatting issues with `prettier`. |
+| `rebuild` | `npm run clean && npm run build` | Clean up existing generated artifacts and re-run the build. |
+| `serve` | `docusaurus serve` | Serves the built website using Docusaurus. |
+| `serve-with-azure-emulation` | `swa start --config-name ff-doc-site` | Serves the built website using Docusaurus, including Azure service emulation for our Azure functions. |
+| `prestart` | `npm run generate-versions` | Runs pre-site build metadata generation. |
+| `start` | `docusaurus start` | Runs the website in watch mode with Docusaurus. |
+| `pretest` | `playwright install --with-deps` | Install necessary `playwright` dependencies before running tests. |
+| `test` | `npm run test:unit && npm run test:site` | Run all tests (`playwright` UX tests and `vitest` unit tests) |
+| `test:site` | `playwright test` | Run UX tests using `playwright` |
+| `test:unit` | `vitest run` | Run unit tests using `vitest` |
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

@@ -1,5 +1,4 @@
-<!-- AUTO-GENERATED-CONTENT:START (HELP:includeHeading=FALSE) -->
-
+<!-- markdown-magic:begin {"transform":"help","includeHeading":false,"headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
@@ -8,11 +7,9 @@ Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for i
 To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 <!-- prettier-ignore-end -->
+<!-- markdown-magic:end -->
 
-<!-- AUTO-GENERATED-CONTENT:END -->
-
-<!-- AUTO-GENERATED-CONTENT:START (HELP) -->
-
+<!-- markdown-magic:begin {"transform":"help","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
@@ -23,5 +20,4 @@ Read the [Fluid Framework documentation](https://fluidframework.com/docs/) for i
 To request information that the documentation does not contain, [create an issue](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Submitting-Bugs-and-Feature-Requests.md).
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

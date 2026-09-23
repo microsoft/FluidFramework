@@ -1,5 +1,92 @@
 # fluid-framework
 
+## 3.2.0
+
+### Minor Changes
+
+- createIdentifierIndex handles schemas with multiple identifiers consistently ([#28233](https://github.com/microsoft/FluidFramework/pull/28233)) [7663ec8ca5d](https://github.com/microsoft/FluidFramework/commit/7663ec8ca5df5ec6f60d0c6a4e9991fbb0fa5d04)
+
+  [`createIdentifierIndex`](https://fluidframework.com/docs/api/tree/#createidentifierindex-function) now indexes a node only when its schema has exactly one [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) field.
+  Schemas with multiple identifier fields are skipped instead of arbitrarily indexing the first identifier field.
+  This avoids field-order-dependent behavior while allowing identifier indexes to be created for trees containing such schemas.
+
+  Identifier indexes now also take advantage of identifier fields being immutable.
+  This avoids unnecessarily re-indexing existing nodes after tree edits while continuing to index newly created nodes and filter detached nodes from index results.
+
+- createTreeIndex now interprets object field selectors as property keys ([#28233](https://github.com/microsoft/FluidFramework/pull/28233)) [7663ec8ca5d](https://github.com/microsoft/FluidFramework/commit/7663ec8ca5df5ec6f60d0c6a4e9991fbb0fa5d04)
+
+  [`createTreeIndex`](https://fluidframework.com/docs/api/tree/#createtreeindex-function) previously interpreted keys returned by [`TreeIndexKeyFieldSelector`](https://fluidframework.com/docs/api/tree/treeindexkeyfieldselector-typealias) as stored keys. This was inconsistent with the Simple Tree schema API and caused indexes to fail when an object field's property key differed from its stored key. Object field selectors are now translated from property keys to stored keys internally. Selectors must return `undefined` for non-object schemas.
+
+- Use configured SharedTree kinds in service client registries ([#28260](https://github.com/microsoft/FluidFramework/pull/28260)) [235654550d1](https://github.com/microsoft/FluidFramework/commit/235654550d165d0da3a40c1b6fb1c6ec2bea676b)
+
+  The alpha [configuredSharedTree](https://fluidframework.com/docs/api/fluid-framework/#configuredsharedtree-function) function in fluid-framework now returns [SharedObjectKindAlpha\<ITree\>](https://fluidframework.com/docs/api/shared-object-base/sharedobjectkindalpha-interface) instead of [SharedObjectKind\<ITree\>](https://fluidframework.com/docs/api/shared-object-base/sharedobjectkind-interface).
+  This exposes the registry capabilities already provided by the returned object, so applications can use it with [sharedObjectRegistryFromIterable](https://fluidframework.com/docs/api/fluid-framework/#sharedobjectregistryfromiterable-function) and [instantiateTreeFirstTime](https://fluidframework.com/docs/api/fluid-framework/#instantiatetreefirsttime-function) without an internal import.
+  Existing uses of the returned `SharedObjectKind<ITree>` remain supported, and runtime behavior is unchanged.
+
+  ```typescript
+  import {
+    configuredSharedTree,
+    sharedObjectRegistryFromIterable,
+  } from "fluid-framework/alpha";
+
+  const treeKind = configuredSharedTree({});
+  const registry = sharedObjectRegistryFromIterable([treeKind]);
+  ```
+
+- Require the oldest supported client version in ServiceOptions ([#27902](https://github.com/microsoft/FluidFramework/pull/27902)) [da0dd40c087](https://github.com/microsoft/FluidFramework/commit/da0dd40c087b075822f0a9be723e1879f25d23b5)
+
+  The alpha [`ServiceOptions.oldestSupportedClient`](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface#oldestsupportedclient-propertysignature) property is now required. Code that constructs service options must specify the oldest Fluid Framework client version that can open and process documents written by the service client.
+
+  ```typescript
+  const options: ServiceOptions = {
+    oldestSupportedClient: "2.100.0",
+  };
+  ```
+
+- Collect container telemetry through ServiceClient ([#28259](https://github.com/microsoft/FluidFramework/pull/28259)) [11261004291](https://github.com/microsoft/FluidFramework/commit/11261004291599575a23483fbaf8b20f4ff1afc1)
+
+  The alpha [ServiceOptions](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface) interface now accepts an optional `logger`.
+  Session, ephemeral, and Tinylicious clients forward telemetry from containers they create or load to this logger.
+  Existing callers can omit the option without changing their behavior.
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+
+  const service = startEphemeralService();
+  const client = service.newClient({
+    oldestSupportedClient: "2.100.0",
+    logger: {
+      send(event) {
+        console.log(event);
+      },
+    },
+  });
+  ```
+
+  The same `logger` option is supported by `getSessionService().newClient(...)` and `createTinyliciousServiceClient(...)`.
+
+## 3.1.0
+
+### Minor Changes
+
+- Fix an infinite loop bug in revertTo ([#28219](https://github.com/microsoft/FluidFramework/pull/28219)) [8c8ca60891d](https://github.com/microsoft/FluidFramework/commit/8c8ca60891da0286a5f4382323a3379369bd3847)
+
+  Fixes a bug in [`UntypedTreeViewAlpha.revertTo`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface#revertto-methodsignature) which could trigger an infinite loop when called.
+  This bug is not known to cause document corruption.
+
+- Fix a bug in revertTo ([#28202](https://github.com/microsoft/FluidFramework/pull/28202)) [acaed12e86d](https://github.com/microsoft/FluidFramework/commit/acaed12e86dd650cc6274beeb43e15faf8c59cf6)
+
+  Fixes a bug in [`UntypedTreeViewAlpha.revertTo`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface#revertto-methodsignature) which could trigger assert codes `0x7ce`, `0x8a1`, `0x695`, and possibly others.
+  This bug is not known to cause document corruption.
+
+- Support flexible indexers when creating tree indexes ([#28210](https://github.com/microsoft/FluidFramework/pull/28210)) [3920a9a6665](https://github.com/microsoft/FluidFramework/commit/3920a9a66656594a07d8e985d98732028010d90b)
+
+  [`createTreeIndex`](https://fluidframework.com/docs/api/tree/#createtreeindex-function) now accepts the new `TreeIndexKeyFieldSelector` type: either a pure callback or an object with a `get` method. This simplifies the factory to two overloads while continuing to support `Map` and `ReadonlyMap` values.
+
+- Fields defined with `SchemaFactoryAlpha.identifier()` now generate identifiers when omitted ([#28178](https://github.com/microsoft/FluidFramework/pull/28178)) [cf51fdd7e09](https://github.com/microsoft/FluidFramework/commit/cf51fdd7e09bceaf3ce671aa0c47715dea827e3c)
+
+  Fields defined with [`SchemaFactoryAlpha.identifier()`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#identifier-property) now correctly generate identifiers when omitted.
+
 ## 3.0.0
 
 ### Minor Changes

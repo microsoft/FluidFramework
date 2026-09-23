@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "3.1.0",
+	"version": "3.3.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -195,7 +195,7 @@
 		"type-fest": "^2.19.0",
 		"typescript": "~6.0.3"
 	},
-	"packageManager": "pnpm@11.15.1+sha512.81350b07e53c9538a02f1f2303b4290fa2d7be04e56e2a970c4cc4b417dc761de196edabd49d55c7dc9580db81007c44143e4e3d7e462b3000d23c255122d065",
+	"packageManager": "pnpm@11.27.0+sha512.ad12821463bb143295f1fa3ecde77a6b9b97a7990386da800ff57bffc3964dc64b7b1c7559d5dbe5c337aea659ed9c8937d4370bd198ca2009bc6fa0249808e7",
 	"engines": {
 		"node": ">=22.22.2",
 		"pnpm": "11"

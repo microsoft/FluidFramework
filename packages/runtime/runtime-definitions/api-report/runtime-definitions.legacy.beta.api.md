@@ -91,6 +91,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    readonly versionMarkResolver: IVersionMarkResolver;
 }
 
 // @beta @sealed @legacy (undocumented)
@@ -387,6 +388,13 @@ export interface ITelemetryContext {
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
+// @beta @sealed @legacy
+export interface IVersionMarkResolver {
+    onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
+    resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
+    sealAndCaptureVersionMark(): VersionMarkCapture;
+}
+
 // @beta @legacy
 export interface LocalAttributionKey {
     // (undocumented)
@@ -420,6 +428,19 @@ export interface OpAttributionKey {
 // @beta @legacy
 export type PackagePath = readonly string[];
 
+// @beta @legacy
+export type ResolveResult = {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+} | {
+    readonly kind: "pending";
+    readonly reason?: string;
+} | {
+    readonly kind: "unresolvable";
+    readonly reason?: string;
+};
+
 // @beta @sealed @legacy
 export interface StageControls {
     readonly commitChanges: () => void;
@@ -436,6 +457,17 @@ export type StagingModeChangedEvent = {
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
+
+// @beta @legacy
+export type VersionMarkCapture = {
+    readonly kind: "pending";
+    readonly batchId: string;
+    readonly sequenceNumberLowerBound: number;
+} | {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+};
 
 // @beta @legacy
 export const VisibilityState: {
