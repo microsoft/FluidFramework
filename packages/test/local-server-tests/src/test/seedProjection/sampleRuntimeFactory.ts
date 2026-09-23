@@ -9,8 +9,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	loadContainerRuntime,
-	type AdditionalSummaryTree,
-	type SummaryGenerationContext,
+	type IAdditionalSummaryTree,
+	type ISummaryGenerationContext,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -37,8 +37,8 @@ import {
 } from "./nativeSeedBaseline.js";
 import {
 	seedRuntimeFactory,
-	type ProjectionLoad,
-	type Projector,
+	type IProjectionLoad,
+	type IProjector,
 } from "./seedRuntimeAdapter.js";
 import {
 	seedBaselineBlobName,
@@ -46,7 +46,7 @@ import {
 } from "./seedBaselineFingerprint.js";
 
 /** Live application surface exposed by each independently loaded sample runtime. */
-export interface HtmlEntryPoint {
+export interface IHtmlEntryPoint {
 	/** Collaborative HTML tree view, realized on interactive clients and summarizers before projection. */
 	view: HtmlView;
 	/** This client's fresh compressor session ID, used to verify genesis does not reuse a live session. */
@@ -78,7 +78,7 @@ const dataStoreFactory: IFluidDataStoreFactory = {
 				return {
 					view,
 					sessionId: dataStore.idCompressor?.localSessionId,
-				} satisfies HtmlEntryPoint;
+				} satisfies IHtmlEntryPoint;
 			},
 		);
 		return runtime;
@@ -90,22 +90,22 @@ const dataStoreFactory: IFluidDataStoreFactory = {
  * sampleRuntimeFactory realizes this model before its factory returns; projection fails until it is ready.
  * Missing aliases fail rather than triggering write-on-open repair or asynchronous alias creation.
  */
-async function entryPoint(runtime: IContainerRuntime): Promise<HtmlEntryPoint> {
+async function entryPoint(runtime: IContainerRuntime): Promise<IHtmlEntryPoint> {
 	const handle = await runtime.getAliasedDataStoreEntryPoint(rootAlias);
 	if (handle === undefined) {
 		throw new Error("Missing persisted root alias");
 	}
-	return (await handle.get()) as HtmlEntryPoint;
+	return (await handle.get()) as IHtmlEntryPoint;
 }
 
 /**
- * Implement the {@link Projector} contract for the reference HTML seed format.
+ * Implement the {@link IProjector} contract for the reference HTML seed format.
  * A runtime metadata blob identifies a native snapshot; otherwise read the application projection
  * using the same external-reader contract and build the native baseline at the unchanged checkpoint.
  * The implementation details live in readApplicationProjection and buildNativeBaseline; the adapter
  * owns snapshot overlays and op ordering. See DESIGN.md's "Runtime-owned conversion" section.
  */
-export const htmlProjector: Projector = {
+export const htmlProjector: IProjector = {
 	format,
 	isNative: (context) => context.baseSnapshot?.blobs[".metadata"] !== undefined,
 	async readSeed(context, retained) {
@@ -122,13 +122,13 @@ export const htmlProjector: Projector = {
 };
 
 /** Test-only observation joining the adapter's decision with the loaded native runtime and model. */
-export interface AppObservation extends ProjectionLoad {
+export interface IAppObservation extends IProjectionLoad {
 	/** Original loader context, kept separate from the native runtime's projected context. */
 	original: IContainerContext;
 	/** Actual loaded container runtime, not a mock or snapshot-builder instance. */
 	runtime: IContainerRuntime;
 	/** Realized application model whose state the projection callback reads. */
-	app: HtmlEntryPoint;
+	app: IHtmlEntryPoint;
 }
 
 /**
@@ -141,13 +141,13 @@ export function sampleRuntimeFactory(
 		/** Disable materialization to validate that graduated snapshots load as ordinary native state. */
 		allowProjection?: boolean;
 		/** Receive a completed load's contexts, runtime, and model for workflow assertions. */
-		observe?: (observation: AppObservation) => void;
+		observe?: (observation: IAppObservation) => void;
 		/** Test-only callback instrumentation/failure injection at the summarizer's checkpoint. */
 		beforeProjection?: (checkpoint: number) => void;
 		/** Test-only observation at the actual serializer boundary, never called for a reused part. */
 		onSerializePart?: (part: HtmlPartId) => void;
 		/** Observe effective generation mode and accepted parent without exposing mutable application state. */
-		observeSummary?: (context: SummaryGenerationContext) => void;
+		observeSummary?: (context: ISummaryGenerationContext) => void;
 		/** Observe adoption after the projection's captured state becomes an accepted reuse baseline. */
 		onSummaryAccepted?: (context: ISummaryContext) => void;
 		/** Observe a fail-closed baseline disagreement, including captured pending runtime work. */
@@ -165,8 +165,8 @@ export function sampleRuntimeFactory(
 		htmlProjector,
 		async (load, existing) => {
 			let summarizeProjection = (
-				_context: SummaryGenerationContext,
-			): AdditionalSummaryTree => {
+				_context: ISummaryGenerationContext,
+			): IAdditionalSummaryTree => {
 				throw new Error("Projection tree must be realized before summarization");
 			};
 			const runtime = await loadContainerRuntime({

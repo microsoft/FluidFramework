@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { projectionKey, type ApplicationProjection } from "./externalSeedFile.js";
+import { projectionKey, type IApplicationProjection } from "./externalSeedFile.js";
 
 /** Application metadata, deliberately outside native DDS state and its canonical hash. */
 export const seedBaselineBlobName = "seed-baseline.json";
@@ -27,7 +27,7 @@ const loaderMessageTypes = new Set<string>(
 );
 
 /** Immutable identity of the native genesis, not a hash of the current edited document. */
-export interface SeedBaselineDescriptor {
+export interface ISeedBaselineDescriptor {
 	/** Digest of immutable source blob identities and the original source checkpoint. */
 	readonly seedId: string;
 	/** Versioned materialization profile used to produce the native genesis. */
@@ -39,18 +39,18 @@ export interface SeedBaselineDescriptor {
 }
 
 /** Retained descriptor bytes are reusable only for the same persisted sidecar blob. */
-export interface RetainedSeedBaseline {
+export interface IRetainedSeedBaseline {
 	readonly blobId: string;
-	readonly descriptor: SeedBaselineDescriptor;
+	readonly descriptor: ISeedBaselineDescriptor;
 }
 
 /** Bind reconstruction to its source without incorporating the computed native hash into source identity. */
 export function createSeedBaselineDescriptor(
-	seed: ApplicationProjection,
+	seed: IApplicationProjection,
 	sourceSequenceNumber: number,
 	profileVersion: string,
 	baselineHash: string,
-): SeedBaselineDescriptor {
+): ISeedBaselineDescriptor {
 	const seedId = createHash("sha256")
 		.update(
 			JSON.stringify([
@@ -70,7 +70,7 @@ export function createSeedBaselineDescriptor(
 }
 
 /** Validate the small versioned proof instead of accepting arbitrary metadata as an agreement. */
-export function parseSeedBaselineDescriptor(value: unknown): SeedBaselineDescriptor {
+export function parseSeedBaselineDescriptor(value: unknown): ISeedBaselineDescriptor {
 	if (
 		typeof value !== "object" ||
 		value === null ||
@@ -100,8 +100,8 @@ export function parseSeedBaselineDescriptor(value: unknown): SeedBaselineDescrip
 
 /** Compare the entire descriptor, including source identity and both version discriminators. */
 export function sameSeedBaseline(
-	a: SeedBaselineDescriptor,
-	b: SeedBaselineDescriptor,
+	a: ISeedBaselineDescriptor,
+	b: ISeedBaselineDescriptor,
 ): boolean {
 	return (
 		a.seedId === b.seedId &&
@@ -115,8 +115,8 @@ export function sameSeedBaseline(
 export async function readSeedBaselineDescriptor(
 	snapshot: ISnapshotTree,
 	readBlob: IDocumentStorageService["readBlob"],
-	retained?: RetainedSeedBaseline,
-): Promise<RetainedSeedBaseline> {
+	retained?: IRetainedSeedBaseline,
+): Promise<IRetainedSeedBaseline> {
 	const blobId = snapshot.trees[projectionKey]?.blobs[seedBaselineBlobName];
 	if (blobId === undefined) {
 		throw new Error("Native snapshot is missing its seed baseline fingerprint");
@@ -141,7 +141,7 @@ export class SeedBaselineMismatchError extends LoggingError {
 	public pendingCaptureError: unknown;
 
 	public constructor(
-		public readonly expected: SeedBaselineDescriptor,
+		public readonly expected: ISeedBaselineDescriptor,
 		public readonly received: unknown,
 		public readonly packet: ISequencedDocumentMessage | undefined,
 	) {
@@ -179,7 +179,7 @@ function descriptorTelemetry(value: unknown): Record<string, string> {
  * no first-send flag, client-ID cache, or reliance on preserved inner compressed/grouped metadata.
  */
 export class SeedBaselineProtocol {
-	public constructor(public readonly descriptor: SeedBaselineDescriptor) {}
+	public constructor(public readonly descriptor: ISeedBaselineDescriptor) {}
 
 	/** Preserve native metadata and reject a conflicting use of the reserved application metadata key. */
 	public stampMetadata(
@@ -212,7 +212,7 @@ export class SeedBaselineProtocol {
 
 	/** Pending restoration also checks the proof before creating a native runtime or replaying local work. */
 	public validateProof(proof: unknown, packet?: ISequencedDocumentMessage): void {
-		let actual: SeedBaselineDescriptor;
+		let actual: ISeedBaselineDescriptor;
 		try {
 			actual = parseSeedBaselineDescriptor(proof);
 		} catch {

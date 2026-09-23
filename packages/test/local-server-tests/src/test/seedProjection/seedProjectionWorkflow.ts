@@ -11,7 +11,7 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import type { SummaryGenerationContext } from "@fluidframework/container-runtime/internal";
+import type { ISummaryGenerationContext } from "@fluidframework/container-runtime/internal";
 import {
 	SummaryType,
 	type ISummaryTree,
@@ -36,24 +36,24 @@ import {
 	projectionKey,
 	readApplicationProjection,
 	type HtmlPartId,
-	type HtmlParts,
+	type IHtmlParts,
 } from "./externalSeedFile.js";
 import { HtmlElement, HtmlText, viewHtml, viewHtmlParts } from "./htmlTreeSchema.js";
 import {
 	sampleRuntimeFactory,
-	type AppObservation,
-	type HtmlEntryPoint,
+	type IAppObservation,
+	type IHtmlEntryPoint,
 } from "./sampleRuntimeFactory.js";
 import { forward } from "./seedRuntimeAdapter.js";
 import type { IInspectableStorageAdapter } from "./inspectableStorageAdapter.js";
 
-export const exampleParts: HtmlParts = {
+export const exampleParts: IHtmlParts = {
 	first: '<div class="document"><p id="first">Hello</p></div>',
 	second: '<div class="details"><p id="second">World</p></div>',
 };
 
 /** Select a known fixture paragraph, failing if loading or prior edits changed its expected structure. */
-function paragraph(app: HtmlEntryPoint, part: HtmlPartId): HtmlElement {
+function paragraph(app: IHtmlEntryPoint, part: HtmlPartId): HtmlElement {
 	const root = app.view.root[part][0];
 	assert(root instanceof HtmlElement);
 	const result = root.children[0];
@@ -62,7 +62,7 @@ function paragraph(app: HtmlEntryPoint, part: HtmlPartId): HtmlElement {
 }
 
 /** Select a fixture text node so concurrent and pending-edit tests mutate the actual collaborative DDS. */
-function text(app: HtmlEntryPoint, part: HtmlPartId): HtmlText {
+function text(app: IHtmlEntryPoint, part: HtmlPartId): HtmlText {
 	const node = paragraph(app, part).children[0];
 	assert(node instanceof HtmlText);
 	return node;
@@ -130,11 +130,11 @@ function partBlobIds(snapshot: ISnapshotTree): Record<HtmlPartId, string> {
 }
 
 /** Test-only client orchestration and observations used by the lifecycle and pending-state scenarios. */
-export interface SeedTestSession {
+export interface ISeedTestSession {
 	/** Coordinates real client queues and waits for convergence, rather than mocking op delivery. */
 	readonly tracker: LoaderContainerTracker;
 	/** Completed native loads and their original/projected contexts, in load-observation order. */
-	readonly observations: AppObservation[];
+	readonly observations: IAppObservation[];
 	/** Construct a loader, optionally forbidding materialization or seed-body reads during restore. */
 	makeLoader(allowProjection?: boolean, denySeedBodyReads?: boolean): Loader;
 	/** Enroll a container in synchronization and cleanup, including separately created summarizers. */
@@ -148,7 +148,7 @@ export interface SeedTestSession {
 	/** Counts at the actual part serializer entry, excluding display/test-only comparisons. */
 	readonly serializedParts: Readonly<Record<HtmlPartId, number>>;
 	/** Contexts delivered to application summary generation, including effective full-tree policy. */
-	readonly summaryContexts: readonly SummaryGenerationContext[];
+	readonly summaryContexts: readonly ISummaryGenerationContext[];
 	/** Wait until runtime/native/GC and captured projection state have adopted a particular storage version. */
 	waitForSummaryAcceptance(version: string): Promise<void>;
 	/** Make exactly the next projection callback throw before any upload is possible. */
@@ -172,16 +172,16 @@ export interface SeedTestSession {
 export function referenceSession(
 	backend: IInspectableStorageAdapter,
 	useSnapshotApi = true,
-): SeedTestSession {
+): ISeedTestSession {
 	const tracker = new LoaderContainerTracker(true);
-	const observations: AppObservation[] = [];
+	const observations: IAppObservation[] = [];
 	const containers: IContainer[] = [];
 	let modelWrites = 0;
 	let failProjection = false;
 	let projectionCalls = 0;
 	let projectionCheckpoint: number | undefined;
 	const serializedParts: Record<HtmlPartId, number> = { first: 0, second: 0 };
-	const summaryContexts: SummaryGenerationContext[] = [];
+	const summaryContexts: ISummaryGenerationContext[] = [];
 	const acceptedVersions = new Set<string>();
 	const acceptanceWaiters = new Map<string, () => void>();
 	/** Wire the sample runtime to the backend, optionally denying source reads to prove offline reconstruction. */
@@ -324,7 +324,7 @@ async function verifyGroupedProjection(
 	backend: IInspectableStorageAdapter,
 	url: string,
 	version: string | undefined,
-	expectedParts: HtmlParts,
+	expectedParts: IHtmlParts,
 ): Promise<Record<HtmlPartId, string>> {
 	const initial = await backend.inspect(url, version);
 	try {
@@ -383,8 +383,8 @@ export async function runReferenceWorkflow(
 		const a = await session.load(url);
 		const b = await session.load(url);
 		await session.tracker.ensureSynchronized();
-		const appA = (await a.getEntryPoint()) as HtmlEntryPoint;
-		const appB = (await b.getEntryPoint()) as HtmlEntryPoint;
+		const appA = (await a.getEntryPoint()) as IHtmlEntryPoint;
+		const appB = (await b.getEntryPoint()) as IHtmlEntryPoint;
 		assert.deepEqual(viewHtmlParts(appA.view), exampleParts);
 		assert.deepEqual(viewHtmlParts(appB.view), exampleParts);
 		assert.notEqual(appA.view.root.first, appA.view.root.second);
@@ -560,7 +560,7 @@ export async function runReferenceWorkflow(
 
 		// No materialization fallback: this must be an entirely normal native load.
 		const fresh = await session.load(url, false, accepted.summaryVersion);
-		const freshApp = (await fresh.getEntryPoint()) as HtmlEntryPoint;
+		const freshApp = (await fresh.getEntryPoint()) as IHtmlEntryPoint;
 		await session.tracker.ensureSynchronized();
 		assert.deepEqual(viewHtmlParts(freshApp.view), editedParts);
 		assert.equal(session.observations.at(-1)?.projected, false);
@@ -626,7 +626,7 @@ export async function runPendingRestoreWorkflow(
 		const a = await session.load(url);
 		const b = await session.load(url);
 		await session.tracker.ensureSynchronized();
-		const app = (await a.getEntryPoint()) as HtmlEntryPoint;
+		const app = (await a.getEntryPoint()) as IHtmlEntryPoint;
 		const fingerprint = session.observations[0].provenance?.fingerprint;
 		assert.equal(
 			session.observations[0].original.snapshotWithContents !== undefined,
@@ -646,10 +646,10 @@ export async function runPendingRestoreWorkflow(
 		const restored = await session.load(url, true, undefined, pending);
 		await waitForContainerConnection(restored);
 		await session.tracker.ensureSynchronized(b, restored);
-		const restoredApp = (await restored.getEntryPoint()) as HtmlEntryPoint;
+		const restoredApp = (await restored.getEntryPoint()) as IHtmlEntryPoint;
 		assert.equal(
 			viewHtml(restoredApp.view),
-			viewHtml(((await b.getEntryPoint()) as HtmlEntryPoint).view),
+			viewHtml(((await b.getEntryPoint()) as IHtmlEntryPoint).view),
 		);
 		assert(viewHtml(restoredApp.view).includes("Pending edit"));
 		const observation = session.observations.find(

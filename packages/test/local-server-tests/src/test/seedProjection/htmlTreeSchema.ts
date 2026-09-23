@@ -6,7 +6,7 @@
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 
 import { format, serializeHtml, type HtmlNode } from "./htmlSeedFormat.js";
-import type { HtmlParts } from "./externalSeedFile.js";
+import type { IHtmlParts } from "./externalSeedFile.js";
 
 const schemaFactory = new SchemaFactory(format);
 
@@ -79,7 +79,7 @@ export function viewHtml(view: HtmlView): string {
 }
 
 /** Read both parts for display/test comparison; incremental projection serializes only changed parts instead. */
-export function viewHtmlParts(view: HtmlView): HtmlParts {
+export function viewHtmlParts(view: HtmlView): IHtmlParts {
 	return {
 		first: serializeHtml(fromTree(view.root.first)),
 		second: serializeHtml(fromTree(view.root.second)),

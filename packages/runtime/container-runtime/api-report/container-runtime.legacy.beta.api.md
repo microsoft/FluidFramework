@@ -5,12 +5,6 @@
 ```ts
 
 // @beta @legacy
-export interface AdditionalSummaryTree {
-    readonly onAccepted?: (context: ISummaryContext) => void;
-    readonly summary: ISummaryTree;
-}
-
-// @beta @legacy
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
 // @beta @legacy
@@ -88,6 +82,12 @@ export interface IAckSummaryResult {
     readonly ackNackDuration: number;
     // (undocumented)
     readonly summaryAckOp: ISummaryAckMessage;
+}
+
+// @beta @legacy
+export interface IAdditionalSummaryTree {
+    readonly onAccepted?: (context: ISummaryContext) => void;
+    readonly summary: ISummaryTree;
 }
 
 // @beta @legacy
@@ -314,6 +314,24 @@ export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseC
 }
 
 // @beta @legacy
+export interface ISummaryGenerationContext {
+    readonly fullTree: boolean;
+    readonly previousSummary: ISummaryContext | undefined;
+    readonly referenceSequenceNumber: number;
+    readonly trackState: boolean;
+}
+
+// @beta @legacy
+export interface ISummaryGenerationOptions {
+    readonly additionalRootTree?: {
+        readonly key: string;
+        readonly summarize: (context: ISummaryGenerationContext) => IAdditionalSummaryTree;
+    };
+    readonly forceFullTree?: boolean;
+    readonly fullTreeUntilFirstAck?: boolean;
+}
+
+// @beta @legacy
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
     // (undocumented)
     contents: ISummaryNack;
@@ -367,7 +385,7 @@ export interface LoadContainerRuntimeParams {
     // @deprecated
     requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
     runtimeOptions?: IContainerRuntimeOptions;
-    summaryGenerationOptions?: SummaryGenerationOptions;
+    summaryGenerationOptions?: ISummaryGenerationOptions;
 }
 
 // @beta @deprecated @legacy (undocumented)
@@ -437,24 +455,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     unsetPendingAckTimerTimeoutCallback(): void;
     waitFlushed(): Promise<IAckedSummary | undefined>;
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
-}
-
-// @beta @legacy
-export interface SummaryGenerationContext {
-    readonly fullTree: boolean;
-    readonly previousSummary: ISummaryContext | undefined;
-    readonly referenceSequenceNumber: number;
-    readonly trackState: boolean;
-}
-
-// @beta @legacy
-export interface SummaryGenerationOptions {
-    readonly additionalRootTree?: {
-        readonly key: string;
-        readonly summarize: (context: SummaryGenerationContext) => AdditionalSummaryTree;
-    };
-    readonly forceFullTree?: boolean;
-    readonly fullTreeUntilFirstAck?: boolean;
 }
 
 // @beta @legacy

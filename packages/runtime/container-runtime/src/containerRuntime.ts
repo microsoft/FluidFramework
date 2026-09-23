@@ -770,7 +770,7 @@ type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSeq
  * The checkpoint and accepted parent used to generate an application summary subtree.
  * @legacy @beta
  */
-export interface SummaryGenerationContext {
+export interface ISummaryGenerationContext {
 	/** Whether this attempt must write all content without prior-summary handles. */
 	readonly fullTree: boolean;
 	/** Whether native summary state is being tracked for this attempt. */
@@ -789,7 +789,7 @@ export interface SummaryGenerationContext {
  * Application content and optional acceptance bookkeeping captured at one summary checkpoint.
  * @legacy @beta
  */
-export interface AdditionalSummaryTree {
+export interface IAdditionalSummaryTree {
 	/** A fresh tree that will not subsequently be mutated. It may specify a `groupId`. */
 	readonly summary: ISummaryTree;
 	/**
@@ -804,9 +804,9 @@ export interface AdditionalSummaryTree {
 	readonly onAccepted?: (context: ISummaryContext) => void;
 }
 
-interface PendingSummaryGeneration {
-	readonly context: SummaryGenerationContext;
-	readonly onAccepted: AdditionalSummaryTree["onAccepted"];
+interface IPendingSummaryGeneration {
+	readonly context: ISummaryGenerationContext;
+	readonly onAccepted: IAdditionalSummaryTree["onAccepted"];
 }
 
 /**
@@ -816,7 +816,7 @@ interface PendingSummaryGeneration {
  * including a summarizer client.
  * @legacy @beta
  */
-export interface SummaryGenerationOptions {
+export interface ISummaryGenerationOptions {
 	/**
 	 * Always generate full structural summaries of the native runtime tree, including data stores,
 	 * DDSes and GC state, without reusing summary handles. Defaults to false.
@@ -865,7 +865,7 @@ export interface SummaryGenerationOptions {
 		 * context.previousSummary. Newly loaded application revisions are not automatically comparable
 		 * to revisions captured by a previous runtime instance.
 		 */
-		readonly summarize: (context: SummaryGenerationContext) => AdditionalSummaryTree;
+		readonly summarize: (context: ISummaryGenerationContext) => IAdditionalSummaryTree;
 	};
 }
 
@@ -895,7 +895,7 @@ export interface LoadContainerRuntimeParams {
 	/**
 	 * Native summary generation policy and additional application content, captured at load time.
 	 */
-	summaryGenerationOptions?: SummaryGenerationOptions;
+	summaryGenerationOptions?: ISummaryGenerationOptions;
 	/**
 	 * runtime services provided with context
 	 */
@@ -1797,10 +1797,10 @@ export class ContainerRuntime
 	private readonly loadedSummaryContext: ISummaryContext | undefined;
 	private hasAcceptedFullSummary = false;
 	/** Only completed proposals retain application acceptance callbacks strongly. */
-	private readonly pendingSummaryGenerations = new Map<string, PendingSummaryGeneration>();
+	private readonly pendingSummaryGenerations = new Map<string, IPendingSummaryGeneration>();
 	private readonly generatedSummaryStates = new WeakMap<
 		ISummaryTree,
-		PendingSummaryGeneration
+		IPendingSummaryGeneration
 	>();
 	/** A failed coordinated adoption is terminal because native summary state cannot be rolled back. */
 	private summaryAcceptanceError: UsageError | undefined;
@@ -1863,7 +1863,7 @@ export class ContainerRuntime
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
-		private readonly summaryGenerationOptions?: SummaryGenerationOptions,
+		private readonly summaryGenerationOptions?: ISummaryGenerationOptions,
 	) {
 		super();
 
@@ -3111,7 +3111,7 @@ export class ContainerRuntime
 
 	private addAdditionalRootTreeToSummary(
 		summaryTree: ISummaryTreeWithStats,
-		context: SummaryGenerationContext,
+		context: ISummaryGenerationContext,
 	): void {
 		const additionalRootTree = this.summaryGenerationOptions?.additionalRootTree;
 		if (additionalRootTree === undefined) {
@@ -5059,7 +5059,7 @@ export class ContainerRuntime
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
-			let summaryGeneration: PendingSummaryGeneration | undefined;
+			let summaryGeneration: IPendingSummaryGeneration | undefined;
 			try {
 				summarizeResult = await this.summarize({
 					fullTree,

@@ -46,8 +46,8 @@ import type { IInspectableStorageAdapter } from "./inspectableStorageAdapter.js"
 import { createLocalSeedBackend } from "./localSeedWorkflowBackend.js";
 import {
 	sampleRuntimeFactory,
-	type AppObservation,
-	type HtmlEntryPoint,
+	type IAppObservation,
+	type IHtmlEntryPoint,
 } from "./sampleRuntimeFactory.js";
 import {
 	seedBaselineBlobName,
@@ -62,7 +62,7 @@ const largeText = Array.from({ length: 100 }, (_, i) =>
 ).join("");
 
 /** Observe the actual loader-to-runtime boundary, never a direct test invocation of the adapter. */
-interface LoaderDispatch {
+interface ILoaderDispatch {
 	/** Match delivery to the independently instantiated receiver. */
 	readonly context: IContainerContext;
 	/** Preserve the physical packet before native processing can unpack or mutate it. */
@@ -105,7 +105,7 @@ function unpackDataStoreMessage(
 }
 
 /** Select a real shared text value; no native operations or DDS processing are mocked in these tests. */
-function text(app: HtmlEntryPoint, part: "first" | "second"): HtmlText {
+function text(app: IHtmlEntryPoint, part: "first" | "second"): HtmlText {
 	const element = app.view.root[part][0];
 	assert(element instanceof HtmlElement);
 	const node = element.children[0];
@@ -136,9 +136,9 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 	let backend: IInspectableStorageAdapter;
 	let tracker: LoaderContainerTracker;
 	let containers: IContainer[];
-	let observations: AppObservation[];
+	let observations: IAppObservation[];
 	let writes: IBatchMessage[];
-	let dispatches: LoaderDispatch[];
+	let dispatches: ILoaderDispatch[];
 	let failures: SeedBaselineMismatchError[];
 	let tamper: ((batch: IBatchMessage[]) => IBatchMessage[]) | undefined;
 	let transportOptions: Parameters<typeof sampleRuntimeFactory>[0];
@@ -225,7 +225,7 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 					// The current Loader calls IRuntime.process for every sequenced packet.
 					// A dispatch-surface change must break these assertions, not bypass validation silently.
 					process: (message, local) => {
-						const dispatch: LoaderDispatch = {
+						const dispatch: ILoaderDispatch = {
 							context: observedContext,
 							message: structuredClone(message),
 							local,
@@ -284,7 +284,7 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 		url: string,
 		pending?: string,
 		version?: string,
-	): Promise<{ container: IContainer; app: HtmlEntryPoint; observation: AppObservation }> {
+	): Promise<{ container: IContainer; app: IHtmlEntryPoint; observation: IAppObservation }> {
 		const container = track(
 			await loader().resolve(
 				{
@@ -295,7 +295,7 @@ describe("Seed baseline fingerprint: real runtime transport", function () {
 			),
 		);
 		await waitForContainerConnection(container);
-		const app = (await container.getEntryPoint()) as HtmlEntryPoint;
+		const app = (await container.getEntryPoint()) as IHtmlEntryPoint;
 		const observation = observations.find((entry) => entry.app === app);
 		assert(observation !== undefined);
 		return { container, app, observation };

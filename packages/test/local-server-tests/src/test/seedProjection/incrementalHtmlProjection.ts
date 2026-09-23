@@ -4,8 +4,8 @@
  */
 
 import type {
-	AdditionalSummaryTree,
-	SummaryGenerationContext,
+	IAdditionalSummaryTree,
+	ISummaryGenerationContext,
 } from "@fluidframework/container-runtime/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
@@ -23,7 +23,7 @@ import { serializeHtml } from "./htmlSeedFormat.js";
 import { fromTree, type HtmlChildren, type HtmlView } from "./htmlTreeSchema.js";
 
 /** Revisions captured by one proposal, tied to the parent that actually accepted its projection. */
-interface AcceptedProjection {
+interface IAcceptedProjection {
 	/** Storage parent against which the captured part paths are known to exist. */
 	readonly context: ISummaryContext;
 	/** Local dirty counters as captured at generation, never the counters at ACK delivery time. */
@@ -52,7 +52,7 @@ export class IncrementalHtmlProjection {
 	private readonly unsubscribeParts = new Map<HtmlPartId, () => void>();
 	private unsubscribeRoot: () => void;
 	private readonly unsubscribeView: () => void;
-	private accepted: AcceptedProjection | undefined;
+	private accepted: IAcceptedProjection | undefined;
 
 	public constructor(
 		private readonly view: HtmlView,
@@ -100,7 +100,7 @@ export class IncrementalHtmlProjection {
 	 * Capturing counters is constant work per part, not a traversal or byte-comparison of unchanged HTML.
 	 * The runtime calls onAccepted only for this proposal after adopting its actual native/GC/storage parent.
 	 */
-	public summarize(context: SummaryGenerationContext): AdditionalSummaryTree {
+	public summarize(context: ISummaryGenerationContext): IAdditionalSummaryTree {
 		const captured = { ...this.revisions };
 		const canReuse =
 			context.trackState &&

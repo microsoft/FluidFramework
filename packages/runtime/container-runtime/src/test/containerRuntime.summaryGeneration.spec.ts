@@ -34,9 +34,9 @@ import { ChannelCollection } from "../channelCollection.js";
 import {
 	ContainerRuntime,
 	loadContainerRuntime,
-	type AdditionalSummaryTree,
-	type SummaryGenerationContext,
-	type SummaryGenerationOptions,
+	type IAdditionalSummaryTree,
+	type ISummaryGenerationContext,
+	type ISummaryGenerationOptions,
 } from "../containerRuntime.js";
 import { GarbageCollector } from "../gc/index.js";
 import { neverCancelledSummaryToken, type ISubmitSummaryOpResult } from "../summary/index.js";
@@ -70,7 +70,7 @@ describe("Runtime summary generation options", () => {
 	 * The returned spies distinguish generation, upload, and submit failures; suite cleanup disposes the runtime.
 	 */
 	async function createRuntime(
-		summaryGenerationOptions?: SummaryGenerationOptions,
+		summaryGenerationOptions?: ISummaryGenerationOptions,
 		attachState = AttachState.Attached,
 		loadedParent?: { id: string; sequenceNumber: number },
 	): Promise<{
@@ -187,7 +187,7 @@ describe("Runtime summary generation options", () => {
 	it("keeps retries full until a tracked ACK adopts the native and GC baseline", async () => {
 		const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 		const gc = sandbox.spy(GarbageCollector.prototype, "summarize");
-		const contexts: SummaryGenerationContext[] = [];
+		const contexts: ISummaryGenerationContext[] = [];
 		const accepted: ISummaryContext[] = [];
 		const fixture = await createRuntime({
 			fullTreeUntilFirstAck: true,
@@ -403,7 +403,7 @@ describe("Runtime summary generation options", () => {
 
 	// The loaded parent checkpoint is stable as ops advance; attach has no prior summary against which to reuse.
 	it("reports effective generation context and the original loaded parent", async () => {
-		const contexts: SummaryGenerationContext[] = [];
+		const contexts: ISummaryGenerationContext[] = [];
 		const fixture = await createRuntime(
 			{
 				fullTreeUntilFirstAck: true,
@@ -759,7 +759,7 @@ describe("Runtime summary generation options", () => {
 		const { runtime } = await createRuntime({
 			additionalRootTree: {
 				key: "application",
-				summarize: (): AdditionalSummaryTree =>
+				summarize: (): IAdditionalSummaryTree =>
 					Object.assign(Promise.resolve(), { summary: additionalTree() }),
 			},
 		});

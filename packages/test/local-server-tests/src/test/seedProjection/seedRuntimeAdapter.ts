@@ -14,15 +14,15 @@ import {
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 
-import type { ApplicationProjection } from "./externalSeedFile.js";
-import type { NativeBaseline } from "./nativeSeedBaseline.js";
+import type { IApplicationProjection } from "./externalSeedFile.js";
+import type { INativeBaseline } from "./nativeSeedBaseline.js";
 import {
 	createSeedBaselineDescriptor,
 	readSeedBaselineDescriptor,
 	SeedBaselineMismatchError,
 	SeedBaselineProtocol,
-	type RetainedSeedBaseline,
-	type SeedBaselineDescriptor,
+	type IRetainedSeedBaseline,
+	type ISeedBaselineDescriptor,
 } from "./seedBaselineFingerprint.js";
 
 /**
@@ -47,29 +47,29 @@ export function forward<T extends object>(source: T, overrides: Partial<T>): T {
 }
 
 /** Reconstruction identity retained with pending state to detect a different source or codec. */
-export interface Provenance {
+export interface IProvenance {
 	/** Versioned application format identifying the materialization rules. */
 	format: string;
 	/** Original persisted snapshot version, when the loader exposes one. */
 	sourceVersion?: string;
 	/** Source checkpoint before the loader applies the sequenced operation suffix. */
 	sourceSequenceNumber: number;
-	/** NativeBaseline's 64-hex SHA-256 identity; diagnostic, not a consensus protocol. */
+	/** INativeBaseline's 64-hex SHA-256 identity; diagnostic, not a consensus protocol. */
 	fingerprint: string;
 }
 
 /** Runtime-owned pending-state envelope; loader caches keep their original, unprojected snapshot. */
-interface PendingProjection {
+interface IPendingProjection {
 	/** Version discriminator separating this envelope from ordinary runtime pending state. */
 	type: "seed-projection-pending/1";
 	/** Expected materialization identity when the previous runtime loaded a seed. */
-	provenance?: Provenance;
+	provenance?: IProvenance;
 	/** Source bytes needed when a restored loader snapshot omitted the projection's blob bodies. */
-	seed?: ApplicationProjection;
+	seed?: IApplicationProjection;
 	/** Agreement identity is retained even when pending operations were captured before transport stamping. */
-	baseline?: SeedBaselineDescriptor;
+	baseline?: ISeedBaselineDescriptor;
 	/** Native-summary descriptor bytes, bound to their source blob ID for offline restoration. */
-	retainedBaseline?: RetainedSeedBaseline;
+	retainedBaseline?: IRetainedSeedBaseline;
 	/** Loaded source checkpoint/version, separate from genesis identity; version may be unavailable from a driver. */
 	loadedFrom?: { version?: string; sequenceNumber: number };
 	/** Native runtime pending state, forwarded unchanged to the delegated runtime. */
@@ -77,7 +77,7 @@ interface PendingProjection {
 }
 
 /** Recognize the reference envelope before unwrapping native pending state for runtime loading. */
-function isPendingProjection(value: unknown): value is PendingProjection {
+function isPendingProjection(value: unknown): value is IPendingProjection {
 	return (
 		typeof value === "object" &&
 		value !== null &&
@@ -90,7 +90,7 @@ function isPendingProjection(value: unknown): value is PendingProjection {
  * Application-owned codec used by seedRuntimeFactory before normal native runtime loading.
  * This reference uses an HTML payload; this is not a proposed generic SDK codec interface.
  */
-export interface Projector {
+export interface IProjector {
 	/** Versioned format governing accepted seed input and deterministic construction. */
 	format: string;
 	/** Recognize native state that must load normally rather than being regenerated from a projection. */
@@ -98,14 +98,14 @@ export interface Projector {
 	/** Read source bytes, optionally reusing retained bytes whose persisted blob IDs still match. */
 	readSeed(
 		context: IContainerContext,
-		retained?: ApplicationProjection,
-	): Promise<ApplicationProjection>;
+		retained?: IApplicationProjection,
+	): Promise<IApplicationProjection>;
 	/** Pure deterministic materialization for fixed seed/checkpoint/codec; never replay ops or allocate live sessions. */
-	materialize(seed: ApplicationProjection, sequenceNumber: number): NativeBaseline;
+	materialize(seed: IApplicationProjection, sequenceNumber: number): INativeBaseline;
 }
 
 /** Both context views and the decision handed to the application's native runtime factory. */
-export interface ProjectionLoad {
+export interface IProjectionLoad {
 	/** Actual loader-owned context; its source snapshot, checkpoint, storage identity, and ops remain unchanged. */
 	original: IContainerContext;
 	/** Runtime-facing context, with a coherent native snapshot/storage overlay only when projection was needed. */
@@ -113,9 +113,9 @@ export interface ProjectionLoad {
 	/** Whether this runtime materialized a seed and needs full native state until its first tracked summary ACK. */
 	projected: boolean;
 	/** Reconstruction identity retained or produced by this load, when available. */
-	provenance?: Provenance;
+	provenance?: IProvenance;
 	/** Immutable genesis agreement, computed for a seed or read from a native summary sidecar. */
-	baseline?: SeedBaselineDescriptor;
+	baseline?: ISeedBaselineDescriptor;
 }
 
 /**
@@ -128,13 +128,13 @@ export interface ProjectionLoad {
  * The delegate must enforce full structural summaries until a projected load adopts a tracked native summary.
  */
 export function seedRuntimeFactory(
-	projector: Projector,
-	delegate: (load: ProjectionLoad, existing: boolean) => Promise<IRuntime>,
+	projector: IProjector,
+	delegate: (load: IProjectionLoad, existing: boolean) => Promise<IRuntime>,
 	options: {
 		/** Set false to prove native reload works without a seed-materialization fallback. */
 		allowProjection?: boolean;
 		/** Test observation hook after adaptation and before invoking the native runtime factory. */
-		observe?: (load: ProjectionLoad, original: IContainerContext) => void;
+		observe?: (load: IProjectionLoad, original: IContainerContext) => void;
 		/** Opt into the reference packet protocol; the sample factory always enables it. */
 		enforceBaselineFingerprint?: boolean;
 		/** Receive mismatch evidence and captured pending runtime work before the container closes. */
@@ -157,9 +157,9 @@ export function seedRuntimeFactory(
 					pending === undefined ? original.pendingLocalState : pending.runtime,
 			});
 			let provenance = pending?.provenance;
-			let seed: ApplicationProjection | undefined;
-			let baselineDescriptor: SeedBaselineDescriptor | undefined;
-			let retainedBaseline: RetainedSeedBaseline | undefined;
+			let seed: IApplicationProjection | undefined;
+			let baselineDescriptor: ISeedBaselineDescriptor | undefined;
+			let retainedBaseline: IRetainedSeedBaseline | undefined;
 			const projected = !projector.isNative(original);
 			if (projected) {
 				if (options.allowProjection === false) {
@@ -195,7 +195,7 @@ export function seedRuntimeFactory(
 				// Preserve the complete original envelope, including protocol and app provenance.
 				const projectTree = (
 					source: ISnapshotTree,
-					projectedBase: NativeBaseline,
+					projectedBase: INativeBaseline,
 				): ISnapshotTree => ({
 					...source,
 					blobs: { ...source.blobs, ...projectedBase.snapshot.blobs },
@@ -341,7 +341,7 @@ export function seedRuntimeFactory(
 					},
 				});
 			}
-			const load: ProjectionLoad = {
+			const load: IProjectionLoad = {
 				original,
 				context,
 				projected,
@@ -359,7 +359,9 @@ export function seedRuntimeFactory(
 						};
 			// Generated overlays are intentionally not serialized. Only source dependencies
 			// omitted from the loader's initial ISnapshot are retained for reconstruction.
-			const capturePending: IRuntime["getPendingLocalState"] = (props): PendingProjection => ({
+			const capturePending: IRuntime["getPendingLocalState"] = (
+				props,
+			): IPendingProjection => ({
 				type: "seed-projection-pending/1",
 				provenance,
 				seed,

@@ -140,8 +140,8 @@ metadata, and explicit failure propagation. The key is currently application-sel
 and optional application-authored `AGENTS.md` remain
 [open design questions](ARCHITECTURE.md#projection-discovery-open-design).
 
-The synchronous callback receives `SummaryGenerationContext`: checkpoint, effective full-tree/tracking mode, and the
-exact accepted parent. It returns `AdditionalSummaryTree`, containing a tree and optional proposal-specific
+The synchronous callback receives `ISummaryGenerationContext`: checkpoint, effective full-tree/tracking mode, and the
+exact accepted parent. It returns `IAdditionalSummaryTree`, containing a tree and optional proposal-specific
 `onAccepted` callback. Callbacks must not mutate the model, run asynchronous work, or start schema upgrades.
 Capture uses the summarizer's sequenced state while incoming processing is paused, not an interactive client's
 optimistic pending edits. The root callback also runs when unchanged native descendants reuse handles.

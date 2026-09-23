@@ -21,7 +21,7 @@ export type HtmlPartId = "first" | "second";
 export const htmlPartIds: readonly HtmlPartId[] = ["first", "second"];
 
 /** The reference document's two independently editable and independently reusable HTML parts. */
-export interface HtmlParts {
+export interface IHtmlParts {
 	/** HTML mapped to the first SharedTree subtree and first/document.html. */
 	first: string;
 	/** HTML mapped to the second SharedTree subtree and second/document.html. */
@@ -40,7 +40,7 @@ export function createProjectionManifest(): string {
  * Application-readable payload extracted from either a seed or a graduated native snapshot.
  * Storage IDs bind retained bytes to a specific snapshot; they are not native DDS identities.
  */
-export interface ApplicationProjection {
+export interface IApplicationProjection {
 	/** Storage blob ID of manifest.work in the inspected snapshot. */
 	manifestId: string;
 	/** Storage blob IDs for each part's document.html in the inspected snapshot. */
@@ -48,7 +48,7 @@ export interface ApplicationProjection {
 	/** Original UTF-8 manifest JSON, including the versioned format and two part paths. */
 	manifest: string;
 	/** Original UTF-8 HTML payloads; reading does not canonicalize or materialize either part. */
-	parts: HtmlParts;
+	parts: IHtmlParts;
 }
 
 /**
@@ -56,7 +56,7 @@ export interface ApplicationProjection {
  * Equal parts produce byte-identical output; this does not allocate IDs or inspect a live runtime.
  * The caller supplies supported HTML (validated during creation or canonicalized by the live model).
  */
-export function createApplicationProjection(parts: HtmlParts): ISummaryTree {
+export function createApplicationProjection(parts: IHtmlParts): ISummaryTree {
 	const projection = new SummaryTreeBuilder({ groupId: projectionGroup });
 	projection.addBlob("manifest.work", createProjectionManifest());
 	for (const partId of htmlPartIds) {
@@ -74,7 +74,7 @@ export function createApplicationProjection(parts: HtmlParts): ISummaryTree {
  * The envelope and fixed code package are a reference protocol, not a stable public file format.
  * For identical HTML the result is identical; file identity is allocated by storage, not here.
  */
-export function createSeedSummary(parts: HtmlParts): ISummaryTree {
+export function createSeedSummary(parts: IHtmlParts): ISummaryTree {
 	for (const partId of htmlPartIds) parseHtml(parts[partId]);
 	const protocol = new SummaryTreeBuilder();
 	protocol.addBlob(
@@ -120,9 +120,9 @@ export async function readApplicationProjection(
 	readBlob: IDocumentStorageService["readBlob"],
 	options: {
 		/** Previously retained source bytes, usable only when all manifest and part blob IDs match. */
-		retained?: ApplicationProjection;
+		retained?: IApplicationProjection;
 	} = {},
-): Promise<ApplicationProjection> {
+): Promise<IApplicationProjection> {
 	const projectionTree: ISnapshotTree | undefined = snapshot.trees[projectionKey];
 	const manifestId: string | undefined = projectionTree?.blobs["manifest.work"];
 	const firstId: string | undefined = projectionTree?.trees.first?.blobs["document.html"];

@@ -24,7 +24,7 @@ import { configuredSharedTree } from "@fluidframework/tree/internal";
 
 import { parseHtml, serializeHtml } from "./htmlSeedFormat.js";
 import { HtmlDocument, toTree, viewConfiguration } from "./htmlTreeSchema.js";
-import type { HtmlParts } from "./externalSeedFile.js";
+import type { IHtmlParts } from "./externalSeedFile.js";
 
 export const storeType = "reference-html-store";
 export const storeId = "document";
@@ -37,7 +37,7 @@ const genesisSession = "beefbeef-beef-4000-8000-000000000001" as SessionId;
  * Complete native application baseline presented to ContainerRuntime before normal loading.
  * This is an in-memory projection, not a new persisted snapshot or a replacement protocol envelope.
  */
-export interface NativeBaseline {
+export interface INativeBaseline {
 	/** Full runtime-root summary containing native metadata, aliases, compressor, stores, and DDSs. */
 	summary: ISummaryTree;
 	/** Equivalent ID-only tree using deterministic `projected:<sha256>` virtual blob IDs. */
@@ -65,7 +65,10 @@ export interface NativeBaseline {
  * It preserves the source checkpoint and does not replay its op suffix. The fingerprint diagnoses
  * incompatible reconstruction; it is not a production first-op agreement or authentication protocol.
  */
-export function buildNativeBaseline(parts: HtmlParts, sequenceNumber: number): NativeBaseline {
+export function buildNativeBaseline(
+	parts: IHtmlParts,
+	sequenceNumber: number,
+): INativeBaseline {
 	if (!Number.isSafeInteger(sequenceNumber) || sequenceNumber < 0) {
 		throw new Error("A native baseline requires a nonnegative integer checkpoint");
 	}

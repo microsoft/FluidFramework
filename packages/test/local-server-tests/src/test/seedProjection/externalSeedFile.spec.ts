@@ -13,7 +13,7 @@ import {
 	createProjectionManifest,
 	projectionKey,
 	readApplicationProjection,
-	type ApplicationProjection,
+	type IApplicationProjection,
 } from "./externalSeedFile.js";
 import { format } from "./htmlSeedFormat.js";
 import { createLocalSeedBackend } from "./localSeedWorkflowBackend.js";
@@ -35,7 +35,7 @@ function projectionSnapshot(): ISnapshotTree {
 }
 
 /** Represent previously read source bytes, including the IDs required to bind them to one snapshot. */
-function retainedProjection(): ApplicationProjection {
+function retainedProjection(): IApplicationProjection {
 	return {
 		manifestId: "manifest-id",
 		partBlobIds: { first: "first-id", second: "second-id" },
