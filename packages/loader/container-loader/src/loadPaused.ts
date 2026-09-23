@@ -65,31 +65,31 @@ export async function loadContainerPaused(
 		},
 	});
 
-	const closeAndDispose = (error: ICriticalContainerError): void => {
-		container.close(error);
-		container.dispose(error);
-	};
-
 	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
-	let closeError: ICriticalContainerError | undefined;
-	const captureCloseError = (error?: ICriticalContainerError): void => {
-		closeError = error;
+	let setupContainerUnavailableError: ICriticalContainerError | undefined;
+	const captureSetupContainerUnavailableError = (error?: ICriticalContainerError): void => {
+		setupContainerUnavailableError = error;
 	};
-	container.on("closed", captureCloseError);
+	container.on("closed", captureSetupContainerUnavailableError);
+	container.on("disposed", captureSetupContainerUnavailableError);
 	try {
 		container.forceReadonly?.(true);
 	} catch (error) {
 		const normalizedError = normalizeError(error);
-		closeAndDispose(normalizedError);
+		container.dispose(normalizedError);
 		throw normalizedError;
 	} finally {
-		container.off("closed", captureCloseError);
+		container.off("closed", captureSetupContainerUnavailableError);
+		container.off("disposed", captureSetupContainerUnavailableError);
 	}
 	if (container.closed) {
 		const error = normalizeError(
-			closeError ?? new GenericError("Container closed before the paused load completed."),
+			setupContainerUnavailableError ??
+				new GenericError(
+					"Container closed or disposed without error before the paused load completed.",
+				),
 		);
-		closeAndDispose(error);
+		container.dispose(error);
 		throw error;
 	}
 
@@ -122,23 +122,25 @@ export async function loadContainerPaused(
 		const error = new GenericError(
 			"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 		);
-		closeAndDispose(error);
+		container.dispose(error);
 		throw error;
 	}
 
 	let opHandler: () => void;
 	let onAbort: () => void;
 	let onContainerUnavailable: (error?: ICriticalContainerError) => void;
-	let containerUnavailableError: ReturnType<typeof normalizeError> | undefined;
+	let replayContainerUnavailableError: ReturnType<typeof normalizeError> | undefined;
 
 	const promise = new Promise<void>((resolve, reject) => {
 		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
 		onContainerUnavailable = (error?: ICriticalContainerError): void => {
-			containerUnavailableError = normalizeError(
+			replayContainerUnavailableError = normalizeError(
 				error ??
-					new GenericError("Container closed while the paused load was waiting for ops."),
+					new GenericError(
+						"Container closed or disposed without error while the paused load was waiting for ops.",
+					),
 			);
-			reject(containerUnavailableError);
+			reject(replayContainerUnavailableError);
 		};
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
@@ -178,31 +180,31 @@ export async function loadContainerPaused(
 	await promise
 		.catch((error: unknown) => {
 			const normalizedError = normalizeError(error);
-			closeAndDispose(normalizedError);
+			container.dispose(normalizedError);
 			throw normalizedError;
 		})
 		.finally(() => {
-			try {
-				// A failure closes the container in the catch above. Disconnecting it again would throw
-				// and replace the original replay or cancellation error.
-				if (!container.closed) {
-					container.disconnect();
-				}
-			} finally {
-				container.off("op", opHandler);
-				container.off("closed", onContainerUnavailable);
-				container.off("disposed", onContainerUnavailable);
-				signal?.removeEventListener("abort", onAbort);
+			// A failure disposes the container in the catch above. Disconnecting it again would throw
+			// and replace the original replay or cancellation error.
+			if (!container.closed) {
+				container.disconnect();
 			}
+
+			container.off("op", opHandler);
+			container.off("closed", onContainerUnavailable);
+			container.off("disposed", onContainerUnavailable);
+			signal?.removeEventListener("abort", onAbort);
 		});
 
 	// Resolving the replay promise does not stop later listeners in the same synchronous op
 	// emission. Recheck the lifecycle state before returning in case one of them closed the container.
 	if (container.closed) {
 		const error =
-			containerUnavailableError ??
-			new GenericError("Container closed before the paused load completed.");
-		closeAndDispose(error);
+			replayContainerUnavailableError ??
+			new GenericError(
+				"Container closed or disposed without error before the paused load completed.",
+			);
+		container.dispose(error);
 		throw error;
 	}
 

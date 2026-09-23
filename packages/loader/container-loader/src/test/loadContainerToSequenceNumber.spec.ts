@@ -217,9 +217,11 @@ describe("loadContainerToSequenceNumber", () => {
 		) as ICriticalContainerError;
 		const sandbox = createSandbox();
 		const loadContainer = Container.load.bind(Container);
+		let closeSpy: SinonSpy | undefined;
 		let disposeSpy: SinonSpy | undefined;
 		sandbox.stub(Container, "load").callsFake(async (loadProps, createProps) => {
 			const container = await loadContainer(loadProps, createProps);
+			closeSpy = sandbox.spy(container, "close");
 			disposeSpy = sandbox.spy(container, "dispose");
 			sandbox.stub(container, "forceReadonly").callsFake(() => {
 				container.close(expectedError);
@@ -240,7 +242,41 @@ describe("loadContainerToSequenceNumber", () => {
 				}),
 				(error: unknown) => error === expectedError,
 			);
+			assert.equal(closeSpy?.calledOnceWithExactly(expectedError), true);
 			assert.equal(disposeSpy?.calledOnceWithExactly(expectedError), true);
+		} finally {
+			sandbox.restore();
+		}
+	});
+
+	it("rejects when the loaded container is disposed before completion", async () => {
+		const service = makeSnapshotService(await createSnapshot(0));
+		const expectedError = new GenericError(
+			"simulated disposal during forceReadonly",
+		) as ICriticalContainerError;
+		const sandbox = createSandbox();
+		const loadContainer = Container.load.bind(Container);
+		sandbox.stub(Container, "load").callsFake(async (loadProps, createProps) => {
+			const container = await loadContainer(loadProps, createProps);
+			sandbox.stub(container, "forceReadonly").callsFake(() => {
+				container.dispose(expectedError);
+			});
+			return container;
+		});
+
+		try {
+			await assert.rejects(
+				loadContainerToSequenceNumber({
+					codeLoader: createTestCodeLoaderProxy({
+						runtimeWithout_setConnectionStatus: true,
+					}),
+					urlResolver,
+					documentServiceFactory: makeCapableFactory(async () => service),
+					request: { url: resolvedUrl.url },
+					loadToSequenceNumber: 0,
+				}),
+				(error: unknown) => error === expectedError,
+			);
 		} finally {
 			sandbox.restore();
 		}
@@ -391,15 +427,18 @@ describe("loadContainerToSequenceNumber", () => {
 			});
 			assertContainerInteractions = (): void => {
 				assert.equal(connectStub.callCount, 1, "the replay should attempt to connect once");
-				assert.equal(
-					onSpy.getCalls().filter((call) => call.args[0] === "disposed").length,
-					1,
-					"the replay disposed listener should be registered once",
-				);
-				assert.equal(
-					offSpy.getCalls().filter((call) => call.args[0] === "disposed").length,
-					1,
-					"the replay disposed listener should be removed once",
+				const registeredDisposedListeners = onSpy
+					.getCalls()
+					.filter((call) => call.args[0] === "disposed")
+					.map((call) => call.args[1]);
+				const removedDisposedListeners = offSpy
+					.getCalls()
+					.filter((call) => call.args[0] === "disposed")
+					.map((call) => call.args[1]);
+				assert.deepEqual(
+					removedDisposedListeners,
+					registeredDisposedListeners,
+					"all disposed listeners should be removed after replay fails",
 				);
 				assert.equal(
 					offSpy.getCalls().filter((call) => call.args[0] === "op").length,
@@ -465,8 +504,9 @@ describe("loadContainerToSequenceNumber", () => {
 						return false;
 					}
 					rejectedError = error;
-					return error.message.includes(
-						"Container closed while the paused load was waiting for ops",
+					return (
+						error.message ===
+						"Container closed or disposed without error while the paused load was waiting for ops."
 					);
 				},
 			);
@@ -485,6 +525,7 @@ describe("loadContainerToSequenceNumber", () => {
 		let assertContainerInteractions: ((expectedError: IErrorBase) => void) | undefined;
 		sandbox.stub(Container, "load").callsFake(async (loadProps, createProps) => {
 			const container = await loadContainer(loadProps, createProps);
+			const closeSpy = sandbox.spy(container, "close");
 			const disposeSpy = sandbox.spy(container, "dispose");
 			const connectSpy = sandbox.spy(container, "connect");
 			const onSpy = sandbox.spy(container, "on");
@@ -494,6 +535,10 @@ describe("loadContainerToSequenceNumber", () => {
 					connectSpy.callCount,
 					0,
 					"an already-aborted load must not start a connection",
+				);
+				assert(
+					closeSpy.notCalled,
+					"a rejected load should be disposed without being closed first",
 				);
 				assert(disposeSpy.calledOnceWithExactly(expectedError));
 				assert.equal(
