@@ -4668,13 +4668,16 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			if (this.summarizerNode.isSummaryInProgress?.() !== true) {
-				this.garbageCollector.clearSummary();
+			try {
+				if (this.summarizerNode.isSummaryInProgress?.() !== true) {
+					this.garbageCollector.clearSummary();
+				}
+			} finally {
+				summaryLogger.sendTelemetryEvent({
+					eventName: "SummarizeTelemetry",
+					details: telemetryContext.serialize(),
+				});
 			}
-			summaryLogger.sendTelemetryEvent({
-				eventName: "SummarizeTelemetry",
-				details: telemetryContext.serialize(),
-			});
 		}
 	}
 

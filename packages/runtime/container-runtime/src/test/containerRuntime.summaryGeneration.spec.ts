@@ -553,6 +553,32 @@ describe("Runtime summary generation options", () => {
 		assert.equal(summary.tree.application, undefined);
 	});
 
+	for (const cleanupMethod of ["isSummaryInProgress", "clearSummary"]) {
+		it(`emits summary telemetry when ${cleanupMethod} throws during cleanup`, async () => {
+			const { runtime } = await createRuntime();
+			const mockLogger = new MockLogger();
+			const cleanupError = new Error("Summary cleanup failed");
+			if (cleanupMethod === "isSummaryInProgress") {
+				sandbox.stub(SummarizerNode.prototype, cleanupMethod).throws(cleanupError);
+			} else {
+				sandbox.stub(GarbageCollector.prototype, "clearSummary").throws(cleanupError);
+			}
+			await assert.rejects(
+				runtime.summarize({
+					...untrackedSummary,
+					summaryLogger: createChildLogger({ logger: mockLogger }),
+				}),
+				(error: unknown) => error === cleanupError,
+			);
+			const events = mockLogger.events.filter(
+				(event) => event.eventName === "SummarizeTelemetry",
+			);
+			assert.equal(events.length, 1);
+			assert.equal(typeof events[0].details, "string");
+			assert.notEqual(events[0].details, "{}");
+		});
+	}
+
 	for (const includeManifest of [false, true]) {
 		it(`accepts opaque application content at a chosen root (manifest ${includeManifest})`, async () => {
 			const createProjection = (): ISummaryTree => {
