@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -130,7 +130,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.116.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@3.1.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
@@ -251,23 +251,7 @@
 		"releasePkgVersion": "3.1.0"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_Buffer": {
-				"backCompat": false
-			},
-			"Function_Uint8ArrayToArrayBuffer": {
-				"backCompat": false
-			},
-			"TypeAlias_IsoBuffer": {
-				"backCompat": false
-			},
-			"Variable_IsoBuffer": {
-				"backCompat": false
-			},
-			"Variable_LayerCompatibilityPolicyWindowMonths": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": ""
 	}
 }

@@ -1542,9 +1542,7 @@ export const shortCodeMap = {
 	"0xb2e": "missing schema for type in cursor",
 	"0xb30": "missing schema for type in cursor",
 	"0xb31": "missing enum value",
-	"0xb32": "node is out of schema",
 	"0xb33": "a value for the key does not exist",
-	"0xb34": "the key is an unexpected type",
 	"0xb35": "missing schema",
 	"0xb36": "Could not find stored key in schema.",
 	"0xb37": "Not a tree node",
@@ -1883,7 +1881,6 @@ export const shortCodeMap = {
 	"0xcd6": "Expect coordinatorResult to be defined",
 	"0xcd7": "overlapsPos not supported on BaseSequenceInterval",
 	"0xcd8": "clone not supported on BaseSequenceInterval",
-	"0xcd9": "union not supported on BaseSequenceInterval",
 	"0xcda": "start and end cannot be undefined because they were not passed in as undefined",
 	"0xcdb": "Expected current label node to exist",
 	"0xcdc": "Expected label tree node to have children",
@@ -1993,5 +1990,10 @@ export const shortCodeMap = {
 	"0xd46": "Node change table is missing a parented node",
 	"0xd47": "Cross-field key table is missing an entry",
 	"0xd48": "Cross-field key table is pointing to the wrong field",
-	"0xd49": "Mismatch between cross-field key table and changeset"
+	"0xd49": "Mismatch between cross-field key table and changeset",
+	"0xd4a": "Unknown Simple Tree field kind",
+	"0xd4b": "the key field does not contain exactly one leaf value",
+	"0xd4c": "Root data store kind must be provided for new containers",
+	"0xd4d": "Should be able to set alias on new data store",
+	"0xd4e": "id should be defined when loading a container"
 };

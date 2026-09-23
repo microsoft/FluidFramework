@@ -22,6 +22,7 @@ import type { Configuration as WebpackConfiguration } from "webpack";
 import type Server from "webpack-dev-server";
 import type { Configuration, ExpressRequestHandler, Middleware } from "webpack-dev-server";
 
+import { createBaseDevServerConfig, createBaseExampleConfig } from "./baseConfig.js";
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
@@ -325,8 +326,10 @@ export function devServerConfig(
 	baseDir: string,
 	env: RouteOptions,
 ): { devServer: Configuration } {
+	const { devServer: baseDevServer } = createBaseDevServerConfig();
 	return {
 		devServer: {
+			...baseDevServer,
 			static: {
 				directory: path.join(
 					baseDir,
@@ -362,8 +365,15 @@ export function commonExampleConfig(
 	baseDir: string,
 	env: RouteOptions & { production?: boolean },
 ): WebpackConfiguration {
-	const { production } = env;
+	const config = createBaseExampleConfig(baseDir, env, {
+		html: false,
+		loaderPaths: {
+			sourceMapLoader: sourceMapLoaderPath,
+			typescriptLoader: tsLoaderPath,
+		},
+	});
 	return {
+		...config,
 		...devServerConfig(baseDir, env),
 		entry: {
 			main: "./src/index.ts",
@@ -393,11 +403,6 @@ export function commonExampleConfig(
 			path: path.resolve(baseDir, appBundleDirectory),
 			library: { name: "[name]", type: "umd" },
 		},
-		watchOptions: {
-			ignored: "**/node_modules/**",
-		},
-		mode: production ? "production" : "development",
-		devtool: production ? "source-map" : "inline-source-map",
 	};
 }
 

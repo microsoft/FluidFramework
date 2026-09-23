@@ -65,7 +65,7 @@ We also support volume mounting your local drive into the container which provid
 To start the service with your local drive mounted run the following commands:
 
 ```sh
-npm install -g pnpm
+npm install -g pnpm@11.27.0
 pnpm install
 npm run build
 npm start
