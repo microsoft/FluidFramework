@@ -93,6 +93,53 @@ npm run test:realsvc:run -- --driver=r11s
 npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=docker
 ```
 
+### SEA WebSocket Tests
+
+The default `test` and `test:realsvc` commands run local, Tinylicious, and then SEA.
+The client CI pipeline has a separate `RealsvcSeaTest` job, and the real-service pipeline has an `e2e_sea` stage.
+Both run the current-version selection; existing service-specific commands and compatibility selections remain unchanged.
+The default run therefore requires the SEA prerequisites listed below; use a service-specific command to run only that service.
+From the repository root, build the test package and run the current-version SEA configuration directly:
+
+```bash
+pnpm exec fluid-build packages/test/test-end-to-end-tests --task build:test:esm
+pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea --grep 'Driver lifecycle smoke'
+pnpm --dir packages/test/test-end-to-end-tests run test:realsvc:sea
+```
+
+The runner requires Linux, the repository Rust toolchain, matching `wasm-bindgen`, OpenSSL, and Node.js with built-in WebSocket support (tested with Node 22.23.2).
+It builds the native service with `websocket-stream`, selects memory storage, creates disposable certificates, and starts unforwarded loopback listeners on available ports.
+It supplies `SEA_TEST_WEBSOCKET_URL` to the test-driver factory and selects `sea-websocket`, `--compatKind=None`, and `--compatVersion=0` explicitly.
+Driver and compatibility overrides are rejected; test filters such as `--grep` and `--bail` remain available.
+The service owns document storage until shutdown; restart persistence and WebTransport backpressure are not exercised.
+Ordinary WebSocket adapter queues fail on overflow rather than applying receive backpressure.
+The Node originless-loopback exception must not be enabled on a forwarded or public endpoint.
+
+CI runs `test:realsvc:sea:report` through the root `ci:test:realsvc:sea` command or the real-service stage.
+It disables fail-fast behavior and uses the shared Mocha JUnit reporter; missing reports fail the SEA publishing step.
+The client build installs the Rust toolchain from `rust-service/rust-toolchain.toml` and the `wasm-bindgen` CLI version required by `sea-wasm`.
+The build archive includes generated WASM but excludes Cargo intermediates under `rust-service/target`.
+SEA test jobs install the native Rust toolchain and build their own service binary; their Linux agents must provide a C compiler, OpenSSL, and HTTPS access to the Rust distribution and Cargo registries.
+The commands and report generation have been checked locally, but hosted-agent setup and Azure pipeline execution remain unverified.
+
+Readiness is bounded to 30 seconds, individual tests default to 10 seconds, and the suite process is bounded to 10 minutes.
+The runner stops owned processes and removes certificates and temporary storage on failure or interruption; service logs are printed on failure.
+Nonzero results are not suppressed.
+The lifecycle smoke passes with the neutral-session driver's ordered membership projection.
+The validated current-version SEA selection has 658 passing tests, 526 pending tests, and no failures.
+Pending cases include inherited service-selection conditions; they are not passes.
+See the [integration results](../../../rust-service/historical/INTEGRATION_TEST_CONFIGURATION_PLAN.md#three-failure-repair-and-green-current-version-selection) for validation evidence and remaining coverage limitations.
+No SEA-specific behavioral tests are silently skipped by this configuration.
+The fixed historical-loader compression suite is explicitly pending for SEA because this configuration supports current-version APIs only.
+See the [SEA exclusion inventory](../../../rust-service/historical/INTEGRATION_TEST_CONFIGURATION_PLAN.md#sea-exclusion-inventory) for the exact cases and local-driver comparison evidence.
+
+Focused setup checks:
+
+```bash
+node --test packages/test/test-drivers/test/seaWebSocketTestDriver.test.mjs
+pnpm --dir packages/test/test-end-to-end-tests run test:sea:runner
+```
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

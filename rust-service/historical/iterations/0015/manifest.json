@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0015",
+	"status": "complete",
+	"sourceCommit": "ff7d736642c2711b44ce0507b2319c188ff46129",
+	"createdAt": "2026-09-17T19:12:28.144Z",
+	"activeWorkstreams": [
+		{
+			"name": "core-session",
+			"instructions": "phase-2/instructions/core-session.md",
+			"report": "phase-2/core-session.md"
+		},
+		{
+			"name": "storage",
+			"instructions": "phase-2/instructions/storage.md",
+			"report": "phase-2/storage.md"
+		},
+		{
+			"name": "decorators",
+			"instructions": "phase-2/instructions/decorators.md",
+			"report": "phase-2/decorators.md"
+		},
+		{
+			"name": "transport",
+			"instructions": "phase-2/instructions/transport.md",
+			"report": "phase-2/transport.md"
+		},
+		{
+			"name": "workloads",
+			"instructions": "phase-2/instructions/workloads.md",
+			"report": "phase-2/workloads.md"
+		}
+	],
+	"deferredWorkstreams": [],
+	"nextWorkstreams": ["contract-locality"]
+}

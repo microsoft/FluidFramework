@@ -173,7 +173,12 @@ describeInstallVersions(
 		requestAbsoluteVersions: [loaderWithoutCompressionField],
 	},
 	/* timeoutMs: 3 minutes */ 180000,
-)("Op Compression self-healing with old loader", (getProvider) =>
+)("Op Compression self-healing with old loader", (getProvider) => {
+	before("SEA supports current-version APIs only", function () {
+		if (getProvider().driver.type === "sea-websocket") {
+			this.skip();
+		}
+	});
 	compressionSuite(async () => {
 		const provider = getProvider();
 		// Ensure support for endpoint names for r11s driver. ODSP might need similar help at some point if we have
@@ -195,8 +200,8 @@ describeInstallVersions(
 			pkgVersion, // runtime version
 			pkgVersion, // datastore runtime version
 		);
-	}),
-);
+	});
+});
 
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
 	crypto.randomBytes(sizeInBytes / 2).toString("hex");

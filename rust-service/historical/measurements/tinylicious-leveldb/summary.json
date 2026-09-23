@@ -1,0 +1,825 @@
+{
+	"revision": "92ecf30f4a7d17db882cc39e7c60d8d19c1042ba",
+	"run": {
+		"schemaVersion": 1,
+		"startedAt": "2026-09-20T18:18:00.762Z",
+		"cwd": "/workspaces/FluidFramework",
+		"command": [
+			"node",
+			"rust-service/scripts/presentation-collect.mjs",
+			"matrix",
+			"rust-service/measurements/tinylicious-leveldb/campaign/cells",
+			"rust-service/measurements/tinylicious-leveldb/matrix.json"
+		],
+		"commit": "92ecf30f4a7d17db882cc39e7c60d8d19c1042ba",
+		"branch": "rust-service",
+		"status": "M rust-service/PRESENTATION_REPORT.md\n M rust-service/scripts/README.md\n M rust-service/scripts/presentation-collect.mjs\n M rust-service/scripts/presentation-stress.mjs\n?? rust-service/measurements/refresh-92ecf30/\n?? rust-service/measurements/tinylicious-leveldb/",
+		"environment": {
+			"cpu": "AMD EPYC 7763 64-Core Processor",
+			"logicalCpus": 32,
+			"memoryBytes": 135064969216,
+			"kernel": "6.8.0-1064-azure",
+			"node": "v22.23.2",
+			"rust": "rustc 1.98.1 (48a229cea 2026-09-01)",
+			"browser": "Chromium 152.0.7977.82 built on Debian GNU/Linux 13 (trixie)",
+			"os": "PRETTY_NAME=\"Debian GNU/Linux 13 (trixie)\"\nNAME=\"Debian GNU/Linux\"\nVERSION_ID=\"13\"\nVERSION=\"13 (trixie)\"\nVERSION_CODENAME=trixie\nDEBIAN_VERSION_FULL=13.6\nID=debian\nHOME_URL=\"https://www.debian.org/\"\nSUPPORT_URL=\"https://www.debian.org/support\"\nBUG_REPORT_URL=\"https://bugs.debian.org/\"",
+			"cpuQuota": "max 100000",
+			"memoryLimit": "max",
+			"cpuTopology": "# The following is the parsable format, which can be fed to other\n# programs. Each different item in every column has an unique ID\n# starting usually from zero.\n# CPU,Core\n0,0\n1,0\n2,1\n3,1\n4,2\n5,2\n6,3\n7,3\n8,4\n9,4\n10,5\n11,5\n12,6\n13,6\n14,7\n15,7\n16,8\n17,8\n18,9\n19,9\n20,10\n21,10\n22,11\n23,11\n24,12\n25,12\n26,13\n27,13\n28,14\n29,14\n30,15\n31,15",
+			"filesystem": "FSTYPE SOURCE                                OPTIONS\next4   /dev/loop4[/codespacemount/workspace] rw,nodev,relatime"
+		},
+		"finishedAt": "2026-09-20T18:18:14.699Z",
+		"elapsedSeconds": 13.755640191000001,
+		"exitCode": 0,
+		"signal": null,
+		"error": null
+	},
+	"manifest": {
+		"startedAt": "2026-09-20T18:18:00.976Z",
+		"commit": "92ecf30f4a7d17db882cc39e7c60d8d19c1042ba",
+		"status": " M rust-service/PRESENTATION_REPORT.md\n M rust-service/scripts/README.md\n M rust-service/scripts/presentation-collect.mjs\n M rust-service/scripts/presentation-stress.mjs\n?? rust-service/measurements/refresh-92ecf30/\n?? rust-service/measurements/tinylicious-leveldb/\n",
+		"cells": [
+			{
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 1,
+				"payloadBytes": 64,
+				"rate": 950,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			{
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 1,
+				"payloadBytes": 8192,
+				"rate": 800,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			{
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 4,
+				"payloadBytes": 64,
+				"rate": 950,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			{
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 4,
+				"payloadBytes": 8192,
+				"rate": 800,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			{
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 8,
+				"payloadBytes": 64,
+				"rate": 950,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			{
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 8,
+				"payloadBytes": 8192,
+				"rate": 800,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			}
+		],
+		"settings": {
+			"SEA_MAX_CONNECTIONS": "128",
+			"NODE_ENV": "production",
+			"native": "Cargo release, websocket-stream feature",
+			"wasm": "Cargo release, simd128",
+			"wireBytes": "not measured",
+			"seaStorage": [],
+			"tinyliciousStorage": ["leveldb"],
+			"generatorPhysicalCores": 4,
+			"generatorCpus": "16,18,20,22"
+		},
+		"artifacts": [
+			{
+				"file": "rust-service/target/release/sea-webtransport-server",
+				"sha256": "688ff59484b8a20b6d78b785000b43ff82dec5a0d6e85f6d17b82dd759354676"
+			},
+			{
+				"file": "rust-service/packages/sea-typescript/generated/websocket/node/sea_wasm_bg.wasm",
+				"sha256": "1d830a0e0232ddbac8453e290aa469bd98a406c2740cd34e4ca86b82c12ec0c9"
+			},
+			{
+				"file": "rust-service/scripts/presentation-stress.mjs",
+				"sha256": "2084980c63c79ba51a40e71566dab6379c55a7ce8bb4564e74855ba1a6fe4a8b"
+			},
+			{
+				"file": "rust-service/scripts/presentation-collect.mjs",
+				"sha256": "5fce8fd6c097a7e503bf38d66f063d090e70817ada73bbca772c7fa0d56c9879"
+			}
+		]
+	},
+	"results": [
+		{
+			"directory": "000-tinylicious-64-32docs-1cpu-950ops",
+			"exitCode": 1,
+			"status": "failed",
+			"configuration": {
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 1,
+				"payloadBytes": 64,
+				"rate": 950,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"error": "Error: Error: R11s socket error (connect_document_error): Failed to connect client to document. Check correlation Id ed2d160b-8aa1-402c-8727-691aab25b893 for details.",
+			"resourceSamples": []
+		},
+		{
+			"directory": "001-tinylicious-8192-32docs-1cpu-800ops",
+			"exitCode": 1,
+			"status": "failed",
+			"configuration": {
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 1,
+				"payloadBytes": 8192,
+				"rate": 800,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"error": "Error: Error: R11s socket error (connect_document_error): Failed to connect client to document. Check correlation Id a1c208fa-5442-4474-8390-de76020af228 for details.",
+			"resourceSamples": []
+		},
+		{
+			"directory": "002-tinylicious-64-32docs-4cpu-950ops",
+			"exitCode": 1,
+			"status": "failed",
+			"configuration": {
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 4,
+				"payloadBytes": 64,
+				"rate": 950,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"error": "Error: Error: R11s socket error (connect_document_error): Failed to connect client to document. Check correlation Id b23f7cc2-47ec-46ea-b4d7-d36e57a8fd7a for details.",
+			"resourceSamples": []
+		},
+		{
+			"directory": "003-tinylicious-8192-32docs-4cpu-800ops",
+			"exitCode": 1,
+			"status": "failed",
+			"configuration": {
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 4,
+				"payloadBytes": 8192,
+				"rate": 800,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"error": "Error: Error: R11s socket error (connect_document_error): Failed to connect client to document. Check correlation Id bef6d199-5a7c-4ee7-a7df-775181fe4e79 for details.",
+			"resourceSamples": []
+		},
+		{
+			"directory": "004-tinylicious-64-32docs-8cpu-950ops",
+			"exitCode": 1,
+			"status": "failed",
+			"configuration": {
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 8,
+				"payloadBytes": 64,
+				"rate": 950,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"error": "Error: Error: R11s socket error (connect_document_error): Failed to connect client to document. Check correlation Id 66ae9988-2b5f-4b20-a11d-821895e83aa8 for details.",
+			"resourceSamples": []
+		},
+		{
+			"directory": "005-tinylicious-8192-32docs-8cpu-800ops",
+			"exitCode": 1,
+			"status": "failed",
+			"configuration": {
+				"backend": "tinylicious",
+				"storage": "leveldb",
+				"cores": 8,
+				"payloadBytes": 8192,
+				"rate": 800,
+				"documents": 32,
+				"seconds": 10,
+				"warmupSeconds": 3
+			},
+			"error": "Error: Error: R11s socket error (connect_document_error): Failed to connect client to document. Check correlation Id a88a8965-3c16-4a15-be46-dbbdcc3a9642 for details.",
+			"resourceSamples": []
+		}
+	],
+	"smoke": {
+		"status": "failed",
+		"configuration": {
+			"backend": "tinylicious",
+			"storage": "leveldb",
+			"rate": 500,
+			"payloadBytes": 64,
+			"documents": 32,
+			"cores": 4,
+			"seconds": 3,
+			"warmupSeconds": 1
+		},
+		"error": "Error: Error: R11s socket error (connect_document_error): Failed to connect client to document. Check correlation Id 01b3f089-0829-4985-b688-564b45d9a2fa for details.",
+		"resourceSamples": []
+	},
+	"memoryControl": {
+		"status": "completed",
+		"configuration": {
+			"backend": "tinylicious",
+			"storage": "memory",
+			"cores": 4,
+			"payloadBytes": 64,
+			"rate": 500,
+			"documents": 32,
+			"seconds": 3,
+			"warmupSeconds": 1
+		},
+		"storage": "default-in-memory-database",
+		"transport": "socket.io",
+		"generator": "node",
+		"serviceCpu": "2,4,6,8",
+		"generatorCpus": "16,18,20,22",
+		"clockTicks": 100,
+		"deliveredOperationsPerSecond": 500,
+		"payloadMiBPerSecond": 0.030517578125,
+		"serviceCpuPercent": 36.71141743986942,
+		"serviceMeanRssMiB": 163.12337239583334,
+		"servicePeakRssMiB": 165.77734375,
+		"sustainable": true,
+		"workers": [
+			{
+				"type": "result",
+				"sent": 499,
+				"measuredSent": 375,
+				"deliveredInWindow": 375,
+				"missing": 0,
+				"errors": [],
+				"pendingAtEnd": 0,
+				"maxPending": 0,
+				"maxScheduleLagMilliseconds": 8,
+				"latencyMilliseconds": {
+					"median": 0.8423329999995985,
+					"p95": 1.5832070000005842,
+					"max": 3.6152219999999033
+				},
+				"generatorCpuSeconds": 0.218585,
+				"generatorPeakRssKiB": 101944,
+				"acknowledged": null,
+				"backlog": [
+					{
+						"seconds": 0.2536190979999999,
+						"pending": 0,
+						"sent": 31
+					},
+					{
+						"seconds": 0.5067401549999999,
+						"pending": 0,
+						"sent": 63
+					},
+					{
+						"seconds": 0.7582209189999999,
+						"pending": 0,
+						"sent": 94
+					},
+					{
+						"seconds": 1.0122092859999998,
+						"pending": 0,
+						"sent": 126
+					},
+					{
+						"seconds": 1.2658474999999998,
+						"pending": 0,
+						"sent": 158
+					},
+					{
+						"seconds": 1.5204433309999998,
+						"pending": 0,
+						"sent": 190
+					},
+					{
+						"seconds": 1.771018924,
+						"pending": 0,
+						"sent": 221
+					},
+					{
+						"seconds": 2.024982025,
+						"pending": 0,
+						"sent": 253
+					},
+					{
+						"seconds": 2.27798437,
+						"pending": 0,
+						"sent": 284
+					},
+					{
+						"seconds": 2.531116969,
+						"pending": 0,
+						"sent": 316
+					},
+					{
+						"seconds": 2.7819840470000003,
+						"pending": 0,
+						"sent": 347
+					},
+					{
+						"seconds": 3.0351237589999998,
+						"pending": 0,
+						"sent": 379
+					},
+					{
+						"seconds": 3.2880299250000005,
+						"pending": 0,
+						"sent": 411
+					},
+					{
+						"seconds": 3.538266174,
+						"pending": 0,
+						"sent": 442
+					},
+					{
+						"seconds": 3.7883296509999997,
+						"pending": 0,
+						"sent": 473
+					}
+				]
+			},
+			{
+				"type": "result",
+				"sent": 499,
+				"measuredSent": 375,
+				"deliveredInWindow": 375,
+				"missing": 0,
+				"errors": [],
+				"pendingAtEnd": 0,
+				"maxPending": 0,
+				"maxScheduleLagMilliseconds": 8,
+				"latencyMilliseconds": {
+					"median": 0.8482340000000477,
+					"p95": 1.54056700000001,
+					"max": 4.4949249999999665
+				},
+				"generatorCpuSeconds": 0.214439,
+				"generatorPeakRssKiB": 99860,
+				"acknowledged": null,
+				"backlog": [
+					{
+						"seconds": 0.25029693300000005,
+						"pending": 0,
+						"sent": 31
+					},
+					{
+						"seconds": 0.501109058,
+						"pending": 0,
+						"sent": 62
+					},
+					{
+						"seconds": 0.754025523,
+						"pending": 0,
+						"sent": 94
+					},
+					{
+						"seconds": 1.0045618430000003,
+						"pending": 0,
+						"sent": 125
+					},
+					{
+						"seconds": 1.2559321000000003,
+						"pending": 0,
+						"sent": 156
+					},
+					{
+						"seconds": 1.506041683,
+						"pending": 0,
+						"sent": 188
+					},
+					{
+						"seconds": 1.7585831879999998,
+						"pending": 0,
+						"sent": 219
+					},
+					{
+						"seconds": 2.0120057680000003,
+						"pending": 0,
+						"sent": 251
+					},
+					{
+						"seconds": 2.265488351,
+						"pending": 0,
+						"sent": 283
+					},
+					{
+						"seconds": 2.516849021,
+						"pending": 0,
+						"sent": 314
+					},
+					{
+						"seconds": 2.7679142679999997,
+						"pending": 0,
+						"sent": 345
+					},
+					{
+						"seconds": 3.0205421550000002,
+						"pending": 0,
+						"sent": 377
+					},
+					{
+						"seconds": 3.272277825,
+						"pending": 0,
+						"sent": 409
+					},
+					{
+						"seconds": 3.5250957250000003,
+						"pending": 0,
+						"sent": 440
+					},
+					{
+						"seconds": 3.7772276059999994,
+						"pending": 0,
+						"sent": 472
+					}
+				]
+			},
+			{
+				"type": "result",
+				"sent": 499,
+				"measuredSent": 375,
+				"deliveredInWindow": 375,
+				"missing": 0,
+				"errors": [],
+				"pendingAtEnd": 0,
+				"maxPending": 0,
+				"maxScheduleLagMilliseconds": 8,
+				"latencyMilliseconds": {
+					"median": 0.8431350000000748,
+					"p95": 1.5632599999999002,
+					"max": 4.626972000000023
+				},
+				"generatorCpuSeconds": 0.214592,
+				"generatorPeakRssKiB": 98176,
+				"acknowledged": null,
+				"backlog": [
+					{
+						"seconds": 0.25173795399999993,
+						"pending": 0,
+						"sent": 31
+					},
+					{
+						"seconds": 0.5063994379999999,
+						"pending": 0,
+						"sent": 63
+					},
+					{
+						"seconds": 0.7592762499999999,
+						"pending": 0,
+						"sent": 94
+					},
+					{
+						"seconds": 1.01267231,
+						"pending": 0,
+						"sent": 126
+					},
+					{
+						"seconds": 1.263983357,
+						"pending": 0,
+						"sent": 157
+					},
+					{
+						"seconds": 1.514344059,
+						"pending": 0,
+						"sent": 189
+					},
+					{
+						"seconds": 1.766844768,
+						"pending": 0,
+						"sent": 220
+					},
+					{
+						"seconds": 2.018419056,
+						"pending": 0,
+						"sent": 252
+					},
+					{
+						"seconds": 2.270992761,
+						"pending": 0,
+						"sent": 283
+					},
+					{
+						"seconds": 2.5265417629999996,
+						"pending": 0,
+						"sent": 315
+					},
+					{
+						"seconds": 2.7791975219999996,
+						"pending": 0,
+						"sent": 347
+					},
+					{
+						"seconds": 3.029646839,
+						"pending": 0,
+						"sent": 378
+					},
+					{
+						"seconds": 3.2800238309999994,
+						"pending": 0,
+						"sent": 410
+					},
+					{
+						"seconds": 3.532620309,
+						"pending": 0,
+						"sent": 441
+					},
+					{
+						"seconds": 3.785215504,
+						"pending": 0,
+						"sent": 473
+					}
+				]
+			},
+			{
+				"type": "result",
+				"sent": 499,
+				"measuredSent": 375,
+				"deliveredInWindow": 375,
+				"missing": 0,
+				"errors": [],
+				"pendingAtEnd": 0,
+				"maxPending": 0,
+				"maxScheduleLagMilliseconds": 8,
+				"latencyMilliseconds": {
+					"median": 0.8270649999999478,
+					"p95": 1.5366899999999077,
+					"max": 3.7563649999997324
+				},
+				"generatorCpuSeconds": 0.212364,
+				"generatorPeakRssKiB": 99620,
+				"acknowledged": null,
+				"backlog": [
+					{
+						"seconds": 0.254625898,
+						"pending": 0,
+						"sent": 31
+					},
+					{
+						"seconds": 0.507794725,
+						"pending": 0,
+						"sent": 63
+					},
+					{
+						"seconds": 0.7598782840000001,
+						"pending": 0,
+						"sent": 94
+					},
+					{
+						"seconds": 1.011473221,
+						"pending": 0,
+						"sent": 126
+					},
+					{
+						"seconds": 1.2658520070000001,
+						"pending": 0,
+						"sent": 158
+					},
+					{
+						"seconds": 1.516698196,
+						"pending": 0,
+						"sent": 189
+					},
+					{
+						"seconds": 1.768988462,
+						"pending": 0,
+						"sent": 221
+					},
+					{
+						"seconds": 2.0229781919999996,
+						"pending": 0,
+						"sent": 252
+					},
+					{
+						"seconds": 2.2736867430000003,
+						"pending": 0,
+						"sent": 284
+					},
+					{
+						"seconds": 2.524801263,
+						"pending": 0,
+						"sent": 315
+					},
+					{
+						"seconds": 2.779625551,
+						"pending": 0,
+						"sent": 347
+					},
+					{
+						"seconds": 3.0336106020000004,
+						"pending": 0,
+						"sent": 379
+					},
+					{
+						"seconds": 3.2866851530000005,
+						"pending": 0,
+						"sent": 410
+					},
+					{
+						"seconds": 3.537243614,
+						"pending": 0,
+						"sent": 442
+					},
+					{
+						"seconds": 3.7917331170000006,
+						"pending": 0,
+						"sent": 473
+					}
+				]
+			}
+		],
+		"resourceSamples": [
+			{
+				"seconds": 0.00005100500000025932,
+				"service": {
+					"cpuTicks": 210,
+					"rssKiB": 162544,
+					"peakRssKiB": 162544
+				}
+			},
+			{
+				"seconds": 0.25040860100000006,
+				"service": {
+					"cpuTicks": 219,
+					"rssKiB": 164028,
+					"peakRssKiB": 164028
+				}
+			},
+			{
+				"seconds": 0.5005777250000001,
+				"service": {
+					"cpuTicks": 229,
+					"rssKiB": 164388,
+					"peakRssKiB": 164388
+				}
+			},
+			{
+				"seconds": 0.7504044589999999,
+				"service": {
+					"cpuTicks": 237,
+					"rssKiB": 164568,
+					"peakRssKiB": 164568
+				}
+			},
+			{
+				"seconds": 1.0006110330000002,
+				"service": {
+					"cpuTicks": 245,
+					"rssKiB": 165272,
+					"peakRssKiB": 165272
+				}
+			},
+			{
+				"seconds": 1.249871474,
+				"service": {
+					"cpuTicks": 254,
+					"rssKiB": 165564,
+					"peakRssKiB": 165564
+				}
+			},
+			{
+				"seconds": 1.5002060070000003,
+				"service": {
+					"cpuTicks": 262,
+					"rssKiB": 165820,
+					"peakRssKiB": 165820
+				}
+			},
+			{
+				"seconds": 1.749831916,
+				"service": {
+					"cpuTicks": 270,
+					"rssKiB": 166032,
+					"peakRssKiB": 166032
+				}
+			},
+			{
+				"seconds": 2.000783898,
+				"service": {
+					"cpuTicks": 280,
+					"rssKiB": 166460,
+					"peakRssKiB": 166460
+				}
+			},
+			{
+				"seconds": 2.2514601030000003,
+				"service": {
+					"cpuTicks": 288,
+					"rssKiB": 166700,
+					"peakRssKiB": 166700
+				}
+			},
+			{
+				"seconds": 2.501031161,
+				"service": {
+					"cpuTicks": 298,
+					"rssKiB": 167352,
+					"peakRssKiB": 167352
+				}
+			},
+			{
+				"seconds": 2.75171933,
+				"service": {
+					"cpuTicks": 307,
+					"rssKiB": 167572,
+					"peakRssKiB": 167572
+				}
+			},
+			{
+				"seconds": 3.0017420570000004,
+				"service": {
+					"cpuTicks": 317,
+					"rssKiB": 168144,
+					"peakRssKiB": 168144
+				}
+			},
+			{
+				"seconds": 3.252580501,
+				"service": {
+					"cpuTicks": 327,
+					"rssKiB": 168344,
+					"peakRssKiB": 169756
+				}
+			},
+			{
+				"seconds": 3.5026214550000003,
+				"service": {
+					"cpuTicks": 338,
+					"rssKiB": 169584,
+					"peakRssKiB": 169756
+				}
+			},
+			{
+				"seconds": 3.7517987300000004,
+				"service": {
+					"cpuTicks": 346,
+					"rssKiB": 167616,
+					"peakRssKiB": 169756
+				}
+			},
+			{
+				"seconds": 4.002746816,
+				"service": {
+					"cpuTicks": 354,
+					"rssKiB": 168032,
+					"peakRssKiB": 169756
+				}
+			},
+			{
+				"seconds": 4.010907091,
+				"service": {
+					"cpuTicks": 355,
+					"rssKiB": 169100,
+					"peakRssKiB": 169756
+				}
+			}
+		]
+	},
+	"selectionVerification": "LevelDB CURRENT marker existed in every LevelDB output before load; absent in memory control",
+	"failure": "Collection checkpoints not implemented.",
+	"sourceHashes": [
+		{
+			"file": "server/routerlicious/packages/tinylicious/src/services/levelDb.ts",
+			"sha256": "aa5ae3347e06d8890a3050157a25f4bdbe64c982622dbd4fb10f64e166c0d10a"
+		},
+		{
+			"file": "server/routerlicious/packages/tinylicious/dist/services/levelDb.js",
+			"sha256": "3c3977ea5aeb19f25172ff4a6a2bda7cb29efbbe67f4aa5751fb61e977838982"
+		},
+		{
+			"file": "server/routerlicious/packages/tinylicious/config.json",
+			"sha256": "146db404808a86c5859afad26561f092e5664f1685b36cfca5a8892fd3dc2251"
+		}
+	]
+}

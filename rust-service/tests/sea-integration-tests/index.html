@@ -1,0 +1,17 @@
+<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>Minimal Fluid WASM driver trace</title>
+</head>
+<body>
+	<pre id="result">running</pre>
+	<script type="importmap">
+		{ "imports": { "@fluidframework/sea-typescript/internal/webtransport": "/packages/sea-typescript/lib/webtransport.js" } }
+	</script>
+	<script type="module" src="./dist/driver-trace.js"></script>
+</body>
+</html>

@@ -70,7 +70,7 @@ const options = {
 		boolean: true,
 	},
 	driver: {
-		choices: ["tinylicious", "t9s", "routerlicious", "r11s", "odsp", "local"],
+		choices: ["tinylicious", "t9s", "routerlicious", "r11s", "odsp", "local", "sea-websocket"],
 		requiresArg: true,
 	},
 	r11sEndpointName: {

@@ -72,7 +72,7 @@ export type {
 	EncodedCommit,
 } from "./editManagerFormatCommons.js";
 
-export type { DecodedMessage } from "./messageTypes.js";
+export type { DecodedMessage, SequencedSharedTreeMessage } from "./messageTypes.js";
 export {
 	getCodecTreeForMessageFormatWithChange,
 	makeMessageCodecBuilder,

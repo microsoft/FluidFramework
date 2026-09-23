@@ -4,6 +4,21 @@ This package contains utilities used by Fluid examples. These interfaces can be 
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
+## SEA Example Selection
+
+`getExampleServiceClient` retains its synchronous contract and existing default/session/ephemeral/Tinylicious behavior.
+The explicit `sea-ephemeral`, `sea-webtransport`, and `sea-websocket` query selections return a Fluid ServiceClient whose first attachment or load initializes SEA asynchronously.
+Detached creation opens no SEA session, and non-SEA selections fetch no SEA WASM.
+The SEA setup module owns the loader-preset choice; `exampleAppConfig` supplies `--env seaPreset=split|combined` at build time, defaulting to split.
+The package's public example entrypoint does not expose generated paths or transport-specific data stores.
+
+WebTransport configuration uses an HTTPS `seaEndpoint` and `seaCertificateHash`; optional `seaCompression=true` must match across peers.
+WebSocket configuration uses a WSS `seaEndpoint` and the dedicated socket artifact, independent of the split/combined preset.
+It does not require a certificate hash and does not support `seaCompression=true`.
+Missing or invalid remote settings fail explicitly without selecting another service.
+Local storage belongs to the returned client for the page lifetime and is not shared across independent calls or windows.
+See the [inventory guide](../../data-objects/inventory-app/README.md#sea-services) for prerequisites, lifetime limits, launch commands, and browser acceptance evidence.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

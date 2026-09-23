@@ -1,0 +1,38 @@
+[package]
+name = "sea-webtransport-server"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "sea-webtransport-server"
+path = "src/main.rs"
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+futures-core.workspace = true
+futures-util.workspace = true
+rand_core = { version = "0.6.4", features = ["getrandom"] }
+sea-core = { path = "../sea-core" }
+sea-file = { path = "../sea-file" }
+sea-memory = { path = "../sea-memory" }
+sea-sequencer = { path = "../sea-sequencer" }
+sea-signals = { path = "../sea-signals" }
+sea-webtransport = { path = "../sea-webtransport" }
+tokio.workspace = true
+thiserror.workspace = true
+wtransport = "=0.7.2"
+tokio-tungstenite = { version = "0.28.0", optional = true, default-features = false, features = ["handshake", "connect"] }
+
+[features]
+websocket-stream = ["dep:tokio-tungstenite", "sea-webtransport/websocket-stream"]
+
+[dev-dependencies]
+sea-conformance = { path = "../sea-conformance" }
+tokio = { workspace = true, features = ["test-util"] }
+wtransport = { version = "=0.7.2", features = ["quinn"] }
+
+[lints]
+workspace = true

@@ -1,0 +1,17 @@
+[package]
+name = "sea-counter"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+bytes.workspace = true
+futures-util.workspace = true
+sea-core = { path = "../../crates/sea-core" }
+sea-memory = { path = "../../crates/sea-memory" }
+sea-sequencer = { path = "../../crates/sea-sequencer" }
+tokio.workspace = true
+
+[lints]
+workspace = true

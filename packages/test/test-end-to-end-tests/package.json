@@ -32,7 +32,7 @@
 		"test:benchmark:frs": "cross-env FLUID_TEST_PERF_MODE=1 FLUID_TEST_VERBOSE=1 mocha -- --driver=r11s --r11sEndpointName=frs --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json --reporterOptions reportFile=./benchmarkFrsOutput.json",
 		"test:benchmark:local": "cross-env FLUID_TEST_PERF_MODE=1 FLUID_TEST_VERBOSE=1 mocha -- --driver=local --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json --reporterOptions reportFile=./benchmarkLocalOutput.json",
 		"test:benchmark:odsp": "cross-env FLUID_TEST_PERF_MODE=1 FLUID_TEST_VERBOSE=1 mocha -- --driver=odsp --e2eConfigFile=src/test/benchmark/e2eDocsConfig.json --reporterOptions reportFile=./benchmarkOdspOutput.json",
-		"test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious",
+		"test:realsvc": "npm run test:realsvc:local && npm run test:realsvc:tinylicious && npm run test:realsvc:sea",
 		"test:realsvc:frs": "npm run test:realsvc:run -- --driver=r11s --r11sEndpointName=frs --timeout=20s",
 		"test:realsvc:frs:report": "npm run test:realsvc:frs --",
 		"test:realsvc:local": "npm run test:realsvc:run -- --driver=local --timeout=2s",
@@ -48,11 +48,14 @@
 		"test:realsvc:routerlicious": "npm run test:realsvc:r11s",
 		"test:realsvc:routerlicious:report": "npm run test:realsvc:r11s --",
 		"test:realsvc:run": "mocha --verbose",
+		"test:realsvc:sea": "node scripts/seaRunner.mjs",
+		"test:realsvc:sea:report": "npm run test:realsvc:sea -- --no-bail",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:report:full": "cross-env fluid__test__backCompat=FULL npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:run": "npm run test:realsvc:run -- --driver=t9s --timeout=5s",
-		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
+		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc",
+		"test:sea:runner": "node --test scripts/seaRunner.test.mjs"
 	},
 	"c8": {
 		"all": true,
@@ -115,6 +118,7 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/sea-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",

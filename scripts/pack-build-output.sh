@@ -37,6 +37,7 @@ echo "**/api-extractor-*.done.build.log" >> .gitignore
 #   ignore root api-extractor collection about 4MB (not much) but will probably be regenerated without
 #   the package .done.build.log files.
 echo "_api-extractor-temp/**" >> .gitignore
+echo "rust-service/target/" >> .gitignore
 
 # Build the content list of unstaged, new files
 git status --porcelain | grep -E '^\?\?' | awk '{print $2}' > build_output_archive/build_output_to_publish.txt

@@ -1,0 +1,63 @@
+name: Rust Service
+
+on:
+  pull_request:
+    paths:
+      - ".github/skills/rust-service-coordination/**"
+      - ".github/workflows/rust-service.yml"
+      - "rust-service/**"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/skills/rust-service-coordination/**"
+      - ".github/workflows/rust-service.yml"
+      - "rust-service/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Format, lint, build, and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust-service
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Run Clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: Build documentation
+        run: RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
+      - name: Build workspace
+        run: cargo build --workspace --all-targets
+      - name: Test workspace
+        run: cargo test --workspace --all-targets --all-features
+      - name: Run counter example
+        run: cargo run -p sea-counter
+      - name: Install WASM target and bindings tool
+        run: |
+          rustup target add wasm32-unknown-unknown
+          cargo install wasm-bindgen-cli --version 0.2.128 --locked
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: "22.x"
+          cache: pnpm
+      - name: Install TypeScript workspace
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+      - name: Build and test generated Sea clients
+        working-directory: .
+        run: |
+          pnpm exec fluid-build rust-service/packages/sea-typescript --task test:mocha:esm
+      - name: Validate current documentation
+        run: node scripts/check-documentation.mjs
+      - name: Validate foundation records
+        run: node ../.github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-foundation

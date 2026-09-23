@@ -66,6 +66,8 @@
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/sea-driver": "workspace:~",
+		"@fluidframework/sea-typescript": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.1",
 		"@fluidframework/task-manager": "workspace:~",

@@ -100,8 +100,18 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 	indexes: TIndexes;
 	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>;
 	codecOptions?: CodecWriteOptions;
+	idCompressor?: IIdCompressor;
+	isAttached?: boolean;
+	submitLocalMessage?: (content: unknown, localOpMetadata?: unknown) => void;
 }): SharedTreeCore<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext> {
-	const { indexes, enrichmentConfig, codecOptions } = options;
+	const {
+		indexes,
+		enrichmentConfig,
+		codecOptions,
+		idCompressor = createIdCompressor(),
+		isAttached = false,
+		submitLocalMessage = () => {},
+	} = options;
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
 	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
@@ -116,17 +126,17 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 			return this;
 		},
 		id: "createTree",
-		isAttached: () => false,
+		isAttached: () => isAttached,
 	};
 	const logger: ITelemetryBaseLogger = { send() {} };
 	return createTreeInner(
 		dummyChannel,
 		mockSerializer,
-		() => {},
+		submitLocalMessage,
 		logger,
 		indexes,
 		TreeCompressionStrategy.Uncompressed,
-		createIdCompressor(),
+		idCompressor,
 		new TreeStoredSchemaRepository(),
 		codecOptions ?? testCodecOptions,
 		enrichmentConfig,

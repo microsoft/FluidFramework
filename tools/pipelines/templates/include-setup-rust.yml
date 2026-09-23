@@ -1,0 +1,52 @@
+parameters:
+- name: buildDirectory
+  type: string
+- name: installWasm
+  type: boolean
+  default: true
+
+steps:
+- task: Bash@3
+  displayName: Install repository Rust toolchain
+  timeoutInMinutes: 20
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/rust-service
+    script: |
+      set -eu -o pipefail
+      [[ "$(uname -s)" == Linux ]]
+      command -v cc
+      openssl version
+      export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
+      if ! command -v rustup >/dev/null; then
+        installer=$(mktemp)
+        trap 'rm -f "$installer"' EXIT
+        curl --proto '=https' --tlsv1.2 --fail --show-error --silent --location https://sh.rustup.rs --output "$installer"
+        sh "$installer" -y --profile minimal --default-toolchain none --no-modify-path
+      fi
+      rustup show
+      rustc --version
+      cargo --version
+      echo "##vso[task.prependpath]${CARGO_HOME:-$HOME/.cargo}/bin"
+
+- ${{ if eq(parameters.installWasm, true) }}:
+  - task: Bash@3
+    displayName: Install matching WASM tools
+    timeoutInMinutes: 20
+    inputs:
+      targetType: inline
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/rust-service
+      script: |
+        set -eu -o pipefail
+        rustup target add wasm32-unknown-unknown
+        version=$(cargo metadata --locked --no-deps --format-version 1 | node -e '
+          const fs = require("node:fs");
+          const metadata = JSON.parse(fs.readFileSync(0, "utf8"));
+          const dependency = metadata.packages.find(entry => entry.name === "sea-wasm").dependencies.find(entry => entry.name === "wasm-bindgen");
+          if (!/^=\d+\.\d+\.\d+$/.test(dependency.req)) throw new Error("wasm-bindgen must use an exact version");
+          process.stdout.write(dependency.req.slice(1));
+        ')
+        if [[ "$(wasm-bindgen --version 2>/dev/null || true)" != "wasm-bindgen $version" ]]; then
+          cargo install wasm-bindgen-cli --version "=$version" --locked
+        fi
+        [[ "$(wasm-bindgen --version)" == "wasm-bindgen $version" ]]

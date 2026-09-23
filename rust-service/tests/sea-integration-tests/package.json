@@ -1,0 +1,133 @@
+{
+	"name": "@fluid-internal/sea-integration-tests",
+	"version": "3.2.0",
+	"private": true,
+	"description": "Fluid and SharedTree integration tests and benchmarks for the Sea Rust service.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "rust-service/tests/sea-integration-tests"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "module",
+	"scripts": {
+		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
+		"bench:build": "fluid-build . --task build:test:esm --task build:benchmarks",
+		"bench:run": "node scripts/run-benchmark.mjs",
+		"benchmark:local": "node browser/run-shared-tree-benchmark.mjs local",
+		"benchmark:rust": "node browser/run-shared-tree-benchmark.mjs rust",
+		"benchmark:rust-local": "node browser/run-shared-tree-benchmark.mjs rust-local",
+		"benchmark:tinylicious": "node browser/run-shared-tree-benchmark.mjs tinylicious",
+		"build": "fluid-build . --task build",
+		"build:benchmark:local": "esbuild browser/shared-tree-benchmark-local.ts --bundle --minify --define:process.env.NODE_ENV=\\\"production\\\" --format=esm --platform=browser --inject:browser/process-shim.ts --outfile=dist/shared-tree-benchmark-local.js --log-level=warning --log-override:package.json=silent",
+		"build:benchmark:rust": "esbuild browser/shared-tree-benchmark-rust.ts --bundle --minify --define:process.env.NODE_ENV=\\\"production\\\" --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-rust.js --external:@fluidframework/sea-typescript/internal/* --log-level=warning --log-override:package.json=silent",
+		"build:benchmark:tinylicious": "esbuild browser/shared-tree-benchmark-tinylicious.ts --bundle --minify --define:process.env.NODE_ENV=\\\"production\\\" --format=esm --platform=browser --outfile=dist/shared-tree-benchmark-tinylicious.js --log-level=warning --log-override:package.json=silent",
+		"build:benchmarks": "pnpm run build:benchmark:rust && pnpm run build:benchmark:local && pnpm run build:benchmark:tinylicious",
+		"build:compile": "fluid-build . --task compile",
+		"build:driver-trace": "esbuild browser/trace.mjs --bundle --format=esm --platform=browser --outfile=dist/driver-trace.js --external:@fluidframework/sea-typescript/internal/* --log-level=warning --log-override:package.json=silent",
+		"build:esm": "tsc --project ./tsconfig.json",
+		"build:shared-tree": "esbuild browser/shared-tree-trace.ts --bundle --format=esm --platform=browser --outfile=dist/shared-tree-trace.js --external:@fluidframework/sea-typescript/internal --log-level=warning --log-override:package.json=silent",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
+		"check:format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html",
+		"clean": "rimraf --glob dist lib pkg \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"format": "biome format src browser scripts package.json tsconfig.json tsconfig.shared-tree.json index.html shared-tree.html shared-tree-benchmark-rust.html shared-tree-benchmark-local.html shared-tree-benchmark-tinylicious.html --write",
+		"lint": "biome lint src browser scripts",
+		"test": "pnpm run build && pnpm run test:all",
+		"test:all": "fluid-build . --task test:all",
+		"test:browser": "SEA_BROWSER_SKIP_BUILD=1 ../webtransport-browser/run-test.sh",
+		"test:mocha:esm": "mocha",
+		"typecheck": "tsc --project tsconfig.json --noEmit --tsBuildInfoFile ./tsconfig.typecheck.tsbuildinfo",
+		"typecheck:shared-tree": "tsc --project tsconfig.shared-tree.json"
+	},
+	"dependencies": {
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/datastore-definitions": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
+		"@fluidframework/local-driver": "workspace:~",
+		"@fluidframework/runtime-definitions": "workspace:~",
+		"@fluidframework/sea-driver": "workspace:~",
+		"@fluidframework/sea-tree": "workspace:~",
+		"@fluidframework/sea-typescript": "workspace:~",
+		"@fluidframework/server-local-server": "^7.0.1",
+		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/tinylicious-client": "workspace:~",
+		"@fluidframework/tree": "workspace:~",
+		"process": "^0.11.10"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-tools/benchmark": "^0.59.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "catalog:types",
+		"cross-env": "^10.1.0",
+		"esbuild": "^0.28.2",
+		"mocha": "^11.7.5",
+		"mocha-multi-reporters": "^1.5.1",
+		"rimraf": "^6.1.3",
+		"typescript": "~6.0.3"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build": {
+				"dependsOn": [
+					"check:format",
+					"compile",
+					"lint"
+				],
+				"script": false
+			},
+			"compile": {
+				"dependsOn": [
+					"build:driver-trace",
+					"build:esm",
+					"build:test:esm",
+					"typecheck:shared-tree",
+					"build:shared-tree",
+					"build:benchmarks"
+				],
+				"script": false
+			},
+			"build:driver-trace": [
+				"^build:package:esm"
+			],
+			"typecheck": [
+				"^build:package:esm"
+			],
+			"typecheck:shared-tree": [
+				"^build:package:esm"
+			],
+			"build:shared-tree": [
+				"^build:package:esm"
+			],
+			"build:benchmarks": [
+				"^build:package:esm"
+			],
+			"test:all": {
+				"dependsOn": [
+					"test:browser",
+					"test:mocha:esm",
+					"@fluidframework/sea-driver#test:mocha:esm",
+					"@fluidframework/sea-tree#test:mocha:esm",
+					"@fluidframework/sea-typescript#test:mocha:esm"
+				],
+				"script": false
+			},
+			"test:browser": [
+				"build:driver-trace",
+				"build:shared-tree",
+				"@fluidframework/sea-typescript#build:test:esm"
+			],
+			"test:mocha:esm": [
+				"...",
+				"build:benchmarks"
+			]
+		}
+	}
+}

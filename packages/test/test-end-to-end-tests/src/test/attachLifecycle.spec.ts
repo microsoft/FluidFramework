@@ -51,6 +51,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 		switch (provider.driver.type) {
 			case "local":
 			case "tinylicious":
+			case "sea-websocket":
 				break;
 			default:
 				this.skip();

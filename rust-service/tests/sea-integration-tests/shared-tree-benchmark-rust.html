@@ -1,0 +1,22 @@
+<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SharedTree Rust-service benchmark</title>
+</head>
+<body>
+  <pre id="result">running</pre>
+  <script type="importmap">
+    { "imports": {
+      "@fluidframework/sea-typescript/internal/memory": "/packages/sea-typescript/lib/memory.js",
+      "@fluidframework/sea-typescript/internal/webtransport": "/packages/sea-typescript/lib/webtransport.js",
+      "@fluidframework/sea-typescript/internal/websocket": "/packages/sea-typescript/lib/websocket.js"
+    } }
+  </script>
+  <script type="module" src="./dist/shared-tree-benchmark-rust.js"></script>
+</body>
+</html>

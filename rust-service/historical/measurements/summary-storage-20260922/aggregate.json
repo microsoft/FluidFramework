@@ -1,0 +1,1346 @@
+[
+	{
+		"key": "32/hash/buffered-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 18.958116000000018,
+				"min": 18.893966999999975,
+				"max": 19.12112000000002
+			},
+			"summarizeMilliseconds": {
+				"median": 33.265812000000096,
+				"min": 33.256002999999964,
+				"max": 33.67671900000005
+			},
+			"downloadMilliseconds": {
+				"median": 108.87492500000002,
+				"min": 108.744121,
+				"max": 114.21959600000002
+			},
+			"coldMilliseconds": {
+				"median": 184.00230500000004,
+				"min": 182.69068600000003,
+				"max": 188.77579500000002
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 275230,
+				"min": 275230,
+				"max": 275230
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307285,
+				"min": 307285,
+				"max": 307285
+			},
+			"closedBytes": {
+				"median": 886876,
+				"min": 886691,
+				"max": 886876
+			},
+			"closedAllocatedBytes": {
+				"median": 888832,
+				"min": 888832,
+				"max": 888832
+			}
+		}
+	},
+	{
+		"key": "32/hash/durable-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 22.53964099999996,
+				"min": 22.276009000000045,
+				"max": 23.480758000000037
+			},
+			"summarizeMilliseconds": {
+				"median": 37.829129999999964,
+				"min": 37.56401499999993,
+				"max": 38.65190599999994
+			},
+			"downloadMilliseconds": {
+				"median": 117.13512800000001,
+				"min": 112.08781699999997,
+				"max": 119.015939
+			},
+			"coldMilliseconds": {
+				"median": 184.10756100000003,
+				"min": 180.598866,
+				"max": 190.48803500000002
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 275230,
+				"min": 275230,
+				"max": 275230
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307277,
+				"min": 307276,
+				"max": 307277
+			},
+			"closedBytes": {
+				"median": 886683,
+				"min": 886682,
+				"max": 886868
+			},
+			"closedAllocatedBytes": {
+				"median": 892928,
+				"min": 892928,
+				"max": 892928
+			}
+		}
+	},
+	{
+		"key": "32/hash/leveldb/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 51.84764599999994,
+				"min": 50.91723000000002,
+				"max": 51.963753
+			},
+			"summarizeMilliseconds": {
+				"median": 94.50061000000005,
+				"min": 93.492389,
+				"max": 94.69483299999979
+			},
+			"downloadMilliseconds": {
+				"median": 157.59691699999996,
+				"min": 156.17132199999998,
+				"max": 158.18514
+			},
+			"coldMilliseconds": {
+				"median": 248.45662600000003,
+				"min": 246.40979499999992,
+				"max": 248.82295000000005
+			},
+			"initialBytes": {
+				"median": 147173,
+				"min": 147167,
+				"max": 147173
+			},
+			"uploadBlobBytes": {
+				"median": 274465,
+				"min": 274465,
+				"max": 274465
+			},
+			"summaryGrowthBytes": {
+				"median": 27639,
+				"min": 27631,
+				"max": 35227
+			},
+			"opGrowthBytes": {
+				"median": 2496751,
+				"min": 2466855,
+				"max": 2674870
+			},
+			"closedBytes": {
+				"median": 4447845,
+				"min": 2454560,
+				"max": 6472192
+			},
+			"closedAllocatedBytes": {
+				"median": 4927488,
+				"min": 2932736,
+				"max": 6955008
+			}
+		}
+	},
+	{
+		"key": "32/hash/buffered-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 11.181310000000053,
+				"min": 11.080241000000001,
+				"max": 11.185227999999938
+			},
+			"summarizeMilliseconds": {
+				"median": 20.78532599999994,
+				"min": 20.709645000000023,
+				"max": 21.013161999999966
+			},
+			"downloadMilliseconds": {
+				"median": 113.49717199999998,
+				"min": 105.84329200000002,
+				"max": 117.82541200000003
+			},
+			"coldMilliseconds": {
+				"median": 183.3809,
+				"min": 182.02284400000002,
+				"max": 189.23965500000003
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 35554,
+				"min": 35554,
+				"max": 35554
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307285,
+				"min": 307284,
+				"max": 307285
+			},
+			"closedBytes": {
+				"median": 886875,
+				"min": 886691,
+				"max": 886876
+			},
+			"closedAllocatedBytes": {
+				"median": 888832,
+				"min": 888832,
+				"max": 888832
+			}
+		}
+	},
+	{
+		"key": "32/hash/durable-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 14.118823999999904,
+				"min": 13.994731999999999,
+				"max": 14.440764000000058
+			},
+			"summarizeMilliseconds": {
+				"median": 24.844764000000055,
+				"min": 24.472650000000044,
+				"max": 25.53451199999995
+			},
+			"downloadMilliseconds": {
+				"median": 112.92423299999996,
+				"min": 111.47431699999999,
+				"max": 115.13693899999998
+			},
+			"coldMilliseconds": {
+				"median": 190.02144399999997,
+				"min": 188.30294200000003,
+				"max": 191.55935999999997
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 35554,
+				"min": 35554,
+				"max": 35554
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307277,
+				"min": 307277,
+				"max": 307277
+			},
+			"closedBytes": {
+				"median": 886868,
+				"min": 886683,
+				"max": 886868
+			},
+			"closedAllocatedBytes": {
+				"median": 892928,
+				"min": 892928,
+				"max": 892928
+			}
+		}
+	},
+	{
+		"key": "32/hash/leveldb/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 37.27849200000014,
+				"min": 36.69526399999995,
+				"max": 38.000909999999976
+			},
+			"summarizeMilliseconds": {
+				"median": 76.01450499999987,
+				"min": 75.26866300000006,
+				"max": 76.102169
+			},
+			"downloadMilliseconds": {
+				"median": 156.40002799999996,
+				"min": 153.49674899999997,
+				"max": 157.58211500000004
+			},
+			"coldMilliseconds": {
+				"median": 252.69422599999996,
+				"min": 247.14409600000005,
+				"max": 254.42592800000006
+			},
+			"initialBytes": {
+				"median": 147170,
+				"min": 147169,
+				"max": 147171
+			},
+			"uploadBlobBytes": {
+				"median": 34789,
+				"min": 34789,
+				"max": 34789
+			},
+			"summaryGrowthBytes": {
+				"median": 27631,
+				"min": 27618,
+				"max": 27634
+			},
+			"opGrowthBytes": {
+				"median": 2848865,
+				"min": 2794525,
+				"max": 3065722
+			},
+			"closedBytes": {
+				"median": 4435524,
+				"min": 2454600,
+				"max": 6321718
+			},
+			"closedAllocatedBytes": {
+				"median": 4911104,
+				"min": 2932736,
+				"max": 6799360
+			}
+		}
+	},
+	{
+		"key": "32/repeated/buffered-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 18.92978299999993,
+				"min": 18.62732900000003,
+				"max": 19.127301999999986
+			},
+			"summarizeMilliseconds": {
+				"median": 32.80392999999992,
+				"min": 32.38131099999998,
+				"max": 32.826852999999915
+			},
+			"downloadMilliseconds": {
+				"median": 108.90747099999999,
+				"min": 108.30553199999997,
+				"max": 120.19736900000004
+			},
+			"coldMilliseconds": {
+				"median": 185.376529,
+				"min": 184.25654299999997,
+				"max": 187.115045
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 275230,
+				"min": 275230,
+				"max": 275230
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307281,
+				"min": 307280,
+				"max": 307283
+			},
+			"closedBytes": {
+				"median": 886871,
+				"min": 886689,
+				"max": 886872
+			},
+			"closedAllocatedBytes": {
+				"median": 888832,
+				"min": 888832,
+				"max": 888832
+			}
+		}
+	},
+	{
+		"key": "32/repeated/durable-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 21.96747300000004,
+				"min": 21.897222000000056,
+				"max": 22.11260399999992
+			},
+			"summarizeMilliseconds": {
+				"median": 36.33579199999997,
+				"min": 36.29618900000003,
+				"max": 37.73757899999998
+			},
+			"downloadMilliseconds": {
+				"median": 116.96786200000003,
+				"min": 112.665345,
+				"max": 118.02223000000004
+			},
+			"coldMilliseconds": {
+				"median": 186.574139,
+				"min": 185.01350200000002,
+				"max": 203.52072099999998
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 275230,
+				"min": 275230,
+				"max": 275230
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307277,
+				"min": 307277,
+				"max": 307277
+			},
+			"closedBytes": {
+				"median": 886683,
+				"min": 886683,
+				"max": 886868
+			},
+			"closedAllocatedBytes": {
+				"median": 892928,
+				"min": 892928,
+				"max": 892928
+			}
+		}
+	},
+	{
+		"key": "32/repeated/leveldb/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 50.472440000000006,
+				"min": 48.64587000000006,
+				"max": 51.95825300000001
+			},
+			"summarizeMilliseconds": {
+				"median": 92.83716499999991,
+				"min": 90.267789,
+				"max": 94.60921199999984
+			},
+			"downloadMilliseconds": {
+				"median": 152.39786299999997,
+				"min": 152.39331899999996,
+				"max": 154.14191900000003
+			},
+			"coldMilliseconds": {
+				"median": 229.24728699999997,
+				"min": 229.16596900000008,
+				"max": 235.46679999999998
+			},
+			"initialBytes": {
+				"median": 8645,
+				"min": 8645,
+				"max": 8646
+			},
+			"uploadBlobBytes": {
+				"median": 274465,
+				"min": 274465,
+				"max": 274465
+			},
+			"summaryGrowthBytes": {
+				"median": 19529,
+				"min": 19519,
+				"max": 20544
+			},
+			"opGrowthBytes": {
+				"median": 3171029,
+				"min": 2152838,
+				"max": 3448436
+			},
+			"closedBytes": {
+				"median": 4071917,
+				"min": 1077095,
+				"max": 5043940
+			},
+			"closedAllocatedBytes": {
+				"median": 4562944,
+				"min": 1568768,
+				"max": 5537792
+			}
+		}
+	},
+	{
+		"key": "32/repeated/buffered-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 10.216519000000062,
+				"min": 9.947708000000034,
+				"max": 11.343473000000017
+			},
+			"summarizeMilliseconds": {
+				"median": 19.680555000000027,
+				"min": 19.364203999999972,
+				"max": 20.93387400000006
+			},
+			"downloadMilliseconds": {
+				"median": 106.883533,
+				"min": 105.41391999999996,
+				"max": 111.43946699999998
+			},
+			"coldMilliseconds": {
+				"median": 184.09665999999999,
+				"min": 183.771884,
+				"max": 186.804825
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 35554,
+				"min": 35554,
+				"max": 35554
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307284,
+				"min": 307277,
+				"max": 307285
+			},
+			"closedBytes": {
+				"median": 886875,
+				"min": 886868,
+				"max": 886876
+			},
+			"closedAllocatedBytes": {
+				"median": 888832,
+				"min": 888832,
+				"max": 888832
+			}
+		}
+	},
+	{
+		"key": "32/repeated/durable-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 13.219294000000104,
+				"min": 13.141448999999966,
+				"max": 14.041639000000032
+			},
+			"summarizeMilliseconds": {
+				"median": 23.293527999999924,
+				"min": 23.16339599999992,
+				"max": 24.10329999999999
+			},
+			"downloadMilliseconds": {
+				"median": 116.827249,
+				"min": 115.32899200000003,
+				"max": 481.18145799999996
+			},
+			"coldMilliseconds": {
+				"median": 185.094603,
+				"min": 183.21796600000005,
+				"max": 190.583754
+			},
+			"initialBytes": {
+				"median": 278600,
+				"min": 278600,
+				"max": 278600
+			},
+			"uploadBlobBytes": {
+				"median": 35554,
+				"min": 35554,
+				"max": 35554
+			},
+			"summaryGrowthBytes": {
+				"median": 19668,
+				"min": 19668,
+				"max": 19668
+			},
+			"opGrowthBytes": {
+				"median": 307276,
+				"min": 307276,
+				"max": 307276
+			},
+			"closedBytes": {
+				"median": 886867,
+				"min": 886867,
+				"max": 886867
+			},
+			"closedAllocatedBytes": {
+				"median": 892928,
+				"min": 892928,
+				"max": 892928
+			}
+		}
+	},
+	{
+		"key": "32/repeated/leveldb/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 35.77893200000017,
+				"min": 35.471469999999954,
+				"max": 37.66575499999999
+			},
+			"summarizeMilliseconds": {
+				"median": 73.178451,
+				"min": 72.95502499999998,
+				"max": 75.23116299999992
+			},
+			"downloadMilliseconds": {
+				"median": 151.30856500000004,
+				"min": 147.56578400000006,
+				"max": 152.76234799999997
+			},
+			"coldMilliseconds": {
+				"median": 231.81278500000002,
+				"min": 229.1986,
+				"max": 238.45738199999994
+			},
+			"initialBytes": {
+				"median": 8643,
+				"min": 8643,
+				"max": 8645
+			},
+			"uploadBlobBytes": {
+				"median": 34789,
+				"min": 34789,
+				"max": 34789
+			},
+			"summaryGrowthBytes": {
+				"median": 19522,
+				"min": 19515,
+				"max": 19523
+			},
+			"opGrowthBytes": {
+				"median": 3080327,
+				"min": 2980239,
+				"max": 3209747
+			},
+			"closedBytes": {
+				"median": 4937256,
+				"min": 4827550,
+				"max": 5090030
+			},
+			"closedAllocatedBytes": {
+				"median": 5427200,
+				"min": 5320704,
+				"max": 5582848
+			}
+		}
+	},
+	{
+		"key": "512/hash/buffered-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 93.59209400000009,
+				"min": 90.09262199999989,
+				"max": 95.36021000000005
+			},
+			"summarizeMilliseconds": {
+				"median": 169.1171559999998,
+				"min": 166.32126700000003,
+				"max": 169.82544200000007
+			},
+			"downloadMilliseconds": {
+				"median": 223.59856799999994,
+				"min": 221.28572599999995,
+				"max": 239.11943299999996
+			},
+			"coldMilliseconds": {
+				"median": 300.61746700000003,
+				"min": 292.101336,
+				"max": 300.749689
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 4351262,
+				"min": 4351262,
+				"max": 4351262
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307284,
+				"min": 307280,
+				"max": 307286
+			},
+			"closedBytes": {
+				"median": 9084250,
+				"min": 9083884,
+				"max": 9084256
+			},
+			"closedAllocatedBytes": {
+				"median": 9084928,
+				"min": 9084928,
+				"max": 9084928
+			}
+		}
+	},
+	{
+		"key": "512/hash/durable-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 97.85563200000001,
+				"min": 95.86944500000004,
+				"max": 99.73858199999995
+			},
+			"summarizeMilliseconds": {
+				"median": 173.75379500000008,
+				"min": 171.55500500000016,
+				"max": 176.0303140000001
+			},
+			"downloadMilliseconds": {
+				"median": 230.35924700000004,
+				"min": 228.19408499999997,
+				"max": 233.04859700000003
+			},
+			"coldMilliseconds": {
+				"median": 295.237269,
+				"min": 293.851713,
+				"max": 307.06048799999996
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 4351262,
+				"min": 4351262,
+				"max": 4351262
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307276,
+				"min": 307276,
+				"max": 307276
+			},
+			"closedBytes": {
+				"median": 9084246,
+				"min": 9084246,
+				"max": 9084246
+			},
+			"closedAllocatedBytes": {
+				"median": 9089024,
+				"min": 9089024,
+				"max": 9089024
+			}
+		}
+	},
+	{
+		"key": "512/hash/leveldb/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 120.41558200000009,
+				"min": 117.23138800000015,
+				"max": 121.11014800000021
+			},
+			"summarizeMilliseconds": {
+				"median": 226.06229699999994,
+				"min": 221.10729700000002,
+				"max": 227.4600559999999
+			},
+			"downloadMilliseconds": {
+				"median": 541.418724,
+				"min": 537.38191,
+				"max": 562.368724
+			},
+			"coldMilliseconds": {
+				"median": 623.869703,
+				"min": 614.4801020000001,
+				"max": 626.8630560000001
+			},
+			"initialBytes": {
+				"median": 2288997,
+				"min": 2288997,
+				"max": 2288997
+			},
+			"uploadBlobBytes": {
+				"median": 4350497,
+				"min": 4350497,
+				"max": 4350497
+			},
+			"summaryGrowthBytes": {
+				"median": 28397,
+				"min": 28393,
+				"max": 28657
+			},
+			"opGrowthBytes": {
+				"median": 3131696,
+				"min": 2870377,
+				"max": 3362793
+			},
+			"closedBytes": {
+				"median": 8738034,
+				"min": 6722321,
+				"max": 10689153
+			},
+			"closedAllocatedBytes": {
+				"median": 10829824,
+				"min": 8814592,
+				"max": 12783616
+			}
+		}
+	},
+	{
+		"key": "512/hash/buffered-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 22.378930999999966,
+				"min": 22.105440000000044,
+				"max": 24.500782000000072
+			},
+			"summarizeMilliseconds": {
+				"median": 44.56877499999996,
+				"min": 42.172596999999996,
+				"max": 48.26660600000014
+			},
+			"downloadMilliseconds": {
+				"median": 228.868579,
+				"min": 218.78183700000005,
+				"max": 228.87742100000003
+			},
+			"coldMilliseconds": {
+				"median": 291.903482,
+				"min": 291.56917799999997,
+				"max": 299.55352600000003
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 545058,
+				"min": 545058,
+				"max": 545058
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307284,
+				"min": 307283,
+				"max": 307285
+			},
+			"closedBytes": {
+				"median": 9084254,
+				"min": 9084253,
+				"max": 9084255
+			},
+			"closedAllocatedBytes": {
+				"median": 9084928,
+				"min": 9084928,
+				"max": 9084928
+			}
+		}
+	},
+	{
+		"key": "512/hash/durable-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 26.093223999999964,
+				"min": 24.855172999999922,
+				"max": 27.648206999999957
+			},
+			"summarizeMilliseconds": {
+				"median": 48.42656000000011,
+				"min": 45.889846000000034,
+				"max": 51.14302100000009
+			},
+			"downloadMilliseconds": {
+				"median": 224.983157,
+				"min": 221.305858,
+				"max": 227.65484399999997
+			},
+			"coldMilliseconds": {
+				"median": 294.356205,
+				"min": 293.26586,
+				"max": 301.32971699999996
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 545058,
+				"min": 545058,
+				"max": 545058
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307277,
+				"min": 307276,
+				"max": 307278
+			},
+			"closedBytes": {
+				"median": 9084246,
+				"min": 9084062,
+				"max": 9084248
+			},
+			"closedAllocatedBytes": {
+				"median": 9089024,
+				"min": 9089024,
+				"max": 9089024
+			}
+		}
+	},
+	{
+		"key": "512/hash/leveldb/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 46.07573300000013,
+				"min": 45.32312700000011,
+				"max": 49.457904999999755
+			},
+			"summarizeMilliseconds": {
+				"median": 96.35168500000009,
+				"min": 94.00315099999989,
+				"max": 98.81755799999974
+			},
+			"downloadMilliseconds": {
+				"median": 548.1064269999999,
+				"min": 544.209218,
+				"max": 576.450924
+			},
+			"coldMilliseconds": {
+				"median": 625.60392,
+				"min": 611.5084710000001,
+				"max": 682.6488120000001
+			},
+			"initialBytes": {
+				"median": 2288996,
+				"min": 2288994,
+				"max": 2288997
+			},
+			"uploadBlobBytes": {
+				"median": 544293,
+				"min": 544293,
+				"max": 544293
+			},
+			"summaryGrowthBytes": {
+				"median": 28389,
+				"min": 28388,
+				"max": 28396
+			},
+			"opGrowthBytes": {
+				"median": 3221768,
+				"min": 2820501,
+				"max": 3374544
+			},
+			"closedBytes": {
+				"median": 6784858,
+				"min": 6739348,
+				"max": 7159267
+			},
+			"closedAllocatedBytes": {
+				"median": 8880128,
+				"min": 8835072,
+				"max": 9252864
+			}
+		}
+	},
+	{
+		"key": "512/repeated/buffered-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 90.90280499999994,
+				"min": 88.4683399999999,
+				"max": 93.55137800000011
+			},
+			"summarizeMilliseconds": {
+				"median": 165.84823400000005,
+				"min": 163.195563,
+				"max": 166.14591000000019
+			},
+			"downloadMilliseconds": {
+				"median": 224.21592500000003,
+				"min": 223.39079500000003,
+				"max": 224.78038400000003
+			},
+			"coldMilliseconds": {
+				"median": 296.540027,
+				"min": 294.6959989999999,
+				"max": 301.424283
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 4351262,
+				"min": 4351262,
+				"max": 4351262
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307283,
+				"min": 307277,
+				"max": 307286
+			},
+			"closedBytes": {
+				"median": 9084247,
+				"min": 9084071,
+				"max": 9084253
+			},
+			"closedAllocatedBytes": {
+				"median": 9084928,
+				"min": 9084928,
+				"max": 9084928
+			}
+		}
+	},
+	{
+		"key": "512/repeated/durable-file/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 92.97466099999997,
+				"min": 92.3101009999998,
+				"max": 95.55022400000007
+			},
+			"summarizeMilliseconds": {
+				"median": 166.73434799999995,
+				"min": 165.85521600000015,
+				"max": 170.41559400000006
+			},
+			"downloadMilliseconds": {
+				"median": 225.00980199999998,
+				"min": 221.82951500000001,
+				"max": 227.29776700000002
+			},
+			"coldMilliseconds": {
+				"median": 299.04965999999996,
+				"min": 295.754355,
+				"max": 304.22394900000006
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 4351262,
+				"min": 4351262,
+				"max": 4351262
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307277,
+				"min": 307277,
+				"max": 307277
+			},
+			"closedBytes": {
+				"median": 9084247,
+				"min": 9084062,
+				"max": 9084247
+			},
+			"closedAllocatedBytes": {
+				"median": 9089024,
+				"min": 9089024,
+				"max": 9089024
+			}
+		}
+	},
+	{
+		"key": "512/repeated/leveldb/full",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 119.0570260000004,
+				"min": 117.140308,
+				"max": 119.39385399999992
+			},
+			"summarizeMilliseconds": {
+				"median": 225.0905319999997,
+				"min": 223.10667999999987,
+				"max": 226.20245799999975
+			},
+			"downloadMilliseconds": {
+				"median": 505.967724,
+				"min": 499.297493,
+				"max": 517.2399829999999
+			},
+			"coldMilliseconds": {
+				"median": 607.1161410000001,
+				"min": 590.597168,
+				"max": 630.5816350000001
+			},
+			"initialBytes": {
+				"median": 70948,
+				"min": 70947,
+				"max": 70949
+			},
+			"uploadBlobBytes": {
+				"median": 4350497,
+				"min": 4350497,
+				"max": 4350497
+			},
+			"summaryGrowthBytes": {
+				"median": 20280,
+				"min": 20274,
+				"max": 20283
+			},
+			"opGrowthBytes": {
+				"median": 3359328,
+				"min": 3286017,
+				"max": 3377805
+			},
+			"closedBytes": {
+				"median": 1191614,
+				"min": 1186736,
+				"max": 1192576
+			},
+			"closedAllocatedBytes": {
+				"median": 3522560,
+				"min": 3518464,
+				"max": 3526656
+			}
+		}
+	},
+	{
+		"key": "512/repeated/buffered-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 25.631327000000056,
+				"min": 24.937347000000045,
+				"max": 25.713014000000157
+			},
+			"summarizeMilliseconds": {
+				"median": 45.59524600000009,
+				"min": 44.82341599999995,
+				"max": 45.70686899999987
+			},
+			"downloadMilliseconds": {
+				"median": 228.770937,
+				"min": 227.26702999999998,
+				"max": 230.52188100000006
+			},
+			"coldMilliseconds": {
+				"median": 296.10346599999997,
+				"min": 293.70141800000005,
+				"max": 296.90940099999995
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 545058,
+				"min": 545058,
+				"max": 545058
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307285,
+				"min": 307280,
+				"max": 307285
+			},
+			"closedBytes": {
+				"median": 9084250,
+				"min": 9084070,
+				"max": 9084255
+			},
+			"closedAllocatedBytes": {
+				"median": 9084928,
+				"min": 9084928,
+				"max": 9084928
+			}
+		}
+	},
+	{
+		"key": "512/repeated/durable-file/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 25.501610000000028,
+				"min": 25.191682000000128,
+				"max": 28.695039999999835
+			},
+			"summarizeMilliseconds": {
+				"median": 46.990058999999974,
+				"min": 46.08102199999985,
+				"max": 49.81359900000007
+			},
+			"downloadMilliseconds": {
+				"median": 220.27302100000003,
+				"min": 219.70938799999993,
+				"max": 233.15913800000004
+			},
+			"coldMilliseconds": {
+				"median": 297.494262,
+				"min": 295.208376,
+				"max": 298.99041
+			},
+			"initialBytes": {
+				"median": 4376648,
+				"min": 4376648,
+				"max": 4376648
+			},
+			"uploadBlobBytes": {
+				"median": 545058,
+				"min": 545058,
+				"max": 545058
+			},
+			"summaryGrowthBytes": {
+				"median": 20951,
+				"min": 20951,
+				"max": 20951
+			},
+			"opGrowthBytes": {
+				"median": 307276,
+				"min": 307275,
+				"max": 307277
+			},
+			"closedBytes": {
+				"median": 9084246,
+				"min": 9084245,
+				"max": 9084247
+			},
+			"closedAllocatedBytes": {
+				"median": 9089024,
+				"min": 9089024,
+				"max": 9089024
+			}
+		}
+	},
+	{
+		"key": "512/repeated/leveldb/incremental",
+		"samples": 3,
+		"metrics": {
+			"uploadMilliseconds": {
+				"median": 49.199117000000115,
+				"min": 46.52066300000024,
+				"max": 50.73147299999982
+			},
+			"summarizeMilliseconds": {
+				"median": 96.94090499999993,
+				"min": 96.31210099999998,
+				"max": 97.55646400000023
+			},
+			"downloadMilliseconds": {
+				"median": 511.80433800000003,
+				"min": 503.90241299999997,
+				"max": 525.063416
+			},
+			"coldMilliseconds": {
+				"median": 580.728793,
+				"min": 571.85491,
+				"max": 621.656121
+			},
+			"initialBytes": {
+				"median": 70947,
+				"min": 70946,
+				"max": 70948
+			},
+			"uploadBlobBytes": {
+				"median": 544293,
+				"min": 544293,
+				"max": 544293
+			},
+			"summaryGrowthBytes": {
+				"median": 20279,
+				"min": 20274,
+				"max": 20291
+			},
+			"opGrowthBytes": {
+				"median": 2654988,
+				"min": 2617647,
+				"max": 3056633
+			},
+			"closedBytes": {
+				"median": 4956642,
+				"min": 1190260,
+				"max": 4995807
+			},
+			"closedAllocatedBytes": {
+				"median": 7286784,
+				"min": 3522560,
+				"max": 7327744
+			}
+		}
+	}
+]

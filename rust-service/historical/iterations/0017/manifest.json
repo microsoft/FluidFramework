@@ -1,0 +1,26 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0017",
+	"status": "complete",
+	"sourceCommit": "41e9420cbba665bb4d9ad32f812eb1816a3fdea9",
+	"createdAt": "2026-09-19T19:48:05.346Z",
+	"activeWorkstreams": [
+		{
+			"name": "signals",
+			"instructions": "phase-2/instructions/signals.md",
+			"report": "phase-2/signals.md"
+		},
+		{
+			"name": "transport",
+			"instructions": "phase-2/instructions/transport.md",
+			"report": "phase-2/transport.md"
+		},
+		{
+			"name": "recovery",
+			"instructions": "phase-2/instructions/recovery.md",
+			"report": "phase-2/recovery.md"
+		}
+	],
+	"deferredWorkstreams": [],
+	"nextWorkstreams": []
+}

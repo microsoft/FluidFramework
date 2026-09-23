@@ -1,0 +1,11 @@
+# Integration Tests
+
+This folder contains cross-language and browser integration harnesses whose generated outputs remain ignored.
+
+- [`sea-integration-tests/`](sea-integration-tests/) retains Fluid/SharedTree integration scenarios, browser traces, benchmarks, and aggregate package-test orchestration.
+- [`wasm-client/`](wasm-client/) documents package-owned neutral Node WASM validation.
+- [`webtransport-browser/`](webtransport-browser/) validates pinned WebTransport and both WebSocket APIs, including shutdown and connection release.
+
+Follow each harness README for generation and execution commands. Validation must regenerate ignored consumers in the active checkout, execute the exact outputs, stop owned processes, and remove temporary artifacts afterward.
+
+Focused driver, direct SharedTree, and neutral session regressions live in their [owning packages](../packages/README.md).

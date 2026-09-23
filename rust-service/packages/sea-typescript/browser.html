@@ -1,0 +1,157 @@
+<!-- Copyright (c) Microsoft Corporation and contributors. All rights reserved. -->
+<!-- Licensed under the MIT License. -->
+
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Sea package session validation</title></head>
+<body>
+<script type="module">
+import { createSeaFactories } from "./lib/presets.js";
+
+const parameters = new URLSearchParams(location.search);
+const certificateHash = Uint8Array.from(parameters.get("hash").match(/../gu), (byte) => Number.parseInt(byte, 16));
+const encode = (value) => new TextEncoder().encode(value);
+const assert = (condition, message) => { if (!condition) { throw new Error(message); } };
+const participation = parameters.get("snapshotPolicy") === "sea" ? "seaSelected" : "clientSelected";
+const preset = parameters.get("preset") ?? "split";
+const compressions = parameters.has("compression") ? [parameters.get("compression") === "true"] : [false, true];
+const artifacts = () => performance.getEntriesByType("resource").map((entry) => new URL(entry.name).pathname).filter((name) => /\/generated\/.*\.(js|wasm)$/u.test(name)).sort();
+
+/** Reads through progress notifications until the requested history state arrives. */
+async function nextMatching(stream, predicate) {
+    for (;;) {
+        const item = await stream.next();
+        assert(item !== undefined, "history ended before the expected state");
+        if (predicate(item)) return item;
+    }
+}
+
+window.__seaPackageResult = (async () => {
+    const results = [];
+    for (const compression of compressions) {
+        const before = artifacts();
+        const factories = createSeaFactories({ preset, compressionSupport: compression });
+        const { openWebTransport } = factories;
+        assert(JSON.stringify(artifacts()) === JSON.stringify(before), "factory selection initialized WASM eagerly");
+        const service = { url: parameters.get("transport"), certificateHash };
+        const options = (name) => ({ session: encode(`${name === "writer" ? "0" : "1"}-${crypto.randomUUID()}`), compression });
+        let missingError;
+        try {
+            const unexpected = await openWebTransport(service, new Uint8Array(8), options("missing"));
+            await unexpected.close();
+        } catch (error) { missingError = error; }
+        assert(missingError?.kind === "Rejected", "missing document did not return a classified rejection");
+        const writer = await openWebTransport(service, undefined, options("writer"));
+        const reader = await openWebTransport(service, writer.document, options("reader"));
+        let coordination;
+        let events;
+        let live;
+        let observerCoordination;
+        try {
+            const initial = await reader.load();
+            initial.cancel();
+            live = reader.read();
+            await nextMatching(live, (item) => item.kind === "progress" && item.status === "AwaitingNewItems");
+            const payload = encode("browser application payload ".repeat(100));
+            const blob = await writer.putBlob(payload);
+            assert(new TextDecoder().decode(await reader.getBlob(blob)) === new TextDecoder().decode(payload), "blob did not round trip");
+            if (compression) {
+                const rawReader = await openWebTransport(service, writer.document, { ...options("raw-reader"), compression: false });
+                try {
+                    const stored = await rawReader.getBlob(blob);
+                    assert(stored.length < payload.length, "compression factory did not encode stored bytes");
+                } finally { await rawReader.close(); }
+            }
+            const root = await writer.putDirectory([{ name: "state", child: blob }]);
+            assert((await reader.getDirectory(root))[0].name === "state", "directory did not round trip");
+            const position = await writer.submit(undefined, payload, root);
+            const delivery = await nextMatching(live, (item) => item.kind === "event");
+            assert(delivery.position === position, "live peer delivery position mismatch");
+            assert(new TextDecoder().decode(delivery.payload) === new TextDecoder().decode(payload), "live peer delivery payload mismatch");
+            assert(delivery.blobTree.kind === root.kind && delivery.blobTree.bytes.every((byte, index) => byte === root.bytes[index]), "live content reference mismatch");
+            await nextMatching(live, (item) => item.kind === "progress" && item.status === "AwaitingNewItems");
+            const pendingRead = live.next();
+            live.cancel();
+            assert(await pendingRead === undefined, "cancellation did not wake the pending read");
+            events = reader.read(undefined, position);
+            let observed = false;
+            for (;;) {
+                const item = await events.next();
+                if (item === undefined) { break; }
+                if (item.kind === "event") {
+                    assert(new TextDecoder().decode(item.payload) === new TextDecoder().decode(payload), "event did not decode");
+                    observed = true;
+                }
+            }
+            assert(observed, "reader did not observe event");
+            coordination = await writer.coordinateSnapshots(participation);
+            const authority = await coordination.next();
+            observerCoordination = await reader.coordinateSnapshots(participation);
+            const observerAuthority = await observerCoordination.next();
+            if (participation === "seaSelected") {
+                assert(authority.fence !== undefined, "publisher did not receive a fence");
+                assert(observerAuthority.fence === undefined, "two publishers were nominated");
+            }
+            const notification = coordination.next();
+            await writer.publishSnapshot(undefined, authority.fence, position, root);
+            let observedSnapshot = await notification;
+            while (observedSnapshot.latest !== position) observedSnapshot = await coordination.next();
+            assert((await writer.getSnapshot()).atEvent === position, "latest snapshot mismatch");
+            assert((await writer.getSnapshot(position)).atEvent === position, "bounded snapshot mismatch");
+            const reloaded = await openWebTransport(service, writer.document, options("reload"));
+            try {
+                const loaded = await reloaded.load();
+                try {
+                    const snapshot = await loaded.next();
+                    assert(snapshot.kind === "snapshot" && snapshot.atEvent === position, "snapshot did not reopen");
+                } finally { loaded.cancel(); }
+            } finally { await reloaded.close(); }
+            const remoteConfiguration = `${preset === "combined" ? "combined" : "webtransport"}${compression ? "-compression" : ""}`;
+            const remoteArtifacts = artifacts().filter((name) => !before.includes(name));
+            assert(remoteArtifacts.length === 2 && remoteArtifacts.every((name) => name.includes(`/generated/${remoteConfiguration}/web/`)), `unexpected remote artifact loading: ${remoteArtifacts}`);
+            const local = await factories.createMemoryService();
+            const isolated = await factories.createMemoryService();
+            let localWriter;
+            let localReader;
+            try {
+                localWriter = await local.open(undefined, options("local-writer"));
+                localReader = await local.open(localWriter.document, options("local-reader"));
+                let isolatedError;
+                try {
+                    const unexpected = await isolated.open(localWriter.document, options("isolated"));
+                    await unexpected.close();
+                } catch (error) { isolatedError = error; }
+                assert(isolatedError?.kind === "Rejected", "initialized bundle shared independent memory storage");
+                const localBlob = await localWriter.putBlob(payload);
+                assert(new TextDecoder().decode(await localReader.getBlob(localBlob)) === new TextDecoder().decode(payload), "local blob mismatch");
+                const localPosition = await localWriter.submit(undefined, payload, localBlob);
+                const history = localReader.read(undefined, localPosition);
+                try {
+                    const item = await nextMatching(history, (item) => item.kind === "event");
+                    assert(item.position === localPosition && new TextDecoder().decode(item.payload) === new TextDecoder().decode(payload), "local event mismatch");
+                } finally { history.cancel(); }
+            } finally {
+                await localWriter?.close();
+                await localReader?.close();
+                local.close();
+                isolated.close();
+            }
+            const selectedArtifacts = artifacts().filter((name) => !before.includes(name));
+            const localConfiguration = `memory${compression ? "-compression" : ""}`;
+            assert(selectedArtifacts.length === (preset === "combined" ? 2 : 4), "bundle initialization was not shared");
+            assert(selectedArtifacts.every((name) => name.includes(`/generated/${remoteConfiguration}/web/`) || (preset === "split" && name.includes(`/generated/${localConfiguration}/web/`))), "unselected bundle loaded");
+            results.push({ preset, compression, blobBytes: payload.length, snapshotPosition: String(position), participation, liveDelivery: true, cancellation: true, serviceErrorKind: missingError.kind, remoteArtifacts, selectedArtifacts, localIsolation: true });
+        } finally {
+            events?.cancel();
+            live?.cancel();
+            observerCoordination?.cancel();
+            coordination?.cancel();
+            await writer.close();
+            await reader.close();
+        }
+    }
+    return { status: "passed", browser: navigator.userAgent, environment: "Chromium inside Codespace", transport: "real WebTransport", results };
+})().catch((error) => ({ status: "failed", error: String(error), stack: error.stack }));
+</script>
+</body>
+</html>

@@ -13,12 +13,14 @@ import { LocalDriverApi, LocalDriverApiType } from "./localDriverApi.js";
 import { LocalServerTestDriver } from "./localServerTestDriver.js";
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 import { OdspTestDriver } from "./odspTestDriver.js";
+import { pkgVersion } from "./packageVersion.js";
 import {
 	RouterliciousDriverApi,
 	RouterliciousDriverApiType,
 } from "./routerliciousDriverApi.js";
 import { RouterliciousTestDriver } from "./routerliciousTestDriver.js";
 import { TinyliciousTestDriver } from "./tinyliciousTestDriver.js";
+import type { SeaWebSocketTestDriver } from "./seaWebSocketTestDriver.js";
 
 /**
  * @internal
@@ -70,7 +72,11 @@ export async function createFluidTestDriver(
 	config?: FluidTestDriverConfig,
 	api: DriverApiType = DriverApi,
 ): Promise<
-	LocalServerTestDriver | TinyliciousTestDriver | RouterliciousTestDriver | OdspTestDriver
+	| LocalServerTestDriver
+	| TinyliciousTestDriver
+	| RouterliciousTestDriver
+	| OdspTestDriver
+	| SeaWebSocketTestDriver
 > {
 	switch (fluidTestDriverType) {
 		case "local":
@@ -86,6 +92,20 @@ export async function createFluidTestDriver(
 
 		case "odsp":
 			return OdspTestDriver.createFromEnv(config?.odsp, api.OdspDriverApi);
+
+		case "sea-websocket": {
+			if (api.LocalDriverApi.version !== pkgVersion) {
+				throw new Error("SEA WebSocket tests require the current driver version");
+			}
+			const endpoint = process.env.SEA_TEST_WEBSOCKET_URL;
+			if (endpoint === undefined || endpoint.length === 0) {
+				throw new Error(
+					"SEA_TEST_WEBSOCKET_URL is required for sea-websocket; use the SEA test runner",
+				);
+			}
+			const { SeaWebSocketTestDriver: Driver } = await import("./seaWebSocketTestDriver.js");
+			return new Driver(endpoint);
+		}
 
 		default:
 			unreachableCase(

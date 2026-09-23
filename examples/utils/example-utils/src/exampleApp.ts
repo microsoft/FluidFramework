@@ -16,6 +16,8 @@ import type {
 import { createElement, type ReactElement, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
 
+import { createSeaExampleServiceClient } from "./seaExampleService.js";
+
 /**
  * This file has some simple example utilities for loading and rendering Fluid containers and data stores.
  */
@@ -42,7 +44,9 @@ export const defaultServiceOptions: ExampleServiceOptions = {
  * {@link @fluid-example/webpack-fluid-loader#exampleAppConfig}, which provides the browser
  * compatibility required by the local-driver services.
  * Reads the `fluidClient` URL query parameter.
- * Accepts `ephemeral`, `session`, or `tinylicious`.
+ * Accepts `ephemeral`, `session`, `tinylicious`, `sea-ephemeral`, `sea-webtransport`, or `sea-websocket`.
+ * SEA initializes WASM lazily on first attachment or load, not when selecting a client.
+ * Remote SEA requires `seaEndpoint`; WebTransport also requires `seaCertificateHash`.
  * Missing and unknown values default to the session service when session storage is available,
  * or the ephemeral service otherwise.
  *
@@ -59,7 +63,14 @@ export const defaultServiceOptions: ExampleServiceOptions = {
 export function getExampleServiceClient(
 	options: ExampleServiceOptions = defaultServiceOptions,
 ): ServiceClient {
-	switch (getExampleServiceType(true)) {
+	const serviceType = getExampleServiceType(true);
+	switch (serviceType) {
+		case "sea-ephemeral":
+		case "sea-websocket":
+		case "sea-webtransport": {
+			const parameters = new URLSearchParams(globalThis.location?.search ?? "");
+			return createSeaExampleServiceClient(serviceType, options, parameters);
+		}
 		case "session": {
 			return getSessionService().newClient(options);
 		}
@@ -75,13 +86,24 @@ export function getExampleServiceClient(
 	}
 }
 
-function getExampleServiceType(warnUnknown = false): "session" | "tinylicious" | "ephemeral" {
+function getExampleServiceType(
+	warnUnknown = false,
+):
+	| "session"
+	| "tinylicious"
+	| "ephemeral"
+	| "sea-ephemeral"
+	| "sea-webtransport"
+	| "sea-websocket" {
 	const fluidClient =
 		new URLSearchParams(globalThis.location?.search ?? "").get("fluidClient") ?? "";
 	switch (fluidClient) {
 		case "session":
 		case "tinylicious":
-		case "ephemeral": {
+		case "ephemeral":
+		case "sea-ephemeral":
+		case "sea-webtransport":
+		case "sea-websocket": {
 			return fluidClient;
 		}
 		default: {

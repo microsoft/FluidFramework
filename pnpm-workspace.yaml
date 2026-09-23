@@ -254,6 +254,8 @@ packages:
   - "examples/**"
   - "experimental/**"
   - "packages/**"
+  - "rust-service/packages/*"
+  - "rust-service/tests/sea-integration-tests"
   - "tools/markdown-magic"
 
   # exclude bundle-analysis output directories, which can contain package.json files from

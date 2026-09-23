@@ -35,6 +35,9 @@ website/resources/_gen/
 # PNPM store (when mounting host file system in docker container)
 .pnpm-store/
 
+# Rust service workspace build output
+/rust-service/target/
+
 # Scratch dir created by `flub check trustPolicy`.
 **/.trust-audit-temp/
 

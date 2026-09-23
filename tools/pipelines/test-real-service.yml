@@ -93,6 +93,22 @@ stages:
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
 
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: e2e_sea
+      stageDisplayName: e2e - SEA
+      poolBuild: Large-eastus2
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
+      testCommand: test:realsvc:sea:report
+      setupRust: true
+      uploadTestPassRateTelemetry: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger'
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+
   # end-to-end tests docker
   - template: templates/include-test-real-service.yml
     parameters:

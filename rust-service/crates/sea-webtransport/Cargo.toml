@@ -1,0 +1,54 @@
+[package]
+name = "sea-webtransport"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[example]]
+name = "browser_lifecycle"
+path = "../../tests/webtransport-browser/transport-lifecycle.rs"
+crate-type = ["cdylib"]
+
+[features]
+websocket-stream = ["dep:gloo-timers", "web-sys/Url", "web-sys/AbortController", "web-sys/AbortSignal", "web-sys/WebSocket", "web-sys/BinaryType", "web-sys/MessageEvent", "web-sys/Event"]
+
+[dependencies]
+async-trait.workspace = true
+bytes.workspace = true
+postcard = { version = "1.1.3", features = ["alloc"] }
+sea-core = { path = "../sea-core" }
+serde = { version = "1.0.219", features = ["derive"] }
+thiserror.workspace = true
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+futures-util.workspace = true
+tokio.workspace = true
+wtransport = "=0.7.2"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+gloo-timers = { version = "0.3.0", optional = true, features = ["futures"] }
+futures-util.workspace = true
+tokio = { version = "1.47.1", default-features = false, features = ["sync", "macros"] }
+js-sys = "=0.3.105"
+wasm-bindgen = "=0.2.128"
+wasm-bindgen-futures = "=0.4.78"
+web-sys = { version = "=0.3.105", features = [
+	"ReadableStream",
+	"ReadableStreamDefaultReader",
+	"WebTransport",
+	"WebTransportBidirectionalStream",
+	"WebTransportHash",
+	"WebTransportOptions",
+	"WebTransportReceiveStream",
+	"WebTransportSendStream",
+	"WritableStream",
+	"WritableStreamDefaultWriter",
+] }
+
+[dev-dependencies]
+sea-memory = { path = "../sea-memory" }
+sea-sequencer = { path = "../sea-sequencer" }
+
+[lints]
+workspace = true
