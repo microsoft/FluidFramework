@@ -1,7 +1,7 @@
 # Application Seed Projection: Implemented Fluid Design
 
 This document describes the implemented Fluid contracts and why the runtime changes are required.
-The [architecture and roadmap](../Application-Seed-Projection.md) separates the wider application/storage direction, attachment proposals, portable downloads, Markdown integration, and optional background services.
+The [architecture and roadmap](../Application-Seed-Projection.md) separates the wider application/storage direction, attachment proposals, portable downloads, Markdown integration, and at-rest summarization.
 The [usage guide](./Usage.md) explains application integration; the [reference README](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md) explains how to run the example.
 Sample-application and test-harness structure belongs in the [local design](../../../../packages/test/local-server-tests/src/test/seedProjection/DESIGN.md), not in the runtime contract.
 

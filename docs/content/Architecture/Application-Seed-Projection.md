@@ -40,6 +40,19 @@ External HTML/Markdown producer
 The application runtime owns parsing, schema, and native graph construction. Storage contracts independently determine
 creation, portable downloads, attachment ownership, and whether loading can omit large payload bodies.
 
+## Priorities and independent directions
+
+The order of the sections below is not an implementation schedule.
+Use these priorities to evaluate the next work; none implies an external service commitment.
+
+| Priority or direction                                                         | Expected outcome                                                                                                         | Relationship to this reference                                                                                                          |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Image support is required.**                                             | Creation, collaboration, and readable projection must preserve images, with explicit payload ownership and reachability. | The reference has no images yet; inline-image assumptions and the proposed shared-payload/attachment design are described below.        |
+| **2. Publish the final application representation at rest.**                  | After collaboration ends, unpublished edits eventually appear in an accepted application projection.                     | Session-end/idle summarization is the next priority, not merely a convenience; its hosting and trigger mechanisms remain unimplemented. |
+| **3. A documented interchange format is highly desirable.**                   | External tools get a stable, portable way to find snapshot content and assets.                                           | An interoperability improvement, not a prerequisite for the implemented seed/projection workflow or service-specific readers.           |
+| **Orthogonal: Markdown and other applications.**                              | The design must extend to other DDSs and application graphs, not just this SharedTree sample.                            | Another application and a generalization test, not a milestone that must wait behind the three priorities above.                        |
+| **Longer-term, largely independent: application content as the stored file.** | Separate canonical application content from recoverable collaboration sessions.                                          | Can reuse the creation, materialization, projection, and asset workflows developed here, but is not required to deliver them.           |
+
 ## Representations and authority
 
 | Representation | Contents                                                                                        | Authority                                                                                                                           |
@@ -61,10 +74,13 @@ reference itself contains no images. A planned single-call creation API would le
 that are treated as attachment blobs after creation; that work is not implemented here. Until then, do not claim inline
 image bytes avoid encoding or re-upload when their containing HTML part changes.
 
-## Dependency: a documented interchange file format
+## Desirable interoperability: a documented interchange file format
 
-**Portable file creation/readback requires a documented storage-service interchange contract.** For ODSP, this would
-cover files downloaded from SharePoint. It is a proposed dependency, not an existing capability or service commitment.
+**A documented portable interchange contract is an improvement, not a gate on the core workflow.**
+Service-specific tools can use a service's creation/snapshot APIs and interpret its envelope before reading the application projection.
+They still need that service's wire contract; the TypeScript snapshot interfaces are not themselves a REST response format.
+For ODSP, a portable contract would make files downloaded from SharePoint easier to consume across languages and tools.
+It is proposed work, not an existing capability or service commitment.
 The format should expose the snapshot tree, blobs as files, checkpoint metadata, an operation tail, and attachments.
 
 It must support **shared references**: multiple leaves can reference one image payload. ZIP is a possible outer package,
@@ -86,8 +102,10 @@ supported operations to readers of an interchange download. It should be ordinar
 special executable runtime hook or a replacement for the machine-readable manifest. These points remain open for
 discussion: the reference does not add that file or mandate a shared root key.
 
-## Images and single-call creation (not implemented)
+## Required: image support and payload ownership (not implemented)
 
+Image support is required for the target application workflow, even though the bounded reference does not implement it.
+The initial inline-base64 assumption and the optimized shared-payload design are different delivery stages, not claims of existing support.
 The asset goal is **one payload pool shared by seed, native state, and read projection**. After this work is
 implemented, materialization/projection should reference image bytes without reading them, and native graduation should
 not upload the same image again. These are future requirements, not properties of today's inline-image assumption.
@@ -145,6 +163,8 @@ do not eliminate application-level image conversion or transport costs.
 
 ## Markdown/rich-text follow-on (not implemented)
 
+Markdown is an orthogonal application of the same design, not a dependency of the HTML workflow.
+Its mixed-DDS graph is an important test of the requirement that the design extend beyond SharedTree.
 The goal is direct creation by a non-Fluid producer without calling a conversion service or knowing DDS formats.
 A Rust or other producer writes Markdown and versioned application metadata into a supported seed/file envelope.
 The application's runtime factory materializes the native graph locally; collaboration then publishes both that graph
@@ -188,20 +208,25 @@ metadata. Add lists after deterministic allocation and application-model synchro
 components, comments, and assets. Verify independent construction, no-write opens, native convergence/reload, and
 checkpoint consistency under delayed application callbacks. None of this expands the current SharedTree implementation.
 
-## Optional: summarize when collaboration ends
+## Next priority: publish the application representation at rest
+
+After collaboration ends, the file should eventually contain an accepted application projection covering the completed editing session.
+Otherwise external readers can indefinitely see stale application content even though the native operation history contains the edits.
+This is the next priority after image support; it is not implemented by the reference.
 
 A worker could consume documented session-end/idle notifications, load the application headlessly, catch up, and publish
 an accepted native summary plus projection. Notifications and worker hosting remain service-specific dependencies.
-This worker is not implemented here.
 
 Only summarize unpublished edits; opening/closing an unchanged file must not convert its seed. Coalesce notifications,
 retry failures, avoid self-triggered loops, and use the normal summary protocol. **Freshness at rest is eventual**, not
-guaranteed at session close; retain the explicit checkpoint.
+guaranteed synchronously at disconnect; retain the explicit checkpoint.
+New edits start a new freshness obligation rather than making an earlier accepted projection represent those later edits.
 
 ## Longer-term: application content as the stored file
 
 A future canonical file could contain only application content, metadata, and shared assets, without embedded Fluid
 state. An application-specific service would own recoverable collaboration sessions separately.
+This is largely independent of the current persistence design, but can reuse its application formats, deterministic materialization, projection, shared-asset handling, and checkpoint-aware workflows.
 
 That needs safe bidirectional transitions, session authority, in-flight operation handling, recovery, and stale-writer
 fencing. The canonical format must cover every required feature, beyond a limited HTML/Markdown projection.
