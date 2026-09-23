@@ -688,6 +688,9 @@ describe("simple-tree tree", () => {
 		});
 
 		it("restores the schema and content from before a schema upgrade on a local branch", () => {
+			// This test verifies current behavior, not necessarily the desired specification.
+			// We will likely make revertTo skip schema changes,
+			// but that requires prerequisite work on rebasing interleaved data and schema changes.
 			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
 			const originalView = getView(originalConfig);
 			originalView.initialize(1);
@@ -718,6 +721,9 @@ describe("simple-tree tree", () => {
 		});
 
 		it("throws when transmitting a revert across a schema upgrade on a shared branch", () => {
+			// This test verifies current behavior, not necessarily the desired specification.
+			// We will likely make revertTo skip schema changes,
+			// but that requires prerequisite work on rebasing interleaved data and schema changes.
 			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
 			const upgradedConfig = new TreeViewConfiguration({
 				schema: [schema.number, schema.string],
