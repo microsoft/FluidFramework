@@ -917,6 +917,9 @@ extends:
             dependsOn:
               # This also depends on build stage transitively.
               - verification
+            # Run when verification skipped to be sure to pick up build stage telemetry
+            # (including when build failure causes verification to be skipped).
+            runOnSkippedDependencies: true
             telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
@@ -926,7 +929,7 @@ extends:
                   pipelineIdentifierForTelemetry: BuildClient
 
       # Upload bundle size telemetry in a separate stage that only depends on the build stage,
-      # so it isn't blocked by publish stage failures. Only runs on the internal project where
+      # so it isn't blocked by verification stage failures. Only runs on the internal project where
       # ff_pipeline_host is available.
       - ${{ if and(eq(parameters.telemetry, true), eq(parameters.taskBundleAnalysis, true), ne(variables['Build.Reason'], 'PullRequest'), eq(variables['System.TeamProject'], 'internal')) }}:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
