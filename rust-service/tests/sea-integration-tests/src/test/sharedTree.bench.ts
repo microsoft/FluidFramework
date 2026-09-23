@@ -7,7 +7,6 @@ import { execFileSync, spawn, spawnSync, type ChildProcess } from "node:child_pr
 import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { createConnection, createServer } from "node:net";
-import { tmpdir } from "node:os";
 import path from "node:path";
 
 import {
@@ -52,6 +51,8 @@ interface BenchmarkOutput {
 			readonly peakResidentSetKiB: number;
 		};
 	};
+	/** Filesystem identity for an external service's temporary data. */
+	readonly serviceData?: ServiceData;
 	/** Individual browser repetitions retained for diagnostics. */
 	readonly samples: readonly Record<string, unknown>[];
 }
@@ -74,8 +75,24 @@ interface RunningService {
 	readonly port?: number;
 	/** Browser HTTP port allowlisted for a WebSocketStream case. */
 	readonly browserPort?: number;
+	/** Owned temporary service-data location and filesystem identity. */
+	readonly data: ServiceData;
 	/** Stops the process and removes temporary data. */
 	stop(): Promise<void>;
+}
+
+/** Recorded identity of one external service's owned temporary data. */
+interface ServiceData {
+	/** Exact owned path removed after the benchmark case. */
+	readonly path: string;
+	/** Required temporary-data root. */
+	readonly root: "/tmp";
+	/** Mounted filesystem type. */
+	readonly filesystem: string;
+	/** Mounted source identity. */
+	readonly mountSource: string;
+	/** Numeric device identity reported by stat. */
+	readonly device: string;
 }
 
 /** Effective workload configuration derived from benchmark environment variables. */
@@ -116,6 +133,8 @@ const webTransportTestDirectory = path.join(
 	rustServiceDirectory,
 	"tests/webtransport-browser",
 );
+/** Explicit common data root for all external browser benchmark services. */
+const temporaryDataRoot = "/tmp";
 
 /** Complete set of service backends exercised by the comparison benchmark. */
 const cases: readonly BenchmarkCase[] = [
@@ -238,6 +257,7 @@ async function runCase(
 			BENCHMARK_TINYLICIOUS_PORT:
 				service?.port === undefined ? undefined : String(service.port),
 			SEA_STORAGE_MODE: benchmarkCase.storageMode,
+			SEA_EXPERIMENTAL_LIVE_CACHE: benchmarkCase.backend === "rust" ? "true" : undefined,
 			BENCHMARK_SERVER_PID:
 				service?.process.pid === undefined ? undefined : String(service.process.pid),
 			BENCHMARK_CPU_PROFILE_PATH: profilePath,
@@ -266,7 +286,10 @@ async function runCase(
 				`benchmark runner failed (${execution.status ?? execution.signal}):\n${execution.stdout}\n${execution.stderr}`,
 			);
 		}
-		const output = parseOutput(execution.stdout);
+		const output = {
+			...parseOutput(execution.stdout),
+			...(service === undefined ? {} : { serviceData: service.data }),
+		};
 		const artifactDirectory = path.resolve(
 			packageDirectory,
 			process.env.BENCHMARK_ARTIFACT_DIR ?? "benchmark-results",
@@ -390,7 +413,10 @@ async function startRustService(
 ): Promise<RunningService> {
 	ensureCertificate();
 	const browserPort = remoteTransport === "websocket-stream" ? await freePort() : undefined;
-	const temporaryDirectory = await mkdtemp(path.join(tmpdir(), "fluid-rust-benchmark-"));
+	const temporaryDirectory = await mkdtemp(
+		path.join(temporaryDataRoot, "fluid-rust-benchmark-"),
+	);
+	const data = serviceData(temporaryDirectory);
 	const certificateDirectory = path.join(webTransportTestDirectory, ".certs");
 	const child = spawn(
 		path.join(rustServiceDirectory, "target/release/sea-webtransport-server"),
@@ -406,6 +432,7 @@ async function startRustService(
 				...process.env,
 				SEA_PROTOCOL: "sea",
 				SEA_STORAGE_MODE: storageMode,
+				SEA_EXPERIMENTAL_LIVE_CACHE: "true",
 				SEA_WEBSOCKET_BIND: browserPort === undefined ? undefined : "127.0.0.1:0",
 				SEA_WEBSOCKET_ORIGINS:
 					browserPort === undefined ? undefined : `http://localhost:${browserPort}`,
@@ -422,7 +449,7 @@ async function startRustService(
 		);
 	} catch (error) {
 		await stopProcess(child);
-		await rm(temporaryDirectory, { recursive: true, force: true });
+		await rm(temporaryDirectory, { recursive: true });
 		throw error;
 	}
 	child.stdout?.resume();
@@ -432,12 +459,13 @@ async function startRustService(
 	).trim();
 	return {
 		process: child,
+		data,
 		transportUrl: output[1] ?? fail("Rust service output omitted its transport URL"),
 		certificateHash,
 		...(browserPort === undefined ? {} : { browserPort }),
 		stop: async () => {
 			await stopProcess(child);
-			await rm(temporaryDirectory, { recursive: true, force: true });
+			await rm(temporaryDirectory, { recursive: true });
 		},
 	};
 }
@@ -446,8 +474,9 @@ async function startRustService(
 async function startTinylicious(): Promise<RunningService> {
 	const port = await freePort();
 	const temporaryDirectory = await mkdtemp(
-		path.join(tmpdir(), "fluid-tinylicious-benchmark-"),
+		path.join(temporaryDataRoot, "fluid-tinylicious-benchmark-"),
 	);
+	const data = serviceData(temporaryDirectory);
 	const child = spawn(
 		process.execPath,
 		[path.join(tinyliciousDirectory, "dist/index.js"), "--port", String(port)],
@@ -461,16 +490,32 @@ async function startTinylicious(): Promise<RunningService> {
 		await waitForPort(child, port, 30_000);
 	} catch (error) {
 		await stopProcess(child);
-		await rm(temporaryDirectory, { recursive: true, force: true });
+		await rm(temporaryDirectory, { recursive: true });
 		throw error;
 	}
 	return {
 		process: child,
+		data,
 		port,
 		stop: async () => {
 			await stopProcess(child);
-			await rm(temporaryDirectory, { recursive: true, force: true });
+			await rm(temporaryDirectory, { recursive: true });
 		},
+	};
+}
+
+/** Captures the actual filesystem used by an owned external-service directory. */
+function serviceData(directory: string): ServiceData {
+	return {
+		path: directory,
+		root: temporaryDataRoot,
+		filesystem: execFileSync("findmnt", ["-T", directory, "-n", "-o", "FSTYPE"], {
+			encoding: "utf8",
+		}).trim(),
+		mountSource: execFileSync("findmnt", ["-T", directory, "-n", "-o", "SOURCE"], {
+			encoding: "utf8",
+		}).trim(),
+		device: execFileSync("stat", ["-c", "%d", directory], { encoding: "utf8" }).trim(),
 	};
 }
 

@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
+pub mod measurement;
+
 /// Version of the newline-delimited JSON result schema emitted by the harness.
 pub const SCHEMA_VERSION: u32 = 3;
 /// Default deterministic fixture seed recorded in benchmark results.

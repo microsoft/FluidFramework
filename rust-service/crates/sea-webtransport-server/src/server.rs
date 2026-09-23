@@ -658,7 +658,7 @@ async fn serve_sea_stream_with_datagrams(
     metrics: &Metrics,
     datagrams: Option<Connection>,
 ) -> Result<(), WebTransportError> {
-    let mut prefix = [0_u8; 1];
+    let mut prefix = [0_u8; 4];
     timeout(config.operation_timeout, receive.read_exact(&mut prefix))
         .await
         .map_err(|_| WebTransportError::Timeout)?
@@ -670,7 +670,7 @@ async fn serve_sea_stream_with_datagrams(
 async fn serve_network_stream(
     mut send: impl SendStream,
     mut receive: impl ReceiveStream,
-    prefix: [u8; 1],
+    prefix: [u8; 4],
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
@@ -1097,7 +1097,7 @@ async fn read_next_network_frame(
 
 async fn read_one_network_frame(
     receive: &mut impl ReceiveStream,
-    prefix: [u8; 1],
+    prefix: [u8; 4],
     limits: sea_v1::Limits,
 ) -> Result<sea_v1::NetworkFrame, WebTransportError> {
     let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
@@ -1253,10 +1253,10 @@ mod tests {
     }
 
     #[tokio::test(start_paused = true)]
-    async fn unknown_first_kind_fails_without_waiting_for_more_bytes() {
+    async fn invalid_first_length_fails_without_waiting_for_more_bytes() {
         let (_sender, receiver) = tokio::sync::mpsc::unbounded_channel();
         let mut receive = TestReceive(receiver);
-        let reading = read_one_network_frame(&mut receive, [0], sea_v1::Limits::default());
+        let reading = read_one_network_frame(&mut receive, [0; 4], sea_v1::Limits::default());
         tokio::pin!(reading);
         assert!(matches!(
             futures_util::poll!(&mut reading),

@@ -188,6 +188,7 @@ const output = {
 				: backend === "rust-local" || backend === "tinylicious"
 					? "memory"
 					: "sessionStorage",
+		liveCache: backend === "rust" ? process.env.SEA_EXPERIMENTAL_LIVE_CACHE === "true" : null,
 		transportUrl: backend === "rust" ? transport : null,
 		clients: samples[0].clientCount,
 	},

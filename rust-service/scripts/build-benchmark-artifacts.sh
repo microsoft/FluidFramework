@@ -6,6 +6,8 @@ set -euo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/benchmark-common.sh"
 
+: "${CARGO_TARGET_DIR:?Set an explicit source-specific CARGO_TARGET_DIR before building benchmark artifacts}"
+
 source_root=$(benchmark_source_root)
 local_release="$source_root/target/release"
 

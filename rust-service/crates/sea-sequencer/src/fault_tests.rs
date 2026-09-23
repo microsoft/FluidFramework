@@ -37,6 +37,9 @@ use sea_memory::{
 };
 use tokio::sync::Notify;
 
+#[path = "live_cache_tests.rs"]
+mod live_cache_tests;
+
 use super::{
     LocalSequencer, SessionError,
     tests::{member, submission},
@@ -77,6 +80,14 @@ enum Failure {
 /// Deterministic fault injection and append-call accounting.
 #[derive(Default)]
 struct Faults {
+    /// Independent opening invalidation, not inferred from archive reads.
+    invalidation: sea_core::storage::InvalidationSource<FaultError>,
+    /// Explicitly exercises third-party backends without the optional capability.
+    unsupported_observer: AtomicBool,
+    /// Counts archive stream construction.
+    reads: AtomicUsize,
+    /// Counts every underlying archive poll, including pending polls.
+    read_polls: AtomicUsize,
     /// Behavior consumed by the next append.
     next: StdMutex<Failure>,
     /// Number of backend append invocations, including pending ones.
@@ -130,6 +141,41 @@ struct FaultStore<Store> {
     inner: Arc<Store>,
     /// Per-component fault controls.
     faults: Arc<Faults>,
+}
+
+/// Poll instrumentation preserves the source's exact progress semantics.
+struct CountedRead<Item, Position, Error> {
+    /// Original backend stream, including its delivered-cursor observation.
+    source: ArchiveStream<Item, Position, Error>,
+    /// Counter owned by the fixture, not by production cache code.
+    faults: Arc<Faults>,
+}
+
+impl<Item, Position: Clone + PartialOrd, Error> futures_util::Stream
+    for CountedRead<Item, Position, Error>
+{
+    type Item = Result<sea_core::MonitoredStreamItem<Item, Position>, Error>;
+
+    fn poll_next(
+        self: std::pin::Pin<&mut Self>,
+        context: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        let this = self.get_mut();
+        this.faults.read_polls.fetch_add(1, Ordering::SeqCst);
+        this.source.as_mut().poll_next(context)
+    }
+}
+
+impl<Item, Position: Clone + PartialOrd, Error> sea_core::MonitoredStream
+    for CountedRead<Item, Position, Error>
+{
+    type Data = Item;
+    type Position = Position;
+    type Error = Error;
+
+    fn progress(&self) -> sea_core::MonitoredStreamProgress<Position> {
+        self.source.progress()
+    }
 }
 
 impl<Store> FaultStore<Store> {
@@ -196,6 +242,14 @@ impl<Store: Archive<Position = EventPosition, Error = MemoryStorageError> + 'sta
     type Item = Store::Item;
     type Append = Store::Append;
     type AppendResult = Store::AppendResult;
+
+    fn observe_invalidation(
+        &self,
+        callback: sea_core::storage::InvalidationCallback<Self::Error>,
+    ) -> Option<sea_core::storage::InvalidationRegistration> {
+        (!self.faults.unsupported_observer.load(Ordering::SeqCst))
+            .then(|| self.faults.invalidation.register(callback))
+    }
 
     async fn append(&self, value: Self::Append) -> Result<Self::AppendResult, Self::Error> {
         self.faults.calls.fetch_add(1, Ordering::SeqCst);
@@ -275,8 +329,14 @@ impl<Store: Archive<Position = EventPosition, Error = MemoryStorageError> + 'sta
     ) -> ArchiveStream<Self::Item, EventPosition, Self::Error> {
         let owner = self.inner.clone();
         let faults = self.faults.clone();
+        faults.reads.fetch_add(1, Ordering::SeqCst);
+        let source: ArchiveStream<Self::Item, EventPosition, MemoryStorageError> =
+            Box::pin(CountedRead {
+                source: self.inner.read(after, stop_after),
+                faults: faults.clone(),
+            });
         map_monitored_stream(
-            self.inner.read(after, stop_after),
+            source,
             move |item| {
                 let _keep_writer_opening = &owner;
                 if faults.fail_read.swap(false, Ordering::SeqCst) {

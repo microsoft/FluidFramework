@@ -7,6 +7,10 @@ license.workspace = true
 rust-version.workspace = true
 publish = false
 
+[features]
+# Only the candidate fixture uses the experimental constructor; approved baseline APIs stay intact.
+checkpoint-live-cache = []
+
 [dependencies]
 async-trait.workspace = true
 bytes.workspace = true

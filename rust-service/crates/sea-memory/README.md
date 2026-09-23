@@ -10,6 +10,8 @@ Factory clones share the registry, and closed documents retain their complete hi
 Components and their clones share one exclusive opening; dropping the last releases writer ownership.
 Reads retain data rather than writer ownership, regardless of their polling/completion state.
 They survive reopening, and live reads receive appends from subsequent openings.
+The event archive supports independent invalidation registration with an explicit never-invalidating registration.
+Independent memory owners remain valid across factory shutdown or drop; the registration does not manufacture a new invalidation event.
 
 Availability handles have private, document-specific provenance and retain data, not writer ownership.
 A new opening of the same document can validate old handles with `ensure_available` or mint fresh ones with `resolve`.

@@ -4,11 +4,24 @@ These shell and Node.js entry points validate or measure the current benchmark h
 The shell validation and measurement wrappers use a disposable source copy; the Node.js collectors use the current checkout and explicit output directories.
 Copies exclude build outputs, installed dependencies, generated packages, Git metadata, and benchmark-result directories; each run uses a separate Cargo target directory and removes the copy and target on exit.
 
+Stress, no-reader, summary, and cold-load runners create backend data in an owned directory directly under `/tmp`, independent of the artifact output directory.
+This includes Sea event and content data, Tinylicious LevelDB data, and Tinylicious filesystem Git summaries.
+Each result records the temporary path, filesystem type, mount source, and device identity.
+The runner removes only its owned data directory after stopping the service and collecting file inventories.
+Benchmark artifacts can therefore use persistent storage without moving either service's file-backend input/output off `/tmp`.
+
 ## Commands
+
+`checkpoint1-pairs.mjs <artifact-directory> <cell>` runs the frozen cache comparison cells.
+It preserves unsuccessful samples and normally requires a passing primary before running controls.
+`--accepted-primary <report-path>` instead records the path and SHA-256 of an explicitly user-accepted primary evidence record.
+Use that option only for a documented exception, not to turn an automatic failure into a pass.
+It does not relax the selected control's gates.
+Copy measurement artifacts to persistent storage after each cell when using temporary data directories.
 
 | Task | Script |
 | --- | --- |
-| Build in Cargo's configured target and stage final native executables locally | [`build-benchmark-artifacts.sh`](build-benchmark-artifacts.sh) |
+| Build in an explicit source-specific target and stage final native executables locally | [`build-benchmark-artifacts.sh`](build-benchmark-artifacts.sh) |
 | Format, unit tests, Clippy, and bounded correctness smoke | [`validate-benchmarks.sh`](validate-benchmarks.sh) |
 | Release build and one `measure` workload; JSON lines to stdout | [`measure-benchmarks.sh`](measure-benchmarks.sh) |
 | Copy preparation and manifest-integrity helpers; source rather than execute | [`benchmark-common.sh`](benchmark-common.sh) |
@@ -18,7 +31,8 @@ Copies exclude build outputs, installed dependencies, generated packages, Git me
 | Bounded Linux Sea/Tinylicious client comparisons | [`benchmark-stress.mjs`](benchmark-stress.mjs) |
 | Fluid summaries, persisted sizes, and process-cold loads | [`benchmark-summaries.mjs`](benchmark-summaries.mjs) |
 
-Use new output directories outside the repository; format completed JSON before retaining it.
+Use new artifact output directories outside the repository; format completed JSON before retaining it.
+The output location does not select the service-data filesystem.
 `check-documentation.mjs` covers Cargo packages, direct harnesses, architectural groupings, historical READMEs, and current top-level guides; it checks local paths, not anchors or external URLs.
 
 ### Collection Modes
@@ -35,10 +49,10 @@ Each takes a new output directory; `matrix` also takes a JSON array of stress-ru
 
 `benchmark-summaries.mjs` uses the built current-version Fluid test runtime and drivers, real SharedMaps, and on-demand Fluid summaries.
 Build the client packages, Tinylicious, and native benchmark artifacts first; use the same certificates as the stress runner.
-The native build compiles in Cargo's configured target directory and copies only final executables to this worktree's `target/release` directory:
+The native build requires an explicit source-specific target directory and copies only final executables to this worktree's `target/release` directory:
 
 ```bash
-bash rust-service/scripts/build-benchmark-artifacts.sh
+CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh
 ```
 
 The runner owns isolated service processes, fresh data directories, dynamically selected loopback ports, and fresh client processes.
@@ -80,13 +94,18 @@ Use repository Biome formatting before committing generated JSON.
 ### Stress Setup
 
 Build Routerlicious, generated Sea clients, browser-test certificates, and the native benchmark artifacts first.
-Use `bash rust-service/scripts/build-benchmark-artifacts.sh` for the native artifacts.
+Use `CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh` for the native artifacts.
 The runner uses production client libraries without SharedTree/container runtime and verifies payloads and ordered delivery to writer and observer.
 Sea defaults to release native service/WASM clients over loopback WebSocket; Tinylicious uses its normal server/Socket.IO client and in-memory operation database.
 Both retain history; their default persistence guarantees differ.
 
 Service affinity uses CPUs 2; 2,4,6,8; or 0,2,4,6,8,10,12,14 for one/four/eight cores.
-Up to four generators use separate physical cores; editor/host activity is not isolated.
+Four generators use separate physical cores by default.
+Set `generatorProcesses` to as many as eight for capacity campaigns; generators use CPUs 16,18,...,30 and documents must divide evenly across them.
+Native offered rates must also divide evenly across the selected generator count.
+Sea uses the built-in live-cache default when `liveCache` is omitted; set it to `false` only for an explicit storage-backed control.
+Results record the effective cache state and generator layout.
+Editor/host activity is not isolated.
 Set `SEA_MAX_CONNECTIONS=128` for more than eight document pairs.
 
 Example bounded stress sample from the repository root:
@@ -108,7 +127,7 @@ Payload throughput counts delivery to one remote observer per document, excludin
 Service CPU and memory cover the owned service process, which currently has no companion service processes in these configurations.
 Generator resource totals are separate and include warmup and draining.
 
-For native Sea generation, run `bash rust-service/scripts/build-benchmark-artifacts.sh`, then add `"generator":"native"` and `"transport":"websocket"` or `"transport":"webtransport"` to the workload.
+For native Sea generation, run `CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh`, then add `"generator":"native"` and `"transport":"websocket"` or `"transport":"webtransport"` to the workload.
 The native worker uses the shared session client with one ordered submission queue per document and a single-thread Tokio runtime per pinned process.
 Its benchmark-only WebSocket adapter uses bounded tungstenite messages and independent child sockets; it is not a new supported production client.
 WebTransport pins the server certificate and includes QUIC/TLS; the local WebSocket listener is unencrypted, so the comparison is not equal-security transport performance.

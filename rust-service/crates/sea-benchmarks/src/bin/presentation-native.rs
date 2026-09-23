@@ -3,8 +3,10 @@
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{SinkExt as _, StreamExt as _};
+use sea_benchmarks::measurement::MeasurementClock;
 use sea_core::{
     Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, archive::SessionEventKind,
+    storage::LoadStart,
 };
 use sea_webtransport::{
     NativeSeaClient, SeaClientError, SessionClient, SessionOpen, TransportConfig, protocol,
@@ -193,6 +195,8 @@ struct State {
     delivered: usize,
     /// Submit-to-observe times, including measured submissions drained afterward.
     latencies: Vec<f64>,
+    /// All application observer deliveries, including warmup and drain.
+    observer_delivery_epoch_micros: Vec<u64>,
     /// First correctness or transport failure.
     error: Option<String>,
 }
@@ -229,6 +233,7 @@ async fn measure<Session>(
 where
     Session: SeaAuthorSession<Error = SeaClientError> + 'static,
 {
+    let clock = MeasurementClock::new();
     let states: Vec<_> = pairs
         .iter()
         .map(|_| Arc::new(Mutex::new(State::default())))
@@ -244,7 +249,14 @@ where
             let end_time = Arc::clone(&end_time);
             let bytes = configuration.payload_bytes;
             tasks.push(tokio::spawn(async move {
-                let mut events = session.read(None, None);
+                // Consume the connection's opening recovery/live stream instead of abandoning it.
+                let mut events = match session.load(LoadStart::LatestSnapshot).await {
+                    Ok(load) => load.events,
+                    Err(error) => {
+                        state.lock().expect("state lock").error = Some(error.to_string());
+                        return;
+                    }
+                };
                 while let Some(event) = events.next().await {
                     let mut state = state.lock().expect("state lock");
                     match event {
@@ -262,6 +274,11 @@ where
                             }
                             state.observed[recipient] = sequence;
                             let (sent_at, measured) = state.times[sequence - 1];
+                            if recipient == 1 {
+                                state
+                                    .observer_delivery_epoch_micros
+                                    .push(clock.at(Instant::now()));
+                            }
                             if recipient == 1 && measured {
                                 let now = Instant::now();
                                 state
@@ -395,12 +412,14 @@ where
     let mut delivered = 0;
     let mut missing = 0;
     let mut acknowledged = 0;
+    let mut observer_delivery_epoch_micros = Vec::new();
     for state in &states {
         let mut state = state.lock().expect("state lock");
         measured_sent += state.times.iter().filter(|(_, measured)| *measured).count();
         delivered += state.delivered;
         missing += 2 * state.times.len() - state.observed.iter().sum::<usize>();
         acknowledged += state.acknowledged;
+        observer_delivery_epoch_micros.append(&mut state.observer_delivery_epoch_micros);
         latencies.append(&mut state.latencies);
         if let Some(error) = state.error.take() {
             errors.push(error);
@@ -416,7 +435,7 @@ where
         task.abort();
     }
     Ok(
-        json!({"type":"result", "sent":sent,"measuredSent":measured_sent,"deliveredInWindow":delivered,"missing":missing,"errors":errors,"pendingAtEnd":pending_at_end,"maxPending":max_pending,"maxScheduleLagMilliseconds":max_lag,"latencyMilliseconds":{"median":percentile(50),"p95":percentile(95),"max":latencies.last()},"acknowledged":acknowledged,"backlog":backlog}),
+        json!({"type":"result", "sent":sent,"measuredSent":measured_sent,"deliveredInWindow":delivered,"missing":missing,"errors":errors,"pendingAtEnd":pending_at_end,"maxPending":max_pending,"maxScheduleLagMilliseconds":max_lag,"latencyMilliseconds":{"median":percentile(50),"p95":percentile(95),"max":latencies.last()},"acknowledged":acknowledged,"backlog":backlog,"observerDeliveryEpochMicros":observer_delivery_epoch_micros,"measurementClock":clock.report()}),
     )
 }
 

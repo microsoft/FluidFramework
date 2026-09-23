@@ -48,7 +48,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(error) => return Err(error.into()),
     };
     let transport_config = configured_transport(maximum_connections.as_deref())?;
-    let host = Arc::new(BuiltInSeaHost::new(data, storage_mode));
+    let live_cache = match env::var("SEA_EXPERIMENTAL_LIVE_CACHE") {
+        Ok(value) => configured_live_cache(Some(&value))?,
+        Err(env::VarError::NotPresent) => configured_live_cache(None)?,
+        Err(error) => return Err(error.into()),
+    };
+    let host = Arc::new(BuiltInSeaHost::new_with_live_cache(
+        data,
+        storage_mode,
+        live_cache,
+    ));
     let server = WebTransportServer::bind(bind, identity, host.clone(), transport_config.clone())?;
     let address = server.local_addr()?;
     let liveness = server.liveness_policy();
@@ -64,6 +73,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
     println!("STORAGE_MODE={}", storage_mode.name());
+    if live_cache {
+        println!("EXPERIMENTAL_LIVE_CACHE=true");
+    }
     println!("PROTOCOL=sea");
     println!("MAX_CONNECTIONS={}", transport_config.max_connections);
     println!(
@@ -76,6 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if let Some(marker) = &shutdown_marker {
         println!("SHUTDOWN_MARKER={}", marker.display());
     }
+
     let mut serving = Box::pin(async move {
         #[cfg(feature = "websocket-stream")]
         if let Some(websocket) = websocket_server {
@@ -211,8 +224,26 @@ fn print_shutdown_outcome(
     );
 }
 
+/// Defaults built-in recovery to the experimental cache while preserving a strict rollback switch.
+fn configured_live_cache(value: Option<&str>) -> Result<bool, &'static str> {
+    match value {
+        Some("false") => Ok(false),
+        None | Some("true") => Ok(true),
+        Some(_) => Err("invalid SEA_EXPERIMENTAL_LIVE_CACHE; expected true or false"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn activation_is_default_on_with_explicit_off_and_strict_values() {
+        assert_eq!(super::configured_live_cache(None), Ok(true));
+        assert_eq!(super::configured_live_cache(Some("false")), Ok(false));
+        assert_eq!(super::configured_live_cache(Some("true")), Ok(true));
+        for invalid in ["", "1", "TRUE", " true", "yes"] {
+            assert!(super::configured_live_cache(Some(invalid)).is_err());
+        }
+    }
     use super::configured_transport;
     use sea_webtransport_server::TransportConfig;
 

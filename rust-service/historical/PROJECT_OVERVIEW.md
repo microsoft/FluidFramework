@@ -1,6 +1,6 @@
 # Sea: Project Overview
 
-Project record as of 2026-09-22; measurements use the revisions listed below.
+Project record as of 2026-09-23; measurements use the revisions listed below.
 For the current implementation and limitations, start with the [project README](../README.md).
 
 Sea (Snapshotted Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
@@ -15,12 +15,14 @@ For setup and usage, see the [project README](../README.md); for service contrac
 
 Native and browser clients access the sequencer locally or over a network transport.
 Storage options include memory, buffered-file, and durable-file backends with different persistence guarantees.
+The built-in host uses a shared live-event cache by default while retaining storage as the authority for recovery and historical catch-up.
 
 ```mermaid
 flowchart LR
    Application[Application or Fluid adapter] --> Client[Native or browser client]
-  Client -->|Local, WebTransport, or WebSocket| Sequencer[Sequencer]
-   Sequencer --> Storage[Memory, buffered-file, or durable-file]
+   Client -->|Local, WebTransport, or WebSocket| Sequencer[Sequencer]
+   Sequencer --> Cache[Shared live-event cache]
+   Cache --> Storage[Memory, buffered-file, or durable-file]
 ```
 
 ## AI-Assisted Development
@@ -54,85 +56,80 @@ They support the method and its limits, not the complete private-evaluation chro
 
 ## Measurement Scope
 
-**Measured 2026-09-20:** service/source results at Sea `92ecf30f4a7`; paired browser results at `9cb45f707ab`, with benchmark-only changes for WebSocketStream; Tinylicious LevelDB includes repair `cf89ceb2ec1`.
-**End-to-end tests refreshed 2026-09-21:** Sea passes all 669 recorded Tinylicious current-version passes, plus 20 more.
-160 retained passing browser samples (80 per distributed data structure (DDS) mode; one additional failed campaign retained), 180 passing repeated service samples, 104 storage probes, and 33 additional LevelDB probes.
-Local, single-host stack comparisons: different features, transports, and persistence guarantees; not production capacity or a language-only comparison.
+The complete current campaign used clean commit `240798434cf591f4db2366a1a3b6b6a7438bd015`.
+The 72-sample summary campaign used `22309cf9d169c4f7986b6ce1db184427269f9656`; the only intervening change makes point-in-time file inventory tolerate an atomic temporary-file rename between directory enumeration and `stat`.
+It does not change service, client, workload, timing, or persistence behavior.
+The corrected native WebTransport groups used `4bdd92ee38a7e599fbdc0116b11b4080d604e421` plus the benchmark lifecycle fix described below.
+
+All file-backed Sea and Tinylicious service data used fresh owned directories directly under `/tmp`.
+The host reported AMD EPYC 9V74, Linux `6.8.0-1064-azure`, Node.js `22.23.2`, Rust `1.98.1`, and 32 logical CPUs.
+`/tmp` was ext4 on `/dev/sda1[/containerTmp]`; benchmark artifacts remained outside service-data directories.
+
+The campaign retained:
+
+- 180 primary repeated stress attempts and 20 bounded replacement attempts;
+- 30 post-fix native WebTransport attempts and three bounded replacements;
+- 135 capacity probes across all 30 storage/core/payload rows;
+- 160 passing browser samples;
+- 72 passing summary and cold-load samples;
+- complete Sea and Tinylicious end-to-end test inventories;
+- current source and production dependency inventories.
+
+The [retained dataset](measurements/overview-refresh-20260923/README.md) contains every value used below.
+These are local, single-host stack comparisons with different features, transports, and persistence guarantees.
+They are not production capacity estimates or language-only comparisons.
 
 ## At a Glance
 
-Throughput cells give **64-byte / 8,192-byte offered ops/s**, using eight service cores and four separate generator cores.
-These are single-run threshold passes from the storage exploration, not repeated capacity estimates or equal-durability comparisons.
+Throughput cells give **64-byte / 8,192-byte offered operations/s**.
+Sea eight-core capacity uses eight service cores and eight separate generator cores; Tinylicious uses four generators because its measured ceiling does not require more.
+Values are the highest observed threshold pass, not repeated maximum-capacity estimates.
+The corresponding higher failure appears in [Storage and Core Exploration](#storage-and-core-exploration).
 ✅ marks a favorable measured result or a shared positive outcome within the stated scope, not overall superiority.
 
-| Aspect | Snapshotted Event Archive (SEA) | Tinylicious |
+| Aspect | Snapshotted Event Archive (Sea) | Tinylicious |
 | --- | --- | --- |
 | Language | Rust | TypeScript |
 | Runtime | ✅ Native or WASM | JavaScript |
-| First part Code | ✅ 19,211 lines:<br>7,090 test/support + 12,121 other | 35,927 lines:<br>10,775 test/support + 25,152 other |
-| Transitive dependencies | ✅ 163 crates:<br>156 external + 7 workspace | 317 npm packages:<br>305 external + 12 workspace |
+| First-party code | ✅ 25,178 lines:<br>9,996 test/support + 15,182 other | 35,977 lines:<br>10,824 test/support + 25,153 other |
+| Transitive dependencies | ✅ 161 crates:<br>155 external + 6 workspace | 318 npm packages:<br>306 external + 12 workspace |
 | Representative libraries | Tokio, Quinn/wtransport, rustls, Serde, Postcard | Express, Socket.IO, isomorphic-git, LevelDB, Winston |
-| Supported Streams | ✅ WebTransport, WebSocketStream, WebSocket | WebSocket via Socket.IO<br>(❌ no application-level receive backpressure) |
-| Fluid end-to-end tests<br>(689 selected tests) | ✅ 100% | ✅ 100% |
+| Supported streams | ✅ WebTransport, WebSocketStream, WebSocket | WebSocket via Socket.IO<br>(❌ no application-level receive backpressure) |
+| Recorded end-to-end test execution | ✅ 691 passed, 0 failed | ✅ 4,049 passed, 0 failed |
 
-| Aspect | Snapshotted Event Archive (SEA) | Tinylicious |
+| Aspect | Snapshotted Event Archive (Sea) | Tinylicious |
 | --- | --- | --- |
-| Op throughput: memory<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 88,000 / 38,000 ops/s | 950 / 800 ops/s |
-| Op throughput: disk, buffered<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 46,000 / 30,000 ops/s | 900 / 100 ops/s (LevelDB) |
-| Op throughput: durable<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 2,000 / 160 ops/s<br>(inconsistent) | ❌ No durable ack in tested config |
-| Memory at matched 500 ops/s<br>(64 B / 8,192 B payload)<br>(4 cores) | ✅ 42.49 / 74.75 MiB RSS | 168.53 / 220.72 MiB RSS |
+| Operation throughput: memory<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 68,000 / 28,000 ops/s | 1,000 / 800 ops/s |
+| Operation throughput: disk, buffered<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 44,000 / 36,000 ops/s | 1,100 / 100 ops/s (LevelDB) |
+| Operation throughput: durable<br>(64 B / 8,192 B payload)<br>(8 cores) | ✅ 5,000 / 4,000 ops/s | ❌ No durable acknowledgment in tested configuration |
+| Memory at matched 500 ops/s<br>(64 B / 8,192 B payload)<br>(4 cores) | ✅ 39.94 / 72.56 MiB RSS | 168.89 / 222.87 MiB RSS |
 
 Source scopes include tests and different feature sets; dependency and test counts are not quality scores.
 Sea's WebTransport and WebSocketStream paths support streaming backpressure; ordinary WebSocket uses bounded fail-stop receive queues instead.
-RSS values are medians of ten run means; small/large payload order matches the throughput rows.
-Matched-load RSS and repeated-throughput results below retain their recorded core counts; no eight-core matched-load repeat was collected.
-Test selections differ, and pending tests are not passes.
+Tinylicious's disk entry is LevelDB without explicitly synchronized writes and is not durability-equivalent to Sea durable-file.
 
 <details>
-<summary>Feature comparison: test scope, dependency counting, and guarantees</summary>
+<summary>Test scope, dependency counting, and guarantees</summary>
 
-**Tests:** the refreshed Sea run started at 2026-09-21 00:49:50 UTC on `8cee1f04f0a` plus three test-allowlist changes, using the existing memory-backed WebSocket runner.
-The full run completed in 62.628 seconds: **691 passed, 0 failed, 493 pending**.
-The newly enabled 31 attach-lifecycle and two SharedString grouped-batching cases passed in two focused runs and again in the full suite, without changing assertions or timeouts.
-Sea's runner selects current-version APIs, but standalone historical suites also register tests outside that selection.
-The totals therefore comprise **689 current-version passes and 486 pending cases**, plus two historical-loader entry-point passes using the local driver and seven pending historical cases (six compression cases and one legacy-chunking case).
-Those two local passes are not Sea compatibility coverage.
+The current Sea run completed with **691 passing, 0 failing, and 493 pending**.
+Its totals comprise 689 current-version passes and 486 pending cases, plus two historical-loader entry-point passes and seven pending historical cases.
+Those two local historical-loader passes are entry-point coverage, not Sea compatibility coverage.
 
-Tinylicious's default selection includes compatibility coverage and has a different denominator.
-Its split comes from the Tinylicious JUnit report dated 2026-09-19 21:16:07 UTC, whose totals match the [integration validation record](INTEGRATION_TEST_CONFIGURATION_PLAN.md): 4,049 passes and 1,921 pending tests.
-The compatibility matrix repeats scenarios with old/new loader, driver, container-runtime, and data-store-runtime combinations, as well as different-version clients creating and loading documents.
-These are additional configurations of many of the same scenarios, not thousands of distinct service features.
+The current Tinylicious default run completed with **4,049 passing, 0 failing, and 1,921 pending**.
+It includes generated layer and cross-client compatibility configurations, so its denominator is not comparable to Sea's current-version-only selection.
+Comparing current-version identities retains the previously established shared set: Sea passes all 669 recorded Tinylicious current-version passes plus 20 cases Tinylicious skips.
 
-| Tinylicious test group | Passed | Pending |
-| --- | ---: | ---: |
-| Current-version `Non-Compat` configurations | 661 | 502 |
-| Current-version load/summarize benchmarks outside the matrix | 8 | 4 |
-| Generated layer-compatibility configurations | 1,950 | 716 |
-| Generated cross-client compatibility configurations | 1,422 | 698 |
-| Explicit historical-loader and legacy-chunking cases outside the matrix | 8 | 1 |
-| Total | 4,049 | 1,921 |
-
-Classification uses each JUnit test's `classname`, with the standalone compression, entry-point, and legacy-chunking suites counted as compatibility because they explicitly request historical APIs.
-Comparing individual test identities confirms that Sea passes every one of Tinylicious's 669 recorded current-version passes, plus 20 cases Tinylicious skips: 11 reentry, four message-size/chunking, four blob/compression, and one snapshot-refresh case.
-Both current-version inventories contain 1,175 cases; Sea skips 486 and Tinylicious skips 506.
-Remaining skips include local-only coverage, capability restrictions, service-specific behavior, and disabled regressions; they are not all irrelevant.
-Both recorded runs passed every executed test; neither demonstrates 100% coverage of all Fluid behavior.
-
-Reproduce the newly enabled selection, then the full Sea suite, from `packages/test/test-end-to-end-tests/`:
+Reproduce from `packages/test/test-end-to-end-tests/`:
 
 ```bash
-pnpm build:test:esm
-node scripts/seaRunner.mjs --grep 'Validate Attach lifecycle|SharedString grouped batching' --no-bail
 node scripts/seaRunner.mjs --no-bail
+pnpm run test:realsvc:tinylicious
 ```
 
-**Dependencies:** counted at `9cb45f707ab` for Linux x86-64, deduplicated by package name and version, excluding the server/package root.
-The Sea graph includes default features plus `websocket-stream`, normal dependencies, build dependencies, and proc-macro dependencies; development-only edges are excluded.
-Tinylicious uses its installed production graph, including resolved optional dependencies, with workspace links normalized through their package manifests and all dependency occurrences traversed.
-The figures exclude the Rust standard library, the Node.js runtime, and separate client applications; packages and crates are not equivalent units of size or complexity.
-Representative library names identify responsibilities, not measured dependency sizes.
-
-Reproduce the graph inputs from the repository root:
+Dependency counts are deduplicated by package name and version and exclude the root package.
+Sea includes normal and build edges plus proc macros for Linux x86-64 with `websocket-stream`; development-only edges are excluded.
+Tinylicious uses its installed production graph with workspace links normalized.
+Crates and npm packages are not equivalent units.
 
 ```bash
 cargo tree --manifest-path rust-service/Cargo.toml --locked \
@@ -140,15 +137,6 @@ cargo tree --manifest-path rust-service/Cargo.toml --locked \
   --target x86_64-unknown-linux-gnu --edges normal,build --prefix none --format '{p}'
 pnpm --dir server/routerlicious --filter tinylicious list --prod --depth Infinity --json
 ```
-
-**Backpressure:** SEA's [transport contract](../crates/sea-webtransport/README.md) distinguishes streaming receive backpressure from the ordinary WebSocket compatibility adapter.
-The latter fails on overflow at 4 MiB or 256 queued messages per socket; it cannot pause incoming browser messages and does not bound total process memory.
-Tinylicious's [runner](../../server/routerlicious/packages/tinylicious/src/runner.ts) leaves operation and connection throttlers unset; Socket.IO/TCP buffering is not an equivalent documented application-level receive-backpressure contract.
-
-**Disk and durability:** the Tinylicious disk entry is LevelDB without explicitly synchronized writes, not a configured synchronous durability mode.
-The cross denotes no equivalent per-operation synchronized acknowledgment guarantee in this configuration.
-SEA durable-file results are inconsistent, and physical power-loss qualification remains outstanding.
-See the storage exploration below for failed probes and queue-growth caveats.
 
 </details>
 
@@ -171,40 +159,26 @@ xychart-beta horizontal
   title "Server source: test/support, other code, and total"
   x-axis ["Sea: test/support", "Sea: other code", "Sea: total", "Tinylicious: test/support", "Tinylicious: other code", "Tinylicious: total"]
   y-axis "Code lines" 0 --> 40000
-  bar [7090, 12121, 19211, 10775, 25152, 35927]
+  bar [9996, 15182, 25178, 10824, 25153, 35977]
 ```
-
-For each service, test/support plus other code equals the total; comments are counted separately.
 
 | Scope | Files | Code lines | Comment lines | Test/support code subset | Other code |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Sea native server local non-development dependency closure | 50 | 19,211 | 2,045 | 7,090 | 12,121 |
-| Tinylicious local server dependency closure | 335 | 35,927 | 7,538 | 10,775 | 25,152 |
-| Tinylicious wrapper only, a subset of the preceding row | 35 | 2,442 | 356 | 472 | 1,970 |
-| Sea TypeScript clients and adapters, separate from native scope | 24 | 5,628 | 716 | 2,669 | 2,959 |
+| Sea native server local non-development dependency closure | 58 | 25,178 | 2,534 | 9,996 | 15,182 |
+| Tinylicious local server dependency closure | 335 | 35,977 | 7,538 | 10,824 | 25,153 |
+| Tinylicious wrapper only, a subset of the preceding row | 35 | 2,492 | 356 | 521 | 1,971 |
+| Sea TypeScript clients and adapters, separate from native scope | 24 | 5,618 | 718 | 2,686 | 2,932 |
 
-<details>
-<summary>Source-count method and reproduction</summary>
-
-cloc 2.06 (`cloc@2.6.0`) counts tracked Rust, TypeScript, and JavaScript at clean revision `92ecf30f4a7`, before the Tinylicious repair.
-Scopes follow manifests, not linker reachability; duplicate-content paths and conditional code are included.
-Generated entrypoints, package-version files, build output, and external dependencies are excluded.
-The Tinylicious closure includes shared service responsibilities beyond this experiment.
-
-Test/support classification uses directory/file names and syntax-derived Rust `#[cfg(test)]` module and test-function spans.
-It excludes complex conditional expressions, unrecognized fixtures, and integration tests outside selected `src` scopes; "other code" does not mean production-only code.
-Test/support comment counts are 28, 809, 33, and 50 in table order.
-
-To regenerate at the pinned revision, follow the source-inventory instructions in the [collection scripts guide](../scripts/README.md#commands).
-Run from the repository root and use a disposable output directory.
-
-</details>
+cloc 2.06 counts tracked Rust, TypeScript, and JavaScript.
+Scopes follow local non-development manifest edges, not linker reachability; generated entry points, package-version files, build output, and external dependencies are excluded.
+Test/support classification uses path/name conventions plus syntax-derived Rust test spans.
+See the [collection scripts guide](../scripts/README.md#commands) to regenerate the inventory.
 
 ## Matched-Load Resources
 
-500 ops/s; 32 documents, one writer and observer each; four service cores plus four generator cores.
-Sea memory with Node/WebAssembly (WASM) WebSocket versus Tinylicious in-memory database with Node Socket.IO and filesystem Git summaries.
-Ten fresh runs per row; three warmup seconds and ten measured seconds.
+500 operations/s; 32 documents, one writer and observer each; four service cores plus four generator cores.
+Sea memory with the production Node/WASM WebSocket client versus Tinylicious's in-memory database, Socket.IO client, and filesystem Git summaries.
+Each row contains ten fresh passing runs with three warmup seconds and ten measured seconds.
 
 ```mermaid
 ---
@@ -216,27 +190,26 @@ config:
       plotColorPalette: "#167d8d"
 ---
 xychart-beta horizontal
-  title "Service memory at 500 ops/s"
+  title "Service memory at 500 operations/s"
   x-axis ["Sea, 64 B", "Tinylicious, 64 B", "Sea, 8192 B", "Tinylicious, 8192 B"]
   y-axis "Median mean RSS (MiB)" 0 --> 250
-  bar [42.49, 168.53, 74.75, 220.72]
+  bar [39.94, 168.89, 72.56, 222.87]
 ```
 
 | Payload | Service | Mean RSS median (min-max), MiB | CPU, % | Worst-worker p95 median, ms |
 | --- | --- | ---: | ---: | ---: |
-| 64 bytes | Sea | 42.49 (42.40-42.64) | 9.43 | 0.46 |
-| 64 bytes | Tinylicious | 168.53 (167.57-170.99) | 38.81 | 2.14 |
-| 8,192 bytes | Sea | 74.75 (74.69-74.86) | 14.85 | 0.71 |
-| 8,192 bytes | Tinylicious | 220.72 (218.28-222.40) | 48.09 | 3.04 |
+| 64 bytes | Sea | 39.94 (39.86-40.05) | 8.65 | 0.46 |
+| 64 bytes | Tinylicious | 168.89 (167.70-170.39) | 36.95 | 2.78 |
+| 8,192 bytes | Sea | 72.56 (72.47-72.82) | 12.14 | 0.63 |
+| 8,192 bytes | Tinylicious | 222.87 (221.26-227.90) | 48.55 | 3.23 |
 
 RSS is the median of run means; CPU is the median, with 100% equal to one occupied core.
-Latency is the median of run worst-worker p95 values, not a pooled percentile.
-Every matched sample delivered 500 ops/s; retained history and duration match.
+Latency is the median of run worst-worker p95 values.
+All 40 samples delivered the offered load with exact acknowledgments and zero missing deliveries.
 
 ## Repeated Throughput
 
-Memory-backed operation storage; same document counts and timing as the matched-load test.
-All rows passed ten fresh runs with zero final errors or missing deliveries.
+Memory-backed operation storage; 32 documents and the same timing boundaries as matched load.
 Rates are tested loads, not capacity maxima; payload bandwidth excludes protocol overhead.
 
 ### Native Sea Transports
@@ -244,86 +217,48 @@ Rates are tested loads, not capacity maxima; payload bandwidth excludes protocol
 Four service cores and four separate native generator cores.
 WebTransport includes QUIC/TLS; loopback WebSocket is unencrypted.
 
-```mermaid
----
-config:
-  xyChart:
-    height: 340
-  themeVariables:
-    xyChart:
-      plotColorPalette: "#167d8d"
----
-xychart-beta horizontal
-  title "Native Sea: service CPU at matched loads"
-  x-axis ["WS, 64 B, 12000 ops/s", "WT, 64 B, 12000 ops/s", "WS, 8192 B, 6000 ops/s", "WT, 8192 B, 6000 ops/s"]
-  y-axis "Median service CPU (%); 100% = one core" 0 --> 180
-  bar [119.05, 157.63, 93.43, 156.70]
-```
+| Transport | Payload | Offered ops/s | Outcome | Delivered ops/s median (min-max) | CPU, % | RSS median, MiB | Worst-worker p95 range, ms |
+| --- | --- | ---: | --- | ---: | ---: | ---: | ---: |
+| WebSocket | 64 bytes | 12,000 | 10/10 pass | 11,999.5 (11,997.0-12,004.0) | 135.34 | 73.53 | 1.07-1.18 |
+| WebTransport | 64 bytes | 12,000 | 10/10 pass | 11,998.8 (11,997.3-12,000.6) | 122.75 | 43.68 | 1.09-1.33 |
+| WebTransport control | 64 bytes | 10,000 | 10/10 pass | 9,999.0 (9,997.8-10,000.5) | 106.04 | 39.22 | 0.96-1.07 |
+| WebSocket | 64 bytes | 24,000 | 10/10 pass | 23,996.1 (23,994.1-24,000.2) | 266.54 | 100.89 | 2.23-2.41 |
+| WebSocket | 8,192 bytes | 6,000 | 10/10 pass | 5,999.6 (5,998.6-6,001.4) | 88.58 | 623.01 | 0.84-0.86 |
+| WebTransport | 8,192 bytes | 6,000 | 10/10 pass | 5,999.1 (5,998.2-5,999.9) | 160.65 | 399.15 | 1.89-2.23 |
+| WebSocket | 8,192 bytes | 12,000 | 10/10 pass | 11,998.9 (11,996.9-12,000.3) | 176.35 | 1,223.90 | 1.56-1.69 |
 
-WS = WebSocket; WT = WebTransport.
-The chart pairs equal offered loads within each payload size; the table also includes higher WebSocket-only loads.
-
-| Transport | Payload | Offered ops/s | Delivered ops/s median (min-max) | Payload MiB/s | CPU, % | RSS median, MiB | Worst-worker p95 range, ms |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| WebSocket | 64 bytes | 12,000 | 11,999.00 (11,996.20-12,002.10) | 0.7324 | 119.05 | 78.18 | 0.98-1.02 |
-| WebTransport | 64 bytes | 12,000 | 11,998.20 (11,996.60-12,000.90) | 0.7323 | 157.63 | 49.79 | 2.19-2.64 |
-| WebSocket | 64 bytes | 24,000 | 23,997.75 (23,994.40-24,001.70) | 1.4647 | 229.20 | 111.16 | 1.89-2.04 |
-| WebSocket | 8,192 bytes | 6,000 | 5,999.50 (5,998.70-6,000.00) | 46.8711 | 93.43 | 423.80 | 0.94-0.99 |
-| WebTransport | 8,192 bytes | 6,000 | 5,998.60 (5,998.00-5,999.70) | 46.8641 | 156.70 | 399.58 | 2.64-2.87 |
-| WebSocket | 8,192 bytes | 12,000 | 11,998.50 (11,996.00-12,000.10) | 93.7383 | 180.82 | 804.47 | 1.87-1.91 |
+The original native WebTransport campaign left each connection's authoritative opening event stream unread and opened a second content stream for observation.
+Flow control on the abandoned live stream eventually stalled the connection, producing transport disconnects and incomplete drains.
+The corrected generator consumes the opening stream through `load`; both small-event groups and the repeated large-event control then passed exact drain in all ten accepted samples.
 
 ### Tinylicious
 
-Node Socket.IO, in-memory database and filesystem Git summaries; four separate generator cores.
+Node Socket.IO, in-memory database, and filesystem Git summaries; four generator cores.
 
-| Payload | Service cores | Delivered ops/s median (min-max) | Payload MiB/s | CPU, % | Worst-worker p95 range, ms |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| 64 bytes | 1 | 749.90 (748.90-750.10) | 0.0458 | 64.76 | 5.70-12.89 |
-| 64 bytes | 4 | 749.75 (749.40-750.10) | 0.0458 | 62.70 | 2.79-3.14 |
-| 8,192 bytes | 1 | 749.65 (745.60-749.90) | 5.8566 | 78.62 | 8.91-60.22 |
-| 8,192 bytes | 4 | 749.75 (748.90-749.90) | 5.8574 | 77.68 | 3.52-5.30 |
+| Payload | Service cores | Delivered ops/s median (min-max) | CPU, % | Worst-worker p95 range, ms |
+| --- | ---: | ---: | ---: | ---: |
+| 64 bytes | 1 | 749.8 (749.5-750.0) | 64.76 | 5.10-10.46 |
+| 64 bytes | 4 | 749.8 (749.5-750.0) | 63.67 | 2.92-3.35 |
+| 8,192 bytes | 1 | 749.8 (745.8-749.9) | 78.85 | 6.49-29.90 |
+| 8,192 bytes | 4 | 749.3 (748.6-749.9) | 81.07 | 4.28-10.97 |
 
 ### Node/WASM Sea Client
 
-WebSocket, Sea memory; four separate generator cores.
+WebSocket and Sea memory; four generator cores.
+The historical one-core 12,000-small point failed all ten runs at full service-core saturation, so a bounded 10,000-small replacement group was collected and passed 10/10.
 
-| Payload | Service cores | Delivered ops/s median (min-max) | Payload MiB/s | CPU, % | RSS median, MiB | Worst-worker p95 range, ms |
+| Payload | Service cores | Offered ops/s | Delivered ops/s median (min-max) | CPU, % | RSS median, MiB | Worst-worker p95 range, ms |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 64 bytes | 1 | 11,997.15 (11,975.00-11,998.90) | 0.7322 | 78.72 | 73.05 | 2.66-14.76 |
-| 64 bytes | 4 | 15,998.05 (15,994.30-15,999.80) | 0.9764 | 153.92 | 86.47 | 3.07-3.24 |
-| 8,192 bytes | 1 | 5,998.75 (5,997.70-5,999.50) | 46.8652 | 79.50 | 421.57 | 6.97-10.94 |
-| 8,192 bytes | 4 | 7,997.95 (7,997.10-7,999.00) | 62.4840 | 143.86 | 550.85 | 3.22-10.57 |
-
-<details>
-<summary>Repeated-run client costs, backlog, and provenance</summary>
-
-The 80-sample Node/WASM and matched-resource campaign and 100-sample native/Tinylicious campaign alternated point order.
-Each native generator is a release binary with a single-thread Tokio runtime and one serial submission queue per document.
-The native WebSocket adapter is benchmark-only, not a supported production client API.
-
-Median summed native generator CPU-seconds are 8.13, 9.72, 15.27, 8.11, 12.53, and 15.69 in native-table order.
-No individual native-repeat generator exceeded 4.00 CPU-seconds across warmup, measurement, and drain.
-Every native Sea repeat ended its measured window with zero pending operations.
-Window-end pending totals reached 221 in the Node/WASM campaign and 44 in the native/Tinylicious campaign; all drained.
-Short-run threshold passes do not establish indefinite queue stability or bounded retained-history memory.
-
-The Node/WASM harness needed its obsolete operation-ID argument removed; this is committed in `9cb45f707ab` and changes no service data path.
-All 60 Sea attempts in the initial 80-attempt campaign failed; the entire matrix was rerun after the repair.
-The failed campaign is retained, not pooled with the corrected data.
-Raw samples, sample standard deviations, nearest-rank p95, backlog-quarter means, commands, and hashes are in the [refresh summary](measurements/refresh-92ecf30/summary.json).
-
-</details>
+| 64 bytes | 1 | 10,000 | 9,998.2 (9,997.0-9,999.3) | 82.41 | 59.50 | 2.80-7.12 |
+| 64 bytes | 4 | 16,000 | 15,997.0 (15,995.0-15,999.6) | 157.77 | 74.10 | 2.45-3.45 |
+| 8,192 bytes | 1 | 6,000 | 5,999.1 (5,996.8-6,000.4) | 77.96 | 425.23 | 4.70-9.21 |
+| 8,192 bytes | 4 | 8,000 | 7,998.5 (7,996.1-7,999.6) | 130.55 | 556.09 | 2.75-10.46 |
 
 ## Optimized Browser Results
 
-**Dummy DDS:** lightweight SharedObject using captured SharedTree operation bodies, without SharedTree processing.
-**Real SharedTree:** scalar edits through SharedTree, including its tree processing.
-Both use one writer and observer, 100 warmup and 1,000 measured edits, and ten repetitions per path at `9cb45f707ab`.
-The 160 retained samples passed convergence checks; one WebSocketStream campaign failed before an unchanged retry passed.
-These are application-client measurements, not service-capacity limits.
-**All networked Sea rows use the server's memory backend**, explicitly selected with `SEA_STORAGE_MODE=memory`.
-WebSocketStream uses unencrypted loopback `ws://`, matching Tinylicious's lack of TLS here; WebTransport includes QUIC/TLS.
-Tinylicious uses its default in-memory database, but still writes Git summaries to the filesystem.
+Ten repetitions per path and DDS mode; 100 warmup edits and 1,000 measured edits.
+Every one of the 160 samples passed writer/observer convergence.
+Median edits/s averages the two central raw values and ranges are observed minima and maxima.
 
 ```mermaid
 ---
@@ -336,9 +271,9 @@ config:
 ---
 xychart-beta horizontal
   title "Dummy DDS"
-  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WebTransport (Encrypted) Fluid", "Sea WebTransport (Encrypted) direct", "Sea WebSocketStream Fluid", "Sea WebSocketStream direct", "Tinylicious"]
-  y-axis "Median edits/s (thousands)" 0 --> 10
-  bar [8.921, 2.163, 0.869, 1.368, 2.863, 1.131, 2.154, 3.354]
+  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WebTransport Fluid", "Sea WebTransport direct", "Sea WebSocketStream Fluid", "Sea WebSocketStream direct", "Tinylicious"]
+  y-axis "Median edits/s (thousands)" 0 --> 14
+  bar [13.532, 2.558, 0.894, 1.438, 3.090, 1.165, 2.604, 4.011]
 ```
 
 ```mermaid
@@ -352,306 +287,116 @@ config:
 ---
 xychart-beta horizontal
   title "Real SharedTree"
-  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WebTransport (Encrypted) Fluid", "Sea WebTransport (Encrypted) direct", "Sea WebSocketStream Fluid", "Sea WebSocketStream direct", "Tinylicious"]
-  y-axis "Median edits/s (thousands)" 0 --> 10
-  bar [1.979, 1.260, 0.642, 0.936, 1.318, 0.829, 1.126, 1.549]
+  x-axis ["Sea local direct", "Sea local Fluid", "TypeScript local", "Sea WebTransport Fluid", "Sea WebTransport direct", "Sea WebSocketStream Fluid", "Sea WebSocketStream direct", "Tinylicious"]
+  y-axis "Median edits/s (thousands)" 0 --> 14
+  bar [2.276, 1.319, 0.691, 0.968, 1.457, 0.841, 1.204, 1.694]
 ```
-
-Median edits/s (minimum-maximum), rounded to whole edits/s.
-Both charts use the same scale; WT = WebTransport; WS stream = the WebSocketStream API over unencrypted `ws://`.
-Direct paths omit Fluid runtime responsibilities.
 
 | Path | Storage backend | Dummy DDS | Real SharedTree |
 | --- | --- | ---: | ---: |
-| Sea local direct | Sea memory | 8,921 (8,078-9,470) | 1,979 (1,928-2,037) |
-| Sea local Fluid | Sea memory | 2,163 (1,954-2,236) | 1,260 (1,221-1,288) |
-| TypeScript local | Browser `sessionStorage` database | 869 (771-1,000) | 642 (623-744) |
-| Sea WebTransport, Fluid | Sea memory | 1,368 (1,306-1,413) | 936 (911-958) |
-| Sea WebTransport, direct | Sea memory | 2,863 (2,789-2,910) | 1,318 (1,260-1,348) |
-| Sea WebSocketStream, Fluid | Sea memory | 1,131 (1,082-1,141) | 829 (817-838) |
-| Sea WebSocketStream, direct | Sea memory | 2,154 (2,022-2,198) | 1,126 (1,071-1,135) |
-| Tinylicious | In-memory database; filesystem Git summaries | 3,354 (3,188-3,619) | 1,549 (1,505-1,604) |
+| Sea local direct | Sea memory | 13,532 (12,887-14,006) | 2,276 (2,078-2,326) |
+| Sea local Fluid | Sea memory | 2,558 (2,415-2,585) | 1,319 (1,295-1,342) |
+| TypeScript local | Browser `sessionStorage` database | 894 (806-960) | 691 (644-720) |
+| Sea WebTransport, Fluid | Sea memory | 1,438 (1,369-1,495) | 968 (922-980) |
+| Sea WebTransport, direct | Sea memory | 3,090 (2,986-3,376) | 1,457 (1,437-1,470) |
+| Sea WebSocketStream, Fluid | Sea memory | 1,165 (1,111-1,179) | 841 (822-847) |
+| Sea WebSocketStream, direct | Sea memory | 2,604 (2,575-2,646) | 1,204 (1,187-1,224) |
+| Tinylicious | In-memory database; filesystem Git summaries | 4,011 (3,508-4,417) | 1,694 (1,640-1,799) |
 
-<details>
-<summary>Browser workload and comparison limits</summary>
-
-Both DDS modes use the same loop: one scalar edit per turn, no per-turn convergence wait, then final writer/observer convergence.
-The dummy DDS retains representative operation bodies, Fluid envelopes, and ID allocation where applicable; it does not execute SharedTree's tree logic.
-Real SharedTree uses the optimized forest implementation.
-An edit is not a fixed number of bytes or wire messages across DDS modes, and direct paths are not drop-in equivalent Fluid drivers.
-
-Browser and service processes shared CPUs 8,10,12,14,16,18,20,22.
-Dummy DDS ran first, then SharedTree; path order was fixed, not randomized or interleaved.
-WebSocketStream was collected later with the same workload and affinity, using benchmark-only changes to select the streaming API explicitly with no ordinary WebSocket fallback.
-The first dummy-DDS Fluid campaign timed out awaiting Chromium CDP on repetition 7, with crash-handler messages; its cause remains unisolated.
-That runner did not persist the first six sample results; the unchanged ten-sample retry passed, and only complete groups enter the table.
-The direct dummy group and both SharedTree groups passed on their first attempts.
-The [WebSocketStream supplement](measurements/browser-dds-comparison/websocket-summary.json) retains all complete samples, the failed run log, endpoint/storage metadata, and validation provenance.
-External services persisted across their ten samples; their peak RSS is not the matched-load memory comparison.
-Builds use release Sea native/WASM, WASM SIMD, and production-minified esbuild bundles; no custom Cargo/LTO profile.
-Medians average the two central raw samples; the runner's lower-middle aggregate medians are retained in the raw evidence but not used here.
-The charts are embedded Mermaid definitions with identical axes and path order; the original six-path definitions are also retained in the [paired summary](measurements/browser-dds-comparison/summary.json).
-Commands, build hashes, raw results, and reproduction details: [paired browser evidence](measurements/browser-dds-comparison/README.md).
-
-</details>
+Both DDS modes use one scalar edit per turn, no per-turn convergence wait, then final convergence.
+Direct paths omit Fluid runtime responsibilities and are not drop-in equivalent Fluid drivers.
+Browser and service processes share CPUs `8,10,12,14,16,18,20,22`.
+External Sea cases explicitly enable the live cache; Sea and Tinylicious service data use separate owned `/tmp` directories.
 
 ## Storage and Core Exploration
 
-**Offered ops/s: highest observed threshold pass / higher completed threshold failure.**
-Single-run probes, not repeated capacity brackets; durable results are non-monotonic.
+**Offered operations/s: highest observed threshold pass / higher observed failure.**
+Single-run probes, not repeated capacity estimates.
 Sea uses native WebSocket; Tinylicious uses Node Socket.IO.
-All use 32 documents, four generator cores, three warmup seconds, ten measured seconds, and fresh workspace-backed storage.
+All use 32 documents, three warmup seconds, ten measured seconds, and fresh data.
+Eight-core Sea rows use eight generator processes; other rows use four.
 
-| Payload | Service cores | Sea memory | Sea buffered-file | Sea durable-file, inconsistent | Tinylicious in-memory DB | Tinylicious LevelDB |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| 64 bytes | 1 | 9,500 / 10,000 | 7,000 / 8,000 | 4,000 / 6,000 | 950 / 1,000 | 250 / 500 |
-| 64 bytes | 4 | 46,000 / 48,000 | 26,000 / 28,000 | 2,000 / 4,000 | 950 / 1,050 | 900 / 950 |
-| 64 bytes | 8 | 88,000 / 92,000 | 46,000 / 48,000 | 2,000 / 4,000 | 950 / 1,050 | 900 / 950 |
-| 8,192 bytes | 1 | 6,000 / 6,500 | 4,252 / 4,500 | 500 / 1,000 | 850 / 900 | 100 / 250 |
-| 8,192 bytes | 4 | 28,000 / 30,000 | 17,000 / 18,000 | 2,000 / 4,000 | 850 / 900 | 100 / 250 |
-| 8,192 bytes | 8 | 38,000 / 40,000 | 30,000 / 32,000 | 160 / 500 | 800 / 850 | 100 / 250 |
+| Payload | Service cores | Sea memory | Sea buffered-file | Sea durable-file | Tinylicious in-memory DB | Tinylicious LevelDB |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 64 bytes | 1 | 6,000 / 7,000 | 3,000 / 4,000 | 2,000 / 4,000 | 1,000 / 1,100 | 500 / 800 |
+| 64 bytes | 4 | 36,000 / 40,000 | 20,000 / 24,000 | 4,000 / 6,000 | 1,000 / 1,100 | 1,000 / 1,100 |
+| 64 bytes | 8 | 68,000 / 72,000 | 44,000 / 48,000 | 5,000 / 6,000 | 1,000 / 1,100 | 1,100 / 1,300 |
+| 8,192 bytes | 1 | 6,000 / 7,000 | 2,500 / 3,000 | 2,000 / 4,000 | 800 / 900 | 100 / 200 |
+| 8,192 bytes | 4 | 24,000 / 28,000 | 16,000 / 20,000 | 4,000 / 8,000 | 800 / 900 | 100 / 200 |
+| 8,192 bytes | 8 | 28,000 / 30,000 | 36,000 / 38,000 | 4,000 / 6,000 | 800 / 900 | 100 / 200 |
 
-Pass criteria: at least 98% submitted and delivered in-window; every worker p95 and scheduling lag at most 100 ms; zero final errors or missing deliveries.
-**The automatic flag does not check backlog trend.**
-File-backed LevelDB and Sea buffered-file are not equivalent to Sea's synchronized durable acknowledgment.
+Passing requires at least 98% submitted and delivered in-window; every worker p95 and scheduling lag at most 100 ms; exact Sea acknowledgment and drain integrity; and zero final errors or missing deliveries.
+Some higher Sea failures terminated on exact-drain or the 4 GiB guard rather than returning a normal threshold result.
+The bracket records the observed boundary, not a diagnosis of the limiting resource.
 
-<details>
-<summary>Storage probes: failures, backlog, and bottleneck limits</summary>
+The live cache changes the file-backed result substantially: caught-up readers receive the event published by the sequencer rather than each independently reopening the just-written record.
+Buffered eight-core throughput is now 44,000 / 36,000 small/large operations/s versus the prior cache-disabled overview's 10,000 / 9,000.
+Durable results are also much higher, but remain sensitive to acknowledgment batching, per-document concurrency, and failure mode.
 
-- **Probe accounting:** 104 attempts comprise 48 initial probes, 43 refinements, 12 midpoints, and one corrected midpoint: 57 passes, 42 completed failures, five pre-load failures.
-  Two pre-load attempts used invalid 4,250 ops/s native rates, not divisible by four workers; 4,252 passed.
-  Three durable-file 120-large-op startup failures remain unresolved.
-- **Buffered-file queues:** four-core 17,000-large passed with 398 pending operations and summed backlog-quarter means of 0, 1.9, 20.4, and 197.8.
-  At 26,000-small, quarter means were 77.8, 13.7, 505.2, and 488.0 despite zero pending at window end.
-  All drained; lower 16,000-large and 24,000-small probes also passed.
-  Singleton handoff cost remains unresolved in the [storage optimization report](STORAGE_OPTIMIZATION.md); this workload does not isolate its contribution or deliberately fill grouped-append batches.
-- **Eight-core memory, small:** 88,000 offered delivered 87,956.4 ops/s, with 69.71 ms p95, 709.84% service CPU, and 121 pending before drain.
-  The busiest generator used 12.56 CPU-seconds over about 13 seconds; the 92,000 failure is not an isolated server ceiling.
-- **Eight-core memory, large:** 38,000 offered delivered 37,992.8 ops/s (296.82 MiB/s), with 7.79 ms p95 and 4,025.55 MiB peak RSS.
-  At 40,000, RSS reached about 4,161 MiB and the 4 GiB guard terminated the service, causing missing deliveries.
-  This is a retained-history memory-budget boundary.
-- **Durable variability:** one-core 120-large failed at 6,236 ms p95 before a retry passed; four-core 700-small failed before passing.
-  Four/eight-core 120-large attempts reset or failed at startup despite later higher-load passes.
-  Eight-core 500-large failed at 816.56 ms p95 while four cores passed 2,000-large.
-  The cause is unisolated; more cores did not consistently help.
-- **Tinylicious queues:** the highest in-memory passes accumulated late-window backlog, then drained; indefinite stability is not established.
+## Summary and Cold-Load Measurement Campaign
 
-</details>
+Sea buffered-file and durable-file are compared with Tinylicious LevelDB operation storage and filesystem Git summary storage.
+The fixture contains eight SharedMaps with either 32 or 512 values of 1,024 bytes each: 256 KiB or 4 MiB of application values.
+It crosses pseudorandom hexadecimal and repeated text, full and incremental summary modes, and all three backends.
+All 72 samples passed snapshot-fingerprint, map-content, and 200-tail-operation verification.
 
-<details>
-<summary>LevelDB repair, measurements, and persistence guarantees</summary>
+Each paired timing cell gives **full / incremental** mode, in milliseconds, and is the median of three independent documents.
+Upload covers the storage call.
+Download uses a fresh service/client and reads every unique blob with fanout eight.
+Cold load restarts the service and client, realizes all eight DDSes, and replays the tail.
+The OS page cache is not cleared.
 
-The LevelDB column includes Tinylicious repair `cf89ceb2ec1`, measured as a working-tree patch on `92ecf30f4a7`.
-It adds the checkpoint collection indexed by `_id` and preserves filter identity fields on inserting upserts; other columns and source counts exclude that repair.
-All 22 Tinylicious tests passed, including checkpoint update, identity isolation, deletion, and database reopen.
-This does not test full service restart recovery or power loss.
-
-The 33 LevelDB boundary attempts contain six passes, 26 completed threshold failures, and one pre-load harness failure.
-The harness checked LevelDB's `CURRENT` marker before opening completed; it now checks after document creation/connection, before load.
-Three separate 500 ops/s smoke/control runs passed, covering both database modes after that correction.
-All 32 completed boundary runs ended without errors or missing deliveries.
-One-core small payloads failed at 500 ops/s with 109 ms worst-worker p95; large payloads failed at 250 with 128-361 ms p95.
-Gaps between passing and failing observations were not exhaustively searched.
-The [LevelDB evidence](measurements/tinylicious-leveldb-fixed/README.md) retains every attempt and links the original blocked runs.
-
-Both Tinylicious database modes use filesystem Git summaries; LevelDB selection is `db:inMemory=false` with `db:path`.
-LevelDB writes do not explicitly request synchronous persistence.
-Sea buffered-file appends without synchronizing each write; durable-file appends new frames and synchronizes once per event batch, with synchronized staging/rename on creation.
-Both Sea file modes retain complete history in memory.
-Durable acknowledgment relies on [interrupted-tail and synchronized-prefix integrity assumptions](../crates/sea-file-durable/README.md#power-loss-model); physical power-cut qualification remains outstanding.
-
-</details>
-
-## Summary and Cold-Load Measurement Campaign (2026-09-22)
-
-The summary and persisted-size campaign completed at source revision `1386a1abe3f6130c026fd820dff3d673bcb4c55c`, with benchmark-only working-tree changes.
-It compares Sea buffered-file and durable-file with Tinylicious LevelDB operation storage and filesystem Git summary storage.
-The first acceptance check used a full Fluid summary followed by an incremental summary with unchanged subtree handles, then a fresh service process and client that verified snapshot bytes and trailing operations.
-Measurements distinguish summary upload, complete snapshot download, process-cold snapshot-plus-event loading, and persisted file sizes.
-Process-cold means the service has restarted and must reopen its files; the operating-system page cache is not cleared.
-File-size accounting distinguishes logical payload bytes, apparent file bytes, allocated blocks, and cumulative retained history where the backend allows those categories to be separated.
-The six-case smoke matrix passed on 2026-09-22: both summary modes on all three backends, eight SharedMaps with four 1,024-byte values each, and five trailing operations.
-Each cold load verified every map value and independently fetched and verified every trailing operation from delta storage.
-The acknowledged snapshot's complete blob set matched its pre-restart SHA-256 fingerprint.
-These smoke timings are not the retained performance comparison.
-
-Two qualification findings affect the measurement method.
-Tinylicious's shredded-summary driver does not implement `downloadSummary`, so both drivers use `getVersions`, `getSnapshotTree`, and `readBlob` with eight concurrent blob requests.
-Downloads select the acknowledged client-summary version; ordinary cold loads request the latest version, which can be a Tinylicious service summary generated on disconnect and can include a log tail.
-Tinylicious LevelDB logs `Collection.deleteMany: Method not implemented` during Scribe checkpoint cleanup (12 occurrences in each tiny smoke case).
-The persistence assertions passed despite those errors, but these runs do not establish a healthy checkpoint-cleanup or retention implementation.
-The service was not repaired or reconfigured to hide that finding.
-
-The retained matrix uses eight SharedMaps containing either 32 or 512 values of 1,024 bytes each (256 KiB or 4 MiB of application values).
-It tests deterministic pseudorandom hex text generated from SHA-256 hashes and repeated text, changes one key after a full baseline, then requests a full or incremental summary and appends 200 unsummarized operations.
-Client op compression and grouped batching are disabled consistently; client garbage collection retains its default behavior.
-Three fresh-document repetitions rotate the order of the three backends.
-**All 72 retained samples passed**, including 14,400 individually verified persisted tail operations.
-The release Sea server and Tinylicious entry package were rebuilt before collection.
-Each service used CPUs `2,4,6,8`; each Node client used separate CPUs `10,12`, on the same Linux host and loopback network.
-The host reported AMD EPYC 7763, Linux `6.8.0-1064-azure`, Node `v22.23.2`, and filesystem type `ext2/ext3` through `stat -f`.
-Sea used the production Node/WASM WebSocket client; Tinylicious used its production HTTP/Socket.IO driver.
-These are stack comparisons with different persistence guarantees, not language-only or equal-durability comparisons.
-See the [retained dataset](measurements/summary-storage-20260922/README.md) for raw samples, hashes, ranges, and reproduction.
-
-### Summary and Cold-Load Timings
-
-Milliseconds, median of three independent documents per cell.
-Each paired cell gives **full / incremental** summary mode, not first / second run.
-Upload covers the storage call; generation-through-acknowledgment results are retained separately.
-Download uses a fresh service and client and retrieves every unique blob of the acknowledged version with fanout eight.
-Cold load uses another fresh service and client, requests the latest snapshot, realizes all eight DDSes, and replays the tail before stopping the timer.
-Server startup and JavaScript module imports are excluded; lazy WASM initialization is included.
-Snapshot download includes content hashing; cold-load content assertions run after the timer.
-Neither read measurement clears the OS page cache or measures raw wire bytes.
-
-| Application values | Data | Backend | Summary upload (ms) | Complete snapshot download (ms) | Process-cold document load (ms) |
+| Application values | Data | Backend | Summary upload | Complete snapshot download | Process-cold document load |
 | --- | --- | --- | ---: | ---: | ---: |
-| 256 KiB | Pseudorandom hex text | Sea buffered | 19.0 / 11.2 | 108.9 / 113.5 | 184.0 / 183.4 |
-| 256 KiB | Pseudorandom hex text | Sea durable | 22.5 / 14.1 | 117.1 / 112.9 | 184.1 / 190.0 |
-| 256 KiB | Pseudorandom hex text | Tinylicious LevelDB | 51.8 / 37.3 | 157.6 / 156.4 | 248.5 / 252.7 |
-| 256 KiB | Repeated text | Sea buffered | 18.9 / 10.2 | 108.9 / 106.9 | 185.4 / 184.1 |
-| 256 KiB | Repeated text | Sea durable | 22.0 / 13.2 | 117.0 / 116.8 | 186.6 / 185.1 |
-| 256 KiB | Repeated text | Tinylicious LevelDB | 50.5 / 35.8 | 152.4 / 151.3 | 229.2 / 231.8 |
-| 4 MiB | Pseudorandom hex text | Sea buffered | 93.6 / 22.4 | 223.6 / 228.9 | 300.6 / 291.9 |
-| 4 MiB | Pseudorandom hex text | Sea durable | 97.9 / 26.1 | 230.4 / 225.0 | 295.2 / 294.4 |
-| 4 MiB | Pseudorandom hex text | Tinylicious LevelDB | 120.4 / 46.1 | 541.4 / 548.1 | 623.9 / 625.6 |
-| 4 MiB | Repeated text | Sea buffered | 90.9 / 25.6 | 224.2 / 228.8 | 296.5 / 296.1 |
-| 4 MiB | Repeated text | Sea durable | 93.0 / 25.5 | 225.0 / 220.3 | 299.0 / 297.5 |
-| 4 MiB | Repeated text | Tinylicious LevelDB | 119.1 / 49.2 | 506.0 / 511.8 | 607.1 / 580.7 |
+| 256 KiB | Pseudorandom hex text | Sea buffered | 21.6 / 11.7 | 120.9 / 118.9 | 174.3 / 171.6 |
+| 256 KiB | Pseudorandom hex text | Sea durable | 24.8 / 16.4 | 120.0 / 118.6 | 173.1 / 174.6 |
+| 256 KiB | Pseudorandom hex text | Tinylicious LevelDB | 48.6 / 34.8 | 151.8 / 151.1 | 243.3 / 246.2 |
+| 256 KiB | Repeated text | Sea buffered | 19.9 / 11.7 | 122.2 / 119.0 | 175.4 / 173.9 |
+| 256 KiB | Repeated text | Sea durable | 25.1 / 16.5 | 118.4 / 119.6 | 173.1 / 175.4 |
+| 256 KiB | Repeated text | Tinylicious LevelDB | 48.8 / 34.9 | 146.6 / 149.3 | 222.0 / 217.8 |
+| 4 MiB | Pseudorandom hex text | Sea buffered | 91.6 / 27.2 | 206.4 / 204.9 | 256.5 / 269.3 |
+| 4 MiB | Pseudorandom hex text | Sea durable | 97.9 / 28.5 | 208.8 / 212.1 | 283.3 / 270.6 |
+| 4 MiB | Pseudorandom hex text | Tinylicious LevelDB | 123.6 / 45.5 | 527.5 / 522.1 | 613.9 / 605.8 |
+| 4 MiB | Repeated text | Sea buffered | 92.3 / 27.8 | 202.5 / 202.1 | 264.9 / 274.2 |
+| 4 MiB | Repeated text | Sea durable | 101.3 / 35.4 | 207.3 / 206.1 | 274.5 / 264.9 |
+| 4 MiB | Repeated text | Tinylicious LevelDB | 119.7 / 47.9 | 491.7 / 488.6 | 562.9 / 553.1 |
 
-At 4 MiB of pseudorandom hex text values, incremental upload was 4.18 times faster than full upload on buffered Sea and 2.61 times faster on Tinylicious.
-Buffered Sea's incremental cold load was 2.14 times faster than Tinylicious in this workload.
-With only three repetitions, these are observed medians, not confidence bounds or production latency predictions.
-Pseudorandom hex text contains deterministic hexadecimal SHA-256 output.
-Its 16-character alphabet remains compressible despite being much less repetitive than the repeated-text fixture; it is not incompressible random data.
+At 4 MiB of pseudorandom hex text, incremental upload was 3.37 times faster than full upload on buffered Sea and 2.72 times faster on Tinylicious.
+Buffered Sea's incremental cold load was 2.25 times faster than Tinylicious in this workload.
+Three repetitions provide observed medians, not confidence bounds.
 
 ### Summary and Operation Sizes
 
-Actual upload trees contained zero handles in full mode and nine in incremental mode.
-For the 4 MiB case, full / incremental blob payloads were 4,351,262 / 545,058 bytes for Sea and 4,350,497 / 544,293 bytes for Tinylicious.
-For 256 KiB, they were 275,230 / 35,554 and 274,465 / 34,789 bytes respectively.
-These are pre-driver blob payloads, not wire sizes; protocol metadata and serialization differ.
-Changing one key dirties one of eight SharedMaps, so incremental upload still includes that map's full summary content.
-
-The following are **actual apparent file bytes**, measured at attachment or immediately before/after the acknowledged update summary.
-Tinylicious's initial column counts Git storage alone; its initial LevelDB files added 1,259 bytes.
-Sea uses a mixed journal, so its initial column includes initial document records as well as summary content.
-Update growth counts all backend data files, including control records and checkpoint metadata.
-Values are medians from incremental-mode cells; corresponding full-mode growth was nearly identical, despite much larger upload payloads.
+Full summaries contain zero handles and incremental summaries contain nine.
+The following are apparent file bytes measured after initial attachment and growth caused by the acknowledged update summary.
+Tinylicious's initial column includes Git storage; its initial LevelDB files add approximately 1.3 KiB.
+Sea uses a mixed journal, so its initial column includes document records as well as summary content.
 
 | Application values | Data | Sea initial journal | Tinylicious initial Git files | Sea update growth | Tinylicious update growth |
 | --- | --- | ---: | ---: | ---: | ---: |
-| 256 KiB | Pseudorandom hex text | 278,600 | 145,911 | 19,668 | 27,631 |
-| 256 KiB | Repeated text | 278,600 | 7,384 | 19,668 | 19,522 |
-| 4 MiB | Pseudorandom hex text | 4,376,648 | 2,287,737 | 20,951 | 28,389 |
-| 4 MiB | Repeated text | 4,376,648 | 69,688 | 20,951 | 20,279 |
+| 256 KiB | Pseudorandom hex text | 277,837 | 147,170 | 19,283 | 35,227 |
+| 256 KiB | Repeated text | 277,837 | 8,644 | 19,283 | 23,616 |
+| 4 MiB | Pseudorandom hex text | 4,372,045 | 2,288,998 | 20,566 | 28,396 |
+| 4 MiB | Repeated text | 4,372,045 | 70,947 | 20,566 | 20,282 |
 
-Content-addressed storage avoids writing all unchanged bytes again in both summary modes.
-Tinylicious's compressed Git objects save substantial apparent space for repeated content; the tested Sea configuration does not use its optional compression decorator.
-This result does not imply that incremental summaries are unnecessary: they reduce client generation and upload work.
+Content-addressed storage avoids rewriting all unchanged bytes in both summary modes.
+Tinylicious Git compression substantially reduces repeated-content size; Sea's optional compression decorator is not enabled.
+Tinylicious emitted 675 existing `Collection.deleteMany: Method not implemented` checkpoint-cleanup errors across its 24 samples.
+All persistence assertions passed, but these samples do not establish healthy checkpoint cleanup or steady-state retention.
 
-The 200-operation tail contains 204,800 bytes of application string values, plus Fluid envelopes and control records.
-Sea's measured append-phase growth was approximately **307,284 bytes buffered / 307,277 bytes durable**, largely independent of document size or entropy.
-Tinylicious's median live-file growth ranged from **2,496,751 to 3,359,328 bytes** across cells.
-Its LevelDB logs, checkpoints, and background table rewriting make that a short-run file-growth observation, not a stable encoded-bytes-per-op estimate.
-All 200 operations in every sample were retrieved independently from persisted delta storage after restart, not merely recovered from a service-summary log tail.
-
-Stopped-service totals below include attachment, both client summaries, the changed-key op, all 200 tail ops, and disconnect activity.
-They show **4 MiB incremental-mode** cells; full-mode and 256 KiB totals are in the dataset.
-MiB means 1,048,576 bytes.
-Allocated sizes use regular-file `stat.blocks * 512`; directory blocks and filesystem metadata are excluded.
-
-| Data | Backend/component | Apparent MiB, median (min-max) | Allocated MiB, median |
-| --- | --- | ---: | ---: |
-| Pseudorandom hex text | Sea buffered journal | 8.663 (8.663-8.663) | 8.664 |
-| Pseudorandom hex text | Sea durable journal | 8.663 (8.663-8.663) | 8.668 |
-| Pseudorandom hex text | Tinylicious Git | 4.491 (4.491-4.492) | 6.473 |
-| Pseudorandom hex text | Tinylicious LevelDB | 1.979 (1.936-2.336) | 1.996 |
-| Repeated text | Sea buffered journal | 8.663 (8.663-8.663) | 8.664 |
-| Repeated text | Sea durable journal | 8.663 (8.663-8.663) | 8.668 |
-| Repeated text | Tinylicious Git | 0.146 (0.146-0.146) | 2.355 |
-| Repeated text | Tinylicious LevelDB | 4.581 (0.989-4.618) | 4.594 |
-
-Tinylicious's loose Git objects have substantial allocation overhead, and LevelDB totals are sensitive to background work.
-Do not interpret differences between its full and incremental totals as causal summary-size savings.
-Scribe checkpoint cleanup logged 24-35 errors in every retained Tinylicious sample; the exact counts are retained alongside the passing integrity checks.
-Neither backend was compacted into a controlled steady-state representation.
-
-### Unsuccessful Attempt
-
-An earlier campaign stopped after two passing Sea samples when Tinylicious exceeded the harness's 10-second shutdown bound.
-The harness had sent SIGTERM while Tinylicious was still writing its disconnect-triggered service summary through its own HTTP endpoint, causing retries against the shutting-down listener.
-The corrected runner waits for the successful `ServiceSummary` record at or beyond the final operation sequence before stopping the server.
-The same 200-operation case then passed, followed by all 72 retained samples, without extending the shutdown timeout or modifying production code.
-The [dataset notes](measurements/summary-storage-20260922/README.md) retain the unsuccessful attempt separately; it is not pooled with the accepted matrix.
+The initial summary campaign stopped at sample 66 when inventory raced an atomic durable cursor rename.
+The replacement campaign restarted from sample one after the inventory-only repair and passed all 72 cells.
+No sample from the interrupted campaign is pooled with the accepted results.
 
 ## Scope and Limitations
 
-Experimental single-host software, not a proposed production replacement; Tinylicious is a local-development baseline, not deployed Routerlicious or ODSP.
-
-<details>
-<summary>Service limitations relevant to interpretation</summary>
-
-| Boundary | Current limitation |
-| --- | --- |
-| Availability | No replication or cross-host fencing; no scale-out or high-availability claim |
-| Durability | Reliable flushes, synchronized-prefix integrity, and crash-atomic creation assumed; physical power-cut qualification outstanding |
-| Retention | No garbage collection for events, snapshots, blobs, directories, or unattached uploads |
-| Security | Built-in host lacks authentication and multi-tenant policy; encryption leaves topology, ordering, and snapshot metadata visible |
-| Fluid compatibility | Automatic reconnect, offline merge, loading groups, and garbage-collection policy remain incomplete |
-| Network | QUIC/UDP WebTransport cannot use TCP-only Codespaces forwarding; WebSocket has different constraints |
-| Delivery | Network-isolated CI has a documented Cargo dependency-restoration gap |
-
-Sources: [overview](../README.md), [architecture](../SEA_ARCHITECTURE.md), and [known issues](../KNOWN_ISSUES.md).
-Unmeasured here: many writers on one document, idle memory, wide-area networking, snapshot recovery, compression effects, and browser artifact size.
-Single-round-trip loading and complete direct SharedTree summary support remain unverified.
-
-</details>
-
-<details>
-<summary>Machine, workload, metrics, and overload guards</summary>
-
-| Item | Configuration |
-| --- | --- |
-| Revision | Service/source inventory `92ecf30f4a7`; paired browser `9cb45f707ab`; LevelDB repair `cf89ceb2ec1` |
-| Machine | AMD EPYC 7763 VM; 32 logical CPUs, 16 exposed physical cores; 135,064,969,216 bytes RAM |
-| Environment | Debian 13.6, kernel 6.8.0-1064-azure; shared Codespace; loopback; inspected CPU/memory cgroups unlimited |
-| Tools/build | Rust 1.98.1, Node 22.23.2, Chromium 152.0.7977.82; release native/WASM, WASM SIMD, production-minified browser bundles |
-| Filesystem | Workspace ext4 on `/dev/loop4`, not `/tmp` |
-| Service cores | One: CPU 2; four: 2,4,6,8; eight: 0,2,4,6,8,10,12,14 |
-| Generator cores | Four separate processes on 16,18,20,22; editor and VM-host activity uncontrolled |
-| Service settings | Sea connection limit 128 per listener; fresh service/documents per stress sample; no application-requested snapshots, compression, or encryption |
-| Payload | 64 or 8,192 bytes: eight-digit sequence followed by ASCII `x`; one operation per call, serial per-document queues, no application batching |
-| Delivery | One observer's unique deliveries determine throughput; writer echoes checked for exact payload, uniqueness, and order but not counted again |
-| Resources | Main service PID and threads sampled through `/proc` every 250 ms; no external companions in these configurations; not a general process-tree sampler |
-| Latency | Worker monotonic submit-to-observe time; worker p95 includes measured operations delivered during drain, not pooled or durable-ack latency |
-| Aggregates | Median averages central values for even sample counts; ranges span runs; generator CPU includes warmup and drain |
-| Guards | 8,192 outstanding operations and 1,000,000 submissions per generator; sampled 4 GiB service-RSS termination; 120-second per-cell and 30-minute wrapper limits; ten-second drain |
-
-RSS is resident set size; MiB/s reports useful payload only, not envelopes, echoes, TLS, or wire bandwidth.
-The RSS guard is not a hard memory cgroup limit; wrapper timeouts do not guarantee descendant cleanup.
-Different client implementations, security, metadata, and service responsibilities prevent protocol-only or language-only attribution.
-Short fresh-history runs do not establish long-term bounded memory, storage, or queues.
-
-</details>
-
-<details>
-<summary>Validation and evidence links</summary>
-
-At the measured Sea revision: Cargo formatting, strict all-target/all-feature Clippy, warning-free rustdoc, all-target build/tests, release binaries, documentation checks, scoped policy, and root `pnpm build:fast` passed.
-The full non-Rust `./test.sh` was not rerun for collection.
-The Tinylicious repair passed compilation, 22 tests, lint with existing warnings, scoped policy, and real client workloads.
-Tests establish selected behavior, not production availability, security, complete compatibility, or physical power-loss survival.
-
-- [Refresh evidence index](measurements/refresh-92ecf30/README.md): commands, environment, validation logs, and compact raw archive.
-- [Refresh summary](measurements/refresh-92ecf30/summary.json): samples, statistics, manifests, hashes, and retained failures.
-- [Paired browser evidence](measurements/browser-dds-comparison/README.md): dummy DDS and real SharedTree commands, raw samples, chart definitions, and build hashes.
-- [WebSocketStream supplement](measurements/browser-dds-comparison/websocket-summary.json): 40 added browser samples, explicit memory storage and unencrypted endpoints, retained timeout, and full harness validation.
-- [LevelDB evidence](measurements/tinylicious-leveldb-fixed/README.md) and [summary](measurements/tinylicious-leveldb-fixed/summary.json): repair provenance, all outcomes, and raw archive.
-- [Collection scripts](../scripts/README.md): reproduction commands and configuration.
-
-Wrapped campaigns record exact commands, environment, revision, status, and tracked patches; direct collectors retain configurations and artifact hashes in manifests.
-No service data-path optimization was made for recollection; the Tinylicious compatibility repair is disclosed separately.
-
-</details>
+- Results are short single-host loopback measurements on a shared virtual machine.
+- Passing capacity probes establish only observed bounds under this workload.
+- Persistence modes do not have equal acknowledgment or power-loss guarantees.
+- The OS page cache remains warm across process-cold summary reads.
+- Browser path order is fixed, not randomized or interleaved.
+- Direct browser paths omit Fluid runtime responsibilities.
+- Source, dependency, and test counts describe different feature sets and are not quality or maintenance scores.
+- Native WebTransport results after the opening-stream lifecycle fix are not directly comparable with the original broken-stream samples.
+- Tinylicious checkpoint cleanup errors remain unresolved.
+- Sea is experimental and lacks production hardening, distributed failover, and physical-device durability qualification.

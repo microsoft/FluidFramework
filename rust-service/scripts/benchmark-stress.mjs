@@ -7,11 +7,23 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	accessSync,
+	constants,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	statSync,
+	writeFileSync,
+} from "node:fs";
 import { createServer } from "node:net";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { setTimeout as delay } from "node:timers/promises";
+import { alignedMeasurement } from "./benchmark-alignment.mjs";
+import { assertDrainIntegrity, hasPendingDrain } from "./benchmark-gates.mjs";
+import { generatorLayout } from "./benchmark-generator-layout.mjs";
+import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
 const script = resolve(import.meta.dirname, "benchmark-stress.mjs");
@@ -73,7 +85,11 @@ async function openPair(configuration, received, failure) {
 		const { openRemote } = await import("../packages/sea-typescript/lib/index.js");
 		const open = (document) =>
 			openRemote(
-				{ environment: "node", mode: "WebSocket", websocketUrl: configuration.endpoint },
+				{
+					environment: "node",
+					mode: "WebSocket",
+					websocketUrl: configuration.endpoint,
+				},
 				document,
 				{ session: Buffer.from(randomUUID()) },
 			);
@@ -296,7 +312,7 @@ async function worker(configuration) {
 	while (
 		errors.length === 0 &&
 		performance.now() < drainDeadline &&
-		documents.some((document) => document.observed.some((count) => count !== document.sent))
+		hasPendingDrain(documents, configuration.backend)
 	)
 		await delay(10);
 	const missing = documents.reduce(
@@ -344,17 +360,34 @@ async function worker(configuration) {
 /** Runs one isolated service sample and captures resource curves from owned processes. */
 async function run(configuration, output) {
 	mkdirSync(output, { recursive: true });
+	const temporaryData = createTemporaryBenchmarkData(`${configuration.backend}-stress-data`);
+	const serverBinary = resolve(
+		configuration.serverBinary ??
+			resolve(root, "rust-service/target/release/sea-webtransport-server"),
+	);
+	const generatorBinary = resolve(
+		configuration.generatorBinary ??
+			resolve(root, "rust-service/target/release/presentation-native"),
+	);
+	if (configuration.backend === "sea") {
+		assert.ok(statSync(serverBinary).isFile(), "serverBinary must be a regular file");
+		accessSync(serverBinary, constants.X_OK);
+		if (configuration.generator === "native") {
+			assert.ok(statSync(generatorBinary).isFile(), "generatorBinary must be a regular file");
+			accessSync(generatorBinary, constants.X_OK);
+		}
+	}
 	const port = await freePort();
 	const serviceCpu = { 1: "2", 4: "2,4,6,8", 8: "0,2,4,6,8,10,12,14" }[configuration.cores];
 	const certificate = resolve(root, "rust-service/tests/webtransport-browser/.certs");
 	const argumentsList =
 		configuration.backend === "sea"
 			? [
-					resolve(root, "rust-service/target/release/sea-webtransport-server"),
+					serverBinary,
 					"127.0.0.1:0",
 					`${certificate}/cert.pem`,
 					`${certificate}/key.pem`,
-					resolve(output, "data"),
+					resolve(temporaryData.path, "sea-data"),
 				]
 			: [
 					process.execPath,
@@ -368,12 +401,15 @@ async function run(configuration, output) {
 			...process.env,
 			NODE_ENV: "production",
 			SEA_STORAGE_MODE: configuration.storage ?? "memory",
+			...(configuration.liveCache === undefined
+				? {}
+				: { SEA_EXPERIMENTAL_LIVE_CACHE: String(configuration.liveCache) }),
 			SEA_WEBSOCKET_BIND: `127.0.0.1:${port}`,
 			SEA_WEBSOCKET_ORIGINS: "http://localhost",
 			SEA_WEBSOCKET_ORIGINLESS_LOOPBACK: "1",
-			storage: resolve(output, "tiny-storage"),
+			storage: resolve(temporaryData.path, "tiny-storage"),
 			db__inMemory: String(configuration.storage !== "leveldb"),
-			db__path: resolve(output, "tiny-db"),
+			db__path: resolve(temporaryData.path, "tiny-db"),
 		},
 		stdio: ["ignore", "pipe", "pipe"],
 	});
@@ -386,9 +422,44 @@ async function run(configuration, output) {
 	const workers = [];
 	let sampleTimer;
 	const samples = [];
+	const anchorMonotonic = performance.now();
+	const anchorEpochMicros = Date.now() * 1000;
+	const epochMicros = () =>
+		Math.round(anchorEpochMicros + (performance.now() - anchorMonotonic) * 1000);
+	let started = performance.now();
+	let workloadStarted = false;
+	let guardFailure;
+	const failGuard = (message) => {
+		guardFailure ??= message;
+		for (const child of [...workers, service]) child.kill("SIGTERM");
+	};
+	const outerTimer = setTimeout(() => failGuard("120 s wall-clock guard"), 120_000);
+	const captureSample = () => {
+		try {
+			const before = epochMicros();
+			const usage = processSample(service.pid);
+			const after = epochMicros();
+			const sample = {
+				seconds: (performance.now() - started) / 1000,
+				workloadStarted,
+				epochBeforeMicros: before,
+				epochAfterMicros: after,
+				clockDiscrepancyMicros: Math.abs(Date.now() * 1000 - epochMicros()),
+				service: usage,
+			};
+			samples.push(sample);
+			if (usage.rssKiB > 4 * 1024 * 1024) failGuard("4 GiB sampled RSS guard");
+			if (sample.clockDiscrepancyMicros > 2000) failGuard("host clock jump exceeds 2 ms");
+		} catch (error) {
+			failGuard(`resource sampling failed: ${error}`);
+		}
+	};
 	const clockTicks = Number(execFileSync("getconf", ["CLK_TCK"], { encoding: "utf8" }));
 	let result;
+	let workerResults;
 	try {
+		captureSample();
+		sampleTimer = setInterval(captureSample, 250);
 		const deadline = Date.now() + 30000;
 		while (true) {
 			if (service.exitCode !== null) throw new Error(`Service exited: ${serviceLog}`);
@@ -396,7 +467,9 @@ async function run(configuration, output) {
 				if (configuration.backend === "sea") {
 					if (serviceLog.includes("WEBSOCKET_URL=")) break;
 				} else {
-					await fetch(`http://127.0.0.1:${port}/`, { signal: AbortSignal.timeout(500) });
+					await fetch(`http://127.0.0.1:${port}/`, {
+						signal: AbortSignal.timeout(500),
+					});
 					break;
 				}
 			} catch {}
@@ -408,13 +481,22 @@ async function run(configuration, output) {
 				serviceLog.match(/STORAGE_MODE=(\S+)/)?.[1],
 				configuration.storage ?? "memory",
 			);
-		const count = Math.min(4, configuration.documents);
+		if (configuration.backend === "sea") {
+			const liveCache = configuration.liveCache ?? true;
+			assert.equal(
+				serviceLog.includes("EXPERIMENTAL_LIVE_CACHE=true"),
+				liveCache,
+				"cache activation marker",
+			);
+		}
+		const generators = generatorLayout(configuration);
 		const ready = [];
-		for (let index = 0; index < count; index++) {
+		for (let index = 0; index < generators.count; index++) {
 			const workerConfiguration = {
 				...configuration,
-				documents: configuration.documents / count,
-				rate: configuration.rate / count,
+				generatorProcesses: undefined,
+				documents: configuration.documents / generators.count,
+				rate: configuration.rate / generators.count,
 				endpoint:
 					configuration.backend === "sea"
 						? configuration.transport === "webtransport"
@@ -429,13 +511,13 @@ async function run(configuration, output) {
 				"taskset",
 				[
 					"-c",
-					String(16 + index * 2),
-					...(native
-						? [resolve(root, "rust-service/target/release/presentation-native")]
-						: [process.execPath, script, "worker"]),
+					String(generators.cpus[index]),
+					...(native ? [generatorBinary] : [process.execPath, script, "worker"]),
 					JSON.stringify(workerConfiguration),
 				],
-				{ stdio: native ? ["pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe", "ipc"] },
+				{
+					stdio: native ? ["pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe", "ipc"],
+				},
 			);
 			if (native) {
 				const lines = createInterface({ input: child.stdout });
@@ -461,23 +543,13 @@ async function run(configuration, output) {
 		await Promise.all(ready);
 		if (configuration.backend === "tinylicious")
 			assert.equal(
-				existsSync(resolve(output, "tiny-db", "CURRENT")),
+				existsSync(resolve(temporaryData.path, "tiny-db", "CURRENT")),
 				configuration.storage === "leveldb",
 				"Tinylicious database selection must match its on-disk LevelDB marker",
 			);
-		const started = performance.now();
-		const captureSample = () => {
-			try {
-				const sample = {
-					seconds: (performance.now() - started) / 1000,
-					service: processSample(service.pid),
-				};
-				samples.push(sample);
-				if (sample.service.rssKiB > 4 * 1024 * 1024) service.kill("SIGTERM");
-			} catch {}
-		};
+		started = performance.now();
+		workloadStarted = true;
 		captureSample();
-		sampleTimer = setInterval(captureSample, 250);
 		const promises = workers.map((child) =>
 			messageFrom(
 				child,
@@ -492,9 +564,13 @@ async function run(configuration, output) {
 			} else child.send({ type: "start" });
 		}
 		const results = await Promise.all(promises);
+		workerResults = results;
 		captureSample();
+		assert.equal(guardFailure, undefined);
+		assertDrainIntegrity(results, configuration.backend);
 		const measured = samples.filter(
 			(sample) =>
+				sample.workloadStarted &&
 				sample.seconds >= configuration.warmupSeconds &&
 				sample.seconds <= configuration.seconds + configuration.warmupSeconds,
 		);
@@ -511,6 +587,7 @@ async function run(configuration, output) {
 					: configuration.storage === "leveldb"
 						? "leveldb"
 						: "default-in-memory-database",
+			liveCache: configuration.backend === "sea" ? (configuration.liveCache ?? true) : null,
 			transport:
 				configuration.backend === "sea"
 					? (configuration.transport ?? "websocket")
@@ -518,8 +595,13 @@ async function run(configuration, output) {
 			generator:
 				configuration.generator ?? (configuration.backend === "sea" ? "node-wasm" : "node"),
 			serviceCpu,
-			generatorCpus: workers.map((_, index) => 16 + index * 2).join(","),
+			generatorProcesses: generators.count,
+			generatorCpus: generators.cpus.join(","),
 			clockTicks,
+			aligned:
+				configuration.generator === "native"
+					? alignedMeasurement(first, last, results, clockTicks)
+					: null,
 			deliveredOperationsPerSecond: delivered / configuration.seconds,
 			payloadMiBPerSecond:
 				(delivered * configuration.payloadBytes) / configuration.seconds / 1048576,
@@ -549,23 +631,43 @@ async function run(configuration, output) {
 				),
 			workers: results,
 			resourceSamples: samples,
+			serviceData: temporaryData.provenance,
 		};
 	} catch (error) {
 		result = {
 			status: "failed",
 			configuration,
 			error: String(error),
+			guardFailure,
+			liveCache: configuration.backend === "sea" ? (configuration.liveCache ?? true) : null,
+			workers: workerResults,
 			resourceSamples: samples,
+			serviceData: temporaryData.provenance,
 		};
 	} finally {
 		clearInterval(sampleTimer);
+		clearTimeout(outerTimer);
 		await Promise.all(workers.map(stop));
 		await stop(service);
+		try {
+			temporaryData.remove();
+		} catch (error) {
+			result = {
+				...result,
+				status: "failed",
+				temporaryDataCleanupError: String(error),
+			};
+		}
 		writeFileSync(resolve(output, "service.log"), serviceLog);
 		writeFileSync(resolve(output, "result.json"), `${JSON.stringify(result, null, "\t")}\n`);
 	}
 	console.log(
-		JSON.stringify({ output, ...result, workers: undefined, resourceSamples: undefined }),
+		JSON.stringify({
+			output,
+			...result,
+			workers: undefined,
+			resourceSamples: undefined,
+		}),
 	);
 	if (result.status === "failed") process.exitCode = 1;
 }
@@ -596,7 +698,7 @@ if (mode === "--help") {
 	for (const key of ["payloadBytes", "seconds", "warmupSeconds"])
 		assert.ok(Number.isInteger(configuration[key]) && configuration[key] > 0, key);
 	assert.ok(configuration.payloadBytes >= 8 && configuration.payloadBytes <= 8192);
-	assert.ok(configuration.documents <= 4 || configuration.documents % 4 === 0);
+	if (mode !== "worker") generatorLayout(configuration);
 	assert.ok(
 		configuration.generator === undefined ||
 			(configuration.generator === "native" && configuration.backend === "sea"),

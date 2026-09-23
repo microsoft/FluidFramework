@@ -19,6 +19,7 @@ import { createServer } from "node:net";
 import { cpus, platform, release } from "node:os";
 import { resolve } from "node:path";
 import { setImmediate as nextTurn, setTimeout as delay } from "node:timers/promises";
+import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
 const script = resolve(import.meta.dirname, "benchmark-summaries.mjs");
@@ -28,11 +29,24 @@ function inventory(directory) {
 	const files = [];
 	const visit = (path, prefix = "") => {
 		if (!existsSync(path)) return;
-		for (const entry of readdirSync(path, { withFileTypes: true })) {
+		let entries;
+		try {
+			entries = readdirSync(path, { withFileTypes: true });
+		} catch (error) {
+			if (error?.code === "ENOENT") return;
+			throw error;
+		}
+		for (const entry of entries) {
 			const name = `${prefix}${entry.name}`;
 			if (entry.isDirectory()) visit(resolve(path, entry.name), `${name}/`);
 			else if (entry.isFile()) {
-				const stat = statSync(resolve(path, entry.name));
+				let stat;
+				try {
+					stat = statSync(resolve(path, entry.name));
+				} catch (error) {
+					if (error?.code === "ENOENT") continue;
+					throw error;
+				}
 				files.push({ name, bytes: stat.size, allocatedBytes: stat.blocks * 512 });
 			}
 		}
@@ -50,7 +64,11 @@ function disk(configuration) {
 	return Object.fromEntries(
 		(configuration.backend === "sea" ? ["data"] : ["tiny-db", "tiny-storage"]).map((name) => [
 			name,
-			inventory(resolve(configuration.output, name)),
+			inventory(
+				configuration.backend === "sea"
+					? resolve(configuration.serviceDataDirectory, "sea-data")
+					: resolve(configuration.serviceDataDirectory, name),
+			),
 		]),
 	);
 }
@@ -446,7 +464,7 @@ async function startService(configuration, phase) {
 					"127.0.0.1:0",
 					`${certificate}/cert.pem`,
 					`${certificate}/key.pem`,
-					resolve(configuration.output, "data"),
+					resolve(configuration.serviceDataDirectory, "sea-data"),
 				]
 			: [
 					process.execPath,
@@ -464,9 +482,9 @@ async function startService(configuration, phase) {
 			SEA_WEBSOCKET_ORIGINS: "http://localhost",
 			SEA_WEBSOCKET_ORIGINLESS_LOOPBACK: "1",
 			SEA_MAX_CONNECTIONS: "128",
-			storage: resolve(configuration.output, "tiny-storage"),
+			storage: resolve(configuration.serviceDataDirectory, "tiny-storage"),
 			db__inMemory: "false",
-			db__path: resolve(configuration.output, "tiny-db"),
+			db__path: resolve(configuration.serviceDataDirectory, "tiny-db"),
 		},
 		stdio: ["ignore", "pipe", "pipe"],
 	});
@@ -554,6 +572,8 @@ async function worker(configuration, phase) {
 async function run(configuration) {
 	assert(!existsSync(configuration.output), "output directory must be new");
 	mkdirSync(configuration.output, { recursive: true });
+	const temporaryData = createTemporaryBenchmarkData(`${configuration.backend}-summary-data`);
+	configuration.serviceDataDirectory = temporaryData.path;
 	configuration.port = await freePort();
 	const result = {
 		configuration,
@@ -566,37 +586,46 @@ async function run(configuration) {
 			release: release(),
 			cpu: cpus()[0].model,
 			node: process.version,
-			filesystem: execFileSync("stat", ["-f", "-c", "%T", configuration.output], {
+			filesystem: execFileSync("stat", ["-f", "-c", "%T", temporaryData.path], {
 				encoding: "utf8",
 			}).trim(),
 		},
+		serviceData: temporaryData.provenance,
 		phases: {},
 	};
 	writeFileSync(
 		resolve(configuration.output, "manifest.json"),
 		JSON.stringify(result, null, 2),
 	);
-	for (const phase of ["seed", "download", "cold"]) {
-		const service = await startService(configuration, phase);
-		try {
-			result.phases[phase] = await worker(configuration, phase);
-			if (phase === "seed" && configuration.backend === "tinylicious") {
-				await until(
-					() => service.hasSettledSummary(result.phases.seed.targetSequence),
-					"Tinylicious disconnect summary persisted",
-				);
+	try {
+		for (const phase of ["seed", "download", "cold"]) {
+			const service = await startService(configuration, phase);
+			try {
+				result.phases[phase] = await worker(configuration, phase);
+				if (phase === "seed" && configuration.backend === "tinylicious") {
+					await until(
+						() => service.hasSettledSummary(result.phases.seed.targetSequence),
+						"Tinylicious disconnect summary persisted",
+					);
+				}
+			} finally {
+				await stop(service);
 			}
-		} finally {
-			await stop(service);
-		}
-		result.phases[phase].closedDisk = disk(configuration);
-		if (configuration.backend === "tinylicious")
-			assert(
-				existsSync(resolve(configuration.output, "tiny-db/CURRENT")),
-				"LevelDB must actually persist",
+			result.phases[phase].closedDisk = disk(configuration);
+			if (configuration.backend === "tinylicious")
+				assert(
+					existsSync(resolve(configuration.serviceDataDirectory, "tiny-db/CURRENT")),
+					"LevelDB must actually persist",
+				);
+			writeFileSync(
+				resolve(configuration.output, "result.json"),
+				JSON.stringify(result, null, 2),
 			);
+		}
+	} finally {
+		temporaryData.remove();
 		writeFileSync(
-			resolve(configuration.output, "result.json"),
+			resolve(configuration.output, "manifest.json"),
 			JSON.stringify(result, null, 2),
 		);
 	}
@@ -619,6 +648,7 @@ function campaign(options, output) {
 	mkdirSync(output, { recursive: true });
 	const artifacts = [
 		script,
+		resolve(import.meta.dirname, "benchmark-temporary-data.mjs"),
 		resolve(root, "rust-service/target/release/sea-webtransport-server"),
 		resolve(
 			root,

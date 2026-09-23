@@ -12,7 +12,9 @@
 //! bounded reconciliation poisons further mutation with
 //! [`crate::session::SessionError::RecoveryRequired`] until the view is discarded and recovered.
 //!
-//! Event delivery uses the view's monitored archive streams directly. Snapshot publisher
+//! Default event delivery uses the view's monitored archive streams directly.
+//! Explicit cache-enabled openings use shared, revocable live delivery after storage replay.
+//! Snapshot publisher
 //! registration is separate synchronous state: dropping a coordination stream revokes its lease,
 //! client-selected publishers suppress Sea nomination, and every nomination change receives a new
 //! fence.
@@ -26,6 +28,13 @@ mod pipeline;
 
 #[path = "checkpoint.rs"]
 mod checkpoint;
+
+#[path = "live_cache.rs"]
+mod live_cache;
+#[path = "live_read.rs"]
+mod live_read;
+
+pub use live_cache::{LiveCacheStats, LiveReadRevocation};
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -59,6 +68,12 @@ use tokio::sync::{Mutex, RwLockWriteGuard, watch};
 
 use crate::codec::{decode_committed, encode_membership, encode_submission};
 pub use crate::error::SessionError;
+
+/// An experimental live stream paired with its subscription-only revocation capability.
+pub type RevocableLiveRead<E> = (
+    ArchiveStream<SessionCommittedEvent, EventPosition, SessionError<E>>,
+    LiveReadRevocation,
+);
 
 /// View supplied by a document factory, moved into the sequencer.
 type View<Storage> = SeaView<
@@ -137,6 +152,8 @@ const POSITION_WINDOW: usize = 1088;
 
 /// Authoritative mutable session state serialized across all clients.
 struct Runtime<Storage: SeaStorage> {
+    /// Optional delivery ownership, independent of sequencing and durable reference floors.
+    live_cache: Option<Arc<live_cache::LiveCache<Storage::Error>>>,
     /// Removed only by explicit shutdown after pending work settles.
     view: Option<Arc<View<Storage>>>,
     /// Active session memberships, not persisted as application events.
@@ -246,6 +263,18 @@ impl Drop for PublisherLease {
 }
 
 impl<Storage: SeaStorage + 'static> Runtime<Storage> {
+    /// Adds independent readiness only for experimental readers; default control futures are unchanged.
+    fn retain_control(
+        &self,
+        future: MutationFuture<Storage::Error>,
+    ) -> MutationFuture<Storage::Error> {
+        if let Some(cache) = &self.live_cache {
+            live_cache::notify_control(cache, future)
+        } else {
+            future
+        }
+    }
+
     /// Validates against the frozen committed floor; only the final candidate may advance it.
     async fn prepare_submission(
         &mut self,
@@ -339,11 +368,13 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         .encode()?;
         let view = self.view()?;
         self.recovery_required = true;
+        let mut cache_guard = live_cache::RecoveryGuard(self.live_cache.clone());
         view.publish_checkpoint(checkpoint)
             .await
             .map_err(SessionError::Storage)?;
         self.since_checkpoint = 0;
         self.recovery_required = false;
+        cache_guard.0 = None;
         Ok(())
     }
 
@@ -409,7 +440,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             SessionEventKind::Joined => {
                 if self
                     .announced
-                    .insert(committed.session_id.clone(), committed)
+                    .insert(committed.session_id.clone(), committed.clone())
                     .is_some()
                 {
                     return Err(SessionError::Corrupt("duplicate membership announcement"));
@@ -422,11 +453,17 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 self.remove_member(&committed.session_id);
             }
         }
+        if let Some(cache) = &self.live_cache {
+            cache.publish(&committed);
+        }
         Ok(())
     }
 
     /// Closes live streams and publisher authority after ordered departure settles.
     fn remove_member(&mut self, session: &SessionId) {
+        if let Some(cache) = &self.live_cache {
+            cache.close_session(session);
+        }
         if let Some(member) = self.members.remove(session) {
             member.closed.send_replace(true);
         }
@@ -460,8 +497,13 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         let input = event.clone();
         self.pending = Some(Pending {
             event: Some(event),
-            future: Box::pin(async move { append_once::<Storage>(&view, input).await }),
+            future: self.retain_control(Box::pin(async move {
+                append_once::<Storage>(&view, input).await
+            })),
         });
+        if let Some(cache) = &self.live_cache {
+            cache.notify();
+        }
         self.settle_pending().await?;
         Ok(self.applied_through.expect("settled membership position"))
     }
@@ -478,6 +520,9 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 .await
         {
             self.recovery_required = true;
+            if let Some(cache) = &self.live_cache {
+                cache.terminate(live_cache::Terminal::RecoveryRequired);
+            }
             return Err(error);
         }
         Ok(())
@@ -514,11 +559,17 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 Err(SessionError::RecoveryRequired | SessionError::Corrupt(_))
             ) {
                 self.recovery_required = true;
+                if let Some(cache) = &self.live_cache {
+                    cache.terminate(live_cache::Terminal::RecoveryRequired);
+                }
             }
             let position = result?;
             if let Some(event) = pending.event {
                 if let Err(error) = self.apply(&CommittedEvent { position, event }) {
                     self.recovery_required = true;
+                    if let Some(cache) = &self.live_cache {
+                        cache.terminate(live_cache::Terminal::RecoveryRequired);
+                    }
                     return Err(error);
                 }
             } else {
@@ -546,6 +597,10 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
 
 /// One runtime multiplexing an exclusively owned view into logical sessions.
 pub struct LocalSequencer<Storage: SeaStorage> {
+    /// Explicit experiment activation; all unbounded reads use this single registry.
+    live_cache: Option<Arc<live_cache::LiveCache<Storage::Error>>>,
+    /// Keeps independent backend invalidation registered for the opening lifetime.
+    _invalidation: Option<sea_core::storage::InvalidationRegistration>,
     /// The sole owner of mutation sequencing and session membership.
     runtime: Arc<Mutex<Runtime<Storage>>>,
     /// Bounded admission, retained persistence work, and lifecycle exclusion.
@@ -610,7 +665,69 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     /// # Panics
     /// Panics if an internal publisher-state lock was poisoned.
     pub async fn recover(view: View<Storage>) -> Result<Arc<Self>, SessionError<Storage::Error>> {
+        Self::recover_inner(view, false).await
+    }
+
+    /// Recovers with the experimental shared live-read cache enabled for every unbounded read.
+    ///
+    /// Retention is unbounded until slow subscriptions are dropped or explicitly revoked.
+    /// Finite reads and historical replay remain storage-backed. Unsupported independent
+    /// backend invalidation is rejected rather than silently weakening terminal behavior.
+    ///
+    /// # Errors
+    /// Returns recovery failures or rejects backends without independent invalidation support.
+    /// # Panics
+    /// Panics if an internal state lock is poisoned.
+    pub async fn recover_with_live_cache(
+        view: View<Storage>,
+    ) -> Result<Arc<Self>, SessionError<Storage::Error>> {
+        Self::recover_inner(view, true).await
+    }
+
+    /// Reports cache-owned allocations only; default openings return `None`.
+    ///
+    /// # Panics
+    /// Panics if the cache state lock is poisoned.
+    pub fn live_cache_stats(&self) -> Option<LiveCacheStats> {
+        self.live_cache.as_ref().map(|cache| cache.stats())
+    }
+
+    /// Issues neutral revocation capabilities for every current live subscription.
+    /// Historical subscriptions are included, but do not retain cache entries.
+    ///
+    /// # Panics
+    /// Panics if the cache state lock is poisoned.
+    pub fn live_read_revocations(&self) -> Vec<LiveReadRevocation> {
+        self.live_cache
+            .as_ref()
+            .map_or_else(Vec::new, live_cache::LiveCache::revocations)
+    }
+
+    /// Shares authoritative recovery while preserving cache-disabled construction.
+    async fn recover_inner(
+        view: View<Storage>,
+        enabled: bool,
+    ) -> Result<Arc<Self>, SessionError<Storage::Error>> {
         let view = Arc::new(view);
+        let live_cache = enabled.then(|| live_cache::LiveCache::new(None));
+        let invalidation = if let Some(cache) = &live_cache {
+            let weak = Arc::downgrade(cache);
+            Some(
+                view.observe_invalidation(Arc::new(move |error| {
+                    if let Some(cache) = weak.upgrade() {
+                        cache.terminate(live_cache::Terminal::Storage(error));
+                    }
+                }))
+                .ok_or(SessionError::Rejected(
+                    "backend does not support independent invalidation",
+                ))?,
+            )
+        } else {
+            None
+        };
+        if let Some(cache) = &live_cache {
+            cache.recovered(None)?;
+        }
         let recovered = view
             .checkpoint()
             .await
@@ -620,6 +737,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             .unwrap_or_default();
         let after = recovered.applied_through;
         let mut runtime = Runtime {
+            live_cache: None,
             minimum_reference: recovered.minimum_reference,
             view: Some(view.clone()),
             members: BTreeMap::new(),
@@ -661,7 +779,13 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             runtime.close_member(&session).await?;
         }
         runtime.positions.clear();
+        if let Some(cache) = &live_cache {
+            cache.recovered(runtime.applied_through)?;
+        }
+        runtime.live_cache = live_cache.clone();
         Ok(Arc::new(Self {
+            live_cache,
+            _invalidation: invalidation,
             runtime: Arc::new(Mutex::new(runtime)),
             pipeline: pipeline::Pipeline::new(),
         }))
@@ -688,6 +812,9 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             .entries
             .clear();
         runtime.view.take();
+        if let Some(cache) = &self.live_cache {
+            cache.terminate(live_cache::Terminal::Closed);
+        }
         Ok(())
     }
 }
@@ -715,6 +842,25 @@ impl<Storage: SeaStorage> Clone for LocalSession<Storage> {
 }
 
 impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
+    /// Creates an experimental live read together with its subscription-only revoke capability.
+    /// Ordinary unbounded `read` and `load` use the same registry and revocation contract.
+    ///
+    /// # Errors
+    /// Rejects cache-disabled openings. Read initialization failures remain stream items.
+    /// # Panics
+    /// Panics if a cache lock is poisoned or subscription identities are exhausted.
+    pub fn read_with_live_cache_revocation(
+        &self,
+        after: Option<EventPosition>,
+    ) -> Result<RevocableLiveRead<Storage::Error>, SessionError<Storage::Error>> {
+        let cache = self
+            .sequencer
+            .live_cache
+            .as_ref()
+            .ok_or(SessionError::Rejected("live cache is disabled"))?;
+        Ok(live_read::read(self.clone(), cache, after))
+    }
+
     /// Returns this membership's stable identity, including allocated numeric identities.
     #[must_use]
     pub fn session_id(&self) -> &SessionId {
@@ -859,6 +1005,11 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
     ) -> ArchiveStream<SessionCommittedEvent, EventPosition, Self::Error> {
+        if stop_after.is_none()
+            && let Some(cache) = &self.sequencer.live_cache
+        {
+            return live_read::read(self.clone(), cache, after).0;
+        }
         let session = self.clone();
         let initial = MonitoredStreamProgress {
             previous: after,
@@ -1097,7 +1248,7 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         let input = snapshot.clone();
         runtime.pending = Some(Pending {
             event: None,
-            future: Box::pin(async move {
+            future: runtime.retain_control(Box::pin(async move {
                 match view.publish_snapshot(&input).await {
                     Ok(()) => Ok(position),
                     Err(error) if error.kind() == ErrorKind::Ambiguous => {
@@ -1120,8 +1271,11 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
                     }
                     Err(error) => Err(SessionError::Storage(error)),
                 }
-            }),
+            })),
         });
+        if let Some(cache) = &runtime.live_cache {
+            cache.notify();
+        }
         runtime.settle().await?;
         Ok(snapshot)
     }

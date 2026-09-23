@@ -79,6 +79,13 @@ Process the entire error suffix, not just its first error, and never automatical
 
 ## Ownership And Reads
 
+Event archives support independent terminal-opening observation through `Archive::observe_invalidation`.
+Opening poison reports the classified ambiguous error, and factory shutdown reports a rejected closed-opening error.
+Notification is sticky, covers racing and late registrations, and runs without another archive poll.
+The observer source releases its own lock before invoking callbacks; observers must not reenter storage.
+Dropping a registration removes it synchronously.
+Ordinary storage-backed read behavior is unchanged.
+
 Both modes use an exclusive OS lock on a stable `.lock` sidecar, including across independently opened factories.
 The sidecar is never replaced or removed, so ownership survives replacement of the journal inode.
 Components, their clones, all derived reads, and pending blocking workers retain the same opening; even unpolled or completed streams must be dropped before reopening.

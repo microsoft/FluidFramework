@@ -16,20 +16,21 @@ One document-bound connection supports five bidirectional logical stream roles:
 | Content | Ordered history/content/snapshot lookup; unary calls reuse a stream, each monitored read owns its stream. |
 | Signal | Independent live membership and messages for an existing document, without archive mutations. |
 
-Each frame contains one explicit `MessageKind` byte, a four-byte big-endian length counting the kind and payload bytes, then a postcard-serialized kind-specific payload.
+Each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
 The five-byte envelope has no correlation ID.
 No-blob submissions and deliveries have distinct kinds and omit the blob option tag; both decode into the same event model as blob-bearing messages.
 The decoder accepts fragmentation and coalescing and enforces `max_frame_bytes` before payload decoding.
 It also reports the next exact read size, validating the header before requesting payload bytes, so callers can stop at one frame boundary.
 Encoded-length accounting belongs to the same codec; WebSocket adapters share the record header and maximum size from the WebSocket envelope module.
-An unknown kind fails as soon as its first byte arrives; invalid kinds, roles, or bodies terminate the owning connection without admitting later requests.
+An excessive length fails before the remaining frame is read; invalid kinds, roles, or bodies terminate the owning connection without admitting later requests.
 Earlier accepted submissions remain committed and recoverable through the session's terminal departure.
 Each reusable stream completes one request before starting the next; bounded content responses end with `ResponseComplete`.
 Snapshot coordination and signal notifications are identified by kind and do not complete requests.
 Cancelling a response wait makes the affected exchange stream unusable, preventing a stale reply from completing a later request.
 Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
 
-Protocol version 11 replaces caller-selected session bytes with sequencer-allocated nonzero `u64` identities in opening responses and delivered events.
+Protocol version 12 places each frame length before its message kind.
+It retains the sequencer-allocated nonzero `u64` session identities introduced in protocol version 11.
 Postcard encodes these integers as varints; no alias table or identity reuse is involved.
 The protocol retains signals and the durable monotonic reference floor, with no author identities or correlation IDs.
 Sea identifies session incarnations and orders their events; applications decide who those sessions represent.
