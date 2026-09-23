@@ -14,6 +14,15 @@ The numbered-record, workstream, integration, and Phase 3 instructions below app
 Otherwise retain the audit configuration, findings, and evidence in an existing local report without creating iteration machinery.
 If no suitable report exists, create one local audit report in the repository's documentation location for the affected area and reuse it throughout the audit.
 
+## Relationship to Simplification Iterations
+
+When both workflows are planned, complete and integrate this quality iteration first.
+Run the simplification iteration from that accepted commit and use the quality inventory as safety evidence.
+Do not run broad quality and simplification iterations concurrently against moving versions of the same code.
+
+After simplification, recheck only boundaries whose responsibility, contract location, or regression-test ownership changed unless new evidence justifies a broader quality run.
+Use the [simplification-iteration skill](../rust-service-simplification-iteration/SKILL.md) for current-state deduplication, consolidation, and accidental-complexity reduction.
+
 ## Principles
 
 - Audit behavior and responsibility boundaries, not comment counts, test counts,

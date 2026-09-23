@@ -113,6 +113,8 @@ or deletion when overlapping evidence no longer proves distinct behavior.
 Past plans, foundation work, iteration records, decisions, and benchmark evidence live in [Historical records](historical/README.md).
 Use the [coordination skill](../.github/skills/rust-service-coordination/SKILL.md) to choose lightweight work or a full iteration and to run the current process.
 Use the [quality-iteration skill](../.github/skills/rust-service-quality-iteration/SKILL.md) for risk-driven contract and regression-test audits, inventory evidence, and stopping conditions.
+Use the [simplification-iteration skill](../.github/skills/rust-service-simplification-iteration/SKILL.md) for current-state reduction of accidental complexity, duplication, unnecessary abstractions, state, dependencies, and dead paths.
+When both audits are planned, complete the quality iteration first, use its accepted commit and inventory as simplification inputs, and perform focused quality review after simplification when responsibility ownership changes.
 New iteration records also live under `historical/iterations/`; completed records remain append-only history.
 Record falsified hypotheses, repeated failed attempts, substantial effort sinks, human interventions, shared decisions, and reusable process findings as they occur.
 The [historical learning index](historical/LEARNINGS.md) records observations, not additional prerequisites for contributors.

@@ -46,3 +46,4 @@ The [coordination skill](../../.github/skills/rust-service-coordination/SKILL.md
 See [iteration records](iterations/README.md) for layout and initialization, and [decision records](decisions/README.md) for decision triggers.
 Completed iterations and accepted decisions remain append-only; lightweight work needs no numbered records.
 Contract/regression audits additionally follow the [quality-iteration skill](../../.github/skills/rust-service-quality-iteration/SKILL.md).
+Current-state simplification and consolidation audits additionally follow the [simplification-iteration skill](../../.github/skills/rust-service-simplification-iteration/SKILL.md).

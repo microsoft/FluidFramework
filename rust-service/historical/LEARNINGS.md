@@ -3,7 +3,7 @@
 This index records lessons observed during the Sea experiment, including work on implementations that were later replaced.
 Confirmed means supported by the linked experiment, not revalidated against every later implementation.
 Read the [agentic-development guide](AGENTIC_DEVELOPMENT.md) for context and representative outcomes.
-Current requirements live in [Development](../DEVELOPMENT.md), the owning crate guides, and the [coordination](../../.github/skills/rust-service-coordination/SKILL.md) and [quality-iteration](../../.github/skills/rust-service-quality-iteration/SKILL.md) skills.
+Current requirements live in [Development](../DEVELOPMENT.md), the owning crate guides, and the [coordination](../../.github/skills/rust-service-coordination/SKILL.md), [quality-iteration](../../.github/skills/rust-service-quality-iteration/SKILL.md), and [simplification-iteration](../../.github/skills/rust-service-simplification-iteration/SKILL.md) skills.
 Detailed evidence remains in iteration reports, retrospectives, and decision records; add an entry only when it explains a useful observation rather than repeating a procedure.
 
 ## How to Add an Entry

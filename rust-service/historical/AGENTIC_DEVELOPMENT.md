@@ -16,6 +16,7 @@ The reusable procedures remain current tools outside this historical folder:
 
 - [Coordination](../../.github/skills/rust-service-coordination/SKILL.md): choose lightweight work or a full iteration, assign ownership, validate, integrate, and close out.
 - [Quality iteration](../../.github/skills/rust-service-quality-iteration/SKILL.md): select consequential contracts, challenge regression evidence, record dispositions, and apply stopping criteria.
+- [Simplification iteration](../../.github/skills/rust-service-simplification-iteration/SKILL.md): find and remove accidental complexity while preserving contracts, tests, and supported behavior.
 - [Status reporting](../../.github/skills/rust-service-status-report/SKILL.md): inspect progress without interfering with workstreams.
 
 These links show the current skills, which evolved during the experiment.

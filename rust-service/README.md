@@ -46,7 +46,8 @@ The proposed [session resource policy plan](SESSION_RESOURCE_POLICY_PLAN.md) mov
 It is an alternative design plan, not current behavior.
 
 Past plans, learnings, iteration reports, decisions, and retained measurement evidence are collected in [Historical records](historical/README.md).
-Current contributor requirements live in [Development](DEVELOPMENT.md); reusable agent workflows remain in the [coordination](../.github/skills/rust-service-coordination/SKILL.md) and [quality-iteration](../.github/skills/rust-service-quality-iteration/SKILL.md) skills.
+Current contributor requirements live in [Development](DEVELOPMENT.md).
+Reusable agent workflows remain in the [coordination](../.github/skills/rust-service-coordination/SKILL.md), [quality-iteration](../.github/skills/rust-service-quality-iteration/SKILL.md), and [simplification-iteration](../.github/skills/rust-service-simplification-iteration/SKILL.md) skills.
 
 ## Limits
 

@@ -23,6 +23,10 @@ const qualityAssetsRoot = resolve(
 	scriptDirectory,
 	"../../rust-service-quality-iteration/assets",
 );
+const simplificationAssetsRoot = resolve(
+	scriptDirectory,
+	"../../rust-service-simplification-iteration/assets",
+);
 const requiredMarker = "<!-- TODO(required):";
 
 const templates = {
@@ -188,15 +192,28 @@ async function createNextInstructions(iteration, workstreamArguments) {
 }
 
 async function initQualityInventory(iteration) {
+	const iterationRoot = resolve(iterationsRoot, iteration);
 	const path = resolve(iterationsRoot, iteration, "quality-inventory.md");
 	if (await exists(path)) {
 		throw new Error(`refusing to overwrite ${relative(repositoryRoot, path)}`);
+	}
+	const manifestPath = resolve(iterationRoot, "manifest.json");
+	const manifest = await loadManifest(iterationRoot, iteration);
+	if (manifest.iterationType && manifest.iterationType !== "quality") {
+		throw new Error(
+			`iteration ${iteration} is already configured as ${manifest.iterationType}`,
+		);
+	}
+	if (await exists(resolve(iterationRoot, "simplification-inventory.md"))) {
+		throw new Error(`iteration ${iteration} already has a simplification inventory`);
 	}
 	const template = await readFile(
 		resolve(qualityAssetsRoot, "quality-inventory.template.md"),
 		"utf8",
 	);
 	await writeNew(path, template.replaceAll("{{ITERATION}}", iteration));
+	manifest.iterationType = "quality";
+	await writeFile(manifestPath, `${JSON.stringify(manifest, undefined, "\t")}\n`, "utf8");
 	console.log(`Created quality inventory for iteration ${iteration}.`);
 }
 
@@ -223,11 +240,80 @@ async function validateQualityInventory(iteration, errors = []) {
 	if (!/^Status: (complete|in progress)$/m.test(content)) {
 		errors.push("quality inventory status must be 'in progress' or 'complete'");
 	}
-	const tableRows = content
-		.split("\n")
-		.filter((line) => line.startsWith("|") && !line.includes("---"));
-	if (tableRows.length < 2) {
+	if (!hasTableDataRow(content, "Reviewed Boundaries")) {
 		errors.push("quality inventory reviewed-boundaries table has no data row");
+	}
+	return errors;
+}
+
+async function initSimplificationInventory(iteration) {
+	const iterationRoot = resolve(iterationsRoot, iteration);
+	const path = resolve(iterationRoot, "simplification-inventory.md");
+	if (await exists(path)) {
+		throw new Error(`refusing to overwrite ${relative(repositoryRoot, path)}`);
+	}
+	const manifestPath = resolve(iterationRoot, "manifest.json");
+	const manifest = await loadManifest(iterationRoot, iteration);
+	if (manifest.iterationType && manifest.iterationType !== "simplification") {
+		throw new Error(
+			`iteration ${iteration} is already configured as ${manifest.iterationType}`,
+		);
+	}
+	if (await exists(resolve(iterationRoot, "quality-inventory.md"))) {
+		throw new Error(`iteration ${iteration} already has a quality inventory`);
+	}
+	const template = await readFile(
+		resolve(simplificationAssetsRoot, "simplification-inventory.template.md"),
+		"utf8",
+	);
+	await writeNew(path, template.replaceAll("{{ITERATION}}", iteration));
+	manifest.iterationType = "simplification";
+	await writeFile(manifestPath, `${JSON.stringify(manifest, undefined, "\t")}\n`, "utf8");
+	console.log(`Created simplification inventory for iteration ${iteration}.`);
+}
+
+async function validateSimplificationInventory(
+	iteration,
+	errors = [],
+	{ requireComplete = false, expectedSourceCommit } = {},
+) {
+	const path = resolve(iterationsRoot, iteration, "simplification-inventory.md");
+	await validateMarkdown(
+		path,
+		[
+			"Selection Rationale",
+			"Reviewed Candidates",
+			"Deferred Candidates",
+			"Cross-Workstream Consolidation",
+			"Contract and Validation Review",
+			"Net Effect",
+			"Convergence Assessment",
+		],
+		errors,
+	);
+	if (!(await exists(path))) {
+		return errors;
+	}
+	const content = await readFile(path, "utf8");
+	if (!content.includes(`Iteration ${iteration} Rust Simplification Inventory`)) {
+		errors.push("simplification inventory title does not match the iteration");
+	}
+	const status = content.match(/^Status: (complete|in progress)$/m)?.[1];
+	if (status === undefined) {
+		errors.push("simplification inventory status must be 'in progress' or 'complete'");
+	} else if (requireComplete && status !== "complete") {
+		errors.push("simplification inventory status must be 'complete'");
+	}
+	if (expectedSourceCommit !== undefined) {
+		const sourceCommit = content.match(/^Source commit:\s*`?([^`\s]+)`?\s*$/m)?.[1];
+		if (sourceCommit === undefined) {
+			errors.push("simplification inventory source commit is missing or invalid");
+		} else if (sourceCommit !== expectedSourceCommit) {
+			errors.push("simplification inventory source commit does not match manifest");
+		}
+	}
+	if (!hasTableDataRow(content, "Reviewed Candidates")) {
+		errors.push("simplification inventory reviewed-candidates table has no data row");
 	}
 	return errors;
 }
@@ -274,6 +360,24 @@ async function validateMarkdown(path, headings, errors) {
 			errors.push(`${relative(repositoryRoot, path)} has missing decision link: ${target}`);
 		}
 	}
+}
+
+function hasTableDataRow(content, heading) {
+	const headingMarker = `## ${heading}`;
+	const headingStart = content.indexOf(headingMarker);
+	if (headingStart === -1) {
+		return false;
+	}
+	const sectionStart = headingStart + headingMarker.length;
+	const nextHeading = content.indexOf("\n## ", sectionStart);
+	const section = content.slice(
+		sectionStart,
+		nextHeading === -1 ? content.length : nextHeading,
+	);
+	const tableRows = section
+		.split("\n")
+		.filter((line) => line.startsWith("|") && !line.includes("---"));
+	return tableRows.length >= 2;
 }
 
 async function validateFoundation() {
@@ -514,8 +618,26 @@ async function validate(iteration, phase) {
 			}
 		}
 
-		if (await exists(resolve(iterationRoot, "quality-inventory.md"))) {
+		const qualityInventoryExists = await exists(
+			resolve(iterationRoot, "quality-inventory.md"),
+		);
+		const simplificationInventoryExists = await exists(
+			resolve(iterationRoot, "simplification-inventory.md"),
+		);
+		if (manifest.iterationType === "quality" && !qualityInventoryExists) {
+			errors.push("quality iteration is missing quality-inventory.md");
+		}
+		if (manifest.iterationType === "simplification" && !simplificationInventoryExists) {
+			errors.push("simplification iteration is missing simplification-inventory.md");
+		}
+		if (qualityInventoryExists) {
 			await validateQualityInventory(iteration, errors);
+		}
+		if (simplificationInventoryExists) {
+			await validateSimplificationInventory(iteration, errors, {
+				requireComplete: true,
+				expectedSourceCommit: manifest.sourceCommit,
+			});
 		}
 	}
 
@@ -559,8 +681,10 @@ function usage() {
   iteration-records.mjs validate-foundation
   iteration-records.mjs init NNNN workstream-name...
 	iteration-records.mjs init-quality NNNN
+	iteration-records.mjs init-simplification NNNN
 	iteration-records.mjs next NNNN workstream-name...
 	iteration-records.mjs validate-quality NNNN
+	iteration-records.mjs validate-simplification NNNN
 	iteration-records.mjs validate NNNN start|phase-2|complete`);
 }
 
@@ -577,6 +701,8 @@ try {
 			await init(iteration, rest);
 		} else if (command === "init-quality") {
 			await initQualityInventory(iteration);
+		} else if (command === "init-simplification") {
+			await initSimplificationInventory(iteration);
 		} else if (command === "next") {
 			await createNextInstructions(iteration, rest);
 		} else if (command === "validate-quality") {
@@ -588,6 +714,21 @@ try {
 				process.exitCode = 1;
 			} else {
 				console.log(`Quality inventory ${iteration} passes validation.`);
+			}
+		} else if (command === "validate-simplification") {
+			const iterationRoot = resolve(iterationsRoot, iteration);
+			const manifest = await loadManifest(iterationRoot, iteration);
+			const errors = await validateSimplificationInventory(iteration, [], {
+				requireComplete: true,
+				expectedSourceCommit: manifest.sourceCommit,
+			});
+			if (errors.length > 0) {
+				for (const error of errors) {
+					console.error(`error: ${error}`);
+				}
+				process.exitCode = 1;
+			} else {
+				console.log(`Simplification inventory ${iteration} passes validation.`);
 			}
 		} else if (command === "validate") {
 			await validate(iteration, rest[0]);

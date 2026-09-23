@@ -51,6 +51,8 @@ Existing iteration records remain append-only historical artifacts.
 
 For a risk-driven contract and regression-test audit, also use the [quality-iteration skill](../rust-service-quality-iteration/SKILL.md).
 It defines boundary selection, evidence, inventory dispositions, and convergence; this skill remains the authority for iteration mechanics.
+For a current-state simplification, consolidation, or deduplication audit, also use the [simplification-iteration skill](../rust-service-simplification-iteration/SKILL.md).
+It defines candidate selection, behavior-preservation evidence, reduction accounting, and convergence; this skill remains the authority for iteration mechanics.
 
 ## Terminal Coordination
 
@@ -139,6 +141,8 @@ Record the alternatives, evidence, and downstream consequences with the question
 4. Set `sourceCommit` to that approved base commit, complete `charter.md` and each generated instruction, and set manifest status to `active`.
    For a quality iteration, also run `iteration-records.mjs init-quality NNNN` using the script path above before committing the kickoff records.
    Complete the inventory's configuration and selection rationale; workstreams fill reviewed boundaries during the audit.
+   For a simplification iteration, instead run `iteration-records.mjs init-simplification NNNN`.
+   Complete the inventory's configuration and selection rationale; workstreams fill reviewed candidates during discovery and repair.
 5. Run `node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN start`.
 6. Commit the initialized records as the iteration kickoff, then create the integration branch and isolated worktrees from that kickoff commit using the Worktrees section below.
 7. Give each agent its generated instruction file and report path.

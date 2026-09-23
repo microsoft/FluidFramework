@@ -10,6 +10,18 @@ After approval, initialize the next unused number from the repository root:
 node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init NNNN workstream-name
 ```
 
+For a contract and regression-test quality iteration, also initialize its quality inventory:
+
+```bash
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init-quality NNNN
+```
+
+For a current-state simplification iteration, instead initialize its simplification inventory:
+
+```bash
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs init-simplification NNNN
+```
+
 An iteration contains:
 
 ```text
@@ -42,4 +54,16 @@ node .github/skills/rust-service-coordination/scripts/iteration-records.mjs vali
 node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN phase-2
 node .github/skills/rust-service-coordination/scripts/iteration-records.mjs next NNNN next-workstream
 node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN complete
+```
+
+Before completing a quality iteration, validate its specialized inventory:
+
+```bash
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-quality NNNN
+```
+
+Before completing a simplification iteration, validate its specialized inventory:
+
+```bash
+node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-simplification NNNN
 ```
