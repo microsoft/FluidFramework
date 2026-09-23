@@ -201,6 +201,7 @@ function sweep(cells) {
 		"rust-service/target/release/sea-webtransport-server",
 		"rust-service/packages/sea-typescript/generated/websocket/node/sea_wasm_bg.wasm",
 		"rust-service/scripts/benchmark-stress.mjs",
+		"rust-service/scripts/benchmark-temporary-data.mjs",
 		"rust-service/scripts/benchmark-collect.mjs",
 	];
 	if (cells.some((cell) => cell.generator === "native")) {

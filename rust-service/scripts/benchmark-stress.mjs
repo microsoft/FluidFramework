@@ -22,6 +22,7 @@ import { createInterface } from "node:readline";
 import { setTimeout as delay } from "node:timers/promises";
 import { alignedMeasurement } from "./benchmark-alignment.mjs";
 import { assertDrainIntegrity, hasPendingDrain } from "./benchmark-gates.mjs";
+import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
 const script = resolve(import.meta.dirname, "benchmark-stress.mjs");
@@ -358,6 +359,7 @@ async function worker(configuration) {
 /** Runs one isolated service sample and captures resource curves from owned processes. */
 async function run(configuration, output) {
 	mkdirSync(output, { recursive: true });
+	const temporaryData = createTemporaryBenchmarkData(`${configuration.backend}-stress-data`);
 	const serverBinary = resolve(
 		configuration.serverBinary ??
 			resolve(root, "rust-service/target/release/sea-webtransport-server"),
@@ -384,7 +386,7 @@ async function run(configuration, output) {
 					"127.0.0.1:0",
 					`${certificate}/cert.pem`,
 					`${certificate}/key.pem`,
-					resolve(output, "data"),
+					resolve(temporaryData.path, "sea-data"),
 				]
 			: [
 					process.execPath,
@@ -402,9 +404,9 @@ async function run(configuration, output) {
 			SEA_WEBSOCKET_BIND: `127.0.0.1:${port}`,
 			SEA_WEBSOCKET_ORIGINS: "http://localhost",
 			SEA_WEBSOCKET_ORIGINLESS_LOOPBACK: "1",
-			storage: resolve(output, "tiny-storage"),
+			storage: resolve(temporaryData.path, "tiny-storage"),
 			db__inMemory: String(configuration.storage !== "leveldb"),
-			db__path: resolve(output, "tiny-db"),
+			db__path: resolve(temporaryData.path, "tiny-db"),
 		},
 		stdio: ["ignore", "pipe", "pipe"],
 	});
@@ -536,7 +538,7 @@ async function run(configuration, output) {
 		await Promise.all(ready);
 		if (configuration.backend === "tinylicious")
 			assert.equal(
-				existsSync(resolve(output, "tiny-db", "CURRENT")),
+				existsSync(resolve(temporaryData.path, "tiny-db", "CURRENT")),
 				configuration.storage === "leveldb",
 				"Tinylicious database selection must match its on-disk LevelDB marker",
 			);
@@ -622,6 +624,7 @@ async function run(configuration, output) {
 				),
 			workers: results,
 			resourceSamples: samples,
+			serviceData: temporaryData.provenance,
 		};
 	} catch (error) {
 		result = {
@@ -631,12 +634,22 @@ async function run(configuration, output) {
 			guardFailure,
 			workers: workerResults,
 			resourceSamples: samples,
+			serviceData: temporaryData.provenance,
 		};
 	} finally {
 		clearInterval(sampleTimer);
 		clearTimeout(outerTimer);
 		await Promise.all(workers.map(stop));
 		await stop(service);
+		try {
+			temporaryData.remove();
+		} catch (error) {
+			result = {
+				...result,
+				status: "failed",
+				temporaryDataCleanupError: String(error),
+			};
+		}
 		writeFileSync(resolve(output, "service.log"), serviceLog);
 		writeFileSync(resolve(output, "result.json"), `${JSON.stringify(result, null, "\t")}\n`);
 	}

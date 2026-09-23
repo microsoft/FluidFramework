@@ -78,7 +78,7 @@ try {
 			const available =
 				Number(readFileSync("/proc/meminfo", "utf8").match(/^MemAvailable:\s+(\d+)/m)[1]) *
 				1024;
-			const disk = statfsSync(artifacts);
+			const disk = statfsSync("/tmp");
 			assert.ok(
 				available >= 8 * 1024 ** 3 && disk.bavail * disk.bsize >= 4 * 1024 ** 3,
 				"resource preflight",
@@ -120,6 +120,9 @@ try {
 				generatorSha256: hash(binaries.generator),
 				runnerSha256: hash(script),
 				alignmentSha256: hash(resolve(import.meta.dirname, "benchmark-alignment.mjs")),
+				temporaryDataSha256: hash(
+					resolve(import.meta.dirname, "benchmark-temporary-data.mjs"),
+				),
 			};
 			const existing = runs.find((run) => run.pair === pair + 1 && run.side === side);
 			if (existing) {
@@ -128,6 +131,7 @@ try {
 					"generatorSha256",
 					"runnerSha256",
 					"alignmentSha256",
+					"temporaryDataSha256",
 				])
 					assert.equal(
 						existing[key],

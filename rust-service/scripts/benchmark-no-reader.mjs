@@ -9,15 +9,17 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { alignedMeasurement } from "./benchmark-alignment.mjs";
+import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
 const [binary, backend, cache, directory] = process.argv.slice(2);
 assert.ok(["memory", "buffered-file", "durable-file"].includes(backend));
 assert.ok(["true", "false"].includes(cache));
 const output = resolve(directory);
 mkdirSync(output, { recursive: true });
+const temporaryData = createTemporaryBenchmarkData("sea-no-reader-data");
 const child = spawn(
 	"taskset",
-	["-c", "0,2,4,6,8,10,12,14", resolve(binary), backend, resolve(output, "data")],
+	["-c", "0,2,4,6,8,10,12,14", resolve(binary), backend, temporaryData.path],
 	{ stdio: ["pipe", "pipe", "pipe"] },
 );
 const ticks = Number(execFileSync("getconf", ["CLK_TCK"], { encoding: "utf8" }));
@@ -180,6 +182,16 @@ try {
 		failure,
 		timed,
 		replay: result,
+	};
+}
+summary.serviceData = temporaryData.provenance;
+try {
+	temporaryData.remove();
+} catch (error) {
+	summary = {
+		...summary,
+		status: "failed",
+		temporaryDataCleanupError: String(error),
 	};
 }
 writeFileSync(resolve(output, "service.log"), log);

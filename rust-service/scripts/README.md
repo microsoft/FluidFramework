@@ -4,6 +4,12 @@ These shell and Node.js entry points validate or measure the current benchmark h
 The shell validation and measurement wrappers use a disposable source copy; the Node.js collectors use the current checkout and explicit output directories.
 Copies exclude build outputs, installed dependencies, generated packages, Git metadata, and benchmark-result directories; each run uses a separate Cargo target directory and removes the copy and target on exit.
 
+Stress, no-reader, summary, and cold-load runners create backend data in an owned directory directly under `/tmp`, independent of the artifact output directory.
+This includes Sea event and content data, Tinylicious LevelDB data, and Tinylicious filesystem Git summaries.
+Each result records the temporary path, filesystem type, mount source, and device identity.
+The runner removes only its owned data directory after stopping the service and collecting file inventories.
+Benchmark artifacts can therefore use persistent storage without moving either service's file-backend input/output off `/tmp`.
+
 ## Commands
 
 `checkpoint1-pairs.mjs <artifact-directory> <cell>` runs the frozen cache comparison cells.
@@ -25,7 +31,8 @@ Copy measurement artifacts to persistent storage after each cell when using temp
 | Bounded Linux Sea/Tinylicious client comparisons | [`benchmark-stress.mjs`](benchmark-stress.mjs) |
 | Fluid summaries, persisted sizes, and process-cold loads | [`benchmark-summaries.mjs`](benchmark-summaries.mjs) |
 
-Use new output directories outside the repository; format completed JSON before retaining it.
+Use new artifact output directories outside the repository; format completed JSON before retaining it.
+The output location does not select the service-data filesystem.
 `check-documentation.mjs` covers Cargo packages, direct harnesses, architectural groupings, historical READMEs, and current top-level guides; it checks local paths, not anchors or external URLs.
 
 ### Collection Modes
