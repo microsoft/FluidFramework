@@ -6,6 +6,10 @@ settings:
   excludeLinksFromLockfile: false
 
 catalogs:
+  TypeScript:
+    typescript:
+      specifier: ~6.0.3
+      version: 6.0.3
   buildTools:
     '@fluid-tools/build-cli':
       specifier: ^0.67.0
@@ -29,10 +33,6 @@ catalogs:
     eslint-config-prettier:
       specifier: ~10.1.8
       version: 10.1.8
-  TypeScript:
-    typescript:
-      specifier: ~6.0.3
-      version: 6.0.3
 
 overrides:
   '@babel/core@>=7 <8': ^7.29.6
@@ -16707,7 +16707,7 @@ importers:
         specifier: ^17.0.32
         version: 17.0.35
       typescript:
-        specifier: ~6.0.3
+        specifier: catalog:TypeScript
         version: 6.0.3
 
 packages:
