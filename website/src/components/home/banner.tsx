@@ -10,6 +10,7 @@ import { YoutubeVideo } from "@site/src/components/youtubeVideo";
 import "@site/src/css/home/banner.css";
 
 const videoEmbedId = "fjRfTdIYzWg";
+const videoTitle = "Fluid Framework - Build collaborative apps fast!";
 
 /**
  * Homepage banner component.
@@ -19,7 +20,11 @@ export function Banner(): ReactElement {
 		<div className="ffcom-banner">
 			<div className="ffcom-banner-inner">
 				<TitleBox />
-				<YoutubeVideo videoId={videoEmbedId} className="ffcom-video-container" />
+				<YoutubeVideo
+					videoId={videoEmbedId}
+					title={videoTitle}
+					className="ffcom-video-container"
+				/>
 			</div>
 		</div>
 	);
