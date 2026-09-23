@@ -580,11 +580,11 @@ export const SchemaFactory_base: SchemaStatics & (new () => SchemaStatics);
 export class SchemaFactoryBeta<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory<TScope, TName> {
     static incrementalSummary: {
         <const T extends TreeNodeSchema>(allowedType: T): AllowedTypesFullFromMixed<readonly [T]>;
-        <const T extends readonly LazyItem<TreeNodeSchema>[]>(allowedTypes: T): AllowedTypesFullFromMixed<T>;
+        <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(allowedTypes: T): AllowedTypesFullFromMixed<T>;
     };
     incrementalSummary: {
         <const T extends TreeNodeSchema>(allowedType: T): AllowedTypesFullFromMixed<readonly [T]>;
-        <const T extends readonly LazyItem<TreeNodeSchema>[]>(allowedTypes: T): AllowedTypesFullFromMixed<T>;
+        <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(allowedTypes: T): AllowedTypesFullFromMixed<T>;
     };
     static incrementalSummaryRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(allowedTypes: T) => AllowedTypesFullFromMixedUnsafe<T>;
     incrementalSummaryRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(allowedTypes: T) => AllowedTypesFullFromMixedUnsafe<T>;
@@ -632,7 +632,7 @@ export interface SchemaStatics {
 export interface SchemaStaticsBeta {
     readonly incrementalSummary: {
         <const T extends TreeNodeSchema>(allowedType: T): AllowedTypesFullFromMixed<readonly [T]>;
-        <const T extends readonly LazyItem<TreeNodeSchema>[]>(allowedTypes: T): AllowedTypesFullFromMixed<T>;
+        <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(allowedTypes: T): AllowedTypesFullFromMixed<T>;
     };
     readonly incrementalSummaryRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(allowedTypes: T) => AllowedTypesFullFromMixedUnsafe<T>;
     readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;

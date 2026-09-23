@@ -99,7 +99,7 @@ export interface SchemaStaticsBeta {
 	 */
 	readonly incrementalSummary: {
 		<const T extends TreeNodeSchema>(allowedType: T): AllowedTypesFullFromMixed<readonly [T]>;
-		<const T extends readonly LazyItem<TreeNodeSchema>[]>(
+		<const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
 			allowedTypes: T,
 		): AllowedTypesFullFromMixed<T>;
 	};

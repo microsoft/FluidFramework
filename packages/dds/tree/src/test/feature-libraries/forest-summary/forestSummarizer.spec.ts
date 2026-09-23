@@ -277,7 +277,7 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 const sf = new SchemaFactoryAlpha("IncrementalSummarization");
 
 class ObjectNodeSchema extends sf.object("objectNodeSchema", {
-	foo: sf.incrementalSummary([sf.string, sf.number]),
+	foo: sf.incrementalSummary([sf.number, sf.staged(sf.string)]),
 }) {}
 
 class FooMap extends sf.mapAlpha("fooMap", sf.incrementalSummary(sf.string)) {}
