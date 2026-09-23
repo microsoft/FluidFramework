@@ -1974,6 +1974,9 @@ importers:
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)(supports-color@8.1.1)
       pm2:
         specifier: ^5.4.2
         version: 5.4.2(supports-color@10.2.2)
@@ -6248,6 +6251,12 @@ packages:
     resolution: {integrity: sha512-+NsyUUAZDmo6YVHzL/stxSu3t9YS1iljliy3BSDrXJ/dkn1KYdmtZODGGjLcc9XLgVVpH4KshHB8XmZgMhaBXg==}
     engines: {node: '>=10'}
     hasBin: true
+
+  mocha-multi-reporters@1.5.1:
+    resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
+    engines: {node: '>=6.0.0'}
+    peerDependencies:
+      mocha: '>=3.1.2'
 
   mocha@10.8.2:
     resolution: {integrity: sha512-VZlYo/WE8t1tstuRmqgeyBgCbJc/lEdopaa+axcKzTBJ+UIdlAB9XnmvTCAH4pwR4ElNInaedhEBmZD8iCSVEg==}
@@ -14216,6 +14225,14 @@ snapshots:
   mkdirp@1.0.4: {}
 
   mkdirp@3.0.1: {}
+
+  mocha-multi-reporters@1.5.1(mocha@10.8.2)(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      lodash: 4.18.1
+      mocha: 10.8.2
+    transitivePeerDependencies:
+      - supports-color
 
   mocha@10.8.2:
     dependencies:
