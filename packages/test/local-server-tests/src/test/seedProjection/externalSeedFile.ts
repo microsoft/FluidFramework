@@ -12,12 +12,16 @@ import { calculateStats, SummaryTreeBuilder } from "@fluidframework/runtime-util
 
 import { format, parseHtml } from "./htmlSeedFormat.js";
 
+/** Application-root child containing readable content in both seed and native summaries. */
 export const projectionKey = "applicationProjection";
+/** Loading-group identifier allowing storage to fetch projection bodies separately from native state. */
 export const projectionGroup = "application-projection";
+/** Runtime code package recorded in seed protocol metadata and resolved by the application's code loader. */
 export const codeDetails = { package: "seed-projection-reference/2" };
 
 /** Stable application part names; each owns one subtree in storage and one subtree in SharedTree. */
 export type HtmlPartId = "first" | "second";
+/** Stable part enumeration shared by seed validation, projection generation, and dirty tracking. */
 export const htmlPartIds: readonly HtmlPartId[] = ["first", "second"];
 
 /** The reference document's two independently editable and independently reusable HTML parts. */
