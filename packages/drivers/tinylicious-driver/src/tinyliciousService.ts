@@ -91,11 +91,14 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 	if (!parameters.existing) {
 		assert(
 			parameters.newContainerRootType !== undefined,
-			"Root data store kind must be provided for new containers",
+			0xd4c /* Root data store kind must be provided for new containers */,
 		);
 		const dataStore = await runtime.createDataStore(parameters.newContainerRootType);
 		const aliasResult = await dataStore.trySetAlias(rootDataStoreId);
-		assert(aliasResult === "Success", "Should be able to set alias on new data store");
+		assert(
+			aliasResult === "Success",
+			0xd4d /* Should be able to set alias on new data store */,
+		);
 	}
 	return runtime;
 };
@@ -187,7 +190,10 @@ export class TinyliciousServiceContainer<TData>
 			(await containerInner.getEntryPoint()) as T,
 			id,
 		);
-		assert(serviceContainer.id !== undefined, "id should be defined when loading a container");
+		assert(
+			serviceContainer.id !== undefined,
+			0xd4e /* id should be defined when loading a container */,
+		);
 		return serviceContainer as typeof serviceContainer & { id: string };
 	}
 
