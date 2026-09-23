@@ -12,10 +12,38 @@ import {
 	type SchemaUpgrade,
 } from "../simple-tree/index.js";
 
-import { getStagedSchemaUpgrades, testSchema, testSimpleTrees } from "./testTrees.js";
+import {
+	getStagedSchemaUpgrades,
+	testDocuments,
+	testSchema,
+	testSimpleTrees,
+	testTrees,
+} from "./testTrees.js";
 import { compareSets } from "../util/index.js";
 
 describe("test tree catalogs", () => {
+	for (const [collectionName, testCases] of Object.entries({
+		testSchema,
+		testSimpleTrees,
+		testTrees,
+		testDocuments,
+	})) {
+		// Test case names are used in snapshot filenames, which must not collide on case-insensitive filesystems.
+		it(`${collectionName} has case-insensitively unique names`, () => {
+			const names = new Map<string, string>();
+			for (const testCase of testCases) {
+				const normalizedName = testCase.name.toLowerCase();
+				const existingName = names.get(normalizedName);
+				assert.equal(
+					existingName,
+					undefined,
+					`Test names "${existingName}" and "${testCase.name}" collide when normalized`,
+				);
+				names.set(normalizedName, testCase.name);
+			}
+		});
+	}
+
 	it("includes the schema for every simple tree", () => {
 		const schemas = new Set(testSchema.map((testCase) => testCase.schema));
 		// Check for duplicate schemas in the testSchema array.
