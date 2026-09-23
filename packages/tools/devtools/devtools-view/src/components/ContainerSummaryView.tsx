@@ -4,6 +4,7 @@
  */
 
 import type {
+	PositioningShorthand,
 	TableColumnDefinition,
 	TableColumnSizingOptions,
 } from "@fluentui/react-components";
@@ -35,6 +36,7 @@ import {
 	containerStatusTooltipText,
 	userIdTooltipText,
 } from "./TooltipTexts.js";
+import { statusInfoTooltipPositioning } from "./TooltipPositioning.js";
 import { Waiting } from "./Waiting.js";
 
 const {
@@ -99,6 +101,11 @@ interface DataRowProps {
 	infoTooltipContent: ReactElement | string | undefined;
 
 	/**
+	 * Preferred placement and fallback behavior for the info popover.
+	 */
+	infoTooltipPositioning?: PositioningShorthand;
+
+	/**
 	 * The value text associated with the label (second column).
 	 */
 	value: ReactElement | string | undefined;
@@ -117,7 +124,7 @@ interface DataRowProps {
  * @remarks {@link DataRowProps.value} will be wrapped in a <TableCell /> so it shouldn't have one itself.
  */
 function DataRow(props: DataRowProps): ReactElement {
-	const { label, infoTooltipContent, value, columnProps } = props;
+	const { label, infoTooltipContent, infoTooltipPositioning, value, columnProps } = props;
 
 	return (
 		<TableRow>
@@ -130,7 +137,15 @@ function DataRow(props: DataRowProps): ReactElement {
 				{infoTooltipContent === undefined ? (
 					<b>{label}</b>
 				) : (
-					<InfoLabel info={infoTooltipContent} style={{ whiteSpace: "nowrap" }}>
+					<InfoLabel
+						info={infoTooltipContent}
+						infoButton={
+							infoTooltipPositioning === undefined
+								? undefined
+								: { popover: { positioning: infoTooltipPositioning } }
+						}
+						style={{ whiteSpace: "nowrap" }}
+					>
 						<b>{label}</b>
 					</InfoLabel>
 				)}
@@ -367,6 +382,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): ReactEle
 						<DataRow
 							label="Status"
 							infoTooltipContent={containerStatusTooltipText}
+							infoTooltipPositioning={statusInfoTooltipPositioning}
 							value={containerStatusValueCell(statusComponents)}
 							columnProps={columnSizing_unstable}
 						/>
