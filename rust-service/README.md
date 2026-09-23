@@ -42,6 +42,9 @@ It is an architectural proposal, not a current deployment guarantee.
 The active [protocol simplification plan](NETWORK_PROTOCOL_PLAN.md) tracks initial metadata and framing changes and the required review of follow-up size optimizations.
 It describes planned work, not current protocol guarantees.
 
+The proposed [session resource policy plan](SESSION_RESOURCE_POLICY_PLAN.md) moves optional admission, pressure response, and reader shedding into service-owned session decorators rather than the sequencer.
+It is an alternative design plan, not current behavior.
+
 Past plans, learnings, iteration reports, decisions, and retained measurement evidence are collected in [Historical records](historical/README.md).
 Current contributor requirements live in [Development](DEVELOPMENT.md); reusable agent workflows remain in the [coordination](../.github/skills/rust-service-coordination/SKILL.md) and [quality-iteration](../.github/skills/rust-service-quality-iteration/SKILL.md) skills.
 
