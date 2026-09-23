@@ -2,7 +2,7 @@
 
 Incremental summary is an optimization that avoids re-summarizing parts of the tree that don't change between summaries. Fields in a schema can opt in to incremental summarization with `SchemaFactoryBeta.incrementalSummary`. These fields are tracked as independent chunks in the summary. During summarization, if their content hasn't changed since the last summary, their previously generated summaries are reused. As a result, their data doesn't need to be re-encoded (saving processing time), and their summary trees don't need to be uploaded again (reducing summary upload size).
 
-> **Warning:** Incremental summary is an alpha feature and is actively under development. The schema helpers are beta, but supporting interfaces and behavior may change in future releases without notice. Do not rely on the feature in production.
+> **Warning:** Incremental summary is a beta API and is actively under development. Interfaces and behavior may change in future releases without notice.
 
 ## Requirements
 
@@ -83,4 +83,4 @@ Fields that are _not_ opted in are encoded into the main summary blob as usual.
 
 - Root fields cannot be incrementally summarized (the callback always returns `false` for them).
 - If the view schema doesn't recognize a node type (e.g., due to schema mismatch or unknown optional fields), that node falls back to non-incremental encoding.
-- The schema helpers are `@beta`; the remaining incremental summary APIs are `@alpha` and may change as the feature stabilizes.
+- Incremental summary is `@beta` and may change as the APIs stabilize.
