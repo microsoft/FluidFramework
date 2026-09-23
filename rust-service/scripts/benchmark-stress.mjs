@@ -22,6 +22,7 @@ import { createInterface } from "node:readline";
 import { setTimeout as delay } from "node:timers/promises";
 import { alignedMeasurement } from "./benchmark-alignment.mjs";
 import { assertDrainIntegrity, hasPendingDrain } from "./benchmark-gates.mjs";
+import { generatorLayout } from "./benchmark-generator-layout.mjs";
 import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -400,7 +401,9 @@ async function run(configuration, output) {
 			...process.env,
 			NODE_ENV: "production",
 			SEA_STORAGE_MODE: configuration.storage ?? "memory",
-			SEA_EXPERIMENTAL_LIVE_CACHE: String(configuration.liveCache ?? false),
+			...(configuration.liveCache === undefined
+				? {}
+				: { SEA_EXPERIMENTAL_LIVE_CACHE: String(configuration.liveCache) }),
 			SEA_WEBSOCKET_BIND: `127.0.0.1:${port}`,
 			SEA_WEBSOCKET_ORIGINS: "http://localhost",
 			SEA_WEBSOCKET_ORIGINLESS_LOOPBACK: "1",
@@ -479,19 +482,21 @@ async function run(configuration, output) {
 				configuration.storage ?? "memory",
 			);
 		if (configuration.backend === "sea") {
+			const liveCache = configuration.liveCache ?? true;
 			assert.equal(
 				serviceLog.includes("EXPERIMENTAL_LIVE_CACHE=true"),
-				configuration.liveCache ?? false,
+				liveCache,
 				"cache activation marker",
 			);
 		}
-		const count = Math.min(4, configuration.documents);
+		const generators = generatorLayout(configuration);
 		const ready = [];
-		for (let index = 0; index < count; index++) {
+		for (let index = 0; index < generators.count; index++) {
 			const workerConfiguration = {
 				...configuration,
-				documents: configuration.documents / count,
-				rate: configuration.rate / count,
+				generatorProcesses: undefined,
+				documents: configuration.documents / generators.count,
+				rate: configuration.rate / generators.count,
 				endpoint:
 					configuration.backend === "sea"
 						? configuration.transport === "webtransport"
@@ -506,7 +511,7 @@ async function run(configuration, output) {
 				"taskset",
 				[
 					"-c",
-					String(16 + index * 2),
+					String(generators.cpus[index]),
 					...(native ? [generatorBinary] : [process.execPath, script, "worker"]),
 					JSON.stringify(workerConfiguration),
 				],
@@ -582,6 +587,7 @@ async function run(configuration, output) {
 					: configuration.storage === "leveldb"
 						? "leveldb"
 						: "default-in-memory-database",
+			liveCache: configuration.backend === "sea" ? (configuration.liveCache ?? true) : null,
 			transport:
 				configuration.backend === "sea"
 					? (configuration.transport ?? "websocket")
@@ -589,7 +595,8 @@ async function run(configuration, output) {
 			generator:
 				configuration.generator ?? (configuration.backend === "sea" ? "node-wasm" : "node"),
 			serviceCpu,
-			generatorCpus: workers.map((_, index) => 16 + index * 2).join(","),
+			generatorProcesses: generators.count,
+			generatorCpus: generators.cpus.join(","),
 			clockTicks,
 			aligned:
 				configuration.generator === "native"
@@ -632,6 +639,7 @@ async function run(configuration, output) {
 			configuration,
 			error: String(error),
 			guardFailure,
+			liveCache: configuration.backend === "sea" ? (configuration.liveCache ?? true) : null,
 			workers: workerResults,
 			resourceSamples: samples,
 			serviceData: temporaryData.provenance,
@@ -690,7 +698,7 @@ if (mode === "--help") {
 	for (const key of ["payloadBytes", "seconds", "warmupSeconds"])
 		assert.ok(Number.isInteger(configuration[key]) && configuration[key] > 0, key);
 	assert.ok(configuration.payloadBytes >= 8 && configuration.payloadBytes <= 8192);
-	assert.ok(configuration.documents <= 4 || configuration.documents % 4 === 0);
+	if (mode !== "worker") generatorLayout(configuration);
 	assert.ok(
 		configuration.generator === undefined ||
 			(configuration.generator === "native" && configuration.backend === "sea"),

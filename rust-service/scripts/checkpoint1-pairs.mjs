@@ -123,6 +123,9 @@ try {
 				temporaryDataSha256: hash(
 					resolve(import.meta.dirname, "benchmark-temporary-data.mjs"),
 				),
+				generatorLayoutSha256: hash(
+					resolve(import.meta.dirname, "benchmark-generator-layout.mjs"),
+				),
 			};
 			const existing = runs.find((run) => run.pair === pair + 1 && run.side === side);
 			if (existing) {
@@ -132,6 +135,7 @@ try {
 					"runnerSha256",
 					"alignmentSha256",
 					"temporaryDataSha256",
+					"generatorLayoutSha256",
 				])
 					assert.equal(
 						existing[key],

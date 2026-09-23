@@ -201,6 +201,7 @@ function sweep(cells) {
 		"rust-service/target/release/sea-webtransport-server",
 		"rust-service/packages/sea-typescript/generated/websocket/node/sea_wasm_bg.wasm",
 		"rust-service/scripts/benchmark-stress.mjs",
+		"rust-service/scripts/benchmark-generator-layout.mjs",
 		"rust-service/scripts/benchmark-temporary-data.mjs",
 		"rust-service/scripts/benchmark-collect.mjs",
 	];
@@ -234,8 +235,12 @@ function sweep(cells) {
 						),
 				),
 			],
-			generatorPhysicalCores: 4,
-			generatorCpus: "16,18,20,22",
+			generatorProcesses: [
+				...new Set(
+					cells.map((cell) => cell.generatorProcesses ?? Math.min(4, cell.documents)),
+				),
+			],
+			generatorCpuPolicy: "separate physical CPUs 16,18,...,30",
 		},
 		artifacts: artifacts.map((file) => ({
 			file,

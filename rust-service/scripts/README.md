@@ -100,7 +100,12 @@ Sea defaults to release native service/WASM clients over loopback WebSocket; Tin
 Both retain history; their default persistence guarantees differ.
 
 Service affinity uses CPUs 2; 2,4,6,8; or 0,2,4,6,8,10,12,14 for one/four/eight cores.
-Up to four generators use separate physical cores; editor/host activity is not isolated.
+Four generators use separate physical cores by default.
+Set `generatorProcesses` to as many as eight for capacity campaigns; generators use CPUs 16,18,...,30 and documents must divide evenly across them.
+Native offered rates must also divide evenly across the selected generator count.
+Sea uses the built-in live-cache default when `liveCache` is omitted; set it to `false` only for an explicit storage-backed control.
+Results record the effective cache state and generator layout.
+Editor/host activity is not isolated.
 Set `SEA_MAX_CONNECTIONS=128` for more than eight document pairs.
 
 Example bounded stress sample from the repository root:

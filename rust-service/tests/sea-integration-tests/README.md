@@ -68,7 +68,10 @@ The benchmark runs the same two-client operation workload through the Rust local
 
 Pass `--dds shared-tree` to use a real SharedTree with the optimized forest implementation. Both modes use the same benchmark loop and validate writer/observer convergence. The selected DDS is recorded in the suite name and detailed JSON configuration.
 
-The harness uses the repository's standard Mocha benchmark tooling, so cases are selected with `--grep` and results are written through the standard benchmark reporter. It owns temporary data, ports, certificates, Chromium, and service processes.
+The harness uses the repository's standard Mocha benchmark tooling, so cases are selected with `--grep` and results are written through the standard benchmark reporter.
+It owns temporary data, ports, certificates, Chromium, and service processes.
+External Sea and Tinylicious services put their data in separate owned directories directly under `/tmp`; detailed results record the filesystem type, mount source, device, and exact path before cleanup.
+The artifact directory is independent of service-data placement.
 
 Install the root workspace and incrementally build the benchmark package from the repository root:
 
@@ -129,6 +132,7 @@ Run `pnpm --dir rust-service/tests/sea-integration-tests run bench:run -- --help
 WebSocketStream cases explicitly select the streaming browser API, without ordinary WebSocket fallback, over unencrypted loopback `ws://`.
 They use `SEA_STORAGE_MODE=memory` on the server and allowlist the browser page's allocated HTTP origin.
 WebTransport memory cases use the same storage mode but include QUIC/TLS.
+Remote Sea cases explicitly enable the live cache and record that state in their detailed configuration.
 Tinylicious launches explicitly set `db__inMemory=true`, matching its default database configuration; Git summaries still use the filesystem.
 Detailed remote results record the transport, endpoint, storage mode, and loaded WASM capability.
 
