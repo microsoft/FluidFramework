@@ -99,6 +99,9 @@ importers:
       eslint:
         specifier: ~9.39.2
         version: 9.39.2(jiti@2.6.1)(supports-color@8.1.1)
+      eslint-plugin-chai-friendly:
+        specifier: ~1.1.0
+        version: 1.1.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))
       inquirer:
         specifier: ^9.3.7
         version: 9.3.8(@types/node@22.19.17)
@@ -2751,6 +2754,12 @@ packages:
   escape-string-regexp@5.0.0:
     resolution: {integrity: sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw==}
     engines: {node: '>=12'}
+
+  eslint-plugin-chai-friendly@1.1.1:
+    resolution: {integrity: sha512-HdWGqTQAv4GLNWkSRen3mNnhFBFlovEGuyZKxdcuZnoQjcyhN8WmS3PGYOEHsqY5PTQ4EtyPaoarKO3hQISn6g==}
+    engines: {node: '>=0.10.0'}
+    peerDependencies:
+      eslint: ~9.39.2
 
   eslint-scope@5.1.1:
     resolution: {integrity: sha512-2NxwbF/hZ0KpepYN0cNbo+FN6XoK7GaHlQhgx/hIZl6Va0bF45RQOOwhLIy8lQDbuCiadSLCBnH2CFYquit5bw==}
@@ -7667,6 +7676,10 @@ snapshots:
   escape-string-regexp@4.0.0: {}
 
   escape-string-regexp@5.0.0: {}
+
+  eslint-plugin-chai-friendly@1.1.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1)):
+    dependencies:
+      eslint: 9.39.2(jiti@2.6.1)(supports-color@8.1.1)
 
   eslint-scope@5.1.1:
     dependencies:
