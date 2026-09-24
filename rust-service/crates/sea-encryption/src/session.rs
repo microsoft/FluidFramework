@@ -268,6 +268,18 @@ mod tests {
         atomic::{AtomicUsize, Ordering},
     };
 
+    /// Recovers a fresh in-memory document for each test or conformance mode.
+    async fn new_runtime() -> Arc<LocalSequencer<MemoryStorage>> {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage
+            .create_view()
+            .await
+            .expect("create an isolated in-memory document");
+        LocalSequencer::recover(view)
+            .await
+            .expect("recover the empty in-memory document")
+    }
+
     /// Reads one data item while leaving progress assertions to each boundary test.
     async fn next_event<E: std::fmt::Debug>(
         events: &mut ArchiveStream<SessionCommittedEvent, EventPosition, E>,
@@ -284,11 +296,7 @@ mod tests {
     /// from public control data and ciphertext-based tree identities.
     #[tokio::test]
     async fn encrypted_payloads_preserve_control_metadata_and_stored_tree_identities() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let raw = runtime.open_session(None).await.unwrap();
         let keys = TestKeys::new();
         let calls = Arc::new(AtomicUsize::new(0));
@@ -374,11 +382,7 @@ mod tests {
     /// against the raw session, including revocation by stream drop.
     #[tokio::test]
     async fn load_and_coordination_forward_handles_fences_and_registration_lifetime() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let raw = runtime.open_session(None).await.unwrap();
         let wrapped = EncryptionSession::new(raw.clone(), TestKeys::new());
         let root = wrapped.put_blob(Bytes::new()).await.unwrap();
@@ -452,11 +456,7 @@ mod tests {
     /// Distinguishes decryption failures after delivery from errors reported by the source stream.
     #[tokio::test]
     async fn malformed_stored_envelopes_preserve_error_kind_and_delivery_progress() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let raw = runtime.open_session(None).await.unwrap();
         let malformed_blob = raw
             .put_blob(Bytes::from_static(b"not an envelope"))
@@ -501,11 +501,7 @@ mod tests {
     /// and prevents both raw-session and wrapper-clone submissions.
     #[tokio::test]
     async fn failed_key_preparation_closes_inner_author_and_wrapper_clones() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let raw = runtime.open_session(None).await.unwrap();
         let observer = runtime.open_session(None).await.unwrap();
         let wrapped = EncryptionSession::new(raw.clone(), TestKeys::empty());
@@ -540,11 +536,7 @@ mod tests {
     #[tokio::test]
     async fn compression_encryption_conformance() {
         for compress in [false, true] {
-            let storage = MemoryStorage::new();
-            let (_, view) = storage.create_view().await.unwrap();
-            let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-                .await
-                .unwrap();
+            let runtime = new_runtime().await;
             let first =
                 EncryptionSession::new(runtime.open_session(None).await.unwrap(), TestKeys::new());
             let second =
@@ -565,11 +557,7 @@ mod tests {
     /// or reuse an earlier committed submission.
     #[tokio::test]
     async fn equal_submissions_encrypt_independently_and_recheck_authority() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let keys = TestKeys::new();
         let calls = Arc::new(AtomicUsize::new(0));
         let nonces = CountingNonce {
@@ -624,11 +612,7 @@ mod tests {
     /// rejection drives the announced membership's terminal departure.
     #[tokio::test]
     async fn cancelled_preparation_terminates_clones_before_inner_append() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let session =
             EncryptionSession::new(runtime.open_session(None).await.unwrap(), TestKeys::new());
         session.announce_membership(Bytes::new()).await.unwrap();

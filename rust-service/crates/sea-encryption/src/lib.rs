@@ -542,24 +542,22 @@ mod tests {
         let mut changed = encoded.to_vec();
         let key_start = MAGIC.len() + 3;
         changed[key_start..key_start + KEY_ID_LENGTH].copy_from_slice(SECOND_ID.as_bytes());
-        assert!(matches!(
-            decrypt_payload::<MemoryStorageError, _>(
-                &keys,
-                &Bytes::from(changed),
-                PayloadContext::Record,
-            ),
-            Err(EncryptionError::CorruptEnvelope)
-        ));
         let mut extended = encoded.to_vec();
         extended.push(0);
-        assert!(matches!(
-            decrypt_payload::<MemoryStorageError, _>(
+        for (case, envelope) in [
+            ("changed key identifier", changed),
+            ("appended byte", extended),
+        ] {
+            let result = decrypt_payload::<MemoryStorageError, _>(
                 &keys,
-                &Bytes::from(extended),
+                &Bytes::from(envelope),
                 PayloadContext::Record,
-            ),
-            Err(EncryptionError::CorruptEnvelope)
-        ));
+            );
+            assert!(
+                matches!(result, Err(EncryptionError::CorruptEnvelope)),
+                "{case}: {result:?}"
+            );
+        }
     }
 
     #[test]
