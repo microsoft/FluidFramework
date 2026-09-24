@@ -314,6 +314,37 @@ describe("checkSchemaCompatibility", () => {
 		assert.equal(fieldFailure.viewIsStagedOptional, true);
 	});
 
+	for (const storedKey of ["persisted", ""]) {
+		it(`retains staging context for a field stored as ${JSON.stringify(storedKey)}`, () => {
+			const view = factory.objectAlpha("RenamedFieldDiagnostics", {
+				property: factory.stagedOptional(
+					factory.types([factory.number, factory.staged(factory.string)]),
+					{ key: storedKey },
+				),
+			});
+			const stored = factory.object("RenamedFieldDiagnostics", {
+				[storedKey]: factory.optional([factory.number, factory.string]),
+			});
+			const status = checkSchemaCompatibility(
+				new TreeViewConfigurationAlpha({ schema: view }),
+				toUpgradeSchema(stored),
+			);
+			assert(status.canView && !status.canUpgrade && !status.isEquivalent);
+			const failures = status.upgradeDiscrepancies.filter(
+				(entry) => entry.location !== "root" && entry.location.nodeType === view.identifier,
+			);
+			assert.equal(failures.length, 2);
+			for (const failure of failures) {
+				assert.deepEqual(failure.location, { nodeType: view.identifier, fieldKey: storedKey });
+				assert.equal(failure.viewIsStagedOptional, true);
+				if (failure.mismatch === "allowedType") {
+					assert.equal(failure.allowedType, factory.string.identifier);
+					assert.equal(failure.viewIsStagedType, true);
+				}
+			}
+		});
+	}
+
 	it("does not classify staged types as viewing blockers for an absent field", () => {
 		const view = factory.objectAlpha("AbsentStagedField", {
 			value: factory.types([factory.number, factory.staged(factory.string)]),

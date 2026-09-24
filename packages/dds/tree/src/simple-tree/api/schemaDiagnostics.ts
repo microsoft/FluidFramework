@@ -397,6 +397,9 @@ export function collectSchemaDiagnostics(
 		string,
 		{ entry: SchemaDiscrepancyAlpha; view: boolean; upgrade: boolean }
 	>();
+	// Cache fields by node identifier and stored key for this comparison only.
+	// View fields are keyed by property name, which can differ from the diagnostic's stored key.
+	const fieldsByStoredKey = new Map<string, ReadonlyMap<string, SimpleFieldSchema>>();
 
 	/**
 	 * Records one distinct aspect difference and which check it prevents.
@@ -425,9 +428,16 @@ export function collectSchemaDiagnostics(
 		if (location === "root") {
 			viewField = view.root;
 		} else if (isField && viewNode?.kind === NodeKind.Object) {
-			viewField = [...viewNode.fields.values()].find(
-				(field) => field.storedKey === (location.fieldKey ?? EmptyKey),
-			);
+			let fields = fieldsByStoredKey.get(location.nodeType);
+			if (fields === undefined) {
+				// Index an object's fields on its first field failure, then reuse the index across checks.
+				// This avoids scanning all fields for every discrepancy and skips objects without field failures.
+				fields = new Map(
+					Array.from(viewNode.fields.values(), (field) => [field.storedKey, field]),
+				);
+				fieldsByStoredKey.set(location.nodeType, fields);
+			}
+			viewField = fields.get(location.fieldKey ?? EmptyKey);
 		}
 		const allowedTypes =
 			viewField?.simpleAllowedTypes ??
