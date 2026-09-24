@@ -868,7 +868,7 @@ Place deterministic tests in the owning sequencer modules first.
 Use storage conformance tests only for guarantees shared by backend implementations and integration/browser tests for distinct transport and client responsibilities.
 Prefer existing fixtures and test files over a new test harness.
 
-Before completing implementation, run the canonical format, strict Clippy, rustdoc, build, test, and documentation commands in [Development](DEVELOPMENT.md), plus its complete `./test.sh` suite for generated-client and browser coverage.
+Before completing implementation, run the canonical format, strict Clippy, rustdoc, build, test, and documentation commands in [Development](DEVELOPMENT.md), plus its complete `./test.sh --extended` suite for generated-client and browser coverage.
 Run `pnpm policy-check --path rust-service` and `pnpm build:fast` from the repository root when implementation changes affect Rust/WASM or registered package inputs.
 Regenerate affected bindings and API reports through their build tasks rather than editing generated artifacts.
 

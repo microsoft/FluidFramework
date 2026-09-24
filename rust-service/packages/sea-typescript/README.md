@@ -213,7 +213,7 @@ To build prerequisites and test in one step, run `pnpm exec fluid-build rust-ser
 | Sessions, content, snapshots, compression, ownership, errors, presets, and lazy imports | [Package tests](src/test) |
 | Public consumer types and closed unions | [Type assertions](src/test/types/seaApi.ts) |
 | Real Node WebSocket | Package test enabled by `SEA_NODE_TRANSPORT_URL`; skipped without a listener. |
-| Browser transports, both presets, compression, and exact artifact loading | [Browser harness](../../tests/webtransport-browser/README.md), included in `test.sh` |
+| Browser transports, both presets, compression, and exact artifact loading | [Browser harness](../../tests/webtransport-browser/README.md), included in `test.sh --extended` |
 | SharedTree lifecycle and comparison benchmarks | [Integration harness](../../tests/sea-integration-tests/README.md) |
 
 For a manual browser run, start the harness's server and run from `rust-service/`:

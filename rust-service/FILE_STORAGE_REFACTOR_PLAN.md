@@ -311,7 +311,7 @@ Required regression cases include:
 - Checkpoint publication size/history independence and no reads or rewrites of content, journals, or cursors by the replacement operation.
 - Minimal checkpoint recovery with no tail, preserved floor, empty live lag window, storage-backed historical reference lookup, and event-count rather than byte-distance cadence/debounce.
 
-Run focused tests after each implementation step, then the canonical commands in [Development](DEVELOPMENT.md#canonical-workspace-commands):
+Run focused tests after each implementation step, then the canonical commands in [Development](DEVELOPMENT.md#canonical-rust-checks):
 
 ```bash
 cargo fmt --all -- --check

@@ -38,6 +38,7 @@
 		"test:all": "fluid-build . --task test:all",
 		"test:browser": "SEA_BROWSER_SKIP_BUILD=1 ../webtransport-browser/run-test.sh",
 		"test:mocha:esm": "mocha",
+		"test:packages": "fluid-build . --task test:packages",
 		"typecheck": "tsc --project tsconfig.json --noEmit --tsBuildInfoFile ./tsconfig.typecheck.tsbuildinfo",
 		"typecheck:shared-tree": "tsc --project tsconfig.shared-tree.json"
 	},
@@ -113,6 +114,14 @@
 				"dependsOn": [
 					"test:browser",
 					"test:mocha:esm",
+					"@fluidframework/sea-driver#test:mocha:esm",
+					"@fluidframework/sea-tree#test:mocha:esm",
+					"@fluidframework/sea-typescript#test:mocha:esm"
+				],
+				"script": false
+			},
+			"test:packages": {
+				"dependsOn": [
 					"@fluidframework/sea-driver#test:mocha:esm",
 					"@fluidframework/sea-tree#test:mocha:esm",
 					"@fluidframework/sea-typescript#test:mocha:esm"

@@ -41,7 +41,7 @@ The default flow opens snapshot coordination as `clientSelected`.
 Run the package and final flows with Sea-managed selection by setting `SEA_SNAPSHOT_POLICY=sea` on the script command.
 The Fluid driver trace retains client-selected publication because Fluid owns that policy.
 The results report `participation` or `snapshotParticipation` as `clientSelected` or `seaSelected`.
-The shared flows and all three transport modes run through `rust-service/test.sh`; they do not establish external-browser connectivity through Codespaces forwarding.
+The shared flows and all three transport modes run through `rust-service/test.sh --extended`; they do not establish external-browser connectivity through Codespaces forwarding.
 
 Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness does not infer unavailable network measurements.
 

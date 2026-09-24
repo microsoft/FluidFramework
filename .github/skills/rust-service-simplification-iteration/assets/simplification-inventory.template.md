@@ -7,8 +7,9 @@ Review mode: <!-- TODO(required): broad, targeted, incremental, or a combination
 Configured scope: <!-- TODO(required): ownership areas and explicit exclusions -->
 Category profile and waves: <!-- TODO(required): resolved profile and ordered patch-first or proposal-first waves -->
 Coverage commitment: <!-- TODO(required): promised ownership areas and category waves, plus explicit limits or gaps -->
-Reviewability budget: <!-- TODO(required): patch boundaries, reviewer capacity, and repair/review allowance; do not use an unexplained edit or accepted-change count -->
+Reviewability budget: <!-- TODO(required): patch boundaries, reviewer capacity, and bounded acceptance-attempt allowance; do not use an unexplained edit or accepted-change count -->
 Execution structure: <!-- TODO(required): explicit audited parallel-iteration authorization and workstream ownership -->
+Checkpoint commits and isolation: <!-- TODO(required): record commit authority, branch, worktree, and fixed-base policy -->
 Inherited evidence: <!-- TODO(required): useful quality or simplification evidence, or none -->
 Permitted changes: <!-- TODO(required): constraints on APIs, dependencies, protocols, generated bindings, platforms, and performance -->
 
@@ -32,7 +33,7 @@ Use one row per reviewable patch or significant rejected structural hypothesis, 
 The linked diff is the authoritative description of accepted edits.
 Summarize only information needed to understand benefit, safeguards, findings, or disposition.
 
-| Patch or hypothesis | Primary category | Scope | Concrete benefit | Preserved boundary and evidence | Review findings and reversions | Disposition | Validation | Revisit trigger |
+| Patch or hypothesis | Primary category | Scope | Concrete benefit | Preserved boundary and evidence | Acceptance attempts and findings | Disposition | Validation | Revisit trigger |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | <!-- TODO(required): link a fixed-base patch or significant rejected hypothesis --> | | | | | | | | |
 

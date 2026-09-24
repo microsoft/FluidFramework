@@ -75,34 +75,56 @@ Combine categories only when supporting edits are inseparable and the combined p
 
 ## Configure One Run
 
-Resolve scope, profile, waves, execution structure, and constraints without asking for an arbitrary change count.
+Resolve every configuration dimension below before editing.
+Ask one question at a time and do not bundle decisions into one answer.
+Never treat selection of scope or execution structure as approval of categories, profile, wave order, commit authority, isolation, validation scope, or change constraints.
+Skip only a decision the user already supplied explicitly or that is inapplicable, such as wave order for one category.
 
-### Confirm Scope
+### 1. Choose Scope
 
-Propose a useful crate or responsibility scope and ask the user to confirm it unless already explicit.
 Offer:
 
-- **Broad current-state pass:** edit all selected crates, including unchanged code.
+- **Broad current-state pass:** edit selected workspace members, including unchanged code.
 - **Targeted pass:** edit selected crates, responsibilities, or forms of complexity.
 - **Incremental pass:** revisit changed code or explicit triggers from an earlier run.
 
+Then load and follow the [multiselect skill](../multiselect/SKILL.md) to select one or more current Cargo workspace members or responsibility areas.
+Read the workspace manifest rather than copying a stale member list into this skill.
+Offer `ALL`.
+Cargo members are the default editable scopes for this Rust-focused workflow.
+Treat the Rust-service TypeScript packages as validation consumers unless the user explicitly includes one as a targeted responsibility.
 State exclusions, including generated artifacts and non-Rust packages when applicable.
-Do not convert an all-crate request into a sample without approval.
+Do not convert an all-member request into a sample without approval.
 
-### Choose the Category Profile
+### 2. Choose Categories
 
-Propose **Conservative** across all six categories unless the user supplied another profile.
-Allow a global level with per-category overrides:
+Load and follow the [multiselect skill](../multiselect/SKILL.md) to select among:
 
-- **Off:** no proactive edits in this category.
-- **Conservative:** make clear improvements with low disruption and straightforward evidence.
-- **Structural:** also attempt justified restructuring with stronger validation and review.
+1. Documentation
+2. Tests
+3. Naming
+4. Code organization
+5. Implementation
+6. Abstractions
 
-Do not ask six separate questions when one profile resolves the choice.
+Offer `ALL`.
+Do not infer all categories from a broad crate scope.
+
+### 3. Choose the Category Profile
+
+Propose **Conservative** across the selected categories unless the user supplied another profile.
+Offer:
+
+- **Conservative everywhere:** clear improvements with low disruption and straightforward evidence.
+- **Structural everywhere:** also attempt justified restructuring with stronger validation and review.
+- **Per-category overrides:** ask only for selected categories whose levels differ.
+
+An unselected category is Off.
 An Off category permits only necessary supporting edits for an enabled patch.
 
-### Choose Waves and Patch Strategy
+### 4. Choose Wave Order and Patch Strategy
 
+For multiple selected categories, offer the suggested order or a custom order.
 State which categories will be patch-first and which require a proposal or prototype.
 For broad Conservative documentation, test, naming, organization, and local implementation work, recommend patch-first editing.
 Do not recommend a no-edit discovery wave merely because the scope is broad.
@@ -110,9 +132,9 @@ Do not recommend a no-edit discovery wave merely because the scope is broad.
 Use a preliminary read-only survey only when it answers a concrete routing question, such as ownership partitioning, generated-file boundaries, or whether a proposed structural dependency is feasible.
 Do not turn that survey into a candidate inventory before editing.
 
-### Choose Execution Structure
+### 5. Choose Execution Structure
 
-Offer these choices separately from scope:
+Offer:
 
 - **Lean parallel editing:** recommended for broad independent crate or category work. Agents edit non-overlapping scopes, return patches, and use concise session evidence. This is not a numbered parallel iteration.
 - **Sequential editing:** one working scope and patch at a time with the same diff-review gates.
@@ -120,6 +142,44 @@ Offer these choices separately from scope:
 
 Parallel editing does not itself require the full coordination workflow.
 Load `.github/skills/rust-service-coordination/SKILL.md` only after the user explicitly selects an audited parallel iteration or asks to continue one.
+
+### 6. Choose Checkpoint Commit Authority
+
+Offer:
+
+- **Commit after acceptance:** recommended for multi-wave work. The user grants advance authority to commit a category only after its acceptance loop passes. Never push.
+- **Ask before each commit:** finish acceptance, present the result, and wait for approval.
+- **Do not commit:** appropriate for a short single wave. For multiple waves, preserve an immutable patch and stop before the next wave.
+
+Candidate edits must never be committed before acceptance.
+Use each accepted category commit as the fixed base for the next category.
+
+### 7. Choose Workspace Isolation
+
+Offer:
+
+- **New worktree and branch:** recommended for broad or multi-wave work.
+- **New branch in the current worktree:** requires a clean worktree and permission to switch it.
+- **Current branch and worktree:** appropriate only for a dedicated clean checkout.
+
+This choice is independent of sequential or parallel editing.
+Never move or overwrite unrelated user changes.
+
+### Announce the Resolved Configuration
+
+Before dispatch, state:
+
+- selected scope and exclusions;
+- categories, profile, and wave order;
+- patch-first and proposal-first boundaries;
+- execution structure;
+- branch and worktree;
+- commit authority;
+- validation sets and acceptance-attempt limit; and
+- prohibited API, dependency, protocol, generated, platform, and performance changes.
+
+Derive the validation sets from [Validation](#validation) and state the default three-attempt limit from [Accept a Category Patch](#accept-a-category-patch).
+Ask only if the user wants to override those defaults.
 
 For lean parallel editing:
 
@@ -142,7 +202,7 @@ Bound work with:
 - maximum reviewable patch scope;
 - execution time or file limits when the user requests them;
 - permitted risk and boundary changes; and
-- repair/review cycle limits.
+- acceptance-attempt limits.
 
 Split a patch when one reviewer cannot inspect the complete diff and relevant context with confidence, or when independent transformations need different evidence.
 Do not split a coherent mechanical transformation merely to satisfy an edit-count target.
@@ -155,8 +215,9 @@ For a lean run, retain only:
 - scope, exclusions, category profile, and waves;
 - execution ownership;
 - patch boundaries and review depth;
+- checkpoint commit authority and workspace isolation;
 - prohibited API, dependency, protocol, generated, platform, and performance changes;
-- validation requirements; and
+- per-category and integrated validation sets; and
 - explicit user limits.
 
 Keep this in session state or an existing task record.
@@ -211,24 +272,39 @@ Pause and assess before implementing a transformation that:
 For such work, state a falsifiable hypothesis and the cheapest evidence that could disprove it.
 A small isolated prototype is preferable to a long speculative report when it can expose the tradeoff safely.
 
-## Review the Actual Diff
+## Accept a Category Patch
 
-Use the [checkpoint-review skill](../checkpoint-review/SKILL.md) for a fresh read-only review against the fixed patch base.
-The reviewer must inspect the complete diff, relevant baseline and current context, and the applicable category safeguards.
+Use one bounded acceptance loop for compiler, formatter, Clippy, rustdoc, test, documentation, policy, and adversarial-review feedback.
+A category checkpoint is accepted only when its declared validation set passes and a fresh fixed-base review then reports no blocking findings on the same unchanged patch.
+
+Default to **three frozen-state attempts total**:
+
+1. freeze the complete category patch;
+2. run its declared category validation;
+3. if validation fails, return diagnostics to the implementer and do not spend a review;
+4. if validation passes, use the [checkpoint-review skill](../checkpoint-review/SKILL.md) for a fresh read-only review;
+5. if review requests changes, return the findings to the implementer;
+6. after any substantive edit or revert, increment the attempt count and restart at validation; and
+7. when validation and review pass consecutively on one unchanged state, commit or pause according to the configured authority.
+
+This single limit replaces the checkpoint-review skill's default repair/review allowance for this workflow.
+A validation-only failed state and every state sent to review draw from the same three attempts; do not add separate review rounds.
+
+The reviewer must inspect the complete diff, relevant baseline and current context, prior findings and dispositions on later attempts, and the applicable category safeguards.
+Verify the frozen state before accepting the review.
 Do not substitute an implementer's prose summary for the diff.
 
 Group cheap related edits by category and ownership so one review can assess the complete transformation.
 Give high-risk structural changes separate checkpoints.
-
 Ask the reviewer to return concrete file-and-line findings and identify:
 
 - edits that should be retained;
 - edits that need correction;
 - edits that should be reverted because benefit is unclear or safeguards were lost;
 - repeated failure patterns that may affect the rest of the patch; and
-- missing edits only when they are clearly within the promised scope.
+- missed edits only when they are clearly within the promised scope.
 
-Apply the following challenges:
+Apply these challenges:
 
 | Category | Diff-review challenges |
 | --- | --- |
@@ -242,15 +318,28 @@ Apply the following challenges:
 For changed contracts or regression evidence, include the quality skill's focused contract-preservation questions in the same review.
 Do not start a separate quality audit.
 
-### Repair and Re-review
+### Classify Validation Failures
 
-The implementer should correct findings and revert edits that do not clearly improve the source.
-Rerun focused validation for affected files or crates, then request a fresh review of the complete updated patch against the same base.
+Before editing in response to a failure, classify it as introduced, pre-existing, environmental, potentially flaky, or unclear.
+When attribution is unclear, reproduce the smallest failing command against the category base in a clean checkout.
 
-Default to two repair/review cycles after the initial review.
-Report-only wording does not consume a source repair cycle.
-If a reviewer finds repeated mechanical problems across a large patch, repair or revert that pattern throughout the owned scope before re-review.
-Stop and ask for guidance only when blocking findings remain, scope must change, or the approved cycle limit is exhausted.
+- Restore missing dependencies or correct an invalid command without consuming an attempt.
+- Rerun a potentially flaky test once for diagnosis; never rerun until green.
+- For an introduced failure, provide the exact command, relevant output, failing test, base result, and current patch to the implementer.
+- Do not weaken, delete, skip, or add retries to a test merely to accept a simplification.
+
+Environment restoration, evidence collection, one diagnostic flaky rerun, and report-only corrections do not consume an attempt because they do not create a new patch state.
+Any substantive source or test edit does.
+
+If all attempts fail, stop before committing or starting the next wave and ask the user to choose:
+
+- revert only the current category patch;
+- preserve the patch and pause;
+- expand scope and authorize another bounded loop; or
+- accept an explicit documented exception.
+
+Recommend reverting.
+Never accept an introduced deterministic regression as an exception or describe an excepted checkpoint as fully validated.
 
 ## Parallel Patch Work
 
@@ -258,11 +347,10 @@ Partition by non-overlapping crate or responsibility ownership, not by overlappi
 Within a broad category wave:
 
 1. dispatch write-capable agents to edit their full owned scopes;
-2. let each agent return a frozen patch and focused validation;
-3. review each complete ownership patch;
-4. repair or revert findings;
-5. integrate accepted patches; and
-6. review the integrated category diff for conflicts and repeated problems.
+2. let each agent return its patch and focused checks;
+3. integrate the category candidate patch;
+4. run the bounded category acceptance loop on the complete integrated diff; and
+5. create or request the accepted category checkpoint commit before the next wave.
 
 Agents may report a small number of high-risk skipped transformations, but should not produce exhaustive no-change or candidate prose.
 Cross-crate changes need one explicit owner and a later patch.
@@ -270,13 +358,26 @@ Do not let multiple workstreams create competing shared abstractions.
 
 ## Validation
 
-Run the smallest focused check after each patch or repair.
-For documentation-only work, use applicable documentation and link checks.
-For test cleanup, verify test discovery, case enumeration, feature and platform gates, and preserved failure detection.
-For implementation work, run focused crate tests and any boundary-specific checks.
+Declare each category validation set before editing.
+Run the smallest useful check during local editing, then use these acceptance minimums:
+
+- **Documentation-only:** documentation checks, rustdoc, and applicable doctests.
+- **Tests:** formatting and compilation as applicable, complete tests for every changed crate, unchanged test discovery and case enumeration, and proportionate failure-detection evidence.
+- **Naming and code organization:** formatting, Clippy or compilation, and complete tests for every changed crate.
+- **Implementation and abstractions:** formatting, Clippy or compilation, complete tests for every changed crate, directly affected dependent-crate tests, and boundary-specific checks.
+
+Every category that changes Rust code or tests must pass the complete affected-crate test suites before acceptance and before the next category begins.
+After review-driven edits, the next attempt reruns the complete declared set.
+Passing tests does not establish preserved test quality; the review must still compare cases, assertions, execution gates, and diagnosis.
+
+Validate just in time.
+Do not run a full pre-change workspace baseline for a documentation wave or preflight later waves.
+Run a baseline suite only when needed to distinguish existing failures, preserve test discovery, or characterize behavior.
 
 At the integrated boundary, run all applicable canonical commands from `rust-service/DEVELOPMENT.md`.
-Run broader repository, generated-consumer, integration, or browser validation only when required by that policy or the affected boundary.
+For ordinary Rust changes, use its scoped native and Rust-service TypeScript/WASM package gate plus the explicit repository policy check.
+Run the extended integration/browser gate or a repository-wide build only when required by the affected boundary.
+The native workspace tests, scoped TypeScript/WASM build and tests, and policy check may run concurrently when their output paths do not conflict.
 Do not rerun source validation after record-only changes.
 
 Missing worktree dependencies are environment setup failures, not source failures.

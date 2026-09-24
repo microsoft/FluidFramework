@@ -5,7 +5,7 @@ description: Use when a workflow needs the user to select one, several, or all i
 
 # Multiselect
 
-Use the single-select `ask_user` interface as a predictable multiselect interaction.
+Use the single-select question interface as a predictable multiselect interaction.
 This skill does not provide real checkboxes.
 
 ## Present the question
@@ -15,6 +15,9 @@ This skill does not provide real checkboxes.
 3. Add `ALL` as the final choice.
 4. State in the question that the user can select multiple items with the free-form input.
 5. Include one short example such as `1,3,5` or `1-3,5`.
+
+If the numbered list plus `ALL` and optional `NONE` exceeds the interface's choice limit, put the complete numbered list in the question text and offer only `ALL` and optional `NONE` as clickable choices.
+The free-form input still accepts the numbered selections.
 
 Use this structure:
 

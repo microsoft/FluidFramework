@@ -39,7 +39,8 @@ Ordinary `test:mocha:esm` discovery includes integration and payload tests, Chro
 Without performance mode, the benchmark defaults are one repetition, ten measured operations, and one warmup operation; convergence and resume assertions still run.
 These tests require Chromium, the Rust toolchain, and the separate Routerlicious workspace dependencies for Tinylicious.
 For an incremental correctness run, use `pnpm exec fluid-build rust-service/tests/sea-integration-tests --task test:mocha:esm` from the repository root.
-To build and test the entire Rust service, including the Cargo workspace, run `./test.sh` from `rust-service/`.
+To build and test the Cargo workspace and package-owned Rust-service TypeScript/WASM consumers, run `./test.sh` from `rust-service/`.
+Use `./test.sh --extended` to also run this integration harness, benchmark correctness cases, and the Chromium transport matrix.
 
 The neutral package's `build:wasm` task tracks inputs/outputs and skips unchanged generation.
 The installed `wasm-bindgen` CLI version must match the workspace crate version.
@@ -51,7 +52,7 @@ The installed `wasm-bindgen` CLI version must match the workspace crate version.
 | `browser/trace.mjs` | Summary reload, two-client delivery, explicit pre-commit recovery/resubmission, duplicate-free reconnect, bounded history. |
 | [Browser matrix](../webtransport-browser/README.md) | Neutral and ServiceClient presets/compression, transport selection, shutdown. |
 
-The trace and ServiceClient matrix run in `test:browser` and `rust-service/test.sh`.
+The trace and ServiceClient matrix run in `test:browser` and `rust-service/test.sh --extended`.
 The legacy Loader-based SharedTree trace below is separate.
 
 Generate the browser harness certificate, start `sea-webtransport-server`, then run from this package:

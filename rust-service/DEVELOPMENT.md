@@ -4,30 +4,38 @@ The Rust service is an application workspace and commits its root `Cargo.lock`. 
 
 The toolchain is pinned by `rust-toolchain.toml` and includes `rustfmt` and Clippy. Run commands from `rust-service/`.
 
-## Canonical Workspace Commands
+## Canonical Rust Checks
 
-Run these commands before completing Rust-service implementation or integration, including lightweight work and every Phase 2 integration boundary.
-Package-scoped checks remain useful during a workstream, but do not replace this workspace-wide gate.
+Run these commands before completing Rust-service implementation or integration.
+During a workstream, run the complete test suites for every changed crate after each coherent code- or test-changing checkpoint.
+Those focused suites localize failures but do not replace the final workspace gate.
 
 ```bash
 cargo fmt --all -- --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
 cargo build --workspace --all-targets
-cargo test --workspace --all-targets --all-features
 node scripts/check-documentation.mjs
 ```
 
-Run the complete Rust and non-Rust test suite with one command:
+For ordinary Rust-service changes, run the scoped native and generated-consumer test gate:
 
 ```bash
 ./test.sh
 ```
 
-The script delegates the complete non-Rust build to the Fluid integration harness, runs the Cargo workspace tests, and then runs that package's aggregate `test:all` task.
-The aggregate includes package-owned driver, direct SharedTree, and neutral session tests and type assertions, as well as the remaining integration and Chromium scenarios.
-The harness depends on the reusable `@fluidframework/sea-driver` and `@fluidframework/sea-tree` packages under `packages/`.
-The package build uses Fluid build's dependency graph to build its dependencies, generate WASM, check formatting and lint, typecheck, and build the browser bundles.
+The script runs native workspace tests in parallel with the scoped Rust-service TypeScript package build.
+That build generates WebAssembly (WASM), checks and typechecks the Rust-service packages, and builds their test prerequisites without building integration or browser bundles.
+After both branches pass, the script runs the package-owned `sea-typescript`, `sea-driver`, and `sea-tree` tests.
+
+Use the extended gate when a change affects protocol or transport behavior, generated bindings, WASM-facing APIs or semantics, session lifecycle or recovery, Fluid or SharedTree integration, browser behavior, or another boundary not covered by the scoped gate:
+
+```bash
+./test.sh --extended
+```
+
+The extended mode runs the integration harness, benchmark correctness cases, and real Chromium transport matrix in addition to the native workspace tests and package build.
+Run narrower boundary-specific checks as well when the changed contract requires them.
 
 Run repository policy validation from the repository root after every Rust-service change:
 
@@ -35,9 +43,13 @@ Run repository policy validation from the repository root after every Rust-servi
 pnpm policy-check --path rust-service
 ```
 
-Also run `pnpm build:fast` from the repository root when a change affects a registered pnpm package or a declared input to its build tasks.
-For `sea-typescript`, those inputs include Rust-service Cargo manifests, `Cargo.lock`, and Rust sources used to generate the WASM clients.
-Documentation-only Rust-service changes do not require the repository build.
+The scoped `./test.sh` build is sufficient for Rust sources and manifests consumed only by the Rust-service TypeScript packages.
+Run repository-root `pnpm build:fast` when a change affects packages outside Rust service, shared build tooling or configuration, workspace dependency topology, lockfiles, or another consumer not covered by the scoped build.
+Documentation-only Rust-service changes require neither test mode nor the repository build unless they change executable examples or generated inputs.
+
+After the source is frozen, the workspace test branch, TypeScript/WASM build branch, and repository policy check are independent and may run concurrently.
+Clippy, rustdoc, native build, and native tests share the default Cargo target and should not run concurrently with one another.
+Do not run multiple commands that write the same Cargo target, generated directory, or Fluid build output concurrently.
 
 The installed `wasm-bindgen` CLI must match the dependency version pinned by `sea-wasm`, which owns the generated bindings.
 See the [browser harness](tests/webtransport-browser/README.md) for the real Chromium WebTransport command and the [Fluid integration harness](tests/sea-integration-tests/README.md) for the SharedTree trace.
