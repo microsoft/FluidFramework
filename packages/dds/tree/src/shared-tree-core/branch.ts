@@ -125,13 +125,13 @@ export interface BranchTrimmingEvents {
 /**
  * A branch of changes that can be applied to a SharedTree.
  * @remarks
- * `SharedTreeBranch` is the low-level revision manager branch that the SharedTree package uses to track and rebase commits.
- * It is not part of the public API.
- * Application code must not use this class directly.
+ * A `SharedTreeBranch` tracks a linear history of commits terminating at a {@link SharedTreeBranch.getHead | head} commit, and provides an {@link SharedTreeBranch.editor | editor} for {@link SharedTreeBranch.apply | applying} new changes onto that history.
  *
- * `EditManager` and `TreeCheckout` build on `SharedTreeBranch` to implement the SharedTree's internal edit history.
- * They also use it to implement the public branching APIs, {@link UntypedTreeView} and {@link UntypedTreeViewAlpha}.
- * Application developers who need branch-style editing of a SharedTree must use {@link UntypedTreeView} or {@link UntypedTreeViewAlpha} instead of this class.
+ * A branch may be {@link SharedTreeBranch.fork | forked} into a new, independent branch that starts from the same head commit.
+ * Changes applied to one branch do not affect the other until the two are reconciled:
+ * {@link SharedTreeBranch.merge | merging} incorporates another branch's divergent commits into this branch, while {@link SharedTreeBranch.rebaseOnto | rebasing} replays this branch's divergent commits onto another branch's head.
+ *
+ * A branch emits {@link SharedTreeBranchEvents | events} whenever its head commit changes (including as a result of applying, forking, merging, rebasing, or removing commits), when one of its commits is sequenced, and when it is disposed.
  */
 export class SharedTreeBranch<
 	TEditor extends ChangeFamilyEditor,
