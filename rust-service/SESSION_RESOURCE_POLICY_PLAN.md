@@ -2,9 +2,11 @@
 
 Created: 2026-09-23.
 Revised: 2026-09-23 to separate cache performance, wrapper overhead, lifecycle controls, and resource policy.
+Revised: 2026-09-24 to resolve lifecycle ownership during the factory probe and split checkpoint 3 into session ownership and subscription/delivery ownership.
 Status: checkpoints 0 and 1 completed; checkpoint 1 used approved base `c41a02a33d5ec09f737b912e6b60d0eae1f88ecb`.
 The user accepted the checkpoint-1 performance tradeoff and missing-raw-evidence exceptions on 2026-09-23; required validation and independent review passed.
 Checkpoints 2 through 5 are not authorized.
+Approval of this plan revision does not authorize their implementation, including checkpoints 3a and 3b.
 Checkpoint 1a is complete: the built-in server cache defaults on for controlled use with an explicit off switch and accepted unbounded-retention risk.
 Decisions, frozen measurements, validation, and review are tracked in the cumulative [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md).
 Historical comparison baseline: `6231d99841a116edc0827ad9c37d1c4bf392f4f3`.
@@ -19,8 +21,8 @@ Do not introduce parallel-iteration machinery unless the user explicitly request
 Prove each source of value and overhead separately, in this order:
 
 1. Add a minimal shared live-read cache and measure whether it removes the storage-read cost for caught-up readers.
-2. Add session-creation interception with a no-op, pass-through factory and decorator, then measure their overhead.
-3. Prove that the factory can reject before session allocation and that decorators can terminate subscriptions or close sessions cleanly.
+2. Resolve the factory's future lifecycle ownership in a native/WebAssembly (WASM) shape probe, then add and measure a no-op, pass-through factory and decorator without implementing lifecycle machinery.
+3. First prove rejection, session ownership, and retained closure in checkpoint 3a; then prove independent subscription termination and delivery ownership in checkpoint 3b.
 4. After those stages are validated and committed, implement simple count- and byte-based lag shedding to bound live-cache retention.
 5. Optionally add production resource limits using the proven factory and decorator boundary.
 
@@ -73,6 +75,11 @@ Do not expand into aggregate accounting, storage-pressure gating, deadlines, or 
 | Simple lag policy | Observe count/byte lag and terminate only the offending live subscription | Lag shedding |
 | Optional production policy | Aggregate resources, pressure response, deferred admission, quotas or rates | Separately authorized extension |
 
+Session creation/decorating and network stream admission are distinct boundaries.
+The factory intercepts creation of a core session; a connection router validates network openings and returns a dispatcher permanently bound to an existing session incarnation.
+Align their ownership without combining them into one interface.
+Generic decorators must not depend on connection registries, opening tokens, QUIC, or WebSocket groups.
+
 Choose the cache's smallest owning abstraction near the canonical publication boundary during the first checkpoint.
 It may be private to the sequencer's delivery implementation, but it must not become a second sequencer or durable storage layer.
 Storage-backed history remains authoritative for recovery and catch-up.
@@ -84,6 +91,15 @@ The service factory creates document factories, which open and decorate sessions
 Initially these are pass-through operations with no counters or policy tasks.
 Add aggregate reservations only in the optional production stage.
 Every path advertised as managed must use the same interception boundary; unmanaged paths remain explicit.
+
+Fit necessary lifecycle restructuring into this sequence rather than running a separate server redesign before or after the plan.
+Do not require a split of connection and bound-session interfaces before checkpoint 2 unless the factory probe identifies a concrete obstruction.
+If required, isolate that split in an authorized, independently reviewed preparatory commit and compare direct and pass-through paths on the same resulting foundation.
+Also measure the preparatory change against its own pre-change baseline; using a shared foundation must not hide its cost.
+Otherwise retain the existing server wrappers until checkpoint 3a establishes which restructuring is necessary.
+Shared transport supervision, lifecycle actors, and general close-coordination frameworks are not prerequisites.
+Introduce such a mechanism only if the lifecycle evidence requires it, with explicit progress and bounded ownership guarantees rather than an unbounded detached cleanup queue.
+Do not route ordinary requests through a new task or channel merely to consolidate cleanup.
 
 ## Core Contracts
 
@@ -125,8 +141,12 @@ Do not build the old multi-stage resource ledger just to run this experiment.
 
 ### Pass-Through Factory And Decoration
 
-Inventory server, local, WebAssembly (WASM), TypeScript, benchmark, and test session-producing paths.
+Inventory server, local, WASM, TypeScript, benchmark, and test session-producing paths.
 Use a compile-only native/WASM probe to resolve object safety, generic availability handles, and clone ownership before committing to a public factory shape.
+Record who owns a provisional open, who takes cleanup responsibility after construction but before result delivery, and how clones and outstanding operations retain that responsibility.
+Identify who will drive retained close work after its initiating future is abandoned on each platform, how server token cleanup will target only the admitted incarnation, and how subscription termination remains independent of session closure.
+The probe must establish a factory shape that can support checkpoint 3 without replacing its creation/ownership boundary.
+These are design decisions and type probes, not permission to add lifecycle workers, close coordination, delivery receipts, or policy to pass-through.
 The factory opens the underlying session and returns a decorator that forwards every session facet, including snapshot coordination, close, reads, and loads.
 It must not erase handle capabilities or change cancellation, ambiguity, or error classification.
 
@@ -146,8 +166,29 @@ Dropping a wrapper is not proof that the underlying session has closed.
 
 Close uses the existing idempotent ordered path: revoke authority, preserve the accepted prefix and ambiguous outcomes, and publish at most one required departure.
 Specify who drives retained close work if the initiating future is abandoned.
+Distinguish closure initiation, authority revocation, and successful durable settlement; a closed flag or dropped wrapper cannot establish all three.
+The shared lifecycle owner drives the existing sequencer close and reconciliation path rather than implementing a second settlement state machine.
+Concurrent close callers may share completion, but deduplication must not suppress required reconciliation after an uncertain result or fabricate success.
+Retaining a future alone is insufficient: identify its polling owner and preserve that owner across caller cancellation.
 Do not introduce an unbounded detached cleanup queue or release a future session-capacity reservation while membership or retained cleanup still consumes that capacity.
-When reservations are later added, failure before construction returns provisional ownership exactly once; after construction it transfers to the shared lifecycle owner until cleanup completes.
+When reservations are later added, failure before construction returns provisional ownership exactly once; after construction it transfers to the shared lifecycle owner.
+Cleanup failure does not release a reservation while its resources remain owned; a transfer to recovery must transfer that responsibility too.
+
+The checkpoint-2 ownership design must record the following failure and shutdown outcomes for checkpoint 3a to validate.
+Cleanup responsibility is not a promise that durable settlement succeeds under every backend or runtime failure.
+
+| Condition | Ownership and progress | Failure observation and recovery |
+| --- | --- | --- |
+| Backend invalidation | Identify which retained work can still settle and which ownership transfers to the existing recovery path. | Surface the classified failure to remaining waiters and the lifecycle owner; do not report successful close without settlement evidence. |
+| Unresolved settlement | Keep responsibility for unresolved work with the shared owner or an explicit recovery owner, even when all close waiters are dropped. | Preserve ambiguity and identify who drives bounded reconciliation or reports that recovery is required; do not retry storage operations blindly. |
+| Native executor shutdown | Identify the shutdown owner, its cleanup-drain policy, and the point after which no polling owner remains. | Report incomplete cleanup where observation remains possible and record how later recovery handles retained durable state; task cancellation is not successful closure. |
+| WASM teardown | Distinguish explicit disposal while the executor is active from abrupt destruction of the runtime; no in-memory owner survives the latter. | Define the observable disposal result and the applicable reconnect or storage-recovery path after abrupt teardown; do not promise a final callback or departure from a destroyed runtime. |
+
+Keep opening-token revocation in the server adapter and scoped to the admitted session incarnation.
+Preserve the [session-incarnation binding decision](historical/decisions/0026-bind-stream-session-incarnations.md): rejected openings do not enter cleanup, and stale streams or cleanup cannot acquire or revoke replacement authority.
+Preserve signal and publisher revocation, author reconnect grace, and author closure before potentially blocking send completion where required by the current lifecycle contracts.
+Use explicit internal lifecycle operations where they clarify ownership instead of requiring every cleanup path to synthesize a wire-level `Close` request.
+Split connection admission from bound-session operations only where it supports these requirements; do not make removal of a wrapper an acceptance goal.
 
 Subscription termination is a separate action that preserves sibling reads, snapshot participation, and author authority.
 It must interrupt a blocked transport send and release its cache claim even when the application stops polling.
@@ -194,6 +235,13 @@ Termination and reclamation must run without a reader poll, free delivery credit
 Policy runs outside cache and sequencing locks.
 If evaluation is deferred, bound the extra retained publication prefix while it is pending; an unbounded notification backlog invalidates the cache-bound claim.
 Reader completion, termination, and invalidation must remain runnable while writers are active.
+
+Before checkpoint 3 begins, record a feasibility argument during the checkpoint-2 probe for bounded lag-detection and reclamation under continuously active writers.
+Identify the enforcement owner and trigger, the lock boundaries, and the maximum additional retained event count and bytes between threshold crossing and claim removal, including publication batches and concurrent publishers.
+A coalesced notification bounds notification storage, not the publication prefix retained before its consumer runs; eventual scheduling alone is not a finite overshoot bound.
+The argument must preserve accepted-work progress without reader cooperation and cover native/WASM execution.
+If no bound can be justified, revisit the design before lifecycle implementation rather than deferring the conflict to checkpoint 4.
+This is design evidence only; lag enforcement remains checkpoint 4 work.
 
 The first policy terminates only the offending live subscription; it does not gate writers or close the entire session.
 Cache publication and accepted-write completion never wait for that reader.
@@ -303,6 +351,7 @@ Do not copy code into main merely to delete it in a subsequent checkpoint.
 
 Checkpoints 0 and 1 are complete; decisions, evidence limitations, performance exceptions, validation, and review are recorded in the cumulative implementation report.
 Checkpoints 2 through 5 remain not started.
+Checkpoint 3 consists of sequential, separately authorized and reviewed acceptance units 3a and 3b; both must pass before checkpoint 4.
 Commit each coherent stage only after its exit checks, applicable canonical validation, and independent review pass; record authorization before making commits.
 Keep incomplete paths opt-in except for the scoped checkpoint-1a rollout, and preserve an explicit storage-backed baseline path for comparison.
 Do not add the next layer to rescue an unexplained regression in the current layer.
@@ -338,7 +387,7 @@ If the benefit is not demonstrated, record the result and revisit the cache desi
 - Record acceptance of unbounded stalled-reader retention separately from checkpoint 1's CPU/RSS tradeoff.
 - Validate unset/on/off configuration, default-path browser/Fluid behavior, and rollback behavior; run applicable canonical gates and independent Standard review.
 - Preserve explicit cache selection in comparisons; do not allow the changed default to select both benchmark sides implicitly.
-- Keep checkpoints 2 through 4 unchanged, with checkpoint 4 still responsible for automatic per-cache lag enforcement.
+- Add no factory or policy behavior in this rollout; checkpoint 4 remains responsible for automatic per-cache lag enforcement.
 
 Exit condition: default-on and explicit-off behavior are validated and reviewed, the accepted limitation and rollback are documented, and no new production resource guarantee is claimed.
 No new performance acceptance campaign is required for this default-only change.
@@ -346,26 +395,49 @@ No new performance acceptance campaign is required for this default-only change.
 ### 2. Implement And Measure Pass-Through Interception
 
 - Inventory all session-producing paths and perform the native/WASM factory-shape probe without erasing availability handles.
+- Resolve the provisional-open, constructed-session, clone, abandoned-close, and server-incarnation ownership questions from the pass-through contract before selecting the factory shape.
+- Record the lifecycle failure/shutdown outcomes and the bounded lag-enforcement feasibility argument required by the core contracts.
+- Record how checkpoint 3 can implement those responsibilities on native/WASM without adding its lifecycle machinery to this checkpoint.
 - Add service/document open interception and complete session forwarding with no policy behavior.
 - Integrate the native host and a local path for measurements; compile remaining adapters and explicitly mark any path not yet integrated.
 - Compare cached direct sessions with cached pass-through sessions for open/close cost, steady-state delivery, and allocations.
 - Optimize material overhead and rerun the same checks before accepting or rejecting the approach.
 
-Exit condition: forwarding and cancellation behavior are equivalent, factory types work on native/WASM, and measured overhead fits the agreed tolerance.
+Exit condition: forwarding and cancellation behavior are equivalent, factory types work on native/WASM and support the recorded lifecycle ownership and failure design, lag-enforcement feasibility is established without implementing policy, and wrapper plus any preparatory-change measurements meet their separate agreed tolerances.
 Commit this boundary before adding rejection or shedding policy.
 
 ### 3. Prove Rejection And Lifecycle Controls
 
+Complete 3a and 3b sequentially with separate fixed bases, validation, independent reviews, and accepted commits.
+Neither unit alone completes checkpoint 3.
+Aggregate quotas and storage pressure remain out of scope.
+
+#### 3a. Prove Session Construction And Closure Ownership
+
 - Reject before sequencer allocation with deterministic policies, including concurrent and cancelled opens.
 - Prove shared clone ownership and cleanup after cancellation before a constructed session is returned.
-- Prove explicit early session closure, accepted-prefix settlement, ambiguity preservation, and at-most-once departure.
+- Implement an explicit owner for retained close work and its completion result using the existing sequencer settlement path.
+- Validate the recorded invalidation, unresolved-settlement, executor-shutdown, and WASM-teardown outcomes, including loss of all close waiters and any transfer of cleanup responsibility to recovery.
+- Prove explicit early session closure, concurrent close, abandoned close waiters, accepted-prefix settlement, ambiguity preservation, and at-most-once departure without lost or unbounded abandoned cleanup.
+- Integrate incarnation-specific server token cleanup and only the connection/bound-session restructuring needed for these guarantees.
+- Preserve replacement isolation, rejected-opening isolation, reconnect grace, and required revocation/transport-completion ordering.
+- Validate advertised construction and whole-session lifecycle paths across native/WASM and generated consumers; explicitly identify paths still awaiting checkpoint-3b delivery ownership.
+- Measure construction and lifecycle overhead against committed checkpoint-2 pass-through, with deterministic rejection and early-closure policies inactive during steady-state comparisons.
+
+Exit condition: pre-allocation rejection and shared cleanup ownership survive cancellation and replacement, ordered closure preserves ambiguity and departure guarantees, and focused plus affected cross-stack gates pass within the frozen overhead tolerance.
+Commit this unit before adding subscription/delivery ownership; do not claim checkpoint 3 is complete.
+
+#### 3b. Prove Subscription And Delivery Ownership
+
 - Prove independent subscription termination, full-write versus abandonment ownership, and blocked-send interruption through real WebTransport and WebSocket listeners.
 - Preserve ownership through compression, encryption, read/load, finite history, snapshot catch-up, and optimized transport paths.
 - Complete advertised local/generated construction paths and verify Fluid replacement, pending-operation recovery, and continued editing without duplicate departure.
-- Measure lifecycle and delivery-ownership overhead against the committed checkpoint-2 pass-through implementation, with rejection and termination policies inactive during steady-state comparisons.
+- Prove claim release without reader polling or cooperation and preserve sibling reads, snapshot participation, and author authority.
+- Measure incremental delivery-ownership overhead against committed checkpoint 3a and total lifecycle/delivery overhead against committed checkpoint-2 pass-through, with rejection and termination policies inactive during steady-state comparisons.
 
-Exit condition: rejection and both termination scopes work without policy bypass or unbounded abandoned cleanup, focused plus cross-stack gates pass, and lifecycle overhead fits the frozen tolerance.
-Commit this functionality before implementing lag shedding; aggregate quotas and storage pressure remain out of scope.
+Exit condition: rejection and both termination scopes work together without policy bypass, fabricated delivery, or unbounded abandoned cleanup; focused plus cross-stack gates pass; and both incremental and total checkpoint-3 overhead fit the frozen tolerances.
+Commit this unit before implementing lag shedding.
+The completed checkpoint 3 must meet its original combined lifecycle and delivery-ownership requirements; passing either incremental comparison alone is insufficient.
 
 ### 4. Add Simple Lag Shedding And Bound The Cache
 
@@ -393,6 +465,12 @@ This optional stage does not delay completion of checkpoints 0 through 4.
 ## Measurement And Validation Gates
 
 Separate five comparisons: uncached versus cached direct sessions, cached direct versus pass-through, checkpoint-2 pass-through versus checkpoint-3 lifecycle and delivery ownership, shedding disabled versus enabled on the same lifecycle-capable implementation, and simple lag shedding versus optional production policies.
+If a preparatory restructuring is required, also compare equivalent direct paths before and after that change using a matched workload and a separately frozen tolerance.
+Retain that result alongside the same-foundation direct-versus-pass-through comparison and an end-to-end pre-preparation-versus-pass-through comparison, with its own frozen total tolerance.
+Acceptance of wrapper overhead does not waive a preparatory or combined regression.
+For checkpoint 3, also measure checkpoint 2 versus 3a and 3a versus 3b to attribute overhead.
+Freeze tolerances for those increments and the total checkpoint-2-to-completed-checkpoint-3 comparison before measurement; acceptable increments do not waive the total budget.
+The checkpoint-3b implementation is the lifecycle-capable baseline for checkpoint 4.
 Keep lifecycle and delivery tracking active on both sides of the shedding comparison so their overhead is not attributed to lag policy.
 The old live-buffer experiment is diagnostic evidence, not the acceptance baseline for wrapper overhead.
 Keep server and generator binaries, source revisions including uncommitted changes, toolchains, storage modes, transport, affinity, payloads, fan-out, and durations attributable to every sample.
@@ -427,6 +505,8 @@ Record results and commit identifiers cumulatively, without claiming that focuse
 - Pass-through preserves every session facet, handle capability, error, and cancellation boundary.
 - Rejected opens allocate no sequencer membership; cancellation after construction retains cleanup responsibility until closure.
 - Shared clones and abandoned close waiters cannot duplicate departure or release future capacity prematurely.
+- Rejected network bindings and stale streams or cleanup cannot mutate replacement membership, opening tokens, or snapshot registrations.
+- Connection-loss grace and prompt signal/publisher revocation remain distinct from whole-session closure and independent subscription termination.
 - A blocked live reader crosses the configured count or byte limit and is terminated without writer-delivery waits or sibling termination.
 - Threshold equality, maximum events, batch overshoot, and oversized backing allocations obey the documented cache bound.
 - A stopped reader opened through a direct/unmanaged path cannot pin a cache claimed to be bounded: it is either subject to lag enforcement or isolated from that cache's retention ownership.
@@ -459,7 +539,7 @@ Do not describe either as proof of client fault, and do not equate cache reclama
 
 ## Completion Criteria
 
-The initial delivery, interception, and simple lag-protection work is complete when checkpoints 0 through 4 are validated, reviewed, and committed:
+The initial delivery, interception, and simple lag-protection work is complete when checkpoints 0 through 4, including both 3a and 3b, are validated, reviewed, and committed:
 
 - the semantic decision is accepted and documented;
 - cache-only measurements demonstrate the intended benefit;
