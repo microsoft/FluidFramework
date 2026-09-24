@@ -161,7 +161,7 @@ impl Factory {
             snapshots: Mutex::new(snapshots),
             failed: AtomicBool::new(false),
             state: Mutex::new(state),
-            executor: crate::durable::Executor::new(workers.clone()),
+            durable_executor: crate::durable::Executor::new(workers.clone()),
             workers,
         });
         let mut openings = self.openings.lock().unwrap();
@@ -253,7 +253,7 @@ impl Factory {
                 if let Some(executor) = &opening.buffered {
                     executor.close();
                 } else {
-                    opening.executor.close();
+                    opening.durable_executor.close();
                 }
             }
         }
@@ -261,7 +261,7 @@ impl Factory {
             if let Some(executor) = &opening.buffered {
                 failed |= executor.flush(close).await.is_err();
             } else {
-                opening.executor.flush(close).await;
+                opening.durable_executor.flush(close).await;
             }
             failed |= opening.failed.load(Ordering::Acquire);
         }
@@ -389,7 +389,7 @@ struct Opening {
     /// Published dependency-closed state; event disk I/O never holds this mutex.
     state: Mutex<State>,
     /// Bounded document mutation ordering outside the blocking pool.
-    executor: crate::durable::Executor,
+    durable_executor: crate::durable::Executor,
     /// Shared bounded file-read and mutation worker capacity.
     workers: Arc<tokio::sync::Semaphore>,
 }
@@ -452,7 +452,7 @@ impl Opening {
     }
 
     /// Tests resident availability using only the short-lived published-state lock.
-    fn resident(&self, keys: impl IntoIterator<Item = Key>) -> Result<bool, FileStorageError> {
+    fn all_pending(&self, keys: impl IntoIterator<Item = Key>) -> Result<bool, FileStorageError> {
         let state = self.lock()?;
         let pending = state.pending.lock().unwrap();
         Ok(keys.into_iter().all(|key| pending.contains_key(&key)))
@@ -551,7 +551,7 @@ impl Opening {
             return Err(FileStorageError::Rejected("storage is shut down"));
         }
         let opening = self.clone();
-        self.executor
+        self.durable_executor
             .run(bytes, move || {
                 if let Ok(result) =
                     std::panic::catch_unwind(std::panic::AssertUnwindSafe(operation))
@@ -660,7 +660,7 @@ struct State {
     /// Document-local hash namespace and checkpoint destination.
     path: PathBuf,
     /// Independent journal cursor for addressed reads, never shared with the writer.
-    reader: Arc<Mutex<fs::File>>,
+    event_reader: Arc<Mutex<fs::File>>,
     /// Independent cursor for fixed-width snapshot records.
     snapshot_reader: Arc<Mutex<fs::File>>,
     /// Byte boundary after the last published snapshot record.
@@ -697,7 +697,7 @@ impl State {
             pending: Arc::default(),
             event_end: events.boundary()?,
             path,
-            reader: Arc::new(Mutex::new(events.reader()?)),
+            event_reader: Arc::new(Mutex::new(events.reader()?)),
             snapshot_reader: Arc::new(Mutex::new(snapshot_reader)),
             snapshot_end: snapshots.recovered_from,
             head: events.last_record_offset,
@@ -801,7 +801,7 @@ impl State {
             return Ok(true);
         }
         let mut reader = self
-            .reader
+            .event_reader
             .lock()
             .map_err(|_| FileStorageError::Ambiguous)?;
         let Some(prefix) = read_prefix::<EVENT_ID_END>(&mut reader, offset)? else {
@@ -974,7 +974,7 @@ impl Record for CommittedEvent {
     }
 
     fn reader(state: &State) -> &Mutex<fs::File> {
-        &state.reader
+        &state.event_reader
     }
 }
 
@@ -1249,7 +1249,7 @@ impl ReferenceableStore for FileBlobs {
     type Id = BlobTreeId;
     type Handle = FileHandle<BlobTreeId>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
-        if self.0.resident([Key::Content(id)])? {
+        if self.0.all_pending([Key::Content(id)])? {
             return Ok(Some(self.0.handle(id)));
         }
         let component = self.clone();
@@ -1257,7 +1257,7 @@ impl ReferenceableStore for FileBlobs {
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
         self.0.compatible(handle)?;
-        if self.0.resident([Key::Content(handle.id)])? {
+        if self.0.all_pending([Key::Content(handle.id)])? {
             return Ok(());
         }
         let handle = handle.clone();
@@ -1309,19 +1309,22 @@ impl BlobStore for FileBlobs {
         let (encoded, id) = directory
             .encode_with_id()
             .map_err(|_| FileStorageError::Rejected("directory encoding"))?;
-        let resident = self.0.buffered.is_some()
+        let children_pending = self.0.buffered.is_some()
             && self
                 .0
-                .resident(directory.entries().values().copied().map(Key::Content))?;
-        if self.0.resident([Key::Content(BlobTreeId::Directory(id))])? {
+                .all_pending(directory.entries().values().copied().map(Key::Content))?;
+        if self
+            .0
+            .all_pending([Key::Content(BlobTreeId::Directory(id))])?
+        {
             return Ok(self.0.handle(BlobTreeId::Directory(id)));
         }
-        if !resident && let Some(handle) = self.resolve(BlobTreeId::Directory(id)).await? {
+        if !children_pending && let Some(handle) = self.resolve(BlobTreeId::Directory(id)).await? {
             return Ok(handle);
         }
         if self.0.buffered.is_some() {
             let id = BlobTreeId::Directory(id);
-            if !resident {
+            if !children_pending {
                 let component = self.clone();
                 let retained_preparation = preparation.clone();
                 self.0
@@ -1365,7 +1368,7 @@ impl ReferenceableStore for FileEvents {
     type Id = EventPosition;
     type Handle = FileHandle<EventPosition>;
     async fn resolve(&self, id: Self::Id) -> Result<Option<Self::Handle>, Self::Error> {
-        if self.0.resident([Key::Event(id)])? {
+        if self.0.all_pending([Key::Event(id)])? {
             return Ok(Some(self.0.handle(id)));
         }
         let component = self.clone();
@@ -1373,7 +1376,7 @@ impl ReferenceableStore for FileEvents {
     }
     async fn ensure_available(&self, handle: &Self::Handle) -> Result<(), Self::Error> {
         self.0.compatible(handle)?;
-        if self.0.resident([Key::Event(handle.id)])? {
+        if self.0.all_pending([Key::Event(handle.id)])? {
             return Ok(());
         }
         let handle = handle.clone();
@@ -1589,7 +1592,7 @@ impl Archive for FileSnapshots {
             let position = snapshot.at_event.id;
             if !self
                 .0
-                .resident([Key::Content(root), Key::Event(position)])?
+                .all_pending([Key::Content(root), Key::Event(position)])?
             {
                 self.0
                     .query(move || {

@@ -394,9 +394,9 @@ where
                 blob_tree: tree.as_ref().map(StorageHandle::id),
             });
         }
-        let checked = events.len();
+        let checked_event_count = events.len();
         let mut results = self.events.append_batch(events).await;
-        if results.len() == checked
+        if results.len() == checked_event_count
             && results.iter().all(Result::is_ok)
             && let Some(error) = dependency_error
         {

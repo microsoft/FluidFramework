@@ -185,8 +185,8 @@ struct Publishers {
     entries: BTreeMap<SessionId, Publisher>,
     /// Current nomination, unique across registration changes within this runtime.
     nominee: Option<(SessionId, u64, u64)>,
-    /// Monotonic registration/fencing sequence; exhaustion rejects registration.
-    next_fence: u64,
+    /// Last issued value in the monotonic registration/fencing sequence; exhaustion rejects registration.
+    last_issued_fence: u64,
     /// Latest committed snapshot version.
     latest: Option<EventPosition>,
 }
@@ -217,8 +217,8 @@ impl Publishers {
             != candidate
         {
             self.nominee = candidate.and_then(|(session, registration)| {
-                self.next_fence = self.next_fence.checked_add(1)?;
-                Some((session, registration, self.next_fence))
+                self.last_issued_fence = self.last_issued_fence.checked_add(1)?;
+                Some((session, registration, self.last_issued_fence))
             });
         }
         for (session, publisher) in &self.entries {
@@ -1107,10 +1107,10 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         runtime.member(&self.session)?;
         let mut publishers = runtime.publishers.lock().expect("publisher lock");
         let registration = publishers
-            .next_fence
+            .last_issued_fence
             .checked_add(1)
             .ok_or(SessionError::Rejected("publisher fence exhausted"))?;
-        publishers.next_fence = registration;
+        publishers.last_issued_fence = registration;
         let alive = Arc::new(());
         let (updates, receiver) = watch::channel(SnapshotCoordination::default());
         publishers.entries.insert(

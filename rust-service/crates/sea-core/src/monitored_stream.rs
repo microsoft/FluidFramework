@@ -89,6 +89,19 @@ pub type BoxMonitoredStream<T, P, E> = Pin<
     >,
 >;
 
+#[cfg(target_arch = "wasm32")]
+/// A boxed monitored stream on browser targets.
+pub type BoxMonitoredStream<T, P, E> = Pin<
+    Box<
+        dyn MonitoredStream<
+                Data = T,
+                Position = P,
+                Error = E,
+                Item = Result<MonitoredStreamItem<T, P>, E>,
+            > + 'static,
+    >,
+>;
+
 /// Tracks delivery positions while accepting the source's progress observations unchanged.
 struct PositionedMonitoredStream<S, F, P> {
     /// Ordered source whose allocation remains pinned while the wrapper moves.
@@ -313,19 +326,6 @@ where
         map_error: Box::new(map_error),
     })
 }
-
-#[cfg(target_arch = "wasm32")]
-/// A boxed monitored stream on browser targets.
-pub type BoxMonitoredStream<T, P, E> = Pin<
-    Box<
-        dyn MonitoredStream<
-                Data = T,
-                Position = P,
-                Error = E,
-                Item = Result<MonitoredStreamItem<T, P>, E>,
-            > + 'static,
-    >,
->;
 
 #[cfg(test)]
 mod tests {

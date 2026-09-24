@@ -39,7 +39,7 @@ struct State<E> {
     /// The first invalidation wins.
     terminal: Option<Arc<E>>,
     /// Never reused while the source exists.
-    next: u64,
+    next_registration_id: u64,
     /// Observers removed on registration drop or invalidation.
     callbacks: BTreeMap<u64, InvalidationCallback<E>>,
 }
@@ -48,7 +48,7 @@ impl<E> Default for InvalidationSource<E> {
     fn default() -> Self {
         Self(Arc::new(Mutex::new(State {
             terminal: None,
-            next: 0,
+            next_registration_id: 0,
             callbacks: BTreeMap::new(),
         })))
     }
@@ -76,8 +76,8 @@ impl<E: Send + Sync + 'static> InvalidationSource<E> {
             return InvalidationRegistration(None);
         }
 
-        let id = state.next;
-        state.next = id.checked_add(1).expect("invalidation identity exhausted");
+        let id = state.next_registration_id;
+        state.next_registration_id = id.checked_add(1).expect("invalidation identity exhausted");
         state.callbacks.insert(id, callback);
         let weak = Arc::downgrade(&self.0);
         InvalidationRegistration(Some(Box::new(move || {
