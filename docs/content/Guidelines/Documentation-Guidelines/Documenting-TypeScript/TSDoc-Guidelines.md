@@ -222,7 +222,7 @@ public rotateEntries(shapes: ShapeList, clockwiseRotationInDegrees: number): Sha
 
 #### \@throws
 
-See: <https://api-extractor.com/pages/tsdoc/tag_throws/>
+See: <https://tsdoc.org/pages/tags/throws/>
 
 ##### \@throws: Guidance
 
