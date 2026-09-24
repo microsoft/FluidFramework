@@ -1,4 +1,4 @@
-# External seed creation application
+# Seed-creation sample: two named text parts
 
 This headless application creates a Fluid file from two named text parts, loads a real SharedTree, and lets the ordinary summarizer persist the first complete Fluid summary.
 The application source is in this directory; assertions, local-service setup, and failure injection are in `test/`.
@@ -46,8 +46,9 @@ Input-format identifiers and schema namespaces are not a materializer compatibil
 
 Seed conversion requires the original checkpoint zero; later operations are replayed, not claimed as part of the pristine seed.
 Pending state, offline loading, loading groups, attachment blobs, and refetch of a different seed version are not supported by the seed path.
-Configure `Fluid.Container.enableOfflineFull` to `false` on the host loader for seed loads; interactive loaders otherwise enable offline tracking by default.
-These restrictions do not apply to ordinary stored DDS-backed loads.
+For now, configure `Fluid.Container.enableOfflineFull` to `false` on any host loader that can open seeds; the host does not need to identify seed files before opening them.
+Interactive loaders otherwise enable offline tracking by default.
+The setting affects every load through that loader, although ordinary stored DDS-backed loads do not inherently require it.
 Your product must validate file creation, permissions, and persistence with its own driver and service.
 
 ## Run the example tests
