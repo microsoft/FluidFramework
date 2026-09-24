@@ -1,0 +1,42 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0019",
+	"status": "active",
+	"sourceCommit": "575b77e825e598b15b7740f56956fe433a6153d8",
+	"createdAt": "2026-09-24T06:34:46.960Z",
+	"activeWorkstreams": [
+		{
+			"name": "foundations",
+			"instructions": "phase-2/instructions/foundations.md",
+			"report": "phase-2/foundations.md"
+		},
+		{
+			"name": "persistence",
+			"instructions": "phase-2/instructions/persistence.md",
+			"report": "phase-2/persistence.md"
+		},
+		{
+			"name": "sessions",
+			"instructions": "phase-2/instructions/sessions.md",
+			"report": "phase-2/sessions.md"
+		},
+		{
+			"name": "transport",
+			"instructions": "phase-2/instructions/transport.md",
+			"report": "phase-2/transport.md"
+		},
+		{
+			"name": "consumers",
+			"instructions": "phase-2/instructions/consumers.md",
+			"report": "phase-2/consumers.md"
+		},
+		{
+			"name": "cross-crate",
+			"instructions": "phase-2/instructions/cross-crate.md",
+			"report": "phase-2/cross-crate.md"
+		}
+	],
+	"deferredWorkstreams": [],
+	"nextWorkstreams": [],
+	"iterationType": "simplification"
+}
