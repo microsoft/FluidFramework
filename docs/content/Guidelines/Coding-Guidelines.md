@@ -609,15 +609,25 @@ Do not invent numeric or hexadecimal assertion codes or copy a code from another
 Where [assert tagging](../../../build-tools/packages/build-cli/docs/generate.md#flub-generate-asserttags) is configured for a package, repository tooling replaces these messages with assigned codes.
 Assert tagging does not apply to every package or test, so follow the applicable package conventions and leave existing generated codes unchanged.
 
-Never catch assertion failures to implement normal control flow.
+> [!NOTE]
+> Unlike `assert`, `fail` is not tagged by default; a package's `assertTagging.config.mjs` must explicitly enable it.
+
+Never specifically catch assertion failures in production code.
+Tests that intentionally exercise assertions can validate them with [validateAssertionError](../../../packages/runtime/test-runtime-utils/src/validateAssertionError.ts).
+
+If a production catch handles all errors and might receive an assertion failure, rethrow the error and/or explicitly report telemetry so the implementation bug is not hidden.
+
+Do not continue normal control flow based on an assertion failure.
+Where available, prefer [onAssertionFailure](../../../packages/common/core-utils/src/assert.ts) for first-chance assertion telemetry because it reports the failure before intermediate catch blocks can swallow or obscure it.
 
 #### ✔ DO account for assertion cost and build configuration
 
 `assert` checks run in all build configurations, including production.
-The condition is evaluated on every call, so consider its runtime cost, especially in frequently executed code.
+The condition is evaluated on every call, so consider its runtime and bundle-size costs, especially in frequently executed code.
+Assert tagging reduces message size, but the assertion call and condition still have nonzero cost.
 Keep assertion checks free of side effects.
 
-For checks needed only for documentation and debugging, consider `debugAssert` from `@fluidframework/core-utils/internal`, defined alongside `assert` in the file linked above.
+For checks needed only for documentation and debugging, especially expensive checks, consider `debugAssert` from `@fluidframework/core-utils/internal`, defined alongside `assert` in the file linked above.
 It accepts a function that returns `true` when the condition holds or a diagnostic message when it fails:
 
 ```typescript
