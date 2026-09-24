@@ -13,11 +13,11 @@ Required environment: <!-- TODO(required): record tool/runtime versions and setu
 
 ## Ownership
 
-<!-- TODO(required): list writable paths, read-only dependencies, and forbidden shared changes -->
+<!-- TODO(required): list writable paths, read-only dependencies, and forbidden shared changes. For shared fixtures, name the owner and authoritative coordinator handoff (source path, commit, and interface), or state none. -->
 
 ## Terminal Access
 
-<!-- TODO(required): record the loaded workspace folder, assigned process task IDs, per-run evidence paths, and any exclusive shared-terminal ownership or task-access blocker -->
+<!-- TODO(required): record the loaded workspace folder, assigned process task IDs (including a checkout-guarded formatter-write task scoped to owned crates/files), per-run evidence paths, and any exclusive shared-terminal ownership or task-access blocker -->
 
 Follow the coordination skill's Terminal Coordination and Execution Isolation Recovery sections.
 Separate worktrees and execution-subagent IDs do not provide terminal isolation.
@@ -45,7 +45,7 @@ Do not retry concurrently, cancel an unverified terminal owner, or report an inc
 
 ## Validation
 
-<!-- TODO(required): list narrow and integration commands; require checkout identity, exact outcomes, direct execution or inspection of fresh generated consumers, and a lockfile-diff check when Cargo resolution is outside ownership -->
+<!-- TODO(required): list narrow and integration commands; require checkout identity, exact outcomes, direct execution or inspection of fresh generated consumers, and a lockfile-diff check when Cargo resolution is outside ownership. If using liveness mutations, specify the owning-test selector and external deadline with bounded termination; follow the coordination skill's baseline, restoration, and rerun requirements. -->
 
 ## Escalation and Stopping Conditions
 

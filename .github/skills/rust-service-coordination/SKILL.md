@@ -70,6 +70,9 @@ Use distinct labels per workstream and command; never run the same task twice co
 Only the coordinator edits the shared task configuration, preserving existing tasks and removing only owned temporary entries after completion.
 For sibling worktrees outside the VS Code workspace, register tasks in the loaded workspace with the assigned worktree's absolute cwd and executable paths.
 
+When delegates use registered tasks, include a formatter-write task scoped to their owned crates or files, using the same checkout identity guards as validation tasks.
+Use the repository's formatter rather than manually applying format-check output; inspect the resulting diff for out-of-scope changes.
+
 Use a compound task with `dependsOrder: parallel` and distinct child task labels to launch independent checks concurrently through a single `run_task` call.
 This path passed a two-process rendezvous probe with separate directories, environments, outputs, and exit codes.
 Separate parallel `run_task` tool calls did not overlap in that probe, so do not assume tool-call parallelism launches processes concurrently.
@@ -164,6 +167,9 @@ Keep worktrees outside the primary checkout, with explicit non-overlapping owner
 Agents must not merge, rebase, force-push, or modify another workstream or the integration branch.
 Shared contract, workspace, and dependency changes require explicit ownership; otherwise report them for coordinator review.
 
+For a shared fixture, designate one owner and have the coordinator publish one authoritative handoff with its source path, commit, and agreed interface.
+Consumers use that handoff; route revisions through the owner and coordinator rather than adding competing aliases or relaying repeated acknowledgments.
+
 Before creating branches, verify that every proposed ref is available. Create the integration branch and worktree from the kickoff commit, then create every workstream from that same commit:
 
 ```bash
@@ -221,6 +227,10 @@ Apply the same checks to the iteration-owned integration worktree after its fina
 6. For each notable event, capture the attempted approach, evidence, impact, resolution or current state, and reusable lesson. Prefer commands, test names, commits, and artifact links over narrative memory.
 7. Create a decision record in `rust-service/historical/decisions/` from [the decision template](./assets/decision-record.template.md) when the outcome changes shared semantics, APIs, crate boundaries, conformance, iteration scope, or coordination policy. Use the next globally increasing four-digit identifier and a short slug; follow the decision directory's README.
 8. Finish with the report template complete and the worktree clean, or enumerate every remaining artifact.
+
+For liveness mutations, select the owning test explicitly and set an external process deadline with bounded termination before running the mutated code.
+Confirm the selected test runs and passes without the mutation; do not run a broad suite while wakeups or progress are deliberately disabled.
+Record timeout outcomes separately from assertion failures, restore the mutation, and rerun the focused test before continuing.
 
 For delegated commands in repositories with multiple worktrees, make the command itself use the assigned absolute path and print the absolute worktree path, `git branch --show-current`, HEAD, and status before running work. Assert the expected branch and base when applicable, and stop on mismatch. Do not accept summarized validation output that omits this guard output, exit status, or the requested test result. When the workstream may edit a crate manifest but does not own the shared lockfile, validate in an exact disposable copy and immediately verify that the assigned worktree's lockfile is unchanged.
 
