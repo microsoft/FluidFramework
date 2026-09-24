@@ -48,6 +48,10 @@ export function stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): b
 
 export type SummarizeReason =
 	/**
+	 * Persist a full native baseline before incremental summaries can reuse handles.
+	 */
+	| "initialFullSummary"
+	/**
 	 * Attempt to summarize after idle timeout has elapsed.
 	 * Idle timer restarts whenever an op is received. So this
 	 * triggers only after some amount of time has passed with

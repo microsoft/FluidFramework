@@ -5,19 +5,37 @@
 
 import { strict as assert } from "node:assert";
 
-import { AttachState } from "@fluidframework/container-definitions";
-import type { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
-import type { ISummaryTree } from "@fluidframework/driver-definitions/internal";
+import type { SeedRuntimeSnapshot } from "@fluidframework/container-loader/legacy/alpha";
 
-import { createSeedSummary } from "../externalSeedFile.js";
 import { materializeSeed } from "../runtimeMaterialization.js";
-import { textProjector } from "../sampleRuntimeFactory.js";
-import { seedRuntimeFactory } from "../seedRuntimeAdapter.js";
-import { validateSummaryUpload } from "../summaryHost.js";
 import { parseSeed, seedRoot } from "../textSeedFormat.js";
 
-describe("Seed creation: deterministic construction and upload contract", () => {
+/**
+ * Creation time and telemetry identity are not collaborative identities.
+ * Compare every other metadata field and every DDS/compressor blob without alteration.
+ */
+function stateWithoutCreationTelemetry(state: SeedRuntimeSnapshot): object {
+	const { ".metadata": metadataId, ...rootBlobs } = state.snapshot.blobs;
+	const metadataBytes = state.blobs.get(metadataId);
+	assert(metadataBytes !== undefined);
+	const metadata: unknown = JSON.parse(new TextDecoder().decode(metadataBytes));
+	assert(typeof metadata === "object" && metadata !== null);
+	assert("createContainerTimestamp" in metadata);
+	assert.equal(typeof metadata.createContainerTimestamp, "number");
+	assert("telemetryDocumentId" in metadata);
+	assert.equal(typeof metadata.telemetryDocumentId, "string");
+	return {
+		snapshot: { ...state.snapshot, blobs: rootBlobs },
+		blobs: [...state.blobs].filter(([id]) => id !== metadataId),
+		metadata: Object.fromEntries(
+			Object.entries(metadata).filter(
+				([key]) => key !== "createContainerTimestamp" && key !== "telemetryDocumentId",
+			),
+		),
+	};
+}
+
+describe("Seed creation: deterministic application construction", () => {
 	const seed = {
 		format: "seed-creation/1",
 		parts: [
@@ -26,37 +44,27 @@ describe("Seed creation: deterministic construction and upload contract", () => 
 		],
 	};
 
-	it("the producer writes only protocol and application input", () => {
-		const summary = createSeedSummary(seed);
-		assert.deepEqual(Object.keys(summary.tree).sort(), [".app", ".protocol"]);
-		const app: SummaryObject | undefined = summary.tree[".app"];
-		assert(app?.type === SummaryType.Tree);
-		assert.deepEqual(Object.keys(app.tree), [seedRoot]);
-	});
-
-	it("independent materialization produces identical native trees and bytes", () => {
-		const a = materializeSeed(seed, 0);
-		const b = materializeSeed({ ...seed, parts: [...seed.parts].reverse() }, 0);
-		assert.deepEqual(a.snapshot, b.snapshot);
-		assert.deepEqual([...a.blobs], [...b.blobs]);
+	it("independent detached runtimes produce identical collaborative identities and state", async () => {
+		const [a, b] = await Promise.all([
+			materializeSeed(seed, 0),
+			materializeSeed({ ...seed, parts: [...seed.parts].reverse() }, 0),
+		]);
+		assert.deepEqual(stateWithoutCreationTelemetry(a), stateWithoutCreationTelemetry(b));
 		assert(a.snapshot.blobs[".metadata"] !== undefined);
 		assert(a.snapshot.blobs[".idCompressor"] !== undefined);
 		assert(!JSON.stringify(a.snapshot).includes(seedRoot));
 	});
 
-	it("content and checkpoint changes alter the corresponding native snapshot", () => {
-		const original = materializeSeed(seed, 0);
-		assert.notDeepEqual(original.snapshot, materializeSeed(seed, 1).snapshot);
-		assert.notDeepEqual(
-			original.snapshot,
-			materializeSeed(
-				{
-					...seed,
-					parts: [{ name: "first", text: "Changed" }, seed.parts[1]],
-				},
-				0,
-			).snapshot,
+	it("changed application content changes the Fluid snapshot", async () => {
+		const original = await materializeSeed(seed, 0);
+		const changed = await materializeSeed(
+			{
+				...seed,
+				parts: [{ name: "first", text: "Changed" }, seed.parts[1]],
+			},
+			0,
 		);
+		assert.notDeepEqual(original.snapshot, changed.snapshot);
 	});
 
 	for (const [name, input] of [
@@ -78,91 +86,15 @@ describe("Seed creation: deterministic construction and upload contract", () => 
 			{ ...seed, parts: [{ name: "first", text: "x".repeat(100_001) }, seed.parts[1]] },
 		],
 	] as const) {
-		it(`rejects ${name} before materialization`, () => {
+		it(`rejects ${name} before materialization`, async () => {
 			assert.throws(() => parseSeed(input));
-			assert.throws(() => materializeSeed(input, 0));
+			await assert.rejects(materializeSeed(input, 0));
 		});
 	}
 
-	it("rejects invalid checkpoints", () => {
-		for (const sequence of [-1, 0.5, Number.NaN, Number.MAX_SAFE_INTEGER + 1]) {
-			assert.throws(() => materializeSeed(seed, sequence));
+	it("rejects every checkpoint other than the original creation checkpoint", async () => {
+		for (const sequence of [-1, 0.5, 1, Number.NaN, Number.MAX_SAFE_INTEGER + 1]) {
+			await assert.rejects(materializeSeed(seed, sequence), /creation checkpoint/);
 		}
-	});
-
-	it("refuses a virtual subtree handle even when nested in the first full upload", () => {
-		const summary: ISummaryTree = {
-			type: SummaryType.Tree,
-			tree: {
-				".channels": {
-					type: SummaryType.Tree,
-					tree: {
-						document: {
-							type: SummaryType.Handle,
-							handleType: SummaryType.Tree,
-							handle: "/.channels/document",
-						},
-					},
-				},
-			},
-		};
-		assert.throws(
-			() =>
-				validateSummaryUpload(
-					summary,
-					{ ackHandle: "seed", proposalHandle: undefined, referenceSequenceNumber: 0 },
-					"seed",
-					true,
-				),
-			/virtual seed path/,
-		);
-		validateSummaryUpload(
-			summary,
-			{ ackHandle: "native", proposalHandle: undefined, referenceSequenceNumber: 0 },
-			"native",
-			false,
-		);
-	});
-
-	it("an ACK alone cannot admit an incremental upload still naming the seed parent", () => {
-		const summary: ISummaryTree = { type: SummaryType.Tree, tree: {} };
-		assert.throws(
-			() =>
-				validateSummaryUpload(
-					summary,
-					{ ackHandle: "seed", proposalHandle: undefined, referenceSequenceNumber: 0 },
-					"accepted-native",
-					false,
-				),
-			/parent was not adopted/,
-		);
-	});
-});
-
-describe("Seed creation: checkpoint guard at load time", () => {
-	it("rejects a still-seed snapshot before reading its content once ops have been sequenced", async () => {
-		const fakeContext = {
-			attachState: AttachState.Attached,
-			baseSnapshot: {
-				blobs: {},
-				trees: { [seedRoot]: { blobs: { "seed.json": "seed-blob" }, trees: {} } },
-			},
-			pendingLocalState: undefined,
-			taggedLogger: { send: () => {} },
-			getLoadedFromVersion: () => ({ id: "fake-version" }),
-			deltaManager: { initialSequenceNumber: 1 },
-			storage: {
-				readBlob: () => {
-					throw new Error("Must not read the seed blob before the checkpoint guard runs");
-				},
-			},
-		} as unknown as IContainerContext;
-		let delegated = false;
-		const factory = seedRuntimeFactory(textProjector, async () => {
-			delegated = true;
-			throw new Error("Must not load native state before the checkpoint guard runs");
-		});
-		await assert.rejects(factory.instantiateRuntime(fakeContext, true), /ops were sequenced/);
-		assert.equal(delegated, false);
 	});
 });

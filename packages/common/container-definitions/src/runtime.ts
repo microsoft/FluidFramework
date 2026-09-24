@@ -381,6 +381,19 @@ export interface IContainerContext {
 	 */
 	readonly getConnectionState?: () => ConnectionState;
 	/**
+	 * Request a write connection without submitting an operation.
+	 *
+	 * @remarks
+	 * This is a one-shot request, not a change to the default connection mode.
+	 * An existing read connection may be upgraded asynchronously. If disconnected,
+	 * the request waits for an otherwise permitted connection; it does not resume
+	 * a paused load or override the host's connection policy.
+	 * Requests are ignored when read-only, closed, detached, or reconnection is forbidden.
+	 * Connection permissions remain authoritative, so a write connection is not guaranteed.
+	 * Older loaders may not provide this capability.
+	 */
+	readonly requestWriteConnection?: () => void;
+	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
 	readonly submitFn: (

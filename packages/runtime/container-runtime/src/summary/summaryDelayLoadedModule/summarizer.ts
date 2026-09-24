@@ -342,6 +342,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			runCoordinator /* cancellationToken */,
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,
 			this.runtime,
+			this.internalsProvider.shouldSummarizeOnStartup,
 		);
 		this.runningSummarizer = runningSummarizer;
 		this.setupForwardedEvents(runningSummarizer);

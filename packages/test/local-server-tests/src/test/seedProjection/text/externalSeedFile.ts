@@ -4,6 +4,7 @@
  */
 
 import type { IRequest } from "@fluidframework/core-interfaces";
+import { createSeedSummary as createDocumentSummary } from "@fluidframework/container-loader/legacy/alpha";
 import type {
 	IDocumentServiceFactory,
 	ISummaryTree,
@@ -18,36 +19,11 @@ import { codeDetails, parseSeed, seedRoot } from "./textSeedFormat.js";
  */
 export function createSeedSummary(input: unknown): ISummaryTree {
 	const seed = parseSeed(input);
-	const protocol = new SummaryTreeBuilder();
-	protocol.addBlob(
-		"attributes",
-		JSON.stringify({ sequenceNumber: 0, minimumSequenceNumber: 0 }),
-	);
-	protocol.addBlob("quorumMembers", "[]");
-	protocol.addBlob("quorumProposals", "[]");
-	protocol.addBlob(
-		"quorumValues",
-		JSON.stringify([
-			[
-				"code",
-				{
-					key: "code",
-					value: codeDetails,
-					approvalSequenceNumber: 0,
-					commitSequenceNumber: 0,
-					sequenceNumber: 0,
-				},
-			],
-		]),
-	);
 	const application = new SummaryTreeBuilder();
 	application.addBlob("seed.json", JSON.stringify(seed));
 	const app = new SummaryTreeBuilder();
 	app.addWithStats(seedRoot, application);
-	const result = new SummaryTreeBuilder();
-	result.addWithStats(".protocol", protocol);
-	result.addWithStats(".app", app);
-	return result.summary;
+	return createDocumentSummary({ codeDetails, applicationProjection: app.summary });
 }
 
 /**

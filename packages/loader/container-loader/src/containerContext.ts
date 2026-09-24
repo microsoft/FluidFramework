@@ -147,6 +147,7 @@ export class ContainerContext
 	public readonly snapshotWithContents?: ISnapshot;
 
 	public readonly getConnectionState: () => ConnectionState;
+	public readonly requestWriteConnection: () => void;
 
 	private readonly _getClientId: () => string | undefined;
 	private readonly _getContainerDiagnosticId: () => string | undefined;
@@ -209,6 +210,7 @@ export class ContainerContext
 		}
 
 		this.getConnectionState = config.getConnectionState;
+		this.requestWriteConnection = config.requestWriteConnection;
 		this._getClientId = config.getClientId;
 		this._getContainerDiagnosticId = config.getContainerDiagnosticId;
 		this._getConnected = config.getConnected;

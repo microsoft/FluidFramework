@@ -392,8 +392,16 @@ export class Container
 			container.mc.logger,
 			{ eventName: "CreateDetached" },
 			async (_event) => {
-				await container.createDetached(codeDetails);
-				return container;
+				try {
+					await container.createDetached(codeDetails);
+					return container;
+				} catch (error) {
+					// A failed creation does not return a container for the caller to dispose.
+					const normalizedError = normalizeError(error);
+					container.close(normalizedError);
+					container.dispose(normalizedError);
+					throw error;
+				}
 			},
 			{ start: true, end: true, cancel: "generic" },
 		);
@@ -2472,6 +2480,11 @@ export class Container
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,
+				requestWriteConnection: () => {
+					if (!this.closed && this.attachState === AttachState.Attached) {
+						this._deltaManager.connectionManager.requestWriteConnection();
+					}
+				},
 				getAbsoluteUrl: this.getAbsoluteUrl,
 				getContainerDiagnosticId: () => this.resolvedUrl?.id,
 				getClientId: () => this.clientId,

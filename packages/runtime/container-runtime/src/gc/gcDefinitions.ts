@@ -421,7 +421,15 @@ export interface IGarbageCollector {
 	/**
 	 * Called when the latest summary of the system has been refreshed.
 	 */
-	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
+	refreshLatestSummary(result: IRefreshSummaryResult, proposalHandle?: string): Promise<void>;
+	/**
+	 * Retain generated GC state for a submitted proposal.
+	 */
+	completeSummary(proposalHandle: string, referenceSequenceNumber: number): void;
+	/**
+	 * Clear unsubmitted GC state, retaining proposals awaiting acknowledgment.
+	 */
+	clearSummary(): void;
 	/**
 	 * Called when a node with the given path is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.

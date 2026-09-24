@@ -84,6 +84,7 @@ export class RunningSummarizer
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 
 		runtime: ISummarizerRuntime,
+		initialSummaryRequired = false,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -148,6 +149,10 @@ export class RunningSummarizer
 
 		// Start heuristics
 		summarizer.heuristicRunner?.start();
+		if (configuration.state === "enabled" && initialSummaryRequired) {
+			// Use the ordinary retry/cancellation path. No application operation or host request is needed.
+			summarizer.trySummarize("initialFullSummary");
+		}
 		summarizer.heuristicRunner?.run();
 
 		return summarizer;
