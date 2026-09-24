@@ -85,20 +85,18 @@ impl PrehashedBlob {
 /// Immutable blobs and directories retained for the lifetime of their document.
 /// Event payloads are stored separately in the event archive.
 ///
-/// Every tree reachable from a stored directory is also stored in these maps.
-/// Publication preserves this invariant by requiring every direct child to be present before
-/// inserting a directory; existing directories already guarantee their own descendants.
-/// Entries are never removed or modified, so membership proves transitive availability.
+/// Entries are immutable, never removed, and include every stored directory's descendants.
+/// Requiring direct children at publication preserves this closure, so membership proves transitive availability.
 #[derive(Debug, Default)]
 struct BlobStorageData {
     /// Published leaf values keyed by their content hashes.
     blobs: BTreeMap<BlobId, Bytes>,
-    /// Published directories whose direct and transitive children are present in these maps.
+    /// Published directories keyed by content identity.
     directories: BTreeMap<BlobDirectoryId, BlobDirectory>,
 }
 
 impl BlobStorageData {
-    /// Tests membership; the closure invariant makes a directory lookup sufficient for its whole tree.
+    /// Tests whole-tree availability using the [`Self`] closure invariant.
     fn contains_tree(&self, id: BlobTreeId) -> bool {
         match id {
             BlobTreeId::Blob(id) => self.blobs.contains_key(&id),
@@ -133,8 +131,7 @@ impl BlobStorageData {
         Ok(id)
     }
 
-    /// Checks closure when reopening potentially inconsistent history, not during ordinary lookups.
-    /// Checking each stored directory's direct children also covers every transitive descendant.
+    /// Checks closure on reopen, not ordinary lookups; direct-child checks cover every descendant.
     fn validate(&self) -> Result<(), MemoryStorageError> {
         if self.directories.values().any(|directory| {
             directory
@@ -359,7 +356,7 @@ impl StorageHandle for MemoryBlobHandle {
     }
 }
 
-/// Blob component of one exclusive opening; clones share the same document-owning opening.
+/// Cloneable blob component sharing one exclusive opening.
 #[derive(Clone, Debug)]
 pub struct MemoryBlobStore {
     /// Owns access to the document and keeps its opening exclusive.

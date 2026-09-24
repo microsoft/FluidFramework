@@ -20,12 +20,10 @@ use crate::MemoryStorageError;
 #[derive(Debug)]
 pub(crate) struct ArchiveData<Item> {
     /// Strictly ordered immutable entries.
-    ///
-    /// Archives are append-only, so a sorted vector could reduce allocation overhead and improve locality.
-    /// Binary search would retain O(log N) lookup for sparse snapshot positions, like this `BTreeMap`.
-    /// Event archives have dense positions, so they could benefit further from
-    /// O(1) indexing by position minus one, without storing separate map keys.
-    /// For now a `BTreeMap` is used for simplicity of implementation.
+    // A BTreeMap keeps the implementation simple. Append-only archives could instead use a
+    // sorted vector to reduce allocations and improve locality, retaining O(log N) sparse
+    // snapshot lookup via binary search. Dense event positions could use O(1) indexing by
+    // position minus one without separate keys.
     pub(crate) entries: BTreeMap<EventPosition, Item>,
     /// Readers to wake after committing an entry; dead registrations are pruned on insert or initialization.
     readers: Vec<Weak<AtomicWaker>>,
