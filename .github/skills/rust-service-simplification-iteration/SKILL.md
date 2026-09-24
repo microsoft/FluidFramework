@@ -13,8 +13,10 @@ This workflow does not require a historical size or growth baseline.
 Pin an approved source commit so each accepted repair has a reproducible before-and-after comparison.
 Treat size measurements as evidence, not as targets.
 
-An ordinary focused simplification is sequential work and does not trigger the coordination skill.
-Only when the user explicitly requests a "parallel iteration", or continues one already authorized, load `.github/skills/rust-service-coordination/SKILL.md` for iteration mechanics.
+Configure scope, coverage budget, and execution structure as separate choices, in that order.
+Explicitly ask whether to use a parallel iteration unless the user has already chosen an execution structure.
+Selecting the parallel-iteration option is explicit authorization to load `.github/skills/rust-service-coordination/SKILL.md` for iteration mechanics.
+Do not load it merely to ask the configuration question.
 The numbered-record, workstream, integration, and Phase 3 instructions below apply only in that case.
 Otherwise retain the configuration, candidates, dispositions, and evidence in an existing local report.
 If no suitable report exists, create one local report in the repository documentation location for the affected area and reuse it throughout the work.
@@ -52,17 +54,58 @@ If responsibility or required behavior cannot be determined, defer the candidate
 ### Confirm the Scope
 
 Before discovery or record initialization, propose a scope, explain why it is useful, and ask the user to confirm or customize it.
-Offer these modes, which can be combined:
+Offer these modes, which can be combined, without bundling coverage or repair limits into the choices:
 
 - **Broad current-state review:** Make all selected crates eligible without requiring change history.
 - **Targeted:** Review selected crates, abstractions, dependencies, or forms of complexity.
 - **Incremental:** Revisit unresolved candidates, changed implementations, and recorded triggers from an earlier simplification inventory.
 
-Confirm explicit exclusions, effort budget, stopping conditions, and whether discovery and repair use separate waves.
-For a broad parallel iteration, prefer a discovery wave followed by bounded repair work.
+Make the crate or responsibility scope and exclusions explicit, including an all-Rust-service-crates option when no narrower area was requested.
+An all-crate review includes unchanged code; it is not limited to the current diff.
+If the user already supplied an explicit scope, restate it briefly without redundant confirmation, then resolve the remaining choices.
+Scope selection alone does not authorize parallel execution or iteration setup.
+
+### Choose Coverage And Budget
+
+After scope selection, estimate the effort needed using crate listings, prior inventories, and a lightweight responsibility map.
+This estimate is configuration work, not completed discovery or assessment.
+Explain whether the proposed default budget covers the whole selected scope or only a risk-ranked sample.
+Never silently interpret an all-crate review as a small sample merely because all crates were eligible.
+
+If the default budget cannot cover everything in scope, ask the user to choose:
+
+- **Review everything in scope:** Examine every scoped crate or responsibility area and assess its material simplification candidates, without a fixed candidate-count or time cutoff.
+- **Use the bounded default:** State the proposed effort limit and expected discovery and assessment coverage, explicitly noting what will remain unreviewed.
+- **Choose a custom budget:** Let the user set effort or coverage limits before work starts.
+
+If the default is sufficient, state the estimate and confirm it unless the user already authorized it.
+Use separate questions for scope, coverage budget, and execution structure; skip choices that the user has already explicitly answered.
+Record repair limits separately from discovery and assessment coverage.
+Exhausting the repair budget must not stop authorized full-scope discovery or assessment: continue examining scoped areas and record additional assessed opportunities as deferred repairs.
+
+Full-scope review does not mean implementing every opportunity, inspecting every declaration, finding every defect, or searching indefinitely for smaller code.
+Use risk ranking to order that work, not to omit lower-ranked areas.
+Stop discovery and assessment when the approved coverage is complete, or disclose a blocker and ask before reducing coverage or imposing a new cutoff.
+For bounded review, stop at the approved limit and distinguish unreviewed areas and candidates from assessed-but-unrepaired candidates.
+Ask before expanding scope or a bounded budget.
+
+### Choose Sequential Or Parallel Execution
+
+After scope and coverage budget are agreed, explicitly ask: "Should this simplification review use the parallel Rust-service iteration structure?"
+Offer:
+
+- **Parallel iteration:** Numbered records, isolated workstreams, a shared simplification inventory, integration, and Phase 3 review under the coordination skill.
+- **Sequential review:** One local report, with the same approved scope and coverage budget.
+
+Recommend parallel execution when the selected scope has substantial independent work, but let the user choose.
+Do not infer sequential execution from a small diff or from the absence of the words "parallel iteration" in the initial request.
+If the user already explicitly selected either structure, or is continuing an authorized run, preserve that choice without asking again.
+Only after a parallel selection, load the coordination skill and follow its setup requirements.
+
+Confirm whether discovery and repair use separate waves.
+For a broad parallel iteration, prefer broad discovery and assessment followed by bounded repair work.
 At kickoff, register ownership-aligned workstreams that can perform both discovery and accepted crate-local repairs.
 If the scope permits cross-crate repairs, register a later-wave shared owner at kickoff; otherwise defer those repairs to an approved follow-on iteration.
-Do not imply exhaustive review merely because all crates were eligible.
 
 ### Record the Configuration
 
@@ -72,7 +115,10 @@ Record:
 - selected mode, crate or responsibility scope, and exclusions;
 - inherited quality and simplification inventories, if any;
 - risk priorities;
-- effort budget and stopping conditions;
+- discovery and assessment coverage commitment (full scope or bounded sample), estimated effort, and any approved limits;
+- repair budget, separate from discovery and assessment coverage;
+- sequential review or explicitly authorized parallel iteration;
+- stopping conditions and discovery/repair waves;
 - permitted public API, dependency, protocol, generated-binding, and performance changes;
 - required validation beyond the canonical gates; and
 - independent review needs.
@@ -99,10 +145,12 @@ Large files, functions, or crates are not automatically too complex.
 
 Rank candidates by expected reduction, confidence, maintenance cost, defect risk, ownership clarity, validation strength, and cross-workstream conflict.
 Record why selected candidates outrank deferred candidates.
+For full-scope review, map every scoped crate or responsibility area to its review owner, examine each area, and assess material candidates in priority order.
+Record evidence for areas with no worthwhile candidates; do not invent candidates or omit those areas.
 
 ## Assess a Candidate
 
-For each selected candidate:
+For each candidate selected under the approved assessment coverage, including material candidates beyond the repair budget:
 
 1. Identify the responsibility, owning component, consumers, and supported platforms.
 2. Link the precise contracts consumers rely on.
@@ -140,7 +188,8 @@ Within an explicitly authorized parallel iteration:
 
 1. Partition discovery by non-overlapping crate or responsibility ownership.
 2. Let workstreams report cross-crate candidates without editing shared owners.
-3. Select bounded repairs after comparing discovery results, then redispatch them to the pre-registered owning workstreams.
+3. Select bounded repairs after comparing discovery and assessment results, then redispatch them to the pre-registered owning workstreams.
+   Keep the approved discovery and assessment coverage independent of the repair limit.
 4. Run crate-local, dependency-independent repairs concurrently.
 5. Assign cross-crate consolidation, shared dependencies, workspace manifests, generated bindings, and public contracts to explicit later-wave owners registered at kickoff, or defer them to a follow-on iteration.
 6. Independently review accepted repairs for behavior preservation and complexity displacement.
@@ -161,6 +210,9 @@ A candidate may be:
 - **rejected** when evidence disproves the proposed duplication or unnecessary complexity.
 
 Every disposition needs direct evidence.
+Distinguish candidates not yet assessed from assessed candidates deferred because repair is blocked or outside budget.
+An unreviewed area is incomplete coverage, not an `already proportionate` result or a deferred repair.
+Budget exhaustion is not a justified exclusion.
 For accepted changes, record:
 
 - the preserved contract and discriminating tests;
@@ -176,8 +228,9 @@ Documentation or focused-test additions can be justified when production ownersh
 
 ## Maintain the Simplification Inventory
 
-For sequential work, retain configuration, candidates, dispositions, and validation in the local report.
-The remaining setup applies only to explicitly authorized parallel iterations.
+For sequential work, retain configuration, area coverage, candidates, dispositions, and validation in the local report.
+Apply the completion checks below to both sequential reports and parallel inventories.
+The numbered inventory setup and validator apply only to explicitly authorized parallel iterations.
 
 Initialize the normal coordination records, then create `rust-service/historical/iterations/NNNN/simplification-inventory.md`:
 
@@ -191,23 +244,29 @@ Use stable candidate identifiers where practical.
 
 At completion, verify that:
 
-- every active workstream is represented;
+- every scoped crate or responsibility area is accounted for, including evidence-backed no-change results where no worthwhile candidates were found;
+- actual discovery and assessment coverage matches the approved commitment, with unreviewed areas and candidates separate from assessed-but-unrepaired candidates and justified exclusions;
+- every active workstream in a parallel iteration is represented;
 - every accepted change links its contract, safety evidence, and validation;
 - every removed test cited by an inherited quality inventory maps to surviving discriminating evidence or an approved contract change;
 - cross-crate candidates have one owner or a revisit trigger;
 - reductions are not double-counted across workstreams;
 - moved code is not reported as deleted;
 - unresolved candidates have concrete revisit triggers; and
-- the status is `complete`, including when explicit deferrals remain.
+- the status is `complete` only after the approved coverage and final dispositions are reconciled, including when explicit repair deferrals remain.
 
-Then run:
+Do not mark promised full-scope coverage complete while scoped areas or material candidates remain unreviewed unless the user explicitly approves reduced coverage.
+Record that approval and the remaining gaps; do not describe the reduced coverage as full scope.
+
+For a parallel iteration, then run:
 
 ```bash
 node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate-simplification NNNN
 ```
 
 The validator checks structure, required headings, template markers, title, status, and the presence of a reviewed-candidate row.
-Reviewers must verify workstream coverage, measurements, behavior preservation, and convergence against the reports and diff.
+If no worthwhile candidates were found, use an evidence-backed area-level `already proportionate` row rather than a fabricated candidate.
+Reviewers must verify the approved coverage, workstream coverage, measurements, behavior preservation, and convergence against the reports and diff.
 
 ## Assess Convergence
 
@@ -222,6 +281,7 @@ Recommend another run only when:
 - the user approves a broader or renewed current-state review.
 
 Stop when another run within the declared scope and budget is unlikely to produce a meaningful reduction.
+This convergence rule does not end the current run's promised discovery and assessment early.
 A well-supported no-change result is evidence that the reviewed structure is proportionate.
 
 ## Validate

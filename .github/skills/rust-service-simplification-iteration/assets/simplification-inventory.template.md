@@ -4,14 +4,29 @@ Status: in progress
 Source commit: <!-- TODO(required): record the exact manifest sourceCommit used for before-and-after comparison -->
 Review mode: <!-- TODO(required): record broad current-state review, targeted, incremental, or the approved combination -->
 Configured scope: <!-- TODO(required): summarize or link the user-confirmed crate or responsibility scope and explicit exclusions -->
+Coverage commitment: <!-- TODO(required): record full scope or a bounded sample, estimated effort, whether the proposed default covers the scope, and the approved discovery and assessment limits -->
+Repair budget: <!-- TODO(required): record repair limits separately; reaching them must not stop promised full-scope discovery or assessment -->
+Execution structure: <!-- TODO(required): record the user's explicit parallel-iteration authorization; sequential reviews use a local report with the same configuration and coverage accounting -->
 Inherited quality inventory: <!-- TODO(required): link accepted quality evidence or write none and require each candidate to establish its contracts and tests -->
 Inherited simplification inventory: <!-- TODO(required): link prior candidates and dispositions or write none -->
 Permitted changes: <!-- TODO(required): record constraints on public APIs, dependencies, protocols, generated bindings, platforms, and performance -->
-Budget and stopping conditions: <!-- TODO(required): summarize or link the charter -->
+Stopping conditions and waves: <!-- TODO(required): summarize or link the charter's discovery/assessment completion criteria and repair waves, including later-wave cross-crate ownership -->
 
 ## Selection Rationale
 
-<!-- TODO(required): describe the evidence used to select candidates and why they outrank deferred candidates. Do not treat size or textual similarity alone as a finding. -->
+<!-- TODO(required): describe the evidence used to order discovery and assessment and to select bounded repairs. For full scope, risk ranking orders work rather than omitting lower-ranked areas. For a bounded sample, state expected coverage and what will remain unreviewed. Do not treat size or textual similarity alone as a finding. -->
+
+## Scope Coverage
+
+Account for every scoped crate or responsibility area, including areas with no worthwhile candidates.
+Full-scope review means examining each area and assessing its material candidates, not inspecting every declaration or implementing every opportunity.
+Distinguish completed discovery and assessment from repair completion.
+Use `reviewed`, `partially reviewed`, `unreviewed`, or `excluded` for coverage status, with evidence or a reason.
+Exclusions need justification; budget exhaustion leaves incomplete coverage rather than an exclusion or a no-change result.
+
+| Crate or responsibility area | Review owner | Coverage status | Examined responsibilities and evidence | Candidate IDs or no-change result | Unreviewed work, blocker, or exclusion rationale |
+| --- | --- | --- | --- | --- | --- |
+| <!-- TODO(required): replace with every scoped area, not only areas with candidates or repairs --> | | | | | |
 
 ## Reviewed Candidates
 
@@ -20,6 +35,7 @@ Link each responsible workstream report.
 For accepted changes, name the preserved responsibility, link its contract and discriminating tests, and describe the mechanism removed.
 Account for moved code and do not report it as deletion.
 Use the skill's dispositions: `simplified`, `consolidated`, `deleted`, `already proportionate`, `deferred`, `excluded`, or `rejected`.
+If no worthwhile candidates were found, include an evidence-backed area-level `already proportionate` row and link its coverage evidence rather than inventing a candidate.
 
 | Candidate | Owner and consumers | Complexity evidence | Preserved contract and safety evidence | Proposed reduction and cheapest disproof | Disposition | Actual reduction | Validation | Revisit trigger |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -27,7 +43,7 @@ Use the skill's dispositions: `simplified`, `consolidated`, `deleted`, `already 
 
 ## Deferred Candidates
 
-<!-- TODO(required): distinguish scope exclusions from eligible candidates left unreviewed or unrepaired. Record remaining value, blocker or budget reason, and a concrete revisit trigger; write none when applicable. -->
+<!-- TODO(required): separately list unreviewed areas or candidates, assessed-but-unrepaired candidates, and justified exclusions. Record remaining value, blocker or coverage/repair-budget reason, and a concrete revisit trigger; write none for each category when applicable. An unreviewed area is incomplete coverage, not a deferred repair. -->
 
 ## Cross-Workstream Consolidation
 
@@ -43,4 +59,4 @@ Use the skill's dispositions: `simplified`, `consolidated`, `deleted`, `already 
 
 ## Convergence Assessment
 
-<!-- TODO(required): compare inherited candidates, accepted reductions, rejected hypotheses, deferred opportunities, replacement abstractions, and stopping conditions. Distinguish eligible scope from reviewed coverage. State whether another run is justified and its specific hypothesis. Set Status to complete after final reconciliation, including when explicit deferrals remain. -->
+<!-- TODO(required): compare inherited candidates, accepted reductions, rejected hypotheses, deferred opportunities, replacement abstractions, and stopping conditions. Reconcile actual discovery and assessment with the approved coverage, including no-change areas. State whether another run is justified and its specific hypothesis; convergence does not end promised coverage early. Set Status to complete only after final reconciliation and satisfaction of the approved coverage, including when explicit repair deferrals remain. Do not mark promised full coverage complete with unreviewed areas or material candidates unless the user explicitly reduces coverage; record that approval and remaining gaps without claiming full coverage. -->

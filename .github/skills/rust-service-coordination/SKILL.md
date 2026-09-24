@@ -14,11 +14,11 @@ The archived plans and foundation report are historical evidence, not prerequisi
 ## Explicit Request Gate
 
 Enter this workflow only when the user requests a "parallel iteration", or the current task continues a parallel iteration that the user already explicitly authorized.
-An explicit selection of "Parallel iteration" during the quality skill's configuration is such a request.
-The quality skill owns that scope-first configuration question; do not load this skill just to offer the choice.
+An explicit selection of "Parallel iteration" during the quality or simplification skill's configuration is such a request.
+Those skills own their scope-first configuration questions; do not load this skill just to offer the choice.
 A reference from another document, an existing iteration directory, a complex task, or permission to use a review subagent is not authorization.
 If loaded without that trigger, return to the ordinary task workflow without prompting the user to choose an iteration mode.
-Outside that quality configuration, do not propose iteration machinery merely because parallel work might be useful.
+Outside those quality or simplification configurations, do not propose iteration machinery merely because parallel work might be useful.
 Never initialize it before explicit authorization.
 Ordinary implementation, sequential checkpoints, reviews, measurements, and quality audits do not require this skill.
 Their repository validation and documentation requirements still apply independently through `rust-service/DEVELOPMENT.md` and applicable task instructions.
