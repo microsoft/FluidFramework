@@ -49,6 +49,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 
 ## Performance and Operations
 
+- **Confirmed:** Fixed-base review of a simplification must inspect evaluation and cost ordering on rejected-input paths; functional tests can preserve outputs while missing newly introduced hashing or other expensive work before rejection. [Evidence](iterations/0019/phase-2/integration.md#checkpoint-review-record)
 - **Confirmed:** Compare storage results only with guarantee differences visible; the minimal and durable logs used equivalent record workloads but intentionally different acknowledgment semantics. [Evidence](iterations/0001/phase-3-report.md#comparative-results)
 - **Confirmed:** Deterministic injected failures provide reproducible recovery evidence but must not be presented as process-termination or power-loss evidence. [Evidence](iterations/0002/phase-2/durable-snapshots.md#remaining-work-and-risks)
 - **Confirmed:** Graceful server shutdown requires ownership and continued polling of every accepted connection future; a control acknowledgement produced inside the server future cannot complete while its caller awaits without polling that future. [Evidence](iterations/0007/phase-2/native-graceful-shutdown.md#notable-events)
@@ -57,6 +58,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 
 ## Agentic Development
 
+- **Confirmed:** Reconcile cumulative report state once after evidence handoffs and immediately before review; separately updating provenance, validation, dirty-path, and cycle text produced repeated report-only review cycles. [Evidence](iterations/0019/retrospective.md#costly-issues-and-dead-ends)
 - **Confirmed:** Iteration 0018 delegates discovered and invoked assigned tasks where 0017 delegates could not; execution capability must be observed in the current environment. **Provisional:** Isolated per-worktree Cargo targets resolved a surprising assertion's provenance concern, but exact shared-cache artifact reuse was not proven. Neither observation establishes cancellation isolation or a throughput improvement. [Evidence](iterations/0018/retrospective.md#agentic-development-findings)
 
 - **Confirmed:** Coordinator task access did not imply delegate capability: iteration 0017 delegates lacked `tool_search`, while coordinator task-batched checks completed without observed interference, including detection and correction of a genuine formatting failure. Autonomous delegate scheduling and cancellation remained unavailable and unverified. [Evidence](iterations/0017/skill-review.md#verification-matrix)
