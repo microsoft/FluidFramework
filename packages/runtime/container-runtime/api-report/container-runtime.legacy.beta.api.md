@@ -325,7 +325,8 @@ export interface ISummaryGenerationContext {
 export interface ISummaryGenerationOptions {
     readonly additionalRootTree?: {
         readonly key: string;
-        readonly summarize: (context: ISummaryGenerationContext) => IApplicationProjectionSummary;
+        readonly summarize: (context: ISummaryGenerationContext) => IApplicationProjectionSummary | Promise<IApplicationProjectionSummary>;
+        readonly createSummary?: (context: ISummaryGenerationContext) => IApplicationProjectionSummary | undefined;
     };
     readonly fullTreePolicy?: "default" | "untilFirstAck" | "always";
 }

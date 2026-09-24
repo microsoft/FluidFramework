@@ -200,11 +200,22 @@ The [reference scenarios](../../../../packages/test/local-server-tests/src/test/
 The key remains application-selected; `applicationProjection` is a convention.
 The [discovery contract](../Application-Projections.md#projection-discovery) permits optional application-owned manifests and `AGENTS.md` without requiring either or interpreting their contents.
 
-The synchronous callback receives `ISummaryGenerationContext`: checkpoint, effective full-tree/tracking mode, and the
-exact accepted parent. It returns `IApplicationProjectionSummary`, containing a tree and optional proposal-specific
-`onAccepted` callback. Callbacks must not mutate the model, run asynchronous work, or start schema upgrades.
+The normal `summarize` callback receives `ISummaryGenerationContext`: checkpoint, effective full-tree/tracking mode,
+and the exact accepted parent. It returns `IApplicationProjectionSummary`, directly or asynchronously, containing
+a tree and optional proposal-specific synchronous `onAccepted` callback. The runtime awaits projection before upload.
+Callbacks must not mutate the model, emit operations, or start schema upgrades.
 Capture uses the summarizer's sequenced state while incoming processing is paused, not an interactive client's
-optimistic pending edits. The root callback also runs when unchanged native descendants reuse handles.
+optimistic pending edits. Asynchronous nested reads must remain at that same checkpoint; the pause does not freeze
+arbitrary application inputs. Direct runtime summary callers must maintain equivalent consistency themselves.
+The root callback also runs when unchanged native descendants reuse handles.
+
+The optional `createSummary` callback serves synchronous attachment and detached serialization.
+Required models must already be realized for that path. Omitting the callback or returning `undefined` omits the
+application root; an empty returned tree instead writes an empty root. There is no fallback to the async callback.
+The HTML reference registers its same synchronous capture implementation for both APIs.
+The unchanged loader/runtime APIs cannot reliably identify which synchronous purpose is calling, so no reason
+argument is added. Attached pending-state capture uses neither callback and still retains required snapshot/seed data.
+External seed creation is independent of these callbacks.
 
 `HtmlSummaryProjection` subscribes to each part's SharedTree subtree, the named-parts map, and document-root
 replacement. It checks local dirty counters **before traversing or serializing HTML**, and captures those counters with

@@ -3,7 +3,7 @@
 This document describes existing summary mechanisms and the changes added to support application projections.
 ContainerRuntime combines distributed data structure (DDS) subtrees, runtime metadata,
 and garbage-collection (GC) state into a summary.
-An application can also provide a callback that adds its own content, such as HTML, as another summary subtree.
+An application can also provide summary callbacks that add its own content, such as HTML, as another summary subtree.
 That content is an **application projection**; see [its callback contract](#application-projection-participation).
 
 ## Existing mechanisms and changes
@@ -113,18 +113,47 @@ The mechanism coordinates persistence and recovery; it does not introduce a new 
 
 ## Application projection participation
 
-`ISummaryGenerationOptions.additionalRootTree` registers a synchronous callback
-and the name of the application-provided summary subtree.
-The callback receives `ISummaryGenerationContext`,
+`ISummaryGenerationOptions.additionalRootTree` registers the name of the application-provided subtree
+and callbacks named after the corresponding ContainerRuntime summary APIs:
+
+| Callback | Called for | Result |
+| --- | --- | --- |
+| `summarize` | Normal asynchronous summary generation, including direct `runtime.summarize()` calls. | Required tree result, returned directly or through a promise. |
+| Optional `createSummary` | Synchronous attachment capture and detached-container serialization. | Synchronous tree result, or `undefined` to omit the subtree. |
+
+Both callbacks receive `ISummaryGenerationContext`,
 including the reference sequence number, effective full-tree/tracking policy, and exact accepted parent.
-It returns `IApplicationProjectionSummary`:
+Their tree result is `IApplicationProjectionSummary`:
 an opaque application-owned tree and an optional proposal-specific `onAccepted` callback.
 The runtime treats the subtree's content as opaque.
 
-Capture cannot mutate shared state or perform asynchronous work.
-The factory must realize required state before summary generation, including on summarizer clients.
+Normal generation awaits `summarize` before uploading or submitting the summary.
+It can asynchronously realize and serialize application components, but all reads must describe the same checkpoint
+as the DDS summary. Neither callback may mutate shared state, emit operations, or initiate schema changes.
+Normal submission holds its existing inbound-processing pause through projection generation.
+That pause does not freeze arbitrary application inputs or prevent local writes; asynchronous exporters must not
+mix revisions across awaits. Direct `runtime.summarize()` callers must provide equivalent consistency themselves.
+The runtime rejects projection results if the runtime closed, the sequenced checkpoint moved,
+or the accepted parent changed while the callback awaited.
+Required projection failures abort the attempt rather than publishing missing or stale content.
+Awaited work extends the summary pause, so prepare dependencies ahead of time where practical.
+Do not await incoming operations or acknowledgments while processing is paused.
+Cancellation is checked after application work settles; existing summary timeouts do not cancel the callback's promise.
+The callback must arrange for its own I/O to complete or reject.
+
+`createSummary` never calls or falls back to `summarize`. Its dependencies must already be realized.
+An omitted callback or explicit `undefined` omits the root entirely; an empty tree writes an empty root instead.
+An application using omission can attach an ordinary DDS-backed file without a readable projection;
+a subsequent accepted normal summary supplies it. External seed creation is independent and still supplies its own seed.
+
+No synchronous reason argument is exposed: the existing runtime API does not reliably distinguish attachment
+from detached serialization, and these existing APIs are unchanged.
+Attached `getPendingLocalState()` does not call either projection callback. Omitting a new projection does not
+remove projection blobs or seed dependencies already retained in the pending snapshot.
+
 Acceptance promotes state captured for that proposal, not current mutable state.
-The callback still runs when data-store or DDS subtrees reuse handles;
+`onAccepted` remains synchronous and is never invoked for attachment or direct summaries.
+The normal callback still runs when data-store or DDS subtrees reuse handles;
 full output or a missing valid parent prohibits application handles.
 
 See the [application projection design][application-design] for one consumer of this contract.

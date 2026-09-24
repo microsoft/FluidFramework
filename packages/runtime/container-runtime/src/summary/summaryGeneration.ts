@@ -54,8 +54,10 @@ interface ISummaryGenerationHost {
 	refreshGC(result: IRefreshSummaryResult, proposalHandle: string): Promise<void>;
 	/** Fetch a newer untracked summary and apply the runtime's existing close/retry behavior. */
 	handleUntrackedSummary(options: IRefreshSummaryAckOptions): Promise<void>;
-	/** Reject promotion if the runtime closed while asynchronous refresh was pending. */
+	/** Reject generation or promotion if the runtime closed during asynchronous work. */
 	verifyNotClosed(): void;
+	/** Detect checkpoint movement while an application projection awaits. */
+	getReferenceSequenceNumber(): number;
 	/** Close the runtime when partially completed acceptance cannot be rolled back. */
 	close(error: UsageError): void;
 }
@@ -94,6 +96,15 @@ export function captureSummaryGenerationOptions(
 			key in Object.prototype)
 	) {
 		throw new UsageError("Invalid or reserved additional summary root key");
+	}
+	const projection = captured.additionalRootTree;
+	if (
+		projection !== undefined &&
+		(typeof projection.summarize !== "function" ||
+			(projection.createSummary !== undefined &&
+				typeof projection.createSummary !== "function"))
+	) {
+		throw new UsageError("Invalid additional summary callbacks");
 	}
 	return captured;
 }
@@ -175,46 +186,84 @@ export class SummaryGenerationController {
 	}
 
 	/**
-	 * Add opaque application content and capture its acceptance callback for this generated tree.
-	 * Direct and attach summaries do not retain proposal state; invalid results fail before upload.
+	 * Capture optional application content synchronously for attachment or detached serialization.
 	 */
-	public addAdditionalRootTreeToSummary(
+	public createSummary(
 		summaryTree: ISummaryTreeWithStats,
 		context: ISummaryGenerationContext,
-		isSummaryInProgress: boolean,
 	): void {
-		const additionalRootTree = this.options?.additionalRootTree;
-		if (additionalRootTree === undefined) {
-			if (context.trackState && isSummaryInProgress) {
-				this.generatedSummaryStates.set(summaryTree.summary, {
-					context,
-					onAccepted: undefined,
-				});
-			}
-			return;
-		}
-		const { key, summarize } = additionalRootTree;
-		if (key in summaryTree.summary.tree) {
-			throw new UsageError("Additional summary root key collides with a native root entry");
-		}
-		const result = summarize(context);
+		const projection = this.options?.additionalRootTree;
+		if (projection?.createSummary === undefined) return;
+		this.verifyRootKeyAvailable(summaryTree.summary, projection.key);
+		const result = projection.createSummary(context);
 		if (isPromiseLike(result)) {
 			// Observe a rejected asynchronous result as well as rejecting the unsupported return shape.
 			Promise.resolve(result).catch(() => {});
 			throw new UsageError(
-				"Additional summary root callback must synchronously return a tree result",
+				"Additional summary createSummary callback must synchronously return a tree result",
 			);
 		}
+		if (result !== undefined) {
+			this.addAdditionalRootTreeToSummary(summaryTree, projection.key, context, result);
+		}
+	}
+
+	/**
+	 * Await normal projection generation and retain only this attempt's acceptance state.
+	 * Submission owns the inbound pause; direct callers must keep their model stable across awaits.
+	 */
+	public async summarize(
+		summaryTree: ISummaryTreeWithStats,
+		context: ISummaryGenerationContext,
+		isSummaryInProgress: boolean,
+	): Promise<void> {
+		const projection = this.options?.additionalRootTree;
+		let onAccepted: IApplicationProjectionSummary["onAccepted"];
+		if (projection !== undefined) {
+			this.verifyRootKeyAvailable(summaryTree.summary, projection.key);
+			const result = await projection.summarize(context);
+			this.host.verifyNotClosed();
+			this.shouldProduceFullSummary(context.fullTree);
+			if (
+				context.referenceSequenceNumber !== this.host.getReferenceSequenceNumber() ||
+				context.previousSummary !== this.previousSummary
+			) {
+				throw new UsageError(
+					"Summary checkpoint or parent changed during application projection",
+				);
+			}
+			onAccepted = this.addAdditionalRootTreeToSummary(
+				summaryTree,
+				projection.key,
+				context,
+				result,
+			);
+		}
+		if (context.trackState && isSummaryInProgress) {
+			this.generatedSummaryStates.set(summaryTree.summary, { context, onAccepted });
+		}
+	}
+
+	/** Reject future native-key collisions before invoking application code. */
+	private verifyRootKeyAvailable(summary: ISummaryTree, key: string): void {
+		if (key in summary.tree) {
+			throw new UsageError("Additional summary root key collides with a native root entry");
+		}
+	}
+
+	/** Validate and insert an application tree identically on both generation paths. */
+	private addAdditionalRootTreeToSummary(
+		summaryTree: ISummaryTreeWithStats,
+		key: string,
+		context: ISummaryGenerationContext,
+		result: IApplicationProjectionSummary,
+	): IApplicationProjectionSummary["onAccepted"] {
 		if (isPromiseLike(result?.summary)) {
 			Promise.resolve(result.summary).catch(() => {});
-			throw new UsageError(
-				"Additional summary root callback must synchronously return a tree result",
-			);
+			throw new UsageError("Additional summary callback must return a tree result");
 		}
 		if (result?.summary?.type !== SummaryType.Tree) {
-			throw new UsageError(
-				"Additional summary root callback must synchronously return a tree result",
-			);
+			throw new UsageError("Additional summary callback must return a tree result");
 		}
 		const onAccepted = result.onAccepted;
 		if (onAccepted !== undefined && typeof onAccepted !== "function") {
@@ -231,9 +280,7 @@ export class SummaryGenerationController {
 			);
 		}
 		addSummarizeResultToSummary(summaryTree, key, { summary, stats });
-		if (context.trackState && isSummaryInProgress) {
-			this.generatedSummaryStates.set(summaryTree.summary, { context, onAccepted });
-		}
+		return onAccepted;
 	}
 
 	/**

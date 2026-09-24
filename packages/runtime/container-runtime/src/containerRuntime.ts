@@ -1880,6 +1880,7 @@ export class ContainerRuntime
 				handleUntrackedSummary: async ({ summaryRefSeq, ackHandle, summaryLogger }) =>
 					this.fetchLatestSnapshotAndMaybeClose(summaryRefSeq, ackHandle, summaryLogger),
 				verifyNotClosed: () => this.verifyNotClosed(),
+				getReferenceSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 				close: (error) => this.closeFn(error),
 			},
 		);
@@ -4355,7 +4356,7 @@ export class ContainerRuntime
 			false /* trackState */,
 			telemetryContext,
 		);
-		this.summaryGeneration.addAdditionalRootTreeToSummary(
+		this.summaryGeneration.createSummary(
 			summarizeResult,
 			Object.freeze({
 				fullTree: true,
@@ -4363,7 +4364,6 @@ export class ContainerRuntime
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				previousSummary: undefined,
 			}),
-			false,
 		);
 		return summarizeResult.summary;
 	}
@@ -4397,7 +4397,7 @@ export class ContainerRuntime
 		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
-		this.summaryGeneration.addAdditionalRootTreeToSummary(
+		await this.summaryGeneration.summarize(
 			summarizeResult,
 			Object.freeze({
 				fullTree,

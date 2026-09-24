@@ -229,6 +229,13 @@ export function sampleRuntimeFactory(
 			): IApplicationProjectionSummary => {
 				throw new Error("Projection tree must be realized before summarization");
 			};
+			const captureProjection = (
+				context: ISummaryGenerationContext,
+			): IApplicationProjectionSummary => {
+				options.beforeProjection?.(load.context.deltaManager.lastSequenceNumber);
+				options.observeSummary?.(context);
+				return summarizeProjection(context);
+			};
 			const runtime = await loadContainerRuntime({
 				context: load.context,
 				existing,
@@ -253,11 +260,8 @@ export function sampleRuntimeFactory(
 					fullTreePolicy: load.projected ? "untilFirstAck" : "default",
 					additionalRootTree: {
 						key: projectionLayout.key,
-						summarize: (context) => {
-							options.beforeProjection?.(load.context.deltaManager.lastSequenceNumber);
-							options.observeSummary?.(context);
-							return summarizeProjection(context);
-						},
+						createSummary: captureProjection,
+						summarize: captureProjection,
 					},
 				},
 			});

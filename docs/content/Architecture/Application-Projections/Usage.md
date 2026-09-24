@@ -173,8 +173,11 @@ accepted summaries.
 3. **Implement seed detection and reading.** Supply the projector operations used by `seedRuntimeFactory()`:
    `isNative`, `readSeed`, and `materialize`. Preserve source identity/checkpoint and retain required bytes for restore.
    Let ordinary loading process the operation suffix; do not replay it inside your converter.
-4. **Wire your native runtime factory.** Realize everything required for read-only projection before the factory
-   returns. Use `fullTreePolicy: "untilFirstAck"` for projected loads, and register an `additionalRootTree` summary participant.
+4. **Wire your native runtime factory.** Use `fullTreePolicy: "untilFirstAck"` for projected loads, and register
+   `additionalRootTree.summarize` for normal summaries. It may await read-only realization and serialization, but
+   every read must describe the summary's checkpoint. Optionally register `createSummary` for synchronous attachment
+   and detached serialization; that path needs already-realized state. Omitting it, or returning `undefined`,
+   leaves out the readable projection on those synchronous paths without affecting external seed creation.
 5. **Map model regions to projection parts.** Track dirtiness before encoding. Produce a complete tree when required;
    otherwise reuse unchanged parts only against the exact accepted parent supplied by the runtime. Promote captured
    revisions in `onAccepted`, not immediately after generation or upload.

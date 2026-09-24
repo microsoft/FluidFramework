@@ -70,21 +70,43 @@ export interface ISummaryGenerationOptions {
 		 */
 		readonly key: string;
 		/**
-		 * Synchronously read the state being summarized and return its additional tree and optional acceptance callback.
+		 * Read the state being summarized and return its additional tree and optional acceptance callback.
 		 * The returned tree may specify a `groupId`. Its statistics are calculated by the runtime.
 		 *
 		 * @remarks
-		 * Called on every attach/detached summary and every normal summary attempt,
-		 * even when unchanged descendants are represented by handles. Throwing aborts the attempt.
+		 * Called by normal asynchronous summarization, even when unchanged descendants are represented by handles.
+		 * The runtime awaits the result. Throwing, rejecting, or returning an invalid result aborts the attempt;
+		 * this callback cannot omit the projection.
 		 *
 		 * This callback must only read state from this runtime at the reference sequence number being summarized.
-		 * It must not mutate state, emit ops, or perform asynchronous work.
-		 * The current contract also serves synchronous attach summarization, so the factory must realize all required data
-		 * before generation on both interactive and summarizer runtimes.
+		 * It may asynchronously realize and serialize state, but must not mutate the document, emit ops, or read
+		 * later revisions across awaits. Normal summary submission pauses inbound processing through generation;
+		 * direct summarize callers must provide equivalent checkpoint consistency themselves.
+		 * Do not await incoming operations or acknowledgments: their processing is paused.
+		 * Cancellation is checked after this work settles, so the callback must complete or reject its own I/O.
 		 * Return a fresh tree whose contents will not subsequently be mutated.
 		 * Reuse handles only when `fullTree` is false and the captured application state belongs to `context.previousSummary`.
 		 * Newly loaded application revisions are not automatically comparable to revisions captured by a previous runtime instance.
 		 */
-		readonly summarize: (context: ISummaryGenerationContext) => IApplicationProjectionSummary;
+		readonly summarize: (
+			context: ISummaryGenerationContext,
+		) => IApplicationProjectionSummary | Promise<IApplicationProjectionSummary>;
+		/**
+		 * Synchronously read state for ContainerRuntime.createSummary during attachment or detached serialization.
+		 *
+		 * @remarks
+		 * Optional: omitting this callback or returning `undefined` omits the application subtree on these paths.
+		 * Returning an empty tree instead writes an empty subtree. The runtime never falls back to `summarize`.
+		 * All required state must already be realized; this callback must not mutate the document, emit ops,
+		 * or return a promise. Returned trees follow the same ownership and validation rules as `summarize`,
+		 * but always require full output without previous-summary handles. Their `onAccepted` callback is not called.
+		 *
+		 * The existing runtime API does not distinguish attachment from detached serialization, so no reason
+		 * is supplied. Attached pending-state capture does not call this API; omission does not strip projections
+		 * or required seed content from an existing pending-state snapshot.
+		 */
+		readonly createSummary?: (
+			context: ISummaryGenerationContext,
+		) => IApplicationProjectionSummary | undefined;
 	};
 }

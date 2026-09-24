@@ -10,6 +10,7 @@ import type {
 	IContainerContext,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
+import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
 	SummaryType,
@@ -48,9 +49,9 @@ import { SummarizerNode } from "../summary/summarizerNode/summarizerNode.js";
 
 /**
  * Verify factory-supplied summary controls independently of application seed loading: unconditional
- * full trees, transition to incremental generation after coordinated acceptance, and synchronous
- * application content beside .channels. Check parent correspondence, retry/late-ACK capture,
- * load-time option capture, placement/group IDs/statistics, and failure-before-upload/retry.
+ * full trees, transition to incremental generation after coordinated acceptance, and application
+ * content beside .channels through separate async and synchronous callbacks. Check parent correspondence,
+ * retry/late-ACK capture, load-time option capture, placement/group IDs/statistics, and failure-before-upload/retry.
  */
 describe("Runtime summary generation options", () => {
 	let sandbox: Sinon.SinonSandbox;
@@ -207,7 +208,7 @@ describe("Runtime summary generation options", () => {
 			fullTreePolicy: "untilFirstAck",
 			additionalRootTree: {
 				key: "application",
-				summarize: (context) => {
+				summarize: async (context) => {
 					contexts.push(context);
 					return {
 						summary: additionalTree(),
@@ -416,12 +417,23 @@ describe("Runtime summary generation options", () => {
 	it("promotes the matching proposal after a later attempt and untracked generation", async () => {
 		let revision = 1;
 		const promoted: { revision: number; parent: ISummaryContext }[] = [];
+		const started = new Deferred<void>();
+		const releaseProjection = new Deferred<void>();
+		const attachAccepted = sandbox.spy();
 		const fixture = await createRuntime({
 			fullTreePolicy: "untilFirstAck",
 			additionalRootTree: {
 				key: "application",
-				summarize: () => {
+				createSummary: () => ({
+					summary: additionalTree("attach"),
+					onAccepted: attachAccepted,
+				}),
+				summarize: async () => {
 					const capturedRevision = revision;
+					if (capturedRevision === 1) {
+						started.resolve();
+						await releaseProjection.promise;
+					}
 					return {
 						summary: additionalTree(String(capturedRevision)),
 						onAccepted: (parent) => {
@@ -433,8 +445,11 @@ describe("Runtime summary generation options", () => {
 		});
 		fixture.uploadSummary.onFirstCall().resolves("first");
 		fixture.uploadSummary.onSecondCall().resolves("second");
-		await submit(fixture);
+		const firstAttempt = submit(fixture);
+		await started.promise;
 		revision = 2;
+		releaseProjection.resolve();
+		await firstAttempt;
 		assert(fixture.deltaManager.lastMessage !== undefined);
 		fixture.deltaManager.lastSequenceNumber = 1;
 		fixture.deltaManager.lastMessage = {
@@ -444,11 +459,19 @@ describe("Runtime summary generation options", () => {
 		await submit(fixture);
 		revision = 3;
 		await fixture.runtime.summarize(untrackedSummary);
+		fixture.runtime.createSummary();
+		assert.equal(promoted.length, 0);
 		await accept(fixture, "first", 0);
-		assert.deepEqual(
-			promoted.map((entry) => entry.revision),
-			[1],
-		);
+		assert.deepEqual(promoted, [
+			{
+				revision: 1,
+				parent: {
+					proposalHandle: "first",
+					ackHandle: "ack-first",
+					referenceSequenceNumber: 0,
+				},
+			},
+		]);
 		await accept(fixture, "first", 0);
 		assert.equal(promoted.length, 1);
 		await accept(fixture, "second");
@@ -456,6 +479,12 @@ describe("Runtime summary generation options", () => {
 			promoted.map((entry) => entry.revision),
 			[1, 2],
 		);
+		assert.deepEqual(promoted[1].parent, {
+			proposalHandle: "second",
+			ackHandle: "ack-second",
+			referenceSequenceNumber: 1,
+		});
+		assert.equal(attachAccepted.callCount, 0);
 	});
 
 	// Both unconditional load-time policy and an individual fullTree request continue to override incremental reuse.
@@ -475,15 +504,19 @@ describe("Runtime summary generation options", () => {
 	// The loaded parent checkpoint is stable as ops advance; attach has no prior summary against which to reuse.
 	it("reports effective generation context and the original loaded parent", async () => {
 		const contexts: ISummaryGenerationContext[] = [];
+		const recordContext = (
+			context: ISummaryGenerationContext,
+		): IApplicationProjectionSummary => {
+			contexts.push(context);
+			return { summary: additionalTree() };
+		};
 		const fixture = await createRuntime(
 			{
 				fullTreePolicy: "untilFirstAck",
 				additionalRootTree: {
 					key: "application",
-					summarize: (context) => {
-						contexts.push(context);
-						return { summary: additionalTree() };
-					},
+					summarize: recordContext,
+					createSummary: recordContext,
 				},
 			},
 			AttachState.Attached,
@@ -566,12 +599,17 @@ describe("Runtime summary generation options", () => {
 	it("retains the load-time policy and registration even if the input object changes", async () => {
 		const channels = sandbox.spy(ChannelCollection.prototype, "summarize");
 		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+		const createSummary = sandbox.spy(() => ({ summary: additionalTree("attach") }));
 		const options: {
 			fullTreePolicy: ISummaryGenerationOptions["fullTreePolicy"];
-			additionalRootTree: { key: string; summarize: () => IApplicationProjectionSummary };
+			additionalRootTree: {
+				key: string;
+				summarize: () => IApplicationProjectionSummary;
+				createSummary: () => IApplicationProjectionSummary;
+			};
 		} = {
 			fullTreePolicy: "always",
-			additionalRootTree: { key: "application", summarize },
+			additionalRootTree: { key: "application", summarize, createSummary },
 		};
 		const { runtime } = await createRuntime(options);
 		options.fullTreePolicy = "default";
@@ -579,9 +617,12 @@ describe("Runtime summary generation options", () => {
 		options.additionalRootTree.summarize = sandbox.spy(() => {
 			throw new Error("Replacement must not be called");
 		});
+		options.additionalRootTree.createSummary = options.additionalRootTree.summarize;
+		assert.deepEqual(runtime.createSummary().tree.application, additionalTree("attach"));
 		const { summary } = await runtime.summarize(untrackedSummary);
 		assert.equal(channels.lastCall.args[0], true);
 		assert.equal(summarize.callCount, 1);
+		assert.equal(createSummary.callCount, 1);
 		assert.deepEqual(summary.tree.application, additionalTree());
 	});
 
@@ -630,6 +671,51 @@ describe("Runtime summary generation options", () => {
 		assert.equal(summary.tree.application, undefined);
 	});
 
+	for (const attachState of [AttachState.Attached, AttachState.Detached]) {
+		for (const provideCreateSummary of [false, true]) {
+			it(`omits the sync root without falling back to summarize (${attachState}, callback ${provideCreateSummary})`, async () => {
+				const summarize = sandbox.spy(async () => ({ summary: additionalTree() }));
+				const createSummary = sandbox.spy(() => undefined);
+				const { runtime } = await createRuntime(
+					{
+						additionalRootTree: {
+							key: "application",
+							summarize,
+							...(provideCreateSummary ? { createSummary } : {}),
+						},
+					},
+					attachState,
+				);
+				assert.equal(Object.hasOwn(runtime.createSummary().tree, "application"), false);
+				assert.equal(summarize.callCount, 0);
+				assert.equal(createSummary.callCount, provideCreateSummary ? 1 : 0);
+				const { summary } = await runtime.summarize(untrackedSummary);
+				assert.deepEqual(summary.tree.application, additionalTree());
+				assert.equal(summarize.callCount, 1);
+				assert.equal(createSummary.callCount, provideCreateSummary ? 1 : 0);
+			});
+		}
+	}
+
+	it("preserves an explicitly empty sync tree instead of omitting its root", async () => {
+		const emptyTree: ISummaryTree = { type: SummaryType.Tree, tree: {} };
+		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+		const { runtime } = await createRuntime(
+			{
+				additionalRootTree: {
+					key: "application",
+					summarize,
+					createSummary: () => ({ summary: emptyTree }),
+				},
+			},
+			AttachState.Detached,
+		);
+		const summary = runtime.createSummary();
+		assert.equal(Object.hasOwn(summary.tree, "application"), true);
+		assert.deepEqual(summary.tree.application, emptyTree);
+		assert.equal(summarize.callCount, 0);
+	});
+
 	for (const cleanupMethod of ["isSummaryInProgress", "clearSummary"]) {
 		it(`emits summary telemetry when ${cleanupMethod} throws during cleanup`, async () => {
 			const { runtime } = await createRuntime();
@@ -673,6 +759,7 @@ describe("Runtime summary generation options", () => {
 				additionalRootTree: {
 					key: "readerContent",
 					summarize: () => ({ summary: createProjection() }),
+					createSummary: () => ({ summary: createProjection() }),
 				},
 			});
 			const attached = runtime.createSummary();
@@ -685,11 +772,14 @@ describe("Runtime summary generation options", () => {
 	}
 
 	// Each summary must get a fresh checkpoint-specific root sibling, not a one-time or DDS-nested projection.
-	it("calls the callback synchronously for every attach and normal summary, preserving groupId", async () => {
+	it("routes each attach and normal summary to its own callback, preserving groupId", async () => {
 		let checkpoint = 0;
 		const summarize = sandbox.spy(() => ({ summary: additionalTree(String(++checkpoint)) }));
+		const createSummary = sandbox.spy(() => ({
+			summary: additionalTree(String(++checkpoint)),
+		}));
 		const { runtime } = await createRuntime(
-			{ additionalRootTree: { key: "application", summarize } },
+			{ additionalRootTree: { key: "application", summarize, createSummary } },
 			AttachState.Detached,
 		);
 		for (let attempt = 1; attempt <= 4; attempt++) {
@@ -700,7 +790,8 @@ describe("Runtime summary generation options", () => {
 				const result = await runtime.summarize(untrackedSummary);
 				summary = result.summary;
 			}
-			assert.equal(summarize.callCount, attempt);
+			assert.equal(createSummary.callCount, Math.min(attempt, 2));
+			assert.equal(summarize.callCount, Math.max(attempt - 2, 0));
 			assert.deepEqual(summary.tree.application, additionalTree(String(attempt)));
 			const channels: SummaryObject | undefined = summary.tree[".channels"];
 			assert(channels?.type === SummaryType.Tree);
@@ -739,16 +830,37 @@ describe("Runtime summary generation options", () => {
 	});
 
 	// Summary accounting must include all projection descendants and actual encoded byte lengths.
-	it("accounts for nested trees and both UTF-8 and binary blob sizes", async () => {
+	it("awaits the normal projection and accounts for nested trees and UTF-8 and binary blobs", async () => {
+		const started = new Deferred<void>();
+		const releaseProjection = new Deferred<void>();
 		const subtree = additionalTree("checkpoint \u{1F30D}");
 		subtree.tree.nested = {
 			type: SummaryType.Tree,
 			tree: { binary: { type: SummaryType.Blob, content: new Uint8Array([1, 2, 3]) } },
 		};
+		const createSummary = sandbox.spy(() => ({ summary: additionalTree("sync only") }));
 		const { runtime } = await createRuntime({
-			additionalRootTree: { key: "application", summarize: () => ({ summary: subtree }) },
+			additionalRootTree: {
+				key: "application",
+				createSummary,
+				summarize: async () => {
+					started.resolve();
+					await releaseProjection.promise;
+					return { summary: subtree };
+				},
+			},
 		});
-		const { summary, stats } = await runtime.summarize(untrackedSummary);
+		let completed = false;
+		const generation = runtime.summarize(untrackedSummary).then((result) => {
+			completed = true;
+			return result;
+		});
+		await started.promise;
+		assert.equal(completed, false);
+		assert.equal(createSummary.callCount, 0);
+		releaseProjection.resolve();
+		const { summary, stats } = await generation;
+		assert.deepEqual(summary.tree.application, subtree);
 		assert.deepEqual(stats, calculateStats(summary));
 		assert.deepEqual(calculateStats(subtree), {
 			treeNodeCount: 2,
@@ -757,6 +869,270 @@ describe("Runtime summary generation options", () => {
 			totalBlobSize: 18,
 			unreferencedBlobSize: 0,
 		});
+	});
+
+	it("awaits a deferred projection before upload and submission and includes its statistics", async () => {
+		const started = new Deferred<void>();
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const onAccepted = sandbox.spy();
+		const createSummary = sandbox.spy(() => ({ summary: additionalTree("sync only") }));
+		const fixture = await createRuntime({
+			additionalRootTree: {
+				key: "application",
+				createSummary,
+				summarize: async () => {
+					started.resolve();
+					return projection.promise;
+				},
+			},
+		});
+		const pending = submit(fixture);
+		await started.promise;
+		assert.equal(fixture.uploadSummary.callCount, 0);
+		assert.equal(fixture.submitSummary.callCount, 0);
+		assert.equal(createSummary.callCount, 0);
+		assert.equal(onAccepted.callCount, 0);
+		projection.resolve({ summary: additionalTree("resolved projection"), onAccepted });
+		const result = await pending;
+		assert.deepEqual(
+			fixture.uploadSummary.firstCall.args[0].tree.application,
+			additionalTree("resolved projection"),
+		);
+		const expectedStats = calculateStats(result.summaryTree);
+		assert.equal(result.summaryStats.treeNodeCount, expectedStats.treeNodeCount);
+		assert.equal(result.summaryStats.blobNodeCount, expectedStats.blobNodeCount);
+		assert.equal(result.summaryStats.totalBlobSize, expectedStats.totalBlobSize);
+		assert.equal(fixture.uploadSummary.callCount, 1);
+		assert.equal(fixture.submitSummary.callCount, 1);
+		assert.equal(createSummary.callCount, 0);
+		assert.equal(onAccepted.callCount, 0);
+		await accept(fixture, "summary-handle");
+		assert.equal(onAccepted.callCount, 1);
+		assert.deepEqual(onAccepted.firstCall.args, [
+			{
+				proposalHandle: "summary-handle",
+				ackHandle: "ack-summary-handle",
+				referenceSequenceNumber: 0,
+			},
+		]);
+	});
+
+	it("rejects a projection if its reference sequence advances while awaiting application work", async () => {
+		const started = new Deferred<void>();
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const onAccepted = sandbox.spy();
+		const fixture = await createRuntime({
+			additionalRootTree: {
+				key: "application",
+				summarize: async () => {
+					started.resolve();
+					return projection.promise;
+				},
+			},
+		});
+		const pending = fixture.runtime.submitSummary({
+			summaryLogger: fixture.logger,
+			cancellationToken: neverCancelledSummaryToken,
+			latestSummaryRefSeqNum: 0,
+		});
+		await started.promise;
+		assert(fixture.deltaManager.lastMessage !== undefined);
+		fixture.deltaManager.lastSequenceNumber = 1;
+		fixture.deltaManager.lastMessage = {
+			...fixture.deltaManager.lastMessage,
+			sequenceNumber: 1,
+		};
+		projection.resolve({ summary: additionalTree(), onAccepted });
+		const result = await pending;
+		assert.equal(result.stage, "base");
+		assert.match(
+			result.error?.message ?? "",
+			/Summary checkpoint or parent changed during application projection/,
+		);
+		assert.equal(fixture.uploadSummary.callCount, 0);
+		assert.equal(fixture.submitSummary.callCount, 0);
+		assert.equal(onAccepted.callCount, 0);
+	});
+
+	it("rejects a projection if the runtime is disposed while awaiting application work", async () => {
+		const started = new Deferred<void>();
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const onAccepted = sandbox.spy();
+		const fixture = await createRuntime({
+			additionalRootTree: {
+				key: "application",
+				summarize: async () => {
+					started.resolve();
+					return projection.promise;
+				},
+			},
+		});
+		const pending = fixture.runtime.summarize(untrackedSummary);
+		await started.promise;
+		fixture.runtime.dispose();
+		projection.resolve({ summary: additionalTree(), onAccepted });
+		await assert.rejects(pending);
+		assert.equal(fixture.uploadSummary.callCount, 0);
+		assert.equal(fixture.submitSummary.callCount, 0);
+		assert.equal(onAccepted.callCount, 0);
+	});
+
+	it("rejects a projection if its parent is accepted while awaiting application work", async () => {
+		const started = new Deferred<void>();
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const accepted = sandbox.spy();
+		const staleAccepted = sandbox.spy();
+		const contexts: ISummaryGenerationContext[] = [];
+		const fixture = await createRuntime({
+			fullTreePolicy: "untilFirstAck",
+			additionalRootTree: {
+				key: "application",
+				summarize: (
+					context,
+				): IApplicationProjectionSummary | Promise<IApplicationProjectionSummary> => {
+					contexts.push(context);
+					if (contexts.length === 2) {
+						started.resolve();
+						return projection.promise;
+					}
+					return { summary: additionalTree(), onAccepted: accepted };
+				},
+			},
+		});
+		await submit(fixture);
+		const pending = fixture.runtime.summarize(untrackedSummary);
+		await started.promise;
+		assert.equal(contexts[1].previousSummary, undefined);
+		await accept(fixture, "summary-handle");
+		assert.equal(accepted.callCount, 1);
+		assert.equal(fixture.deltaManager.lastSequenceNumber, contexts[1].referenceSequenceNumber);
+		projection.resolve({ summary: additionalTree("stale"), onAccepted: staleAccepted });
+		await assert.rejects(
+			pending,
+			/Summary checkpoint or parent changed during application projection/,
+		);
+		assert.equal(fixture.uploadSummary.callCount, 1);
+		assert.equal(fixture.submitSummary.callCount, 1);
+		assert.equal(staleAccepted.callCount, 0);
+		await fixture.runtime.summarize(untrackedSummary);
+		assert.equal(contexts[2].previousSummary, accepted.firstCall.args[0]);
+	});
+
+	it("rejects a deferred projection that resumes during native summary acceptance", async () => {
+		const projectionStarted = new Deferred<void>();
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const acceptanceStarted = new Deferred<void>();
+		const releaseAcceptance = new Deferred<void>();
+		const refreshGC = GarbageCollector.prototype.refreshLatestSummary;
+		sandbox.stub(GarbageCollector.prototype, "refreshLatestSummary").callsFake(async function (
+			this: GarbageCollector,
+			...args
+		) {
+			acceptanceStarted.resolve();
+			await releaseAcceptance.promise;
+			return refreshGC.apply(this, args);
+		});
+		let attempts = 0;
+		const accepted = sandbox.spy();
+		const staleAccepted = sandbox.spy();
+		const fixture = await createRuntime({
+			fullTreePolicy: "untilFirstAck",
+			additionalRootTree: {
+				key: "application",
+				summarize: ():
+					| IApplicationProjectionSummary
+					| Promise<IApplicationProjectionSummary> => {
+					if (++attempts === 2) {
+						projectionStarted.resolve();
+						return projection.promise;
+					}
+					return { summary: additionalTree(), onAccepted: accepted };
+				},
+			},
+		});
+		await submit(fixture);
+		const pending = fixture.runtime.summarize(untrackedSummary);
+		await projectionStarted.promise;
+		const acceptance = accept(fixture, "summary-handle");
+		await acceptanceStarted.promise;
+		projection.resolve({ summary: additionalTree("stale"), onAccepted: staleAccepted });
+		await assert.rejects(pending, /during summary acceptance/);
+		assert.equal(accepted.callCount, 0);
+		assert.equal(staleAccepted.callCount, 0);
+		releaseAcceptance.resolve();
+		await acceptance;
+		assert.equal(accepted.callCount, 1);
+		assert.equal(staleAccepted.callCount, 0);
+	});
+
+	it("does not upload a projection when submission is cancelled during application work", async () => {
+		const started = new Deferred<void>();
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const onAccepted = sandbox.spy();
+		const fixture = await createRuntime({
+			additionalRootTree: {
+				key: "application",
+				summarize: async () => {
+					started.resolve();
+					return projection.promise;
+				},
+			},
+		});
+		const cancellation = new Deferred<SummarizerStopReason>();
+		const cancellationToken = { cancelled: false, waitCancelled: cancellation.promise };
+		const pending = fixture.runtime.submitSummary({
+			summaryLogger: fixture.logger,
+			cancellationToken,
+			latestSummaryRefSeqNum: 0,
+		});
+		await started.promise;
+		cancellationToken.cancelled = true;
+		cancellation.resolve("parentNotConnected");
+		projection.resolve({ summary: additionalTree(), onAccepted });
+		const result = await pending;
+		assert.notEqual(result.stage, "submit");
+		assert.equal(fixture.uploadSummary.callCount, 0);
+		assert.equal(fixture.submitSummary.callCount, 0);
+		assert.equal(onAccepted.callCount, 0);
+	});
+
+	it("rejects a missing normal projection callback at load time", async () => {
+		await assert.rejects(
+			createRuntime({
+				// @ts-expect-error -- JavaScript callers must still provide summarize.
+				additionalRootTree: { key: "application", createSummary: () => undefined },
+			}),
+			/Invalid additional summary callbacks/,
+		);
+	});
+
+	it("rejects a non-function normal projection callback at load time", async () => {
+		await assert.rejects(
+			createRuntime({
+				additionalRootTree: {
+					key: "application",
+					// @ts-expect-error -- Validate the runtime boundary for JavaScript callers.
+					summarize: true,
+				},
+			}),
+			/Invalid additional summary callbacks/,
+		);
+	});
+
+	it("rejects a non-function optional sync callback without invoking summarize", async () => {
+		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+		await assert.rejects(
+			createRuntime({
+				additionalRootTree: {
+					key: "application",
+					summarize,
+					// @ts-expect-error -- An optional callback may be omitted, not malformed.
+					createSummary: true,
+				},
+			}),
+			/Invalid additional summary callbacks/,
+		);
+		assert.equal(summarize.callCount, 0);
 	});
 
 	for (const key of [
@@ -808,8 +1184,9 @@ describe("Runtime summary generation options", () => {
 				addBlobToSummary(summary, "application", "native");
 			});
 		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+		const createSummary = sandbox.spy(() => ({ summary: additionalTree() }));
 		const { runtime } = await createRuntime({
-			additionalRootTree: { key: "application", summarize },
+			additionalRootTree: { key: "application", summarize, createSummary },
 		});
 		assert.throws(() => runtime.createSummary(), /collides with a native root entry/);
 		await assert.rejects(
@@ -818,6 +1195,7 @@ describe("Runtime summary generation options", () => {
 		);
 		assert.equal(nativeState.callCount, 2);
 		assert.equal(summarize.callCount, 0);
+		assert.equal(createSummary.callCount, 0);
 	});
 
 	// Neither summary entry point may swallow a failed projection or return success with missing app content.
@@ -827,6 +1205,9 @@ describe("Runtime summary generation options", () => {
 			additionalRootTree: {
 				key: "application",
 				summarize: () => {
+					throw failure;
+				},
+				createSummary: () => {
 					throw failure;
 				},
 			},
@@ -839,87 +1220,224 @@ describe("Runtime summary generation options", () => {
 	});
 
 	// A projection error must abort before upload/submission; retry must run the callback again rather than reuse it.
-	it("does not upload a failed callback's summary, and invokes it again on retry", async () => {
+	it("does not upload a rejected deferred projection and invokes summarize again on retry", async () => {
 		let attempts = 0;
-		const { runtime, logger, uploadSummary, submitSummary } = await createRuntime({
+		const started = new Deferred<void>();
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const onAccepted = sandbox.spy();
+		const createSummary = sandbox.spy(() => ({ summary: additionalTree("sync only") }));
+		const fixture = await createRuntime({
 			additionalRootTree: {
 				key: "application",
-				summarize: () => {
+				createSummary,
+				summarize: async () => {
 					if (++attempts === 1) {
-						throw new Error("Cannot read checkpoint");
+						started.resolve();
+						return projection.promise;
 					}
-					return { summary: additionalTree() };
+					return { summary: additionalTree("retried"), onAccepted };
 				},
 			},
 		});
 		const options = {
-			summaryLogger: logger,
+			summaryLogger: fixture.logger,
 			cancellationToken: neverCancelledSummaryToken,
 			latestSummaryRefSeqNum: 0,
 		};
-		const failed = await runtime.submitSummary(options);
+		const pending = fixture.runtime.submitSummary(options);
+		await started.promise;
+		assert.equal(fixture.uploadSummary.callCount, 0);
+		assert.equal(fixture.submitSummary.callCount, 0);
+		projection.reject(new Error("Cannot read checkpoint"));
+		const failed = await pending;
 		assert.equal(failed.stage, "base");
 		assert.match(failed.error?.message ?? "", /Cannot read checkpoint/);
-		assert.equal(uploadSummary.callCount, 0);
-		assert.equal(submitSummary.callCount, 0);
-		const retried = await runtime.submitSummary(options);
-		assert.equal(retried.stage, "submit");
+		assert.equal(fixture.uploadSummary.callCount, 0);
+		assert.equal(fixture.submitSummary.callCount, 0);
+		assert.equal(createSummary.callCount, 0);
+		assert.equal(onAccepted.callCount, 0);
+		const retried = await submit(fixture);
 		assert.equal(attempts, 2);
-		assert.equal(uploadSummary.callCount, 1);
-		assert.equal(submitSummary.callCount, 1);
+		assert.equal(fixture.uploadSummary.callCount, 1);
+		assert.equal(fixture.submitSummary.callCount, 1);
+		assert.deepEqual(retried.summaryTree.tree.application, additionalTree("retried"));
+		assert.equal(onAccepted.callCount, 0);
+		await accept(fixture, "summary-handle");
+		assert.equal(onAccepted.callCount, 1);
+		assert.equal(createSummary.callCount, 0);
 	});
 
-	// Runtime validation protects JS or mistyped callers from promises entering a synchronous summary contract.
-	it("rejects async callbacks rather than silently emitting an incomplete subtree", async () => {
+	const invalidResults: { name: string; result: unknown }[] = [
+		{ name: "undefined", result: undefined },
+		// eslint-disable-next-line unicorn/no-null -- Exercise malformed results from JavaScript callers.
+		{ name: "null", result: null },
+		{ name: "missing summary", result: {} },
+		{
+			name: "non-tree summary",
+			result: { summary: { type: SummaryType.Blob, content: "not a tree" } },
+		},
+		{
+			name: "promise-valued summary",
+			result: { summary: Promise.resolve(additionalTree()) },
+		},
+	];
+	for (const { name, result } of invalidResults) {
+		it(`rejects an async ${name} result without falling back to createSummary or uploading`, async () => {
+			const createSummary = sandbox.spy(() => ({ summary: additionalTree("sync only") }));
+			const fixture = await createRuntime({
+				additionalRootTree: {
+					key: "application",
+					createSummary,
+					// @ts-expect-error -- Validate malformed results from JavaScript callers.
+					summarize: async () => result,
+				},
+			});
+			await assert.rejects(
+				fixture.runtime.summarize(untrackedSummary),
+				/must return a tree result/,
+			);
+			const failed = await fixture.runtime.submitSummary({
+				summaryLogger: fixture.logger,
+				cancellationToken: neverCancelledSummaryToken,
+				latestSummaryRefSeqNum: 0,
+			});
+			assert.equal(failed.stage, "base");
+			assert.match(failed.error?.message ?? "", /must return a tree result/);
+			assert.equal(fixture.uploadSummary.callCount, 0);
+			assert.equal(fixture.submitSummary.callCount, 0);
+			assert.equal(createSummary.callCount, 0);
+		});
+
+		if (result !== undefined) {
+			it(`rejects a sync ${name} result without falling back to summarize`, async () => {
+				const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+				const { runtime } = await createRuntime({
+					additionalRootTree: {
+						key: "application",
+						summarize,
+						// @ts-expect-error -- Only undefined may omit the synchronous projection.
+						createSummary: () => result,
+					},
+				});
+				assert.throws(
+					() => runtime.createSummary(),
+					/must (synchronously )?return a tree result/,
+				);
+				assert.equal(summarize.callCount, 0);
+			});
+		}
+	}
+
+	it("validates acceptance callback shape for async and sync projection results", async () => {
 		const { runtime } = await createRuntime({
 			additionalRootTree: {
 				key: "application",
-				// @ts-expect-error -- Async callbacks are intentionally unsupported, including at runtime.
-				summarize: async () => ({ summary: additionalTree() }),
+				// @ts-expect-error -- Validate a non-function acceptance callback from JavaScript.
+				summarize: async () => ({ summary: additionalTree(), onAccepted: true }),
+				// @ts-expect-error -- Synchronous projection results receive the same validation.
+				createSummary: () => ({ summary: additionalTree(), onAccepted: true }),
 			},
 		});
-		assert.throws(() => runtime.createSummary(), /must synchronously return a tree/);
+		assert.throws(() => runtime.createSummary(), /acceptance callback must be a function/);
 		await assert.rejects(
 			runtime.summarize(untrackedSummary),
-			/must synchronously return a tree/,
+			/acceptance callback must be a function/,
 		);
 	});
 
-	// A promise with an otherwise-valid tree property is still asynchronous, including for JavaScript callers.
-	it("rejects thenable results even if they also expose a summary tree", async () => {
+	it("rejects a Promise from createSummary without invoking summarize as a fallback", async () => {
+		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
 		const { runtime } = await createRuntime({
 			additionalRootTree: {
 				key: "application",
-				summarize: (): IApplicationProjectionSummary =>
+				summarize,
+				// @ts-expect-error -- Synchronous serialization must reject an async JavaScript callback.
+				createSummary: async () => ({ summary: additionalTree() }),
+			},
+		});
+		assert.throws(() => runtime.createSummary(), /must synchronously return a tree/);
+		assert.equal(summarize.callCount, 0);
+		const { summary } = await runtime.summarize(untrackedSummary);
+		assert.deepEqual(summary.tree.application, additionalTree());
+		assert.equal(summarize.callCount, 1);
+	});
+
+	it("rejects thenable sync results even if they also expose a valid summary tree", async () => {
+		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+		const { runtime } = await createRuntime({
+			additionalRootTree: {
+				key: "application",
+				summarize,
+				createSummary: (): IApplicationProjectionSummary =>
 					Object.assign(Promise.resolve(), { summary: additionalTree() }),
 			},
 		});
 		assert.throws(() => runtime.createSummary(), /must synchronously return a tree/);
-		await assert.rejects(
-			runtime.summarize(untrackedSummary),
-			/must synchronously return a tree/,
+		assert.equal(summarize.callCount, 0);
+	});
+
+	it("rejects custom thenables from createSummary even when they expose a valid tree", async () => {
+		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+		const { runtime } = await createRuntime({
+			additionalRootTree: {
+				key: "application",
+				summarize,
+				createSummary: () => ({
+					summary: additionalTree(),
+					// eslint-disable-next-line unicorn/no-thenable -- Exercise a custom thenable at the JavaScript boundary.
+					then: (resolve: () => void) => resolve(),
+				}),
+			},
+		});
+		assert.throws(() => runtime.createSummary(), /must synchronously return a tree/);
+		assert.equal(summarize.callCount, 0);
+	});
+
+	it("observes a rejected Promise returned by createSummary to prevent an unhandled rejection", async () => {
+		const projection = new Deferred<IApplicationProjectionSummary>();
+		const observeRejection = sandbox.spy(projection.promise, "then");
+		const summarize = sandbox.spy(() => ({ summary: additionalTree() }));
+		const { runtime } = await createRuntime({
+			additionalRootTree: {
+				key: "application",
+				summarize,
+				/* eslint-disable @typescript-eslint/promise-function-async -- Preserve Promise identity to verify rejection observation. */
+				// @ts-expect-error -- Reject asynchronous work even when its Promise rejects.
+				createSummary: () => projection.promise,
+				/* eslint-enable @typescript-eslint/promise-function-async -- Only the malformed callback above needs this exception. */
+			},
+		});
+		projection.reject(new Error("Cannot read sync checkpoint"));
+		assert.throws(() => runtime.createSummary(), /must synchronously return a tree/);
+		assert(
+			observeRejection.getCalls().some((call) => typeof call.args[1] === "function"),
+			"The runtime must attach a rejection handler before returning to the caller",
 		);
+		assert.equal(summarize.callCount, 0);
+		await Promise.resolve();
 	});
 
 	// Application code must honor the effective policy; invalid handles cannot escape into an uploaded summary.
 	for (const fullTreePolicy of ["default", "untilFirstAck", "always"] as const) {
 		it(`rejects application handles without a reusable parent (policy ${fullTreePolicy})`, async () => {
+			const projection = (): IApplicationProjectionSummary => ({
+				summary: {
+					type: SummaryType.Tree,
+					tree: {
+						part: {
+							type: SummaryType.Handle,
+							handleType: SummaryType.Tree,
+							handle: "/application/part",
+						},
+					},
+				},
+			});
 			const { runtime } = await createRuntime({
 				fullTreePolicy,
 				additionalRootTree: {
 					key: "application",
-					summarize: () => ({
-						summary: {
-							type: SummaryType.Tree,
-							tree: {
-								part: {
-									type: SummaryType.Handle,
-									handleType: SummaryType.Tree,
-									handle: "/application/part",
-								},
-							},
-						},
-					}),
+					summarize: async () => projection(),
+					createSummary: projection,
 				},
 			});
 			assert.throws(() => runtime.createSummary(), /handles require an incremental attempt/);
