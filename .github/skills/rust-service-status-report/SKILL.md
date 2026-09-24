@@ -1,6 +1,6 @@
 ---
 name: rust-service-status-report
-description: 'Report progress for Rust service iterations and concurrent workstreams without disturbing agents. Use when asked to report status, check progress, inspect iteration worktrees, determine whether an agent is making progress, or summarize integration state for rust-service iterations.'
+description: 'Report progress and compare change size for Rust service iterations and concurrent workstreams without disturbing agents. Use when asked to report status, check progress, quantify changes or fixes, assess significance, inspect iteration worktrees, determine whether an agent is making progress, or summarize integration state for rust-service iterations.'
 argument-hint: '[iteration, for example 0004]'
 ---
 
@@ -90,7 +90,7 @@ For target-specific transport work, report native server, native client, and bro
 
 ## Report Format
 
-Always use this table shape:
+Always include these four columns:
 
 ```markdown
 **Iteration 0004**
@@ -99,6 +99,39 @@ Always use this table shape:
 |---|---|---|---|
 | ... | ... | ... | /absolute/path/to/report.md |
 ```
+
+Add metric columns when the user asks about size, significance, progress, quality, performance, or another dimension that benefits from comparison.
+Keep `Workstream`, `Status`, `Summary`, and `Report`; insert no more than four metric columns before `Summary`.
+Do not add columns whose values would mostly be unknown, repeated, or misleading.
+
+Choose metrics that match the iteration and question:
+
+- **Quality or bug-fix iteration:** `Fixes`, `Changed files`, `Lines`, and `Tests`.
+- **Simplification iteration:** `Changed files`, `Lines`, `Net lines`, and `Consolidations` or `Removed abstractions` when reports state them explicitly.
+- **Documentation iteration:** `Documented surfaces`, `README files`, `Diagnostics removed`, or `Links checked` when the reports provide comparable counts.
+- **Performance iteration:** `Samples`, `Effect`, `Variance` or `Confidence`, and the remaining benchmark gate.
+- **Feature or integration iteration:** `Commits`, `Deliverables`, and target-specific validation columns such as `Native`, `WASM`, or `Browser`.
+- **Ordinary status request:** use the four required columns unless an additional column materially improves the answer.
+
+For example, a quality-iteration size report may use:
+
+```markdown
+| Workstream | Status | Fixes | Changed files | Lines | Tests | Summary | Report |
+|---|---|---:|---:|---:|---:|---|---|
+| ... | ... | 3 | 12 | +900 / -40 | 14 | ... | /absolute/path/to/report.md |
+```
+
+### Metric Evidence
+
+Use report evidence for semantic counts and Git evidence for mechanical counts:
+
+- Count `Fixes`, `Consolidations`, `Removed abstractions`, and similar outcomes only when a current report explicitly enumerates them. Do not infer them from commits, changed files, test names, or diff hunks. State the counting rule after the table when it is not self-evident.
+- Measure a workstream against the manifest source commit or another explicitly recorded common kickoff commit. Use one working-tree comparison such as `git -C <worktree> diff --numstat <source-commit>` so committed, staged, and unstaged tracked changes are not double-counted.
+- Add untracked files from `git -C <worktree> ls-files --others --exclude-standard` when reporting current in-progress size. State that they are included. Binary line counts are unknown.
+- Prefer exact test counts recorded in reports. If estimating newly added tests from source, label the result as a lower bound or heuristic and state the languages or test forms counted.
+- When the user asks for a comments breakdown, separate `Comment-only`, `Non-comment code`, `Docs/report`, and optionally `Blank`. Treat a line that contains executable syntax plus an inline comment as code. State that this is a lexical estimate, not a parser-derived semantic count.
+- Use `N/A` for the Integration row when a metric would duplicate accepted workstream changes. Do not add workstream totals when owned paths overlap unless duplicates are removed; otherwise label the total as gross.
+- Do not compare raw line counts across unlike iteration kinds without context. Explain whether the volume is implementation, tests, generated output, documentation, retained evidence, or report text.
 
 Requirements:
 
