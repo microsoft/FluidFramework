@@ -1,6 +1,7 @@
 # Seed-creation sample: two named text parts
 
 This headless application creates a Fluid file from two named text parts, loads a real SharedTree, and lets the ordinary summarizer persist the first complete Fluid summary.
+The file producer writes only the seed and protocol metadata; it does not run a Fluid runtime or construct any distributed data structures (DDSs).
 The application source is in this directory; assertions, local-service setup, and failure injection are in `test/`.
 Application modules use framework APIs, not mocks, test helpers, or hand-authored runtime serialization.
 
