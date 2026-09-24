@@ -37,7 +37,6 @@ export function PartnersSection(): JSX.Element {
 						title="Autodesk"
 						// bodyText={TODO}
 						learnMoreHref={autodeskLink}
-						learnMoreLinkAltText="Autodesk"
 					/>
 					<PartnerEntry
 						icon={
@@ -49,7 +48,6 @@ export function PartnersSection(): JSX.Element {
 						title="Hexagon"
 						// bodyText={TODO}
 						learnMoreHref={hexagonLink}
-						learnMoreLinkAltText="Hexagon"
 					/>
 					<PartnerEntry
 						icon={
@@ -61,7 +59,6 @@ export function PartnersSection(): JSX.Element {
 						title="Microsoft Loop"
 						// bodyText={TODO}
 						learnMoreHref={loopLink}
-						learnMoreLinkAltText="Microsoft Loop"
 					/>
 					<PartnerEntry
 						icon={
@@ -73,7 +70,6 @@ export function PartnersSection(): JSX.Element {
 						title="Microsoft Teams"
 						// bodyText={TODO}
 						learnMoreHref={teamsLink}
-						learnMoreLinkAltText="Microsoft Teams"
 					/>
 					<PartnerEntry
 						icon={
@@ -85,7 +81,6 @@ export function PartnersSection(): JSX.Element {
 						title="Power Apps"
 						// bodyText={TODO}
 						learnMoreHref={powerAppsLink}
-						learnMoreLinkAltText="Power Apps"
 					/>
 					<PartnerEntry
 						icon={
@@ -97,7 +92,6 @@ export function PartnersSection(): JSX.Element {
 						title="Whiteboard"
 						// bodyText={TODO}
 						learnMoreHref={whiteboardLink}
-						learnMoreLinkAltText="Whiteboard"
 					/>
 				</div>
 			</div>
@@ -110,15 +104,9 @@ interface PartnerEntryProps {
 	title: string;
 	// bodyText: string;
 	learnMoreHref: string;
-	learnMoreLinkAltText: string;
 }
 
-function PartnerEntry({
-	icon,
-	title,
-	learnMoreHref,
-	learnMoreLinkAltText,
-}: PartnerEntryProps): JSX.Element {
+function PartnerEntry({ icon, title, learnMoreHref }: PartnerEntryProps): JSX.Element {
 	return (
 		<div className="ffcom-partner-entry">
 			<div className="ffcom-partner-entry-inner">
@@ -126,10 +114,7 @@ function PartnerEntry({
 					<PartnerEntryIcon icon={icon} />
 					<PartnerEntryLabel title={title} />
 					{/* TODO: restore this once we have body text contents: <PartnerEntryBody bodyText={bodyText} /> */}
-					<PartnerEntryFooter
-						learnMoreHref={learnMoreHref}
-						learnMoreLinkAltText={learnMoreLinkAltText}
-					/>
+					<PartnerEntryFooter title={title} learnMoreHref={learnMoreHref} />
 				</div>
 			</div>
 		</div>
@@ -170,14 +155,11 @@ function PartnerEntryLabel({ title }: PartnerEntryLabelProps): ReactElement {
 // }
 
 interface PartnerEntryFooterProps {
+	title: string;
 	learnMoreHref: string;
-	learnMoreLinkAltText: string;
 }
 
-function PartnerEntryFooter({
-	learnMoreHref,
-	learnMoreLinkAltText,
-}: PartnerEntryFooterProps): ReactElement {
+function PartnerEntryFooter({ title, learnMoreHref }: PartnerEntryFooterProps): ReactElement {
 	return (
 		<div className="ffcom-partner-entry-learn-more-container ">
 			<div className="ffcom-partner-entry-learn-more-container-inner">
@@ -186,7 +168,7 @@ function PartnerEntryFooter({
 					href={learnMoreHref}
 					target="_blank"
 					rel="noreferrer"
-					aria-label={learnMoreLinkAltText}
+					aria-label={`Learn more about ${title}`}
 				>
 					Learn more
 				</a>

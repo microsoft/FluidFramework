@@ -57,7 +57,7 @@ function quillEditor(panel: Locator, name: string): Locator {
  * @param page - The page that opens the new document.
  */
 async function openNewDocument(page: Page): Promise<void> {
-	await page.goto("/", { waitUntil: "load" });
+	await page.goto("/?fluidClient=tinylicious", { waitUntil: "load" });
 	await expect(page).toHaveURL(/#[\dA-Za-z-]{3,64}$/);
 	await expect(page.getByText(/^User \d+$/)).toHaveCount(2);
 }
@@ -100,6 +100,30 @@ const test = base.extend<{ openCollaborationPage: OpenCollaborationPage }>({
 });
 
 test.describe("text editor", () => {
+	for (const service of ["", "session", "ephemeral"]) {
+		test(`collaborates with ${service || "default"} service`, async ({ page }) => {
+			await page.goto(service === "" ? "/" : `/?fluidClient=${service}`);
+			await expect(page.getByText(/^User \d+$/)).toHaveCount(2);
+			const text = `Text from ${service || "default"} service`;
+			await userPanel(page, 1).locator("textarea").fill(text);
+			await expect(userPanel(page, 2).locator("textarea")).toHaveValue(text);
+			await page.getByRole("button", { name: "+ Add user" }).click();
+			await expect(userPanel(page, 3).locator("textarea")).toHaveValue(text);
+			await page.getByRole("button", { name: "Devtools: Off" }).click();
+			await expect(page.getByRole("button", { name: "Devtools: On" })).toBeVisible();
+			await page.getByRole("button", { name: "Devtools: On" }).click();
+			await page.getByRole("button", { name: "Remove User 3" }).click();
+			await expect(page.getByText(/^User \d+$/)).toHaveCount(2);
+			if (service !== "ephemeral") {
+				const documentUrl = page.url();
+				await page.reload();
+				await expect(page).toHaveURL(documentUrl);
+				await expect(userPanel(page, 1).locator("textarea")).toHaveValue(text);
+				await expect(userPanel(page, 2).locator("textarea")).toHaveValue(text);
+			}
+		});
+	}
+
 	test("boots a new document with two users and three editors", async ({ page }) => {
 		await openNewDocument(page);
 
@@ -259,14 +283,14 @@ test.describe("text editor", () => {
 		await expect(originalUser.locator("textarea")).toHaveValue("Edited from another context");
 	});
 
-	test("rejects an invalid document ID", async ({ page }) => {
-		const invalidDocumentId = "f47ac10b-58cc-4372_a567-0e02b2c3d479";
-		await page.goto(`/#${invalidDocumentId}`, { waitUntil: "load" });
+	test("shows an error when loading a missing document", async ({ page }) => {
+		const missingDocumentId = "f47ac10b-58cc-4372-a567-0e02b2c3d479";
+		await page.goto(`/?fluidClient=ephemeral#${missingDocumentId}`, { waitUntil: "load" });
 
+		const alert = page.getByRole("alert");
+		await expect(alert).toBeVisible();
 		await expect(
-			page.getByRole("heading", { name: "Failed to connect to Tinylicious" }),
+			alert.getByRole("heading", { name: "Failed to load document" }),
 		).toBeVisible();
-		await expect(page.getByText(/Invalid container ID in URL hash/)).toBeVisible();
-		await expect(page.getByText(/Expected 3-64 alphanumeric or '-' characters/)).toBeVisible();
 	});
 });

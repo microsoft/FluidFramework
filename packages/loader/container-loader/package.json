@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-loader",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"description": "Fluid container loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -137,7 +137,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.116.0",
+		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@3.1.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/debug": "^4.1.5",
