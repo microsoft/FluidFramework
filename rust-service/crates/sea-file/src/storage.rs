@@ -109,8 +109,8 @@ impl Factory {
         path: PathBuf,
         mut journal: Journal,
         records: Vec<Vec<u8>>,
-        workers: Arc<tokio::sync::Semaphore>,
     ) -> Result<StorageComponents<FileBlobs, FileEvents, FileSnapshots>, FileStorageError> {
+        let workers = self.workers.clone();
         let snapshots_path = path.with_file_name(format!(
             "{}-snapshots.sea",
             path.file_stem().unwrap().to_string_lossy()
@@ -282,8 +282,7 @@ impl Factory {
                     if self.durable {
                         fs::File::open(&self.root)?.sync_all()?;
                     }
-                    let components =
-                        self.components(path, journal, records, self.workers.clone())?;
+                    let components = self.components(path, journal, records)?;
                     return Ok(CreatedDocument {
                         id: DocumentId::from_bytes(Bytes::copy_from_slice(&ordinal.to_be_bytes())),
                         components,
@@ -310,9 +309,7 @@ impl Factory {
             .root
             .join(format!("{:016x}.sea", u64::from_be_bytes(bytes)));
         match Journal::open(&path, false, self.durable) {
-            Ok((journal, records)) => self
-                .components(path, journal, records, self.workers.clone())
-                .map(Some),
+            Ok((journal, records)) => self.components(path, journal, records).map(Some),
             Err(FileStorageError::Io(error)) if error.kind() == std::io::ErrorKind::NotFound => {
                 Ok(None)
             }

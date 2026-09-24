@@ -70,8 +70,8 @@ async fn cache_is_opt_in_and_requires_independent_invalidation() {
 #[tokio::test]
 async fn caught_up_live_delivery_never_polls_archive_and_shares_exact_payload_backing() {
     let (storage, runtime) = fixture().await;
-    let author = member(&runtime, "author").await;
-    let observer = member(&runtime, "observer").await;
+    let author = member(&runtime).await;
+    let observer = member(&runtime).await;
     let mut first = observer.read(None, None);
     let mut second = observer.read(None, None);
     caught_up(&mut first).await;
@@ -113,7 +113,7 @@ async fn caught_up_live_delivery_never_polls_archive_and_shares_exact_payload_ba
 async fn historical_and_cached_backlogs_report_fallen_behind_without_inconsistent_snapshots() {
     for historical in [true, false] {
         let (_, runtime) = fixture().await;
-        let author = member(&runtime, "author").await;
+        let author = member(&runtime).await;
         let mut parked = author.read(None, None);
         if !historical {
             caught_up(&mut parked).await;
@@ -156,7 +156,7 @@ async fn historical_and_cached_backlogs_report_fallen_behind_without_inconsisten
 #[tokio::test]
 async fn cached_progress_discovers_retained_and_new_frontiers_before_delivering_items() {
     let (_, runtime) = fixture().await;
-    let author = member(&runtime, "author").await;
+    let author = member(&runtime).await;
     let mut parked = author.read(None, None);
     caught_up(&mut parked).await;
     let first = author.submit(submission(b"one")).await.unwrap();
@@ -222,8 +222,8 @@ async fn cached_progress_discovers_retained_and_new_frontiers_before_delivering_
 #[tokio::test]
 async fn revocation_drop_close_and_stale_capabilities_reclaim_without_polling() {
     let (_, runtime) = fixture().await;
-    let author = member(&runtime, "author").await;
-    let observer = member(&runtime, "observer").await;
+    let author = member(&runtime).await;
+    let observer = member(&runtime).await;
     let (mut first, stale) = observer.read_with_live_cache_revocation(None).unwrap();
     caught_up(&mut first).await;
     let mut sibling = observer.read(None, None);
@@ -264,7 +264,7 @@ async fn revocation_drop_close_and_stale_capabilities_reclaim_without_polling() 
 #[tokio::test]
 async fn historical_finite_load_and_missed_handoff_preserve_exact_delivered_cursor() {
     let (storage, runtime) = fixture().await;
-    let author = member(&runtime, "author").await;
+    let author = member(&runtime).await;
     let first = author.submit(submission(b"one")).await.unwrap();
     let second = author.submit(submission(b"two")).await.unwrap();
     let mut historical = author.read(None, None);
@@ -348,8 +348,8 @@ async fn historical_finite_load_and_missed_handoff_preserve_exact_delivered_curs
 async fn cancellation_retained_append_is_driven_only_by_live_reader_after_ack() {
     for failure in [Failure::GateBefore, Failure::GateAfter] {
         let (storage, runtime) = fixture().await;
-        let writer = member(&runtime, "writer").await;
-        let observer = member(&runtime, "observer").await;
+        let writer = member(&runtime).await;
+        let observer = member(&runtime).await;
         let mut stream = observer.read(None, None);
         caught_up(&mut stream).await;
         let polls = storage.events.read_polls.load(Ordering::SeqCst);
@@ -397,7 +397,7 @@ async fn cancellation_retained_append_is_driven_only_by_live_reader_after_ack() 
 #[tokio::test]
 async fn independent_invalidation_releases_unpolled_claims_and_wakes_active_read() {
     let (storage, runtime) = fixture().await;
-    let author = member(&runtime, "author").await;
+    let author = member(&runtime).await;
     let mut active = author.read(None, None);
     let mut parked = author.read(None, None);
     caught_up(&mut active).await;
@@ -438,8 +438,8 @@ async fn independent_invalidation_releases_unpolled_claims_and_wakes_active_read
 #[tokio::test]
 async fn ordered_membership_and_cancelled_control_use_same_publication_boundary() {
     let (storage, runtime) = fixture().await;
-    let writer = member(&runtime, "writer").await;
-    let observer = member(&runtime, "observer").await;
+    let writer = member(&runtime).await;
+    let observer = member(&runtime).await;
     let mut stream = observer.read(None, None);
     caught_up(&mut stream).await;
     storage.events.arm(Failure::GateAfter);
@@ -461,10 +461,10 @@ async fn ordered_membership_and_cancelled_control_use_same_publication_boundary(
 #[tokio::test]
 async fn cancelled_dispatched_batch_publishes_accepted_prefix_without_archive_polling() {
     let (storage, runtime) = fixture().await;
-    let lead = member(&runtime, "lead").await;
-    let first = member(&runtime, "first").await;
-    let second = member(&runtime, "second").await;
-    let observer = member(&runtime, "observer").await;
+    let lead = member(&runtime).await;
+    let first = member(&runtime).await;
+    let second = member(&runtime).await;
+    let observer = member(&runtime).await;
     let mut stream = observer.read(None, None);
     caught_up(&mut stream).await;
     let polls = storage.events.read_polls.load(Ordering::SeqCst);
@@ -523,7 +523,7 @@ async fn cancelled_dispatched_batch_publishes_accepted_prefix_without_archive_po
 #[tokio::test]
 async fn snapshot_load_handoff_and_subscription_revocation_leave_publisher_and_author_intact() {
     let (_, runtime) = fixture().await;
-    let author = member(&runtime, "author").await;
+    let author = member(&runtime).await;
     let first = author
         .submit(submission(b"snapshot boundary"))
         .await
@@ -583,8 +583,8 @@ async fn cache_enabled_memory_sessions_satisfy_session_conformance() {
     let runtime = LocalSequencer::<MemoryStorage>::recover_with_live_cache(view)
         .await
         .unwrap();
-    let first = member(&runtime, "first").await;
-    let second = member(&runtime, "second").await;
+    let first = member(&runtime).await;
+    let second = member(&runtime).await;
     settles(sea_conformance::run_session_conformance(&first, &second)).await;
 }
 
@@ -595,7 +595,7 @@ async fn shutdown_preserves_memory_reopening_with_unpolled_closed_live_and_histo
     let runtime = LocalSequencer::<MemoryStorage>::recover_with_live_cache(view)
         .await
         .unwrap();
-    let author = member(&runtime, "author").await;
+    let author = member(&runtime).await;
     let mut live = author.read(None, None);
     live.next().await.unwrap().unwrap();
     author.submit(submission(b"history")).await.unwrap();
@@ -621,7 +621,7 @@ async fn recovery_never_retains_history_and_invalidated_openings_cannot_rejoin()
     let storage = FaultStorage::default();
     let (id, view) = storage.create_view().await.unwrap();
     let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
-    let author = member(&runtime, "author").await;
+    let author = member(&runtime).await;
     author
         .announce_membership(Bytes::from_static(b"member"))
         .await
@@ -642,7 +642,7 @@ async fn recovery_never_retains_history_and_invalidated_openings_cannot_rejoin()
         ),
         (0, 0, 0, 0)
     );
-    let observer = member(&runtime, "observer").await;
+    let observer = member(&runtime).await;
     let mut stream = observer.read(None, None);
     for kind in [
         SessionEventKind::Joined,
@@ -674,8 +674,8 @@ async fn recovery_never_retains_history_and_invalidated_openings_cannot_rejoin()
 #[tokio::test]
 async fn unpolled_cache_claims_do_not_gate_writes_reference_floor_controls_or_shutdown() {
     let (_, runtime) = fixture().await;
-    let author = member(&runtime, "author").await;
-    let observer = member(&runtime, "observer").await;
+    let author = member(&runtime).await;
+    let observer = member(&runtime).await;
     let mut stalled = observer.read(None, None);
     caught_up(&mut stalled).await;
     let mut reference = None;
@@ -702,8 +702,8 @@ async fn unpolled_cache_claims_do_not_gate_writes_reference_floor_controls_or_sh
 #[tokio::test]
 async fn parked_control_driver_releases_guards_and_survives_another_cancelled_drainer() {
     let (storage, runtime) = fixture().await;
-    let writer = member(&runtime, "writer").await;
-    let observer = member(&runtime, "observer").await;
+    let writer = member(&runtime).await;
+    let observer = member(&runtime).await;
     let mut stream = observer.read(None, None);
     caught_up(&mut stream).await;
     storage.events.arm(Failure::GateBefore);

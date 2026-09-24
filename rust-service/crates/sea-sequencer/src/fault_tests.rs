@@ -451,7 +451,7 @@ async fn checkpoint_failure_stops_tail_growth_before_next_submission() {
     ] {
         let storage = FaultStorage::default();
         let (id, runtime) = create_sequencer(&storage).await;
-        let writer = member(&runtime, "checkpoint-failure").await;
+        let writer = member(&runtime).await;
         for _ in 0..super::checkpoint::INTERVAL {
             writer.submit(submission(b"accepted")).await.unwrap();
         }
@@ -532,8 +532,8 @@ async fn cancelled_reservations_require_recovery_before_allocating_again() {
 async fn interrupted_recovery_departures_are_not_duplicated_on_reopen() {
     let storage = FaultStorage::default();
     let (id, runtime) = create_sequencer(&storage).await;
-    let first = member(&runtime, "first").await;
-    let second = member(&runtime, "second").await;
+    let first = member(&runtime).await;
+    let second = member(&runtime).await;
     first.announce_membership(Bytes::new()).await.unwrap();
     second.announce_membership(Bytes::new()).await.unwrap();
     let identities = [first.session_id().clone(), second.session_id().clone()];
@@ -646,7 +646,7 @@ async fn settles<Output>(future: impl std::future::Future<Output = Output>) -> O
 #[tokio::test]
 async fn idle_ready_submissions_apply_before_receipts_and_rejection_ends_authority() {
     let (storage, runtime) = fixture().await;
-    let writer = member(&runtime, "writer").await;
+    let writer = member(&runtime).await;
     let mut receipts = Vec::new();
     for _ in 0..2 {
         let position = writer
@@ -680,7 +680,7 @@ async fn idle_ready_submissions_apply_before_receipts_and_rejection_ends_authori
 async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() {
     let storage = MemoryStorage::new();
     let (_, runtime) = create_sequencer(&storage).await;
-    let writer = member(&runtime, "writer").await;
+    let writer = member(&runtime).await;
     let mut pending = futures_util::stream::iter(0..257)
         .map(|index| {
             let writer = &writer;
@@ -723,10 +723,10 @@ async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() 
 async fn delayed_persistence_admits_a_bounded_ring_and_publishes_only_after_commit() {
     let (storage, runtime) = fixture().await;
     let mut members = Vec::new();
-    for index in 0..257 {
-        members.push(member(&runtime, &format!("writer-{index}")).await);
+    for _ in 0..257 {
+        members.push(member(&runtime).await);
     }
-    let observer = member(&runtime, "observer").await;
+    let observer = member(&runtime).await;
     let mut reader = observer.read(None, None);
     assert!(reader.next().await.unwrap().is_ok());
     for _ in 0..2 {
@@ -765,8 +765,8 @@ async fn delayed_persistence_admits_a_bounded_ring_and_publishes_only_after_comm
 #[tokio::test]
 async fn cancelled_admitted_entry_discards_queued_session_suffix_before_leave() {
     let (storage, runtime) = fixture().await;
-    let writer = member(&runtime, "writer").await;
-    let observer = member(&runtime, "observer").await;
+    let writer = member(&runtime).await;
+    let observer = member(&runtime).await;
     writer.announce_membership(Bytes::new()).await.unwrap();
     storage.events.arm(Failure::GateBefore);
     let mut first = Box::pin(writer.submit(submission(b"first")));
@@ -802,7 +802,7 @@ async fn cancelled_admitted_entry_discards_queued_session_suffix_before_leave() 
 #[tokio::test]
 async fn definitive_failure_never_dispatches_the_queued_same_session_suffix() {
     let (storage, runtime) = fixture().await;
-    let writer = member(&runtime, "writer").await;
+    let writer = member(&runtime).await;
     storage.events.arm(Failure::GateReject);
     let mut first = Box::pin(writer.submit(submission(b"first")));
     let mut suffix = Box::pin(writer.submit(submission(b"suffix")));
@@ -819,9 +819,9 @@ async fn definitive_failure_never_dispatches_the_queued_same_session_suffix() {
 #[tokio::test]
 async fn grouped_ambiguity_poisoning_prevents_suffix_and_terminal_leave() {
     let (storage, runtime) = fixture().await;
-    let first = member(&runtime, "first").await;
-    let second = member(&runtime, "second").await;
-    let third = member(&runtime, "third").await;
+    let first = member(&runtime).await;
+    let second = member(&runtime).await;
+    let third = member(&runtime).await;
     second.announce_membership(Bytes::new()).await.unwrap();
     storage.events.arm(Failure::GateBefore);
     let mut blocked = Box::pin(first.submit(submission(b"blocked")));
@@ -862,8 +862,8 @@ async fn grouped_ambiguity_poisoning_prevents_suffix_and_terminal_leave() {
 #[tokio::test]
 async fn admitted_inputs_do_not_retain_oversized_caller_backing() {
     let (storage, runtime) = fixture().await;
-    let first = member(&runtime, "first").await;
-    let second = member(&runtime, "second").await;
+    let first = member(&runtime).await;
+    let second = member(&runtime).await;
     storage.events.arm(Failure::GateBefore);
     let mut pending = Vec::new();
     for writer in [&first, &second] {
@@ -894,8 +894,8 @@ async fn admitted_inputs_do_not_retain_oversized_caller_backing() {
 async fn unavailable_tree_rejects_singleton_and_batch_before_storage_append() {
     for batched in [false, true] {
         let (storage, runtime) = fixture().await;
-        let leader = member(&runtime, "leader").await;
-        let writer = member(&runtime, "writer").await;
+        let leader = member(&runtime).await;
+        let writer = member(&runtime).await;
         let mut invalid = submission(b"unavailable tree");
         invalid.event.blob_tree = Some(sea_core::BlobTreeId::Blob(BlobId::for_bytes(b"absent")));
         if batched {
@@ -935,8 +935,8 @@ async fn unavailable_tree_rejects_singleton_and_batch_before_storage_append() {
 #[tokio::test]
 async fn byte_bound_backpressures_before_the_entry_limit() {
     let (storage, runtime) = fixture().await;
-    let first = member(&runtime, "first").await;
-    let second = member(&runtime, "second").await;
+    let first = member(&runtime).await;
+    let second = member(&runtime).await;
     let mut large = submission(b"large");
     large.event.payload = Bytes::from(vec![0; 3 * 1024 * 1024]);
     storage.events.arm(Failure::GateBefore);
@@ -957,8 +957,8 @@ async fn byte_bound_backpressures_before_the_entry_limit() {
 async fn capacity_wait_preserves_same_session_order_and_failure_prefix() {
     for invalid in [false, true] {
         let (storage, runtime) = fixture().await;
-        let leader = member(&runtime, "leader").await;
-        let writer = member(&runtime, "writer").await;
+        let leader = member(&runtime).await;
+        let writer = member(&runtime).await;
         let cloned_writer = writer.clone();
         let mut input = submission(b"blocked");
         input.event.payload = Bytes::from(vec![0; 3 * 1024 * 1024]);
@@ -1011,8 +1011,8 @@ async fn capacity_wait_preserves_same_session_order_and_failure_prefix() {
 async fn capacity_wait_cancellation_preserves_authority_and_close_needs_no_admission_lock() {
     for close in [false, true] {
         let (storage, runtime) = fixture().await;
-        let leader = member(&runtime, "leader").await;
-        let writer = member(&runtime, "writer").await;
+        let leader = member(&runtime).await;
+        let writer = member(&runtime).await;
         let cloned_writer = writer.clone();
         let mut input = submission(b"blocked");
         input.event.payload = Bytes::from(vec![0; 3 * 1024 * 1024]);
@@ -1086,8 +1086,8 @@ async fn capacity_wait_cancellation_preserves_authority_and_close_needs_no_admis
 #[tokio::test]
 async fn same_session_batch_rejects_invalid_entry_and_suffix_but_settles_prepared_prefix() {
     let (storage, runtime) = fixture().await;
-    let leader = member(&runtime, "leader").await;
-    let writer = member(&runtime, "writer").await;
+    let leader = member(&runtime).await;
+    let writer = member(&runtime).await;
     storage.events.arm(Failure::GateBefore);
     let mut blocked = Box::pin(leader.submit(submission(b"blocked")));
     assert!(blocked.as_mut().now_or_never().is_none());
@@ -1121,8 +1121,8 @@ async fn same_session_batch_rejects_invalid_entry_and_suffix_but_settles_prepare
 #[tokio::test]
 async fn cancelled_dispatched_same_session_batch_settles_before_leave_without_queued_suffix() {
     let (storage, runtime) = fixture().await;
-    let leader = member(&runtime, "leader").await;
-    let writer = member(&runtime, "writer").await;
+    let leader = member(&runtime).await;
+    let writer = member(&runtime).await;
     writer.announce_membership(Bytes::new()).await.unwrap();
     storage.events.arm(Failure::GateBefore);
     let mut blocked = Box::pin(leader.submit(submission(b"blocked")));
@@ -1171,8 +1171,8 @@ async fn cancelled_dispatched_same_session_batch_settles_before_leave_without_qu
 async fn batch_floor_does_not_invalidate_a_prepared_lower_reference() {
     let storage = FaultStorage::default();
     let (id, runtime) = create_sequencer(&storage).await;
-    let leader = member(&runtime, "leader").await;
-    let writer = member(&runtime, "writer").await;
+    let leader = member(&runtime).await;
+    let writer = member(&runtime).await;
     let mut reference = None;
     for _ in 0..1100 {
         let mut input = submission(b"seed");
@@ -1217,7 +1217,7 @@ async fn floor_advances_only_with_the_committed_event() {
     ] {
         let storage = FaultStorage::default();
         let (id, runtime) = create_sequencer(&storage).await;
-        let session = member(&runtime, "writer").await;
+        let session = member(&runtime).await;
         let initial = session.submit(submission(b"initial")).await.unwrap();
         let mut advancing = submission(b"advance");
         advancing.reference = Some(initial);
@@ -1243,7 +1243,7 @@ async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership()
         Failure::Reject,
     ] {
         let (storage, runtime) = fixture().await;
-        let session = member(&runtime, "author").await;
+        let session = member(&runtime).await;
         storage.events.arm(failure);
         let result = session.submit(submission(b"operation")).await;
         assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
@@ -1257,7 +1257,7 @@ async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership()
                 session.submit(submission(b"later")).await,
                 Err(SessionError::Closed)
             ));
-            let session = member(&runtime, "recovery").await;
+            let session = member(&runtime).await;
             assert!(
                 session
                     .view()
@@ -1279,7 +1279,7 @@ async fn failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery
     for failure in [Failure::FailHead, Failure::FailRead] {
         let storage = FaultStorage::default();
         let (id, runtime) = create_sequencer(&storage).await;
-        let session = member(&runtime, "author").await;
+        let session = member(&runtime).await;
         storage.events.arm(failure);
         assert!(matches!(
             session.submit(submission(b"uncertain")).await,
@@ -1296,7 +1296,7 @@ async fn failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery
             LocalSequencer::<FaultStorage>::recover(storage.open_view(&id).await.unwrap().unwrap())
                 .await
                 .unwrap();
-        let session = member(&recovered, "new-author").await;
+        let session = member(&recovered).await;
         let mut replay = session.read(None, None);
         assert_eq!(
             super::tests::data(&mut replay)
@@ -1317,7 +1317,7 @@ async fn failed_reconciliation_prevents_terminal_leave_until_recovery() {
         for shutdown in [false, true] {
             let storage = FaultStorage::default();
             let (id, runtime) = create_sequencer(&storage).await;
-            let session = member(&runtime, "author").await;
+            let session = member(&runtime).await;
             let old_session = session.session.clone();
             session.announce_membership(Bytes::new()).await.unwrap();
             storage.events.arm(failure);
@@ -1348,7 +1348,7 @@ async fn failed_reconciliation_prevents_terminal_leave_until_recovery() {
             .await
             .unwrap();
             assert_eq!(storage.events.calls.load(Ordering::SeqCst), 3);
-            let observer = member(&recovered, "observer").await;
+            let observer = member(&recovered).await;
             let head = observer
                 .view()
                 .await
@@ -1380,8 +1380,8 @@ async fn failed_reconciliation_prevents_terminal_leave_until_recovery() {
 #[tokio::test]
 async fn repeated_close_ignores_an_unrelated_recovery_failure() {
     let (storage, runtime) = fixture().await;
-    let closed = member(&runtime, "closed").await;
-    let active = member(&runtime, "active").await;
+    let closed = member(&runtime).await;
+    let active = member(&runtime).await;
     closed.close().await.unwrap();
     storage.events.arm(Failure::FailHead);
     assert!(matches!(
@@ -1395,8 +1395,8 @@ async fn repeated_close_ignores_an_unrelated_recovery_failure() {
 async fn cancelling_before_or_after_commit_retains_the_same_backend_future_until_settlement() {
     for failure in [Failure::GateBefore, Failure::GateAfter] {
         let (storage, runtime) = fixture().await;
-        let first = member(&runtime, "first").await;
-        let second = member(&runtime, "second").await;
+        let first = member(&runtime).await;
+        let second = member(&runtime).await;
         storage.events.arm(failure);
         assert!(
             first
@@ -1452,8 +1452,8 @@ async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work(
         Failure::GateAfter,
     ] {
         let (storage, runtime) = fixture().await;
-        let first = member(&runtime, "first").await;
-        let observer = member(&runtime, "observer").await;
+        let first = member(&runtime).await;
+        let observer = member(&runtime).await;
         first.announce_membership(Bytes::new()).await.unwrap();
         first.submit(submission(b"accepted")).await.unwrap();
         storage.events.arm(failure);
@@ -1514,7 +1514,7 @@ async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work(
 async fn revoking_publisher_does_not_cancel_an_admitted_snapshot() {
     use sea_core::storage::StorageHandle;
     let (storage, runtime) = fixture().await;
-    let session = member(&runtime, "publisher").await;
+    let session = member(&runtime).await;
     let position = session.submit(submission(b"boundary")).await.unwrap();
     let snapshot = Snapshot {
         root: session.put_blob(Bytes::new()).await.unwrap(),
@@ -1559,7 +1559,7 @@ async fn snapshot_cancellation_and_ambiguity_preserve_publication_order() {
         Failure::FailLookup,
     ] {
         let (storage, runtime) = fixture().await;
-        let session = member(&runtime, "author").await;
+        let session = member(&runtime).await;
         let position = session.submit(submission(b"boundary")).await.unwrap();
         let root = session.put_blob(Bytes::new()).await.unwrap();
         let snapshot = Snapshot {
@@ -1606,8 +1606,8 @@ async fn snapshot_cancellation_and_ambiguity_preserve_publication_order() {
 async fn shutdown_and_session_close_work_when_backend_streams_retain_writer_ownership() {
     let storage = FaultStorage::default();
     let (id, runtime) = create_sequencer(&storage).await;
-    let first = member(&runtime, "first").await;
-    let second = member(&runtime, "second").await;
+    let first = member(&runtime).await;
+    let second = member(&runtime).await;
     let mut first_read = first.read(None, None);
     let mut second_read = second.load(LoadStart::Beginning).await.unwrap().events;
     first_read.next().await.unwrap().unwrap();

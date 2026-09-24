@@ -1310,7 +1310,7 @@ mod tests {
     async fn committed_minimum_survives_new_members_and_recovery() {
         let storage = MemoryStorage::new();
         let (id, runtime) = create_sequencer(&storage).await;
-        let first = member(&runtime, "first").await;
+        let first = member(&runtime).await;
         first.announce_membership(Bytes::new()).await.unwrap();
         let initial = first.submit(submission(b"initial")).await.unwrap();
         let mut advancing = submission(b"advance");
@@ -1323,7 +1323,7 @@ mod tests {
         );
         drop(history);
         first.close().await.unwrap();
-        let stale = member(&runtime, "stale").await;
+        let stale = member(&runtime).await;
         stale.announce_membership(Bytes::new()).await.unwrap();
         assert!(
             stale
@@ -1341,12 +1341,12 @@ mod tests {
         )
         .await
         .unwrap();
-        let fresh = member(&recovered, "fresh").await;
+        let fresh = member(&recovered).await;
         let mut below = submission(b"below-floor");
         below.reference = Some(initial);
         assert!(fresh.submit(below).await.is_err());
         let valid = recovered.open_session(None).await.unwrap();
-        let observer = member(&recovered, "observer").await;
+        let observer = member(&recovered).await;
         let mut replay = observer.read(None, None);
         let mut minimum = None;
         for _ in 0..6 {
@@ -1384,8 +1384,8 @@ mod tests {
     async fn idle_members_cannot_pin_the_debounced_reference_window() {
         let storage = MemoryStorage::new();
         let (_, runtime) = create_sequencer(&storage).await;
-        let idle = member(&runtime, "idle").await;
-        let writer = member(&runtime, "writer").await;
+        let idle = member(&runtime).await;
+        let writer = member(&runtime).await;
         let mut reference = None;
         let mut advances = Vec::new();
         for _ in 0..1152 {
@@ -1417,7 +1417,7 @@ mod tests {
     async fn snapshot_boundary_retains_its_floor_after_recovery() {
         let storage = MemoryStorage::new();
         let (id, runtime) = create_sequencer(&storage).await;
-        let writer = member(&runtime, "writer").await;
+        let writer = member(&runtime).await;
         let participation = writer
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)
             .await
@@ -1447,7 +1447,7 @@ mod tests {
         )
         .await
         .unwrap();
-        let reader = member(&recovered, "reader").await;
+        let reader = member(&recovered).await;
         let loaded = reader.load(LoadStart::LatestSnapshot).await.unwrap();
         let boundary = loaded.snapshot.unwrap().at_event.id();
         assert_eq!(boundary, advanced);
@@ -1466,8 +1466,8 @@ mod tests {
     async fn announced_membership_orders_departure_on_close_and_recovery() {
         let storage = MemoryStorage::new();
         let (id, runtime) = create_sequencer(&storage).await;
-        let observer = member(&runtime, "observer").await;
-        let first = member(&runtime, "first").await;
+        let observer = member(&runtime).await;
+        let first = member(&runtime).await;
         let joined = first
             .announce_membership(Bytes::from_static(b"metadata"))
             .await
@@ -1501,7 +1501,7 @@ mod tests {
         assert_eq!(departed.kind, SessionEventKind::Left);
         assert!(edit < departed.committed.position);
 
-        let second = member(&runtime, "second").await;
+        let second = member(&runtime).await;
         second.announce_membership(Bytes::new()).await.unwrap();
         let replacement = runtime.open_session(None).await.unwrap();
         assert_eq!(
@@ -1533,7 +1533,7 @@ mod tests {
         )
         .await
         .unwrap();
-        let observer = member(&recovered, "fresh-observer").await;
+        let observer = member(&recovered).await;
         let mut replay = observer.read(None, None);
         let mut kinds = Vec::new();
         for _ in 0..7 {
@@ -1563,7 +1563,7 @@ mod tests {
     async fn internal_checkpoints_recover_bounded_tail_and_outstanding_departures() {
         let storage = MemoryStorage::new();
         let (id, runtime) = create_sequencer(&storage).await;
-        let writer = member(&runtime, "checkpoint-writer").await;
+        let writer = member(&runtime).await;
         writer
             .announce_membership(Bytes::from_static(b"writer"))
             .await
@@ -1574,9 +1574,9 @@ mod tests {
             event.reference = reference;
             reference = Some(writer.submit(event).await.unwrap());
         }
-        let late = member(&runtime, "tail-announcement").await;
+        let late = member(&runtime).await;
         late.announce_membership(Bytes::new()).await.unwrap();
-        let unannounced = member(&runtime, "unannounced").await;
+        let unannounced = member(&runtime).await;
         let (boundary, floor, head) = {
             let state = runtime.runtime.lock().await;
             assert_eq!(state.recent_positions.len(), POSITION_WINDOW);
@@ -1611,7 +1611,7 @@ mod tests {
             assert!(state.minimum_reference >= floor);
             assert!(state.since_checkpoint <= 2 * checkpoint::INTERVAL);
         }
-        let reader = member(&recovered, "checkpoint-reader").await;
+        let reader = member(&recovered).await;
         let mut departures = reader.read(Some(head), Some(EventPosition::new(head.get() + 2)));
         for _ in 0..2 {
             assert_eq!(
@@ -1626,7 +1626,7 @@ mod tests {
     async fn checkpoint_at_head_recovers_without_live_policy_history() {
         let storage = MemoryStorage::new();
         let (id, runtime) = create_sequencer(&storage).await;
-        let writer = member(&runtime, "writer").await;
+        let writer = member(&runtime).await;
         let first = writer.submit(submission(b"first")).await.unwrap();
         let mut second = submission(b"second");
         second.reference = Some(first);
@@ -1652,7 +1652,7 @@ mod tests {
             assert_eq!(state.since_checkpoint, 0);
             assert!(state.known_reference(Some(first)).await.unwrap());
         }
-        let fresh = member(&recovered, "fresh").await;
+        let fresh = member(&recovered).await;
         let mut next = submission(b"next");
         next.reference = Some(head);
         let next = fresh.submit(next).await.unwrap();
@@ -1726,8 +1726,8 @@ mod tests {
     async fn concurrent_sessions_deliver_each_submission_once_with_lazy_errors_and_progress() {
         let storage = MemoryStorage::new();
         let (id, runtime) = create_sequencer(&storage).await;
-        let first = member(&runtime, "first").await;
-        let second = member(&runtime, "second").await;
+        let first = member(&runtime).await;
+        let second = member(&runtime).await;
         let mut live = first.read(None, None);
         assert_eq!(live.progress().previous, None);
         assert!(matches!(
@@ -1919,7 +1919,7 @@ mod tests {
         let recovered = LocalSequencer::<MemoryStorage>::recover(duplicate)
             .await
             .unwrap();
-        let observer = member(&recovered, "observer").await;
+        let observer = member(&recovered).await;
         let mut replay = observer.read(None, None);
         let first = data(&mut replay).await.unwrap();
         let second = data(&mut replay).await.unwrap();
@@ -1928,10 +1928,9 @@ mod tests {
         assert!(first.committed.position < second.committed.position);
     }
 
-    /// Opens a fresh member with no declared reference; the name only labels the test call site.
+    /// Opens a fresh member with no declared reference.
     pub(super) async fn member<Storage: SeaStorage + 'static>(
         runtime: &Arc<LocalSequencer<Storage>>,
-        _name: &str,
     ) -> LocalSession<Storage> {
         runtime.open_session(None).await.unwrap()
     }
@@ -1952,8 +1951,8 @@ mod tests {
     async fn session_conformance() {
         let storage = MemoryStorage::new();
         let (_, runtime) = create_sequencer(&storage).await;
-        let first = member(&runtime, "first").await;
-        let second = member(&runtime, "second").await;
+        let first = member(&runtime).await;
+        let second = member(&runtime).await;
         tokio::time::timeout(
             std::time::Duration::from_secs(5),
             sea_conformance::run_session_conformance(&first, &second),
@@ -1966,8 +1965,8 @@ mod tests {
     async fn membership_positions_resolve_and_publish_snapshot_boundaries() {
         let storage = MemoryStorage::new();
         let (_, runtime) = create_sequencer(&storage).await;
-        let publisher = member(&runtime, "publisher").await;
-        let participant = member(&runtime, "participant").await;
+        let publisher = member(&runtime).await;
+        let participant = member(&runtime).await;
         let root = publisher.put_blob(Bytes::new()).await.unwrap();
         let _registration = publisher
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)
@@ -2016,8 +2015,8 @@ mod tests {
     async fn snapshot_parent_position_and_publisher_fences_are_session_policy() {
         let storage = MemoryStorage::new();
         let (_, runtime) = create_sequencer(&storage).await;
-        let first = member(&runtime, "first").await;
-        let second = member(&runtime, "second").await;
+        let first = member(&runtime).await;
+        let second = member(&runtime).await;
         let root = first.put_blob(Bytes::new()).await.unwrap();
         let initial = first.submit(submission(b"initial")).await.unwrap();
         let snapshot = Snapshot {
@@ -2138,8 +2137,8 @@ mod tests {
     async fn closing_the_nominee_transfers_snapshot_authority_with_a_fresh_fence() {
         let storage = MemoryStorage::new();
         let (_, runtime) = create_sequencer(&storage).await;
-        let first = member(&runtime, "first").await;
-        let second = member(&runtime, "second").await;
+        let first = member(&runtime).await;
+        let second = member(&runtime).await;
         let mut first_nomination = first
             .coordinate_snapshots(SnapshotParticipation::SeaSelected)
             .await
@@ -2179,8 +2178,8 @@ mod tests {
         use futures_util::FutureExt;
         let storage = MemoryStorage::new();
         let (_, runtime) = create_sequencer(&storage).await;
-        let first = member(&runtime, "first").await;
-        let second = member(&runtime, "second").await;
+        let first = member(&runtime).await;
+        let second = member(&runtime).await;
         let mut live = first.load(LoadStart::Beginning).await.unwrap().events;
         assert!(matches!(
             live.next().await,
@@ -2255,7 +2254,7 @@ mod tests {
     async fn recovery_preserves_positions_and_snapshots_without_deduplicating_submissions() {
         let storage = MemoryStorage::new();
         let (id, runtime) = create_sequencer(&storage).await;
-        let first = member(&runtime, "author").await;
+        let first = member(&runtime).await;
         let position = first.submit(submission(b"original")).await.unwrap();
         let authority = first
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)
@@ -2293,7 +2292,7 @@ mod tests {
                 .id(),
             position
         );
-        let foreign = member(&recovered, "foreign").await;
+        let foreign = member(&recovered).await;
         assert!(foreign.submit(submission(b"original")).await.unwrap() > position);
         let mut absent = submission(b"invalid");
         absent.reference = Some(EventPosition::new(999));
@@ -2304,8 +2303,8 @@ mod tests {
     async fn content_facade_resolves_stored_identities_and_requires_live_membership() {
         let storage = MemoryStorage::new();
         let (_, runtime) = create_sequencer(&storage).await;
-        let session = member(&runtime, "content").await;
-        let peer = member(&runtime, "peer").await;
+        let session = member(&runtime).await;
+        let peer = member(&runtime).await;
         let payload = Bytes::from_static(b"content");
         let blob = session.put_blob(payload.clone()).await.unwrap();
         let BlobTreeId::Blob(id) = blob.id() else {

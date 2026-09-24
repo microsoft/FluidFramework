@@ -529,7 +529,13 @@ where
     let read_started = Instant::now();
     let records = collect_session_events(sessions[0].read(None, None), record_capacity).await?;
     let finite_read_microseconds = elapsed_microseconds(read_started);
-    verify_session_payloads(&records, &generator, config)?;
+    verify_payloads(
+        records
+            .iter()
+            .map(|record| record.committed.event.payload.as_ref()),
+        &generator,
+        config,
+    )?;
     for session in &sessions {
         session.close().await.map_err(display_error)?;
     }
@@ -564,7 +570,13 @@ where
     let expected_records = usize::try_from(config.records)
         .map_err(|_| "record count exceeds addressable memory".to_owned())?;
     let records = collect_session_events(session.read(None, None), expected_records).await?;
-    verify_session_payloads(&records, &generator, config)?;
+    verify_payloads(
+        records
+            .iter()
+            .map(|record| record.committed.event.payload.as_ref()),
+        &generator,
+        config,
+    )?;
     if config.snapshot_frequency.is_some() {
         let snapshot = session
             .get_snapshot(LoadStart::LatestSnapshot)
@@ -606,21 +618,6 @@ where
         }
     }
     Ok(events)
-}
-
-/// Verifies a session read against the configured record count and fixture payloads.
-fn verify_session_payloads(
-    records: &[sea_core::archive::SessionCommittedEvent],
-    generator: &FixtureGenerator,
-    config: &Config,
-) -> Result<(), String> {
-    verify_payloads(
-        records
-            .iter()
-            .map(|record| record.committed.event.payload.as_ref()),
-        generator,
-        config,
-    )
 }
 
 /// Runs the append, optional snapshot, and finite-read workload on trusted storage.
@@ -717,7 +714,11 @@ where
         collect_storage_events(storage.read(None, storage.head().await.map_err(display_error)?))
             .await?;
     let finite_read_microseconds = elapsed_microseconds(read_started);
-    verify_storage_payloads(&records, &generator, config)?;
+    verify_payloads(
+        records.iter().map(|record| record.event.payload.as_ref()),
+        &generator,
+        config,
+    )?;
 
     Ok(RunMeasurements {
         startup_microseconds,
@@ -757,7 +758,11 @@ where
     let records =
         collect_storage_events(storage.read(None, storage.head().await.map_err(display_error)?))
             .await?;
-    verify_storage_payloads(&records, &FixtureGenerator::new(config.seed), config)?;
+    verify_payloads(
+        records.iter().map(|record| record.event.payload.as_ref()),
+        &FixtureGenerator::new(config.seed),
+        config,
+    )?;
     if config.snapshot_frequency.is_some() {
         let snapshot = storage
             .get_snapshot(LoadStart::LatestSnapshot)
@@ -795,19 +800,6 @@ async fn collect_storage_events<Error: std::fmt::Display>(
         }
     }
     Ok(events)
-}
-
-/// Verifies a storage read against the configured record count and fixture payloads.
-fn verify_storage_payloads(
-    records: &[sea_core::CommittedEvent],
-    generator: &FixtureGenerator,
-    config: &Config,
-) -> Result<(), String> {
-    verify_payloads(
-        records.iter().map(|record| record.event.payload.as_ref()),
-        generator,
-        config,
-    )
 }
 
 /// Verifies the exact payload multiset without assuming concurrent append order.
