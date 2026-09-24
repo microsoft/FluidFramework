@@ -871,6 +871,58 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn signal_admission_requires_existing_document_and_one_registration_per_connection() {
+        use sea_core::signals::SeaSignals as _;
+
+        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+        let connection = host.connect(LivenessPolicy::default());
+        let mut opening = protocol::signals::OpenSignals {
+            version: protocol::PROTOCOL_VERSION,
+            document: b"missing".to_vec(),
+            member: protocol::signals::Member {
+                id: b"member".to_vec(),
+                metadata: Vec::new(),
+            },
+            datagrams: false,
+        };
+        assert!(matches!(
+            connection.open_signals(opening.clone()).await,
+            Err(protocol::Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                ..
+            })
+        ));
+        let (document, _, session) = host
+            .open_session(Vec::new(), protocol::ArchiveIntent::Create, None)
+            .await
+            .unwrap();
+        opening.document = document.as_bytes().to_vec();
+        opening.version += 1;
+        assert!(matches!(
+            connection.open_signals(opening.clone()).await,
+            Err(protocol::Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                ..
+            })
+        ));
+        opening.version = protocol::PROTOCOL_VERSION;
+        let signals = connection.open_signals(opening.clone()).await.unwrap();
+        signals.close_signals().await.unwrap();
+        assert!(matches!(
+            connection.open_signals(opening.clone()).await,
+            Err(protocol::Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                ..
+            })
+        ));
+        let fresh = host.connect(LivenessPolicy::default());
+        fresh.open_signals(opening).await.unwrap();
+        fresh.connection_closed(false).await;
+        connection.connection_closed(false).await;
+        session.connection_closed(false).await;
+    }
+
+    #[tokio::test]
     #[allow(clippy::too_many_lines)]
     async fn signals_cross_native_connections_without_archive_events() {
         use sea_core::signals::{
@@ -1599,6 +1651,68 @@ mod tests {
         ] {
             native_client_round_trip(mode).await;
         }
+    }
+
+    #[tokio::test]
+    #[ignore = "known cross-incarnation routing defect; repair explicitly deferred"]
+    async fn replaced_event_authority_cannot_be_used_by_an_old_author_stream() {
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let hash = identity.certificate_chain().as_slice()[0].hash();
+        let server = WebTransportServer::bind(
+            "127.0.0.1:0".parse().unwrap(),
+            identity,
+            Arc::new(BuiltInSeaHost::new(
+                std::path::PathBuf::new(),
+                StorageMode::Memory,
+            )),
+            TransportConfig::default(),
+        )
+        .unwrap();
+        let address = server.local_addr().unwrap();
+        let shutdown = server.shutdown_handle();
+        let serving = tokio::spawn(server.serve_until_shutdown());
+        let (_endpoint, connection) = raw_connection(address, hash).await;
+        let (authority, document, old_session, _events) = open_raw_event_stream_with_intent(
+            &connection,
+            b"",
+            protocol::ArchiveIntent::Create,
+            b"old",
+        )
+        .await;
+        let (mut author, mut receipts) = connection.open_bi().await.unwrap().await.unwrap();
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
+        send_raw_request(
+            &mut author,
+            protocol::Request::OpenAuthorStream { authority },
+        )
+        .await;
+        assert_eq!(
+            read_raw_response(&mut receipts, &mut decoder, protocol::StreamRole::Author).await,
+            protocol::Response::Acknowledged
+        );
+        let (_, replacement, _replacement_events) =
+            open_raw_event_stream(&connection, &document, b"replacement").await;
+        assert_ne!(old_session, replacement);
+        send_raw_request(
+            &mut author,
+            protocol::Request::Submit {
+                reference: None,
+                event: protocol::Event {
+                    payload: b"old-stream".to_vec(),
+                    blob_tree: None,
+                },
+            },
+        )
+        .await;
+        let response =
+            read_raw_response(&mut receipts, &mut decoder, protocol::StreamRole::Author).await;
+        connection.close(0_u32.into(), b"reproduction complete");
+        shutdown.shutdown(ShutdownMode::Immediate).unwrap();
+        serving.await.unwrap().unwrap();
+        assert!(
+            !matches!(response, protocol::Response::EventCommitted { .. }),
+            "old session {old_session} author stream committed under replacement {replacement}: {response:?}"
+        );
     }
 
     #[tokio::test]

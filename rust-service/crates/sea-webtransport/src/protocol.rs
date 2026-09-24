@@ -853,7 +853,7 @@ pub enum Request {
         /// Event to sequence.
         event: Event,
     },
-    /// Reads a bounded range of committed application events.
+    /// Reads committed session events, including membership, within the optional bounds.
     Read {
         /// Exclusive starting position.
         after: Option<u64>,
@@ -1091,7 +1091,14 @@ fn encode_typed_payload<T: Serialize>(
 }
 
 fn decode_typed_payload<T: DeserializeOwned>(frame: &NetworkFrame) -> Result<T, ProtocolError> {
-    postcard::from_bytes(&frame.payload).map_err(ProtocolError::InvalidPayload)
+    let (value, trailing) =
+        postcard::take_from_bytes(&frame.payload).map_err(ProtocolError::InvalidPayload)?;
+    if !trailing.is_empty() {
+        return Err(ProtocolError::InvalidPayload(
+            postcard::Error::DeserializeBadEncoding,
+        ));
+    }
+    Ok(value)
 }
 
 /// Encodes a request without serializing the outer [`Request`] enum.
@@ -2196,6 +2203,42 @@ mod tests {
             decode_request_frame(StreamRole::Author, &malformed),
             Err(ProtocolError::InvalidPayload(_))
         ));
+    }
+
+    #[test]
+    fn typed_payloads_reject_trailing_bytes_in_both_directions() {
+        for request in [
+            Request::Close,
+            Request::Submit {
+                reference: None,
+                event: Event {
+                    payload: vec![1, 2],
+                    blob_tree: None,
+                },
+            },
+        ] {
+            let encoded =
+                encode_request_frame(StreamRole::Author, &request, Limits::default()).unwrap();
+            let mut frame = decode_one_network_frame(&encoded);
+            frame.payload.push(0);
+            assert!(matches!(
+                decode_request_frame(StreamRole::Author, &frame),
+                Err(ProtocolError::InvalidPayload(_))
+            ));
+        }
+        for response in [
+            Response::Acknowledged,
+            Response::EventCommitted { position: 1 },
+        ] {
+            let encoded =
+                encode_response_frame(StreamRole::Author, &response, Limits::default()).unwrap();
+            let mut frame = decode_one_network_frame(&encoded);
+            frame.payload.push(0);
+            assert!(matches!(
+                decode_response_network_frame(StreamRole::Author, &frame),
+                Err(ProtocolError::InvalidPayload(_))
+            ));
+        }
     }
 
     fn decode_one_network_frame(encoded: &[u8]) -> NetworkFrame {

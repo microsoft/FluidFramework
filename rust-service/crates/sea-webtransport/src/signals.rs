@@ -234,6 +234,67 @@ impl SeaSignals for SignalClient {
 mod tests {
     use super::*;
 
+    #[tokio::test]
+    async fn receive_cancellation_preserves_events_and_close_wakes_the_pending_receiver() {
+        use futures_util::FutureExt as _;
+
+        let (commands, _requests) = mpsc::channel(1);
+        let (events, receiver) = mpsc::channel(1);
+        let (terminal, _) = watch::channel(None);
+        let client = SignalClient {
+            commands,
+            events: Mutex::new(receiver),
+            terminal,
+            task: AbortHandle::new_pair().0,
+        };
+        {
+            let pending = client.next_signal();
+            tokio::pin!(pending);
+            assert!(pending.as_mut().now_or_never().is_none());
+            assert!(matches!(
+                client.next_signal().await,
+                Err(SeaClientError::Service(protocol::ErrorKind::Conflict, _))
+            ));
+        }
+        let event = SignalEvent::Members(Vec::new());
+        events.try_send(event.clone()).unwrap();
+        assert_eq!(client.next_signal().await.unwrap(), Some(event));
+        let pending = client.next_signal();
+        tokio::pin!(pending);
+        assert!(pending.as_mut().now_or_never().is_none());
+        client.close_signals().await.unwrap();
+        assert!(pending.await.unwrap().is_none());
+        assert!(matches!(
+            client
+                .send_signal(SignalSubmission {
+                    target: None,
+                    payload: bytes::Bytes::new(),
+                    delivery: sea_core::signals::SignalDelivery::Reliable,
+                })
+                .await,
+            Err(SeaClientError::Closed)
+        ));
+    }
+
+    #[tokio::test]
+    async fn terminal_failure_is_not_hidden_by_queued_events() {
+        let (commands, _requests) = mpsc::channel(1);
+        let (events, receiver) = mpsc::channel(1);
+        let (terminal, _) = watch::channel(Some("overflow".to_owned()));
+        events.try_send(SignalEvent::Members(Vec::new())).unwrap();
+        let client = SignalClient {
+            commands,
+            events: Mutex::new(receiver),
+            terminal,
+            task: AbortHandle::new_pair().0,
+        };
+        assert!(matches!(
+            client.next_signal().await,
+            Err(SeaClientError::Service(protocol::ErrorKind::Unavailable, message))
+                if message == "overflow"
+        ));
+    }
+
     #[test]
     fn client_overflow_drops_only_best_effort_messages() {
         let (sender, mut receiver) = mpsc::channel(1);

@@ -44,7 +44,10 @@ pub struct TransportConfig {
     pub max_connections: usize,
     /// Maximum bidirectional streams per connection.
     pub max_streams_per_connection: usize,
-    /// Timeout for connection establishment and framed I/O.
+    /// Timeout applied separately to native connection, event-stream, and author-stream opening.
+    ///
+    /// Later native frame reads and writes have no client-side operation timeout.
+    /// The server independently enforces its own framed-I/O deadlines.
     pub operation_timeout: Duration,
 }
 
@@ -83,7 +86,7 @@ pub enum WebTransportError {
     /// A complete frame exceeds its configured bound.
     #[error("transport frame exceeds its configured bound")]
     FrameTooLarge,
-    /// Connection or framed I/O exceeded its timeout.
+    /// Native connection or initial logical-stream opening exceeded its timeout.
     #[error("transport operation timed out")]
     Timeout,
     /// The peer closed or local client cancelled the connection.

@@ -115,6 +115,7 @@ where
     where
         Transport: sea_core::SessionBounds,
     {
+        self.state.check_connected()?;
         let bytes = protocol::encode_request_frame(
             StreamRole::Signal,
             &Request::SendSignal(submission.clone()),
@@ -133,6 +134,7 @@ where
     where
         Transport: sea_core::SessionBounds,
     {
+        self.state.check_connected()?;
         let bytes = self
             .transport
             .receive_datagram()
@@ -326,7 +328,10 @@ where
         self.state.is_closed()
     }
 
-    /// Disconnects the underlying transport without closing logical client state.
+    /// Attempts physical disconnect and abandons logical authority even if it fails.
+    ///
+    /// Returns the physical transport error after disabling request admission.
+    /// Recovery requires explicitly reconnecting or replacing the transport and opening a fresh session.
     pub fn disconnect(&self) -> Result<(), ClientError<Transport::Error>> {
         let result = self.transport.disconnect();
         self.state.disconnect()?;
@@ -616,13 +621,20 @@ where
     pub async fn close(mut self) -> Result<(), ClientError<Stream::Error>> {
         self.stream.finish().await.map_err(ClientError::Transport)
     }
+
+    /// Cancels both directions when the registration owner ends, including on pump cancellation.
+    pub(crate) async fn cancel(&mut self) {
+        self.terminal = true;
+        let _ = self.stream.cancel().await;
+    }
 }
 
 impl<Stream> AuthorStream<Stream>
 where
     Stream: BidirectionalStream,
 {
-    /// Sends one author-role request and receives its ordered response.
+    /// Sends one author-role request and receives its matching ordered response.
+    /// An unexpected receipt ends this stream's authority before another request can be sent.
     pub async fn request(
         &mut self,
         request: Request,
@@ -665,7 +677,20 @@ where
             .await?
             .ok_or(ClientError::ResponseEnded)?;
 
-        protocol::decode_response_network_frame(StreamRole::Author, &frame).map_err(Into::into)
+        let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
+        if matches!(
+            (&request, &response),
+            (_, Response::Error { .. })
+                | (Request::Close, Response::Acknowledged)
+                | (
+                    Request::Submit { .. } | Request::AnnounceMembership { .. },
+                    Response::EventCommitted { .. }
+                )
+        ) {
+            Ok(response)
+        } else {
+            Err(ClientError::UnexpectedResponse(response))
+        }
     }
 
     /// Finishes the author stream and closes shared client state.
@@ -747,7 +772,8 @@ impl<Stream> ResponseStream<Stream>
 where
     Stream: BidirectionalStream,
 {
-    /// Receives and decodes the next response, or completes at clean EOF.
+    /// Receives and decodes the next response.
+    /// Content responses require `ResponseComplete`; clean EOF alone ends only event streams.
     pub async fn next(&mut self) -> Result<Option<Response>, ClientError<Stream::Error>> {
         if self.ended {
             return Ok(None);
@@ -769,6 +795,9 @@ where
             else {
                 self.decoder.finish()?;
                 self.ended = true;
+                if self.role == StreamRole::Content {
+                    return Err(ClientError::ResponseEnded);
+                }
                 return Ok(None);
             };
             self.decoder.push(&chunk);
@@ -922,7 +951,7 @@ mod tests {
         convert::Infallible,
         sync::{
             Arc, Mutex,
-            atomic::{AtomicBool, Ordering},
+            atomic::{AtomicBool, AtomicUsize, Ordering},
         },
     };
 
@@ -949,10 +978,65 @@ mod tests {
         streams: Mutex<VecDeque<Vec<Vec<u8>>>>,
     }
 
+    struct FailingDisconnectTransport {
+        calls: Arc<AtomicUsize>,
+    }
+
+    #[async_trait]
+    impl ClientTransport for FailingDisconnectTransport {
+        type Stream = Self;
+        type Error = &'static str;
+
+        async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
+            self.calls.fetch_add(1, Ordering::Relaxed);
+            Err("transport requires replacement")
+        }
+
+        async fn send_datagram(&self, _bytes: &[u8]) -> Result<bool, Self::Error> {
+            self.calls.fetch_add(1, Ordering::Relaxed);
+            Err("transport requires replacement")
+        }
+
+        async fn receive_datagram(&self) -> Result<Vec<u8>, Self::Error> {
+            self.calls.fetch_add(1, Ordering::Relaxed);
+            Err("transport requires replacement")
+        }
+
+        fn disconnect(&self) -> Result<(), Self::Error> {
+            self.calls.fetch_add(1, Ordering::Relaxed);
+            Err("physical disconnect failed")
+        }
+    }
+
+    #[async_trait]
+    impl BidirectionalStream for FailingDisconnectTransport {
+        type Error = &'static str;
+
+        async fn send(&mut self, _bytes: &[u8]) -> Result<(), Self::Error> {
+            panic!("failed transport must not yield an open stream");
+        }
+
+        async fn finish(&mut self) -> Result<(), Self::Error> {
+            panic!("failed transport must not yield an open stream");
+        }
+
+        async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
+            panic!("failed transport must not yield an open stream");
+        }
+
+        async fn cancel(&mut self) -> Result<(), Self::Error> {
+            panic!("failed transport must not yield an open stream");
+        }
+    }
+
     #[async_trait]
     impl ClientTransport for ScriptedTransport {
         type Stream = ScriptedStream;
         type Error = Infallible;
+
+        async fn receive_datagram(&self) -> Result<Vec<u8>, Self::Error> {
+            Ok(self.chunks.concat())
+        }
 
         async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
             Ok(ScriptedStream {
@@ -1026,6 +1110,121 @@ mod tests {
         state.check_connected().expect("request after recovery");
         state.close().expect("close");
         assert!(matches!(state.reconnect(), Err(ClientStateError::Closed)));
+    }
+
+    #[tokio::test]
+    async fn failed_physical_disconnect_abandons_authority_and_rejects_later_requests() {
+        use super::ClientError;
+
+        let calls = Arc::new(AtomicUsize::new(0));
+        let state = Arc::new(ClientState::default());
+        state.set_authority(vec![9; 32]).unwrap();
+        let client = Client::with_state(
+            FailingDisconnectTransport {
+                calls: calls.clone(),
+            },
+            state.clone(),
+            protocol::Limits::default(),
+        );
+        assert!(matches!(
+            client.disconnect(),
+            Err(ClientError::Transport("physical disconnect failed"))
+        ));
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
+        assert!(matches!(
+            state.check_connected(),
+            Err(ClientStateError::Disconnected)
+        ));
+        assert!(matches!(
+            state.authority(),
+            Err(ClientStateError::MissingAuthority)
+        ));
+        assert!(matches!(
+            client.open_content_stream().await,
+            Err(ClientError::State(ClientStateError::MissingAuthority))
+        ));
+        let opening = Request::OpenEventStream {
+            version: protocol::PROTOCOL_VERSION,
+            archive: b"document".to_vec(),
+            intent: protocol::ArchiveIntent::Open,
+            resume_after: None,
+        };
+        assert!(matches!(
+            client.open_event_stream(opening.clone()).await,
+            Err(ClientError::State(ClientStateError::Disconnected))
+        ));
+        assert!(matches!(
+            client
+                .send_signal_datagram(&protocol::signals::Submission {
+                    target: None,
+                    payload: Vec::new(),
+                    best_effort: true,
+                })
+                .await,
+            Err(ClientError::State(ClientStateError::Disconnected))
+        ));
+        assert!(matches!(
+            client.receive_signal_datagram().await,
+            Err(ClientError::State(ClientStateError::Disconnected))
+        ));
+        assert_eq!(calls.load(Ordering::Relaxed), 1);
+        client.reconnect().unwrap();
+        assert!(matches!(
+            state.authority(),
+            Err(ClientStateError::MissingAuthority)
+        ));
+        assert!(matches!(
+            client.open_author_stream().await,
+            Err(ClientError::State(ClientStateError::MissingAuthority))
+        ));
+        assert!(matches!(
+            client.open_event_stream(opening).await,
+            Err(ClientError::Transport("transport requires replacement"))
+        ));
+        assert_eq!(calls.load(Ordering::Relaxed), 2);
+    }
+
+    #[tokio::test]
+    async fn signal_datagrams_require_one_complete_best_effort_message() {
+        let limits = protocol::Limits::default();
+        let message = |best_effort| protocol::signals::Event::Message {
+            sender: vec![1],
+            submission: protocol::signals::Submission {
+                target: Some(vec![2]),
+                payload: vec![3],
+                best_effort,
+            },
+        };
+        let encode = |event| {
+            protocol::encode_response_frame(
+                StreamRole::Signal,
+                &Response::SignalEvent(event),
+                limits,
+            )
+            .unwrap()
+        };
+        let valid = encode(message(true));
+        for (bytes, accepted) in [
+            (valid.clone(), true),
+            (encode(message(false)), false),
+            (encode(protocol::signals::Event::Members(Vec::new())), false),
+            ([valid.clone(), valid.clone()].concat(), false),
+            (valid[..valid.len() - 1].to_vec(), false),
+        ] {
+            let client = Client::new(
+                ScriptedTransport {
+                    chunks: vec![bytes],
+                    cancelled: None,
+                },
+                limits,
+            );
+            let result = client.receive_signal_datagram().await;
+            if accepted {
+                assert_eq!(result.unwrap(), message(true));
+            } else {
+                assert!(result.is_err());
+            }
+        }
     }
 
     #[tokio::test]
@@ -1117,6 +1316,41 @@ mod tests {
         event_stream.cancel().await.expect("cancel event stream");
 
         assert!(cancelled.load(Ordering::Relaxed));
+    }
+
+    #[tokio::test]
+    async fn content_eof_requires_explicit_completion_but_event_eof_does_not() {
+        let limits = protocol::Limits::default();
+        for (role, complete) in [
+            (StreamRole::Content, false),
+            (StreamRole::Content, true),
+            (StreamRole::Event, false),
+        ] {
+            let chunks = if complete {
+                vec![
+                    protocol::encode_response_frame(role, &Response::ResponseComplete, limits)
+                        .unwrap(),
+                ]
+            } else {
+                Vec::new()
+            };
+            let mut responses = super::ResponseStream {
+                stream: ScriptedStream {
+                    chunks: chunks.into(),
+                    cancelled: None,
+                },
+                role,
+                ended: false,
+                decoder: protocol::NetworkFrameDecoder::new(limits),
+            };
+            let result = responses.next().await;
+            if role == StreamRole::Content && !complete {
+                assert!(matches!(result, Err(super::ClientError::ResponseEnded)));
+            } else {
+                assert!(matches!(result, Ok(None)));
+            }
+            assert!(matches!(responses.next().await, Ok(None)));
+        }
     }
 
     #[tokio::test]
@@ -1244,6 +1478,53 @@ mod tests {
             Err(super::ClientError::State(ClientStateError::Closed))
         ));
         assert!(cancelled.load(Ordering::Relaxed));
+    }
+
+    #[tokio::test]
+    async fn mismatched_author_receipts_make_the_stream_terminal() {
+        let limits = protocol::Limits::default();
+        for (request, response) in [
+            (
+                Request::Submit {
+                    reference: None,
+                    event: protocol::Event {
+                        payload: vec![1],
+                        blob_tree: None,
+                    },
+                },
+                Response::Acknowledged,
+            ),
+            (
+                Request::AnnounceMembership { metadata: vec![] },
+                Response::Acknowledged,
+            ),
+            (Request::Close, Response::EventCommitted { position: 1 }),
+        ] {
+            let cancelled = Arc::new(AtomicBool::new(false));
+            let mut author = super::AuthorStream {
+                terminal: false,
+                stream: ScriptedStream {
+                    chunks: vec![
+                        protocol::encode_response_frame(StreamRole::Author, &response, limits)
+                            .unwrap(),
+                    ]
+                    .into(),
+                    cancelled: Some(cancelled.clone()),
+                },
+                state: Arc::new(ClientState::default()),
+                limits,
+                decoder: protocol::NetworkFrameDecoder::new(limits),
+            };
+            assert!(matches!(
+                author.request(request.clone()).await,
+                Err(super::ClientError::UnexpectedResponse(actual)) if actual == response
+            ));
+            assert!(cancelled.load(Ordering::Relaxed));
+            assert!(matches!(
+                author.request(request).await,
+                Err(super::ClientError::State(ClientStateError::Closed))
+            ));
+        }
     }
 
     #[tokio::test]

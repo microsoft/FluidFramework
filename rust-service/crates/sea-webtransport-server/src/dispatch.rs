@@ -655,4 +655,175 @@ mod tests {
             }) if previous == position && latest_known == position
         ));
     }
+
+    #[tokio::test]
+    async fn joined_and_left_positions_are_valid_snapshot_dependencies() {
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let actor = SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
+        let observer =
+            SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
+        assert!(matches!(
+            actor
+                .author_request(protocol::Request::AnnounceMembership {
+                    metadata: Vec::new(),
+                })
+                .await,
+            protocol::Response::EventCommitted { .. }
+        ));
+        assert_eq!(
+            actor.author_request(protocol::Request::Close).await,
+            protocol::Response::Acknowledged
+        );
+        let mut events = observer.event_stream(None).await.unwrap();
+        let mut positions = Vec::new();
+        while let Some(response) = events.next().await {
+            match response {
+                protocol::Response::LoadEvent(event) => {
+                    positions.push((event.kind, event.position));
+                }
+                protocol::Response::StreamProgress {
+                    status: protocol::StreamStatus::AwaitingNewItems,
+                    ..
+                } => break,
+                _ => {}
+            }
+        }
+        assert_eq!(
+            positions.iter().map(|(kind, _)| *kind).collect::<Vec<_>>(),
+            vec![
+                protocol::SessionEventKind::Joined,
+                protocol::SessionEventKind::Left,
+            ]
+        );
+        let mut coordination = observer
+            .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                authority: Vec::new(),
+                participation: protocol::SnapshotParticipation::SeaSelected,
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::SnapshotCoordination { fence, .. }) =
+            coordination.next().await
+        else {
+            panic!("observer must be nominated");
+        };
+        let mut uploaded = observer
+            .content_request(protocol::Request::PutBlob {
+                payload: b"membership snapshot".to_vec(),
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::BlobStored { id }) = uploaded.next().await else {
+            panic!("blob missing");
+        };
+        let root = protocol::TreeId::Blob(id);
+        let mut expected_parent = None;
+        for (_, position) in positions {
+            assert_eq!(
+                observer
+                    .snapshot_request(protocol::Request::PublishSnapshot {
+                        fence,
+                        expected_parent,
+                        at_event: position,
+                        root,
+                    })
+                    .await,
+                protocol::Response::Snapshot(Some(protocol::Snapshot {
+                    at_event: position,
+                    root,
+                }))
+            );
+            expected_parent = Some(position);
+        }
+    }
+
+    #[tokio::test]
+    async fn snapshot_publication_rejects_unresolved_dependencies_before_publication() {
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let dispatcher = SessionDispatcher::new(Arc::new(session));
+        let mut coordination = dispatcher
+            .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                authority: Vec::new(),
+                participation: protocol::SnapshotParticipation::SeaSelected,
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::SnapshotCoordination { fence, .. }) =
+            coordination.next().await
+        else {
+            panic!("publisher must be nominated");
+        };
+        let mut uploaded = dispatcher
+            .content_request(protocol::Request::PutBlob {
+                payload: b"snapshot".to_vec(),
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::BlobStored { id }) = uploaded.next().await else {
+            panic!("blob missing");
+        };
+        for (root, message) in [
+            (
+                protocol::TreeId::Blob([0; 32]),
+                "snapshot tree is unavailable",
+            ),
+            (protocol::TreeId::Blob(id), "snapshot event is unavailable"),
+        ] {
+            assert_eq!(
+                dispatcher
+                    .snapshot_request(protocol::Request::PublishSnapshot {
+                        fence,
+                        expected_parent: None,
+                        at_event: u64::MAX,
+                        root,
+                    })
+                    .await,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Invalid,
+                    message: message.to_owned(),
+                }
+            );
+            assert_eq!(
+                dispatcher
+                    .snapshot_request(protocol::Request::LatestSnapshot)
+                    .await,
+                protocol::Response::Snapshot(None)
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn directory_wire_input_rejects_duplicate_and_invalid_names() {
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let dispatcher = SessionDispatcher::new(Arc::new(session));
+        for names in [vec!["leaf", "leaf"], vec!["bad/name"], vec![""]] {
+            let entries = names
+                .into_iter()
+                .map(|name| protocol::DirectoryEntry {
+                    name: name.to_owned(),
+                    child: protocol::TreeId::Blob([0; 32]),
+                })
+                .collect();
+            assert!(matches!(
+                dispatcher
+                    .content_request(protocol::Request::PutDirectory { entries })
+                    .await,
+                Err(protocol::Response::Error {
+                    kind: protocol::ErrorKind::Invalid,
+                    ..
+                })
+            ));
+        }
+    }
 }

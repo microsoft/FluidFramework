@@ -280,43 +280,43 @@ impl SnapshotPump {
         let (updates, receiver) = watch::channel(Ok(state(&stream)));
         let (commands, mut requests) = mpsc::channel::<SnapshotCommand>(16);
         let (task, registration) = AbortHandle::new_pair();
-        let future = Abortable::new(
-            async move {
-                loop {
-                    tokio::select! {
-                        command = requests.recv() => {
-                            let Some(command) = command else { break; };
-                            let result = stream.request(command.request).await.map_err(SeaClientError::from);
-                            if let Err(error) = &result {
-                                let _ = updates.send_replace(Err(error.to_string()));
-                                let _ = command.response.send(result);
-                                break;
-                            }
-                            let _ = updates.send_replace(Ok(state(&stream)));
-                            let _ = command.response.send(result);
-                        }
-                        result = stream.next_coordination() => {
-                            match result {
-                                Ok(()) => { let _ = updates.send_replace(Ok(state(&stream))); }
-                                Err(error) => {
-                                    let _ = updates.send_replace(Err(SeaClientError::from(error).to_string()));
+        let future = async move {
+            let _ = Abortable::new(
+                async {
+                    loop {
+                        tokio::select! {
+                            command = requests.recv() => {
+                                let Some(command) = command else { break; };
+                                let result = stream.request(command.request).await.map_err(SeaClientError::from);
+                                if let Err(error) = &result {
+                                    let _ = updates.send_replace(Err(error.to_string()));
+                                    let _ = command.response.send(result);
                                     break;
+                                }
+                                let _ = updates.send_replace(Ok(state(&stream)));
+                                let _ = command.response.send(result);
+                            }
+                            result = stream.next_coordination() => {
+                                match result {
+                                    Ok(()) => { let _ = updates.send_replace(Ok(state(&stream))); }
+                                    Err(error) => {
+                                        let _ = updates.send_replace(Err(SeaClientError::from(error).to_string()));
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            },
-            registration,
-        );
+                },
+                registration,
+            )
+            .await;
+            stream.cancel().await;
+        };
         #[cfg(not(target_arch = "wasm32"))]
-        tokio::spawn(async move {
-            let _ = future.await;
-        });
+        tokio::spawn(future);
         #[cfg(target_arch = "wasm32")]
-        wasm_bindgen_futures::spawn_local(async move {
-            let _ = future.await;
-        });
+        wasm_bindgen_futures::spawn_local(future);
         (Arc::new(Self { commands, task }), receiver)
     }
 
@@ -1036,6 +1036,8 @@ mod tests {
     struct OpeningStream {
         /// A pending receive wakes only when the test sends a frame or closes the channel.
         incoming: mpsc::UnboundedReceiver<Vec<u8>>,
+        /// Reports explicit cancellation separately from dropping a transport handle.
+        cancelled: Option<oneshot::Sender<()>>,
     }
 
     #[async_trait]
@@ -1074,6 +1076,9 @@ mod tests {
         }
 
         async fn cancel(&mut self) -> Result<(), Self::Error> {
+            if let Some(cancelled) = self.cancelled.take() {
+                let _ = cancelled.send(());
+            }
             self.incoming.close();
             Ok(())
         }
@@ -1096,15 +1101,31 @@ mod tests {
         SessionClient<OpeningTransport>,
         mpsc::UnboundedSender<Vec<u8>>,
     ) {
+        opening_client_with_streams(reference, Vec::new()).await
+    }
+
+    async fn opening_client_with_streams(
+        reference: Option<EventPosition>,
+        additional: Vec<OpeningStream>,
+    ) -> (
+        SessionClient<OpeningTransport>,
+        mpsc::UnboundedSender<Vec<u8>>,
+    ) {
         let (events, incoming) = mpsc::unbounded_channel();
         let (author, author_incoming) = mpsc::unbounded_channel();
+        let mut streams = VecDeque::from([
+            OpeningStream {
+                incoming,
+                cancelled: None,
+            },
+            OpeningStream {
+                incoming: author_incoming,
+                cancelled: None,
+            },
+        ]);
+        streams.extend(additional);
         let transport = OpeningTransport {
-            streams: std::sync::Mutex::new(VecDeque::from([
-                OpeningStream { incoming },
-                OpeningStream {
-                    incoming: author_incoming,
-                },
-            ])),
+            streams: std::sync::Mutex::new(streams),
         };
         reply(
             &events,
@@ -1227,5 +1248,143 @@ mod tests {
             event_from_stream_response(Response::Acknowledged),
             Err(SeaClientError::UnexpectedResponse)
         ));
+    }
+
+    #[tokio::test]
+    async fn remote_resolution_accepts_joined_and_left_positions() {
+        for kind in [
+            protocol::SessionEventKind::Joined,
+            protocol::SessionEventKind::Left,
+        ] {
+            let (content, incoming) = mpsc::unbounded_channel();
+            let (client, _events) = opening_client_with_streams(
+                None,
+                vec![OpeningStream {
+                    incoming,
+                    cancelled: None,
+                }],
+            )
+            .await;
+            reply(&content, StreamRole::Content, &Response::Acknowledged);
+            reply(
+                &content,
+                StreamRole::Content,
+                &Response::LoadEvent(Box::new(protocol::StreamEvent {
+                    kind,
+                    position: 7,
+                    session: 1,
+                    reference: None,
+                    minimum_reference: None,
+                    event: protocol::Event {
+                        payload: Vec::new(),
+                        blob_tree: None,
+                    },
+                })),
+            );
+            reply(&content, StreamRole::Content, &Response::ResponseComplete);
+            let resolved = client
+                .resolve_position(EventPosition::new(7))
+                .await
+                .unwrap()
+                .expect("committed membership position must resolve");
+            assert_eq!(resolved.id(), EventPosition::new(7));
+            assert!(Arc::ptr_eq(&resolved.scope, &client.scope));
+        }
+    }
+
+    #[tokio::test]
+    async fn snapshot_handles_from_another_client_are_rejected_before_transport_access() {
+        let (client, _events) = opening_client(None).await;
+        let (other, _other_events) = opening_client(None).await;
+        let root = BlobTreeId::Blob(BlobId::from_bytes(&[1; 32]).unwrap());
+        let position = EventPosition::new(1);
+        for snapshot in [
+            Snapshot {
+                root: other.handle(root),
+                at_event: client.handle(position),
+            },
+            Snapshot {
+                root: client.handle(root),
+                at_event: other.handle(position),
+            },
+        ] {
+            assert!(matches!(
+                client.publish_snapshot(None, None, snapshot).await,
+                Err(SeaClientError::Service(protocol::ErrorKind::Rejected, message))
+                    if message == "snapshot handles belong to another client"
+            ));
+        }
+    }
+
+    #[tokio::test]
+    async fn snapshot_pump_explicitly_cancels_transport_on_drop_or_receive_failure() {
+        for drop_owner in [true, false] {
+            let (events, incoming) = mpsc::unbounded_channel();
+            let (snapshots, snapshot_incoming) = mpsc::unbounded_channel();
+            let (cancelled, cancellation) = oneshot::channel();
+            let client = Client::new(
+                OpeningTransport {
+                    streams: std::sync::Mutex::new(VecDeque::from([
+                        OpeningStream {
+                            incoming,
+                            cancelled: None,
+                        },
+                        OpeningStream {
+                            incoming: snapshot_incoming,
+                            cancelled: Some(cancelled),
+                        },
+                    ])),
+                },
+                protocol::Limits::default(),
+            );
+            reply(
+                &events,
+                StreamRole::Event,
+                &Response::EventStreamOpened {
+                    session: 1,
+                    document: b"document".to_vec(),
+                    authority: vec![9; 32],
+                },
+            );
+            let _event_stream = client
+                .open_event_stream(protocol::Request::OpenEventStream {
+                    version: protocol::PROTOCOL_VERSION,
+                    archive: b"document".to_vec(),
+                    intent: protocol::ArchiveIntent::Open,
+                    resume_after: None,
+                })
+                .await
+                .unwrap();
+            reply(&snapshots, StreamRole::Snapshot, &Response::Acknowledged);
+            reply(
+                &snapshots,
+                StreamRole::Snapshot,
+                &Response::SnapshotCoordination {
+                    latest: None,
+                    fence: Some(1),
+                },
+            );
+            let snapshot = client
+                .open_snapshot_stream(protocol::SnapshotParticipation::SeaSelected)
+                .await
+                .unwrap();
+            let (pump, _updates) = SnapshotPump::start(snapshot);
+            if drop_owner {
+                drop(pump);
+            } else {
+                reply(&snapshots, StreamRole::Snapshot, &Response::Acknowledged);
+                // Keep the owner alive so only the unexpected notification ends the pump.
+                tokio::time::timeout(std::time::Duration::from_secs(1), cancellation)
+                    .await
+                    .expect("failed pump must cancel its stream")
+                    .expect("dropping the stream alone does not call cancel");
+                drop(pump);
+                continue;
+            }
+            tokio::time::timeout(std::time::Duration::from_secs(1), cancellation)
+                .await
+                .expect("dropping the owner must cancel its stream")
+                .expect("dropping the stream alone does not call cancel");
+        }
     }
 }

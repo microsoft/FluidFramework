@@ -7,7 +7,7 @@ use std::{
     rc::Rc,
 };
 use wasm_bindgen::{JsCast as _, JsValue};
-use wasm_bindgen_futures::JsFuture;
+use wasm_bindgen_futures::{JsFuture, spawn_local};
 use web_sys::{
     ReadableStream, ReadableStreamDefaultReader, WebTransport, WebTransportBidirectionalStream,
     WebTransportHash, WebTransportOptions, WritableStream, WritableStreamDefaultWriter,
@@ -17,15 +17,25 @@ use super::{BidirectionalStream, ClientTransport};
 
 /// Browser connection primitive used by the shared Sea client.
 pub struct BrowserTransport {
-    transport: WebTransport,
+    transport: BrowserConnection,
     /// Datagram stream locks and retained reads, separate from reliable logical streams.
     datagrams: BrowserBidirectionalStream,
     /// Browser-advertised datagram size, which may change during the connection.
     datagram_options: JsValue,
 }
 
+/// Closes the connection even when establishment or datagram setup is abandoned.
+struct BrowserConnection(WebTransport);
+
+impl Drop for BrowserConnection {
+    fn drop(&mut self) {
+        self.0.close();
+    }
+}
+
 impl BrowserTransport {
     /// Connects to a WebTransport endpoint using one SHA-256 certificate pin.
+    /// Cancellation or failure closes the partially established connection.
     pub async fn connect(url: &str, certificate_hash: &[u8]) -> Result<Self, JsValue> {
         if certificate_hash.len() != 32 {
             return Err(js_error("certificate hash must contain exactly 32 bytes"));
@@ -35,9 +45,9 @@ impl BrowserTransport {
         hash.set_value_u8_array(&Uint8Array::from(certificate_hash));
         let options = WebTransportOptions::new();
         options.set_server_certificate_hashes(&[hash]);
-        let transport = WebTransport::new_with_options(url, &options)?;
-        JsFuture::from(transport.ready()).await?;
-        let datagram_options = Reflect::get(&transport, &JsValue::from_str("datagrams"))?;
+        let transport = BrowserConnection(WebTransport::new_with_options(url, &options)?);
+        JsFuture::from(transport.0.ready()).await?;
+        let datagram_options = Reflect::get(&transport.0, &JsValue::from_str("datagrams"))?;
         let readable: ReadableStream =
             Reflect::get(&datagram_options, &JsValue::from_str("readable"))?.dyn_into()?;
         let writable: WritableStream =
@@ -57,12 +67,6 @@ impl BrowserTransport {
             datagrams,
             datagram_options,
         })
-    }
-}
-
-impl Drop for BrowserTransport {
-    fn drop(&mut self) {
-        self.transport.close();
     }
 }
 
@@ -101,7 +105,7 @@ impl ClientTransport for BrowserTransport {
     }
 
     async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
-        let stream = JsFuture::from(self.transport.create_bidirectional_stream())
+        let stream = JsFuture::from(self.transport.0.create_bidirectional_stream())
             .await?
             .dyn_into::<WebTransportBidirectionalStream>()?;
         let writable: WritableStream = stream.writable().unchecked_into();
@@ -119,12 +123,13 @@ impl ClientTransport for BrowserTransport {
     }
 
     fn disconnect(&self) -> Result<(), Self::Error> {
-        self.transport.close();
+        self.transport.0.close();
         Ok(())
     }
 }
 
 /// Browser bidirectional byte stream used by the shared Sea client.
+/// Dropping its final clone cancels both directions and releases the JavaScript locks.
 #[derive(Clone)]
 pub struct BrowserBidirectionalStream {
     /// Shared directions permit sending while one JavaScript read remains pending.
@@ -145,6 +150,21 @@ struct BrowserStreamState {
     ended: Cell<bool>,
     /// A JavaScript read is not cancelled merely by dropping its Rust waiter.
     pending_receive: RefCell<Option<Promise>>,
+}
+
+impl Drop for BrowserStreamState {
+    fn drop(&mut self) {
+        let writer = self.writer.clone();
+        let reader = self.reader.clone();
+        let abort = JsFuture::from(writer.abort());
+        let cancel = JsFuture::from(reader.cancel());
+        spawn_local(async move {
+            let _ = abort.await;
+            writer.release_lock();
+            let _ = cancel.await;
+            reader.release_lock();
+        });
+    }
 }
 
 #[async_trait(?Send)]

@@ -1043,7 +1043,15 @@ async fn serve_content_stream(
             Ok(responses) => responses,
             Err(response) => Box::pin(stream::once(async move { response })),
         };
-        while let Some(response) = responses.next().await {
+        loop {
+            let response = tokio::select! {
+                biased;
+                () = send.stopped() => return Ok(()),
+                response = responses.next() => response,
+            };
+            let Some(response) = response else {
+                break;
+            };
             write_network_response(
                 &mut send,
                 role,
@@ -1224,6 +1232,82 @@ mod tests {
                 bytes.len()
             }))
         }
+    }
+
+    /// Observes writes and exposes peer cancellation independently of response production.
+    struct TestSend {
+        writes: Arc<AtomicUsize>,
+        stopped: watch::Receiver<bool>,
+    }
+
+    #[async_trait]
+    impl SendStream for TestSend {
+        async fn write_all(&mut self, _bytes: &[u8]) -> Result<(), WebTransportError> {
+            self.writes.fetch_add(1, Ordering::Relaxed);
+            Ok(())
+        }
+
+        async fn finish(&mut self) -> Result<(), WebTransportError> {
+            Ok(())
+        }
+
+        async fn stopped(&mut self) {
+            let _ = self.stopped.wait_for(|stopped| *stopped).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn idle_content_read_releases_its_stream_when_peer_cancels() {
+        use sea_core::storage::SeaStorage as _;
+        use sea_memory::MemoryStorage;
+        use sea_sequencer::session::LocalSequencer;
+
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let service = Arc::new(crate::SessionDispatcher::new(Arc::new(session)));
+        let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
+        requests
+            .send(
+                sea_v1::encode_request_frame(
+                    sea_v1::StreamRole::Content,
+                    &sea_v1::Request::Read {
+                        after: None,
+                        stop_after: None,
+                    },
+                    sea_v1::Limits::default(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+        let (stop, stopped) = watch::channel(false);
+        let writes = Arc::new(AtomicUsize::new(0));
+        let config = TransportConfig::default();
+        let metrics = Metrics::default();
+        let serving = serve_content_stream(
+            TestSend {
+                writes: writes.clone(),
+                stopped,
+            },
+            TestReceive(receive),
+            service,
+            &config,
+            &metrics,
+            sea_v1::StreamRole::Content,
+            sea_v1::Request::OpenContentStream {
+                authority: Vec::new(),
+            },
+        );
+        tokio::pin!(serving);
+        assert!(futures_util::poll!(&mut serving).is_pending());
+        assert!(writes.load(Ordering::Relaxed) > 1, "read must have started");
+        stop.send_replace(true);
+        assert!(matches!(
+            futures_util::poll!(&mut serving),
+            std::task::Poll::Ready(Ok(()))
+        ));
     }
 
     #[tokio::test(start_paused = true)]

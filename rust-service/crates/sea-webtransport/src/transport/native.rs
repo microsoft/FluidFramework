@@ -112,3 +112,63 @@ impl BidirectionalStream for NativeBidirectionalStream {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures_util::FutureExt as _;
+    use std::time::Duration;
+    use tokio::time::timeout;
+    use wtransport::{Identity, ServerConfig};
+
+    #[tokio::test]
+    async fn datagrams_fall_back_before_admission_and_preserve_admitted_payloads() {
+        let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+        let hash = identity.certificate_chain().as_slice()[0].hash();
+        let server = Endpoint::server(
+            ServerConfig::builder()
+                .with_bind_address("127.0.0.1:0".parse().unwrap())
+                .with_identity(identity)
+                .build(),
+        )
+        .unwrap();
+        let url = format!("https://{}/sea", server.local_addr().unwrap());
+        let (client, peer) = timeout(Duration::from_secs(5), async {
+            tokio::join!(
+                crate::connect_once(&url, hash, Duration::from_secs(5)),
+                async { server.accept().await.await.unwrap().accept().await.unwrap() }
+            )
+        })
+        .await
+        .unwrap();
+        let (endpoint, connection) = client.unwrap();
+        let transport = NativeTransport::new(endpoint, connection);
+        assert!(transport.supports_datagrams());
+        let maximum = transport.connection.max_datagram_size().unwrap();
+        assert!(
+            !transport
+                .send_datagram(&vec![0; maximum + 1])
+                .await
+                .unwrap()
+        );
+        assert!(peer.receive_datagram().now_or_never().is_none());
+        assert!(transport.send_datagram(b"outbound").await.unwrap());
+        let received = timeout(Duration::from_secs(2), peer.receive_datagram())
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(received.payload().as_ref(), b"outbound");
+        peer.send_datagram(b"inbound").unwrap();
+        assert_eq!(
+            timeout(Duration::from_secs(2), transport.receive_datagram())
+                .await
+                .unwrap()
+                .unwrap(),
+            b"inbound"
+        );
+        transport.disconnect().unwrap();
+        timeout(Duration::from_secs(2), peer.closed())
+            .await
+            .unwrap();
+    }
+}

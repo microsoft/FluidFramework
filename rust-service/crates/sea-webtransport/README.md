@@ -17,6 +17,7 @@ One document-bound connection supports five bidirectional logical stream roles:
 | Signal | Independent live membership and messages for an existing document, without archive mutations. |
 
 Each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
+The payload must contain exactly one value of that kind, with no trailing bytes.
 The five-byte envelope has no correlation ID.
 No-blob submissions and deliveries have distinct kinds and omit the blob option tag; both decode into the same event model as blob-bearing messages.
 The decoder accepts fragmentation and coalescing and enforces `max_frame_bytes` before payload decoding.
@@ -25,6 +26,7 @@ Encoded-length accounting belongs to the same codec; WebSocket adapters share th
 An excessive length fails before the remaining frame is read; invalid kinds, roles, or bodies terminate the owning connection without admitting later requests.
 Earlier accepted submissions remain committed and recoverable through the session's terminal departure.
 Each reusable stream completes one request before starting the next; bounded content responses end with `ResponseComplete`.
+Content-stream EOF without that marker is a failed response, not a successful truncated read.
 Snapshot coordination and signal notifications are identified by kind and do not complete requests.
 Cancelling a response wait makes the affected exchange stream unusable, preventing a stale reply from completing a later request.
 Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
@@ -41,6 +43,7 @@ Creation supplies no document ID; the open response returns the ID to retain for
 Submissions return committed event positions; durability is a backend property.
 
 Snapshots contain a root and committed event position, which is also their document-scoped version.
+Any committed session-event position is eligible, including membership `Joined` and `Left` events; remote resolution does not restrict handles to application-kind events.
 Publication carries the expected parent position and optional nomination fence; the receiver resolves tree and event availability before publishing.
 An exact retry at the same position and root succeeds, but a different root at that position fails.
 Snapshot lookup selects the newest snapshot at or before its inclusive bound; latest lookup needs no publisher subscription.
@@ -94,16 +97,25 @@ Other loads and direct `read` calls use separate content streams; they do not dr
 Private-provenance handles confirm availability within the resolving client; they are never wire authority.
 Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
 Disconnect and reconnect are explicit; operations are never retried automatically.
+The generic client's disconnect attempt abandons logical authority and disables future request admission even if physical disconnect fails.
+The physical error is propagated; failure does not restore the old session.
+Recovery requires an explicitly replaced or reconnected transport and a fresh session handshake.
 An author-stream error or cancelled receipt makes that stream terminal before another request can be sent.
+An unexpected receipt kind also makes the author stream terminal; it cannot acknowledge a different operation.
 The next request or explicit close cancels the failed transport stream; recovery uses a fresh session and the old session's durable departure barrier.
-Active frame reads and writes have deadlines, while an idle healthy stream does not inherit the operation deadline.
+Native `TransportConfig::operation_timeout` applies separately to connection establishment and the initial event-stream and author-stream openings.
+Later native frame reads and writes have no client-side operation deadline.
+The server independently applies deadlines to active framed I/O, while an idle healthy server stream does not inherit the operation deadline.
+Native client per-frame enforcement is deferred; a server deadline is not a timeout guarantee against an arbitrary stalled peer.
 Connection loss releases author membership and snapshot participation according to server liveness policy.
-Protocol or transport failure closes the owning connection without terminating the server endpoint.
+Server failure handling preserves the listener for unrelated connections; ordinary logical-stream failure does not imply that the whole connection has closed.
 
 Snapshot subscriptions own their registrations; replacement/cancellation/drop cannot release a newer registration.
 Native/browser-local tasks serialize requests independently of coordination notifications, allowing publication during a pending notification read.
 Cancelling a notification wakes its waiter.
 Browser reads retain their JavaScript promise across cancelled Rust waiters, since dropping a Rust future does not cancel a JavaScript read.
+Dropping the final owner of a browser stream cancels both directions and releases their locks; dropping a clone does not cancel remaining owners.
+Failed or cancelled browser establishment closes the partially established connection before fallback.
 Explicit browser disconnect closes the underlying WebTransport session.
 JavaScript-facing session values and their resource ownership belong to `sea-wasm` and `sea-typescript`, not this transport crate.
 

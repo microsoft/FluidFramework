@@ -46,6 +46,7 @@ It also prints heartbeat, inactivity, reconnect-grace, and legacy live-lag setti
 | Session close | Settle admitted work before the durable departure; unknown storage outcomes cannot claim completion. |
 | Snapshot-stream loss | Revoke that registration, leaving other logical streams available. |
 
+These framed-I/O deadlines are server-owned; the native client's configured timeout covers connection and initial event/author opening only, not later native frame operations.
 See [snapshot participation](../sea-webtransport/README.md#snapshot-participation) for publication authority.
 
 ## Ephemeral Signals
@@ -139,6 +140,10 @@ The binary shuts down the shared host after both listeners finish; direct host o
 An expired flush deadline reports cancellation, and a failed flush reports a storage error, not successful persistence.
 
 Snapshot dispatch resolves wire roots and committed event positions through the session before constructing availability handles.
+Known limitation: replacing the event session on one physical connection leaves existing author/content/snapshot streams routed through the connection's mutable current session.
+An old author stream can therefore commit under, or close, the replacement session.
+Until per-stream session binding or replacement restrictions are designed, use a fresh physical connection for a new logical session; do not use session replacement as an authority-isolation boundary.
+Committed membership `Joined` and `Left` positions are valid snapshot dependencies, just like application-kind event positions.
 Snapshots are versioned by event position, not publication-operation IDs.
 Each snapshot stream owns its own registration lease, so cleanup of an older stream cannot revoke its replacement.
 An explicit snapshot `Close` acknowledges and ends that transport stream; lease drop, not session-wide revocation, releases its registration.
@@ -147,6 +152,7 @@ Invalid Sea message kinds, stream roles, or payloads terminate the owning native
 No subsequent request on that connection is admitted after the failure is observed.
 Earlier accepted submissions remain committed; terminal session cleanup preserves their recovery evidence.
 Protocol failure does not stop the listener or unrelated connections, and ordinary stream cancellation remains stream-local.
+Cancelling a monitored content read releases that stream even while its document is idle; cleanup does not wait for another event or connection loss.
 
 ## Validation
 
