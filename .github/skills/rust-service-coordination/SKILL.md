@@ -175,14 +175,30 @@ git worktree add -b rust-service-iteration-NNNN-<workstream> ../FluidFramework-r
 
 Record the actual branch, worktree, and kickoff commit in each workstream report before implementation. Generated instructions may cite the prior approved source commit; the report is authoritative for the worktree's actual kickoff provenance.
 
-Before removing a completed worktree, verify that its report accounts for all changes and that `git -C <worktree-path> status --short` is empty. Then run:
+Use Cargo's default workspace-local `target` directory for ordinary workstream and integration builds.
+
+The coordinator must remove each workstream worktree created by the iteration once its work is fully integrated and no agent, process, or pending review still needs that checkout.
+Do not leave eligible worktrees behind at iteration closeout.
+Before removal:
+
+- Verify the exact path and branch against the recorded iteration ownership; never remove the primary checkout or an unrelated worktree.
+- Verify that the report accounts for all changes and that `git -C <worktree-path> status --porcelain=v1 --untracked-files=all` is empty.
+- Verify that the final workstream commit is an ancestor of the accepted integration commit with `git merge-base --is-ancestor <workstream-head> <integration-commit>`.
+  For cherry-picked or adapted work, instead verify and record the source-to-integrated commit mapping and disposition of every source change; a conflict-free cherry-pick alone is not proof that no work remains.
+- Preserve required evidence outside the worktree, including any intentionally retained ignored files, and confirm that all users and owned processes have finished with the checkout.
+
+Then run:
 
 ```bash
 git worktree remove <worktree-path>
-git worktree prune
+git worktree list --porcelain
 ```
 
-Never use forced removal to bypass uncommitted or untracked files. Do not delete the workstream branch until its disposition and commits are recorded in the integration report.
+Verify that the worktree is no longer registered and its directory is gone.
+Record the removal and integration evidence in the integration report, or record the exact blocker and owner when cleanup cannot safely proceed.
+Never use forced removal to bypass local files, locks, or incomplete integration.
+Do not delete the workstream branch until its disposition and commits are recorded in the integration report.
+Apply the same checks to the iteration-owned integration worktree after its final commits are accepted into the primary branch.
 
 ## Run a Workstream
 

@@ -30,6 +30,10 @@ The script discovers worktrees from `git worktree list`, reads the iteration man
 Iteration manifests and reports live under `rust-service/historical/iterations/NNNN/`, including records for active iterations.
 For worktrees that predate the archive move, the collector can still read the old `rust-service/iterations/NNNN/` location without modifying those worktrees.
 
+After worktree cleanup, the collector can read retained reports from the primary checkout.
+Unavailable workstream Git state does not by itself mean incomplete work.
+If the integration worktree is gone, the fallback Git snapshot describes the primary checkout's current state, not the historical integration state.
+
 Use `--integration-root <absolute-path>` only when the integration worktree cannot be discovered automatically:
 
 ```bash
@@ -71,14 +75,16 @@ For progress questions, compare concrete evidence: new commits, changed paths, r
 
 Use conservative labels:
 
-- **Complete**: report says `complete`, has no required TODO markers, the worktree is clean, and deliverables are committed.
+- **Complete**: report says `complete`, has no required TODO markers, and deliverables are committed; any remaining worktree is clean.
 - **Implementation committed; report pending**: implementation is committed, but report completion or evidence remains.
 - **In progress**: substantive uncommitted changes or an incomplete report exist.
 - **Waiting**: report or charter explicitly names an unmet prerequisite and no substantive implementation has begun.
 - **Blocked**: report records a concrete unresolved blocker or repeated failed validation.
-- **Wave N integrated**: the integration report accepts the work and the integration branch contains the corresponding commits. A completed workstream branch alone is not integrated.
+- **Wave N integrated**: the integration report accepts the work and the accepted integration or primary-branch history contains the corresponding commits. A completed workstream branch alone is not integrated.
+- **Integrated; worktree removed**: retained reports record acceptance and cleanup, and accepted history contains the deliverables. Verify recorded commits from the primary checkout; for cherry-picked or adapted work, use the recorded source-to-integrated mapping. Neither the original branch nor its worktree needs to remain.
 
 Distinguish code presence, uncommitted implementation, committed implementation, completed report, and integration. Do not collapse these into one status.
+If a worktree is absent without sufficient acceptance or cleanup evidence, report that evidence as unknown rather than assuming successful integration or lost work.
 
 For target-specific transport work, report native server, native client, and browser-WASM status separately in the summary when they differ.
 

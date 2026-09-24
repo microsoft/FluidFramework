@@ -31,4 +31,4 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Artifact Check
 
-<!-- TODO(required): confirm every active workstream report and intentional uncommitted artifact is accounted for, temporary validation state is removed, owned processes are stopped, and the integration checkout is clean -->
+<!-- TODO(required): confirm every active workstream report and intentional uncommitted artifact is accounted for, temporary validation state is removed, owned processes are stopped, and the integration checkout is clean. For each iteration-owned worktree, record its path, final commit, integration ancestry or verified source-to-integrated mapping, clean-status and retained-evidence checks, and verified removal once no agent/process/review needs it; otherwise name the cleanup blocker and owner. -->
