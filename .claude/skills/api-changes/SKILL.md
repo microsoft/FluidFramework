@@ -119,7 +119,7 @@ Share this link with the user for full deprecation guidance: ../../../docs/conte
 
 ## Step 6: Release documentation
 
-Document customer-facing API changes: additions, modifications, deprecations, tag promotions, and removals.
+Document customer-facing API changes: additions, modifications, deprecations, release level promotions, and removals.
 Follow the [release-group guidance](../../../.changeset/README.md#when-should-i-use-a-changeset) to choose the documentation format.
 
 For groups that use changesets, check the branch diff and working tree for an existing entry in the group's `.changeset` directory.
