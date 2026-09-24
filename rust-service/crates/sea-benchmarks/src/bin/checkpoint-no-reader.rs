@@ -227,7 +227,7 @@ async fn exercise<Storage: SeaStorage + 'static>(storage: Storage) -> Result<(),
         let mut sent = 0;
         let mut measured_sent = 0;
         let mut acknowledged = 0;
-        let mut delivered = 0;
+        let mut measured_acknowledged = 0;
         let mut timestamps = Vec::new();
         let mut latencies = Vec::new();
         for state in &states[shard * 8..shard * 8 + 8] {
@@ -241,7 +241,7 @@ async fn exercise<Storage: SeaStorage + 'static>(storage: Storage) -> Result<(),
             sent += state.sent;
             measured_sent += state.measured_sent;
             acknowledged += state.acknowledged;
-            delivered += state.measured_acknowledged;
+            measured_acknowledged += state.measured_acknowledged;
             timestamps.append(&mut state.acknowledgments);
             latencies.append(&mut state.latencies);
         }
@@ -249,7 +249,7 @@ async fn exercise<Storage: SeaStorage + 'static>(storage: Storage) -> Result<(),
         result["sent"] = json!(sent);
         result["measuredSent"] = json!(measured_sent);
         result["acknowledged"] = json!(acknowledged);
-        result["deliveredInWindow"] = json!(delivered);
+        result["deliveredInWindow"] = json!(measured_acknowledged);
         result["acknowledgmentEpochMicros"] = json!(timestamps);
         result["latencyMilliseconds"] =
             json!({"p95":latencies.get((latencies.len() * 95).div_ceil(100).saturating_sub(1))});

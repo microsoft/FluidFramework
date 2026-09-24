@@ -133,7 +133,7 @@ impl Factory {
             boundary = frame_end(boundary, record.len() as u64)
                 .ok_or(FileStorageError::Corrupt("event recovery boundary"))?;
         }
-        journal.remember_tail(state.head)?;
+        journal.remember_tail(state.event_head)?;
         let mut snapshot_offset = snapshots.recovered_from;
         for record in snapshot_records {
             state.recover_snapshot(&record, snapshot_offset)?;
@@ -666,7 +666,7 @@ struct State {
     /// Byte boundary after the last published snapshot record.
     snapshot_end: u64,
     /// Last committed event byte offset, with zero representing an empty archive.
-    head: u64,
+    event_head: u64,
     /// Last application snapshot position, with zero representing no snapshots.
     snapshot_head: u64,
     /// Counts snapshot frame reads for traversal regressions.
@@ -700,14 +700,14 @@ impl State {
             event_reader: Arc::new(Mutex::new(events.reader()?)),
             snapshot_reader: Arc::new(Mutex::new(snapshot_reader)),
             snapshot_end: snapshots.recovered_from,
-            head: events.last_record_offset,
+            event_head: events.last_record_offset,
             snapshot_head,
             #[cfg(test)]
             snapshot_reads: Arc::default(),
             invalid_dependency: false,
             readers: Vec::new(),
         };
-        if let Some(head) = nonzero_position(state.head) {
+        if let Some(head) = nonzero_position(state.event_head) {
             let event = state.event(head)?;
             if event
                 .event
@@ -768,7 +768,7 @@ impl State {
 
     /// Fetches an event only when an archive reader requests it.
     fn event(&self, position: EventPosition) -> Result<CommittedEvent, FileStorageError> {
-        if position.get() < RECORD_START || position.get() > self.head {
+        if position.get() < RECORD_START || position.get() > self.event_head {
             return Err(FileStorageError::Corrupt("missing addressed event"));
         }
         let event = RecordArchive::<CommittedEvent>::new(self).read(position.get())?;
@@ -789,7 +789,7 @@ impl State {
     /// Rejects non-record positions without treating numeric ordering as availability.
     fn has_event(&self, position: EventPosition) -> Result<bool, FileStorageError> {
         let offset = position.get();
-        if offset < RECORD_START || offset > self.head {
+        if offset < RECORD_START || offset > self.event_head {
             return Ok(false);
         }
         if self
@@ -843,7 +843,7 @@ impl State {
     /// Applies an event frame only when its predecessor and dependencies are available.
     fn recover_event(&mut self, record: &[u8], offset: u64) -> Result<(), FileStorageError> {
         let event = decode_event(record)?;
-        if event.position.get() != offset || event_previous(record)? != self.head {
+        if event.position.get() != offset || event_previous(record)? != self.event_head {
             return Err(FileStorageError::Corrupt("event position or dependency"));
         }
         if let Some(root) = event.event.blob_tree
@@ -851,7 +851,7 @@ impl State {
         {
             return Err(FileStorageError::Corrupt("event dependency"));
         }
-        self.head = event.position.get();
+        self.event_head = event.position.get();
         Ok(())
     }
 
@@ -1078,7 +1078,9 @@ impl RecordArchive<'_, CommittedEvent> {
         &self,
         after: Option<EventPosition>,
     ) -> Result<Option<EventPosition>, FileStorageError> {
-        if self.state.head == 0 || after.is_some_and(|after| after.get() >= self.state.head) {
+        if self.state.event_head == 0
+            || after.is_some_and(|after| after.get() >= self.state.event_head)
+        {
             return Ok(None);
         }
         let offset = match after {
@@ -1088,7 +1090,7 @@ impl RecordArchive<'_, CommittedEvent> {
                     .ok_or(FileStorageError::Corrupt("event frame boundary"))?
             }
             Some(after) => {
-                let mut candidate = self.state.head;
+                let mut candidate = self.state.event_head;
                 loop {
                     let previous = event_previous(&self.frame(candidate)?)?;
                     if previous <= after.get() {
@@ -1106,7 +1108,7 @@ impl RecordArchive<'_, CommittedEvent> {
         &self,
         through: Option<EventPosition>,
     ) -> Result<Option<EventPosition>, FileStorageError> {
-        let mut candidate = self.state.head;
+        let mut candidate = self.state.event_head;
         while candidate != 0 && through.is_some_and(|bound| candidate > bound.get()) {
             candidate = event_previous(&self.frame(candidate)?)?;
         }
@@ -1422,7 +1424,7 @@ impl Archive for FileEvents {
                 .admit(bytes, || {
                     let mut state = self.0.lock()?;
                     let mut offset = state.event_end;
-                    let mut previous = state.head;
+                    let mut previous = state.event_head;
                     let mut records = Vec::with_capacity(values.len());
                     let mut handles = Vec::with_capacity(values.len());
                     for event in &values {
@@ -1434,7 +1436,7 @@ impl Archive for FileEvents {
                         records.push((Key::Event(position), Bytes::from(record)));
                         handles.push(Ok(self.0.handle(position)));
                     }
-                    state.head = previous;
+                    state.event_head = previous;
                     state.event_end = offset;
                     state
                         .pending
@@ -1474,7 +1476,7 @@ impl Archive for FileEvents {
         read(self.0.clone(), after, stop_after, EventCursor)
     }
     async fn head(&self) -> Result<Option<EventPosition>, Self::Error> {
-        Ok(nonzero_position(self.0.lock()?.head))
+        Ok(nonzero_position(self.0.lock()?.event_head))
     }
 }
 
@@ -1492,7 +1494,7 @@ impl FileEvents {
             Ok(state) => state,
             Err(error) => return vec![Err(error)],
         };
-        let head = state.head;
+        let head = state.event_head;
         let invalid_dependency = values.iter().any(|event| {
             event
                 .blob_tree
@@ -1550,7 +1552,7 @@ impl FileEvents {
             .map(|record| {
                 let position =
                     EventPosition::new(u64::from_be_bytes(record[1..9].try_into().unwrap()));
-                state.head = position.get();
+                state.event_head = position.get();
                 Ok(self.0.handle(position))
             })
             .collect::<Vec<_>>();
@@ -1977,7 +1979,7 @@ impl ArchiveCursor for EventCursor {
     type Candidate = EventPosition;
 
     fn head(state: &State) -> Option<EventPosition> {
-        nonzero_position(state.head)
+        nonzero_position(state.event_head)
     }
 
     fn latest(
@@ -2400,7 +2402,7 @@ mod tests {
         let valid = encode_event(&batch_event(), offset, second.id().get());
         let mut recovered = state.clone();
         recovered.recover_event(&valid, offset).unwrap();
-        assert_eq!(recovered.head, offset);
+        assert_eq!(recovered.event_head, offset);
         for (position, tree) in [
             (first.id(), blob.id()),
             (EventPosition::new(second.id().get() - 1), blob.id()),
@@ -3691,7 +3693,7 @@ mod tests {
                         .iter()
                         .all(|result| matches!(result, Err(FileStorageError::Ambiguous)))
                 );
-                assert_eq!(events.0.state.lock().unwrap().head, 0);
+                assert_eq!(events.0.state.lock().unwrap().event_head, 0);
                 assert!(matches!(
                     live.next().await,
                     Some(Err(FileStorageError::Ambiguous))

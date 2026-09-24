@@ -1334,7 +1334,7 @@ mod tests {
             let mut author = super::AuthorStream {
                 terminal: false,
                 stream: super::FramedStream::untimed(
-                    SuspendedAuthorStream {
+                    SuspendedStream {
                         inner: ScriptedStream {
                             chunks: vec![error].into(),
                             cancelled: Some(cancelled.clone()),
@@ -1375,7 +1375,7 @@ mod tests {
         use futures_util::FutureExt;
         let limits = protocol::Limits::default();
         let cancelled = Arc::new(AtomicBool::new(false));
-        let suspended = || SuspendedAuthorStream {
+        let suspended = || SuspendedStream {
             inner: ScriptedStream {
                 chunks: VecDeque::new(),
                 cancelled: Some(cancelled.clone()),
@@ -1590,13 +1590,13 @@ mod tests {
     }
 
     /// Suspends receipt delivery so dropping an admitted request is deterministic.
-    struct SuspendedAuthorStream {
+    struct SuspendedStream {
         inner: ScriptedStream,
         suspend: bool,
     }
 
     #[async_trait]
-    impl BidirectionalStream for SuspendedAuthorStream {
+    impl BidirectionalStream for SuspendedStream {
         type Error = Infallible;
         async fn send(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
             self.inner.send(bytes).await

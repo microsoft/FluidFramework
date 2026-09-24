@@ -656,7 +656,7 @@ async fn idle_ready_submissions_apply_before_receipts_and_rejection_ends_authori
             .unwrap();
         assert_eq!(runtime.pipeline.occupancy(), (0, 0));
         let state = runtime.runtime.try_lock().unwrap();
-        assert!(state.positions.contains(&position));
+        assert!(state.recent_positions.contains(&position));
         assert!(state.member(&writer.session).is_ok());
         receipts.push(position);
     }
@@ -813,7 +813,7 @@ async fn definitive_failure_never_dispatches_the_queued_same_session_suffix() {
     assert!(first.is_err());
     assert!(suffix.is_err());
     assert_eq!(storage.events.calls.load(Ordering::SeqCst), 1);
-    assert!(runtime.runtime.lock().await.positions.is_empty());
+    assert!(runtime.runtime.lock().await.recent_positions.is_empty());
 }
 
 #[tokio::test]

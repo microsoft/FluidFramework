@@ -159,7 +159,7 @@ struct Runtime<Storage: SeaStorage> {
     /// Persisted announcements whose departure has not committed, including recovered sessions.
     announced: BTreeMap<SessionId, SessionCommittedEvent>,
     /// Bounded recent event positions for live floor policy; reset after recovery ends old sessions.
-    positions: BTreeSet<EventPosition>,
+    recent_positions: BTreeSet<EventPosition>,
     /// Last event incorporated into durable sequencer state, independent of the live policy window.
     applied_through: Option<EventPosition>,
     /// Applied records since the last successful internal publication.
@@ -341,7 +341,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         if Some(position) > self.applied_through {
             return Ok(false);
         }
-        if self.positions.contains(&position) {
+        if self.recent_positions.contains(&position) {
             return Ok(true);
         }
         Ok(self
@@ -393,13 +393,13 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         reference: Option<EventPosition>,
     ) -> Option<EventPosition> {
         let window = self
-            .positions
+            .recent_positions
             .iter()
             .rev()
             .nth(1023)
             .copied()
             .filter(|candidate| {
-                self.positions
+                self.recent_positions
                     .range(..=*candidate)
                     .filter(|position| Some(**position) > self.minimum_reference)
                     .take(64)
@@ -434,10 +434,10 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         {
             member.declared_reference = committed.reference;
         }
-        self.positions.insert(record.position);
+        self.recent_positions.insert(record.position);
         self.applied_through = Some(record.position);
-        while self.positions.len() > POSITION_WINDOW {
-            self.positions.pop_first();
+        while self.recent_positions.len() > POSITION_WINDOW {
+            self.recent_positions.pop_first();
         }
         self.since_checkpoint += 1;
         self.minimum_reference = committed.minimum_reference;
@@ -741,7 +741,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
             view: Some(view.clone()),
             members: BTreeMap::new(),
             announced: recovered.announced,
-            positions: BTreeSet::new(),
+            recent_positions: BTreeSet::new(),
             applied_through: after,
             since_checkpoint: 0,
             session_id_reserved_through: recovered.session_id_reserved_through,
@@ -777,7 +777,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         for session in runtime.announced.keys().cloned().collect::<Vec<_>>() {
             runtime.close_member(&session).await?;
         }
-        runtime.positions.clear();
+        runtime.recent_positions.clear();
         if let Some(cache) = &live_cache {
             cache.recovered(runtime.applied_through)?;
         }
@@ -1368,9 +1368,9 @@ mod tests {
         let mut runtime = sequencer.runtime.lock().await;
         for ordinal in 1..=1152_u64 {
             let position = EventPosition::new(8 + ordinal * ordinal * 4099);
-            runtime.positions.insert(position);
-            while runtime.positions.len() > POSITION_WINDOW {
-                runtime.positions.pop_first();
+            runtime.recent_positions.insert(position);
+            while runtime.recent_positions.len() > POSITION_WINDOW {
+                runtime.recent_positions.pop_first();
             }
             runtime.minimum_reference = runtime.proposed_minimum(None, Some(position));
             let expected_ordinal = ordinal.saturating_sub(1023) / 64 * 64;
@@ -1579,7 +1579,7 @@ mod tests {
         let unannounced = member(&runtime, "unannounced").await;
         let (boundary, floor, head) = {
             let state = runtime.runtime.lock().await;
-            assert_eq!(state.positions.len(), POSITION_WINDOW);
+            assert_eq!(state.recent_positions.len(), POSITION_WINDOW);
             let view = state.view().unwrap();
             let checkpoint =
                 checkpoint::Checkpoint::decode::<()>(view.checkpoint().await.unwrap().unwrap())
@@ -1593,7 +1593,7 @@ mod tests {
             (
                 checkpoint.applied_through.unwrap(),
                 state.minimum_reference,
-                state.positions.last().copied().unwrap(),
+                state.recent_positions.last().copied().unwrap(),
             )
         };
         assert!(head.get() - boundary.get() < 2 * checkpoint::INTERVAL as u64);
@@ -1606,7 +1606,7 @@ mod tests {
         {
             let state = recovered.runtime.lock().await;
             assert!(state.announced.is_empty());
-            assert!(state.positions.is_empty());
+            assert!(state.recent_positions.is_empty());
             assert!(state.applied_through > Some(head));
             assert!(state.minimum_reference >= floor);
             assert!(state.since_checkpoint <= 2 * checkpoint::INTERVAL);
@@ -1646,7 +1646,7 @@ mod tests {
         .unwrap();
         {
             let mut state = recovered.runtime.lock().await;
-            assert!(state.positions.is_empty());
+            assert!(state.recent_positions.is_empty());
             assert_eq!(state.applied_through, Some(head));
             assert_eq!(state.minimum_reference, Some(first));
             assert_eq!(state.since_checkpoint, 0);
@@ -1658,7 +1658,7 @@ mod tests {
         let next = fresh.submit(next).await.unwrap();
         let state = recovered.runtime.lock().await;
         assert_eq!(
-            state.positions.iter().copied().collect::<Vec<_>>(),
+            state.recent_positions.iter().copied().collect::<Vec<_>>(),
             vec![next]
         );
         assert_eq!(state.applied_through, Some(next));
@@ -1688,7 +1688,7 @@ mod tests {
         .unwrap();
         let next = runtime.open_session(None).await.unwrap();
         assert_eq!(next.session_id().as_bytes().as_ref(), 257_u64.to_be_bytes());
-        assert!(runtime.runtime.lock().await.positions.is_empty());
+        assert!(runtime.runtime.lock().await.recent_positions.is_empty());
         drop(next);
         {
             let mut state = runtime.runtime.lock().await;
