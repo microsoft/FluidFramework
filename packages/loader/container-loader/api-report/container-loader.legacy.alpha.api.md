@@ -38,7 +38,7 @@ export function createDetachedContainer(createDetachedContainerProps: ICreateDet
 export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
 // @alpha @legacy
-export function createSeedRuntimeSnapshot(input: CreateSeedRuntimeSnapshotProps): Promise<SeedRuntimeSnapshot>;
+export function createSeedRuntimeSnapshot(input: CreateSeedRuntimeSnapshotProps): Promise<SeedRuntimeConstructionResult>;
 
 // @alpha @legacy
 export interface CreateSeedRuntimeSnapshotProps extends Pick<IContainerHostProps, "scope" | "logger" | "configProvider"> {
@@ -307,6 +307,11 @@ export interface SeedProjector<TSeed = unknown> {
     isNative(context: IContainerContext): boolean;
     materialize(seed: TSeed, sequenceNumber: number): SeedRuntimeSnapshot | Promise<SeedRuntimeSnapshot>;
     readSeed(context: IContainerContext): Promise<TSeed>;
+}
+
+// @alpha @legacy
+export interface SeedRuntimeConstructionResult extends SeedRuntimeSnapshot {
+    readonly summary: ISummaryTree;
 }
 
 // @alpha @legacy

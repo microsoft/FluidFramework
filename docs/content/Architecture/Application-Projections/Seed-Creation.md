@@ -232,6 +232,23 @@ Fluid's runtime, data stores, and DDSs serialize their own state; your materiali
 The provided sample demonstrates how to share the same application runtime between construction and normal loading.
 Replace its schema and initialization with your own application's model and creation APIs.
 
+#### Creating a new native file from a construction result
+
+`createSeedRuntimeSnapshot` returns the `summary: ISummaryTree` it captured from `runtime.createSummary()`, alongside the `snapshot`/`blobs` view used for seed loading.
+When creating a new native file directly (not producing a seed for later conversion by other clients), pass that captured `summary` straight into `createSeedSummary` as `applicationProjection`, instead of reconstructing an `ISummaryTree` from `snapshot`/`blobs`:
+
+```typescript
+const captured = await createSeedRuntimeSnapshot({ runtimeFactory, initialize });
+const creationSummary = createSeedSummary({
+	codeDetails,
+	applicationProjection: captured.summary,
+});
+// Pass creationSummary to your driver's createContainer method.
+```
+
+This is a one-shot creation path: it does not by itself establish that independent seed reconstruction on other clients converges to the same state, or that the first summary is durably acknowledged and reloadable.
+Those remain the responsibilities described elsewhere in this guide.
+
 #### Make construction deterministic across clients
 
 Every client converting the same seed must construct the same collaborative identities and initial state.

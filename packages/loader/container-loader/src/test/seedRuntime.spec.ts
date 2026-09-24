@@ -37,6 +37,7 @@ import {
 	createSeedSummary,
 	seedRuntimeFactory,
 	type SeedProjector,
+	type SeedRuntimeConstructionResult,
 	type SeedRuntimeSnapshot,
 } from "../seedRuntime.js";
 import { getISnapshotFromSerializedContainer } from "../utils.js";
@@ -612,7 +613,7 @@ describe("Seed runtime APIs", () => {
 	});
 
 	it("serializes the real temporary runtime, preserves binary contents, and disposes it", async () => {
-		const outputs: SeedRuntimeSnapshot[] = [];
+		const outputs: SeedRuntimeConstructionResult[] = [];
 		for (let index = 0; index < 2; index++) {
 			const runtime = new ConstructionRuntime();
 			outputs.push(
@@ -632,6 +633,34 @@ describe("Seed runtime APIs", () => {
 		const binary = outputs[0].blobs.get(outputs[0].snapshot.blobs.binary);
 		assert(binary !== undefined);
 		assert.deepEqual(new Uint8Array(binary), new Uint8Array([0, 128, 255]));
+		// The returned summary is the same object captured from `runtime.createSummary()`.
+		assert.deepEqual(Object.keys(outputs[0].summary.tree).sort(), ["binary", "initialized"]);
+	});
+
+	it("composes the captured summary with createSeedSummary without double-wrapping .app", async () => {
+		const runtime = new ConstructionRuntime();
+		const captured = await createSeedRuntimeSnapshot({
+			runtimeFactory: makeRuntimeFactory(runtime),
+		});
+		const creationSummary = createSeedSummary({
+			codeDetails: { package: "application" },
+			applicationProjection: captured.summary,
+		});
+		assert.deepEqual(Object.keys(creationSummary.tree).sort(), [".app", ".protocol"]);
+		assert.equal(creationSummary.tree[".app"], captured.summary);
+		const converted = getISnapshotFromSerializedContainer(creationSummary);
+		// The blobs reachable from the converted snapshot must match the returned snapshot/blob
+		// map by path, including non-UTF-8 bytes, confirming both representations were derived from
+		// the same underlying summary rather than reconstructed independently. Application content
+		// is flattened into the root snapshot tree alongside `.protocol`, not nested under `.app`.
+		const binaryBlobId = converted.snapshotTree.blobs.binary;
+		assert(binaryBlobId !== undefined);
+		const convertedBinary = converted.blobContents.get(binaryBlobId);
+		assert(convertedBinary !== undefined);
+		const capturedBinary = captured.blobs.get(captured.snapshot.blobs.binary);
+		assert(capturedBinary !== undefined);
+		assert.deepEqual(new Uint8Array(convertedBinary), new Uint8Array(capturedBinary));
+		assert.deepEqual(new Uint8Array(convertedBinary), new Uint8Array([0, 128, 255]));
 	});
 
 	it("disposes temporary state when initialization or summary serialization fails", async () => {

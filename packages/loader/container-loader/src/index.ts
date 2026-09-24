@@ -76,6 +76,7 @@ export {
 	type SeedProjector,
 	type SeedRuntimeFactoryOptions,
 	type SeedRuntimeLoad,
+	type SeedRuntimeConstructionResult,
 	type SeedRuntimeSnapshot,
 } from "./seedRuntime.js";
 export type { SeedLoadContext } from "./containerContext.js";

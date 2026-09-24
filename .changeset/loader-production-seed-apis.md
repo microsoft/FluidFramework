@@ -49,6 +49,19 @@ Native telemetry metadata may differ between constructions; deterministic graph 
 Each live client must use a fresh compressor session.
 The native runtime must create complete summaries until its first native summary is acknowledged; do not copy seed content into native summaries.
 
+`createSeedRuntimeSnapshot` returns a `SeedRuntimeConstructionResult`, which extends `SeedRuntimeSnapshot` with the captured `summary: ISummaryTree` (the same object returned by `runtime.createSummary()`).
+Pass it directly as `applicationProjection` to `createSeedSummary` when creating a new native document from this construction, instead of reconstructing an `ISummaryTree` from `snapshot`/`blobs`:
+
+```typescript
+const captured = await createSeedRuntimeSnapshot({ runtimeFactory, initialize });
+const creationSummary = createSeedSummary({
+  codeDetails,
+  applicationProjection: captured.summary,
+});
+```
+
+`SeedProjector.materialize` and custom materializers are unaffected: they still return the narrower `SeedRuntimeSnapshot`, which every `SeedRuntimeConstructionResult` remains assignable to.
+
 Use `assertDeterministicSeedConstruction` from the same entry point to verify, in your own tests, that two independent constructions of the same seed produce identical collaborative state:
 
 ```typescript

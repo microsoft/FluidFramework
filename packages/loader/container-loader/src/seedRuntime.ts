@@ -47,6 +47,24 @@ export interface SeedRuntimeSnapshot {
 }
 
 /**
+ * Result of {@link createSeedRuntimeSnapshot}: a native runtime snapshot alongside the
+ * application summary it was derived from.
+ * @legacy @alpha
+ */
+export interface SeedRuntimeConstructionResult extends SeedRuntimeSnapshot {
+	/**
+	 * The runtime-root application summary captured from `runtime.createSummary()`, without a
+	 * protocol tree or an enclosing `.app` tree.
+	 *
+	 * @remarks
+	 * Pass this directly as `applicationProjection` to {@link createSeedSummary} when creating a
+	 * new native document from this construction, instead of reconstructing an `ISummaryTree`
+	 * from `snapshot`/`blobs`.
+	 */
+	readonly summary: ISummaryTree;
+}
+
+/**
  * Options for {@link assertDeterministicSeedConstruction}.
  * @legacy @alpha
  */
@@ -422,7 +440,7 @@ export interface CreateSeedRuntimeSnapshotProps
  * The result contains only runtime state; protocol state and operation replay remain loader-owned.
  *
  * @param props - Your construction runtime factory and optional initializer.
- * @returns Native runtime snapshot and all referenced blob contents.
+ * @returns Native runtime snapshot, all referenced blob contents, and the captured application summary.
  * @legacy @alpha
  */
 export async function createSeedRuntimeSnapshot({
@@ -432,7 +450,7 @@ export async function createSeedRuntimeSnapshot({
 	scope,
 	logger,
 	configProvider,
-}: CreateSeedRuntimeSnapshotProps): Promise<SeedRuntimeSnapshot> {
+}: CreateSeedRuntimeSnapshotProps): Promise<SeedRuntimeConstructionResult> {
 	let runtime: IRuntime | undefined;
 	const factory: IRuntimeFactory = {
 		get IRuntimeFactory() {
@@ -499,7 +517,7 @@ export async function createSeedRuntimeSnapshot({
 			),
 			...(tree.unreferenced === undefined ? {} : { unreferenced: tree.unreferenced }),
 		});
-		const result = { snapshot: canonicalize(converted.snapshotTree), blobs };
+		const result = { snapshot: canonicalize(converted.snapshotTree), blobs, summary };
 		validateSeedRuntimeSnapshot(result);
 		return result;
 	} finally {
