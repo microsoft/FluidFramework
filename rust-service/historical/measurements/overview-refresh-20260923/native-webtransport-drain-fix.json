@@ -1,75 +1,75 @@
 {
-  "baseRevision": "4bdd92ee38a7e599fbdc0116b11b4080d604e421",
-  "change": "The native benchmark consumes the authoritative opening event stream through load instead of opening a second read stream.",
-  "configuration": {
-    "backend": "sea",
-    "generator": "native",
-    "transport": "webtransport",
-    "storage": "memory",
-    "serviceCores": 4,
-    "documents": 32,
-    "generatorProcesses": 8,
-    "warmupSeconds": 3,
-    "measurementSeconds": 10
-  },
-  "groups": [
-    {
-      "payloadBytes": 64,
-      "offeredOperationsPerSecond": 10000,
-      "acceptedSamples": 10,
-      "deliveredOperationsPerSecond": {
-        "median": 9998.95,
-        "min": 9997.8,
-        "max": 10000.5
-      },
-      "serviceCpuPercentMedian": 106.04401153111206,
-      "serviceMeanRssMiBMedian": 39.22180488782051,
-      "worstWorkerP95Milliseconds": {
-        "min": 0.957062,
-        "max": 1.0694789999999998
-      },
-      "exactAcknowledgments": true,
-      "missingDeliveries": 0
-    },
-    {
-      "payloadBytes": 64,
-      "offeredOperationsPerSecond": 12000,
-      "acceptedSamples": 10,
-      "deliveredOperationsPerSecond": {
-        "median": 11998.8,
-        "min": 11997.3,
-        "max": 12000.6
-      },
-      "serviceCpuPercentMedian": 122.75329731843128,
-      "serviceMeanRssMiBMedian": 43.679622395833334,
-      "worstWorkerP95Milliseconds": {
-        "min": 1.088858,
-        "max": 1.3293650000000001
-      },
-      "exactAcknowledgments": true,
-      "missingDeliveries": 0
-    },
-    {
-      "payloadBytes": 8192,
-      "offeredOperationsPerSecond": 6000,
-      "acceptedSamples": 10,
-      "deliveredOperationsPerSecond": {
-        "median": 5999.1,
-        "min": 5998.2,
-        "max": 5999.9
-      },
-      "serviceCpuPercentMedian": 160.65125294493922,
-      "serviceMeanRssMiBMedian": 399.145263671875,
-      "worstWorkerP95Milliseconds": {
-        "min": 1.890429,
-        "max": 2.2312849999999997
-      },
-      "exactAcknowledgments": true,
-      "missingDeliveries": 0
-    }
-  ],
-  "excludedSamples": {
-    "count": 3,
-    "reason": "Shared-host scheduling lag exceeded the existing 100 ms sustainability threshold; exact acknowledgments and zero missing deliveries still held."
-  }
+	"baseRevision": "4bdd92ee38a7e599fbdc0116b11b4080d604e421",
+	"change": "The native benchmark consumes the authoritative opening event stream through load instead of opening a second read stream.",
+	"configuration": {
+		"backend": "sea",
+		"generator": "native",
+		"transport": "webtransport",
+		"storage": "memory",
+		"serviceCores": 4,
+		"documents": 32,
+		"generatorProcesses": 8,
+		"warmupSeconds": 3,
+		"measurementSeconds": 10
+	},
+	"groups": [
+		{
+			"payloadBytes": 64,
+			"offeredOperationsPerSecond": 10000,
+			"acceptedSamples": 10,
+			"deliveredOperationsPerSecond": {
+				"median": 9998.95,
+				"min": 9997.8,
+				"max": 10000.5
+			},
+			"serviceCpuPercentMedian": 106.04401153111206,
+			"serviceMeanRssMiBMedian": 39.22180488782051,
+			"worstWorkerP95Milliseconds": {
+				"min": 0.957062,
+				"max": 1.0694789999999998
+			},
+			"exactAcknowledgments": true,
+			"missingDeliveries": 0
+		},
+		{
+			"payloadBytes": 64,
+			"offeredOperationsPerSecond": 12000,
+			"acceptedSamples": 10,
+			"deliveredOperationsPerSecond": {
+				"median": 11998.8,
+				"min": 11997.3,
+				"max": 12000.6
+			},
+			"serviceCpuPercentMedian": 122.75329731843128,
+			"serviceMeanRssMiBMedian": 43.679622395833334,
+			"worstWorkerP95Milliseconds": {
+				"min": 1.088858,
+				"max": 1.3293650000000001
+			},
+			"exactAcknowledgments": true,
+			"missingDeliveries": 0
+		},
+		{
+			"payloadBytes": 8192,
+			"offeredOperationsPerSecond": 6000,
+			"acceptedSamples": 10,
+			"deliveredOperationsPerSecond": {
+				"median": 5999.1,
+				"min": 5998.2,
+				"max": 5999.9
+			},
+			"serviceCpuPercentMedian": 160.65125294493922,
+			"serviceMeanRssMiBMedian": 399.145263671875,
+			"worstWorkerP95Milliseconds": {
+				"min": 1.890429,
+				"max": 2.2312849999999997
+			},
+			"exactAcknowledgments": true,
+			"missingDeliveries": 0
+		}
+	],
+	"excludedSamples": {
+		"count": 3,
+		"reason": "Shared-host scheduling lag exceeded the existing 100 ms sustainability threshold; exact acknowledgments and zero missing deliveries still held."
+	}
 }
