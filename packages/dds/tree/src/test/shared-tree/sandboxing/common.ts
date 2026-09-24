@@ -245,7 +245,23 @@ export type HostGuestMessage =
 	| DataChangeMessage
 	| AcknowledgmentMessage
 	| BlobRequestMessage
-	| BlobResponseMessage;
+	| BlobResponseMessage
+	| SessionFailureMessage;
+
+/**
+ * Terminal notification in either direction. The application must recreate the Host/Guest pair.
+ * Delivery is only possible while the transport still works; this message is not acknowledged.
+ */
+export type SessionFailureMessage = Static<typeof SessionFailureMessage>;
+const SessionFailureMessage = Type.Object(
+	{
+		type: Type.Literal("sessionFailure"),
+		/** A diagnostic description, not an error object or stack trace. */
+		error: Type.String(),
+	},
+	{ additionalProperties: false },
+);
+const sessionFailureValidator = validator.compile(SessionFailureMessage);
 
 /**
  * Guest-to-Host request to resolve an authorized {@link HandleToken} as a blob.
@@ -333,6 +349,10 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 		return data as AcknowledgmentMessage;
 	}
 
+	if (data.type === "sessionFailure" && sessionFailureValidator.check(data)) {
+		return data;
+	}
+
 	if (data.type === "dataChange" && Object.hasOwn(data, "change") && "change" in data) {
 		validateTreePayload(data.change);
 		return data as DataChangeMessage;
@@ -360,27 +380,32 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 }
 
 /**
- * A promise and the function that resolves it.
+ * A synchronization promise and the functions that settle it.
  */
 export interface PromiseWithResolver {
 	/** The synchronization operation that a caller can await. */
 	readonly promise: Promise<void>;
 	/** Resolves the synchronization operation. */
 	readonly resolver: () => void;
+	/** Rejects synchronization when its session ends before acknowledgment. */
+	readonly rejecter: (error: Error) => void;
 }
 
 /**
- * Creates a promise and the function that resolves it.
+ * Creates a synchronization promise and its settlement functions.
  *
- * @returns The promise and its resolver.
+ * @returns The promise, resolver, and rejecter.
  */
 export function makePromiseWithResolver(): PromiseWithResolver {
 	let resolver: undefined | (() => void);
-	const promise = new Promise<void>((resolve) => {
+	let rejecter: undefined | ((error: Error) => void);
+	const promise = new Promise<void>((resolve, reject) => {
 		resolver = resolve;
+		rejecter = reject;
 	});
 	assert(resolver !== undefined, "Resolve function should have been assigned");
-	return { promise, resolver };
+	assert(rejecter !== undefined, "Reject function should have been assigned");
+	return { promise, resolver, rejecter };
 }
 
 /**

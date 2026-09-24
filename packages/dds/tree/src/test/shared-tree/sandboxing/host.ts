@@ -27,6 +27,7 @@ import {
 	throwProtocolError,
 } from "./common.js";
 import { HostHandleCodec, normalizeTransportData } from "./handles.js";
+import { SandboxSession } from "./session.js";
 
 /**
  * Gets the revisions of the commits that are in the `ahead` view but not in the `behind` view.
@@ -65,8 +66,9 @@ function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSc
  */
 export class Host<const TSchema extends ImplicitFieldSchema> {
 	public readonly codec: HostHandleCodec;
+	private readonly session: SandboxSession;
 	private disposed = false;
-	/** The main branch on the Host. Is automatically updated when peer changes are received. */
+	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
 	public readonly main: TreeViewAlpha<TSchema>;
 	/**
 	 * The local branch on the Host.
@@ -90,7 +92,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
-		try {
+		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
 				case "dataChange": {
@@ -103,25 +105,27 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				}
 				case "blobRequest": {
 					this.receiveBlobRequest(message).catch((error: unknown) => {
-						this.handleProtocolError(normalizeProtocolError(error));
+						this.session.fail(error);
 					});
 					break;
 				}
 				case "blobResponse": {
 					throw new Error("The Host cannot receive blob responses.");
 				}
+				case "sessionFailure": {
+					this.session.fail(new Error(message.error), false);
+					break;
+				}
 				default: {
 					fail("Unexpected Host and Guest message type");
 				}
 			}
-		} catch (error) {
-			this.handleProtocolError(normalizeProtocolError(error));
-		}
+		});
 	};
 
 	/** Reports a protocol message that the platform cannot deserialize. */
 	private readonly onMessageError = (): void => {
-		this.handleProtocolError(new Error("The Host could not deserialize a protocol message."));
+		this.session.fail(new Error("The Host could not deserialize a protocol message."));
 	};
 
 	public constructor(
@@ -130,20 +134,32 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		private readonly port: MessagePort,
 		/** The SharedTree handle to which restored handles are bound. */
 		bind: IFluidHandle,
-		/** Receives errors from protocol validation and message processing. */
-		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
+		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
+		handleProtocolError: (error: Error) => void = throwProtocolError,
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.codec = new HostHandleCodec(bind);
 		this.main = main;
 		this.local = main.fork();
+		this.session = new SandboxSession(
+			port,
+			(error) => {
+				this.offMainChanged();
+				this.codec.dispose();
+				this.updateInProgress?.rejecter(error);
+				this.updateInProgress = undefined;
+			},
+			handleProtocolError,
+		);
 		this.offMainChanged = this.main.events.on("changed", () => {
 			// The Host might need to update the Guest after applying changes from the Guest,
 			// but receiveChangeFromGuest must first send an acknowledgment to the Guest.
-			if (!this.isApplyingGuestChanges) {
-				this.tryUpdateGuest("after main branch changed");
-			}
+			this.session.run(() => {
+				if (!this.isApplyingGuestChanges) {
+					this.tryUpdateGuest("after main branch changed");
+				}
+			});
 		});
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
@@ -151,17 +167,21 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public dispose(): void {
+		if (this.disposed) {
+			return;
+		}
 		this.disposed = true;
-		this.codec.dispose();
+		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.port.close();
-		this.updateInProgress = undefined;
-		this.offMainChanged();
 		this.mainHeadFromLastUpdate?.dispose();
 		this.mainHeadFromLastUpdate = undefined;
 		this.local.dispose();
-		this.main.dispose();
+	}
+
+	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
+	public get error(): Error | undefined {
+		return this.session.error;
 	}
 
 	/**
@@ -189,6 +209,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		);
 		this.isApplyingGuestChanges = true;
 		try {
+			// TODO: Establish isolation for failures during main-tree merge, beyond validation on local.
 			this.main.merge(this.local, false);
 		} finally {
 			this.isApplyingGuestChanges = false;
@@ -226,6 +247,8 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					"Host:   no pre-existing update in progress. Creating new update promise.",
 				);
 				this.updateInProgress = makePromiseWithResolver();
+				// Report through the session even when the application does not await synchronization.
+				this.updateInProgress.promise.catch((error: unknown) => this.session.fail(error));
 			} else {
 				this.logger("Host:   Reusing existing update promise.");
 			}
@@ -253,6 +276,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	private async receiveBlobRequest(message: BlobRequestMessage): Promise<void> {
+		this.codec.validateToken(message.token);
 		let response: BlobResponseMessage;
 		try {
 			const blob = await this.codec.resolveBlob(message.token);
@@ -264,7 +288,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				error: normalizeProtocolError(error).message,
 			};
 		}
-		if (!this.disposed) {
+		if (this.session.active) {
 			// Do not transfer: detaching the Host's buffer could break other consumers.
 			this.postMessage(response);
 		}
@@ -306,8 +330,10 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	 * If new changes arrive while a promise is in progress, the existing promise resolves only
 	 * after the new changes are also reflected in the Guest.
 	 * A caller does not need to get the promise again after new changes arrive while it is pending.
+	 * Pending promises reject on failure or disposal. Access after failure throws.
 	 */
 	public get updateGuestPromise(): Promise<void> | undefined {
+		this.session.breaker.use();
 		return this.updateInProgress?.promise;
 	}
 }

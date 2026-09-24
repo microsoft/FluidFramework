@@ -26,13 +26,13 @@ import {
 	type HostGuestMessage,
 	getRevision,
 	makePromiseWithResolver,
-	normalizeProtocolError,
 	parseHostGuestMessage,
 	type PromiseWithResolver,
 	throwProtocolError,
 	validateTreePayload,
 } from "./common.js";
 import { GuestHandleCodec, normalizeTransportData } from "./handles.js";
+import { SandboxSession } from "./session.js";
 
 /**
  * An independent TreeView synchronized with a Host through a message protocol.
@@ -41,6 +41,8 @@ import { GuestHandleCodec, normalizeTransportData } from "./handles.js";
  */
 export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly codec: GuestHandleCodec;
+	private readonly session: SandboxSession;
+	private disposed = false;
 	/** The independent view on the Guest. */
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** The number of local Guest changes that the Host has not acknowledged. */
@@ -59,7 +61,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 	/** Receives and routes protocol messages from the Host. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
-		try {
+		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
 				case "dataChange": {
@@ -77,18 +79,20 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				case "blobRequest": {
 					throw new Error("The Guest cannot receive blob requests.");
 				}
+				case "sessionFailure": {
+					this.session.fail(new Error(message.error), false);
+					break;
+				}
 				default: {
 					fail("Unexpected Host and Guest message type");
 				}
 			}
-		} catch (error) {
-			this.handleProtocolError(normalizeProtocolError(error));
-		}
+		});
 	};
 
 	/** Reports a protocol message that the platform cannot deserialize. */
 	private readonly onMessageError = (): void => {
-		this.handleProtocolError(new Error("The Guest could not deserialize a protocol message."));
+		this.session.fail(new Error("The Guest could not deserialize a protocol message."));
 	};
 
 	public constructor(
@@ -97,12 +101,24 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		content: ViewContent,
 		/** The Guest endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
-		/** Receives errors from protocol validation and message processing. */
-		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
+		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
+		handleProtocolError: (error: Error) => void = throwProtocolError,
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
-		this.codec = new GuestHandleCodec((message) => this.postMessage(message));
+		this.session = new SandboxSession(
+			port,
+			(error) => {
+				this.offViewChanged();
+				this.codec.dispose(error);
+				this.pushInProgress?.rejecter(error);
+				this.pushInProgress = undefined;
+			},
+			handleProtocolError,
+		);
+		this.codec = new GuestHandleCodec((message) =>
+			this.session.run(() => this.postMessage(message)),
+		);
 		const tree = this.codec.decode(content.tree);
 		validateTreePayload(tree);
 		this.view = independentInitializedView(config, options, {
@@ -110,7 +126,10 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			tree: tree as ViewContent["tree"],
 		});
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
-			if (metadata.isLocal && !this.isApplyingChangesFromHost) {
+			this.session.run(() => {
+				if (!metadata.isLocal || this.isApplyingChangesFromHost) {
+					return;
+				}
 				const newChange = metadata.getChange();
 				// MessagePort delivery is asynchronous. Validate and send before recording a pending edit.
 				this.postMessage({
@@ -123,11 +142,13 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				if (this.pushInProgress === undefined) {
 					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
 					this.pushInProgress = makePromiseWithResolver();
+					// Report through the session even when the application does not await synchronization.
+					this.pushInProgress.promise.catch((error: unknown) => this.session.fail(error));
 				} else {
 					this.logger("Guest:   Reusing existing push promise.");
 				}
 				this.inFlight += 1;
-			}
+			});
 		});
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
@@ -135,13 +156,20 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public dispose(): void {
-		this.codec.dispose();
+		if (this.disposed) {
+			return;
+		}
+		this.disposed = true;
+		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.port.close();
-		this.pushInProgress = undefined;
-		this.offViewChanged();
+		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
 		this.view.dispose();
+	}
+
+	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
+	public get error(): Error | undefined {
+		return this.session.error;
 	}
 
 	/**
@@ -200,8 +228,10 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * If new local changes are made while a promise is in progress, the existing promise resolves
 	 * only after the Host acknowledges the new changes too.
 	 * A caller does not need to get the promise again after making new changes while it is pending.
+	 * Pending promises reject on failure or disposal. Access after failure throws.
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
+		this.session.breaker.use();
 		return this.pushInProgress?.promise;
 	}
 }

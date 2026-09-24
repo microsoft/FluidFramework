@@ -143,6 +143,41 @@ export function setup(initialState: string[]) {
 }
 
 /**
+ * Initializes a new Guest from an existing Host, including application-managed replacement sessions.
+ * The caller owns the supplied port and must dispose the returned Guest.
+ */
+export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
+	host: Host<TSchema>,
+	config: TreeViewConfiguration<TSchema>,
+	port: MessagePort,
+	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
+	handleProtocolError: (error: Error) => void = throwProtocolError,
+	logger: (message: string) => void = () => {},
+): Guest<TSchema> {
+	const localRoot = host.local.root;
+	assert(localRoot !== undefined, "Expected an initialized root");
+	const startingState = TreeAlpha.exportCompressed(localRoot, {
+		// TODO: shard the compressor here?
+		idCompressor: hostCompressor,
+		minVersionForCollab: FluidClientVersion.v2_80,
+	});
+	const normalized = normalizeTransportData(startingState);
+	validateTreePayload(normalized);
+	return new Guest(
+		config,
+		{ jsonValidator: FormatValidatorBasic },
+		{
+			tree: structuredClone(host.codec.encode(normalized)) as typeof startingState,
+			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
+			idCompressor: hostCompressor,
+		},
+		port,
+		handleProtocolError,
+		logger,
+	);
+}
+
+/**
  * Sets up a Host, Guest, and peer with the given initial state, schema, and session ports.
  *
  * @param initialState - The initial state of the shared tree.
@@ -188,27 +223,11 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 		logger,
 	);
 
-	const hostCompressor = provider.getCompressor(provider.trees[1]);
-	const localRoot = host.local.root;
-	assert(localRoot !== undefined, "Expected an initialized root");
-	const startingState = TreeAlpha.exportCompressed(localRoot, {
-		// TODO: shard the compressor here?
-		idCompressor: hostCompressor,
-		minVersionForCollab: FluidClientVersion.v2_80,
-	});
-	const normalized = normalizeTransportData(startingState);
-	validateTreePayload(normalized);
-
-	const guest = new Guest(
+	const guest = createGuestForHost(
+		host,
 		config,
-		{ jsonValidator: FormatValidatorBasic },
-		{
-			tree: structuredClone(host.codec.encode(normalized)) as typeof startingState,
-			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
-			// TODO: shard the compressor here?
-			idCompressor: hostCompressor,
-		},
 		sessionPorts.guestPort,
+		provider.getCompressor(provider.trees[1]),
 		handleProtocolError,
 		logger,
 	);
@@ -222,6 +241,7 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 			() => guest.dispose(),
 			() => host.dispose(),
 			() => sessionPorts.dispose(),
+			() => main.dispose(),
 		]) {
 			try {
 				dispose();

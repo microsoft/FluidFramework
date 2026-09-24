@@ -23,6 +23,8 @@ These terms are similar to the terms for virtual machines.
 - **Peer**: Another Fluid client that collaborates with the Host through Fluid services, not through the sandbox protocol.
 - **Session**: The lifetime of one Host-to-Guest connection, including its handle tables and pending requests.
   Nothing in the Guest is supported beyond its owning Host session.
+- **Session failure**: A terminal protocol or synchronization error that requires the application to replace the Host/Guest pair.
+  A `sessionFailure` message notifies the peer when the transport still works.
 - **Sequenced edits**: Edits ordered by Fluid services.
   The **trunk** is the branch containing sequenced history.
 - **Host-local edits**: Edits on the Host that are not sequenced.
@@ -30,6 +32,7 @@ These terms are similar to the terms for virtual machines.
 - **Host-originated edits**: Edits that the Host makes directly, not edits received from a Guest.
 - **Main branch**: The Host branch that participates in Fluid collaboration.
   The Host also maintains a **local branch** to track and reconcile Guest edits.
+  The main view belongs to the application; the sandbox Host borrows it and owns its session branches.
 - **Data change**: A sandbox message containing an encoded SharedTree change.
 - **Acknowledgment**: A sandbox message confirming that the receiver applied a data change.
 - **Timeline**: The tree's application-visible branch history, including support for history operations such as undo and redo.
@@ -132,6 +135,7 @@ flowchart TB
     R -->|"Data change"| T["Tree codec and change application<br/>Receives local handles"]
     R -->|"Blob request / response"| A["Resolve an authorized handle<br/>or settle a matching pending request"]
     R -->|"Acknowledgment"| K["Advance synchronization"]
+    R -->|"Session failure"| X["Stop this endpoint<br/>Reject pending work<br/>Notify the application"]
 
     classDef conversion fill:#e8f1ff,stroke:#3166a3,color:#111;
     classDef validation fill:#e7f4e8,stroke:#397a42,color:#111;
@@ -144,14 +148,25 @@ flowchart TB
 The entire incoming graph is restricted before marker validation or handle restoration.
 Restoration alone neither binds nor resolves handles.
 For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, binds its handles, merges into the main branch, and then acknowledges it.
-Incoming validation or processing failures go to the protocol-error handler.
-Outgoing normalization, validation, or encoding failures prevent the send.
+Incoming validation or processing failures and outgoing normalization, validation, or encoding failures terminate the session.
 
 Initialization is a separate entry point: the compressed initial tree follows normalization, payload validation, transport encoding, structured clone, transport decoding, payload validation, and tree-codec initialization.
 The complete initialization payload does not yet pass through `MessagePort`; see [ID Sharding](#id-sharding).
 
 These diagrams show the implemented layers, not a complete security guarantee.
 See [Protocol Validation and Security Hardening](#protocol-validation-and-security-hardening) for the validation still required before production use.
+
+### Session Failure and Application-Managed Recreation
+
+[SandboxSession](./session.ts) treats protocol anomalies and synchronization failures as fatal: it stops the endpoint, rejects pending work, and reports the error to the application and, when possible, the peer.
+Valid blob-resolution errors reject only `get()`, not the session.
+Error reporting runs outside tree event dispatch to avoid interrupting main-tree edits.
+
+The application owns teardown and recreation of the Host/Guest pair and sandbox.
+Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
+Recovery uses fresh session objects, not reset breakers.
+
+The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
 
 ## Path to Production
 
@@ -182,7 +197,7 @@ Handle transport and resolution follow [Architecture](#architecture), with these
 - Only the Host performs binding and Fluid attachment; Guest proxies cannot attach.
 - Equivalent Host handle paths reuse one token and Guest proxy.
   Each proxy caches one `get()` promise, including rejection.
-- Tables and proxies are retained until session disposal, which clears the tables and rejects pending Guest requests.
+- Tables and proxies are retained until session failure or disposal, which clears the tables and rejects pending Guest requests.
   No per-handle reclamation or sandbox-specific Fluid garbage collection mechanism is required.
 - The transport codecs do not implement `IFluidSerializer` or provide JSON stringification.
 
@@ -217,6 +232,14 @@ Before using it with an untrusted participant:
 - Verify that tree codecs reject handles in structural-record positions, including record-node data, without traversing handle internals or invoking getters.
 - Define resource limits for message size, nesting depth, outstanding requests, and blob data.
 - Test malformed messages and protocol-state violations across the remaining message types.
+
+### Session Fault Isolation
+
+Complete the isolation guarantees of [session failure handling](#session-failure-and-application-managed-recreation):
+
+- Isolate failures during main-tree merge; successful local-branch validation alone does not guarantee this.
+- Invalidate retained Guest references and support cleanup of already-broken tree state.
+- Integrate application-level failure coordination when the port cannot notify the peer.
 
 ### Host Lifetime Extensions
 

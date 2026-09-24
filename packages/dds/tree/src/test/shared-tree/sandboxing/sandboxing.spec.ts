@@ -26,6 +26,7 @@ import { normalizeTransportData } from "./handles.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
+	createGuestForHost,
 	disposeActiveSessions,
 	handleArrayConfig,
 	type SessionPorts,
@@ -50,6 +51,9 @@ describe("Host and Guest message protocol", () => {
 			{},
 			{ type: "unknown" },
 			{ type: "dataChange" },
+			{ type: "sessionFailure" },
+			{ type: "sessionFailure", error: 0 },
+			{ type: "sessionFailure", error: "failure", extra: true },
 		];
 
 		for (const message of invalidMessages) {
@@ -199,6 +203,181 @@ describe("Host and Guest correctness", () => {
 		host.main.root.push(handle);
 		await host.updateGuestPromise;
 		await strict.rejects(guest.view.root[0].get(), /Blob retrieval failed/);
+		guest.view.root.push(guest.view.root[0]);
+		await guest.updateHostPromise;
+		strict.equal(host.main.root.length, 2);
+		strict.equal(host.error, undefined);
+		strict.equal(guest.error, undefined);
+	});
+
+	for (const transaction of [false, true]) {
+		it(`fails both endpoints on a foreign Guest handle and allows application-managed replacement (transaction: ${transaction})`, async () => {
+			const errors: Error[] = [];
+			const failed = makePromiseWithResolver();
+			const releaseBlob = makePromiseWithResolver();
+			const handle = Object.assign(new MockHandle(new ArrayBuffer(1)), {
+				get: async () => {
+					await releaseBlob.promise;
+					return new ArrayBuffer(1);
+				},
+			});
+			const { host, guest, provider, peer } = setupCustom(
+				[handle],
+				handleArrayConfig,
+				buildDirectSessionPorts,
+				false,
+				(error) => {
+					errors.push(error);
+					if (errors.length === 2) {
+						failed.resolver();
+					}
+				},
+			);
+			const proxy = guest.view.root[0];
+			const blobRejected = strict.rejects(proxy.get(), /recreate the Host and Guest/);
+			guest.view.root.push(proxy);
+			const push = guest.updateHostPromise ?? strict.fail("Expected pending Guest change");
+			const pushRejected = strict.rejects(push, /recreate the Host and Guest/);
+			const insertForeignHandle = () => {
+				guest.view.root.push(new MockHandle(new ArrayBuffer(2)));
+			};
+			if (transaction) {
+				guest.view.runTransaction(insertForeignHandle);
+			} else {
+				insertForeignHandle();
+			}
+			await Promise.all([failed.promise, blobRejected, pushRejected]);
+
+			strict.match(guest.error?.message ?? "", /foreign/);
+			strict.match(host.error?.message ?? "", /foreign/);
+			strict.throws((): Promise<void> | undefined => guest.updateHostPromise, /Invalid use/);
+			strict.throws((): Promise<void> | undefined => host.updateGuestPromise, /Invalid use/);
+			releaseBlob.resolver();
+			await releaseBlob.promise;
+			guest.dispose();
+			host.dispose();
+			// The valid edit sent before the failure remains on main; the foreign handle never reaches it.
+			strict.equal(host.main.root.length, 2);
+			host.main.root.push(handle);
+			provider.synchronizeMessages();
+			strict.equal(peer.root.length, 3);
+
+			const ports = buildDirectSessionPorts();
+			const replacementHost = new Host(host.main, ports.hostPort, provider.trees[1].handle);
+			const replacementGuest = createGuestForHost(
+				replacementHost,
+				handleArrayConfig,
+				ports.guestPort,
+				provider.getCompressor(provider.trees[1]),
+			);
+			try {
+				strict.equal(replacementGuest.view.root.length, 3);
+				replacementGuest.view.root.push(replacementGuest.view.root[0]);
+				await replacementGuest.updateHostPromise;
+				replacementHost.main.root.push(handle);
+				await replacementHost.updateGuestPromise;
+				strict.equal(replacementGuest.view.root.length, 5);
+				strict.equal(replacementHost.main.root.length, 5);
+				strict.equal(errors.length, 2);
+			} finally {
+				replacementGuest.dispose();
+				replacementHost.dispose();
+				ports.dispose();
+			}
+		});
+	}
+
+	for (const [receiver, message, expected] of [
+		[
+			"Host",
+			{ type: "dataChange", change: { type: "__sandbox_handle__", token: 99 } },
+			/Unknown sandbox handle token/,
+		],
+		["Host", { type: "blobRequest", requestId: 0, token: 99 }, /Unknown sandbox handle token/],
+		["Guest", { type: "blobResponse", blob: new ArrayBuffer(0) }, /Invalid Host and Guest/],
+		[
+			"Guest",
+			{ type: "blobResponse", requestId: 99, blob: new ArrayBuffer(0) },
+			/Unexpected sandbox blob response/,
+		],
+	] as const) {
+		it(`fails the ${receiver} and rejects pending work for ${JSON.stringify(message)}`, async () => {
+			const reported = makePromiseWithResolver();
+			const handle = new MockHandle(new ArrayBuffer(1));
+			const { host, guest, interop, provider, peer } = setupCustom(
+				[handle],
+				handleArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
+			let synchronization: Promise<void> | undefined;
+			let blobRejected: Promise<void> | undefined;
+			if (receiver === "Host") {
+				host.main.root.push(handle);
+				synchronization = host.updateGuestPromise;
+			} else {
+				guest.view.root.push(guest.view.root[0]);
+				synchronization = guest.updateHostPromise;
+				blobRejected = strict.rejects(guest.view.root[0].get(), expected);
+			}
+			strict(synchronization !== undefined);
+			const synchronizationRejected = strict.rejects(synchronization, expected);
+			const target = receiver === "Host" ? interop.sendToHost : interop.sendToGuest;
+			target.postMessage(message);
+			await Promise.all([reported.promise, synchronizationRejected, blobRejected]);
+			strict.match((receiver === "Host" ? host.error : guest.error)?.message ?? "", expected);
+			host.main.root.push(handle);
+			provider.synchronizeMessages();
+			strict.equal(peer.root.length, host.main.root.length);
+		});
+	}
+
+	it("fails the session when a resolved blob cannot be serialized", async () => {
+		const reported = makePromiseWithResolver();
+		let reports = 0;
+		const handle = new MockHandle(Object.assign(new ArrayBuffer(1), { extra: true }));
+		const { host, guest } = setupCustom(
+			[handle],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+			false,
+			() => {
+				if (++reports === 2) {
+					reported.resolver();
+				}
+			},
+		);
+		await strict.rejects(guest.view.root[0].get(), /buffers cannot have custom properties/);
+		await reported.promise;
+		strict(host.error !== undefined);
+		strict(guest.error !== undefined);
+		host.main.root.push(handle);
+		strict.equal(host.main.root.length, 2);
+	});
+
+	it("contains send failures in main-tree callbacks even when peer notification also fails", async () => {
+		const reported = makePromiseWithResolver();
+		const { host, guest } = setupCustom(
+			[],
+			stringArrayConfig,
+			() => {
+				const ports = buildDirectSessionPorts();
+				ports.hostPort.postMessage = () => {
+					throw new Error("Transport unavailable");
+				};
+				return ports;
+			},
+			false,
+			() => reported.resolver(),
+		);
+		strict.doesNotThrow(() => host.main.root.push("retained edit"));
+		await reported.promise;
+		strict.match(host.error?.message ?? "", /Peer notification failed: Transport unavailable/);
+		strict.equal(guest.error, undefined);
+		host.dispose();
+		host.main.root.push("still usable");
+		strict.deepEqual([...host.main.root], ["retained edit", "still usable"]);
 	});
 
 	it("continues synchronizing edits while a blob request is pending", async () => {
@@ -257,8 +436,14 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("returns an error for an unauthorized blob token", async () => {
-		const { interop } = setupCustom([], handleArrayConfig, buildIsolatedSessionPorts);
+	it("notifies the peer that an unauthorized blob token terminates the session", async () => {
+		const { interop, host } = setupCustom(
+			[],
+			handleArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => {},
+		);
 		const received = new Promise<HostGuestMessage>((resolve) => {
 			interop.sendToHost.addEventListener(
 				"message",
@@ -272,11 +457,11 @@ describe("Host and Guest correctness", () => {
 		strict.deepEqual(
 			await received,
 			normalizeTransportData({
-				type: "blobResponse",
-				requestId: 0,
+				type: "sessionFailure",
 				error: "Unknown sandbox handle token.",
 			}),
 		);
+		strict(host.error !== undefined);
 	});
 
 	for (const receiver of ["Host", "Guest"] as const) {
@@ -356,8 +541,9 @@ describe("Host and Guest correctness", () => {
 			reportProtocolError,
 		);
 		let acknowledgmentReceived = false;
-		channel.port2.addEventListener("message", () => {
-			acknowledgmentReceived = true;
+		channel.port2.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = parseHostGuestMessage(normalizeTransportData(event.data));
+			acknowledgmentReceived ||= message.type === "acknowledgment";
 		});
 		channel.port2.start();
 

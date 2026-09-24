@@ -284,6 +284,13 @@ export class HostHandleCodec extends HandleCodec {
 		return this.handles[token];
 	}
 
+	/**
+	 * Checks authorization before resolution errors are converted into nonfatal blob responses.
+	 */
+	public validateToken(token: HandleToken): void {
+		this.getHandle(token);
+	}
+
 	public async resolveBlob(token: HandleToken): Promise<ArrayBuffer> {
 		const result = await this.getHandle(token).get();
 		if (!(result instanceof ArrayBuffer)) {
@@ -404,10 +411,10 @@ export class GuestHandleCodec extends HandleCodec {
 		}
 	}
 
-	public dispose(): void {
+	public dispose(error: Error = new Error("The Guest handle session is disposed.")): void {
 		this.disposed = true;
 		for (const pending of this.pending.values()) {
-			pending.reject(new Error("The Guest handle session is disposed."));
+			pending.reject(error);
 		}
 		this.pending.clear();
 		this.handles.clear();
