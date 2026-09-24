@@ -1,4 +1,8 @@
 //! Type-erased session adapter preserving concrete availability capabilities.
+//!
+//! Operations retain the contracts of [`SeaArchive`](sea_core::SeaArchive), [`SeaAuthorSession`](sea_core::SeaAuthorSession), and
+//! [`SeaSnapshotCoordinator`](sea_core::SeaSnapshotCoordinator).
+//! This module changes only their handle and error representations; it does not add session policy.
 
 use std::{any::Any, sync::Arc};
 
@@ -18,7 +22,7 @@ use sea_core::{
 #[derive(Debug, thiserror::Error)]
 #[error("{message}")]
 pub struct BindingError {
-    /// Original SEA failure classification.
+    /// Original service failure classification.
     kind: ErrorKind,
     /// Human-readable diagnostic, without implementation-specific error ownership.
     message: String,
@@ -297,7 +301,7 @@ mod tests {
         sequencer.open_session(None).await.unwrap()
     }
 
-    /// Exercises one object-safe session contract across concrete configurations.
+    /// Checks content, ordered history, snapshot publication, and loading through one erased session.
     async fn round_trip(session: &BindingSession) {
         let payload = Bytes::from_static(b"shared binding payload");
         let blob = session.put_blob(payload.clone()).await.unwrap();
@@ -371,6 +375,7 @@ mod tests {
         );
     }
 
+    /// Checks that either incompatible dependency rejects publication without changing the selected snapshot.
     #[tokio::test]
     async fn shared_adapter_rejects_incompatible_snapshot_capabilities() {
         let session = SessionAdapter::new(local_session().await);
@@ -393,6 +398,7 @@ mod tests {
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)
             .await
             .unwrap();
+        // Nesting either handle preserves its identity but changes its concrete capability type.
         for snapshot in [
             Snapshot {
                 root: BindingHandle::new(root.clone()),

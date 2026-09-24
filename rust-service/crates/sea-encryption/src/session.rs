@@ -5,8 +5,10 @@
 //! Directories, snapshots, positions, and opaque availability handles pass through in the ciphertext store's identity space.
 //! Reads decrypt lazily and preserve monitored progress and underlying error classifications.
 //!
-//! Each submission is encrypted independently. Ambiguous outcomes terminate append authority;
-//! clients recover the accepted prefix through the session's terminal departure before resubmission.
+//! Each submission is encrypted independently.
+//! Ambiguous outcomes terminate append authority.
+//! Recovery follows [`SeaAuthorSession`]: replay through the terminal
+//! departure before transforming the unaccepted suffix for submission under a fresh session.
 
 use crate::{
     EncryptionError, EncryptionSession, KeyProvider, NonceSource, PayloadContext, decrypt_payload,
@@ -28,7 +30,10 @@ use sea_core::{
 impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSource>
     EncryptionSession<Session, Keys, Nonces>
 {
-    /// Each stream retains a key-provider clone and forwards delivery progress without reinterpretation.
+    /// Decrypts application events on poll and leaves membership records unchanged.
+    ///
+    /// Each stream retains a key-provider clone and forwards delivery progress without reinterpretation,
+    /// including when decryption fails.
     fn decode_next(
         &self,
         source: ArchiveStream<SessionCommittedEvent, EventPosition, Session::Error>,
@@ -55,6 +60,9 @@ impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: Non
     EncryptionSession<Session, Keys, Nonces>
 {
     /// Serializes admission and leaves authority terminal unless the admitted operation succeeds.
+    ///
+    /// Hold the returned guard through preparation and the inner append, then clear the flag only on success.
+    /// Leaving the flag set makes cancellation terminal even before the inner session receives a request.
     async fn begin_append(
         &self,
     ) -> Result<futures_util::lock::MutexGuard<'_, bool>, EncryptionError<Session::Error>> {
@@ -272,6 +280,8 @@ mod tests {
         panic!("expected an event");
     }
 
+    /// Compares raw and decorated views of the same archive to distinguish encrypted payloads
+    /// from public control data and ciphertext-based tree identities.
     #[tokio::test]
     async fn encrypted_payloads_preserve_control_metadata_and_stored_tree_identities() {
         let storage = MemoryStorage::new();
@@ -360,6 +370,8 @@ mod tests {
         assert_eq!(decoded.progress().previous, Some(position));
     }
 
+    /// Exercises both publisher-selection modes through the wrapper while checking authority
+    /// against the raw session, including revocation by stream drop.
     #[tokio::test]
     async fn load_and_coordination_forward_handles_fences_and_registration_lifetime() {
         let storage = MemoryStorage::new();
@@ -437,6 +449,7 @@ mod tests {
         assert!(raw.submit(submission).await.is_err());
     }
 
+    /// Distinguishes decryption failures after delivery from errors reported by the source stream.
     #[tokio::test]
     async fn malformed_stored_envelopes_preserve_error_kind_and_delivery_progress() {
         let storage = MemoryStorage::new();
@@ -484,6 +497,8 @@ mod tests {
         );
     }
 
+    /// Verifies that a failure before the inner submit still produces an observable departure
+    /// and prevents both raw-session and wrapper-clone submissions.
     #[tokio::test]
     async fn failed_key_preparation_closes_inner_author_and_wrapper_clones() {
         let storage = MemoryStorage::new();
@@ -520,6 +535,8 @@ mod tests {
         assert_eq!(next_event(&mut history).await.kind, SessionEventKind::Left);
     }
 
+    /// Applies the shared session contract to encryption alone and to compression of plaintext
+    /// before encryption, without introducing a separate wrapper-specific contract.
     #[tokio::test]
     async fn compression_encryption_conformance() {
         for compress in [false, true] {
@@ -544,6 +561,8 @@ mod tests {
         }
     }
 
+    /// Checks that neither key rotation nor equal inputs across sessions revive closed authority
+    /// or reuse an earlier committed submission.
     #[tokio::test]
     async fn equal_submissions_encrypt_independently_and_recheck_authority() {
         let storage = MemoryStorage::new();
@@ -601,6 +620,8 @@ mod tests {
         );
     }
 
+    /// Cancels after wrapper admission but before any inner append, then checks that clone
+    /// rejection drives the announced membership's terminal departure.
     #[tokio::test]
     async fn cancelled_preparation_terminates_clones_before_inner_append() {
         let storage = MemoryStorage::new();
@@ -612,6 +633,7 @@ mod tests {
             EncryptionSession::new(runtime.open_session(None).await.unwrap(), TestKeys::new());
         session.announce_membership(Bytes::new()).await.unwrap();
         let clone = session.clone();
+        // Stop after wrapper admission so only the wrapper can remember the cancelled request.
         let preparation = async {
             let _terminal = session.begin_append().await.unwrap();
             std::future::pending::<()>().await;

@@ -13,7 +13,7 @@ The distinct contexts prevent swapping a stored event with a blob.
 | --- | --- |
 | Malformed, truncated, context-swapped, or authentication-failing envelope | `CorruptEnvelope` / `Corrupt` |
 | Missing key or nonce-source failure | `Unavailable` |
-| Encryption failure | `Rejected` |
+| Encryption failure or closed append authority | `Rejected` |
 | Underlying session error | Original classification |
 
 Historical-key lookup precedes authentication.
@@ -26,15 +26,23 @@ If the key is available, authentication rejects a changed identifier even when i
 `KeyId` is public; `EncryptionKey` redacts debug output and zeroizes on drop.
 `OsNonceSource` uses the operating system's cryptographically secure random generator.
 Injected sources must provide a fresh nonce per payload/key; deterministic sources are for tests only.
+
+## Submission And Recovery
+
 Each submission encrypts independently with a fresh nonce and is admitted under the current author membership.
 Equal plaintext submissions are distinct events; the wrapper performs no committed-event lookup or ciphertext reuse.
 Author operations are serialized across wrapper clones.
-An append error or cancellation leaves the wrapper terminal; a later append cannot bypass that state even when the inner session never received the cancelled request.
+An admitted append that fails or is cancelled leaves the wrapper terminal; a later append cannot bypass that state even when the inner session never received the cancelled request.
 Close, or the next attempted append, drives inner closure and its durable departure barrier.
+The departure record applies to announced memberships.
 Uncertain writes are never blindly resubmitted to storage, and a rejection never triggers a retry.
+Recovery follows the `SeaAuthorSession` contract: replay through the terminal departure to identify the accepted prefix, then transform only the unaccepted suffix for submission under a fresh session.
+
+## Reads And Composition
 
 The wrapper buffers one complete payload with no size limit; untrusted inputs need an outer limit.
 Reads decrypt on poll without a background task or extra stream buffer.
+Decryption errors do not rewind the underlying stream's delivery progress.
 
 Membership metadata, directories, event metadata, and snapshot metadata pass through unchanged so the server can validate membership, ordering, and reachability.
 For compression plus encryption, wrap an `EncryptionSession` in `CompressionSession` so compression processes plaintext first.
@@ -53,3 +61,4 @@ RUSTDOCFLAGS="-D warnings" cargo doc -p sea-encryption --all-features --no-deps
 ```
 
 Tests cover session conformance, compression composition, nonce use, key rotation, terminal append failures, envelope corruption/context separation, and key redaction.
+See [Development](../../DEVELOPMENT.md) for workspace validation and documentation requirements.

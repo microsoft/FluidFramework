@@ -32,6 +32,7 @@ const HEADER_LENGTH: usize = MAGIC.len() + 3 + KEY_ID_LENGTH + NONCE_LENGTH;
 /// The encoded bytes added to every encrypted payload.
 pub const ENVELOPE_OVERHEAD: usize = HEADER_LENGTH + TAG_LENGTH;
 
+/// Authenticated domain separator that prevents event and blob envelopes from being exchanged.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 enum PayloadContext {
     /// Domain separator for event records.
@@ -58,7 +59,8 @@ impl KeyId {
     }
 }
 
-/// Secret key bytes. Debug output and public accessors never expose the value.
+/// Secret key bytes that are zeroized on drop.
+/// Debug output and public accessors never expose the value.
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct EncryptionKey([u8; 32]);
 
@@ -88,13 +90,22 @@ pub struct ActiveKey {
 /// Resolves the active write key and historical read keys.
 pub trait KeyProvider: Send + Sync {
     /// Returns the key used for a new event or blob payload.
+    ///
+    /// Returns `None` when no write key is available.
     fn active_key(&self) -> Option<ActiveKey>;
 
     /// Resolves key material by its non-secret envelope identity.
+    ///
+    /// Retain all historical keys needed for reads, including after write-key rotation.
+    /// Returns `None` when the requested key is unavailable.
+    /// The identifier has not yet been authenticated when this lookup occurs.
     fn key_for_id(&self, id: &KeyId) -> Option<EncryptionKey>;
 }
 
 /// Supplies a fresh 96-bit nonce for each envelope.
+///
+/// Sources must provide a fresh nonce per payload/key, including across wrapper clones.
+/// Deterministic sources are for tests only.
 pub trait NonceSource: Send + Sync {
     /// Generates one nonce or reports that the source is unavailable.
     ///
@@ -109,7 +120,7 @@ pub trait NonceSource: Send + Sync {
 #[error("secure nonce source is unavailable")]
 pub struct NonceUnavailable;
 
-/// A nonce source backed by the operating system CSPRNG.
+/// A nonce source backed by the operating system's cryptographically secure random generator.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct OsNonceSource;
 
@@ -166,8 +177,11 @@ where
 /// Encrypts event payloads and blob leaves through an individual Sea session.
 #[derive(Clone, Debug)]
 pub struct EncryptionSession<S, K, N = OsNonceSource> {
+    /// Session that stores ciphertext and owns positions, handles, and membership.
     inner: S,
+    /// Provider of active write keys and historical keys for decryption.
     keys: K,
+    /// Source consulted independently for each encrypted payload.
     nonces: N,
     /// Shared fail-stop admission state, including preparation before an inner append.
     author_terminal: std::sync::Arc<futures_util::lock::Mutex<bool>>,
@@ -187,6 +201,8 @@ impl<S, K> EncryptionSession<S, K, OsNonceSource> {
 
 impl<S, K, N> EncryptionSession<S, K, N> {
     /// Wraps a session using an injected nonce source.
+    ///
+    /// The source must satisfy the freshness requirements of [`NonceSource`].
     pub fn with_nonce_source(inner: S, keys: K, nonces: N) -> Self {
         Self {
             inner,
@@ -244,6 +260,9 @@ where
 }
 
 /// Validates and decrypts one envelope for the expected payload context.
+///
+/// Historical-key lookup follows structural validation but precedes authentication.
+/// An unavailable key therefore takes precedence over an authentication failure.
 fn decrypt_payload<E, K>(
     keys: &K,
     envelope: &Bytes,
@@ -307,6 +326,7 @@ mod tests {
     /// Rotatable in-memory key provider used to exercise key lifecycle behavior.
     #[derive(Clone, Debug)]
     pub(super) struct TestKeys {
+        /// Shared rotation state so existing wrapper clones can read old and new envelopes.
         state: Arc<Mutex<TestKeyState>>,
     }
 
@@ -384,6 +404,7 @@ mod tests {
     /// Deterministic nonce source that records how many payloads request a nonce.
     #[derive(Clone, Debug)]
     pub(super) struct CountingNonce {
+        /// Shared request count used to detect skipped or repeated encryption.
         pub(super) calls: Arc<AtomicUsize>,
     }
 
@@ -509,6 +530,7 @@ mod tests {
     #[test]
     fn key_identifier_is_authenticated_even_when_two_identifiers_resolve_to_the_same_key() {
         let keys = TestKeys::new();
+        // Equal key bytes isolate authentication of the identifier from a wrong-key failure.
         keys.state.lock().unwrap().1.push((SECOND_ID, [7; 32]));
         let encoded = encrypt_payload::<MemoryStorageError, _, _>(
             &keys,

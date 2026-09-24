@@ -63,7 +63,7 @@ extern "C" {
     pub type SeaTreeReference;
 }
 
-/// Copies an optional generated identity without transferring ownership of its allocation.
+/// Validates and copies a generated identity without transferring ownership of its allocation.
 fn tree_reference(value: &SeaTreeReference) -> Result<BlobTreeId, JsValue> {
     let bytes = Reflect::get(value.as_ref(), &"bytes".into())?;
     let bytes = bytes
@@ -142,6 +142,9 @@ impl SeaSessionOptions {
 }
 
 /// One open session whose operations are shared by every concrete configuration.
+///
+/// Service failures become JavaScript errors with their original diagnostic and a `kind` property.
+/// Binding-generated input errors use `kind: "Rejected"`.
 #[wasm_bindgen]
 pub struct SeaSession {
     /// Numeric identity allocated by the document sequencer.
@@ -240,6 +243,9 @@ impl SeaSession {
     }
 
     /// Uploads an immutable directory of named identities.
+    ///
+    /// Pairs `names` and `children` by index.
+    /// Rejects unequal lengths, duplicate names, and names rejected by [`BlobDirectory::new`](sea_core::BlobDirectory::new).
     #[wasm_bindgen(js_name = putDirectory)]
     pub async fn put_directory(
         &self,
@@ -270,7 +276,7 @@ impl SeaSession {
         })
     }
 
-    /// Reads a directory as named child identities.
+    /// Reads a directory as `{ name, child }` entries in lexical name order.
     #[wasm_bindgen(js_name = getDirectory)]
     pub async fn get_directory(&self, id: &SeaTreeId) -> Result<Array, JsValue> {
         let BlobTreeId::Directory(id) = id.inner else {
@@ -302,6 +308,9 @@ impl SeaSession {
     }
 
     /// Submits opaque application data in session order.
+    ///
+    /// Callers must establish author-call order as required by [`sea_core::SeaAuthorSession`].
+    /// Invalid `blob_tree` input attempts to close the underlying session before returning the input error.
     pub async fn submit(
         &self,
         reference: Option<u64>,
@@ -328,7 +337,9 @@ impl SeaSession {
             .map_err(|error| service_error(&error))
     }
 
-    /// Opens monitored bounded or live event history.
+    /// Opens monitored history after the exclusive `after` cursor through inclusive `stop_after`.
+    ///
+    /// Without `stop_after`, the stream stays live after catching up.
     pub fn read(&self, after: Option<u64>, stop_after: Option<u64>) -> SeaEventStream {
         let events = self.inner.read(
             after.map(EventPosition::new),
@@ -344,6 +355,10 @@ impl SeaSession {
     }
 
     /// Selects a snapshot and its gap-free event suffix.
+    ///
+    /// `required` bounds snapshot selection inclusively, not the live event suffix.
+    /// Without a bound, selects the latest snapshot; without a compatible snapshot, replays from the beginning.
+    /// The stream emits the selected snapshot first, if any, then monitored events without a captured event head.
     pub async fn load(&self, required: Option<u64>) -> Result<SeaEventStream, JsValue> {
         let loaded = self
             .inner
@@ -368,6 +383,8 @@ impl SeaSession {
     }
 
     /// Returns the newest snapshot at or before an inclusive event bound, or the latest if absent.
+    ///
+    /// Returns JavaScript `undefined` when no compatible snapshot exists.
     #[wasm_bindgen(js_name = getSnapshot)]
     pub async fn get_snapshot(&self, required: Option<u64>) -> Result<JsValue, JsValue> {
         let snapshot = self
@@ -438,7 +455,9 @@ impl SeaSession {
         snapshot_result(snapshot.root.id(), snapshot.at_event.id())
     }
 
-    /// Closes this membership without closing other clients of the same service.
+    /// Closes live signal connections, then this membership, without closing other clients.
+    ///
+    /// A signal-close failure is returned before the underlying session close is attempted.
     pub async fn close(&self) -> Result<(), JsValue> {
         let signals = self.signals.take();
         for connection in signals
@@ -554,6 +573,8 @@ fn event_result(
 }
 
 /// Cancellable event or snapshot-and-event stream.
+///
+/// Cancel before freeing a generated stream and wait for any pending `next` call to settle.
 #[wasm_bindgen]
 pub struct SeaEventStream {
     /// Sole stream owner between reads.
@@ -564,7 +585,9 @@ pub struct SeaEventStream {
 
 #[wasm_bindgen]
 impl SeaEventStream {
-    /// Reads one result; concurrent reads are rejected.
+    /// Reads one result, or returns JavaScript `undefined` after completion or cancellation.
+    ///
+    /// Concurrent reads are rejected.
     pub async fn next(&self) -> Result<JsValue, JsValue> {
         let Some(mut stream) = self.stream.take() else {
             return if self.pending.borrow().is_some() {
@@ -596,6 +619,8 @@ impl SeaEventStream {
 }
 
 /// Cancellation-owned snapshot registration with explicit publisher fences.
+///
+/// Cancel before freeing a generated stream and wait for any pending `next` call to settle.
 #[wasm_bindgen]
 pub struct SeaSnapshotStream {
     /// Underlying registration, whose drop revokes participation.
@@ -607,6 +632,9 @@ pub struct SeaSnapshotStream {
 #[wasm_bindgen]
 impl SeaSnapshotStream {
     /// Reads the current or next coalesced coordination state.
+    ///
+    /// Unlike an event stream, this rejects when the stream ends or is cancelled.
+    /// Reads also reject if the stream is closed or another read is pending.
     pub async fn next(&self) -> Result<JsValue, JsValue> {
         let mut stream = self
             .stream

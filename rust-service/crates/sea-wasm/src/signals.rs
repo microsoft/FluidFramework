@@ -73,6 +73,9 @@ impl<Connection: Signals> Signals for ConnectionAdapter<Connection> {
 }
 
 /// One independently closable ephemeral messaging connection.
+///
+/// Delivery and membership follow [`sea_core::signals::SeaSignals`].
+/// Wait for pending operations to settle before freeing the generated JavaScript object.
 #[wasm_bindgen]
 pub struct SeaSignals {
     /// Shared connection retained across pending JavaScript operations.
@@ -82,6 +85,9 @@ pub struct SeaSignals {
 #[wasm_bindgen]
 impl SeaSignals {
     /// Admits an opaque message; completion is not remote receipt.
+    ///
+    /// An absent `target` broadcasts to current members, including the sender.
+    /// `best_effort` permits loss and reordering; otherwise delivery is reliable only while live.
     ///
     /// # Errors
     /// Rejects invalid input, unavailable admission, or a closed connection.
@@ -105,6 +111,8 @@ impl SeaSignals {
             .map_err(|error| service_error(&error))
     }
     /// Receives a membership observation or opaque message; concurrent reads are rejected.
+    ///
+    /// Returns JavaScript `undefined` after the connection closes.
     ///
     /// # Errors
     /// Reports concurrent reads, terminal delivery failures, or result encoding errors.
