@@ -41,6 +41,7 @@ import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 /**
  * Loader capability used after a runtime factory detects application seed content.
  * This is optional so seed factories can detect older loaders and fail safely.
+ * @legacy @alpha
  */
 export interface SeedLoadContext extends IContainerContext {
 	/**

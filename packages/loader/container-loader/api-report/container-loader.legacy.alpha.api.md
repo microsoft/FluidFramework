@@ -290,6 +290,11 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @alpha @legacy
+export interface SeedLoadContext extends IContainerContext {
+    readonly disableOfflineLoad?: (() => void) | undefined;
+}
+
+// @alpha @legacy
 export interface SeedProjector<TSeed = unknown> {
     isNative(context: IContainerContext): boolean;
     materialize(seed: TSeed, sequenceNumber: number): SeedRuntimeSnapshot | Promise<SeedRuntimeSnapshot>;

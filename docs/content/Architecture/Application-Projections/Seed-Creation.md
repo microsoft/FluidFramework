@@ -243,9 +243,12 @@ detachedConstructionOptions: {
 }
 ```
 
-Use an enabled runtime identifier compressor and deterministic short data store identifiers.
-Use the same construction session, model schema, data store and channel types, channel identifiers, aliases, and initialization order for a given seed on every client.
-Canonicalize unordered input before allocating identifiers or initializing DDSs; the sample validates and sorts its two text parts before creating content.
+For a given seed, every client's construction must match on all of the following:
+
+- An enabled runtime identifier compressor and deterministic short data store identifiers.
+- The same construction session, model schema, data store and channel types, channel identifiers, aliases, and initialization order.
+- Canonicalized unordered input, applied before allocating identifiers or initializing DDSs; the sample validates and sorts its two text parts before creating content.
+
 Collaborative identifiers and state must agree; the runtime's creation timestamp and telemetry identifier can differ without changing the model.
 Construction is not a promise that every summary byte, including telemetry metadata, is identical.
 The construction runtime cannot attach or become a live client.

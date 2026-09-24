@@ -76,6 +76,7 @@ export {
 	type SeedRuntimeLoad,
 	type SeedRuntimeSnapshot,
 } from "./seedRuntime.js";
+export type { SeedLoadContext } from "./containerContext.js";
 export {
 	extractBlobAttachReferences,
 	wireFormatConstants,
