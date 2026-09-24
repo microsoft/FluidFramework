@@ -14,7 +14,7 @@ These requirements apply to source-code comments and API documentation as well a
 
 ## Changesets
 
-Add a changeset for changes to user-facing behavior or APIs.
+Add a changeset for user-facing changes only if the affected release group uses changesets.
 Before writing or modifying a changeset, read and follow the [Changeset Guidelines](../.changeset/README.md).
 
 ## Asserts
