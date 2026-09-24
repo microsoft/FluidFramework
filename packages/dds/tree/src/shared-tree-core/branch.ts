@@ -124,6 +124,14 @@ export interface BranchTrimmingEvents {
 
 /**
  * A branch of changes that can be applied to a SharedTree.
+ * @remarks
+ * `SharedTreeBranch` is the low-level revision manager branch that the SharedTree package uses to track and rebase commits.
+ * It is not part of the public API.
+ * Application code must not use this class directly.
+ *
+ * `EditManager` and `TreeCheckout` build on `SharedTreeBranch` to implement the SharedTree's internal edit history.
+ * They also use it to implement the public branching APIs, {@link UntypedTreeView} and {@link UntypedTreeViewAlpha}.
+ * Application developers who need branch-style editing of a SharedTree must use {@link UntypedTreeView} or {@link UntypedTreeViewAlpha} instead of this class.
  */
 export class SharedTreeBranch<
 	TEditor extends ChangeFamilyEditor,
