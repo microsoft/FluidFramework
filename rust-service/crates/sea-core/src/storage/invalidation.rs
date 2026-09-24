@@ -66,7 +66,8 @@ impl<E: Send + Sync + 'static> InvalidationSource<E> {
     /// Registers an observer, immediately notifying it if this opening is already invalid.
     ///
     /// # Panics
-    /// Panics if the source lock is poisoned or registration identities are exhausted.
+    /// Panics if the source lock is poisoned, registration identities are exhausted,
+    /// or an immediately notified observer panics.
     pub fn register(&self, callback: InvalidationCallback<E>) -> InvalidationRegistration {
         let mut state = self.0.lock().expect("invalidation lock");
         if let Some(error) = state.terminal.clone() {

@@ -45,13 +45,13 @@ pub enum FileStorageError {
     /// A valid opening already owns this document.
     #[error("document already open")]
     Busy,
-    /// An input is not valid for this component.
+    /// Input, capacity, or lifecycle checks rejected the operation before mutation.
     #[error("rejected: {0}")]
     Rejected(&'static str),
     /// A nonempty read has a bound beyond its initialization head.
     #[error("position beyond archive head")]
     InvalidPosition,
-    /// A journal mutation may have committed; this opening must be recovered.
+    /// An operation has an uncertain outcome; this opening must be recovered.
     #[error("journal mutation requires recovery")]
     Ambiguous,
 }
@@ -297,6 +297,7 @@ impl Journal {
     }
 
     /// Publishes the storage-owned validated tail without any historical address table.
+    /// The caller must validate record semantics and dependencies before advancing this cursor.
     pub(crate) fn remember_tail(
         &mut self,
         last_record_offset: u64,
@@ -338,8 +339,10 @@ impl Journal {
         self.append_batch(&[payload])
     }
 
-    /// Appends a group with one sync; on uncertainty any prefix of the group may survive.
-    /// No caller may publish any member until this method succeeds.
+    /// Appends a nonempty group with one journal synchronization in durable mode.
+    /// On uncertainty, any prefix of the group may survive.
+    /// Durable callers must wait for this write before publishing records and must manage
+    /// validated settled-tail cursor publication separately. Buffered admission can precede this write.
     pub(crate) fn append_batch(&mut self, payloads: &[&[u8]]) -> Result<(), FileStorageError> {
         self.ready()?;
         if payloads.is_empty() {

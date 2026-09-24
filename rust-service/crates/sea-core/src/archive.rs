@@ -18,6 +18,9 @@ pub struct EventSubmission {
 }
 
 /// A stable event-order value within one archive.
+///
+/// Ordering is meaningful only within that archive.
+/// Neither adjacent numeric values nor a particular starting value are required.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct EventPosition(u64);
 
@@ -47,10 +50,10 @@ impl EventPosition {
     }
 }
 
-/// One application event before or after commitment.
+/// Opaque event content before or after commitment.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Event {
-    /// Opaque application bytes.
+    /// Opaque bytes interpreted by the layer above storage.
     pub payload: Bytes,
     /// Optional immutable content tree referenced by this event.
     pub blob_tree: Option<BlobTreeId>,
@@ -133,7 +136,7 @@ pub enum ValueError {
     ZeroSessionId,
 }
 
-/// One committed application event returned through Sea interfaces.
+/// One committed event returned by event storage.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommittedEvent {
     /// Stable position assigned when the event committed.
@@ -160,10 +163,10 @@ pub enum SessionEventKind {
 pub struct SessionCommittedEvent {
     /// Distinguishes submissions from service-authoritative membership records.
     pub kind: SessionEventKind,
-    /// Storage commitment and application event.
+    /// Stored event and its position; `kind` determines how to interpret the payload.
     pub committed: CommittedEvent,
 
-    /// Connection identity that submitted the event.
+    /// Logical session whose submission or membership transition this event records.
     pub session_id: SessionId,
     /// Sequenced history known when the author constructed this event, or initial state.
     /// Together with the session's preceding application events, this describes the submission context.

@@ -132,6 +132,7 @@ pub enum BlobTreeId {
 /// An immutable directory mapping validated names to typed child identities.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct BlobDirectory {
+    /// Validated child names kept in lexical order for canonical encoding.
     entries: BTreeMap<String, BlobTreeId>,
 }
 
@@ -140,7 +141,7 @@ impl BlobDirectory {
     ///
     /// # Errors
     ///
-    /// Returns an error for empty names, path separators, NUL bytes, `.` or `..`.
+    /// Returns an error for empty names, `/`, NUL bytes, `.` or `..`.
     pub fn new(entries: BTreeMap<String, BlobTreeId>) -> Result<Self, BlobTreeError> {
         for name in entries.keys() {
             validate_entry_name(name)?;
@@ -256,6 +257,7 @@ impl BlobDirectory {
     }
 }
 
+/// Requires the fixed width shared by leaf and directory identities.
 fn content_id_bytes(bytes: &[u8]) -> Result<[u8; CONTENT_ID_BYTES], BlobTreeError> {
     bytes
         .try_into()
@@ -264,6 +266,7 @@ fn content_id_bytes(bytes: &[u8]) -> Result<[u8; CONTENT_ID_BYTES], BlobTreeErro
         })
 }
 
+/// Prefixes stored bytes with their domain so leaf and directory identities remain distinct.
 fn domain_hash(domain: &[u8], bytes: &[u8]) -> [u8; CONTENT_ID_BYTES] {
     let mut hash = Hasher::new();
     hash.update(domain);
@@ -271,6 +274,7 @@ fn domain_hash(domain: &[u8], bytes: &[u8]) -> [u8; CONTENT_ID_BYTES] {
     *hash.finalize().as_bytes()
 }
 
+/// Rejects empty names, traversal segments, and embedded `/` or NUL characters.
 fn validate_entry_name(name: &str) -> Result<(), BlobTreeError> {
     if name.is_empty() || matches!(name, "." | "..") || name.contains(['/', '\0']) {
         return Err(BlobTreeError::InvalidEntryName(name.to_owned()));

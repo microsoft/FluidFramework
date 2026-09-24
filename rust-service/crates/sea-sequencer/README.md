@@ -49,7 +49,8 @@ Exact announcement retries return the original position; changing metadata is re
 Membership metadata is public control data and is not transformed by payload compression or encryption.
 `read` lazily initializes the view's bounded or live read and preserves its progress and error classification.
 For storage-backed reads, progress observations after initialization delegate to the monitored backend even between reader polls; draining the last known item does not leave a stale backlog status.
-Closing or replacing membership terminates its initialized live reads.
+Closing a membership terminates its initialized storage-backed reads, including finite reads.
+Cached unbounded reads register at creation, so closure also terminates subscriptions that have not been polled.
 Loads use `LoadStart`, returning a selected handle-based snapshot and the live suffix without an atomic captured head.
 Backend monitored streams provide gap-free catch-up and live delivery.
 Publisher observations use coalescing watch streams because intermediate publisher states need not all be delivered.
@@ -210,12 +211,13 @@ An exact committed envelope resolves success; a complete settled empty range yie
 Under the required prefix contract, rejection terminates the old append stream; recovery and transformed resubmission belong to the caller.
 A failed head or incomplete scan yields `RecoveryRequired` and prevents further mutations or claims of absence.
 
-The runtime retains an owned mutation future before first polling backend work.
+Event appends and snapshot publication use owned mutation futures retained across caller cancellation.
 Dropping a caller future does not drop that backend future or treat cancellation as settlement.
 The next state-dependent operation, including close or shutdown, drives the same future to settlement before continuing.
 There is no background task or assumed executor, including on WASM; with no further operation, cancelled work may remain pending.
 Dropping the whole runtime can still cancel its retained future: the owner must then follow backend settlement/recovery rules before acquiring a replacement view.
 An unreconcilable runtime must be discarded and recovered; it cannot use `shutdown` to claim successful settlement.
+Internal checkpoint publication is different: cancellation requires reopening rather than resuming a retained future, as described in [Internal Checkpoints](#internal-checkpoints).
 
 ## Snapshots
 

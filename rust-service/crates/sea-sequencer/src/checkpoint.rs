@@ -11,7 +11,8 @@ use sea_core::{
 use super::SessionError;
 use crate::codec::{self, decode_committed, encode_membership};
 
-/// Maximum applied entries between normal internal checkpoint publications.
+/// Applied-entry threshold checked before the next batch or membership append.
+/// A batch can cross this threshold before the checkpoint is published.
 pub(super) const INTERVAL: usize = 256;
 /// Internal encoding marker, separate from event and application snapshot encodings.
 const MAGIC: &[u8] = b"SEAC3";

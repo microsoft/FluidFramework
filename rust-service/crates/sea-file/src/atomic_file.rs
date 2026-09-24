@@ -1,4 +1,6 @@
 //! Checksummed whole-value publication for small document metadata and immutable content.
+//!
+//! Callers must serialize writes to each destination because they share a fixed `.pending` path.
 
 use std::{
     fs::{self, File, OpenOptions},
@@ -30,7 +32,8 @@ pub(crate) fn read(path: &Path) -> Result<Option<Vec<u8>>, FileStorageError> {
     Ok(Some(bytes[32..].to_vec()))
 }
 
-/// Publishes content before its name and reports all write failures as uncertain.
+/// Atomically replaces the published value and reports all write failures as uncertain.
+/// Durable mode synchronizes the staged file before rename and its parent directory afterward.
 pub(crate) fn write(path: &Path, value: &[u8], durable: bool) -> Result<(), FileStorageError> {
     let result = (|| -> std::io::Result<()> {
         let temporary = pending(path);
@@ -47,7 +50,7 @@ pub(crate) fn write(path: &Path, value: &[u8], durable: bool) -> Result<(), File
     result.map_err(|_| FileStorageError::Ambiguous)
 }
 
-/// Writes complete unpublished bytes without making them discoverable.
+/// Writes checksummed staging bytes without synchronizing or publishing them.
 pub(crate) fn stage(path: &Path, value: &[u8]) -> std::io::Result<File> {
     let mut file = OpenOptions::new()
         .write(true)

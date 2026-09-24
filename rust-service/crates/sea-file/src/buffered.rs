@@ -66,7 +66,7 @@ pub(crate) struct Executor {
     waiting: Arc<Semaphore>,
     /// Independent byte budget for waiting input and encoding buffers.
     waiting_bytes: Arc<Semaphore>,
-    /// Admission lock never covers disk I/O.
+    /// Protects admission and completion bookkeeping; never held during disk I/O.
     queue: Mutex<Queue>,
     /// Written-prefix and terminal-state notification.
     changed: Notify,
@@ -194,6 +194,7 @@ impl Executor {
     }
 
     /// Settles a limited backlog on one worker, stopping permanently after the first error.
+    /// Returns whether another drain turn may be needed.
     fn turn(&self) -> Result<bool, FileStorageError> {
         let mut bytes = 0;
         for _ in 0..64 {

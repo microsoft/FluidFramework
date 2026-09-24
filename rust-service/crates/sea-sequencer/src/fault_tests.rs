@@ -88,7 +88,7 @@ struct Faults {
     reads: AtomicUsize,
     /// Counts every underlying archive poll, including pending polls.
     read_polls: AtomicUsize,
-    /// Behavior consumed by the next append.
+    /// Behavior consumed by the next append or checkpoint publication.
     next: StdMutex<Failure>,
     /// Number of backend append invocations, including pending ones.
     calls: AtomicUsize,
@@ -105,7 +105,7 @@ struct Faults {
 }
 
 impl Faults {
-    /// Arms a single append failure.
+    /// Arms one append or checkpoint publication with the selected behavior.
     fn arm(&self, failure: Failure) {
         *self.next.lock().unwrap() = failure;
     }
@@ -289,6 +289,7 @@ impl<Store: Archive<Position = EventPosition, Error = MemoryStorageError> + 'sta
         }
     }
 
+    /// Stops at a real append failure; grouped ambiguity reports errors for the committed prefix.
     async fn append_batch(
         &self,
         values: Vec<Self::Append>,
@@ -430,14 +431,14 @@ impl SnapshotArchive for FaultStore<MemorySnapshotArchive> {
     }
 }
 
-/// Factory with separately controlled event and snapshot failures.
+/// Factory with independent event faults and shared snapshot/checkpoint publication faults.
 #[derive(Default)]
 struct FaultStorage {
     /// Persistent in-process test document registry.
     inner: MemoryStorage,
     /// Event-append fault controls.
     events: Arc<Faults>,
-    /// Snapshot-publication fault controls.
+    /// Shared snapshot and internal-checkpoint publication fault controls.
     snapshots: Arc<Faults>,
 }
 

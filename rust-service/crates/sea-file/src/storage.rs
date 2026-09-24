@@ -1,8 +1,9 @@
 //! Document components over exclusive journals and hash-addressed immutable content.
 //!
-//! [`crate::FileStorage`] allocates numeric document identities below a canonical namespace
-//! and opens OS-locked event and snapshot journals per document. All components share that
-//! opening and its mutation order. Availability handles retain canonical-path provenance but no
+//! [`crate::FileStorage`] and [`crate::DurableStorage`] allocate numeric document identities
+//! below a canonical namespace and acquire operating-system locks on stable journal sidecars.
+//! All components share that opening and its mutation order.
+//! Availability handles retain canonical-path provenance but no
 //! writer ownership; components and streams retain the opening until dropped.
 //!
 //! Publication orders immutable content before referencing events and events before snapshots.
@@ -13,8 +14,10 @@
 //! Reads initialize lazily, register wakeups under the published-state lock, and preserve
 //! exclusive-lower and inclusive-upper archive bounds. Event batches run on Tokio blocking workers
 //! that retain the opening after caller cancellation. Their disk I/O does not hold the state lock.
-//! Returned results establish publication; buffered persistence additionally requires factory flush.
+//! Returned results establish publication.
+//! Factory flush waits for buffered writes but does not synchronize them or provide power-loss safety.
 //! Creation, recovery, mutations, and historical reads use bounded blocking workers.
+//! The synchronous `_blocking` helpers run on those workers, not on the async executor.
 //! Cancellation does not revoke accepted work. No mutation is retried automatically.
 //! Uncertain writes and failed workers terminate authoritative observations until recovery.
 
@@ -1218,6 +1221,10 @@ fn decode_tree(bytes: &[u8]) -> Result<BlobTreeId, FileStorageError> {
 #[derive(Clone)]
 pub struct FileBlobs(Arc<Opening>);
 /// Independently usable ordered event component, with opaque tree identities.
+///
+/// Appends do not reject unavailable tree identities.
+/// Use a composed view to establish dependency availability before publication;
+/// dependencies still missing at recovery cause reopening to fail.
 #[derive(Clone)]
 pub struct FileEvents(Arc<Opening>);
 /// Independently usable sparse snapshot component.
@@ -1753,14 +1760,14 @@ impl FileBlobs {
             })
             .await
     }
-    /// Executes resolve on an owned blocking worker.
+    /// Mints a content handle from published membership without reading the payload.
     fn resolve_blocking(
         &self,
         id: BlobTreeId,
     ) -> Result<Option<FileHandle<BlobTreeId>>, FileStorageError> {
         Ok(self.0.published()?.contains(id)?.then(|| self.0.handle(id)))
     }
-    /// Executes ensure available on an owned blocking worker.
+    /// Revalidates document provenance and content membership, including after reopening.
     fn ensure_available_blocking(
         &self,
         handle: &FileHandle<BlobTreeId>,
@@ -1772,7 +1779,7 @@ impl FileBlobs {
             Err(FileStorageError::Rejected("missing tree"))
         }
     }
-    /// Executes put blob on an owned blocking worker.
+    /// Reuses an existing blob or publishes its immutable bytes before minting a handle.
     fn put_blob_blocking(
         &self,
         payload: &[u8],
@@ -1787,7 +1794,7 @@ impl FileBlobs {
         }
         Ok(self.0.handle(BlobTreeId::Blob(id)))
     }
-    /// Executes get blob on an owned blocking worker.
+    /// Reads blob bytes from the pending overlay or checksum- and identity-checked persisted content.
     fn get_blob_blocking(&self, id: BlobId) -> Result<Bytes, FileStorageError> {
         let record = self
             .0
@@ -1796,7 +1803,7 @@ impl FileBlobs {
             .ok_or(FileStorageError::Rejected("missing blob"))?;
         Ok(Bytes::copy_from_slice(&record[1..]))
     }
-    /// Executes put directory on an owned blocking worker.
+    /// Rechecks directory membership in mutation order and validates children only for new content.
     fn put_directory_blocking(
         &self,
         directory: &BlobDirectory,
@@ -1817,7 +1824,7 @@ impl FileBlobs {
         }
         Ok(self.0.handle(BlobTreeId::Directory(id)))
     }
-    /// Executes get directory on an owned blocking worker.
+    /// Decodes a pending directory or reads one with persisted checksum and typed-identity validation.
     fn get_directory_blocking(
         &self,
         id: BlobDirectoryId,
@@ -1833,7 +1840,7 @@ impl FileBlobs {
 }
 
 impl FileEvents {
-    /// Executes resolve on an owned blocking worker.
+    /// Mints an event handle only for an available record, not an arbitrary in-range offset.
     fn resolve_blocking(
         &self,
         id: EventPosition,
@@ -1844,7 +1851,7 @@ impl FileEvents {
             .has_event(id)?
             .then(|| self.0.handle(id)))
     }
-    /// Executes ensure available on an owned blocking worker.
+    /// Revalidates document provenance and event membership, including after reopening.
     fn ensure_available_blocking(
         &self,
         handle: &FileHandle<EventPosition>,
@@ -1859,7 +1866,7 @@ impl FileEvents {
 }
 
 impl FileSnapshots {
-    /// Executes append on an owned blocking worker.
+    /// Validates dependencies and position advancement before persisting and publishing a snapshot.
     fn append_blocking(&self, snapshot: &FileSnapshot) -> Result<(), FileStorageError> {
         self.0.compatible(&snapshot.root)?;
         self.0.compatible(&snapshot.at_event)?;
@@ -1901,7 +1908,7 @@ impl FileSnapshots {
         }
         Ok(())
     }
-    /// Executes get snapshot at on an owned blocking worker.
+    /// Returns a snapshot only for an exact event-position match, with document-scoped handles.
     fn get_snapshot_at_blocking(
         &self,
         position: EventPosition,
@@ -1912,7 +1919,7 @@ impl FileSnapshots {
             .snapshot(position)?
             .map(|root| self.0.snapshot(position, root)))
     }
-    /// Executes latest at or before on an owned blocking worker.
+    /// Selects the last snapshot within an inclusive bound, or the latest when unbounded.
     fn latest_at_or_before_blocking(
         &self,
         position: Option<EventPosition>,
@@ -1925,12 +1932,12 @@ impl FileSnapshots {
 }
 
 impl FileCheckpoint {
-    /// Executes checkpoint on an owned blocking worker.
+    /// Reads the published checkpoint with checksum validation, ignoring any staged replacement.
     fn checkpoint_blocking(&self) -> Result<Option<Bytes>, FileStorageError> {
         drop(self.0.lock()?);
         Ok(atomic_file::read(&self.0.path.with_extension("checkpoint"))?.map(Bytes::from))
     }
-    /// Executes publish checkpoint on an owned blocking worker.
+    /// Replaces a nonempty checkpoint independently of journal and content files.
     fn publish_checkpoint_blocking(&self, checkpoint: &[u8]) -> Result<(), FileStorageError> {
         if checkpoint.is_empty() {
             return Err(FileStorageError::Rejected("empty internal checkpoint"));
@@ -2082,7 +2089,7 @@ impl ArchiveCursor for SnapshotCursor {
     }
 }
 
-/// Creates a lazy read retaining the opening, with notifications registered under the mutation lock.
+/// Creates a lazy read retaining the opening, with notifications registered under the published-state lock.
 #[expect(
     clippy::too_many_lines,
     reason = "Keep the bounded lazy-read state machine together"
@@ -2208,7 +2215,7 @@ struct FileRead<Source> {
     observation: Arc<Mutex<MonitoredStreamProgress<EventPosition>>>,
 }
 
-/// Computes a coherent in-range backlog observation from the same locked history.
+/// Computes an in-range backlog observation from positions selected from one published-state snapshot.
 fn observe(
     latest: Option<EventPosition>,
     next: Option<EventPosition>,
@@ -3151,7 +3158,7 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
 
-    /// Checks that closed directories can be reused while another mutation owns the journal.
+    /// Checks that dependency-closed directories can be reused while another mutation owns the journal.
     async fn check_directory_deduplication(durable: bool, reopened: bool) {
         let root = root();
         let storage = Factory::open(&root, durable).unwrap();

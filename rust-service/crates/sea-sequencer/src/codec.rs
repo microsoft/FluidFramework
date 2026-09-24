@@ -59,7 +59,7 @@ pub(crate) fn encode_submission<Error>(
     Ok(encoded.freeze())
 }
 
-/// Decodes a persisted submission, rejecting truncation and trailing bytes.
+/// Decodes an application or membership envelope, rejecting malformed or trailing data.
 ///
 /// The returned payload owns exact-sized backing, independent of the encoded record.
 /// Metadata parsing only borrows shared input backing; it does not copy the encoded body.

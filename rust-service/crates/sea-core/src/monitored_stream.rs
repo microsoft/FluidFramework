@@ -89,9 +89,13 @@ pub type BoxMonitoredStream<T, P, E> = Pin<
     >,
 >;
 
+/// Tracks delivery positions while accepting the source's progress observations unchanged.
 struct PositionedMonitoredStream<S, F, P> {
+    /// Ordered source whose allocation remains pinned while the wrapper moves.
     inner: Pin<Box<S>>,
+    /// Extracts a delivered item's cursor; `None` leaves progress unchanged.
     position_of: Box<F>,
+    /// Current progress, updated by source observations and positioned data delivery.
     progress: Box<MonitoredStreamProgress<P>>,
 }
 
@@ -156,6 +160,7 @@ where
 /// Boxes a native monitored stream and tracks the position of each yielded data item.
 ///
 /// The source must emit ordered data and coherent progress observations.
+/// A `position_of` result of `None` leaves progress unchanged for that item.
 /// Delivery also advances `latest_known` if needed and clears `FallenBehind` when its known
 /// backlog is exhausted. Only a source observation establishes `AwaitingNewItems`.
 pub fn boxed_monitored_stream<S, F, T, P, E>(
@@ -181,6 +186,7 @@ where
 /// Boxes a browser monitored stream and tracks the position of each yielded data item.
 ///
 /// The source must emit ordered data and coherent progress observations.
+/// A `position_of` result of `None` leaves progress unchanged for that item.
 /// Delivery also advances `latest_known` if needed and clears `FallenBehind` when its known
 /// backlog is exhausted. Only a source observation establishes `AwaitingNewItems`.
 pub fn boxed_monitored_stream<S, F, T, P, E>(
@@ -202,9 +208,13 @@ where
     })
 }
 
+/// Transforms data and errors without changing the source's delivery progress.
 struct MappedMonitoredStream<T, P, E, F, G> {
+    /// Source that remains authoritative for progress, including after a mapping error.
     inner: BoxMonitoredStream<T, P, E>,
+    /// Fallible transformation applied only to data items, not progress observations.
     map_data: Box<F>,
+    /// Converts source errors independently of data-transformation errors.
     map_error: Box<G>,
 }
 
@@ -332,7 +342,9 @@ mod tests {
         MonitoredStreamStatus, boxed_monitored_stream, map_monitored_stream,
     };
 
+    /// Object-safety fixture with observable progress but no stream items.
     struct EmptyStream {
+        /// Fixed observation exposed through the monitored-stream trait object.
         progress: MonitoredStreamProgress<u64>,
     }
 

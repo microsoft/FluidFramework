@@ -282,6 +282,8 @@ impl<Item: Send + 'static> MonitoredStream for BlockingRead<Item> {
 }
 
 /// Runs filesystem work with a factory-scoped concurrency budget retained through cancellation.
+/// Cancellation while waiting for capacity drops the operation; after dispatch, the worker
+/// retains the operation and its permit until completion.
 pub(crate) async fn blocking<Output: Send + 'static>(
     workers: Arc<Semaphore>,
     operation: impl FnOnce() -> Result<Output, FileStorageError> + Send + 'static,

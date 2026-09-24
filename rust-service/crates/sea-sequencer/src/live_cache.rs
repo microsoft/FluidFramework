@@ -46,7 +46,7 @@ impl LiveReadRevocation {
 pub(super) enum Terminal<E> {
     /// Neutral subscription-only revocation.
     Revoked,
-    /// Ordered membership closure.
+    /// Membership closure or runtime shutdown.
     Closed,
     /// The sequencer cannot establish a safe settled prefix.
     RecoveryRequired,
@@ -113,7 +113,7 @@ pub(super) struct LiveCache<E> {
     changed: watch::Sender<()>,
 }
 
-/// Cancellation of checkpoint publication invalidates the sequencer's continuation.
+/// Invalidates cached delivery if checkpoint publication fails or is cancelled.
 pub(super) struct RecoveryGuard<E>(pub(super) Option<Arc<LiveCache<E>>>);
 
 impl<E> Drop for RecoveryGuard<E> {

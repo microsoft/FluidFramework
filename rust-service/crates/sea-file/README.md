@@ -53,7 +53,9 @@ Raw event components treat tree identities as opaque, while the view establishes
 Snapshots persist only position/root identities, not handles or session publication metadata.
 
 Internal checkpoint metadata is separate from the application snapshot archive and does not create an application snapshot.
-Publication writes the opaque payload plus a 32-byte checksum to `.checkpoint.pending`, synchronizes it in durable mode, atomically renames it over `.checkpoint`, and synchronizes the directory before acknowledgment.
+Publication writes the opaque payload plus a 32-byte checksum to `.checkpoint.pending` and atomically renames it over `.checkpoint`.
+Durable mode synchronizes the staged file before rename and the directory before acknowledgment.
+Buffered checkpoint publication waits for the write and rename, unlike buffered event admission, but does not synchronize either file or directory.
 An unpublished replacement is ignored by recovery; atomic rename selects the complete old or new value.
 Checkpoint publication neither reads nor rewrites content, journals, or storage cursors.
 Any uncertain publication poisons the opening.
@@ -84,7 +86,6 @@ Opening poison reports the classified ambiguous error, and factory shutdown repo
 Notification is sticky, covers racing and late registrations, and runs without another archive poll.
 The observer source releases its own lock before invoking callbacks; observers must not reenter storage.
 Dropping a registration removes it synchronously.
-Ordinary storage-backed read behavior is unchanged.
 
 Both modes use an exclusive OS lock on a stable `.lock` sidecar, including across independently opened factories.
 The sidecar is never replaced or removed, so ownership survives replacement of the journal inode.

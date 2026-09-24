@@ -6,11 +6,12 @@
 //! durable announcements, and requires callers to establish fresh sessions.
 //!
 //! A bounded application ring separates admission from persistence; lifecycle barriers drain it.
-//! One runtime mutex serializes membership changes and committed metadata. The runtime retains
-//! owned backend futures, so cancellation of a caller does not
-//! masquerade as settlement. A later operation drives the same future to completion; a failed
+//! One runtime mutex serializes membership changes and committed metadata.
+//! Event appends and snapshot publication retain owned backend futures across caller cancellation.
+//! A later operation drives the same future to completion; a failed
 //! bounded reconciliation poisons further mutation with
 //! [`crate::session::SessionError::RecoveryRequired`] until the view is discarded and recovered.
+//! Cancellation of internal checkpoint publication also requires recovery, not retained-future settlement.
 //!
 //! Default event delivery uses the view's monitored archive streams directly.
 //! Explicit cache-enabled openings use shared, revocable live delivery after storage replay.
@@ -112,7 +113,7 @@ struct Publisher {
 struct Membership {
     /// Latest history reference declared by this membership.
     declared_reference: Option<EventPosition>,
-    /// Closing or replacing this membership ends its live streams.
+    /// Membership closure ends initialized storage-backed reads.
     closed: watch::Sender<bool>,
     /// Cancellation or failure revokes append authority before asynchronous settlement.
     failed: Arc<std::sync::atomic::AtomicBool>,
@@ -169,7 +170,7 @@ struct Runtime<Storage: SeaStorage> {
     next_session: Option<u64>,
     /// Durable document-wide admission floor restored from ordered committed metadata.
     minimum_reference: Option<EventPosition>,
-    /// At most one outstanding mutation owns backend execution.
+    /// Retained lifecycle or snapshot mutation; application batches belong to the pipeline.
     pending: Option<Pending<Storage::Error>>,
     /// A failed reconciliation prevents mutation or a false terminal departure.
     recovery_required: bool,
@@ -456,7 +457,8 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         Ok(())
     }
 
-    /// Closes live streams and publisher authority after ordered departure settles.
+    /// Revokes local membership, active reads, and publisher authority without writing a departure.
+    /// Used before a local close append and when applying a committed departure.
     fn remove_member(&mut self, session: &SessionId) {
         if let Some(cache) = &self.live_cache {
             cache.close_session(session);
@@ -583,7 +585,8 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         self.view.clone().ok_or(SessionError::Closed)
     }
 
-    /// Requires current logical membership after all prior mutations settle.
+    /// Rejects missing memberships and authority revoked by failure or cancellation.
+    /// Callers remain responsible for settling any prior work their operation depends on.
     fn member(&self, session: &SessionId) -> Result<&Membership, SessionError<Storage::Error>> {
         self.members
             .get(session)
@@ -864,7 +867,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
         &self.session
     }
 
-    /// Publishes this membership once in archive order, retaining opaque application metadata.
+    /// Publishes this membership once in archive order, retaining opaque public member metadata.
     /// Close and recovery publish an ordered departure.
     /// Exact retries return the original position; metadata cannot change within a membership.
     ///
@@ -997,6 +1000,7 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
     type BlobHandle = BlobHandle<Storage>;
     type EventHandle = EventHandle<Storage>;
 
+    /// Storage reads initialize lazily; experimental unbounded reads register for revocation immediately.
     fn read(
         &self,
         after: Option<EventPosition>,
@@ -1010,6 +1014,7 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
         storage_read::read(self.clone(), after, stop_after)
     }
 
+    /// Selects a snapshot, then opens its live suffix without capturing an atomic archive head.
     async fn load(
         &self,
         start: LoadStart,
@@ -1090,6 +1095,8 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Storage> {
+    /// Replaces this membership's registration and returns coalesced authority updates.
+    /// Stream drop revokes only the registration created by this call.
     async fn coordinate_snapshots(
         &self,
         participation: SnapshotParticipation,
@@ -1134,6 +1141,8 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         )))
     }
 
+    /// Checks current authority before accepting either an exact retry or a new publication.
+    /// After returned ambiguity, only the stored position/root match establishes success.
     async fn publish_snapshot(
         &self,
         expected_parent: Option<EventPosition>,
@@ -1233,6 +1242,7 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         Ok(snapshot)
     }
 
+    /// Removes current registration without cancelling an already admitted snapshot publication.
     async fn revoke_snapshot_publisher(&self) -> Result<(), Self::Error> {
         let runtime = self.sequencer.runtime.lock().await;
         let mut publishers = runtime.publishers.lock().expect("publisher lock");
@@ -1941,7 +1951,7 @@ mod tests {
         assert!(first.committed.position < second.committed.position);
     }
 
-    /// Opens a named member without imposing backend-specific ownership rules.
+    /// Opens a fresh member with no declared reference; the name only labels the test call site.
     pub(super) async fn member<Storage: SeaStorage + 'static>(
         runtime: &Arc<LocalSequencer<Storage>>,
         _name: &str,

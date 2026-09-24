@@ -36,6 +36,9 @@ The host owns active-document caching and sequencer lifetime.
 `SeaView::blobs()` borrows the underlying blob store for content access and handle resolution; event and snapshot publication remain composed operations on the view.
 `Snapshot<BlobHandle, EventHandle>` carries availability handles and is shared by snapshot lookup, publication, and loading.
 Snapshot archives use event positions as their positions; initial empty state has no snapshot publication.
+
+### Loading
+
 `get_snapshot` and `load` share these `LoadStart` policies:
 
 | Policy | Snapshot selection |
@@ -48,6 +51,8 @@ Selection returns `None` when no snapshot qualifies.
 `load` combines selection with a gap-free live suffix, including for an empty archive, without capturing an event head.
 Use a selected snapshot plus bounded `read` to reconstruct a fixed event position; drop streams to cancel.
 
+### Append Outcomes
+
 `Archive::append_batch` returns results for an input prefix; omitted inputs were not attempted.
 Successful results precede errors, and any results after the first error must be ambiguous.
 A definitive failure cannot precede a committed entry; grouped persistence can report every attempted entry ambiguous when any prefix may survive.
@@ -56,6 +61,8 @@ The default implementation appends sequentially and stops at its first error.
 `SeaView::append_batch` checks tree capabilities in order and publishes the checked prefix even when a later dependency fails.
 Its dependency error is returned only after all preceding entries succeed.
 
+### Opening Invalidation
+
 `Archive::observe_invalidation` is an optional independent terminal-opening capability, also exposed by `SeaView`.
 Its default returns `None`, preserving compatibility for third-party archives and making unsupported observation explicit.
 Supporting backends return a registration that unregisters on drop.
@@ -63,6 +70,8 @@ Supporting backends return a registration that unregisters on drop.
 Callbacks run synchronously outside the source lock and must only update their own state, never reenter storage or wait for I/O.
 This lets a cache release ownership and wake live observers without an archive poll or a per-document task.
 The capability does not change the normal archive error or lifetime contract.
+
+### Sessions
 
 The session facets add membership, author ordering/recovery, and conditional snapshot coordination using `SeaService`'s native/browser thread-safety bounds.
 Initial application state is represented by an application event, not an initial storage snapshot.

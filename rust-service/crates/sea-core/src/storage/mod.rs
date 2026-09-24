@@ -280,9 +280,13 @@ where
             EventHandle = Events::Handle,
         >,
 {
+    /// Establishes complete-tree availability before dependent publication.
     blobs: Blobs,
+    /// Stores event history and resolves committed boundaries for snapshots.
     events: Events,
+    /// Stores publications after the view checks their blob and event dependencies.
     snapshots: Snapshots,
+    /// Maintains opaque recovery state independently of application snapshots.
     checkpoints: Box<dyn CheckpointStore<Error = Blobs::Error>>,
 }
 
