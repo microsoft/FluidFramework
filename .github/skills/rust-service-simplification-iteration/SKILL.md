@@ -43,6 +43,8 @@ When required behavior or ownership cannot be established from current contracts
   Remove, consolidate, relocate, or narrow elements whose complexity is not justified.
 - Preserve required qualities, not their current representation.
   Existing prose, tests, names, files, states, branches, conversions, and abstractions are evidence to assess, not structures that must automatically survive.
+- Preserve useful knowledge, not necessarily its current wording or placement.
+  Audience determines where and how information is presented; a mismatch with the current audience is not sufficient reason to delete it.
 - Additions are justified when they close a consequential gap, establish a clearer authoritative owner, or enable a larger reduction in accidental complexity.
   Material growth without a concrete audience, evidence, ownership, or mechanism benefit is not simplification.
 - Review must challenge both loss of necessary value and retention, displacement, or introduction of accidental complexity.
@@ -64,7 +66,7 @@ Use one primary category per checkpoint; a broad wave does not require one all-c
 
 | Category | Default strategy | Intended improvements | Required safeguards |
 | --- | --- | --- | --- |
-| Documentation | Patch first | Remove unnecessary detail, duplication, narration, and misplaced information; retain or add only what the intended audience needs. | Preserve required contracts, qualifications, useful local context, non-obvious reasoning, and discoverability. Account for inherited and authoritative documentation. |
+| Documentation | Patch first | Remove redundant or unhelpful prose, tighten wording, and relocate useful information to the appropriate documentation or implementation surface. | Preserve required contracts and useful knowledge not adequately captured elsewhere, including rationale, constraints, limitations, and meaningful future-work notes. Preserve qualifications and discoverability; account for inherited and authoritative documentation. |
 | Tests | Patch first | Remove or consolidate redundant cases, assertions, fixtures, helpers, and layers while preserving consequential regression evidence. | Preserve distinct behavioral obligations, independent expectations, execution, isolation, and useful failure diagnosis rather than every current test artifact. Check for expectations derived from production code, hidden or unexecuted scenarios, and shared state introduced by consolidation. |
 | Naming | Patch first for private/local names | Reduce misleading, redundant, inconsistent, or unnecessarily specific vocabulary. | Improve responsibility or call-site comprehension rather than substituting stylistic preference; check public, serialized, reflected, generated, diagnostic, and operational names. Check for mixed old and new terminology at affected call sites. |
 | Code organization | Patch first for local mechanical cleanup | Reduce unnecessary files, modules, forwarding layers, visibility, imports, dependency edges, and navigation. | Move code only to a clearer owner or when the move enables deletion of a boundary; preserve necessary platform, lifecycle, and failure separation. Check for broader visibility, added forwarding, and lost comments, attributes, initialization, or build inclusion during moves. |
@@ -290,9 +292,16 @@ Do not weaken the initial pass merely to avoid reviewer findings.
 Apply these reduction rules:
 
 - **Documentation:** inspect all Markdown files owned by each selected crate and the documentation and implementation-comment coverage and placement in its hand-authored source.
-  Identify the intended audience and authoritative owner.
-  Remove duplication, implementation narration, historical residue, misplaced detail, restatements, and qualifications that do not support a realistic reader decision.
-  Then tighten retained material, relocate information to its narrowest correct owner, and add the shortest useful explanation only when a consequential gap remains.
+  Assess the information's value before its placement, including its value to maintainers rather than only callers.
+  Preserve useful rationale, constraints, tradeoffs, limitations, and actionable or informative future-work notes that are not adequately captured elsewhere.
+  Use audience and ownership to choose the narrowest appropriate home; relocate misplaced information or narrow its presentation rather than deleting its substance.
+  Follow the [documentation policy](../../../rust-service/DEVELOPMENT.md#documentation-policy) to distinguish item contracts from implementation notes.
+  Remove redundant, demonstrably obsolete, code-restating, or otherwise unhelpful prose.
+  Before deleting duplication, verify that the retained source preserves the substance and remains discoverable where needed.
+  Preserve uncertainty and qualifications when tightening hypotheses or future-work notes; do not turn possibilities into promises.
+  If the value or continued relevance of unique information is uncertain, retain it rather than silently discard it.
+  Do not mechanically move every deleted sentence into an implementation comment; relocation must preserve useful knowledge, not merely relocate clutter.
+  Add the shortest useful explanation only when a consequential gap remains.
   Generated, vendored, and build-output files are outside this hand-authored surface.
 - **Tests:** identify the owning decisions, behavioral equivalence classes, and distinct boundaries protected by the original suite.
   Retain, replace, consolidate, relocate, or remove tests and assertions according to whether they detect a distinct consequential regression with useful diagnosis.
@@ -354,6 +363,8 @@ A later patch that changes an accepted transformation must include the affected 
 
 Review the actual diff and relevant baseline and current context using the [category safeguards](#category-strategies) and [reduction rules](#edit-the-full-assigned-scope).
 Check both preservation of essential value and removal of accidental complexity.
+For substantive documentation deletions, verify that the information is redundant, obsolete, readily apparent from code, otherwise unhelpful, or preserved in an appropriate discoverable location.
+Wrong audience or placement alone does not justify deletion; loss of useful knowledge is a blocking safeguard failure even when it is not an API contract.
 For changed contracts or regression evidence, include [Focused Contract-Preservation Review](../rust-service-quality-iteration/SKILL.md#focused-contract-preservation-review) in this same review, not a separate audit.
 
 Return concrete file-and-line findings and a checkpoint disposition, not an approval or justification for every edit.

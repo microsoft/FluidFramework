@@ -104,6 +104,20 @@ only on behavior promised by that contract, not on incidental details inferred
 from its current implementation. Avoid turning implementation choices into
 promises unless consumers genuinely require them.
 
+Preserve useful knowledge that is not adequately captured elsewhere, even when its current location serves the wrong audience.
+Audience determines placement and presentation, not whether rationale, constraints, tradeoffs, known limitations, or meaningful future-work notes deserve to survive.
+Relocate or narrow misplaced information rather than deleting it; retain discoverability and any qualifications or uncertainty.
+Delete redundant, demonstrably obsolete, code-restating, or otherwise unhelpful prose, but retain unique information when its continued relevance is uncertain.
+Before removing duplication, verify that the retained source preserves the substance and can be found where needed.
+
+In Rust, use `///` for item documentation, including contracts on private items.
+Use ordinary `//` comments near the responsible member or implementation for maintainer-only rationale and implementation notes that do not belong in the item's documentation.
+Split mixed comments when helpful: keep the contract as `///` and retain useful implementation context as `//`.
+This changes documentation presentation, not Rust visibility; do not hide a caller-relevant guarantee or limitation in an implementation comment.
+Use `TODO` for concrete unfinished work, preserving useful constraints and existing issue references.
+An informative alternative or optimization opportunity need not become a TODO or a promise to implement it.
+Keep broader design reasoning at its authoritative owner and link it locally when necessary; do not create new documents or mechanically convert redundant prose into `//` comments merely to avoid deletion.
+
 Use layered evidence for a documentation audit:
 
 - compiler `missing_docs` diagnostics establish the public Rust baseline;
