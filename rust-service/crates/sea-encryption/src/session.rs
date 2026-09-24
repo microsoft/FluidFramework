@@ -34,7 +34,7 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
     ///
     /// Each stream retains a key-provider clone and forwards delivery progress without reinterpretation,
     /// including when decryption fails.
-    fn decode_next(
+    fn decrypt_events(
         &self,
         source: ArchiveStream<SessionCommittedEvent, EventPosition, Session::Error>,
     ) -> ArchiveStream<SessionCommittedEvent, EventPosition, EncryptionError<Session::Error>> {
@@ -88,7 +88,7 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
         after: Option<EventPosition>,
         stop: Option<EventPosition>,
     ) -> ArchiveStream<SessionCommittedEvent, EventPosition, Self::Error> {
-        self.decode_next(self.inner.read(after, stop))
+        self.decrypt_events(self.inner.read(after, stop))
     }
     async fn load(
         &self,
@@ -101,7 +101,7 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
             .map_err(EncryptionError::Store)?;
         Ok(SessionLoad {
             snapshot: loaded.snapshot,
-            events: self.decode_next(loaded.events),
+            events: self.decrypt_events(loaded.events),
         })
     }
     async fn get_snapshot(
@@ -591,9 +591,9 @@ mod tests {
             nonces,
         );
         assert!(other.submit(submission.clone()).await.unwrap() > position);
-        let mut conflicting = submission;
-        conflicting.event.payload = Bytes::from_static(b"changed");
-        assert!(reconnected.submit(conflicting).await.unwrap() > position);
+        let mut changed_submission = submission;
+        changed_submission.event.payload = Bytes::from_static(b"changed");
+        assert!(reconnected.submit(changed_submission).await.unwrap() > position);
         assert!(
             first
                 .submit(EventSubmission {

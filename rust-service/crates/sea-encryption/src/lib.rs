@@ -242,21 +242,21 @@ where
         .active_key()
         .ok_or(EncryptionError::KeyUnavailable { key_id: None })?;
     let nonce = nonces.generate_nonce()?;
-    let mut header = Vec::with_capacity(HEADER_LENGTH);
-    header.extend_from_slice(MAGIC);
-    header.extend_from_slice(&[VERSION, ALGORITHM_AES_256_GCM_SIV, context as u8]);
-    header.extend_from_slice(active.id.as_bytes());
-    header.extend_from_slice(&nonce);
+    let mut envelope = Vec::with_capacity(HEADER_LENGTH);
+    envelope.extend_from_slice(MAGIC);
+    envelope.extend_from_slice(&[VERSION, ALGORITHM_AES_256_GCM_SIV, context as u8]);
+    envelope.extend_from_slice(active.id.as_bytes());
+    envelope.extend_from_slice(&nonce);
 
     let cipher = Aes256GcmSiv::new_from_slice(&active.key.0)
         .map_err(|_| EncryptionError::EncryptionFailed)?;
     let mut ciphertext = payload.to_vec();
     let tag = cipher
-        .encrypt_in_place_detached(Nonce::from_slice(&nonce), &header, &mut ciphertext)
+        .encrypt_in_place_detached(Nonce::from_slice(&nonce), &envelope, &mut ciphertext)
         .map_err(|_| EncryptionError::EncryptionFailed)?;
-    header.append(&mut ciphertext);
-    header.extend_from_slice(tag.as_slice());
-    Ok(Bytes::from(header))
+    envelope.append(&mut ciphertext);
+    envelope.extend_from_slice(tag.as_slice());
+    Ok(Bytes::from(envelope))
 }
 
 /// Validates and decrypts one envelope for the expected payload context.
@@ -280,10 +280,10 @@ where
         return Err(EncryptionError::CorruptEnvelope);
     }
 
-    let key_start = MAGIC.len() + 3;
-    let nonce_start = key_start + KEY_ID_LENGTH;
+    let key_id_start = MAGIC.len() + 3;
+    let nonce_start = key_id_start + KEY_ID_LENGTH;
     let key_id = KeyId(
-        envelope[key_start..nonce_start]
+        envelope[key_id_start..nonce_start]
             .try_into()
             .map_err(|_| EncryptionError::CorruptEnvelope)?,
     );
@@ -540,8 +540,8 @@ mod tests {
         )
         .unwrap();
         let mut changed = encoded.to_vec();
-        let key_start = MAGIC.len() + 3;
-        changed[key_start..key_start + KEY_ID_LENGTH].copy_from_slice(SECOND_ID.as_bytes());
+        let key_id_start = MAGIC.len() + 3;
+        changed[key_id_start..key_id_start + KEY_ID_LENGTH].copy_from_slice(SECOND_ID.as_bytes());
         let mut extended = encoded.to_vec();
         extended.push(0);
         for (case, envelope) in [

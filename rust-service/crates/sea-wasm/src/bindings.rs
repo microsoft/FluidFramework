@@ -673,7 +673,7 @@ pub struct SeaMemoryService {
     /// Storage retains documents independently of individual sessions.
     storage: sea_memory::MemoryStorage,
     /// One exclusive sequencer per document.
-    runtimes: futures_util::lock::Mutex<
+    sequencers: futures_util::lock::Mutex<
         BTreeMap<
             Vec<u8>,
             std::sync::Arc<sea_sequencer::session::LocalSequencer<sea_memory::MemoryStorage>>,
@@ -690,7 +690,7 @@ impl SeaMemoryService {
         Self {
             storage: sea_memory::MemoryStorage::new(),
             signals: RefCell::new(BTreeMap::new()),
-            runtimes: futures_util::lock::Mutex::new(BTreeMap::new()),
+            sequencers: futures_util::lock::Mutex::new(BTreeMap::new()),
         }
     }
 
@@ -702,9 +702,9 @@ impl SeaMemoryService {
     ) -> Result<SeaSession, JsValue> {
         use sea_core::storage::SeaStorage as _;
         check_options(options)?;
-        let mut runtimes = self.runtimes.lock().await;
+        let mut sequencers = self.sequencers.lock().await;
         let (document, sequencer) = if let Some(document) = document {
-            let sequencer = runtimes
+            let sequencer = sequencers
                 .get(&document)
                 .cloned()
                 .ok_or_else(|| invalid("document does not exist in this memory service"))?;
@@ -719,10 +719,10 @@ impl SeaMemoryService {
                 .await
                 .map_err(|error| service_error(&error))?;
             let document = document.as_bytes().to_vec();
-            runtimes.insert(document.clone(), sequencer.clone());
+            sequencers.insert(document.clone(), sequencer.clone());
             (document, sequencer)
         };
-        drop(runtimes);
+        drop(sequencers);
         let session = sequencer
             .open_session(options.reference)
             .await
