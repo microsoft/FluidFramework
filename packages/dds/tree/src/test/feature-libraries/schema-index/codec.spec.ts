@@ -133,6 +133,17 @@ describe("SchemaIndex", () => {
 		assert.throws(() => codec.decode(encoded));
 	});
 
+	it("rejects unsafe application schema versions", () => {
+		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
+		const encoded = {
+			version: SchemaFormatVersion.v3Experimental,
+			nodes: {},
+			root: { kind: "x" as FieldKindIdentifier, types: [] },
+			schemaVersion: [["test", Number.MAX_SAFE_INTEGER + 1]],
+		} satisfies FormatV3;
+		assert.throws(() => codec.decode(encoded), /non-negative safe integers/);
+	});
+
 	it("rejects formats which cannot encode application schema versions", () => {
 		const codec = schemaCodecBuilder.build({
 			...codecOptions,

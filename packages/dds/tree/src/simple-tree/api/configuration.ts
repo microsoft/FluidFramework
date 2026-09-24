@@ -189,7 +189,7 @@ export interface ITreeViewConfigurationAlpha<
 	 * Application-defined versions for the view schema.
 	 *
 	 * @remarks
-	 * Each value must be a non-negative integer.
+	 * Each value must be a non-negative safe integer.
 	 * These versions are stored in documents initialized or upgraded through a {@link TreeViewAlpha}.
 	 * Schema versions use an experimental persisted format.
 	 * Every client that loads or collaborates on a document using schema versions must use a Fluid Framework version that supports schema versions.
@@ -344,7 +344,7 @@ export class TreeViewConfigurationAlpha<
 
 /**
  * Validates and freezes an application-defined schema version map.
- * A valid map is `undefined` or maps each library identifier to a non-negative integer.
+ * A valid map is `undefined` or maps each library identifier to a non-negative safe integer.
  */
 export function validateSchemaVersion(
 	schemaVersion: SchemaVersionMap | undefined,
@@ -353,9 +353,9 @@ export function validateSchemaVersion(
 		return undefined;
 	}
 	for (const [libraryId, version] of Object.entries(schemaVersion)) {
-		if (!Number.isInteger(version) || version < 0) {
+		if (!Number.isSafeInteger(version) || version < 0) {
 			throw new UsageError(
-				`Schema version for library ${JSON.stringify(libraryId)} must be a non-negative integer.`,
+				`Schema version for library ${JSON.stringify(libraryId)} must be a non-negative safe integer.`,
 			);
 		}
 	}

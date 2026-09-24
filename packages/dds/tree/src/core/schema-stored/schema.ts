@@ -58,7 +58,7 @@ export type LibraryId = string & { readonly "tree.LibraryId": "tree.LibraryId" }
  * Application-defined versions associated with stored schema.
  *
  * @remarks
- * Each version must be a non-negative integer.
+ * Each version must be a non-negative safe integer.
  * Library identifiers and version values are persisted in the document as part of its stored schema.
  *
  * @alpha

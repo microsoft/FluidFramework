@@ -117,8 +117,8 @@ function decodeV3(f: FormatV3): TreeStoredSchema {
 	let previous: string | undefined;
 	const entries: [LibraryId, number][] = [];
 	for (const [libraryId, version] of f.schemaVersion) {
-		if (!Number.isInteger(version) || version < 0) {
-			throw new UsageError("Stored schema versions must be non-negative integers.");
+		if (!Number.isSafeInteger(version) || version < 0) {
+			throw new UsageError("Stored schema versions must be non-negative safe integers.");
 		}
 		if (previous !== undefined && previous >= libraryId) {
 			throw new UsageError(

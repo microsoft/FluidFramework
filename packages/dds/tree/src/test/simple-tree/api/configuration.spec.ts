@@ -276,7 +276,7 @@ describe("simple-tree configuration", () => {
 					schema: [],
 					schemaVersion: { [testLibraryId]: -1 },
 				}),
-			/non-negative integer/,
+			/non-negative safe integer/,
 		);
 		assert.throws(
 			() =>
@@ -284,7 +284,7 @@ describe("simple-tree configuration", () => {
 					schema: [],
 					schemaVersion: { [testLibraryId]: 1.5 },
 				}),
-			/non-negative integer/,
+			/non-negative safe integer/,
 		);
 	});
 
@@ -297,13 +297,15 @@ describe("simple-tree configuration", () => {
 		assert.equal(config.schemaVersion?.[testLibraryId], 0);
 	});
 
-	it("accepts positive integers larger than Number.MAX_SAFE_INTEGER", () => {
+	it("rejects positive integers larger than Number.MAX_SAFE_INTEGER", () => {
 		const version = Number.MAX_SAFE_INTEGER + 1;
-		const config = new TreeViewConfigurationAlpha({
-			schema: [],
-			schemaVersion: { [testLibraryId]: version },
-		});
-
-		assert.equal(config.schemaVersion?.[testLibraryId], version);
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: [],
+					schemaVersion: { [testLibraryId]: version },
+				}),
+			/non-negative safe integer/,
+		);
 	});
 });

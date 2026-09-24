@@ -133,8 +133,8 @@ function decodeSchemaVersion(
 	const entries: [LibraryId, number][] = [];
 	let previous: string | undefined;
 	for (const [libraryId, version] of encoded) {
-		if (!Number.isInteger(version) || version < 0) {
-			throw new UsageError("Schema versions must be non-negative integers.");
+		if (!Number.isSafeInteger(version) || version < 0) {
+			throw new UsageError("Schema versions must be non-negative safe integers.");
 		}
 		if (previous !== undefined && previous >= libraryId) {
 			throw new UsageError(
