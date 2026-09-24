@@ -243,8 +243,7 @@ where
     envelope.extend_from_slice(active.id.as_bytes());
     envelope.extend_from_slice(&nonce);
 
-    let cipher = Aes256GcmSiv::new_from_slice(&active.key.0)
-        .map_err(|_| EncryptionError::EncryptionFailed)?;
+    let cipher = Aes256GcmSiv::new((&active.key.0).into());
     let mut ciphertext = payload.to_vec();
     let tag = cipher
         .encrypt_in_place_detached(Nonce::from_slice(&nonce), &envelope, &mut ciphertext)
@@ -290,8 +289,7 @@ where
     let nonce_end = nonce_start + NONCE_LENGTH;
     let ciphertext_end = envelope.len() - TAG_LENGTH;
     let mut plaintext = envelope[HEADER_LENGTH..ciphertext_end].to_vec();
-    let cipher =
-        Aes256GcmSiv::new_from_slice(&key.0).map_err(|_| EncryptionError::CorruptEnvelope)?;
+    let cipher = Aes256GcmSiv::new((&key.0).into());
     cipher
         .decrypt_in_place_detached(
             Nonce::from_slice(&envelope[nonce_start..nonce_end]),

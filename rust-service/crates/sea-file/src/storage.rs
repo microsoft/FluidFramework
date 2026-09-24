@@ -1931,10 +1931,8 @@ impl FileCheckpoint {
         Ok(atomic_file::read(&self.0.path.with_extension("checkpoint"))?.map(Bytes::from))
     }
     /// Replaces a nonempty checkpoint independently of journal and content files.
+    /// The caller rejects empty payloads before dispatching this worker.
     fn publish_checkpoint_blocking(&self, checkpoint: &[u8]) -> Result<(), FileStorageError> {
-        if checkpoint.is_empty() {
-            return Err(FileStorageError::Rejected("empty internal checkpoint"));
-        }
         self.0
             .write_value(&self.0.path.with_extension("checkpoint"), checkpoint)
     }

@@ -785,7 +785,6 @@ where
 
     /// Cancels the transport stream.
     pub async fn cancel(mut self) -> Result<(), ClientError<Stream::Error>> {
-        self.ended = true;
         self.stream.cancel().await
     }
 }

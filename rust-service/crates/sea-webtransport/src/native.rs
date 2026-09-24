@@ -371,24 +371,14 @@ impl SessionClient<NativeTransport> {
         let url = url.into();
         let (endpoint, connection) =
             connect_once(&url, certificate_hash, config.operation_timeout).await?;
-        let client = Client::new(
+        Self::open(
             NativeTransport::new(endpoint, connection, config.operation_timeout),
             protocol::Limits {
                 max_frame_bytes: config.max_frame_bytes,
             },
-        );
-        let resume_after = open.reference;
-        let event_stream = client
-            .open_event_stream(protocol::Request::OpenEventStream {
-                version: protocol::PROTOCOL_VERSION,
-                archive: open.archive.to_vec(),
-                intent: open.intent,
-
-                resume_after: resume_after.map(EventPosition::get),
-            })
-            .await?;
-        let author_stream = client.open_author_stream().await?;
-        Self::from_streams(client, event_stream, author_stream, resume_after)
+            open,
+        )
+        .await
     }
 }
 

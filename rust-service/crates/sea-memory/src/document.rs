@@ -308,7 +308,7 @@ impl SeaStorage for MemoryStorage {
         self.documents.lock().expect("registry lock").insert(
             id.clone(),
             DocumentEntry {
-                document: document.clone(),
+                document,
                 opening: Arc::downgrade(&opening),
             },
         );
