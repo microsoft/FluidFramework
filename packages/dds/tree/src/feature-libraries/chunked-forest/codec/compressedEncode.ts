@@ -41,6 +41,7 @@ import {
 	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
 	type EncodedFieldBatchV1OrV2,
+	type EncodedIncrementalFieldBatch,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
 	type FieldBatchFormatVersion,
@@ -577,7 +578,7 @@ export class EncoderContext
 	 * that chooses its encoders for each batch can override this method. The override encodes the
 	 * chunk with encoders that it chooses for the chunk.
 	 */
-	public encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedFieldBatchV1OrV2 {
+	public encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedIncrementalFieldBatch {
 		return compressedEncode(fieldBatch, this);
 	}
 

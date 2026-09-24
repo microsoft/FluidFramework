@@ -40,6 +40,7 @@ import {
 	FieldBatchFormatVersion,
 	supportsIncrementalEncoding,
 	type EncodedFieldBatchV1OrV2,
+	type EncodedIncrementalFieldBatch,
 } from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
 import {
@@ -84,7 +85,7 @@ export interface IncrementalEncoder {
 	 */
 	encodeIncrementalField(
 		cursor: ITreeCursorSynchronous,
-		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
+		chunkEncoder: (chunk: TreeChunk) => EncodedIncrementalFieldBatch,
 	): ChunkReferenceId[];
 }
 
@@ -104,7 +105,7 @@ export interface IncrementalDecoder {
 	 */
 	decodeIncrementalChunk(
 		referenceId: ChunkReferenceId,
-		chunkDecoder: (encoded: EncodedFieldBatchV2) => TreeChunk,
+		chunkDecoder: (encoded: EncodedIncrementalFieldBatch) => TreeChunk,
 	): TreeChunk;
 }
 /**

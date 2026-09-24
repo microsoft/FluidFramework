@@ -44,8 +44,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	FieldBatchFormatVersion,
-	type EncodedFieldBatchV2,
-	type EncodedFieldBatchVTextExperimental,
+	type EncodedIncrementalFieldBatch,
 	SpecialField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
@@ -393,7 +392,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
+					chunkEncoder: (chunk: TreeChunk) => EncodedIncrementalFieldBatch,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");
@@ -506,7 +505,7 @@ describe("schemaBasedEncoding", () => {
 		it("does not select a field with no repeated value", () => {
 			const decision = chooseSpecialization(
 				2,
-				countNodes(Array.from({ length: 10 }, (_, i) => [i, "Arial"])),
+				countNodes(Array.from({ length: 10 }, (_, index) => [index, "Arial"])),
 			);
 			assert.deepEqual(decision, {
 				selectedFieldIndices: [1],
@@ -521,7 +520,7 @@ describe("schemaBasedEncoding", () => {
 			// than its shape costs. Without field 0, all nodes form one worthwhile node group.
 			const decision = chooseSpecialization(
 				2,
-				countNodes(Array.from({ length: 100 }, (_, i) => [i % 50, "Arial"])),
+				countNodes(Array.from({ length: 100 }, (_, index) => [index % 50, "Arial"])),
 			);
 			assert.deepEqual(decision, {
 				selectedFieldIndices: [1],
@@ -559,12 +558,11 @@ describe("schemaBasedEncoding", () => {
 
 	describe("schemaCompressedEncodeVTextExperimental", () => {
 		// Setup used in multiple tests below, so defined in the outer scope of the describe block.
-		const countSpecializedShapes = (
-			batch: EncodedFieldBatchV2 | EncodedFieldBatchVTextExperimental,
-		): number => batch.shapes.filter((shape) => "f" in shape).length;
+		const countSpecializedShapes = (batch: EncodedIncrementalFieldBatch): number =>
+			batch.shapes.filter((shape) => "f" in shape).length;
 
 		const decodeRoundTrip = (
-			encoded: EncodedFieldBatchV2 | EncodedFieldBatchVTextExperimental,
+			encoded: EncodedIncrementalFieldBatch,
 		): ReturnType<typeof decode> => {
 			const decoded = decode(
 				encoded as unknown as Parameters<typeof decode>[0],
@@ -579,7 +577,7 @@ describe("schemaBasedEncoding", () => {
 
 		const makeChunkingIncrementalEncoder = (
 			shouldEncodeIncrementally: IncrementalEncoder["shouldEncodeIncrementally"],
-			onEncode: (encodedSubBatch: EncodedFieldBatchV2) => void,
+			onEncode: (encodedSubBatch: EncodedIncrementalFieldBatch) => void,
 		): IncrementalEncoder => {
 			let nextRefId = 1;
 			return {
@@ -721,17 +719,17 @@ describe("schemaBasedEncoding", () => {
 			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
 
 			// "a" occurs two times inline. Its specialization saves bytes. "b" occurs one time inline
-			// and one time in the incremental sub-chunk. If the outer count pass counted the node in
-			// the sub-chunk (incorrect), "b" would have a count of 2. Then the encoder would also
+			// and two times in the incremental sub-chunk. If the outer count pass counted the nodes in
+			// the sub-chunk (incorrect), "b" would have a count of 3. Then the encoder would also
 			// specialize "b", and the output would have 2 specialized shapes, not 1.
 			const a = "alpha value here".repeat(6);
 			const b = "bravo value here".repeat(6);
 			const makeText = (text: string): TextNode => new TextNode({ text });
 			const inline = [makeText(a), makeText(a), makeText(b)];
-			const inc = new TextArray([makeText(b)]);
+			const inc = new TextArray([makeText(b), makeText(b)]);
 			const doc = new Doc({ inline: new TextArray(inline), inc });
 
-			const subEncodings: EncodedFieldBatchV2[] = [];
+			const subEncodings: EncodedIncrementalFieldBatch[] = [];
 			const mockIncEncoder = makeChunkingIncrementalEncoder(
 				incrementalEncodingPolicyForAllowedTypes(
 					new TreeViewConfigurationAlpha({ schema: Doc }),
@@ -752,7 +750,23 @@ describe("schemaBasedEncoding", () => {
 
 			assert.equal(subEncodings.length, 1);
 			const subBatch = subEncodings[0] ?? assert.fail("missing sub-chunk encoding");
-			assert.equal(countSpecializedShapes(subBatch), 0);
+			assert.equal(subBatch.version, FieldBatchFormatVersion.vTextExperimental);
+			assert.equal(countSpecializedShapes(subBatch), 1);
+
+			// Round-trip: the incremental decoder decodes the VText sub-chunk.
+			const decoded = decode(
+				encoded as unknown as Parameters<typeof decode>[0],
+				FieldBatchDecodingContext.forOp({
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				}).idDecodingContext,
+				{ decodeIncrementalChunk: (_, chunkDecoder) => chunkDecoder(subBatch) },
+			);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			assert.deepEqual(
+				jsonableTreeFromFieldCursor(firstChunk.cursor()),
+				jsonableTreeFromFieldCursor(fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)),
+			);
 		});
 
 		it("encodes a tree containing a Map node under the Alpha incremental policy without throwing", () => {
@@ -881,11 +895,9 @@ describe("schemaBasedEncoding", () => {
 		});
 
 		it("specializes leaf fields but not sub-object fields", () => {
-			// Inner has a boolean leaf. Thus its (flag:true) node group uses a specialized shape.
+			// Inner has a string leaf. Thus its node group uses a specialized shape.
 			// The only field of Outer is a sub-object (Inner), which is not a specializable leaf.
-			// Thus the encoder does not specialize Outer. An earlier version ("subShape") specialized
-			// sub-objects. We removed it because the size tests showed a larger output, and because
-			// it needed more than one count pass.
+			// Thus the encoder does not specialize Outer.
 			const sf = new SchemaFactoryAlpha("test");
 			class Inner extends sf.object("Inner", {
 				text: sf.string,

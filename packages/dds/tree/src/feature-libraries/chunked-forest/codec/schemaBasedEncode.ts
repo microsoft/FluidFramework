@@ -57,6 +57,7 @@ import {
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
 	type EncodedFieldBatchVTextExperimental,
+	type EncodedIncrementalFieldBatch,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	SpecialField,
@@ -415,6 +416,10 @@ function collectBatchCounts(fieldBatch: FieldBatch, options: VTextEncodeOptions)
  * this function reads the nodes does not change the result, and one pass is sufficient.
  *
  * This function does not read incremental fields.
+ *
+ * TODO: The node group key could also include values other than leaf values, such as the shape
+ * of a sub-object field. Then the key of a node would depend on the decisions for its
+ * descendants, so one pass would no longer be sufficient.
  */
 function countNodeAndDescendants(
 	cursor: ITreeCursorSynchronous,
@@ -484,7 +489,9 @@ class VTextEncoderContext extends EncoderContext {
 		);
 	}
 
-	public override encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedFieldBatchV1OrV2 {
+	public override encodeIncrementalChunk(
+		fieldBatch: FieldBatch,
+	): EncodedIncrementalFieldBatch {
 		return encodeBatchVText(fieldBatch, this.options);
 	}
 }
@@ -559,13 +566,10 @@ function findSpecializableFields(
 			) {
 				specializableFields.push({ key, leafType: type });
 			}
-			// This code does not specialize sub-object fields. An earlier version ("subShape") did
-			// this, but the size tests showed a larger output. That version also needed more than
-			// one count pass. A node with sub-object fields can specialize its own leaf fields.
 		}
 	}
 
-	specializableFields.sort((a, b) => compareStrings(a.key, b.key));
+	specializableFields.sort((left, right) => compareStrings(left.key, right.key));
 	return specializableFields;
 }
 
@@ -842,7 +846,9 @@ function withoutMostDistinctValues(
  * Returns the values of the `selected` fields, in the order of `selected`.
  */
 function selectValues(values: NodeGroupKey, selected: readonly number[]): NodeGroupKey {
-	return selected.map((f) => values[f] ?? fail("selected field index out of range"));
+	return selected.map(
+		(fieldIndex) => values[fieldIndex] ?? fail("selected field index out of range"),
+	);
 }
 
 /**
@@ -1042,9 +1048,9 @@ function createSpecialized(
 		Map<SpecializableValue, NodeShapeBasedEncoder>
 	>,
 ): SpecializedNodeShapeEncoder {
-	const overrides: KeyedFieldEncoder[] = selected.map((fieldIndex, i) => {
+	const overrides: KeyedFieldEncoder[] = selected.map((fieldIndex, selectedIndex) => {
 		const field = fields[fieldIndex] ?? fail("selected field index out of range");
-		const value = values[i] ?? fail("selected value index out of range");
+		const value = values[selectedIndex] ?? fail("selected value index out of range");
 		const nodeEncoder = getOrCreate(
 			getOrCreate(constantEncoders, field.leafType, () => new Map()),
 			value,
