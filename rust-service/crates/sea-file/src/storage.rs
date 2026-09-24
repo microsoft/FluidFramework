@@ -854,7 +854,7 @@ impl State {
 
     /// Applies a snapshot frame only when both identities are available and ordered.
     fn recover_snapshot(&mut self, record: &[u8], offset: u64) -> Result<(), FileStorageError> {
-        let (position, root) = decode_snapshot(record)?;
+        let SnapshotRecord { position, root } = SnapshotRecord::decode(record)?;
         if self.snapshot_head >= position.get()
             || !self.has_event(position)?
             || !self.contains(root)?
@@ -1121,12 +1121,6 @@ impl RecordArchive<'_, CommittedEvent> {
         }
         Ok(nonzero_position(candidate))
     }
-}
-
-/// Decodes snapshot identities for recovery without exposing physical offsets.
-fn decode_snapshot(record: &[u8]) -> Result<(EventPosition, BlobTreeId), FileStorageError> {
-    let record = SnapshotRecord::decode(record)?;
-    Ok((record.position, record.root))
 }
 
 /// Journal record discriminator for an event.

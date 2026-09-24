@@ -11,7 +11,7 @@ use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use rand_core::{OsRng, RngCore as _};
 use sea_core::storage::{DocumentId, SeaStorage};
-use sea_core::{ClassifiedError, ErrorKind, EventPosition, archive::SessionId};
+use sea_core::{EventPosition, archive::SessionId};
 use sea_file::buffered::FileStorage;
 use sea_file::durable::DurableStorage;
 use sea_memory::MemoryStorage;
@@ -20,6 +20,7 @@ use tokio::{sync::Mutex, time::sleep};
 
 use crate::{
     LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
+    dispatch::error_response,
 };
 
 /// Retained exclusive runtimes indexed by opaque document identity.
@@ -740,24 +741,6 @@ fn rejected(message: &str) -> protocol::Response {
 
 fn unsupported_version(version: u16) -> protocol::Response {
     rejected(&format!("unsupported protocol version {version}"))
-}
-
-fn error_response(error: impl ClassifiedError) -> protocol::Response {
-    let kind = error.kind();
-    let message = error.to_string();
-    drop(error);
-    protocol::Response::Error {
-        kind: match kind {
-            ErrorKind::InvalidPosition => protocol::ErrorKind::Invalid,
-            ErrorKind::StalePosition => protocol::ErrorKind::Stale,
-            ErrorKind::Conflict => protocol::ErrorKind::Conflict,
-            ErrorKind::Rejected => protocol::ErrorKind::Rejected,
-            ErrorKind::Ambiguous => protocol::ErrorKind::Ambiguous,
-            ErrorKind::Unavailable => protocol::ErrorKind::Unavailable,
-            ErrorKind::Corrupt => protocol::ErrorKind::Corrupt,
-        },
-        message,
-    }
 }
 
 #[cfg(test)]
