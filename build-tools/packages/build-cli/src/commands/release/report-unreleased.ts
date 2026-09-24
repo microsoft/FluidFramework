@@ -51,8 +51,7 @@ The command fails if the input report has no entries with the target release gro
 			required: true,
 		}),
 		releaseGroup: releaseGroupFlag({
-			description:
-				"Selects the release group to update and filters the output to that group.",
+			description: "Selects the release group to update and filters the output to that group.",
 			required: false,
 		}),
 		...BaseCommand.flags,
