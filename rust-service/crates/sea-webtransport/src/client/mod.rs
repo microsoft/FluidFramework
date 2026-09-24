@@ -7,9 +7,21 @@ use thiserror::Error;
 use crate::protocol::{self, NetworkFrameDecoder, ProtocolError, Request, Response, StreamRole};
 use crate::transport::{BidirectionalStream, ClientTransport};
 
+mod framed;
+use framed::FramedStream;
+
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod deadline_tests;
+
 /// Failure from the shared protocol client.
 #[derive(Debug)]
 pub enum ClientError<TransportError> {
+    /// A native request or partial frame exceeded its absolute deadline.
+    #[cfg(not(target_arch = "wasm32"))]
+    Timeout,
+    /// A mutating request timed out without establishing whether it committed.
+    #[cfg(not(target_arch = "wasm32"))]
+    AmbiguousTimeout,
     /// Shared connection lifecycle state failed.
     State(ClientStateError),
     /// A network frame violated the Sea protocol.
@@ -75,19 +87,9 @@ where
             &Request::OpenSignalStream(opening),
             self.limits,
         )?;
-        let mut stream = self
-            .transport
-            .open_bidirectional()
-            .await
-            .map_err(ClientError::Transport)?;
-        stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        let mut decoder = NetworkFrameDecoder::new(self.limits);
-        let frame = receive_next_frame(&mut stream, &mut decoder)
-            .await?
-            .ok_or(ClientError::ResponseEnded)?;
+        let mut stream = FramedStream::open(&self.transport, self.limits).await?;
+        stream.send(&outgoing).await?;
+        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
         if response != Response::Acknowledged {
@@ -98,7 +100,6 @@ where
             stream,
             state: self.state.clone(),
             limits: self.limits,
-            decoder,
         })
     }
 
@@ -167,22 +168,14 @@ where
         self.state.check_connected()?;
 
         let outgoing = protocol::encode_request_frame(StreamRole::Event, &request, self.limits)?;
-        let mut stream = self
-            .transport
-            .open_bidirectional()
-            .await
-            .map_err(ClientError::Transport)?;
-        stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        stream.finish().await.map_err(ClientError::Transport)?;
+        let mut stream = FramedStream::open(&self.transport, self.limits).await?;
+        stream.send(&outgoing).await?;
+        stream.finish().await?;
         let mut responses = ResponseStream {
             ended: false,
+            subscription: true,
             stream,
             role: StreamRole::Event,
-
-            decoder: NetworkFrameDecoder::new(self.limits),
         };
         let response = responses.next().await?.ok_or(ClientError::ResponseEnded)?;
         let Response::EventStreamOpened {
@@ -194,6 +187,7 @@ where
             return Err(ClientError::UnexpectedResponse(response));
         };
         self.state.set_authority(authority.clone())?;
+        responses.stream.end_request();
         Ok(EventStream {
             session,
             document,
@@ -211,30 +205,20 @@ where
 
         let request = Request::OpenAuthorStream { authority };
         let outgoing = protocol::encode_request_frame(StreamRole::Author, &request, self.limits)?;
-        let mut stream = self
-            .transport
-            .open_bidirectional()
-            .await
-            .map_err(ClientError::Transport)?;
-        stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        let mut decoder = NetworkFrameDecoder::new(self.limits);
-        let frame = receive_next_frame(&mut stream, &mut decoder)
-            .await?
-            .ok_or(ClientError::ResponseEnded)?;
+        let mut stream = FramedStream::open(&self.transport, self.limits).await?;
+        stream.send(&outgoing).await?;
+        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
         }
+        stream.end_request();
         Ok(AuthorStream {
             terminal: false,
             stream,
             state: Arc::clone(&self.state),
             limits: self.limits,
-            decoder,
         })
     }
 
@@ -251,19 +235,9 @@ where
             participation,
         };
         let outgoing = protocol::encode_request_frame(StreamRole::Snapshot, &request, self.limits)?;
-        let mut stream = self
-            .transport
-            .open_bidirectional()
-            .await
-            .map_err(ClientError::Transport)?;
-        stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        let mut decoder = NetworkFrameDecoder::new(self.limits);
-        let frame = receive_next_frame(&mut stream, &mut decoder)
-            .await?
-            .ok_or(ClientError::ResponseEnded)?;
+        let mut stream = FramedStream::open(&self.transport, self.limits).await?;
+        stream.send(&outgoing).await?;
+        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
         if response != Response::Acknowledged {
@@ -274,11 +248,11 @@ where
             stream,
             state: Arc::clone(&self.state),
             limits: self.limits,
-            decoder,
             latest: None,
             fence: None,
         };
         snapshot.next_coordination().await?;
+        snapshot.stream.end_request();
         Ok(snapshot)
     }
 
@@ -291,30 +265,20 @@ where
 
         let request = Request::OpenContentStream { authority };
         let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
-        let mut stream = self
-            .transport
-            .open_bidirectional()
-            .await
-            .map_err(ClientError::Transport)?;
-        stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        let mut decoder = NetworkFrameDecoder::new(self.limits);
-        let frame = receive_next_frame(&mut stream, &mut decoder)
-            .await?
-            .ok_or(ClientError::ResponseEnded)?;
+        let mut stream = FramedStream::open(&self.transport, self.limits).await?;
+        stream.send(&outgoing).await?;
+        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
         if response != Response::Acknowledged {
             return Err(ClientError::UnexpectedResponse(response));
         }
+        stream.end_request();
         Ok(ContentStream {
             terminal: false,
             stream,
             state: Arc::clone(&self.state),
             limits: self.limits,
-            decoder,
         })
     }
 
@@ -360,10 +324,9 @@ pub struct EventStream<Stream> {
 pub struct AuthorStream<Stream> {
     /// Set before awaiting a request; only a successful response permits another request.
     terminal: bool,
-    stream: Stream,
+    stream: FramedStream<Stream>,
     state: Arc<ClientState>,
     limits: protocol::Limits,
-    decoder: NetworkFrameDecoder,
 }
 
 /// One independently pumped ephemeral signal stream.
@@ -371,13 +334,11 @@ pub struct SignalStream<Stream> {
     /// A cancelled or failed exchange cannot be reused.
     terminal: bool,
     /// Sole owner of network reads and writes.
-    stream: Stream,
+    stream: FramedStream<Stream>,
     /// Connection lifecycle shared with other logical streams.
     state: Arc<ClientState>,
     /// Encoded frame bound.
     limits: protocol::Limits,
-    /// Cancellation-safe partial frame state.
-    decoder: NetworkFrameDecoder,
 }
 
 impl<Stream: BidirectionalStream> SignalStream<Stream> {
@@ -387,7 +348,9 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
             let _ = self.stream.cancel().await;
             return Err(ClientStateError::Closed.into());
         }
-        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+        let frame = self
+            .stream
+            .receive()
             .await?
             .ok_or(ClientError::ResponseEnded)?;
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
@@ -395,7 +358,10 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
             return Err(ClientError::UnexpectedResponse(response));
         }
         match response {
-            Response::SignalEvent(event) => Ok(event),
+            Response::SignalEvent(event) => {
+                self.stream.end_request();
+                Ok(event)
+            }
             response => Err(ClientError::UnexpectedResponse(response)),
         }
     }
@@ -412,12 +378,12 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
         }
         self.state.check_connected()?;
         let outgoing = protocol::encode_request_frame(StreamRole::Signal, &request, self.limits)?;
-        self.stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
+        self.stream.begin_request();
+        self.stream.send(&outgoing).await?;
         loop {
-            let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+            let frame = self
+                .stream
+                .receive()
                 .await?
                 .ok_or(ClientError::ResponseEnded)?;
             let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
@@ -430,6 +396,7 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
             }
 
             return if response == Response::Acknowledged {
+                self.stream.end_request();
                 self.terminal = false;
                 Ok(())
             } else {
@@ -449,10 +416,9 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
 pub struct SnapshotStream<Stream> {
     /// A cancelled or failed exchange cannot be reused.
     terminal: bool,
-    stream: Stream,
+    stream: FramedStream<Stream>,
     state: Arc<ClientState>,
     limits: protocol::Limits,
-    decoder: NetworkFrameDecoder,
     latest: Option<u64>,
     fence: Option<u64>,
 }
@@ -462,10 +428,9 @@ pub struct SnapshotStream<Stream> {
 pub struct ContentStream<Stream> {
     /// A cancelled or failed exchange cannot be reused.
     terminal: bool,
-    stream: Stream,
+    stream: FramedStream<Stream>,
     state: Arc<ClientState>,
     limits: protocol::Limits,
-    decoder: NetworkFrameDecoder,
 }
 
 impl<Stream> ContentStream<Stream>
@@ -473,6 +438,8 @@ where
     Stream: BidirectionalStream,
 {
     /// Sends one content operation and returns its owned response stream.
+    /// Native monitored reads bound their first response, then permit idle waits.
+    /// Other requests retain their budget through `ResponseComplete`, including consumer pauses.
     pub async fn request_stream(
         mut self,
         request: Request,
@@ -484,17 +451,14 @@ where
         self.state.check_connected()?;
 
         let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
-        self.stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        self.stream.finish().await.map_err(ClientError::Transport)?;
+        self.stream.begin_request();
+        self.stream.send(&outgoing).await?;
+        self.stream.finish().await?;
         Ok(ResponseStream {
             ended: false,
+            subscription: matches!(request, Request::Read { .. }),
             stream: self.stream,
             role: StreamRole::Content,
-
-            decoder: self.decoder,
         })
     }
 
@@ -510,17 +474,18 @@ where
         self.state.check_connected()?;
 
         let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
-        self.stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
+        self.stream.begin_request();
+        self.stream.send(&outgoing).await?;
         let mut responses = Vec::new();
         loop {
-            let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+            let frame = self
+                .stream
+                .receive()
                 .await?
                 .ok_or(ClientError::ResponseEnded)?;
             let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
             if response == Response::ResponseComplete {
+                self.stream.end_request();
                 self.terminal = false;
                 return Ok(responses);
             }
@@ -530,7 +495,8 @@ where
 
     /// Finishes the reusable content stream.
     pub async fn close(mut self) -> Result<(), ClientError<Stream::Error>> {
-        self.stream.finish().await.map_err(ClientError::Transport)
+        self.stream.begin_request();
+        self.stream.finish().await
     }
 }
 
@@ -556,7 +522,9 @@ where
             let _ = self.stream.cancel().await;
             return Err(ClientStateError::Closed.into());
         }
-        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+        let frame = self
+            .stream
+            .receive()
             .await?
             .ok_or(ClientError::ResponseEnded)?;
         let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
@@ -569,7 +537,23 @@ where
     }
 
     /// Sends one ordered snapshot operation while retaining interleaved coordination updates.
+    /// A native publication timeout leaves commitment unknown and ends the stream.
     pub async fn request(
+        &mut self,
+        request: Request,
+    ) -> Result<Response, ClientError<Stream::Error>> {
+        #[cfg(not(target_arch = "wasm32"))]
+        let publishing = matches!(request, Request::PublishSnapshot { .. });
+        let result = self.request_inner(request).await;
+        #[cfg(not(target_arch = "wasm32"))]
+        if publishing && matches!(result, Err(ClientError::Timeout)) {
+            return Err(ClientError::AmbiguousTimeout);
+        }
+        result
+    }
+
+    /// Exchanges a request under terminal-by-default state and one timeout budget.
+    async fn request_inner(
         &mut self,
         request: Request,
     ) -> Result<Response, ClientError<Stream::Error>> {
@@ -580,12 +564,12 @@ where
         self.state.check_connected()?;
 
         let outgoing = protocol::encode_request_frame(StreamRole::Snapshot, &request, self.limits)?;
-        self.stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
+        self.stream.begin_request();
+        self.stream.send(&outgoing).await?;
         loop {
-            let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+            let frame = self
+                .stream
+                .receive()
                 .await?
                 .ok_or(ClientError::ResponseEnded)?;
             if frame.kind == protocol::MessageKind::SnapshotCoordination {
@@ -612,6 +596,7 @@ where
             if !completed {
                 return Err(ClientError::UnexpectedResponse(response));
             }
+            self.stream.end_request();
             self.terminal = false;
             return Ok(response);
         }
@@ -619,7 +604,8 @@ where
 
     /// Finishes the stream so the server revokes publisher membership.
     pub async fn close(mut self) -> Result<(), ClientError<Stream::Error>> {
-        self.stream.finish().await.map_err(ClientError::Transport)
+        self.stream.begin_request();
+        self.stream.finish().await
     }
 
     /// Cancels both directions when the registration owner ends, including on pump cancellation.
@@ -635,6 +621,7 @@ where
 {
     /// Sends one author-role request and receives its matching ordered response.
     /// An unexpected receipt ends this stream's authority before another request can be sent.
+    /// A native append timeout is ambiguous; this client never resubmits it.
     pub async fn request(
         &mut self,
         request: Request,
@@ -643,11 +630,21 @@ where
             let _ = self.stream.cancel().await;
             return Err(ClientStateError::Closed.into());
         }
+        #[cfg(not(target_arch = "wasm32"))]
+        let appending = matches!(
+            request,
+            Request::Submit { .. } | Request::AnnounceMembership { .. }
+        );
         let result = self.request_inner(request).await;
         if matches!(&result, Ok(response) if !matches!(response, Response::Error { .. })) {
+            self.stream.end_request();
             self.terminal = false;
         } else {
             let _ = self.stream.cancel().await;
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        if appending && matches!(result, Err(ClientError::Timeout)) {
+            return Err(ClientError::AmbiguousTimeout);
         }
         result
     }
@@ -669,11 +666,11 @@ where
         self.state.check_connected()?;
 
         let outgoing = protocol::encode_request_frame(StreamRole::Author, &request, self.limits)?;
-        self.stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+        self.stream.begin_request();
+        self.stream.send(&outgoing).await?;
+        let frame = self
+            .stream
+            .receive()
             .await?
             .ok_or(ClientError::ResponseEnded)?;
 
@@ -702,20 +699,20 @@ where
     }
 
     /// Finishes this author stream while allowing another session to open.
+    /// The `Close` acknowledgement completes the exchange; transport half-close is not required.
     pub async fn finish(mut self) -> Result<(), ClientError<Stream::Error>> {
         if self.terminal {
-            return self.stream.cancel().await.map_err(ClientError::Transport);
+            return self.stream.cancel().await;
         }
         self.state.check_connected()?;
 
         let request = Request::Close;
         let outgoing = protocol::encode_request_frame(StreamRole::Author, &request, self.limits)?;
-        self.stream
-            .send(&outgoing)
-            .await
-            .map_err(ClientError::Transport)?;
-        let _ = self.stream.finish().await;
-        let frame = receive_next_frame(&mut self.stream, &mut self.decoder)
+        self.stream.begin_request();
+        self.stream.send(&outgoing).await?;
+        let frame = self
+            .stream
+            .receive()
             .await?
             .ok_or(ClientError::ResponseEnded)?;
 
@@ -762,10 +759,11 @@ where
 /// Bounded response stream owned by the shared client.
 #[derive(Debug)]
 pub struct ResponseStream<Stream> {
-    stream: Stream,
+    stream: FramedStream<Stream>,
     role: StreamRole,
     ended: bool,
-    decoder: NetworkFrameDecoder,
+    /// Reads become idle subscriptions after their first response; finite requests do not.
+    subscription: bool,
 }
 
 impl<Stream> ResponseStream<Stream>
@@ -778,55 +776,28 @@ where
         if self.ended {
             return Ok(None);
         }
-        loop {
-            if let Some(frame) = self.decoder.next_frame()? {
-                let response = protocol::decode_response_network_frame(self.role, &frame)?;
-                if response == Response::ResponseComplete {
-                    self.ended = true;
-                    return Ok(None);
-                }
+        let frame = self.stream.receive().await?;
+        if let Some(frame) = frame {
+            let response = protocol::decode_response_network_frame(self.role, &frame)?;
+            if self.subscription {
+                self.stream.end_request();
+            }
+            if response != Response::ResponseComplete {
                 return Ok(Some(response));
             }
-            let Some(chunk) = self
-                .stream
-                .receive()
-                .await
-                .map_err(ClientError::Transport)?
-            else {
-                self.decoder.finish()?;
-                self.ended = true;
-                if self.role == StreamRole::Content {
-                    return Err(ClientError::ResponseEnded);
-                }
-                return Ok(None);
-            };
-            self.decoder.push(&chunk);
+            self.stream.end_request();
+        } else if self.role == StreamRole::Content {
+            self.ended = true;
+            return Err(ClientError::ResponseEnded);
         }
+        self.ended = true;
+        Ok(None)
     }
 
     /// Cancels the transport stream.
     pub async fn cancel(mut self) -> Result<(), ClientError<Stream::Error>> {
         self.ended = true;
-        self.stream.cancel().await.map_err(ClientError::Transport)
-    }
-}
-
-async fn receive_next_frame<Stream>(
-    stream: &mut Stream,
-    decoder: &mut NetworkFrameDecoder,
-) -> Result<Option<protocol::NetworkFrame>, ClientError<Stream::Error>>
-where
-    Stream: BidirectionalStream,
-{
-    loop {
-        if let Some(frame) = decoder.next_frame()? {
-            return Ok(Some(frame));
-        }
-        let Some(chunk) = stream.receive().await.map_err(ClientError::Transport)? else {
-            decoder.finish()?;
-            return Ok(None);
-        };
-        decoder.push(&chunk);
+        self.stream.cancel().await
     }
 }
 
@@ -1335,13 +1306,16 @@ mod tests {
                 Vec::new()
             };
             let mut responses = super::ResponseStream {
-                stream: ScriptedStream {
-                    chunks: chunks.into(),
-                    cancelled: None,
-                },
+                stream: super::FramedStream::untimed(
+                    ScriptedStream {
+                        chunks: chunks.into(),
+                        cancelled: None,
+                    },
+                    limits,
+                ),
                 role,
                 ended: false,
-                decoder: protocol::NetworkFrameDecoder::new(limits),
+                subscription: role == StreamRole::Event,
             };
             let result = responses.next().await;
             if role == StreamRole::Content && !complete {
@@ -1370,16 +1344,18 @@ mod tests {
             .unwrap();
             let mut author = super::AuthorStream {
                 terminal: false,
-                stream: SuspendedAuthorStream {
-                    inner: ScriptedStream {
-                        chunks: vec![error].into(),
-                        cancelled: Some(cancelled.clone()),
+                stream: super::FramedStream::untimed(
+                    SuspendedAuthorStream {
+                        inner: ScriptedStream {
+                            chunks: vec![error].into(),
+                            cancelled: Some(cancelled.clone()),
+                        },
+                        suspend: cancel_receipt,
                     },
-                    suspend: cancel_receipt,
-                },
+                    limits,
+                ),
                 state: Arc::new(ClientState::default()),
                 limits,
-                decoder: protocol::NetworkFrameDecoder::new(limits),
             };
             let request = Request::Submit {
                 reference: None,
@@ -1419,10 +1395,9 @@ mod tests {
         };
         let mut content = super::ContentStream {
             terminal: false,
-            stream: suspended(),
+            stream: super::FramedStream::untimed(suspended(), limits),
             state: Arc::new(ClientState::default()),
             limits,
-            decoder: protocol::NetworkFrameDecoder::new(limits),
         };
         assert!(
             content
@@ -1437,10 +1412,9 @@ mod tests {
         assert!(cancelled.swap(false, Ordering::Relaxed));
         let mut snapshot = super::SnapshotStream {
             terminal: false,
-            stream: suspended(),
+            stream: super::FramedStream::untimed(suspended(), limits),
             state: Arc::new(ClientState::default()),
             limits,
-            decoder: protocol::NetworkFrameDecoder::new(limits),
             latest: None,
             fence: None,
         };
@@ -1457,10 +1431,9 @@ mod tests {
         assert!(cancelled.swap(false, Ordering::Relaxed));
         let mut signal = super::SignalStream {
             terminal: false,
-            stream: suspended(),
+            stream: super::FramedStream::untimed(suspended(), limits),
             state: Arc::new(ClientState::default()),
             limits,
-            decoder: protocol::NetworkFrameDecoder::new(limits),
         };
         let request = Request::SendSignal(protocol::signals::Submission {
             target: None,
@@ -1503,17 +1476,19 @@ mod tests {
             let cancelled = Arc::new(AtomicBool::new(false));
             let mut author = super::AuthorStream {
                 terminal: false,
-                stream: ScriptedStream {
-                    chunks: vec![
-                        protocol::encode_response_frame(StreamRole::Author, &response, limits)
-                            .unwrap(),
-                    ]
-                    .into(),
-                    cancelled: Some(cancelled.clone()),
-                },
+                stream: super::FramedStream::untimed(
+                    ScriptedStream {
+                        chunks: vec![
+                            protocol::encode_response_frame(StreamRole::Author, &response, limits)
+                                .unwrap(),
+                        ]
+                        .into(),
+                        cancelled: Some(cancelled.clone()),
+                    },
+                    limits,
+                ),
                 state: Arc::new(ClientState::default()),
                 limits,
-                decoder: protocol::NetworkFrameDecoder::new(limits),
             };
             assert!(matches!(
                 author.request(request.clone()).await,
@@ -1542,13 +1517,15 @@ mod tests {
         .collect::<Vec<_>>();
         let mut signal = super::SignalStream {
             terminal: false,
-            stream: ScriptedStream {
-                chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
-                cancelled: None,
-            },
+            stream: super::FramedStream::untimed(
+                ScriptedStream {
+                    chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
+                    cancelled: None,
+                },
+                limits,
+            ),
             state: Arc::new(ClientState::default()),
             limits,
-            decoder: protocol::NetworkFrameDecoder::new(limits),
         };
         let mut received = Vec::new();
         signal
@@ -1590,13 +1567,15 @@ mod tests {
         .collect::<Vec<_>>();
         let mut snapshot = super::SnapshotStream {
             terminal: false,
-            stream: ScriptedStream {
-                chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
-                cancelled: None,
-            },
+            stream: super::FramedStream::untimed(
+                ScriptedStream {
+                    chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
+                    cancelled: None,
+                },
+                limits,
+            ),
             state: Arc::new(ClientState::default()),
             limits,
-            decoder: protocol::NetworkFrameDecoder::new(limits),
             latest: None,
             fence: None,
         };

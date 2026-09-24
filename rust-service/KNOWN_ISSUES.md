@@ -73,14 +73,6 @@ Historical findings and resolved investigations are retained in [Historical reco
 - **Evidence:** The [execution isolation investigation](historical/EXECUTION_ISOLATION_INVESTIGATION.md) and [0017 retrospective](historical/iterations/0017/retrospective.md) describe tested workarounds and unverified scheduling and cancellation behavior.
 - **Trigger:** Revalidate when tool capabilities change or interference recurs. A passing workaround does not establish an upstream fix.
 
-## Native client frame deadlines after opening
-
-- **Status:** Deferred in [Decision 0025](historical/decisions/0025-native-timeout-scope.md).
-- **Area:** Native client transport liveness.
-- **Evidence:** The configured native operation timeout applies during connection and initial session-stream opening, not subsequent native framed I/O.
-- **Impact:** Server-owned deadlines do not establish a client-side bound against stalled or custom servers.
-- **Trigger:** Add native per-frame enforcement only with defined partial-frame cancellation and terminal-state behavior, plus focused stalled-peer regressions.
-
 ## RS-003: Durable storage has qualified guarantees
 
 - **Status:** Open

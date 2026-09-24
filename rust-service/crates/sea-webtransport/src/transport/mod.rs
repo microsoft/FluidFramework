@@ -31,6 +31,13 @@ pub trait ClientTransport {
     /// Transport-specific failure.
     type Error;
 
+    /// Optional native budget for logical-stream opening, requests, and partial frames.
+    /// Idle unsolicited subscriptions do not consume a request budget.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn operation_timeout(&self) -> Option<std::time::Duration> {
+        None
+    }
+
     /// Whether this connection exposes a usable datagram path.
     fn supports_datagrams(&self) -> bool {
         false

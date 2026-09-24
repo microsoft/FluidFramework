@@ -1,11 +1,11 @@
 # Decision 0025: Native Timeout Scope
 
-Status: accepted
+Status: superseded
 Date: 2026-09-24
 Iteration: 0018
 Owners: user, coordinator, transport workstream
 Supersedes: none
-Superseded by: none
+Superseded by: [0027: Native Request and Frame Deadlines](0027-native-request-frame-deadlines.md)
 
 ## Context
 

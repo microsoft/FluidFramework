@@ -13,4 +13,6 @@ Snapshots can use any committed session-event boundary, including membership eve
 
 Logical streams retain the session that admitted them when another session replaces it on the same connection.
 Stale submissions, content operations, and snapshot requests cannot use replacement authority, and old stream cleanup cannot close the replacement session or revoke its snapshot registration.
-Native client per-frame deadlines after opening remain unimplemented; server-side deadlines are not a substitute for that client guarantee.
+Native clients bound logical-stream admission and finite requests, including their matching responses.
+Idle event, history, signal, and snapshot subscriptions remain supported, while incomplete frames cannot extend their deadline by trickling bytes.
+Timed-out streams are cancelled and cannot be reused; append and snapshot-publication timeouts report ambiguous commitment and are never retried automatically.

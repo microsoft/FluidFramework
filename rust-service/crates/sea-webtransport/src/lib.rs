@@ -44,10 +44,14 @@ pub struct TransportConfig {
     pub max_connections: usize,
     /// Maximum bidirectional streams per connection.
     pub max_streams_per_connection: usize,
-    /// Timeout applied separately to native connection, event-stream, and author-stream opening.
+    /// Native budget for connection establishment, each logical-stream opening, and each request.
     ///
-    /// Later native frame reads and writes have no client-side operation timeout.
-    /// The server independently enforces its own framed-I/O deadlines.
+    /// A finite request includes sending and receiving its matching completion; interleaved
+    /// notifications do not restart the budget. Monitored reads use it through their first response.
+    /// Idle subscriptions remain pending indefinitely, but an observed incomplete frame must
+    /// finish within this duration, even across cancellation of a receive future.
+    /// Expiry cancels the affected stream; append and snapshot-publication timeouts are ambiguous
+    /// and are never retried automatically. Browser transports retain their own timeout policy.
     pub operation_timeout: Duration,
 }
 
@@ -86,7 +90,7 @@ pub enum WebTransportError {
     /// A complete frame exceeds its configured bound.
     #[error("transport frame exceeds its configured bound")]
     FrameTooLarge,
-    /// Native connection or initial logical-stream opening exceeded its timeout.
+    /// Native connection, logical-stream opening, request, or partial frame exceeded its timeout.
     #[error("transport operation timed out")]
     Timeout,
     /// The peer closed or local client cancelled the connection.

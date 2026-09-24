@@ -30,8 +30,6 @@ use sea_core::{
 };
 use tokio::sync::{Mutex, mpsc, oneshot, watch};
 #[cfg(not(target_arch = "wasm32"))]
-use tokio::time::timeout;
-#[cfg(not(target_arch = "wasm32"))]
 use wtransport::tls::Sha256Digest;
 
 #[cfg(not(target_arch = "wasm32"))]
@@ -186,6 +184,13 @@ impl From<ClientStateError> for SeaClientError {
 impl<TransportError: Into<SeaClientError>> From<ClientError<TransportError>> for SeaClientError {
     fn from(error: ClientError<TransportError>) -> Self {
         match error {
+            #[cfg(not(target_arch = "wasm32"))]
+            ClientError::Timeout => WebTransportError::Timeout.into(),
+            #[cfg(not(target_arch = "wasm32"))]
+            ClientError::AmbiguousTimeout => Self::Service(
+                protocol::ErrorKind::Ambiguous,
+                "transport operation timed out; commitment is unknown".into(),
+            ),
             ClientError::State(error) => error.into(),
             ClientError::Protocol(error) => error.into(),
             ClientError::Transport(error) => error.into(),
@@ -367,27 +372,22 @@ impl SessionClient<NativeTransport> {
         let (endpoint, connection) =
             connect_once(&url, certificate_hash, config.operation_timeout).await?;
         let client = Client::new(
-            NativeTransport::new(endpoint, connection),
+            NativeTransport::new(endpoint, connection, config.operation_timeout),
             protocol::Limits {
                 max_frame_bytes: config.max_frame_bytes,
             },
         );
         let resume_after = open.reference;
-        let event_stream = timeout(
-            config.operation_timeout,
-            client.open_event_stream(protocol::Request::OpenEventStream {
+        let event_stream = client
+            .open_event_stream(protocol::Request::OpenEventStream {
                 version: protocol::PROTOCOL_VERSION,
                 archive: open.archive.to_vec(),
                 intent: open.intent,
 
                 resume_after: resume_after.map(EventPosition::get),
-            }),
-        )
-        .await
-        .map_err(|_| WebTransportError::Timeout)??;
-        let author_stream = timeout(config.operation_timeout, client.open_author_stream())
-            .await
-            .map_err(|_| WebTransportError::Timeout)??;
+            })
+            .await?;
+        let author_stream = client.open_author_stream().await?;
         Self::from_streams(client, event_stream, author_stream, resume_after)
     }
 }

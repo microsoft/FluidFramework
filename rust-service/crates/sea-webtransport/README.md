@@ -103,10 +103,21 @@ Recovery requires an explicitly replaced or reconnected transport and a fresh se
 An author-stream error or cancelled receipt makes that stream terminal before another request can be sent.
 An unexpected receipt kind also makes the author stream terminal; it cannot acknowledge a different operation.
 The next request or explicit close cancels the failed transport stream; recovery uses a fresh session and the old session's durable departure barrier.
-Native `TransportConfig::operation_timeout` applies separately to connection establishment and the initial event-stream and author-stream openings.
-Later native frame reads and writes have no client-side operation deadline.
-The server independently applies deadlines to active framed I/O, while an idle healthy server stream does not inherit the operation deadline.
-Native client per-frame enforcement is deferred; a server deadline is not a timeout guarantee against an arbitrary stalled peer.
+Native `TransportConfig::operation_timeout` applies separately to connection establishment, each logical-stream opening, and each finite request.
+Stream opening includes admission, sending the opening frame, and receiving its handshake; snapshot and signal opening also include the initial coordination state and membership snapshot, respectively.
+A finite request has one budget for writing and receiving the matching completion, including all interleaved notifications and content frames.
+Notifications and trickled bytes do not renew that budget.
+Monitored history reads use the request budget through their first response, then become subscriptions.
+Event, history, signal, and snapshot subscriptions can wait indefinitely between frames.
+Once a receive observes an incomplete frame, its completion has an absolute deadline that survives cancellation of the receive future.
+Complete buffered subscription frames do not expire merely because the application pauses consumption.
+These are I/O deadlines, not limits on caller-side queueing or mutex acquisition; finite streamed responses include consumer pauses in their request budget.
+
+Timeout cancels both directions of the affected stream and prevents reuse.
+Append, membership-append, and snapshot-publication timeouts report `Ambiguous`, because the peer might have committed before the receipt was lost.
+No operation is automatically retried; callers must reconcile uncertain outcomes before deciding what to submit next.
+The server still enforces its own independent deadlines.
+Browser transports retain their existing timeout policy; custom native transports opt in through `ClientTransport::operation_timeout`.
 Connection loss releases author membership and snapshot participation according to server liveness policy.
 Server failure handling preserves the listener for unrelated connections; ordinary logical-stream failure does not imply that the whole connection has closed.
 The built-in server binds author, content, and snapshot streams to the session that admitted them.
