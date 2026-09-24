@@ -32,6 +32,9 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 
 ## Correctness and Testing
 
+- **Confirmed:** Bounding a `Bytes` value's visible length does not bound its retained backing allocation; admission and signal queues needed owning-allocation probes and compaction at retention boundaries. [Evidence](iterations/0018/phase-2/sessions.md)
+- **Confirmed:** CDP availability and a navigation command response do not establish that evaluation will run in the requested document. Controlled frame/loader readiness events discriminate this gap without a sleep or blanket retry; the original sporadic failure's exact cause remains unproven. [Evidence](iterations/0018/phase-2/consumers.md#reopened-browser-navigation-readiness)
+
 - **Confirmed:** Mixed-language declaration documentation needs layered evidence: compiler missing-doc diagnostics cover public Rust, while private Rust and TypeScript require language-aware inventories; README presence alone does not prove source coverage. [Evidence](iterations/0012/phase-3-report.md#shared-abstraction-findings)
 - **Confirmed:** One implementation-independent conformance function can validate direct and transparent-wrapper implementations without copied tests. [Evidence](iterations/0001/phase-2/compression.md#hypothesis-results)
 - **Confirmed:** Specialized crash or transport suites do not replace shared semantic conformance; applying a concurrently expanded model directly to durable storage exposed an error-classification defect during integration. [Evidence](iterations/0002/phase-2/integration.md#conflict-resolution-and-adaptation)
@@ -53,6 +56,8 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 - **Confirmed:** A fixed-size last-writer-wins workload can isolate sequence-growth cost, but final scalar convergence and coalesced change notifications prove only final state; report requested application edits rather than independently preserved logical operations. [Evidence](iterations/0010/phase-3-report.md#evidence-summary)
 
 ## Agentic Development
+
+- **Confirmed:** Iteration 0018 delegates discovered and invoked assigned tasks where 0017 delegates could not; execution capability must be observed in the current environment. **Provisional:** Isolated per-worktree Cargo targets resolved a surprising assertion's provenance concern, but exact shared-cache artifact reuse was not proven. Neither observation establishes cancellation isolation or a throughput improvement. [Evidence](iterations/0018/retrospective.md#agentic-development-findings)
 
 - **Confirmed:** Coordinator task access did not imply delegate capability: iteration 0017 delegates lacked `tool_search`, while coordinator task-batched checks completed without observed interference, including detection and correction of a genuine formatting failure. Autonomous delegate scheduling and cancellation remained unavailable and unverified. [Evidence](iterations/0017/skill-review.md#verification-matrix)
 - **Confirmed:** Test-only environment overrides must be command-scoped or visibly reported because persistent agent terminals can leak state into later validation. [Evidence](foundation-report.md#notable-events)
