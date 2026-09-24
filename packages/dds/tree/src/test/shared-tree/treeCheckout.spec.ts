@@ -22,7 +22,9 @@ import {
 	EmptyKey,
 	type NormalizedFieldUpPath,
 	LeafNodeStoredSchema,
+	type LibraryId,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	ValueSchema,
 } from "../../core/index.js";
@@ -1717,6 +1719,38 @@ describe("sharedTreeView", () => {
 				newRootAllowedTypeCount: oldSchema.rootFieldSchema.types.size,
 			});
 		});
+
+		itView(
+			"does not classify a version-only schema change as initialization",
+			({ view, logger }) => {
+				const schema: TreeStoredSchema = {
+					rootFieldSchema: {
+						kind: FieldKinds.optional.identifier,
+						types: new Set(),
+						persistedMetadata: undefined,
+					},
+					nodeSchema: new Map(),
+				};
+				view.checkout.updateSchema(schema, true);
+				view.checkout.updateSchema({
+					rootFieldSchema: schema.rootFieldSchema,
+					nodeSchema: schema.nodeSchema,
+					schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
+				});
+
+				const schemaChangeEvents = logger
+					.events()
+					.filter((event) =>
+						event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
+					);
+				const versionChangeEvent = schemaChangeEvents.at(-1);
+				assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
+				assert.equal(
+					parseCodeArtifactDetails(versionChangeEvent.details).changeKind,
+					"upgrade",
+				);
+			},
+		);
 	});
 
 	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
