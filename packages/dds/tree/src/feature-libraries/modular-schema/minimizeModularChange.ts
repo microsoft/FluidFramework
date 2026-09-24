@@ -9,6 +9,7 @@ import {
 	makeChangeAtomId,
 	makeDetachedFieldIndex,
 	newChangeAtomIdRangeMap,
+	offsetChangeAtomId,
 	visitDelta,
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
@@ -21,11 +22,16 @@ import { brand, hasSingle, type Mutable, type RangeQueryResult } from "../../uti
 import {
 	getFromChangeAtomIdMap,
 	newChangeAtomIdBTree,
+	rangeQueryChangeAtomIdMap,
 	setInChangeAtomIdMap,
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
 import { NodeMoveType } from "./crossFieldQueries.js";
-import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
+import {
+	EditFilterStatus,
+	NodeAttachState,
+	type FilterDetachResult,
+} from "./fieldChangeHandler.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
 import { filterEdits } from "./filterEdits.js";
@@ -40,6 +46,7 @@ import type {
 	NodeId,
 } from "./modularChangeTypes.js";
 import {
+	assignRootChange,
 	firstDetachIdFromAttachId,
 	getAttachFieldForDetach,
 	getChangeHandler,
@@ -97,16 +104,60 @@ class ModularChangeMinimizer {
 	}
 
 	public minimize(forestFactory: () => IEditableForest): ModularChangeset {
-		const residualChange = filterEdits(
+		const residualChange: Mutable<ModularChangeset> = filterEdits(
 			this.change,
 			this.filterEditsForResidualChange.bind(this),
 			this.filterRenamesForResidualChange.bind(this),
 			this.fieldKinds,
 		);
 
-		(residualChange as Mutable<ModularChangeset>).builds = this.squashBuilds(forestFactory);
+		this.squashBuilds(residualChange, forestFactory);
+		this.updateResidualBuiltNodeLocations(residualChange);
+
 		validateChangeset(residualChange, this.fieldKinds);
 		return residualChange;
+	}
+
+	/**
+	 * Updates the locations of built nodes which the input change detached from other builds.
+	 * The detaches are squashed into the build trees,
+	 * so in the residual change these nodes should be represented under their new root locations.
+	 */
+	private updateResidualBuiltNodeLocations(residualChange: ModularChangeset): void {
+		for (const rootEntry of this.builtRootIds.entries()) {
+			let rootId = rootEntry.start;
+			let countRemaining = rootEntry.length;
+			while (countRemaining > 0) {
+				const nodeIdEntry = rangeQueryChangeAtomIdMap(
+					this.rootIdToNodeId,
+					rootId,
+					countRemaining,
+				);
+
+				// Even if there was a node changeset for this root, it may have been pruned away.
+				// We check that it still exists before updating its location in the residual change.
+				if (
+					nodeIdEntry.value !== undefined &&
+					getFromChangeAtomIdMap(residualChange.nodeChanges, nodeIdEntry.value) !== undefined
+				) {
+					const detachLocation =
+						this.change.rootNodes.detachLocations.getFirst(rootId, 1).value ??
+						getFirstDetachField(this.change.crossFieldKeys, rootId, 1).value;
+
+					assignRootChange(
+						residualChange.rootNodes,
+						residualChange.nodeToParent,
+						rootId,
+						nodeIdEntry.value,
+						detachLocation,
+						residualChange.rebaseVersion,
+					);
+				}
+
+				rootId = offsetChangeAtomId(rootId, nodeIdEntry.length);
+				countRemaining -= nodeIdEntry.length;
+			}
+		}
 	}
 
 	private isNodeIdInBuiltTree(nodeId: NodeId | undefined): boolean {
@@ -259,12 +310,12 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		detachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<EditFilterStatus> {
+	): RangeQueryResult<FilterDetachResult> {
 		let countProcessed = count;
 
 		if (!this.shouldSquashDetach(fieldId)) {
 			return {
-				value: EditFilterStatus.Remove,
+				value: { action: EditFilterStatus.Remove },
 				length: countProcessed,
 			};
 		}
@@ -277,7 +328,7 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = moveEndpointEntry.length;
 
-		return { value: EditFilterStatus.Preserve, length: countProcessed };
+		return { value: { action: EditFilterStatus.Preserve }, length: countProcessed };
 	}
 
 	private filterAttachForBuildChange(
@@ -398,7 +449,7 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		detachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<EditFilterStatus> {
+	): RangeQueryResult<FilterDetachResult> {
 		let countProcessed = count;
 		const moveEndpointEntry = getAttachFieldForDetach(
 			this.change.crossFieldKeys,
@@ -408,13 +459,6 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = moveEndpointEntry.length;
 
-		const inputRootIdEntry = firstDetachIdFromAttachId(
-			this.change.rootNodes,
-			detachId,
-			countProcessed,
-		);
-		countProcessed = inputRootIdEntry.length;
-
 		const shouldDropEntry = this.shouldDropDetach(
 			fieldId,
 			detachId,
@@ -423,8 +467,21 @@ class ModularChangeMinimizer {
 		);
 		countProcessed = shouldDropEntry.length;
 
+		if (shouldDropEntry.value) {
+			// If this is a detach from a built node, the detach has been squashed into the build trees
+			// and the detached node will be a root in the input context,
+			// so we should not represent any child change here.
+			const isDetachFromBuild = this.isNodeIdInBuiltTree(fieldId.nodeId);
+			return {
+				value: { action: EditFilterStatus.Remove, shouldRemoveChild: isDetachFromBuild },
+				length: countProcessed,
+			};
+		}
+
 		return {
-			value: shouldDropEntry.value ? EditFilterStatus.Remove : EditFilterStatus.Preserve,
+			value: {
+				action: EditFilterStatus.Preserve,
+			},
 			length: countProcessed,
 		};
 	}
@@ -485,7 +542,10 @@ class ModularChangeMinimizer {
 		};
 	}
 
-	private squashBuilds(forestFactory: () => IEditableForest): ChangeAtomIdBTree<TreeChunk> {
+	private squashBuilds(
+		residualChange: Mutable<ModularChangeset>,
+		forestFactory: () => IEditableForest,
+	): void {
 		const changeForBuilds = filterEdits(
 			this.change,
 			this.filterEditsForBuildChange.bind(this),
@@ -525,8 +585,8 @@ class ModularChangeMinimizer {
 			};
 
 			const attachEntry = getAttachFieldForDetach(
-				this.change.crossFieldKeys,
-				this.change.rootNodes,
+				residualChange.crossFieldKeys,
+				residualChange.rootNodes,
 				rootId,
 				chunk.topLevelLength,
 			);
@@ -543,7 +603,7 @@ class ModularChangeMinimizer {
 			cursor.exitField();
 		}
 
-		return squashedBuilds;
+		residualChange.builds = squashedBuilds;
 	}
 }
 

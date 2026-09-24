@@ -77,17 +77,20 @@ function filterMark(
 			const result = filterDetach(detachId, mark.count);
 
 			let filtered: Mark;
-			switch (result.value) {
+			switch (result.value.action) {
 				case EditFilterStatus.Preserve: {
 					filtered = mark;
 					break;
 				}
 				case EditFilterStatus.Remove: {
 					filtered = omitMarkEffect(mark);
+					if (result.value.shouldRemoveChild === true) {
+						delete filtered.changes;
+					}
 					break;
 				}
 				default: {
-					unreachableCase(result.value);
+					unreachableCase(result.value.action);
 				}
 			}
 			return { ...filtered, count: result.length };

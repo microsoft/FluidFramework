@@ -612,13 +612,16 @@ function filterEdits(
 		const attachResult =
 			attachId === undefined ? undefined : options.filterAttach(attachId, 1).value;
 
-		if (detachResult === EditFilterStatus.Remove) {
+		if (detachResult?.action === EditFilterStatus.Remove) {
 			assert(
 				attachId === undefined || attachResult === EditFilterStatus.Remove,
 				0xd0e /* Cannot remove detach without also removing attach */,
 			);
 
 			delete filtered.valueReplace;
+			if (detachResult.shouldRemoveChild === true) {
+				delete filtered.childChange;
+			}
 		} else if (attachResult === EditFilterStatus.Remove) {
 			filtered.valueReplace = { ...change.valueReplace };
 			delete (filtered.valueReplace as Mutable<Replace>).src;

@@ -8,6 +8,7 @@ import { filterEdits } from "../../../feature-libraries/sequence-field/filterEdi
 // eslint-disable-next-line import-x/no-internal-modules
 import {
 	EditFilterStatus,
+	FilterDetachResult,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -34,8 +35,8 @@ const id7: ChangeAtomId = { revision: tag3, localId: brand(2) };
 function preserveAllDetaches(
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<EditFilterStatus> {
-	return { length: count, value: EditFilterStatus.Preserve };
+): RangeQueryResult<FilterDetachResult> {
+	return { length: count, value: { action: EditFilterStatus.Preserve } };
 }
 
 function preserveAllAttaches(
@@ -48,10 +49,10 @@ function preserveAllAttaches(
 function removeAllDetaches(
 	id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<EditFilterStatus> {
+): RangeQueryResult<FilterDetachResult> {
 	return {
 		length: count,
-		value: EditFilterStatus.Remove,
+		value: { action: EditFilterStatus.Remove },
 	};
 }
 
@@ -110,9 +111,11 @@ export function testFilterEdits(): void {
 			const filtered = filterEdits(unfiltered, {
 				filterDetach: (id, count) => ({
 					length: 1,
-					value: areEqualChangeAtomIds(id, id4)
-						? EditFilterStatus.Remove
-						: EditFilterStatus.Preserve,
+					value: {
+						action: areEqualChangeAtomIds(id, id4)
+							? EditFilterStatus.Remove
+							: EditFilterStatus.Preserve,
+					},
 				}),
 				filterAttach: (id, count) => ({
 					length: 1,
