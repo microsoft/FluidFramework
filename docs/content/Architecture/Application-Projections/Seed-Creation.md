@@ -100,10 +100,10 @@ Configure the loader's code selection to resolve the seed's `codeDetails` to you
 The integration point is **before** `loadContainerRuntime`, not after your application's data stores have loaded.
 `seedRuntimeFactory(projector, delegate, options?)` passes these values to your delegate:
 
--   `load.original`: the unchanged loader-owned `IContainerContext`.
--   `load.context`: the runtime-facing context with coherent snapshot and storage overrides.
--   `load.fromSeed`: whether this load constructed native state from a seed.
--   `load.summaries`: the `SeedSummaryHost` owned by this loaded runtime.
+- `load.original`: the unchanged loader-owned `IContainerContext`.
+- `load.context`: the runtime-facing context with coherent snapshot and storage overrides.
+- `load.fromSeed`: whether this load constructed native state from a seed.
+- `load.summaries`: the `SeedSummaryHost` owned by this loaded runtime.
 
 Your `SeedProjector` supplies `isNative(context)`, `readSeed(context)`, and `materialize(seed, sequenceNumber)`.
 Materialization returns a `MaterializedSnapshot`: an `ISnapshotTree` and a complete `ReadonlyMap<string, ArrayBuffer>` of its blob bodies.
