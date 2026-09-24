@@ -530,11 +530,19 @@ Where a standard JavaScript error better matches the API contract, use an approp
 Throw error objects, not strings or other values.
 
 Use an error type that describes the failure, rather than treating every failure as incorrect usage.
-Other framework error types include:
+Specialized framework error types include:
 
-- `DataCorruptionError` for definitive evidence of corrupted persisted data.
+- `DataCorruptionError` for definitive evidence that persisted data at rest backing a Fluid container is corrupted and the container cannot be expected to load successfully.
 - `DataProcessingError` for fatal failures while processing incoming data from the Fluid service.
 - `LayerIncompatibilityError` for incompatible Fluid layer versions.
+
+Use these specialized errors only at boundaries that own the corresponding failure classification.
+Relevant Fluid processing call stacks generally classify or wrap errors at designated boundaries.
+
+Before constructing a specialized error directly, check whether the enclosing boundary already performs this conversion.
+Within those boundaries, use assertions for ordinary implementation invariant failures and allow the boundary to classify unexpected errors.
+
+Construct a `DataCorruptionError` directly only when there is definitive evidence of corruption in persisted data backing a Fluid container.
 
 These error types and `validatePrecondition` are defined in [error.ts](../../../packages/utils/telemetry-utils/src/error.ts).
 See [IErrorBase and the framework error categories](../../../packages/common/core-interfaces/src/error.ts) for shared error contracts.
