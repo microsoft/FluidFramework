@@ -45,7 +45,6 @@ import type { IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
-	type EncodedChunkShapeV2,
 	type EncodedFieldBatchAnyVersion,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
@@ -68,7 +67,12 @@ export function decode(
 ): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
-		new DecoderContext(chunk.identifiers, chunk.shapes, idDecodingContext, incrementalDecoder),
+		new DecoderContext<EncodedChunkShape>(
+			chunk.identifiers,
+			chunk.shapes,
+			idDecodingContext,
+			incrementalDecoder,
+		),
 		chunk,
 		anyDecoder,
 	);
@@ -221,11 +225,14 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 	e(
 		shape: EncodedIncrementalChunkShape,
-		context: DecoderContext<EncodedChunkShapeV2>,
+		context: DecoderContext<EncodedChunkShape>,
 	): ChunkDecoder {
 		return new IncrementalChunkDecoder(context);
 	},
-	f(shape: EncodedSpecializedNodeShape, context): ChunkDecoder {
+	f(
+		shape: EncodedSpecializedNodeShape,
+		context: DecoderContext<EncodedChunkShape>,
+	): ChunkDecoder {
 		return new SpecializedNodeDecoder(shape, context);
 	},
 });
@@ -381,7 +388,7 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalChunkShape}s.
  */
 export class IncrementalChunkDecoder implements ChunkDecoder {
-	public constructor(private readonly context: DecoderContext<EncodedChunkShapeV2>) {}
+	public constructor(private readonly context: DecoderContext<EncodedChunkShape>) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		assert(
 			this.context.incrementalDecoder !== undefined,
@@ -393,7 +400,7 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 				supportsIncrementalEncoding(batch.version),
 				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,
 			);
-			const context = new DecoderContext(
+			const context = new DecoderContext<EncodedChunkShape>(
 				batch.identifiers,
 				batch.shapes,
 				this.context.idDecodingContext,
