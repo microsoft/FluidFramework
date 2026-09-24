@@ -190,12 +190,7 @@ pub struct EncryptionSession<S, K, N = OsNonceSource> {
 impl<S, K> EncryptionSession<S, K, OsNonceSource> {
     /// Wraps a session using operating-system-generated nonces.
     pub fn new(inner: S, keys: K) -> Self {
-        Self {
-            inner,
-            keys,
-            nonces: OsNonceSource,
-            author_terminal: std::sync::Arc::new(futures_util::lock::Mutex::new(false)),
-        }
+        Self::with_nonce_source(inner, keys, OsNonceSource)
     }
 }
 
