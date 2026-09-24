@@ -320,8 +320,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             let startup = Instant::now();
             let factory = FileStorage::open(&directory).map_err(display_error)?;
             let (document, view) = factory.create_view().await.map_err(display_error)?;
-            let coordinators =
-                open_local_sessions::<FileStorage>(view, config.writers, "compression").await?;
+            let coordinators = open_local_sessions::<FileStorage>(view, config.writers).await?;
             let sessions = coordinators
                 .iter()
                 .cloned()
@@ -340,7 +339,6 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
                     .map_err(display_error)?
                     .ok_or("missing document")?,
                 1,
-                "compression-reopen",
             )
             .await?
             .pop()
@@ -357,8 +355,7 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             let startup = Instant::now();
             let factory = FileStorage::open(&directory).map_err(display_error)?;
             let (document, view) = factory.create_view().await.map_err(display_error)?;
-            let coordinators =
-                open_local_sessions::<FileStorage>(view, config.writers, "encryption").await?;
+            let coordinators = open_local_sessions::<FileStorage>(view, config.writers).await?;
             let sessions = coordinators
                 .iter()
                 .cloned()
@@ -377,7 +374,6 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
                     .map_err(display_error)?
                     .ok_or("missing document")?,
                 1,
-                "encryption-reopen",
             )
             .await?
             .pop()
@@ -400,7 +396,6 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
 async fn open_local_sessions<S>(
     storage: BackendView<S>,
     writers: usize,
-    _identity_prefix: &str,
 ) -> Result<Vec<LocalSession<S>>, String>
 where
     S: SeaStorage + 'static,
@@ -1168,7 +1163,7 @@ mod tests {
         assert_eq!(storage_measurements.finite_read_records, 8);
 
         let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sessions = open_local_sessions::<MemoryStorage>(view, 2, "concurrent-test")
+        let sessions = open_local_sessions::<MemoryStorage>(view, 2)
             .await
             .expect("concurrent sessions");
         let session_measurements = run_session(sessions, &config, 0.0)
@@ -1236,9 +1231,7 @@ mod tests {
         };
         let generator = FixtureGenerator::new(config.seed);
         let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sessions = open_local_sessions::<MemoryStorage>(view, 1, "stale-snapshot")
-            .await
-            .unwrap();
+        let sessions = open_local_sessions::<MemoryStorage>(view, 1).await.unwrap();
         let session = &sessions[0];
         let _participation = session
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)

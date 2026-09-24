@@ -1,11 +1,11 @@
 # Iteration 0019: consumers Report
 
-Status: Wave 1 discovery complete; awaiting coordinator reconciliation and Wave 2 selection
+Status: Wave 2 `RS0019-CONS-001` implemented, validated, and independently reviewed
 Branch: `rust-service-iteration-0019-consumers`
 Worktree: `/workspaces/FluidFramework-rust-service-iteration-0019-consumers`
 Kickoff commit: `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`
 Approved source commit recorded by the shared charter: `575b77e825e598b15b7740f56956fe433a6153d8`
-Final commit: none; Wave 1 is read-only and commits were prohibited
+Final commit: the checkpoint commit containing this completed report; hash recorded during integration
 Agent or owner: consumers workstream agent
 Model and tool version: model unknown; repository file-view and patch tools
 Instruction source: [consumers instructions](instructions/consumers.md), read from the kickoff worktree
@@ -23,16 +23,17 @@ guide, plus the workspace architecture, Sea architecture, development policy,
 iteration charter, shared simplification inventory, and inherited 0018
 consumer quality evidence.
 
-One small, high-confidence implementation candidate removes an unused
-benchmark-helper parameter.
+One small, high-confidence implementation candidate removed an unused
+benchmark-helper parameter without changing session creation or measurement.
 Two larger duplication hypotheses remain plausible but are deferred because
 their cheapest disproof requires a typed implementation prototype and, for the
 WASM case, fresh generated/browser validation.
 Five proposed consolidations or deletions were rejected or excluded because
 they would couple distinct boundaries, weaken independent regression evidence,
 obscure diagnostics, or provide no material maintenance benefit.
-No production, test, guide, manifest, generated output, or shared record was
-edited.
+Wave 2 changed only the owned benchmark source and this report.
+No tests, guides, manifests, generated outputs, shared scripts/packages, or
+shared records were edited.
 
 ## Configuration and Provenance
 
@@ -57,6 +58,7 @@ edited.
   ran in Wave 1.
 - Registered future task labels: `rs0019 consumers test` and
   `rs0019 consumers format`.
+- Wave 2 checkpoint base: discovery-report HEAD `94a1d5a36f9`.
 
 ## Complete Responsibility Map
 
@@ -101,11 +103,58 @@ edited.
 - Expected benefit: removes a false suggestion that benchmark session identity
   is caller-controlled and eliminates needless call-site noise.
 - Displaced complexity/supporting edits: none; call-site edits only.
-- Proposed disposition: **simplified**, subject to Wave 2 selection and
-  validation.
+- Proposed disposition: **simplified** in Wave 2; focused validation passed.
+  The first fixed-base review found no source regression and requested only
+  correction of contradictory validation statements in this report.
 - Ranking: 1. Highest confidence, smallest change, no boundary expansion.
 - Revisit trigger: selection for Wave 2 or any new use of named benchmark
   identities before repair.
+
+#### Wave 2 checkpoint evidence
+
+- Primary category: Implementation / Conservative.
+- Supporting edits: six necessary call-site argument removals in the same
+  implementation file; no supporting category or external owner was touched.
+- Exact plumbing removed: the unused `_identity_prefix: &str` parameter and
+  the literals `"compression"`, `"compression-reopen"`, `"encryption"`,
+  `"encryption-reopen"`, `"concurrent-test"`, and `"stale-snapshot"` passed
+  solely to it.
+- Preserved behavior: `open_local_sessions` still receives the same
+  `BackendView` and writer count, recovers one `LocalSequencer`, allocates the
+  same number of sessions with `open_session(None)`, and returns them in the
+  same order.
+- Preserved inputs/outputs: no benchmark `Config`, fixture, measurement timer,
+  schema, guarantee label, diagnostic, generated/browser API, composition
+  path, or expected value changed.
+- Contract and tests: inherited
+  `benchmark-command-and-concurrency` and
+  `benchmark-snapshot-recovery-verification`;
+  `concurrent_writers_complete_before_measurement_returns`,
+  `file_backend_recovers_without_snapshots`, and the reopened snapshot tests
+  exercise the affected helper paths.
+- Maintenance benefit: removes one false input concept and six meaningless
+  arguments, so callers no longer imply that benchmark identities depend on a
+  label.
+- Displaced-complexity check: no helper, branch, state, conversion, dependency,
+  or new configuration replaced the removed plumbing.
+- Checkpoint base: discovery-report HEAD `94a1d5a36f9`.
+- Checkpoint state: guarded format and 49 tests passed with 0 failures.
+  Repair cycle 1 corrected only this report; fresh re-review completed with no
+  actionable findings.
+
+#### Cumulative checkpoint review
+
+- Review base: `94a1d5a36f9`.
+- Review finding: the source removal had no identified regression, but stale
+  report statements contradicted the recorded successful validation.
+- Repair-cycle disposition: accepted for repair.
+  Cycle 1 changed only this cumulative report so the checkpoint decision,
+  remaining work, and conclusion consistently record the passing guarded
+  formatter and 49-test result.
+- Source disposition: unchanged; no code repair was requested or made.
+- Final review: patch
+  `e0552bfdac15d5beaa003e3cdd2b15da02e5a142fdaf894f6ca15d61d7de4804`
+  received no actionable findings. Coordinator integration gates remain.
 
 ### `RS0019-CONS-002` — consolidate common WASM remote-session finalization
 
@@ -344,32 +393,38 @@ validation if selected.
 
 ## Deliverables and Commits
 
-- Deliverable: this Wave 1 discovery report only.
-- Commits: none, as required.
-- Production/test/documentation changes: none.
+- Deliverables:
+  - `crates/sea-benchmarks/src/main.rs`: removed the unused
+    `_identity_prefix` parameter and its six call arguments.
+  - This report: recorded the Wave 2 checkpoint and validation.
+- Commits: none, as required; the checkpoint is intentionally uncommitted.
+- Test/documentation/generated/shared-package changes: none.
 - Shared inventory/instruction changes: none.
 
 ## Validation Evidence
 
 Wave 1 intentionally ran no commands.
-There are no test, formatting, lint, build, generated-binding, browser,
-benchmark, or Git-status results to claim.
+The workstream's initial direct task invocations returned `Task not found`, so
+no terminal fallback was used.
+The coordinator subsequently ran both registered tasks in the guarded
+worktree at HEAD `94a1d5a36f9`:
 
-If `RS0019-CONS-001` is selected, the registered focused tasks are:
+| Task | Result |
+| --- | --- |
+| `rs0019 consumers format` | Passed. It ran with only `sea-benchmarks/src/main.rs` and this report dirty and caused no out-of-scope path changes. |
+| `rs0019 consumers test` | Passed 49 tests across all `sea-benchmarks` targets, `sea-counter`, `sea-integration-tests` composition, and `sea-wasm`; 0 failures. |
 
-- `rs0019 consumers test`
-- `rs0019 consumers format`
+The guarded status contained only `sea-benchmarks/src/main.rs` and this report.
+Lockfiles remained absent from status.
 
-If `RS0019-CONS-002` is selected, the coordinator must additionally assign
-fresh generated artifact/API comparison and the relevant Node/browser
-consumer checks.
-If `RS0019-CONS-005` is selected, review must compare measurement boundaries
-before running correctness smoke/tests; no benchmark campaign or performance
-improvement claim is proposed.
+Fresh generated/browser and benchmark-campaign validation are not applicable
+to this plumbing-only repair.
+The focused task nevertheless covered the owned integration composition,
+WASM, and counter targets as recorded above.
 
 ## Behavioral Contracts and Test Layers
 
-No behavior changed.
+No behavior is intended to change.
 The complete responsibility map and candidate records link each assessed
 boundary to its 0018 evidence.
 The review specifically retained:
@@ -399,6 +454,7 @@ No inherited 0018 test is proposed for removal.
 | Falsified hypothesis | Shared stream cancellation state appeared extractable. | `SeaEventStream::next` treats end/cancel as `undefined`; `SeaSnapshotStream::next` reports cancellation/end and owns publisher revocation. | A helper would hide distinct generated lifetimes for minimal deletion. | `RS0019-CONS-003` rejected. | Compare state transitions and terminal meaning before sharing structurally similar async wrappers. |
 | Falsified hypothesis | The large composition matrix appeared reducible through more table-driven setup. | Independent plaintext inputs, topology counters, scenario names, fresh documents, reconnect state, deadlines, and cleanup each diagnose a distinct boundary. | Reduction would mostly move complexity into parameters/macros. | `RS0019-CONS-004` rejected. | Test size is not duplication when repetition preserves independent expectations and diagnosis. |
 | Provenance discrepancy | Assigned kickoff differs from the source commit recorded in instructions/charter. | User: `7b56e89c...`; records: `575b77e8...`. | Fixed-base review must not silently conflate them. | Recorded for coordinator reconciliation; no command was run. | Keep worktree kickoff and approved comparison source as separate provenance fields. |
+| Tool limitation | Both registered Wave 2 process tasks were initially invoked through `runTask` but were not discoverable to this agent. | Each returned `Task not found`; the coordinator later ran both at HEAD `94a1d5a36f9`. | Direct validation was blocked, but coordinator validation passed with 49 tests and no out-of-scope or lockfile changes. | Resolved through the assigned coordinator task route without a terminal fallback. | Treat a registered label as provisional until the assigned worktree exposes it through task discovery. |
 
 ## Contract and Integration Friction
 
@@ -414,8 +470,9 @@ No inherited 0018 test is proposed for removal.
 ## Human Interventions
 
 The user supplied the exact worktree, branch, kickoff commit, no-command rule,
-write restriction, preservation constraints, and task labels.
-No additional human correction occurred.
+write restriction, preservation constraints, task labels, coordinator
+validation results, and the fixed-base review finding.
+The requested repair cycle corrected only the report.
 
 ## Measurements
 
@@ -424,15 +481,16 @@ No additional human correction occurred.
   selection criterion.
 - Discovery coverage: four of four assigned members and six of six enabled
   categories reviewed.
-- Candidate outcomes: one proposed simplification, two deferred, four
-  rejected, and one excluded.
+- Candidate outcomes: one implemented and validated simplification pending
+  independent re-review/integration, two deferred, four rejected, and one
+  excluded.
 - Command effort: zero terminal commands by instruction.
 - Wall-clock/tool cost: unknown.
 
 ## Proposed Decisions
 
-- Select `RS0019-CONS-001` for a small crate-local Wave 2 repair if it outranks
-  candidates from other workstreams.
+- Accept `RS0019-CONS-001` after independent re-review confirms this report
+  correction and coordinator integration gates pass.
 - Keep `RS0019-CONS-002` and `RS0019-CONS-005` deferred unless the coordinator
   assigns their required typed prototype and boundary review.
 - No shared architectural, API, protocol, generated-binding, dependency, or
@@ -447,14 +505,14 @@ lifetimes directly prevented false consolidations in
 
 ## Remaining Work and Risks
 
-- Coordinator reconciliation must copy these candidate dispositions and
-  complete coverage into the shared simplification inventory.
-- Wave 2 may select at most the charter's remaining repair budget; this report
-  does not authorize edits.
-- `RS0019-CONS-002` remains unsafe without generated Node/browser evidence.
-- `RS0019-CONS-005` remains unsafe without fixed-base comparison of timer,
-  flush, drop, reopen, and cleanup boundaries.
-- No member or category remains unreviewed.
+- Repair-cycle-1 re-review against `94a1d5a36f9` is complete with no
+  actionable findings.
+- Coordinator integration must reconcile the accepted disposition and run its
+  applicable integration gates before any authorized commit.
+- No source repair, focused validation, member discovery, or category
+  assessment remains.
+- Deferred `RS0019-CONS-002` and `RS0019-CONS-005` are outside this checkpoint
+  and require no action without their recorded revisit triggers.
 
 ## Convergence Assessment
 
@@ -462,7 +520,8 @@ Wave 1 coverage is complete for the consumers workstream.
 The current structure is largely proportionate after quality iteration 0018:
 generated and browser boundaries, cross-crate composition, benchmark
 correctness, and example replay justify most apparent repetition.
-One small dead-input repair can remove confirmed accidental complexity.
+The selected dead-input repair removes confirmed accidental complexity without
+moving it.
 The two deferred hypotheses have concrete revisit triggers and should not be
 reinvestigated without them.
 Another broad consumers discovery pass is not justified unless those triggers
@@ -472,19 +531,23 @@ or material code changes occur.
 
 - Coverage: complete for all four assigned members and all six Conservative
   categories; no unreviewed area remains.
-- Value: one high-confidence removal identified; two ownership hypotheses
+- Value: one high-confidence removal implemented; two ownership hypotheses
   bounded; five low-value or unsafe simplifications prevented.
-- Safety: static contract/test reconciliation completed, but no command,
-  generated, browser, or checkpoint evidence exists because Wave 1 forbids
-  execution and repair.
+- Safety: static contract/test reconciliation completed and the diff is
+  plumbing-only. Both guarded tasks passed, including 49 tests with 0 failures;
+  the formatter changed no out-of-scope path and lockfiles remained absent
+  from status. The first review identified no source regression, and the fresh
+  repair re-review found no actionable findings.
 - Effort: every member source, manifest, guide, architecture input, and relevant
   inherited 0018 boundary was inspected; exact elapsed effort is unknown.
-- Recommendation: select `RS0019-CONS-001` only if it ranks within the global
-  four-repair budget; otherwise stop consumers work. Revisit the deferred
-  candidates only on their recorded triggers.
+- Recommendation: independently re-review this report correction, then proceed
+  through coordinator integration gates. Revisit deferred candidates only on
+  their recorded triggers.
 
 Candidate selection was conservative and calibrated to boundary risk.
 The main guardrails—independent expected values, generated/resource lifetime
 preservation, fixed benchmark meaning, and example replay—were effective.
-No checkpoint decomposition, review cycle, validation, or user intervention
-beyond kickoff applies yet.
+The checkpoint is one coherent implementation cleanup with no adjacent source
+changes. Guarded validation and the first review completed; repair cycle 1
+resolved the sole report-consistency finding. Only independent re-review and
+coordinator integration gates remain.
