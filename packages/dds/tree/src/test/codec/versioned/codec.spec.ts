@@ -16,6 +16,7 @@ import { FluidClientVersion, Versioned } from "../../../codec/index.js";
 import {
 	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
+	makeExperimentalCodecVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../codec/versioned/codec.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -62,11 +63,7 @@ describe("versioned Codecs", () => {
 				formatVersion: 2,
 				codec: () => codecV2,
 			},
-			{
-				minVersionForCollab: undefined,
-				formatVersion: "X",
-				codec: codecVX,
-			},
+			makeExperimentalCodecVersion("X", codecVX),
 		]);
 
 		it("round trip", () => {
@@ -124,11 +121,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 						formatVersion: 1,
 						codec: codecV1,
 					},
-					{
-						minVersionForCollab: undefined,
-						formatVersion: "X",
-						codec: codecVX,
-					},
+					makeExperimentalCodecVersion("X", codecVX),
 				],
 				{
 					selectWriteFormatVersion: (data, defaultVersion) =>
@@ -261,7 +254,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 							},
 						]),
 					validateAssertionError(
-						"Debug assert failed: Codec Test is missing entry for lowestMinVersionForCollab",
+						"Debug assert failed: codec format 1 in Test must specify why it has no minVersionForCollab",
 					),
 				);
 

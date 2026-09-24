@@ -7,7 +7,11 @@ import { fail } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { VersionDispatchingCodecBuilder, FluidClientVersion } from "../../codec/index.js";
+import {
+	VersionDispatchingCodecBuilder,
+	FluidClientVersion,
+	makeExperimentalCodecVersion,
+} from "../../codec/index.js";
 import {
 	SchemaFormatVersion,
 	type TreeNodeSchemaIdentifier,
@@ -155,15 +159,11 @@ export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build(
 				schema: FormatV2,
 			},
 		},
-		{
-			minVersionForCollab: undefined,
-			formatVersion: SchemaFormatVersion.v3Experimental,
-			codec: {
-				encode: (data: TreeStoredSchema) => encodeRepoV3(data),
-				decode: (data: FormatV3) => decodeV3(data),
-				schema: FormatV3,
-			},
-		},
+		makeExperimentalCodecVersion(SchemaFormatVersion.v3Experimental, {
+			encode: (data: TreeStoredSchema) => encodeRepoV3(data),
+			decode: (data: FormatV3) => decodeV3(data),
+			schema: FormatV3,
+		}),
 	],
 	{
 		selectWriteFormatVersion: (data, defaultVersion, hasExplicitOverride) => {

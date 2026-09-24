@@ -128,6 +128,7 @@ export function makeDiscontinuedCodecAndSchema<
 ): CodecVersion<TDecoded, unknown, TFormatVersion, ICodecOptions, unknown> {
 	return {
 		minVersionForCollab: undefined,
+		formatStatus: "discontinued",
 		formatVersion: discontinuedVersion,
 		codec: {
 			schema: JsonCompatibleReadOnlySchema,
@@ -173,15 +174,51 @@ export interface CodecVersionBase<
 	TFormatVersion extends FormatVersion = FormatVersion,
 > {
 	/**
-	 * When `undefined` the codec will never be selected as a write version except via override.
+	 * When `undefined`, {@link CodecVersionBase.formatStatus} indicates why this format is not
+	 * selected based on client compatibility.
 	 * @remarks
 	 * This format will be used for decode if data in it needs to be decoded, regardless of `minVersionForCollab`.
-	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
-	 * as well as previously stabilized formats that are discontinued (meaning we always prefer to use some other format for encoding).
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
+	/**
+	 * Status for a format without a {@link CodecVersionBase.minVersionForCollab}.
+	 *
+	 * @remarks
+	 * Experimental formats should be created with {@link makeExperimentalCodecVersion}.
+	 * Discontinued formats should be created with {@link makeDiscontinuedCodecAndSchema}.
+	 */
+	readonly formatStatus?: "experimental" | "discontinued";
 	readonly formatVersion: TFormatVersion;
 	readonly codec: T;
+}
+
+/**
+ * Creates an experimental codec version.
+ *
+ * @remarks
+ * Experimental formats use string identifiers and are never selected based on
+ * {@link CodecWriteOptionsBeta.minVersionForCollab}.
+ * They may be selected through a write-version override or a
+ * {@link VersionDispatchingCodecBuilderOptions.selectWriteFormatVersion} callback.
+ *
+ * Applications writing an experimental format are responsible for ensuring that every client
+ * which loads or collaborates on the document supports that format.
+ */
+export function makeExperimentalCodecVersion<TFormatVersion extends string, TCodec>(
+	formatVersion: TFormatVersion,
+	codec: TCodec,
+): {
+	readonly minVersionForCollab: undefined;
+	readonly formatStatus: "experimental";
+	readonly formatVersion: TFormatVersion;
+	readonly codec: TCodec;
+} {
+	return {
+		minVersionForCollab: undefined,
+		formatStatus: "experimental",
+		formatVersion,
+		codec,
+	};
 }
 
 /**
@@ -282,6 +319,7 @@ function normalizeCodecVersion<
 
 	return {
 		minVersionForCollab: codecVersion.minVersionForCollab,
+		formatStatus: codecVersion.formatStatus,
 		formatVersion: codecVersion.formatVersion,
 		codec,
 	};
@@ -326,6 +364,13 @@ export interface VersionDispatchingCodecBuilderOptions<
 > {
 	/**
 	 * Selects a write format for each value.
+	 *
+	 * @remarks
+	 * This callback may select an experimental format created with
+	 * {@link makeExperimentalCodecVersion}.
+	 * The codec author is responsible for ensuring that every client which can access data written
+	 * in that format supports it.
+	 *
 	 * @param data - The value being encoded.
 	 * @param defaultVersion - The format selected from the codec write options.
 	 * @param hasExplicitOverride - Whether the codec write options explicitly override this codec's format.
@@ -410,6 +455,24 @@ export class VersionDispatchingCodecBuilder<
 					typeof codec.formatVersion !== "string" ||
 					`unstable format ${JSON.stringify(codec.formatVersion)} (string formats) must not have a minVersionForCollab in ${name}`,
 			);
+			debugAssert(
+				() =>
+					codec.minVersionForCollab !== undefined ||
+					codec.formatStatus !== undefined ||
+					`codec format ${JSON.stringify(codec.formatVersion)} in ${name} must specify why it has no minVersionForCollab`,
+			);
+			debugAssert(
+				() =>
+					codec.minVersionForCollab === undefined ||
+					codec.formatStatus === undefined ||
+					`codec format ${JSON.stringify(codec.formatVersion)} in ${name} cannot have both a minVersionForCollab and formatStatus`,
+			);
+			debugAssert(
+				() =>
+					codec.formatStatus !== "experimental" ||
+					typeof codec.formatVersion === "string" ||
+					`experimental format ${JSON.stringify(codec.formatVersion)} in ${name} must use a string identifier`,
+			);
 			formats.add(codec.formatVersion);
 			const normalizedCodec = normalizeCodecVersion(codec);
 			normalizedRegistry.push(normalizedCodec);
@@ -443,6 +506,7 @@ export class VersionDispatchingCodecBuilder<
 	): EvaluatedCodecVersion<TDecoded, TEncodeContext, TFormatVersion, TDecodeContext>[] {
 		return this.registry.map((codec) => ({
 			minVersionForCollab: codec.minVersionForCollab,
+			formatStatus: codec.formatStatus,
 			formatVersion: codec.formatVersion,
 			codec: codec.codec(options),
 		}));
