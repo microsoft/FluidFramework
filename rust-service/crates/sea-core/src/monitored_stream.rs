@@ -393,8 +393,7 @@ mod tests {
         ]);
         let mut stream =
             boxed_monitored_stream(source, discovered.clone(), |position| Some(*position));
-        let waker = futures_util::task::noop_waker();
-        let mut context = Context::from_waker(&waker);
+        let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
 
         assert_eq!(stream.progress(), discovered);
         assert!(matches!(
@@ -420,15 +419,13 @@ mod tests {
             Ok::<_, Infallible>(MonitoredStreamItem::Item(4_u64)),
             Ok(MonitoredStreamItem::Item(5_u64)),
         ]);
-        let positioned =
-            boxed_monitored_stream(source, initial.clone(), |position| Some(*position));
+        let positioned = boxed_monitored_stream(source, initial, |position| Some(*position));
         let mut stream = map_monitored_stream(
             positioned,
             |position| (position < 5).then_some(position).ok_or("invalid item"),
             |error| match error {},
         );
-        let waker = futures_util::task::noop_waker();
-        let mut context = Context::from_waker(&waker);
+        let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
 
         assert!(matches!(
             stream.as_mut().poll_next(&mut context),
@@ -454,8 +451,7 @@ mod tests {
             Ok(MonitoredStreamItem::Item(5_u64)),
         ]);
         let mut stream = boxed_monitored_stream(source, discovered, |position| Some(*position));
-        let waker = futures_util::task::noop_waker();
-        let mut context = Context::from_waker(&waker);
+        let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
         for expected in [4, 5] {
             assert!(matches!(
                 stream.as_mut().poll_next(&mut context),
@@ -486,8 +482,7 @@ mod tests {
             |_| -> Result<(), String> { panic!("only data may be transformed") },
             |error| format!("mapped {error}"),
         );
-        let waker = futures_util::task::noop_waker();
-        let mut context = Context::from_waker(&waker);
+        let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
         assert!(matches!(
             stream.as_mut().poll_next(&mut context),
             Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress)))) if progress == initial
@@ -523,8 +518,7 @@ mod tests {
             Ok(MonitoredStreamItem::Item(6_u64)),
         ]);
         let mut stream = boxed_monitored_stream(source, initial, |position| Some(*position));
-        let waker = futures_util::task::noop_waker();
-        let mut context = Context::from_waker(&waker);
+        let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
         assert!(matches!(
             stream.as_mut().poll_next(&mut context),
             Poll::Ready(Some(Ok(MonitoredStreamItem::Item(4))))

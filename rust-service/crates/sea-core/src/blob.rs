@@ -355,15 +355,10 @@ mod tests {
             );
             assert_eq!(combined_id, source.id().unwrap());
         }
+        let decoded = BlobDirectory::decode(&encoded).expect("canonical decoding");
+        assert_eq!(decoded, directory);
         assert_eq!(
-            BlobDirectory::decode(&encoded).expect("canonical decoding"),
-            directory
-        );
-        assert_eq!(
-            BlobDirectory::decode(&encoded)
-                .expect("canonical decoding")
-                .id()
-                .expect("decoded id"),
+            decoded.id().expect("decoded id"),
             directory.id().expect("source id")
         );
     }

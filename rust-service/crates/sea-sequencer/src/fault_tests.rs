@@ -42,7 +42,7 @@ mod live_cache_tests;
 
 use super::{
     LocalSequencer, SessionError,
-    tests::{member, submission},
+    tests::{create_sequencer, member, submission},
 };
 use sea_core::{
     archive::SnapshotParticipation,
@@ -450,8 +450,7 @@ async fn checkpoint_failure_stops_tail_growth_before_next_submission() {
         Failure::AmbiguousCommitted,
     ] {
         let storage = FaultStorage::default();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let writer = member(&runtime, "checkpoint-failure").await;
         for _ in 0..super::checkpoint::INTERVAL {
             writer.submit(submission(b"accepted")).await.unwrap();
@@ -486,8 +485,7 @@ async fn failed_reservations_expose_no_authority_and_recovery_skips_committed_ra
         (Failure::AmbiguousCommitted, 257),
     ] {
         let storage = FaultStorage::default();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         storage.snapshots.arm(failure);
         assert!(runtime.open_session(None).await.is_err());
         assert!(runtime.runtime.lock().await.members.is_empty());
@@ -506,8 +504,7 @@ async fn failed_reservations_expose_no_authority_and_recovery_skips_committed_ra
 async fn cancelled_reservations_require_recovery_before_allocating_again() {
     for (failure, expected) in [(Failure::GateBefore, 1), (Failure::GateAfter, 257)] {
         let storage = FaultStorage::default();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         storage.snapshots.arm(failure);
         let mut opening = Box::pin(runtime.open_session(None));
         assert!(opening.as_mut().now_or_never().is_none());
@@ -534,8 +531,7 @@ async fn cancelled_reservations_require_recovery_before_allocating_again() {
 #[tokio::test]
 async fn interrupted_recovery_departures_are_not_duplicated_on_reopen() {
     let storage = FaultStorage::default();
-    let (id, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (id, runtime) = create_sequencer(&storage).await;
     let first = member(&runtime, "first").await;
     let second = member(&runtime, "second").await;
     first.announce_membership(Bytes::new()).await.unwrap();
@@ -636,8 +632,7 @@ impl SeaStorage for FaultStorage {
 /// Creates a fresh fault-injecting document and its exclusive sequencer.
 async fn fixture() -> (FaultStorage, Arc<LocalSequencer<FaultStorage>>) {
     let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (_, runtime) = create_sequencer(&storage).await;
     (storage, runtime)
 }
 
@@ -684,10 +679,7 @@ async fn idle_ready_submissions_apply_before_receipts_and_rejection_ends_authori
 #[tokio::test]
 async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() {
     let storage = MemoryStorage::new();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-        .await
-        .unwrap();
+    let (_, runtime) = create_sequencer(&storage).await;
     let writer = member(&runtime, "writer").await;
     let mut pending = futures_util::stream::iter(0..257)
         .map(|index| {
@@ -1178,8 +1170,7 @@ async fn cancelled_dispatched_same_session_batch_settles_before_leave_without_qu
 #[tokio::test]
 async fn batch_floor_does_not_invalidate_a_prepared_lower_reference() {
     let storage = FaultStorage::default();
-    let (id, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (id, runtime) = create_sequencer(&storage).await;
     let leader = member(&runtime, "leader").await;
     let writer = member(&runtime, "writer").await;
     let mut reference = None;
@@ -1225,8 +1216,7 @@ async fn floor_advances_only_with_the_committed_event() {
         Failure::AmbiguousCommitted,
     ] {
         let storage = FaultStorage::default();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let session = member(&runtime, "writer").await;
         let initial = session.submit(submission(b"initial")).await.unwrap();
         let mut advancing = submission(b"advance");
@@ -1288,8 +1278,7 @@ async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership()
 async fn failed_reconciliation_blocks_mutation_and_absence_claims_until_recovery() {
     for failure in [Failure::FailHead, Failure::FailRead] {
         let storage = FaultStorage::default();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let session = member(&runtime, "author").await;
         storage.events.arm(failure);
         assert!(matches!(
@@ -1327,8 +1316,7 @@ async fn failed_reconciliation_prevents_terminal_leave_until_recovery() {
     for failure in [Failure::FailHead, Failure::FailRead] {
         for shutdown in [false, true] {
             let storage = FaultStorage::default();
-            let (id, view) = storage.create_view().await.unwrap();
-            let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+            let (id, runtime) = create_sequencer(&storage).await;
             let session = member(&runtime, "author").await;
             let old_session = session.session.clone();
             session.announce_membership(Bytes::new()).await.unwrap();
@@ -1617,8 +1605,7 @@ async fn snapshot_cancellation_and_ambiguity_preserve_publication_order() {
 #[tokio::test]
 async fn shutdown_and_session_close_work_when_backend_streams_retain_writer_ownership() {
     let storage = FaultStorage::default();
-    let (id, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (id, runtime) = create_sequencer(&storage).await;
     let first = member(&runtime, "first").await;
     let second = member(&runtime, "second").await;
     let mut first_read = first.read(None, None);

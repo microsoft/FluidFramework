@@ -2370,9 +2370,7 @@ mod tests {
 
     #[tokio::test]
     async fn recovery_validates_semantics_after_framing_has_succeeded() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, _storage, created) = create_test_document(true).await;
         let components = &created.components;
         let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
         let first = components.events.append(batch_event()).await.unwrap();
@@ -2439,9 +2437,7 @@ mod tests {
     #[tokio::test]
     async fn completed_streams_retain_exclusive_opening_until_dropped() {
         for durable in [false, true] {
-            let root = root();
-            let storage = Factory::open(&root, durable).unwrap();
-            let created = storage.create_document().await.unwrap();
+            let (root, storage, created) = create_test_document(durable).await;
             let bound = Some(EventPosition::new(1));
             let mut events = created.components.events.read(bound, bound);
             let mut snapshots = created.components.snapshots.read(bound, bound);
@@ -2485,9 +2481,7 @@ mod tests {
     #[tokio::test]
     async fn read_bounds_use_the_lazy_initialization_head_for_both_archives() {
         for durable in [false, true] {
-            let root = root();
-            let storage = Factory::open(&root, durable).unwrap();
-            let created = storage.create_document().await.unwrap();
+            let (root, storage, created) = create_test_document(durable).await;
             let components = &created.components;
             let first = EventPosition::new(RECORD_START);
             let mut events = components.events.read(None, Some(first));
@@ -2544,9 +2538,7 @@ mod tests {
     #[tokio::test]
     async fn snapshots_reject_foreign_dependencies_and_nonadvancing_positions() {
         for durable in [false, true] {
-            let root = root();
-            let storage = Factory::open(&root, durable).unwrap();
-            let created = storage.create_document().await.unwrap();
+            let (root, storage, created) = create_test_document(durable).await;
             let other = storage.create_document().await.unwrap();
             let components = &created.components;
             let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
@@ -2598,9 +2590,7 @@ mod tests {
     async fn independent_invalidation_covers_poison_shutdown_and_late_registration() {
         for durable in [false, true] {
             for poison in [false, true] {
-                let root = root();
-                let storage = Factory::open(&root, durable).unwrap();
-                let created = storage.create_document().await.unwrap();
+                let (root, storage, created) = create_test_document(durable).await;
                 let events = &created.components.events;
                 let count = Arc::new(AtomicU64::new(0));
                 let observed = count.clone();
@@ -2790,9 +2780,7 @@ mod tests {
             JournalFault::BeforeSync,
             JournalFault::AfterSync,
         ] {
-            let root = root();
-            let storage = Factory::open(&root, true).unwrap();
-            let created = storage.create_document().await.unwrap();
+            let (root, storage, created) = create_test_document(true).await;
             let components = &created.components;
             components
                 .checkpoints
@@ -2846,9 +2834,7 @@ mod tests {
 
     #[tokio::test]
     async fn snapshot_reads_are_linear_and_bounded_lookups_are_logarithmic() {
-        let root = root();
-        let storage = Factory::open(&root, false).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(false).await;
         let components = created.components;
         let blob = components
             .blobs
@@ -2964,9 +2950,7 @@ mod tests {
 
     #[tokio::test]
     async fn byte_offset_bounds_and_snapshot_lookup_survive_reopen_without_checkpoint() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(true).await;
         let id = created.id;
         let components = created.components;
         let blob = components
@@ -3029,9 +3013,7 @@ mod tests {
     #[tokio::test]
     async fn direct_reopen_keeps_history_lazy_and_checkpoint_size_independent() {
         use std::io::{Seek, SeekFrom, Write};
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(true).await;
         let id = created.id;
         let blob = created
             .components
@@ -3160,9 +3142,7 @@ mod tests {
 
     /// Checks that dependency-closed directories can be reused while another mutation owns the journal.
     async fn check_directory_deduplication(durable: bool, reopened: bool) {
-        let root = root();
-        let storage = Factory::open(&root, durable).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(durable).await;
         let blobs = &created.components.blobs;
         let leaf = blobs.put_blob(Bytes::from_static(b"leaf")).await.unwrap();
         let directory =
@@ -3221,9 +3201,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn directory_publication_preserves_closure_and_failed_deduplication_is_rejected() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(true).await;
         let blobs = &created.components.blobs;
         let leaf = blobs.put_blob(Bytes::from_static(b"leaf")).await.unwrap();
         let child = BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf.id())])).unwrap();
@@ -3310,9 +3288,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn directory_sync_failure_does_not_publish_parent() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, _storage, created) = create_test_document(true).await;
         let blobs = &created.components.blobs;
         let child = blobs.put_blob(Bytes::from_static(b"child")).await.unwrap();
         let parent =
@@ -3346,9 +3322,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn buffered_admission_reads_capacity_and_shutdown_precede_reopen() {
-        let root = root();
-        let storage = Factory::open(&root, false).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(false).await;
         let events = &created.components.events;
         let (entered, release) = block_write(events, false);
         let first = events.append(batch_event()).await.unwrap();
@@ -3405,9 +3379,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn buffered_resident_dependencies_and_checkpoint_keep_order_without_workers() {
-        let root = root();
-        let storage = Factory::open(&root, false).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(false).await;
         let components = &created.components;
         let (entered, release) = block_write(&components.events, false);
         let first = components.events.append(batch_event()).await.unwrap();
@@ -3507,9 +3479,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn blocked_batch_allows_executor_admission_and_published_reads() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, _storage, created) = create_test_document(true).await;
         let events = created.components.events.clone();
         let first = events.append(batch_event()).await.unwrap();
         let mut live = events.read(Some(first.id()), None);
@@ -3555,9 +3525,7 @@ mod tests {
 
     #[tokio::test(flavor = "current_thread")]
     async fn cancelled_batch_retains_opening_until_worker_settles() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(true).await;
         let events = created.components.events.clone();
         let (entered, release) = block_write(&events, false);
         let append = tokio::spawn(async move { events.append_batch(batch()).await });
@@ -3591,9 +3559,7 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn worker_panic_poisons_observations_and_wakes_readers_even_after_cancellation() {
         for cancelled in [false, true] {
-            let root = root();
-            let storage = Factory::open(&root, true).unwrap();
-            let created = storage.create_document().await.unwrap();
+            let (root, storage, created) = create_test_document(true).await;
             let events = created.components.events.clone();
             let mut live = events.read(None, None);
             live.next().await.unwrap().unwrap();
@@ -3665,9 +3631,7 @@ mod tests {
 
     #[tokio::test]
     async fn event_batch_positions_are_frame_offsets_with_one_journal_sync() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(true).await;
         let events = &created.components.events;
         let mut live = events.read(None, None);
         live.next().await.unwrap().unwrap();
@@ -3711,9 +3675,7 @@ mod tests {
             JournalFault::BeforeSync,
             JournalFault::AfterSync,
         ] {
-            let root = root();
-            let storage = Factory::open(&root, true).unwrap();
-            let created = storage.create_document().await.unwrap();
+            let (root, storage, created) = create_test_document(true).await;
             let events = &created.components.events;
             let mut live = events.read(None, None);
             live.next().await.unwrap().unwrap();
@@ -3760,9 +3722,7 @@ mod tests {
 
     #[tokio::test]
     async fn live_readers_wake_on_commit_and_uncertain_write() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, _storage, created) = create_test_document(true).await;
         let events = &created.components.events;
         let mut live = events.read(None, None);
         live.next().await.unwrap().unwrap();
@@ -3813,6 +3773,23 @@ mod tests {
         ))
     }
 
+    /// Creates an isolated namespace and document; the caller controls flushing, dropping, and cleanup.
+    async fn create_test_document(
+        durable: bool,
+    ) -> (
+        PathBuf,
+        Factory,
+        CreatedDocument<FileBlobs, FileEvents, FileSnapshots>,
+    ) {
+        let root = root();
+        let storage = Factory::open(&root, durable).expect("test namespace must open");
+        let created = storage
+            .create_document()
+            .await
+            .expect("fresh test document must be created");
+        (root, storage, created)
+    }
+
     #[tokio::test]
     async fn journal_faults_preserve_prefix_and_block_uncertain_observations() {
         for fault in [
@@ -3829,9 +3806,7 @@ mod tests {
 
     /// Exercises the same state transition under both durability policies.
     async fn check_fault(durable: bool, fault: JournalFault) {
-        let root = root();
-        let storage = Factory::open(&root, durable).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(durable).await;
         let events = &created.components.events;
         let first = events
             .append(Event {
@@ -3887,9 +3862,7 @@ mod tests {
 
     #[tokio::test]
     async fn snapshot_post_sync_ambiguity_recovers_without_duplicate_publication() {
-        let root = root();
-        let storage = Factory::open(&root, true).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(true).await;
         let blob = created
             .components
             .blobs
@@ -3984,9 +3957,7 @@ mod tests {
 
     #[tokio::test]
     async fn raw_event_dependencies_fail_recovery_and_foreign_handles_are_rejected() {
-        let root = root();
-        let storage = Factory::open(&root, false).unwrap();
-        let created = storage.create_document().await.unwrap();
+        let (root, storage, created) = create_test_document(false).await;
         let (_, other) = storage.create_view().await.unwrap();
         let foreign = other
             .blobs()

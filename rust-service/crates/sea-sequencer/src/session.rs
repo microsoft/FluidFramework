@@ -1299,16 +1299,23 @@ async fn append_once<Storage: SeaStorage>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sea_core::MonitoredStreamStatus;
+    use sea_core::{MonitoredStreamStatus, storage::DocumentId};
     use sea_memory::MemoryStorage;
+
+    /// Creates a fresh document with the default storage-backed sequencer.
+    /// The caller retains storage ownership for reopening and lifetime checks.
+    pub(super) async fn create_sequencer<Storage: SeaStorage + 'static>(
+        storage: &Storage,
+    ) -> (DocumentId, Arc<LocalSequencer<Storage>>) {
+        let (id, view) = storage.create_view().await.unwrap();
+        let sequencer = LocalSequencer::<Storage>::recover(view).await.unwrap();
+        (id, sequencer)
+    }
 
     #[tokio::test]
     async fn committed_minimum_survives_new_members_and_recovery() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime, "first").await;
         first.announce_membership(Bytes::new()).await.unwrap();
         let initial = first.submit(submission(b"initial")).await.unwrap();
@@ -1363,10 +1370,7 @@ mod tests {
     #[tokio::test]
     async fn floor_debounce_counts_events_not_numeric_position_units() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, sequencer) = create_sequencer(&storage).await;
         let mut runtime = sequencer.runtime.lock().await;
         for ordinal in 1..=1152_u64 {
             let position = EventPosition::new(8 + ordinal * ordinal * 4099);
@@ -1385,10 +1389,7 @@ mod tests {
     #[tokio::test]
     async fn idle_members_cannot_pin_the_debounced_reference_window() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, runtime) = create_sequencer(&storage).await;
         let idle = member(&runtime, "idle").await;
         let writer = member(&runtime, "writer").await;
         let mut reference = None;
@@ -1421,10 +1422,7 @@ mod tests {
     #[tokio::test]
     async fn snapshot_boundary_retains_its_floor_after_recovery() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let writer = member(&runtime, "writer").await;
         let participation = writer
             .coordinate_snapshots(SnapshotParticipation::ClientSelected)
@@ -1473,10 +1471,7 @@ mod tests {
     #[tokio::test]
     async fn announced_membership_orders_departure_on_close_and_recovery() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let observer = member(&runtime, "observer").await;
         let first = member(&runtime, "first").await;
         let joined = first
@@ -1573,10 +1568,7 @@ mod tests {
     #[tokio::test]
     async fn internal_checkpoints_recover_bounded_tail_and_outstanding_departures() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let writer = member(&runtime, "checkpoint-writer").await;
         writer
             .announce_membership(Bytes::from_static(b"writer"))
@@ -1639,10 +1631,7 @@ mod tests {
     #[tokio::test]
     async fn checkpoint_at_head_recovers_without_live_policy_history() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let writer = member(&runtime, "writer").await;
         let first = writer.submit(submission(b"first")).await.unwrap();
         let mut second = submission(b"second");
@@ -1685,10 +1674,7 @@ mod tests {
     #[tokio::test]
     async fn allocation_reserves_before_exposure_and_skips_unused_ids_after_restart() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let first = runtime.open_session(None).await.unwrap();
         assert_eq!(first.session_id().as_bytes().as_ref(), 1_u64.to_be_bytes());
         let checkpoint = {
@@ -1745,10 +1731,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn concurrent_sessions_deliver_each_submission_once_with_lazy_errors_and_progress() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime, "first").await;
         let second = member(&runtime, "second").await;
         let mut live = first.read(None, None);
@@ -1974,10 +1957,7 @@ mod tests {
     #[tokio::test]
     async fn session_conformance() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime, "first").await;
         let second = member(&runtime, "second").await;
         tokio::time::timeout(
@@ -1991,10 +1971,7 @@ mod tests {
     #[tokio::test]
     async fn membership_positions_resolve_and_publish_snapshot_boundaries() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, runtime) = create_sequencer(&storage).await;
         let publisher = member(&runtime, "publisher").await;
         let participant = member(&runtime, "participant").await;
         let root = publisher.put_blob(Bytes::new()).await.unwrap();
@@ -2044,10 +2021,7 @@ mod tests {
     #[tokio::test]
     async fn snapshot_parent_position_and_publisher_fences_are_session_policy() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime, "first").await;
         let second = member(&runtime, "second").await;
         let root = first.put_blob(Bytes::new()).await.unwrap();
@@ -2169,10 +2143,7 @@ mod tests {
     #[tokio::test]
     async fn closing_the_nominee_transfers_snapshot_authority_with_a_fresh_fence() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime, "first").await;
         let second = member(&runtime, "second").await;
         let mut first_nomination = first
@@ -2213,10 +2184,7 @@ mod tests {
     async fn direct_reads_close_with_membership_and_load_policies_preserve_replay() {
         use futures_util::FutureExt;
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime, "first").await;
         let second = member(&runtime, "second").await;
         let mut live = first.load(LoadStart::Beginning).await.unwrap().events;
@@ -2292,10 +2260,7 @@ mod tests {
     #[tokio::test]
     async fn recovery_preserves_positions_and_snapshots_without_deduplicating_submissions() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, runtime) = create_sequencer(&storage).await;
         let first = member(&runtime, "author").await;
         let position = first.submit(submission(b"original")).await.unwrap();
         let authority = first
@@ -2346,10 +2311,7 @@ mod tests {
     #[tokio::test]
     async fn content_facade_resolves_stored_identities_and_requires_live_membership() {
         let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (_, runtime) = create_sequencer(&storage).await;
         let session = member(&runtime, "content").await;
         let peer = member(&runtime, "peer").await;
         let payload = Bytes::from_static(b"content");
@@ -2398,10 +2360,7 @@ mod tests {
     #[tokio::test]
     async fn two_sessions_share_one_view_and_close_independently() {
         let storage = MemoryStorage::new();
-        let (id, view) = storage.create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let (id, sequencer) = create_sequencer(&storage).await;
         let first = sequencer.open_session(None).await.unwrap();
         let second = sequencer.open_session(None).await.unwrap();
         assert!(storage.open_view(&id).await.is_err());
