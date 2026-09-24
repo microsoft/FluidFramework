@@ -234,7 +234,8 @@ Include errors propagated from other APIs only when they are part of the support
 When an input is not currently supported but its error behavior is not intended as a stable contract, document the restriction with `@param` or `@remarks` without an `@throws` block.
 This preserves the ability to support the input later without changing a documented error contract.
 
-Use `{@link ...}` to reference error types when they are available at the API's support level.
+Use `{@link ...}` to reference exported project error types when they are available at the API's support level.
+Use code formatting for standard JavaScript error types, such as `RangeError`.
 Otherwise, describe the error using properties that callers can observe, such as `errorType: "usageError"`, without linking to an internal implementation type.
 
 Document input requirements with `@param` or `@remarks` in addition to `@throws`.
@@ -253,7 +254,7 @@ See the [error-handling guidelines](../../Coding-Guidelines.md#errors) for guida
  *
  * @param items - The items to read from.
  * @param index - Must be an integer in the range [0, items.length).
- * @throws A `RangeError` if index is not an integer or is outside the supported range.
+ * @throws A `RangeError` if index is not an integer inside the supported range.
  */
 export function getItemAt(items: readonly string[], index: number): string;
 ```

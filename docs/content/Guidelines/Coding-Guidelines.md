@@ -737,7 +737,7 @@ A better option for our example method might look something like:
 /**
  * Gets the element at the provided index.
  * @param index - The index being queried. Must be an integer in the range [0, {@link Bar.length}).
- * @throws A `RangeError` if the index is not an integer or is outside the supported range.
+ * @throws A `RangeError` if index is not an integer inside the supported range.
  */
 public getAtIndex(index: number): Foo;
 ```
