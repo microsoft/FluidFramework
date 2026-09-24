@@ -57,7 +57,8 @@ describeCompat(
 			"fails a point-in-time load after restoring the newest recoverable version bumps the epoch",
 			[
 				{
-					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelection",
+					outcome: "failed",
 					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
@@ -66,7 +67,8 @@ describeCompat(
 					errorType: "fileOverwrittenInStorage",
 				},
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					outcome: "failed",
 					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
@@ -122,7 +124,8 @@ describeCompat(
 			"fails a point-in-time load whose base precedes the target after a disruptive restore",
 			[
 				{
-					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					eventName: "fluid:telemetry:OdspDriver:VersionMarkBaseVersionSelection",
+					outcome: "failed",
 					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
@@ -131,7 +134,8 @@ describeCompat(
 					errorType: "fileOverwrittenInStorage",
 				},
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					outcome: "failed",
 					availabilityOutcome: "lineageMismatch",
 					errorType: "fileOverwrittenInStorage",
 				},
@@ -195,7 +199,8 @@ describeCompat(
 				{ eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception" },
 				{ eventName: "fluid:telemetry:Container:ContainerClose" },
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					outcome: "failed",
 					availabilityOutcome: "missingOps",
 				},
 			],
@@ -273,7 +278,8 @@ describeCompat(
 					errorType: "genericError",
 				},
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					outcome: "failed",
 					availabilityOutcome: "cancelled",
 					errorType: "genericError",
 				},

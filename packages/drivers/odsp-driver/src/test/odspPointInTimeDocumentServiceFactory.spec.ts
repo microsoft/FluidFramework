@@ -164,7 +164,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		assert.equal(versionManagerEpochTracker, capturedCacheAndTrackers[0]?.epochTracker);
 		logger.assertMatch([
 			{
-				eventName: "OdspDriver:VersionMarkBaseVersionSelectionSucceeded",
+				eventName: "OdspDriver:VersionMarkBaseVersionSelection",
+				outcome: "succeeded",
 				versionsProbed: 2,
 				sequenceNumberFetchCount: 2,
 			},
@@ -203,8 +204,9 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 
 		logger.assertMatch([
 			{
-				eventName: "OdspDriver:VersionMarkBaseVersionSelectionFailed",
+				eventName: "OdspDriver:VersionMarkBaseVersionSelection",
 				category: "error",
+				outcome: "failed",
 				error: "lineage mismatch",
 				errorType: OdspErrorTypes.fileOverwrittenInStorage,
 				availabilityOutcome: "lineageMismatch",
@@ -340,8 +342,9 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 			assert.equal(createDocumentServiceCalls, 0);
 			logger.assertMatch([
 				{
-					eventName: "OdspDriver:VersionMarkBaseVersionSelectionFailed",
+					eventName: "OdspDriver:VersionMarkBaseVersionSelection",
 					category: "error",
+					outcome: "failed",
 					availabilityOutcome: "baseVersionMissing",
 					oldestResolvedSequenceNumber: oldestResolvedSeq,
 					versionsProbed: oldestResolvedSeq === undefined ? 0 : 3,

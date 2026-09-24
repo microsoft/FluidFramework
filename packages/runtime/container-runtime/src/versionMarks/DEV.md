@@ -393,12 +393,10 @@ Resolver, driver, and loader timings use Fluid's standard `duration` property, e
 The loader and ODSP driver own the separate materialization telemetry. Their event names begin with
 `VersionMark`: the loader reports the end-to-end point-in-time load, while the driver reports
 base-version selection. Existing lower-level snapshot and op-fetch events retain their established names
-and ownership. These rollout events are terminal outcomes rather than `PerformanceEvent` lifecycle pairs:
-attempt volume is `Succeeded + Failed`, and each terminal event carries its own duration. The loader emits
-`fluid:telemetry:VersionMarkPointInTimeLoadSucceeded` /
-`fluid:telemetry:VersionMarkPointInTimeLoadFailed`; the ODSP driver emits
-`OdspDriver:VersionMarkBaseVersionSelectionSucceeded` /
-`OdspDriver:VersionMarkBaseVersionSelectionFailed`.
+and ownership. These rollout events are terminal outcomes rather than `PerformanceEvent` lifecycle pairs.
+Each operation uses one event name with `outcome` (`succeeded` or `failed`) and carries its own duration:
+the loader emits `fluid:telemetry:VersionMarkPointInTimeLoad`; the ODSP driver emits
+`OdspDriver:VersionMarkBaseVersionSelection`.
 
 The successful loader event reports `replayedOpCount`, the aggregate amount of replay work required,
 without emitting document-specific sequence numbers. The successful base-selection event reports

@@ -163,7 +163,8 @@ export async function createPointInTimeDocumentServiceCore(
 	} catch (error) {
 		extLogger.sendErrorEvent(
 			{
-				eventName: "VersionMarkBaseVersionSelectionFailed",
+				eventName: "VersionMarkBaseVersionSelection",
+				outcome: "failed",
 				duration: performanceNow() - baseSelectionStartTime,
 				targetSequenceNumber,
 				errorType: (error as Partial<{ errorType: string }> | undefined)?.errorType,
@@ -187,7 +188,8 @@ export async function createPointInTimeDocumentServiceCore(
 			versionMarkAvailabilityOutcome: "baseVersionMissing",
 		});
 		extLogger.sendErrorEvent({
-			eventName: "VersionMarkBaseVersionSelectionFailed",
+			eventName: "VersionMarkBaseVersionSelection",
+			outcome: "failed",
 			duration: performanceNow() - baseSelectionStartTime,
 			targetSequenceNumber,
 			availabilityOutcome: "baseVersionMissing",
@@ -199,7 +201,8 @@ export async function createPointInTimeDocumentServiceCore(
 		throw error;
 	}
 	extLogger.sendPerformanceEvent({
-		eventName: "VersionMarkBaseVersionSelectionSucceeded",
+		eventName: "VersionMarkBaseVersionSelection",
+		outcome: "succeeded",
 		duration: performanceNow() - baseSelectionStartTime,
 		versionsProbed: baseResult.versionsProbed,
 		sequenceNumberFetchCount: baseResult.sequenceNumberFetchCount,

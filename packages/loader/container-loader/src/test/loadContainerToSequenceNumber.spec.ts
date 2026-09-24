@@ -267,13 +267,14 @@ describe("loadContainerToSequenceNumber", () => {
 			logger.assertMatchNone([{ category: "error" }], undefined, false, false);
 
 			const terminalEvent = logger.events.find(
-				(event) => event.eventName === "fluid:telemetry:VersionMarkPointInTimeLoadSucceeded",
+				(event) => event.eventName === "fluid:telemetry:VersionMarkPointInTimeLoad",
 			);
 			assert(Number.isInteger(terminalEvent?.duration));
 			logger.assertMatch([
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadSucceeded",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
 					category: "performance",
+					outcome: "succeeded",
 					replayedOpCount: 0,
 				},
 			]);
@@ -299,13 +300,14 @@ describe("loadContainerToSequenceNumber", () => {
 
 			logger.assertMatch([
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
 					category: "error",
+					outcome: "failed",
 					targetSequenceNumber: 42,
 					availabilityOutcome: "targetOlderThanSnapshot",
 					baseSnapshotSequenceNumber: 50,
 					errorType: FluidErrorTypes.genericError,
-					error: "VersionMarkPointInTimeLoadFailed",
+					error: "VersionMarkPointInTimeLoad",
 					stack: undefined,
 				},
 			]);
@@ -325,15 +327,16 @@ describe("loadContainerToSequenceNumber", () => {
 
 			logger.assertMatch([
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
 					category: "error",
+					outcome: "failed",
 					targetSequenceNumber: 42,
 					availabilityOutcome: "missingOps",
 					baseSnapshotSequenceNumber: undefined,
 					errorType: expectedErrorType,
 					...(assertErrorPropertiesExcluded
 						? {
-								error: "VersionMarkPointInTimeLoadFailed",
+								error: "VersionMarkPointInTimeLoad",
 								stack: undefined,
 								driverVersion: undefined,
 								versionLabel: undefined,
@@ -385,8 +388,9 @@ describe("loadContainerToSequenceNumber", () => {
 
 			logger.assertMatch([
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
 					category: "error",
+					outcome: "failed",
 					targetSequenceNumber: 42,
 					availabilityOutcome: undefined,
 					baseSnapshotSequenceNumber: undefined,
@@ -410,8 +414,9 @@ describe("loadContainerToSequenceNumber", () => {
 
 			logger.assertMatch([
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
 					category: "error",
+					outcome: "failed",
 					targetSequenceNumber: 12,
 					availabilityOutcome: "missingOps",
 					baseSnapshotSequenceNumber: 10,
@@ -433,12 +438,13 @@ describe("loadContainerToSequenceNumber", () => {
 
 			logger.assertMatch([
 				{
-					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadFailed",
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
 					category: "error",
+					outcome: "failed",
 					targetSequenceNumber: 42,
 					availabilityOutcome: undefined,
 					errorType: FluidErrorTypes.genericError,
-					error: "VersionMarkPointInTimeLoadFailed",
+					error: "VersionMarkPointInTimeLoad",
 					stack: undefined,
 				},
 			]);

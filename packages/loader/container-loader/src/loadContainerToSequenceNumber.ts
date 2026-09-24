@@ -110,7 +110,8 @@ export async function loadContainerToSequenceNumber(
 		const baseSnapshotSequenceNumber = container.deltaManager.initialSequenceNumber;
 		const finalSequenceNumber = container.deltaManager.lastSequenceNumber;
 		logger.sendPerformanceEvent({
-			eventName: "VersionMarkPointInTimeLoadSucceeded",
+			eventName: "VersionMarkPointInTimeLoad",
+			outcome: "succeeded",
 			replayedOpCount: finalSequenceNumber - baseSnapshotSequenceNumber,
 			duration: performanceNow() - startTime,
 		});
@@ -121,7 +122,8 @@ export async function loadContainerToSequenceNumber(
 		const baseSnapshotSequenceNumber =
 			telemetryProperties.versionMarkBaseSnapshotSequenceNumber;
 		logger.sendErrorEvent({
-			eventName: "VersionMarkPointInTimeLoadFailed",
+			eventName: "VersionMarkPointInTimeLoad",
+			outcome: "failed",
 			targetSequenceNumber: loadToSequenceNumber,
 			...(typeof availabilityOutcome === "string" ? { availabilityOutcome } : {}),
 			...(typeof baseSnapshotSequenceNumber === "number"
