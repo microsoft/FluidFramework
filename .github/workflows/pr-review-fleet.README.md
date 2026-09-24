@@ -46,6 +46,7 @@ Four workflows compose the PR fleet review system:
 
 - **Triggers:** `workflow_run` on completion of "PR Review Fleet Dispatcher", **or** `workflow_dispatch` (manual / from the confirm workflow). The `workflow_run` path only proceeds if the dispatcher succeeded.
 - **Permissions:** `contents: read`, `pull-requests: write`, `actions: read` (to download the dispatcher artifact), `checks: write` (to surface a "Fleet Review" check on the PR — `workflow_dispatch` runs aren't otherwise visible in the Checks tab).
+- **Concurrency:** Keyed per PR; cancels in-progress runs.
 
 ### Adding a reviewer
 
@@ -54,15 +55,15 @@ Add the reviewer ID, display label, and description to `REVIEWERS` in
 `../prompts/reviewers/`. The prompt must instruct the agent to write
 `review-<id>.json` using the standard `findings` schema. Also add the ID to the
 fallback list in `pr-review-fleet.yml`. The fallback list is the complete set
-of reviewers; set `reviewer_count` to its length when the fallback should run
-the full fleet.
+of reviewers; add the new total to the `reviewer_count` choice options and set
+`reviewer_count` to that value when the fallback should run the full fleet.
 
 New reviewers appear in the confirmation comment and can be selected
-explicitly. To make a review area's HIGH findings request changes, add its
-display label to `PROMOTED_AREAS` in `../scripts/consolidate_reviews.py`;
-otherwise its findings remain advisory. If a reviewer has a stricter severity
-cap, enforce it in `parse_review_file()` as well as in its prompt.
-- **Concurrency:** Keyed per PR; cancels in-progress runs.
+explicitly. A single HIGH finding requests changes only when its area is in
+`PROMOTED_AREAS` in `../scripts/consolidate_reviews.py`; otherwise HIGH
+findings remain advisory unless there are at least three non-promoted HIGH
+findings in the same consolidated report. If a reviewer has a stricter
+severity cap, enforce it in `parse_review_file()` as well as in its prompt.
 
 ### Jobs
 
