@@ -28,6 +28,7 @@ import {
 	makePromiseWithResolvers,
 	parseHostGuestMessage,
 	type PromiseWithResolvers,
+	SandboxProtocolError,
 	throwProtocolError,
 	validateTreePayloadVocabulary,
 } from "./common.js";
@@ -77,7 +78,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 					break;
 				}
 				case "blobRequest": {
-					throw new Error("The Guest cannot receive blob requests.");
+					throw new SandboxProtocolError("The Guest cannot receive blob requests.");
 				}
 				case "sessionFailure": {
 					this.session.fail(new Error(message.error), false);
@@ -92,7 +93,9 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 	/** Reports a protocol message that the platform cannot deserialize. */
 	private readonly onMessageError = (): void => {
-		this.session.fail(new Error("The Guest could not deserialize a protocol message."));
+		this.session.fail(
+			new SandboxProtocolError("The Guest could not deserialize a protocol message."),
+		);
 	};
 
 	public constructor(
@@ -204,7 +207,9 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 	/** Processes the Host's acknowledgment of a local Guest change. */
 	private receiveAckFromHost(): void {
-		assert(this.inFlight > 0, "Unexpectedly received ack from Host");
+		if (this.inFlight <= 0) {
+			throw new SandboxProtocolError("Unexpectedly received ack from Host");
+		}
 		this.logger(`Guest: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
 		this.inFlight -= 1;
 

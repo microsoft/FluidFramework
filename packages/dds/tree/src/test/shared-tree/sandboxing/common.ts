@@ -20,6 +20,15 @@ import {
 } from "../../../util/index.js";
 
 /**
+ * A violation of the sandbox protocol's data or state requirements.
+ * Used by either endpoint, including shared validation on send and receive.
+ * This identifies the failed contract, not which participant is at fault.
+ */
+export class SandboxProtocolError extends Error {
+	public override readonly name = "SandboxProtocolError";
+}
+
+/**
  * An index into the Host's table of handles authorized for one Guest.
  * Valid only within the owning session; the brand does not establish runtime authorization.
  */
@@ -211,7 +220,7 @@ export function isEscapedObject(value: unknown): value is Static<typeof EscapedO
  */
 export function validateTreePayloadVocabulary(value: unknown): void {
 	if (!treePayloadVocabularyValidator.check(value)) {
-		throw new Error("Invalid sandbox tree payload.");
+		throw new SandboxProtocolError("Invalid sandbox tree payload.");
 	}
 }
 
@@ -334,7 +343,7 @@ export function isHandleToken(value: unknown): value is HandleToken {
  *
  * @param data - Normalized or decoded message data, with registered {@link BufferPlaceholder} placeholders.
  * @returns The validated protocol message.
- * @throws An error if the data is not a valid protocol message envelope.
+ * @throws {@link SandboxProtocolError} if the data is not a valid protocol message envelope.
  */
 export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	if (
@@ -344,7 +353,7 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 		!Object.hasOwn(data, "type") ||
 		!("type" in data)
 	) {
-		throw new Error("Invalid Host and Guest protocol message.");
+		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 	}
 
 	if (data.type === "acknowledgment") {
@@ -368,17 +377,16 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 			return data;
 		}
 		const blob = getTransportBuffer(data.blob);
-		if (blob !== undefined) {
-			const response: object = Object.create(null);
-			return Object.assign(response, {
-				type: "blobResponse" as const,
-				requestId: data.requestId,
-				blob,
-			});
-		}
+		assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
+		const response: object = Object.create(null);
+		return Object.assign(response, {
+			type: "blobResponse" as const,
+			requestId: data.requestId,
+			blob,
+		});
 	}
 
-	throw new Error("Invalid Host and Guest protocol message.");
+	throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 }
 
 /**

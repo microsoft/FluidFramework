@@ -29,7 +29,7 @@ export class SandboxSessionEndpoint {
 		private readonly report: (error: Error) => void,
 	) {}
 
-	/** The first terminal failure, if any. Remains available after disposal. */
+	/** The first terminal failure, with the original error and its classification in `cause`. Remains available after disposal. */
 	public get error(): Error | undefined {
 		return this.failure;
 	}
@@ -53,8 +53,8 @@ export class SandboxSessionEndpoint {
 			this.breaker.run(action);
 		} catch (error) {
 			const cause = normalizeProtocolError(error);
-			const failure = Object.assign(
-				new Error(`Sandbox session failed; recreate the Host and Guest. ${cause.message}`),
+			const failure = new Error(
+				`Sandbox session failed; recreate the Host and Guest. ${cause.message}`,
 				{ cause },
 			);
 			this.failure = failure;

@@ -3,12 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { compareFluidHandles, isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import {
+	compareFluidHandles,
+	isFluidHandle,
+	toFluidHandleInternal,
+} from "@fluidframework/runtime-utils/internal";
+import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { brand, type isAssignableTo, type requireFalse } from "../../../util/index.js";
 
@@ -20,6 +24,7 @@ import {
 	isLocalHandle,
 	isSerializedHandle,
 	parseHostGuestMessage,
+	SandboxProtocolError,
 	validateTreePayloadVocabulary,
 } from "./common.js";
 import {
@@ -43,13 +48,13 @@ describe("Sandbox transport codecs", () => {
 			return;
 		}
 		if (value instanceof ArrayBuffer) {
-			strict.equal(Object.getPrototypeOf(value), ArrayBuffer.prototype);
+			assert.equal(Object.getPrototypeOf(value), ArrayBuffer.prototype);
 			return;
 		}
 		if (Array.isArray(value)) {
-			strict.equal(Object.getPrototypeOf(value), Array.prototype);
+			assert.equal(Object.getPrototypeOf(value), Array.prototype);
 		} else {
-			strict.equal(Object.getPrototypeOf(value), null);
+			assert.equal(Object.getPrototypeOf(value), null);
 		}
 		for (const child of Object.values(value)) {
 			assertNullPrototypeRecords(child);
@@ -74,7 +79,7 @@ describe("Sandbox transport codecs", () => {
 		const untouched = { value: 1 };
 		const input = { untouched, nested: [handle, { handle }] };
 		const encoded = host.encode(input);
-		strict.deepEqual(
+		assert.deepEqual(
 			encoded,
 			normalizeTransportData({
 				untouched,
@@ -84,15 +89,15 @@ describe("Sandbox transport codecs", () => {
 				],
 			}),
 		);
-		strict.equal(input.nested[0], handle);
-		strict.deepEqual(host.encode(untouched), normalizeTransportData(untouched));
-		strict.notEqual(host.encode(untouched), untouched);
+		assert.equal(input.nested[0], handle);
+		assert.deepEqual(host.encode(untouched), normalizeTransportData(untouched));
+		assert.notEqual(host.encode(untouched), untouched);
 		const decoded = guest.decode(structuredClone(encoded));
 		const restored = host.decode(guest.encode(decoded));
-		strict.deepEqual(restored, normalizeTransportData(input));
-		strict.deepEqual(bound, []);
+		assert.deepEqual(restored, normalizeTransportData(input));
+		assert.deepEqual(bound, []);
 		host.bindHandles(restored);
-		strict.deepEqual(bound, [handle]);
+		assert.deepEqual(bound, [handle]);
 	});
 
 	it("normalizes every record, including generated handle and escape records", () => {
@@ -110,23 +115,23 @@ describe("Sandbox transport codecs", () => {
 		assertNullPrototypeRecords(decoded);
 		const restored = host.decode(structuredClone(guest.encode(decoded)));
 		assertNullPrototypeRecords(restored);
-		strict.deepEqual(restored, normalized);
-		strict.equal(Object.getPrototypeOf(input), Object.prototype);
-		strict.equal(Object.getPrototypeOf(input.nested[0]), Object.prototype);
+		assert.deepEqual(restored, normalized);
+		assert.equal(Object.getPrototypeOf(input), Object.prototype);
+		assert.equal(Object.getPrototypeOf(input.nested[0]), Object.prototype);
 	});
 
 	it("rejects ordinary records during semantic validation, including nested records", () => {
 		for (const value of [{}, { nested: {} }, [{}]]) {
-			strict.throws(
+			assert.throws(
 				() => validateTreePayloadVocabulary(value),
 				/Invalid sandbox tree payload/,
 			);
-			strict.doesNotThrow(() => validateTreePayloadVocabulary(normalizeTransportData(value)));
+			assert.doesNotThrow(() => validateTreePayloadVocabulary(normalizeTransportData(value)));
 		}
 		const nested: Record<string, unknown> = Object.create(null);
 		nested.child = {};
-		strict.throws(() => validateTreePayloadVocabulary(nested), /Invalid sandbox tree payload/);
-		strict.throws(
+		assert.throws(() => validateTreePayloadVocabulary(nested), /Invalid sandbox tree payload/);
+		assert.throws(
 			() => parseHostGuestMessage({ type: "acknowledgment" }),
 			/Invalid Host and Guest/,
 		);
@@ -149,11 +154,11 @@ describe("Sandbox transport codecs", () => {
 			});
 			channel.port1.postMessage(encoded);
 			const wire = await received;
-			strict.equal(Object.getPrototypeOf(wire), Object.prototype);
+			assert.equal(Object.getPrototypeOf(wire), Object.prototype);
 			const decoded = guest.decode(wire);
 			assertNullPrototypeRecords(decoded);
 			validateTreePayloadVocabulary(decoded);
-			strict.deepEqual(decoded, normalizeTransportData(input));
+			assert.deepEqual(decoded, normalizeTransportData(input));
 		} finally {
 			channel.port1.close();
 			channel.port2.close();
@@ -171,20 +176,20 @@ describe("Sandbox transport codecs", () => {
 			const normalized = normalizeTransportData(message);
 			const wire = structuredClone(sender.encode(normalized));
 			const decoded = receiver.decode(wire);
-			strict(typeof decoded === "object" && decoded !== null && "blob" in decoded);
-			strict.deepEqual(decoded.blob, normalizeTransportData({ arrayBufferMarker: true }));
+			assert(typeof decoded === "object" && decoded !== null && "blob" in decoded);
+			assert.deepEqual(decoded.blob, normalizeTransportData({ arrayBufferMarker: true }));
 			assertNullPrototypeRecords(decoded);
-			strict.throws(
+			assert.throws(
 				() => validateTreePayloadVocabulary(decoded.blob),
 				/Invalid sandbox tree payload/,
 			);
 
 			const parsed = parseHostGuestMessage(decoded);
-			strict(parsed.type === "blobResponse" && "blob" in parsed);
-			strict(parsed.blob instanceof ArrayBuffer);
-			strict.notEqual(parsed.blob, blob);
-			strict.deepEqual(new Uint8Array(parsed.blob), new Uint8Array(blob));
-			strict.deepEqual(new Uint8Array(blob), new Uint8Array([0, 127, 255]));
+			assert(parsed.type === "blobResponse" && "blob" in parsed);
+			assert(parsed.blob instanceof ArrayBuffer);
+			assert.notEqual(parsed.blob, blob);
+			assert.deepEqual(new Uint8Array(parsed.blob), new Uint8Array(blob));
+			assert.deepEqual(new Uint8Array(blob), new Uint8Array([0, 127, 255]));
 
 			for (const fake of [
 				{ arrayBufferMarker: true },
@@ -193,8 +198,8 @@ describe("Sandbox transport codecs", () => {
 			]) {
 				const data = receiver.decode(structuredClone(sender.encode(fake)));
 				validateTreePayloadVocabulary(data);
-				strict.deepEqual(data, normalizeTransportData(fake));
-				strict.throws(
+				assert.deepEqual(data, normalizeTransportData(fake));
+				assert.throws(
 					() => parseHostGuestMessage(normalizeTransportData({ ...message, blob: data })),
 					/Invalid Host and Guest/,
 				);
@@ -215,12 +220,12 @@ describe("Sandbox transport codecs", () => {
 				const normalized = normalizeTransportData(payload);
 				const decoded = codec.decode(structuredClone(codec.encode(payload)));
 				for (const value of [normalized, decoded, normalizeTransportData(decoded)]) {
-					strict.throws(
+					assert.throws(
 						() => validateTreePayloadVocabulary(value),
 						/Invalid sandbox tree payload/,
 					);
 				}
-				strict.throws(
+				assert.throws(
 					() =>
 						parseHostGuestMessage(
 							codec.decode(
@@ -237,7 +242,7 @@ describe("Sandbox transport codecs", () => {
 				{ type: "blobResponse", requestId: 0, error: blob },
 				{ type: "blobRequest", requestId: 0, token: blob },
 			]) {
-				strict.throws(
+				assert.throws(
 					() => parseHostGuestMessage(codec.decode(structuredClone(codec.encode(message)))),
 					/Invalid Host and Guest/,
 				);
@@ -251,50 +256,50 @@ describe("Sandbox transport codecs", () => {
 		const equivalent = new MockHandle(new ArrayBuffer(1), handle.path);
 		const first = guest.decode(host.encode(handle));
 		const second = guest.decode(host.encode(equivalent));
-		strict(isFluidHandle(first));
-		strict(isFluidHandle(second));
-		strict.equal(first, second);
-		strict(compareFluidHandles(first, second));
-		strict(!compareFluidHandles(first, handle));
+		assert(isFluidHandle(first));
+		assert(isFluidHandle(second));
+		assert.equal(first, second);
+		assert(compareFluidHandles(first, second));
+		assert(!compareFluidHandles(first, handle));
 	});
 
 	it("caches a single promise for concurrent and repeated get calls", async () => {
 		const { host, guest, requests } = setupTransportCodecs();
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
-		strict(isFluidHandle(proxy));
+		assert(isFluidHandle(proxy));
 		const first = proxy.get();
 		const second = proxy.get();
-		strict.equal(first, second);
-		strict.equal(requests.length, 1);
+		assert.equal(first, second);
+		assert.equal(requests.length, 1);
 		const request = requests[0];
 		const blob = await host.resolveBlob(request.token);
 		guest.receiveBlobResponse({ type: "blobResponse", requestId: request.requestId, blob });
-		strict.equal(await first, blob);
-		strict.equal(proxy.get(), first);
-		strict.equal(requests.length, 1);
+		assert.equal(await first, blob);
+		assert.equal(proxy.get(), first);
+		assert.equal(requests.length, 1);
 	});
 
 	it("caches resolution failures", async () => {
 		const { host, guest, requests } = setupTransportCodecs();
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
-		strict(isFluidHandle(proxy));
+		assert(isFluidHandle(proxy));
 		const promise = proxy.get();
 		guest.receiveBlobResponse({
 			type: "blobResponse",
 			requestId: requests[0].requestId,
 			error: "Blob unavailable",
 		});
-		await strict.rejects(promise, /Blob unavailable/);
-		strict.equal(proxy.get(), promise);
-		strict.equal(requests.length, 1);
+		await assert.rejects(promise, { name: "Error", message: "Blob unavailable" });
+		assert.equal(proxy.get(), promise);
+		assert.equal(requests.length, 1);
 	});
 
 	it("matches out-of-order blob responses to their requests", async () => {
 		const { host, guest, requests } = setupTransportCodecs();
 		const first = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
 		const second = guest.decode(host.encode(new MockHandle(new ArrayBuffer(2))));
-		strict(isFluidHandle(first));
-		strict(isFluidHandle(second));
+		assert(isFluidHandle(first));
+		assert(isFluidHandle(second));
 		const firstPromise = first.get();
 		const secondPromise = second.get();
 		const secondBlob = new ArrayBuffer(2);
@@ -303,54 +308,102 @@ describe("Sandbox transport codecs", () => {
 			requestId: requests[1].requestId,
 			blob: secondBlob,
 		});
-		strict.equal(await secondPromise, secondBlob);
+		assert.equal(await secondPromise, secondBlob);
 		const firstBlob = new ArrayBuffer(1);
 		guest.receiveBlobResponse({
 			type: "blobResponse",
 			requestId: requests[0].requestId,
 			blob: firstBlob,
 		});
-		strict.equal(await firstPromise, firstBlob);
+		assert.equal(await firstPromise, firstBlob);
 	});
 
 	it("propagates transport failures and removes the pending request", async () => {
 		const { host } = setupTransportCodecs();
+		const transportError = new Error("Cannot post message");
 		const guest = new GuestTransportCodec(() => {
-			throw new Error("Cannot post message");
+			throw transportError;
 		});
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
-		strict(isFluidHandle(proxy));
-		await strict.rejects(proxy.get(), /Cannot post message/);
-		strict.throws(
+		assert(isFluidHandle(proxy));
+		await assert.rejects(proxy.get(), (error: unknown) => error === transportError);
+		assert.throws(
 			() =>
 				guest.receiveBlobResponse({
 					type: "blobResponse",
 					requestId: brand<BlobRequestId>(0),
 					blob: new ArrayBuffer(1),
 				}),
-			/Unexpected sandbox blob response/,
+			SandboxProtocolError,
 		);
 	});
 
 	it("rejects pending requests on disposal", async () => {
 		const { host, guest } = setupTransportCodecs();
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
-		strict(isFluidHandle(proxy));
+		assert(isFluidHandle(proxy));
 		const promise = proxy.get();
 		guest.dispose();
-		await strict.rejects(promise, /disposed/);
-		strict.throws(() => guest.encode(proxy), /disposed/);
+		await assert.rejects(promise, /disposed/);
+		assert.throws(() => guest.encode(proxy), validateUsageError(/disposed/));
+		assert.throws(
+			() => guest.decode(host.encode(new MockHandle(new ArrayBuffer(0)))),
+			validateUsageError(/disposed/),
+		);
 		host.dispose();
-		await strict.rejects(host.resolveBlob(brand<HandleToken>(0)), /disposed/);
+		await assert.rejects(
+			host.resolveBlob(brand<HandleToken>(0)),
+			validateUsageError(/disposed/),
+		);
+		assert.throws(
+			() => host.encode(new MockHandle(new ArrayBuffer(0))),
+			validateUsageError(/disposed/),
+		);
 	});
 
 	it("rejects new and foreign Guest handles", () => {
 		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(1));
-		strict.throws(() => guest.encode(handle), /foreign/);
-		const otherGuest = new GuestTransportCodec(() => strict.fail("Unexpected request"));
+		assert.throws(() => guest.encode(handle), validateUsageError(/foreign/));
+		const otherGuest = new GuestTransportCodec(() => assert.fail("Unexpected request"));
 		const proxy = otherGuest.decode(host.encode(handle));
-		strict.throws(() => guest.encode(proxy), /foreign/);
+		assert.throws(() => guest.encode(proxy), validateUsageError(/foreign/));
+	});
+
+	it("classifies unsupported handle operations as usage errors", async () => {
+		assert.throws(
+			() => new HostTransportCodec(new MockHandle(undefined)),
+			validateUsageError(/requires a SharedTree handle/),
+		);
+		const { host, guest } = setupTransportCodecs();
+		const proxy = guest.decode(host.encode(new MockHandle("not a blob")));
+		assert(isFluidHandle(proxy));
+		await assert.rejects(
+			host.resolveBlob(brand<HandleToken>(0)),
+			validateUsageError(/only blob handles/),
+		);
+		assert.throws(
+			() => toFluidHandleInternal(proxy).attachGraph(),
+			validateUsageError(/Guest handles cannot attach/),
+		);
+		guest.dispose();
+		await assert.rejects(proxy.get(), validateUsageError(/disposed/));
+	});
+
+	it("preserves local blob-resolution errors", async () => {
+		const { host } = setupTransportCodecs();
+		const resolutionError = new Error("Storage unavailable");
+		host.encode(
+			Object.assign(new MockHandle(new ArrayBuffer(0)), {
+				get: async () => {
+					throw resolutionError;
+				},
+			}),
+		);
+		await assert.rejects(
+			host.resolveBlob(brand<HandleToken>(0)),
+			(error: unknown) => error === resolutionError,
+		);
 	});
 
 	it("rejects invalid and unknown tokens for edits and resolution", async () => {
@@ -358,27 +411,21 @@ describe("Sandbox transport codecs", () => {
 		host.encode(new MockHandle(new ArrayBuffer(1)));
 		for (const token of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, "0", undefined]) {
 			const encoded = { type: "__sandbox_handle__", token };
-			strict.throws(() => host.decode(encoded), /Invalid sandbox handle token/);
-			strict.throws(() => guest.decode(encoded), /Invalid sandbox handle token/);
+			assert.throws(() => host.decode(encoded), SandboxProtocolError);
+			assert.throws(() => guest.decode(encoded), SandboxProtocolError);
 		}
-		strict.throws(
+		assert.throws(
 			() => host.decode({ type: "__sandbox_handle__", token: 1 }),
-			/Unknown sandbox handle token/,
+			SandboxProtocolError,
 		);
-		await strict.rejects(
-			host.resolveBlob(brand<HandleToken>(1)),
-			/Unknown sandbox handle token/,
-		);
-		await strict.rejects(
-			host.resolveBlob(brand<HandleToken>(-1)),
-			/Unknown sandbox handle token/,
-		);
+		await assert.rejects(host.resolveBlob(brand<HandleToken>(1)), SandboxProtocolError);
+		await assert.rejects(host.resolveBlob(brand<HandleToken>(-1)), SandboxProtocolError);
 	});
 
 	it("does not interpret Host URLs as sandbox handles", () => {
 		const { host } = setupTransportCodecs();
 		const value = { type: "__fluid_handle__", url: "/unauthorized" };
-		strict.deepEqual(host.decode(value), normalizeTransportData(value));
+		assert.deepEqual(host.decode(value), normalizeTransportData(value));
 	});
 
 	it("rejects malformed blob messages and unexpected responses", () => {
@@ -398,33 +445,33 @@ describe("Sandbox transport codecs", () => {
 			{ type: "blobResponse", requestId: 0, blob: new ArrayBuffer(0), extra: true },
 			{ type: "blobResponse", requestId: 0, error: "failure", extra: true },
 		]) {
-			strict.throws(
+			assert.throws(
 				() => parseHostGuestMessage(normalizeTransportData(message)),
-				/Invalid Host and Guest|Unsupported sandbox transport/,
+				SandboxProtocolError,
 			);
 		}
-		strict.throws(
+		assert.throws(
 			() =>
 				guest.receiveBlobResponse({
 					type: "blobResponse",
 					requestId: brand<BlobRequestId>(0),
 					blob: new ArrayBuffer(0),
 				}),
-			/Unexpected sandbox blob response/,
+			SandboxProtocolError,
 		);
 	});
 
 	it("validates identifier bounds for handle records and every blob message variant", () => {
 		for (const id of [0, Number.MAX_SAFE_INTEGER]) {
-			strict(isHandleToken(id));
-			strict(isSerializedHandle({ type: "__sandbox_handle__", token: id }));
+			assert(isHandleToken(id));
+			assert(isSerializedHandle({ type: "__sandbox_handle__", token: id }));
 			for (const message of [
 				{ type: "blobRequest", requestId: id, token: id },
 				{ type: "blobResponse", requestId: id, blob: new ArrayBuffer(0) },
 				{ type: "blobResponse", requestId: id, error: "failure" },
 			]) {
 				const normalized = normalizeTransportData(message);
-				strict.deepEqual(
+				assert.deepEqual(
 					normalizeTransportData(parseHostGuestMessage(normalized)),
 					normalized,
 				);
@@ -440,15 +487,15 @@ describe("Sandbox transport codecs", () => {
 			null,
 			undefined,
 		]) {
-			strict(!isHandleToken(id));
-			strict(!isSerializedHandle({ type: "__sandbox_handle__", token: id }));
+			assert(!isHandleToken(id));
+			assert(!isSerializedHandle({ type: "__sandbox_handle__", token: id }));
 			for (const message of [
 				{ type: "blobRequest", requestId: 0, token: id },
 				{ type: "blobRequest", requestId: id, token: 0 },
 				{ type: "blobResponse", requestId: id, blob: new ArrayBuffer(0) },
 				{ type: "blobResponse", requestId: id, error: "failure" },
 			]) {
-				strict.throws(
+				assert.throws(
 					() => parseHostGuestMessage(normalizeTransportData(message)),
 					/Invalid Host and Guest|Unsupported sandbox transport/,
 				);
@@ -464,12 +511,12 @@ describe("Sandbox transport codecs", () => {
 			{ type: "__sandbox_handle__", token: 0, extra: true },
 			{ type: "__sandbox_handle__", token: 0, url: "/unauthorized" },
 		]) {
-			strict(!isSerializedHandle(value));
-			strict.throws(() => host.decode(value), /Invalid sandbox handle token/);
-			strict.throws(() => guest.decode(value), /Invalid sandbox handle token/);
+			assert(!isSerializedHandle(value));
+			assert.throws(() => host.decode(value), /Invalid sandbox handle token/);
+			assert.throws(() => guest.decode(value), /Invalid sandbox handle token/);
 		}
-		strict.equal(bound.length, 0);
-		strict.equal(requests.length, 0);
+		assert.equal(bound.length, 0);
+		assert.equal(requests.length, 0);
 	});
 
 	it("round-trips marker-shaped ordinary data in both directions", () => {
@@ -489,13 +536,13 @@ describe("Sandbox transport codecs", () => {
 		];
 		for (const value of [...inputs, { nested: inputs }]) {
 			const onGuest = guest.decode(structuredClone(host.encode(value)));
-			strict.deepEqual(onGuest, normalizeTransportData(value));
+			assert.deepEqual(onGuest, normalizeTransportData(value));
 			const onHost = host.decode(structuredClone(guest.encode(onGuest)));
-			strict.deepEqual(onHost, normalizeTransportData(value));
-			strict(!isLocalHandle(onGuest));
-			strict(!isLocalHandle(onHost));
+			assert.deepEqual(onHost, normalizeTransportData(value));
+			assert(!isLocalHandle(onGuest));
+			assert(!isLocalHandle(onHost));
 		}
-		strict.deepEqual(bound, []);
+		assert.deepEqual(bound, []);
 	});
 
 	it("restores nested handles in escaped objects without reinterpreting ordinary marker roots", () => {
@@ -509,10 +556,10 @@ describe("Sandbox transport codecs", () => {
 		const decoded = guest.decode(structuredClone(host.encode(value)));
 		validateTreePayloadVocabulary(decoded);
 		const restored = host.decode(structuredClone(guest.encode(decoded)));
-		strict.deepEqual(restored, normalizeTransportData(value));
-		strict.deepEqual(bound, []);
+		assert.deepEqual(restored, normalizeTransportData(value));
+		assert.deepEqual(bound, []);
 		host.bindHandles(restored);
-		strict.deepEqual(bound, [handle]);
+		assert.deepEqual(bound, [handle]);
 	});
 
 	it("preserves prototype-related property names in null-prototype records", () => {
@@ -522,49 +569,49 @@ describe("Sandbox transport codecs", () => {
 		);
 		const decoded = guest.decode(structuredClone(host.encode(value)));
 		validateTreePayloadVocabulary(decoded);
-		strict.deepEqual(decoded, normalizeTransportData(value));
-		strict(typeof decoded === "object" && decoded !== null);
-		strict.equal(Object.getPrototypeOf(decoded), null);
-		strict(Object.hasOwn(decoded, "__proto__"));
-		strict.equal(Object.hasOwn(Object.prototype, "polluted"), false);
-		strict.deepEqual(
+		assert.deepEqual(decoded, normalizeTransportData(value));
+		assert(typeof decoded === "object" && decoded !== null);
+		assert.equal(Object.getPrototypeOf(decoded), null);
+		assert(Object.hasOwn(decoded, "__proto__"));
+		assert.equal(Object.hasOwn(Object.prototype, "polluted"), false);
+		assert.deepEqual(
 			host.decode(structuredClone(guest.encode(decoded))),
 			normalizeTransportData(value),
 		);
 		const nullPrototype: unknown = Object.assign(Object.create(null), { value: 1 });
-		strict.deepEqual(guest.decode(host.encode(nullPrototype)), nullPrototype);
+		assert.deepEqual(guest.decode(host.encode(nullPrototype)), nullPrototype);
 	});
 
 	it("treats legacy string-property handle lookalikes as ordinary data", () => {
 		const { host, guest, requests } = setupTransportCodecs();
 		const value = { IFluidHandle: { IFluidHandle: true }, type: "__sandbox_handle__" };
-		strict(
+		assert(
 			isFluidHandle(value),
 			"The legacy fallback is the reason for the strict local check",
 		);
-		strict(!isLocalHandle(value));
+		assert(!isLocalHandle(value));
 		const decoded = guest.decode(structuredClone(host.encode(value)));
-		strict.deepEqual(decoded, normalizeTransportData(value));
+		assert.deepEqual(decoded, normalizeTransportData(value));
 		validateTreePayloadVocabulary(decoded);
-		strict.deepEqual(
+		assert.deepEqual(
 			host.decode(structuredClone(guest.encode(decoded))),
 			normalizeTransportData(value),
 		);
-		strict.equal(requests.length, 0);
+		assert.equal(requests.length, 0);
 	});
 
 	it("validates decoded handles as opaque leaves, not wire markers", () => {
 		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(0));
 		const decoded = guest.decode(structuredClone(host.encode([handle])));
-		strict(Array.isArray(decoded));
-		strict(isLocalHandle(decoded[0]));
-		strict(fluidHandleSymbol in decoded[0]);
+		assert(Array.isArray(decoded));
+		assert(isLocalHandle(decoded[0]));
+		assert(fluidHandleSymbol in decoded[0]);
 		validateTreePayloadVocabulary(decoded);
-		strict.doesNotThrow(() =>
+		assert.doesNotThrow(() =>
 			parseHostGuestMessage(normalizeTransportData({ type: "dataChange", change: decoded })),
 		);
-		strict.throws(
+		assert.throws(
 			() => validateTreePayloadVocabulary(new ArrayBuffer(0)),
 			/Invalid sandbox tree payload/,
 		);
@@ -591,11 +638,12 @@ describe("Sandbox transport codecs", () => {
 			cycle,
 			sparse,
 		]) {
-			strict.throws(() => host.encode(value), TypeError);
-			strict.throws(() => guest.decode(value), TypeError);
+			assert.throws(() => host.encode(value), SandboxProtocolError);
+			assert.throws(() => guest.decode(value), SandboxProtocolError);
+			assert.throws(() => normalizeTransportData(value), SandboxProtocolError);
 		}
 		const shared = { value: undefined };
-		strict.deepEqual(
+		assert.deepEqual(
 			guest.decode(host.encode([shared, shared, -0])),
 			normalizeTransportData([shared, shared, -0]),
 		);
@@ -613,11 +661,11 @@ describe("Sandbox transport codecs", () => {
 		});
 		const hidden = Object.defineProperty({}, "hidden", { value: 1 });
 		for (const value of [accessor, hidden, { [Symbol("key")]: 1 }]) {
-			strict.throws(() => host.encode(value), TypeError);
-			strict.throws(() => guest.decode(value), TypeError);
+			assert.throws(() => host.encode(value), SandboxProtocolError);
+			assert.throws(() => guest.decode(value), SandboxProtocolError);
 		}
-		strict.equal(accesses, 0);
-		strict.throws(
+		assert.equal(accesses, 0);
+		assert.throws(
 			() => guest.decode({ [fluidHandleSymbol]: {} }),
 			/Handles must cross the sandbox boundary as tokens/,
 		);
@@ -640,10 +688,10 @@ describe("Sandbox transport codecs", () => {
 				],
 			},
 		]) {
-			strict.throws(() => host.decode(value), /sandbox object escape/);
-			strict.throws(() => guest.decode(value), /sandbox object escape/);
+			assert.throws(() => host.decode(value), SandboxProtocolError);
+			assert.throws(() => guest.decode(value), SandboxProtocolError);
 		}
-		strict.deepEqual(bound, []);
+		assert.deepEqual(bound, []);
 	});
 
 	it("copies and restricts the entire message before restoring any handle", () => {
@@ -652,8 +700,8 @@ describe("Sandbox transport codecs", () => {
 			nested: host.encode(new MockHandle(new ArrayBuffer(0))),
 			unsupported: new Map(),
 		};
-		strict.throws(() => guest.decode(wire), /Unsupported sandbox transport object/);
-		strict.throws(
+		assert.throws(() => guest.decode(wire), /Unsupported sandbox transport object/);
+		assert.throws(
 			() =>
 				host.decode({
 					nested: { type: "__sandbox_handle__", token: Number.MAX_SAFE_INTEGER },

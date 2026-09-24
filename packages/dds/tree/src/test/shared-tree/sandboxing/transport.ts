@@ -12,6 +12,7 @@ import {
 	type ISharedObjectHandle,
 	isISharedObjectHandle,
 } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { brand } from "../../../util/index.js";
@@ -29,6 +30,7 @@ import {
 	isLocalHandle,
 	isSerializedHandle,
 	normalizeProtocolError,
+	SandboxProtocolError,
 	type SerializedHandle,
 	serializedHandleType,
 } from "./common.js";
@@ -62,7 +64,7 @@ abstract class TransportCodec {
 	public decode(value: unknown): unknown {
 		// Restrict the entire graph before schema checks or token restoration.
 		const copied = copyTransportData(value, () => {
-			throw new Error("Handles must cross the sandbox boundary as tokens.");
+			throw new SandboxProtocolError("Handles must cross the sandbox boundary as tokens.");
 		});
 		const restore = (item: unknown): unknown => {
 			if (
@@ -81,14 +83,14 @@ abstract class TransportCodec {
 				item.type === serializedHandleType
 			) {
 				if (!isSerializedHandle(item)) {
-					throw new Error("Invalid sandbox handle token.");
+					throw new SandboxProtocolError("Invalid sandbox handle token.");
 				}
 				return this.decodeHandle(item.token);
 			}
 			let entries: [string, unknown][];
 			if (Object.hasOwn(item, "type") && "type" in item && item.type === escapedObjectType) {
 				if (!isEscapedObject(item)) {
-					throw new Error("Invalid sandbox object escape.");
+					throw new SandboxProtocolError("Invalid sandbox object escape.");
 				}
 				entries = item.entries;
 			} else {
@@ -97,7 +99,7 @@ abstract class TransportCodec {
 			const record: object = Object.create(null);
 			for (const [key, child] of entries) {
 				if (Object.hasOwn(record, key)) {
-					throw new Error("Duplicate property in sandbox object escape.");
+					throw new SandboxProtocolError("Duplicate property in sandbox object escape.");
 				}
 				defineDataProperty(record, key, restore(child));
 			}
@@ -156,7 +158,7 @@ function copyTransportData(
 			return item;
 		}
 		if (typeof item !== "object") {
-			throw new TypeError("Unsupported sandbox transport value.");
+			throw new SandboxProtocolError("Unsupported sandbox transport value.");
 		}
 		if (isLocalHandle(item)) {
 			return handle(item);
@@ -166,7 +168,7 @@ function copyTransportData(
 			return buffer(registeredBuffer);
 		}
 		if (ancestors.has(item)) {
-			throw new TypeError("Cyclic sandbox transport data.");
+			throw new SandboxProtocolError("Cyclic sandbox transport data.");
 		}
 		const array = Array.isArray(item);
 		const isBuffer = item instanceof ArrayBuffer;
@@ -176,12 +178,12 @@ function copyTransportData(
 			(isBuffer && prototype !== ArrayBuffer.prototype) ||
 			(!array && !isBuffer && prototype !== Object.prototype && prototype !== null)
 		) {
-			throw new TypeError("Unsupported sandbox transport object.");
+			throw new SandboxProtocolError("Unsupported sandbox transport object.");
 		}
 		const keys = Reflect.ownKeys(item);
 		if (isBuffer) {
 			if (keys.length > 0) {
-				throw new TypeError("Sandbox buffers cannot have custom properties.");
+				throw new SandboxProtocolError("Sandbox buffers cannot have custom properties.");
 			}
 			// eslint-disable-next-line unicorn/prefer-spread -- This copies an ArrayBuffer, not an iterable array.
 			return buffer(item.slice(0));
@@ -195,16 +197,18 @@ function copyTransportData(
 					continue;
 				}
 				if (typeof key !== "string" || (array && key !== String(index++))) {
-					throw new TypeError("Unsupported sandbox transport property.");
+					throw new SandboxProtocolError("Unsupported sandbox transport property.");
 				}
 				const descriptor = Object.getOwnPropertyDescriptor(item, key);
 				if (descriptor?.enumerable !== true || !("value" in descriptor)) {
-					throw new TypeError("Sandbox transport requires enumerable data properties.");
+					throw new SandboxProtocolError(
+						"Sandbox transport requires enumerable data properties.",
+					);
 				}
 				defineDataProperty(result, key, copy(descriptor.value));
 			}
 			if (array && index !== item.length) {
-				throw new TypeError("Sparse sandbox transport arrays are not supported.");
+				throw new SandboxProtocolError("Sparse sandbox transport arrays are not supported.");
 			}
 			return array ? result : record(result);
 		} finally {
@@ -238,7 +242,7 @@ export class HostTransportCodec extends TransportCodec {
 		super();
 		const internal = toFluidHandleInternal(bindingHandle);
 		if (!isISharedObjectHandle(internal)) {
-			throw new Error("The Host requires a SharedTree handle for binding.");
+			throw new UsageError("The Host requires a SharedTree handle for binding.");
 		}
 		this.bindingHandle = internal;
 	}
@@ -275,14 +279,14 @@ export class HostTransportCodec extends TransportCodec {
 
 	private checkActive(): void {
 		if (this.disposed) {
-			throw new Error("The Host handle session is disposed.");
+			throw new UsageError("The Host handle session is disposed.");
 		}
 	}
 
 	private getHandle(token: HandleToken): IFluidHandle {
 		this.checkActive();
 		if (!isHandleToken(token) || token >= this.handles.length) {
-			throw new Error("Unknown sandbox handle token.");
+			throw new SandboxProtocolError("Unknown sandbox handle token.");
 		}
 		return this.handles[token];
 	}
@@ -298,7 +302,7 @@ export class HostTransportCodec extends TransportCodec {
 		const result = await this.getHandle(token).get();
 		if (!(result instanceof ArrayBuffer)) {
 			// If needed, a customizable Host policy could support Guest get() calls for Fluid-object handles.
-			throw new TypeError(
+			throw new UsageError(
 				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
 			);
 		}
@@ -335,7 +339,7 @@ class GuestHandle extends FluidHandleBase<ArrayBuffer> {
 	}
 
 	public attachGraph(): never {
-		throw new Error("Guest handles cannot attach. Return them to the Host instead.");
+		throw new UsageError("Guest handles cannot attach. Return them to the Host instead.");
 	}
 }
 
@@ -362,14 +366,14 @@ export class GuestTransportCodec extends TransportCodec {
 	protected encodeHandle(handle: IFluidHandle): HandleToken {
 		const token = this.tokens.get(handle);
 		if (this.disposed || token === undefined) {
-			throw new Error("Cannot send a foreign or disposed handle to the Host.");
+			throw new UsageError("Cannot send a foreign or disposed handle to the Host.");
 		}
 		return token;
 	}
 
 	protected decodeHandle(token: HandleToken): IFluidHandle {
 		if (this.disposed) {
-			throw new Error("The Guest handle session is disposed.");
+			throw new UsageError("The Guest handle session is disposed.");
 		}
 		let handle = this.handles.get(token);
 		if (handle === undefined) {
@@ -384,10 +388,12 @@ export class GuestTransportCodec extends TransportCodec {
 
 	private async requestBlob(token: HandleToken): Promise<ArrayBuffer> {
 		if (this.disposed) {
-			throw new Error("The Guest handle session is disposed.");
+			throw new UsageError("The Guest handle session is disposed.");
 		}
 		if (this.nextRequestId > Number.MAX_SAFE_INTEGER) {
-			throw new RangeError("Sandbox blob request identifiers are exhausted.");
+			throw new UsageError(
+				"Sandbox blob request identifiers are exhausted. Recreate the Host and Guest.",
+			);
 		}
 		const requestId = brand<BlobRequestId>(this.nextRequestId++);
 		return new Promise<ArrayBuffer>((resolve, reject) => {
@@ -404,7 +410,7 @@ export class GuestTransportCodec extends TransportCodec {
 	public receiveBlobResponse(message: BlobResponseMessage): void {
 		const pending = this.pending.get(message.requestId);
 		if (pending === undefined) {
-			throw new Error("Unexpected sandbox blob response.");
+			throw new SandboxProtocolError("Unexpected sandbox blob response.");
 		}
 		this.pending.delete(message.requestId);
 		if ("error" in message) {

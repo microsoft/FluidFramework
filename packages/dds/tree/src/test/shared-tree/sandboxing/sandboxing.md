@@ -203,6 +203,12 @@ This boundary assumes genuine structured clone, not arbitrary same-realm JavaScr
 Valid blob-resolution errors reject only `get()`, not the session.
 Error reporting runs outside tree event dispatch to avoid interrupting main-tree edits.
 
+Internal invariants use `assert` or `fail`; application misuse uses `UsageError`.
+[SandboxProtocolError](./common.ts) identifies protocol data or state violations at either endpoint, including shared send/receive validation.
+Operational errors retain their original classification.
+Local session reports preserve the original error in `cause`; peer notifications carry only a diagnostic message, not an error classification.
+These categories do not change which failures terminate the session.
+
 The application owns teardown and recreation of the Host/Guest pair and sandbox.
 Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
 Recovery uses fresh session objects, not reset breakers.

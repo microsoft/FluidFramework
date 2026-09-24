@@ -24,6 +24,7 @@ import {
 	normalizeProtocolError,
 	parseHostGuestMessage,
 	type PromiseWithResolvers,
+	SandboxProtocolError,
 	throwProtocolError,
 } from "./common.js";
 import { HostTransportCodec, normalizeTransportData } from "./transport.js";
@@ -110,7 +111,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					break;
 				}
 				case "blobResponse": {
-					throw new Error("The Host cannot receive blob responses.");
+					throw new SandboxProtocolError("The Host cannot receive blob responses.");
 				}
 				case "sessionFailure": {
 					this.session.fail(new Error(message.error), false);
@@ -125,7 +126,9 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 
 	/** Reports a protocol message that the platform cannot deserialize. */
 	private readonly onMessageError = (): void => {
-		this.session.fail(new Error("The Host could not deserialize a protocol message."));
+		this.session.fail(
+			new SandboxProtocolError("The Host could not deserialize a protocol message."),
+		);
 	};
 
 	public constructor(
@@ -306,11 +309,10 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	 * It can also cause the Host to send changes that arrived after the acknowledged update.
 	 */
 	private receiveAckFromGuest(): void {
+		if (this.mainHeadFromLastUpdate === undefined) {
+			throw new SandboxProtocolError("Unexpectedly received ack from Guest");
+		}
 		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
-		assert(
-			this.mainHeadFromLastUpdate !== undefined,
-			"Expected main head from last update to be defined",
-		);
 		this.logger(
 			`Host: received ack of update from Guest for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
 		);
