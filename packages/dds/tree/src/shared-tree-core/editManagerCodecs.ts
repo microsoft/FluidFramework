@@ -16,6 +16,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeDiscontinuedCodecAndSchema,
+	makeExperimentalCodecVersion,
 } from "../codec/index.js";
 import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 
@@ -120,10 +121,9 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					EditManagerFormatVersion.v7,
 				),
 		},
-		{
-			minVersionForCollab: undefined,
-			formatVersion: EditManagerFormatVersion.vSharedBranches,
-			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+		makeExperimentalCodecVersion(
+			EditManagerFormatVersion.vSharedBranches,
+			(options: EditManagerCodecOptions<TChangeset>) =>
 				makeSharedBranchesCodecWithVersion(
 					options.changeCodecs.resolve(
 						options.dependentChangeFormatVersion.lookup(
@@ -133,7 +133,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					options.revisionTagCodec,
 					EditManagerFormatVersion.vSharedBranches,
 				),
-		},
+		),
 	];
 
 	return VersionDispatchingCodecBuilder.build(editManagerCodecName, versions);
