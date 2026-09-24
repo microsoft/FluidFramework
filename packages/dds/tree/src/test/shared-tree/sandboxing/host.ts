@@ -26,7 +26,7 @@ import {
 	type PromiseWithResolver,
 	throwProtocolError,
 } from "./common.js";
-import { HostHandleCodec, normalizeTransportData } from "./handles.js";
+import { HostTransportCodec, normalizeTransportData } from "./handles.js";
 import { SandboxSession } from "./session.js";
 
 /**
@@ -65,7 +65,7 @@ function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSc
  * @typeParam TSchema - The schema of the synchronized tree.
  */
 export class Host<const TSchema extends ImplicitFieldSchema> {
-	public readonly codec: HostHandleCodec;
+	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSession;
 	private disposed = false;
 	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
@@ -139,7 +139,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
-		this.codec = new HostHandleCodec(bind);
+		this.codec = new HostTransportCodec(bind);
 		this.main = main;
 		this.local = main.fork();
 		this.session = new SandboxSession(

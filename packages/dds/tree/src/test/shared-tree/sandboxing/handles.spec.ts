@@ -22,7 +22,7 @@ import {
 	parseHostGuestMessage,
 	validateTreePayload,
 } from "./common.js";
-import { GuestHandleCodec, HostHandleCodec, normalizeTransportData } from "./handles.js";
+import { GuestTransportCodec, HostTransportCodec, normalizeTransportData } from "./handles.js";
 
 /**
  * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.
@@ -54,13 +54,13 @@ describe("Sandbox handle serialization", () => {
 
 	function setupSerializers() {
 		const bound: IFluidHandleInternal[] = [];
-		const host = new HostHandleCodec(
+		const host = new HostTransportCodec(
 			Object.assign(new MockHandle(undefined), {
 				bind: (handle: IFluidHandleInternal) => bound.push(handle),
 			}),
 		);
 		const requests: BlobRequestMessage[] = [];
-		const guest = new GuestHandleCodec((message) => requests.push(message));
+		const guest = new GuestTransportCodec((message) => requests.push(message));
 		return { host, guest, bound, requests };
 	}
 
@@ -302,7 +302,7 @@ describe("Sandbox handle serialization", () => {
 
 	it("propagates transport failures and removes the pending request", async () => {
 		const { host } = setupSerializers();
-		const guest = new GuestHandleCodec(() => {
+		const guest = new GuestTransportCodec(() => {
 			throw new Error("Cannot post message");
 		});
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
@@ -335,7 +335,7 @@ describe("Sandbox handle serialization", () => {
 		const { host, guest } = setupSerializers();
 		const handle = new MockHandle(new ArrayBuffer(1));
 		strict.throws(() => guest.encode(handle), /foreign/);
-		const otherGuest = new GuestHandleCodec(() => strict.fail("Unexpected request"));
+		const otherGuest = new GuestTransportCodec(() => strict.fail("Unexpected request"));
 		const proxy = otherGuest.decode(host.encode(handle));
 		strict.throws(() => guest.encode(proxy), /foreign/);
 	});

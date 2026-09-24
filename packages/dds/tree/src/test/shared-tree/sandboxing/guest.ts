@@ -31,7 +31,7 @@ import {
 	throwProtocolError,
 	validateTreePayload,
 } from "./common.js";
-import { GuestHandleCodec, normalizeTransportData } from "./handles.js";
+import { GuestTransportCodec, normalizeTransportData } from "./handles.js";
 import { SandboxSession } from "./session.js";
 
 /**
@@ -40,7 +40,7 @@ import { SandboxSession } from "./session.js";
  * @typeParam TSchema - The schema of the synchronized tree.
  */
 export class Guest<const TSchema extends ImplicitFieldSchema> {
-	private readonly codec: GuestHandleCodec;
+	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSession;
 	private disposed = false;
 	/** The independent view on the Guest. */
@@ -116,7 +116,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			},
 			handleProtocolError,
 		);
-		this.codec = new GuestHandleCodec((message) =>
+		this.codec = new GuestTransportCodec((message) =>
 			this.session.run(() => this.postMessage(message)),
 		);
 		const tree = this.codec.decode(content.tree);

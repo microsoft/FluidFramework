@@ -35,11 +35,11 @@ import {
 
 /**
  * Copies structured-clone messages and replaces handles without changing the input.
- * {@link HandleCodec.decode} restores authorized handles without binding or resolving them.
+ * {@link TransportCodec.decode} restores authorized handles without binding or resolving them.
  * Decoded buffers remain placeholders until blob-response validation.
  * Callers must perform semantic validation after decoding; this layer checks only transport structure.
  */
-abstract class HandleCodec {
+abstract class TransportCodec {
 	public encode(value: unknown): unknown {
 		return copyData(
 			value,
@@ -221,11 +221,11 @@ function defineDataProperty(target: object, key: string, value: unknown): void {
 }
 
 /**
- * Owns the handles authorized for one Guest. Entries live until {@link HostHandleCodec.dispose}.
+ * Owns the handles authorized for one Guest. Entries live until {@link HostTransportCodec.dispose}.
  * Equivalent handle paths share a token; returned tokens restore the original Host handles.
- * {@link HostHandleCodec.bindHandles} is separate from decoding so callers can first validate and apply the change locally.
+ * {@link HostTransportCodec.bindHandles} is separate from decoding so callers can first validate and apply the change locally.
  */
-export class HostHandleCodec extends HandleCodec {
+export class HostTransportCodec extends TransportCodec {
 	private readonly handles: IFluidHandle[] = [];
 	private readonly tokens = new Map<string, HandleToken>();
 	private readonly bind: ISharedObjectHandle;
@@ -339,9 +339,9 @@ class GuestHandle extends FluidHandleBase<ArrayBuffer> {
 /**
  * Restores {@link GuestHandle} proxies and resolves blobs independently of tree synchronization.
  * Caches one proxy per {@link HandleToken} and permits sending only proxies created by this codec.
- * {@link GuestHandleCodec.dispose} rejects pending requests and clears the session's proxy tables.
+ * {@link GuestTransportCodec.dispose} rejects pending requests and clears the session's proxy tables.
  */
-export class GuestHandleCodec extends HandleCodec {
+export class GuestTransportCodec extends TransportCodec {
 	private readonly sessionId = uuid();
 	private readonly handles = new Map<HandleToken, GuestHandle>();
 	private readonly tokens = new Map<IFluidHandle, HandleToken>();
