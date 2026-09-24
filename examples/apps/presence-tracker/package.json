@@ -37,15 +37,9 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",

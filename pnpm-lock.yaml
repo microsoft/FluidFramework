@@ -302,9 +302,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-utils
       '@fluidframework/datastore':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore
@@ -317,9 +314,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -514,9 +508,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
@@ -614,12 +605,6 @@ importers:
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       css-loader:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.109.0)
@@ -747,9 +732,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       prop-types:
         specifier: ^15.8.1
         version: 15.8.1
@@ -947,33 +929,15 @@ importers:
 
   examples/apps/presence-tracker:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
-      '@fluid-experimental/data-objects':
-        specifier: workspace:~
-        version: link:../../../experimental/framework/data-objects
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/container-definitions
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
       '@fluidframework/datastore':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/driver-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../packages/framework/fluid-static
       '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../packages/framework/presence
@@ -1210,12 +1174,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -1350,45 +1308,18 @@ importers:
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../experimental/dds/tree
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/client-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../../packages/loader/driver-utils
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/telemetry-utils
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -1486,18 +1417,6 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/common/container-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1556,24 +1475,9 @@ importers:
 
   examples/benchmarks/bubblebench/common:
     dependencies:
-      '@fluid-experimental/tree':
-        specifier: workspace:~
-        version: link:../../../../experimental/dds/tree
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
       best-random:
         specifier: ^1.0.0
         version: 1.0.3
@@ -1635,18 +1539,12 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -1717,18 +1615,9 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
       ot-json1:
         specifier: ^1.0.1
         version: 1.0.2
@@ -1802,9 +1691,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../../packages/dds/map
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../../packages/dds/tree
@@ -1878,9 +1764,6 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/azure-client
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
@@ -2181,9 +2064,6 @@ importers:
       '@fluidframework/counter':
         specifier: workspace:~
         version: link:../../../packages/dds/counter
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -2254,9 +2134,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -2454,15 +2331,9 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
@@ -2670,12 +2541,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../../packages/common/core-interfaces
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../../packages/framework/request-handler
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/runtime/runtime-utils
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -2940,9 +2805,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -3187,15 +3049,9 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
@@ -3293,21 +3149,9 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../../packages/dds/sequence
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -3514,21 +3358,12 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../packages/dds/map
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
@@ -3620,9 +3455,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../packages/dds/map
       '@fluidframework/merge-tree':
         specifier: workspace:~
         version: link:../../../packages/dds/merge-tree
@@ -3774,51 +3606,21 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../packages/common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../packages/common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../packages/common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../packages/loader/driver-utils
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../packages/dds/map
-      '@fluidframework/register-collection':
-        specifier: workspace:~
-        version: link:../../packages/dds/register-collection
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../packages/framework/request-handler
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../packages/runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../packages/dds/sequence
-      '@fluidframework/task-manager':
-        specifier: workspace:~
-        version: link:../../packages/dds/task-manager
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../packages/utils/telemetry-utils
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../packages/drivers/tinylicious-driver
       cors:
         specifier: ^2.8.4
         version: 2.8.5
@@ -4079,9 +3881,6 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/azure-client
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../../packages/common/core-interfaces
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../../packages/framework/react
@@ -4218,9 +4017,6 @@ importers:
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../../../packages/service-clients/odsp-client
-      '@fluidframework/odsp-doclib-utils':
-        specifier: workspace:~
-        version: link:../../../../packages/utils/odsp-doclib-utils
       css-loader:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.109.0)
@@ -4530,48 +4326,27 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
-      '@fluidframework/datastore':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../../packages/loader/driver-utils
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
       '@fluidframework/merge-tree':
         specifier: workspace:~
         version: link:../../../packages/dds/merge-tree
-      '@fluidframework/register-collection':
-        specifier: workspace:~
-        version: link:../../../packages/dds/register-collection
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
         specifier: ^7.0.1
         version: 7.0.1(supports-color@10.2.2)
-      '@fluidframework/task-manager':
-        specifier: workspace:~
-        version: link:../../../packages/dds/task-manager
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -4697,9 +4472,6 @@ importers:
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -5051,9 +4823,6 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -5148,36 +4917,15 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../../packages/loader/driver-utils
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/register-collection':
-        specifier: workspace:~
-        version: link:../../../packages/dds/register-collection
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
-      '@fluidframework/task-manager':
-        specifier: workspace:~
-        version: link:../../../packages/dds/task-manager
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -5272,9 +5020,6 @@ importers:
       '@fluid-example/migration-tools':
         specifier: workspace:~
         version: link:../../utils/migration-tools
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/client-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
@@ -5299,39 +5044,21 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../../packages/loader/driver-utils
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/register-collection':
-        specifier: workspace:~
-        version: link:../../../packages/dds/register-collection
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
         specifier: ^7.0.1
         version: 7.0.1(supports-color@10.2.2)
-      '@fluidframework/task-manager':
-        specifier: workspace:~
-        version: link:../../../packages/dds/task-manager
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -5426,45 +5153,18 @@ importers:
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../experimental/dds/tree
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/client-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../../packages/loader/container-loader
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../../packages/loader/driver-utils
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/telemetry-utils
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -5689,9 +5389,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -5777,9 +5474,6 @@ importers:
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       css-loader:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.109.0)
@@ -6295,18 +5989,12 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../../packages/common/client-utils
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../../packages/common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../../packages/common/core-utils
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../../packages/runtime/datastore-definitions
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../../packages/common/driver-definitions
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../../packages/runtime/runtime-definitions
@@ -6392,18 +6080,9 @@ importers:
       '@fluid-experimental/ot':
         specifier: workspace:~
         version: link:../../ot
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../../../packages/common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../../../packages/runtime/datastore-definitions
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../../../packages/common/driver-definitions
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../../../../packages/dds/shared-object-base
       ot-json1:
         specifier: ^1.0.1
         version: 1.0.2
@@ -6740,9 +6419,6 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../packages/dds/map
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
@@ -6813,9 +6489,6 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/driver-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/shared-summary-block':
         specifier: workspace:~
         version: link:../../../packages/dds/shared-summary-block
@@ -6868,9 +6541,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../core-utils
       '@types/events_pkg':
         specifier: npm:@types/events@^3.0.0
         version: '@types/events@3.0.3'
@@ -7225,9 +6895,6 @@ importers:
 
   packages/dds/cell:
     dependencies:
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -7419,9 +7086,6 @@ importers:
 
   packages/dds/counter:
     dependencies:
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -7519,9 +7183,6 @@ importers:
 
   packages/dds/ink:
     dependencies:
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
@@ -7625,9 +7286,6 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../loader/driver-utils
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
@@ -8197,9 +7855,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -8639,9 +8294,6 @@ importers:
 
   packages/dds/shared-summary-block:
     dependencies:
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
@@ -8736,12 +8388,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -9175,9 +8821,6 @@ importers:
 
   packages/drivers/driver-base:
     dependencies:
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../common/client-utils
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -9430,9 +9073,6 @@ importers:
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -10064,9 +9704,6 @@ importers:
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -10076,9 +9713,6 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../loader/driver-utils
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
@@ -10185,9 +9819,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -10367,9 +9998,6 @@ importers:
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -10840,9 +10468,6 @@ importers:
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../loader/container-loader
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
@@ -10861,15 +10486,9 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../request-handler
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-utils
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base
@@ -11359,9 +10978,6 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/datastore-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../fluid-static
@@ -11477,12 +11093,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../common/core-utils
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
@@ -13233,9 +12843,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../common/client-utils
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../../test/mocha-test-setup
       '@fluid-private/test-version-utils':
         specifier: workspace:~
         version: link:../../../test/test-version-utils
@@ -13272,18 +12879,12 @@ importers:
       '@fluidframework/map-legacy':
         specifier: npm:@fluidframework/map@^1.4.0
         version: '@fluidframework/map@1.4.0(debug@4.4.3)(supports-color@10.2.2)'
-      '@fluidframework/matrix':
-        specifier: workspace:~
-        version: link:../../../dds/matrix
       '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../framework/presence
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../../dds/sequence
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../utils/telemetry-utils
@@ -13369,9 +12970,6 @@ importers:
 
   packages/service-clients/end-to-end-tests/odsp-client:
     dependencies:
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../../test/mocha-test-setup
       '@fluid-private/test-version-utils':
         specifier: workspace:~
         version: link:../../../test/test-version-utils
@@ -13396,9 +12994,6 @@ importers:
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../dds/map
-      '@fluidframework/matrix':
-        specifier: workspace:~
-        version: link:../../../dds/matrix
       '@fluidframework/odsp-client':
         specifier: workspace:~
         version: link:../../odsp-client
@@ -13408,9 +13003,6 @@ importers:
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../../../drivers/odsp-driver-definitions
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../../dds/sequence
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../utils/telemetry-utils
@@ -13602,9 +13194,6 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../loader/driver-utils
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../framework/fluid-static
@@ -13617,9 +13206,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -13843,9 +13429,6 @@ importers:
 
   packages/test/local-server-stress-tests:
     dependencies:
-      '@fluid-experimental/tree':
-        specifier: workspace:~
-        version: link:../../../experimental/dds/tree
       '@fluid-internal/claims':
         specifier: workspace:~
         version: link:../../dds/claims
@@ -13897,12 +13480,6 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../loader/driver-utils
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@6.0.3)
@@ -14193,9 +13770,6 @@ importers:
 
   packages/test/snapshots:
     dependencies:
-      '@fluid-experimental/ink':
-        specifier: workspace:~
-        version: link:../../dds/ink
       '@fluid-experimental/sequence-deprecated':
         specifier: workspace:~
         version: link:../../../experimental/dds/sequence-deprecated
@@ -14214,9 +13788,6 @@ importers:
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../common/core-interfaces
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -14475,9 +14046,6 @@ importers:
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../../drivers/odsp-driver-definitions
-      '@fluidframework/odsp-urlresolver':
-        specifier: workspace:~
-        version: link:../../drivers/odsp-urlResolver
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
@@ -14560,9 +14128,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../mocha-test-setup
       '@fluid-internal/test-driver-definitions':
         specifier: workspace:~
         version: link:../test-driver-definitions
@@ -14656,9 +14221,6 @@ importers:
       '@fluidframework/register-collection':
         specifier: workspace:~
         version: link:../../dds/register-collection
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../framework/request-handler
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
@@ -14992,9 +14554,6 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../loader/driver-utils
-      '@fluidframework/local-driver':
-        specifier: workspace:~
-        version: link:../../drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../dds/map
@@ -15004,9 +14563,6 @@ importers:
       '@fluidframework/request-handler':
         specifier: workspace:~
         version: link:../../framework/request-handler
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
@@ -15331,9 +14887,6 @@ importers:
 
   packages/tools/devtools/devtools:
     dependencies:
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../common/container-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../common/core-interfaces
@@ -15627,9 +15180,6 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/runtime-utils
@@ -15772,24 +15322,12 @@ importers:
       '@fluidframework/devtools-core':
         specifier: workspace:~
         version: link:../devtools-core
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../common/driver-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../framework/fluid-static
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../dds/map
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../framework/react
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../runtime/runtime-utils
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../dds/sequence
@@ -15926,9 +15464,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../common/core-interfaces
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../runtime/datastore-definitions
       '@fluidframework/devtools-core':
         specifier: workspace:~
         version: link:../devtools-core
@@ -15972,6 +15507,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.67.0(@types/node@22.19.17)(supports-color@10.2.2)
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/datastore-definitions
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@6.0.3)
@@ -16119,9 +15657,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
-      '@fluidframework/tool-utils':
-        specifier: workspace:~
-        version: link:../../utils/tool-utils
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -16313,9 +15848,6 @@ importers:
       '@fluidframework/replay-driver':
         specifier: workspace:~
         version: link:../../drivers/replay-driver
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../framework/request-handler
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
@@ -16392,9 +15924,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -16568,9 +16097,6 @@ importers:
 
   packages/utils/tool-utils:
     dependencies:
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions

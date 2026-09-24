@@ -53,7 +53,6 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"prop-types": "^15.8.1",
 		"react": "^18.3.1",
 		"react-collapsible": "^2.7.0",
