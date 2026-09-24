@@ -11,8 +11,8 @@ use bytes::Bytes;
 use futures_util::StreamExt as _;
 use sea_benchmarks::measurement::MeasurementClock;
 use sea_core::{
-    Event, EventSubmission, MonitoredStreamItem, SeaAuthorSession, archive::SessionEventKind,
-    session::SeaArchive, storage::SeaStorage,
+    Event, EventPosition, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
+    archive::SessionEventKind, session::SeaArchive, storage::SeaStorage,
 };
 use sea_memory::MemoryStorage;
 use sea_sequencer::session::LocalSequencer;
@@ -42,6 +42,33 @@ fn payload(sequence: usize) -> Bytes {
     let mut bytes = format!("{sequence:08}").into_bytes();
     bytes.resize(64, b'x');
     Bytes::from(bytes)
+}
+
+/// Checks the exact finite replay after measurement without creating a subscription during writes.
+async fn verify_replay<Session: SeaArchive>(
+    session: &Session,
+    identity: &SessionId,
+    receipts: &[EventPosition],
+) -> Result<usize, String> {
+    let last = *receipts.last().ok_or("no receipts")?;
+    let mut events = session.read(None, Some(last));
+    let mut count = 0;
+    while let Some(event) = events.next().await {
+        if let MonitoredStreamItem::Item(event) = event.map_err(display)? {
+            if event.kind != SessionEventKind::Application
+                || &event.session_id != identity
+                || event.committed.event.payload != payload(count + 1)
+                || receipts.get(count) != Some(&event.committed.position)
+            {
+                return Err(format!("finite replay mismatch at {count}"));
+            }
+            count += 1;
+        }
+    }
+    if count != receipts.len() {
+        return Err("incomplete finite replay".into());
+    }
+    Ok(count)
 }
 
 /// Exchanges phase boundaries with the external CPU/RSS sampler.
@@ -240,26 +267,7 @@ async fn exercise<Storage: SeaStorage + 'static>(storage: Storage) -> Result<(),
     exchange(&json!({"type":"timed-result","workers":workers,"cacheAllocation":allocation}))?;
     let mut replayed = 0;
     for ((session, sequencer), receipts) in sessions.iter().zip(&sequencers).zip(&receipts) {
-        let last = *receipts.last().ok_or("no receipts")?;
-        let mut events = session.read(None, Some(last));
-        let mut count = 0;
-        while let Some(event) = events.next().await {
-            if let MonitoredStreamItem::Item(event) = event.map_err(display)? {
-                if event.kind != SessionEventKind::Application
-                    || event.session_id != *session.session_id()
-                    || event.committed.event.payload != payload(count + 1)
-                    || receipts.get(count) != Some(&event.committed.position)
-                {
-                    return Err(format!("finite replay mismatch at {count}"));
-                }
-                count += 1;
-            }
-        }
-        if count != receipts.len() {
-            return Err("incomplete finite replay".into());
-        }
-        replayed += count;
-        drop(events);
+        replayed += verify_replay(session.as_ref(), session.session_id(), receipts).await?;
         session.close().await.map_err(display)?;
         sequencer.shutdown().await.map_err(display)?;
     }
@@ -307,5 +315,67 @@ mod tests {
     fn exact_no_reader_payload() {
         assert_eq!(payload(42).len(), 64);
         assert_eq!(&payload(42)[..8], b"00000042");
+    }
+
+    #[tokio::test]
+    async fn replay_checks_identity_receipts_payloads_and_complete_history() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let sequencer = recover::<MemoryStorage>(view).await.unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let mut receipts = Vec::new();
+        for sequence in 1..=2 {
+            receipts.push(
+                session
+                    .submit(EventSubmission {
+                        reference: None,
+                        event: Event {
+                            payload: payload(sequence),
+                            blob_tree: None,
+                        },
+                    })
+                    .await
+                    .unwrap(),
+            );
+        }
+        assert_eq!(
+            verify_replay(&session, session.session_id(), &receipts).await,
+            Ok(2)
+        );
+        assert!(
+            verify_replay(&session, &SessionId::new(u64::MAX).unwrap(), &receipts)
+                .await
+                .is_err()
+        );
+        assert!(
+            verify_replay(&session, session.session_id(), &[receipts[1]])
+                .await
+                .is_err()
+        );
+        assert!(
+            verify_replay(&session, session.session_id(), &[receipts[0], receipts[0]])
+                .await
+                .is_err()
+        );
+        receipts.push(
+            session
+                .submit(EventSubmission {
+                    reference: None,
+                    event: Event {
+                        payload: payload(2),
+                        blob_tree: None,
+                    },
+                })
+                .await
+                .unwrap(),
+        );
+        assert!(
+            verify_replay(&session, session.session_id(), &receipts)
+                .await
+                .is_err()
+        );
+        session.close().await.unwrap();
+        sequencer.shutdown().await.unwrap();
+        storage.shutdown().await.unwrap();
     }
 }

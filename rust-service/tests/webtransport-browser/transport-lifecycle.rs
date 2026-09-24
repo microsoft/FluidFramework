@@ -1,6 +1,10 @@
 //! Test-only ownership controls for the real browser transport.
 
 #[cfg(target_arch = "wasm32")]
+#[path = "../../crates/sea-webtransport/examples/support/lifecycle_controls.rs"]
+mod controls;
+
+#[cfg(target_arch = "wasm32")]
 mod browser {
     use sea_webtransport::transport::{ClientTransport, browser::BrowserTransport};
     use wasm_bindgen::prelude::*;

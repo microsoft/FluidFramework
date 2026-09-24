@@ -18,7 +18,7 @@ use sea_benchmarks::{
 };
 use sea_compression::CompressionSession;
 use sea_core::{
-    ArchiveEventStream, Event, EventPosition, MonitoredStreamItem,
+    ArchiveEventStream, BlobTreeId, Event, MonitoredStreamItem,
     archive::{EventSubmission, SnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{
@@ -576,8 +576,15 @@ where
             .await
             .map_err(display_error)?
             .ok_or_else(|| "reopened session did not preserve its snapshot".to_owned())?;
-        if snapshot.at_event.id() != EventPosition::new(config.records) {
+        if Some(snapshot.at_event.id()) != records.last().map(|record| record.committed.position) {
             return Err("reopened session did not preserve its latest snapshot".to_owned());
+        }
+        let BlobTreeId::Blob(root) = snapshot.root.id() else {
+            return Err("reopened session snapshot root is not a blob".to_owned());
+        };
+        let payload = session.get_blob(root).await.map_err(display_error)?;
+        if payload.as_ref() != generator.payload(FixtureKind::Snapshot, config.records) {
+            return Err("reopened session snapshot payload did not match fixture".to_owned());
         }
     }
     Ok(())
@@ -755,14 +762,28 @@ where
         collect_storage_events(storage.read(None, storage.head().await.map_err(display_error)?))
             .await?;
     verify_storage_payloads(&records, &FixtureGenerator::new(config.seed), config)?;
-    if config.snapshot_frequency.is_some()
-        && storage
+    if config.snapshot_frequency.is_some() {
+        let snapshot = storage
             .get_snapshot(LoadStart::LatestSnapshot)
             .await
             .map_err(display_error)?
-            .is_none()
-    {
-        return Err("reopened file stream did not preserve its snapshot".to_owned());
+            .ok_or_else(|| "reopened file stream did not preserve its snapshot".to_owned())?;
+        if Some(snapshot.at_event.id()) != records.last().map(|record| record.position) {
+            return Err("reopened file stream did not preserve its latest snapshot".to_owned());
+        }
+        let BlobTreeId::Blob(root) = snapshot.root.id() else {
+            return Err("reopened file snapshot root is not a blob".to_owned());
+        };
+        let payload = storage
+            .blobs()
+            .get_blob(root)
+            .await
+            .map_err(display_error)?;
+        if payload.as_ref()
+            != FixtureGenerator::new(config.seed).payload(FixtureKind::Snapshot, config.records)
+        {
+            return Err("reopened file snapshot payload did not match fixture".to_owned());
+        }
     }
     Ok(())
 }
@@ -1048,6 +1069,7 @@ fn usage() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sea_core::EventPosition;
 
     #[test]
     fn command_parser_accepts_help_for_program_and_measurement() {
@@ -1253,5 +1275,147 @@ mod tests {
             verify_reopened_session(session, &config).await,
             Err("reopened session did not preserve its latest snapshot".to_owned())
         );
+    }
+
+    #[tokio::test]
+    async fn snapshot_verification_uses_receipt_positions_not_record_counts() {
+        let directory =
+            PathBuf::from("target").join(format!("snapshot-verification-{}", std::process::id()));
+        fs::create_dir_all("target").unwrap();
+        fs::create_dir(&directory).unwrap();
+        let factory = FileStorage::open(&directory).unwrap();
+        let (_, view) = factory.create_view().await.unwrap();
+        let sequencer = LocalSequencer::<FileStorage>::recover(view).await.unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let config = Config {
+            backend: Backend::File,
+            fixture: FixtureKind::SmallCompressible,
+            seed: DEFAULT_SEED,
+            records: 2,
+            writers: 1,
+            snapshot_frequency: Some(1),
+            repetitions: 1,
+            warmups: 0,
+        };
+        let generator = FixtureGenerator::new(config.seed);
+        let mut last = None;
+        for index in 0..config.records {
+            last = Some(
+                session
+                    .submit(EventSubmission {
+                        reference: last,
+                        event: Event {
+                            payload: Bytes::from(generator.payload(config.fixture, index)),
+                            blob_tree: None,
+                        },
+                    })
+                    .await
+                    .unwrap(),
+            );
+        }
+        let position = last.unwrap();
+        assert_ne!(position, EventPosition::new(config.records));
+        let root = session
+            .put_blob(Bytes::from(
+                generator.payload(FixtureKind::Snapshot, config.records),
+            ))
+            .await
+            .unwrap();
+        let at_event = session.resolve_position(position).await.unwrap().unwrap();
+        let _participation = session
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        session
+            .publish_snapshot(None, None, Snapshot { root, at_event })
+            .await
+            .unwrap();
+        let result = verify_reopened_session(&session, &config).await;
+        session.close().await.unwrap();
+        sequencer.shutdown().await.unwrap();
+        factory.shutdown().await.unwrap();
+        fs::remove_dir_all(directory).unwrap();
+        assert_eq!(result, Ok(()));
+    }
+
+    #[tokio::test]
+    async fn reopened_storage_rejects_stale_and_corrupt_snapshot_state() {
+        let config = Config {
+            backend: Backend::Memory,
+            fixture: FixtureKind::Empty,
+            seed: DEFAULT_SEED,
+            records: 2,
+            writers: 1,
+            snapshot_frequency: Some(1),
+            repetitions: 1,
+            warmups: 0,
+        };
+        for stale in [true, false] {
+            let (_, storage) = MemoryStorage::new().create_view().await.unwrap();
+            let first = storage.append(Bytes::new(), None).await.unwrap();
+            let last = storage.append(Bytes::new(), None).await.unwrap();
+            let root = storage.blobs().put_blob(Bytes::new()).await.unwrap();
+            storage
+                .publish_snapshot(&Snapshot {
+                    at_event: if stale { first } else { last },
+                    root,
+                })
+                .await
+                .unwrap();
+            assert_eq!(
+                verify_reopened_storage(&storage, &config).await,
+                Err(if stale {
+                    "reopened file stream did not preserve its latest snapshot"
+                } else {
+                    "reopened file snapshot payload did not match fixture"
+                }
+                .to_owned())
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn reopened_session_rejects_corrupt_snapshot_state() {
+        let config = Config {
+            backend: Backend::Memory,
+            fixture: FixtureKind::Empty,
+            seed: DEFAULT_SEED,
+            records: 1,
+            writers: 1,
+            snapshot_frequency: Some(1),
+            repetitions: 1,
+            warmups: 0,
+        };
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let position = session
+            .submit(EventSubmission {
+                reference: None,
+                event: Event {
+                    payload: Bytes::new(),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+        let root = session.put_blob(Bytes::new()).await.unwrap();
+        let at_event = session.resolve_position(position).await.unwrap().unwrap();
+        let _participation = session
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        session
+            .publish_snapshot(None, None, Snapshot { root, at_event })
+            .await
+            .unwrap();
+        assert_eq!(
+            verify_reopened_session(&session, &config).await,
+            Err("reopened session snapshot payload did not match fixture".to_owned())
+        );
+        session.close().await.unwrap();
+        sequencer.shutdown().await.unwrap();
     }
 }

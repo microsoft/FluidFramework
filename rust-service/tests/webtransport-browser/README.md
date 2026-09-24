@@ -31,10 +31,10 @@ Each final scenario prints `TRANSPORT_MODE`, browser results, shutdown results, 
 | Artifact loading | Factory construction loads nothing; split loads only selected capabilities; combined shares one artifact pair. An undecorated observer verifies encoded bytes. |
 | ServiceClient: each preset/compression pair | Detached creation, attachment, load by ID, bidirectional edits, reopen, independent creation. |
 | Final transport flow | Allocated IDs, ordered submissions, gap-free loads, content round trips, snapshots, close/reopen, closed-call rejection without retry. |
-| Snapshot ownership | Old cancellation cannot revoke replacement; publication works with a pending notification; cancelled reads reject. |
+| Snapshot ownership | Old cancellation cannot revoke replacement; publication works with a pending notification; cancelled reads reject; cancelling the selected participant grants a waiting peer a new fence while both archive connections remain usable. |
 | Shutdown | Existing sessions work during drain and fail after its deadline; new sessions fail after acceptance stops. |
 
-The final flow reports four successful sessions, excluding missing-document rejection.
+The final flow reports six successful sessions, including two independent snapshot-lease probe sessions and excluding missing-document rejection.
 Unique ordered session identities stabilize Sea-selected publisher expectations.
 
 The default flow opens snapshot coordination as `clientSelected`.
@@ -50,6 +50,16 @@ Browser APIs do not expose HTTP/3, QUIC, UDP, or TLS byte totals, so the harness
 `run-test.sh` also builds the test-only `browser_lifecycle` WASM example and explicitly runs the normally ignored `browser_disconnect_and_drop_release_capacity` Rust test.
 The Rust fixture owns a certificate-pinned one-slot listener and launches the existing Chromium runner with `SEA_BROWSER_LIFECYCLE_WASM` pointing to the temporary generated bindings.
 No shipped session export or production configuration option is added.
+The example enables `websocket-stream` so its timeout probe exercises the production transport-selection deadline.
+
+Before connecting to the listener, controlled JavaScript transports exercise five ownership cases:
+pending establishment is closed after the selection timeout without opening a Sea stream;
+failed datagram setup closes the connection;
+successful construction preserves the connection;
+dropping a nonfinal stream clone preserves both directions whereas final drop cancels both and releases their JavaScript locks;
+and already finished/EOF directions remain cleanly released.
+The fixture retains the mock connections and uses real `ReadableStream`/`WritableStream` objects with counted underlying cancellation hooks.
+This API-level evidence does not replace the real connection-capacity checks below.
 
 Two independent cases exercise the concrete `BrowserTransport`:
 

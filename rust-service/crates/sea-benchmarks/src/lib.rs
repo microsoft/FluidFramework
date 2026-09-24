@@ -157,9 +157,9 @@ pub struct Distribution {
     pub samples: usize,
     /// Smallest observation.
     pub minimum: f64,
-    /// Nearest-rank 50th percentile.
+    /// Upper order statistic at zero-based rank `ceil((samples - 1) * 0.5)`.
     pub median: f64,
-    /// Nearest-rank 95th percentile.
+    /// Upper order statistic at zero-based rank `ceil((samples - 1) * 0.95)`.
     pub p95: f64,
     /// Largest observation.
     pub maximum: f64,
@@ -272,7 +272,7 @@ pub fn summarize(mut values: Vec<f64>) -> Distribution {
     }
 }
 
-/// Selects a nearest-rank percentile from a non-empty sorted sample.
+/// Selects the upper order statistic at `ceil((len - 1) * numerator / denominator)`.
 fn percentile(sorted: &[f64], numerator: usize, denominator: usize) -> f64 {
     let rank = ((sorted.len() - 1) * numerator).div_ceil(denominator);
     sorted[rank]
@@ -378,7 +378,7 @@ mod tests {
     }
 
     #[test]
-    fn percentile_selects_boundary_and_nearest_ranks() {
+    fn percentile_selects_boundary_and_upper_ranks() {
         let values = [1.0, 2.0];
 
         assert!((percentile(&values, 0, 100) - 1.0).abs() < f64::EPSILON);

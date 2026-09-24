@@ -214,7 +214,8 @@ fn payload(index: u32, size: usize) -> Bytes {
     Bytes::from(payload)
 }
 
-/// Counts flat journal files after clean shutdown; memory cells have no files.
+/// Sums file lengths across the document namespace after shutdown, excluding directory metadata.
+/// Memory cells have no files.
 fn persisted_bytes(path: &Path) -> Result<u64, String> {
     if !path.exists() {
         return Ok(0);
@@ -222,12 +223,14 @@ fn persisted_bytes(path: &Path) -> Result<u64, String> {
     fs::read_dir(path)
         .map_err(display_error)?
         .try_fold(0, |total, entry| {
+            let entry = entry.map_err(display_error)?;
+            let metadata = entry.metadata().map_err(display_error)?;
             Ok(total
-                + entry
-                    .map_err(display_error)?
-                    .metadata()
-                    .map_err(display_error)?
-                    .len())
+                + if metadata.is_dir() {
+                    persisted_bytes(&entry.path())?
+                } else {
+                    metadata.len()
+                })
         })
 }
 
@@ -239,6 +242,24 @@ fn display_error(error: impl std::fmt::Display) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn persisted_size_counts_nested_files_not_directory_metadata() {
+        let directory = std::path::PathBuf::from("target")
+            .join(format!("pipeline-size-{}", std::process::id()));
+        fs::create_dir_all("target").unwrap();
+        fs::create_dir(&directory).unwrap();
+        let result = {
+            assert_eq!(persisted_bytes(&directory.join("absent")).unwrap(), 0);
+            fs::create_dir_all(directory.join("document/content")).unwrap();
+            fs::write(directory.join("namespace"), [0; 3]).unwrap();
+            fs::write(directory.join("document/events"), [0; 17]).unwrap();
+            fs::write(directory.join("document/content/blob"), [0; 29]).unwrap();
+            persisted_bytes(&directory).unwrap()
+        };
+        fs::remove_dir_all(directory).unwrap();
+        assert_eq!(result, 49);
+    }
 
     #[tokio::test(flavor = "current_thread")]
     async fn bounded_single_session_replays_in_order() {

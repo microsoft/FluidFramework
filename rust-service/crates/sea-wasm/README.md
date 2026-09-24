@@ -36,3 +36,5 @@ cargo check -p sea-wasm --no-default-features --features memory --target wasm32-
 Use the workspace's browser compiler flags when enabling `webtransport` for WASM.
 The [development guide](../../DEVELOPMENT.md) defines the workspace validation gates.
 Generated memory and browser tests cover signal routing, unchanged archive history, concurrent-read rejection, and closing a pending read.
+The [raw generated-binding tests](../../tests/sea-integration-tests/src/test/wasmBindings.spec.ts) bypass TypeScript wrapper guards to check Rust-owned input rejection, concurrent event reads, and signal cleanup on session close.
+They run with the integration harness's Mocha suite after generating the memory bundle.

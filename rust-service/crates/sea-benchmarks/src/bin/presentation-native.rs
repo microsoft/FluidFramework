@@ -201,6 +201,36 @@ struct State {
     error: Option<String>,
 }
 
+impl State {
+    /// Validates one delivery before advancing its recipient or recording observer timing.
+    /// Warmup contributes timestamps, while measured deliveries contribute latency even during drain.
+    fn observe(
+        &mut self,
+        recipient: usize,
+        received: &Bytes,
+        payload_bytes: usize,
+        now: Instant,
+        end: Instant,
+        clock: MeasurementClock,
+    ) -> Result<(), String> {
+        let sequence = self.observed[recipient] + 1;
+        if received != &payload(sequence, payload_bytes) || sequence > self.times.len() {
+            return Err("duplicate, missing, reordered, or corrupt payload".into());
+        }
+        self.observed[recipient] = sequence;
+        let (sent_at, measured) = self.times[sequence - 1];
+        if recipient == 1 {
+            self.observer_delivery_epoch_micros.push(clock.at(now));
+            if measured {
+                self.latencies
+                    .push(now.duration_since(sent_at).as_secs_f64() * 1000.0);
+                self.delivered += usize::from(now < end);
+            }
+        }
+        Ok(())
+    }
+}
+
 /// Creates the exact deterministic payload used by the Node generator.
 fn payload(sequence: usize, bytes: usize) -> Bytes {
     let mut result = format!("{sequence:08}").into_bytes();
@@ -263,30 +293,17 @@ where
                         Ok(MonitoredStreamItem::Item(event))
                             if event.kind == SessionEventKind::Application =>
                         {
-                            let sequence = state.observed[recipient] + 1;
-                            if event.committed.event.payload != payload(sequence, bytes)
-                                || sequence > state.times.len()
-                            {
-                                state.error = Some(
-                                    "duplicate, missing, reordered, or corrupt payload".into(),
-                                );
+                            let result = state.observe(
+                                recipient,
+                                &event.committed.event.payload,
+                                bytes,
+                                Instant::now(),
+                                end_time.lock().expect("end lock").expect("started"),
+                                clock,
+                            );
+                            if let Err(error) = result {
+                                state.error = Some(error);
                                 break;
-                            }
-                            state.observed[recipient] = sequence;
-                            let (sent_at, measured) = state.times[sequence - 1];
-                            if recipient == 1 {
-                                state
-                                    .observer_delivery_epoch_micros
-                                    .push(clock.at(Instant::now()));
-                            }
-                            if recipient == 1 && measured {
-                                let now = Instant::now();
-                                state
-                                    .latencies
-                                    .push(now.duration_since(sent_at).as_secs_f64() * 1000.0);
-                                if now < end_time.lock().expect("end lock").expect("started") {
-                                    state.delivered += 1;
-                                }
                             }
                         }
                         Ok(_) => {}
@@ -512,9 +529,141 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 mod tests {
     use super::*;
 
+    #[tokio::test]
+    #[allow(
+        clippy::result_large_err,
+        reason = "The handshake callback uses tungstenite's fixed response error type"
+    )]
+    async fn socket_stream_chunks_data_and_requires_explicit_fin() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let (stream, _) = listener.accept().await.unwrap();
+            let mut socket = tokio_tungstenite::accept_hdr_async(
+                stream,
+                |_: &tokio_tungstenite::tungstenite::handshake::server::Request,
+                 mut response: tokio_tungstenite::tungstenite::handshake::server::Response| {
+                    response.headers_mut().insert(
+                        "Sec-WebSocket-Protocol",
+                        SUBPROTOCOL.parse().unwrap(),
+                    );
+                    Ok(response)
+                },
+            )
+            .await
+            .unwrap();
+            for size in [CHUNK_BYTES, 1] {
+                let Message::Binary(record) = socket.next().await.unwrap().unwrap() else {
+                    panic!("expected binary data");
+                };
+                assert_eq!(record[0], DATA);
+                assert_eq!(record.len(), size + RECORD_HEADER_BYTES);
+                assert!(record[RECORD_HEADER_BYTES..].iter().all(|byte| *byte == 42));
+            }
+            assert_eq!(
+                socket.next().await.unwrap().unwrap(),
+                Message::Binary(vec![FIN].into())
+            );
+            socket
+                .send(Message::Binary(vec![DATA, 7, 8].into()))
+                .await
+                .unwrap();
+            socket
+                .send(Message::Binary(vec![FIN].into()))
+                .await
+                .unwrap();
+        });
+        tokio::time::timeout(Duration::from_secs(3), async {
+            let mut stream = SocketStream(socket(&format!("ws://{address}")).await.unwrap());
+            stream.send(&vec![42; CHUNK_BYTES + 1]).await.unwrap();
+            stream.finish().await.unwrap();
+            assert_eq!(stream.receive().await.unwrap(), Some(vec![7, 8]));
+            assert_eq!(stream.receive().await.unwrap(), None);
+            server.await.unwrap();
+        })
+        .await
+        .expect("bounded socket fixture");
+    }
+
+    #[tokio::test]
+    async fn socket_rejects_missing_subprotocol() {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let (stream, _) = listener.accept().await.unwrap();
+            tokio_tungstenite::accept_async(stream).await.unwrap()
+        });
+        tokio::time::timeout(Duration::from_secs(3), async {
+            assert!(socket(&format!("ws://{address}")).await.is_err());
+            drop(server.await.unwrap());
+        })
+        .await
+        .expect("bounded subprotocol fixture");
+    }
+
     #[test]
     fn payload_matches_node_fixture() {
         assert_eq!(payload(42, 12), Bytes::from_static(b"00000042xxxx"));
         assert_eq!(payload(1, 8192).len(), 8192);
+    }
+
+    #[test]
+    fn observation_rejects_wrong_order_corruption_and_unsubmitted_deliveries() {
+        let clock = MeasurementClock::new();
+        let now = Instant::now();
+        let mut state = State {
+            times: vec![(now, true)],
+            ..State::default()
+        };
+        for received in [payload(2, 12), Bytes::from_static(b"00000001bad!")] {
+            assert!(state.observe(1, &received, 12, now, now, clock).is_err());
+            assert_eq!(state.observed, [0, 0]);
+            assert!(state.observer_delivery_epoch_micros.is_empty());
+        }
+        state
+            .observe(1, &payload(1, 12), 12, now, now, clock)
+            .unwrap();
+        for received in [payload(1, 12), payload(2, 12)] {
+            assert!(state.observe(1, &received, 12, now, now, clock).is_err());
+            assert_eq!(state.observed, [0, 1]);
+        }
+    }
+
+    #[test]
+    fn observation_separates_writer_warmup_window_and_drain() {
+        let clock = MeasurementClock::new();
+        let started = Instant::now();
+        let end = started + Duration::from_millis(10);
+        let mut state = State {
+            times: vec![(started, false), (started, true), (started, true)],
+            ..State::default()
+        };
+        for recipient in [0, 1] {
+            for (sequence, now) in [
+                (1, started + Duration::from_millis(1)),
+                (2, started + Duration::from_millis(5)),
+                (3, end),
+            ] {
+                state
+                    .observe(recipient, &payload(sequence, 12), 12, now, end, clock)
+                    .unwrap();
+            }
+            if recipient == 0 {
+                assert!(state.latencies.is_empty());
+                assert!(state.observer_delivery_epoch_micros.is_empty());
+                assert_eq!(state.delivered, 0);
+            }
+        }
+        assert_eq!(state.observed, [3, 3]);
+        assert_eq!(state.delivered, 1);
+        assert_eq!(state.latencies, vec![5.0, 10.0]);
+        assert_eq!(
+            state.observer_delivery_epoch_micros,
+            vec![
+                clock.at(started + Duration::from_millis(1)),
+                clock.at(started + Duration::from_millis(5)),
+                clock.at(end),
+            ]
+        );
     }
 }

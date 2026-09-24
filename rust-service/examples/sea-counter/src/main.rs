@@ -128,6 +128,15 @@ mod tests {
     use super::*;
 
     #[tokio::test]
+    async fn replays_without_a_snapshot_and_stops_at_the_live_boundary() {
+        let session = counter_session().await;
+        assert_eq!(recover(&session).await, Ok(0));
+        append_delta(&session, 7).await;
+        append_delta(&session, -10).await;
+        assert_eq!(recover(&session).await, Ok(-3));
+    }
+
+    #[tokio::test]
     async fn recovers_from_committed_initial_state() {
         let session = counter_session().await;
         let position = append_delta(&session, 10).await;

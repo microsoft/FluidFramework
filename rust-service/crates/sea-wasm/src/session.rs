@@ -370,4 +370,62 @@ mod tests {
             ErrorKind::Rejected
         );
     }
+
+    #[tokio::test]
+    async fn shared_adapter_rejects_incompatible_snapshot_capabilities() {
+        let session = SessionAdapter::new(local_session().await);
+        let root = session
+            .put_blob(Bytes::from_static(b"snapshot"))
+            .await
+            .unwrap();
+        let position = session
+            .submit(EventSubmission {
+                reference: None,
+                event: Event {
+                    payload: Bytes::new(),
+                    blob_tree: Some(root.id()),
+                },
+            })
+            .await
+            .unwrap();
+        let at_event = session.resolve_position(position).await.unwrap().unwrap();
+        let _participation = session
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        for snapshot in [
+            Snapshot {
+                root: BindingHandle::new(root.clone()),
+                at_event: at_event.clone(),
+            },
+            Snapshot {
+                root: root.clone(),
+                at_event: BindingHandle::new(at_event.clone()),
+            },
+        ] {
+            let error = session
+                .publish_snapshot(None, None, snapshot)
+                .await
+                .err()
+                .expect("matching identities cannot replace concrete capabilities");
+            assert_eq!(error.kind(), ErrorKind::Rejected);
+            assert_eq!(
+                error.to_string(),
+                "snapshot handle belongs to an incompatible session implementation"
+            );
+            assert!(
+                session
+                    .get_snapshot(LoadStart::LatestSnapshot)
+                    .await
+                    .unwrap()
+                    .is_none()
+            );
+        }
+        let published = session
+            .publish_snapshot(None, None, Snapshot { root, at_event })
+            .await
+            .unwrap();
+        assert_eq!(published.at_event.id(), position);
+        session.close().await.unwrap();
+    }
 }

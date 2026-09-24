@@ -80,6 +80,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn timestamps_preserve_the_anchored_elapsed_microseconds() {
+        let instant = Instant::now();
+        let clock = MeasurementClock {
+            instant,
+            epoch_micros: 123_456,
+            uncertainty_micros: 7,
+        };
+        assert_eq!(clock.at(instant), 123_456);
+        assert_eq!(
+            clock.at(instant + std::time::Duration::from_micros(987)),
+            124_443
+        );
+    }
+
+    #[test]
     fn monotonic_clock_and_output_shape() {
         let clock = MeasurementClock::new();
         let first = clock.at(Instant::now());

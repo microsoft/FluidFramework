@@ -75,7 +75,7 @@ fi
 cargo build -p sea-webtransport-server "${server_features[@]}"
 
 RUSTFLAGS="${RUSTFLAGS:-} --cfg=web_sys_unstable_apis" cargo build --locked \
-	-p sea-webtransport --example browser_lifecycle --target wasm32-unknown-unknown
+	-p sea-webtransport --example browser_lifecycle --features websocket-stream --target wasm32-unknown-unknown
 wasm-bindgen "$CARGO_TARGET_DIR/wasm32-unknown-unknown/debug/examples/browser_lifecycle.wasm" \
 	--target web --out-name browser_lifecycle --out-dir "$temporary_root/lifecycle-wasm"
 SEA_BROWSER_LIFECYCLE_WASM="$temporary_root/lifecycle-wasm" cargo test --locked \

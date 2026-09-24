@@ -15,7 +15,7 @@ Each scenario runs against every configured stack:
 | Events and snapshots | Blob trees, snapshot publication, bounded replay, and live delivery. |
 | Reconnect | Fresh memberships/connections, retained history, and new snapshot publication. |
 | Collaboration | Concurrent authors, identical ordered delivery, shared content, and publisher coordination. |
-| Collaboration stress | Four collaboration rounds with repeated peer reconnects, 36 committed events, four snapshots, historical snapshot lookup, and catch-up after writes made while the peer is disconnected. |
+| Collaboration stress | Four collaboration rounds with repeated peer reconnects, 36 round events plus one final reconnected-peer submission, four snapshots, historical snapshot lookup, and catch-up after writes made while the peer is disconnected. |
 
 Configurations range from a bare session to duplicate payload wrappers, reversed compression/encryption ordering, multiple real loopback WebTransport hops, and a nine-layer mixed stack.
 

@@ -3,7 +3,7 @@
 //! This suite checks that session behavior survives composition of compression, encryption,
 //! and real loopback WebTransport, including repeated layers and multiple network hops.
 //! Every configuration runs the same workflows: open/close, content and snapshot round-trips,
-//! reconnect with stable submission retries, two-author collaboration, and bounded collaboration stress.
+//! reconnect with fresh memberships, two-author collaboration, and bounded collaboration stress.
 //! Together they check ordered live delivery and replay, nested blob trees, snapshot publication authority,
 //! rejected mutations, read cancellation, and catch-up after a peer disconnects.
 //!
@@ -68,7 +68,7 @@ enum Scenario {
     OpenClose,
     /// Content, snapshot publication, bounded replay, and live delivery round-trip.
     EventsAndSnapshots,
-    /// Fresh memberships and transport connections retain history and stable retries.
+    /// Fresh memberships and transport connections retain history and renew publication authority.
     Reconnect,
     /// Independent authors observe the same order and exchange snapshot content.
     Collaboration,
@@ -366,7 +366,7 @@ impl SeaConnectionService for TestHost {
 
 /// Durable identities and original plaintext survive teardown; availability handles do not.
 struct Trace {
-    /// Exact input used to check committed retries after rebuilding every layer.
+    /// Original input retained for history and terminal-rejection checks after rebuilding layers.
     submission: EventSubmission,
     /// First committed event, also the snapshot version.
     first: EventPosition,

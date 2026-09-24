@@ -50,12 +50,241 @@ async function nextSnapshot(stream) {
 	}
 }
 
+/** Bounds one lifecycle observation without allowing server inactivity cleanup to satisfy it. */
+async function lifecycleDeadline(promise, message) {
+	let timer;
+	try {
+		return await Promise.race([
+			promise,
+			new Promise((_, reject) => {
+				timer = setTimeout(() => reject(new Error(message)), 3000);
+			}),
+		]);
+	} finally {
+		clearTimeout(timer);
+	}
+}
+
+/** Proves coordination cancellation releases server authority while both archive sessions stay open. */
+async function verifySnapshotLeaseRelease(open) {
+	const first = await open(undefined, "lease-first");
+	let second;
+	let firstCoordination;
+	let secondCoordination;
+	let replacement;
+	try {
+		second = await open(first.document, "lease-second");
+		firstCoordination = await first.coordinateSnapshots("seaSelected");
+		const firstState = await lifecycleDeadline(
+			firstCoordination.next(),
+			"lease probe first participant did not receive coordination",
+		);
+		assert(firstState.fence !== undefined, "lease probe first participant was not selected");
+		secondCoordination = await second.coordinateSnapshots("seaSelected");
+		assert(
+			(
+				await lifecycleDeadline(
+					secondCoordination.next(),
+					"lease probe second participant did not receive coordination",
+				)
+			).fence === undefined,
+			"lease probe admitted two publishers",
+		);
+		replacement = (async () => {
+			for (;;) {
+				const state = await secondCoordination.next();
+				assert(state !== undefined, "lease probe coordination ended before selection");
+				if (state.fence !== undefined) return state;
+			}
+		})();
+		firstCoordination.cancel();
+		const selected = await lifecycleDeadline(
+			replacement,
+			"coordination cancellation did not release server nomination",
+		);
+		assert(selected.fence !== firstState.fence, "lease probe reused the old publisher fence");
+		const payload = encoder.encode("archive survives coordination cancellation");
+		const blob = await first.putBlob(payload);
+		assert(
+			equalBytes(await second.getBlob(blob), payload),
+			"lease release required closing an archive connection",
+		);
+		return true;
+	} finally {
+		firstCoordination?.cancel();
+		secondCoordination?.cancel();
+		await replacement?.catch(() => {});
+		await Promise.all([first.close(), second?.close()]);
+	}
+}
+
+/** Observes Rust ownership independently of JavaScript garbage collection and remote cleanup. */
+async function verifyMockLifecycle(bindings, hash) {
+	const NativeWebTransport = globalThis.WebTransport;
+	const retainedConnections = [];
+	let scenario = "pending";
+	const directions = () => {
+		const state = { aborts: 0, cancellations: 0, closes: 0 };
+		state.readable = new ReadableStream({
+			start(controller) {
+				state.controller = controller;
+			},
+			cancel() {
+				state.cancellations++;
+			},
+		});
+		state.writable = new WritableStream({
+			abort() {
+				state.aborts++;
+			},
+			close() {
+				state.closes++;
+			},
+		});
+		return state;
+	};
+	const unlocked = async (state) => {
+		const deadline = performance.now() + 3000;
+		while (state.readable.locked || state.writable.locked) {
+			assert(
+				performance.now() < deadline,
+				"final stream owner did not release JavaScript locks",
+			);
+			await new Promise((resolve) => setTimeout(resolve, 0));
+		}
+	};
+	const rejects = async (promise, message) => {
+		let rejected = false;
+		try {
+			const unexpected = await lifecycleDeadline(promise, message);
+			unexpected?.free?.();
+		} catch (error) {
+			assert(error.message !== message, message);
+			rejected = true;
+		}
+		assert(rejected, message);
+	};
+	const connect = async () => {
+		const attempt = new bindings.LifecycleConnectAttempt(transportUrl, hash);
+		try {
+			return await attempt.result();
+		} finally {
+			attempt.free();
+		}
+	};
+	globalThis.WebTransport = class {
+		constructor() {
+			this.closes = 0;
+			this.streams = [];
+			this.ready = scenario === "pending" ? new Promise(() => {}) : Promise.resolve();
+			this.closed = new Promise(() => {});
+			this.datagramState = directions();
+			retainedConnections.push(this);
+		}
+		get datagrams() {
+			if (scenario === "datagram-failure") throw new Error("injected datagram setup failure");
+			return this.datagramState;
+		}
+		createBidirectionalStream() {
+			const state = directions();
+			this.streams.push(state);
+			return Promise.resolve(
+				Object.create(WebTransportBidirectionalStream.prototype, {
+					readable: { value: state.readable },
+					writable: { value: state.writable },
+				}),
+			);
+		}
+		close() {
+			this.closes++;
+		}
+	};
+	let owner;
+	let stream;
+	let clone;
+	try {
+		await rejects(
+			bindings.awaitSelectedConnect(transportUrl, hash, 20),
+			"pending establishment did not reject through its selection deadline",
+		);
+		assert(retainedConnections.length === 1, "timeout probe did not construct WebTransport");
+		assert(retainedConnections[0].closes === 1, "abandoned establishment was not closed");
+		assert(
+			retainedConnections[0].streams.length === 0,
+			"abandoned establishment opened a Sea stream",
+		);
+
+		scenario = "datagram-failure";
+		await rejects(
+			connect(),
+			"datagram setup failure did not reject",
+		);
+		assert(retainedConnections.length === 2, "setup probe did not construct WebTransport");
+		assert(retainedConnections[1].closes === 1, "failed datagram setup leaked its connection");
+		assert(retainedConnections[1].streams.length === 0, "failed setup opened a Sea stream");
+
+		scenario = "success";
+		owner = await connect();
+		const connection = retainedConnections[2];
+		assert(connection.closes === 0, "successful construction prematurely closed its connection");
+		stream = await owner.openStream();
+		const state = connection.streams[0];
+		clone = stream.cloneOwner();
+		stream.free();
+		stream = undefined;
+		await new Promise((resolve) => setTimeout(resolve, 0));
+		assert(
+			state.aborts === 0 && state.cancellations === 0,
+			"nonfinal clone cancelled a direction",
+		);
+		assert(state.readable.locked && state.writable.locked, "nonfinal clone released shared locks");
+		clone.free();
+		clone = undefined;
+		await unlocked(state);
+		assert(
+			state.aborts === 1 && state.cancellations === 1,
+			"final clone did not cancel both directions",
+		);
+		assert(connection.closes === 0, "stream drop closed its parent connection");
+
+		stream = await owner.openStream();
+		const finished = connection.streams[1];
+		await stream.finish();
+		finished.controller.close();
+		assert((await stream.receive()) === undefined, "closed readable did not produce EOF");
+		stream.free();
+		stream = undefined;
+		await unlocked(finished);
+		assert(finished.closes === 1, "finished stream did not close its writer");
+		assert(
+			finished.aborts === 0 && finished.cancellations === 0,
+			"completed directions were cancelled again",
+		);
+		owner.free();
+		owner = undefined;
+		assert(connection.closes === 1, "final connection owner did not close");
+		await unlocked(connection.datagramState);
+		return [
+			"pending-establishment",
+			"datagram-setup-failure",
+			"successful-establishment",
+			"stream-clones",
+			"finished-stream",
+		];
+	} finally {
+		stream?.free();
+		clone?.free();
+		owner?.free();
+		globalThis.WebTransport = NativeWebTransport;
+	}
+}
+
 /** Checks each concrete close path against a live one-slot server. */
 async function runLifecycle(hash) {
-	const { default: initialize, LifecycleTransport } = await import(
-		"/lifecycle/browser_lifecycle.js"
-	);
+	const bindings = await import("/lifecycle/browser_lifecycle.js");
+	const { default: initialize, LifecycleTransport } = bindings;
 	await initialize();
+	const ownership = await verifyMockLifecycle(bindings, hash);
 	const NativeWebTransport = globalThis.WebTransport;
 	const retainedConnections = [];
 	globalThis.WebTransport = class extends NativeWebTransport {
@@ -66,23 +295,10 @@ async function runLifecycle(hash) {
 			this.closed.catch(() => {});
 		}
 	};
-	const bounded = async (promise, message) => {
-		let timer;
-		try {
-			return await Promise.race([
-				promise,
-				new Promise((_, reject) => {
-					timer = setTimeout(() => reject(new Error(message)), 3000);
-				}),
-			]);
-		} finally {
-			clearTimeout(timer);
-		}
-	};
 	const cases = [];
 	try {
 		for (const mode of ["disconnect", "drop"]) {
-			let owner = await bounded(
+			let owner = await lifecycleDeadline(
 				LifecycleTransport.connect(transportUrl, hash),
 				`${mode}: initial connection failed`,
 			);
@@ -107,7 +323,7 @@ async function runLifecycle(hash) {
 					owner.free();
 					owner = undefined;
 				}
-				await bounded(
+				await lifecycleDeadline(
 					admitted,
 					`${mode}: physical connection did not release server capacity`,
 				);
@@ -121,7 +337,7 @@ async function runLifecycle(hash) {
 				owner?.free();
 			}
 		}
-		return { status: "passed", browser: navigator.userAgent, physicalRelease: cases };
+		return { status: "passed", browser: navigator.userAgent, ownership, physicalRelease: cases };
 	} finally {
 		globalThis.WebTransport = NativeWebTransport;
 		for (const connection of retainedConnections) connection.close();
@@ -246,6 +462,7 @@ async function run() {
 		missingArchiveError?.kind === "Rejected",
 		"service rejection omitted its structured error kind",
 	);
+	const snapshotLeaseReleased = await verifySnapshotLeaseRelease(open);
 	let first = await open(undefined, "browser-session");
 	const archive = first.document;
 	const previousCoordination = await first.coordinateSnapshots(snapshotParticipation);
@@ -517,6 +734,7 @@ async function run() {
 		status: "passed",
 		browser: navigator.userAgent,
 		transportSessionCount,
+		snapshotLeaseReleased,
 		firstPosition: firstReceipt.toString(),
 		firstStreamedPosition: firstStreamedReceipt.toString(),
 		secondStreamedPosition: secondStreamedReceipt.toString(),

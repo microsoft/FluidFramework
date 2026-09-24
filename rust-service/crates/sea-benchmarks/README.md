@@ -44,6 +44,7 @@ The cumulative implementation report freezes the comparison source, commands, co
 It accepts payload sizes 64 or 8192 and an in-flight window of 1 or 128, preserves initial submit polling order, and verifies exact receipts and finite replay.
 Replay verifies session identity and a sequential counter encoded in the opaque payload, without Sea operation IDs or submission deduplication.
 Each invocation emits separate JSON rows for a 128-operation warmup and a fresh 4096-operation measured document, then deletes its newly created data directory.
+Its `persisted_bytes` sums file lengths recursively through the document namespace, excluding directory metadata.
 Creation, replay, and shutdown are outside the submission timer; measured latency starts at each future's first poll.
 Throughput includes final factory flush, with admission duration and final-drain duration reported separately.
 Submit latency reports p50/p95/p99; replay and shutdown have separate durations, and Linux output includes whole-process peak RSS across warmup, writes, and replay.
@@ -97,7 +98,10 @@ Each JSON output line is one schema-version-3 `BenchmarkResult`.
 It includes the measured API boundary, repetition number, source/environment metadata, workload parameters, active guarantees, commit latency distribution, throughput, startup/read/snapshot/recovery duration, process CPU time and peak resident memory where `/proc` exposes them, and logical and persisted bytes.
 Unavailable counters are `null`; they are never inferred.
 
-Latency and throughput use a monotonic process clock. The distribution reports minimum, median, p95, maximum, mean, sample standard deviation, and coefficient of variation. Results are procedure observations, not capacity claims.
+Latency and throughput use a monotonic process clock.
+The general harness distribution reports minimum, median, p95, maximum, mean, sample standard deviation, and coefficient of variation.
+Its median and p95 select the upper sample at zero-based rank `ceil((samples - 1) * percentile)` without interpolation; this is not the nearest-rank convention used by the presentation workers.
+Results are procedure observations, not capacity claims.
 
 For periodic snapshot workloads, commit throughput includes snapshot publication wall time and `snapshot_publish_microseconds` is the sum across all publications in the repetition.
 The general harness measures acknowledgment throughput; its later orderly file flush is outside that timer.
@@ -109,7 +113,10 @@ The `memory` and `file` cells measure trusted backend operations through a facto
 The `compression` and `encryption` cells measure `SeaSession` decorators over a common `LocalSequencer<FileStorage>`.
 Their payload and snapshot facets use the decorated session, retaining publisher registration for the publication workload.
 File recovery reopens the backend-assigned document ID after releasing the prior opening.
+Snapshot verification compares the selected snapshot with the final replayed event position, not the record count: positions can be byte offsets.
+It also fetches the snapshot blob and checks its exact final counter payload.
 Storage reads use an explicit committed upper bound; session reads collect the configured number of acknowledged submissions.
 Their commit measurements therefore include sequencing and author-session work and are not directly comparable with schema-version-2 raw-stream decorator results.
-File-backed cells report recursive persisted size; decorator cells report process CPU used by the submit/read/snapshot workload.
+File-backed cells report recursive persisted size.
+Whole-process CPU sampling spans backend construction, the workload, and file flush/recovery where applicable; it is not a commit-only observation.
 The benchmark key is a fixed non-production key used only in memory and is never emitted; encryption nonces come from the operating system.
