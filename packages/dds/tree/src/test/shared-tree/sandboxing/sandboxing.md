@@ -156,35 +156,6 @@ The complete initialization payload does not yet pass through `MessagePort`; see
 These diagrams show the implemented layers, not a complete security guarantee.
 See [Protocol Validation and Security Hardening](#protocol-validation-and-security-hardening) for the validation still required before production use.
 
-### Session Failure and Application-Managed Recreation
-
-[SandboxSession](./session.ts) treats protocol anomalies and synchronization failures as fatal: it stops the endpoint, rejects pending work, and reports the error to the application and, when possible, the peer.
-Valid blob-resolution errors reject only `get()`, not the session.
-Error reporting runs outside tree event dispatch to avoid interrupting main-tree edits.
-
-The application owns teardown and recreation of the Host/Guest pair and sandbox.
-Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
-Recovery uses fresh session objects, not reset breakers.
-
-The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
-
-## Path to Production
-
-Complete these items in any order.
-
-Some tests will fail if you write them before you complete the implementation.
-These failures do not prevent you from writing the tests.
-
-### ID Sharding
-
-The Host and the Guest currently use the same id-compressor instance.
-This design is not practical because the Host and the Guest can run in different processes.
-Update the code to serialize a sharded id-compressor.
-
-Sharding support was added in https://github.com/microsoft/FluidFramework/pull/26294.
-The change was reverted in https://github.com/microsoft/FluidFramework/pull/26394.
-Fix, restore, and use that implementation, or implement a different solution.
-
 ### Fluid Handles
 
 Handle transport and resolution follow [Architecture](#architecture), with these constraints:
@@ -201,7 +172,7 @@ Handle transport and resolution follow [Architecture](#architecture), with these
   No per-handle reclamation or sandbox-specific Fluid garbage collection mechanism is required.
 - The transport codecs do not implement `IFluidSerializer` or provide JSON stringification.
 
-### Protocol Validation and Security Hardening
+### Transport Validation
 
 The [pipeline](#message-conversion-and-validation) enforces these additional rules:
 
@@ -225,7 +196,50 @@ The [pipeline](#message-conversion-and-validation) enforces these additional rul
 - **Validator support:** Alternative validators must support the custom handle, buffer-placeholder, and plain-record schema kinds or provide equivalent checks.
 
 This boundary assumes genuine structured clone, not arbitrary same-realm JavaScript proxies.
-Before using it with an untrusted participant:
+
+### Session Failure and Application-Managed Recreation
+
+[SandboxSession](./session.ts) treats protocol anomalies and synchronization failures as fatal: it stops the endpoint, rejects pending work, and reports the error to the application and, when possible, the peer.
+Valid blob-resolution errors reject only `get()`, not the session.
+Error reporting runs outside tree event dispatch to avoid interrupting main-tree edits.
+
+The application owns teardown and recreation of the Host/Guest pair and sandbox.
+Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
+Recovery uses fresh session objects, not reset breakers.
+
+The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
+
+### Test Coverage
+
+[Handle codec tests](./handles.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
+End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
+The tests use real `MessagePort` channels; the permutation test uses a two-channel relay to control delivery in each direction.
+
+## Remaining Work Before Production
+
+Track only unfinished work here.
+When completing an item, remove it or narrow it to the remaining work.
+Move useful descriptions of implemented behavior to [Architecture](#architecture).
+Preserve the scope and rationale of unresolved items when editing them.
+
+Complete these items in any order.
+
+Some tests will fail if you write them before you complete the implementation.
+These failures do not prevent you from writing the tests.
+
+### ID Sharding
+
+The Host and the Guest currently use the same id-compressor instance.
+This design is not practical because the Host and the Guest can run in different processes.
+Update the code to serialize a sharded id-compressor.
+
+Sharding support was added in https://github.com/microsoft/FluidFramework/pull/26294.
+The change was reverted in https://github.com/microsoft/FluidFramework/pull/26394.
+Fix, restore, and use that implementation, or implement a different solution.
+
+### Protocol Validation and Security Hardening
+
+Before using the sandbox with an untrusted participant, extend the existing [transport validation](#transport-validation):
 
 - Complete schemas for data changes, acknowledgments, and the full initialization payload.
 - Validate codec-specific change structure before mutation, beyond the value vocabulary, to prevent partial application of malformed changes.
@@ -257,10 +271,6 @@ In other configurations, make sure that the Guest does not keep an unlimited his
 
 ### `MessagePort` and IFrame Testing
 
-The Host and the Guest send runtime data changes and acknowledgments through a real `MessagePort`.
-The unit tests validate the structured-clone boundary.
-The permutation test uses a two-channel relay to control message delivery in each direction.
-
 Initialization data does not yet pass through the port.
 The compressed initial tree follows the separate path described in [Architecture](#message-conversion-and-validation).
 Complete [ID sharding](#id-sharding) before the entire initialization payload uses the message protocol.
@@ -270,12 +280,10 @@ This test makes sure that the implementation does not depend on shared global va
 
 ### Edge Case Unit Testing
 
-The tests should cover concurrent Host and Guest edits, delayed and interleaved messages,
+Extend the existing [test coverage](#test-coverage) for concurrent Host and Guest edits, delayed and interleaved messages,
 Guest reloads or disposal with messages in flight, and malformed messages.
-Handle-specific tests should cover repeated references, concurrent `get()` calls, resolution failures.
 
-Validate undo and redo operations.
-Include an operation that reverses a deletion after the Host would have normally discarded its data refreshers.
+Extend undo and redo coverage, including an operation that reverses a deletion after the Host would have normally discarded its data refreshers.
 
 ### Timeline
 
