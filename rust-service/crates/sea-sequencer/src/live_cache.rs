@@ -85,7 +85,7 @@ impl<E> Terminal<E> {
 }
 
 /// One registry-owned subscription; historical subscriptions have no retention cursor.
-struct Claim<E> {
+struct SubscriptionState<E> {
     /// Membership used only for synchronous lifecycle cleanup.
     session: SessionId,
     /// Historical subscriptions have no retention authority until atomic handoff.
@@ -105,7 +105,7 @@ struct State<E> {
     /// Shared canonical entries, with exact-sized payload backing.
     entries: VecDeque<SessionCommittedEvent>,
     /// Both historical observers and live retention owners.
-    claims: BTreeMap<u64, Claim<E>>,
+    subscriptions: BTreeMap<u64, SubscriptionState<E>>,
     /// Checked, never-reused subscription identity.
     next: u64,
     /// Sticky opening termination; new reads must not rejoin.
@@ -185,7 +185,7 @@ impl<E> State<E> {
     /// Removes entries no attached reader needs and releases slots when entirely empty.
     fn reclaim(&mut self) {
         let floor = self
-            .claims
+            .subscriptions
             .values()
             .filter(|claim| claim.attached)
             .map(|claim| claim.cursor)
@@ -224,7 +224,7 @@ impl<E> LiveCache<E> {
                 head,
                 reclaimed_through: head,
                 entries: VecDeque::new(),
-                claims: BTreeMap::new(),
+                subscriptions: BTreeMap::new(),
                 next: 0,
                 terminal: None,
             }),
@@ -247,7 +247,8 @@ impl<E> LiveCache<E> {
         {
             let mut state = self.state.lock().expect("live cache lock");
             state.head = Some(event.committed.position);
-            if state.terminal.is_none() && state.claims.values().any(|claim| claim.attached) {
+            if state.terminal.is_none() && state.subscriptions.values().any(|claim| claim.attached)
+            {
                 state.entries.push_back(event.clone());
             }
             state.reclaim();
@@ -259,7 +260,7 @@ impl<E> LiveCache<E> {
     fn remove(&self, id: u64, terminal: Option<Terminal<E>>) {
         {
             let mut state = self.state.lock().expect("live cache lock");
-            if let Some(claim) = state.claims.remove(&id) {
+            if let Some(claim) = state.subscriptions.remove(&id) {
                 *claim.terminal.lock().expect("subscription terminal lock") = terminal;
                 state.reclaim();
             } else {
@@ -273,7 +274,7 @@ impl<E> LiveCache<E> {
     pub(super) fn close_session(&self, session: &SessionId) {
         {
             let mut state = self.state.lock().expect("live cache lock");
-            state.claims.retain(|_, claim| {
+            state.subscriptions.retain(|_, claim| {
                 if &claim.session == session {
                     *claim.terminal.lock().expect("subscription terminal lock") =
                         Some(Terminal::Closed);
@@ -294,7 +295,7 @@ impl<E> LiveCache<E> {
             if state.terminal.is_some() {
                 return;
             }
-            for claim in std::mem::take(&mut state.claims).into_values() {
+            for claim in std::mem::take(&mut state.subscriptions).into_values() {
                 *claim.terminal.lock().expect("subscription terminal lock") =
                     Some(terminal.clone());
             }
@@ -308,8 +309,12 @@ impl<E> LiveCache<E> {
     pub(super) fn stats(&self) -> LiveCacheStats {
         let state = self.state.lock().expect("live cache lock");
         LiveCacheStats {
-            subscriptions: state.claims.len(),
-            claims: state.claims.values().filter(|claim| claim.attached).count(),
+            subscriptions: state.subscriptions.len(),
+            claims: state
+                .subscriptions
+                .values()
+                .filter(|claim| claim.attached)
+                .count(),
             entries: state.entries.len(),
             payload_bytes: state
                 .entries
@@ -331,9 +336,9 @@ impl<E: Send + Sync + 'static> LiveCache<E> {
             .expect("live subscription identity exhausted");
         let terminal = Arc::new(Mutex::new(state.terminal.clone()));
         if state.terminal.is_none() {
-            state.claims.insert(
+            state.subscriptions.insert(
                 id,
-                Claim {
+                SubscriptionState {
                     session,
                     attached: false,
                     cursor: None,
@@ -353,7 +358,7 @@ impl<E: Send + Sync + 'static> LiveCache<E> {
         self.state
             .lock()
             .expect("live cache lock")
-            .claims
+            .subscriptions
             .keys()
             .map(|id| Self::revocation(Arc::downgrade(self), *id))
             .collect()
@@ -402,7 +407,10 @@ impl<E: Send + Sync + 'static> Subscription<E> {
         if cursor < state.reclaimed_through {
             return Ok(false);
         }
-        let claim = state.claims.get_mut(&self.id).expect("active subscription");
+        let claim = state
+            .subscriptions
+            .get_mut(&self.id)
+            .expect("active subscription");
         claim.attached = true;
         claim.cursor = cursor;
         Ok(true)
@@ -429,7 +437,10 @@ impl<E: Send + Sync + 'static> Subscription<E> {
         if let Some(terminal) = self.terminal() {
             return Err(terminal.error());
         }
-        let claim = state.claims.get(&self.id).expect("active subscription");
+        let claim = state
+            .subscriptions
+            .get(&self.id)
+            .expect("active subscription");
         assert!(claim.attached, "attached subscription");
         let cursor = claim.cursor;
         let index = state
@@ -438,7 +449,7 @@ impl<E: Send + Sync + 'static> Subscription<E> {
         let event = state.entries.get(index).cloned();
         if let Some(event) = &event {
             state
-                .claims
+                .subscriptions
                 .get_mut(&self.id)
                 .expect("active subscription")
                 .cursor = Some(event.committed.position);

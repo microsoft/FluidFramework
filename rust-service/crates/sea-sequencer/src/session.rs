@@ -111,7 +111,7 @@ struct Publisher {
 /// One logical membership; clones observe the same closure signal.
 struct Membership {
     /// Latest history reference declared by this membership.
-    reference: Option<EventPosition>,
+    declared_reference: Option<EventPosition>,
     /// Closing or replacing this membership ends its live streams.
     closed: watch::Sender<bool>,
     /// Cancellation or failure revokes append authority before asynchronous settlement.
@@ -299,7 +299,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 if identity == session {
                     submission.reference
                 } else {
-                    member.reference
+                    member.declared_reference
                 }
             })
             .min()
@@ -423,7 +423,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         if committed.kind == SessionEventKind::Application
             && let Some(member) = self.members.get_mut(&committed.session_id)
         {
-            member.reference = committed.reference;
+            member.declared_reference = committed.reference;
         }
         self.positions.insert(record.position);
         self.applied_through = Some(record.position);
@@ -482,7 +482,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
             .members
             .iter()
             .filter(|(identity, _)| kind != SessionEventKind::Left || *identity != session)
-            .map(|(_, member)| member.reference)
+            .map(|(_, member)| member.declared_reference)
             .min()
             .unwrap_or(reference);
         let minimum = self.proposed_minimum(minimum, reference);
@@ -635,7 +635,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         runtime.members.insert(
             session.clone(),
             Membership {
-                reference,
+                declared_reference: reference,
                 closed,
                 failed: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             },

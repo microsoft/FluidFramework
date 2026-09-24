@@ -108,10 +108,10 @@ enum BenchmarkCommand {
 struct RunMeasurements {
     /// Backend construction time in microseconds.
     startup_microseconds: f64,
-    /// Individual acknowledged append latencies in microseconds.
-    append_latencies: Vec<f64>,
-    /// Wall-clock duration of the append phase in seconds.
-    append_elapsed_seconds: f64,
+    /// Individual acknowledged append or session submit latencies in microseconds.
+    commit_latencies: Vec<f64>,
+    /// Wall-clock duration of the commit phase in seconds, including periodic snapshots.
+    commit_elapsed_seconds: f64,
     /// Finite-read duration in microseconds.
     finite_read_microseconds: f64,
     /// Records observed by the finite read.
@@ -224,13 +224,13 @@ async fn measure(config: Config) -> Result<(), String> {
     let environment = environment();
     for repetition in 1..=config.repetitions {
         let measurements = run_backend(&config).await?;
-        let throughput = if measurements.append_elapsed_seconds == 0.0 {
+        let throughput = if measurements.commit_elapsed_seconds == 0.0 {
             0.0
         } else {
             f64::from(
                 u32::try_from(config.records)
                     .map_err(|_| "record count exceeds measurement range")?,
-            ) / measurements.append_elapsed_seconds
+            ) / measurements.commit_elapsed_seconds
         };
         let result = BenchmarkResult {
             schema_version: SCHEMA_VERSION,
@@ -260,7 +260,7 @@ async fn measure(config: Config) -> Result<(), String> {
             },
             measurements: Measurements {
                 startup_microseconds: measurements.startup_microseconds,
-                commit_latency_microseconds: summarize(measurements.append_latencies),
+                commit_latency_microseconds: summarize(measurements.commit_latencies),
                 commit_throughput_records_per_second: throughput,
                 finite_read_microseconds: measurements.finite_read_microseconds,
                 finite_read_records: measurements.finite_read_records,
@@ -320,15 +320,15 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             let startup = Instant::now();
             let factory = FileStorage::open(&directory).map_err(display_error)?;
             let (document, view) = factory.create_view().await.map_err(display_error)?;
-            let coordinators = open_local_sessions::<FileStorage>(view, config.writers).await?;
-            let sessions = coordinators
+            let local_sessions = open_local_sessions::<FileStorage>(view, config.writers).await?;
+            let sessions = local_sessions
                 .iter()
                 .cloned()
                 .map(CompressionSession::new)
                 .collect();
             let mut measurements =
                 run_session(sessions, config, elapsed_microseconds(startup)).await?;
-            drop(coordinators);
+            drop(local_sessions);
             factory.flush().await.map_err(display_error)?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
@@ -355,15 +355,15 @@ async fn run_backend(config: &Config) -> Result<RunMeasurements, String> {
             let startup = Instant::now();
             let factory = FileStorage::open(&directory).map_err(display_error)?;
             let (document, view) = factory.create_view().await.map_err(display_error)?;
-            let coordinators = open_local_sessions::<FileStorage>(view, config.writers).await?;
-            let sessions = coordinators
+            let local_sessions = open_local_sessions::<FileStorage>(view, config.writers).await?;
+            let sessions = local_sessions
                 .iter()
                 .cloned()
                 .map(|session| EncryptionSession::new(session, BenchmarkKey))
                 .collect();
             let mut measurements =
                 run_session(sessions, config, elapsed_microseconds(startup)).await?;
-            drop(coordinators);
+            drop(local_sessions);
             factory.flush().await.map_err(display_error)?;
             measurements.persisted_bytes = Some(directory_bytes(&directory)?);
             let recovery = Instant::now();
@@ -430,8 +430,8 @@ where
     let generator = FixtureGenerator::new(config.seed);
     let record_capacity =
         usize::try_from(config.records).map_err(|_| "record count exceeds addressable memory")?;
-    let append_started = Instant::now();
-    let (append_latencies, snapshot_publish_microseconds) =
+    let commit_started = Instant::now();
+    let (commit_latencies, snapshot_publish_microseconds) =
         if let Some(snapshot_frequency) = config.snapshot_frequency {
             if config.writers != 1 {
                 return Err("periodic snapshots require exactly one writer".to_owned());
@@ -521,8 +521,8 @@ where
             }
             (latencies, None)
         };
-    let append_elapsed_seconds = append_started.elapsed().as_secs_f64();
-    if append_latencies.len() != record_capacity {
+    let commit_elapsed_seconds = commit_started.elapsed().as_secs_f64();
+    if commit_latencies.len() != record_capacity {
         return Err("submission count did not match workload".to_owned());
     }
 
@@ -536,8 +536,8 @@ where
 
     Ok(RunMeasurements {
         startup_microseconds,
-        append_latencies,
-        append_elapsed_seconds,
+        commit_latencies,
+        commit_elapsed_seconds,
         finite_read_microseconds,
         finite_read_records: config.records,
         snapshot_publish_microseconds,
@@ -645,8 +645,8 @@ where
     let generator = FixtureGenerator::new(config.seed);
     let record_capacity =
         usize::try_from(config.records).map_err(|_| "record count exceeds addressable memory")?;
-    let append_started = Instant::now();
-    let (append_latencies, snapshot_publish_microseconds) =
+    let commit_started = Instant::now();
+    let (commit_latencies, snapshot_publish_microseconds) =
         if let Some(snapshot_frequency) = config.snapshot_frequency {
             if config.writers != 1 {
                 return Err("periodic snapshots require exactly one writer".to_owned());
@@ -707,8 +707,8 @@ where
             }
             (latencies, None)
         };
-    let append_elapsed_seconds = append_started.elapsed().as_secs_f64();
-    if append_latencies.len() != record_capacity {
+    let commit_elapsed_seconds = commit_started.elapsed().as_secs_f64();
+    if commit_latencies.len() != record_capacity {
         return Err("append count did not match workload".to_owned());
     }
 
@@ -721,8 +721,8 @@ where
 
     Ok(RunMeasurements {
         startup_microseconds,
-        append_latencies,
-        append_elapsed_seconds,
+        commit_latencies,
+        commit_elapsed_seconds,
         finite_read_microseconds,
         finite_read_records: config.records,
         snapshot_publish_microseconds,
@@ -1163,7 +1163,7 @@ mod tests {
         let storage_measurements = run_storage(Arc::new(storage), &config, 0.0)
             .await
             .expect("concurrent storage workload");
-        assert_eq!(storage_measurements.append_latencies.len(), 8);
+        assert_eq!(storage_measurements.commit_latencies.len(), 8);
         assert_eq!(storage_measurements.finite_read_records, 8);
 
         let (_, view) = MemoryStorage::new().create_view().await.unwrap();
@@ -1173,7 +1173,7 @@ mod tests {
         let session_measurements = run_session(sessions, &config, 0.0)
             .await
             .expect("concurrent session workload");
-        assert_eq!(session_measurements.append_latencies.len(), 8);
+        assert_eq!(session_measurements.commit_latencies.len(), 8);
         assert_eq!(session_measurements.finite_read_records, 8);
     }
 

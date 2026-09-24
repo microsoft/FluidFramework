@@ -53,7 +53,7 @@ impl State {
     }
 
     /// Returns the terminal error without consuming it.
-    fn check(&self) -> Result<(), JsValue> {
+    fn check_terminal_error(&self) -> Result<(), JsValue> {
         self.error.borrow().clone().map_or(Ok(()), Err)
     }
 }
@@ -140,7 +140,7 @@ impl OrdinarySocket {
             _close: close,
         };
         loop {
-            connected.state.check()?;
+            connected.state.check_terminal_error()?;
             match connected.state.socket.ready_state() {
                 WebSocket::OPEN => break,
                 WebSocket::CONNECTING => connected.state.changed.notified().await,
@@ -156,7 +156,7 @@ impl OrdinarySocket {
     /// Consumes one queued message; cancelling the waiter does not lose messages.
     pub(super) async fn read(&self) -> Result<JsValue, JsValue> {
         loop {
-            self.state.check()?;
+            self.state.check_terminal_error()?;
             if let Some((message, size)) = self.state.queue.borrow_mut().pop_front() {
                 self.state
                     .queued_bytes
@@ -173,7 +173,7 @@ impl OrdinarySocket {
     /// Throttles uploads; completion is not a remote application acknowledgement.
     pub(super) async fn write(&self, bytes: &Uint8Array) -> Result<(), JsValue> {
         loop {
-            self.state.check()?;
+            self.state.check_terminal_error()?;
             if self.state.socket.ready_state() != WebSocket::OPEN {
                 return Err(js_error("WebSocket is closed"));
             }

@@ -109,8 +109,8 @@ pub(crate) fn read_prefix<const LENGTH: usize>(
 pub(crate) struct Journal {
     /// Stable journal name used to publish its settled-tail cursor.
     path: PathBuf,
-    /// Last record covered by the storage-owned settled cursor, or zero for an empty log.
-    pub(crate) last: u64,
+    /// Byte offset of the last record covered by the storage-owned settled cursor, or zero for an empty log.
+    pub(crate) last_record_offset: u64,
     /// First byte not covered by the storage-owned settled cursor.
     pub(crate) recovered_from: u64,
     /// Last published cursor value; absence requires publication even for an empty journal.
@@ -211,7 +211,7 @@ impl Journal {
         } else {
             atomic_file::read(&path.with_extension("cursor"))?
         };
-        let (start, last) = Self::decode_cursor(cursor.as_deref())?;
+        let (start, last_record_offset) = Self::decode_cursor(cursor.as_deref())?;
         let length = file.metadata()?.len();
         let (records, boundary) = recover_tail(&mut file, start, length, durable)?;
         if boundary != length {
@@ -234,9 +234,9 @@ impl Journal {
         Ok((
             Self {
                 path: path.to_path_buf(),
-                last,
+                last_record_offset,
                 recovered_from: start,
-                cursor: cursor.map(|_| (start, last)),
+                cursor: cursor.map(|_| (start, last_record_offset)),
                 file,
                 _lock: lock,
                 durable,
@@ -265,11 +265,14 @@ impl Journal {
             return Err(FileStorageError::Corrupt("journal cursor"));
         }
         let boundary = u64::from_be_bytes(cursor[..8].try_into().unwrap());
-        let last = u64::from_be_bytes(cursor[8..].try_into().unwrap());
-        if (boundary == 8) != (last == 0) || (last != 0 && (last < 8 || last >= boundary)) {
+        let last_record_offset = u64::from_be_bytes(cursor[8..].try_into().unwrap());
+        if (boundary == 8) != (last_record_offset == 0)
+            || (last_record_offset != 0
+                && (last_record_offset < 8 || last_record_offset >= boundary))
+        {
             return Err(FileStorageError::Corrupt("journal cursor boundary"));
         }
-        Ok((boundary, last))
+        Ok((boundary, last_record_offset))
     }
 
     /// Refuses observations that could mistake an uncertain tail for settled absence.
@@ -294,21 +297,24 @@ impl Journal {
     }
 
     /// Publishes the storage-owned validated tail without any historical address table.
-    pub(crate) fn remember_tail(&mut self, last: u64) -> Result<(), FileStorageError> {
+    pub(crate) fn remember_tail(
+        &mut self,
+        last_record_offset: u64,
+    ) -> Result<(), FileStorageError> {
         let boundary = self.boundary()?;
-        if self.cursor == Some((boundary, last)) {
+        if self.cursor == Some((boundary, last_record_offset)) {
             return Ok(());
         }
         self.failed = true;
         let result = {
             let mut cursor = boundary.to_be_bytes().to_vec();
-            cursor.extend_from_slice(&last.to_be_bytes());
+            cursor.extend_from_slice(&last_record_offset.to_be_bytes());
             atomic_file::write(&self.path.with_extension("cursor"), &cursor, self.durable)
         };
         match result {
             Ok(()) => {
-                self.last = last;
-                self.cursor = Some((boundary, last));
+                self.last_record_offset = last_record_offset;
+                self.cursor = Some((boundary, last_record_offset));
                 #[cfg(test)]
                 {
                     self.cursor_writes += 1;
@@ -590,7 +596,7 @@ mod tests {
         let (journal, records) = Journal::open(&path, false, true).unwrap();
         assert_eq!(records, vec![b"tail".to_vec()]);
         assert_eq!(journal.recovered_from, boundary);
-        assert_eq!(journal.last, 8);
+        assert_eq!(journal.last_record_offset, 8);
         assert_eq!(
             fs::metadata(path.with_extension("cursor")).unwrap().len(),
             48

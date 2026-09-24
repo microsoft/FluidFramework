@@ -136,8 +136,8 @@ struct Fixture {
     runtime: Arc<LocalSequencer<MemoryStorage>>,
     /// Backend-assigned document identity returned by every proxy hop.
     document: Bytes,
-    /// Distinguishes independently generated test session names.
-    session_prefix: &'static str,
+    /// Identifies the author in hop-traffic assertion failures.
+    author_label: &'static str,
     /// Fresh memberships prevent accidental reuse of connection-scoped authority.
     generation: usize,
     /// Endpoints in inner-to-outer construction order.
@@ -156,7 +156,7 @@ impl Fixture {
                 .await
                 .unwrap(),
             document: document.as_bytes().clone(),
-            session_prefix: "primary",
+            author_label: "primary",
             generation: 0,
             endpoints: Vec::new(),
             hops: Vec::new(),
@@ -164,11 +164,11 @@ impl Fixture {
     }
 
     /// Shares document state, but not author membership, wrappers, or transport resources.
-    fn peer(&self, session_prefix: &'static str) -> Self {
+    fn peer(&self, author_label: &'static str) -> Self {
         Self {
             runtime: self.runtime.clone(),
             document: self.document.clone(),
-            session_prefix,
+            author_label,
             generation: 0,
             endpoints: Vec::new(),
             hops: Vec::new(),
@@ -232,7 +232,7 @@ impl Fixture {
                 assert!(
                     hop.submissions.load(Ordering::SeqCst) > 0,
                     "{} / {scenario:?}: hop {index} received no submissions",
-                    self.session_prefix
+                    self.author_label
                 );
             }
         }

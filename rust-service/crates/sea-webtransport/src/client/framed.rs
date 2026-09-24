@@ -71,7 +71,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
     }
 
     /// Cancels failed I/O, reporting cleanup failure if cancellation also fails.
-    async fn complete<T>(
+    async fn cancel_on_error<T>(
         &mut self,
         result: Result<T, ClientError<Stream::Error>>,
     ) -> Result<T, ClientError<Stream::Error>> {
@@ -94,7 +94,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
                     .map_err(ClientError::Transport)
             })
             .await;
-        self.complete(result).await?;
+        self.cancel_on_error(result).await?;
         self.terminal = false;
         Ok(())
     }
@@ -107,7 +107,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
             .deadline
             .run(async { self.stream.finish().await.map_err(ClientError::Transport) })
             .await;
-        self.complete(result).await?;
+        self.cancel_on_error(result).await?;
         self.terminal = false;
         Ok(())
     }
@@ -120,7 +120,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
     ) -> Result<Option<protocol::NetworkFrame>, ClientError<Stream::Error>> {
         self.check_open()?;
         let result = self.receive_inner().await;
-        self.complete(result).await
+        self.cancel_on_error(result).await
     }
 
     /// Decodes without resetting either deadline when a peer trickles bytes.

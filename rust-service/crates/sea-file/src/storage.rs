@@ -683,10 +683,10 @@ impl State {
         snapshots: &mut Journal,
     ) -> Result<Self, FileStorageError> {
         let mut snapshot_reader = snapshots.reader()?;
-        let snapshot_head = if snapshots.last == 0 {
+        let snapshot_head = if snapshots.last_record_offset == 0 {
             0
         } else {
-            let record = read_record(&mut snapshot_reader, snapshots.last)?;
+            let record = read_record(&mut snapshot_reader, snapshots.last_record_offset)?;
             SnapshotRecord::decode(&record)?.position.get()
         };
         let state = Self {
@@ -697,7 +697,7 @@ impl State {
             reader: Arc::new(Mutex::new(events.reader()?)),
             snapshot_reader: Arc::new(Mutex::new(snapshot_reader)),
             snapshot_end: snapshots.recovered_from,
-            head: events.last,
+            head: events.last_record_offset,
             snapshot_head,
             #[cfg(test)]
             snapshot_reads: Arc::default(),
