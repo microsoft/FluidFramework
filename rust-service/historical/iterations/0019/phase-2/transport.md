@@ -40,6 +40,13 @@ No command was permitted to resolve checkout identity.
 This provenance discrepancy does not alter the source evidence recorded below,
 but the coordinator must reconcile it before selecting or reviewing a repair.
 
+## Deliverables and Commits
+
+- Discovery report source commit: `07266b9ad2d`.
+- Integrated discovery report commit: `71f0f557489`.
+- Production deliverable: none; all assessed transport candidates were
+  rejected, deferred, excluded, or already proportionate.
+
 ## Responsibility and Coverage Map
 
 | Area | Responsibilities, consumers, and platforms | Contract and nearest discriminating evidence | Six-category result |

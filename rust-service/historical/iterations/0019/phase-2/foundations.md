@@ -32,6 +32,13 @@ Wave 2 selected only FND-CA-001.
 Checkpoint review found a blocking performance regression, and repair cycle 1 restored the
 production source exactly; only this report remains as the workstream result.
 
+## Deliverables and Commits
+
+- Discovery report source commit: `50114459e5b`.
+- Rejected-checkpoint evidence source commit: `a9eddb51f45`.
+- Integrated evidence commit: `757b5ca6f56`.
+- Production deliverable: none; the attempted source change was fully reverted.
+
 ## Area and Responsibility Coverage
 
 | Member / responsibility | Owner, consumers, platforms | Evidence examined | Coverage and result |

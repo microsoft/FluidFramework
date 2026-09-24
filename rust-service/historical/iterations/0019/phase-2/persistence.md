@@ -45,6 +45,13 @@ Confidence is high for the responsibility map and dispositions because the
 current contracts and the complete 0018 owner-local evidence were inspected
 together.
 
+## Deliverables and Commits
+
+- Discovery report source commit: `142cefda415`.
+- Reviewed checkpoint source commit: `d843b8b422e`.
+- Integrated checkpoint commit: `73d42e8f291`.
+- Production deliverable: one private authoritative snapshot-record encoder.
+
 ## Inputs And Constraints
 
 - Scope and profile: broad current-state review of all `sea-file`
@@ -548,7 +555,7 @@ task, and lockfile guard.
 | Checkpoint review finding | Standard-depth fixed-base review found the implementation sound but identified contradictory validation statements in this report | The status, Outcome, and notable-event text still described validation as unavailable after the coordinator results were added | Made the cumulative gate record unreliable | Blocking report-only finding resolved by distinguishing delegated lookup failure from successful coordinator validation; fresh repair review required | Reconcile stale status prose whenever later evidence supersedes an earlier execution limitation. |
 | Platform guard retained | Compared Unix device boundary with non-Unix ancestor traversal and RS-003 | `cfg(unix)` controls device identity; production durability remains unqualified | Avoided treating platform code as dead or normalizing guarantees | Already proportionate | Platform branches require contract and qualification evidence before simplification. |
 
-## Contract And Integration Friction
+## Contract and Integration Friction
 
 - The worktree kickoff supplied for this assignment is
   `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`, while the checked-in iteration
@@ -588,14 +595,14 @@ The coordinator should reconcile `PERSIST-IMPL-001` and
 `PERSIST-ORG-001` against other workstreams and the four-repair budget.
 Wave 1 does not authorize either repair.
 
-## Candidate Skills And Process Changes
+## Candidate Skills and Process Changes
 
 None.
 The existing instruction to test duplication against distinct persistence,
 platform, recovery, worker, and failure guarantees directly prevented false
 executor, publication, cursor, and budget consolidations.
 
-## Remaining Work And Risks
+## Remaining Work and Risks
 
 - Package Clippy, rustdoc, and canonical integration gates remain.
 - Standard-depth fixed-base review against `142cefda415` and repair-cycle-1
