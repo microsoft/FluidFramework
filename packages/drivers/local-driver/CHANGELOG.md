@@ -1,5 +1,39 @@
 # @fluidframework/local-driver
 
+## 3.2.0
+
+### Minor Changes
+
+- Collect container telemetry through ServiceClient ([#28259](https://github.com/microsoft/FluidFramework/pull/28259)) [11261004291](https://github.com/microsoft/FluidFramework/commit/11261004291599575a23483fbaf8b20f4ff1afc1)
+
+  The alpha [ServiceOptions](https://fluidframework.com/docs/api/driver-definitions/serviceoptions-interface) interface now accepts an optional `logger`.
+  Session, ephemeral, and Tinylicious clients forward telemetry from containers they create or load to this logger.
+  Existing callers can omit the option without changing their behavior.
+
+  ```typescript
+  import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+
+  const service = startEphemeralService();
+  const client = service.newClient({
+    oldestSupportedClient: "2.100.0",
+    logger: {
+      send(event) {
+        console.log(event);
+      },
+    },
+  });
+  ```
+
+  The same `logger` option is supported by `getSessionService().newClient(...)` and `createTinyliciousServiceClient(...)`.
+
+- Add session-storage-backed local services ([#27902](https://github.com/microsoft/FluidFramework/pull/27902)) [da0dd40c087](https://github.com/microsoft/FluidFramework/commit/da0dd40c087b075822f0a9be723e1879f25d23b5)
+
+  The new alpha [`getSessionService`](https://fluidframework.com/docs/api/local-driver/getsessionservice-function) API provides a [`ServiceClient`](https://fluidframework.com/docs/api/driver-definitions/serviceclient-interface) compatible way to use the browser-local Fluid service that retains attached documents across page reloads in the same browser tab. Calls within one JavaScript realm share a lazily created service for the lifetime of that realm. Local services also expose APIs to list and delete their stored documents.
+
+  Session storage can be shared by separate same-origin JavaScript realms or applications loading separate copies of the package. Such instances run independent local servers, so concurrently editing the same stored document across them is unsupported.
+
+  The alpha `EphemeralServiceClient` type has been replaced by the more general [`LocalServiceClient`](https://fluidframework.com/docs/api/local-driver/localserviceclient-interface) type. Update type imports and annotations to use [`LocalServiceClient`](https://fluidframework.com/docs/api/local-driver/localserviceclient-interface)<[`EphemeralService`](https://fluidframework.com/docs/api/local-driver/ephemeralservice-interface)>.
+
 ## 3.1.0
 
 Dependency updates only.

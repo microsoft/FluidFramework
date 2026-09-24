@@ -157,7 +157,7 @@ class TestParseCheckboxes:
         cmd_parse_checkboxes(_ns(body_file=str(body)))
         assert json.loads(capsys.readouterr().out) == ["api-compatibility"]
 
-    def test_parses_all_five_reviewers(
+    def test_parses_all_reviewers(
         self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
     ) -> None:
         lines = [f"- [x] **{r.label}** — desc" for r in REVIEWERS]

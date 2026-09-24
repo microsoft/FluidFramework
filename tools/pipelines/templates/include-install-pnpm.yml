@@ -139,7 +139,7 @@ steps:
       echo "npm registry: $npm_registry"
 
       # Parse the pnpm version pinned in package.json's "packageManager" field
-      # (e.g. "pnpm@10.33.0+sha512..." -> "pnpm@10.33.0").
+      # (e.g. "pnpm@11.27.0+sha512..." -> "pnpm@11.27.0").
       # This discards the integrity hash suffix, which npm does not provide a practical way to use,
       # and trusts the package repository to serve the correct version.
       PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])")
