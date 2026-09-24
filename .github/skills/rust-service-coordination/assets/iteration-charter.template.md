@@ -18,7 +18,7 @@ Coordinator: <!-- TODO(required): record the coordinator -->
 
 ## Shared Validation
 
-<!-- TODO(required): list the canonical workspace formatting, all-target/all-feature linting, build, test, example, conformance, fresh generated-consumer, and retained-artifact validation commands that apply. Define expected files and domain invariants for machine-readable evidence. -->
+<!-- TODO(required): select checkpoint and integrated validation commands from rust-service/DEVELOPMENT.md by affected surface, including its documentation-only path where applicable. Define expected files and domain invariants for machine-readable evidence. -->
 
 ## Contract and Test Evidence
 

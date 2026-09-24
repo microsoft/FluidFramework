@@ -22,6 +22,9 @@ Owner: <!-- TODO(required): record the agent or owner -->
 
 ## Deliverables and Validation
 
+For simplification, deliver frozen uncommitted patches and focused evidence for coordinator-owned checkpoint acceptance, not candidate implementation commits.
+Select validation from `rust-service/DEVELOPMENT.md` by affected surface, including its documentation-only path where applicable.
+
 Follow the coordination skill's Terminal Coordination section before dispatch.
 Assign process task IDs and fresh per-run evidence paths; use compound tasks for parallel check batches and serialize only shared foreground terminal access by default.
 Include a checkout-guarded formatter-write task scoped to owned crates or files.

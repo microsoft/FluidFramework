@@ -34,20 +34,9 @@ distinct boundary. If a changed crate needs no documentation or test change,
 record why existing evidence is sufficient or why another boundary owns the
 guarantee. Follow the full policy in `rust-service/DEVELOPMENT.md`.
 
-Before completing any Rust-service implementation or integration, run the
-canonical validation in `rust-service/DEVELOPMENT.md` and, from the repository
-root, run:
-
-```bash
-pnpm policy-check --path rust-service
-```
-
-Run `pnpm build:fast` from the repository root when changed files affect a
-registered pnpm package or any declared input to its build tasks. This includes
-changes to package manifests, task definitions, workspace or lock files, and
-Rust sources or manifests consumed by generated WASM tasks. A package-scoped
-build does not replace this check. Documentation-only changes outside registered
-package build inputs do not require the repository build.
+Use [the development guide](../../../rust-service/DEVELOPMENT.md#canonical-rust-checks) as the authority for checkpoint and integrated validation, including documentation-only checks, consumer builds, and repository policy.
+Iteration machinery does not require broader checks than the affected surfaces and boundaries require.
+This skill governs execution ownership, scheduling, and evidence, not a separate validation policy.
 
 Apply the following sections within the explicitly authorized parallel iteration.
 Existing iteration records remain append-only historical artifacts.
@@ -56,6 +45,9 @@ For a risk-driven contract and regression-test audit, also use the [quality-iter
 It defines boundary selection, evidence, inventory dispositions, and convergence; this skill remains the authority for iteration mechanics.
 For a current-state simplification, consolidation, or deduplication audit, also use the [simplification-iteration skill](../rust-service-simplification-iteration/SKILL.md).
 It defines candidate selection, behavior-preservation evidence, reduction accounting, and convergence; this skill remains the authority for iteration mechanics.
+For simplification, its patch-first checkpoint acceptance replaces the generic workstream-commit handoff below.
+Workers return frozen uncommitted patches; the coordinator assembles, validates, reviews, and commits accepted checkpoints under the configured authority.
+Keep the audited records and Phase 3 closeout, but do not add a separate candidate-approval gate.
 
 ## Terminal Coordination
 
@@ -148,7 +140,7 @@ Record the alternatives, evidence, and downstream consequences with the question
    For a quality iteration, also run `iteration-records.mjs init-quality NNNN` using the script path above before committing the kickoff records.
    Complete the inventory's configuration and selection rationale; workstreams fill reviewed boundaries during the audit.
    For a simplification iteration, instead run `iteration-records.mjs init-simplification NNNN`.
-   Complete the inventory's configuration and selection rationale; workstreams fill reviewed candidates during discovery and repair.
+   Complete the inventory's configuration and selection rationale; record checkpoint dispositions after patch-first editing and review.
 5. Run `node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN start`.
 6. Commit the initialized records as the iteration kickoff, then create the integration branch and isolated worktrees from that kickoff commit using the Worktrees section below.
 7. Give each agent its generated instruction file and report path.
@@ -191,7 +183,13 @@ Before removal:
 - Verify that the report accounts for all changes and that `git -C <worktree-path> status --porcelain=v1 --untracked-files=all` is empty.
 - Verify that the final workstream commit is an ancestor of the accepted integration commit with `git merge-base --is-ancestor <workstream-head> <integration-commit>`.
   For cherry-picked or adapted work, instead verify and record the source-to-integrated commit mapping and disposition of every source change; a conflict-free cherry-pick alone is not proof that no work remains.
+  For simplification patch handoffs, use the frozen patch identity and its base instead of workstream commit ancestry.
+  Preserve tracked and untracked patch contents outside the worktree and map every change to an accepted checkpoint commit, adaptation, rejection, or deferral.
+  A kickoff commit's ancestry is not evidence that an uncommitted patch was integrated.
 - Preserve required evidence outside the worktree, including any intentionally retained ignored files, and confirm that all users and owned processes have finished with the checkout.
+
+For an uncommitted patch handoff, obtain permission to discard only the verified, recorded workstream edits after preserving their evidence and dispositions.
+Until the worktree is clean, record cleanup as blocked; do not force removal or create an unreviewed source commit merely to satisfy cleanup.
 
 Then run:
 
@@ -203,13 +201,14 @@ git worktree list --porcelain
 Verify that the worktree is no longer registered and its directory is gone.
 Record the removal and integration evidence in the integration report, or record the exact blocker and owner when cleanup cannot safely proceed.
 Never use forced removal to bypass local files, locks, or incomplete integration.
-Do not delete the workstream branch until its disposition and commits are recorded in the integration report.
+Do not delete the workstream branch until its disposition and commit or patch mapping are recorded in the integration report.
 Apply the same checks to the iteration-owned integration worktree after its final commits are accepted into the primary branch.
 
 ## Run a Workstream
 
 1. Record branch, worktree, base commit, agent/instruction provenance, initial hypothesis, and planned checks before substantive implementation.
 2. Keep implementation commits coherent and independently reviewable.
+   For simplification, return a frozen patch with its base, snapshot identity, tracked and untracked contents, and focused check results instead; do not commit candidate source changes.
 3. Before changing behavior, identify the relied-upon contract and the narrowest
    responsible implementation boundary. Plan focused owning-module or
    owning-crate regression evidence first, then shared conformance or broader
@@ -234,10 +233,8 @@ Record timeout outcomes separately from assertion failures, restore the mutation
 
 For delegated commands in repositories with multiple worktrees, make the command itself use the assigned absolute path and print the absolute worktree path, `git branch --show-current`, HEAD, and status before running work. Assert the expected branch and base when applicable, and stop on mismatch. Do not accept summarized validation output that omits this guard output, exit status, or the requested test result. When the workstream may edit a crate manifest but does not own the shared lockfile, validate in an exact disposable copy and immediately verify that the assigned worktree's lockfile is unchanged.
 
-When accepting a delegated implementation or review, inspect the named Git
-object directly and compare its changed paths with the workstream ownership and
-report. Review prose without evidence of the named commit or checkout is not
-integration evidence.
+When accepting a delegated implementation or review, inspect the named Git object or frozen patch and compare its changed paths with the workstream ownership and report.
+Review prose without evidence of the named commit or snapshot is not integration evidence.
 
 When a workstream retains machine-readable evidence, directly verify the
 expected files, nonzero size, parse success, provenance, and declared domain
@@ -260,6 +257,8 @@ Use [workstream report template](./assets/workstream-report.template.md).
 ## Integrate Phase 2
 
 1. Review and integrate accepted commits in dependency order.
+   For simplification, assemble frozen workstream patches and use its checkpoint acceptance loop instead.
+   Record the mapping from each source patch to accepted checkpoint commits and any rejected or deferred edits; do not require per-worker candidate approval.
 2. For every accepted behavior change or bug fix, verify that the relied-upon
    contract is documented at its owning boundary and that each changed
    production crate has proportionate focused regression evidence or a recorded
@@ -277,14 +276,9 @@ Use [workstream report template](./assets/workstream-report.template.md).
    node .github/skills/rust-service-coordination/scripts/iteration-records.mjs validate NNNN phase-2
    ```
 
-6. Run workspace-level validation and commit the integration boundary only after the artifact check passes.
+6. Run the applicable integrated validation and commit the integration boundary only after the artifact check passes.
 
-Workspace-level validation must include the canonical format, strict
-workspace/all-target/all-feature Clippy, rustdoc, build, test, and documentation checks in
-`rust-service/DEVELOPMENT.md`. Package-scoped checks do not replace this gate.
-It must also include the scoped repository policy check and, when the changed
-files affect the registered pnpm or declarative build graph, the repository-root
-`pnpm build:fast` command described there.
+Select integrated checks from [the development guide](../../../rust-service/DEVELOPMENT.md#canonical-rust-checks) for the combined accepted changes, including its documentation-only path where applicable.
 When downstream tests consume ignored generated packages or build outputs,
 regenerate them in the integration checkout and execute or inspect the exact
 consumer artifact rather than relying on a source build or cached output.

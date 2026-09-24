@@ -4,7 +4,7 @@ Status: in progress
 Branch: `rust-service/iteration-{{ITERATION}}/{{WORKSTREAM}}`
 Worktree: <!-- TODO(required): record the worktree path -->
 Base commit: <!-- TODO(required): record the base commit -->
-Final commit: <!-- TODO(required): record the final commit or explain why none exists -->
+Final commit: <!-- TODO(required): record the final commit, or for simplification link the frozen patch and accepted checkpoint mapping; explain why none exists when applicable -->
 Agent or owner: <!-- TODO(required): record the agent or owner -->
 Model and tool version: <!-- TODO(required): record known values; use unknown when unavailable -->
 Instruction source: <!-- TODO(required): link the assigned instruction file and record its commit -->
@@ -21,7 +21,7 @@ Started and finished: <!-- TODO(required): record known timestamps or unknown --
 
 ## Deliverables and Commits
 
-<!-- TODO(required): list deliverables and ordered commits -->
+<!-- TODO(required): list deliverables and ordered commits, or frozen patch identities and bases for simplification. Link tracked and untracked contents and their accepted checkpoint commits, adaptations, rejections, or deferrals. -->
 
 ## Validation Evidence
 

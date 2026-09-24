@@ -7,7 +7,7 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Accepted Work
 
-<!-- TODO(required): list accepted workstream commit ranges in dependency order and record direct Git-object/path review against ownership -->
+<!-- TODO(required): list accepted workstream commit ranges, or simplification checkpoint commits with source patch identities and bases, in dependency order. Record direct diff/path review against ownership and account for all patch adaptations and dispositions. -->
 
 ## Rejected or Deferred Work
 
@@ -19,7 +19,7 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Validation Evidence
 
-<!-- TODO(required): list artifact validation; canonical workspace format, all-target/all-feature lint, build, test, and example results; conformance and integration results; fresh generated-consumer execution; and retained-evidence size, parse, provenance, and domain-invariant checks when applicable -->
+<!-- TODO(required): list artifact validation and the applicable integrated checks selected from rust-service/DEVELOPMENT.md by affected surface, including its documentation-only path where applicable. Include required fresh generated-consumer execution and retained-evidence size, parse, provenance, and domain-invariant checks. -->
 
 ## Contract and Regression Review
 
@@ -31,4 +31,4 @@ Integration commit: <!-- TODO(required): record the immutable Phase 2 integratio
 
 ## Artifact Check
 
-<!-- TODO(required): confirm every active workstream report and intentional uncommitted artifact is accounted for, temporary validation state is removed, owned processes are stopped, and the integration checkout is clean. For each iteration-owned worktree, record its path, final commit, integration ancestry or verified source-to-integrated mapping, clean-status and retained-evidence checks, and verified removal once no agent/process/review needs it; otherwise name the cleanup blocker and owner. -->
+<!-- TODO(required): confirm every active workstream report and intentional uncommitted artifact is accounted for, temporary validation state is removed, owned processes are stopped, and the integration checkout is clean. For each iteration-owned worktree, record its path, final commit or frozen patch identity, integration ancestry or verified patch/commit-to-checkpoint mapping, clean-status and retained-evidence checks, and verified removal once no agent/process/review needs it. For patch handoffs, record permission for discarding only verified recorded edits; otherwise name the cleanup blocker and owner. -->

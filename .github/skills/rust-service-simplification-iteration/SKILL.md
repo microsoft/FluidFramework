@@ -255,6 +255,21 @@ Before editing:
 3. identify generated, public, serialized, platform, persistence, and measured boundaries; and
 4. assign non-overlapping ownership.
 
+Distinguish the **initial run baseline**, before any simplification, from each later **checkpoint base**, which includes accepted changes from this run.
+
+- Establish passing evidence on the initial source commit for the planned run's applicable validation gates.
+  Reuse results only when they identify that exact commit, cover the required checks, and come from a compatible toolchain and environment; otherwise run the missing checks before editing.
+  Documentation-only runs do not require implementation gates unless executable examples or generated inputs require them.
+  Resolve initial source failures outside simplification before starting the run.
+- Before later checkpoints, establish passing evidence for their checkpoint-local checks.
+  Reuse matching results from the preceding accepted checkpoint and run newly required local checks against the checkpoint base.
+  Do not rerun broader integrated gates merely because the base commit changed; schedule them at the boundaries described in [Validation](#validation).
+  An accepted checkpoint is known to pass its recorded checks, not every broader gate.
+
+Record the initial source commit separately from checkpoint bases, with commands, results, and evidence used or reused in the existing session state or run record.
+A failure on a later checkpoint base may have been introduced by this run; follow [failure attribution](#classify-validation-failures) rather than treating it as an initial source failure.
+Corrective checkpoints for confirmed in-run regressions start from recorded failing evidence, as described there.
+
 Do not write a prose candidate list for cheap edits that can be evaluated directly in a diff.
 
 ### Edit the Full Assigned Scope
@@ -329,6 +344,7 @@ Default to **three frozen-state attempts per checkpoint**, including the initial
    Verify the frozen identity and combined review coverage, then commit or pause according to the configured authority.
 
 This limit replaces the checkpoint-review skill's default repair/review allowance.
+This workflow requires passing validation; it does not use the checkpoint-review skill's validation-exception option.
 Validation failures and review-driven repairs share the allowance; they do not get separate loops.
 All review assignments in a batch share that allowance, and every revised attempt validates and reviews the complete batch again.
 Acceptance of one checkpoint does not require re-reviewing earlier unchanged checkpoints.
@@ -354,26 +370,39 @@ Report gaps in promised scope coverage separately; acceptance of a patch does no
 
 ### Classify Validation Failures
 
-Before editing in response to a failure, classify it as introduced, pre-existing, environmental, potentially flaky, or unclear.
-When attribution is unclear, reproduce the smallest failing command against the checkpoint base in a clean checkout.
+Passing baseline checks reduce attribution uncertainty but do not eliminate it.
+Before changing source in response to a failure:
 
-- Restore missing dependencies or correct an invalid command without consuming an attempt.
-- Rerun a potentially flaky test once for diagnosis; never rerun until green.
-- For an introduced failure, provide the exact command, relevant output, failing test, base result, and current patch to the implementer.
-- Do not weaken, delete, skip, or add retries to a test merely to accept a simplification.
+- **Environment or command problem:** restore missing dependencies or correct the command, then rerun the affected checks.
+  If a corrected command lacks baseline evidence, run it against the checkpoint base too.
+- **Current-candidate regression:** return the command, relevant output, failing test when applicable, baseline evidence, and current patch to the implementer for repair within the checkpoint allowance.
+- **Unclear attribution:** reproduce the smallest failing command against the checkpoint base in a clean checkout.
+  If it fails there, compare earlier accepted states and the initial source commit to distinguish an in-run regression from an initial source failure.
+  Trace the responsible change or interaction; failure on the latest accepted base does not establish that it predates the run.
+  One diagnostic rerun may help investigate a potentially flaky test; a passing rerun alone does not resolve the failure.
+- **Regression in earlier accepted work:** stop forward progress and repair or revert the responsible transformation within simplification.
+  For committed work, use a corrective checkpoint on the latest accepted commit, preserving any pending candidate separately; do not rewrite accepted history.
+  Give it the normal bounded acceptance loop, including the newly failing check and affected validation.
+  Record the failing starting evidence instead of requiring that known-broken check to pass before the corrective edit.
+  For uncommitted accepted work, reopen its acceptance loop against its original base.
+  After correction, adapt and revalidate dependent candidates before resuming.
+- **Initial source failure or unresolved attribution:** pause, preserve the patch and failure evidence, and report the blocker.
+  Only failures shown to predate this run are routed outside simplification for source repair.
+  Resume after attribution and resolution, re-establishing the initial baseline if an external repair changes it.
 
-Environment restoration, evidence collection, one diagnostic flaky rerun, and report-only corrections do not consume an attempt because they do not create a new patch state.
-Any substantive source or test edit does.
+Do not weaken, delete, skip, or add retries to a test merely to accept a simplification.
+Environment restoration, evidence collection, one diagnostic flaky rerun, and report-only corrections do not consume a candidate attempt.
+Substantive source or test repairs create a new candidate state and use the next attempt.
 
 If all attempts fail, stop before committing or starting another checkpoint and ask the user to choose:
 
 - revert only the current checkpoint patch, leaving earlier accepted checkpoints intact;
-- preserve the patch and pause;
-- expand scope and authorize another bounded loop; or
-- accept an explicit documented exception.
+- preserve the patch and pause; or
+- authorize another bounded repair loop for the simplification.
 
-Recommend reverting.
-Never accept an introduced deterministic regression as an exception or describe an excepted checkpoint as fully validated.
+Recommend reverting the candidate, or the responsible accepted transformation when repairing an earlier regression.
+Abandoning a corrective candidate does not resolve the earlier regression; keep forward progress blocked until a repair or revert passes acceptance.
+Do not waive required validation or unresolved blocking findings to accept the checkpoint.
 
 ## Parallel Patch Work
 
@@ -403,26 +432,22 @@ Do not let multiple workstreams create competing shared abstractions.
 
 ## Validation
 
-Declare the validation set for each checkpoint before editing, using its category and affected boundaries.
-Run the smallest useful check during local editing, then use these acceptance minimums:
-
-- **Documentation-only:** documentation checks, rustdoc, and applicable doctests.
-- **Tests:** formatting and compilation as applicable, complete tests for every changed crate, an accounting of consequential behavioral obligations before and after, verification that retained cases execute, and proportionate failure-detection evidence.
-- **Naming or code organization:** formatting, Clippy or compilation, and complete tests for every changed crate.
-- **Implementation and abstractions:** formatting, Clippy or compilation, complete tests for every changed crate, directly affected dependent-crate tests, and boundary-specific checks.
-
-Every checkpoint that changes Rust code or tests must pass the complete affected-crate test suites before acceptance.
+Declare each checkpoint's validation set before editing using [the development guide's affected-surface requirements](../../../rust-service/DEVELOPMENT.md#checkpoint-and-documentation-checks).
+The category name does not exempt executable examples, generated inputs, or consumers from their required checks.
+Run the smallest useful checks during local editing under the worktree synchronization rules.
+For test simplification, also account for consequential behavioral obligations before and after, verify that retained cases execute, and provide proportionate failure-detection evidence.
 After review-driven edits, the next attempt reruns the complete declared set.
 Passing tests does not establish preserved test quality; the review must still compare behavioral obligations, independent expectations, execution gates, diagnosis, and potentially redundant evidence.
 
 Validate just in time.
-Do not run a full pre-change workspace baseline for a documentation wave or preflight later waves.
-Run a baseline suite only when needed to distinguish existing failures, account for test-discovery changes, or characterize behavior.
+Verify the initial run baseline once, then establish checkpoint-local evidence as described in [Establish the Baseline](#establish-the-baseline).
+Do not repeat initial integrated validation before every checkpoint or run implementation gates for documentation-only work that does not affect executable examples or generated inputs.
+Use focused baseline reproductions when later failures need attribution, test discovery changes, or behavior needs characterization.
 
-At the integrated boundary, run all applicable canonical commands from `rust-service/DEVELOPMENT.md`.
-For ordinary Rust changes, use its scoped native and Rust-service TypeScript/WASM package gate plus the explicit repository policy check.
-Run the extended integration/browser gate or a repository-wide build only when required by the affected boundary.
-The native workspace tests, scoped TypeScript/WASM build and tests, and policy check may run concurrently when their output paths do not conflict.
+Declare broader gate boundaries with the validation plan: run them at an affected checkpoint when its safety depends on them, at planned wave or integration-batch boundaries, and before completion.
+Select the applicable gates and safe command concurrency from [the development guide](../../../rust-service/DEVELOPMENT.md#canonical-rust-checks).
+Matching results on the same frozen state may satisfy more than one boundary without rerunning commands.
+Failures at these boundaries use the same attribution and corrective-checkpoint rules as local failures.
 Do not rerun source validation after record-only changes.
 
 Missing worktree dependencies are environment setup failures, not source failures.

@@ -11,6 +11,9 @@ Required environment: <!-- TODO(required): record tool/runtime versions and setu
 
 <!-- TODO(required): define the research question, falsifiable hypothesis, and scope -->
 
+For simplification work, edit first and return a frozen uncommitted patch with its base, snapshot identity, tracked and untracked contents, and focused check results.
+The coordinator owns assembled checkpoint acceptance; do not commit candidate source changes or seek a separate per-worker approval.
+
 ## Ownership
 
 <!-- TODO(required): list writable paths, read-only dependencies, and forbidden shared changes. For shared fixtures, name the owner and authoritative coordinator handoff (source path, commit, and interface), or state none. -->
@@ -45,7 +48,7 @@ Do not retry concurrently, cancel an unverified terminal owner, or report an inc
 
 ## Validation
 
-<!-- TODO(required): list narrow and integration commands; require checkout identity, exact outcomes, direct execution or inspection of fresh generated consumers, and a lockfile-diff check when Cargo resolution is outside ownership. If using liveness mutations, specify the owning-test selector and external deadline with bounded termination; follow the coordination skill's baseline, restoration, and rerun requirements. -->
+<!-- TODO(required): select checkpoint and integration commands from rust-service/DEVELOPMENT.md by affected surface, including its documentation-only path where applicable; require checkout identity, exact outcomes, direct execution or inspection of required fresh generated consumers, and a lockfile-diff check when Cargo resolution is outside ownership. If using liveness mutations, specify the owning-test selector and external deadline with bounded termination; follow the coordination skill's baseline, restoration, and rerun requirements. -->
 
 ## Escalation and Stopping Conditions
 

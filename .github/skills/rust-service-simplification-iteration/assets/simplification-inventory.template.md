@@ -46,7 +46,7 @@ Summarize only information needed to understand benefit, safeguards, findings, o
 
 ## Contract and Validation Review
 
-<!-- Link fixed-base reviews and command evidence to the same frozen checkpoint identity, including coverage across review assignments. Summarize material findings, corrections, and reversions. Do not copy command status or patch descriptions into multiple sections. -->
+<!-- Distinguish initial run baseline evidence from checkpoint-local evidence and planned broader gate boundaries. Identify exact commits, commands, and compatible environments for new or reused results. Link reviews and candidate validation to the same frozen checkpoint identity, including coverage across review assignments. Record failure attribution to the initial source or an in-run change, unresolved attribution, and corrective checkpoints with their failing starting evidence and accepted repair/revert. Summarize material findings without duplicating command status or patch descriptions. -->
 
 ## Net Effect
 

@@ -6,9 +6,41 @@ The toolchain is pinned by `rust-toolchain.toml` and includes `rustfmt` and Clip
 
 ## Canonical Rust Checks
 
-Run these commands before completing Rust-service implementation or integration.
-During a workstream, run the complete test suites for every changed crate after each coherent code- or test-changing checkpoint.
-Those focused suites localize failures but do not replace the final workspace gate.
+This document is the authority for Rust-service validation requirements.
+Select checks by the affected source, executable inputs, and consumer boundaries, not by the task or iteration label.
+For mixed changes, use the combined requirements.
+
+### Checkpoint and Documentation Checks
+
+| Changed surface | Required checks before accepting a checkpoint |
+| --- | --- |
+| Standalone Markdown or workflow prose | Applicable documentation, local-link, and repository policy checks. No Rust compilation or consumer build is required unless the prose is an executable or generated input. |
+| Rust documentation or other Rust comments only | Documentation and policy checks, formatting, strict rustdoc, applicable doctests, and strict all-target/all-feature Clippy for affected crates. Ordinary unit/integration suites and TypeScript/WASM builds are not required solely for comment edits. |
+| Rust code, tests, manifests, names, or organization | Formatting, compilation or Clippy, complete affected-crate test suites, documentation and policy checks, and directly affected dependent-crate tests and boundary checks. |
+| Executable examples or generated inputs | Validate the executable examples and regenerate and test the affected consumers, in addition to the applicable source checks above. |
+
+Rust doc comments can contain executable tests and are checked by Clippy as well as rustdoc.
+For Rust-comment-only changes, run the documentation checker and policy command below, plus:
+
+```bash
+cargo fmt --all -- --check
+cargo clippy -p <affected-package> --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc -p <affected-package> --all-features --no-deps
+cargo test -p <affected-package> --doc --all-features
+```
+
+Replace `<affected-package>` with the affected Cargo package, repeating `-p` for multiple packages.
+Include crates that consume changed included documentation; a Markdown file used by `include_str!` in a doc attribute is not standalone prose.
+Run doctests where the package has a doctest target; do not treat an unsupported target as a passing test.
+These documentation-only checks are also sufficient at the integrated boundary unless executable or generated inputs require broader validation.
+
+Passing checks do not establish semantic accuracy or preservation of contracts.
+Review those properties separately.
+
+### Implementation and Integration Gates
+
+For code, test, manifest, or executable-input changes, checkpoint checks localize failures but do not replace the final applicable integration gates.
+Run these commands before completing Rust-service implementation or integration of such changes:
 
 ```bash
 cargo fmt --all -- --check
@@ -18,7 +50,7 @@ cargo build --workspace --all-targets
 node scripts/check-documentation.mjs
 ```
 
-For ordinary Rust-service changes, run the scoped native and generated-consumer test gate:
+For ordinary changes covered by this section, run the scoped native and generated-consumer test gate:
 
 ```bash
 ./test.sh
@@ -45,7 +77,7 @@ pnpm policy-check --path rust-service
 
 The scoped `./test.sh` build is sufficient for Rust sources and manifests consumed only by the Rust-service TypeScript packages.
 Run repository-root `pnpm build:fast` when a change affects packages outside Rust service, shared build tooling or configuration, workspace dependency topology, lockfiles, or another consumer not covered by the scoped build.
-Documentation-only Rust-service changes require neither test mode nor the repository build unless they change executable examples or generated inputs.
+Documentation-only work uses the checks above; it does not require either test mode or the repository build solely because it is part of an iteration.
 
 After the source is frozen, the workspace test branch, TypeScript/WASM build branch, and repository policy check are independent and may run concurrently.
 Clippy, rustdoc, native build, and native tests share the default Cargo target and should not run concurrently with one another.
