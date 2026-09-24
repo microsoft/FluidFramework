@@ -1,32 +1,33 @@
 # Create collaborative Fluid files from application data
 
-You can create a Fluid file from application data without constructing a container or distributed data structure (DDS) in the producer.
-When a client opens that file, its application converts the creation data, or **seed**, into real DDSs before the normal Fluid runtime loads.
-Fluid then persists the complete DDS-backed state and continues ordinary summarization.
+You can create a Fluid file from application data without running a Fluid runtime in the producer or reproducing Fluid's serialization of distributed data structures (DDSs).
+The creation data is the **seed**.
+When clients open the file, each client independently converts that seed into the same initial DDS state and then loads it through its ordinary runtime.
+Clients do not need to coordinate initialization or submit initialization operations to collaborate.
 
-The APIs provide the complete seed-loading and first-summary lifecycle.
-You supply your application's format, validation, schema, and deterministic conversion.
-You do not copy a loader adapter or summary host from a test package.
-The loader APIs are available through `@fluidframework/container-loader/legacy/alpha`; they have alpha stability.
+Your host still uses the normal container-loading APIs.
+You add seed support around your existing runtime factory and supply the deterministic conversion for your application's format.
+Fluid later persists the DDS state so that new clients can load it without converting the seed.
+The persistence details are described below; the DDSs are already usable before that first persisted summary.
 
 ## Use the feature
 
 ### Responsibilities
 
-| Component                    | Your application supplies                                                                            | Fluid supplies                                                                                                                  |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| File producer                | Validated input, application code details, configured driver, authentication, and create-new request | `createSeedSummary` writes the creation protocol and application input.                                                         |
-| Seed-enabled runtime factory | `SeedProjector`, your registry and entry point, and opt-in first-summary policy                      | `seedRuntimeFactory` adapts the runtime-facing snapshot and storage before normal loading.                                      |
-| Initial graph construction   | Deterministic initialization through your ordinary runtime and DDS APIs                              | `createSeedRuntimeSnapshot` creates a disconnected container, serializes the real runtime, and disposes it.                     |
-| Persistence                  | Normal enabled summary scheduling and an eligible connected writer                                   | The runtime requests the first full summary, handles acknowledgment and baseline adoption, and continues incremental summaries. |
+| Component                  | Your application supplies                                                                | Fluid supplies                                                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| File producer              | Seed payload, application code details, and file creation through your service           | The optional `createSeedSummary` helper writes the creation protocol and application input.                                     |
+| Seed loading               | Your existing runtime-loading function and a `SeedProjector`                             | `seedRuntimeFactory` wraps that function and supplies the converted state before normal runtime loading.                        |
+| Initial state construction | Deterministic initialization through your ordinary runtime and DDS APIs                  | `createSeedRuntimeSnapshot` creates a disconnected container, serializes the real runtime, and disposes it.                     |
+| Persistence                | The first-full-summary policy shown below and normal enabled summarization with a writer | The runtime requests the first full summary, handles acknowledgment and baseline adoption, and continues incremental summaries. |
 
-The [text application][application] is a complete, headless composition of these pieces.
+The [seed-creation sample][application] is a complete, headless composition of these pieces, using two named text parts.
 Its application modules contain no test-utility imports.
-The sibling `test/` directory contains the local service, assertions, and failure injection; do not ship those files.
+Its `test/` subdirectory contains the local service, assertions, and failure injection; do not ship those files.
 
 ### 1. Produce the creation summary
 
-Import the framework helper and supply your own application tree.
+Import the alpha framework helper and supply your own application tree with a seed payload.
 For example:
 
 ```typescript
@@ -59,6 +60,7 @@ const summary = createSeedSummary({
 ```
 
 The [complete example summary][example-summary] is an actual JSON serialization of this creation summary, including all protocol blobs.
+The numeric `type` tags are defined by [`SummaryType`][summary-types]; use that definition and its tree/blob interfaces when implementing a producer in another language.
 A [producer test][producer-tests] checks it against the executable producer.
 Its structure is:
 
@@ -79,23 +81,29 @@ The `applicationProjection` path is an application convention, not a required ma
 The helper's `applicationProjection` argument is the complete application tree that it places under `.app`.
 Use your own paths and format, and make your projector read those same paths.
 
-Pass the resulting summary to your configured driver's `IDocumentServiceFactory.createContainer`.
+In the standard TypeScript driver-based creation path, pass the resulting summary to your configured driver's `IDocumentServiceFactory.createContainer`.
 The executable [externalSeedFile.ts][producer] shows request resolution, file creation, URL retrieval, and service disposal.
 Supply a create-new request supported by your driver, not an arbitrary existing-document URL.
+
+The producer does not have to use TypeScript, a URL resolver, or a Fluid document-service factory.
+A producer in another language can construct the same protocol metadata and application tree, then use its service's authenticated file-creation API.
+The JSON example describes the logical summary, not a universal service HTTP request: follow the target service's creation and serialization contract.
+That producer needs neither a Fluid runtime nor the application's DDS implementations.
+
 Configure the host's code loader to resolve `codeDetails` to your seed-enabled runtime factory.
 The example package name is not a production code-selection policy.
 
 ### 2. Add seed loading to your runtime factory
 
-Wrap the call that normally loads your runtime, before any data store loads.
-Keep your existing registry, entry point, runtime options, and application cleanup.
-In this composition sketch, `applicationLoadOptions` is your existing load configuration and `applicationProjector` is your implementation of `SeedProjector`:
+Wrap the function that normally loads your container runtime with `seedRuntimeFactory`.
+Keep your existing load configuration and application cleanup.
+In this composition sketch, `applicationLoadOptions` is that unchanged configuration and `seedProjector` implements the [`SeedProjector` operations below](#3-implement-your-seed-projector):
 
 ```typescript
 import { seedRuntimeFactory } from "@fluidframework/container-loader/legacy/alpha";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 
-const runtimeFactory = seedRuntimeFactory(applicationProjector, (load, existing) =>
+const runtimeFactory = seedRuntimeFactory(seedProjector, (load, existing) =>
 	loadContainerRuntime({
 		...applicationLoadOptions,
 		context: load.context,
@@ -115,11 +123,6 @@ Use the same integration for interactive clients and summarizer clients.
 Do not set `summaryOnRequest` unless your application intentionally owns summary scheduling; normal automatic scheduling is the default.
 There is no additional summary-host callback or test summarizer to register.
 
-Configure the host loader's `configProvider` so `getRawConfig("Fluid.Container.enableOfflineFull")` returns `false` for seed loads.
-Interactive loaders enable offline tracking by default, so leaving this setting unspecified is not equivalent to disabling it.
-Keep your other host configuration and leave immediate summary-acknowledgment refresh enabled.
-This explicit restriction applies to seed loading, not to an ordinary DDS-backed load.
-
 The delegate receives:
 
 - `load.context`: the context to pass to your runtime constructor.
@@ -133,18 +136,19 @@ Its `nativeOnly` option bypasses the seed adapter entirely, demonstrating that p
 #### Existing derived container runtimes
 
 You do not need to replace your subclass with the example runtime.
-If your existing factory calls `ContainerRuntime.loadRuntime2`, retain its `registry`, `containerRuntimeCtor`, and other options, and add the adapted context and policy there:
+If your existing factory calls `ContainerRuntime.loadRuntime2`, keep its existing options, including the runtime subclass, and add the adapted context and policy there:
 
 ```typescript
-const runtimeFactory = seedRuntimeFactory(applicationProjector, async (load, existing) => {
+const runtimeFactory = seedRuntimeFactory(seedProjector, async (load, existing) => {
 	const { runtime } = await ContainerRuntime.loadRuntime2({
 		...applicationLoadOptions,
-		registry: applicationRegistry,
-		containerRuntimeCtor: ApplicationContainerRuntime,
 		context: load.context,
 		existing,
 		summaryGenerationOptions: {
-			fullTreePolicy: load.fromSeed ? "untilFirstAck" : "default",
+			...applicationLoadOptions.summaryGenerationOptions,
+			fullTreePolicy: load.fromSeed
+				? "untilFirstAck"
+				: applicationLoadOptions.summaryGenerationOptions?.fullTreePolicy,
 		},
 	});
 	return runtime;
@@ -154,11 +158,10 @@ const runtimeFactory = seedRuntimeFactory(applicationProjector, async (load, exi
 Here `ContainerRuntime` comes from `@fluidframework/container-runtime/legacy`.
 The load path applies the new summary and construction options outside the constructor, so an existing subclass does not need new positional constructor arguments.
 Retain your normal realization and disposal logic.
-The complete materialized graph must match the data store types, channels, aliases, and schema that your existing factories expect.
 
 ### 3. Implement your seed projector
 
-`SeedProjector<TSeed>` has three application-owned operations:
+The `seedProjector` argument in the preceding examples implements `SeedProjector<TSeed>`, which has three application-owned operations:
 
 | Operation                           | What you implement                                                                                                                        |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -178,7 +181,58 @@ Initialize the graph either in that factory or in the optional awaited `initiali
 The helper calls Fluid's ordinary runtime serializer and disposes the construction container on success or failure.
 Do not hand-author runtime or data-store metadata, and do not use mock runtimes in shipping application code.
 
-During **construction only**, pass a fixed, application-defined compressor session to the runtime:
+#### Example: construct and serialize a real runtime
+
+The sample's [materializer][builder] uses the following implementation.
+`parseSeed`, `codeDetails`, and `loadTextRuntime` are sample application code, not additional framework APIs:
+
+```typescript
+export async function materializeSeed(
+	input: unknown,
+	sequenceNumber: number,
+): Promise<SeedRuntimeSnapshot> {
+	if (sequenceNumber !== 0) {
+		throw new Error("Only the original creation checkpoint can be materialized");
+	}
+	const seed = parseSeed(input);
+	return createSeedRuntimeSnapshot({
+		codeDetails,
+		runtimeFactory: {
+			get IRuntimeFactory() {
+				return this;
+			},
+			async instantiateRuntime(context, existing) {
+				const { runtime } = await loadTextRuntime(context, existing, { seed });
+				return runtime;
+			},
+		},
+	});
+}
+```
+
+Import `createSeedRuntimeSnapshot` and the `SeedRuntimeSnapshot` type from `@fluidframework/container-loader/legacy/alpha`.
+The sample passes `materializeSeed` as its projector's `materialize` operation.
+Its [application runtime][runtime] uses ordinary creation APIs while constructing the disconnected state:
+
+```typescript
+if (!existing) {
+	const store = await runtime.createDataStore(layout.storeType);
+	await store.entryPoint.get();
+	if ((await store.trySetAlias(layout.alias)) !== "Success") {
+		throw new Error("Cannot assign the text application's root alias");
+	}
+}
+```
+
+The [data store factory][data-store] then creates a SharedTree channel, initializes its content, and binds it to that data store.
+Fluid's runtime, data stores, and DDSs serialize their own state; your materializer does not assemble their summary or snapshot structures.
+The provided sample demonstrates how to share the same application runtime between construction and normal loading.
+Replace its schema and initialization with your own application's model and creation APIs.
+
+#### Make construction deterministic across clients
+
+Every client converting the same seed must construct the same collaborative identities and initial state.
+During **construction only**, all clients must pass the **same fixed, application-defined compressor session ID** to the runtime:
 
 ```typescript
 detachedConstructionOptions: {
@@ -187,19 +241,21 @@ detachedConstructionOptions: {
 ```
 
 Use an enabled runtime identifier compressor and deterministic short data store identifiers.
-Keep the construction session, schema, registry, channel identifiers, alias assignment, and initialization order compatible across clients.
+Use the same construction session, model schema, data store and channel types, channel identifiers, aliases, and initialization order for a given seed on every client.
+Canonicalize unordered input before allocating identifiers or initializing DDSs; the sample validates and sorts its two text parts before creating content.
 Collaborative identifiers and state must agree; the runtime's creation timestamp and telemetry identifier can differ without changing the model.
 Construction is not a promise that every summary byte, including telemetry metadata, is identical.
 The construction runtime cannot attach or become a live client.
 Do not pass construction options to a runtime joining the stored document: each live client needs a fresh compressor session for new allocations.
 
-The executable [runtimeMaterialization.ts][builder] uses this helper and the same [textContainerRuntime.ts][runtime] that loads the application normally.
-The example validates and sorts its two text parts before initialization.
-Replace that application's schema and initialization with your own model; the framework does not convert arbitrary HTML, JSON, or packages into a suitable collaborative model for you.
+The sample's [determinism tests][materialization-tests] compare independent constructions, excluding only those two telemetry fields.
+Your application's tests must cover its own initialization paths and supported materializer versions.
+The framework does not convert arbitrary HTML, JSON, or packages into a suitable collaborative model for you.
 
-#### Initialize content once; create a view on every load
+#### SharedTree example: initialize content once; create a view on every load
 
-These operations have different purposes:
+The sample uses SharedTree to illustrate the difference between initializing DDS content during disconnected construction and accessing existing content during normal loading.
+Its SharedTree operations have different purposes:
 
 - `viewWith(configuration)` creates a typed view of a SharedTree. You use it when rendering or accessing both new and loaded data.
 - `view.initialize(content)` writes the initial content and schema into a new tree. Use it only while constructing the disconnected seed graph, not in every joining client.
@@ -227,6 +283,15 @@ Historical service versions can still contain the original seed.
 A client loading a persisted DDS-backed summary needs neither the seed body nor the conversion.
 The [lifecycle tests][lifecycle-tests] exercise automatic graduation without an application edit, continued automatic persistence, independent collaboration, operation replay, full then incremental summaries, failed-upload retry, and loading through the ordinary factory without the adapter.
 
+### Host configuration
+
+The host selects the seed-enabled runtime factory through its ordinary code loader; it does not inspect each document to choose a seed or DDS-backed load path.
+Currently, a host that can open seed documents must disable offline tracking in that loader's configuration: `getRawConfig("Fluid.Container.enableOfflineFull")` must return `false`.
+This is a loader-wide limitation, not a setting that the host can choose after learning whether an individual document contains a seed.
+Interactive loaders enable offline tracking by default, so leaving this setting unspecified does not disable it.
+Keep your other host configuration and leave immediate summary-acknowledgment refresh enabled.
+Ordinary DDS-backed documents do not inherently need these restrictions, but documents opened by that same loader share its offline configuration.
+
 ## How loading and persistence work
 
 ### Preserve the original checkpoint and operation stream
@@ -246,13 +311,23 @@ The runtime's opt-in full-tree policy, proposal tracking, and garbage-collection
 Applications that do not select the new policy retain the existing summary path.
 The opt-in policy can move an otherwise idle seed client from read mode into the writer quorum; hosts should account for that connection activity.
 
-### Compatibility and remaining application responsibilities
+### Correctness requirements and risks
 
-The input format, deterministic conversion contract, and SharedTree schema namespace are different concerns.
-Fluid does not require a manifest or a universal external format identifier.
-Applications must deploy compatible materializers or reject incompatible loaders.
+**Deterministic seed conversion is a correctness requirement, not an optimization.**
+All clients that convert the same seed must produce the same initial collaborative state, including identifiers and subsequent identifier-allocation state.
 Equal visible text is insufficient if two conversions produce different node identities: later operations can target different nodes and break convergence.
-Deterministic construction also does not prove that a conversion faithfully represents the application's input.
+The loader cannot prove this requirement for application-defined conversion code.
+Test independent constructions and cross-client operation replay, including across every materializer version that can open the same seed.
+Do not change allocation order, schema, codecs, or initialization behavior for existing seeds unless the resulting collaborative state remains the same.
+Reject unsupported inputs or versions rather than guessing how to convert them.
+
+The input format, deterministic conversion contract, and a DDS's schema identity are different concerns.
+For example, keeping a SharedTree schema namespace unchanged does not prove that two versions of your materializer construct the same state.
+Fluid does not require a manifest or a universal external format identifier; your application must select the correct deterministic conversion.
+
+**Faithful conversion is a separate application requirement.**
+A conversion can be deterministic and still omit or misinterpret input.
+Validate that your DDS model represents all supported seed content, and reject content it cannot represent.
 
 Validate creation and persistence with your actual driver and service.
 The local-service tests do not prove that every production driver accepts a seed-only application tree.
@@ -274,7 +349,9 @@ The example's two string-valued parts are a small application contract, not a li
 [producer]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/externalSeedFile.ts
 [example-summary]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/exampleSeedSummary.json
 [producer-tests]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/test/externalSeedFile.spec.ts
+[summary-types]: ../../../../packages/common/driver-definitions/src/protocol/summary.ts
 [builder]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/runtimeMaterialization.ts
+[materialization-tests]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/test/materialization.spec.ts
 [sample]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/sampleRuntimeFactory.ts
 [runtime]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/textContainerRuntime.ts
 [data-store]: ../../../../packages/test/local-server-tests/src/test/seedProjection/text/textDataStore.ts
