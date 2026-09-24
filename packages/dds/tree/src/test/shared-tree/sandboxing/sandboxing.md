@@ -78,7 +78,7 @@ Before the Host applies the changes, it restores and binds the real handles.
 
 The production implementation should preserve custom handle identity for repeated references and propagate resolution errors.
 It should cache a single promise for blobs in their custom handles.
-The cache deduplicates requests to prevent optimize data transfers to the Guest.
+The cache deduplicates requests to optimize data transfers to the Guest.
 The promise is cached so that the deduplication handles concurrent requests.
 
 Review the [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort) features before you select a data-transfer method.
