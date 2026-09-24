@@ -285,6 +285,29 @@ export interface ContainerExtension<
 		opMessage: JsonDeserialized<NonNullable<TRuntimeProperties["OpMessages"]>["content"]>,
 		local: boolean,
 	) => void;
+
+	/**
+	 * Called just before a batch of ops is flushed to the wire, giving the extension a chance
+	 * to have a pending op message included first in that batch.
+	 *
+	 * @returns Content for an op to submit (addressed to this extension, with an empty address
+	 * chain), or `undefined` if the extension currently has nothing pending.
+	 *
+	 * @remarks
+	 * This is the mechanism by which an extension can ensure some op of its own is always sent
+	 * ahead of other ops, including after reconnection: implementations are expected to track
+	 * their own "has this been acknowledged yet" state (typically by observing their own op come
+	 * back through {@link ContainerExtension.processOpMessage} with `local === true`), and return
+	 * the pending content again on every call until that acknowledgment is observed. Extensions
+	 * that use this hook do not need separate resubmit-on-reconnect handling: the next flush
+	 * after reconnecting will simply invoke this hook again.
+	 *
+	 * This is called synchronously and only while the container can currently submit ops; it
+	 * must not have side effects beyond reading the extension's own pending state.
+	 */
+	getPendingOpMessage?: () => JsonSerializable<
+		NonNullable<TRuntimeProperties["OpMessages"]>["content"]
+	> | undefined;
 }
 
 // These are exported individual types as this is a type only package and does

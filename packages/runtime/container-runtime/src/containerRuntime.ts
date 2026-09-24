@@ -2265,6 +2265,7 @@ export class ContainerRuntime
 					staged: false,
 				};
 			},
+			generateExtensionOpMessages: () => this.generateExtensionOpMessages(),
 		});
 
 		this._quorum = quorum;
@@ -5849,6 +5850,31 @@ export class ContainerRuntime
 			contents: { extensionId: id, addressChain, contents },
 		};
 		this.submit(message);
+	}
+
+	/**
+	 * Called by the outbox just before a batch is flushed. Gives every acquired extension a
+	 * chance to have a pending op included first in that batch, via
+	 * {@link @fluidframework/container-runtime-definitions#ContainerExtension.getPendingOpMessage}.
+	 */
+	private generateExtensionOpMessages(): LocalBatchMessage[] {
+		const messages: LocalBatchMessage[] = [];
+		for (const [id, entry] of this.extensions) {
+			const contents = entry.extension.getPendingOpMessage?.();
+			if (contents === undefined) {
+				continue;
+			}
+			const opMessage: LocalContainerRuntimeMessage = {
+				type: ContainerMessageType.ExtensionOp,
+				contents: { extensionId: id, addressChain: [], contents },
+			};
+			messages.push({
+				runtimeOp: opMessage,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				staged: false,
+			});
+		}
+		return messages;
 	}
 
 	public acquireExtension<
