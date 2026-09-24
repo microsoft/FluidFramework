@@ -260,3 +260,30 @@ No commits, symlinks, servers, copied dependencies or benchmark output were crea
 New filesystem test directories are removed by their successful tests; an empty ignored crate-local `target` parent can remain.
 All intended modified paths are enumerated under Deliverables; the generated-binding test is the only new source file.
 Rust correctness confidence is high for the demonstrated defects and focused decisions; browser/platform acceptance remains conditional on fresh execution.
+
+### Reopened Native Benchmark Artifact Selection
+
+At 2026-09-24T01:53:50Z the coordinator reopened only the localized harness artifact-selection repair on its committed consumer base `82724b3e113`.
+The coordinator reported fresh generation of all WASM bundles and three passing raw binding tests using Mocha's `--no-config --no-package` isolation.
+An earlier config-wide Mocha invocation reached eight Rust benchmark cases that failed with `ENOENT`: Cargo honored an inherited target directory while `startRustService` launched `rust-service/target/release/sea-webtransport-server`.
+The independently missing Tinylicious prerequisites were restored by the coordinator and are not part of this repair.
+The prior audit's recorded build/launch mismatch was not closed by the initial native-crate evidence; this supplement accounts for that consequential harness gap.
+
+| Boundary | Owning decision and contract | Discriminating evidence | Disposition and revisit trigger |
+| --- | --- | --- | --- |
+| `benchmark-native-artifact-selection` | `getRustServiceArtifacts` supplies both `buildPrerequisites`' Cargo arguments and `startRustService`' executable path. The benchmark intentionally uses its workspace-local `target`, overriding inherited `CARGO_TARGET_DIR`; skip-build requires that same prepared executable. | New `Rust benchmark artifact selection / builds and launches from the same target despite inherited Cargo output` checks the complete locked/release/feature/explicit-target command and exact matching executable under an unrelated inherited target, including a workspace path containing spaces. It launches no service and builds no Rust crates. Removing `--target-dir` or separating the launch path fails this owning-assembly regression. | Localized repair complete, execution pending coordinator. Revisit Cargo profile/target flags, executable naming, or any future general environment-target support. |
+
+Follow-up files: `tests/sea-integration-tests/src/test/sharedTree.bench.ts`, new `rustServiceArtifacts.ts` and `rustServiceArtifacts.spec.ts` beside it, the package README, and this report.
+The helper preserves existing package/features/profile and executable naming; it changes only output selection.
+No browser fixture, manifest, lockfile, or sibling-worktree source was edited.
+No assigned task or shell was invoked: the assigned task still expects the previous HEAD, and the coordinator explicitly owns validation.
+Editor diagnostics returned no errors in the three TypeScript files, which is not a compiled/runtime pass.
+
+Required focused coordinator checks after integrating this follow-up:
+
+1. From `rust-service/tests/sea-integration-tests`, run `pnpm run build:test:esm`, `pnpm run check:format`, and `pnpm run lint`.
+2. From the same package, run `pnpm exec mocha --no-config --no-package lib/test/rustServiceArtifacts.spec.js`.
+3. With an unrelated inherited Cargo target still present, rerun a previously failing Rust benchmark correctness case with builds enabled, then resume the intended integration gate.
+   The focused assembly test does not substitute for observing the formerly missing executable being built and launched.
+
+This follow-up is paused for coordinator validation and commit; pending browser execution remains unchanged.

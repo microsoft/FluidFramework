@@ -84,6 +84,9 @@ The build uses Fluid build's dependency graph and declarative WASM task. Unchang
 
 Comparison browser bundles are minified and define `process.env.NODE_ENV` as `production` for every backend.
 The native Sea service and generated WASM use Cargo release builds; the WASM build also enables SIMD.
+The native benchmark service explicitly builds into `rust-service/target` and launches `target/release/sea-webtransport-server` from that same workspace.
+Its Cargo command overrides inherited `CARGO_TARGET_DIR` settings so the build and launch paths cannot diverge.
+When using `--skip-build`, prepare that workspace-local executable first.
 Results from earlier unminified bundles are not interchangeable with this configuration.
 
 Tinylicious belongs to the separate Routerlicious pnpm workspace. Install that workspace once before running the unfiltered correctness suite or selecting the Tinylicious performance case:

@@ -17,6 +17,8 @@ import {
 	ValueType,
 } from "@fluid-tools/benchmark";
 
+import { getRustServiceArtifacts } from "./rustServiceArtifacts.js";
+
 /** One selectable service backend and its stable artifact identity. */
 interface BenchmarkCase {
 	/** Human-readable title used by the standard benchmark reporter. */
@@ -123,6 +125,8 @@ const packageDirectory = path.resolve(import.meta.dirname, "../..");
 const repositoryDirectory = path.resolve(packageDirectory, "../../..");
 /** Absolute Rust service workspace root. */
 const rustServiceDirectory = path.join(repositoryDirectory, "rust-service");
+/** Matched build arguments and launch path for the native benchmark service. */
+const rustServiceArtifacts = getRustServiceArtifacts(rustServiceDirectory);
 /** Routerlicious package root used to build and launch Tinylicious. */
 const tinyliciousDirectory = path.join(
 	repositoryDirectory,
@@ -352,21 +356,7 @@ function dataStructureEnvironmentVariable(): "dummy" | "shared-tree" {
 /** Incrementally builds native or Tinylicious prerequisites for a case. */
 function buildPrerequisites(benchmarkCase: BenchmarkCase): void {
 	if (benchmarkCase.backend === "rust") {
-		run(
-			"cargo",
-			[
-				"build",
-				"--locked",
-				"-p",
-				"sea-webtransport-server",
-				"--release",
-				"--features",
-				"websocket-stream",
-			],
-			{
-				cwd: rustServiceDirectory,
-			},
-		);
+		run("cargo", rustServiceArtifacts.buildArguments, { cwd: rustServiceDirectory });
 		ensureCertificate();
 	}
 	if (benchmarkCase.backend === "tinylicious") {
@@ -419,7 +409,7 @@ async function startRustService(
 	const data = serviceData(temporaryDirectory);
 	const certificateDirectory = path.join(webTransportTestDirectory, ".certs");
 	const child = spawn(
-		path.join(rustServiceDirectory, "target/release/sea-webtransport-server"),
+		rustServiceArtifacts.executable,
 		[
 			"127.0.0.1:0",
 			path.join(certificateDirectory, "cert.pem"),
