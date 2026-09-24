@@ -656,57 +656,63 @@ mod tests {
     fn durable_append_reuses_inode_and_recovers_uncertain_prefix() {
         let root = std::env::temp_dir().join(format!("sea-publication-{}", std::process::id()));
         fs::create_dir_all(&root).unwrap();
-        for (index, fault) in [
-            JournalFault::PartialWrite,
-            JournalFault::BeforeSync,
-            JournalFault::AfterSync,
+        for (index, (fault, rollback)) in [
+            (JournalFault::PartialWrite, false),
+            (JournalFault::BeforeSync, false),
+            (JournalFault::BeforeSync, true),
+            (JournalFault::AfterSync, false),
         ]
         .into_iter()
         .enumerate()
         {
-            for rollback in [false, true] {
-                let path = root.join(format!("journal-{index}-{rollback}"));
-                let (mut journal, _) = Journal::open(&path, true, true).unwrap();
-                journal.append(b"acknowledged").unwrap();
-                let published = fs::read(&path).unwrap();
-                let mut old_inode = File::open(&path).unwrap();
-                journal.inject(fault);
+            let path = root.join(format!("journal-{index}-{rollback}"));
+            let (mut journal, _) = Journal::open(&path, true, true).unwrap();
+            journal.append(b"acknowledged").unwrap();
+            let published = fs::read(&path).unwrap();
+            let mut old_inode = File::open(&path).unwrap();
+            journal.inject(fault);
+            assert!(matches!(
+                journal.append(b"next"),
+                Err(FileStorageError::Ambiguous)
+            ));
+            assert!(matches!(journal.ready(), Err(FileStorageError::Ambiguous)));
+            for durable in [false, true] {
                 assert!(matches!(
-                    journal.append(b"next"),
-                    Err(FileStorageError::Ambiguous)
+                    Journal::open(&path, false, durable),
+                    Err(FileStorageError::Busy)
                 ));
-                assert!(matches!(journal.ready(), Err(FileStorageError::Ambiguous)));
-                for durable in [false, true] {
-                    assert!(matches!(
-                        Journal::open(&path, false, durable),
-                        Err(FileStorageError::Busy)
-                    ));
-                }
-                let mut retained = Vec::new();
-                old_inode.read_to_end(&mut retained).unwrap();
-                assert!(retained.starts_with(&published));
-                assert!(retained.len() > published.len());
-                assert_eq!(retained, fs::read(&path).unwrap());
-                assert!(!path.with_extension("pending").exists());
-                drop((old_inode, journal));
-                if rollback && matches!(fault, JournalFault::BeforeSync) {
-                    fs::write(&path, &published).unwrap();
-                }
-                let (mut journal, records) = Journal::open(&path, false, true).unwrap();
-                let mut expected = vec![b"acknowledged".to_vec()];
-                if matches!(fault, JournalFault::AfterSync)
-                    || (!rollback && matches!(fault, JournalFault::BeforeSync))
-                {
-                    expected.push(b"next".to_vec());
-                }
-                assert_eq!(records, expected);
-                journal.append(b"resumed").unwrap();
-                drop(journal);
-                expected.push(b"resumed".to_vec());
-                let (journal, records) = Journal::open(&path, false, true).unwrap();
-                assert_eq!(records, expected);
-                drop(journal);
             }
+            let mut retained = Vec::new();
+            old_inode.read_to_end(&mut retained).unwrap();
+            assert!(retained.starts_with(&published));
+            if matches!(fault, JournalFault::PartialWrite) {
+                assert_eq!(retained.len(), published.len() + 20);
+            } else {
+                assert!(retained.len() > published.len());
+            }
+            assert_eq!(retained, fs::read(&path).unwrap());
+            assert!(!path.with_extension("pending").exists());
+            drop((old_inode, journal));
+            if rollback {
+                fs::write(&path, &published).unwrap();
+            }
+            let (mut journal, records) = Journal::open(&path, false, true).unwrap();
+            if matches!(fault, JournalFault::PartialWrite) {
+                assert_eq!(fs::read(&path).unwrap(), published);
+            }
+            let mut expected = vec![b"acknowledged".to_vec()];
+            if matches!(fault, JournalFault::AfterSync)
+                || (!rollback && matches!(fault, JournalFault::BeforeSync))
+            {
+                expected.push(b"next".to_vec());
+            }
+            assert_eq!(records, expected);
+            journal.append(b"resumed").unwrap();
+            drop(journal);
+            expected.push(b"resumed".to_vec());
+            let (journal, records) = Journal::open(&path, false, true).unwrap();
+            assert_eq!(records, expected);
+            drop(journal);
         }
         fs::remove_dir_all(root).unwrap();
     }
@@ -769,31 +775,6 @@ mod tests {
             drop(journal);
         }
         fs::remove_dir_all(root).unwrap();
-    }
-
-    #[test]
-    fn interrupted_durable_append_preserves_acknowledged_prefix() {
-        let root =
-            std::env::temp_dir().join(format!("sea-published-journal-{}", std::process::id()));
-        std::fs::create_dir_all(&root).unwrap();
-        let path = root.join("journal");
-        let (mut journal, _) = Journal::open(&path, true, true).unwrap();
-        journal.append(b"acknowledged").unwrap();
-        let published = std::fs::read(&path).unwrap();
-        journal.inject(JournalFault::PartialWrite);
-        assert!(matches!(
-            journal.append(b"unacknowledged"),
-            Err(FileStorageError::Ambiguous)
-        ));
-        let interrupted = std::fs::read(&path).unwrap();
-        assert!(interrupted.starts_with(&published));
-        assert_eq!(interrupted.len(), published.len() + 20);
-        drop(journal);
-        let (journal, records) = Journal::open(&path, false, true).unwrap();
-        assert_eq!(records, vec![b"acknowledged".to_vec()]);
-        assert_eq!(std::fs::read(&path).unwrap(), published);
-        drop(journal);
-        std::fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

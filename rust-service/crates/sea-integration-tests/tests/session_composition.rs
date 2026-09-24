@@ -1208,8 +1208,7 @@ macro_rules! configurations {
                             collaborate(&mut fixture, &mut peer_fixture, |fixture| Box::pin(build(fixture)), rounds).await;
                             return;
                         }
-                        let base = fixture.open().await;
-                        let session = stack!(fixture, base; $($layer),*);
+                        let session = build(&mut fixture).await;
                         let trace = match scenario {
                             Scenario::OpenClose => None,
                             Scenario::EventsAndSnapshots | Scenario::Reconnect => Some(write_trace(&session).await),
@@ -1219,8 +1218,7 @@ macro_rules! configurations {
                         drop(session);
                         fixture.stop_endpoints().await;
                         if matches!(scenario, Scenario::Reconnect) {
-                            let base = fixture.open().await;
-                            let session = stack!(fixture, base; $($layer),*);
+                            let session = build(&mut fixture).await;
                             after_reconnect(&session, &trace.unwrap()).await;
                             session.close().await.unwrap();
                         }

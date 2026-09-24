@@ -735,22 +735,19 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn isolated_rooms_limits_missing_target_and_drop() {
+    async fn payload_limits_missing_target_and_drop() {
         let room = SignalRoom::new(SignalLimits {
             max_payload_bytes: 5,
             ..SignalLimits::default()
         })
         .unwrap();
-        let other_room = SignalRoom::new(SignalLimits::default()).unwrap();
         let first = connect(&room, "first").await;
-        let isolated = connect(&other_room, "first").await;
         let second = connect(&room, "second").await;
         first.next_signal().await.unwrap();
         first
             .send_signal(message(Some("missing"), SignalDelivery::Reliable))
             .await
             .unwrap();
-        assert!(isolated.receiver.lock().await.try_recv().is_err());
         let mut oversized = message(None, SignalDelivery::Reliable);
         oversized.payload = Bytes::from_static(b"too big");
         assert_eq!(

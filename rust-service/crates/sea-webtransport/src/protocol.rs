@@ -1965,45 +1965,45 @@ mod tests {
         let limits = Limits::default();
         for (payload_length, length_bytes) in [(0, 1), (127, 1), (128, 2), (16383, 2), (16384, 3)] {
             for (position, position_bytes) in [(127, 1), (128, 2), (16383, 2), (16384, 3)] {
-                for (session, session_bytes) in [
-                    (1, 1),
-                    (127, 1),
-                    (128, 2),
-                    (16383, 2),
-                    (16384, 3),
-                    (u64::MAX, 10),
-                ] {
-                    for blob_tree in [None, Some(TreeId::Directory([1; 32]))] {
-                        let blob_bytes = if blob_tree.is_some() { 34 } else { 0 };
-                        let event = Event {
-                            payload: vec![42; payload_length],
-                            blob_tree,
-                        };
-                        let request = Request::Submit {
-                            reference: Some(position),
-                            event: event.clone(),
-                        };
-                        let encoded =
-                            encode_request_frame(StreamRole::Author, &request, limits).unwrap();
-                        assert_eq!(
-                            encoded.len(),
-                            5 + 1 + position_bytes + length_bytes + payload_length + blob_bytes
-                        );
-                        assert_eq!(
-                            decode_request_frame(
-                                StreamRole::Author,
-                                &decode_one_network_frame(&encoded)
-                            )
-                            .unwrap(),
-                            request
-                        );
+                for blob_tree in [None, Some(TreeId::Directory([1; 32]))] {
+                    let blob_bytes = if blob_tree.is_some() { 34 } else { 0 };
+                    let event = Event {
+                        payload: vec![42; payload_length],
+                        blob_tree,
+                    };
+                    let request = Request::Submit {
+                        reference: Some(position),
+                        event: event.clone(),
+                    };
+                    let encoded =
+                        encode_request_frame(StreamRole::Author, &request, limits).unwrap();
+                    assert_eq!(
+                        encoded.len(),
+                        5 + 1 + position_bytes + length_bytes + payload_length + blob_bytes
+                    );
+                    assert_eq!(
+                        decode_request_frame(
+                            StreamRole::Author,
+                            &decode_one_network_frame(&encoded)
+                        )
+                        .unwrap(),
+                        request
+                    );
+                    for (session, session_bytes) in [
+                        (1, 1),
+                        (127, 1),
+                        (128, 2),
+                        (16383, 2),
+                        (16384, 3),
+                        (u64::MAX, 10),
+                    ] {
                         let response = Response::LoadEvent(Box::new(StreamEvent {
                             kind: super::SessionEventKind::Application,
                             position,
                             session,
                             reference: Some(position),
                             minimum_reference: Some(position),
-                            event,
+                            event: event.clone(),
                         }));
                         let encoded =
                             encode_response_frame(StreamRole::Event, &response, limits).unwrap();

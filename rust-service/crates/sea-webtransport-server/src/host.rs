@@ -1393,12 +1393,7 @@ mod tests {
     #[tokio::test]
     #[allow(clippy::too_many_lines)]
     async fn event_stream_returns_distinct_authority_before_recovery() {
-        let root = std::env::temp_dir().join(format!(
-            "sea-webtransport-event-open-{}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&root);
-        let host = BuiltInSeaHost::new(root.clone(), StorageMode::Memory);
+        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
         let first_connection = host.connect(LivenessPolicy::default());
         let mut first_stream = first_connection
             .open_event_stream(protocol::Request::OpenEventStream {
@@ -1616,17 +1611,11 @@ mod tests {
                 ..
             }) if fence > first_fence
         ));
-        let _ = std::fs::remove_dir_all(root);
     }
 
     #[tokio::test]
     async fn concurrent_close_is_idempotent_during_reconnect_grace() {
-        let root = std::env::temp_dir().join(format!(
-            "sea-webtransport-concurrent-close-{}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&root);
-        let host = BuiltInSeaHost::new(root.clone(), StorageMode::Memory);
+        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
         let connection = host.connect(LivenessPolicy {
             reconnect_grace: Duration::from_millis(25),
             ..LivenessPolicy::default()
@@ -1709,7 +1698,6 @@ mod tests {
                 ..
             }
         ));
-        let _ = std::fs::remove_dir_all(root);
     }
 
     #[tokio::test]
@@ -2017,17 +2005,15 @@ mod tests {
 
     #[tokio::test]
     async fn immediate_shutdown_releases_session_without_reconnect_grace() {
-        let root = std::env::temp_dir().join(format!(
-            "sea-webtransport-immediate-shutdown-{}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&root);
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(root.clone(), StorageMode::Memory)),
+            Arc::new(BuiltInSeaHost::new(
+                std::path::PathBuf::new(),
+                StorageMode::Memory,
+            )),
             TransportConfig {
                 liveness: LivenessPolicy {
                     reconnect_grace: Duration::from_secs(30),
@@ -2064,7 +2050,6 @@ mod tests {
         assert_eq!(outcome.owned_connections, 1);
         assert_eq!(outcome.cancelled_connections, 1);
         assert_eq!(measurements.snapshot().connection_cleanups, 1);
-        let _ = std::fs::remove_dir_all(root);
     }
 
     #[allow(clippy::too_many_lines)]
@@ -2186,17 +2171,15 @@ mod tests {
 
     #[tokio::test]
     async fn server_survives_malformed_and_abandoned_response_streams() {
-        let root = std::env::temp_dir().join(format!(
-            "sea-webtransport-server-fault-test-{}",
-            std::process::id()
-        ));
-        let _ = std::fs::remove_dir_all(&root);
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(root.clone(), StorageMode::Memory)),
+            Arc::new(BuiltInSeaHost::new(
+                std::path::PathBuf::new(),
+                StorageMode::Memory,
+            )),
             TransportConfig {
                 operation_timeout: Duration::from_millis(50),
                 ..TransportConfig::default()
@@ -2241,7 +2224,6 @@ mod tests {
         };
         let (result, ()) = tokio::join!(serving, exercise);
         result.unwrap();
-        let _ = std::fs::remove_dir_all(root);
     }
 
     async fn malformed_snapshot_stream_releases_publisher(

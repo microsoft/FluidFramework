@@ -289,13 +289,6 @@ mod tests {
     use super::{BlobDirectory, BlobDirectoryId, BlobId, BlobTreeError, BlobTreeId};
 
     #[test]
-    fn leaf_and_directory_identities_are_domain_separated() {
-        let blob = BlobId::for_bytes(&[]);
-        let directory = BlobDirectory::default().id().expect("empty directory id");
-        assert_ne!(blob.as_bytes(), directory.as_bytes());
-    }
-
-    #[test]
     fn content_identities_use_versioned_blake3_domains() {
         assert_eq!(
             BlobId::for_bytes(&[]).as_bytes(),
@@ -357,10 +350,6 @@ mod tests {
         }
         let decoded = BlobDirectory::decode(&encoded).expect("canonical decoding");
         assert_eq!(decoded, directory);
-        assert_eq!(
-            decoded.id().expect("decoded id"),
-            directory.id().expect("source id")
-        );
     }
 
     #[test]

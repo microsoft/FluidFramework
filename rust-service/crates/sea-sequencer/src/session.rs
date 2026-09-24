@@ -2273,9 +2273,7 @@ mod tests {
             )
             .await
             .unwrap();
-        let mut conflicting = submission(b"original");
-        conflicting.event.payload = Bytes::from_static(b"conflict");
-        assert!(first.submit(conflicting).await.unwrap() > position);
+        assert!(first.submit(submission(b"conflict")).await.unwrap() > position);
         runtime.shutdown().await.unwrap();
         drop((first, authority, runtime));
         let recovered = LocalSequencer::<MemoryStorage>::recover(

@@ -184,12 +184,7 @@ mod tests {
         let decoded = Checkpoint::decode::<()>(bytes.clone()).unwrap();
         assert_eq!(decoded.applied_through, checkpoint.applied_through);
         assert_eq!(decoded.minimum_reference, checkpoint.minimum_reference);
-        assert_eq!(
-            Checkpoint::decode::<()>(bytes.clone())
-                .unwrap()
-                .session_id_reserved_through,
-            256
-        );
+        assert_eq!(decoded.session_id_reserved_through, 256);
         for length in 0..bytes.len() {
             assert!(Checkpoint::decode::<()>(bytes.slice(..length)).is_err());
         }
