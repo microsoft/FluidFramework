@@ -182,6 +182,8 @@ accepted summaries.
    every read must describe the summary's checkpoint. Optionally register `createSummary` for synchronous attachment
    and detached serialization; that path needs already-realized state. Omitting it, or returning `undefined`,
    leaves out the readable projection on those synchronous paths without affecting external seed creation.
+   With summary heuristics enabled, the runtime requests the first full summary without an application edit, then returns to ordinary incremental scheduling after adoption.
+   The HTML test harness uses on-demand scheduling only to control its assertions.
 5. **Map model regions to projection parts.** Track dirtiness before encoding. Produce a complete tree when required;
    otherwise reuse unchanged parts only against the exact accepted parent supplied by the runtime. Promote captured
    revisions in `onAccepted`, not immediately after generation or upload.

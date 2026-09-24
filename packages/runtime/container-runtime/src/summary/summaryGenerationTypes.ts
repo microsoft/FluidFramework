@@ -51,7 +51,15 @@ export interface ISummaryGenerationOptions {
 	 *
 	 * @remarks
 	 * Use `"untilFirstAck"` when the loaded state was constructed in memory and its summary paths do not yet exist in storage.
+	 * With summary heuristics enabled, the elected summarizer requests an initial summary without waiting for application edits.
+	 * An attached interactive client requests a writer connection through the loader to participate in election,
+	 * without submitting an application operation or bypassing connection and permission restrictions.
+	 * This automatic connection request requires a loader that supplies `IContainerContext.requestWriteConnection`.
+	 * Disabled heuristics and on-demand summarization still require an explicit request.
+	 * After adoption, ordinary incremental generation and scheduling resume.
+	 *
 	 * Generating, uploading, or receiving an untracked acknowledgment does not end this policy.
+	 * If adoption fails, the runtime closes rather than reuse an incomplete baseline.
 	 * An explicit full-tree request is honored under every policy, including after the first accepted summary.
 	 * This policy does not inline attachment blob payloads or force full garbage-collection graph regeneration.
 	 * The runtime captures the option at load time and never mutates the caller's configuration.

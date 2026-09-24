@@ -29,6 +29,25 @@ export function createDetachedContainer(createDetachedContainerProps: ICreateDet
 // @alpha @legacy
 export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
+// @alpha @legacy
+export function createSeedRuntimeSnapshot(input: CreateSeedRuntimeSnapshotProps): Promise<SeedRuntimeSnapshot>;
+
+// @alpha @legacy
+export interface CreateSeedRuntimeSnapshotProps extends Pick<IContainerHostProps, "scope" | "logger" | "configProvider"> {
+    readonly codeDetails?: IFluidCodeDetails;
+    readonly initialize?: (container: IContainer) => Promise<void>;
+    readonly runtimeFactory: IRuntimeFactory;
+}
+
+// @alpha @legacy
+export function createSeedSummary(input: CreateSeedSummaryProps): ISummaryTree;
+
+// @alpha @legacy
+export interface CreateSeedSummaryProps {
+    readonly applicationProjection: ISummaryTree;
+    readonly codeDetails: IFluidCodeDetails;
+}
+
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
@@ -269,6 +288,34 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @alpha @legacy
+export interface SeedProjector {
+    isNative(context: IContainerContext): boolean;
+    materialize(seed: unknown, sequenceNumber: number): SeedRuntimeSnapshot | Promise<SeedRuntimeSnapshot>;
+    readSeed(context: IContainerContext): Promise<unknown>;
+}
+
+// @alpha @legacy
+export function seedRuntimeFactory(projector: SeedProjector, delegate: (load: SeedRuntimeLoad, existing: boolean) => Promise<IRuntime>, options?: SeedRuntimeFactoryOptions): IRuntimeFactory;
+
+// @alpha @legacy
+export interface SeedRuntimeFactoryOptions {
+    readonly allowProjection?: boolean;
+}
+
+// @alpha @legacy
+export interface SeedRuntimeLoad {
+    readonly context: IContainerContext;
+    readonly fromSeed: boolean;
+    readonly original: IContainerContext;
+}
+
+// @alpha @legacy
+export interface SeedRuntimeSnapshot {
+    readonly blobs: ReadonlyMap<string, ArrayBuffer>;
+    readonly snapshot: ISnapshotTree;
+}
 
 // @alpha @legacy
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";

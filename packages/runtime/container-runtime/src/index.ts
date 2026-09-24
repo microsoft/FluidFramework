@@ -21,6 +21,7 @@ export {
 	type RuntimeHeaderData,
 } from "./containerRuntime.js";
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export type { IDetachedRuntimeConstructionOptions } from "./detachedRuntimeConstruction.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export type {
 	ContainerRuntimeAliasMessage,

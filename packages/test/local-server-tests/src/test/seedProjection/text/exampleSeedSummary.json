@@ -1,0 +1,40 @@
+{
+	"type": 1,
+	"tree": {
+		".protocol": {
+			"type": 1,
+			"tree": {
+				"attributes": {
+					"type": 2,
+					"content": "{\"sequenceNumber\":0,\"minimumSequenceNumber\":0}"
+				},
+				"quorumMembers": {
+					"type": 2,
+					"content": "[]"
+				},
+				"quorumProposals": {
+					"type": 2,
+					"content": "[]"
+				},
+				"quorumValues": {
+					"type": 2,
+					"content": "[[\"code\",{\"key\":\"code\",\"value\":{\"package\":\"seed-creation-reference/1\"},\"approvalSequenceNumber\":0,\"commitSequenceNumber\":0,\"sequenceNumber\":0}]]"
+				}
+			}
+		},
+		".app": {
+			"type": 1,
+			"tree": {
+				"applicationProjection": {
+					"type": 1,
+					"tree": {
+						"seed.json": {
+							"type": 2,
+							"content": "{\"format\":\"seed-creation/1\",\"parts\":[{\"name\":\"first\",\"text\":\"Hello\"},{\"name\":\"second\",\"text\":\"World\"}]}"
+						}
+					}
+				}
+			}
+		}
+	}
+}

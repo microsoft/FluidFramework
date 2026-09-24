@@ -39,12 +39,92 @@ Read the **@fluidframework/container-runtime** API documentation at <https://flu
 ## Summary generation and acceptance
 
 Summary generation distinguishes full output, state tracking, and adoption of an acknowledged proposal.
-Runtime and distributed data structure (DDS) state, garbage-collection state, and application-provided content
-must refer to the same accepted summary before reusing its subtrees through summary handles.
-Full structural output does not imply a full GC reachability run.
-See [Summary Generation](Summary-Generation.md) for these generic runtime/GC contracts and their source/test map.
-[Application projections](../../../docs/content/Architecture/Application-Projections.md) are one use of these capabilities,
-not a dependency of the GC implementation.
+Runtime and distributed data structure (DDS) state, garbage-collection state, and application-provided content must refer to the same accepted summary before reusing its subtrees through summary handles.
+Full structural output does not imply a full garbage-collection reachability run.
+See [Summary Generation](Summary-Generation.md) for these runtime contracts and their source/test map.
+[Application projections](../../../docs/content/Architecture/Application-Projections.md) are one use of these capabilities, not a dependency of the garbage collector.
+
+## Persisting a full native summary before handle reuse
+
+If your runtime factory loads a graph whose native summary paths do not yet exist in storage, select `untilFirstAck`.
+Supply the policy on every load of that graph, including summarizer client loads:
+
+```typescript
+import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
+
+// In your runtime factory, after selecting the initial graph:
+const runtime = await loadContainerRuntime({
+  context,
+  registryEntries,
+  existing,
+  provideEntryPoint,
+  summaryGenerationOptions: { fullTreePolicy: "untilFirstAck" },
+});
+```
+
+With summary heuristics enabled (the default), normal client election starts a summarizer.
+That summarizer requests an initial summary without waiting for an application edit.
+It uses the normal summary submission, retry, cancellation, and acknowledgment paths.
+No application-owned summarizer host, dummy operation, or callback on every summary is required.
+If you explicitly disable heuristics or select `summaryOnRequest`, request the summary yourself through the existing summarizer API.
+Disabling summarization does not start a summarizer.
+
+Every attempt writes a full native summary until this runtime adopts an acknowledged full proposal that it submitted.
+Adoption includes the matching summarizer-node and garbage-collection state.
+Generation, upload, failed submission, and untracked acknowledgments do not permit handle reuse.
+An adoption failure closes the runtime rather than allow incremental summaries against a partially updated baseline.
+After adoption, ordinary incremental summaries and scheduling continue.
+On a subsequent load from persisted native state, omit this option to use ordinary behavior.
+
+Use `always` to require full native output for the runtime's lifetime.
+Omitting the option, or selecting `default`, leaves existing behavior unchanged.
+An explicit `fullTree` request is honored under every policy, including after adoption.
+The policy does not inline attachment blob payloads or force full garbage-collection graph regeneration.
+The policy controls full output and the initial request; it does not itself export application projections.
+You can separately register `additionalRootTree.summarize` for recurring application content and optional `additionalRootTree.createSummary` for synchronous attachment or detached serialization.
+When both are configured, the full-first policy also applies to application content.
+Handle reuse starts only after the same proposal's native state, garbage-collection state, and optional application acceptance callback have been adopted.
+
+## Constructing a temporary native snapshot
+
+A runtime factory can supply `detachedConstructionOptions` when creating a temporary detached container.
+The factory can initialize its normal data stores and DDSs without a mock runtime or manually authored runtime metadata:
+
+```typescript
+import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
+
+const constructionSessionId = "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa";
+const runtime = await loadContainerRuntime({
+  context,
+  registryEntries,
+  existing: false,
+  provideEntryPoint,
+  runtimeOptions: { enableRuntimeIdCompressor: "on" },
+  detachedConstructionOptions: { idCompressorSessionId: constructionSessionId },
+});
+```
+
+`IDetachedRuntimeConstructionOptions` is exported from the same entry point.
+The option is also accepted by `ContainerRuntime.loadRuntime2` with a custom `containerRuntimeCtor`.
+Derived runtimes do not need a new constructor parameter.
+
+Use the same valid compressor session ID and deterministic initialization order when reconstructing the same graph.
+Both data-store creation APIs already generate deterministic compact IDs while the container is detached.
+The second argument to `createDetachedDataStore` is a loading-group ID, not an explicit data-store ID.
+Assign stable DDS channel IDs and ensure the stores are reachable, for example through their normal root aliases.
+The `Fluid.Runtime.DisableShortIds` setting must not be `true`.
+The construction session is supplied as a lowercase version 4 UUID string and validated before loading.
+No branded-type assertion or ID-compressor import is needed.
+Construction preserves ordinary native telemetry metadata, including the creation timestamp and telemetry document ID.
+These values can differ between constructions.
+Deterministic collaborative identities do not imply byte-identical summaries.
+
+This mode only accepts a new, disconnected, detached context without a snapshot or pending local state.
+Attempting to attach, connect, or export pending local state closes the construction runtime.
+After initialization, use the native `IRuntime.createSummary` serialization path and close the temporary container.
+That path finalizes compressor allocations and persists the compressor without resumable local-session state.
+Load the generated native snapshot without `detachedConstructionOptions`; each live runtime then receives a fresh compressor session.
+Do not inject the construction session through pending local state.
 
 ## Data Virtualization For DataStores (Work in Progress)
 

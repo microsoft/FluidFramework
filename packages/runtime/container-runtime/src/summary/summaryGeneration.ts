@@ -170,6 +170,13 @@ export class SummaryGenerationController {
 	}
 
 	/**
+	 * Whether enabled summary heuristics must request an initial full summary without application edits.
+	 */
+	public get shouldSummarizeOnStartup(): boolean {
+		return this.options?.fullTreePolicy === "untilFirstAck" && !this.hasAcceptedFullSummary;
+	}
+
+	/**
 	 * Honor explicit full-tree requests and the captured policy.
 	 * Generation cannot start during acceptance or after acceptance fails because the parent may be partially updated.
 	 */
@@ -181,7 +188,7 @@ export class SummaryGenerationController {
 		return (
 			requestedFullTree ||
 			this.options?.fullTreePolicy === "always" ||
-			(this.options?.fullTreePolicy === "untilFirstAck" && !this.hasAcceptedFullSummary)
+			this.shouldSummarizeOnStartup
 		);
 	}
 

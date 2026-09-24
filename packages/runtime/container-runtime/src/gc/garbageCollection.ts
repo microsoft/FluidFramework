@@ -1217,6 +1217,7 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	public dispose(): void {
+		this.summaryStateTracker.dispose();
 		this.sessionExpiryTimer?.clear();
 		this.sessionExpiryTimer = undefined;
 

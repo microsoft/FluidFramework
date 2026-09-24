@@ -8,6 +8,7 @@
   - [Importing from this package](#importing-from-this-package)
   - [API Documentation](#api-documentation)
   - [Fluid Loader](#fluid-loader)
+  - [Application-owned seed documents](#application-owned-seed-documents)
   - [Expectations from host implementers](#expectations-from-host-implementers)
   - [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
   - [Container Lifetime](#container-lifetime)
@@ -85,6 +86,79 @@ Storage includes snapshots as well as the live and persisted operation stream.
 
 The consensus system allows clients within the collaboration window to agree on container's properties. One
 example of this is the npm package that should be loaded to process operations applied to the container.
+
+## Application-owned seed documents
+
+Import seed APIs from `@fluidframework/container-loader/legacy/alpha`.
+An external producer can create a document containing only protocol metadata and application-owned creation content.
+The application then constructs the native runtime state before the loader replays operations.
+You do not need test utilities or a particular seed manifest.
+
+```typescript
+import {
+	createSeedRuntimeSnapshot,
+	createSeedSummary,
+	seedRuntimeFactory,
+} from "@fluidframework/container-loader/legacy/alpha";
+
+// Producer: applicationProjection is an ISummaryTree with your own paths and content.
+const summary = createSeedSummary({ codeDetails, applicationProjection });
+// Upload summary with your configured driver's createContainer method.
+
+// Consumer: supply this factory through your normal code loader.
+const runtimeFactory = seedRuntimeFactory(
+	{
+		isNative: (context) => context.baseSnapshot?.blobs[".metadata"] !== undefined,
+		readSeed: readApplicationSeed,
+		materialize: async (seed) =>
+			createSeedRuntimeSnapshot({
+				runtimeFactory: createApplicationConstructionFactory(seed),
+			}),
+	},
+	async ({ context, fromSeed }, existing) =>
+		loadApplicationRuntime(context, existing, {
+			summaryGenerationOptions: {
+				fullTreePolicy: fromSeed ? "untilFirstAck" : "default",
+			},
+		}),
+);
+```
+
+The example's application callbacks are supplied by your application:
+
+- `readApplicationSeed` reads and validates your seed from the original context's snapshot and storage.
+- `createApplicationConstructionFactory` returns an `IRuntimeFactory` for your real runtime and registry.
+  It creates and initializes the complete graph in a detached container, using the same graph identities, schema, construction compressor session, and initialization order on every client.
+  Alternatively, pass `initialize` to `createSeedRuntimeSnapshot` and initialize through the temporary container's entry point.
+- `loadApplicationRuntime` loads your normal runtime using the supplied context and summary-generation policy.
+  Do not pass the construction compressor session to a live runtime.
+  Each live client must use its own fresh session.
+
+For `ContainerRuntime`, pass `detachedConstructionOptions: { idCompressorSessionId: constructionSession }`
+and `runtimeOptions: { enableRuntimeIdCompressor: "on" }` to `loadContainerRuntime` or your derived runtime's `loadRuntime2`.
+The options type, `IDetachedRuntimeConstructionOptions`, is exported from `@fluidframework/container-runtime/legacy`.
+This mode requires a fresh, detached, disconnected runtime with short IDs enabled.
+Create data stores in the same order to obtain the same runtime-generated store IDs; no explicit store ID override is needed.
+Omit `detachedConstructionOptions` entirely from the live runtime load.
+Construction guarantees deterministic graph identities, not byte-identical summaries: native telemetry timestamps and telemetry document IDs may differ.
+
+`createSeedRuntimeSnapshot` calls ordinary runtime serialization, returns the complete runtime snapshot and blob contents, and disposes its temporary container.
+It does not hand-author runtime envelopes or connect to a document service.
+Attachment blobs, summary handles, and loading groups are not supported during construction.
+
+The loader retains the original protocol state, stored version, checkpoint, and operation replay.
+For seed loads, it overlays the runtime-facing snapshot, storage reads, and snapshot refetches consistently.
+A refetch of another seed version is rejected; a later native snapshot passes through unchanged.
+The first acknowledged full native summary replaces the seed.
+Do not preserve the seed root in native summaries.
+The runtime can then safely produce incremental summaries.
+
+Seed loading supports checkpoint zero only.
+It rejects pending-state restoration and capture, offline loading, loading groups, and disabled immediate summary acknowledgement refresh.
+Interactive hosts must set `Fluid.Container.enableOfflineFull` to `false` in their configuration provider; offline support is enabled by default for interactive clients.
+Noninteractive clients do not enable offline loading.
+Custom projectors must provide blob IDs that do not collide with stored snapshot blobs, including protocol blobs; collisions are rejected before exposing an overlay.
+These restrictions do not apply when the stored document already contains native state or when you create an ordinary new detached container.
 
 ## Expectations from host implementers
 

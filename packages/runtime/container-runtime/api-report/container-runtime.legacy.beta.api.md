@@ -129,6 +129,11 @@ export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
 // @beta @legacy
+export interface IDetachedRuntimeConstructionOptions {
+    readonly idCompressorSessionId: string;
+}
+
+// @beta @legacy
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
@@ -376,6 +381,7 @@ export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promis
 export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
+    detachedConstructionOptions?: IDetachedRuntimeConstructionOptions;
     existing: boolean;
     // @deprecated
     minVersionForCollab?: OldestSupportedClientVersion;

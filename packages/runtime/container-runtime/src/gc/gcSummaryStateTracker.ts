@@ -257,6 +257,14 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
+	 * Release generated and submitted state when the owning runtime is disposed.
+	 */
+	public dispose(): void {
+		this.pendingSummaries.clear();
+		this.clearSummary();
+	}
+
+	/**
 	 * Adopt the garbage-collection state captured for the acknowledged tracked proposal.
 	 * Retire older captures in the same order as summarizer nodes, and ignore untracked acknowledgments.
 	 *

@@ -14,7 +14,9 @@ Applications can set `fullTreePolicy` to `"untilFirstAck"` when their DDS state 
 Full structural output continues until a tracked full proposal is acknowledged and adopted;
 subsequent summaries can reuse unchanged subtrees from that accepted summary.
 The other policies are `"default"` for normal summary behavior and `"always"` for full output on every summary.
-These options control summary generation, not summary scheduling.
+With enabled summary heuristics, `untilFirstAck` also requests an initial summary without waiting for application edits.
+After adoption, ordinary incremental generation and scheduling resume.
+Disabled heuristics and on-demand summaries still require an explicit request.
 
 ```typescript
 import type { ISummaryGenerationOptions } from "@fluidframework/container-runtime/legacy";

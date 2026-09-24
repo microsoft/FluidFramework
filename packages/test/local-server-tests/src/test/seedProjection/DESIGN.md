@@ -13,8 +13,10 @@ consumer responsibilities.
 
 The independent `text/` application demonstrates seed creation and native loading without the projection runtime APIs.
 Its application files and `text/test/` suites match the `html/` and `html/test/` structure.
-See its [source map](text/README.md#source-map) and [consumer guide](../../../../../../docs/content/Architecture/Application-Projections/Seed-Creation.md) for the runtime-factory integration boundary and test-internal construction gaps.
-It deliberately retains its bounded on-request summary host instead of depending on the projection callbacks or the shared HTML workflow harness.
+See its [source map](text/README.md#source-map) and [consumer guide](../../../../../../docs/content/Architecture/Application-Projections/Seed-Creation.md) for the runtime-factory integration boundary.
+It uses the exported loader seed APIs to construct a real runtime and SharedTree graph.
+Normal automatic summarization persists the first full native summary without an application edit, then continues with incremental summaries.
+No application-owned summary host or projection callback is required.
 The rest of this document describes the HTML projection application and harness.
 
 The HTML sample defines the format, SharedTree schema, deterministic materialization, runtime
@@ -28,6 +30,11 @@ The reference is headless and remains in a test package because its complete run
 uses test-internal construction support. It is not a supported production SDK or a browser demo. The
 restricted HTML codec and single-store graph deliberately bound the sample; they do not constrain
 the wider architecture to HTML or SharedTree.
+
+The HTML adapter retains projection-specific pending-state reconstruction, loading-group overlays, and baseline fingerprints.
+The exported seed loader APIs intentionally reject pending state, offline tracking, and loading groups on seed loads.
+Replacing the HTML adapter with those seed-only APIs would remove behavior covered by its restoration and fingerprint suites.
+This reference therefore keeps that adapter and construction support separate from the production seed APIs used by `text/`.
 
 External file creation writes application content and a loader-valid envelope, without constructing a DDS.
 Runtime materialization is separate: the application builds its runtime/DDS snapshot when it loads that seed.

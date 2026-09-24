@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 import { randomUUID } from "node:crypto";
-import { setImmediate } from "node:timers/promises";
 
 import {
 	LoaderHeader,
@@ -13,6 +12,10 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
+import {
+	DefaultSummaryConfiguration,
+	SummaryCollection,
+} from "@fluidframework/container-runtime/internal";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
@@ -35,10 +38,10 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	summarizeNow,
+	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 
 import { createSeedDocument } from "../externalSeedFile.js";
-import { layout } from "../runtimeMaterialization.js";
 import { sampleRuntimeFactory, type SeedLoad } from "../sampleRuntimeFactory.js";
 import { codeDetails, seedRoot } from "../textSeedFormat.js";
 import { readParts, TextNode } from "../textTreeSchema.js";
@@ -105,12 +108,29 @@ describe("Seed creation: real local-service lifecycle", function () {
 	function makeLoader(
 		options: {
 			nativeOnly?: boolean;
+			automatic?: boolean;
 			pending?: boolean;
 			config?: Record<string, boolean>;
 		} = {},
 	): Loader {
+		assert(DefaultSummaryConfiguration.state === "enabled");
 		const application = sampleRuntimeFactory({
 			nativeOnly: options.nativeOnly,
+			summaryConfigOverrides: options.automatic
+				? {
+						...DefaultSummaryConfiguration,
+						state: "enabled",
+						initialSummarizerDelayMs: 0,
+						maxOps: 1,
+						minIdleTime: 1,
+						maxIdleTime: 1,
+					}
+				: {
+						...DefaultSummaryConfiguration,
+						state: "summaryOnRequest",
+						initialSummarizerDelayMs: 0,
+						maxAckWaitTime: 20_000,
+					},
 			observe: (load) => loads.push(load),
 		});
 		const observed: IRuntimeFactory = {
@@ -140,7 +160,7 @@ describe("Seed creation: real local-service lifecycle", function () {
 					existing,
 				),
 		};
-		return new Loader({
+		const loader = new Loader({
 			documentServiceFactory: factory,
 			urlResolver: resolver,
 			codeLoader: new LocalCodeLoader([[codeDetails, observed]]),
@@ -150,6 +170,8 @@ describe("Seed creation: real local-service lifecycle", function () {
 				...options.config,
 			}),
 		});
+		tracker.add(loader);
+		return loader;
 	}
 
 	/** Enroll real client queues for synchronization and always dispose their owners. */
@@ -190,7 +212,46 @@ describe("Seed creation: real local-service lifecycle", function () {
 		}
 	}
 
-	it("creates without DDSs, independently collaborates, persists full then incremental, and reloads native-only", async () => {
+	it("graduates automatically without application writes and continues automatic persistence", async () => {
+		const url = await create();
+		const client = track(await makeLoader({ automatic: true }).resolve({ url }));
+		const summaries = new SummaryCollection(client.deltaManager, { send: () => {} });
+		const first = await timeoutAwait(summaries.waitSummaryAck(0), {
+			errorMsg: "Automatic first summary was not acknowledged",
+		});
+		assert.equal(writes, 0, "Graduation must not require an initialization or dummy model op");
+		assertFull(uploads[0].summary);
+		assert.equal(uploads[0].summary.tree[seedRoot], undefined);
+		const firstStored = await inspect(url, first.summaryAck.contents.handle);
+		assert(firstStored.snapshotTree.blobs[".metadata"] !== undefined);
+		assert.equal(firstStored.snapshotTree.trees[seedRoot], undefined);
+
+		const interactive = loads.find(
+			(load) => load.context.clientDetails.capabilities.interactive,
+		);
+		assert(interactive !== undefined);
+		const part = interactive.app.view.root.parts.get("first");
+		assert(part !== undefined);
+		const requiredSummaryReference = client.deltaManager.lastSequenceNumber + 1;
+		part.text = "Edited after automatic graduation";
+		await tracker.ensureSynchronized();
+		const later = await timeoutAwait(summaries.waitSummaryAck(requiredSummaryReference), {
+			errorMsg: "Automatic summary after editing was not acknowledged",
+		});
+		assert.notEqual(later.summaryAck.contents.handle, first.summaryAck.contents.handle);
+
+		track(
+			await makeLoader({ nativeOnly: true }).resolve({
+				url,
+				headers: { [LoaderHeader.version]: later.summaryAck.contents.handle },
+			}),
+		);
+		const reloaded = loads.at(-1);
+		assert(reloaded !== undefined && !reloaded.fromSeed);
+		assert.equal(reloaded.app.view.root.parts.get("first")?.text, part.text);
+	});
+
+	it("independently collaborates, replays edits, persists full then incremental, and reloads without the adapter", async () => {
 		const url = await create();
 		assert.equal(loads.length, 0, "The producer must not instantiate an application runtime");
 		const storedSeed = await inspect(url);
@@ -213,11 +274,7 @@ describe("Seed creation: real local-service lifecycle", function () {
 			0,
 			"Opening must not initialize, assign aliases, or submit model ops",
 		);
-		assert.equal(
-			uploads.length,
-			0,
-			"Automatic summaries are disabled in the reference factory",
-		);
+		assert.equal(uploads.length, 0, "This test explicitly selects on-demand summaries");
 		assert.equal(loadA.original.baseSnapshot?.blobs[".metadata"], undefined);
 		assert.notEqual(loadA.context, loadA.original);
 		assert(loadA.context.baseSnapshot?.blobs[".metadata"] !== undefined);
@@ -252,10 +309,7 @@ describe("Seed creation: real local-service lifecycle", function () {
 			expected,
 			"Loader must replay the sequenced suffix after construction",
 		);
-		const accepted = await summaryLoad.summaries.summarize(
-			summarizer,
-			"persist native seed state",
-		);
+		const accepted = await summarizeNow(summarizer, "persist seed state as a Fluid summary");
 		assertFull(accepted.summaryTree);
 		assert.equal(
 			accepted.summaryTree.tree[seedRoot],
@@ -265,16 +319,12 @@ describe("Seed creation: real local-service lifecycle", function () {
 		assert.equal(uploads[0].context.ackHandle, seedVersion);
 		assert(accepted.summaryTree.tree.gc !== undefined);
 
-		// Calls queue in the actual host, without a test-supplied fullTree flag.
-		const [incremental] = await Promise.all([
-			summaryLoad.summaries.summarize(summarizer, "reuse accepted native state"),
-			summaryLoad.summaries.summarize(summarizer, "serialized subsequent request"),
-		]);
+		const incremental = await summarizeNow(summarizer, "reuse the adopted Fluid summary");
 		const channels: SummaryObject | undefined = incremental.summaryTree.tree[".channels"];
 		assert(channels?.type === SummaryType.Tree);
-		const store: SummaryObject | undefined = channels.tree[layout.storeId];
+		const store: SummaryObject | undefined = channels.tree[summaryLoad.app.storeId];
 		assert(store?.type === SummaryType.Handle);
-		assert.equal(store.handle, `/.channels/${layout.storeId}`);
+		assert.equal(store.handle, `/.channels/${summaryLoad.app.storeId}`);
 		const gc: SummaryObject | undefined = incremental.summaryTree.tree.gc;
 		assert.equal(gc?.type, SummaryType.Handle);
 		assert.equal(uploads[1].context.ackHandle, accepted.summaryVersion);
@@ -282,18 +332,26 @@ describe("Seed creation: real local-service lifecycle", function () {
 		assert.equal(storedNative.snapshotTree.trees[seedRoot], undefined);
 		assert(storedNative.snapshotTree.blobs[".metadata"] !== undefined);
 
+		loadA.app.view.root.parts.set("first", new TextNode({ text: "Changed after graduation" }));
+		await tracker.ensureSynchronized();
+		const changed = await summarizeNow(summarizer, "persist new edits after graduation");
+		assert.equal(uploads[2].context.ackHandle, incremental.summaryVersion);
+		const changedExpected = readParts(loadA.app.view);
+		assert.deepEqual(readParts(loadB.app.view), changedExpected);
+		assert.deepEqual(readParts(summaryLoad.app.view), changedExpected);
+
 		const writesBeforeReload = writes;
 		track(
 			await makeLoader({ nativeOnly: true }).resolve({
 				url,
-				headers: { [LoaderHeader.version]: incremental.summaryVersion },
+				headers: { [LoaderHeader.version]: changed.summaryVersion },
 			}),
 		);
 		await tracker.ensureSynchronized();
 		const native = loads.at(-1);
 		assert(native !== undefined && !native.fromSeed);
 		assert.equal(native.context.baseSnapshot, native.original.baseSnapshot);
-		assert.deepEqual(readParts(native.app.view), expected);
+		assert.deepEqual(readParts(native.app.view), changedExpected);
 		assert.equal(
 			writes,
 			writesBeforeReload,
@@ -301,67 +359,33 @@ describe("Seed creation: real local-service lifecycle", function () {
 		);
 	});
 
-	it("closes a failed summarizer and requires a fresh seed load before retry", async () => {
+	it("keeps the first summary full after a failed upload and retries on the same runtime", async () => {
 		const url = await create();
 		const client = track(await makeLoader().resolve({ url }));
 		const failed = await createSummarizerCore(client, makeLoader());
 		track(failed.container);
 		await tracker.ensureSynchronized();
-		const failedLoad = loads.at(-1);
-		assert(failedLoad !== undefined);
 		failUpload = true;
 		await assert.rejects(
-			failedLoad.summaries.summarize(failed.summarizer, "injected failure"),
+			summarizeNow(failed.summarizer, { reason: "injected failure", retryOnFailure: false }),
+			/Injected seed-summary upload failure/,
 		);
-		assert(failed.container.closed);
+		assert.equal(failed.container.closed, false);
 		assert.equal(uploads.length, 0);
-		await assert.rejects(
-			failedLoad.summaries.summarize(failed.summarizer, "forbidden reuse"),
-			/fresh summarizer/,
-		);
-		// Closing the only write client starts a server-authored summary. Load after it commits.
-		const deadline = Date.now() + 10_000;
-		let recoveryVersion: string | undefined;
-		do {
-			assert(Date.now() < deadline, "Local server did not finish closing the failed client");
-			await setImmediate();
-			const storedRecovery = await inspect(url);
-			recoveryVersion = storedRecovery.snapshotTree.id;
-			assert(recoveryVersion !== undefined, "Stored recovery snapshot must have a version");
-		} while (recoveryVersion === failedLoad.original.getLoadedFromVersion()?.id);
-		const replacement = await createSummarizerCore(client, makeLoader(), recoveryVersion);
-		track(replacement.container);
-		await tracker.ensureSynchronized();
-		const replacementLoad = loads.at(-1);
-		assert(replacementLoad !== undefined);
-		assert.equal(
-			replacementLoad.original.getLoadedFromVersion()?.id,
-			recoveryVersion,
-			"Recovery loads the newer server-authored seed snapshot",
-		);
-		const accepted = await replacementLoad.summaries.summarize(
-			replacement.summarizer,
-			"fresh retry",
-		);
+		const accepted = await summarizeNow(failed.summarizer, "retry the full first summary");
 		assertFull(accepted.summaryTree);
 		assert.equal(uploads.length, 1);
 	});
 
-	it("rejects a direct summary request outside the host before storage writes", async () => {
+	it("rejects seed loading through the ordinary runtime and creation without initial content", async () => {
 		const url = await create();
-		const client = track(await makeLoader().resolve({ url }));
-		const attempt = await createSummarizerCore(client, makeLoader());
-		track(attempt.container);
-		await assert.rejects(summarizeNow(attempt.summarizer), /SeedSummaryHost/);
-		assert.equal(uploads.length, 0);
-	});
-
-	it("rejects native-only seed loading and detached creation", async () => {
-		const url = await create();
-		await assert.rejects(makeLoader({ nativeOnly: true }).resolve({ url }), /Native-only/);
+		await assert.rejects(
+			makeLoader({ nativeOnly: true }).resolve({ url }),
+			/Missing persisted root entry point/,
+		);
 		await assert.rejects(
 			makeLoader().createDetachedContainer(codeDetails),
-			/existing, externally/,
+			/creation requires initial content/,
 		);
 	});
 

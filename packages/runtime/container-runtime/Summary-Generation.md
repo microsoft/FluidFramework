@@ -30,7 +30,7 @@ In that case, the generated DDS summary paths do not yet exist in storage.
 The first accepted summary must write those trees before later summaries can reuse them by handle.
 See the [application loading example][application-design] for this use of the general full-output policy.
 
-`ISummaryGenerationOptions.fullTreePolicy` selects one of three policies, separate from summary scheduling:
+`ISummaryGenerationOptions.fullTreePolicy` selects one of three output policies:
 
 | Value                    | Behavior                                                                                    |
 | ------------------------ | ------------------------------------------------------------------------------------------- |
@@ -42,6 +42,14 @@ An explicit per-attempt `fullTree: true` request remains effective with any poli
 `shouldProduceFullSummary()` in [summary generation](src/summary/summaryGeneration.ts) evaluates the request and policy.
 The runtime propagates the result to data-store and DDS summaries, GC serialization, and any application projection callback.
 Unconditional forcing is not cleared by acceptance.
+
+With `untilFirstAck` and summary heuristics enabled, the elected summarizer requests an initial summary without waiting for an application edit.
+An attached interactive client requests writer participation through the optional loader `requestWriteConnection` hook so it can participate in election.
+This does not submit a dummy operation, bypass permissions, or connect a container that the host kept disconnected.
+The attempt uses normal submission, retry, cancellation, and acknowledgment processing.
+After full adoption, ordinary incremental generation and scheduling resume.
+Disabled heuristics and on-demand scheduling still require an explicit summary request; disabled summarization does not start a summarizer.
+Omitting the policy or selecting `default` does not request initial writer participation or an initial summary.
 
 `fullTree` controls the representation written to storage, not whether the attempt is tracked.
 Full tracked attempts still capture the baseline needed by subsequent incremental summaries.

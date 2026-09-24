@@ -20,6 +20,92 @@ import {
 } from "../../gc/index.js";
 
 describe("GCSummaryStateTracker tests", () => {
+	describe("Proposal-correlated baseline adoption", () => {
+		let tracker: GCSummaryStateTracker;
+		const state = { gcNodes: { "/": { outboundRoutes: [] } } };
+		const firstDeleted = new Set(["/deleted-first"]);
+		const newerDeleted = new Set(["/deleted-first", "/deleted-second"]);
+
+		beforeEach(() => {
+			tracker = new GCSummaryStateTracker({
+				gcAllowed: true,
+				gcVersionInBaseSnapshot: nextGCVersion,
+				gcVersionInEffect: nextGCVersion,
+			});
+		});
+
+		afterEach(() => tracker.dispose());
+
+		it("adopts a full proposal, not newer submitted, failed, or untracked generation", async () => {
+			const full = tracker.summarize(true, state, firstDeleted, ["/tombstone-first"], true);
+			assert.equal(full?.stats.handleNodeCount, 0);
+			tracker.completeSummary("first", 1);
+			tracker.summarize(true, state, newerDeleted, ["/tombstone-second"], true);
+			tracker.completeSummary("second", 2);
+			tracker.summarize(true, { gcNodes: {} }, new Set(), [], true);
+			tracker.clearSummary();
+			await tracker.refreshLatestSummary(
+				{ isSummaryTracked: true, isSummaryNewer: true },
+				"first",
+			);
+
+			const same = tracker.summarize(true, state, firstDeleted, ["/tombstone-first"]);
+			assert.equal(same?.summary.type, SummaryType.Handle);
+			const different = tracker.summarize(true, state, newerDeleted, ["/tombstone-second"]);
+			assert(different?.summary.type === SummaryType.Tree);
+			assert.equal(different.summary.tree[gcStateBlobKey]?.type, SummaryType.Handle);
+			assert.equal(different.summary.tree[gcDeletedBlobKey]?.type, SummaryType.Blob);
+			assert.equal(different.summary.tree[gcTombstoneBlobKey]?.type, SummaryType.Blob);
+
+			await tracker.refreshLatestSummary(
+				{ isSummaryTracked: true, isSummaryNewer: true },
+				"second",
+			);
+			assert.equal(
+				tracker.summarize(true, state, newerDeleted, ["/tombstone-second"])?.summary.type,
+				SummaryType.Handle,
+			);
+			assert.equal(
+				tracker.summarize(false, state, newerDeleted, ["/tombstone-second"])?.stats
+					.handleNodeCount,
+				0,
+			);
+		});
+
+		it("rejects missing or retired tracked captures rather than adopting current generation", async () => {
+			tracker.summarize(true, state, firstDeleted, [], true);
+			tracker.completeSummary("first", 1);
+			tracker.summarize(true, state, newerDeleted, [], true);
+			tracker.completeSummary("second", 2);
+			await tracker.refreshLatestSummary(
+				{ isSummaryTracked: true, isSummaryNewer: true },
+				"second",
+			);
+			for (const proposal of ["first", "unknown"]) {
+				await assert.rejects(
+					tracker.refreshLatestSummary(
+						{ isSummaryTracked: true, isSummaryNewer: false },
+						proposal,
+					),
+					/matching proposal state/,
+				);
+			}
+		});
+
+		it("ignores untracked acknowledgments", async () => {
+			tracker.summarize(true, state, firstDeleted, [], true);
+			tracker.completeSummary("first", 1);
+			await tracker.refreshLatestSummary(
+				{ isSummaryTracked: false, isSummaryNewer: true },
+				"remote",
+			);
+			assert.equal(
+				tracker.summarize(true, state, firstDeleted, [])?.summary.type,
+				SummaryType.Tree,
+			);
+		});
+	});
+
 	/**
 	 * These tests validate that the GC data is written in summary incrementally. Basically, only parts of the GC
 	 * data that has changed since the last successful summary is re-written, rest is written as SummaryHandle.

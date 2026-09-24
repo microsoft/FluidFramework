@@ -171,6 +171,12 @@ This reference does not implement that broader native transport work.
 Virtual loading paths do not exist in storage.
 Setting `summaryGenerationOptions.fullTreePolicy` to `"untilFirstAck"` therefore requests full structural native state, including GC, until a tracked full proposal is successfully adopted.
 
+With summary heuristics enabled, normal election requests that first summary without an application edit.
+The loader's optional writer-connection hook permits an untouched interactive client to participate without a dummy operation, while preserving permission and host connection restrictions.
+After adoption, ordinary incremental persistence continues.
+The HTML test harness selects on-demand scheduling for controlled assertions; that is not a requirement of seed loading or application projections.
+See the [seed creation guide](Seed-Creation.md) for the independently usable seed APIs and automatic lifecycle.
+
 Full tracked generation still records pending native baselines. `ContainerRuntime.refreshLatestSummaryAck` coordinates
 their adoption with the **matching proposal's GC state**, the actual accepted storage parent, and the application
 acceptance callback. Only then does initial forcing end. Generation, upload, submission, NACK, or an untracked/remote

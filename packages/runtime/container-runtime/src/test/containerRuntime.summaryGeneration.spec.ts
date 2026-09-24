@@ -341,10 +341,12 @@ describe("Runtime summary generation options", () => {
 		await firstGCStarted.promise;
 		assert.equal(nativeCalls, 1);
 		assert.equal(onAccepted.callCount, 0);
+		assert.equal(fixture.runtime.shouldSummarizeOnStartup, true);
 		releaseGC.resolve();
 		await first;
 		await duplicateStarted.promise;
 		assert.equal(onAccepted.callCount, 1);
+		assert.equal(fixture.runtime.shouldSummarizeOnStartup, false);
 		await assert.rejects(
 			fixture.runtime.summarize(untrackedSummary),
 			/during summary acceptance/,
