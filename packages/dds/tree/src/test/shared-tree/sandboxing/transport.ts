@@ -21,7 +21,7 @@ import {
 	type BlobRequestMessage,
 	type BlobResponseMessage,
 	type HandleToken,
-	createBufferMarker,
+	createBufferPlaceholder,
 	escapedObjectType,
 	getTransportBuffer,
 	isEscapedObject,
@@ -41,24 +41,27 @@ import {
  */
 abstract class TransportCodec {
 	public encode(value: unknown): unknown {
-		return copyData(
+		return copyTransportData(
 			value,
 			(handle) =>
-				nullRecord({
+				createNullPrototypeRecord({
 					type: serializedHandleType,
 					token: this.encodeHandle(handle),
 				} satisfies SerializedHandle),
 			(buffer) => buffer,
 			(record) =>
 				isReservedRecord(record)
-					? nullRecord({ type: escapedObjectType, entries: Object.entries(record) })
+					? createNullPrototypeRecord({
+							type: escapedObjectType,
+							entries: Object.entries(record),
+						})
 					: record,
 		);
 	}
 
 	public decode(value: unknown): unknown {
 		// Restrict the entire graph before schema checks or token restoration.
-		const copied = copyData(value, () => {
+		const copied = copyTransportData(value, () => {
 			throw new Error("Handles must cross the sandbox boundary as tokens.");
 		});
 		const restore = (item: unknown): unknown => {
@@ -110,13 +113,13 @@ abstract class TransportCodec {
 
 /**
  * Copies outgoing semantic data into null-prototype records before validation.
- * Local handles remain opaque leaves; buffers become identity-checked markers via {@link createBufferMarker}.
+ * Local handles remain opaque leaves; buffers become identity-checked placeholders via {@link createBufferPlaceholder}.
  */
 export function normalizeTransportData(value: unknown): unknown {
-	return copyData(value, (handle) => handle);
+	return copyTransportData(value, (handle) => handle);
 }
 
-function nullRecord<T extends object>(properties: T): T {
+function createNullPrototypeRecord<T extends object>(properties: T): T {
 	const record: object = Object.create(null);
 	return Object.assign(record, properties);
 }
@@ -133,10 +136,10 @@ function isReservedRecord(value: object): boolean {
  * Copies only supported data types. Incoming values must originate from structured clone,
  * not arbitrary same-realm proxies. Accessors are rejected without invoking them.
  */
-function copyData(
+function copyTransportData(
 	value: unknown,
 	handle: (value: IFluidHandle) => unknown,
-	buffer: (value: ArrayBuffer) => unknown = createBufferMarker,
+	buffer: (value: ArrayBuffer) => unknown = createBufferPlaceholder,
 	record: (value: object) => unknown = (item) => item,
 ): unknown {
 	const ancestors = new Set<object>();
@@ -228,16 +231,16 @@ function defineDataProperty(target: object, key: string, value: unknown): void {
 export class HostTransportCodec extends TransportCodec {
 	private readonly handles: IFluidHandle[] = [];
 	private readonly tokens = new Map<string, HandleToken>();
-	private readonly bind: ISharedObjectHandle;
+	private readonly bindingHandle: ISharedObjectHandle;
 	private disposed = false;
 
-	public constructor(bind: IFluidHandle) {
+	public constructor(bindingHandle: IFluidHandle) {
 		super();
-		const internal = toFluidHandleInternal(bind);
+		const internal = toFluidHandleInternal(bindingHandle);
 		if (!isISharedObjectHandle(internal)) {
 			throw new Error("The Host requires a SharedTree handle for binding.");
 		}
-		this.bind = internal;
+		this.bindingHandle = internal;
 	}
 
 	protected encodeHandle(handle: IFluidHandle): HandleToken {
@@ -261,12 +264,12 @@ export class HostTransportCodec extends TransportCodec {
 	 */
 	public bindHandles(value: unknown): void {
 		const handles = new Set<IFluidHandle>();
-		copyData(value, (handle) => {
+		copyTransportData(value, (handle) => {
 			handles.add(handle);
 			return handle;
 		});
 		for (const handle of handles) {
-			this.bind.bind(toFluidHandleInternal(handle));
+			this.bindingHandle.bind(toFluidHandleInternal(handle));
 		}
 	}
 
@@ -287,7 +290,7 @@ export class HostTransportCodec extends TransportCodec {
 	/**
 	 * Checks authorization before resolution errors are converted into nonfatal blob responses.
 	 */
-	public validateToken(token: HandleToken): void {
+	public assertAuthorizedToken(token: HandleToken): void {
 		this.getHandle(token);
 	}
 
@@ -371,7 +374,7 @@ export class GuestTransportCodec extends TransportCodec {
 		let handle = this.handles.get(token);
 		if (handle === undefined) {
 			handle = new GuestHandle(`/sandbox/${this.sessionId}/${token}`, async () =>
-				this.request(token),
+				this.requestBlob(token),
 			);
 			this.handles.set(token, handle);
 			this.tokens.set(handle, token);
@@ -379,7 +382,7 @@ export class GuestTransportCodec extends TransportCodec {
 		return handle;
 	}
 
-	private async request(token: HandleToken): Promise<ArrayBuffer> {
+	private async requestBlob(token: HandleToken): Promise<ArrayBuffer> {
 		if (this.disposed) {
 			throw new Error("The Guest handle session is disposed.");
 		}
@@ -398,7 +401,7 @@ export class GuestTransportCodec extends TransportCodec {
 		});
 	}
 
-	public receiveResponse(message: BlobResponseMessage): void {
+	public receiveBlobResponse(message: BlobResponseMessage): void {
 		const pending = this.pending.get(message.requestId);
 		if (pending === undefined) {
 			throw new Error("Unexpected sandbox blob response.");

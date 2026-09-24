@@ -43,7 +43,7 @@ These terms are similar to the terms for virtual machines.
   It does not preserve null record prototypes or Fluid handle symbols.
 - **Record**: An object with string-keyed data properties, distinct from arrays, buffers, and handles.
   A **null-prototype record** has no inherited properties.
-- **Transport codec**: The sandbox conversion layer in [handles.ts](./handles.ts).
+- **Transport codec**: The sandbox conversion layer in [transport.ts](./transport.ts).
   It copies supported values, normalizes record prototypes, and converts handles, buffers, and escaped records between local and wire representations.
 - **Wire representation**: Structured-clone-compatible data sent through the port, with handle markers, escape records, and actual buffers.
 - **Tree payload**: The encoded initial tree or encoded change carried by the sandbox.
@@ -193,13 +193,13 @@ The [pipeline](#message-conversion-and-validation) enforces these additional rul
 - **Protocol state:** Enforce the [message directions](#participants-and-message-directions), token authorization, and response matching against outstanding requests.
 - **Local handles:** Legacy string-property lookalikes remain ordinary data.
   Removing the general `isFluidHandle` helper's legacy fallback is separate work.
-- **Validator support:** Alternative validators must support the custom handle, buffer-placeholder, and plain-record schema kinds or provide equivalent checks.
+- **Validator support:** Alternative validators must support the custom handle, buffer-placeholder, and null-prototype-record schema kinds or provide equivalent checks.
 
 This boundary assumes genuine structured clone, not arbitrary same-realm JavaScript proxies.
 
 ### Session Failure and Application-Managed Recreation
 
-[SandboxSession](./session.ts) treats protocol anomalies and synchronization failures as fatal: it stops the endpoint, rejects pending work, and reports the error to the application and, when possible, the peer.
+[SandboxSessionEndpoint](./session.ts) treats protocol anomalies and synchronization failures as fatal: it stops the endpoint, rejects pending work, and reports the error to the application and, when possible, the peer.
 Valid blob-resolution errors reject only `get()`, not the session.
 Error reporting runs outside tree event dispatch to avoid interrupting main-tree edits.
 
@@ -211,7 +211,7 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 
 ### Test Coverage
 
-[Handle codec tests](./handles.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
+[Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
 The tests use real `MessagePort` channels; the permutation test uses a two-channel relay to control delivery in each direction.
 

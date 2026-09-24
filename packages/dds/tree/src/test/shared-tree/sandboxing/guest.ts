@@ -25,14 +25,14 @@ import {
 	type DataChangeMessage,
 	type HostGuestMessage,
 	getRevision,
-	makePromiseWithResolver,
+	makePromiseWithResolvers,
 	parseHostGuestMessage,
-	type PromiseWithResolver,
+	type PromiseWithResolvers,
 	throwProtocolError,
-	validateTreePayload,
+	validateTreePayloadVocabulary,
 } from "./common.js";
-import { GuestTransportCodec, normalizeTransportData } from "./handles.js";
-import { SandboxSession } from "./session.js";
+import { GuestTransportCodec, normalizeTransportData } from "./transport.js";
+import { SandboxSessionEndpoint } from "./session.js";
 
 /**
  * An independent TreeView synchronized with a Host through a message protocol.
@@ -41,7 +41,7 @@ import { SandboxSession } from "./session.js";
  */
 export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly codec: GuestTransportCodec;
-	private readonly session: SandboxSession;
+	private readonly session: SandboxSessionEndpoint;
 	private disposed = false;
 	/** The independent view on the Guest. */
 	public readonly view: TreeViewAlpha<TSchema>;
@@ -53,7 +53,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * The promise resolves when the Host acknowledges all Guest changes.
 	 * When this is undefined, the Host is up to date with the Guest.
 	 */
-	private pushInProgress?: PromiseWithResolver;
+	private pushInProgress?: PromiseWithResolvers;
 	/** The callback that unsubscribes from view changes. */
 	private readonly offViewChanged: () => void;
 	/** Whether the Guest is applying changes from the Host. */
@@ -73,7 +73,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 					break;
 				}
 				case "blobResponse": {
-					this.codec.receiveResponse(message);
+					this.codec.receiveBlobResponse(message);
 					break;
 				}
 				case "blobRequest": {
@@ -106,7 +106,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
-		this.session = new SandboxSession(
+		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
 				this.offViewChanged();
@@ -120,7 +120,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			this.session.run(() => this.postMessage(message)),
 		);
 		const tree = this.codec.decode(content.tree);
-		validateTreePayload(tree);
+		validateTreePayloadVocabulary(tree);
 		this.view = independentInitializedView(config, options, {
 			...content,
 			tree: tree as ViewContent["tree"],
@@ -141,7 +141,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				);
 				if (this.pushInProgress === undefined) {
 					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
-					this.pushInProgress = makePromiseWithResolver();
+					this.pushInProgress = makePromiseWithResolvers();
 					// Report through the session even when the application does not await synchronization.
 					this.pushInProgress.promise.catch((error: unknown) => this.session.fail(error));
 				} else {

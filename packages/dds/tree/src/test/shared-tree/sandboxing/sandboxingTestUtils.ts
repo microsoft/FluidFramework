@@ -22,9 +22,13 @@ import {
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
-import { normalizeProtocolError, throwProtocolError, validateTreePayload } from "./common.js";
+import {
+	normalizeProtocolError,
+	throwProtocolError,
+	validateTreePayloadVocabulary,
+} from "./common.js";
 import { Guest } from "./guest.js";
-import { normalizeTransportData } from "./handles.js";
+import { normalizeTransportData } from "./transport.js";
 import { Host } from "./host.js";
 
 /**
@@ -162,7 +166,7 @@ export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
 		minVersionForCollab: FluidClientVersion.v2_80,
 	});
 	const normalized = normalizeTransportData(startingState);
-	validateTreePayload(normalized);
+	validateTreePayloadVocabulary(normalized);
 	return new Guest(
 		config,
 		{ jsonValidator: FormatValidatorBasic },

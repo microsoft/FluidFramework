@@ -93,61 +93,63 @@ export function isLocalHandle(value: unknown): value is IFluidHandle {
 /**
  * Local placeholder that keeps an {@link ArrayBuffer} out of general schema validation.
  * @remarks
- * Created as a frozen null-prototype record by {@link createBufferMarker}.
+ * Created as a frozen null-prototype record by {@link createBufferPlaceholder}.
  * Its identity in {@link transportBuffers}, not its shape, associates it with a buffer.
  * Ordinary data with the same property remains ordinary data.
  *
- * Markers are not sent over the wire: encoding replaces them with buffers, and receiving creates new markers.
- * {@link validateTreePayload} rejects registered markers; {@link parseHostGuestMessage} unwraps only validated blob-response fields for application use.
+ * Placeholders are not sent over the wire: encoding replaces them with buffers, and receiving creates new placeholders.
+ * {@link validateTreePayloadVocabulary} rejects registered placeholders; {@link parseHostGuestMessage} unwraps only validated blob-response fields for application use.
  */
-interface BufferMarker {
+interface BufferPlaceholder {
 	/** Describes the placeholder shape; this property alone does not establish buffer identity. */
 	readonly arrayBufferMarker: true;
 }
 
 /**
- * Associates local marker identities with buffers without keeping otherwise unreachable markers alive.
+ * Associates local placeholder identities with buffers without keeping otherwise unreachable placeholders alive.
  */
 const transportBuffers = new WeakMap<object, ArrayBuffer>();
 
 /**
- * Hides a copied transport buffer from schema validation behind an identity-checked {@link BufferMarker}.
+ * Hides a copied transport buffer from schema validation behind an identity-checked {@link BufferPlaceholder}.
  */
-export function createBufferMarker(buffer: ArrayBuffer): BufferMarker {
+export function createBufferPlaceholder(buffer: ArrayBuffer): BufferPlaceholder {
 	const record: object = Object.create(null);
-	const marker = Object.freeze(Object.assign(record, { arrayBufferMarker: true as const }));
-	transportBuffers.set(marker, buffer);
-	return marker;
+	const placeholder = Object.freeze(
+		Object.assign(record, { arrayBufferMarker: true as const }),
+	);
+	transportBuffers.set(placeholder, buffer);
+	return placeholder;
 }
 
 /**
- * Retrieves a buffer only for a marker registered by {@link createBufferMarker}, never for a shape lookalike.
+ * Retrieves a buffer only for a placeholder registered by {@link createBufferPlaceholder}, never for a shape lookalike.
  */
 export function getTransportBuffer(value: object): ArrayBuffer | undefined {
 	return transportBuffers.get(value);
 }
 
 /**
- * Recognizes {@link BufferMarker} identities registered in {@link transportBuffers}, rejecting shape lookalikes and raw buffers.
+ * Recognizes {@link BufferPlaceholder} identities registered in {@link transportBuffers}, rejecting shape lookalikes and raw buffers.
  */
-const LocalBuffer = TypeSystem.Type<BufferMarker>(
-	"Sandbox.LocalBuffer",
+const RegisteredBufferPlaceholder = TypeSystem.Type<BufferPlaceholder>(
+	"Sandbox.RegisteredBufferPlaceholder",
 	(_schema, value) =>
 		typeof value === "object" && value !== null && transportBuffers.has(value),
 )();
 
 /**
- * Treats handles recognized by {@link isLocalHandle} as opaque leaves during {@link TreePayload} validation.
+ * Treats handles recognized by {@link isLocalHandle} as opaque leaves during {@link TreePayloadVocabulary} validation.
  */
 const LocalHandle = TypeSystem.Type<IFluidHandle>("Sandbox.LocalHandle", (_schema, value) =>
 	isLocalHandle(value),
 )();
 /**
- * Restricts payload records to null prototypes and excludes registered {@link BufferMarker} identities.
- * {@link TreePayload} separately validates property values.
+ * Restricts payload records to null prototypes and excludes registered {@link BufferPlaceholder} identities.
+ * {@link TreePayloadVocabulary} separately validates property values.
  */
-const PlainRecord = TypeSystem.Type<Record<string, unknown>>(
-	"Sandbox.PlainRecord",
+const NullPrototypeRecord = TypeSystem.Type<Record<string, unknown>>(
+	"Sandbox.NullPrototypeRecord",
 	(_schema, value) => {
 		if (typeof value !== "object" || value === null) {
 			return false;
@@ -159,9 +161,9 @@ const PlainRecord = TypeSystem.Type<Record<string, unknown>>(
 
 /**
  * The value vocabulary of decoded tree payloads, not their codec-specific structure.
- * {@link LocalHandle} must precede {@link PlainRecord} so validation treats handles as opaque leaves.
+ * {@link LocalHandle} must precede {@link NullPrototypeRecord} so validation treats handles as opaque leaves.
  */
-const TreePayload = Type.Recursive((Self) =>
+const TreePayloadVocabulary = Type.Recursive((Self) =>
 	Type.Union([
 		LocalHandle,
 		Type.Null(),
@@ -170,7 +172,7 @@ const TreePayload = Type.Recursive((Self) =>
 		Type.Number(),
 		Type.String(),
 		Type.Array(Self),
-		Type.Intersect([PlainRecord, Type.Record(Type.String(), Self)]),
+		Type.Intersect([NullPrototypeRecord, Type.Record(Type.String(), Self)]),
 	]),
 );
 // TODO: Verify that existing tree codecs reject restored handles in structural-record positions,
@@ -195,7 +197,7 @@ const validator = extractJsonValidator(FormatValidatorBasic);
 const handleTokenValidator = validator.compile(HandleToken);
 const serializedHandleValidator = validator.compile(SerializedHandle);
 const escapedObjectValidator = validator.compile(EscapedObject);
-const treePayloadValidator = validator.compile(TreePayload);
+const treePayloadVocabularyValidator = validator.compile(TreePayloadVocabulary);
 
 /**
  * Checks {@link EscapedObject} structure after the transport has copied and restricted its value types.
@@ -205,10 +207,10 @@ export function isEscapedObject(value: unknown): value is Static<typeof EscapedO
 }
 
 /**
- * Checks the {@link TreePayload} value vocabulary before existing tree codecs inspect the payload.
+ * Checks the {@link TreePayloadVocabulary} value vocabulary before existing tree codecs inspect the payload.
  */
-export function validateTreePayload(value: unknown): void {
-	if (!treePayloadValidator.check(value)) {
+export function validateTreePayloadVocabulary(value: unknown): void {
+	if (!treePayloadVocabularyValidator.check(value)) {
 		throw new Error("Invalid sandbox tree payload.");
 	}
 }
@@ -281,7 +283,7 @@ const BlobRequestMessage = Type.Object(
 
 /**
  * Validation representation of a successful Host-to-Guest blob response.
- * Its blob is a registered {@link BufferMarker}, unlike the {@link ArrayBuffer} exposed by {@link BlobResponseMessage}.
+ * Its blob is a registered {@link BufferPlaceholder}, unlike the {@link ArrayBuffer} exposed by {@link BlobResponseMessage}.
  */
 const BlobSuccessMessage = Type.Object(
 	{
@@ -289,7 +291,7 @@ const BlobSuccessMessage = Type.Object(
 		/** Matches the outstanding Guest request. */
 		requestId: Type.Readonly(BlobRequestId),
 		/** Unwrapped by {@link parseHostGuestMessage} only after the response passes validation. */
-		blob: Type.Readonly(LocalBuffer),
+		blob: Type.Readonly(RegisteredBufferPlaceholder),
 	},
 	{ additionalProperties: false },
 );
@@ -330,7 +332,7 @@ export function isHandleToken(value: unknown): value is HandleToken {
 /**
  * Validates data from a Host and Guest message channel.
  *
- * @param data - Normalized or decoded message data, with registered {@link BufferMarker} placeholders.
+ * @param data - Normalized or decoded message data, with registered {@link BufferPlaceholder} placeholders.
  * @returns The validated protocol message.
  * @throws An error if the data is not a valid protocol message envelope.
  */
@@ -354,7 +356,7 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	}
 
 	if (data.type === "dataChange" && Object.hasOwn(data, "change") && "change" in data) {
-		validateTreePayload(data.change);
+		validateTreePayloadVocabulary(data.change);
 		return data as DataChangeMessage;
 	}
 
@@ -382,7 +384,7 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 /**
  * A synchronization promise and the functions that settle it.
  */
-export interface PromiseWithResolver {
+export interface PromiseWithResolvers {
 	/** The synchronization operation that a caller can await. */
 	readonly promise: Promise<void>;
 	/** Resolves the synchronization operation. */
@@ -396,7 +398,7 @@ export interface PromiseWithResolver {
  *
  * @returns The promise, resolver, and rejecter.
  */
-export function makePromiseWithResolver(): PromiseWithResolver {
+export function makePromiseWithResolvers(): PromiseWithResolvers {
 	let resolver: undefined | (() => void);
 	let rejecter: undefined | ((error: Error) => void);
 	const promise = new Promise<void>((resolve, reject) => {

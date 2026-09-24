@@ -18,11 +18,11 @@ import { StringArray, createTestUndoRedoStacks } from "../../utils.js";
 import {
 	type DataChangeMessage,
 	type HostGuestMessage,
-	makePromiseWithResolver,
+	makePromiseWithResolvers,
 	parseHostGuestMessage,
 } from "./common.js";
 import { Host } from "./host.js";
-import { normalizeTransportData } from "./handles.js";
+import { normalizeTransportData } from "./transport.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -213,8 +213,8 @@ describe("Host and Guest correctness", () => {
 	for (const transaction of [false, true]) {
 		it(`fails both endpoints on a foreign Guest handle and allows application-managed replacement (transaction: ${transaction})`, async () => {
 			const errors: Error[] = [];
-			const failed = makePromiseWithResolver();
-			const releaseBlob = makePromiseWithResolver();
+			const failed = makePromiseWithResolvers();
+			const releaseBlob = makePromiseWithResolvers();
 			const handle = Object.assign(new MockHandle(new ArrayBuffer(1)), {
 				get: async () => {
 					await releaseBlob.promise;
@@ -302,7 +302,7 @@ describe("Host and Guest correctness", () => {
 		],
 	] as const) {
 		it(`fails the ${receiver} and rejects pending work for ${JSON.stringify(message)}`, async () => {
-			const reported = makePromiseWithResolver();
+			const reported = makePromiseWithResolvers();
 			const handle = new MockHandle(new ArrayBuffer(1));
 			const { host, guest, interop, provider, peer } = setupCustom(
 				[handle],
@@ -334,7 +334,7 @@ describe("Host and Guest correctness", () => {
 	}
 
 	it("fails the session when a resolved blob cannot be serialized", async () => {
-		const reported = makePromiseWithResolver();
+		const reported = makePromiseWithResolvers();
 		let reports = 0;
 		const handle = new MockHandle(Object.assign(new ArrayBuffer(1), { extra: true }));
 		const { host, guest } = setupCustom(
@@ -357,7 +357,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("contains send failures in main-tree callbacks even when peer notification also fails", async () => {
-		const reported = makePromiseWithResolver();
+		const reported = makePromiseWithResolvers();
 		const { host, guest } = setupCustom(
 			[],
 			stringArrayConfig,
@@ -382,8 +382,8 @@ describe("Host and Guest correctness", () => {
 
 	it("continues synchronizing edits while a blob request is pending", async () => {
 		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
-		const requested = makePromiseWithResolver();
-		const release = makePromiseWithResolver();
+		const requested = makePromiseWithResolvers();
+		const release = makePromiseWithResolvers();
 		const blob = new Uint8Array([7]).buffer;
 		let requests = 0;
 		const handle = Object.assign(new MockHandle(blob), {

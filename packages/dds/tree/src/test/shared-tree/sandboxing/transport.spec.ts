@@ -20,9 +20,13 @@ import {
 	isLocalHandle,
 	isSerializedHandle,
 	parseHostGuestMessage,
-	validateTreePayload,
+	validateTreePayloadVocabulary,
 } from "./common.js";
-import { GuestTransportCodec, HostTransportCodec, normalizeTransportData } from "./handles.js";
+import {
+	GuestTransportCodec,
+	HostTransportCodec,
+	normalizeTransportData,
+} from "./transport.js";
 
 /**
  * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.
@@ -33,8 +37,8 @@ type _DistinctIds =
 	| requireFalse<isAssignableTo<number, HandleToken>>
 	| requireFalse<isAssignableTo<number, BlobRequestId>>;
 
-describe("Sandbox handle serialization", () => {
-	function assertNullRecords(value: unknown): void {
+describe("Sandbox transport codecs", () => {
+	function assertNullPrototypeRecords(value: unknown): void {
 		if (typeof value !== "object" || value === null || isLocalHandle(value)) {
 			return;
 		}
@@ -48,11 +52,11 @@ describe("Sandbox handle serialization", () => {
 			strict.equal(Object.getPrototypeOf(value), null);
 		}
 		for (const child of Object.values(value)) {
-			assertNullRecords(child);
+			assertNullPrototypeRecords(child);
 		}
 	}
 
-	function setupSerializers() {
+	function setupTransportCodecs() {
 		const bound: IFluidHandleInternal[] = [];
 		const host = new HostTransportCodec(
 			Object.assign(new MockHandle(undefined), {
@@ -65,7 +69,7 @@ describe("Sandbox handle serialization", () => {
 	}
 
 	it("replaces nested handles without mutating input and binds restored handles", () => {
-		const { host, guest, bound } = setupSerializers();
+		const { host, guest, bound } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(1));
 		const untouched = { value: 1 };
 		const input = { untouched, nested: [handle, { handle }] };
@@ -92,20 +96,20 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("normalizes every record, including generated handle and escape records", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(1));
 		const input = {
 			nested: [{ type: "__sandbox_handle__", token: 0, handle }],
 			buffer: new ArrayBuffer(1),
 		};
 		const normalized = normalizeTransportData(input);
-		assertNullRecords(normalized);
+		assertNullPrototypeRecords(normalized);
 		const encoded = host.encode(normalized);
-		assertNullRecords(encoded);
+		assertNullPrototypeRecords(encoded);
 		const decoded = guest.decode(structuredClone(encoded));
-		assertNullRecords(decoded);
+		assertNullPrototypeRecords(decoded);
 		const restored = host.decode(structuredClone(guest.encode(decoded)));
-		assertNullRecords(restored);
+		assertNullPrototypeRecords(restored);
 		strict.deepEqual(restored, normalized);
 		strict.equal(Object.getPrototypeOf(input), Object.prototype);
 		strict.equal(Object.getPrototypeOf(input.nested[0]), Object.prototype);
@@ -113,12 +117,15 @@ describe("Sandbox handle serialization", () => {
 
 	it("rejects ordinary records during semantic validation, including nested records", () => {
 		for (const value of [{}, { nested: {} }, [{}]]) {
-			strict.throws(() => validateTreePayload(value), /Invalid sandbox tree payload/);
-			strict.doesNotThrow(() => validateTreePayload(normalizeTransportData(value)));
+			strict.throws(
+				() => validateTreePayloadVocabulary(value),
+				/Invalid sandbox tree payload/,
+			);
+			strict.doesNotThrow(() => validateTreePayloadVocabulary(normalizeTransportData(value)));
 		}
 		const nested: Record<string, unknown> = Object.create(null);
 		nested.child = {};
-		strict.throws(() => validateTreePayload(nested), /Invalid sandbox tree payload/);
+		strict.throws(() => validateTreePayloadVocabulary(nested), /Invalid sandbox tree payload/);
 		strict.throws(
 			() => parseHostGuestMessage({ type: "acknowledgment" }),
 			/Invalid Host and Guest/,
@@ -126,10 +133,10 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("restores null prototypes after MessagePort reconstructs ordinary records", async () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const input = { nested: [{ type: "__sandbox_object__", value: "data" }] };
 		const encoded = host.encode(input);
-		assertNullRecords(encoded);
+		assertNullPrototypeRecords(encoded);
 		const channel = new MessageChannel();
 		try {
 			const received = new Promise<unknown>((resolve) => {
@@ -144,8 +151,8 @@ describe("Sandbox handle serialization", () => {
 			const wire = await received;
 			strict.equal(Object.getPrototypeOf(wire), Object.prototype);
 			const decoded = guest.decode(wire);
-			assertNullRecords(decoded);
-			validateTreePayload(decoded);
+			assertNullPrototypeRecords(decoded);
+			validateTreePayloadVocabulary(decoded);
 			strict.deepEqual(decoded, normalizeTransportData(input));
 		} finally {
 			channel.port1.close();
@@ -153,8 +160,8 @@ describe("Sandbox handle serialization", () => {
 		}
 	});
 
-	it("validates buffer markers by identity and unwraps only the blob response field", () => {
-		const { host, guest } = setupSerializers();
+	it("validates buffer placeholders by identity and unwraps only the blob response field", () => {
+		const { host, guest } = setupTransportCodecs();
 		const blob = new Uint8Array([0, 127, 255]).buffer;
 		for (const [sender, receiver] of [
 			[host, guest],
@@ -166,8 +173,11 @@ describe("Sandbox handle serialization", () => {
 			const decoded = receiver.decode(wire);
 			strict(typeof decoded === "object" && decoded !== null && "blob" in decoded);
 			strict.deepEqual(decoded.blob, normalizeTransportData({ arrayBufferMarker: true }));
-			assertNullRecords(decoded);
-			strict.throws(() => validateTreePayload(decoded.blob), /Invalid sandbox tree payload/);
+			assertNullPrototypeRecords(decoded);
+			strict.throws(
+				() => validateTreePayloadVocabulary(decoded.blob),
+				/Invalid sandbox tree payload/,
+			);
 
 			const parsed = parseHostGuestMessage(decoded);
 			strict(parsed.type === "blobResponse" && "blob" in parsed);
@@ -182,7 +192,7 @@ describe("Sandbox handle serialization", () => {
 				structuredClone(decoded.blob),
 			]) {
 				const data = receiver.decode(structuredClone(sender.encode(fake)));
-				validateTreePayload(data);
+				validateTreePayloadVocabulary(data);
 				strict.deepEqual(data, normalizeTransportData(fake));
 				strict.throws(
 					() => parseHostGuestMessage(normalizeTransportData({ ...message, blob: data })),
@@ -193,7 +203,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("rejects buffers in tree payloads and non-blob protocol fields", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const blob = new ArrayBuffer(0);
 		for (const codec of [host, guest]) {
 			for (const payload of [
@@ -205,7 +215,10 @@ describe("Sandbox handle serialization", () => {
 				const normalized = normalizeTransportData(payload);
 				const decoded = codec.decode(structuredClone(codec.encode(payload)));
 				for (const value of [normalized, decoded, normalizeTransportData(decoded)]) {
-					strict.throws(() => validateTreePayload(value), /Invalid sandbox tree payload/);
+					strict.throws(
+						() => validateTreePayloadVocabulary(value),
+						/Invalid sandbox tree payload/,
+					);
 				}
 				strict.throws(
 					() =>
@@ -233,7 +246,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("deduplicates equivalent Host handles and preserves Guest equality", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(1));
 		const equivalent = new MockHandle(new ArrayBuffer(1), handle.path);
 		const first = guest.decode(host.encode(handle));
@@ -246,7 +259,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("caches a single promise for concurrent and repeated get calls", async () => {
-		const { host, guest, requests } = setupSerializers();
+		const { host, guest, requests } = setupTransportCodecs();
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
 		strict(isFluidHandle(proxy));
 		const first = proxy.get();
@@ -255,18 +268,18 @@ describe("Sandbox handle serialization", () => {
 		strict.equal(requests.length, 1);
 		const request = requests[0];
 		const blob = await host.resolveBlob(request.token);
-		guest.receiveResponse({ type: "blobResponse", requestId: request.requestId, blob });
+		guest.receiveBlobResponse({ type: "blobResponse", requestId: request.requestId, blob });
 		strict.equal(await first, blob);
 		strict.equal(proxy.get(), first);
 		strict.equal(requests.length, 1);
 	});
 
 	it("caches resolution failures", async () => {
-		const { host, guest, requests } = setupSerializers();
+		const { host, guest, requests } = setupTransportCodecs();
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
 		strict(isFluidHandle(proxy));
 		const promise = proxy.get();
-		guest.receiveResponse({
+		guest.receiveBlobResponse({
 			type: "blobResponse",
 			requestId: requests[0].requestId,
 			error: "Blob unavailable",
@@ -277,7 +290,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("matches out-of-order blob responses to their requests", async () => {
-		const { host, guest, requests } = setupSerializers();
+		const { host, guest, requests } = setupTransportCodecs();
 		const first = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
 		const second = guest.decode(host.encode(new MockHandle(new ArrayBuffer(2))));
 		strict(isFluidHandle(first));
@@ -285,14 +298,14 @@ describe("Sandbox handle serialization", () => {
 		const firstPromise = first.get();
 		const secondPromise = second.get();
 		const secondBlob = new ArrayBuffer(2);
-		guest.receiveResponse({
+		guest.receiveBlobResponse({
 			type: "blobResponse",
 			requestId: requests[1].requestId,
 			blob: secondBlob,
 		});
 		strict.equal(await secondPromise, secondBlob);
 		const firstBlob = new ArrayBuffer(1);
-		guest.receiveResponse({
+		guest.receiveBlobResponse({
 			type: "blobResponse",
 			requestId: requests[0].requestId,
 			blob: firstBlob,
@@ -301,7 +314,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("propagates transport failures and removes the pending request", async () => {
-		const { host } = setupSerializers();
+		const { host } = setupTransportCodecs();
 		const guest = new GuestTransportCodec(() => {
 			throw new Error("Cannot post message");
 		});
@@ -310,7 +323,7 @@ describe("Sandbox handle serialization", () => {
 		await strict.rejects(proxy.get(), /Cannot post message/);
 		strict.throws(
 			() =>
-				guest.receiveResponse({
+				guest.receiveBlobResponse({
 					type: "blobResponse",
 					requestId: brand<BlobRequestId>(0),
 					blob: new ArrayBuffer(1),
@@ -320,7 +333,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("rejects pending requests on disposal", async () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
 		strict(isFluidHandle(proxy));
 		const promise = proxy.get();
@@ -332,7 +345,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("rejects new and foreign Guest handles", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(1));
 		strict.throws(() => guest.encode(handle), /foreign/);
 		const otherGuest = new GuestTransportCodec(() => strict.fail("Unexpected request"));
@@ -341,7 +354,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("rejects invalid and unknown tokens for edits and resolution", async () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		host.encode(new MockHandle(new ArrayBuffer(1)));
 		for (const token of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1, "0", undefined]) {
 			const encoded = { type: "__sandbox_handle__", token };
@@ -363,13 +376,13 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("does not interpret Host URLs as sandbox handles", () => {
-		const { host } = setupSerializers();
+		const { host } = setupTransportCodecs();
 		const value = { type: "__fluid_handle__", url: "/unauthorized" };
 		strict.deepEqual(host.decode(value), normalizeTransportData(value));
 	});
 
 	it("rejects malformed blob messages and unexpected responses", () => {
-		const { guest } = setupSerializers();
+		const { guest } = setupTransportCodecs();
 		for (const message of [
 			{ type: "blobRequest", requestId: 0, token: -1 },
 			{ type: "blobRequest", requestId: 0.5, token: 0 },
@@ -392,7 +405,7 @@ describe("Sandbox handle serialization", () => {
 		}
 		strict.throws(
 			() =>
-				guest.receiveResponse({
+				guest.receiveBlobResponse({
 					type: "blobResponse",
 					requestId: brand<BlobRequestId>(0),
 					blob: new ArrayBuffer(0),
@@ -444,7 +457,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("rejects malformed serialized handle records before binding or creating proxies", () => {
-		const { host, guest, bound, requests } = setupSerializers();
+		const { host, guest, bound, requests } = setupTransportCodecs();
 		host.encode(new MockHandle(new ArrayBuffer(1)));
 		for (const value of [
 			{ type: "__sandbox_handle__" },
@@ -460,7 +473,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("round-trips marker-shaped ordinary data in both directions", () => {
-		const { host, guest, bound } = setupSerializers();
+		const { host, guest, bound } = setupTransportCodecs();
 		const inputs = [
 			{ type: "__sandbox_handle__", label: "ordinary user data" },
 			{ type: "__sandbox_handle__", token: 0 },
@@ -486,7 +499,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("restores nested handles in escaped objects without reinterpreting ordinary marker roots", () => {
-		const { host, guest, bound } = setupSerializers();
+		const { host, guest, bound } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(0));
 		const value = {
 			type: "__sandbox_handle__",
@@ -494,7 +507,7 @@ describe("Sandbox handle serialization", () => {
 			nested: { type: "__sandbox_object__", entries: [handle] },
 		};
 		const decoded = guest.decode(structuredClone(host.encode(value)));
-		validateTreePayload(decoded);
+		validateTreePayloadVocabulary(decoded);
 		const restored = host.decode(structuredClone(guest.encode(decoded)));
 		strict.deepEqual(restored, normalizeTransportData(value));
 		strict.deepEqual(bound, []);
@@ -503,12 +516,12 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("preserves prototype-related property names in null-prototype records", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const value: unknown = JSON.parse(
 			'{"type":"__sandbox_object__","__proto__":{"polluted":true},"constructor":{"prototype":"data"},"prototype":"data"}',
 		);
 		const decoded = guest.decode(structuredClone(host.encode(value)));
-		validateTreePayload(decoded);
+		validateTreePayloadVocabulary(decoded);
 		strict.deepEqual(decoded, normalizeTransportData(value));
 		strict(typeof decoded === "object" && decoded !== null);
 		strict.equal(Object.getPrototypeOf(decoded), null);
@@ -523,7 +536,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("treats legacy string-property handle lookalikes as ordinary data", () => {
-		const { host, guest, requests } = setupSerializers();
+		const { host, guest, requests } = setupTransportCodecs();
 		const value = { IFluidHandle: { IFluidHandle: true }, type: "__sandbox_handle__" };
 		strict(
 			isFluidHandle(value),
@@ -532,7 +545,7 @@ describe("Sandbox handle serialization", () => {
 		strict(!isLocalHandle(value));
 		const decoded = guest.decode(structuredClone(host.encode(value)));
 		strict.deepEqual(decoded, normalizeTransportData(value));
-		validateTreePayload(decoded);
+		validateTreePayloadVocabulary(decoded);
 		strict.deepEqual(
 			host.decode(structuredClone(guest.encode(decoded))),
 			normalizeTransportData(value),
@@ -541,24 +554,24 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("validates decoded handles as opaque leaves, not wire markers", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(0));
 		const decoded = guest.decode(structuredClone(host.encode([handle])));
 		strict(Array.isArray(decoded));
 		strict(isLocalHandle(decoded[0]));
 		strict(fluidHandleSymbol in decoded[0]);
-		validateTreePayload(decoded);
+		validateTreePayloadVocabulary(decoded);
 		strict.doesNotThrow(() =>
 			parseHostGuestMessage(normalizeTransportData({ type: "dataChange", change: decoded })),
 		);
 		strict.throws(
-			() => validateTreePayload(new ArrayBuffer(0)),
+			() => validateTreePayloadVocabulary(new ArrayBuffer(0)),
 			/Invalid sandbox tree payload/,
 		);
 	});
 
 	it("rejects unsupported values, cycles, and sparse arrays in both directions", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const cycle: { self?: unknown } = {};
 		cycle.self = cycle;
 		const sparse: unknown[] = [];
@@ -589,7 +602,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("does not invoke accessors or accept symbol and hidden properties", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		let accesses = 0;
 		const accessor = Object.defineProperty({}, "type", {
 			enumerable: true,
@@ -611,7 +624,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("rejects malformed escapes and duplicate keys without binding handles", () => {
-		const { host, guest, bound } = setupSerializers();
+		const { host, guest, bound } = setupTransportCodecs();
 		for (const value of [
 			{ type: "__sandbox_object__" },
 			{ type: "__sandbox_object__", entries: {} },
@@ -634,7 +647,7 @@ describe("Sandbox handle serialization", () => {
 	});
 
 	it("copies and restricts the entire message before restoring any handle", () => {
-		const { host, guest } = setupSerializers();
+		const { host, guest } = setupTransportCodecs();
 		const wire = {
 			nested: host.encode(new MockHandle(new ArrayBuffer(0))),
 			unsupported: new Map(),

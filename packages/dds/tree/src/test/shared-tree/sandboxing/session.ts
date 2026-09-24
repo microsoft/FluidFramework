@@ -9,13 +9,13 @@ import { normalizeProtocolError, type SessionFailureMessage } from "./common.js"
 
 /**
  * Local fail-stop boundary for one endpoint of a sandbox session.
- * {@link SandboxSession.run} contains errors from protocol work, including callbacks invoked by the main tree.
+ * {@link SandboxSessionEndpoint.run} contains errors from protocol work, including callbacks invoked by the main tree.
  * Failure reporting runs outside those callbacks so reporting cannot interrupt a main-tree edit.
  *
  * The application owns recreation of both endpoints and the sandbox itself.
  * This boundary does not make main-tree merges exception-safe or invalidate retained tree references.
  */
-export class SandboxSession {
+export class SandboxSessionEndpoint {
 	/** Guards access to synchronization state after a fatal error. Never reset for recovery. */
 	public readonly breaker = new Breakable("sandbox session; recreate the Host and Guest");
 	private failure: Error | undefined;
@@ -42,8 +42,8 @@ export class SandboxSession {
 	/**
 	 * Runs synchronous protocol work unless the endpoint has already stopped.
 	 * Exceptions break this endpoint rather than escaping into the caller's tree event.
-	 * Asynchronous work must separately route rejections to {@link SandboxSession.fail}
-	 * and check {@link SandboxSession.active} before side effects.
+	 * Asynchronous work must separately route rejections to {@link SandboxSessionEndpoint.fail}
+	 * and check {@link SandboxSessionEndpoint.active} before side effects.
 	 */
 	public run(action: () => void, notifyPeer: boolean = true): void {
 		if (!this.active) {

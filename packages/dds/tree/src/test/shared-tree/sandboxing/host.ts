@@ -20,14 +20,14 @@ import {
 	type DataChangeMessage,
 	type HostGuestMessage,
 	getRevision,
-	makePromiseWithResolver,
+	makePromiseWithResolvers,
 	normalizeProtocolError,
 	parseHostGuestMessage,
-	type PromiseWithResolver,
+	type PromiseWithResolvers,
 	throwProtocolError,
 } from "./common.js";
-import { HostTransportCodec, normalizeTransportData } from "./handles.js";
-import { SandboxSession } from "./session.js";
+import { HostTransportCodec, normalizeTransportData } from "./transport.js";
+import { SandboxSessionEndpoint } from "./session.js";
 
 /**
  * Gets the revisions of the commits that are in the `ahead` view but not in the `behind` view.
@@ -66,7 +66,7 @@ function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSc
  */
 export class Host<const TSchema extends ImplicitFieldSchema> {
 	public readonly codec: HostTransportCodec;
-	private readonly session: SandboxSession;
+	private readonly session: SandboxSessionEndpoint;
 	private disposed = false;
 	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
 	public readonly main: TreeViewAlpha<TSchema>;
@@ -82,7 +82,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	 * When this is undefined, no update is in progress and the Guest is up to date with the
 	 * Host's main branch.
 	 */
-	private updateInProgress?: PromiseWithResolver;
+	private updateInProgress?: PromiseWithResolvers;
 	/** A clone of the main branch from when the last update to the Guest started. */
 	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
 	/** Whether the Host is applying changes from the Guest to the main branch. */
@@ -133,16 +133,16 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		/** The Host endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
 		/** The SharedTree handle to which restored handles are bound. */
-		bind: IFluidHandle,
+		bindingHandle: IFluidHandle,
 		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
 		handleProtocolError: (error: Error) => void = throwProtocolError,
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
-		this.codec = new HostTransportCodec(bind);
+		this.codec = new HostTransportCodec(bindingHandle);
 		this.main = main;
 		this.local = main.fork();
-		this.session = new SandboxSession(
+		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
 				this.offMainChanged();
@@ -246,7 +246,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				this.logger(
 					"Host:   no pre-existing update in progress. Creating new update promise.",
 				);
-				this.updateInProgress = makePromiseWithResolver();
+				this.updateInProgress = makePromiseWithResolvers();
 				// Report through the session even when the application does not await synchronization.
 				this.updateInProgress.promise.catch((error: unknown) => this.session.fail(error));
 			} else {
@@ -276,7 +276,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	private async receiveBlobRequest(message: BlobRequestMessage): Promise<void> {
-		this.codec.validateToken(message.token);
+		this.codec.assertAuthorizedToken(message.token);
 		let response: BlobResponseMessage;
 		try {
 			const blob = await this.codec.resolveBlob(message.token);
