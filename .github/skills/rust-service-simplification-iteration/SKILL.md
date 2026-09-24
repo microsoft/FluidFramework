@@ -27,7 +27,7 @@ Prefer this order when both workflows are planned:
 
 1. complete and integrate the contract and regression-test quality iteration;
 2. use that accepted commit and quality inventory as inputs to the simplification iteration; and
-3. perform focused quality review of boundaries whose ownership changed.
+3. perform focused contract-preservation review of changed and directly affected boundaries.
 
 Do not run broad quality and simplification iterations concurrently against moving versions of the same code.
 The quality iteration identifies behavior that consumers rely on.
@@ -281,6 +281,12 @@ Identify what became harder to understand, where, and why; keep personal stylist
 For documentation and comment changes, apply the [Documentation Guidelines](../../../docs/content/Guidelines/Documentation-Guidelines.md) and the linked guides relevant to the language and format.
 Use those sources for writing conventions rather than duplicating their rules here.
 
+Have the same checkpoint reviewer apply the quality skill's [Focused Contract-Preservation Review](../rust-service-quality-iteration/SKILL.md#focused-contract-preservation-review) when a repair affects contracts, behavior, or regression evidence.
+This includes documentation and test cleanup, not only ownership changes.
+Supply the fixed checkpoint base and before-and-after sources so the reviewer can detect guarantees lost even when the final documentation and tests agree.
+Use only that read-only assessment within the current checkpoint scope; do not initiate quality configuration, a separate audit or inventory, or another reviewer.
+Retain findings and requested checks in the checkpoint report, distinguishing introduced regressions from pre-existing gaps.
+
 Apply these review prompts to the primary category and every supporting category touched, including necessary edits in an Off category.
 Assess the fixed-base diff and relevant consumers; record material findings and evidence gaps, not a rote checklist of assurances.
 
@@ -413,4 +419,5 @@ Use focused checks while repairing each candidate and all applicable canonical c
 For sequential work, record the checks in the local report.
 For parallel iterations, also follow the coordination skill's validation, integration, and Phase 3 requirements.
 
-After simplification, perform focused quality review when responsibility, contract location, or regression-test ownership changed.
+At closeout, confirm that affected contracts, behavior, and regression evidence received focused contract-preservation review.
+Recheck boundaries whose evidence changed after checkpoint review; reuse accepted evidence for unchanged boundaries rather than initiating a second audit.

@@ -8,6 +8,8 @@ argument-hint: 'configure or run a Rust-service contract and test quality audit'
 
 Use this workflow to find and repair consequential documentation and behavioral test gaps.
 Read `rust-service/DEVELOPMENT.md` for the quality bar and validation requirements.
+For a read-only contract-preservation check inside an existing change review, use only [Focused Contract-Preservation Review](#focused-contract-preservation-review) and its referenced assessment criteria.
+That entry point does not start a quality audit or use the run-configuration workflow below.
 Configure scope, coverage budget, and execution structure as separate choices, in that order.
 Explicitly ask whether to use a parallel iteration unless the user has already chosen an execution structure.
 Selecting the parallel-iteration option is explicit authorization to load `.github/skills/rust-service-coordination/SKILL.md` for iteration mechanics.
@@ -22,7 +24,8 @@ When both workflows are planned, complete and integrate this quality iteration f
 Run the simplification iteration from that accepted commit and use the quality inventory as safety evidence.
 Do not run broad quality and simplification iterations concurrently against moving versions of the same code.
 
-After simplification, recheck only boundaries whose responsibility, contract location, or regression-test ownership changed unless new evidence justifies a broader quality run.
+During simplification checkpoint review, use [Focused Contract-Preservation Review](#focused-contract-preservation-review) for changed and directly affected contracts, behavior, or regression evidence, including documentation and test edits.
+At closeout, recheck affected boundaries whose evidence changed after checkpoint review; do not repeat accepted reviews or start a broader quality run without justification and approval.
 Use the [simplification-iteration skill](../rust-service-simplification-iteration/SKILL.md) for current-state deduplication, consolidation, and accidental-complexity reduction.
 
 ## Principles
@@ -207,6 +210,39 @@ A finding may be:
 
 Every disposition needs direct evidence. "No time" is not an exclusion
 rationale; it is a deferral with remaining risk.
+
+## Focused Contract-Preservation Review
+
+Use this read-only assessment within an existing change review, including simplification checkpoints.
+The invoking workflow supplies the fixed comparison base, changed state, approved scope, permitted behavior changes, and review evidence.
+It remains responsible for reviewer assignment, command execution, findings, and repair decisions.
+Do not run this skill's configuration questions, initialize an audit or inventory, spawn another reviewer, or execute its repair steps.
+Return findings and requests for focused checks through the existing review workflow and report.
+
+Use the identification and evidence criteria in [Audit a Boundary](#audit-a-boundary) and [Evidence for Dispositions](#evidence-for-dispositions), not their repair instructions.
+Limit assessment to changed and directly affected boundaries.
+For each affected boundary, compare this relationship before and after the change:
+
+**Consumer requirement -> documented contract -> implementation -> discriminating test**
+
+Identify the owner and consumers, quote or link the precise contract, and name the owning decision whose regression the test would detect.
+Inspect both the fixed-base and changed versions; agreement among the final documentation, implementation, and tests can still conceal a dropped guarantee.
+Check whether:
+
+- documentation edits weaken a guarantee, broaden a promise, remove a precondition, or change the apparent owner;
+- replacement tests still protect the same promised behavior at the responsible boundary, rather than merely exercising related functionality;
+- implementation or abstraction changes preserve the contract and the test's ability to detect failure of the owning decision; and
+- moves or renames preserve the contract's association with its owner and its discoverability.
+
+Keep evidence proportional to the semantic risk.
+A punctuation-only edit does not require new behavioral tests; changes to error, ordering, cancellation, or other guarantees require inspection of the affected contract and evidence.
+Missing contracts or ambiguous semantics are evidence gaps, not permission to infer promises from implementation or tests.
+Do not silently rewrite a contract or weaken assertions to make the final state agree.
+
+Distinguish introduced regressions and unapproved semantic changes from pre-existing gaps.
+Report a regression or a gap that prevents establishing preservation as blocking under the invoking workflow's acceptance criteria.
+Record unrelated pre-existing gaps for follow-up without expanding this review into a broad audit.
+Return inspected boundaries, before-and-after contract and test references, material findings, unresolved evidence gaps, and requested checks in the existing report.
 
 ## Maintain the Quality Inventory
 
