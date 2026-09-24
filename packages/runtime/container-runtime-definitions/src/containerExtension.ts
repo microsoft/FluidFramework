@@ -183,6 +183,14 @@ export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage
  */
 export interface ExtensionRuntimeProperties {
 	SignalMessages: TypedMessage;
+	/**
+	 * Message type(s) an extension may submit as persisted, sequenced ops via
+	 * {@link ExtensionHost.submitAddressedOpMessage}.
+	 *
+	 * @remarks
+	 * Optional: extensions that only use signals do not need to declare this.
+	 */
+	OpMessages?: TypedMessage;
 }
 
 /**
@@ -255,6 +263,26 @@ export interface ContainerExtension<
 	processSignal?: (
 		addressChain: string[],
 		signalMessage: InboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+		local: boolean,
+	) => void;
+
+	/**
+	 * Callback for a persisted, sequenced op sent by this extension via
+	 * {@link ExtensionHost.submitAddressedOpMessage}.
+	 *
+	 * @remarks
+	 * Unlike {@link ContainerExtension.processSignal}, this is called for every op in
+	 * sequence order (including ops submitted by this client, once sequenced), and is
+	 * guaranteed to be called identically on all clients (including ones that join later
+	 * and process the op from the beginning of the log, and ones applying stashed ops).
+	 *
+	 * @param addressChain - Address chain of the op, as passed to {@link ExtensionHost.submitAddressedOpMessage}.
+	 * @param opMessage - Op content, as passed to {@link ExtensionHost.submitAddressedOpMessage}.
+	 * @param local - True if the op was originally submitted by this client.
+	 */
+	processOpMessage?: (
+		addressChain: string[],
+		opMessage: JsonDeserialized<NonNullable<TRuntimeProperties["OpMessages"]>["content"]>,
 		local: boolean,
 	) => void;
 }
@@ -355,6 +383,25 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	submitAddressedSignal: (
 		addressChain: string[],
 		message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
+	) => void;
+
+	/**
+	 * Submits a persisted, sequenced op to be sent to other clients (and processed by this
+	 * client once sequenced).
+	 *
+	 * @param addressChain - Custom address sequence for the op.
+	 * @param message - Custom message content of the op. Must be JSON-serializable.
+	 *
+	 * Upon sequencing, {@link ContainerExtension.processOpMessage} will be called on every client
+	 * (including this one) with the same address and message content.
+	 *
+	 * @remarks
+	 * Unlike {@link ExtensionHost.submitAddressedSignal}, this op is persisted in the op stream:
+	 * it survives reconnection (via resubmit) and is seen by clients that join later.
+	 */
+	submitAddressedOpMessage: (
+		addressChain: string[],
+		message: JsonSerializable<NonNullable<TRuntimeProperties["OpMessages"]>["content"]>,
 	) => void;
 
 	/**

@@ -185,7 +185,11 @@
 		"typescript": "~6.0.3"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Enum_ContainerMessageType": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
