@@ -55,7 +55,7 @@ Organize broad work into category waves so reviewers can apply coherent criteria
 
 | Category | Default strategy | Intended improvements | Required safeguards |
 | --- | --- | --- | --- |
-| Documentation | Patch first | Review all Markdown files owned by each selected crate and all existing or potentially missing documentation or implementation comments in its hand-authored source. Add, revise, retain, consolidate, or remove comments according to repository policy. | Preserve contracts, qualifications, examples, useful local context, non-obvious implementation reasoning, and discoverability. Do not add comments that merely restate the code, and remove such comments when they add no value. Shorter is not automatically better. |
+| Documentation | Patch first | Review all Markdown files owned by each selected crate and the documentation and implementation-comment coverage and placement in its hand-authored source. Determine whether comments should be added, revised, preserved, relocated, consolidated, or removed according to repository policy. | Aim for the appropriate documentation state, not maximum comment coverage. Preserve contracts, qualifications, examples, useful local context, non-obvious implementation reasoning, and discoverability. Account for inherited and authoritative documentation before treating a location as undocumented. Do not add comments that merely restate the code, and remove such comments when they add no value. Shorter is not automatically better. |
 | Tests | Patch first | Simplify fixtures and setup, factor repetition, and use table-driven cases when clearer. | Preserve cases, discriminating assertions, execution, independence, and failure diagnosis. |
 | Naming | Patch first for private/local names | Use names that describe actual responsibility and meaning. | Check public APIs, serialization, reflection, generated consumers, and call-site clarity. |
 | Code organization | Patch first for local mechanical cleanup | Move code to better owners, simplify imports and exports, and remove unnecessary files. | Keep moves lossless; check comments, visibility, initialization, dependency direction, and build inclusion. |
@@ -254,8 +254,9 @@ The initial patch is intentionally a candidate set.
 It is expected that review may correct many edits and revert some entirely.
 Do not weaken the initial pass merely to avoid reviewer findings.
 
-For broad documentation work, inspect all Markdown files owned by each selected crate and all existing or potentially missing documentation or implementation comments in its hand-authored source.
-Apply the repository documentation and coding policies to decide whether each location needs no comment or a comment that should be added, revised, retained, consolidated, or removed.
+For broad documentation work, inspect all Markdown files owned by each selected crate and the documentation and implementation-comment coverage and placement in its hand-authored source.
+Apply the repository documentation and coding policies to decide whether each location needs no comment or a comment that should be added, revised, preserved, relocated, consolidated, or removed.
+Account for inherited documentation and other authoritative owners before treating a location as undocumented or adding a duplicate comment.
 Generated, vendored, and build-output files are outside this hand-authored surface.
 For broad test work, directly simplify fixtures, setup, and cases where the revised code is plausibly clearer.
 For local implementation work, directly remove supported accidental mechanics.
@@ -310,7 +311,7 @@ Apply these challenges:
 
 | Category | Diff-review challenges |
 | --- | --- |
-| Documentation | Did the patch cover the promised Markdown and hand-authored comment surface, including useful missing comments? Were requirements, qualifications, precise terms, examples, non-obvious implementation reasoning, or useful local context lost? Were redundant or code-restating comments retained or added? Is the result clearer rather than merely shorter? |
+| Documentation | Did the patch cover the promised Markdown and hand-authored comment surface and reach the appropriate documentation state? Did it account for inherited and authoritative documentation before adding comments? Were requirements, qualifications, precise terms, examples, non-obvious implementation reasoning, or useful local context lost? Were redundant, misplaced, or code-restating comments retained or added? Is the result clearer rather than merely shorter? |
 | Tests | Are old cases and discriminating assertions preserved and still executed? Did sharing hide expectations, state, or failure location? |
 | Naming | Does the new name improve responsibility and call-site clarity? Could it affect public, serialized, reflected, or generated names? |
 | Code organization | Was movement lossless, including comments and attributes? Is the destination a better owner, and are visibility and dependency direction preserved? |
