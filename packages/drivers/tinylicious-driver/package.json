@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-driver",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"description": "Driver for tinylicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -83,8 +83,8 @@
 	"dependencies": {
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:^",
-		"@fluidframework/container-runtime-definitions": "workspace:^",
+		"@fluidframework/container-runtime": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",

@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { Revertible } from "../../../core/index.js";
@@ -30,7 +33,13 @@ import {
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
-import { getView, StringArray, TestTreeProviderLite } from "../../utils.js";
+import {
+	expectJsonTree,
+	expectSchemaEqual,
+	getView,
+	StringArray,
+	TestTreeProviderLite,
+} from "../../utils.js";
 import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
@@ -666,6 +675,77 @@ describe("simple-tree tree", () => {
 			// Verify
 			assert.deepEqual([...view.root], ["A", "B", "C"]);
 			assert.equal(view.branchHistory.length, 8);
+		});
+
+		it("restores the schema and content from before a schema upgrade on a local branch", () => {
+			// This test verifies current behavior, not necessarily the desired specification.
+			// We will likely make revertTo skip schema changes,
+			// but that requires prerequisite work on rebasing interleaved data and schema changes.
+			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
+			const originalView = getView(originalConfig);
+			originalView.initialize(1);
+			const revision = originalView.branchHistory.getHead()?.revision;
+			assert(revision !== undefined, "revision should be defined");
+
+			const upgradedView = originalView.checkout.fork().viewWith(
+				new TreeViewConfiguration({
+					schema: [schema.number, schema.string],
+				}),
+			);
+			upgradedView.upgradeSchema();
+			assert.equal(upgradedView.compatibility.isEquivalent, true);
+			// Include content that is only valid under the upgraded schema.
+			upgradedView.root = "upgraded";
+
+			upgradedView.revertTo(revision);
+
+			expectSchemaEqual(
+				upgradedView.checkout.storedSchema,
+				originalView.checkout.storedSchema,
+			);
+			expectJsonTree(upgradedView.checkout, [1]);
+			// Reverting also makes the upgraded view require a schema upgrade again.
+			assert.equal(upgradedView.compatibility.isEquivalent, false);
+			assert.equal(upgradedView.compatibility.canView, false);
+			assert.equal(upgradedView.compatibility.canUpgrade, true);
+		});
+
+		it("throws when transmitting a revert across a schema upgrade on a shared branch", () => {
+			// This test verifies current behavior, not necessarily the desired specification.
+			// We will likely make revertTo skip schema changes,
+			// but that requires prerequisite work on rebasing interleaved data and schema changes.
+			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
+			const upgradedConfig = new TreeViewConfiguration({
+				schema: [schema.number, schema.string],
+			});
+			const provider = new TestTreeProviderLite(2);
+			const [treeA, treeB] = provider.trees;
+			const originalViewA = treeA.kernel.viewWith(originalConfig);
+			const viewB = treeB.kernel.viewWith(upgradedConfig);
+			originalViewA.initialize(1);
+			provider.synchronizeMessages();
+
+			const revision = originalViewA.branchHistory.getHead()?.revision;
+			assert(revision !== undefined, "revision should be defined");
+			originalViewA.dispose();
+
+			const upgradedViewA = treeA.kernel.viewWith(upgradedConfig);
+			upgradedViewA.upgradeSchema();
+			assert.equal(upgradedViewA.compatibility.isEquivalent, true);
+			upgradedViewA.root = "upgraded";
+			provider.synchronizeMessages();
+			assert.equal(upgradedViewA.root, "upgraded");
+			assert.equal(viewB.compatibility.isEquivalent, true);
+			assert.equal(viewB.root, "upgraded");
+
+			// The inverse schema change can be applied locally, but cannot be encoded in an op.
+			assert.throws(
+				() => upgradedViewA.revertTo(revision),
+				validateAssertionError("Inverse schema changes should never be transmitted"),
+			);
+			provider.synchronizeMessages();
+			assert.equal(viewB.compatibility.isEquivalent, true);
+			assert.equal(viewB.root, "upgraded");
 		});
 
 		it("is a no-op when given the revision of the head commit", () => {
