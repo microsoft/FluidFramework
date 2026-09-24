@@ -551,12 +551,12 @@ Focus runtime validation on conditions that the type system cannot express and f
 Avoid redundant checks for every possible violation of TypeScript types.
 Preserve documented default behavior for supported boundary cases, such as empty inputs, instead of introducing new errors.
 
-#### ✔ DO document expected errors with `@throws`
+#### ✔ DO document supported error contracts with `@throws`
 
-APIs that throw errors, or are expected to throw errors, should include [`@throws` blocks](./Documentation-Guidelines/Documenting-TypeScript/TSDoc-Guidelines.md#throws).
-Describe the conditions that cause each error and the kind of error reported.
+Document errors that are intentionally part of a supported API contract with `@throws`.
+Follow the detailed [`@throws` guidance](./Documentation-Guidelines/Documenting-TypeScript/TSDoc-Guidelines.md#throws) to decide which errors belong in that contract and how to document unsupported inputs, propagated errors, recoverability, and fault isolation.
 
-Assertion failures indicate implementation bugs, not supported API behavior; do not document them as expected usage errors.
+Assertion failures are implementation bugs, not supported API behavior; do not document them as expected errors.
 
 #### ✘ DO NOT use assertions for validating supported API input
 

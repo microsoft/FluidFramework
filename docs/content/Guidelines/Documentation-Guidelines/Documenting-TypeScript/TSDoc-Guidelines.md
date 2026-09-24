@@ -226,15 +226,21 @@ See: <https://tsdoc.org/pages/tags/throws/>
 
 ##### \@throws: Guidance
 
-Use `@throws` blocks for APIs that throw errors or on API declarations whose implementations are expected to throw errors under certain conditions.
+Use `@throws` blocks when an error is intentionally part of a supported API contract.
 Describe the condition that causes the error and the kind of error reported.
 Use separate blocks for distinct error conditions when that makes the documentation clearer.
-Include expected errors propagated from other APIs, not only errors thrown directly by the implementation.
+Include errors propagated from other APIs only when they are part of the supported contract, not merely incidental implementation failures.
+
+When an input is not currently supported but its error behavior is not intended as a stable contract, document the restriction with `@param` or `@remarks` without an `@throws` block.
+This preserves the ability to support the input later without changing a documented error contract.
 
 Use `{@link ...}` to reference error types when they are available at the API's support level.
 Otherwise, describe the error using properties that callers can observe, such as `errorType: "usageError"`, without linking to an internal implementation type.
 
 Document input requirements with `@param` or `@remarks` in addition to `@throws`.
+
+An `@throws` block does not imply that an error is safe to catch or that the affected state remains usable.
+Document recoverability or fault-isolation guarantees only when the API provides a reliable way to identify the error and explicitly defines the usable state after it occurs.
 
 Internal assertion failures represent implementation bugs, not expected error cases in the API contract, so they should not be represented by `@throws` documentation.
 See the [error-handling guidelines](../../Coding-Guidelines.md#errors) for guidance on errors and assertions.
