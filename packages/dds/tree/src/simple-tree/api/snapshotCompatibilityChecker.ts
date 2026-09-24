@@ -22,9 +22,19 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
+ * Reports viewing and stored-schema upgrade compatibility for `view.schema` against a stored schema generated from `viewWhichCreatedStoredSchema.schema`.
  *
- * @remarks See {@link SchemaCompatibilityStatus} for details on the compatibility results.
+ * @remarks
+ * Only the `schema` property of each configuration is used.
+ * The existing and proposed stored schemas are generated using the default restrictive staged upgrade policy;
+ * staged upgrade policies supplied through alpha configurations are not used.
+ * Viewing checks compare `view.schema` with the generated existing stored schema.
+ * Upgrade checks compare the generated existing and proposed stored schemas.
+ * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
+ * See {@link SchemaCompatibilityStatus} for the compatibility flags.
+ *
+ * Metadata and descriptions do not affect compatibility.
+ * This function does not inspect document content and does not report `canInitialize`.
  *
  * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
@@ -63,9 +73,9 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - From which to derive the stored schema, as if it initialized or upgraded a tree via {@link TreeView}.
- * @param view - The view being tested to see if it could view tree created or initialized using `viewWhichCreatedStoredSchema`.
- * @returns The compatibility status.
+ * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the existing stored schema with the default restrictive staged upgrade policy.
+ * @param view - Configuration whose `schema` is used for viewing checks and to generate the proposed stored schema with the default restrictive staged upgrade policy.
+ * @returns The {@link SchemaCompatibilityStatus} for these schemas, without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
