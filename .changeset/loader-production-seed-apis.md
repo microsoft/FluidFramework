@@ -2,18 +2,21 @@
 "@fluidframework/container-loader": minor
 "__section": feature
 ---
-Create and load application-owned seed documents without test utilities
+
+Add legacy alpha APIs for seed document creation, loading, and detached runtime construction
 
 The new legacy alpha APIs support external document creation with protocol metadata and application-owned content, followed by deterministic construction of native runtime state before operation replay.
 They do not require a seed manifest or a prescribed application format.
+`SeedProjector<TSeed>` connects the validated result of your seed reader to your materializer's input type.
+`seedRuntimeFactory` infers this type from your projector; existing `SeedProjector` annotations still default to `unknown`.
 
 Import the APIs from `@fluidframework/container-loader/legacy/alpha`:
 
 ```typescript
 import {
-	createSeedRuntimeSnapshot,
-	createSeedSummary,
-	seedRuntimeFactory,
+  createSeedRuntimeSnapshot,
+  createSeedSummary,
+  seedRuntimeFactory,
 } from "@fluidframework/container-loader/legacy/alpha";
 
 // The external producer writes application data without constructing a runtime.
@@ -21,20 +24,20 @@ const summary = createSeedSummary({ codeDetails, applicationProjection });
 // Pass summary to your driver's createContainer method.
 
 const factory = seedRuntimeFactory(
-	{
-		isNative,
-		readSeed,
-		materialize: async (seed) =>
-			createSeedRuntimeSnapshot({
-				runtimeFactory: createDeterministicConstructionFactory(seed),
-			}),
-	},
-	async ({ context, fromSeed }, existing) =>
-		loadApplicationRuntime(context, existing, {
-			summaryGenerationOptions: {
-				fullTreePolicy: fromSeed ? "untilFirstAck" : "default",
-			},
-		}),
+  {
+    isNative,
+    readSeed,
+    materialize: async (seed) =>
+      createSeedRuntimeSnapshot({
+        runtimeFactory: createDeterministicConstructionFactory(seed),
+      }),
+  },
+  async ({ context, fromSeed }, existing) =>
+    loadApplicationRuntime(context, existing, {
+      summaryGenerationOptions: {
+        fullTreePolicy: fromSeed ? "untilFirstAck" : "default",
+      },
+    }),
 );
 ```
 

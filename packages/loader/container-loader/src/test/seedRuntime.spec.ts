@@ -203,6 +203,66 @@ describe("Seed runtime APIs", () => {
 		assert(runtime.disposed);
 	});
 
+	it("infers the materializer's seed type from the reader", async () => {
+		const input = { title: "seed" };
+		let materialized = false;
+		const factory = seedRuntimeFactory(
+			{
+				isNative: () => false,
+				readSeed: async () => input,
+				materialize: (value, sequenceNumber) => {
+					assert.equal(value.title, "seed");
+					assert.equal(value, input);
+					assert.equal(sequenceNumber, 0);
+					materialized = true;
+					return native;
+				},
+			},
+			async () => new ConstructionRuntime(),
+		);
+		const runtime = await factory.instantiateRuntime(makeContext(), true);
+		assert(materialized);
+		runtime.dispose();
+	});
+
+	it("accepts an explicitly typed projector with asynchronous materialization", async () => {
+		const input = { title: "seed" };
+		let materialized = false;
+		const projector: SeedProjector<typeof input> = {
+			isNative: () => false,
+			readSeed: async () => input,
+			materialize: async (value, sequenceNumber) => {
+				assert.equal(value.title, "seed");
+				assert.equal(value, input);
+				assert.equal(sequenceNumber, 0);
+				materialized = true;
+				return native;
+			},
+		};
+		const factory = seedRuntimeFactory(projector, async () => new ConstructionRuntime());
+		const runtime = await factory.instantiateRuntime(makeContext(), true);
+		assert(materialized);
+		runtime.dispose();
+	});
+
+	it("rejects mismatched seed types at compile time", () => {
+		const incompatibleProjector = {
+			isNative: () => false,
+			readSeed: async () => ({ title: "seed" }),
+			materialize: (_input: number) => native,
+		};
+		// @ts-expect-error -- The inferred reader result must match the materializer input.
+		seedRuntimeFactory(incompatibleProjector, async () => new ConstructionRuntime());
+
+		const projector: SeedProjector<{ title: string }> = {
+			isNative: () => false,
+			// @ts-expect-error -- An explicitly typed projector must read its declared seed type.
+			readSeed: async () => 123,
+			materialize: () => native,
+		};
+		seedRuntimeFactory(projector, async () => new ConstructionRuntime());
+	});
+
 	it("rejects a nonzero checkpoint before reading or materializing application input", async () => {
 		const original = makeContext({
 			deltaManager: {

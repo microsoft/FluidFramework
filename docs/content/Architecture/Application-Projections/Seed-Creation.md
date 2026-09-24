@@ -158,13 +158,19 @@ The complete materialized graph must match the data store types, channels, alias
 
 ### 3. Implement your seed projector
 
-`SeedProjector` has three application-owned operations:
+`SeedProjector<TSeed>` has three application-owned operations:
 
 | Operation                           | What you implement                                                                                                                        |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `isNative(context)`                 | Recognize a stored DDS-backed snapshot without reading seed content. The example checks the runtime's `.metadata` blob.                   |
 | `readSeed(context)`                 | Read your seed from the original snapshot and storage. Validate its format before construction.                                           |
 | `materialize(seed, sequenceNumber)` | Construct the complete initial graph at sequence number zero and return its snapshot and blob bodies. This operation can be asynchronous. |
+
+Use your validated application input type as `TSeed`, for example `SeedProjector<MySeed>`.
+`readSeed` returns `Promise<MySeed>`, and `materialize` receives that same type.
+When you pass a projector directly to `seedRuntimeFactory`, TypeScript infers the seed type from its reader.
+Omitting the type argument in a `SeedProjector` annotation retains `unknown`.
+These types do not validate stored data at runtime; your reader must still validate the external input.
 
 Use `createSeedRuntimeSnapshot({ runtimeFactory, initialize?, ... })` for the third operation.
 It loads your factory in a real detached container without a document service.
