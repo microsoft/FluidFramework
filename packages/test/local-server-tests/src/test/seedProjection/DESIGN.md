@@ -11,6 +11,12 @@ consumer responsibilities.
 
 ## Boundaries
 
+The independent `text/` application demonstrates seed creation and native loading without the projection runtime APIs.
+Its application files and `text/test/` suites match the `html/` and `html/test/` structure.
+See its [source map](text/README.md#source-map) and [consumer guide](../../../../../../docs/content/Architecture/Application-Projections/Seed-Creation.md) for the runtime-factory integration boundary and test-internal construction gaps.
+It deliberately retains its bounded on-request summary host instead of depending on the projection callbacks or the shared HTML workflow harness.
+The rest of this document describes the HTML projection application and harness.
+
 The HTML sample defines the format, SharedTree schema, deterministic materialization, runtime
 integration, and readable projection. The test harness supplies storage, clients, sequencing,
 summary observation, and lifecycle assertions.
@@ -125,7 +131,7 @@ Undo regressions prevent a removed/restored subtree from reusing an older HTML h
 
 Pending-state cases discard the original overlay and deny original seed-body reads. Fingerprint
 cases exercise real transport and native reload in addition to protocol units. The
-[README](README.md#what-the-scenario-checks) summarizes scenario coverage and provides normal build/run commands.
+[README](README.md#what-the-html-scenario-checks) summarizes scenario coverage and provides normal build/run commands.
 
 [`applicationIdentity.spec.ts`](html/test/applicationIdentity.spec.ts) verifies that external format,
 internal materialization rules, and native schema names are independent.

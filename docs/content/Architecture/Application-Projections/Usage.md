@@ -4,6 +4,10 @@
 pattern, not how its runtime internals work.
 See the [Fluid design](./Fluid-Design.md) for maintainer details, the [architecture](../Application-Projections.md) for the wider roadmap, and the [reference README](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md) for running the example.
 
+If you only need to create and load application-seeded files, start with the independent [seed-creation guide](./Seed-Creation.md).
+It shows how to adapt an existing runtime factory, separates application code from test fixtures, and identifies the remaining production integration work.
+Its text example does not require the projection callbacks described below.
+
 The code here is an executable reference in a test package, not a published application SDK.
 Its restricted HTML codec and single-store runtime snapshot builder are fixtures.
 Runtime/DDS state means Fluid's runtime metadata and distributed data structure (DDS) representation, not the original seed.

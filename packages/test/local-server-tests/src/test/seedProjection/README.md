@@ -1,4 +1,20 @@
-# Headless Application-Projection Reference
+# Application Seed and Projection References
+
+This directory separates example application source from its tests.
+The seed-only reference uses two named text parts; it does not require the ongoing application-projection runtime changes.
+
+| Goal                                                                 | Starting point                                                                                                                |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Integrate seed creation with your existing application               | [Consumer guide](../../../../../../docs/content/Architecture/Application-Projections/Seed-Creation.md)                        |
+| Follow the example application, fixture boundaries, and run commands | [Text application README](text/README.md)                                                                                     |
+| See the runtime-factory integration                                  | [`text/sampleRuntimeFactory.ts`](text/sampleRuntimeFactory.ts) and [`text/seedRuntimeAdapter.ts`](text/seedRuntimeAdapter.ts) |
+| Read assertions and local-service scenarios                          | [`text/test/`](text/test)                                                                                                     |
+
+`text/` contains the bounded sample implementation; `text/test/` contains its tests.
+The larger [projection PR](https://github.com/microsoft/FluidFramework/pull/28280) adds the sibling `html/`, `html/test/`, and shared test `harness/` directories.
+Neither example is a published SDK: the consumer guide identifies the internal construction and host support that you must replace or harden before shipping.
+
+## HTML projection reference
 
 This executable reference creates a seed containing two HTML parts without instantiating a Fluid container.
 It loads the content into SharedTree, supports collaboration, and publishes incrementally reusable HTML projections.
@@ -8,7 +24,7 @@ It uses an in-process service, not a browser application or external service.
 It is not the original HTML seed.
 A later summary stores runtime/DDS state beside an **application projection**: readable HTML for the same checkpoint.
 
-## Choose a starting point
+### Choose a starting point
 
 | Task                                                | Read                                                                                                                                                                               |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -28,7 +44,7 @@ Follow the [repository setup instructions](../../../../../../README.md), then ru
 
 ```bash
 pnpm --filter @fluid-internal/local-server-tests build
-pnpm --filter @fluid-internal/local-server-tests exec mocha --grep "Seed projection reference"
+pnpm --filter @fluid-internal/local-server-tests exec mocha --grep "Seed creation:|Seed projection reference"
 ```
 
 The first command uses the ordinary dependency-aware build, rather than compiling only the test files.
@@ -38,7 +54,7 @@ before rebuilding.
 The focused runtime suite is `packages/runtime/container-runtime/src/test/containerRuntime.summaryGeneration.spec.ts`;
 related GC cases live beside the existing GC tests.
 
-## What the scenario checks
+## What the HTML scenario checks
 
 The workflow covers external creation, independent clients, no initialization writes, concurrent SharedTree edits, summary
 failure/retry and real ACKs. It verifies the same runtime's first-full-to-incremental transition, zero serialization or

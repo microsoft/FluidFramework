@@ -192,7 +192,7 @@ It explains the late-acknowledgment failure that a single pending GC slot cannot
 Those capabilities do not depend on seeds, HTML, an application manifest, or a specific schema.
 
 This application uses them because its materialized loading view is not yet a stored native parent.
-The [reference scenarios](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md#what-the-scenario-checks) separately verify real storage upload/ACK, native handle reuse, skipped HTML serialization, and unchanged persisted part IDs.
+The [reference scenarios](../../../../packages/test/local-server-tests/src/test/seedProjection/README.md#what-the-html-scenario-checks) separately verify real storage upload/ACK, native handle reuse, skipped HTML serialization, and unchanged persisted part IDs.
 
 ## Incremental application projection
 
