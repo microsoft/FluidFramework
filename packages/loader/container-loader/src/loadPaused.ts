@@ -161,14 +161,18 @@ export async function loadContainerPaused(
 			throw error;
 		})
 		.finally(() => {
-			// There is not much value in leaving delta connection on. We are not processing ops, we also can't advance to "connected" state because of it.
-			// We are not sending ops (due to forceReadonly() call above). We are holding collab window and any consensus-based processes.
-			// It's better not to have connection in such case, as there are only nagatives, and no positives.
-			container.disconnect();
-
-			container.off("op", opHandler);
-			container.off("closed", onClose);
-			signal?.removeEventListener("abort", onAbort);
+			try {
+				// There is not much value in leaving delta connection on. We are not processing ops, we also can't advance to "connected" state because of it.
+				// We are not sending ops (due to forceReadonly() call above). We are holding collab window and any consensus-based processes.
+				// It's better not to have connection in such case, as there are only nagatives, and no positives.
+				if (!container.closed) {
+					container.disconnect();
+				}
+			} finally {
+				container.off("op", opHandler);
+				container.off("closed", onClose);
+				signal?.removeEventListener("abort", onAbort);
+			}
 		});
 
 	return container;
