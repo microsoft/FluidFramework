@@ -12,7 +12,7 @@ use thiserror::Error;
 /// An error produced by the compression wrapper or its underlying store.
 #[derive(Debug, Error)]
 pub enum CompressionError<E> {
-    /// The underlying store rejected the operation.
+    /// The underlying store failed; its error classification is preserved.
     #[error("underlying store error: {0}")]
     Store(#[source] E),
     /// A payload could not be encoded before it was appended or published.
@@ -48,7 +48,7 @@ impl<S> CompressionSession<S> {
         Self { inner }
     }
 
-    /// Returns the underlying uncompressed session.
+    /// Removes this wrapper and returns the underlying session without decoding stored data.
     pub fn into_inner(self) -> S {
         self.inner
     }

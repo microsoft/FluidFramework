@@ -1,4 +1,4 @@
-//! Document-scoped implementations of the replacement storage contracts.
+//! Document-scoped in-memory storage components.
 
 use std::{
     collections::{BTreeMap, HashMap},
@@ -25,7 +25,7 @@ use crate::memory_archive::{self, ArchiveData};
 /// Process-wide allocation prevents accidental cross-factory document identity collisions.
 static NEXT_DOCUMENT_ID: AtomicU64 = AtomicU64::new(1);
 
-/// Failures from the replacement memory document store.
+/// Failures from the in-memory document store.
 #[derive(Debug, Error)]
 pub enum MemoryStorageError {
     /// A capability belongs to another document.
@@ -267,7 +267,7 @@ impl MemoryStorage {
         Self::default()
     }
 
-    /// Derives all three components from the same document-owning opening.
+    /// Derives storage components and checkpoint authority from the same exclusive opening.
     fn components(
         opening: Arc<DocumentOpening>,
     ) -> StorageComponents<MemoryBlobStore, MemoryEventArchive, MemorySnapshotArchive> {

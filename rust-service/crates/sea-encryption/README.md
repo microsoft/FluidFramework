@@ -1,6 +1,6 @@
 # Sea Encryption
 
-`sea-encryption` transparently encrypts event payloads and blob leaves through `EncryptionSession<S, K, N>` using AES-256-GCM-SIV.
+`sea-encryption` transparently encrypts application-event payloads and blob leaves through `EncryptionSession<S, K, N>` using AES-256-GCM-SIV.
 Each payload has an independent authenticated envelope; the wrapped session continues to own positions, blob-tree identities, snapshot lineage, operation recovery, cancellation, and backpressure.
 
 ## Envelope And Errors
@@ -36,7 +36,7 @@ Uncertain writes are never blindly resubmitted to storage, and a rejection never
 The wrapper buffers one complete payload with no size limit; untrusted inputs need an outer limit.
 Reads decrypt on poll without a background task or extra stream buffer.
 
-Directories, event metadata, and snapshot metadata remain visible so the server can validate ordering and reachability.
+Membership metadata, directories, event metadata, and snapshot metadata pass through unchanged so the server can validate membership, ordering, and reachability.
 For compression plus encryption, wrap an `EncryptionSession` in `CompressionSession` so compression processes plaintext first.
 Snapshot handles and publisher participation/fences pass through unchanged, and loads decrypt the direct live suffix.
 Blob identities and handles identify stored ciphertext; directory references remain in that stored identity space.

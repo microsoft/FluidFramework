@@ -64,7 +64,7 @@ impl MeasurementClock {
     }
 }
 
-/// Reads the common Linux host epoch without introducing a floating-point timestamp.
+/// Reads microseconds since the Unix epoch without a floating-point conversion.
 fn epoch_micros() -> u64 {
     u64::try_from(
         SystemTime::now()

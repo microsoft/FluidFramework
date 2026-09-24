@@ -60,8 +60,7 @@ pub enum MonitoredStreamItem<T, P> {
 /// Implementations choose when buffered throughput pressure qualifies as `FallenBehind`, but must
 /// eventually report it if new items continue accumulating while the consumer does not read them.
 ///
-/// TODO: Add a separate mechanism for connection health and whether timely delivery is currently
-/// guaranteed. Those concerns are independent of buffered backlog.
+/// Backlog status does not describe connection health or guarantee timely delivery.
 pub trait MonitoredStream:
     Stream<Item = Result<MonitoredStreamItem<Self::Data, Self::Position>, Self::Error>>
 {

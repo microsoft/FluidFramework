@@ -116,7 +116,7 @@ File recovery reopens the backend-assigned document ID after releasing the prior
 Snapshot verification compares the selected snapshot with the final replayed event position, not the record count: positions can be byte offsets.
 It also fetches the snapshot blob and checks its exact final counter payload.
 Storage reads use an explicit committed upper bound; session reads collect the configured number of acknowledged submissions.
-Their commit measurements therefore include sequencing and author-session work and are not directly comparable with schema-version-2 raw-stream decorator results.
+Sequenced-session commit measurements include sequencing and author-session work and are not directly comparable with schema-version-2 raw-stream decorator results.
 File-backed cells report recursive persisted size.
 Whole-process CPU sampling spans backend construction, the workload, and file flush/recovery where applicable; it is not a commit-only observation.
 The benchmark key is a fixed non-production key used only in memory and is never emitted; encryption nonces come from the operating system.

@@ -175,7 +175,7 @@ const session = await openRemote(
     timeoutMilliseconds: 5000,
   },
   document,
-  { session: sessionIdentity },
+  {},
 );
 ```
 
@@ -206,7 +206,7 @@ Overflow closes and fails the stream; it never silently drops bytes or reports c
 Slow consumers can therefore fail instead of slowing the sender, and must explicitly reconnect through the application's existing recovery policy.
 Uploads throttle admission using `bufferedAmount`, allowing at most two maximum-sized records in the reported native send buffer; this does not restore receive backpressure.
 Queue limits are per socket, not per connection, and do not bound already delivered messages, runtime/kernel buffering, or proxy memory.
-Node's built-in client sends no Origin: direct local tests require the server's separate, default-off loopback allowance described below.
+Node's built-in client sends no Origin: direct local tests require the server's separate, default-off [loopback allowance](../sea-webtransport-server/README.md#optional-websocket-listener).
 
 An awaited write is not a remote application acknowledgment; intermediary buffering is implementation-dependent.
 WebSocket has no QUIC datagrams or built-in production authentication.

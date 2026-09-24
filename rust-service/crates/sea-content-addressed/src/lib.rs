@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 
-/// Replacement blob-store capabilities for the immutable object engine.
+/// Blob-store availability capabilities for the immutable object engine.
 pub mod storage;
 
 use std::{
@@ -150,7 +150,9 @@ impl ContentStore {
         Ok(payload)
     }
 
-    /// Publishes or deduplicates one immutable directory.
+    /// Publishes or deduplicates one immutable directory without checking child availability.
+    ///
+    /// Use [`sea_core::storage::BlobStore::put_directory`] to verify the complete tree.
     ///
     /// # Errors
     ///

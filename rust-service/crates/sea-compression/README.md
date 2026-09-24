@@ -1,6 +1,6 @@
 # Sea Compression
 
-`sea-compression` transparently compresses event payloads and blob leaves through `CompressionSession<S>`.
+`sea-compression` transparently compresses application-event payloads and blob leaves through `CompressionSession<S>`.
 The wrapped session continues to own event positions, blob-tree identities, snapshot lineage, operation recovery, cancellation, and backpressure.
 
 ## Behavior
@@ -13,7 +13,7 @@ The wrapped session continues to own event positions, blob-tree identities, snap
   Untrusted inputs therefore need a limit in another layer.
 - Underlying store errors retain their original `ErrorKind`; local encoding failures are `Rejected`.
 
-Directories and snapshot metadata remain visible so the server can validate reachability.
+Membership metadata, directories, and snapshot metadata pass through unchanged so the server can validate membership and reachability.
 For compression plus encryption, wrap an encrypted session in `CompressionSession`; the outer compression layer processes plaintext before the inner encryption layer stores it.
 Loads preserve the selected handle-based snapshot and decode its live suffix; read progress and source error classifications are preserved.
 Content identities and availability handles are those of the encoded stored bytes, not plaintext hashes.
@@ -34,3 +34,4 @@ let compressed = CompressionSession::new(session);
 
 From `rust-service/`, run `cargo test -p sea-compression`.
 Tests cover session conformance, decoding errors, replay, and independent close.
+See [Developing `sea-compression`](DEV.md) for all-feature, lint, and documentation checks.

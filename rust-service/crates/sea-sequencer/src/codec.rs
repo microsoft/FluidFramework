@@ -5,10 +5,10 @@
 //! in the surrounding storage event so availability checks remain owned by the storage view.
 //!
 //! Older active-member-minimum encodings are rejected rather than interpreted as enforced floors.
-//! Announced membership records use a distinct marker
-//! and share the same archive order without occupying the application submission identity space.
-//! Decoding rejects an invalid marker, empty identity, truncation, unknown position tag, or trailing
-//! bytes as [`crate::SessionError::Corrupt`].
+//! Announced membership records use a distinct marker and share the same archive order.
+//! They do not count toward a session's accepted application-event prefix.
+//! Decoding rejects an invalid marker, zero session identity, truncation, unknown position tag, or trailing
+//! bytes as [`crate::session::SessionError::Corrupt`].
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use sea_core::archive::SessionEventKind;
@@ -117,7 +117,7 @@ pub(crate) fn decode_committed<Error>(
     })
 }
 
-/// Writes a length-prefixed identity or payload.
+/// Writes a length-prefixed byte field.
 pub(super) fn put_field<Error>(
     encoded: &mut BytesMut,
     bytes: &[u8],

@@ -28,7 +28,7 @@ type DocumentRuntimes<Storage> =
 
 /// Serializes lazy runtime recovery within one backend namespace.
 struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
-    /// Explicit opening-level experiment, never enabled by the default constructors.
+    /// Enables experimental live delivery for recovered documents; `DocumentRegistry::new` disables it.
     live_cache: bool,
     /// Factory retaining the backend namespace independently of active views.
     storage: Arc<Storage>,

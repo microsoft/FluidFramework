@@ -150,9 +150,7 @@ Checkpoints participate in mutation order and await their own write, including b
 Shutdown timeout can stop waiting, but cannot cancel a syscall or report successful flushing.
 Successful shutdown waits for accepted workers to settle; separately retained components and streams still own their document locks until dropped.
 Mutations write only new frames without replacing the journal inode; encoding memory is proportional to batch size.
-Distributed filesystems, external file replacement, and writes through buffered mode are outside the durable guarantee.
-Malformed lengths and complete checksum failures are errors, including at the final frame.
-Checksums cannot distinguish a torn unacknowledged record from damaged acknowledged history; only structurally incomplete tails are repairable under the durable model.
+See [Power-Loss Model](#power-loss-model) for filesystem requirements, corruption limits, and repairable tails.
 
 See [`src/storage.rs`](src/storage.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.
 Shared view and sparse-archive laws come from [`sea-conformance`](../sea-conformance/README.md).

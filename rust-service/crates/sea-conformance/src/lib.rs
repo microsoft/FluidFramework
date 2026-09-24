@@ -1,19 +1,5 @@
 #![doc = include_str!("../README.md")]
 
-//! Shared behavioral checks for storage and session implementations.
-//!
-//! The storage checks exercise contracts common to every backend: exclusive opening, compatible
-//! handles from successful publication and reopening, ordered archive ranges, complete-tree
-//! publication, and snapshot selection. They do not independently test rejection of foreign handles
-//! or unavailable dependencies. Those negative paths, backend-specific future-bound behavior,
-//! durability, and resource lifetimes require each implementation's focused tests.
-//!
-//! [`crate::run_session_conformance`] checks the implementation-independent session workflow
-//! over two memberships: explicit initialization, conditional snapshot publication,
-//! snapshot-plus-live loading, distinct equal submissions, ordered replay, and isolated close.
-//! Cancellation, reconciliation failures, publisher fencing, and concrete runtime ownership remain
-//! implementation responsibilities and require owner-local tests.
-
 use sea_core::{
     archive::{EventSubmission, SnapshotParticipation},
     session::SeaSession,

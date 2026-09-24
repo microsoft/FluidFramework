@@ -1,9 +1,9 @@
 //! Multi-user session runtime over one exclusively owned document view.
 //!
-//! [`crate::session::LocalSequencer`] recovers committed positions and used session identities, then
-//! multiplexes the view into [`crate::session::LocalSession`] memberships. Memberships are
-//! runtime-local: reopening restores stable committed identities, closes outstanding durable
-//! announcements, and requires callers to establish fresh sessions.
+//! [`crate::session::LocalSequencer`] restores a checkpoint and replays its bounded committed suffix,
+//! then multiplexes the view into [`crate::session::LocalSession`] memberships.
+//! Memberships are runtime-local: reopening skips unused reserved identities, closes outstanding
+//! durable announcements, and requires callers to establish fresh sessions.
 //!
 //! A bounded application ring separates admission from persistence; lifecycle barriers drain it.
 //! One runtime mutex serializes membership changes and committed metadata. The runtime retains
@@ -110,7 +110,7 @@ struct Publisher {
 
 /// One logical membership; clones observe the same closure signal.
 struct Membership {
-    /// Latest acknowledged application position.
+    /// Latest history reference declared by this membership.
     reference: Option<EventPosition>,
     /// Closing or replacing this membership ends its live streams.
     closed: watch::Sender<bool>,
@@ -136,7 +136,7 @@ impl Drop for AppendGuard {
     }
 }
 
-/// One in-flight mutation and its replayable application input.
+/// One retained control mutation and its optional encoded event.
 struct Pending<Error> {
     /// Owned backend work; never dropped merely because its requesting future was dropped.
     future: MutationFuture<Error>,
@@ -505,7 +505,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
         Ok(self.applied_through.expect("settled membership position"))
     }
 
-    /// Commits an announced departure before ending authority; unannounced sessions add no event.
+    /// Ends local authority, then commits a departure if the membership was announced.
     async fn close_member(
         &mut self,
         session: &SessionId,
@@ -654,7 +654,7 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
         guard
     }
 
-    /// Recovers stable event identities by scanning a bounded committed history.
+    /// Restores a checkpoint and replays the bounded committed suffix after it.
     /// Active membership is runtime-local; recovery requires fresh logical sessions.
     ///
     /// # Errors
@@ -858,7 +858,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
         Ok(live_read::read(self.clone(), cache, after))
     }
 
-    /// Returns this membership's stable identity, including allocated numeric identities.
+    /// Returns this membership's stable, sequencer-allocated identity.
     #[must_use]
     pub fn session_id(&self) -> &SessionId {
         &self.session
@@ -909,7 +909,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
             .await
     }
 
-    /// Submits once; failure or cancellation ends this session's accepted prefix.
+    /// Submits once; failure or cancellation after admission ends this session's accepted prefix.
     async fn submit(
         &self,
         submission: EventSubmission,

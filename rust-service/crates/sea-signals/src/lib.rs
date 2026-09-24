@@ -42,7 +42,7 @@ pub enum SignalError {
     /// Invalid limits, identity, or message size.
     #[error("signal request exceeds limits or has an invalid identity")]
     Invalid,
-    /// The requested live connection identity is already in use.
+    /// The connection identity is already in use, or another receive is pending on this connection.
     #[error("signal connection identity is already in use")]
     Conflict,
     /// The connection has ended.

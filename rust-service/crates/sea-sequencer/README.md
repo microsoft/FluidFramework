@@ -231,7 +231,7 @@ Returned ambiguity is resolved only when lookup confirms the requested position/
 Absence or lookup failure does not establish publication settlement, so it yields `RecoveryRequired` rather than permitting an unsafe retry.
 
 `coordinate_snapshots` registers client-selected, Sea-selected, or read-only participation.
-Client-selected publishers suppress Sea nomination; otherwise the lexically first eligible session is nominated.
+Client-selected publishers suppress Sea nomination; otherwise the eligible session with the lowest numeric identity is nominated.
 Nomination changes issue a fresh checked fence, preventing stale authority from becoming valid again.
 Publication checks authority at admission; revoking a stream does not roll back an already admitted mutation.
 Dropping a coordination stream revokes its own registration synchronously and notifies remaining publishers.

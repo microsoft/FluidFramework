@@ -20,7 +20,8 @@ Each scenario runs against every configured stack:
 Configurations range from a bare session to duplicate payload wrappers, reversed compression/encryption ordering, multiple real loopback WebTransport hops, and a nine-layer mixed stack.
 
 Transport probes count decoded submissions at each endpoint and inject a rejection at each hop.
-The rejection must reach the caller without commitment or traffic to deeper hops; after removing it, submissions must traverse every hop.
+The rejection must reach the caller without commitment or traffic to deeper hops and must terminate that submission stream.
+Removing the rejection and rebuilding the stack must restore submissions through every hop.
 Scenarios check endpoint counts for every connection generation, including all three hops of `repeated_stress` after reconnect.
 
 The collaboration scenarios use empty and binary event payloads up to 8 KiB, nested blob directories with shared subtrees, and exact plaintext history expectations independent of the returned events.

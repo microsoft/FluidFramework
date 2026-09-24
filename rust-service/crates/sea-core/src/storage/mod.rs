@@ -81,7 +81,7 @@ impl DocumentId {
     }
 }
 
-/// The three storage components belonging to one document.
+/// Blob, event, and snapshot components with independent internal checkpoint state for one document.
 ///
 /// A value returned by [`SeaStorage`] collectively represents one exclusive writable opening of
 /// the document. Component types need not be `Clone`. If an implementation makes one cloneable,

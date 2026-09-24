@@ -12,7 +12,7 @@ use sea_sequencer::session::{LocalSequencer, LocalSession};
 /// Counter membership over one exclusively opened memory document.
 type CounterSession = LocalSession<MemoryStorage>;
 
-/// Opens an in-memory session for the counter's session identity.
+/// Creates an in-memory document and opens a counter session.
 async fn counter_session() -> CounterSession {
     let (_, view) = MemoryStorage::new()
         .create_view()
@@ -70,7 +70,7 @@ fn decode_counter_value(
     Ok(i64::from_be_bytes(encoded))
 }
 
-/// Recovers the counter from the newest snapshot and its subsequent events.
+/// Recovers from the newest snapshot and its tail, stopping when the stream awaits new events.
 async fn recover(session: &CounterSession) -> Result<i64, &'static str> {
     let load = session.load(LoadStart::LatestSnapshot).await.expect("load");
     let mut value = 0_i64;
@@ -115,7 +115,7 @@ async fn run_demo() -> i64 {
     recover(&session).await.expect("recover counter")
 }
 
-/// Runs the snapshot and replay demonstration.
+/// Checks and prints the recovered value from the demonstration.
 #[tokio::main]
 async fn main() {
     let value = run_demo().await;

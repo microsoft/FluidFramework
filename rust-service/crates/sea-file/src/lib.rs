@@ -13,5 +13,5 @@ pub use storage::{FileBlobs, FileEvents, FileHandle, FileSnapshots, FileStorageE
 
 pub(crate) use common::{atomic_file, journal};
 
-/// Replacement document factory and independently usable file components.
+/// Document factory and independently usable file components.
 pub mod storage;

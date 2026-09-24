@@ -1,9 +1,9 @@
 //! Authenticated-encryption adapters for session facets.
 //!
-//! Event payloads and blob leaves use independent AES-256-GCM-SIV envelopes with distinct record
-//! and blob contexts. Directories, snapshots, positions, and opaque availability handles pass
-//! through in the ciphertext store's identity space. Reads decrypt lazily and preserve monitored
-//! progress and underlying error classifications.
+//! Application-event payloads and blob leaves use independent AES-256-GCM-SIV envelopes with distinct record and blob contexts.
+//! Membership metadata passes through unchanged.
+//! Directories, snapshots, positions, and opaque availability handles pass through in the ciphertext store's identity space.
+//! Reads decrypt lazily and preserve monitored progress and underlying error classifications.
 //!
 //! Each submission is encrypted independently. Ambiguous outcomes terminate append authority;
 //! clients recover the accepted prefix through the session's terminal departure before resubmission.

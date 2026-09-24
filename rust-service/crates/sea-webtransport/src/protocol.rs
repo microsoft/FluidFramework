@@ -519,11 +519,11 @@ pub struct StreamEvent {
     /// Stable event position.
     pub position: u64,
 
-    /// Connection identity that submitted the event.
+    /// Sequencer-allocated session identity associated with the event.
     pub session: u64,
     /// Author reference position.
     pub reference: Option<u64>,
-    /// Minimum active reference position.
+    /// Committed monotonic reference floor at this event.
     pub minimum_reference: Option<u64>,
     /// Opaque event value.
     pub event: Event,

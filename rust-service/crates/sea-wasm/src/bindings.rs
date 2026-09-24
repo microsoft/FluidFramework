@@ -728,7 +728,7 @@ impl Default for SeaMemoryService {
     }
 }
 
-/// Opens a neutral session with explicit initial transport selection and no replay.
+/// Opens a neutral session with explicit initial transport selection, without retrying Sea operations.
 #[cfg(feature = "websocket-stream")]
 #[wasm_bindgen(js_name = openRemote)]
 pub async fn open_remote(

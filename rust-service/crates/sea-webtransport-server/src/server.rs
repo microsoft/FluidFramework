@@ -297,7 +297,7 @@ pub trait SeaConnectionService: Send + Sync {
         authority: &[u8],
     ) -> Result<Arc<dyn SeaConnectionService>, sea_v1::Response>;
 
-    /// Admits an authenticated connection's best-effort datagram after its signal handshake.
+    /// Admits a best-effort datagram for the connection's established signal registration.
     async fn signal_datagram(&self, _submission: sea_v1::signals::Submission) {}
     /// Opens ephemeral messaging without creating author membership.
     async fn open_signals(

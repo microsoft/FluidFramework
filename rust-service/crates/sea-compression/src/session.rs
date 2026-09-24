@@ -1,6 +1,7 @@
 //! Stateless compression adapters for session facets.
 //!
-//! Event payloads and blob leaves are encoded as independent deterministic zlib frames.
+//! Application-event payloads and blob leaves use independent deterministic zlib frames.
+//! Membership metadata passes through unchanged.
 //! Equal submissions remain distinct events; each read item decodes without replay-global state.
 //! Directories, snapshots, positions, and availability
 //! handles pass through in the encoded store's identity space.

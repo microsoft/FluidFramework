@@ -175,7 +175,7 @@ impl Fixture {
         }
     }
 
-    /// Opens the same author under a fresh logical membership.
+    /// Opens a fresh author membership on the retained document.
     async fn open(&mut self) -> LocalSession<MemoryStorage> {
         self.generation += 1;
         self.runtime.open_session(None).await.unwrap()
@@ -372,7 +372,7 @@ impl SeaConnectionService for TestHost {
     }
 }
 
-/// Durable identities and original plaintext survive teardown; availability handles do not.
+/// Stored identities and original plaintext survive stack teardown; availability handles do not.
 struct Trace {
     /// Original input retained for history and terminal-rejection checks after rebuilding layers.
     submission: EventSubmission,
@@ -577,7 +577,7 @@ async fn check_history<Session: SeaArchive>(session: &Session, trace: &Trace) {
     }
 }
 
-/// Rebuilds wrapper state and verifies replay and fresh snapshot authority.
+/// Verifies replay and fresh snapshot authority after the stack is rebuilt.
 async fn after_reconnect<Session: SeaSession>(session: &Session, trace: &Trace) {
     check_content(session, trace).await;
     check_history(session, trace).await;

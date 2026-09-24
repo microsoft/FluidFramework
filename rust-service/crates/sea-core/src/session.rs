@@ -25,7 +25,7 @@ use crate::{
     archive::{EventSubmission, SessionCommittedEvent, SessionStream, SnapshotParticipation},
 };
 
-/// Selected state and a live stream of application events, without a captured event head.
+/// Selected state and a live stream of session events, without a captured event head.
 pub struct SessionLoad<BlobHandle, EventHandle, Error> {
     /// Selected publication; its event position is its document-scoped version identity.
     /// The position may identify an application event or a committed membership transition.

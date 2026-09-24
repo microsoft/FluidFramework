@@ -233,7 +233,7 @@ async fn deadline<Value>(
     }
 }
 
-/// Native socket plus cancellation-safe reader ownership.
+/// Selected streaming or ordinary socket with cancellation-safe reads.
 struct Socket {
     /// Explicit compatibility backend, never silently used by strict modes.
     ordinary: Option<OrdinarySocket>,
@@ -252,7 +252,7 @@ struct Socket {
 }
 
 impl Socket {
-    /// Constructs a native socket and closes it if establishment is abandoned.
+    /// Opens the selected socket backend and closes it if establishment is abandoned.
     async fn connect(url: &str, ordinary: bool) -> Result<Rc<Self>, JsValue> {
         if ordinary {
             return Ok(Rc::new(Self {
@@ -528,10 +528,10 @@ impl SeaWebSocketTransport {
     }
 }
 
-/// One native WebSocket adapted to bidirectional bytes and directional EOF.
+/// One streaming or ordinary WebSocket adapted to bidirectional bytes and directional EOF.
 #[wasm_bindgen]
 pub struct SeaWebSocketBidirectionalStream {
-    /// Native socket owned by this logical stream.
+    /// Selected socket backend owned by this logical stream.
     socket: Rc<Socket>,
     /// Keeps the connection group alive while the stream is owned.
     _group: Rc<Group>,

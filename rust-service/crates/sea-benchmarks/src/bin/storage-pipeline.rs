@@ -87,7 +87,7 @@ async fn run() -> Result<(), String> {
     outcome.and(cleanup)
 }
 
-/// Measures only bounded submissions, then checks every receipt against finite ordered replay.
+/// Measures bounded submissions and final factory flush, then checks every receipt against finite ordered replay.
 /// Ordinary buffered futures exercise first-poll admission order under cooperative scheduling.
 async fn exercise<Storage: SeaStorage + 'static>(
     storage: Storage,

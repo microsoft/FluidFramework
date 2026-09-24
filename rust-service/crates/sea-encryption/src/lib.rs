@@ -129,10 +129,10 @@ pub enum EncryptionError<E> {
     /// An earlier append failed or was cancelled, or the session was closed.
     #[error("author session is closed")]
     Closed,
-    /// The underlying store rejected the operation.
+    /// The underlying store failed; its error classification is preserved.
     #[error("underlying store error: {0}")]
     Store(#[source] E),
-    /// Required key material is unavailable. Key bytes are never retained.
+    /// Required key material is unavailable; this error retains no key bytes.
     #[error("encryption key is unavailable for key identifier {key_id:?}")]
     KeyUnavailable {
         /// Requested historical key, or `None` when no active write key exists.

@@ -41,16 +41,16 @@ type BackendView<Storage> = SeaView<
     <Storage as SeaStorage>::Snapshots,
 >;
 
-/// Storage or transport composition exercised by one workload.
+/// Storage or sequenced-session composition exercised by one workload.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 enum Backend {
-    /// In-process reference stream.
+    /// In-memory trusted storage.
     Memory,
-    /// Buffered single-process file stream.
+    /// Buffered single-process file storage.
     File,
-    /// Independent zlib records over the file stream.
+    /// Independent zlib records over a file-backed session.
     Compression,
-    /// Authenticated encryption over the file stream.
+    /// Authenticated encryption over a file-backed session.
     Encryption,
 }
 
@@ -410,10 +410,10 @@ where
     Ok(sessions)
 }
 
-/// Runs submission, optional snapshot, and finite-read work through sequenced sessions.
+/// Runs submissions, optional snapshots, and a count-limited read through sequenced sessions.
 ///
 /// Success means every configured submission completed, produced exactly one latency sample, and
-/// the finite read contained the exact configured fixture multiset.
+/// the collected events matched the configured fixture multiset.
 #[allow(clippy::too_many_lines)]
 async fn run_session<S>(
     sessions: Vec<S>,
@@ -585,6 +585,7 @@ where
     Ok(())
 }
 
+/// Collects `expected` events, skipping progress without waiting for the live stream to end.
 async fn collect_session_events<E>(
     mut stream: ArchiveEventStream<E>,
     expected: usize,
