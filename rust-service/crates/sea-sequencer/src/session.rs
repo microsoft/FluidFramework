@@ -8,15 +8,15 @@
 //! A bounded application ring separates admission from persistence; lifecycle barriers drain it.
 //! One runtime mutex serializes membership changes and committed metadata.
 //! Event appends and snapshot publication retain owned backend futures across caller cancellation.
-//! A later operation drives the same future to completion; a failed
-//! bounded reconciliation poisons further mutation with
+//! A later operation drives the same future to completion.
+//! A failed bounded reconciliation poisons further mutation with
 //! [`crate::session::SessionError::RecoveryRequired`] until the view is discarded and recovered.
 //! Cancellation of internal checkpoint publication also requires recovery, not retained-future settlement.
 //!
 //! Default event delivery uses the view's monitored archive streams directly.
 //! Explicit cache-enabled openings use shared, revocable live delivery after storage replay.
-//! Snapshot publisher
-//! registration is separate synchronous state: dropping a coordination stream revokes its lease,
+//! Snapshot publisher registration is separate synchronous state: dropping a coordination stream
+//! revokes its lease,
 //! client-selected publishers suppress Sea nomination, and every nomination change receives a new
 //! fence.
 
@@ -1013,7 +1013,6 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
         storage_read::read(self.clone(), after, stop_after)
     }
 
-    /// Selects a snapshot, then opens its live suffix without capturing an atomic archive head.
     async fn load(
         &self,
         start: LoadStart,
@@ -1094,8 +1093,6 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
 #[cfg_attr(not(target_arch = "wasm32"), async_trait)]
 #[cfg_attr(target_arch = "wasm32", async_trait(?Send))]
 impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Storage> {
-    /// Replaces this membership's registration and returns coalesced authority updates.
-    /// Stream drop revokes only the registration created by this call.
     async fn coordinate_snapshots(
         &self,
         participation: SnapshotParticipation,
@@ -1140,8 +1137,6 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         )))
     }
 
-    /// Checks current authority before accepting either an exact retry or a new publication.
-    /// After returned ambiguity, only the stored position/root match establishes success.
     async fn publish_snapshot(
         &self,
         expected_parent: Option<EventPosition>,

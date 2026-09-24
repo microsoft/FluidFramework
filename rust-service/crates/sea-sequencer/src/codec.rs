@@ -1,14 +1,15 @@
 //! Private persisted submission encoding for the local sequencer.
 //!
-//! Each application event stores session identity, its explicit
-//! reference, the durable minimum-reference floor, and opaque application bytes. Blob-tree identity stays
-//! in the surrounding storage event so availability checks remain owned by the storage view.
+//! Each application event stores session identity, its explicit reference, the durable
+//! minimum-reference floor, and opaque application bytes.
+//! Blob-tree identity stays in the surrounding storage event so availability checks remain owned by
+//! the storage view.
 //!
 //! Older active-member-minimum encodings are rejected rather than interpreted as enforced floors.
 //! Announced membership records use a distinct marker and share the same archive order.
 //! They do not count toward a session's accepted application-event prefix.
-//! Decoding rejects an invalid marker, zero session identity, truncation, unknown position tag, or trailing
-//! bytes as [`crate::session::SessionError::Corrupt`].
+//! Decoding rejects an invalid marker, zero session identity, truncation, unknown position tag, or
+//! trailing bytes as [`crate::session::SessionError::Corrupt`].
 
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use sea_core::archive::SessionEventKind;
