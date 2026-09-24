@@ -20,7 +20,15 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		`Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
 
 	static readonly description =
-		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
+		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.
+
+Updates package versions only within the target release group, which defaults to "client".
+Packages are selected using the input report's releaseGroup metadata.
+
+When --releaseGroup is supplied, the output also excludes packages outside that group.
+Otherwise, those packages remain in the report with their original versions.
+
+The command fails if the input report has no entries with the target release group.`;
 
 	static readonly flags = {
 		version: semverFlag({
@@ -44,7 +52,7 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		}),
 		releaseGroup: releaseGroupFlag({
 			description:
-				"Filters the release report to only include packages from this release group.",
+				"Selects the release group to update and filters the output to that group.",
 			required: false,
 		}),
 		...BaseCommand.flags,
@@ -103,7 +111,7 @@ function filterReleaseReport(
 
 /**
  * Generate release reports for unreleased versions.
- * @param fullReleaseReport - The format of the "full" release report.
+ * @param releaseReport - The report in the "full" format.
  * @param version - The version string for the reports.
  * @param outDir - The output directory for the reports.
  * @param branchName - The branch name for the reports.
@@ -118,9 +126,8 @@ async function generateReleaseReport(
 	releaseGroup: ReleaseGroup | undefined,
 	log: Logger,
 ): Promise<void> {
-	const ignorePackageList = new Set<string>();
-
-	await updateReportVersions(releaseReport, ignorePackageList, version, releaseGroup, log);
+	updateReportVersions(releaseReport, version, releaseGroup);
+	log.log(`Release report updated pointing to version: ${version}`);
 
 	const caretReportOutput = toReportKind(releaseReport, "caret");
 	const simpleReportOutput = toReportKind(releaseReport, "simple");
@@ -186,65 +193,32 @@ async function writeReport(
 }
 
 /**
- * Updates versions in a release report based on specified conditions.
+ * Updates the simple and caret versions of packages in the target release group in place.
  * @param report - A map of package names to full release reports. This is the format of the "full" release report.
- * @param ignorePackageList - The set of package names to ignore during version updating. These packages are not published to internal ADO feed.
  * @param version - The version string to update packages to.
- * @param releaseGroup - The release group to filter packages by.
+ * @param releaseGroup - The release group to update. Defaults to client when undefined.
+ * @throws If the report has no entries with the target release group.
  */
-async function updateReportVersions(
+export function updateReportVersions(
 	report: ReleaseReport,
-	ignorePackageList: Set<string>,
 	version: string,
 	releaseGroup: ReleaseGroup | undefined,
-	log: Logger,
-): Promise<void> {
-	const packageNames: Record<string, string> = {
-		"client": "fluid-framework",
-		"server": "@fluidframework/server-routerlicious",
-		"gitrest": "@fluidframework/gitrest",
-		"historian": "@fluidframework/historian",
-	};
+): void {
+	const targetReleaseGroup = releaseGroup ?? "client";
+	const packages = Object.values(report).filter(
+		(packageInfo) => packageInfo.releaseGroup === targetReleaseGroup,
+	);
 
-	const packageName = packageNames[releaseGroup ?? "client"] ?? "fluid-framework";
-
-	const packageReleaseDetails = report[packageName];
-
-	if (packageReleaseDetails === undefined) {
-		throw new Error(`Package ${packageName} is not defined in the report.`);
+	if (packages.length === 0) {
+		throw new Error(
+			`No packages with releaseGroup "${targetReleaseGroup}" are defined in the report.`,
+		);
 	}
 
-	if (packageReleaseDetails.ranges?.caret === undefined) {
-		throw new Error(`Caret version for ${packageName} is not defined in the report.`);
+	for (const packageInfo of packages) {
+		packageInfo.ranges.caret = version;
+		packageInfo.version = version;
 	}
-
-	if (packageReleaseDetails.version === undefined) {
-		throw new Error(`Simple version for ${packageName} is not defined in the report.`);
-	}
-
-	const packageVersionCaret = report[packageName].ranges.caret;
-	const packageVersionSimple = report[packageName].version;
-
-	log.log(`Caret version: ${packageVersionCaret}`);
-	log.log(`Simple version: ${packageVersionSimple}`);
-
-	for (const packageName of Object.keys(report)) {
-		if (ignorePackageList.has(packageName)) {
-			continue;
-		}
-
-		const packageInfo = report[packageName];
-
-		// todo: add better checks
-		if (packageInfo.ranges.caret && packageInfo.ranges.caret === packageVersionCaret) {
-			report[packageName].ranges.caret = version;
-		}
-
-		if (packageInfo.version && packageInfo.version === packageVersionSimple) {
-			report[packageName].version = version;
-		}
-	}
-	log.log(`Release report updated pointing to version: ${version}`);
 }
 
 /**
