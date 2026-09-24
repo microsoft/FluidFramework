@@ -385,4 +385,44 @@ mod tests {
             Err(BlobTreeError::TruncatedDirectory)
         );
     }
+
+    #[test]
+    fn directory_encoding_has_stable_lengths_order_and_child_tags() {
+        let directory = BlobDirectory::new(BTreeMap::from([
+            (
+                "b".to_owned(),
+                BlobTreeId::Directory(BlobDirectoryId::from_bytes(&[2; 32]).unwrap()),
+            ),
+            (
+                "a".to_owned(),
+                BlobTreeId::Blob(BlobId::from_bytes(&[1; 32]).unwrap()),
+            ),
+        ]))
+        .unwrap();
+        let mut expected = vec![0, 0, 0, 2, 0, 0, 0, 1, b'a', 0];
+        expected.extend_from_slice(&[1; 32]);
+        expected.extend_from_slice(&[0, 0, 0, 1, b'b', 1]);
+        expected.extend_from_slice(&[2; 32]);
+        assert_eq!(directory.encode().unwrap().as_ref(), expected);
+        assert_eq!(BlobDirectory::decode(&expected).unwrap(), directory);
+
+        for length in 0..expected.len() {
+            assert_eq!(
+                BlobDirectory::decode(&expected[..length]),
+                Err(BlobTreeError::TruncatedDirectory),
+                "truncation at byte {length}"
+            );
+        }
+        for (offset, value, error) in [
+            (8, 0xff, BlobTreeError::InvalidEntryEncoding),
+            (8, b'/', BlobTreeError::InvalidEntryName("/".to_owned())),
+            (9, 2, BlobTreeError::InvalidChildTag(2)),
+            (46, b'a', BlobTreeError::NonCanonicalEntryOrder),
+            (46, b'0', BlobTreeError::NonCanonicalEntryOrder),
+        ] {
+            let mut malformed = expected.clone();
+            malformed[offset] = value;
+            assert_eq!(BlobDirectory::decode(&malformed), Err(error));
+        }
+    }
 }

@@ -47,6 +47,8 @@ mod ordered_archive;
 mod referenceable_store;
 mod snapshot_archive;
 mod storage_surface;
+#[cfg(test)]
+mod tests;
 
 use async_trait::async_trait;
 use bytes::Bytes;

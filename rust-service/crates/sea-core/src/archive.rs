@@ -72,6 +72,12 @@ mod event_tests {
         for position in positions {
             assert_eq!(EventPosition::from_bytes(position.to_bytes()), position);
         }
+        let position = EventPosition::new(0x0102_0304_0506_0708);
+        assert_eq!(position.to_bytes(), [1, 2, 3, 4, 5, 6, 7, 8]);
+        assert_eq!(
+            EventPosition::from_bytes([1, 2, 3, 4, 5, 6, 7, 8]),
+            position
+        );
     }
 }
 

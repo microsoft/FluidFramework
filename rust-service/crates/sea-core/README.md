@@ -71,6 +71,8 @@ See [sequencer contracts](../sea-sequencer/README.md) for accepted prefixes and 
 
 `SeaAuthorSession::announce_membership` opts into durable joined/left records sharing the application event order.
 `SessionCommittedEvent::kind` distinguishes application submissions from service-authored membership transitions.
+Snapshots may reference any committed session-event position, including `Joined` and `Left` membership transitions.
+Resolving a position for snapshot publication does not filter by event kind.
 Metadata is immutable public control data; payload decorators do not protect it.
 Close, replacement, and recovery settle a departure before later mutation, while unannounced sessions retain submission-only history.
 See [the membership decision](../../historical/decisions/0014-ordered-session-membership.md) for recovery, compatibility, and security boundaries.

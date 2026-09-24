@@ -104,7 +104,10 @@ impl ReferenceableStore for ContentStore {
         if *handle.root != self.root {
             return Err(StoreError::IncompatibleHandle);
         }
-        self.verify_tree(handle.id)
+        self.resolve(handle.id)
+            .await?
+            .map(|_| ())
+            .ok_or(StoreError::Missing)
     }
 }
 
@@ -135,9 +138,38 @@ mod tests {
     use crate::StoreConfig;
     use std::{collections::BTreeMap, fs};
 
+    #[test]
+    fn errors_preserve_caller_recovery_classification() {
+        for (error, expected) in [
+            (
+                StoreError::Io(std::io::ErrorKind::PermissionDenied.into()),
+                ErrorKind::Unavailable,
+            ),
+            (StoreError::Corrupt("invalid"), ErrorKind::Corrupt),
+            (StoreError::Missing, ErrorKind::Rejected),
+            (StoreError::IncompatibleHandle, ErrorKind::Rejected),
+            (
+                StoreError::BlobTooLarge {
+                    actual: 2,
+                    maximum: 1,
+                },
+                ErrorKind::Rejected,
+            ),
+            (
+                StoreError::DirectoryTooLarge {
+                    actual: 2,
+                    maximum: 1,
+                },
+                ErrorKind::Rejected,
+            ),
+        ] {
+            assert_eq!(error.kind(), expected);
+        }
+    }
+
     #[tokio::test]
     async fn closure_provenance_reopen_and_missing_dependency() {
-        let root = std::env::temp_dir().join(format!("sea-next-content-{}", std::process::id()));
+        let root = PathBuf::from("target").join(format!("sea-next-content-{}", std::process::id()));
         let store = ContentStore::open(root.join("first"), StoreConfig::default()).unwrap();
         let other = ContentStore::open(root.join("other"), StoreConfig::default()).unwrap();
         let blob = BlobStore::put_blob(&store, Bytes::from_static(b"content"))
@@ -181,6 +213,68 @@ mod tests {
         assert!(matches!(
             reopened.resolve(tree.id()).await,
             Err(StoreError::Corrupt(_))
+        ));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn trait_publication_and_resolution_validate_transitive_content() {
+        let root =
+            PathBuf::from("target").join(format!("sea-content-closure-{}", std::process::id()));
+        let store = ContentStore::open(&root, StoreConfig::default()).unwrap();
+        let leaf = BlobStore::put_blob(&store, Bytes::from_static(b"leaf"))
+            .await
+            .unwrap();
+        let child = BlobDirectory::new(BTreeMap::from([("leaf".to_owned(), leaf.id())])).unwrap();
+        let child_handle = BlobStore::put_directory(&store, child).await.unwrap();
+        let parent = BlobDirectory::new(BTreeMap::from([
+            ("left".to_owned(), child_handle.id()),
+            ("right".to_owned(), child_handle.id()),
+        ]))
+        .unwrap();
+        let parent_id = BlobTreeId::Directory(parent.id().unwrap());
+        let alias = ContentStore::open(root.join("."), StoreConfig::default()).unwrap();
+        alias.ensure_available(&child_handle).await.unwrap();
+        assert_eq!(
+            alias
+                .resolve(child_handle.id())
+                .await
+                .unwrap()
+                .unwrap()
+                .id(),
+            child_handle.id()
+        );
+        let BlobTreeId::Blob(leaf_id) = leaf.id() else {
+            panic!("expected leaf");
+        };
+        let leaf_path = store.blobs.join(crate::hex(leaf_id.as_bytes()));
+        fs::remove_file(&leaf_path).unwrap();
+        assert!(matches!(
+            BlobStore::put_directory(&store, parent.clone()).await,
+            Err(StoreError::Missing)
+        ));
+        assert!(store.resolve(parent_id).await.unwrap().is_none());
+        assert!(matches!(
+            store.resolve(child_handle.id()).await,
+            Err(StoreError::Corrupt("missing transitive dependency"))
+        ));
+        assert!(matches!(
+            store.ensure_available(&child_handle).await,
+            Err(StoreError::Corrupt("missing transitive dependency"))
+        ));
+        BlobStore::put_blob(&store, Bytes::from_static(b"leaf"))
+            .await
+            .unwrap();
+        let parent_handle = BlobStore::put_directory(&store, parent).await.unwrap();
+        alias.ensure_available(&parent_handle).await.unwrap();
+        fs::write(&leaf_path, b"fake").unwrap();
+        assert!(matches!(
+            alias.ensure_available(&parent_handle).await,
+            Err(StoreError::Corrupt("blob identity mismatch"))
+        ));
+        assert!(matches!(
+            alias.resolve(parent_id).await,
+            Err(StoreError::Corrupt("blob identity mismatch"))
         ));
         fs::remove_dir_all(root).unwrap();
     }

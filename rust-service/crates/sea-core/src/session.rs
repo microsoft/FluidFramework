@@ -28,6 +28,7 @@ use crate::{
 /// Selected state and a live stream of application events, without a captured event head.
 pub struct SessionLoad<BlobHandle, EventHandle, Error> {
     /// Selected publication; its event position is its document-scoped version identity.
+    /// The position may identify an application event or a committed membership transition.
     pub snapshot: Option<Snapshot<BlobHandle, EventHandle>>,
     /// Ordered events after the selected snapshot, or from the beginning.
     pub events: ArchiveStream<SessionCommittedEvent, EventPosition, Error>,
@@ -84,7 +85,10 @@ pub trait SeaArchive: crate::SeaService {
     async fn get_directory(&self, id: BlobDirectoryId) -> Result<BlobDirectory, Self::Error>;
     /// Resolves an available tree identity at the receiving boundary.
     async fn resolve_tree(&self, id: BlobTreeId) -> Result<Option<Self::BlobHandle>, Self::Error>;
-    /// Resolves a committed application position for snapshot publication.
+    /// Resolves any committed session-event position for snapshot publication.
+    ///
+    /// Application events and committed `Joined`/`Left` membership transitions all qualify.
+    /// A missing position returns `None`; membership-event positions are not filtered out.
     async fn resolve_position(
         &self,
         position: EventPosition,
@@ -143,6 +147,7 @@ pub trait SeaSnapshotCoordinator: SeaArchive {
     ) -> Result<SessionStream<SnapshotCoordination, Self::Error>, Self::Error>;
     /// Publishes under client-selected or current Sea-selected authority.
     /// A new publication must match the expected parent and advance its event position.
+    /// Its event handle may identify any committed session event, including `Joined` or `Left`.
     /// Exact position/root retries return the existing publication even after the parent advances;
     /// another root at that position conflicts. No independent publication operation ID is assigned.
     async fn publish_snapshot(

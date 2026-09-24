@@ -4,6 +4,10 @@
 
 `ContentStore` uses `BlobDirectory` and the typed blob and directory identities from `sea-core`.
 Blob and directory data occupy separate namespaces below the store root.
+The constructor owns durable namespace creation.
+It synchronizes namespace bindings bottom-up from the canonical root through its filesystem before returning, including newly created ancestor names.
+On Unix, synchronization stops before an ancestor on a different device; mount configuration remains outside the store's guarantee.
+Initialization propagates creation, metadata, canonicalization, and synchronization failures rather than returning an incompletely initialized store.
 
 ## Blob Store
 
@@ -18,11 +22,13 @@ An equal identity from a different namespace does not establish availability.
 
 Blob and directory publication writes a same-directory temporary file, synchronizes it, atomically hard-links it to its identity path without replacing existing content, removes the temporary link, and synchronizes the destination directory before acknowledgement.
 Repeated publication verifies and reuses an existing immutable object only when its bytes match.
+It synchronizes the containing directory before acknowledgement, including when a concurrent publisher installed the object.
 
 Directory encoding and identity validation are delegated to `sea-core`.
 Reads enforce configured byte limits and verify that stored bytes match the requested identity before returning data.
 
 Publication removes its temporary file after ordinary failures when possible.
+If a staging path already exists, publication fails without removing another attempt's file.
 An interrupted process can leave a temporary file, which the store does not currently collect.
 
 ## Limits

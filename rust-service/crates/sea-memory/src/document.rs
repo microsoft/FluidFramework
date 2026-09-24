@@ -835,6 +835,87 @@ mod tests {
         }
     }
 
+    #[test]
+    fn errors_preserve_caller_recovery_classification() {
+        for (error, expected) in [
+            (MemoryStorageError::ForeignHandle, ErrorKind::Rejected),
+            (MemoryStorageError::MissingContent, ErrorKind::Rejected),
+            (MemoryStorageError::AlreadyOpen, ErrorKind::Conflict),
+            (
+                MemoryStorageError::InvalidPosition,
+                ErrorKind::InvalidPosition,
+            ),
+            (MemoryStorageError::SnapshotOrder, ErrorKind::Conflict),
+            (MemoryStorageError::IdentityExhausted, ErrorKind::Rejected),
+            (MemoryStorageError::InconsistentHistory, ErrorKind::Corrupt),
+        ] {
+            assert_eq!(error.kind(), expected);
+        }
+    }
+
+    #[tokio::test]
+    async fn independent_opening_never_invalidates_on_factory_shutdown_or_drop() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let events = created.components.events;
+        let count = Arc::new(AtomicUsize::new(0));
+        let observed = count.clone();
+        let registration = events
+            .observe_invalidation(Arc::new(move |_| {
+                observed.fetch_add(1, Ordering::Relaxed);
+            }))
+            .expect("memory declares independent opening validity");
+        storage.shutdown().await.unwrap();
+        drop(storage);
+        events
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        assert_eq!(events.head().await.unwrap(), Some(EventPosition::new(1)));
+        drop(events);
+        assert_eq!(count.load(Ordering::Relaxed), 0);
+        drop(registration);
+    }
+
+    #[tokio::test]
+    async fn snapshot_resolution_rejects_missing_event_dependency() {
+        let storage = MemoryStorage::new();
+        let components = storage.create_document().await.unwrap().components;
+        let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
+        let event = components
+            .events
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        components
+            .snapshots
+            .append(Snapshot {
+                root,
+                at_event: event.clone(),
+            })
+            .await
+            .unwrap();
+        event.document.events.lock().unwrap().entries.clear();
+        assert!(matches!(
+            components.snapshots.get_snapshot_at(event.id()).await,
+            Err(MemoryStorageError::InconsistentHistory)
+        ));
+        assert!(matches!(
+            components.snapshots.latest_at_or_before(None).await,
+            Err(MemoryStorageError::InconsistentHistory)
+        ));
+        assert!(matches!(
+            collect_items(components.snapshots.read(None, Some(event.id()))).await,
+            Err(MemoryStorageError::InconsistentHistory)
+        ));
+    }
+
     #[tokio::test]
     async fn replacement_storage_conformance() {
         tokio::time::timeout(Duration::from_secs(5), async {
@@ -1146,6 +1227,241 @@ mod tests {
         assert_eq!(archive.head(), Some(position));
         assert_eq!(archive.entries.len(), 1);
         assert_eq!(archive.entries[&position].event, event);
+    }
+
+    #[tokio::test]
+    async fn exhausted_batch_retains_and_notifies_only_its_successful_prefix() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let events = created.components.events;
+        let preceding = EventPosition::new(u64::MAX - 1);
+        let event = Event {
+            payload: Bytes::from_static(b"prefix"),
+            blob_tree: None,
+        };
+        events.opening.document.events.lock().unwrap().insert(
+            preceding,
+            CommittedEvent {
+                position: preceding,
+                event: event.clone(),
+            },
+        );
+        let mut live = events.read(Some(preceding), None);
+        let counter = Arc::new(WakeCounter::default());
+        let wake = waker(counter.clone());
+        let mut context = Context::from_waker(&wake);
+        assert!(live.as_mut().poll_next(&mut context).is_ready());
+        assert!(live.as_mut().poll_next(&mut context).is_pending());
+        let results = events.append_batch(vec![event.clone(); 3]).await;
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].as_ref().unwrap().id().get(), u64::MAX);
+        assert!(matches!(
+            results[1],
+            Err(MemoryStorageError::IdentityExhausted)
+        ));
+        assert!(counter.0.load(Ordering::Relaxed) > 0);
+        assert!(matches!(
+            live.next().await,
+            Some(Ok(MonitoredStreamItem::Item(committed)))
+                if committed.position.get() == u64::MAX && committed.event == event
+        ));
+        assert_eq!(
+            events.head().await.unwrap(),
+            Some(EventPosition::new(u64::MAX))
+        );
+        assert_eq!(
+            events.opening.document.events.lock().unwrap().entries.len(),
+            2
+        );
+        assert!(events.append_batch(Vec::new()).await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn checkpoints_replace_opaque_state_without_publishing_archive_entries() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let id = created.id;
+        let StorageComponents {
+            blobs,
+            events,
+            snapshots,
+            checkpoints,
+        } = created.components;
+        assert_eq!(checkpoints.checkpoint().await.unwrap(), None);
+        for payload in [b"first".as_slice(), b"replacement".as_slice()] {
+            checkpoints
+                .publish_checkpoint(Bytes::copy_from_slice(payload))
+                .await
+                .unwrap();
+            assert_eq!(checkpoints.checkpoint().await.unwrap().unwrap(), payload);
+        }
+        assert!(checkpoints.publish_checkpoint(Bytes::new()).await.is_err());
+        assert_eq!(
+            checkpoints.checkpoint().await.unwrap(),
+            Some(Bytes::from_static(b"replacement"))
+        );
+        assert_eq!(events.head().await.unwrap(), None);
+        assert_eq!(snapshots.head().await.unwrap(), None);
+        drop((blobs, events, snapshots));
+        assert!(matches!(
+            storage.open_document(&id).await,
+            Err(MemoryStorageError::AlreadyOpen)
+        ));
+        drop(checkpoints);
+        let reopened = storage.open_document(&id).await.unwrap().unwrap();
+        assert_eq!(
+            reopened.checkpoints.checkpoint().await.unwrap(),
+            Some(Bytes::from_static(b"replacement"))
+        );
+    }
+
+    #[tokio::test]
+    async fn snapshot_component_enforces_provenance_order_and_sparse_lookup() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let components = created.components;
+        let foreign = storage.create_document().await.unwrap().components;
+        let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
+        let foreign_root = foreign.blobs.put_blob(Bytes::new()).await.unwrap();
+        let mut positions = Vec::new();
+        for _ in 0..3 {
+            positions.push(
+                components
+                    .events
+                    .append(Event {
+                        payload: Bytes::new(),
+                        blob_tree: None,
+                    })
+                    .await
+                    .unwrap(),
+            );
+        }
+        let foreign_event = foreign
+            .events
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        for snapshot in [
+            Snapshot {
+                root: foreign_root,
+                at_event: positions[0].clone(),
+            },
+            Snapshot {
+                root: root.clone(),
+                at_event: foreign_event,
+            },
+        ] {
+            assert!(matches!(
+                components.snapshots.append(snapshot).await,
+                Err(MemoryStorageError::ForeignHandle)
+            ));
+        }
+        assert_eq!(components.snapshots.head().await.unwrap(), None);
+        for index in [0, 2] {
+            components
+                .snapshots
+                .append(Snapshot {
+                    root: root.clone(),
+                    at_event: positions[index].clone(),
+                })
+                .await
+                .unwrap();
+        }
+        for index in 0..3 {
+            let exact = components
+                .snapshots
+                .get_snapshot_at(positions[index].id())
+                .await
+                .unwrap();
+            assert_eq!(
+                exact.map(|s| s.at_event.id()),
+                (index != 1).then(|| positions[index].id())
+            );
+            let selected = components
+                .snapshots
+                .latest_at_or_before(Some(positions[index].id()))
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(
+                selected.at_event.id(),
+                positions[if index == 2 { 2 } else { 0 }].id()
+            );
+            assert_eq!(selected.root.id(), root.id());
+            assert!(matches!(
+                components
+                    .snapshots
+                    .append(Snapshot {
+                        root: root.clone(),
+                        at_event: positions[index].clone(),
+                    })
+                    .await,
+                Err(MemoryStorageError::SnapshotOrder)
+            ));
+        }
+        assert!(
+            components
+                .snapshots
+                .latest_at_or_before(Some(EventPosition::new(0)))
+                .await
+                .unwrap()
+                .is_none()
+        );
+        let retained = collect_items(components.snapshots.read(None, Some(positions[2].id())))
+            .await
+            .unwrap();
+        assert_eq!(retained.len(), 2);
+        assert_eq!(retained[0].at_event.id(), positions[0].id());
+        assert_eq!(retained[1].at_event.id(), positions[2].id());
+    }
+
+    #[tokio::test]
+    async fn event_handles_revalidate_membership_and_reopening_checks_item_positions() {
+        let storage = MemoryStorage::new();
+        let created = storage.create_document().await.unwrap();
+        let event = created
+            .components
+            .events
+            .append(Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            })
+            .await
+            .unwrap();
+        let missing = MemoryEventHandle {
+            document: event.document.clone(),
+            id: EventPosition::new(99),
+        };
+        assert!(matches!(
+            created.components.events.ensure_available(&missing).await,
+            Err(MemoryStorageError::InvalidPosition)
+        ));
+        assert!(
+            created
+                .components
+                .events
+                .resolve(missing.id())
+                .await
+                .unwrap()
+                .is_none()
+        );
+        event
+            .document
+            .events
+            .lock()
+            .unwrap()
+            .entries
+            .get_mut(&event.id())
+            .unwrap()
+            .position = missing.id();
+        drop(created.components);
+        assert!(matches!(
+            storage.open_document(&created.id).await,
+            Err(MemoryStorageError::InconsistentHistory)
+        ));
     }
 
     #[tokio::test]

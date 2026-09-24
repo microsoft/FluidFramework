@@ -100,7 +100,7 @@ impl<S, F, T, P, E> Stream for PositionedMonitoredStream<S, F, P>
 where
     S: Stream<Item = Result<MonitoredStreamItem<T, P>, E>>,
     F: FnMut(&T) -> Option<P>,
-    P: Clone,
+    P: Clone + PartialOrd,
 {
     type Item = Result<MonitoredStreamItem<T, P>, E>;
 
@@ -112,7 +112,20 @@ where
         match this.inner.as_mut().poll_next(context) {
             std::task::Poll::Ready(Some(Ok(MonitoredStreamItem::Item(item)))) => {
                 if let Some(position) = (this.position_of)(&item) {
+                    if this
+                        .progress
+                        .latest_known
+                        .as_ref()
+                        .is_none_or(|latest| position > *latest)
+                    {
+                        this.progress.latest_known = Some(position.clone());
+                    }
                     this.progress.previous = Some(position);
+                    if this.progress.status == MonitoredStreamStatus::FallenBehind
+                        && this.progress.previous == this.progress.latest_known
+                    {
+                        this.progress.status = MonitoredStreamStatus::StreamingBacklog;
+                    }
                 }
                 std::task::Poll::Ready(Some(Ok(MonitoredStreamItem::Item(item))))
             }
@@ -142,6 +155,10 @@ where
 
 #[cfg(not(target_arch = "wasm32"))]
 /// Boxes a native monitored stream and tracks the position of each yielded data item.
+///
+/// The source must emit ordered data and coherent progress observations.
+/// Delivery also advances `latest_known` if needed and clears `FallenBehind` when its known
+/// backlog is exhausted. Only a source observation establishes `AwaitingNewItems`.
 pub fn boxed_monitored_stream<S, F, T, P, E>(
     stream: S,
     initial: MonitoredStreamProgress<P>,
@@ -163,6 +180,10 @@ where
 
 #[cfg(target_arch = "wasm32")]
 /// Boxes a browser monitored stream and tracks the position of each yielded data item.
+///
+/// The source must emit ordered data and coherent progress observations.
+/// Delivery also advances `latest_known` if needed and clears `FallenBehind` when its known
+/// backlog is exhausted. Only a source observation establishes `AwaitingNewItems`.
 pub fn boxed_monitored_stream<S, F, T, P, E>(
     stream: S,
     initial: MonitoredStreamProgress<P>,
@@ -408,5 +429,124 @@ mod tests {
             Poll::Ready(Some(Err("invalid item")))
         ));
         assert_eq!(stream.progress().previous, Some(5));
+    }
+
+    #[test]
+    fn delivered_items_keep_latest_and_backlog_status_coherent() {
+        let discovered = MonitoredStreamProgress {
+            previous: Some(3),
+            latest_known: Some(4),
+            status: MonitoredStreamStatus::FallenBehind,
+        };
+        let source = futures_util::stream::iter([
+            Ok::<_, Infallible>(MonitoredStreamItem::Item(4_u64)),
+            Ok(MonitoredStreamItem::Item(5_u64)),
+        ]);
+        let mut stream = boxed_monitored_stream(source, discovered, |position| Some(*position));
+        let waker = futures_util::task::noop_waker();
+        let mut context = Context::from_waker(&waker);
+        for expected in [4, 5] {
+            assert!(matches!(
+                stream.as_mut().poll_next(&mut context),
+                Poll::Ready(Some(Ok(MonitoredStreamItem::Item(position)))) if position == expected
+            ));
+            let progress = stream.progress();
+            assert_eq!(progress.previous, Some(expected));
+            assert_eq!(progress.latest_known, Some(expected));
+            assert_eq!(progress.status, MonitoredStreamStatus::StreamingBacklog);
+        }
+    }
+
+    #[test]
+    fn mapped_source_errors_and_progress_do_not_transform_data_or_advance_cursor() {
+        let initial = MonitoredStreamProgress {
+            previous: Some(3),
+            latest_known: Some(5),
+            status: MonitoredStreamStatus::FallenBehind,
+        };
+        let source = futures_util::stream::iter([
+            Ok(MonitoredStreamItem::<u64, _>::Progress(initial.clone())),
+            Err("source failure"),
+        ]);
+        let positioned =
+            boxed_monitored_stream(source, initial.clone(), |position| Some(*position));
+        let mut stream = map_monitored_stream(
+            positioned,
+            |_| -> Result<(), String> { panic!("only data may be transformed") },
+            |error| format!("mapped {error}"),
+        );
+        let waker = futures_util::task::noop_waker();
+        let mut context = Context::from_waker(&waker);
+        assert!(matches!(
+            stream.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress)))) if progress == initial
+        ));
+        assert_eq!(stream.progress(), initial);
+        assert!(matches!(
+            stream.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Err(error))) if error == "mapped source failure"
+        ));
+        assert_eq!(stream.progress(), initial);
+        assert!(matches!(
+            stream.as_mut().poll_next(&mut context),
+            Poll::Ready(None)
+        ));
+    }
+
+    #[test]
+    fn delivery_after_awaiting_and_changed_source_progress_remain_coherent() {
+        let initial = MonitoredStreamProgress {
+            previous: Some(3),
+            latest_known: Some(3),
+            status: MonitoredStreamStatus::AwaitingNewItems,
+        };
+        let discovered = MonitoredStreamProgress {
+            previous: Some(4),
+            latest_known: Some(6),
+            status: MonitoredStreamStatus::FallenBehind,
+        };
+        let source = futures_util::stream::iter([
+            Ok::<_, Infallible>(MonitoredStreamItem::Item(4_u64)),
+            Ok(MonitoredStreamItem::Progress(discovered.clone())),
+            Ok(MonitoredStreamItem::Item(5_u64)),
+            Ok(MonitoredStreamItem::Item(6_u64)),
+        ]);
+        let mut stream = boxed_monitored_stream(source, initial, |position| Some(*position));
+        let waker = futures_util::task::noop_waker();
+        let mut context = Context::from_waker(&waker);
+        assert!(matches!(
+            stream.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Ok(MonitoredStreamItem::Item(4))))
+        ));
+        assert_eq!(
+            stream.progress(),
+            MonitoredStreamProgress {
+                previous: Some(4),
+                latest_known: Some(4),
+                status: MonitoredStreamStatus::AwaitingNewItems,
+            }
+        );
+        assert!(matches!(
+            stream.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress)))) if progress == discovered
+        ));
+        assert_eq!(stream.progress(), discovered);
+        for (position, status) in [
+            (5, MonitoredStreamStatus::FallenBehind),
+            (6, MonitoredStreamStatus::StreamingBacklog),
+        ] {
+            assert!(matches!(
+                stream.as_mut().poll_next(&mut context),
+                Poll::Ready(Some(Ok(MonitoredStreamItem::Item(delivered)))) if delivered == position
+            ));
+            assert_eq!(
+                stream.progress(),
+                MonitoredStreamProgress {
+                    previous: Some(position),
+                    latest_known: Some(6),
+                    status,
+                }
+            );
+        }
     }
 }

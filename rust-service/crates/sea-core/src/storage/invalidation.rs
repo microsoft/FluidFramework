@@ -158,4 +158,21 @@ mod tests {
             drop(registration);
         }
     }
+
+    #[test]
+    fn callbacks_run_outside_the_source_lock() {
+        let source = InvalidationSource::<std::io::Error>::default();
+        let state = Arc::downgrade(&source.0);
+        let callback: InvalidationCallback<std::io::Error> = Arc::new(move |_| {
+            let state = state.upgrade().unwrap();
+            assert!(
+                state.try_lock().is_ok(),
+                "callback must not hold source lock"
+            );
+        });
+        let early = source.register(callback.clone());
+        source.invalidate(std::io::Error::from(std::io::ErrorKind::BrokenPipe));
+        let late = source.register(callback);
+        drop((early, late));
+    }
 }
