@@ -147,10 +147,10 @@ Durable saturation rejects before acceptance; bounded accepted tasks retain thei
 Caller-owned buffers, transport queues, read results, allocator overhead, and filesystem caches are not a total-process memory guarantee.
 Drain turns stop after bounded work or a 1 MiB batching target; a single admitted request can exceed that target but not its admission budget.
 Disk work does not hold the published-state mutex. Durable content visibility uses a separate publication fence.
-Checkpoints participate in mutation order and await their own write, including buffered checkpoints; they do not rebuild journals or historical indexes.
+Checkpoints participate in mutation order.
 Shutdown timeout can stop waiting, but cannot cancel a syscall or report successful flushing.
 Successful shutdown waits for accepted workers to settle; separately retained components and streams still own their document locks until dropped.
-Mutations write only new frames without replacing the journal inode; encoding memory is proportional to batch size.
+Mutation encoding memory is proportional to batch size.
 See [Power-Loss Model](#power-loss-model) for filesystem requirements, corruption limits, and repairable tails.
 
 See [`src/storage.rs`](src/storage.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.

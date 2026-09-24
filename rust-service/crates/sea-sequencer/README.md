@@ -182,8 +182,8 @@ There is no supported data migration from the experimental earlier formats.
 
 The `SEAC3` checkpoint contains the exact applied position, durable minimum-reference floor, outstanding announcement envelopes, and the inclusive session-allocation reservation.
 The lag-window history is runtime-only: recovery ends outstanding sessions with leave messages and clears the window before admitting fresh sessions.
-The committed floor remains monotonic; historical reference availability is resolved through storage.
-It retains no historical session or submission set.
+The committed floor remains monotonic.
+No historical session or submission set is retained.
 Outstanding announcement state scales with still-outstanding memberships, not total retained history.
 Historical reference checks use the storage resolver when a position is outside the recent window.
 

@@ -1,17 +1,8 @@
 //! Cross-crate scenarios for independently selected session decorator stacks.
 //!
-//! This suite checks that session behavior survives composition of compression, encryption,
-//! and real loopback WebTransport, including repeated layers and multiple network hops.
-//! Every configuration runs the same workflows: open/close, content and snapshot round-trips,
-//! reconnect with fresh memberships, two-author collaboration, and bounded collaboration stress.
-//! Together they check ordered live delivery and replay, nested blob trees, snapshot publication authority,
-//! rejected mutations, read cancellation, and catch-up after a peer disconnects.
-//!
-//! Server-side probes also verify that submissions traverse every configured network hop.
+//! See `sea-integration-tests/README.md` for scenarios, layer configurations, and coverage limits.
 //! Reconnects rebuild memberships, decorators, and connections over a retained in-memory sequencer;
 //! they do not restart the service or test durable recovery.
-//! This is composition coverage, not exhaustive fault injection or a performance benchmark:
-//! packet loss, process crashes, malformed wire data, and key rotation are outside its scope.
 //!
 //! # Reading this test
 //!

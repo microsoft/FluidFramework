@@ -100,10 +100,9 @@ impl SignalRoom {
 
     /// Registers a host-bound identity; the host must authorize document access first.
     /// Identities must contain 1 to 256 bytes; metadata obeys `max_payload_bytes`.
-    /// Admission fails when `max_members` live identities are already registered.
     ///
     /// # Errors
-    /// Rejects duplicate identities, invalid sizes, and rooms at capacity.
+    /// Rejects duplicate identities, invalid sizes, and rooms with `max_members` live identities.
     ///
     /// # Panics
     /// Panics if another thread panicked while holding the room lock.

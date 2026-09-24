@@ -33,7 +33,7 @@ An interrupted process can leave a temporary file, which the store does not curr
 
 ## Limits
 
-The store retains all content and interrupted-process temporary files; hosts own access control.
+The store retains all content; hosts own access control.
 Low-level synchronous directory publication validates encoding but not closure; the trait boundary verifies closure.
 Durability claims depend on the host filesystem honoring file and directory synchronization.
 Store paths are implementation details except for diagnostics and tests.

@@ -236,9 +236,7 @@ pub enum LoadStart {
     /// The stream's initial progress cursor is `None` or at most this position,
     /// so every event after this cursor is replayed, possibly along with earlier events.
     ReplayAtLeastAllAfter(EventPosition),
-    /// Selects the newest snapshot, if one exists.
-    ///
-    /// Selects no snapshot when none exists, so loading starts at the beginning.
+    /// Selects the newest snapshot, or starts loading at the beginning when none exists.
     LatestSnapshot,
 }
 
@@ -309,7 +307,6 @@ where
 
     /// Borrows the blob store for content access and availability-handle resolution.
     ///
-    /// The view retains ownership of the component.
     /// Event and snapshot publication still go through the view's availability checks.
     #[must_use]
     pub const fn blobs(&self) -> &Blobs {
@@ -491,8 +488,7 @@ where
     /// its `stop_after` is `None`, so the stream catches up and then waits for new events.
     /// Selection semantics follow [`Self::get_snapshot`]; stream behavior and cancellation follow [`Self::read`].
     /// This method does not capture an event head or an atomic snapshot-and-event read.
-    /// Snapshot lookup failures are returned here; event initialization and runtime failures are
-    /// yielded by the stream.
+    /// Event initialization and runtime failures are yielded by the stream.
     ///
     /// # Errors
     /// Returns snapshot selection errors from [`Self::get_snapshot`].

@@ -16,9 +16,8 @@ One document-bound connection supports five bidirectional logical stream roles:
 | Content | Ordered history/content/snapshot lookup; unary calls reuse a stream, each monitored read owns its stream. |
 | Signal | Independent live membership and messages for an existing document, without archive mutations. |
 
-Each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
+In protocol version 12, each frame contains a four-byte big-endian length counting the kind and payload bytes, one explicit `MessageKind` byte, then a postcard-serialized kind-specific payload.
 The payload must contain exactly one value of that kind, with no trailing bytes.
-The five-byte envelope has no correlation ID.
 No-blob submissions and deliveries have distinct kinds and omit the blob option tag; both decode into the same event model as blob-bearing messages.
 The decoder accepts fragmentation and coalescing and enforces `max_frame_bytes` before payload decoding.
 It also reports the next exact read size, validating the header before requesting payload bytes, so callers can stop at one frame boundary.
@@ -31,8 +30,7 @@ Snapshot coordination and signal notifications are identified by kind and do not
 Cancelling a response wait makes the affected exchange stream unusable, preventing a stale reply from completing a later request.
 Monitored progress responses are out-of-band observations and may cut ahead of buffered event responses without reordering those events.
 
-Protocol version 12 places each frame length before its message kind.
-It retains the sequencer-allocated nonzero `u64` session identities introduced in protocol version 11.
+Session identities are the sequencer-allocated nonzero `u64` values introduced in protocol version 11.
 Postcard encodes these integers as varints; no alias table or identity reuse is involved.
 The protocol retains signals and the durable monotonic reference floor, with no author identities or correlation IDs.
 Sea identifies session incarnations and orders their events; applications decide who those sessions represent.
@@ -96,7 +94,7 @@ Read that load's returned events to drain the opening stream.
 Other loads and direct `read` calls use separate content streams; they do not drain the opening stream.
 Private-provenance handles confirm availability within the resolving client; they are never wire authority.
 Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
-Disconnect and reconnect are explicit; operations are never retried automatically.
+Disconnect and reconnect are explicit.
 The generic client's disconnect attempt abandons logical authority and disables future request admission even if physical disconnect fails.
 The physical error is propagated; failure does not restore the old session.
 Recovery requires an explicitly replaced or reconnected transport and a fresh session handshake.

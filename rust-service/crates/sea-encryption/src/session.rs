@@ -1,14 +1,6 @@
 //! Authenticated-encryption adapters for session facets.
 //!
-//! Application-event payloads and blob leaves use independent AES-256-GCM-SIV envelopes with distinct record and blob contexts.
-//! Membership metadata passes through unchanged.
-//! Directories, snapshots, positions, and opaque availability handles pass through in the ciphertext store's identity space.
-//! Reads decrypt lazily and preserve monitored progress and underlying error classifications.
-//!
-//! Each submission is encrypted independently.
-//! Ambiguous outcomes terminate append authority.
-//! Recovery follows [`SeaAuthorSession`]: replay through the terminal
-//! departure before transforming the unaccepted suffix for submission under a fresh session.
+//! See the [crate documentation](crate) for envelope, identity, and recovery semantics.
 
 use crate::{
     EncryptionError, EncryptionSession, KeyProvider, NonceSource, PayloadContext, decrypt_payload,

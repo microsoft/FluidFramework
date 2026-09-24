@@ -88,7 +88,7 @@ pub trait SeaArchive: crate::SeaService {
     /// Resolves any committed session-event position for snapshot publication.
     ///
     /// Application events and committed `Joined`/`Left` membership transitions all qualify.
-    /// A missing position returns `None`; membership-event positions are not filtered out.
+    /// A missing position returns `None`.
     async fn resolve_position(
         &self,
         position: EventPosition,

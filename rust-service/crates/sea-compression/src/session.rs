@@ -1,14 +1,7 @@
 //! Stateless compression adapters for session facets.
 //!
-//! Application-event payloads and blob leaves use independent deterministic zlib frames.
-//! Membership metadata passes through unchanged.
-//! Equal submissions remain distinct events; each read item decodes without replay-global state.
-//! Directories, snapshots, positions, and availability
-//! handles pass through in the encoded store's identity space.
-//!
-//! Reads and loads decode only when an item is polled, preserve monitored progress, and add no
-//! background task or buffering layer. Malformed frames are classified as corrupt; underlying
-//! session errors retain their classification. This adapter imposes no decoded-size bound.
+//! Each read item decodes without replay-global state.
+//! See the [crate documentation](crate) for payload, identity, and error semantics.
 
 use crate::{CompressionError, CompressionSession, compress_payload, decompress_payload};
 use async_trait::async_trait;
