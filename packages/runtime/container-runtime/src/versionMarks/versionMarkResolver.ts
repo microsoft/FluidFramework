@@ -15,7 +15,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryGenericEventExt,
+	TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { InboundMessageResult } from "../opLifecycle/index.js";
 
@@ -143,7 +146,7 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		let resolvedSequenceNumber: number | undefined;
 		let resolvedReason: string | undefined;
 		let historyAttempted = false;
-		const createEvent = () => ({
+		const createEvent = (): ITelemetryGenericEventExt => ({
 			eventName: "Resolve",
 			outcome,
 			path,
