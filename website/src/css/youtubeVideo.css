@@ -1,0 +1,47 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+.ffcom-rounded-video {
+	position: relative;
+	height: 100%;
+	overflow: hidden;
+	border-radius: 15px;
+}
+
+.ffcom-rounded-video iframe {
+	display: block;
+	border: 0;
+}
+
+.ffcom-video-title {
+	position: absolute;
+	z-index: 1;
+	top: 0;
+	right: 0;
+	left: 0;
+	display: block;
+	overflow: hidden;
+	padding: 12px 48px 12px 12px;
+	color: #fff;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background: linear-gradient(rgba(14, 23, 38, 0.95), rgba(14, 23, 38, 0.7));
+}
+
+.ffcom-video-title:hover,
+.ffcom-video-title:focus-visible {
+	overflow: visible;
+	color: #fff;
+	white-space: normal;
+	background: rgba(14, 23, 38, 0.95);
+}
+
+.ffcom-video-title:focus-visible {
+	outline: 3px solid var(--ifm-color-primary);
+	outline-offset: -3px;
+}
