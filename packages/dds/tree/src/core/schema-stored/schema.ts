@@ -50,6 +50,12 @@ export type SchemaFormatVersion = Values<typeof SchemaFormatVersion>;
 /**
  * Identifies a library which owns an application-defined schema version.
  *
+ * @remarks
+ * Library identifiers are persisted in documents and must remain stable across releases.
+ * Use a globally unique, namespaced identifier, such as a package name or domain-based name, to
+ * avoid collisions with independently developed libraries.
+ * Every client using the library must use the same identifier.
+ *
  * @alpha
  */
 export type LibraryId = string & { readonly "tree.LibraryId": "tree.LibraryId" };

@@ -7,6 +7,7 @@ Add application-defined schema versions to SharedTree
 
 SharedTree now supports optional application-defined schema versions through [`TreeViewConfigurationAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfigurationalpha-class).
 Version maps use non-negative safe integers keyed by [`LibraryId`](https://fluidframework.com/docs/api/fluid-framework/libraryid-typealias), allowing each library or component to manage its own version.
+Library identifiers are persisted and must be stable, globally unique, and namespaced, such as a package name or domain-based name.
 
 Versions allow a schema change when existing documents remain valid and at least one version increases.
 Existing versions cannot decrease or be removed.
