@@ -942,6 +942,16 @@ struct SnapshotRecord {
     root: BlobTreeId,
 }
 
+impl SnapshotRecord {
+    /// Encodes the persisted snapshot identity shared by both publication policies.
+    fn encode(position: EventPosition, root: BlobTreeId) -> Vec<u8> {
+        let mut record = vec![4];
+        record.extend_from_slice(&position.get().to_be_bytes());
+        encode_tree(&mut record, root);
+        record
+    }
+}
+
 impl Record for SnapshotRecord {
     fn decode(bytes: &[u8]) -> Result<Self, FileStorageError> {
         if bytes.len() != Self::ENCODED_SIZE || bytes[0] != 4 {
@@ -1619,10 +1629,7 @@ impl Archive for FileSnapshots {
                     let end = offset
                         .checked_add(RecordArchive::<SnapshotRecord>::FRAME_SIZE as u64)
                         .ok_or(FileStorageError::Rejected("snapshot positions exhausted"))?;
-                    let mut record = vec![4];
-                    record.extend_from_slice(&position.get().to_be_bytes());
-                    encode_tree(&mut record, root);
-                    let record = Bytes::from(record);
+                    let record = Bytes::from(SnapshotRecord::encode(position, root));
                     let key = Key::Snapshot(offset);
                     state.pending.lock().unwrap().insert(key, record.clone());
                     state.snapshot_end = end;
@@ -1889,9 +1896,7 @@ impl FileSnapshots {
         if state.snapshot_head >= position.get() {
             return Err(FileStorageError::Rejected("snapshot must advance"));
         }
-        let mut record = vec![4];
-        record.extend_from_slice(&position.get().to_be_bytes());
-        encode_tree(&mut record, snapshot.root.id);
+        let record = SnapshotRecord::encode(position, snapshot.root.id);
         let result = {
             let mut snapshots = self
                 .0

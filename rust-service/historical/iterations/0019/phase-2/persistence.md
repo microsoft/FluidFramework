@@ -1,11 +1,11 @@
 # Iteration 0019: persistence Report
 
-Status: Wave 1 discovery and assessment complete; no repair selected or started
+Status: Wave 2 `PERSIST-IMPL-001` implemented, validated, and independently reviewed
 Branch: `rust-service-iteration-0019-persistence`
 Worktree: `/workspaces/FluidFramework-rust-service-iteration-0019-persistence`
 Kickoff commit: `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`
 Iteration-approved source commit: `575b77e825e598b15b7740f56956fe433a6153d8`
-Final commit: none; Wave 1 was read-only and commits were prohibited
+Final commit: the checkpoint commit containing this completed report; hash recorded during integration
 Agent or owner: Copilot persistence discovery agent
 Model and tool version: unknown
 Instruction source: [persistence instructions](instructions/persistence.md), whose recorded iteration source is `575b77e825e598b15b7740f56956fe433a6153d8`
@@ -25,7 +25,7 @@ settlement, Unix and non-Unix namespace handling, framing and semantic
 recovery, read and mutation workers, cancellation, poisoning, and error-suffix
 semantics.
 
-Two localized candidates are credible:
+Wave 1 identified two localized candidates:
 
 1. `PERSIST-IMPL-001` can give snapshot bytes one encoder instead of maintaining
    matching buffered and durable encoders.
@@ -33,9 +33,12 @@ Two localized candidates are credible:
    instead of nesting them under `common` and immediately re-exporting them
    back to the crate root.
 
-Both remain proposed for coordinator reconciliation; neither is selected or
-implemented.
-The first has the stronger correctness and maintenance benefit.
+The coordinator selected only `PERSIST-IMPL-001` for Wave 2.
+It is now implemented as one private `SnapshotRecord::encode` owner used by the
+buffered and durable snapshot publication paths.
+The delegated task lookup was unavailable, but the coordinator subsequently ran
+the registered guarded format and test tasks successfully as recorded below.
+`PERSIST-ORG-001` remains deferred and was not edited.
 Other apparent duplication either expresses distinct guarantees or would
 replace small local code with broader coupling.
 Confidence is high for the responsibility map and dispositions because the
@@ -131,9 +134,9 @@ together.
 - **Displaced complexity/supporting edits:** One small helper and two call-site
   replacements; no test expectation may derive its expected bytes from the new
   helper. No documentation, API, dependency, or format edit is needed.
-- **Proposed disposition/ranking:** **Deferred pending Wave 2 selection; rank
-  1.** Strongest local candidate because correctness requires agreement and
-  focused independent byte-layout evidence exists.
+- **Proposed disposition/ranking:** **Simplified in the uncommitted Wave 2
+  checkpoint; rank 1.** Strongest local candidate because correctness requires
+  agreement and focused independent byte-layout evidence exists.
 - **Revisit trigger:** Snapshot layout, root variants, or either publication
   path changes; or coordinator repair selection.
 
@@ -397,22 +400,86 @@ together.
 | 8-12 | `PERSIST-ABST-001` through `004`, `PERSIST-IMPL-002` | High | Superficial declarations/literals | Collapses distinct guarantees or adds indirection | Rejected |
 
 The two credible candidates do not overlap behaviorally.
-If the global four-repair budget is competitive, select
-`PERSIST-IMPL-001` before `PERSIST-ORG-001`.
+The coordinator selected `PERSIST-IMPL-001` only;
+`PERSIST-ORG-001` remains deferred.
 No cross-crate owner or shared-file edit is required.
+
+## Wave 2 Checkpoint: `PERSIST-IMPL-001`
+
+- **Checkpoint base:** discovery-report HEAD `142cefda415` (`Record iteration
+  0019 persistence discovery`).
+- **Reviewed state:** uncommitted working tree; fixed-base review not yet run.
+- **Primary category/profile:** Implementation, Conservative.
+- **Supporting categories:** None. The private method has the concise source
+  documentation required by `DEVELOPMENT.md`; this is necessary documentation
+  of the new implementation owner, not an independent documentation cleanup.
+- **Exact responsibility removed:** Removed the second independently maintained
+  construction of persisted snapshot bytes. `SnapshotRecord::encode` now owns
+  tag `4`, the big-endian event position, and typed tree identity for both
+  buffered admission and durable append.
+- **Preserved contract:** Snapshot records remain byte-for-byte identical;
+  positions remain public event positions while physical offsets remain
+  storage-private. Buffered publication still becomes visible at admission.
+  Durable publication still validates dependencies and order, appends and
+  synchronizes before visibility, and poisons uncertainty. Recovery, lookup,
+  worker ownership, failure classification, and Unix/non-Unix behavior are
+  untouched.
+- **Independent expectations:** The existing
+  `S::fixed_snapshot_layout_matches_encoding_and_checks_ordinal_arithmetic`
+  manually constructs tag, position bytes, and tree identity rather than
+  calling `SnapshotRecord::encode`; it therefore remains an independent
+  fixed-byte expectation. No test was edited or removed.
+- **Nearest discriminating tests:**
+  `S::fixed_snapshot_layout_matches_encoding_and_checks_ordinal_arithmetic`,
+  `S::snapshots_reject_foreign_dependencies_and_nonadvancing_positions`,
+  `S::buffered_resident_dependencies_and_checkpoint_keep_order_without_workers`,
+  and `S::snapshot_post_sync_ambiguity_recovers_without_duplicate_publication`.
+- **Maintenance benefit:** Future snapshot-format work has one writer-side
+  codec owner next to its decoder and encoded-size definition, eliminating
+  policy drift without coupling policy execution.
+- **Displaced complexity:** One small private method replaces two equal
+  three-statement constructions. It adds no state, allocation, branch,
+  configuration, dependency, or cross-module navigation. Each path still
+  performs one `Vec` allocation and the same byte appends.
+- **Scope check:** Only `crates/sea-file/src/storage.rs` and this report changed.
+  No API, dependency, protocol, generated binding, platform branch, persisted
+  bytes, or performance characteristic changed.
+- **Checkpoint decision:** Accepted after repair-cycle-1 re-review found no
+  actionable findings against patch
+  `65574472f3cb21c1eb6ba5b2aa32191e7a37d795a0da9349af6356b0e77a79fe`.
 
 ## Validation Evidence
 
 Wave 1 ran **no commands**.
 No terminal command, task, test, formatter, linter, build, documentation check,
 policy check, or Git command was run.
-The registered labels `rs0019 persistence test` and
-`rs0019 persistence format` are recorded for a possible Wave 2 only and were
-not invoked.
 
-No files other than this report were edited.
-No production, test, guide, instruction, shared record, manifest, lockfile, or
-generated file was changed.
+For Wave 2, delegated `runTask` lookup/invocation of
+`rs0019 persistence format` for
+`/workspaces/FluidFramework-rust-service-iteration-0019-persistence` returned
+`Task not found: rs0019 persistence format`.
+Per the workstream instructions, the delegate used no terminal fallback.
+
+The coordinator then ran the registered process tasks from the loaded primary
+workspace. Both tasks asserted the absolute persistence worktree, branch
+`rust-service-iteration-0019-persistence`, and HEAD `142cefda415`, and printed
+the expected dirty paths:
+
+- `rs0019 persistence format` passed. It formatted `sea-file` and introduced no
+  out-of-scope path.
+- `rs0019 persistence test` passed all 59 `sea-file` unit tests and the one
+  process-locking integration test: 60 passed, 0 failed.
+
+`Cargo.lock` was absent from the guarded status and remains unchanged.
+Package Clippy and rustdoc remain integration-gate work; the focused checkpoint
+does not claim those commands.
+
+The working-tree diff was inspected through the Git integration after the code
+edit.
+It contains the expected `storage.rs` encoder consolidation and this report;
+`Cargo.lock` is absent and therefore unchanged.
+No test, guide, instruction, shared record, manifest, lockfile, dependency, or
+generated file was edited.
 No commit was created.
 
 Assessment evidence came from direct read-only inspection of the assigned
@@ -422,16 +489,14 @@ modules, and the cross-process test.
 The inherited 0018 passing results are historical safety evidence, not fresh
 0019 validation.
 
-For a selected `PERSIST-IMPL-001` repair, the first focused validation should
-use exact selectors for
+Focused validation must use exact selectors for
 `storage::tests::fixed_snapshot_layout_matches_encoding_and_checks_ordinal_arithmetic`,
 `storage::tests::snapshots_reject_foreign_dependencies_and_nonadvancing_positions`,
 `storage::tests::buffered_resident_dependencies_and_checkpoint_keep_order_without_workers`,
 and
 `storage::tests::snapshot_post_sync_ambiguity_recovers_without_duplicate_publication`,
-then the assigned full package test and format tasks.
-For `PERSIST-ORG-001`, run the full package tests because module-local test
-discovery and every consumer import are affected.
+then the assigned full package test, strict package Clippy/doc checks, format
+task, and lockfile guard.
 
 ## Behavioral Contracts And Test Layers
 
@@ -453,8 +518,9 @@ discovery and every consumer import are affected.
 
 ## Hypothesis Results
 
-- **Supported:** Snapshot publication has one small accidental duplicate whose
-  copies must agree (`PERSIST-IMPL-001`).
+- **Supported and implemented:** Snapshot publication had one small accidental
+  duplicate whose copies must agree (`PERSIST-IMPL-001`); one private encoder
+  now owns those bytes.
 - **Supported, lower value:** Private module topology does not match physical or
   call-site ownership (`PERSIST-ORG-001`).
 - **Falsified:** Buffered and durable executors represent one responsibility.
@@ -477,7 +543,9 @@ discovery and every consumer import are affected.
 | Type | Attempt or event | Evidence | Impact | Resolution or state | Reusable lesson |
 | --- | --- | --- | --- | --- | --- |
 | Falsified sharing hypothesis | Compared buffered and durable executors | Different acknowledgement points, pending overlay, saturation, coalescing, cancellation, and flush targets; separate `B`/`D` tests | Prevented a modeful shared executor that would obscure guarantees | Rejected as `PERSIST-ABST-001` | Match ownership and failure semantics, not similarly named queue operations. |
-| Confirmed duplication | Compared both snapshot append paths with the decoder and fixed-width contract | Both construct exactly tag `4` + event position + tree identity | Identified a bounded, byte-preserving Wave 2 candidate | Deferred as `PERSIST-IMPL-001` pending coordinator selection | A persisted codec is worth sharing only when correctness requires all writers to agree and expectations remain independent. |
+| Confirmed duplication | Compared both snapshot append paths with the decoder and fixed-width contract | Both constructed exactly tag `4` + event position + tree identity | Identified and implemented a bounded, byte-preserving Wave 2 candidate | One private encoder now owns both writers; guarded format and 60 tests passed | A persisted codec is worth sharing only when correctness requires all writers to agree and expectations remain independent. |
+| Tool limitation | Invoked assigned formatter task through delegated `runTask` | `Task not found: rs0019 persistence format` | Delegate could not start validation | No terminal fallback; coordinator later ran both registered tasks successfully | Treat task visibility as capability that must be demonstrated per execution context, not assumed from recorded labels. |
+| Checkpoint review finding | Standard-depth fixed-base review found the implementation sound but identified contradictory validation statements in this report | The status, Outcome, and notable-event text still described validation as unavailable after the coordinator results were added | Made the cumulative gate record unreliable | Blocking report-only finding resolved by distinguishing delegated lookup failure from successful coordinator validation; fresh repair review required | Reconcile stale status prose whenever later evidence supersedes an earlier execution limitation. |
 | Platform guard retained | Compared Unix device boundary with non-Unix ancestor traversal and RS-003 | `cfg(unix)` controls device identity; production durability remains unqualified | Avoided treating platform code as dead or normalizing guarantees | Already proportionate | Platform branches require contract and qualification evidence before simplification. |
 
 ## Contract And Integration Friction
@@ -529,20 +597,17 @@ executor, publication, cursor, and budget consolidations.
 
 ## Remaining Work And Risks
 
-- Coordinator reconciliation and explicit Wave 2 selection remain.
-- If `PERSIST-IMPL-001` is selected, preserve independent fixed-byte test
-  expectations and do not move validation or publication order into the codec.
-- If `PERSIST-ORG-001` is selected, verify test discovery, private visibility,
-  rustdoc paths, imports, and complete package behavior; do not rewrite
-  historical records.
+- Package Clippy, rustdoc, and canonical integration gates remain.
+- Standard-depth fixed-base review against `142cefda415` and repair-cycle-1
+  re-review are complete with no unresolved findings.
+- `PERSIST-ORG-001` remains deferred and outside this checkpoint.
 - RS-003 power-cut/filesystem qualification and RS-015 retention remain
   out-of-scope known issues, not simplification candidates.
 - Buffered mode must remain explicitly non-production and must not acquire
   durable recovery semantics.
 - Unix filesystem-boundary behavior and non-Unix compilation must remain
   distinct.
-- No claim of validation is made for iteration 0019 because Wave 1 ran no
-  commands.
+- Focused package validation passed; canonical iteration validation remains.
 
-Wave 1 stops here with full `sea-file` responsibility and category coverage
-ready for full-scope coordinator reconciliation.
+The reviewed `PERSIST-IMPL-001` checkpoint is ready for integration without
+further scope expansion.
