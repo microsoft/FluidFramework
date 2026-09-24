@@ -143,7 +143,31 @@ describe("SchemaIndex", () => {
 			schemaVersion: { ["test" as LibraryId]: 1 },
 		};
 
-		assert.throws(() => codec.encode(schema), /does not support application-defined/);
+		assert.throws(
+			() => codec.encode(schema),
+			/cannot encode this data using explicitly selected format version 1/,
+		);
+	});
+
+	it("accepts an explicit override to the experimental schema format", () => {
+		const codec = schemaCodecBuilder.build({
+			...codecOptions,
+			allowPossiblyIncompatibleWriteVersionOverrides: true,
+			writeVersionOverrides: new Map([
+				[schemaCodecBuilder.name, SchemaFormatVersion.v3Experimental],
+			]),
+		});
+		const schema: TreeStoredSchema = {
+			...schema2,
+			schemaVersion: { ["test" as LibraryId]: 1 },
+		};
+
+		const encoded = codec.encode(schema);
+		assert.equal(
+			(encoded as { version: unknown }).version,
+			SchemaFormatVersion.v3Experimental,
+		);
+		assert.deepEqual(codec.decode(encoded).schemaVersion, schema.schemaVersion);
 	});
 
 	it("accepts valid data - schema v1", () => {

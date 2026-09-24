@@ -137,6 +137,68 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.deepEqual(codec.encode(-1), { version: "X", valueX: -1 });
 		});
 
+		it("rejects per-value formats that conflict with an explicit override", () => {
+			const perValueBuilder = VersionDispatchingCodecBuilder.build(
+				"PerValue",
+				[
+					{
+						minVersionForCollab: lowestMinVersionForCollab,
+						formatVersion: 1,
+						codec: codecV1,
+					},
+					makeExperimentalCodecVersion("X", codecVX),
+				],
+				{
+					selectWriteFormatVersion: (data, defaultVersion) =>
+						data < 0 ? "X" : defaultVersion,
+				},
+			);
+			const codec = perValueBuilder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+				writeVersionOverrides: new Map([["PerValue", 1]]),
+			});
+
+			assert.throws(
+				() => codec.encode(-1),
+				validateUsageError(
+					'Codec "PerValue" cannot encode this data using explicitly selected format version 1. The data requires format version "X".',
+				),
+			);
+		});
+
+		it("rejects per-value stable formats incompatible with minVersionForCollab", () => {
+			const perValueBuilder = VersionDispatchingCodecBuilder.build(
+				"PerValue",
+				[
+					{
+						minVersionForCollab: lowestMinVersionForCollab,
+						formatVersion: 1,
+						codec: codecV1,
+					},
+					{
+						minVersionForCollab: FluidClientVersion.v2_43,
+						formatVersion: 2,
+						codec: codecV2,
+					},
+				],
+				{
+					selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? 2 : defaultVersion),
+				},
+			);
+			const codec = perValueBuilder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+			});
+
+			assert.throws(
+				() => codec.encode(-1),
+				validateUsageError(
+					'Codec "PerValue" selected format version 2 for this data, but that format is only compatible back to client version 2.43.0 and the requested oldest compatible client was 2.0.0.',
+				),
+			);
+		});
+
 		it("bad override", () => {
 			assert.throws(
 				() =>

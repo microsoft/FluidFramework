@@ -174,10 +174,14 @@ export interface CodecVersionBase<
 	TFormatVersion extends FormatVersion = FormatVersion,
 > {
 	/**
-	 * When `undefined`, {@link CodecVersionBase.formatStatus} indicates why this format is not
-	 * selected based on client compatibility.
+	 * When `undefined`, the codec will never be selected as the default write version and may only
+	 * be selected explicitly or by a {@link VersionDispatchingCodecBuilderOptions.selectWriteFormatVersion}
+	 * callback.
+	 * {@link CodecVersionBase.formatStatus} indicates why the format has no `minVersionForCollab`.
 	 * @remarks
 	 * This format will be used for decode if data in it needs to be decoded, regardless of `minVersionForCollab`.
+	 * `undefined` should be used when the format meets one of the conditions represented by
+	 * {@link CodecVersionBase.formatStatus}.
 	 */
 	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
 	/**
@@ -351,6 +355,8 @@ export interface VersionDispatchingCodec<
 	 * The format version which this codec writes.
 	 * @remarks
 	 * Selected by {@link VersionDispatchingCodecBuilder.build} based on the provided options.
+	 * If the builder has a {@link VersionDispatchingCodecBuilderOptions.selectWriteFormatVersion}
+	 * callback, individual values may be encoded using a different format.
 	 */
 	readonly writeVersion: TFormatVersion;
 }
@@ -370,15 +376,15 @@ export interface VersionDispatchingCodecBuilderOptions<
 	 * {@link makeExperimentalCodecVersion}.
 	 * The codec author is responsible for ensuring that every client which can access data written
 	 * in that format supports it.
+	 * If the write options explicitly override this codec's format, the selected format must match
+	 * that override.
 	 *
 	 * @param data - The value being encoded.
 	 * @param defaultVersion - The format selected from the codec write options.
-	 * @param hasExplicitOverride - Whether the codec write options explicitly override this codec's format.
 	 */
 	readonly selectWriteFormatVersion?: (
 		data: TDecoded,
 		defaultVersion: TFormatVersion,
-		hasExplicitOverride: boolean,
 	) => TFormatVersion;
 }
 
@@ -520,7 +526,11 @@ export class VersionDispatchingCodecBuilder<
 		options: TBuildOptions & CodecWriteOptions,
 	): VersionDispatchingCodec<TDecoded, TEncodeContext, TFormatVersion, TDecodeContext> {
 		const [applied, decoder] = this.buildDecoderInternal(options);
-		const writeVersion = getWriteVersion(this.name, options, applied);
+		const { version: writeVersion, fromOverride } = getWriteVersion(
+			this.name,
+			options,
+			applied,
+		);
 		const fromFormatVersion = new Map(
 			applied.map((codec) => [codec.formatVersion, codec] as const),
 		);
@@ -528,16 +538,28 @@ export class VersionDispatchingCodecBuilder<
 			...decoder,
 			encode: (data: TDecoded, context: TEncodeContext): JsonCompatibleReadOnly => {
 				const selectedFormatVersion =
-					this.builderOptions.selectWriteFormatVersion?.(
-						data,
-						writeVersion.formatVersion,
-						options.writeVersionOverrides?.has(this.name) === true,
-					) ?? writeVersion.formatVersion;
+					this.builderOptions.selectWriteFormatVersion?.(data, writeVersion.formatVersion) ??
+					writeVersion.formatVersion;
 				const selected = fromFormatVersion.get(selectedFormatVersion);
 				if (selected === undefined) {
 					throw new UsageError(
 						`Codec "${this.name}" selected unsupported format version ${JSON.stringify(selectedFormatVersion)} while encoding. Supported versions are: ${versionList(applied)}.`,
 					);
+				}
+				if (selectedFormatVersion !== writeVersion.formatVersion) {
+					if (fromOverride) {
+						throw new UsageError(
+							`Codec "${this.name}" cannot encode this data using explicitly selected format version ${JSON.stringify(writeVersion.formatVersion)}. The data requires format version ${JSON.stringify(selectedFormatVersion)}.`,
+						);
+					}
+					if (
+						selected.minVersionForCollab !== undefined &&
+						gt(selected.minVersionForCollab, options.minVersionForCollab)
+					) {
+						throw new UsageError(
+							`Codec "${this.name}" selected format version ${JSON.stringify(selectedFormatVersion)} for this data, but that format is only compatible back to client version ${selected.minVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}.`,
+						);
+					}
 				}
 				return selected.codec.encode(data, context);
 			},
@@ -689,7 +711,7 @@ function getWriteVersion<T extends CodecVersionBase>(
 	name: CodecName,
 	options: CodecWriteOptions,
 	versions: readonly T[],
-): T {
+): { version: T; fromOverride: boolean } {
 	if (options.writeVersionOverrides?.has(name) === true) {
 		const selectedFormatVersion = options.writeVersionOverrides.get(name);
 		const selected = versions.find((codec) => codec.formatVersion === selectedFormatVersion);
@@ -710,10 +732,13 @@ function getWriteVersion<T extends CodecVersionBase>(
 			}
 		}
 
-		return selected;
+		return { version: selected, fromOverride: true };
 	}
 
-	return getWriteVersionNoOverrides(versions, options.minVersionForCollab);
+	return {
+		version: getWriteVersionNoOverrides(versions, options.minVersionForCollab),
+		fromOverride: false,
+	};
 }
 
 /**

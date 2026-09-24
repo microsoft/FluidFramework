@@ -6,7 +6,6 @@
 import { fail } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
 import {
 	VersionDispatchingCodecBuilder,
 	FluidClientVersion,
@@ -166,16 +165,7 @@ export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build(
 		}),
 	],
 	{
-		selectWriteFormatVersion: (data, defaultVersion, hasExplicitOverride) => {
-			if (data.schemaVersion === undefined) {
-				return defaultVersion;
-			}
-			if (hasExplicitOverride && defaultVersion !== SchemaFormatVersion.v3Experimental) {
-				throw new UsageError(
-					"The selected schema format does not support application-defined schema versions.",
-				);
-			}
-			return SchemaFormatVersion.v3Experimental;
-		},
+		selectWriteFormatVersion: (data, defaultVersion) =>
+			data.schemaVersion === undefined ? defaultVersion : SchemaFormatVersion.v3Experimental,
 	},
 );

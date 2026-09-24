@@ -192,7 +192,7 @@ export interface ITreeViewConfigurationAlpha<
 	 * Each value must be a non-negative integer.
 	 * These versions are stored in documents initialized or upgraded through a {@link TreeViewAlpha}.
 	 * Schema versions use an experimental persisted format.
-	 * Every client that loads or collaborates on a document using schema versions must use the same Fluid Framework version.
+	 * Every client that loads or collaborates on a document using schema versions must use a Fluid Framework version that supports schema versions.
 	 *
 	 * Without versions, schema upgrades are limited to changes that only expand what may be stored.
 	 * Providing versions also allows other changes that keep all existing documents valid.
