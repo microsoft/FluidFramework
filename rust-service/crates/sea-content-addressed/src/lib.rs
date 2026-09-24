@@ -586,8 +586,7 @@ mod tests {
 
     #[test]
     fn publication_cleanup_preserves_unowned_staging_files() {
-        let root =
-            PathBuf::from("target").join(format!("sea-content-publication-{}", std::process::id()));
+        let root = test_directory();
         fs::create_dir_all(&root).unwrap();
         let target = root.join("object");
         let staging = root.join("staging");
@@ -620,7 +619,7 @@ mod tests {
 
     #[test]
     fn existing_and_racing_publications_propagate_directory_sync_failure() {
-        let root = PathBuf::from("target").join(format!("sea-content-sync-{}", std::process::id()));
+        let root = test_directory();
         fs::create_dir_all(&root).unwrap();
         let target = root.join("object");
         let staging = root.join("staging");

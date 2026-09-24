@@ -1067,6 +1067,18 @@ mod tests {
     use super::*;
     use sea_core::EventPosition;
 
+    /// One empty record in memory, with one writer, no snapshots, and no warmup.
+    const TEST_CONFIG: Config = Config {
+        backend: Backend::Memory,
+        fixture: FixtureKind::Empty,
+        seed: DEFAULT_SEED,
+        records: 1,
+        writers: 1,
+        snapshot_frequency: None,
+        repetitions: 1,
+        warmups: 0,
+    };
+
     #[test]
     fn command_parser_accepts_help_for_program_and_measurement() {
         for arguments in [&["--help"][..], &["-h"], &["help"], &["measure", "--help"]] {
@@ -1127,14 +1139,9 @@ mod tests {
     #[test]
     fn payload_verification_rejects_duplicate_wrong_payloads() {
         let config = Config {
-            backend: Backend::Memory,
-            fixture: FixtureKind::Empty,
-            seed: DEFAULT_SEED,
             records: 4,
             writers: 2,
-            snapshot_frequency: None,
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
         let wrong_payloads = [b"wrong".as_slice(); 4];
 
@@ -1147,14 +1154,10 @@ mod tests {
     #[tokio::test]
     async fn concurrent_writers_complete_before_measurement_returns() {
         let config = Config {
-            backend: Backend::Memory,
             fixture: FixtureKind::SmallIncompressible,
-            seed: DEFAULT_SEED,
             records: 8,
             writers: 2,
-            snapshot_frequency: None,
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
         let (_, storage) = MemoryStorage::new().create_view().await.unwrap();
         let storage_measurements = run_storage(Arc::new(storage), &config, 0.0)
@@ -1179,12 +1182,9 @@ mod tests {
         let config = Config {
             backend: Backend::File,
             fixture: FixtureKind::SmallIncompressible,
-            seed: DEFAULT_SEED,
             records: 4,
             writers: 2,
-            snapshot_frequency: None,
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
 
         let measurements = run_backend(&config)
@@ -1198,13 +1198,7 @@ mod tests {
     async fn reopened_storage_rejects_wrong_payloads_without_snapshots() {
         let config = Config {
             backend: Backend::File,
-            fixture: FixtureKind::Empty,
-            seed: DEFAULT_SEED,
-            records: 1,
-            writers: 1,
-            snapshot_frequency: None,
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
         let (_, storage) = MemoryStorage::new().create_view().await.unwrap();
         storage
@@ -1221,14 +1215,10 @@ mod tests {
     #[tokio::test]
     async fn reopened_session_rejects_a_stale_snapshot() {
         let config = Config {
-            backend: Backend::Memory,
             fixture: FixtureKind::SmallCompressible,
-            seed: DEFAULT_SEED,
             records: 2,
-            writers: 1,
             snapshot_frequency: Some(1),
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
         let generator = FixtureGenerator::new(config.seed);
         let (_, view) = MemoryStorage::new().create_view().await.unwrap();
@@ -1284,12 +1274,9 @@ mod tests {
         let config = Config {
             backend: Backend::File,
             fixture: FixtureKind::SmallCompressible,
-            seed: DEFAULT_SEED,
             records: 2,
-            writers: 1,
             snapshot_frequency: Some(1),
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
         let generator = FixtureGenerator::new(config.seed);
         let mut last = None;
@@ -1335,14 +1322,9 @@ mod tests {
     #[tokio::test]
     async fn reopened_storage_rejects_stale_and_corrupt_snapshot_state() {
         let config = Config {
-            backend: Backend::Memory,
-            fixture: FixtureKind::Empty,
-            seed: DEFAULT_SEED,
             records: 2,
-            writers: 1,
             snapshot_frequency: Some(1),
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
         for stale in [true, false] {
             let (_, storage) = MemoryStorage::new().create_view().await.unwrap();
@@ -1371,14 +1353,8 @@ mod tests {
     #[tokio::test]
     async fn reopened_session_rejects_corrupt_snapshot_state() {
         let config = Config {
-            backend: Backend::Memory,
-            fixture: FixtureKind::Empty,
-            seed: DEFAULT_SEED,
-            records: 1,
-            writers: 1,
             snapshot_frequency: Some(1),
-            repetitions: 1,
-            warmups: 0,
+            ..TEST_CONFIG
         };
         let (_, view) = MemoryStorage::new().create_view().await.unwrap();
         let sequencer = LocalSequencer::<MemoryStorage>::recover(view)

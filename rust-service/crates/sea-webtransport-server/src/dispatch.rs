@@ -484,12 +484,17 @@ mod tests {
 
     use crate::SeaConnectionService;
 
+    /// Recovers a fresh in-memory document for one dispatcher test.
+    async fn sequencer() -> Arc<LocalSequencer<MemoryStorage>> {
+        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
+        LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap()
+    }
+
     #[tokio::test]
     async fn malformed_append_closes_authority_before_queued_submission() {
-        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let sequencer = sequencer().await;
         let session = sequencer.open_session(None).await.unwrap();
         let observer = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
@@ -536,10 +541,7 @@ mod tests {
 
     #[tokio::test]
     async fn closing_old_snapshot_stream_preserves_replacement() {
-        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let sequencer = sequencer().await;
         let session = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
         let opening = protocol::Request::OpenSnapshotStream {
@@ -593,10 +595,7 @@ mod tests {
 
     #[tokio::test]
     async fn dispatches_typed_role_operations() {
-        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let sequencer = sequencer().await;
         let session = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
 
@@ -670,10 +669,7 @@ mod tests {
 
     #[tokio::test]
     async fn joined_and_left_positions_are_valid_snapshot_dependencies() {
-        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let sequencer = sequencer().await;
         let actor = SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
         let observer =
             SessionDispatcher::new(Arc::new(sequencer.open_session(None).await.unwrap()));
@@ -754,10 +750,7 @@ mod tests {
 
     #[tokio::test]
     async fn snapshot_publication_rejects_unresolved_dependencies_before_publication() {
-        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let sequencer = sequencer().await;
         let session = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
         let mut coordination = dispatcher
@@ -813,10 +806,7 @@ mod tests {
 
     #[tokio::test]
     async fn directory_wire_input_rejects_duplicate_and_invalid_names() {
-        let (_, view) = MemoryStorage::new().create_view().await.unwrap();
-        let sequencer = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let sequencer = sequencer().await;
         let session = sequencer.open_session(None).await.unwrap();
         let dispatcher = SessionDispatcher::new(Arc::new(session));
         for names in [vec!["leaf", "leaf"], vec!["bad/name"], vec![""]] {

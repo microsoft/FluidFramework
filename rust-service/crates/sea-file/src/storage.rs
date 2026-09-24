@@ -2322,7 +2322,7 @@ mod tests {
             let event = created
                 .components
                 .events
-                .append(batch().remove(0))
+                .append(batch_event())
                 .await
                 .unwrap();
             storage.shutdown().await.unwrap();
@@ -2338,7 +2338,7 @@ mod tests {
                 created
                     .components
                     .events
-                    .append(batch().remove(0))
+                    .append(batch_event())
                     .await
                     .is_err()
             );
@@ -2393,8 +2393,8 @@ mod tests {
         let created = storage.create_document().await.unwrap();
         let components = &created.components;
         let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
-        let first = components.events.append(batch().remove(0)).await.unwrap();
-        let second = components.events.append(batch().remove(0)).await.unwrap();
+        let first = components.events.append(batch_event()).await.unwrap();
+        let second = components.events.append(batch_event()).await.unwrap();
         components
             .snapshots
             .append(Snapshot {
@@ -2426,7 +2426,7 @@ mod tests {
                 Err(FileStorageError::Corrupt(_))
             ));
         }
-        let valid = encode_event(&batch().remove(0), offset, second.id().get());
+        let valid = encode_event(&batch_event(), offset, second.id().get());
         let mut recovered = state.clone();
         recovered.recover_event(&valid, offset).unwrap();
         assert_eq!(recovered.head, offset);
@@ -2511,7 +2511,7 @@ mod tests {
             let mut events = components.events.read(None, Some(first));
             let mut snapshots = components.snapshots.read(None, Some(first));
             let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
-            let event = components.events.append(batch().remove(0)).await.unwrap();
+            let event = components.events.append(batch_event()).await.unwrap();
             components
                 .snapshots
                 .append(Snapshot {
@@ -2569,14 +2569,9 @@ mod tests {
             let components = &created.components;
             let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
             let foreign_blob = other.components.blobs.put_blob(Bytes::new()).await.unwrap();
-            let first = components.events.append(batch().remove(0)).await.unwrap();
-            let second = components.events.append(batch().remove(0)).await.unwrap();
-            let foreign_event = other
-                .components
-                .events
-                .append(batch().remove(0))
-                .await
-                .unwrap();
+            let first = components.events.append(batch_event()).await.unwrap();
+            let second = components.events.append(batch_event()).await.unwrap();
+            let foreign_event = other.components.events.append(batch_event()).await.unwrap();
             for (root, at_event) in [(foreign_blob, first.clone()), (blob.clone(), foreign_event)] {
                 assert!(matches!(
                     components
@@ -2715,15 +2710,17 @@ mod tests {
         (entered_receiver, release)
     }
 
+    /// Supplies the same payload for single-event and batch tests.
+    fn batch_event() -> Event {
+        Event {
+            payload: Bytes::from_static(b"batch"),
+            blob_tree: None,
+        }
+    }
+
     /// Provides identical payloads so batch ordering does not depend on content identity.
     fn batch() -> Vec<Event> {
-        vec![
-            Event {
-                payload: Bytes::from_static(b"batch"),
-                blob_tree: None
-            };
-            2
-        ]
+        vec![batch_event(); 2]
     }
 
     #[test]
@@ -2878,7 +2875,7 @@ mod tests {
             .unwrap();
         let mut positions = Vec::new();
         for _ in 0..128 {
-            let event = components.events.append(batch().remove(0)).await.unwrap();
+            let event = components.events.append(batch_event()).await.unwrap();
             positions.push(event.id());
             components
                 .snapshots
@@ -3064,7 +3061,7 @@ mod tests {
             created
                 .components
                 .events
-                .append(batch().remove(0))
+                .append(batch_event())
                 .await
                 .unwrap();
         }
@@ -3078,7 +3075,7 @@ mod tests {
         let last = created
             .components
             .events
-            .append(batch().remove(0))
+            .append(batch_event())
             .await
             .unwrap()
             .id();
@@ -3140,8 +3137,9 @@ mod tests {
     #[tokio::test(flavor = "current_thread")]
     async fn directory_deduplication_does_not_wait_for_writer() {
         for reopened in [false, true] {
-            check_directory_deduplication::<false>(reopened).await;
-            check_directory_deduplication::<true>(reopened).await;
+            for durable in [false, true] {
+                check_directory_deduplication(durable, reopened).await;
+            }
         }
     }
 
@@ -3179,9 +3177,9 @@ mod tests {
     }
 
     /// Checks that closed directories can be reused while another mutation owns the journal.
-    async fn check_directory_deduplication<const DURABLE: bool>(reopened: bool) {
+    async fn check_directory_deduplication(durable: bool, reopened: bool) {
         let root = root();
-        let storage = Factory::open(&root, DURABLE).unwrap();
+        let storage = Factory::open(&root, durable).unwrap();
         let created = storage.create_document().await.unwrap();
         let blobs = &created.components.blobs;
         let leaf = blobs.put_blob(Bytes::from_static(b"leaf")).await.unwrap();
@@ -3365,20 +3363,15 @@ mod tests {
     }
 
     #[tokio::test(flavor = "current_thread")]
-    async fn blocked_batch_allows_executor_admission_and_published_reads() {
-        check_blocked_batch::<true>().await;
-    }
-
-    #[tokio::test(flavor = "current_thread")]
     async fn buffered_admission_reads_capacity_and_shutdown_precede_reopen() {
         let root = root();
         let storage = Factory::open(&root, false).unwrap();
         let created = storage.create_document().await.unwrap();
         let events = &created.components.events;
         let (entered, release) = block_write(events, false);
-        let first = events.append(batch().remove(0)).await.unwrap();
+        let first = events.append(batch_event()).await.unwrap();
         entered.await.unwrap();
-        let second = events.append(batch().remove(0)).await.unwrap();
+        let second = events.append(batch_event()).await.unwrap();
         assert_eq!(second.id().get(), first.id().get() + 71);
         assert_eq!(events.head().await.unwrap(), Some(second.id()));
         let mut history = events.read(None, Some(second.id()));
@@ -3390,11 +3383,11 @@ mod tests {
         }
         assert_eq!(positions, vec![first.id(), second.id()]);
         for _ in 2..128 {
-            events.append(batch().remove(0)).await.unwrap();
+            events.append(batch_event()).await.unwrap();
         }
         let head = events.head().await.unwrap();
         {
-            let waiting = events.append(batch().remove(0));
+            let waiting = events.append(batch_event());
             tokio::pin!(waiting);
             assert!(futures_util::poll!(&mut waiting).is_pending());
             assert_eq!(events.head().await.unwrap(), head);
@@ -3415,7 +3408,7 @@ mod tests {
                 .is_empty()
         );
         storage.shutdown().await.unwrap();
-        assert!(events.append(batch().remove(0)).await.is_err());
+        assert!(events.append(batch_event()).await.is_err());
         drop((history, created.components));
         let reopened_factory = Factory::open(&root, false).unwrap();
         let reopened = reopened_factory
@@ -3435,7 +3428,7 @@ mod tests {
         let created = storage.create_document().await.unwrap();
         let components = &created.components;
         let (entered, release) = block_write(&components.events, false);
-        let first = components.events.append(batch().remove(0)).await.unwrap();
+        let first = components.events.append(batch_event()).await.unwrap();
         entered.await.unwrap();
         let blob = components
             .blobs
@@ -3491,7 +3484,7 @@ mod tests {
         assert!(futures_util::poll!(&mut checkpoint).is_pending());
         let third = components
             .events
-            .append(batch().remove(0))
+            .append(batch_event())
             .now_or_never()
             .unwrap()
             .unwrap();
@@ -3530,13 +3523,13 @@ mod tests {
         fs::remove_dir_all(root).unwrap();
     }
 
-    /// Checks off-executor writes and prefix visibility under both durability policies.
-    async fn check_blocked_batch<const DURABLE: bool>() {
+    #[tokio::test(flavor = "current_thread")]
+    async fn blocked_batch_allows_executor_admission_and_published_reads() {
         let root = root();
-        let storage = Factory::open(&root, DURABLE).unwrap();
+        let storage = Factory::open(&root, true).unwrap();
         let created = storage.create_document().await.unwrap();
         let events = created.components.events.clone();
-        let first = events.append(batch().remove(0)).await.unwrap();
+        let first = events.append(batch_event()).await.unwrap();
         let mut live = events.read(Some(first.id()), None);
         live.next().await.unwrap().unwrap();
         let (entered, release) = block_write(&events, false);
@@ -3676,7 +3669,7 @@ mod tests {
                     .await,
                 Err(FileStorageError::Ambiguous)
             ));
-            assert!(events.append(batch().remove(0)).await.is_err());
+            assert!(events.append(batch_event()).await.is_err());
             drop((live, events, created.components));
             let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
             assert_eq!(
@@ -3701,11 +3694,8 @@ mod tests {
                 Event {
                     payload: Bytes::from_static(b"same"),
                     blob_tree: None,
-                },
-                Event {
-                    payload: Bytes::from_static(b"same"),
-                    blob_tree: None,
-                },
+                };
+                2
             ])
             .await;
         assert_eq!(results.len(), 2);
@@ -3751,11 +3741,8 @@ mod tests {
                     Event {
                         payload: Bytes::new(),
                         blob_tree: None,
-                    },
-                    Event {
-                        payload: Bytes::new(),
-                        blob_tree: None,
-                    },
+                    };
+                    2
                 ])
                 .await;
             if matches!(fault, JournalFault::BeforeWrite) {
@@ -3851,16 +3838,17 @@ mod tests {
             JournalFault::PartialWrite,
             JournalFault::AfterSync,
         ] {
-            check_fault::<false>(fault).await;
-            check_fault::<true>(fault).await;
+            for durable in [false, true] {
+                check_fault(durable, fault).await;
+            }
         }
-        check_fault::<true>(JournalFault::BeforeSync).await;
+        check_fault(true, JournalFault::BeforeSync).await;
     }
 
     /// Exercises the same state transition under both durability policies.
-    async fn check_fault<const DURABLE: bool>(fault: JournalFault) {
+    async fn check_fault(durable: bool, fault: JournalFault) {
         let root = root();
-        let storage = Factory::open(&root, DURABLE).unwrap();
+        let storage = Factory::open(&root, durable).unwrap();
         let created = storage.create_document().await.unwrap();
         let events = &created.components.events;
         let first = events
@@ -3878,7 +3866,7 @@ mod tests {
                 blob_tree: None,
             })
             .await;
-        if !DURABLE {
+        if !durable {
             result.unwrap();
             assert!(matches!(
                 storage.flush().await,
@@ -3898,7 +3886,7 @@ mod tests {
         }
         drop(created.components);
         let reopened = storage.open_view(&created.id).await;
-        if !DURABLE && matches!(fault, JournalFault::PartialWrite) {
+        if !durable && matches!(fault, JournalFault::PartialWrite) {
             assert!(matches!(reopened, Err(FileStorageError::Corrupt(_))));
         } else {
             let view = reopened.unwrap().unwrap();

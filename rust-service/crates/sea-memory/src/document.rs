@@ -835,6 +835,14 @@ mod tests {
         }
     }
 
+    /// Supplies an event without payload or content dependencies.
+    fn empty_event() -> Event {
+        Event {
+            payload: Bytes::new(),
+            blob_tree: None,
+        }
+    }
+
     #[test]
     fn errors_preserve_caller_recovery_classification() {
         for (error, expected) in [
@@ -867,13 +875,7 @@ mod tests {
             .expect("memory declares independent opening validity");
         storage.shutdown().await.unwrap();
         drop(storage);
-        events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap();
+        events.append(empty_event()).await.unwrap();
         assert_eq!(events.head().await.unwrap(), Some(EventPosition::new(1)));
         drop(events);
         assert_eq!(count.load(Ordering::Relaxed), 0);
@@ -885,14 +887,7 @@ mod tests {
         let storage = MemoryStorage::new();
         let components = storage.create_document().await.unwrap().components;
         let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
-        let event = components
-            .events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap();
+        let event = components.events.append(empty_event()).await.unwrap();
         components
             .snapshots
             .append(Snapshot {
@@ -1214,13 +1209,7 @@ mod tests {
             },
         );
 
-        let error = events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap_err();
+        let error = events.append(empty_event()).await.unwrap_err();
         assert!(matches!(error, MemoryStorageError::IdentityExhausted));
         assert_eq!(error.kind(), ErrorKind::Rejected);
         let archive = events.opening.document.events.lock().unwrap();
@@ -1325,25 +1314,9 @@ mod tests {
         let foreign_root = foreign.blobs.put_blob(Bytes::new()).await.unwrap();
         let mut positions = Vec::new();
         for _ in 0..3 {
-            positions.push(
-                components
-                    .events
-                    .append(Event {
-                        payload: Bytes::new(),
-                        blob_tree: None,
-                    })
-                    .await
-                    .unwrap(),
-            );
+            positions.push(components.events.append(empty_event()).await.unwrap());
         }
-        let foreign_event = foreign
-            .events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap();
+        let foreign_event = foreign.events.append(empty_event()).await.unwrap();
         for snapshot in [
             Snapshot {
                 root: foreign_root,
@@ -1425,10 +1398,7 @@ mod tests {
         let event = created
             .components
             .events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
+            .append(empty_event())
             .await
             .unwrap();
         let missing = MemoryEventHandle {
@@ -1498,22 +1468,8 @@ mod tests {
         let created = storage.create_document().await.unwrap();
         let components = created.components;
         let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
-        let first = components
-            .events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap();
-        let second = components
-            .events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap();
+        let first = components.events.append(empty_event()).await.unwrap();
+        let second = components.events.append(empty_event()).await.unwrap();
         components
             .snapshots
             .append(Snapshot {
@@ -1569,14 +1525,7 @@ mod tests {
         let created = storage.create_document().await.unwrap();
         let components = created.components;
         let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
-        let event = components
-            .events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap();
+        let event = components.events.append(empty_event()).await.unwrap();
         components
             .snapshots
             .append(Snapshot {
@@ -1668,14 +1617,7 @@ mod tests {
         let components = created.components;
         let document = Arc::downgrade(&components.blobs.opening.document);
         let root = components.blobs.put_blob(Bytes::new()).await.unwrap();
-        let event = components
-            .events
-            .append(Event {
-                payload: Bytes::new(),
-                blob_tree: None,
-            })
-            .await
-            .unwrap();
+        let event = components.events.append(empty_event()).await.unwrap();
         let mut snapshots = components.snapshots.read(None, None);
         assert!(matches!(
             snapshots.next().await,

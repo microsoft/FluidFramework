@@ -632,6 +632,14 @@ impl SeaStorage for FaultStorage {
     }
 }
 
+/// Creates a fresh fault-injecting document and its exclusive sequencer.
+async fn fixture() -> (FaultStorage, Arc<LocalSequencer<FaultStorage>>) {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    (storage, runtime)
+}
+
 /// Bounds delayed checks without assuming when the cooperative driver runs.
 async fn settles<Output>(future: impl std::future::Future<Output = Output>) -> Output {
     tokio::time::timeout(std::time::Duration::from_secs(5), future)
@@ -641,9 +649,7 @@ async fn settles<Output>(future: impl std::future::Future<Output = Output>) -> O
 
 #[tokio::test]
 async fn idle_ready_submissions_apply_before_receipts_and_rejection_ends_authority() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let writer = member(&runtime, "writer").await;
     let mut receipts = Vec::new();
     for _ in 0..2 {
@@ -722,9 +728,7 @@ async fn buffered_submissions_preserve_first_poll_order_with_exhausted_budget() 
 
 #[tokio::test]
 async fn delayed_persistence_admits_a_bounded_ring_and_publishes_only_after_commit() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let mut members = Vec::new();
     for index in 0..257 {
         members.push(member(&runtime, &format!("writer-{index}")).await);
@@ -767,9 +771,7 @@ async fn delayed_persistence_admits_a_bounded_ring_and_publishes_only_after_comm
 
 #[tokio::test]
 async fn cancelled_admitted_entry_discards_queued_session_suffix_before_leave() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let writer = member(&runtime, "writer").await;
     let observer = member(&runtime, "observer").await;
     writer.announce_membership(Bytes::new()).await.unwrap();
@@ -806,9 +808,7 @@ async fn cancelled_admitted_entry_discards_queued_session_suffix_before_leave() 
 
 #[tokio::test]
 async fn definitive_failure_never_dispatches_the_queued_same_session_suffix() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let writer = member(&runtime, "writer").await;
     storage.events.arm(Failure::GateReject);
     let mut first = Box::pin(writer.submit(submission(b"first")));
@@ -825,9 +825,7 @@ async fn definitive_failure_never_dispatches_the_queued_same_session_suffix() {
 
 #[tokio::test]
 async fn grouped_ambiguity_poisoning_prevents_suffix_and_terminal_leave() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let first = member(&runtime, "first").await;
     let second = member(&runtime, "second").await;
     let third = member(&runtime, "third").await;
@@ -870,9 +868,7 @@ async fn grouped_ambiguity_poisoning_prevents_suffix_and_terminal_leave() {
 
 #[tokio::test]
 async fn admitted_inputs_do_not_retain_oversized_caller_backing() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let first = member(&runtime, "first").await;
     let second = member(&runtime, "second").await;
     storage.events.arm(Failure::GateBefore);
@@ -904,9 +900,7 @@ async fn admitted_inputs_do_not_retain_oversized_caller_backing() {
 #[tokio::test]
 async fn unavailable_tree_rejects_singleton_and_batch_before_storage_append() {
     for batched in [false, true] {
-        let storage = FaultStorage::default();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (storage, runtime) = fixture().await;
         let leader = member(&runtime, "leader").await;
         let writer = member(&runtime, "writer").await;
         let mut invalid = submission(b"unavailable tree");
@@ -947,9 +941,7 @@ async fn unavailable_tree_rejects_singleton_and_batch_before_storage_append() {
 
 #[tokio::test]
 async fn byte_bound_backpressures_before_the_entry_limit() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let first = member(&runtime, "first").await;
     let second = member(&runtime, "second").await;
     let mut large = submission(b"large");
@@ -971,9 +963,7 @@ async fn byte_bound_backpressures_before_the_entry_limit() {
 #[tokio::test]
 async fn capacity_wait_preserves_same_session_order_and_failure_prefix() {
     for invalid in [false, true] {
-        let storage = FaultStorage::default();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (storage, runtime) = fixture().await;
         let leader = member(&runtime, "leader").await;
         let writer = member(&runtime, "writer").await;
         let cloned_writer = writer.clone();
@@ -1027,9 +1017,7 @@ async fn capacity_wait_preserves_same_session_order_and_failure_prefix() {
 #[tokio::test]
 async fn capacity_wait_cancellation_preserves_authority_and_close_needs_no_admission_lock() {
     for close in [false, true] {
-        let storage = FaultStorage::default();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (storage, runtime) = fixture().await;
         let leader = member(&runtime, "leader").await;
         let writer = member(&runtime, "writer").await;
         let cloned_writer = writer.clone();
@@ -1104,9 +1092,7 @@ async fn capacity_wait_cancellation_preserves_authority_and_close_needs_no_admis
 
 #[tokio::test]
 async fn same_session_batch_rejects_invalid_entry_and_suffix_but_settles_prepared_prefix() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let leader = member(&runtime, "leader").await;
     let writer = member(&runtime, "writer").await;
     storage.events.arm(Failure::GateBefore);
@@ -1141,9 +1127,7 @@ async fn same_session_batch_rejects_invalid_entry_and_suffix_but_settles_prepare
 
 #[tokio::test]
 async fn cancelled_dispatched_same_session_batch_settles_before_leave_without_queued_suffix() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let leader = member(&runtime, "leader").await;
     let writer = member(&runtime, "writer").await;
     writer.announce_membership(Bytes::new()).await.unwrap();
@@ -1267,9 +1251,7 @@ async fn returned_ambiguity_is_scanned_and_rejection_requires_fresh_membership()
         Failure::AmbiguousAbsent,
         Failure::Reject,
     ] {
-        let storage = FaultStorage::default();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (storage, runtime) = fixture().await;
         let session = member(&runtime, "author").await;
         storage.events.arm(failure);
         let result = session.submit(submission(b"operation")).await;
@@ -1408,9 +1390,7 @@ async fn failed_reconciliation_prevents_terminal_leave_until_recovery() {
 
 #[tokio::test]
 async fn repeated_close_ignores_an_unrelated_recovery_failure() {
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let closed = member(&runtime, "closed").await;
     let active = member(&runtime, "active").await;
     closed.close().await.unwrap();
@@ -1425,9 +1405,7 @@ async fn repeated_close_ignores_an_unrelated_recovery_failure() {
 #[tokio::test]
 async fn cancelling_before_or_after_commit_retains_the_same_backend_future_until_settlement() {
     for failure in [Failure::GateBefore, Failure::GateAfter] {
-        let storage = FaultStorage::default();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (storage, runtime) = fixture().await;
         let first = member(&runtime, "first").await;
         let second = member(&runtime, "second").await;
         storage.events.arm(failure);
@@ -1484,9 +1462,7 @@ async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work(
         Failure::GateBefore,
         Failure::GateAfter,
     ] {
-        let storage = FaultStorage::default();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (storage, runtime) = fixture().await;
         let first = member(&runtime, "first").await;
         let observer = member(&runtime, "observer").await;
         first.announce_membership(Bytes::new()).await.unwrap();
@@ -1548,9 +1524,7 @@ async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work(
 #[tokio::test]
 async fn revoking_publisher_does_not_cancel_an_admitted_snapshot() {
     use sea_core::storage::StorageHandle;
-    let storage = FaultStorage::default();
-    let (_, view) = storage.create_view().await.unwrap();
-    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let (storage, runtime) = fixture().await;
     let session = member(&runtime, "publisher").await;
     let position = session.submit(submission(b"boundary")).await.unwrap();
     let snapshot = Snapshot {
@@ -1595,9 +1569,7 @@ async fn snapshot_cancellation_and_ambiguity_preserve_publication_order() {
         Failure::AmbiguousAbsent,
         Failure::FailLookup,
     ] {
-        let storage = FaultStorage::default();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let (storage, runtime) = fixture().await;
         let session = member(&runtime, "author").await;
         let position = session.submit(submission(b"boundary")).await.unwrap();
         let root = session.put_blob(Bytes::new()).await.unwrap();

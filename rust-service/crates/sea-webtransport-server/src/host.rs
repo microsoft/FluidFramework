@@ -1987,13 +1987,9 @@ mod tests {
         let shutdown = server.shutdown_handle();
         let serving = tokio::spawn(server.serve_until_shutdown());
         let (_endpoint, connection) = raw_connection(address, hash).await;
-        let (authority, document, old_session, _events) = open_raw_event_stream_with_intent(
-            &connection,
-            b"",
-            protocol::ArchiveIntent::Create,
-            b"old",
-        )
-        .await;
+        let (authority, document, old_session, _events) =
+            open_raw_event_stream_with_intent(&connection, b"", protocol::ArchiveIntent::Create)
+                .await;
         let (mut author, mut receipts) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(
@@ -2006,7 +2002,7 @@ mod tests {
             protocol::Response::Acknowledged
         );
         let (_, replacement, _replacement_events) =
-            open_raw_event_stream(&connection, &document, b"replacement").await;
+            open_raw_event_stream(&connection, &document).await;
         assert_ne!(old_session, replacement);
         send_raw_request(
             &mut author,
@@ -2270,13 +2266,9 @@ mod tests {
         certificate_hash: wtransport::tls::Sha256Digest,
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
-        let (authority, document, _, _events) = open_raw_event_stream_with_intent(
-            &connection,
-            b"",
-            protocol::ArchiveIntent::Create,
-            b"malformed-snapshot-session",
-        )
-        .await;
+        let (authority, document, _, _events) =
+            open_raw_event_stream_with_intent(&connection, b"", protocol::ArchiveIntent::Create)
+                .await;
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(
@@ -2310,7 +2302,7 @@ mod tests {
         let (_observer_endpoint, observer_connection) =
             raw_connection(address, certificate_hash).await;
         let (observer_authority, _, _observer_events) =
-            open_raw_event_stream(&observer_connection, &document, b"observer-session").await;
+            open_raw_event_stream(&observer_connection, &document).await;
         let (mut observer_send, mut observer_receive) =
             observer_connection.open_bi().await.unwrap().await.unwrap();
         let mut observer_decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
@@ -2384,12 +2376,8 @@ mod tests {
         client: &NativeSeaClient,
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
-        let (authority, _, _events) = open_raw_event_stream(
-            &connection,
-            client.document().as_bytes(),
-            b"invalid-suffix-session",
-        )
-        .await;
+        let (authority, _, _events) =
+            open_raw_event_stream(&connection, client.document().as_bytes()).await;
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(&mut send, protocol::Request::OpenAuthorStream { authority }).await;
@@ -2468,12 +2456,8 @@ mod tests {
         client: &NativeSeaClient,
     ) -> EventPosition {
         let (_endpoint, connection) = raw_connection(address, certificate_hash).await;
-        let (authority, session, _events) = open_raw_event_stream(
-            &connection,
-            client.document().as_bytes(),
-            b"submission-session",
-        )
-        .await;
+        let (authority, session, _events) =
+            open_raw_event_stream(&connection, client.document().as_bytes()).await;
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(&mut send, protocol::Request::OpenAuthorStream { authority }).await;
@@ -2581,8 +2565,7 @@ mod tests {
         root: [u8; 32],
     ) {
         let (_endpoint, connection) = raw_connection(address, certificate_hash.clone()).await;
-        let (authority, _, _events) =
-            open_raw_event_stream(&connection, document, b"snapshot-session").await;
+        let (authority, _, _events) = open_raw_event_stream(&connection, document).await;
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         send_raw_request(
@@ -2639,15 +2622,10 @@ mod tests {
     async fn open_raw_event_stream(
         connection: &Connection,
         archive: &[u8],
-        session: &[u8],
     ) -> (Vec<u8>, u64, wtransport::RecvStream) {
-        let (authority, _, allocated, events) = open_raw_event_stream_with_intent(
-            connection,
-            archive,
-            protocol::ArchiveIntent::Open,
-            session,
-        )
-        .await;
+        let (authority, _, allocated, events) =
+            open_raw_event_stream_with_intent(connection, archive, protocol::ArchiveIntent::Open)
+                .await;
         (authority, allocated, events)
     }
 
@@ -2655,7 +2633,6 @@ mod tests {
         connection: &Connection,
         archive: &[u8],
         intent: protocol::ArchiveIntent,
-        _session: &[u8],
     ) -> (Vec<u8>, Vec<u8>, u64, wtransport::RecvStream) {
         let (mut send, mut receive) = connection.open_bi().await.unwrap().await.unwrap();
         send_raw_request(

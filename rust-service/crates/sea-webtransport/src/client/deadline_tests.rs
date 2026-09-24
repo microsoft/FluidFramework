@@ -204,7 +204,8 @@ async fn every_logical_opening_and_snapshot_initial_state_have_a_deadline() {
         );
         assert_eq!(Instant::now() - start, BUDGET);
         assert!(calls.cancelled.load(Ordering::Relaxed));
-
+    }
+    {
         let (client, peer, calls) = probe();
         peer.send(frame(StreamRole::Signal, &Response::Acknowledged))
             .unwrap();
@@ -212,6 +213,7 @@ async fn every_logical_opening_and_snapshot_initial_state_have_a_deadline() {
         assert!(matches!(signal.next().await, Err(ClientError::Timeout)));
         assert!(calls.cancelled.load(Ordering::Relaxed));
     }
+
     let (client, peer, calls) = probe();
     peer.send(frame(StreamRole::Snapshot, &Response::Acknowledged))
         .unwrap();

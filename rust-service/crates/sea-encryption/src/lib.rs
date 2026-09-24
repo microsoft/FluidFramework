@@ -486,29 +486,24 @@ mod tests {
             PayloadContext::Record,
         )
         .unwrap();
-        let wrong_key = decrypt_payload::<MemoryStorageError, _>(
-            &TestKeys::wrong(),
-            &encoded,
-            PayloadContext::Record,
-        )
-        .unwrap_err();
-        assert_eq!(wrong_key.kind(), ErrorKind::Corrupt);
-        let wrong_context =
-            decrypt_payload::<MemoryStorageError, _>(&keys, &encoded, PayloadContext::Blob)
-                .unwrap_err();
-        assert_eq!(wrong_context.kind(), ErrorKind::Corrupt);
+        let wrong_keys = TestKeys::wrong();
         let mut tampered = encoded.to_vec();
         tampered[HEADER_LENGTH] ^= 1;
-        assert_eq!(
-            decrypt_payload::<MemoryStorageError, _>(
+        let tampered = Bytes::from(tampered);
+        for (case, keys, envelope, context) in [
+            ("wrong key", &wrong_keys, &encoded, PayloadContext::Record),
+            ("wrong context", &keys, &encoded, PayloadContext::Blob),
+            (
+                "tampered ciphertext",
                 &keys,
-                &Bytes::from(tampered),
+                &tampered,
                 PayloadContext::Record,
-            )
-            .unwrap_err()
-            .kind(),
-            ErrorKind::Corrupt
-        );
+            ),
+        ] {
+            let error =
+                decrypt_payload::<MemoryStorageError, _>(keys, envelope, context).expect_err(case);
+            assert_eq!(error.kind(), ErrorKind::Corrupt, "{case}");
+        }
     }
 
     #[test]
