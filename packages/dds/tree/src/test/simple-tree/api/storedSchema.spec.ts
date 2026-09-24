@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { FluidClientVersion } from "../../../codec/index.js";
+import { ValueSchema } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	comparePersistedSchema,
@@ -22,6 +23,31 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js
 import { getStagedSchemaUpgrades, testDocuments } from "../../testTrees.js";
 
 describe("simple-tree storedSchema", () => {
+	it("reports an unknown persisted root field kind as incompatible", () => {
+		const schema = SchemaFactoryAlpha.number;
+		const persisted = {
+			version: 1,
+			nodes: { [schema.identifier]: { leaf: ValueSchema.Number } },
+			root: { kind: "FutureKind", types: [schema.identifier] },
+		};
+		const status = comparePersistedSchema(persisted, schema, {
+			jsonValidator: FormatValidatorBasic,
+		});
+		assert(!status.canView && !status.canUpgrade && !status.isEquivalent);
+		const expected = [
+			{
+				mismatch: "fieldKind",
+				location: "root",
+				view: "Value",
+				existingStored: "FutureKind",
+				proposedStored: "Value",
+			},
+		];
+		assert.deepEqual(status.viewDiscrepancies, expected);
+		assert.deepEqual(status.upgradeDiscrepancies, expected);
+		assert.deepEqual(status.equivalenceDiscrepancies, expected);
+	});
+
 	it("ignores metadata differences through both helpers without inspecting non-persisted metadata", () => {
 		const factory = new SchemaFactoryAlpha("diagnostics");
 		const metadata = {

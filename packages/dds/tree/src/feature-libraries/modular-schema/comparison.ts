@@ -230,7 +230,11 @@ function* getFieldSupersetFailures(
 		return;
 	}
 
-	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
+	const supersetKind = policy.fieldKinds.get(superset.kind);
+	if (supersetKind === undefined) {
+		yield { mismatch: "fieldKind" };
+		return;
+	}
 
 	if (monotonicOnly) {
 		if (!supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind)) {
