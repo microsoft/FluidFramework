@@ -29,7 +29,7 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * Only the `schema` property of each configuration is used.
  * The existing and proposed stored schemas are generated using the default restrictive staged upgrade policy;
  * staged upgrade policies supplied through alpha configurations are not used.
- * Viewing diagnostics compare `view.schema` with the generated existing stored schema.
+ * Viewing diagnostics compare `view.schema` with the existing stored schema.
  * Upgrade diagnostics compare the generated existing and proposed stored schemas.
  * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
  * See {@link SchemaCompatibilityStatus} for the compatibility flags and {@link SchemaComparisonStatusAlpha} for the diagnostic lists.
