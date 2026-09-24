@@ -21,6 +21,7 @@ import { resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { setTimeout as delay } from "node:timers/promises";
 import { alignedMeasurement } from "./benchmark-alignment.mjs";
+import { verifyNativeBuild } from "./benchmark-artifacts.mjs";
 import { assertDrainIntegrity, hasPendingDrain } from "./benchmark-gates.mjs";
 import { generatorLayout } from "./benchmark-generator-layout.mjs";
 import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
@@ -359,6 +360,14 @@ async function worker(configuration) {
 
 /** Runs one isolated service sample and captures resource curves from owned processes. */
 async function run(configuration, output) {
+	if (configuration.backend === "sea") {
+		verifyNativeBuild([
+			...(configuration.serverBinary === undefined ? ["sea-webtransport-server"] : []),
+			...(configuration.generator === "native" && configuration.generatorBinary === undefined
+				? ["presentation-native"]
+				: []),
+		]);
+	}
 	mkdirSync(output, { recursive: true });
 	const temporaryData = createTemporaryBenchmarkData(`${configuration.backend}-stress-data`);
 	const serverBinary = resolve(

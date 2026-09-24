@@ -17,6 +17,7 @@ import {
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, relative, resolve } from "node:path";
+import { verifyNativeBuild } from "./benchmark-artifacts.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
 const [mode, outputText, inputText] = process.argv.slice(2);
@@ -50,6 +51,7 @@ function command(executable, argumentsList, cwd = root) {
 
 /** Counts tracked sources in conservative repository-owned dependency scopes. */
 function sourceCounts() {
+	verifyNativeBuild(["presentation-test-spans"]);
 	const tracked = command("git", ["ls-files", "-z"]).split("\0").filter(Boolean);
 	const cargo = JSON.parse(
 		command(
@@ -197,6 +199,10 @@ function sourceCounts() {
 
 /** Runs a recorded, alternating-order matrix while retaining failed cells. */
 function sweep(cells) {
+	verifyNativeBuild([
+		...(cells.some((cell) => cell.backend === "sea") ? ["sea-webtransport-server"] : []),
+		...(cells.some((cell) => cell.generator === "native") ? ["presentation-native"] : []),
+	]);
 	const artifacts = [
 		"rust-service/target/release/sea-webtransport-server",
 		"rust-service/packages/sea-typescript/generated/websocket/node/sea_wasm_bg.wasm",

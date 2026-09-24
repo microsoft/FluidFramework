@@ -19,6 +19,7 @@ import { createServer } from "node:net";
 import { cpus, platform, release } from "node:os";
 import { resolve } from "node:path";
 import { setImmediate as nextTurn, setTimeout as delay } from "node:timers/promises";
+import { verifyNativeBuild } from "./benchmark-artifacts.mjs";
 import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -639,6 +640,7 @@ async function run(configuration) {
 
 /** Collects balanced repetitions, preserving failures and updating the result index after every sample. */
 function campaign(options, output) {
+	verifyNativeBuild(["sea-webtransport-server"]);
 	assert(!existsSync(output), "campaign output must be new");
 	mkdirSync(output, { recursive: true });
 	const artifacts = [
@@ -868,6 +870,7 @@ if (command === "worker") {
 	);
 	for (const name of ["maps", "entries", "valueBytes", "operations"])
 		assert(Number.isSafeInteger(configuration[name]) && configuration[name] > 0);
+	if (configuration.backend === "sea") verifyNativeBuild(["sea-webtransport-server"]);
 	await run(configuration);
 } else if (command === "campaign") {
 	campaign(JSON.parse(argument), resolve(output));

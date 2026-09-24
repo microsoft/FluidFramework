@@ -35,6 +35,23 @@ Use new artifact output directories outside the repository; format completed JSO
 The output location does not select the service-data filesystem.
 `check-documentation.mjs` covers Cargo packages, direct harnesses, architectural groupings, historical READMEs, and current top-level guides; it checks local paths, not anchors or external URLs.
 
+### Native Build Verification
+
+`build-benchmark-artifacts.sh` writes `target/release/benchmark-build.json` only after a successful build and staging.
+The receipt identifies native workspace inputs and each staged executable by SHA-256.
+The script invalidates the previous receipt before building and rejects source changes during compilation.
+Source, stress, and summary collectors verify the receipt before using default native executables.
+Stress and summary campaigns check before recording their manifests, and individual runs check before starting a service.
+A missing receipt, changed native source, or replaced executable stops collection with a rebuild command instead of running stale binaries.
+Documentation-only edits do not invalidate the receipt.
+
+This check covers repository native inputs and staged executables, not WASM, TypeScript output, arbitrary external build inputs, or concurrent edits after verification.
+Keep sources and build outputs unchanged during collection.
+Explicit `serverBinary` and `generatorBinary` stress overrides remain available for historical comparisons; their provenance is the caller's responsibility.
+The separate browser benchmark's `--skip-build` option still requires the caller to prepare current native and WASM artifacts.
+
+Run the receipt regression tests with `node --test rust-service/scripts/benchmark-artifacts.test.mjs` from the repository root.
+
 ### Collection Modes
 
 `benchmark-collect.mjs --help` lists `source`, `repeat`, `native-repeat`, and `matrix`.

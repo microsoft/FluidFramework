@@ -12,6 +12,8 @@ source_root=$(benchmark_source_root)
 local_release="$source_root/target/release"
 
 cd "$source_root"
+rm -f "$local_release/benchmark-build.json"
+source_hash=$(node scripts/benchmark-artifacts.mjs snapshot)
 cargo build --release --locked \
 	-p sea-webtransport-server --features sea-webtransport-server/websocket-stream \
 	-p sea-benchmarks --bins
@@ -46,4 +48,5 @@ do
 	fi
 done
 
+node scripts/benchmark-artifacts.mjs record "$source_hash"
 printf 'staged benchmark executables in %s\n' "$local_release"

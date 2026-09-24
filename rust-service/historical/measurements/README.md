@@ -5,7 +5,8 @@ The overview records the tested revisions, workloads, environment, and compariso
 
 | Dataset | Purpose |
 | --- | --- |
-| [Complete overview refresh](overview-refresh-20260923/README.md) | Current source, dependency, test, stress, browser, capacity, summary, cold-load, and persisted-size measurements. |
+| [Current overview refresh](overview-refresh-20260924/README.md) | Current source, Sea test, stress, browser, capacity, summary, cold-load, and persisted-size measurements; unchanged dependency and Tinylicious test inventories are identified explicitly. |
+| [Previous complete overview refresh](overview-refresh-20260923/README.md) | Previous source, dependency, test, stress, browser, capacity, summary, cold-load, and persisted-size measurements. |
 | [Session resource policy checkpoint 1](session-resource-policy-checkpoint1-20260923.json.gz) | Experimental cache provenance, surviving measurements, validation, and explicit performance/missing-data exceptions; see the [cumulative report](../../SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md). |
 | [Summary and storage comparison](summary-storage-20260922/README.md) | Full/incremental Fluid summaries, verified restart loads, and actual file-backend sizes. |
 | [Service refresh](refresh-92ecf30/README.md) | Repeated service loads, matched-load resources, and storage probes at `92ecf30f4a7`. |
