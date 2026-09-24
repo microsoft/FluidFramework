@@ -135,6 +135,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 					sequenceNumber: 5,
 					lastModifiedDateTime: "2026-01-01T00:00:00Z",
 				},
+				versionsProbed: 2,
+				sequenceNumberFetchCount: 2,
 			}),
 		};
 		const capturedCacheAndTrackers: ICacheAndTracker[] = [];
@@ -163,8 +165,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 		logger.assertMatch([
 			{
 				eventName: "OdspDriver:VersionMarkBaseVersionSelectionSucceeded",
-				targetSequenceNumber: 8,
-				baseSnapshotSequenceNumber: 5,
+				versionsProbed: 2,
+				sequenceNumberFetchCount: 2,
 			},
 		]);
 	});
@@ -237,6 +239,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 								sequenceNumber: 5,
 								lastModifiedDateTime: "2026-01-01T00:00:00Z",
 							},
+							versionsProbed: 2,
+							sequenceNumberFetchCount: 2,
 						}),
 					}),
 					resolveFileVersion: () => recoverableResolvedUrl,
@@ -273,6 +277,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 							sequenceNumber: 5,
 							lastModifiedDateTime: "2026-01-01T00:00:00Z",
 						},
+						versionsProbed: 2,
+						sequenceNumberFetchCount: 2,
 					}),
 				}),
 			},
@@ -307,8 +313,17 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 							createVersionManager: () => ({
 								findBaseForSeq: async (): Promise<BaseForSeq> =>
 									oldestResolvedSeq === undefined
-										? { kind: "noBaseVersion" }
-										: { kind: "noBaseVersion", oldestResolvedSeq },
+										? {
+												kind: "noBaseVersion",
+												versionsProbed: 0,
+												sequenceNumberFetchCount: 0,
+											}
+										: {
+												kind: "noBaseVersion",
+												oldestResolvedSeq,
+												versionsProbed: 3,
+												sequenceNumberFetchCount: 3,
+											},
 							}),
 						},
 					),
@@ -329,6 +344,8 @@ describe("OdspPointInTimeDocumentServiceFactory", () => {
 					category: "error",
 					availabilityOutcome: "baseVersionMissing",
 					oldestResolvedSequenceNumber: oldestResolvedSeq,
+					versionsProbed: oldestResolvedSeq === undefined ? 0 : 3,
+					sequenceNumberFetchCount: oldestResolvedSeq === undefined ? 0 : 3,
 				},
 			]);
 		});

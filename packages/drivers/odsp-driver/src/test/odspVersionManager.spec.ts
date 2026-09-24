@@ -112,6 +112,8 @@ describe("OdspVersionManager", () => {
 			assert.equal(result.kind, "found");
 			assert.equal(result.kind === "found" && result.base.versionId, "40.0");
 			assert.equal(result.kind === "found" && result.base.sequenceNumber, 418);
+			assert.equal(result.versionsProbed, 3);
+			assert.equal(result.sequenceNumberFetchCount, 3);
 		});
 
 		it("returns an exact match (0-op replay) when the target equals a version's sequence number", async () => {
@@ -121,6 +123,8 @@ describe("OdspVersionManager", () => {
 			assert.equal(result.kind, "found");
 			assert.equal(result.kind === "found" && result.base.versionId, "42.0");
 			assert.equal(result.kind === "found" && result.base.sequenceNumber, 448);
+			assert.equal(result.versionsProbed, 2);
+			assert.equal(result.sequenceNumberFetchCount, 2);
 		});
 
 		it("returns the newest SEALED version when the target is newer than all sealed versions (not the tip)", async () => {
@@ -131,6 +135,8 @@ describe("OdspVersionManager", () => {
 			// 43.0, not the tip 44.0 — the tip is excluded from base selection.
 			assert.equal(result.kind === "found" && result.base.versionId, "43.0");
 			assert.equal(result.kind === "found" && result.base.sequenceNumber, 460);
+			assert.equal(result.versionsProbed, 1);
+			assert.equal(result.sequenceNumberFetchCount, 1);
 			assert.ok(!fetcher.resolvedIds().includes("44.0"), "the tip must never be resolved");
 		});
 
@@ -140,6 +146,8 @@ describe("OdspVersionManager", () => {
 			const result = await manager.findBaseForSeq(400);
 			assert.equal(result.kind, "noBaseVersion");
 			assert.equal(result.kind === "noBaseVersion" && result.oldestResolvedSeq, 418);
+			assert.equal(result.versionsProbed, 3);
+			assert.equal(result.sequenceNumberFetchCount, 3);
 		});
 	});
 
@@ -155,6 +163,8 @@ describe("OdspVersionManager", () => {
 			const result = await manager.findBaseForSeq(500);
 			assert.equal(result.kind, "found");
 			assert.equal(result.kind === "found" && result.base.versionId, "43.0");
+			assert.equal(result.versionsProbed, 1);
+			assert.equal(result.sequenceNumberFetchCount, 1);
 			assert.deepEqual(
 				fetcher.resolvedIds(),
 				["43.0"],
@@ -167,6 +177,8 @@ describe("OdspVersionManager", () => {
 			const { manager, fetcher } = makeManager([ref("44.0")], {});
 			const result = await manager.findBaseForSeq(500);
 			assert.equal(result.kind, "noBaseVersion");
+			assert.equal(result.versionsProbed, 0);
+			assert.equal(result.sequenceNumberFetchCount, 0);
 			assert.deepEqual(fetcher.resolvedIds(), [], "the tip must never be resolved");
 		});
 
@@ -179,6 +191,8 @@ describe("OdspVersionManager", () => {
 			const result = await manager.findBaseForSeq(448);
 			assert.equal(result.kind, "found");
 			assert.equal(result.kind === "found" && result.base.versionId, "42.0");
+			assert.equal(result.versionsProbed, 2);
+			assert.equal(result.sequenceNumberFetchCount, 2);
 		});
 
 		it("returns noBaseVersion when the version list is empty", async () => {
@@ -186,6 +200,8 @@ describe("OdspVersionManager", () => {
 			const { manager } = makeManager([], {});
 			const result = await manager.findBaseForSeq(100);
 			assert.equal(result.kind, "noBaseVersion");
+			assert.equal(result.versionsProbed, 0);
+			assert.equal(result.sequenceNumberFetchCount, 0);
 		});
 	});
 
@@ -196,7 +212,9 @@ describe("OdspVersionManager", () => {
 			const seqs = { "43.0": 460, "42.0": 448, "40.0": 418 };
 			const { manager, fetcher } = makeManager(versions, seqs);
 			// target 448: skips the tip, resolves 43.0 (too new) then 42.0 (match), so 40.0 is never resolved.
-			await manager.findBaseForSeq(448);
+			const result = await manager.findBaseForSeq(448);
+			assert.equal(result.versionsProbed, 2);
+			assert.equal(result.sequenceNumberFetchCount, 2);
 			assert.deepEqual(fetcher.resolvedIds(), ["43.0", "42.0"]);
 		});
 
@@ -205,8 +223,12 @@ describe("OdspVersionManager", () => {
 			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
 			const seqs = { "43.0": 460, "42.0": 448, "40.0": 418 };
 			const { manager, fetcher } = makeManager(versions, seqs);
-			await manager.findBaseForSeq(0); // scans all sealed (no match), resolving 43.0, 42.0, 40.0
-			await manager.findBaseForSeq(0); // list re-fetched; seqs served from cache
+			const firstResult = await manager.findBaseForSeq(0); // scans all sealed (no match), resolving 43.0, 42.0, 40.0
+			const secondResult = await manager.findBaseForSeq(0); // list re-fetched; seqs served from cache
+			assert.equal(firstResult.versionsProbed, 3);
+			assert.equal(firstResult.sequenceNumberFetchCount, 3);
+			assert.equal(secondResult.versionsProbed, 3);
+			assert.equal(secondResult.sequenceNumberFetchCount, 0);
 			assert.equal(fetcher.listCalls(), 2, "the version list is re-enumerated on every call");
 			assert.deepEqual(
 				fetcher.resolvedIds(),
@@ -336,6 +358,8 @@ describe("OdspVersionManager", () => {
 					sequenceNumber: 418,
 					lastModifiedDateTime: "2026-01-01T00:00:00.000Z",
 				},
+				versionsProbed: 1,
+				sequenceNumberFetchCount: 1,
 			});
 		});
 

@@ -192,6 +192,8 @@ export async function createPointInTimeDocumentServiceCore(
 			targetSequenceNumber,
 			availabilityOutcome: "baseVersionMissing",
 			oldestResolvedSequenceNumber: baseResult.oldestResolvedSeq,
+			versionsProbed: baseResult.versionsProbed,
+			sequenceNumberFetchCount: baseResult.sequenceNumberFetchCount,
 			errorType: error.errorType,
 		});
 		throw error;
@@ -199,8 +201,8 @@ export async function createPointInTimeDocumentServiceCore(
 	extLogger.sendPerformanceEvent({
 		eventName: "VersionMarkBaseVersionSelectionSucceeded",
 		duration: performanceNow() - baseSelectionStartTime,
-		targetSequenceNumber,
-		baseSnapshotSequenceNumber: baseResult.base.sequenceNumber,
+		versionsProbed: baseResult.versionsProbed,
+		sequenceNumberFetchCount: baseResult.sequenceNumberFetchCount,
 	});
 
 	const recoverableResolvedUrl = await (dependencies.resolveFileVersion ?? resolveFileVersion)(

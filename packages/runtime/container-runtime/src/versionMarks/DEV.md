@@ -400,13 +400,19 @@ attempt volume is `Succeeded + Failed`, and each terminal event carries its own 
 `OdspDriver:VersionMarkBaseVersionSelectionSucceeded` /
 `OdspDriver:VersionMarkBaseVersionSelectionFailed`.
 
-Both loader terminal events use `baseSnapshotSequenceNumber` for the selected snapshot sequence when
-that value is available. Once the paused loader has established a base container, it attaches that
-sequence number to any Fluid error raised during bounded replay; failures before a base is established
-leave the field absent. Failures obtain feature-specific `availabilityOutcome` values from metadata on
-the actual error rather than from ambient request state. `missingOps` is attached by the bounded ODSP
-replay only when the driver has established that the required fixed range cannot be served: either its
-canonical `cannotCatchUp` error or the non-retryable empty-response exhaustion
+The successful loader event reports `replayedOpCount`, the aggregate amount of replay work required,
+without emitting document-specific sequence numbers. The successful base-selection event reports
+`versionsProbed`, the number of sealed candidates examined, and `sequenceNumberFetchCount`, the subset
+that required an uncached ODSP sequence-number fetch. Together with duration, these fields make future
+base-selection caching and fuzzy-search optimizations directly measurable.
+
+The failed loader event uses `baseSnapshotSequenceNumber` for the selected snapshot sequence when that
+value is available. Once the paused loader has established a base container, it attaches that sequence
+number to any Fluid error raised during bounded replay; failures before a base is established leave the
+field absent. Failures obtain feature-specific `availabilityOutcome` values from metadata on the actual
+error rather than from ambient request state. `missingOps` is attached by the bounded ODSP replay only
+when the driver has established that the required fixed range cannot be served: either its canonical
+`cannotCatchUp` error or the non-retryable empty-response exhaustion
 (`genericNetworkError`, "Failed to retrieve ops from storage (Too Many Retries)"). The terminal event
 preserves that underlying `errorType`; `availabilityOutcome` is the stable Version Mark classification,
 while `errorType` remains the lower-level diagnostic taxonomy. Ordinary transport failures are not

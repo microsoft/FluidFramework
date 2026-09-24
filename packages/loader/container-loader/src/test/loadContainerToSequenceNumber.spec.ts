@@ -274,9 +274,6 @@ describe("loadContainerToSequenceNumber", () => {
 				{
 					eventName: "fluid:telemetry:VersionMarkPointInTimeLoadSucceeded",
 					category: "performance",
-					targetSequenceNumber: 0,
-					baseSnapshotSequenceNumber: 0,
-					finalSequenceNumber: 0,
 					replayedOpCount: 0,
 				},
 			]);

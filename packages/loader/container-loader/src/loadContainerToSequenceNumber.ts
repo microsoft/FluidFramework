@@ -111,9 +111,6 @@ export async function loadContainerToSequenceNumber(
 		const finalSequenceNumber = container.deltaManager.lastSequenceNumber;
 		logger.sendPerformanceEvent({
 			eventName: "VersionMarkPointInTimeLoadSucceeded",
-			targetSequenceNumber: loadToSequenceNumber,
-			baseSnapshotSequenceNumber,
-			finalSequenceNumber,
 			replayedOpCount: finalSequenceNumber - baseSnapshotSequenceNumber,
 			duration: performanceNow() - startTime,
 		});
