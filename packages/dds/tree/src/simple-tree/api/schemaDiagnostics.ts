@@ -352,7 +352,7 @@ function getNodeKind(
 		return "map";
 	}
 	if (node instanceof ObjectNodeStoredSchema) {
-		// Stored arrays use an object containing a single sequence field at the empty key.
+		// A stored array is an object with one sequence field at the empty key.
 		return node.objectNodeFields.size === 1 &&
 			node.objectNodeFields.get(EmptyKey)?.kind === FieldKinds.sequence.identifier
 			? "array"
@@ -391,14 +391,16 @@ export function collectSchemaDiagnostics(
 	upgrade: readonly SchemaDiscrepancyAlpha[];
 	equivalence: readonly SchemaDiscrepancyAlpha[];
 } {
-	// Include all staged content when representing the view; target retains the effective staging policy.
+	// Include all staged changes in the view's stored representation.
+	// The target schema includes only the changes allowed by the upgrade policy.
 	const viewed = toUpgradeSchema(view.root, StagedSchemaUpgradePolicy.permissive);
 	const entries = new Map<
 		string,
 		{ entry: SchemaDiscrepancyAlpha; view: boolean; upgrade: boolean }
 	>();
-	// Cache fields by node identifier and stored key for this comparison only.
-	// View fields are keyed by property name, which can differ from the diagnostic's stored key.
+	// Use this cache only for the current comparison.
+	// Find fields by node identifier and stored key.
+	// The view's field map uses property names, which can differ from stored keys.
 	const fieldsByStoredKey = new Map<string, ReadonlyMap<string, SimpleFieldSchema>>();
 
 	/**
@@ -423,6 +425,8 @@ export function collectSchemaDiagnostics(
 			proposedStored: values.target,
 		};
 		const viewNode = location === "root" ? undefined : view.definitions.get(location.nodeType);
+		// A `null` field key identifies an implicit field.
+		// An `undefined` field key identifies the node, not a field.
 		const isField = location === "root" || location.fieldKey !== undefined;
 		let viewField: SimpleFieldSchema | undefined;
 		if (location === "root") {
@@ -430,8 +434,9 @@ export function collectSchemaDiagnostics(
 		} else if (isField && viewNode?.kind === NodeKind.Object) {
 			let fields = fieldsByStoredKey.get(location.nodeType);
 			if (fields === undefined) {
-				// Index an object's fields on its first field failure, then reuse the index across checks.
-				// This avoids scanning all fields for every discrepancy and skips objects without field failures.
+				// Build the index when the object has its first field failure.
+				// Reuse it for later failures instead of searching all fields again.
+				// Objects without field failures do not need an index.
 				fields = new Map(
 					Array.from(viewNode.fields.values(), (field) => [field.storedKey, field]),
 				);
@@ -439,6 +444,8 @@ export function collectSchemaDiagnostics(
 			}
 			viewField = fields.get(location.fieldKey ?? EmptyKey);
 		}
+		// Read annotations from the view schema. Stored schemas do not contain them.
+		// For a collection, the node schema contains the allowed types for its implicit field.
 		const allowedTypes =
 			viewField?.simpleAllowedTypes ??
 			(isField &&
@@ -456,6 +463,9 @@ export function collectSchemaDiagnostics(
 					attributes.isStaged !== undefined &&
 					attributes.isStaged !== false,
 			);
+		// Include annotation flags only when `true`. Omit side values that are `undefined`.
+		// Keep `false` side values: they mean that the type is not allowed.
+		// These rules keep the same properties before and after JSON serialization.
 		const data = {
 			mismatch,
 			location,
@@ -484,10 +494,15 @@ export function collectSchemaDiagnostics(
 				? {}
 				: { proposedStored: normalized.proposedStored }),
 		};
+		// `mark` supplies values that match the mismatch kind.
+		// TypeScript cannot verify this relationship because the arguments are separate
+		// and some properties are added only under specific conditions.
 		const entry = data as SchemaDiscrepancyAlpha;
 		const key = JSON.stringify(entry);
-		// Reuse the same entry when multiple comparisons identify the same difference.
+		// Reuse the entry when another comparison reports the same difference.
 		const record = entries.get(key) ?? { entry, view: false, upgrade: false };
+		// Every entry makes the equivalence check fail.
+		// A reverse comparison failure therefore needs no separate flag.
 		if (check !== "reverse") {
 			record[check] = true;
 		}
@@ -515,6 +530,8 @@ export function collectSchemaDiagnostics(
 			stored: identifier === undefined ? undefined : stored.nodeSchema.get(identifier),
 			target: identifier === undefined ? undefined : target.nodeSchema.get(identifier),
 		};
+		// Use `missingNode` only if a definition is missing from one of the two schemas being compared.
+		// If it is missing only from the third schema, keep the original mismatch kind.
 		const entryMismatch =
 			location !== "root" &&
 			location.fieldKey === undefined &&
@@ -540,6 +557,7 @@ export function collectSchemaDiagnostics(
 							: node instanceof ObjectNodeStoredSchema
 								? node.objectNodeFields.get(brand(location.fieldKey ?? EmptyKey))
 								: undefined;
+				// A missing field allows no content. Report its constraints instead of `undefined`.
 				const actual = field ?? storedEmptyFieldSchema;
 				if (mismatch === "allowedType") {
 					assert(allowedType !== undefined, "An allowed-type failure must identify its type");
@@ -581,6 +599,9 @@ export function collectSchemaDiagnostics(
 		if (identifier === undefined) {
 			return "root";
 		}
+		// `EmptyKey` can identify an implicit field or an object field whose key is an empty string.
+		// Check the node kinds before replacing the key with `null`.
+		// Keep the object field's key when comparing an object with a map.
 		return {
 			nodeType: identifier,
 			fieldKey:
@@ -595,9 +616,11 @@ export function collectSchemaDiagnostics(
 		};
 	}
 
-	// Reuse viewing decisions and beta context from the pre-target analysis.
+	// Use failures from the existing viewing check to preserve its staging and field rules.
 	for (const failure of viewFailures) {
 		if (failure.mismatch === "allowedTypes") {
+			// The beta failure groups the differing types by schema side.
+			// Report each type in a separate alpha entry.
 			const location = getFieldLocation(failure.identifier, failure.fieldKey);
 			for (const { type } of failure.view) {
 				mark(location, "allowedType", "view", type.identifier);
@@ -617,7 +640,7 @@ export function collectSchemaDiagnostics(
 		}
 	}
 
-	// These failure streams are also the source of truth for boolean-only stored-schema comparisons.
+	// Use the same comparison rules as the boolean compatibility checks.
 	for (const [check, original, superset] of [
 		["upgrade", stored, target],
 		["reverse", target, stored],
@@ -639,13 +662,15 @@ export function collectSchemaDiagnostics(
 			);
 		}
 	}
+	// Sort by the JSON string so the result order does not depend on schema insertion order.
+	// Select entries for each list in this order. Reuse the entry objects without copying them.
 	const ordered = [...entries.entries()]
 		.sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
 		.map(([, record]) => record);
 	return {
 		view: ordered.filter((record) => record.view).map(({ entry }) => entry),
 		upgrade: ordered.filter((record) => record.upgrade).map(({ entry }) => entry),
-		// Equivalence requires viewing compatibility and superset checks in both directions.
+		// Equivalence requires the viewing check and both stored-schema comparisons to succeed.
 		equivalence: ordered.map(({ entry }) => entry),
 	};
 }
