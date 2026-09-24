@@ -46,15 +46,17 @@ Input-format identifiers and schema namespaces are not a materializer compatibil
 
 Seed conversion requires the original checkpoint zero; later operations are replayed, not claimed as part of the pristine seed.
 Pending state, offline loading, loading groups, attachment blobs, and refetch of a different seed version are not supported by the seed path.
-For now, configure `Fluid.Container.enableOfflineFull` to `false` on any host loader that can open seeds; the host does not need to identify seed files before opening them.
-Interactive loaders otherwise enable offline tracking by default.
-The setting affects every load through that loader, although ordinary stored DDS-backed loads do not inherently require it.
+With compatible loader and runtime versions, the host keeps its ordinary settings and does not need to identify seed files before opening them.
+Seed detection disables offline snapshot tracking and pending-state capture only for that container instance; ordinary DDS-backed loads retain their normal behavior.
+The runtime's full-tree policy ensures acknowledgment adoption even when the host disables immediate refresh.
+Pending-state capture remains unsupported on a seed-loaded instance after graduation; reload a persisted DDS-backed version to regain ordinary offline support.
 Your product must validate file creation, permissions, and persistence with its own driver and service.
 
 ## Run the example tests
 
 The tests use a real local service, loaders, runtimes, SharedTree operations, summary uploads, and acknowledgments.
-They cover deterministic construction, the checked-in creation summary, automatic graduation without model writes, collaboration, replay, incremental persistence after new edits, retry after upload failure, and loading without the seed adapter.
+They cover deterministic construction, the checked-in creation summary, automatic graduation with default host settings and without model writes, collaboration, replay, incremental persistence after new edits, retry after upload failure, and loading without the seed adapter.
+They also cover host-disabled immediate acknowledgment refresh, rejected pending-state capture on seed-loaded instances, and preserved capture on DDS-backed reloads.
 Focused on-demand tests override scheduling explicitly; the application defaults to normal automatic scheduling.
 
 ```bash

@@ -97,6 +97,7 @@ export class RunningSummarizer
 			cancellationToken,
 			stopSummarizerCallback,
 			runtime,
+			initialSummaryRequired,
 		);
 
 		// If there have been any acks newer that the one this client loaded from until now, process them before
@@ -211,6 +212,7 @@ export class RunningSummarizer
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 
 		private readonly runtime: ISummarizerRuntime,
+		initialSummaryRequired: boolean,
 	) {
 		super();
 
@@ -277,7 +279,10 @@ export class RunningSummarizer
 		});
 
 		const immediatelyRefreshLatestSummaryAck =
-			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ?? true;
+			// A materialized baseline must be adopted before the next summary can reuse its handles.
+			initialSummaryRequired ||
+			(this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ??
+				true);
 		this.generator = new SummaryGenerator(
 			this.pendingAckTimer,
 			this.heuristicData,

@@ -2485,6 +2485,7 @@ export class Container
 						this._deltaManager.connectionManager.requestWriteConnection();
 					}
 				},
+				disableOfflineLoad: () => this.serializedStateManager.disableOfflineLoad(),
 				getAbsoluteUrl: this.getAbsoluteUrl,
 				getContainerDiagnosticId: () => this.resolvedUrl?.id,
 				getClientId: () => this.clientId,

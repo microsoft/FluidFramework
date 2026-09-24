@@ -56,6 +56,7 @@ export interface ISummaryGenerationOptions {
 	 * without submitting an application operation or bypassing connection and permission restrictions.
 	 * This automatic connection request requires a loader that supplies `IContainerContext.requestWriteConnection`.
 	 * Disabled heuristics and on-demand summarization still require an explicit request.
+	 * The summarizer refreshes acknowledgments before completing each summary, regardless of host refresh configuration.
 	 * After adoption, ordinary incremental generation and scheduling resume.
 	 *
 	 * Generating, uploading, or receiving an untracked acknowledgment does not end this policy.

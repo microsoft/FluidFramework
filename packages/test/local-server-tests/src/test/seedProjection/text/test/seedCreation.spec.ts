@@ -164,11 +164,9 @@ describe("Seed creation: real local-service lifecycle", function () {
 			documentServiceFactory: factory,
 			urlResolver: resolver,
 			codeLoader: new LocalCodeLoader([[codeDetails, observed]]),
-			configProvider: createTestConfigProvider({
-				"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
-				"Fluid.Container.enableOfflineFull": false,
-				...options.config,
-			}),
+			...(options.config === undefined
+				? {}
+				: { configProvider: createTestConfigProvider(options.config) }),
 		});
 		tracker.add(loader);
 		return loader;
@@ -212,44 +210,69 @@ describe("Seed creation: real local-service lifecycle", function () {
 		}
 	}
 
-	it("graduates automatically without application writes and continues automatic persistence", async () => {
-		const url = await create();
-		const client = track(await makeLoader({ automatic: true }).resolve({ url }));
-		const summaries = new SummaryCollection(client.deltaManager, { send: () => {} });
-		const first = await timeoutAwait(summaries.waitSummaryAck(0), {
-			errorMsg: "Automatic first summary was not acknowledged",
-		});
-		assert.equal(writes, 0, "Graduation must not require an initialization or dummy model op");
-		assertFull(uploads[0].summary);
-		assert.equal(uploads[0].summary.tree[seedRoot], undefined);
-		const firstStored = await inspect(url, first.summaryAck.contents.handle);
-		assert(firstStored.snapshotTree.blobs[".metadata"] !== undefined);
-		assert.equal(firstStored.snapshotTree.trees[seedRoot], undefined);
+	for (const disableImmediateAckRefresh of [false, true]) {
+		const hostConfiguration = disableImmediateAckRefresh
+			? "host ACK refresh disabled"
+			: "default host configuration";
+		it(`graduates automatically with ${hostConfiguration} and continues automatic persistence`, async () => {
+			const url = await create();
+			const client = track(
+				await makeLoader({
+					automatic: true,
+					...(disableImmediateAckRefresh
+						? {
+								config: { "Fluid.Summarizer.immediatelyRefreshLatestSummaryAck": false },
+							}
+						: {}),
+				}).resolve({ url }),
+			);
+			const summaries = new SummaryCollection(client.deltaManager, { send: () => {} });
+			const interactive = loads.find(
+				(load) => load.context.clientDetails.capabilities.interactive,
+			);
+			assert(interactive?.fromSeed);
+			assert.deepEqual(readParts(interactive.app.view), seed.parts);
+			assert(client.getPendingLocalState !== undefined);
+			await assert.rejects(client.getPendingLocalState(), /offline load is enabled/);
 
-		const interactive = loads.find(
-			(load) => load.context.clientDetails.capabilities.interactive,
-		);
-		assert(interactive !== undefined);
-		const part = interactive.app.view.root.parts.get("first");
-		assert(part !== undefined);
-		const requiredSummaryReference = client.deltaManager.lastSequenceNumber + 1;
-		part.text = "Edited after automatic graduation";
-		await tracker.ensureSynchronized();
-		const later = await timeoutAwait(summaries.waitSummaryAck(requiredSummaryReference), {
-			errorMsg: "Automatic summary after editing was not acknowledged",
-		});
-		assert.notEqual(later.summaryAck.contents.handle, first.summaryAck.contents.handle);
+			const first = await timeoutAwait(summaries.waitSummaryAck(0), {
+				errorMsg: "Automatic first summary was not acknowledged",
+			});
+			assert.equal(
+				writes,
+				0,
+				"Graduation must not require an initialization or dummy model op",
+			);
+			assertFull(uploads[0].summary);
+			assert.equal(uploads[0].summary.tree[seedRoot], undefined);
+			const firstStored = await inspect(url, first.summaryAck.contents.handle);
+			assert(firstStored.snapshotTree.blobs[".metadata"] !== undefined);
+			assert.equal(firstStored.snapshotTree.trees[seedRoot], undefined);
+			await assert.rejects(client.getPendingLocalState(), /offline load is enabled/);
 
-		track(
-			await makeLoader({ nativeOnly: true }).resolve({
-				url,
-				headers: { [LoaderHeader.version]: later.summaryAck.contents.handle },
-			}),
-		);
-		const reloaded = loads.at(-1);
-		assert(reloaded !== undefined && !reloaded.fromSeed);
-		assert.equal(reloaded.app.view.root.parts.get("first")?.text, part.text);
-	});
+			const part = interactive.app.view.root.parts.get("first");
+			assert(part !== undefined);
+			const requiredSummaryReference = client.deltaManager.lastSequenceNumber + 1;
+			part.text = "Edited after automatic graduation";
+			await tracker.ensureSynchronized();
+			const later = await timeoutAwait(summaries.waitSummaryAck(requiredSummaryReference), {
+				errorMsg: "Automatic summary after editing was not acknowledged",
+			});
+			assert.notEqual(later.summaryAck.contents.handle, first.summaryAck.contents.handle);
+
+			const nativeClient = track(
+				await makeLoader({ nativeOnly: true }).resolve({
+					url,
+					headers: { [LoaderHeader.version]: later.summaryAck.contents.handle },
+				}),
+			);
+			const reloaded = loads.at(-1);
+			assert(reloaded !== undefined && !reloaded.fromSeed);
+			assert.equal(reloaded.app.view.root.parts.get("first")?.text, part.text);
+			assert(nativeClient.getPendingLocalState !== undefined);
+			assert.notEqual(await nativeClient.getPendingLocalState(), "");
+		});
+	}
 
 	it("independently collaborates, replays edits, persists full then incremental, and reloads without the adapter", async () => {
 		const url = await create();
@@ -389,24 +412,50 @@ describe("Seed creation: real local-service lifecycle", function () {
 		);
 	});
 
-	for (const [name, options, message] of [
-		["pending restoration", { pending: true }, /Pending\/offline/],
-		[
-			"offline loading",
-			{ config: { "Fluid.Container.enableOfflineFull": true } },
-			/Offline loading/,
-		],
-		[
-			"deferred ACK refresh",
-			{ config: { "Fluid.Summarizer.immediatelyRefreshLatestSummaryAck": false } },
-			/immediate summary ACK/,
-		],
-	] as const) {
-		it(`rejects unsupported ${name}`, async () => {
-			const url = await create();
-			await assert.rejects(makeLoader(options).resolve({ url }), message);
-			assert.equal(loads.length, 0);
-			assert.equal(writes, 0);
-		});
-	}
+	it("selects seed-safe behavior internally while preserving native pending-state capture", async () => {
+		const config = {
+			"Fluid.Container.UseLoadingGroupIdForSnapshotFetch2": true,
+			"Fluid.Container.enableOfflineFull": true,
+			"Fluid.Summarizer.immediatelyRefreshLatestSummaryAck": false,
+		};
+		const url = await create();
+		const client = track(await makeLoader({ config }).resolve({ url }));
+		assert(client.getPendingLocalState !== undefined);
+		await assert.rejects(client.getPendingLocalState(), /offline load is enabled/);
+		const { container, summarizer } = await createSummarizerCore(
+			client,
+			makeLoader({ config }),
+		);
+		track(container);
+		await tracker.ensureSynchronized();
+		const accepted = await summarizeNow(summarizer, "adopt seed baseline with host defaults");
+		assertFull(accepted.summaryTree);
+		const incremental = await summarizeNow(
+			summarizer,
+			"reuse the internally adopted baseline",
+		);
+		assert.equal(incremental.summaryTree.tree.gc?.type, SummaryType.Handle);
+		assert.equal(uploads[1].context.ackHandle, accepted.summaryVersion);
+		// The seeded incarnation still has a seed baseline in its loader, even after the service graduates.
+		await assert.rejects(client.getPendingLocalState(), /offline load is enabled/);
+
+		const nativeClient = track(
+			await makeLoader({ config }).resolve({
+				url,
+				headers: { [LoaderHeader.version]: incremental.summaryVersion },
+			}),
+		);
+		await tracker.ensureSynchronized();
+		assert.equal(loads.at(-1)?.fromSeed, false);
+		assert(nativeClient.getPendingLocalState !== undefined);
+		assert.notEqual(await nativeClient.getPendingLocalState(), "");
+		assert.equal(writes, 0);
+	});
+
+	it("rejects unsupported pending restoration", async () => {
+		const url = await create();
+		await assert.rejects(makeLoader({ pending: true }).resolve({ url }), /Pending\/offline/);
+		assert.equal(loads.length, 0);
+		assert.equal(writes, 0);
+	});
 });

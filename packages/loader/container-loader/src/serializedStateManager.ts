@@ -193,7 +193,7 @@ export class SerializedStateManager implements IDisposable {
 	constructor(
 		subLogger: ITelemetryBaseLogger,
 		private readonly storageAdapter: ISerializedStateManagerDocumentStorageService,
-		private readonly offlineLoadEnabled: boolean,
+		private offlineLoadEnabled: boolean,
 		containerEvent: IEventProvider<ISerializerEvent>,
 		private readonly containerDirty: () => boolean,
 		private readonly supportGetSnapshotApi: () => boolean,
@@ -223,6 +223,19 @@ export class SerializedStateManager implements IDisposable {
 	dispose(): void {
 		this.#disposed = true;
 		this.snapshotRefresher?.dispose();
+	}
+
+	/**
+	 * Stop tracking state when the runtime cannot restore from the loader's stored snapshot.
+	 * Call this during runtime instantiation, before operation replay or pending-state capture.
+	 */
+	public disableOfflineLoad(): void {
+		this.verifyNotDisposed();
+		this.offlineLoadEnabled = false;
+		this.snapshotRefresher?.dispose();
+		this.snapshotInfo = undefined;
+		this.latestSnapshot = undefined;
+		this.processedOps.length = 0;
 	}
 
 	private verifyNotDisposed(): void {
@@ -340,6 +353,9 @@ export class SerializedStateManager implements IDisposable {
 	 * @returns The snapshot sequence number if updated, -1 otherwise
 	 */
 	private handleSnapshotRefreshed(latestSnapshot: ISnapshotInfo): number {
+		if (!this.offlineLoadEnabled || this.#disposed) {
+			return -1;
+		}
 		this.latestSnapshot = latestSnapshot;
 		return this.updateSnapshotAndProcessedOpsMaybe();
 	}

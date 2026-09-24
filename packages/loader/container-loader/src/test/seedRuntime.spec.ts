@@ -5,8 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	bufferToString,
+	stringToBuffer,
+	TypedEventEmitter,
+} from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
 	IContainerContext,
 	IRuntime,
@@ -14,9 +19,18 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentStorageService,
+	IResolvedUrl,
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
+import type { SeedLoadContext } from "../containerContext.js";
+import { loadExistingContainer } from "../createAndLoadContainerUtils.js";
 import {
 	createSeedRuntimeSnapshot,
 	createSeedSummary,
@@ -57,7 +71,7 @@ function asSnapshot(tree: ISnapshotTree): ISnapshot {
 	};
 }
 
-function makeContext(overrides: Partial<IContainerContext> = {}): IContainerContext {
+function makeContext(overrides: Partial<SeedLoadContext> = {}): SeedLoadContext {
 	const storage: IContainerContext["storage"] = {
 		getSnapshotTree: async () => seed,
 		getSnapshot: async () => asSnapshot(seed),
@@ -76,10 +90,8 @@ function makeContext(overrides: Partial<IContainerContext> = {}): IContainerCont
 		attachState: AttachState.Attached,
 		clientDetails: { capabilities: { interactive: true } },
 		deltaManager: { initialSequenceNumber: 0 },
-		taggedLogger: mixinMonitoringContext(new MockLogger(), {
-			getRawConfig: (name) =>
-				name === "Fluid.Container.enableOfflineFull" ? false : undefined,
-		}).logger,
+		taggedLogger: new MockLogger(),
+		disableOfflineLoad: () => {},
 		getLoadedFromVersion: () => ({ id: "seed-version", treeId: "seed-version" }),
 		...overrides,
 	} as unknown as IContainerContext;
@@ -413,10 +425,47 @@ describe("Seed runtime APIs", () => {
 		}
 	});
 
-	it("uses effective interactive offline defaults while leaving native loads unrestricted", async () => {
+	it("disables loader tracking only for seeds, regardless of interactive offline settings", async () => {
+		for (const interactive of [true, false]) {
+			for (const enabled of [undefined, false, true]) {
+				let disabled = false;
+				const context = makeContext({
+					clientDetails: { capabilities: { interactive } },
+					disableOfflineLoad: () => {
+						disabled = true;
+					},
+					taggedLogger: mixinMonitoringContext(new MockLogger(), {
+						getRawConfig: (name) =>
+							name === "Fluid.Container.enableOfflineFull"
+								? enabled
+								: name === "Fluid.Summarizer.immediatelyRefreshLatestSummaryAck"
+									? false
+									: undefined,
+					}).logger,
+				});
+				const factory = seedRuntimeFactory(
+					makeProjector({
+						readSeed: async () => {
+							assert(disabled, "Disable loader tracking before asynchronous materialization");
+							return "seed";
+						},
+					}),
+					async () => new ConstructionRuntime(),
+				);
+				await factory.instantiateRuntime(context, true);
+				assert(disabled);
+				disabled = false;
+				await factory.instantiateRuntime({ ...context, baseSnapshot: native.snapshot }, true);
+				assert(!disabled, "Native loads must preserve host offline settings");
+			}
+		}
+	});
+
+	it("fails safely with older loaders that cannot disable interactive offline tracking", async () => {
 		for (const interactive of [true, false]) {
 			for (const enabled of [undefined, false, true]) {
 				const context = makeContext({
+					disableOfflineLoad: undefined,
 					clientDetails: { capabilities: { interactive } },
 					taggedLogger: mixinMonitoringContext(new MockLogger(), {
 						getRawConfig: (name) =>
@@ -437,7 +486,7 @@ describe("Seed runtime APIs", () => {
 				if (interactive && (enabled ?? true)) {
 					await assert.rejects(
 						factory.instantiateRuntime(context, true),
-						/Offline loading is not supported/,
+						/loader that can disable offline snapshot tracking/,
 					);
 					assert.equal(seedRead, false);
 				} else {
@@ -449,6 +498,95 @@ describe("Seed runtime APIs", () => {
 			}
 		}
 	});
+
+	for (const fromSeed of [true, false]) {
+		it(`loads through the real loader with default host settings, fromSeed=${fromSeed}`, async () => {
+			const codeDetails = { package: "seed-application" };
+			const stored = getISnapshotFromSerializedContainer(
+				createSeedSummary({
+					codeDetails,
+					applicationProjection: {
+						type: SummaryType.Tree,
+						tree: {
+							[fromSeed ? "input" : ".metadata"]: {
+								type: SummaryType.Blob,
+								content: fromSeed ? "seed" : "native",
+							},
+						},
+					},
+				}),
+			);
+			stored.snapshotTree.id = "stored-version";
+			const resolvedUrl: IResolvedUrl = {
+				type: "fluid",
+				id: "document",
+				url: "https://example.com/tenant/document",
+				tokens: {},
+				endpoints: {},
+			};
+			const storage: IDocumentStorageService = {
+				...makeContext().storage,
+				getVersions: async () => [{ id: "stored-version", treeId: "stored-version" }],
+				getSnapshotTree: async () => stored.snapshotTree,
+				downloadSummary: async () => assert.fail("No summary download expected"),
+				readBlob: async (id) => {
+					const blob = stored.blobContents.get(id);
+					assert(blob !== undefined);
+					return blob;
+				},
+			};
+			const service: IDocumentService = Object.assign(
+				new TypedEventEmitter<IDocumentServiceEvents>(),
+				{
+					resolvedUrl,
+					connectToStorage: async () => storage,
+					connectToDeltaStorage: async () => assert.fail("No operation fetch expected"),
+					connectToDeltaStream: async () => assert.fail("No connection expected"),
+					dispose: () => {},
+				},
+			);
+			const runtime = new ConstructionRuntime();
+			const factory = seedRuntimeFactory(makeProjector(), async (load) => {
+				assert.equal(load.fromSeed, fromSeed);
+				return runtime;
+			});
+			const container = await loadExistingContainer({
+				codeLoader: {
+					load: async () => ({ module: { fluidExport: factory }, details: codeDetails }),
+				},
+				urlResolver: {
+					resolve: async () => resolvedUrl,
+					getAbsoluteUrl: async () => resolvedUrl.url,
+				},
+				documentServiceFactory: {
+					createContainer: async () => assert.fail("No creation expected"),
+					createDocumentService: async () => service,
+				},
+				request: {
+					url: resolvedUrl.url,
+					headers: { [LoaderHeader.loadMode]: { deltaConnection: "none" } },
+				},
+			});
+			try {
+				assert.equal(container.closed, false);
+				assert.equal(await container.getEntryPoint(), await runtime.getEntryPoint());
+				assert(container.getPendingLocalState !== undefined);
+				if (fromSeed) {
+					await assert.rejects(container.getPendingLocalState(), /offline load is enabled/);
+				} else {
+					const captured = await container.getPendingLocalState();
+					assert(captured.includes('"pendingRuntimeState":"pending"'));
+				}
+				assert.equal(
+					container.closed,
+					false,
+					"A rejected capture must not close the container",
+				);
+			} finally {
+				container.dispose();
+			}
+		});
+	}
 
 	it("rejects unsupported seed modes before reading application input", async () => {
 		const rejectRead = async (): Promise<never> => assert.fail("No seed reads");

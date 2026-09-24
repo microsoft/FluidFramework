@@ -286,11 +286,15 @@ The [lifecycle tests][lifecycle-tests] exercise automatic graduation without an 
 ### Host configuration
 
 The host selects the seed-enabled runtime factory through its ordinary code loader; it does not inspect each document to choose a seed or DDS-backed load path.
-Currently, a host that can open seed documents must disable offline tracking in that loader's configuration: `getRawConfig("Fluid.Container.enableOfflineFull")` must return `false`.
-This is a loader-wide limitation, not a setting that the host can choose after learning whether an individual document contains a seed.
-Interactive loaders enable offline tracking by default, so leaving this setting unspecified does not disable it.
-Keep your other host configuration and leave immediate summary-acknowledgment refresh enabled.
-Ordinary DDS-backed documents do not inherently need these restrictions, but documents opened by that same loader share its offline configuration.
+With compatible loader and runtime versions, keep your ordinary host settings; no seed-specific configuration is required.
+After detecting a seed, the factory tells the loader to stop offline snapshot tracking and reject pending-state capture for that container instance.
+This prevents the stored seed snapshot from being combined with pending state from the constructed DDS graph.
+Other documents opened through the same loader retain their ordinary offline behavior.
+The runtime's `untilFirstAck` policy ensures acknowledgment adoption before summary completion, even when the host disables immediate acknowledgment refresh.
+
+Pending-state capture remains unsupported for a container instance loaded from a seed, including after its first Fluid summary is persisted.
+Reload a persisted DDS-backed version to regain ordinary pending-state capture and offline support.
+Older loaders without the internal per-container capability reject interactive seed loads if offline tracking is enabled, rather than retain an unsafe snapshot baseline.
 
 ## How loading and persistence work
 
@@ -337,8 +341,8 @@ The summarizer needs the same permissions and connectivity as ordinary Fluid sum
 ### Supported boundaries
 
 - Creation input and constructed snapshots must contain complete trees and blobs, not attachment blobs, summary handles, or loading groups.
-- Seed loads require an attached stored version at checkpoint zero and immediate summary-acknowledgment refresh.
-- Seed-loaded runtimes reject pending-state capture/restoration and offline loading. Reload a persisted DDS-backed version to use the ordinary load path.
+- Seed loads require an attached stored version at checkpoint zero. The runtime enforces the acknowledgment adoption needed by its full-tree policy.
+- Seed-loaded container instances reject pending-state capture/restoration and offline loading, without disabling these capabilities for other documents. Reload a persisted DDS-backed version to use the ordinary load path.
 - Refetching the same seed version is supported; refetching a different seed version is rejected.
 - Disabling summary heuristics or selecting on-demand summaries intentionally requires your host to request a summary through the ordinary summarizer APIs.
 

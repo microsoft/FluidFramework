@@ -22,6 +22,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { snapshotHasLoadingGroups } from "./captureReferencedContents.js";
+import type { SeedLoadContext } from "./containerContext.js";
 import {
 	createDetachedContainer,
 	type IContainerHostProps,
@@ -121,9 +122,12 @@ export interface SeedRuntimeFactoryOptions {
  * summary is acknowledged (`summaryGenerationOptions.fullTreePolicy: "untilFirstAck"` in ContainerRuntime).
  * Do not copy seed content into native summaries.
  *
- * Seed loads currently require an attached version at checkpoint zero, immediate summary
- * acknowledgement refresh, and no pending state, offline mode, or loading groups.
- * These restrictions do not apply to native documents.
+ * Seed loads require an attached version at checkpoint zero without pending state or loading groups.
+ * After detecting seed content, the factory asks the loader to stop offline snapshot tracking
+ * and reject pending-state capture for that container.
+ * The runtime's full-tree policy ensures immediate summary acknowledgment refresh.
+ * No seed-specific host configuration is needed with a compatible loader and runtime.
+ * Native documents keep their ordinary loading and offline behavior.
  *
  * @typeParam TSeed - Application input shared by the projector's reader and materializer.
  * @param projector - Application-owned seed interpretation and materialization.
@@ -159,15 +163,16 @@ export function seedRuntimeFactory<TSeed = unknown>(
 			if (original.deltaManager.initialSequenceNumber !== 0) {
 				throw new UsageError("Only the original creation checkpoint can be materialized");
 			}
+			const seedContext: SeedLoadContext = original;
 			const config = loggerToMonitoringContext(original.taggedLogger).config;
 			if (
+				seedContext.disableOfflineLoad === undefined &&
 				original.clientDetails.capabilities.interactive &&
 				(config.getBoolean("Fluid.Container.enableOfflineFull") ?? true)
 			) {
-				throw new UsageError("Offline loading is not supported for seed loading");
-			}
-			if (config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") === false) {
-				throw new UsageError("Seed loading requires immediate summary ACK refresh");
+				throw new UsageError(
+					"Seed loading requires a loader that can disable offline snapshot tracking",
+				);
 			}
 			const sourceVersion = original.getLoadedFromVersion()?.id;
 			if (sourceVersion === undefined) {
@@ -177,6 +182,7 @@ export function seedRuntimeFactory<TSeed = unknown>(
 			if (snapshotHasLoadingGroups(source)) {
 				throw new UsageError("Loading groups are unsupported for seed loading");
 			}
+			seedContext.disableOfflineLoad?.();
 			const materialized = await projector.materialize(await projector.readSeed(original), 0);
 			validateSeedRuntimeSnapshot(materialized);
 			validateBlobNamespaces(
