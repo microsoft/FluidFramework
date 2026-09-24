@@ -1,10 +1,11 @@
 # Iteration 0019: sessions Report
 
-Status: Wave 1 discovery and assessment complete; no repair selected or performed
+Status: Wave 2 SESS-001 simplified, validated, and independently reviewed; integration pending
 Branch: `rust-service-iteration-0019-sessions`
 Worktree: `/workspaces/FluidFramework-rust-service-iteration-0019-sessions`
-Base commit: user-specified kickoff `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`
-Final commit: none; Wave 1 forbids commits
+Iteration kickoff/source context: `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`
+SESS-001 fixed checkpoint base/HEAD: `e25b4e46566d67189dd6530a09e9a20bc565ea78`
+Final commit: the checkpoint commit containing this completed report; hash recorded during integration
 Agent or owner: sessions workstream agent
 Model and tool version: model unknown; repository file-search and file-edit tools
 Instruction source: [sessions instructions](instructions/sessions.md), read from the assigned checkout; that generated file and the shared charter still name `575b77e825e598b15b7740f56956fe433a6153d8`, while the direct assignment supersedes them with kickoff `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`
@@ -20,8 +21,8 @@ workspace guidance and known issues, and the inherited
 [0018 quality inventory](../../0018/quality-inventory.md) were assessed.
 Every crate and all six categories are accounted for below.
 
-One small implementation candidate, [SESS-001](#sess-001), is suitable for
-Wave 2 comparison.
+One small implementation candidate, [SESS-001](#sess-001), was selected for
+Wave 2 and implemented without supporting edits.
 One documentation consolidation, [SESS-002](#sess-002), is lower-ranked and
 deferred.
 The remaining material-looking similarities were rejected, excluded, or found
@@ -29,15 +30,19 @@ already proportionate because they encode distinct lifecycle, platform,
 security, delivery, or diagnostic responsibilities.
 In particular, compression and encryption wrappers must not be coupled merely
 because their forwarding syntax is similar.
-No code, tests, crate documentation, instructions, shared record, manifest,
-lockfile, or generated artifact was changed.
-Only this report was written.
+Wave 2 has exactly two tracked dirty files:
+`rust-service/crates/sea-encryption/src/session.rs` and
+`rust-service/historical/iterations/0019/phase-2/sessions.md`.
+Tests, crate documentation, instructions, shared records, manifests, lockfiles,
+and generated artifacts were not changed.
 
 Confidence is high for ownership and false-coupling conclusions because the
 0018 inventory already supplies focused discriminators for every consequential
 boundary.
-Confidence in repair safety remains provisional until Wave 2 runs the recorded
-checks.
+The fixed-base production diff contains only the recorded ownership
+simplification; the other tracked dirty file is this cumulative report.
+Coordinator validation passed in the guarded worktree at HEAD
+`e25b4e46566d67189dd6530a09e9a20bc565ea78`.
 
 ## Hypothesis Results
 
@@ -120,8 +125,40 @@ checks.
   makes ownership clearer at the transformation boundary.
 - **Displaced complexity/supporting edits:** none expected; no test or
   documentation edit should be needed because behavior is unchanged.
-- **Proposed disposition:** **deferred to Wave 2 selection**, recommended local
-  repair.
+- **Proposed disposition:** **simplified, validated, and independently
+  reviewed; accepted for integration**.
+  The implementation computes the encrypted payload while borrowing the
+  original submission, then moves the owned submission and replaces only its
+  payload.
+  This removes the `EventSubmission::clone` responsibility without changing
+  the append state machine.
+- **Actual maintenance benefit:** one unnecessary clone/refcount operation and
+  its implication of two live submission values are removed.
+  The resulting order is explicit: acquire terminal guard, prepare ciphertext,
+  move the original metadata/tree/reference, submit, then preserve the existing
+  success/error terminal handling.
+- **Checkpoint base:** discovery-report `HEAD`
+  `e25b4e46566d67189dd6530a09e9a20bc565ea78`.
+  The iteration kickoff/source context is
+  `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`; it is not the SESS-001
+  checkpoint base.
+  Coordinator status evidence identifies exactly two tracked dirty files:
+  `rust-service/crates/sea-encryption/src/session.rs` and
+  `rust-service/historical/iterations/0019/phase-2/sessions.md`.
+- **Supporting edits:** none.
+- **Displaced-complexity check:** no helper, abstraction, branch, state,
+  allocation, conversion, dependency, public item, test adaptation, or
+  documentation qualification was added.
+  Encryption still occurs before ownership moves to the inner session, and the
+  same `author_terminal` guard spans preparation and append.
+- **Validation:** coordinator validation passed at fixed checkpoint base/HEAD
+  `e25b4e46566d67189dd6530a09e9a20bc565ea78`.
+  `rs0019 sessions format` completed with exactly
+  `rust-service/crates/sea-encryption/src/session.rs` and
+  `rust-service/historical/iterations/0019/phase-2/sessions.md` dirty,
+  introduced no out-of-scope paths, and left `Cargo.lock` absent from status.
+  `rs0019 sessions test` passed 7 `sea-compression`, 17 `sea-encryption`,
+  70 `sea-sequencer`, and 11 `sea-signals` tests: 105 total with 0 failures.
 - **Revisit trigger:** selection against the iteration's four-repair budget, or
   a future change to `EventSubmission` clone cost/fields.
 
@@ -406,29 +443,114 @@ No sessions candidate justifies Structural ambition or a shared owner.
 
 ## Deliverables and Commits
 
-- Deliverable: this complete Wave 1 workstream report.
+- Deliverable: this complete Wave 1 report plus the uncommitted SESS-001
+  implementation checkpoint.
 - Commits: none, as required.
-- Production, tests, crate documentation, instructions, shared inventories,
-  manifests, lockfiles, and generated files: unchanged.
+- Production change: `sea-encryption/src/session.rs` no longer clones the owned
+  `EventSubmission` before payload replacement.
+- Tests, crate documentation, instructions, shared inventories, manifests,
+  lockfiles, and generated files: unchanged.
 
 ## Validation Evidence
 
-Wave 1 ran **no terminal commands, tests, formatters, builds, linters, or
-documentation checks**, as explicitly required.
-Repository evidence was gathered with read-only file viewing and text search.
-No passing validation is claimed.
+Wave 1 ran no commands.
+After the Wave 2 edit, task discovery was not exposed as a separate tool.
+The directly available task runner was invoked with the assigned workspace and
+both registered labels:
 
-Registered follow-on task labels from the direct assignment:
+- `rs0019 sessions format`: `Task not found`
+- `rs0019 sessions test`: `Task not found`
 
-- `rs0019 sessions test`
-- `rs0019 sessions format`
+Per the fallback instruction, no terminal command was used and no passing
+validation was initially claimed.
+The exact requested fallback commands were:
 
-If SESS-001 is selected, `rs0019 sessions test` should run the focused
-encryption tests named in that candidate, followed by the assigned four-crate
-package checks.
-`rs0019 sessions format` must remain scoped to the four owned crates and must
-verify that `Cargo.lock` is unchanged.
+```console
+cd /workspaces/FluidFramework-rust-service-iteration-0019-sessions/rust-service
+cargo fmt --package sea-encryption
+cargo test -p sea-encryption --all-targets --all-features session::tests::encrypted_payloads_preserve_control_metadata_and_stored_tree_identities
+cargo test -p sea-encryption --all-targets --all-features session::tests::failed_key_preparation_closes_inner_author_and_wrapper_clones
+cargo test -p sea-encryption --all-targets --all-features session::tests::equal_submissions_encrypt_independently_and_recheck_authority
+cargo test -p sea-encryption --all-targets --all-features session::tests::cancelled_preparation_terminates_clones_before_inner_append
+cargo test -p sea-encryption --all-targets --all-features
+cargo clippy -p sea-encryption --all-targets --all-features -- -D warnings
+```
+
+The package test includes
+`session::tests::encrypted_payloads_preserve_control_metadata_and_stored_tree_identities`,
+`session::tests::failed_key_preparation_closes_inner_author_and_wrapper_clones`,
+`session::tests::equal_submissions_encrypt_independently_and_recheck_authority`,
+and
+`session::tests::cancelled_preparation_terminates_clones_before_inner_append`.
+The coordinator should also execute the guarded task's four-crate package
+checks if its registered definition requires them.
+
+Coordinator validation subsequently passed.
+`rs0019 sessions format` ran in the guarded worktree at fixed checkpoint
+base/HEAD `e25b4e46566d67189dd6530a09e9a20bc565ea78` with exactly two tracked
+dirty files: `rust-service/crates/sea-encryption/src/session.rs` and
+`rust-service/historical/iterations/0019/phase-2/sessions.md`.
+The formatter caused no out-of-scope paths, and `rust-service/Cargo.lock`
+remained absent from status.
+`rs0019 sessions test` passed 7 `sea-compression`, 17 `sea-encryption`,
+70 `sea-sequencer`, and 11 `sea-signals` tests, for 105 total and 0 failures.
+No failed coordinator validation is reported.
+Editor diagnostics for `sea-encryption/src/session.rs` reported no errors after
+the edit.
 The coordinator retains canonical workspace and integration gates.
+
+## Checkpoint Review
+
+Checkpoint: SESS-001
+Fixed base/HEAD: `e25b4e46566d67189dd6530a09e9a20bc565ea78`
+Reviewed state: uncommitted diff containing exactly
+`rust-service/crates/sea-encryption/src/session.rs` and
+`rust-service/historical/iterations/0019/phase-2/sessions.md`
+Current review cycle: exceptional report-only repair cycle 3
+
+The reviewer identified no runtime regression in the clone removal.
+One Medium report-provenance finding noted that the report incorrectly named
+the iteration kickoff `7b56e89cc3d79a861ed708c8d9d4b1fe7d9ff475`
+as the SESS-001 checkpoint base and incompletely described tracked dirty paths.
+This repair cycle corrects the fixed base to
+`e25b4e46566d67189dd6530a09e9a20bc565ea78`, retains `7b56e89...` only as
+iteration kickoff/source context, and records both tracked dirty files wherever
+checkpoint scope or provenance is described.
+
+Disposition: **resolved in report; runtime change unchanged**.
+No code, test, contract, or public surface changed during repair cycle 1.
+The prior coordinator validation remains applicable because this correction
+changes only the report.
+
+Repair cycle 2 used the same fixed base,
+`e25b4e46566d67189dd6530a09e9a20bc565ea78`.
+Re-review identified two remaining report-only contradictions:
+the SESS-001 disposition still said validation was pending, and Measurements
+said no commands were performed despite the recorded coordinator formatting
+and 105 passing tests.
+This cycle marks SESS-001 simplified and validated, pending fixed-base
+re-review and integration, and distinguishes absent performance measurement
+from completed coordinator validation.
+
+Disposition: **resolved in report; runtime change unchanged**.
+No code, test, contract, public surface, or validation evidence changed during
+repair cycle 2.
+The original Medium provenance finding and repair-cycle-1 disposition remain
+recorded above.
+
+Repair-cycle-2 re-review found one stale header still identifying repair cycle
+1 as the current cycle.
+The configured two-cycle allowance was exhausted, so the coordinator stopped
+and the user explicitly authorized one additional report-only repair and fresh
+review.
+Exceptional repair cycle 3 updates the current-cycle header and records the
+stale-header finding plus the user-authorized exception; source and validation
+evidence remain unchanged.
+
+Disposition: **resolved**.
+The final fresh review inspected complete patch
+`dab753ca90d9ca066adce8d002a869c58748805c032894591403a88f89e24797`
+and returned no actionable findings.
 
 ## Behavioral Contracts and Test Layers
 
@@ -455,10 +577,13 @@ a way that hides the regression it is intended to detect.
 
 | Type | Attempt or event | Evidence | Impact | Resolution or state | Reusable lesson |
 | --- | --- | --- | --- | --- | --- |
-| Provenance discrepancy | Direct assignment names kickoff `7b56e89...`; generated charter, inventory, and workstream instructions name `575b77e...` | File headers versus direct task text | Terminal verification was forbidden, so checkout identity was not independently queried | Record direct assignment as authoritative and preserve the discrepancy for coordinator reconciliation | Generated records should be refreshed when kickoff changes before dispatch |
+| Provenance discrepancy | Iteration kickoff/source context is `7b56e89...`; generated charter, inventory, and workstream instructions name `575b77e...`; SESS-001 fixed base is independently `e25b4e46566d67189dd6530a09e9a20bc565ea78` | Direct task, generated file headers, and checkpoint review | Conflating kickoff with checkpoint base produced a Medium review finding | Repair cycle 1 now separates all three provenance facts and records both tracked dirty files; finding resolved | Generated records should be refreshed when kickoff changes, and checkpoint base must be captured separately at repair start |
 | Falsified abstraction | Compression and encryption forwarding appeared nearly identical | SESS-003 contract and state comparison | A common adapter would hide different error and author-lifecycle rules | Rejected | Compare required agreement, not syntax |
 | Falsified test cleanup | Wrapper tests use parallel fixture shapes | SESS-004 and inherited 0018 mutation evidence | Consolidation would weaken raw-boundary diagnosis | Rejected | A shared conformance pass cannot prove a transform occurred |
 | Explicit no-command constraint | Wave 1 was limited to file inspection/reporting | Direct assignment and instructions | No live branch/HEAD/status or test evidence can be claimed | Recorded labels and required future gates only | Keep discovery evidence distinct from execution evidence |
+| Validation handoff | Both assigned Wave 2 task labels initially returned `Task not found` to this workstream | `rs0019 sessions format`; `rs0019 sessions test` | Required coordinator execution | Coordinator later ran both guarded tasks successfully at fixed base/HEAD `e25b4e46566d67189dd6530a09e9a20bc565ea78`; 105 tests passed, exactly the source and report were dirty, and no out-of-scope path or `Cargo.lock` change appeared | Register worktree-scoped tasks before repair dispatch |
+| Checkpoint review finding | Report used iteration kickoff as the SESS-001 fixed base and omitted the tracked report from one status description | Medium provenance finding; no runtime regression identified | Review evidence could be compared against the wrong base | Repair cycle 1 corrected the report only; finding resolved, runtime diff unchanged | Record kickoff, checkpoint base, and reviewed dirty paths as separate fields |
+| Checkpoint re-review finding | Report still described SESS-001 validation as pending and said no commands were performed | Repair-cycle-1 re-review; report contradicted its coordinator-validation section | Candidate state and measurement provenance were inaccurate | Repair cycle 2 corrected both statements; finding resolved, runtime diff unchanged | Search cumulative reports for stale state after each validation or review handoff |
 
 ## Contract and Integration Friction
 
@@ -478,15 +603,21 @@ a way that hides the regression it is intended to detect.
 
 ## Human Interventions
 
-The user supplied the exact worktree, branch, superseding kickoff commit,
+The user supplied the exact worktree, branch, kickoff/source-context commit,
 four-crate scope, Conservative six-category profile, full-coverage requirement,
 write restriction, task labels, no-command rule, and stopping point.
-No further human intervention occurred.
+The coordinator later supplied guarded validation at
+`e25b4e46566d67189dd6530a09e9a20bc565ea78`.
+Checkpoint review supplied one Medium report-provenance finding and explicitly
+found no runtime regression; the user directed this report-only repair cycle.
 
 ## Measurements
 
-No size, performance, dependency, timing, build, test, or command measurements
-were requested or performed.
+No performance, size, dependency, or timing measurements were requested or
+performed.
+Coordinator formatting ran, and coordinator tests passed 105 cases with
+0 failures: 7 `sea-compression`, 17 `sea-encryption`, 70 `sea-sequencer`, and
+11 `sea-signals`.
 Assessment counts describe coverage only: four workspace members, six enabled
 categories per member, seven stable candidate hypotheses, one recommended
 repair, one deferred documentation candidate, four rejected false-sharing
@@ -495,8 +626,7 @@ These counts do not establish value.
 
 ## Proposed Decisions
 
-1. Compare SESS-001 with candidates from all workstreams for Wave 2; if
-   selected, keep it one implementation-only checkpoint.
+1. Advance validated SESS-001 to fixed-base re-review and integration.
 2. Leave SESS-002 deferred unless the repair budget has room for a small
    documentation checkpoint.
 3. Record SESS-003 through SESS-006 as explicit false-coupling rejections so a
@@ -526,16 +656,16 @@ sufficient for wrapper, fixture, retained-backing, and lifecycle analysis.
 
 - Coordinator reconciliation must copy the four reviewed area results and
   SESS-001 through SESS-007 into the shared simplification inventory.
-- Wave 2 must compare SESS-001 and SESS-002 against other workstreams under the
-  global four-repair budget.
-- If SESS-001 is selected, preserve all named encryption lifecycle and
-  transform tests and run the registered focused/package tasks before
-  checkpoint review.
-- Resolve the shared-record kickoff discrepancy before claiming fixed-base
-  review evidence.
+- SESS-001 is implemented; its formatter and 105 tests passed, and fixed-base
+  review converged with no actionable findings. Integration remains.
+- The shared-record kickoff discrepancy remains for coordinator reconciliation,
+  but this checkpoint now records its independent fixed base correctly.
 - No sessions area or enabled category remains unreviewed.
   There are no hidden repair promises: rejected and excluded candidates require
   their explicit revisit triggers, and SESS-002 remains assessed but
   unrepaired.
 
-This report stops at complete Wave 1 discovery and assessment.
+The validated, uncommitted checkpoint stops after SESS-001 only.
+Repair cycles 1, 2, and 3 resolved report-only checkpoint-review findings.
+No code or validation evidence changed, and no additional command ran during
+any of those cycles.

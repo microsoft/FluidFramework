@@ -179,13 +179,14 @@ impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: Non
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         let mut terminal = self.begin_append().await?;
         let result = async {
-            let mut encoded = submission.clone();
-            encoded.event.payload = encrypt_payload(
+            let payload = encrypt_payload(
                 &self.keys,
                 &self.nonces,
                 &submission.event.payload,
                 PayloadContext::Record,
             )?;
+            let mut encoded = submission;
+            encoded.event.payload = payload;
             self.inner
                 .submit(encoded)
                 .await
