@@ -1,6 +1,6 @@
 # Changesets
 
-In commonly changed release groups, we use a modified version of the [changesets][] workflow to track changes that we want to communicate to customers or partners.
+We use a modified version of the [changesets][] workflow in many of our release groups to track changes that we want to communicate to customers or partners.
 
 ## What is a changeset?
 
