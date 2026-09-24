@@ -1,0 +1,221 @@
+{
+	"iteration": "0018",
+	"sourceCommit": "73aae4414baff2e635f6ccdcbd2b4cb507d62bfd",
+	"logRoot": "/home/node/.copilot/session-state/4cc33478-17d9-40d5-9640-a53d9778b2c5/files",
+	"executionOwner": "coordinator",
+	"runs": [
+		{
+			"run": "native-2026-09-24T01-54-33.207Z-952386",
+			"head": "415077e9f8256da7eb0a91e933990fda34b357d2",
+			"branch": "rust-service-iteration-0018",
+			"target": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service/target",
+			"passed": true,
+			"results": [
+				{
+					"command": ["cargo", "fmt", "--all", "--", "--check"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T01:54:33.275Z",
+					"finished": "2026-09-24T01:54:33.745Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 0,
+					"logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+				},
+				{
+					"command": [
+						"cargo",
+						"clippy",
+						"--workspace",
+						"--all-targets",
+						"--all-features",
+						"--",
+						"-D",
+						"warnings"
+					],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T01:54:33.745Z",
+					"finished": "2026-09-24T01:54:56.105Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 7281,
+					"logSha256": "e8d72306da6353b46866a0ad9bd2a05926dc5a0922337c54ab915a964d187d2b"
+				},
+				{
+					"command": ["cargo", "doc", "--workspace", "--all-features", "--no-deps"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {
+						"RUSTDOCFLAGS": "-D warnings"
+					},
+					"started": "2026-09-24T01:54:56.105Z",
+					"finished": "2026-09-24T01:55:03.131Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 3205,
+					"logSha256": "89eee2fb0056911ab0c2ce7fd315c995db7865ccb81e916859227a53d4b3bf66"
+				},
+				{
+					"command": ["cargo", "build", "--workspace", "--all-targets"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T01:55:03.131Z",
+					"finished": "2026-09-24T01:55:56.637Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 7039,
+					"logSha256": "f1998d4e3edef0fecf7e64f83db25e3a62565527baf8ea6f9469e822f8326541"
+				},
+				{
+					"command": ["cargo", "test", "--workspace", "--all-targets", "--all-features"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T01:55:56.638Z",
+					"finished": "2026-09-24T01:57:49.615Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 36499,
+					"logSha256": "b973e90862111ba1b3931a2f1ea1b6a43120c46abbe7db94a59d179b864895d6"
+				},
+				{
+					"command": ["node", "scripts/check-documentation.mjs"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T01:57:49.615Z",
+					"finished": "2026-09-24T01:57:49.673Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 68,
+					"logSha256": "c590c3035d4685aaff8e4aa230d4745e7843af5724164c9546cab74129649f74"
+				},
+				{
+					"command": ["pnpm", "policy-check", "--path", "rust-service"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018",
+					"overrides": {},
+					"started": "2026-09-24T01:57:49.673Z",
+					"finished": "2026-09-24T01:57:53.403Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 881,
+					"logSha256": "3ab16a1950ab2ee0418a26181c42bf3f408b11cd3b13d56fc79fe6efd067106e"
+				}
+			]
+		},
+		{
+			"run": "full-2026-09-24T01-58-36.421Z-970271",
+			"head": "7a02c8c84c1cfc6da46a2828f0277ae9e1d342cd",
+			"branch": "rust-service-iteration-0018",
+			"target": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service/target",
+			"passed": false,
+			"results": [
+				{
+					"command": ["bash", "test.sh"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T01:58:36.486Z",
+					"finished": "2026-09-24T02:01:19.541Z",
+					"exit": 255,
+					"signal": null,
+					"logBytes": 92162,
+					"logSha256": "c4ca962fef84b36709b896dd64d6baaf7b54b32a01038df7a75d911ddd283847"
+				}
+			]
+		},
+		{
+			"run": "build-2026-09-24T02-02-54.198Z-993081",
+			"head": "7a02c8c84c1cfc6da46a2828f0277ae9e1d342cd",
+			"branch": "rust-service-iteration-0018",
+			"target": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service/target",
+			"passed": false,
+			"results": [
+				{
+					"command": ["pnpm", "build:fast"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018",
+					"overrides": {},
+					"started": "2026-09-24T02:02:54.263Z",
+					"finished": "2026-09-24T02:09:17.861Z",
+					"exit": 255,
+					"signal": null,
+					"logBytes": 217076,
+					"logSha256": "2bc9bf3f66953e0fcc9382165059dd346f02ec1bc85bb7472cf3920ba504bcf8"
+				}
+			]
+		},
+		{
+			"run": "full-2026-09-24T02-10-40.057Z-1038157",
+			"head": "314248a7fb6d7896043df4a345b7c25ac992aa4e",
+			"branch": "rust-service-iteration-0018",
+			"target": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service/target",
+			"passed": true,
+			"results": [
+				{
+					"command": ["bash", "test.sh"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T02:10:40.126Z",
+					"finished": "2026-09-24T02:12:30.916Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 74319,
+					"logSha256": "5c28d74139a974c6fb89eafc35d7803b2bd333a197fed2543fdec3d1670024b6"
+				},
+				{
+					"command": [
+						"node",
+						"--test",
+						"scripts/benchmark-alignment.test.mjs",
+						"scripts/benchmark-gates.test.mjs"
+					],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service",
+					"overrides": {},
+					"started": "2026-09-24T02:12:30.917Z",
+					"finished": "2026-09-24T02:12:31.030Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 1613,
+					"logSha256": "2d4defbe169eeb8122375333be05c4feddc8d9d7c1653ddf31f11b55811e10d9"
+				}
+			]
+		},
+		{
+			"run": "build-2026-09-24T02-12-31.074Z-1038155",
+			"head": "314248a7fb6d7896043df4a345b7c25ac992aa4e",
+			"branch": "rust-service-iteration-0018",
+			"target": "/workspaces/FluidFramework-rust-service-iteration-0018/rust-service/target",
+			"passed": true,
+			"results": [
+				{
+					"command": ["pnpm", "build:fast"],
+					"cwd": "/workspaces/FluidFramework-rust-service-iteration-0018",
+					"overrides": {},
+					"started": "2026-09-24T02:12:31.143Z",
+					"finished": "2026-09-24T02:13:43.792Z",
+					"exit": 0,
+					"signal": null,
+					"logBytes": 26797,
+					"logSha256": "ff6ccf23cd7aff267a4790cc503340e020d06e27f08efe01c535a24ed5a0a053"
+				}
+			]
+		}
+	],
+	"browser": {
+		"passedEvidenceRecords": 13,
+		"lifetime": {
+			"status": "passed",
+			"browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+			"ownership": [
+				"pending-establishment",
+				"datagram-setup-failure",
+				"successful-establishment",
+				"stream-clones",
+				"finished-stream"
+			],
+			"physicalRelease": ["disconnect", "drop"]
+		}
+	},
+	"limitations": [
+		"Native post-opening frame deadlines and stale cross-incarnation stream authority remain explicitly deferred.",
+		"The first aggregate execution-context failure is preserved; the navigation regression demonstrates a readiness gap, not proven causality for that incident.",
+		"Raw logs remain session-local; this record preserves commands, source identity, exits and content hashes."
+	]
+}

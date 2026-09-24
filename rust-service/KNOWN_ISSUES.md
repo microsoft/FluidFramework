@@ -73,18 +73,25 @@ Historical findings and resolved investigations are retained in [Historical reco
 - **Evidence:** The [execution isolation investigation](historical/EXECUTION_ISOLATION_INVESTIGATION.md) and [0017 retrospective](historical/iterations/0017/retrospective.md) describe tested workarounds and unverified scheduling and cancellation behavior.
 - **Trigger:** Revalidate when tool capabilities change or interference recurs. A passing workaround does not establish an upstream fix.
 
-## Generic client disconnect error state is not defined
+## Same-connection session replacement does not isolate old logical streams
 
-- **Status:** Deferred; the former JavaScript injection API is removed
-- **Severity:** Low
-- **Area:** Generic Rust transport lifecycle contract
-- **Evidence:** `Client::disconnect` marks client state disconnected and abandons authority/correlations even if `ClientTransport::disconnect` returns an error.
-  The method does not specify this error-state policy, and the focused state test bypasses the outer client's fallible transport call.
-  See the [historical deferral reconciliation](historical/DEFERRAL_RECONCILIATION.md#injected-disconnect-failure-state).
-- **Impact:** A consumer of a fallible custom transport cannot rely on a defined recovery state after disconnect fails.
-  Removal of the JavaScript injection surface does not settle the generic Rust contract.
-- **Trigger:** When a fallible transport consumer requires recovery semantics, choose whether an error still abandons logical admission and pending requests.
-  Document that choice and test error propagation, request admission, correlation cleanup, and explicit recovery through the outer `Client` API.
+- **Status:** Confirmed; repair explicitly deferred in [Decision 0023](historical/decisions/0023-defer-stream-incarnation-binding.md).
+- **Area:** Hosted transport stream authority.
+- **Evidence:** [Iteration 0018 transport audit](historical/iterations/0018/phase-2/transport.md) reproduced an old author stream committing under the replacement session on the same physical connection.
+  Logical handlers retain the mutable connection service rather than the session incarnation that admitted the stream.
+- **Impact:** Do not rely on old author/content/snapshot streams remaining isolated from replacement authority.
+  The append path is reproduced; other retained handlers share the ownership risk.
+- **Reproduction:** From `rust-service/`, run `cargo test -p sea-webtransport-server replaced_event_authority_cannot_be_used_by_an_old_author_stream -- --ignored`.
+  The ignored regression is expected to fail until the ownership repair is implemented; normal-suite success does not close this issue.
+- **Trigger:** Before supporting safe same-connection session replacement, choose stream-incarnation binding or an explicit replacement restriction and validate all logical stream roles.
+
+## Native client frame deadlines after opening
+
+- **Status:** Deferred in [Decision 0025](historical/decisions/0025-native-timeout-scope.md).
+- **Area:** Native client transport liveness.
+- **Evidence:** The configured native operation timeout applies during connection and initial session-stream opening, not subsequent native framed I/O.
+- **Impact:** Server-owned deadlines do not establish a client-side bound against stalled or custom servers.
+- **Trigger:** Add native per-frame enforcement only with defined partial-frame cancellation and terminal-state behavior, plus focused stalled-peer regressions.
 
 ## RS-003: Durable storage has qualified guarantees
 
