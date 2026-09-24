@@ -200,6 +200,9 @@ versionGroups:
       - "optional"
     isBanned: true
 
+  # Within a workspace, our packages are allowed to depend on `@internal` APIs which do not follow semver and thus must not have version skew across minors.
+  # This is enforced using `~` dependencies.
+  #
   # Keep this before the Fluid interdependency ignore rule.
   # https://syncpack.dev/version-groups/pinned/
   - label: "Workspace dependencies must use workspace:~"
