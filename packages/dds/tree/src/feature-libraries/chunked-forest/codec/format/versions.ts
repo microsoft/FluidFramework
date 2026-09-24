@@ -97,11 +97,12 @@ export const EncodedFieldBatchVTextExperimental = EncodedFieldBatchGeneric(
 export type EncodedFieldBatchV1OrV2 = EncodedFieldBatchV1 | EncodedFieldBatchV2;
 
 /**
- * Encoded {@link FieldBatch} in any format that supports incremental chunks.
+ * Encoded {@link FieldBatch} in any supported {@link FieldBatchFormatVersion}.
  * @remarks
- * An incremental chunk uses the format of its outer batch.
+ * New format versions should add their batch type to this union.
  */
-export type EncodedIncrementalFieldBatch =
+export type EncodedFieldBatchAnyVersion =
+	| EncodedFieldBatchV1
 	| EncodedFieldBatchV2
 	| EncodedFieldBatchVTextExperimental;
 

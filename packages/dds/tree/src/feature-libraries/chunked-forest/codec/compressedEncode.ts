@@ -40,8 +40,7 @@ import {
 	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
-	type EncodedFieldBatchV1OrV2,
-	type EncodedIncrementalFieldBatch,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
 	type FieldBatchFormatVersion,
@@ -59,7 +58,7 @@ import {
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
-): EncodedFieldBatchV1OrV2 {
+): EncodedFieldBatchAnyVersion {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -578,7 +577,7 @@ export class EncoderContext
 	 * that chooses its encoders for each batch can override this method. The override encodes the
 	 * chunk with encoders that it chooses for the chunk.
 	 */
-	public encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedIncrementalFieldBatch {
+	public encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedFieldBatchAnyVersion {
 		return compressedEncode(fieldBatch, this);
 	}
 

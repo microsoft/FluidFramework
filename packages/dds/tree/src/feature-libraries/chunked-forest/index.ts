@@ -30,6 +30,6 @@ export {
 	defaultIncrementalEncodingPolicy,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
-	type EncodedIncrementalFieldBatch,
+	type EncodedFieldBatchAnyVersion,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";

@@ -46,8 +46,7 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
-	type EncodedFieldBatchV1OrV2,
-	type EncodedIncrementalFieldBatch,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedIncrementalChunkShape,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
@@ -63,7 +62,7 @@ import {
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
-	chunk: EncodedFieldBatchV1OrV2,
+	chunk: EncodedFieldBatchAnyVersion,
 	idDecodingContext: IdDecodingContext,
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {
@@ -389,7 +388,7 @@ export class IncrementalChunkDecoder implements ChunkDecoder {
 			0xc27 /* incremental decoder not available for incremental field decoding */,
 		);
 
-		const chunkDecoder = (batch: EncodedIncrementalFieldBatch): TreeChunk => {
+		const chunkDecoder = (batch: EncodedFieldBatchAnyVersion): TreeChunk => {
 			assert(
 				supportsIncrementalEncoding(batch.version),
 				0xc9f /* Unsupported FieldBatchFormatVersion for incremental chunks; must be v2 or higher */,

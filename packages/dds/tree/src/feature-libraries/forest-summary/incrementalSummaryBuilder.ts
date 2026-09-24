@@ -23,7 +23,7 @@ import {
 } from "../../util/index.js";
 import type {
 	ChunkReferenceId,
-	EncodedIncrementalFieldBatch,
+	EncodedFieldBatchAnyVersion,
 	IncrementalEncoderDecoder,
 	IncrementalEncodingPolicy,
 	TreeChunk,
@@ -48,7 +48,7 @@ interface ChunkLoadProperties {
 	/**
 	 * The encoded contents of the chunk.
 	 */
-	readonly encodedContents: EncodedIncrementalFieldBatch;
+	readonly encodedContents: EncodedFieldBatchAnyVersion;
 	/**
 	 * The reference ID of this chunk's parent in the summary tree, or `undefined` if this chunk is
 	 * at the top level (directly under the forest summary tree).
@@ -294,7 +294,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 				}
 				const chunkContents = (await args.readAndParseChunk(
 					chunkContentsPath,
-				)) as EncodedIncrementalFieldBatch; // TODO: this should use a codec to validate the data instead of just type casting.
+				)) as EncodedFieldBatchAnyVersion; // TODO: this should use a codec to validate the data instead of just type casting.
 				this.loadedChunksMap.set(chunkReferenceId, {
 					encodedContents: chunkContents,
 					parentReferenceId,
@@ -414,7 +414,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public encodeIncrementalField(
 		cursor: ITreeCursorSynchronous,
-		chunkEncoder: (chunk: TreeChunk) => EncodedIncrementalFieldBatch,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchAnyVersion,
 	): ChunkReferenceId[] {
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
 		const trackedSummaryProperties = this.requireTrackingSummary();
@@ -563,7 +563,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	public decodeIncrementalChunk(
 		referenceId: ChunkReferenceId,
-		chunkDecoder: (encoded: EncodedIncrementalFieldBatch) => TreeChunk,
+		chunkDecoder: (encoded: EncodedFieldBatchAnyVersion) => TreeChunk,
 	): TreeChunk {
 		const chunkLoadProperties = this.loadedChunksMap.get(`${referenceId}`);
 		assert(chunkLoadProperties !== undefined, 0xc86 /* Encoded incremental chunk not found */);

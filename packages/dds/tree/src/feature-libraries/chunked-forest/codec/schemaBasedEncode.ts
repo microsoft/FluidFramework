@@ -57,7 +57,7 @@ import {
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
 	type EncodedFieldBatchVTextExperimental,
-	type EncodedIncrementalFieldBatch,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	SpecialField,
@@ -134,10 +134,12 @@ function schemaCompressedEncode(
 	version: FieldBatchFormatVersion,
 	isSummary: boolean,
 ): EncodedFieldBatchV1OrV2 {
-	return compressedEncode(
+	const encoded = compressedEncode(
 		fieldBatch,
 		buildContext(schema, policy, idCompressor, incrementalEncoder, version, isSummary),
 	);
+	// This context only uses V1 and V2 encoders, so the output has no VText shapes.
+	return encoded as EncodedFieldBatchV1OrV2;
 }
 
 export function buildContext(
@@ -379,7 +381,7 @@ interface VTextEncodeOptions {
 function encodeBatchVText(
 	fieldBatch: FieldBatch,
 	options: VTextEncodeOptions,
-): EncodedFieldBatchV1OrV2 {
+): EncodedFieldBatchVTextExperimental {
 	const counts = collectBatchCounts(fieldBatch, options);
 	const decisions = decideBatchSpecializations(counts, options.specializableFieldsOf);
 	return compressedEncode(fieldBatch, buildBatchContext(decisions, options));
@@ -489,9 +491,7 @@ class VTextEncoderContext extends EncoderContext {
 		);
 	}
 
-	public override encodeIncrementalChunk(
-		fieldBatch: FieldBatch,
-	): EncodedIncrementalFieldBatch {
+	public override encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedFieldBatchAnyVersion {
 		return encodeBatchVText(fieldBatch, this.options);
 	}
 }

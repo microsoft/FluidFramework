@@ -44,7 +44,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	FieldBatchFormatVersion,
-	type EncodedIncrementalFieldBatch,
+	type EncodedFieldBatchAnyVersion,
 	SpecialField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
@@ -392,7 +392,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedIncrementalFieldBatch,
+					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchAnyVersion,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");
@@ -558,11 +558,11 @@ describe("schemaBasedEncoding", () => {
 
 	describe("schemaCompressedEncodeVTextExperimental", () => {
 		// Setup used in multiple tests below, so defined in the outer scope of the describe block.
-		const countSpecializedShapes = (batch: EncodedIncrementalFieldBatch): number =>
+		const countSpecializedShapes = (batch: EncodedFieldBatchAnyVersion): number =>
 			batch.shapes.filter((shape) => "f" in shape).length;
 
 		const decodeRoundTrip = (
-			encoded: EncodedIncrementalFieldBatch,
+			encoded: EncodedFieldBatchAnyVersion,
 		): ReturnType<typeof decode> => {
 			const decoded = decode(
 				encoded as unknown as Parameters<typeof decode>[0],
@@ -577,7 +577,7 @@ describe("schemaBasedEncoding", () => {
 
 		const makeChunkingIncrementalEncoder = (
 			shouldEncodeIncrementally: IncrementalEncoder["shouldEncodeIncrementally"],
-			onEncode: (encodedSubBatch: EncodedIncrementalFieldBatch) => void,
+			onEncode: (encodedSubBatch: EncodedFieldBatchAnyVersion) => void,
 		): IncrementalEncoder => {
 			let nextRefId = 1;
 			return {
@@ -729,7 +729,7 @@ describe("schemaBasedEncoding", () => {
 			const inc = new TextArray([makeText(b), makeText(b)]);
 			const doc = new Doc({ inline: new TextArray(inline), inc });
 
-			const subEncodings: EncodedIncrementalFieldBatch[] = [];
+			const subEncodings: EncodedFieldBatchAnyVersion[] = [];
 			const mockIncEncoder = makeChunkingIncrementalEncoder(
 				incrementalEncodingPolicyForAllowedTypes(
 					new TreeViewConfigurationAlpha({ schema: Doc }),

@@ -7,7 +7,7 @@ export type {
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV1OrV2,
 	EncodedFieldBatchV2,
-	EncodedIncrementalFieldBatch,
+	EncodedFieldBatchAnyVersion,
 } from "./format/index.js";
 export { FieldBatchFormatVersion } from "./format/index.js";
 export type { FieldBatch } from "./fieldBatch.js";
