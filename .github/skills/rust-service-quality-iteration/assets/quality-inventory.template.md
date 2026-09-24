@@ -6,11 +6,12 @@ Review mode: <!-- TODO(required): record incremental, full reassessment, targete
 Configured scope: <!-- TODO(required): summarize or link the user-confirmed charter scope, including explicit exclusions -->
 Reassessment trigger: <!-- TODO(required): record why previously accepted boundaries are being revisited, such as a user request or skill/model improvements; write none when not applicable -->
 Inherited inventory: <!-- TODO(required): link prior inventory inputs or write none -->
-Budget and stopping conditions: <!-- TODO(required): summarize or link the charter -->
+Coverage commitment: <!-- TODO(required): record full-scope review or a bounded sample; for full scope, link the map accounting for every selected crate or responsibility area -->
+Budget and stopping conditions: <!-- TODO(required): record estimated review effort and any approved limits separately from repair limits, or link the charter; a repair limit does not end full-scope review -->
 
 ## Selection Rationale
 
-<!-- TODO(required): identify the risk evidence used to select reviewed boundaries within the confirmed mode, scope, and budget, and explain why they outrank deferred candidates without naming private expected findings. Prior acceptance does not exclude a boundary from an approved reassessment. -->
+<!-- TODO(required): identify the risk evidence used to order review within the confirmed mode, scope, and budget. For bounded review, explain why selected boundaries outrank deferred candidates. For full-scope review, account for every selected crate or responsibility area instead of selecting only a high-risk subset. Do not name private expected findings. Prior acceptance does not exclude a boundary from an approved reassessment. -->
 
 ## Reviewed Boundaries
 
@@ -38,4 +39,4 @@ Give unresolved findings a concrete revisit trigger and identify an owner when k
 
 ## Convergence Assessment
 
-<!-- TODO(required): compare inherited findings, changed or reassessed boundaries, new material findings, repaired risk, redundant churn, and the configured stopping conditions. Distinguish eligible scope from actual reviewed coverage; full reassessment does not by itself establish exhaustive coverage. State whether another run is justified and the hypothesis it would test. After final review, set Status to complete even when explicit deferrals remain. -->
+<!-- TODO(required): compare inherited findings, changed or reassessed boundaries, new material findings, repaired risk, redundant churn, and the configured stopping conditions. Reconcile actual coverage with the approved full-scope or bounded commitment; full reassessment alone does not establish exhaustive coverage. State whether another run is justified and the hypothesis it would test. After final review, set Status to complete even when explicit repair deferrals remain, but not when promised review coverage remains incomplete without user-approved scope reduction. -->

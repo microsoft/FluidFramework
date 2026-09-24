@@ -8,8 +8,10 @@ argument-hint: 'configure or run a Rust-service contract and test quality audit'
 
 Use this workflow to find and repair consequential documentation and behavioral test gaps.
 Read `rust-service/DEVELOPMENT.md` for the quality bar and validation requirements.
-An ordinary quality audit is sequential work and does not trigger the coordination skill.
-Only when the user explicitly requests a "parallel iteration", or continues one already authorized, load `.github/skills/rust-service-coordination/SKILL.md` for iteration mechanics.
+Configure scope, coverage budget, and execution structure as separate choices, in that order.
+Explicitly ask whether to use a parallel iteration unless the user has already chosen an execution structure.
+Selecting the parallel-iteration option is explicit authorization to load `.github/skills/rust-service-coordination/SKILL.md` for iteration mechanics.
+Do not load it merely to ask the configuration question.
 The numbered-record, workstream, integration, and Phase 3 instructions below apply only in that case.
 Otherwise retain the audit configuration, findings, and evidence in an existing local report without creating iteration machinery.
 If no suitable report exists, create one local audit report in the repository's documentation location for the affected area and reuse it throughout the audit.
@@ -46,21 +48,58 @@ Use the [simplification-iteration skill](../rust-service-simplification-iteratio
 ### Confirm the Scope
 
 Before auditing boundaries or initializing records, propose a scope, explain the reason for it, and ask the user to confirm or customize it.
-Offer these starting modes, allowing combinations and explicit exclusions:
+Offer these starting modes, allowing combinations and explicit exclusions, without bundling a review-count or repair budget into the choices:
 
 - **Incremental:** Prioritize recent changes, unresolved findings, and recorded revisit triggers.
 - **Full reassessment:** Make every boundary in the selected crates or responsibility scope eligible, including unchanged and previously accepted boundaries.
 - **Targeted:** Review user-selected crates, behaviors, or concerns, regardless of change history or prior dispositions.
 
 When no scope is supplied, propose incremental review with the relevant prior inventory and change window, if available; do not silently assume approval.
-Confirm the effort budget and stopping conditions alongside the scope.
-If the user already supplied an explicit scope, restate it briefly and proceed without redundant confirmation; ask only about unresolved configuration choices.
-Scope confirmation is not a request for a parallel iteration and must not trigger iteration setup or a workflow-selection prompt.
+Make the crate or responsibility scope explicit, including an all-Rust-service-crates option when no narrower area was requested.
+An all-crate reassessment includes unchanged code; it is not a review limited to the current diff.
+If the user already supplied an explicit scope, restate it briefly without redundant confirmation, then resolve the remaining configuration choices.
+Scope confirmation alone does not authorize parallel execution or iteration setup.
 
 For full or targeted reassessments, retain prior inventories as evidence, but treat their conclusions as hypotheses to recheck rather than reasons to skip inspection.
 Record the user's request to revisit the area, improved skill guidance, or improved agent models as the reassessment trigger, as applicable.
-All boundaries being eligible does not mean all were reviewed: rank work within the approved budget and distinguish reviewed boundaries from unreviewed candidates in the final report.
-Ask before expanding the approved scope or budget.
+
+### Choose Coverage And Budget
+
+After scope selection, estimate the effort needed to cover it using crate listings, prior inventories, and a lightweight responsibility map.
+This estimate is configuration work, not a completed boundary audit.
+Explain whether the proposed default budget covers the whole selected scope or only a risk-ranked sample.
+Never silently turn "full reassessment" or "all crates" into a fixed three-boundary audit.
+
+If the default budget cannot cover everything in scope, ask the user to choose:
+
+- **Review everything in scope:** Inspect every in-scope crate and its consequential responsibility boundaries, without a fixed boundary-count or time cutoff.
+- **Use the bounded default:** State the proposed effort limit and expected coverage, explicitly noting what will remain unreviewed.
+- **Choose a custom budget:** Let the user set effort or coverage limits before work starts.
+
+If the default is sufficient, state the estimate and confirm it unless the user already authorized it.
+Use separate questions for scope, budget, and execution structure; do not ask one bundled approval question.
+Record repair limits separately from review coverage.
+Reaching a repair limit must not stop an authorized full-scope review: continue inspection and record additional confirmed gaps as deferred repairs.
+Reviewing everything does not promise finding every defect, documenting every declaration, or repairing every finding.
+
+For full-scope review, account for every selected crate or responsibility area and its consequential boundaries.
+Use risk ranking to order the work, not to omit lower-ranked areas.
+Stop when that coverage is complete, or disclose a blocker and ask before reducing coverage or imposing a new cutoff.
+For bounded review, stop at the approved limit and distinguish reviewed boundaries from unreviewed candidates.
+Ask before expanding scope or a bounded budget.
+
+### Choose Sequential Or Parallel Execution
+
+After scope and budget are agreed, explicitly ask: "Should this quality audit use the parallel Rust-service iteration structure?"
+Offer:
+
+- **Parallel iteration:** Numbered records, isolated workstreams, a shared quality inventory, integration, and Phase 3 review under the coordination skill.
+- **Sequential audit:** One local report, with the same approved scope and coverage budget.
+
+Recommend parallel execution when the selected scope has substantial independent work, but let the user choose.
+Do not infer sequential execution from a small diff or from the absence of the words "parallel iteration" in the initial request.
+If the user already explicitly selected either structure, or is continuing an authorized run, preserve that choice without asking again.
+Only after a parallel selection, load the coordination skill and follow its setup requirements.
 
 ### Record the Configuration
 
@@ -70,7 +109,9 @@ Before initializing records, agree with the user on these run-specific inputs:
 - review mode or combination, Rust crate or responsibility scope, and exclusions;
 - reassessment trigger, when revisiting previously accepted boundaries;
 - risk priorities or recent-change window;
-- effort budget;
+- coverage commitment (full scope or bounded sample), estimated effort, and any approved effort limits;
+- repair budget, separate from review coverage;
+- sequential audit or explicitly authorized parallel iteration;
 - stopping conditions;
 - inherited quality inventory, if any;
 - required validation beyond the canonical gates; and
@@ -104,7 +145,8 @@ Do not assume that recent change implies a defect or that old code is safe.
 Use history to select where inspection has value, then judge the current
 contract and evidence on their merits.
 
-Record why selected boundaries outrank deferred candidates.
+Record why earlier boundaries outrank later or deferred candidates.
+For full-scope review, map every selected crate or responsibility area to its review owner and consequential boundaries; do not select only the highest-risk subset.
 For sequential audits, inspect those boundaries in priority order within the approved budget.
 Only within an explicitly authorized parallel iteration, partition active
 workstreams by non-overlapping crate or responsibility ownership. Prefer
@@ -211,6 +253,11 @@ Parallel iterations also require the coordination skill's normal Phase 2 checks.
 - accepted changes contain no unrelated cleanup; and
 - inventory dispositions match the actual diff and validation.
 
+Reconcile actual coverage with the approved commitment.
+A full-scope run must account for every selected crate or responsibility area, including no-change results, reviewed exclusions with rationale, and any blocked review.
+An unreviewed area is incomplete coverage, not an adequate result or a deferred repair.
+Do not label a full-scope review complete while review areas remain unreviewed unless the user explicitly approves reduced coverage.
+
 When independent review is part of the approved audit scope, the reviewer should inspect the resulting evidence without
 receiving expected findings. It may challenge dispositions and identify missed
 high-risk boundaries, but it must use the same configured scope and budget.
@@ -249,7 +296,7 @@ Before completing Phase 3, verify that `quality-inventory.md` has no placeholder
 rows, every active workstream is represented, every unresolved item has an owner
 or revisit trigger, and every accepted repair links its contract, tests, and
 validation evidence.
-Set the inventory status to `complete` after reconciling the final dispositions, including any explicit deferrals.
+Set the inventory status to `complete` after reconciling the final dispositions and satisfying the approved review coverage, including any explicit repair deferrals.
 Then run:
 
 ```bash
