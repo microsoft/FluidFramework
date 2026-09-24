@@ -5,11 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
+import { AttachState } from "@fluidframework/container-definitions";
+import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
 import type { ISummaryTree } from "@fluidframework/driver-definitions/internal";
 
 import { materializeSeed } from "./runtimeMaterialization.js";
-import { createSeedSummary, seedRoot, validateSeed } from "./seedFormat.js";
+import { createSeedSummary, parseSeed, seedRoot } from "./seedFormat.js";
+import { seedRuntimeFactory } from "./seedRuntimeFactory.js";
 import { validateSummaryUpload } from "./summaryHost.js";
 
 describe("Seed creation: deterministic construction and upload contract", () => {
@@ -74,7 +77,7 @@ describe("Seed creation: deterministic construction and upload contract", () => 
 		],
 	] as const) {
 		it(`rejects ${name} before materialization`, () => {
-			assert.throws(() => validateSeed(input));
+			assert.throws(() => parseSeed(input));
 			assert.throws(() => materializeSeed(input, 0));
 		});
 	}
@@ -130,6 +133,31 @@ describe("Seed creation: deterministic construction and upload contract", () => 
 					false,
 				),
 			/parent was not adopted/,
+		);
+	});
+});
+
+describe("Seed creation: checkpoint guard at load time", () => {
+	it("rejects a still-seed snapshot before reading its content once ops have been sequenced", async () => {
+		const fakeContext = {
+			attachState: AttachState.Attached,
+			baseSnapshot: {
+				blobs: {},
+				trees: { [seedRoot]: { blobs: { "seed.json": "seed-blob" }, trees: {} } },
+			},
+			pendingLocalState: undefined,
+			taggedLogger: { send: () => {} },
+			getLoadedFromVersion: () => ({ id: "fake-version" }),
+			deltaManager: { initialSequenceNumber: 1 },
+			storage: {
+				readBlob: () => {
+					throw new Error("Must not read the seed blob before the checkpoint guard runs");
+				},
+			},
+		} as unknown as IContainerContext;
+		await assert.rejects(
+			seedRuntimeFactory().instantiateRuntime(fakeContext, true),
+			/ops were sequenced/,
 		);
 	});
 });

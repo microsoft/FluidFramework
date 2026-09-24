@@ -39,14 +39,16 @@ export interface TextPart {
 export interface TextSeed {
 	/** Reject incompatible input before constructing any DDS state. */
 	readonly format: "seed-creation/1";
-	/** Exactly two differently named parts, sorted by name during validation. */
-	readonly parts: readonly TextPart[];
+	/** Exactly two differently named parts, sorted by name during parsing. */
+	readonly parts: readonly [TextPart, TextPart];
 }
 
 /**
- * Validate all supported input fields and return a canonical copy.
+ * Validate all supported input fields and return a canonical, sorted copy.
+ * Despite the name, this also normalizes the input (sorting parts by name); it is not a pure
+ * validity check.
  */
-export function validateSeed(input: unknown): TextSeed {
+export function parseSeed(input: unknown): TextSeed {
 	if (
 		typeof input !== "object" ||
 		input === null ||
@@ -76,17 +78,18 @@ export function validateSeed(input: unknown): TextSeed {
 		return { name: part.name, text: part.text };
 	});
 	parts.sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
-	if (parts[0].name === parts[1].name) {
+	const [first, second] = parts;
+	if (first.name === second.name) {
 		throw new Error("Seed part names must be distinct");
 	}
-	return { format: "seed-creation/1", parts };
+	return { format: "seed-creation/1", parts: [first, second] };
 }
 
 /**
  * Produce protocol metadata and application bytes without constructing a Container or DDS.
  */
 export function createSeedSummary(input: unknown): ISummaryTree {
-	const seed = validateSeed(input);
+	const seed = parseSeed(input);
 	const protocol = new SummaryTreeBuilder();
 	protocol.addBlob(
 		"attributes",

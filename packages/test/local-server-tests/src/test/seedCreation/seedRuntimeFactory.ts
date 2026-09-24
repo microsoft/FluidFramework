@@ -108,6 +108,15 @@ export function seedRuntimeFactory(
 			const fromSeed = source.blobs[".metadata"] === undefined;
 			if (fromSeed && options.nativeOnly === true)
 				throw new Error("Native-only loader refuses a seed");
+			if (fromSeed && original.deltaManager.initialSequenceNumber !== 0) {
+				// materializeSeed() always reconstructs the pristine seed content. Tagging that
+				// reconstruction with a nonzero checkpoint would tell the runtime it has already
+				// incorporated ops it never actually replayed into the tree, silently dropping them.
+				// Only the original creation checkpoint (sequence number 0) is safe to materialize.
+				throw new Error(
+					"Loading a seed snapshot after ops were sequenced is unsupported; only the original creation checkpoint can be materialized",
+				);
+			}
 			const summaries = new SeedSummaryHost(parent, fromSeed);
 			let snapshot = source;
 			let virtualBlobs: ReadonlyMap<string, ArrayBuffer> = new Map();

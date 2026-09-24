@@ -22,7 +22,7 @@ import { addBlobToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-ut
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "@fluidframework/tree/internal";
 
-import { validateSeed } from "./seedFormat.js";
+import { parseSeed } from "./seedFormat.js";
 import { documentFromSeed, viewConfiguration } from "./treeModel.js";
 
 /**
@@ -67,7 +67,7 @@ export function materializeSeed(input: unknown, sequenceNumber: number): Materia
 	if (!Number.isSafeInteger(sequenceNumber) || sequenceNumber < 0) {
 		throw new Error("Seed checkpoint must be a nonnegative safe integer");
 	}
-	const seed = validateSeed(input);
+	const seed = parseSeed(input);
 	const compressor = toIdCompressorWithCore(createIdCompressor(genesisSession));
 	const runtime = new MockFluidDataStoreRuntime({
 		id: layout.storeId,
@@ -97,6 +97,9 @@ export function materializeSeed(input: unknown, sequenceNumber: number): Materia
 		const stores = new SummaryTreeBuilder();
 		stores.addWithStats(layout.storeId, store);
 		const result = new SummaryTreeBuilder();
+		// Mirrors the shape ContainerRuntime writes at summarization time; see
+		// packages/runtime/container-runtime/src/containerRuntime.ts (search "summaryFormatVersion: 1")
+		// for the authoritative, evolving metadata contract this fixture pins to a snapshot in time.
 		result.addBlob(
 			".metadata",
 			JSON.stringify({

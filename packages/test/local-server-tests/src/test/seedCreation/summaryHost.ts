@@ -44,6 +44,20 @@ export function validateSummaryUpload(
  * ACK success permits the next incremental attempt; its upload must also prove the native runtime
  * adopted that exact parent. Baseline summarizer code can log refresh errors and still report an ACK.
  * Failed clients are closed, not retried with possibly inconsistent or late-ACK state.
+ *
+ * Lifecycle contract:
+ * Call {@link SeedSummaryHost.summarize} to request a summary from the given summarizer.
+ * This arms the host (`active = true`) for exactly the duration of that attempt and enforces
+ * `fullTree` (`true` only for the very first summary out of a seed-materialized snapshot).
+ * While armed, the runtime's storage layer must route its one upload through
+ * {@link SeedSummaryHost.upload}, which validates the parent/full-tree shape and records the
+ * uploaded tree. Any upload attempted outside an active `summarize()` call, or by a summarizer
+ * other than the one currently bound, is rejected.
+ * On ACK, `summarize()` confirms the acknowledged tree matches the one `upload()` recorded,
+ * advances `expectedParent` to the new version, and permanently clears `fullTree`.
+ * On any failure (including a mismatched ACK), the host marks itself permanently `failed` and
+ * closes the summarizer; it will reject all further use. Recovery requires loading a fresh
+ * client (and a fresh host) from the latest durable snapshot, not retrying this instance.
  */
 export class SeedSummaryHost {
 	private queue: Promise<unknown> = Promise.resolve();

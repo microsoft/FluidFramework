@@ -35,6 +35,7 @@ External readback from subsequent native summaries belongs to the separate appli
   All collaborating clients must use compatible application code; no mixed-version agreement protocol is implemented.
 - Detached creation, pending-state capture/restoration, offline loading, loading groups, and a disabled immediate-ACK-refresh configuration are rejected.
   Historical refetch of a different seed version is unsupported.
+  Loading a still-seed-tagged snapshot at any checkpoint other than the original creation sequence number is also rejected: the materializer always reconstructs the pristine seed content, so tagging that reconstruction with a later checkpoint would tell the runtime it already incorporated ops it never replayed.
 - Requests outside `SeedSummaryHost` cannot upload.
   A failed host closes its summarizer; recover by loading the latest durable service snapshot with a fresh client and host, not by reusing failed tracking state.
   Another summary committed concurrently can still invalidate a fresh client's parent; a NACK requires another fresh load.
