@@ -6,7 +6,7 @@ argument-hint: 'configure or run a Rust-service simplification and consolidation
 
 # Rust Service Simplification Iteration
 
-Use this workflow to make Rust-service code, tests, and documentation easier to understand and maintain without weakening behavior, diagnostics, performance, or supported platforms.
+Use this workflow to reduce accidental complexity in Rust-service code, tests, and documentation without weakening essential behavior, diagnostics, performance, ownership boundaries, or supported platforms.
 Read `rust-service/DEVELOPMENT.md` for the quality bar and validation requirements.
 
 The default workflow is **patch first**:
@@ -38,6 +38,14 @@ When required behavior or ownership cannot be established from current contracts
 
 ## Principles
 
+- **The purpose of this workflow is to reduce accidental complexity while preserving essential complexity.**
+  For every existing or added element in the selected surface, ask whether behavior, the intended audience, diagnostic value, ownership, supported variation, platform constraints, or performance makes it necessary.
+  Remove, consolidate, relocate, or narrow elements whose complexity is not justified.
+- Preserve required qualities, not their current representation.
+  Existing prose, tests, names, files, states, branches, conversions, and abstractions are evidence to assess, not structures that must automatically survive.
+- Additions are justified when they close a consequential gap, establish a clearer authoritative owner, or enable a larger reduction in accidental complexity.
+  Material growth without a concrete audience, evidence, ownership, or mechanism benefit is not simplification.
+- Review must challenge both loss of necessary value and retention, displacement, or introduction of accidental complexity.
 - Improve the current source; do not infer a defect from historical growth or file size.
 - Prefer a concrete reversible patch over a speculative prose inventory.
 - Preserve required behavior, useful diagnostics, performance characteristics, and platform support.
@@ -55,20 +63,21 @@ Organize broad work into category waves so reviewers can apply coherent criteria
 
 | Category | Default strategy | Intended improvements | Required safeguards |
 | --- | --- | --- | --- |
-| Documentation | Patch first | Review all Markdown files owned by each selected crate and the documentation and implementation-comment coverage and placement in its hand-authored source. Determine whether comments should be added, revised, preserved, relocated, consolidated, or removed according to repository policy. | Aim for the appropriate documentation state, not maximum comment coverage. Preserve contracts, qualifications, examples, useful local context, non-obvious implementation reasoning, and discoverability. Account for inherited and authoritative documentation before treating a location as undocumented. Do not add comments that merely restate the code, and remove such comments when they add no value. Shorter is not automatically better. |
-| Tests | Patch first | Simplify fixtures and setup, factor repetition, and use table-driven cases when clearer. | Preserve cases, discriminating assertions, execution, independence, and failure diagnosis. |
-| Naming | Patch first for private/local names | Use names that describe actual responsibility and meaning. | Check public APIs, serialization, reflection, generated consumers, and call-site clarity. |
-| Code organization | Patch first for local mechanical cleanup | Move code to better owners, simplify imports and exports, and remove unnecessary files. | Keep moves lossless; check comments, visibility, initialization, dependency direction, and build inclusion. |
-| Implementation | Patch first for local mechanics; proposal first for risky boundaries | Simplify control flow, deduplicate owned logic, and remove unnecessary state, clones, branches, conversions, or dead paths. | Preserve evaluation order, errors, side effects, resource lifetimes, concurrency, and performance. |
-| Abstractions | Proposal or small prototype first | Remove unnecessary layers and consolidate responsibilities that must evolve together. | Similar syntax is not shared ownership. Avoid new indirection, configuration, visibility, or dependencies that outweigh the reduction. |
+| Documentation | Patch first | Remove unnecessary detail, duplication, narration, and misplaced information; retain or add only what the intended audience needs. | Preserve required contracts, qualifications, useful local context, non-obvious reasoning, and discoverability. Account for inherited and authoritative documentation. |
+| Tests | Patch first | Remove or consolidate redundant cases, assertions, fixtures, helpers, and layers while preserving consequential regression evidence. | Preserve distinct behavioral obligations, independent expectations, execution, isolation, and useful failure diagnosis rather than every current test artifact. |
+| Naming | Patch first for private/local names | Reduce misleading, redundant, inconsistent, or unnecessarily specific vocabulary. | Improve responsibility or call-site comprehension rather than substituting stylistic preference; check public, serialized, reflected, and generated names. |
+| Code organization | Patch first for local mechanical cleanup | Reduce unnecessary files, modules, forwarding layers, visibility, imports, dependency edges, and navigation. | Move code only to a clearer owner or when the move enables deletion of a boundary; preserve necessary platform, lifecycle, and failure separation. |
+| Implementation | Patch first for local mechanics; proposal first for risky boundaries | Remove unnecessary mechanisms, states, branches, validation, conversions, allocations, clones, wrappers, synchronization, and lifecycle phases. | Preserve documented contracts and demonstrated consumer requirements, including evaluation order, errors, side effects, resource lifetimes, concurrency, and performance. |
+| Abstractions | Patch first for private removal; proposal or prototype first for new or shared surfaces | Remove layers, traits, wrappers, adapters, genericity, configuration, and extension points that do not own meaningful variation, policy, substitution, invariants, or dependency direction. | Prefer direct code or small duplication over false sharing; do not collapse distinct platform, failure, persistence, or lifecycle guarantees. |
 
 Suggested broad-wave order:
 
 1. documentation;
 2. tests;
-3. naming and local code organization;
-4. local implementation;
-5. abstractions and cross-crate consolidation.
+3. naming;
+4. local code organization;
+5. local implementation;
+6. abstractions and cross-crate consolidation.
 
 Finish review and integration of one wave before a later wave obscures its diff.
 Combine categories only when supporting edits are inseparable and the combined patch remains easy to review.
@@ -80,12 +89,11 @@ Ask one question at a time and do not bundle decisions into one answer.
 Never treat selection of scope or execution structure as approval of categories, profile, wave order, commit authority, isolation, validation scope, or change constraints.
 Skip only a decision the user already supplied explicitly or that is inapplicable, such as wave order for one category.
 
-### 1. Choose Scope
+### 1. Choose Review Basis and Scope
 
 Offer:
 
-- **Broad current-state pass:** edit selected workspace members, including unchanged code.
-- **Targeted pass:** edit selected crates, responsibilities, or forms of complexity.
+- **Current-state pass:** review the selected scopes and categories regardless of change history.
 - **Incremental pass:** revisit changed code or explicit triggers from an earlier run.
 
 Then load and follow the [multiselect skill](../multiselect/SKILL.md) to select one or more current Cargo workspace members or responsibility areas.
@@ -115,10 +123,13 @@ Do not infer all categories from a broad crate scope.
 Propose **Conservative** across the selected categories unless the user supplied another profile.
 Offer:
 
-- **Conservative everywhere:** clear improvements with low disruption and straightforward evidence.
-- **Structural everywhere:** also attempt justified restructuring with stronger validation and review.
+- **Conservative everywhere:** pursue reduction through private, reversible, low-disruption changes with straightforward evidence.
+- **Structural everywhere:** also pursue justified ownership, dependency, public-surface, or lifecycle restructuring with stronger validation and review.
 - **Per-category overrides:** ask only for selected categories whose levels differ.
 
+Both profiles seek to remove accidental complexity.
+They control acceptable disruption and compatibility risk, not whether the pass is reduction-oriented.
+Conservative does not mean preservation-biased.
 An unselected category is Off.
 An Off category permits only necessary supporting edits for an enabled patch.
 
@@ -254,12 +265,27 @@ The initial patch is intentionally a candidate set.
 It is expected that review may correct many edits and revert some entirely.
 Do not weaken the initial pass merely to avoid reviewer findings.
 
-For broad documentation work, inspect all Markdown files owned by each selected crate and the documentation and implementation-comment coverage and placement in its hand-authored source.
-Apply the repository documentation and coding policies to decide whether each location needs no comment or a comment that should be added, revised, preserved, relocated, consolidated, or removed.
-Account for inherited documentation and other authoritative owners before treating a location as undocumented or adding a duplicate comment.
-Generated, vendored, and build-output files are outside this hand-authored surface.
-For broad test work, directly simplify fixtures, setup, and cases where the revised code is plausibly clearer.
-For local implementation work, directly remove supported accidental mechanics.
+Apply these reduction rules:
+
+- **Documentation:** inspect all Markdown files owned by each selected crate and the documentation and implementation-comment coverage and placement in its hand-authored source.
+  Identify the intended audience and authoritative owner.
+  Remove duplication, implementation narration, historical residue, misplaced detail, restatements, and qualifications that do not support a realistic reader decision.
+  Then tighten retained material, relocate information to its narrowest correct owner, and add the shortest useful explanation only when a consequential gap remains.
+  Generated, vendored, and build-output files are outside this hand-authored surface.
+- **Tests:** identify the owning decisions, behavioral equivalence classes, and distinct boundaries protected by the original suite.
+  Retain, replace, consolidate, relocate, or remove tests and assertions according to whether they detect a distinct consequential regression with useful diagnosis.
+  Remove duplicate, incidental, setup-only, overfitted, and non-discriminating evidence.
+  Add or rewrite tests only when needed to preserve meaningful protection through the simpler structure; route unrelated missing coverage to the quality workflow.
+- **Naming:** reduce competing terminology, false distinctions, and context already supplied by the enclosing scope.
+  Change a name only when responsibility, consistency, or call-site comprehension materially improves.
+- **Code organization:** reduce places a maintainer must visit to understand one responsibility.
+  Collapse ceremonial boundaries and forwarding layers, keep single-consumer helpers near their owner, and avoid moves that require broader visibility or more navigation.
+- **Implementation:** remove mechanisms not required by documented contracts or demonstrated consumer requirements.
+  Do not preserve incidental behavior solely because current tests encode it; determine whether the test is overfitted before retaining accidental implementation complexity.
+  Prefer direct representation and control flow over helpers or dense expressions that merely hide the same complexity.
+- **Abstractions:** directly attempt removal or collapse of private abstractions when the change is reversible.
+  Retain an abstraction only when it owns meaningful variation, policy, substitution, invariants, or dependency direction.
+  Use a proposal or small prototype for new shared surfaces, cross-crate ownership, or consequential public changes.
 
 ### Escalate Risky Transformations
 
@@ -311,12 +337,12 @@ Apply these challenges:
 
 | Category | Diff-review challenges |
 | --- | --- |
-| Documentation | Did the patch cover the promised Markdown and hand-authored comment surface and reach the appropriate documentation state? Did it account for inherited and authoritative documentation before adding comments? Were requirements, qualifications, precise terms, examples, non-obvious implementation reasoning, or useful local context lost? Were redundant, misplaced, or code-restating comments retained or added? Is the result clearer rather than merely shorter? |
-| Tests | Are old cases and discriminating assertions preserved and still executed? Did sharing hide expectations, state, or failure location? |
-| Naming | Does the new name improve responsibility and call-site clarity? Could it affect public, serialized, reflected, or generated names? |
-| Code organization | Was movement lossless, including comments and attributes? Is the destination a better owner, and are visibility and dependency direction preserved? |
-| Implementation | Are edge cases, evaluation order, errors, side effects, resource lifetimes, concurrency, and performance preserved? |
-| Abstractions | Must the responsibilities evolve together? Did the patch remove concepts, or add indirection, configuration, coupling, or navigation? |
+| Documentation | What realistic reader decision does each added or retained detail support? Did the patch remove detail the intended audience does not need, use the authoritative owner, and account for inherited documentation? Were requirements, qualifications, non-obvious reasoning, or useful context lost? Did accurate but unnecessary, duplicated, misplaced, historical, or code-restating prose remain or grow? |
+| Tests | What distinct owning decision, equivalence class, or boundary does each retained or added test protect? Are all consequential behavioral obligations still executed with independent expectations and useful diagnosis? Could surviving evidence detect and localize the same defect, making a case, assertion, fixture, helper, parameter, or layer redundant? Did consolidation hide scenarios, introduce shared state, or derive expectations from production? |
+| Naming | Did the patch reduce misleading or competing vocabulary rather than substitute style? Is the new term authoritative and accurate at call sites? Did mixed old terminology remain? Could the rename affect public, serialized, reflected, generated, diagnostic, or operational names? |
+| Code organization | Did the patch reduce files, boundaries, visibility, imports, dependency edges, or navigation needed to understand the responsibility? Is the destination the actual owner? Did a smaller file require broader visibility, more forwarding, or loss of platform, lifecycle, failure, comments, attributes, initialization, or build inclusion? |
+| Implementation | What mechanism, state, branch, validation, conversion, allocation, clone, wrapper, synchronization, or lifecycle phase disappeared? Was complexity removed rather than hidden behind a helper or denser expression? Are retained behaviors contractually or demonstrably required, and are evaluation order, errors, side effects, resource lifetimes, concurrency, and performance preserved? |
+| Abstractions | What concept or navigation step disappeared? Does each retained abstraction own meaningful variation, policy, substitution, invariants, or dependency direction? Did the patch add indirection, configuration, coupling, visibility, or dependencies, falsely share independently evolving responsibilities, or collapse distinct guarantees? Would direct code or small duplication be simpler? |
 
 For changed contracts or regression evidence, include the quality skill's focused contract-preservation questions in the same review.
 Do not start a separate quality audit.
@@ -365,17 +391,17 @@ Declare each category validation set before editing.
 Run the smallest useful check during local editing, then use these acceptance minimums:
 
 - **Documentation-only:** documentation checks, rustdoc, and applicable doctests.
-- **Tests:** formatting and compilation as applicable, complete tests for every changed crate, unchanged test discovery and case enumeration, and proportionate failure-detection evidence.
-- **Naming and code organization:** formatting, Clippy or compilation, and complete tests for every changed crate.
+- **Tests:** formatting and compilation as applicable, complete tests for every changed crate, an accounting of consequential behavioral obligations before and after, verification that retained cases execute, and proportionate failure-detection evidence.
+- **Naming or code organization:** formatting, Clippy or compilation, and complete tests for every changed crate.
 - **Implementation and abstractions:** formatting, Clippy or compilation, complete tests for every changed crate, directly affected dependent-crate tests, and boundary-specific checks.
 
 Every category that changes Rust code or tests must pass the complete affected-crate test suites before acceptance and before the next category begins.
 After review-driven edits, the next attempt reruns the complete declared set.
-Passing tests does not establish preserved test quality; the review must still compare cases, assertions, execution gates, and diagnosis.
+Passing tests does not establish preserved test quality; the review must still compare behavioral obligations, independent expectations, execution gates, diagnosis, and potentially redundant evidence.
 
 Validate just in time.
 Do not run a full pre-change workspace baseline for a documentation wave or preflight later waves.
-Run a baseline suite only when needed to distinguish existing failures, preserve test discovery, or characterize behavior.
+Run a baseline suite only when needed to distinguish existing failures, account for test-discovery changes, or characterize behavior.
 
 At the integrated boundary, run all applicable canonical commands from `rust-service/DEVELOPMENT.md`.
 For ordinary Rust changes, use its scoped native and Rust-service TypeScript/WASM package gate plus the explicit repository policy check.
@@ -431,12 +457,12 @@ Before completion, compare recorded commits and status with Git and correct stal
 Assess:
 
 - **Coverage:** promised ownership and category waves completed, with explicit gaps.
-- **Value:** concrete clarity or mechanism improvements visible in the accepted diff.
+- **Value:** accidental complexity removed, essential complexity preserved, and any introduced or displaced complexity visible in the accepted diff.
 - **Safety:** review findings, reversions, validation, and unresolved evidence gaps.
 - **Effort:** implementation, review, validation, rework, and coordination costs.
 - **Recommendation:** stop, continue the next configured wave, or pursue one specific risky transformation.
 
-A run is converging when review retains worthwhile edits, rejects weak transformations, and later patches expose fewer repeated problems.
+A run is converging when accepted patches reduce accidental complexity without displacing it, review retains worthwhile edits and rejects weak transformations, and later patches expose fewer repeated problems.
 A large initial patch followed by substantial correction can be a successful result.
 Do not infer value from edit count, and do not infer failure merely because review reverted many candidate edits.
 

@@ -3,7 +3,7 @@
 Status: in progress
 Source commit: <!-- TODO(required): exact manifest sourceCommit used for every fixed-base patch -->
 Skill revision: <!-- TODO(required): skill commit and any local guidance changes used by this run -->
-Review mode: <!-- TODO(required): broad, targeted, incremental, or a combination -->
+Review mode: <!-- TODO(required): current-state or incremental -->
 Configured scope: <!-- TODO(required): ownership areas and explicit exclusions -->
 Category profile and waves: <!-- TODO(required): resolved profile and ordered patch-first or proposal-first waves -->
 Coverage commitment: <!-- TODO(required): promised ownership areas and category waves, plus explicit limits or gaps -->
@@ -15,7 +15,7 @@ Permitted changes: <!-- TODO(required): constraints on APIs, dependencies, proto
 
 ## Selection Rationale
 
-<!-- TODO(required): explain category-wave order, ownership partitioning, and which risky transformations require proposal-first assessment. Do not create a prose inventory of cheap edits that will be evaluated in the patch. -->
+<!-- TODO(required): explain category-wave order, ownership partitioning, expected accidental-complexity reduction, and which risky transformations require proposal-first assessment. Do not create a prose inventory of cheap edits that will be evaluated in the patch. -->
 
 ## Scope Coverage
 
@@ -51,7 +51,7 @@ Summarize only information needed to understand benefit, safeguards, findings, o
 
 ## Net Effect
 
-<!-- Summarize the accepted diff by category, including representative clarity improvements, mechanisms removed, meaningful structural changes, and any introduced complexity. Counts describe scale but do not establish quality. -->
+<!-- Summarize the accepted diff by category, including accidental complexity removed, essential complexity preserved, representative clarity improvements, mechanisms removed, meaningful structural changes, and any introduced or displaced complexity. Counts describe scale but do not establish quality. -->
 
 ## Convergence Assessment
 
