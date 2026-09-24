@@ -42,7 +42,7 @@
 		"@types/mdast": "^4.0.4",
 		"@types/node": "catalog:types",
 		"@types/yargs": "^17.0.32",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
 		"disabled": true
