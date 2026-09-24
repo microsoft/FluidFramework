@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"iteration": "0018",
+	"status": "active",
+	"sourceCommit": "73aae4414baff2e635f6ccdcbd2b4cb507d62bfd",
+	"createdAt": "2026-09-24T00:57:53.126Z",
+	"activeWorkstreams": [
+		{
+			"name": "foundations",
+			"instructions": "phase-2/instructions/foundations.md",
+			"report": "phase-2/foundations.md"
+		},
+		{
+			"name": "persistence",
+			"instructions": "phase-2/instructions/persistence.md",
+			"report": "phase-2/persistence.md"
+		},
+		{
+			"name": "sessions",
+			"instructions": "phase-2/instructions/sessions.md",
+			"report": "phase-2/sessions.md"
+		},
+		{
+			"name": "transport",
+			"instructions": "phase-2/instructions/transport.md",
+			"report": "phase-2/transport.md"
+		},
+		{
+			"name": "consumers",
+			"instructions": "phase-2/instructions/consumers.md",
+			"report": "phase-2/consumers.md"
+		}
+	],
+	"deferredWorkstreams": [],
+	"nextWorkstreams": [],
+	"iterationType": "quality"
+}
