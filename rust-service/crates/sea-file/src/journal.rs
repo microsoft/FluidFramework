@@ -311,8 +311,7 @@ impl Journal {
             let mut cursor = boundary.to_be_bytes().to_vec();
             cursor.extend_from_slice(&last_record_offset.to_be_bytes());
             atomic_file::write(&self.path.with_extension("cursor"), &cursor, self.durable)
-        }
-        .map_err(|_| FileStorageError::Ambiguous)?;
+        }?;
         self.last_record_offset = last_record_offset;
         self.cursor = Some((boundary, last_record_offset));
         #[cfg(test)]

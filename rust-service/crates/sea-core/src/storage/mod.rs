@@ -207,10 +207,7 @@ pub trait SeaStorage: Send + Sync {
         &self,
         id: &DocumentId,
     ) -> Result<Option<SeaView<Self::Blobs, Self::Events, Self::Snapshots>>, Self::Error> {
-        let Some(components) = self.open_document(id).await? else {
-            return Ok(None);
-        };
-        Ok(Some(SeaView::new(components)))
+        Ok(self.open_document(id).await?.map(SeaView::new))
     }
 }
 
