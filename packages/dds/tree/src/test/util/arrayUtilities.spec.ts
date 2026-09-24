@@ -9,6 +9,7 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 
 import {
 	collectContiguousRanges,
+	replaceArrayRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
@@ -167,6 +168,83 @@ describe("arrayUtilities unit tests", () => {
 				/Malformed range passed to test. Start index 2 is greater than end index 1./,
 			),
 		);
+	});
+
+	describe("replaceArrayRange", () => {
+		type ReplaceCase = readonly [
+			name: string,
+			input: readonly number[],
+			start: number,
+			end: number,
+			replacement: readonly number[],
+		];
+
+		function assertMatchesSplice(
+			input: readonly number[],
+			start: number,
+			end: number,
+			replacement: readonly number[],
+		): void {
+			const expected = [...input];
+			expected.splice(start, end - start, ...replacement);
+			const actual = [...input];
+
+			replaceArrayRange(actual, start, end, replacement);
+
+			assert.deepEqual(actual, expected);
+		}
+
+		const cases: readonly ReplaceCase[] = [
+			["inserts into an empty range", [0, 3], 1, 1, [1, 2]],
+			["deletes a range", [0, 1, 2, 3], 1, 3, []],
+			["grows a middle range", [0, 1, 4], 1, 2, [1, 2, 3]],
+			["shrinks a middle range", [0, 1, 2, 3, 4], 1, 4, [9]],
+			["replaces the whole array", [0, 1, 2], 0, 3, [3, 4]],
+			["is a no-op for two empty ranges", [0, 1, 2], 1, 1, []],
+		];
+
+		for (const [name, input, start, end, replacement] of cases) {
+			it(name, () => {
+				assertMatchesSplice(input, start, end, replacement);
+			});
+		}
+
+		it("supports replacements larger than the function argument limit", () => {
+			const replacement = Array.from({ length: 200_000 }, (_, index) => index);
+			const array = [-1, -2, -3];
+
+			replaceArrayRange(array, 1, 2, replacement);
+
+			assert.equal(array.length, replacement.length + 2);
+			assert.equal(array[0], -1);
+			assert.equal(array[1], 0);
+			assert.equal(array[replacement.length], replacement.length - 1);
+			assert.equal(array.at(-1), -3);
+		});
+
+		it("supports shrinking a range with a large replacement", () => {
+			const input = Array.from({ length: 2000 }, (_, index) => index);
+			const replacement = Array.from({ length: 1000 }, (_, index) => -index);
+
+			assertMatchesSplice(input, 500, 1800, replacement);
+		});
+
+		it("supports using the modified array as the replacement", () => {
+			const array = Array.from({ length: 2000 }, (_, index) => index);
+			const expected = [...array];
+			expected.splice(500, 1000, ...expected);
+
+			replaceArrayRange(array, 500, 1500, array);
+
+			assert.deepEqual(array, expected);
+		});
+
+		it("rejects an invalid range", () => {
+			assert.throws(
+				() => replaceArrayRange([0, 1], 0, 3, []),
+				validateUsageError(/Index value passed to replaceArrayRange is out of bounds/),
+			);
+		});
 	});
 
 	describe("collectContiguousRanges", () => {
