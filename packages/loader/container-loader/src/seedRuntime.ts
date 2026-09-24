@@ -47,6 +47,106 @@ export interface SeedRuntimeSnapshot {
 }
 
 /**
+ * Options for {@link assertDeterministicSeedConstruction}.
+ * @legacy @alpha
+ */
+export interface AssertDeterministicSeedConstructionOptions {
+	/**
+	 * Blob names, wherever they appear in the snapshot tree, whose contents are exempt from
+	 * comparison. Use this only for non-collaborative metadata, such as native creation
+	 * timestamps or per-construction telemetry identifiers, that legitimately differ between
+	 * otherwise-identical constructions.
+	 *
+	 * @remarks
+	 * Do not exempt any blob that participates in collaborative identity, schema, or content.
+	 * Exempting too much hides real nondeterminism.
+	 */
+	readonly excludeBlobNames?: readonly string[];
+}
+
+/**
+ * Assert that two independent materializations of the same seed produce the same collaborative
+ * state, ignoring only explicitly excluded non-collaborative metadata (such as creation
+ * timestamps or telemetry identifiers).
+ *
+ * @remarks
+ * Call this from your application's tests, not from production code: constructing a seed twice
+ * on every real creation would double creation latency and cost for a guarantee that only needs
+ * verification once per supported materializer version, not on every document your product creates.
+ *
+ * A typical test constructs the same seed twice, optionally through different code paths (for
+ * example, an older and a newer materializer version that must remain compatible), and calls this
+ * helper on the two results:
+ *
+ * ```typescript
+ * const [a, b] = await Promise.all([materializeSeed(seed, 0), materializeSeed(seed, 0)]);
+ * assertDeterministicSeedConstruction(a, b, { excludeBlobNames: [".metadata"] });
+ * ```
+ *
+ * If your excluded blobs still need partial verification (for example, checking that a metadata
+ * blob's *shape* is correct while excluding only specific volatile fields within it), compare
+ * those fields yourself before or after calling this helper.
+ *
+ * @param first - The first materialization to compare.
+ * @param second - The second materialization to compare.
+ * @param options - Blob names to exclude from comparison.
+ * @throws A `UsageError` describing the first mismatch found, including its snapshot path.
+ * @legacy @alpha
+ */
+export function assertDeterministicSeedConstruction(
+	first: SeedRuntimeSnapshot,
+	second: SeedRuntimeSnapshot,
+	options: AssertDeterministicSeedConstructionOptions = {},
+): void {
+	const excludeBlobNames = new Set(options.excludeBlobNames ?? []);
+	const mismatch = (path: string, reason: string): never => {
+		throw new UsageError(`Nondeterministic seed construction at "${path}": ${reason}`);
+	};
+	const compareBlobContents = (path: string, a: ArrayBuffer, b: ArrayBuffer): void => {
+		if (a.byteLength !== b.byteLength) {
+			mismatch(path, `blob length differs (${a.byteLength} vs ${b.byteLength} bytes)`);
+		}
+		const viewA = new Uint8Array(a);
+		const viewB = new Uint8Array(b);
+		for (let i = 0; i < viewA.length; i++) {
+			if (viewA[i] !== viewB[i]) {
+				mismatch(path, "blob contents differ");
+			}
+		}
+	};
+	const compareTrees = (path: string, a: ISnapshotTree, b: ISnapshotTree): void => {
+		const blobNamesA = Object.keys(a.blobs).sort();
+		const blobNamesB = Object.keys(b.blobs).sort();
+		if (blobNamesA.join("\u0000") !== blobNamesB.join("\u0000")) {
+			mismatch(path, "blob names differ");
+		}
+		for (const name of blobNamesA) {
+			if (excludeBlobNames.has(name)) continue;
+			const idA = a.blobs[name];
+			const idB = b.blobs[name];
+			assert(idA !== undefined && idB !== undefined, "blob name must resolve to an ID");
+			const contentsA = first.blobs.get(idA);
+			const contentsB = second.blobs.get(idB);
+			assert(contentsA !== undefined, "first snapshot must contain every referenced blob");
+			assert(contentsB !== undefined, "second snapshot must contain every referenced blob");
+			compareBlobContents(`${path}/${name}`, contentsA, contentsB);
+		}
+		const treeNamesA = Object.keys(a.trees).sort();
+		const treeNamesB = Object.keys(b.trees).sort();
+		if (treeNamesA.join("\u0000") !== treeNamesB.join("\u0000")) {
+			mismatch(path, "subtree names differ");
+		}
+		for (const name of treeNamesA) {
+			compareTrees(`${path}/${name}`, a.trees[name], b.trees[name]);
+		}
+		if ((a.unreferenced ?? false) !== (b.unreferenced ?? false)) {
+			mismatch(path, "unreferenced flag differs");
+		}
+	};
+	compareTrees("", first.snapshot, second.snapshot);
+}
+
+/**
  * Application-owned interpretation and deterministic construction of seed content.
  *
  * @remarks

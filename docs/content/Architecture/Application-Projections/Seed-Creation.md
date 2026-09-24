@@ -254,7 +254,15 @@ Construction is not a promise that every summary byte, including telemetry metad
 The construction runtime cannot attach or become a live client.
 Do not pass construction options to a runtime joining the stored document: each live client needs a fresh compressor session for new allocations.
 
-The sample's [determinism tests][materialization-tests] compare independent constructions, excluding only those two telemetry fields.
+The sample's [determinism tests][materialization-tests] use the framework's `assertDeterministicSeedConstruction` helper (exported from `@fluidframework/container-loader/legacy/alpha`) to compare independent constructions, excluding only those two telemetry fields:
+
+```typescript
+assertDeterministicSeedConstruction(first, second, {
+	excludeBlobNames: [".metadata"],
+});
+```
+
+Call this helper from your own tests, not from production code: verify determinism once per supported materializer version, not on every document your product creates.
 Your application's tests must cover its own initialization paths and supported materializer versions.
 The framework does not convert arbitrary HTML, JSON, or packages into a suitable collaborative model for you.
 

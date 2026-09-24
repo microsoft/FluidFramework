@@ -19,6 +19,7 @@ import {
   seedRuntimeFactory,
 } from "@fluidframework/container-loader/legacy/alpha";
 
+
 // The external producer writes application data without constructing a runtime.
 const summary = createSeedSummary({ codeDetails, applicationProjection });
 // Pass summary to your driver's createContainer method.
@@ -47,6 +48,16 @@ With `ContainerRuntime`, pass `detachedConstructionOptions: { idCompressorSessio
 Native telemetry metadata may differ between constructions; deterministic graph identities do not imply byte-identical summaries.
 Each live client must use a fresh compressor session.
 The native runtime must create complete summaries until its first native summary is acknowledged; do not copy seed content into native summaries.
+
+Use `assertDeterministicSeedConstruction` from the same entry point to verify, in your own tests, that two independent constructions of the same seed produce identical collaborative state:
+
+```typescript
+assertDeterministicSeedConstruction(first, second, {
+  excludeBlobNames: [".metadata"],
+});
+```
+
+Call it from tests only; constructing a seed twice on every real document creation would double creation latency and cost for a guarantee that only needs verifying once per supported materializer version.
 
 Seed loading initially supports only checkpoint zero, with no pending-state restoration, offline loading, or loading groups.
 Interactive hosts must explicitly configure `Fluid.Container.enableOfflineFull` to `false`, since interactive offline support defaults to enabled.

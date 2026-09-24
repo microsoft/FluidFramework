@@ -5,17 +5,21 @@
 
 import { strict as assert } from "node:assert";
 
-import type { SeedRuntimeSnapshot } from "@fluidframework/container-loader/legacy/alpha";
+import {
+	assertDeterministicSeedConstruction,
+	type SeedRuntimeSnapshot,
+} from "@fluidframework/container-loader/legacy/alpha";
 
 import { materializeSeed } from "../runtimeMaterialization.js";
 import { parseSeed, seedRoot } from "../textSeedFormat.js";
 
 /**
- * Creation time and telemetry identity are not collaborative identities.
- * Compare every other metadata field and every DDS/compressor blob without alteration.
+ * Creation time and telemetry identity are not collaborative identities: assert that they have
+ * the expected shape, without requiring them to match between independent materializations.
  */
-function stateWithoutCreationTelemetry(state: SeedRuntimeSnapshot): object {
-	const { ".metadata": metadataId, ...rootBlobs } = state.snapshot.blobs;
+function assertMetadataShape(state: SeedRuntimeSnapshot): void {
+	const metadataId: string | undefined = state.snapshot.blobs[".metadata"];
+	assert(metadataId !== undefined);
 	const metadataBytes = state.blobs.get(metadataId);
 	assert(metadataBytes !== undefined);
 	const metadata: unknown = JSON.parse(new TextDecoder().decode(metadataBytes));
@@ -24,15 +28,6 @@ function stateWithoutCreationTelemetry(state: SeedRuntimeSnapshot): object {
 	assert.equal(typeof metadata.createContainerTimestamp, "number");
 	assert("telemetryDocumentId" in metadata);
 	assert.equal(typeof metadata.telemetryDocumentId, "string");
-	return {
-		snapshot: { ...state.snapshot, blobs: rootBlobs },
-		blobs: [...state.blobs].filter(([id]) => id !== metadataId),
-		metadata: Object.fromEntries(
-			Object.entries(metadata).filter(
-				([key]) => key !== "createContainerTimestamp" && key !== "telemetryDocumentId",
-			),
-		),
-	};
 }
 
 describe("Seed creation: deterministic application construction", () => {
@@ -49,7 +44,11 @@ describe("Seed creation: deterministic application construction", () => {
 			materializeSeed(seed, 0),
 			materializeSeed({ ...seed, parts: [...seed.parts].reverse() }, 0),
 		]);
-		assert.deepEqual(stateWithoutCreationTelemetry(a), stateWithoutCreationTelemetry(b));
+		assertMetadataShape(a);
+		assertMetadataShape(b);
+		assertDeterministicSeedConstruction(a, b, {
+			excludeBlobNames: [".metadata"],
+		});
 		assert(a.snapshot.blobs[".metadata"] !== undefined);
 		assert(a.snapshot.blobs[".idCompressor"] !== undefined);
 		assert(!JSON.stringify(a.snapshot).includes(seedRoot));

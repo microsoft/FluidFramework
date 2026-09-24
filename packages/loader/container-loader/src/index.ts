@@ -66,9 +66,11 @@ export type {
 } from "./protocol/index.js";
 export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
 export {
+	assertDeterministicSeedConstruction,
 	createSeedRuntimeSnapshot,
 	createSeedSummary,
 	seedRuntimeFactory,
+	type AssertDeterministicSeedConstructionOptions,
 	type CreateSeedRuntimeSnapshotProps,
 	type CreateSeedSummaryProps,
 	type SeedProjector,

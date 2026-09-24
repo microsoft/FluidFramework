@@ -32,6 +32,7 @@ import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-ut
 import type { SeedLoadContext } from "../containerContext.js";
 import { loadExistingContainer } from "../createAndLoadContainerUtils.js";
 import {
+	assertDeterministicSeedConstruction,
 	createSeedRuntimeSnapshot,
 	createSeedSummary,
 	seedRuntimeFactory,
@@ -710,5 +711,89 @@ describe("Seed runtime APIs", () => {
 		);
 		assert.equal(runtime.disposed, true);
 		assert.equal(runtime.disposeCount, 1);
+	});
+});
+
+describe("assertDeterministicSeedConstruction", () => {
+	const makeSnapshot = (): SeedRuntimeSnapshot => ({
+		snapshot: {
+			blobs: { ".metadata": "metadata-id", "shared.blob": "shared-id" },
+			trees: {
+				".channels": {
+					blobs: { header: "header-id" },
+					trees: {},
+					unreferenced: true,
+				},
+			},
+		},
+		blobs: new Map([
+			["metadata-id", stringToBuffer("metadata-contents", "utf8")],
+			["shared-id", stringToBuffer("shared-contents", "utf8")],
+			["header-id", stringToBuffer("header-contents", "utf8")],
+		]),
+	});
+
+	const withBlob = (
+		snapshot: SeedRuntimeSnapshot,
+		id: string,
+		contents: string,
+	): SeedRuntimeSnapshot => ({
+		snapshot: snapshot.snapshot,
+		blobs: new Map(snapshot.blobs).set(id, stringToBuffer(contents, "utf8")),
+	});
+
+	it("does not throw for identical snapshots", () => {
+		assertDeterministicSeedConstruction(makeSnapshot(), makeSnapshot());
+	});
+
+	it("throws when blob contents differ", () => {
+		const first = makeSnapshot();
+		const second = withBlob(makeSnapshot(), "shared-id", "different-contents");
+		assert.throws(
+			() => assertDeterministicSeedConstruction(first, second),
+			/shared\.blob.*blob (contents differ|length differs)/,
+		);
+	});
+
+	it("throws when blob names differ", () => {
+		const first = makeSnapshot();
+		const second = makeSnapshot();
+		const mutableBlobs = second.snapshot.blobs as Record<string, string>;
+		delete mutableBlobs["shared.blob"];
+		mutableBlobs["other.blob"] = "shared-id";
+		assert.throws(
+			() => assertDeterministicSeedConstruction(first, second),
+			/blob names differ/,
+		);
+	});
+
+	it("throws when subtree names differ", () => {
+		const first = makeSnapshot();
+		const second = makeSnapshot();
+		const mutableTrees = second.snapshot.trees as Record<string, ISnapshotTree>;
+		delete mutableTrees[".channels"];
+		mutableTrees[".other"] = { blobs: {}, trees: {} };
+		assert.throws(
+			() => assertDeterministicSeedConstruction(first, second),
+			/subtree names differ/,
+		);
+	});
+
+	it("throws when the unreferenced flag differs", () => {
+		const first = makeSnapshot();
+		const second = makeSnapshot();
+		(second.snapshot.trees[".channels"] as { unreferenced?: boolean }).unreferenced = false;
+		assert.throws(
+			() => assertDeterministicSeedConstruction(first, second),
+			/unreferenced flag differs/,
+		);
+	});
+
+	it("skips excluded blob names even when their contents differ", () => {
+		const first = makeSnapshot();
+		const second = withBlob(makeSnapshot(), "metadata-id", "different-metadata");
+		assertDeterministicSeedConstruction(first, second, {
+			excludeBlobNames: [".metadata"],
+		});
 	});
 });

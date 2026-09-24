@@ -8,6 +8,14 @@
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @alpha @legacy
+export function assertDeterministicSeedConstruction(first: SeedRuntimeSnapshot, second: SeedRuntimeSnapshot, options?: AssertDeterministicSeedConstructionOptions): void;
+
+// @alpha @legacy
+export interface AssertDeterministicSeedConstructionOptions {
+    readonly excludeBlobNames?: readonly string[];
+}
+
+// @alpha @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
