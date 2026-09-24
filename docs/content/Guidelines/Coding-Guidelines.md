@@ -615,8 +615,6 @@ debugAssert(() => cachedValues.size <= capacity || "The cache must stay within c
 
 `debugAssert` can be disabled or removed from production builds, which can reduce runtime cost and bundle size.
 
-Never catch assertion failures to implement normal control flow.
-
 ### Events
 
 #### ✔ DO use the types and conventions shared across the framework codebase
