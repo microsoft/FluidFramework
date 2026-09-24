@@ -21,7 +21,7 @@ import {
 
 import type { MoveMarkEffect } from "./helperTypes.js";
 import { MarkListFactory } from "./markListFactory.js";
-import { MarkQueue } from "./markQueue.js";
+import { MarkSegmentTree } from "./markSegmentTree.js";
 import {
 	type MoveEffect,
 	type MoveEffectTable,
@@ -33,6 +33,7 @@ import {
 	isMoveOut,
 	setMoveEffect,
 } from "./moveEffectTable.js";
+import { SegmentMarkQueue } from "./segmentMarkQueue.js";
 import {
 	type Attach,
 	type CellMark,
@@ -51,7 +52,6 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	asAttachAndDetach,
-	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
 	getEndpoint,
@@ -112,6 +112,13 @@ function composeMarkLists(
 	const factory = new MarkListFactory();
 	const queue = new ComposeQueue(baseMarkList, newMarkList, moveEffects, revisionMetadata);
 	while (!queue.isEmpty()) {
+		const reused = queue.tryPopReusable();
+		if (reused !== undefined) {
+			for (const mark of reused) {
+				factory.push(mark);
+			}
+			continue;
+		}
 		const { baseMark, newMark } = queue.pop();
 		if (newMark === undefined) {
 			assert(
@@ -509,8 +516,8 @@ function composeMark<TMark extends Mark>(
 }
 
 export class ComposeQueue {
-	private readonly baseMarks: MarkQueue;
-	private readonly newMarks: MarkQueue;
+	private readonly baseMarks: SegmentMarkQueue;
+	private readonly newMarks: SegmentMarkQueue;
 	private readonly baseMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 	private readonly newMarksCellSources: ReadonlySet<RevisionTag | undefined>;
 
@@ -520,14 +527,57 @@ export class ComposeQueue {
 		private readonly moveEffects: MoveEffectTable,
 		private readonly revisionMetadata: RevisionMetadataSource,
 	) {
-		this.baseMarks = new MarkQueue(baseMarks, moveEffects);
-		this.newMarks = new MarkQueue(newMarks, moveEffects);
-		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getOutputCellId);
-		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
+		const baseTree = MarkSegmentTree.fromMarks(baseMarks);
+		const newTree = MarkSegmentTree.fromMarks(newMarks);
+		this.baseMarks = new SegmentMarkQueue(baseTree, moveEffects);
+		this.newMarks = new SegmentMarkQueue(newTree, moveEffects);
+		this.baseMarksCellSources = baseTree.getCellSources("output");
+		this.newMarksCellSources = newTree.getCellSources("input");
 	}
 
 	public isEmpty(): boolean {
 		return this.baseMarks.isEmpty() && this.newMarks.isEmpty();
+	}
+
+	/**
+	 * Skips pairing for a reusable array range. Marks requiring child callbacks,
+	 * move effects, or settling are left for the ordinary pairing path.
+	 * The tree finds the boundary; counting and emitting the selected marks remain linear.
+	 */
+	public tryPopReusable(): readonly Mark[] | undefined {
+		const baseMark = this.baseMarks.peek();
+		const newMark = this.newMarks.peek();
+		if (baseMark === undefined || (isNoopMark(baseMark) && baseMark.changes === undefined)) {
+			if (baseMark?.count === 0) {
+				return [this.baseMarks.dequeueUpTo(Number.POSITIVE_INFINITY)];
+			}
+			const reused = this.newMarks.tryDequeueReusable(baseMark, "input");
+			if (reused !== undefined) {
+				if (baseMark !== undefined) {
+					const count = reused.reduce((sum, mark) => sum + mark.count, 0);
+					if (count > 0) {
+						this.baseMarks.dequeueUpTo(count);
+					}
+				}
+				return reused;
+			}
+		}
+		if (newMark === undefined || (isNoopMark(newMark) && newMark.changes === undefined)) {
+			if (newMark?.count === 0) {
+				return [this.newMarks.dequeueUpTo(Number.POSITIVE_INFINITY)];
+			}
+			const reused = this.baseMarks.tryDequeueReusable(newMark, "output");
+			if (reused !== undefined) {
+				if (newMark !== undefined) {
+					const count = reused.reduce((sum, mark) => sum + mark.count, 0);
+					if (count > 0) {
+						this.newMarks.dequeueUpTo(count);
+					}
+				}
+				return reused;
+			}
+		}
+		return undefined;
 	}
 
 	public pop(): ComposeMarks {
