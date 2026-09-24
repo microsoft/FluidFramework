@@ -24,6 +24,10 @@ import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 const root = resolve(import.meta.dirname, "../..");
 const script = resolve(import.meta.dirname, "benchmark-summaries.mjs");
 
+function serializeJson(value, replacer = null) {
+	return `${JSON.stringify(value, replacer, "\t")}\n`;
+}
+
 /** Inventories regular files, retaining filesystem allocation separately from apparent length. */
 function inventory(directory) {
 	const files = [];
@@ -593,10 +597,7 @@ async function run(configuration) {
 		serviceData: temporaryData.provenance,
 		phases: {},
 	};
-	writeFileSync(
-		resolve(configuration.output, "manifest.json"),
-		JSON.stringify(result, null, 2),
-	);
+	writeFileSync(resolve(configuration.output, "manifest.json"), serializeJson(result));
 	try {
 		for (const phase of ["seed", "download", "cold"]) {
 			const service = await startService(configuration, phase);
@@ -617,17 +618,11 @@ async function run(configuration) {
 					existsSync(resolve(configuration.serviceDataDirectory, "tiny-db/CURRENT")),
 					"LevelDB must actually persist",
 				);
-			writeFileSync(
-				resolve(configuration.output, "result.json"),
-				JSON.stringify(result, null, 2),
-			);
+			writeFileSync(resolve(configuration.output, "result.json"), serializeJson(result));
 		}
 	} finally {
 		temporaryData.remove();
-		writeFileSync(
-			resolve(configuration.output, "manifest.json"),
-			JSON.stringify(result, null, 2),
-		);
+		writeFileSync(resolve(configuration.output, "manifest.json"), serializeJson(result));
 	}
 	console.log(
 		JSON.stringify({
@@ -671,7 +666,7 @@ function campaign(options, output) {
 			sha256: createHash("sha256").update(readFileSync(file)).digest("hex"),
 		})),
 	};
-	writeFileSync(resolve(output, "manifest.json"), JSON.stringify(manifest, null, 2));
+	writeFileSync(resolve(output, "manifest.json"), serializeJson(manifest));
 	const results = [];
 	for (let repetition = 0; repetition < (options.repetitions ?? 3); repetition++) {
 		for (const entries of options.sizes ?? [32, 512]) {
@@ -722,7 +717,7 @@ function campaign(options, output) {
 							checkpointErrors,
 							...result,
 						});
-						writeFileSync(resolve(output, "results.json"), JSON.stringify(results, null, 2));
+						writeFileSync(resolve(output, "results.json"), serializeJson(results));
 						console.log(
 							JSON.stringify({
 								sample: results.length,
@@ -765,7 +760,7 @@ function report(directory, output) {
 					sha256: createHash("sha256").update(JSON.stringify(item)).digest("hex"),
 				}
 			: item;
-	writeFileSync(resolve(output, "samples.json"), JSON.stringify(results, compact, 2));
+	writeFileSync(resolve(output, "samples.json"), serializeJson(results, compact));
 	writeFileSync(
 		resolve(output, "manifest.json"),
 		readFileSync(resolve(directory, "manifest.json")),
@@ -817,7 +812,7 @@ function report(directory, output) {
 			),
 		});
 	}
-	writeFileSync(resolve(output, "aggregate.json"), JSON.stringify(aggregate, null, 2));
+	writeFileSync(resolve(output, "aggregate.json"), serializeJson(aggregate));
 	console.log(`Retained ${results.length} samples in ${output}`);
 	for (const group of aggregate)
 		console.log(
@@ -842,10 +837,7 @@ if (command === "worker") {
 			document,
 		);
 		api.close();
-		writeFileSync(
-			resolve(configuration.output, `${argument}.json`),
-			JSON.stringify(result, null, 2),
-		);
+		writeFileSync(resolve(configuration.output, `${argument}.json`), serializeJson(result));
 		process.exit(0);
 	} catch (error) {
 		console.error(error);

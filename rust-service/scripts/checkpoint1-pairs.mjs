@@ -235,4 +235,4 @@ try {
 } finally {
 	persist();
 }
-console.log(JSON.stringify(summary, null, 2));
+console.log(JSON.stringify(summary, null, "\t"));

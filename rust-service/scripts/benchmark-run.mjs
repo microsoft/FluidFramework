@@ -83,6 +83,6 @@ if (outputDirectory === "--help") {
 		error: execution.error?.message ?? null,
 	});
 	writeFileSync(recordPath, `${JSON.stringify(record, null, "\t")}\n`);
-	console.log(JSON.stringify({ output, ...record }, null, 2));
+	console.log(JSON.stringify({ output, ...record }, null, "\t"));
 	process.exitCode = execution.status ?? 1;
 }

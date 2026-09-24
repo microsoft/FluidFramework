@@ -192,7 +192,7 @@ function sourceCounts() {
 			"Subset of total source: files in test/tests/test-utils/__tests__ directories or named *.spec.*/*.test.*, plus syntax-derived Rust #[cfg(test)] modules and #[test]/#[tokio::test] functions. Includes test support, not a count of test cases; complex cfg expressions, fixtures outside these paths, and integration tests outside the source scopes are not included.",
 		results,
 	});
-	console.log(JSON.stringify(results, null, 2));
+	console.log(JSON.stringify(results, null, "\t"));
 }
 
 /** Runs a recorded, alternating-order matrix while retaining failed cells. */

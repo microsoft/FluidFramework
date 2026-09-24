@@ -221,7 +221,7 @@ const output = {
 	},
 	samples,
 };
-console.log(JSON.stringify(output, undefined, 2));
+console.log(JSON.stringify(output, undefined, "\t"));
 
 function readServiceProcess() {
 	const pid = Number(process.env.BENCHMARK_SERVER_PID);

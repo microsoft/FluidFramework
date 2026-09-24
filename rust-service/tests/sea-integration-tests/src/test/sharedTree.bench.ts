@@ -297,7 +297,7 @@ async function runCase(
 		await mkdir(artifactDirectory, { recursive: true });
 		await writeFile(
 			path.join(artifactDirectory, `${benchmarkCase.slug}-${configuration.workload}.json`),
-			`${JSON.stringify(output, undefined, 2)}\n`,
+			`${JSON.stringify(output, undefined, "\t")}\n`,
 		);
 		return measurements(output);
 	} finally {
