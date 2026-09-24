@@ -362,7 +362,6 @@ export interface TreeBranchHistory {
  * An {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
  * Use `UntypedTreeViewAlpha` when your application needs to inspect or manipulate branch history directly, for example to {@link UntypedTreeViewAlpha.rewindTo | rewind} a branch to an earlier commit, or to {@link UntypedTreeViewAlpha.revertTo | revert} a branch to a prior state.
- * This is still a public API for application code, not an internal implementation detail.
  * The alpha designation means the shape of these APIs may still change before they become stable.
  *
  * To get the untyped view for a specific {@link TreeNode}, call {@link (TreeAlpha:interface).context} and check {@link TreeContextAlpha.isView | isView()}.
