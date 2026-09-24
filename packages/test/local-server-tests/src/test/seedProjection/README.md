@@ -1,7 +1,8 @@
 # Application Seed and Projection References
 
 This directory separates example application source from its tests.
-The seed-only reference uses two named text parts; it does not require the ongoing application-projection runtime changes.
+The seed-creation sample creates a Fluid file from two named text parts without running a Fluid runtime in the producer.
+It shows how clients load that file, collaborate, and automatically persist their state.
 
 | Goal                                                                   | Starting point                                                                                                                    |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |

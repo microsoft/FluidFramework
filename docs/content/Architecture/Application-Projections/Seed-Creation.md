@@ -14,12 +14,12 @@ The persistence details are described below; the DDSs are already usable before 
 
 ### Responsibilities
 
-| Component                  | Your application supplies                                                                | Fluid supplies                                                                                                                  |
-| -------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| File producer              | Seed payload, application code details, and file creation through your service           | The optional `createSeedSummary` helper writes the creation protocol and application input.                                     |
-| Seed loading               | Your existing runtime-loading function and a `SeedProjector`                             | `seedRuntimeFactory` wraps that function and supplies the converted state before normal runtime loading.                        |
-| Initial state construction | Deterministic initialization through your ordinary runtime and DDS APIs                  | `createSeedRuntimeSnapshot` creates a disconnected container, serializes the real runtime, and disposes it.                     |
-| Persistence                | The first-full-summary policy shown below and normal enabled summarization with a writer | The runtime requests the first full summary, handles acknowledgment and baseline adoption, and continues incremental summaries. |
+| Component                  | Your application supplies                                                                | Fluid supplies                                                                                                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| File producer              | Seed payload, application code details, and file creation through your service           | The optional `createSeedSummary` helper writes the creation protocol and application input.                                                                             |
+| Seed loading               | Your existing runtime-loading function and a `SeedProjector`                             | `seedRuntimeFactory` wraps that function and supplies the converted state before normal runtime loading.                                                                |
+| Initial state construction | Deterministic initialization through your ordinary runtime and DDS APIs                  | `createSeedRuntimeSnapshot` creates a disconnected container, serializes the real runtime, and disposes it.                                                             |
+| Persistence                | The first-full-summary policy shown below and normal enabled summarization with a writer | The runtime requests the first full summary, waits for the service to confirm it, and uses that accepted summary as the stored baseline that later summaries can reuse. |
 
 The [seed-creation sample][application] is a complete, headless composition of these pieces, using two named text parts.
 Its application modules contain no test-utility imports.
@@ -97,7 +97,10 @@ The example package name is not a production code-selection policy.
 
 Wrap the function that normally loads your container runtime with `seedRuntimeFactory`.
 Keep your existing load configuration and application cleanup.
-In this composition sketch, `applicationLoadOptions` is that unchanged configuration and `seedProjector` implements the [`SeedProjector` operations below](#3-implement-your-seed-projector):
+In this composition sketch, `applicationLoadOptions` is the options object you already pass to `loadContainerRuntime`, including your data-store registry and runtime options.
+`seedProjector` supplies three callbacks: `isNative` recognizes stored DDS state, `readSeed` reads and validates the seed, and `materialize` constructs the initial DDS state.
+[Step 3](#3-implement-your-seed-projector) describes how to implement those callbacks.
+Neither object is supplied by the framework:
 
 ```typescript
 import { seedRuntimeFactory } from "@fluidframework/container-loader/legacy/alpha";
