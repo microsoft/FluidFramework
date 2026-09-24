@@ -11,17 +11,17 @@ Read `rust-service/DEVELOPMENT.md` for the quality bar and validation requiremen
 
 The default workflow is **patch first**:
 
-1. assign a reviewable category and ownership scope;
-2. make all supported improvements in that scope;
-3. review the complete fixed-base diff;
-4. correct or revert edits that do not satisfy the category safeguards; and
-5. retain only the accepted patch.
+1. assign a category and ownership scope;
+2. edit the checkout, then assemble a reviewable checkpoint;
+3. freeze and validate the patch;
+4. independently review its complete fixed-base diff; and
+5. correct or revert edits through the same bounded loop, then retain only the accepted patch.
 
 The diff is the primary proposal and review artifact.
 Do not require an English candidate description before making a cheap, reversible local edit.
 Use proposal-first assessment only when implementation is expensive, crosses ownership, or could change a public, protocol, persistence, concurrency, platform, generated, or performance boundary.
 
-Pin an approved source commit so every patch has a reproducible before-and-after comparison.
+Record the approved source commit for the run and the fixed base for each checkpoint.
 Treat size and edit counts as descriptive evidence, not targets.
 
 ## Relationship to Quality Iterations
@@ -58,15 +58,16 @@ When required behavior or ownership cannot be established from current contracts
 
 ## Category Strategies
 
-Use one primary category for each reviewable patch.
-Organize broad work into category waves so reviewers can apply coherent criteria to the complete diff.
+A **checkpoint** is one reviewable patch with a fixed base, validation set, and acceptance decision.
+A **wave** covers one category through one or more checkpoints.
+Use one primary category per checkpoint; a broad wave does not require one all-crate diff.
 
 | Category | Default strategy | Intended improvements | Required safeguards |
 | --- | --- | --- | --- |
 | Documentation | Patch first | Remove unnecessary detail, duplication, narration, and misplaced information; retain or add only what the intended audience needs. | Preserve required contracts, qualifications, useful local context, non-obvious reasoning, and discoverability. Account for inherited and authoritative documentation. |
-| Tests | Patch first | Remove or consolidate redundant cases, assertions, fixtures, helpers, and layers while preserving consequential regression evidence. | Preserve distinct behavioral obligations, independent expectations, execution, isolation, and useful failure diagnosis rather than every current test artifact. |
-| Naming | Patch first for private/local names | Reduce misleading, redundant, inconsistent, or unnecessarily specific vocabulary. | Improve responsibility or call-site comprehension rather than substituting stylistic preference; check public, serialized, reflected, and generated names. |
-| Code organization | Patch first for local mechanical cleanup | Reduce unnecessary files, modules, forwarding layers, visibility, imports, dependency edges, and navigation. | Move code only to a clearer owner or when the move enables deletion of a boundary; preserve necessary platform, lifecycle, and failure separation. |
+| Tests | Patch first | Remove or consolidate redundant cases, assertions, fixtures, helpers, and layers while preserving consequential regression evidence. | Preserve distinct behavioral obligations, independent expectations, execution, isolation, and useful failure diagnosis rather than every current test artifact. Check for expectations derived from production code, hidden or unexecuted scenarios, and shared state introduced by consolidation. |
+| Naming | Patch first for private/local names | Reduce misleading, redundant, inconsistent, or unnecessarily specific vocabulary. | Improve responsibility or call-site comprehension rather than substituting stylistic preference; check public, serialized, reflected, generated, diagnostic, and operational names. Check for mixed old and new terminology at affected call sites. |
+| Code organization | Patch first for local mechanical cleanup | Reduce unnecessary files, modules, forwarding layers, visibility, imports, dependency edges, and navigation. | Move code only to a clearer owner or when the move enables deletion of a boundary; preserve necessary platform, lifecycle, and failure separation. Check for broader visibility, added forwarding, and lost comments, attributes, initialization, or build inclusion during moves. |
 | Implementation | Patch first for local mechanics; proposal first for risky boundaries | Remove unnecessary mechanisms, states, branches, validation, conversions, allocations, clones, wrappers, synchronization, and lifecycle phases. | Preserve documented contracts and demonstrated consumer requirements, including evaluation order, errors, side effects, resource lifetimes, concurrency, and performance. |
 | Abstractions | Patch first for private removal; proposal or prototype first for new or shared surfaces | Remove layers, traits, wrappers, adapters, genericity, configuration, and extension points that do not own meaningful variation, policy, substitution, invariants, or dependency direction. | Prefer direct code or small duplication over false sharing; do not collapse distinct platform, failure, persistence, or lifecycle guarantees. |
 
@@ -158,12 +159,12 @@ Load `.github/skills/rust-service-coordination/SKILL.md` only after the user exp
 
 Offer:
 
-- **Commit after acceptance:** recommended for multi-wave work. The user grants advance authority to commit a category only after its acceptance loop passes. Never push.
+- **Commit after acceptance:** recommended for multiple checkpoints. The user grants advance authority to commit each checkpoint only after its acceptance loop passes. Never push.
 - **Ask before each commit:** finish acceptance, present the result, and wait for approval.
-- **Do not commit:** appropriate for a short single wave. For multiple waves, preserve an immutable patch and stop before the next wave.
+- **Do not commit:** appropriate for one checkpoint. Preserve an immutable accepted patch and stop before starting another checkpoint.
 
 Candidate edits must never be committed before acceptance.
-Use each accepted category commit as the fixed base for the next category.
+Use each accepted checkpoint commit as the fixed base for the next checkpoint, including within the same wave.
 
 ### 7. Choose Workspace Isolation
 
@@ -183,22 +184,22 @@ Before dispatch, state:
 - selected scope and exclusions;
 - categories, profile, and wave order;
 - patch-first and proposal-first boundaries;
-- execution structure;
+- execution structure, shared or per-worker worktrees, and synchronization boundary;
 - branch and worktree;
 - commit authority;
 - validation sets and acceptance-attempt limit; and
 - prohibited API, dependency, protocol, generated, platform, and performance changes.
 
-Derive the validation sets from [Validation](#validation) and state the default three-attempt limit from [Accept a Category Patch](#accept-a-category-patch).
+Derive the validation sets from [Validation](#validation) and state the default three-attempt limit per checkpoint from [Accept a Checkpoint](#accept-a-checkpoint).
 Ask only if the user wants to override those defaults.
 
 For lean parallel editing:
 
 - give each agent non-overlapping writable paths;
-- use isolated worktrees when concurrent writes or independent commits require them;
+- use the [shared-worktree barrier](#parallel-patch-work), or isolated worktrees and build outputs for independent edit/test loops;
 - keep shared commands under one execution owner;
 - do not modify tracked editor or task configuration to schedule commands; and
-- integrate only frozen, reviewed patches.
+- assemble frozen candidate patches before checkpoint validation and review.
 
 ### Budget by Reviewability
 
@@ -215,8 +216,14 @@ Bound work with:
 - permitted risk and boundary changes; and
 - acceptance-attempt limits.
 
-Split a patch when one reviewer cannot inspect the complete diff and relevant context with confidence, or when independent transformations need different evidence.
+Choose a cohesive batch that fits the reviewability budget, combining small related scopes when practical rather than defaulting to one checkpoint per crate.
+In a shared worktree, the concurrent editing batch is one checkpoint, with one acceptance decision and attempt allowance.
+Review assignments may partition that frozen batch by crate or responsibility; they are not independently acceptable checkpoints.
+Use one reviewer when the complete batch is small enough.
+Follow the checkpoint-review skill's assignment rules: name a reviewer owner for every changed area and relevant cross-area interaction, and have the coordinator verify complete coverage.
+If the batch is too large even for partitioned review, schedule smaller batches before editing.
 Do not split a coherent mechanical transformation merely to satisfy an edit-count target.
+Keep candidates for later checkpoints outside the checkout being validated and reviewed.
 
 ### Record Configuration
 
@@ -224,11 +231,11 @@ For a lean run, retain only:
 
 - approved source commit;
 - scope, exclusions, category profile, and waves;
-- execution ownership;
-- patch boundaries and review depth;
+- execution ownership and worktree-wide synchronization;
+- checkpoint boundaries, review assignments, and review depth;
 - checkpoint commit authority and workspace isolation;
 - prohibited API, dependency, protocol, generated, platform, and performance changes;
-- per-category and integrated validation sets; and
+- per-checkpoint and integrated validation sets; and
 - explicit user limits.
 
 Keep this in session state or an existing task record.
@@ -301,56 +308,54 @@ Pause and assess before implementing a transformation that:
 For such work, state a falsifiable hypothesis and the cheapest evidence that could disprove it.
 A small isolated prototype is preferable to a long speculative report when it can expose the tradeoff safely.
 
-## Accept a Category Patch
+## Accept a Checkpoint
 
-Use one bounded acceptance loop for compiler, formatter, Clippy, rustdoc, test, documentation, policy, and adversarial-review feedback.
-A category checkpoint is accepted only when its declared validation set passes and a fresh fixed-base review then reports no blocking findings on the same unchanged patch.
+Use this one acceptance loop for sequential and parallel editing.
+Local diff inspection and focused checks prepare the patch; they are not separate approval gates.
+Use the [checkpoint-review skill](../checkpoint-review/SKILL.md) for snapshot identity, independent read-only review, finding dispositions, and commit safeguards.
+Supply the category criteria below with its review input.
 
-Default to **three frozen-state attempts total**:
+Default to **three frozen-state attempts per checkpoint**, including the initial attempt:
 
-1. freeze the complete category patch;
-2. run its declared category validation;
-3. if validation fails, return diagnostics to the implementer and do not spend a review;
-4. if validation passes, use the [checkpoint-review skill](../checkpoint-review/SKILL.md) for a fresh read-only review;
-5. if review requests changes, return the findings to the implementer;
-6. after any substantive edit or revert, increment the attempt count and restart at validation; and
-7. when validation and review pass consecutively on one unchanged state, commit or pause according to the configured authority.
+1. Pause all writers to the checkpoint worktree and wait for acknowledgment that their edits and write-producing commands have finished.
+   The coordinator then assembles the complete candidate patch, including parallel contributions and integration fixes.
+2. Freeze the worktree's source and validation inputs, capture the snapshot identity, and run the declared validation set.
+   If validation fails, classify the failure before repairing it; do not request a review yet.
+3. Once validation passes, request one fresh reviewer per declared review assignment against the same fixed checkpoint-start base and frozen snapshot.
+   Give each reviewer access to the complete diff and baseline/current context, with an explicit owner for every changed area and relevant cross-area interaction.
+4. Collect all review results and finish all checks before releasing writers for coordinated repairs.
+   Resolve findings with evidence and batch necessary corrections or reversions; a revised candidate starts the next attempt at the worktree-wide barrier, against the same base.
+5. Accept only when required validation and complete review pass on the same unchanged state with no unresolved blocking findings.
+   Verify the frozen identity and combined review coverage, then commit or pause according to the configured authority.
 
-This single limit replaces the checkpoint-review skill's default repair/review allowance for this workflow.
-A validation-only failed state and every state sent to review draw from the same three attempts; do not add separate review rounds.
+This limit replaces the checkpoint-review skill's default repair/review allowance.
+Validation failures and review-driven repairs share the allowance; they do not get separate loops.
+All review assignments in a batch share that allowance, and every revised attempt validates and reviews the complete batch again.
+Acceptance of one checkpoint does not require re-reviewing earlier unchanged checkpoints.
+A later patch that changes an accepted transformation must include the affected context and renewed evidence in its own review.
 
-The reviewer must inspect the complete diff, relevant baseline and current context, prior findings and dispositions on later attempts, and the applicable category safeguards.
-Verify the frozen state before accepting the review.
-Do not substitute an implementer's prose summary for the diff.
+### Review Criteria
 
-Group cheap related edits by category and ownership so one review can assess the complete transformation.
-Give high-risk structural changes separate checkpoints.
-Ask the reviewer to return concrete file-and-line findings and identify:
+Review the actual diff and relevant baseline and current context using the [category safeguards](#category-strategies) and [reduction rules](#edit-the-full-assigned-scope).
+Check both preservation of essential value and removal of accidental complexity.
+For changed contracts or regression evidence, include [Focused Contract-Preservation Review](../rust-service-quality-iteration/SKILL.md#focused-contract-preservation-review) in this same review, not a separate audit.
 
-- edits that should be retained;
-- edits that need correction;
-- edits that should be reverted because benefit is unclear or safeguards were lost;
-- repeated failure patterns that may affect the rest of the patch; and
-- missed edits only when they are clearly within the promised scope.
+Return concrete file-and-line findings and a checkpoint disposition, not an approval or justification for every edit.
+Distinguish:
 
-Apply these challenges:
+- **Blocking:** lost safeguards, missing required evidence, incomplete review coverage, or a transformation that lacks a concrete simplification benefit or merely displaces complexity.
+  Explain the mechanism and affected responsibility; a stylistic preference is not a blocker.
+  Correct or revert the transformation.
+- **Nonblocking:** additional simplification opportunities that are not needed to make the current transformation worthwhile and safe.
+  These do not expand the repair loop.
 
-| Category | Diff-review challenges |
-| --- | --- |
-| Documentation | What realistic reader decision does each added or retained detail support? Did the patch remove detail the intended audience does not need, use the authoritative owner, and account for inherited documentation? Were requirements, qualifications, non-obvious reasoning, or useful context lost? Did accurate but unnecessary, duplicated, misplaced, historical, or code-restating prose remain or grow? |
-| Tests | What distinct owning decision, equivalence class, or boundary does each retained or added test protect? Are all consequential behavioral obligations still executed with independent expectations and useful diagnosis? Could surviving evidence detect and localize the same defect, making a case, assertion, fixture, helper, parameter, or layer redundant? Did consolidation hide scenarios, introduce shared state, or derive expectations from production? |
-| Naming | Did the patch reduce misleading or competing vocabulary rather than substitute style? Is the new term authoritative and accurate at call sites? Did mixed old terminology remain? Could the rename affect public, serialized, reflected, generated, diagnostic, or operational names? |
-| Code organization | Did the patch reduce files, boundaries, visibility, imports, dependency edges, or navigation needed to understand the responsibility? Is the destination the actual owner? Did a smaller file require broader visibility, more forwarding, or loss of platform, lifecycle, failure, comments, attributes, initialization, or build inclusion? |
-| Implementation | What mechanism, state, branch, validation, conversion, allocation, clone, wrapper, synchronization, or lifecycle phase disappeared? Was complexity removed rather than hidden behind a helper or denser expression? Are retained behaviors contractually or demonstrably required, and are evaluation order, errors, side effects, resource lifetimes, concurrency, and performance preserved? |
-| Abstractions | What concept or navigation step disappeared? Does each retained abstraction own meaningful variation, policy, substitution, invariants, or dependency direction? Did the patch add indirection, configuration, coupling, visibility, or dependencies, falsely share independently evolving responsibilities, or collapse distinct guarantees? Would direct code or small duplication be simpler? |
-
-For changed contracts or regression evidence, include the quality skill's focused contract-preservation questions in the same review.
-Do not start a separate quality audit.
+If a finding reveals a repeated failure pattern, check the rest of the patch for that pattern.
+Report gaps in promised scope coverage separately; acceptance of a patch does not establish completion of its wave.
 
 ### Classify Validation Failures
 
 Before editing in response to a failure, classify it as introduced, pre-existing, environmental, potentially flaky, or unclear.
-When attribution is unclear, reproduce the smallest failing command against the category base in a clean checkout.
+When attribution is unclear, reproduce the smallest failing command against the checkpoint base in a clean checkout.
 
 - Restore missing dependencies or correct an invalid command without consuming an attempt.
 - Rerun a potentially flaky test once for diagnosis; never rerun until green.
@@ -360,9 +365,9 @@ When attribution is unclear, reproduce the smallest failing command against the 
 Environment restoration, evidence collection, one diagnostic flaky rerun, and report-only corrections do not consume an attempt because they do not create a new patch state.
 Any substantive source or test edit does.
 
-If all attempts fail, stop before committing or starting the next wave and ask the user to choose:
+If all attempts fail, stop before committing or starting another checkpoint and ask the user to choose:
 
-- revert only the current category patch;
+- revert only the current checkpoint patch, leaving earlier accepted checkpoints intact;
 - preserve the patch and pause;
 - expand scope and authorize another bounded loop; or
 - accept an explicit documented exception.
@@ -373,21 +378,32 @@ Never accept an introduced deterministic regression as an exception or describe 
 ## Parallel Patch Work
 
 Partition by non-overlapping crate or responsibility ownership, not by overlapping techniques.
-Within a broad category wave:
+Non-overlapping files do not isolate source dependencies, generated inputs, or build outputs.
 
-1. dispatch write-capable agents to edit their full owned scopes;
-2. let each agent return its patch and focused checks;
-3. integrate the category candidate patch;
-4. run the bounded category acceptance loop on the complete integrated diff; and
-5. create or request the accepted category checkpoint commit before the next wave.
+**Shared worktree:** alternate parallel editing with a worktree-wide validation/review phase.
+Workers stop writing and acknowledge the barrier before the coordinator runs checks or starts reviews.
+Keep all writers paused until validation, review, and acceptance finish, or the coordinator explicitly opens a repair phase after all checks and reviews have stopped.
+This barrier also applies to focused compilation and tests during local editing; do not run one worker's checks against another worker's moving source.
+Read-only reviewers may work concurrently on the frozen batch, but all command execution stays under one owner, who serializes commands with conflicting outputs.
 
-Agents may report a small number of high-risk skipped transformations, but should not produce exhaustive no-change or candidate prose.
+**Isolated worktrees:** workers may run independent edit/test loops only when their source trees, generated directories, and build outputs are isolated.
+They return frozen patches and focused check results; the coordinator assembles them in the checkpoint worktree before [acceptance](#accept-a-checkpoint).
+Adapt contributions prepared against an older base before freezing, then validate and review the actual assembled diff.
+Independent work elsewhere may continue only if it cannot modify that worktree's inputs or outputs.
+
+Assembly is not acceptance: neither mode requires independent review or candidate commits before assembly.
+If any source or validation input changes while frozen, invalidate the attempt's evidence and re-enter the acceptance loop; do not silently accept mixed-state results or revert another worker's edits.
+Validation may regenerate declared build artifacts from frozen inputs, including artifacts consumed by later checks.
+Changes to source or other frozen inputs require a new freeze.
+
+Audited runs use this source-change acceptance loop too; coordination records and integration checks do not add a per-agent candidate-approval gate.
+Agents may report significant high-risk skipped transformations, but should not produce exhaustive no-change or candidate prose.
 Cross-crate changes need one explicit owner and a later patch.
 Do not let multiple workstreams create competing shared abstractions.
 
 ## Validation
 
-Declare each category validation set before editing.
+Declare the validation set for each checkpoint before editing, using its category and affected boundaries.
 Run the smallest useful check during local editing, then use these acceptance minimums:
 
 - **Documentation-only:** documentation checks, rustdoc, and applicable doctests.
@@ -395,7 +411,7 @@ Run the smallest useful check during local editing, then use these acceptance mi
 - **Naming or code organization:** formatting, Clippy or compilation, and complete tests for every changed crate.
 - **Implementation and abstractions:** formatting, Clippy or compilation, complete tests for every changed crate, directly affected dependent-crate tests, and boundary-specific checks.
 
-Every category that changes Rust code or tests must pass the complete affected-crate test suites before acceptance and before the next category begins.
+Every checkpoint that changes Rust code or tests must pass the complete affected-crate test suites before acceptance.
 After review-driven edits, the next attempt reruns the complete declared set.
 Passing tests does not establish preserved test quality; the review must still compare behavioral obligations, independent expectations, execution gates, diagnosis, and potentially redundant evidence.
 
