@@ -199,6 +199,8 @@ struct BlockingRead<Item> {
     source: Option<ArchiveStream<Item, EventPosition, FileStorageError>>,
     /// At most one in-flight poll retains the opening after cancellation.
     job: Option<PollJob<Item>>,
+    /// Completion stops worker dispatch without releasing the source's opening.
+    finished: bool,
     /// Last delivery-consistent source observation.
     progress: MonitoredStreamProgress<EventPosition>,
     /// Factory-wide worker budget.
@@ -214,6 +216,7 @@ pub(crate) fn blocking_read<Item: Send + 'static>(
     Box::pin(BlockingRead {
         source: Some(source),
         job: None,
+        finished: false,
         progress,
         workers,
         wake: Arc::default(),
@@ -225,6 +228,9 @@ impl<Item: Send + 'static> Stream for BlockingRead<Item> {
 
     fn poll_next(self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let reader = self.get_mut();
+        if reader.finished {
+            return Poll::Ready(None);
+        }
         reader.wake.consumer.register(context.waker());
         if reader.job.is_none() {
             let Some(mut source) = reader.source.take() else {
@@ -247,9 +253,8 @@ impl<Item: Send + 'static> Stream for BlockingRead<Item> {
                 match result {
                     Ok((source, result)) => {
                         reader.progress = source.progress();
-                        if !matches!(result, Poll::Ready(None)) {
-                            reader.source = Some(source);
-                        }
+                        reader.finished = matches!(result, Poll::Ready(None));
+                        reader.source = Some(source);
                         if result.is_pending()
                             && reader
                                 .wake
@@ -291,4 +296,122 @@ pub(crate) async fn blocking<Output: Send + 'static>(
     })
     .await
     .map_err(|_| FileStorageError::Ambiguous)?
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use futures_util::StreamExt;
+
+    /// Signals readiness while a blocking poll is still returning pending.
+    struct WakeDuringPoll {
+        /// The first poll races its own wake; the next poll delivers progress.
+        pending: bool,
+    }
+
+    impl Stream for WakeDuringPoll {
+        type Item = Result<sea_core::MonitoredStreamItem<(), EventPosition>, FileStorageError>;
+
+        fn poll_next(self: Pin<&mut Self>, context: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+            let source = self.get_mut();
+            if source.pending {
+                source.pending = false;
+                context.waker().wake_by_ref();
+                Poll::Pending
+            } else {
+                Poll::Ready(Some(Ok(sea_core::MonitoredStreamItem::Progress(
+                    source.progress(),
+                ))))
+            }
+        }
+    }
+
+    impl MonitoredStream for WakeDuringPoll {
+        type Data = ();
+        type Position = EventPosition;
+        type Error = FileStorageError;
+
+        fn progress(&self) -> MonitoredStreamProgress<EventPosition> {
+            MonitoredStreamProgress {
+                previous: None,
+                latest_known: None,
+                status: sea_core::MonitoredStreamStatus::AwaitingNewItems,
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn blocking_read_preserves_a_wake_racing_with_pending_completion() {
+        let mut reader = blocking_read(
+            Box::pin(WakeDuringPoll { pending: true }),
+            Arc::new(Semaphore::new(1)),
+        );
+        let next = tokio::time::timeout(std::time::Duration::from_secs(1), reader.next())
+            .await
+            .expect("the pending worker's wake must schedule another source poll");
+        assert!(matches!(
+            next,
+            Some(Ok(sea_core::MonitoredStreamItem::Progress(_)))
+        ));
+    }
+
+    #[tokio::test]
+    async fn blocking_capacity_is_retained_until_cancelled_callers_work_settles() {
+        let workers = Arc::new(Semaphore::new(1));
+        let held = workers.clone().acquire_owned().await.unwrap();
+        {
+            let waiting = blocking(workers.clone(), || -> Result<(), FileStorageError> {
+                panic!("cancelled waiter must not run")
+            });
+            tokio::pin!(waiting);
+            assert!(futures_util::poll!(&mut waiting).is_pending());
+        }
+        drop(held);
+        let (entered, entry) = tokio::sync::oneshot::channel();
+        let (release, released) = std::sync::mpsc::channel();
+        let caller = tokio::spawn(blocking(workers.clone(), move || {
+            entered.send(()).unwrap();
+            released
+                .recv_timeout(std::time::Duration::from_secs(5))
+                .unwrap();
+            Ok(())
+        }));
+        entry.await.unwrap();
+        caller.abort();
+        assert!(caller.await.unwrap_err().is_cancelled());
+        assert_eq!(workers.available_permits(), 0);
+        release.send(()).unwrap();
+        tokio::time::timeout(
+            std::time::Duration::from_secs(5),
+            blocking(workers.clone(), || Ok(())),
+        )
+        .await
+        .unwrap()
+        .unwrap();
+        assert_eq!(workers.available_permits(), 1);
+    }
+
+    #[test]
+    fn preparation_limits_reject_excess_and_retain_worker_owned_charges() {
+        let budget = PreparationBudget::new();
+        let retained = budget.reserve(16 * 1024 * 1024).unwrap();
+        assert!(matches!(
+            budget.reserve(1),
+            Err(FileStorageError::Rejected(_))
+        ));
+        let worker = retained.clone();
+        drop(retained);
+        assert!(budget.reserve(1).is_err());
+        drop(worker);
+        assert_eq!(budget.bytes.available_permits(), 16 * 1024 * 1024);
+        assert!(budget.reserve(16 * 1024 * 1024 + 1).is_err());
+        assert!(budget.reserve(usize::MAX).is_err());
+        let requests = (0..128)
+            .map(|_| budget.reserve(0).unwrap())
+            .collect::<Vec<_>>();
+        assert!(budget.reserve(0).is_err());
+        drop(requests);
+        assert_eq!(budget.requests.available_permits(), 128);
+        assert!(budget.reserve(1).is_ok());
+    }
 }

@@ -191,7 +191,9 @@ RUSTDOCFLAGS='-D warnings' cargo doc -p sea-file --all-features --no-deps
 ```
 
 Tests cover framing/corruption, batch visibility and uncertainty, lost acknowledgments, cross-process locks, executor progress during event I/O, and cancellation/panic ownership.
+Completed event and snapshot streams retain their exclusive opening until dropped, without dispatching more read workers.
 Policy tests cover bounded count/byte backpressure, cancelled waiters, durable prefix flush, shutdown wakeups, and hot/cold-document fairness.
+Direct preparation and durable-admission tests check independent request/byte limits, retained cancellation ownership, and capacity release after settlement.
 Paused-worker tests verify resident directory/snapshot admission, variable-sized offset reservation, checkpoint ordering, and orderly reopen.
 Atomic-file tests cover every truncated unpublished replacement and complete old/new selection.
 Storage tests cover checkpoint size and historical-file independence, lazy historical corruption detection, byte-offset bounds, and snapshot lookup without sequencer state.

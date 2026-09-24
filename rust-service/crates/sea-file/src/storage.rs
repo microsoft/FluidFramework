@@ -2294,6 +2294,325 @@ mod tests {
     static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 
     #[tokio::test]
+    async fn factory_identity_shutdown_and_sticky_failure_are_opening_independent() {
+        for durable in [false, true] {
+            let root = root();
+            let storage = Factory::open(&root, durable).unwrap();
+            let cloned = storage.clone();
+            let created = storage.create_document().await.unwrap();
+            let second = cloned.create_document().await.unwrap();
+            assert_ne!(created.id, second.id);
+            for id in [
+                DocumentId::from_bytes(Bytes::from_static(b"malformed")),
+                DocumentId::from_bytes(Bytes::copy_from_slice(&u64::MAX.to_be_bytes())),
+            ] {
+                assert!(storage.open_document(&id).await.unwrap().is_none());
+            }
+            let blob = created
+                .components
+                .blobs
+                .put_blob(Bytes::new())
+                .await
+                .unwrap();
+            let event = created
+                .components
+                .events
+                .append(batch().remove(0))
+                .await
+                .unwrap();
+            storage.shutdown().await.unwrap();
+            assert!(matches!(
+                cloned.create_document().await,
+                Err(FileStorageError::Rejected(_))
+            ));
+            assert!(matches!(
+                cloned.open_document(&created.id).await,
+                Err(FileStorageError::Rejected(_))
+            ));
+            assert!(
+                created
+                    .components
+                    .events
+                    .append(batch().remove(0))
+                    .await
+                    .is_err()
+            );
+            assert!(
+                created
+                    .components
+                    .blobs
+                    .put_blob(Bytes::new())
+                    .await
+                    .is_err()
+            );
+            assert!(
+                created
+                    .components
+                    .snapshots
+                    .append(Snapshot {
+                        root: blob,
+                        at_event: event
+                    })
+                    .await
+                    .is_err()
+            );
+            assert!(
+                created
+                    .components
+                    .checkpoints
+                    .publish_checkpoint(Bytes::from_static(b"late"))
+                    .await
+                    .is_err()
+            );
+            drop((created, second));
+            let storage = Factory::open(&root, durable).unwrap();
+            let created = storage.create_document().await.unwrap();
+            created.components.events.0.poison();
+            drop(created);
+            assert!(matches!(
+                storage.flush().await,
+                Err(FileStorageError::Ambiguous)
+            ));
+            assert!(matches!(
+                storage.shutdown().await,
+                Err(FileStorageError::Ambiguous)
+            ));
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn recovery_validates_semantics_after_framing_has_succeeded() {
+        let root = root();
+        let storage = Factory::open(&root, true).unwrap();
+        let created = storage.create_document().await.unwrap();
+        let components = &created.components;
+        let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
+        let first = components.events.append(batch().remove(0)).await.unwrap();
+        let second = components.events.append(batch().remove(0)).await.unwrap();
+        components
+            .snapshots
+            .append(Snapshot {
+                root: blob.clone(),
+                at_event: first.clone(),
+            })
+            .await
+            .unwrap();
+        let opening = &components.events.0;
+        let state = opening.published().unwrap();
+        let offset = opening.writer().unwrap().boundary().unwrap();
+        let missing = BlobTreeId::Blob(BlobId::for_bytes(b"missing"));
+        for (position, previous, tree) in [
+            (offset + 1, second.id().get(), None),
+            (offset, 0, None),
+            (offset, offset, None),
+            (offset, second.id().get(), Some(missing)),
+        ] {
+            let record = encode_event(
+                &Event {
+                    payload: Bytes::new(),
+                    blob_tree: tree,
+                },
+                position,
+                previous,
+            );
+            assert!(matches!(
+                state.clone().recover_event(&record, offset),
+                Err(FileStorageError::Corrupt(_))
+            ));
+        }
+        let valid = encode_event(&batch().remove(0), offset, second.id().get());
+        let mut recovered = state.clone();
+        recovered.recover_event(&valid, offset).unwrap();
+        assert_eq!(recovered.head, offset);
+        for (position, tree) in [
+            (first.id(), blob.id()),
+            (EventPosition::new(second.id().get() - 1), blob.id()),
+            (second.id(), missing),
+        ] {
+            let mut record = vec![4];
+            record.extend_from_slice(&position.get().to_be_bytes());
+            encode_tree(&mut record, tree);
+            assert!(matches!(
+                state.clone().recover_snapshot(&record, state.snapshot_end),
+                Err(FileStorageError::Corrupt(_))
+            ));
+        }
+        let mut valid = vec![4];
+        valid.extend_from_slice(&second.id().get().to_be_bytes());
+        encode_tree(&mut valid, blob.id());
+        recovered
+            .recover_snapshot(&valid, state.snapshot_end)
+            .unwrap();
+        assert_eq!(recovered.snapshot_head, second.id().get());
+        drop(created);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn completed_streams_retain_exclusive_opening_until_dropped() {
+        for durable in [false, true] {
+            let root = root();
+            let storage = Factory::open(&root, durable).unwrap();
+            let created = storage.create_document().await.unwrap();
+            let bound = Some(EventPosition::new(1));
+            let mut events = created.components.events.read(bound, bound);
+            let mut snapshots = created.components.snapshots.read(bound, bound);
+            let id = created.id;
+            drop(created.components);
+            assert!(matches!(
+                storage.open_document(&id).await,
+                Err(FileStorageError::Busy)
+            ));
+            while let Some(item) = events.next().await {
+                item.unwrap();
+            }
+            while let Some(item) = snapshots.next().await {
+                item.unwrap();
+            }
+            let workers = storage
+                .workers
+                .clone()
+                .acquire_many_owned(if durable { 32 } else { 4 })
+                .await
+                .unwrap();
+            assert!(matches!(events.next().now_or_never(), Some(None)));
+            assert!(matches!(snapshots.next().now_or_never(), Some(None)));
+            drop(workers);
+            assert!(matches!(
+                storage.open_document(&id).await,
+                Err(FileStorageError::Busy)
+            ));
+            drop(events);
+            assert!(matches!(
+                storage.open_document(&id).await,
+                Err(FileStorageError::Busy)
+            ));
+            drop(snapshots);
+            let reopened = storage.open_document(&id).await.unwrap().unwrap();
+            drop(reopened);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn read_bounds_use_the_lazy_initialization_head_for_both_archives() {
+        for durable in [false, true] {
+            let root = root();
+            let storage = Factory::open(&root, durable).unwrap();
+            let created = storage.create_document().await.unwrap();
+            let components = &created.components;
+            let first = EventPosition::new(RECORD_START);
+            let mut events = components.events.read(None, Some(first));
+            let mut snapshots = components.snapshots.read(None, Some(first));
+            let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
+            let event = components.events.append(batch().remove(0)).await.unwrap();
+            components
+                .snapshots
+                .append(Snapshot {
+                    root: blob,
+                    at_event: event,
+                })
+                .await
+                .unwrap();
+            assert!(matches!(
+                events.next().await,
+                Some(Ok(MonitoredStreamItem::Progress(_)))
+            ));
+            assert!(matches!(
+                events.next().await,
+                Some(Ok(MonitoredStreamItem::Item(event))) if event.position == first
+            ));
+            assert!(matches!(
+                snapshots.next().await,
+                Some(Ok(MonitoredStreamItem::Progress(_)))
+            ));
+            assert!(matches!(
+                snapshots.next().await,
+                Some(Ok(MonitoredStreamItem::Item(snapshot))) if snapshot.at_event.id() == first
+            ));
+            for (after, stop) in [
+                (None, Some(EventPosition::new(first.get() + 1))),
+                (Some(EventPosition::new(first.get() + 1)), None),
+            ] {
+                let mut invalid_events = components.events.read(after, stop);
+                let mut invalid_snapshots = components.snapshots.read(after, stop);
+                assert!(matches!(
+                    invalid_events.next().await,
+                    Some(Err(FileStorageError::InvalidPosition))
+                ));
+                assert!(matches!(
+                    invalid_snapshots.next().await,
+                    Some(Err(FileStorageError::InvalidPosition))
+                ));
+                assert!(invalid_events.next().await.is_none());
+                assert!(invalid_snapshots.next().await.is_none());
+            }
+            storage.shutdown().await.unwrap();
+            drop((events, snapshots, created));
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn snapshots_reject_foreign_dependencies_and_nonadvancing_positions() {
+        for durable in [false, true] {
+            let root = root();
+            let storage = Factory::open(&root, durable).unwrap();
+            let created = storage.create_document().await.unwrap();
+            let other = storage.create_document().await.unwrap();
+            let components = &created.components;
+            let blob = components.blobs.put_blob(Bytes::new()).await.unwrap();
+            let foreign_blob = other.components.blobs.put_blob(Bytes::new()).await.unwrap();
+            let first = components.events.append(batch().remove(0)).await.unwrap();
+            let second = components.events.append(batch().remove(0)).await.unwrap();
+            let foreign_event = other
+                .components
+                .events
+                .append(batch().remove(0))
+                .await
+                .unwrap();
+            for (root, at_event) in [(foreign_blob, first.clone()), (blob.clone(), foreign_event)] {
+                assert!(matches!(
+                    components
+                        .snapshots
+                        .append(Snapshot { root, at_event })
+                        .await,
+                    Err(FileStorageError::Rejected("foreign document handle"))
+                ));
+            }
+            assert_eq!(components.snapshots.head().await.unwrap(), None);
+            components
+                .snapshots
+                .append(Snapshot {
+                    root: blob.clone(),
+                    at_event: second.clone(),
+                })
+                .await
+                .unwrap();
+            for at_event in [first, second.clone()] {
+                assert!(matches!(
+                    components
+                        .snapshots
+                        .append(Snapshot {
+                            root: blob.clone(),
+                            at_event,
+                        })
+                        .await,
+                    Err(FileStorageError::Rejected("snapshot must advance"))
+                ));
+            }
+            assert_eq!(
+                components.snapshots.head().await.unwrap(),
+                Some(second.id())
+            );
+            storage.shutdown().await.unwrap();
+            drop((created, other));
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn independent_invalidation_covers_poison_shutdown_and_late_registration() {
         for durable in [false, true] {
             for poison in [false, true] {

@@ -132,6 +132,50 @@ mod tests {
     static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
 
     #[tokio::test]
+    async fn admission_limits_reject_without_running_and_release_after_settlement() {
+        let executor = Executor::new(Arc::new(Semaphore::new(1)));
+        let unpolled = executor.run(1, || -> Result<(), FileStorageError> {
+            panic!("unpolled mutation must have no effect")
+        });
+        drop(unpolled);
+        assert!(
+            executor
+                .enqueue(MAX_BYTES + 1, || -> Result<(), FileStorageError> {
+                    panic!("oversized mutation must not run")
+                })
+                .is_err()
+        );
+        for (count, bytes) in [(128, 1), (1, MAX_BYTES)] {
+            let held = executor.order.clone().lock_owned().await;
+            let completed = Arc::new(AtomicU64::new(0));
+            for _ in 0..count {
+                let completed = completed.clone();
+                drop(
+                    executor
+                        .enqueue(bytes, move || {
+                            completed.fetch_add(1, Ordering::Relaxed);
+                            Ok(())
+                        })
+                        .unwrap(),
+                );
+            }
+            assert!(matches!(
+                executor.enqueue(1, || -> Result<(), FileStorageError> {
+                    panic!("saturated mutation must not run")
+                }),
+                Err(FileStorageError::Rejected(_))
+            ));
+            assert_eq!(completed.load(Ordering::Relaxed), 0);
+            drop(held);
+            executor.flush(false).await;
+            assert_eq!(completed.load(Ordering::Relaxed), count);
+            assert_eq!(executor.requests.available_permits(), 128);
+            assert_eq!(executor.bytes.available_permits(), MAX_BYTES);
+        }
+        executor.run(MAX_BYTES, || Ok(())).await.unwrap();
+    }
+
+    #[tokio::test]
     async fn queued_document_mutations_leave_workers_for_reads_and_other_documents() {
         let workers = Arc::new(Semaphore::new(1));
         let hot = Executor::new(workers.clone());

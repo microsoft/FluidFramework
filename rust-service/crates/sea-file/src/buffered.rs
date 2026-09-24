@@ -292,6 +292,95 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn event_coalescing_preserves_records_and_control_order() {
+        let workers = Arc::new(Semaphore::new(1));
+        let held = workers.clone().acquire_owned().await.unwrap();
+        let executor = Executor::new(workers);
+        let observed = Arc::new(Mutex::new(Vec::new()));
+        for ordinal in 0..4 {
+            let observed = observed.clone();
+            executor
+                .admit(1, || {
+                    Ok((
+                        (),
+                        Task {
+                            events: ordinal != 2,
+                            records: vec![(
+                                crate::storage::Key::Event(sea_core::EventPosition::new(ordinal)),
+                                bytes::Bytes::from(vec![u8::try_from(ordinal).unwrap()]),
+                            )],
+                            run: Box::new(move |records| {
+                                observed.lock().unwrap().push(
+                                    records
+                                        .into_iter()
+                                        .map(|(_, bytes)| bytes[0])
+                                        .collect::<Vec<_>>(),
+                                );
+                                Ok(())
+                            }),
+                        },
+                    ))
+                })
+                .await
+                .unwrap();
+        }
+        drop(held);
+        executor.flush(false).await.unwrap();
+        assert_eq!(
+            *observed.lock().unwrap(),
+            vec![vec![0, 1], vec![2], vec![3]]
+        );
+        let queue = executor.queue.lock().unwrap();
+        assert_eq!(queue.written, 4);
+        assert_eq!((queue.requests, queue.bytes), (0, 0));
+    }
+
+    #[tokio::test]
+    async fn flush_waits_for_its_prefix_not_later_admission() {
+        let executor = Executor::new(Arc::new(Semaphore::new(1)));
+        let (release_first, first) = std::sync::mpsc::channel();
+        let (release_later, later) = std::sync::mpsc::channel();
+        executor
+            .admit(1, || {
+                Ok((
+                    (),
+                    task(move || {
+                        first
+                            .recv_timeout(std::time::Duration::from_secs(5))
+                            .unwrap();
+                        Ok(())
+                    }),
+                ))
+            })
+            .await
+            .unwrap();
+        let flush = executor.flush(false);
+        tokio::pin!(flush);
+        assert!(futures_util::poll!(&mut flush).is_pending());
+        executor
+            .admit(1, || {
+                Ok((
+                    (),
+                    task(move || {
+                        later
+                            .recv_timeout(std::time::Duration::from_secs(5))
+                            .unwrap();
+                        Ok(())
+                    }),
+                ))
+            })
+            .await
+            .unwrap();
+        release_first.send(()).unwrap();
+        tokio::time::timeout(std::time::Duration::from_secs(1), flush)
+            .await
+            .unwrap()
+            .unwrap();
+        release_later.send(()).unwrap();
+        executor.flush(true).await.unwrap();
+    }
+
+    #[tokio::test]
     async fn hot_document_yields_worker_capacity_to_cold_document() {
         let workers = Arc::new(Semaphore::new(1));
         let held = workers.clone().acquire_owned().await.unwrap();
