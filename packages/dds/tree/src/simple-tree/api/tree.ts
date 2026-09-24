@@ -155,7 +155,7 @@ export interface ITreeAlpha extends ITree {
  * Every {@link ITree | SharedTree} has one "main" branch.
  * All other branches fork from the main branch, either directly or through another branch.
  *
- * See {@link UntypedTreeViewAlpha} for more APIs.
+ * @see {@link UntypedTreeViewAlpha} for more experimental APIs.
  * The alpha APIs are for application developers who need finer control over branch history, and who accept that these APIs may still change.
  * @sealed @beta
  */
