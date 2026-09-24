@@ -54,7 +54,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -63,17 +62,13 @@
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^11.7.5",
-		"mocha-multi-reporters": "^1.5.1",
-		"sinon": "^18.0.1",
-		"uuid": "^11.1.0"
+		"mocha-multi-reporters": "^1.5.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
@@ -81,15 +76,12 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@types/mocha": "^10.0.10",
-		"@types/nock": "^9.3.0",
 		"@types/node": "catalog:types",
-		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
 		"fluid-framework": "workspace:~",
 		"jiti": "^2.6.1",
-		"nock": "^13.3.3",
 		"rimraf": "^6.1.3",
 		"typescript": "~6.0.3"
 	},

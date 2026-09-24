@@ -48,14 +48,12 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
@@ -63,7 +61,6 @@
 		"@types/node": "catalog:types",
 		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",

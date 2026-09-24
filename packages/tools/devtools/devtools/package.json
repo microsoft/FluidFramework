@@ -102,7 +102,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~"
@@ -123,7 +122,6 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
-		"eslint-config-prettier": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",

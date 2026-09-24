@@ -44,8 +44,7 @@
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/routerlicious-urlresolver": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/tool-utils": "workspace:~"
+		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",

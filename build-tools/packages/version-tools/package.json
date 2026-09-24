@@ -74,9 +74,7 @@
 	"dependencies": {
 		"@oclif/core": "^4.10.5",
 		"@oclif/plugin-autocomplete": "^3.2.45",
-		"@oclif/plugin-commands": "^4.1.45",
 		"@oclif/plugin-help": "^6.2.43",
-		"@oclif/plugin-not-found": "^3.2.80",
 		"semver": "^7.7.3",
 		"table": "^6.9.0"
 	},
@@ -85,7 +83,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.65.0",
 		"@microsoft/api-extractor": "^7.58.1",
-		"@oclif/test": "^4.1.18",
 		"@types/chai": "^5.2.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "~22.19.17",

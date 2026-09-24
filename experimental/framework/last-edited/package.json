@@ -49,18 +49,15 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-summary-block": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
-		"@types/node": "catalog:types",
 		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"eslint": "catalog:eslint",

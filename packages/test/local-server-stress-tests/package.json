@@ -56,7 +56,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/claims": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
@@ -74,8 +73,6 @@
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/legacy-dds": "workspace:~",
@@ -91,8 +88,7 @@
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
-		"uuid": "^11.1.0"
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
@@ -105,7 +101,6 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"ts-loader": "^9.5.1",
 		"typescript": "~6.0.3"
 	},
 	"comments": [
