@@ -98,6 +98,10 @@ At incident inspection, the incomplete mutation directory had only `0.log` and `
 `getTaskOutput` returned blank and was not treated as evidence.
 After coordinator cleanup, directly inspected the new run's nonempty `result.json`: expected run/cwd/branch/HEAD and owned modified paths, exactly three correctly specified command entries, all exit 0 with null signal.
 The coordinator supplied explicit confirmation of test counts, final lockfile guard, and termination of all three owned processes.
+At 2026-09-24T01:22:31Z the sessions owner reported a surprising passing dependency-sensitive test and noted that assigned tasks share `/workspaces/.cargo-target`.
+Its cause is not established; a shared target alone does not establish stale artifacts.
+Persistence's own regression failed before repair and its added test names/counts appeared in subsequent runs, which identifies the changed top-level test artifact but does not independently establish dependency isolation.
+Coordinator should use an isolated integration target for canonical acceptance while investigating the sessions owner's evidence.
 Editor diagnostics reported no errors in the checked Rust files; Cargo/Clippy, not editor diagnostics, is the executable evidence.
 
 For the actual ownership defect, the unmodified implementation failed the new test and the repair passed it.
@@ -233,4 +237,10 @@ Coordinator verified and settled the mutation task's exact process tree, then su
 The optional negative control remains inconclusive; no further mutations or production edits are planned or needed for this handoff.
 Actual ownership red/green evidence is complete.
 Coordinator must perform machine-readable evidence verification, canonical integration/documentation/policy gates, changeset assessment, independent review, and commit.
+Resolve the subsequently reported shared-target provenance concern with isolated integration evidence; no additional persistence mutation or package command was launched in response.
 The known filesystem/power-loss qualification risk remains explicitly outside this iteration's repair scope.
+
+Closeout supplement: the coordinator found the late shared-target observation above still uncommitted during clean-worktree verification and preserved it in a separate report-only commit.
+Canonical integration run `native-2026-09-24T01-54-33.207Z-952386` used the integration checkout's own `rust-service/target` and passed all seven gates.
+The coordinator directly verified that result's identity and exits, and the complete integration suite later passed on `314248a7fb6`.
+This resolves acceptance provenance without claiming the earlier shared target caused a Cargo defect.
