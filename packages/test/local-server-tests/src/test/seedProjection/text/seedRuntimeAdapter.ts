@@ -6,78 +6,66 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IContainerContext,
+	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 
-import { layout, materializeSeed, treeFactory, treeKind } from "./runtimeMaterialization.js";
-import { seedRoot } from "./seedFormat.js";
 import { SeedSummaryHost } from "./summaryHost.js";
-import { viewConfiguration, type TextView } from "./treeModel.js";
 
 /**
- * Native model and this joining client's fresh compressor session.
+ * Runtime-only virtual snapshot and its complete content-addressed blob bodies.
  */
-export class SeedEntryPoint {
-	/** No initialization or alias writes are performed by this entry point. */
-	public constructor(
-		public readonly view: TextView,
-		public readonly sessionId: string | undefined,
-	) {}
+export interface MaterializedSnapshot {
+	/** Native app-root tree; does not replace the loader's protocol or stored version. */
+	readonly snapshot: ISnapshotTree;
+	/** Every blob referenced by the generated tree. */
+	readonly blobs: ReadonlyMap<string, ArrayBuffer>;
 }
 
-/** Load the persisted graph; a missing graph is an error, never an instruction to initialize. */
-const dataStoreFactory: IFluidDataStoreFactory = {
-	type: layout.storeType,
-	get IFluidDataStoreFactory() {
-		return this;
-	},
-	async instantiateDataStore(context, existing) {
-		if (!existing) throw new Error("The seed reference does not create live data stores");
-		return new FluidDataStoreRuntime(
-			context,
-			new Map([[treeFactory.type, treeFactory]]),
-			existing,
-			async (store) => {
-				const channel = await store.getChannel(layout.treeId);
-				if (!treeKind.is(channel)) throw new Error("Expected the persisted SharedTree");
-				const view = channel.viewWith(viewConfiguration);
-				store.once("dispose", () => view.dispose());
-				return new SeedEntryPoint(view, store.idCompressor?.localSessionId);
-			},
-		);
-	},
-};
+/**
+ * Application-owned construction rules, supplied before ordinary runtime loading.
+ * This local reference contract is not a published converter API.
+ */
+export interface SeedProjector {
+	/** Stored native state must load normally instead of being reconstructed from old seed input. */
+	isNative(context: IContainerContext): boolean;
+	/** Read application content without changing the original snapshot or replaying operations. */
+	readSeed(context: IContainerContext): Promise<unknown>;
+	/** Build a deterministic complete graph at the source checkpoint, without live-client writes. */
+	materialize(seed: unknown, sequenceNumber: number): MaterializedSnapshot;
+}
 
 /**
- * One loaded runtime's host-facing state. It is not shared across independent clients.
+ * Inputs supplied to the application's existing native runtime construction.
  */
-export interface SeedLoad {
+export interface SeedRuntimeLoad {
 	/** True only when the original stored snapshot contained no native runtime state. */
 	readonly fromSeed: boolean;
 	/** The loader-owned context remains unmodified, including protocol, version and replay state. */
 	readonly original: IContainerContext;
-	/** Realized native model for this client. */
-	readonly app: SeedEntryPoint;
+	/** Runtime-facing snapshot/storage overlay; pass this context to ordinary native loading. */
+	readonly context: IContainerContext;
 	/** The only supported way to request summaries from the corresponding summarizer. */
 	readonly summaries: SeedSummaryHost;
 }
 
 /**
- * Load a seed as deterministic native state, or load stored native state normally.
- * No callback preserves the seed root: native summaries deliberately replace the creation input.
+ * Adapt the runtime-facing context, then call the application's normal runtime constructor.
+ *
+ * Keep the application registry and entry point in the delegate, not in this adapter.
+ * The delegate must disable automatic summaries and route host requests through the supplied
+ * SeedSummaryHost. No callback preserves the seed root: native summaries replace creation input.
+ * This reference uses test-internal forwarding and summary helpers; it is not a shipping SDK.
  */
 export function seedRuntimeFactory(
+	projector: SeedProjector,
+	delegate: (load: SeedRuntimeLoad, existing: boolean) => Promise<IRuntime>,
 	options: {
-		/** Prove that persisted native state loads without conversion or seed reads. */
-		nativeOnly?: boolean;
-		/** Receive the reference host and model once native loading has completed. */
-		observe?: (load: SeedLoad) => void;
+		/** Set false to prove that persisted native state loads without conversion or seed reads. */
+		allowProjection?: boolean;
 	} = {},
 ): IRuntimeFactory {
 	return {
@@ -105,8 +93,8 @@ export function seedRuntimeFactory(
 			const parent = original.getLoadedFromVersion()?.id;
 			if (parent === undefined) throw new Error("A stored snapshot version is required");
 			const source = original.baseSnapshot;
-			const fromSeed = source.blobs[".metadata"] === undefined;
-			if (fromSeed && options.nativeOnly === true)
+			const fromSeed = !projector.isNative(original);
+			if (fromSeed && options.allowProjection === false)
 				throw new Error("Native-only loader refuses a seed");
 			if (fromSeed && original.deltaManager.initialSequenceNumber !== 0) {
 				// materializeSeed() always reconstructs the pristine seed content. Tagging that
@@ -121,15 +109,8 @@ export function seedRuntimeFactory(
 			let snapshot = source;
 			let virtualBlobs: ReadonlyMap<string, ArrayBuffer> = new Map();
 			if (fromSeed) {
-				const application: ISnapshotTree | undefined = source.trees[seedRoot];
-				const seedId = application?.blobs["seed.json"];
-				if (seedId === undefined || application?.groupId !== undefined) {
-					throw new Error("Expected an ungrouped applicationProjection/seed.json");
-				}
-				const input: unknown = JSON.parse(
-					Buffer.from(await original.storage.readBlob(seedId)).toString(),
-				);
-				const materialized = materializeSeed(
+				const input = await projector.readSeed(original);
+				const materialized = projector.materialize(
 					input,
 					original.deltaManager.initialSequenceNumber,
 				);
@@ -200,50 +181,16 @@ export function seedRuntimeFactory(
 				},
 				{ receiver: "target" },
 			);
-			const runtime = await loadContainerRuntime({
-				context,
-				existing,
-				registryEntries: [[layout.storeType, Promise.resolve(dataStoreFactory)]],
-				oldestSupportedClient: "2.0.0",
-				runtimeOptions: {
-					enableRuntimeIdCompressor: "on",
-					explicitSchemaControl: true,
-					summaryOptions: {
-						summaryConfigOverrides: {
-							state: "summaryOnRequest",
-							initialSummarizerDelayMs: 0,
-							maxAckWaitTime: 20_000,
-							maxOpsSinceLastSummary: 7000,
-						},
+			const runtime = await delegate({ fromSeed, original, context, summaries }, existing);
+			return wrapObjectAndOverride(
+				runtime,
+				{
+					getPendingLocalState: () => () => {
+						throw new Error("Pending/offline capture is unsupported by the seed reference");
 					},
 				},
-				provideEntryPoint: async (container) => {
-					const handle = await container.getAliasedDataStoreEntryPoint(layout.alias);
-					const app = await handle?.get();
-					if (!(app instanceof SeedEntryPoint))
-						throw new Error("Missing persisted root entry point");
-					return app;
-				},
-			});
-			try {
-				const handle = await runtime.getAliasedDataStoreEntryPoint(layout.alias);
-				const app = await handle?.get();
-				if (!(app instanceof SeedEntryPoint))
-					throw new Error("Missing persisted root entry point");
-				options.observe?.({ fromSeed, original, app, summaries });
-				return wrapObjectAndOverride(
-					runtime,
-					{
-						getPendingLocalState: () => () => {
-							throw new Error("Pending/offline capture is unsupported by the seed reference");
-						},
-					},
-					{ receiver: "target" },
-				);
-			} catch (error) {
-				runtime.dispose();
-				throw error;
-			}
+				{ receiver: "target" },
+			);
 		},
 	};
 }

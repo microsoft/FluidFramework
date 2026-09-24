@@ -37,10 +37,11 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { layout } from "./runtimeMaterialization.js";
-import { codeDetails, createSeedDocument, seedRoot } from "./seedFormat.js";
-import { seedRuntimeFactory, type SeedLoad } from "./seedRuntimeFactory.js";
-import { readParts, TextNode } from "./treeModel.js";
+import { createSeedDocument } from "../externalSeedFile.js";
+import { layout } from "../runtimeMaterialization.js";
+import { sampleRuntimeFactory, type SeedLoad } from "../sampleRuntimeFactory.js";
+import { codeDetails, seedRoot } from "../textSeedFormat.js";
+import { readParts, TextNode } from "../textTreeSchema.js";
 
 describe("Seed creation: real local-service lifecycle", function () {
 	this.timeout(30_000);
@@ -108,7 +109,7 @@ describe("Seed creation: real local-service lifecycle", function () {
 			config?: Record<string, boolean>;
 		} = {},
 	): Loader {
-		const application = seedRuntimeFactory({
+		const application = sampleRuntimeFactory({
 			nativeOnly: options.nativeOnly,
 			observe: (load) => loads.push(load),
 		});
@@ -218,6 +219,10 @@ describe("Seed creation: real local-service lifecycle", function () {
 			"Automatic summaries are disabled in the reference factory",
 		);
 		assert.equal(loadA.original.baseSnapshot?.blobs[".metadata"], undefined);
+		assert.notEqual(loadA.context, loadA.original);
+		assert(loadA.context.baseSnapshot?.blobs[".metadata"] !== undefined);
+		assert.equal(loadA.context.baseSnapshot?.id, seedVersion);
+		assert.equal(loadA.context.deltaManager, loadA.original.deltaManager);
 
 		const first = loadA.app.view.root.parts.get("first");
 		const second = loadB.app.view.root.parts.get("second");
@@ -287,6 +292,7 @@ describe("Seed creation: real local-service lifecycle", function () {
 		await tracker.ensureSynchronized();
 		const native = loads.at(-1);
 		assert(native !== undefined && !native.fromSeed);
+		assert.equal(native.context.baseSnapshot, native.original.baseSnapshot);
 		assert.deepEqual(readParts(native.app.view), expected);
 		assert.equal(
 			writes,

@@ -5,7 +5,7 @@
 
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
 
-import type { TextPart, TextSeed } from "./seedFormat.js";
+import type { TextPart, TextSeed } from "./textSeedFormat.js";
 
 /** Persisted schema identity is independent of the external input format. */
 const schema = new SchemaFactory("seed-text-tree/1");

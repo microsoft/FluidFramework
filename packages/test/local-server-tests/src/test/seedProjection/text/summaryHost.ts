@@ -39,6 +39,7 @@ export function validateSummaryUpload(
 
 /**
  * Explicit on-demand host for this bounded reference, not a generic runtime policy.
+ * The summarizeNow dependency supplies test timeout/ACK plumbing, not a production host API.
  *
  * The factory disables automatic summaries. All requests and uploads must pass through this host.
  * ACK success permits the next incremental attempt; its upload must also prove the native runtime

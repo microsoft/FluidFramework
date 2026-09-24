@@ -10,10 +10,12 @@ import type { IContainerContext } from "@fluidframework/container-definitions/in
 import { SummaryType, type SummaryObject } from "@fluidframework/driver-definitions";
 import type { ISummaryTree } from "@fluidframework/driver-definitions/internal";
 
-import { materializeSeed } from "./runtimeMaterialization.js";
-import { createSeedSummary, parseSeed, seedRoot } from "./seedFormat.js";
-import { seedRuntimeFactory } from "./seedRuntimeFactory.js";
-import { validateSummaryUpload } from "./summaryHost.js";
+import { createSeedSummary } from "../externalSeedFile.js";
+import { materializeSeed } from "../runtimeMaterialization.js";
+import { textProjector } from "../sampleRuntimeFactory.js";
+import { seedRuntimeFactory } from "../seedRuntimeAdapter.js";
+import { validateSummaryUpload } from "../summaryHost.js";
+import { parseSeed, seedRoot } from "../textSeedFormat.js";
 
 describe("Seed creation: deterministic construction and upload contract", () => {
 	const seed = {
@@ -155,9 +157,12 @@ describe("Seed creation: checkpoint guard at load time", () => {
 				},
 			},
 		} as unknown as IContainerContext;
-		await assert.rejects(
-			seedRuntimeFactory().instantiateRuntime(fakeContext, true),
-			/ops were sequenced/,
-		);
+		let delegated = false;
+		const factory = seedRuntimeFactory(textProjector, async () => {
+			delegated = true;
+			throw new Error("Must not load native state before the checkpoint guard runs");
+		});
+		await assert.rejects(factory.instantiateRuntime(fakeContext, true), /ops were sequenced/);
+		assert.equal(delegated, false);
 	});
 });

@@ -22,8 +22,9 @@ import { addBlobToSummary, SummaryTreeBuilder } from "@fluidframework/runtime-ut
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "@fluidframework/tree/internal";
 
-import { parseSeed } from "./seedFormat.js";
-import { documentFromSeed, viewConfiguration } from "./treeModel.js";
+import type { MaterializedSnapshot } from "./seedRuntimeAdapter.js";
+import { parseSeed } from "./textSeedFormat.js";
+import { documentFromSeed, viewConfiguration } from "./textTreeSchema.js";
 
 /**
  * Fixed application registry, graph paths and alias in the internal construction fixture.
@@ -45,16 +46,6 @@ export const treeFactory = treeKind.getFactory();
 
 /** Shared construction allocation context; never a live joining client's session. */
 const genesisSession = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-
-/**
- * Runtime-only virtual snapshot and its complete content-addressed blob bodies.
- */
-export interface MaterializedSnapshot {
-	/** Native app-root tree; does not replace the loader's protocol or stored version. */
-	readonly snapshot: ISnapshotTree;
-	/** Every blob referenced by the generated tree. */
-	readonly blobs: ReadonlyMap<string, ArrayBuffer>;
-}
 
 /**
  * Construct genuine SharedTree state at the seed checkpoint without submitting live initialization ops.
