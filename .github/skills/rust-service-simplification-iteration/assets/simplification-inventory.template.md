@@ -2,6 +2,7 @@
 
 Status: in progress
 Source commit: <!-- TODO(required): record the exact manifest sourceCommit used for before-and-after comparison -->
+Skill revision: <!-- TODO(required): record the skill commit used and identify any local guidance changes that affected the run -->
 Review mode: <!-- TODO(required): record broad current-state review, targeted, incremental, or the approved combination -->
 Configured scope: <!-- TODO(required): summarize or link the user-confirmed crate or responsibility scope and explicit exclusions -->
 Category profile: <!-- TODO(required): record the global level and resolved Off, Conservative, or Structural level for documentation, tests, implementation, abstractions, code organization, and naming; default proposal is Conservative everywhere, not implicit authorization -->
@@ -72,3 +73,21 @@ If no worthwhile candidates were found, include an evidence-backed area-level `a
 ## Convergence Assessment
 
 <!-- TODO(required): compare inherited candidates, accepted reductions, rejected hypotheses, deferred opportunities, replacement abstractions, and stopping conditions. Reconcile actual discovery and assessment with the approved coverage, including no-change areas. State whether another run is justified and its specific hypothesis; convergence does not end promised coverage early. Set Status to complete only after final reconciliation and satisfaction of the approved coverage, including when explicit repair deferrals remain. Do not mark promised full coverage complete with unreviewed areas or material candidates unless the user explicitly reduces coverage; record that approval and remaining gaps without claiming full coverage. -->
+
+## Run Assessment
+
+Give the user a concise, evidence-linked assessment; distinguish task completion from demonstrated benefit.
+Reuse the records above rather than duplicating candidate details.
+During a run, mark conclusions provisional and remaining coverage explicit.
+
+- Coverage: <!-- TODO(required): compare promised and actual assessment, including unreviewed and no-change areas -->
+- Value: <!-- TODO(required): summarize concrete benefits and tradeoffs by enabled category with representative evidence -->
+- Safety: <!-- TODO(required): summarize completed validation/review, substantive problems caught, evidence gaps, and known regressions after acceptance; do not equate no reported regressions with proof of safety -->
+- Effort: <!-- TODO(required): identify substantial discovery, implementation, validation, review, rework, or coordination costs; use observed data and explicit unknowns -->
+- Recommendation: <!-- TODO(required): give a reasoned stop, specific follow-up, or profile/process adjustment recommendation consistent with the convergence assessment -->
+
+<!-- TODO(required): assess candidate selection, confidence calibration, guardrails, decomposition, overhead, and user interventions using candidate/checkpoint evidence. Link deeper findings to the existing retrospective and skill-review records. For proposed improvements, link the observed problem, evidence, suspected cause, adjustment, next-run check, and accepted/rejected/deferred decision with revisit trigger; write none when justified. Distinguish unclear guidance from noncompliance, domain gaps, and tool limitations. -->
+
+Use the recorded source, skill revision, profile, coverage, and execution structure to interpret comparisons.
+Record relevant model/tool provenance only when available; no mandatory telemetry or composite score.
+Keep later observations in subsequent linked reports rather than rewriting completed history.

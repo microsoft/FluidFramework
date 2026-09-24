@@ -147,6 +147,7 @@ If the scope permits cross-crate repairs, register a later-wave shared owner at 
 Record:
 
 - approved source commit;
+- skill revision used, including any local guidance changes that affected the run;
 - selected mode, crate or responsibility scope, and exclusions;
 - global category level and resolved per-category overrides;
 - inherited quality and simplification inventories, if any;
@@ -381,6 +382,7 @@ At completion, verify that:
 - cross-crate candidates have one owner or a revisit trigger;
 - reductions are not double-counted across workstreams;
 - moved code is not reported as deleted;
+- the run assessment distinguishes completed work from demonstrated benefit and links evidence for process-improvement proposals;
 - unresolved candidates have concrete revisit triggers; and
 - the status is `complete` only after the approved coverage and final dispositions are reconciled, including when explicit repair deferrals remain.
 
@@ -412,6 +414,41 @@ Recommend another run only when:
 Stop when another run within the declared scope and budget is unlikely to produce a meaningful reduction.
 This convergence rule does not end the current run's promised discovery and assessment early.
 A well-supported no-change result is evidence that the reviewed structure is proportionate.
+
+## Assess the Run and the Skill
+
+At closeout, give the user a concise assessment in the existing sequential report or simplification inventory.
+On request during a run, summarize current evidence with incomplete coverage and provisional conclusions explicit.
+Reuse candidate, checkpoint, validation, and convergence records instead of reconstructing or duplicating them.
+Distinguish successful task completion from demonstrated maintenance benefit.
+
+Summarize:
+
+- **Coverage:** promised and actual discovery and assessment, including unreviewed areas and justified no-change results.
+- **Value:** concrete improvements and tradeoffs by enabled category, with representative candidate or checkpoint links.
+- **Safety:** validation and review completed, substantive problems caught, unresolved evidence gaps, and any known regressions found after acceptance.
+- **Effort:** substantial costs in discovery, implementation, validation, review, rework, or coordination, using observed data and explicit unknowns.
+- **Recommendation:** stop, pursue a specific deferred opportunity, or adjust the profile or process, with supporting reasons.
+
+Assess candidate selection, confidence calibration, guardrail effectiveness, checkpoint decomposition, process overhead, and user interventions.
+Look for recurring cosmetic proposals, false sharing, disruptive Conservative repairs, lost comments, weakened contracts or tests, clarity regressions, oversized or fragmented checkpoints, redundant checks, excessive questions, and reporting burden.
+Link material observations to specific candidates or checkpoints; do not infer effectiveness from a finding count or an absence of reported regressions.
+A caught problem can show that review worked while also exposing weak candidate selection or implementation guidance.
+
+Interpret comparisons using the source commit, skill revision, category profile, coverage commitment, and execution structure.
+Record model or tool provenance only when available and relevant; do not invent timing, cost, token use, or attribution.
+Separate observed outcomes from expected benefits and unresolved hypotheses.
+Do not require telemetry, extra reviewers, numerical targets, or a composite performance score.
+Counts may describe activity, not establish quality or justify more changes.
+
+For each proposed skill improvement, record the observed problem, evidence, suspected cause, proposed adjustment, and what a later run should check.
+Distinguish unclear instructions from failure to follow clear instructions, missing domain knowledge, and tool limitations.
+Use accepted, rejected, or deferred decisions with reasons and revisit triggers; not every failure warrants more guidance.
+Record proposals without treating the assessment as authorization to change skills, expand scope, or start another run.
+
+For parallel iterations, link deeper findings to the existing [retrospective](../rust-service-coordination/assets/retrospective.template.md) and [skill review](../rust-service-coordination/assets/skill-review.template.md) records instead of creating another report.
+For sequential work, retain the equivalent findings and decisions in the same local report without initializing iteration machinery.
+Record later-discovered regressions in subsequent reports linked to the original run; do not rewrite completed history.
 
 ## Validate
 
