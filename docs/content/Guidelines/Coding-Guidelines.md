@@ -515,10 +515,14 @@ Now there is no chance of collision with a predefined user property.
 
 ### Errors
 
-#### ✔ DO use errors to validate end-user input and usage
+#### ✔ DO use errors to validate supported API input and usage
 
-Use errors to report invalid input or usage through supported user-facing package APIs.
+Use errors to report invalid input or usage by callers of supported, non-internal package APIs.
 Validate these conditions before they can violate internal invariants.
+
+> [!NOTE]
+> Here, callers are application code or code in other packages, not people using a Fluid-powered application.
+> Invalid data entered by a person should normally be represented in application control flow rather than thrown as an exception that escapes the validation layer.
 
 Use `UsageError` from `@fluidframework/telemetry-utils/internal` for incorrect user-facing API usage.
 The `validatePrecondition` helper throws a `UsageError` when its condition is false and narrows types when the condition holds.
@@ -546,15 +550,15 @@ Describe the conditions that cause each error and the kind of error reported.
 
 Assertion failures indicate implementation bugs, not supported API behavior; do not document them as expected usage errors.
 
-#### ✘ DO NOT use assertions for validating user input
+#### ✘ DO NOT use assertions for validating supported API input
 
-An assertion failure indicates a bug in the Fluid Framework implementation, not incorrect usage by an application.
-Do not use `assert` or `debugAssert` to reject invalid end-user input or usage.
-A user-facing API can contain assertions about its implementation, but checks of end-user input should report usage errors.
+An assertion failure indicates a bug in the Fluid Framework implementation, not incorrect usage by a caller of a supported API.
+Do not use `assert` or `debugAssert` to reject input or usage that callers of a supported, non-internal API can provide.
+Such an API can contain assertions about its implementation, but validate caller input at the API boundary with an appropriate error.
 
 #### ✔ DO use assertions to document and validate internal invariants
 
-Here, internal includes implementation details within a package and APIs marked `@internal`, even when called across package boundaries.
+In this guidance, internal includes implementation details within a package and APIs marked `@internal`, even when called across package boundaries.
 These APIs are not part of the supported user-facing API surface.
 Use assertions to validate their input requirements and assumptions, just as for package-internal code.
 
@@ -594,7 +598,8 @@ function readCachedValue(cachedValues: ReadonlyMap<string, string>, key: string)
 
 Use a descriptive string literal for each new assertion message.
 Do not invent numeric or hexadecimal assertion codes or copy a code from another assertion.
-Repository tooling assigns these codes; leave existing generated codes unchanged.
+Where [assert tagging](../../../build-tools/packages/build-cli/docs/generate.md#flub-generate-asserttags) is configured for a package, repository tooling replaces these messages with assigned codes.
+Assert tagging does not apply to every package or test, so follow the applicable package conventions and leave existing generated codes unchanged.
 
 Never catch assertion failures to implement normal control flow.
 
