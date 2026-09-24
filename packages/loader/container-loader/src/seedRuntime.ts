@@ -52,9 +52,11 @@ export interface SeedRuntimeSnapshot {
  * Use the same registry, schema, graph IDs, construction session, and initialization order
  * on every client that loads a particular seed.
  * The format of the seed remains application-owned; no manifest is required.
+ *
+ * @typeParam TSeed - Validated application input returned by `readSeed` and consumed by `materialize`.
  * @legacy @alpha
  */
-export interface SeedProjector {
+export interface SeedProjector<TSeed = unknown> {
 	/**
 	 * Identify stored native runtime state, including snapshots fetched after a summary.
 	 * Inspect `context.baseSnapshot` without reading or modifying seed content.
@@ -63,13 +65,13 @@ export interface SeedProjector {
 	/**
 	 * Read and validate application-owned input from the original stored snapshot.
 	 */
-	readSeed(context: IContainerContext): Promise<unknown>;
+	readSeed(context: IContainerContext): Promise<TSeed>;
 	/**
 	 * Construct the complete native graph at checkpoint zero, without live writes.
 	 * Use {@link createSeedRuntimeSnapshot} to serialize a real detached runtime.
 	 */
 	materialize(
-		seed: unknown,
+		seed: TSeed,
 		sequenceNumber: number,
 	): SeedRuntimeSnapshot | Promise<SeedRuntimeSnapshot>;
 }
@@ -123,14 +125,15 @@ export interface SeedRuntimeFactoryOptions {
  * acknowledgement refresh, and no pending state, offline mode, or loading groups.
  * These restrictions do not apply to native documents.
  *
+ * @typeParam TSeed - Application input shared by the projector's reader and materializer.
  * @param projector - Application-owned seed interpretation and materialization.
  * @param delegate - Your normal runtime constructor, called after materialization completes.
  * @param options - Optional native-only loading policy.
  * @returns A factory for use by your code loader.
  * @legacy @alpha
  */
-export function seedRuntimeFactory(
-	projector: SeedProjector,
+export function seedRuntimeFactory<TSeed = unknown>(
+	projector: SeedProjector<TSeed>,
 	delegate: (load: SeedRuntimeLoad, existing: boolean) => Promise<IRuntime>,
 	options: SeedRuntimeFactoryOptions = {},
 ): IRuntimeFactory {

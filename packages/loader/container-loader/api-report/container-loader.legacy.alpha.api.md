@@ -290,14 +290,14 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
 
 // @alpha @legacy
-export interface SeedProjector {
+export interface SeedProjector<TSeed = unknown> {
     isNative(context: IContainerContext): boolean;
-    materialize(seed: unknown, sequenceNumber: number): SeedRuntimeSnapshot | Promise<SeedRuntimeSnapshot>;
-    readSeed(context: IContainerContext): Promise<unknown>;
+    materialize(seed: TSeed, sequenceNumber: number): SeedRuntimeSnapshot | Promise<SeedRuntimeSnapshot>;
+    readSeed(context: IContainerContext): Promise<TSeed>;
 }
 
 // @alpha @legacy
-export function seedRuntimeFactory(projector: SeedProjector, delegate: (load: SeedRuntimeLoad, existing: boolean) => Promise<IRuntime>, options?: SeedRuntimeFactoryOptions): IRuntimeFactory;
+export function seedRuntimeFactory<TSeed = unknown>(projector: SeedProjector<TSeed>, delegate: (load: SeedRuntimeLoad, existing: boolean) => Promise<IRuntime>, options?: SeedRuntimeFactoryOptions): IRuntimeFactory;
 
 // @alpha @legacy
 export interface SeedRuntimeFactoryOptions {
