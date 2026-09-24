@@ -914,12 +914,6 @@ trait Record: Sized {
     fn reader(state: &State) -> &Mutex<fs::File>;
 }
 
-/// Records whose encoded payload width is invariant across all valid values.
-trait FixedSize: Record {
-    /// Payload bytes, excluding the common journal frame header.
-    const ENCODED_SIZE: usize;
-}
-
 /// Application snapshot identities, ordered by referenced event position on publication.
 struct SnapshotRecord {
     /// Event position represented by the snapshot.
@@ -929,6 +923,9 @@ struct SnapshotRecord {
 }
 
 impl SnapshotRecord {
+    /// Payload bytes, excluding the common journal frame header; invariant across all valid snapshots.
+    const ENCODED_SIZE: usize = 1 + 8 + TREE_ID_BYTES;
+
     /// Encodes the persisted snapshot identity shared by both publication policies.
     fn encode(position: EventPosition, root: BlobTreeId) -> Vec<u8> {
         let mut record = vec![4];
@@ -958,10 +955,6 @@ impl Record for SnapshotRecord {
         state.snapshot_reads.fetch_add(1, Ordering::Relaxed);
         &state.snapshot_reader
     }
-}
-
-impl FixedSize for SnapshotRecord {
-    const ENCODED_SIZE: usize = 1 + 8 + TREE_ID_BYTES;
 }
 
 impl Record for CommittedEvent {
@@ -1019,12 +1012,9 @@ impl<'state, RecordType: Record> RecordArchive<'state, RecordType> {
     }
 }
 
-impl<RecordType> RecordArchive<'_, RecordType>
-where
-    RecordType: FixedSize,
-{
+impl RecordArchive<'_, SnapshotRecord> {
     /// Complete fixed-width frame stride, including common framing.
-    const FRAME_SIZE: usize = FRAME_HEADER + RecordType::ENCODED_SIZE;
+    const FRAME_SIZE: usize = FRAME_HEADER + SnapshotRecord::ENCODED_SIZE;
 
     /// Converts a record ordinal to a physical offset without truncating overflow.
     fn offset(ordinal: u64) -> Result<u64, FileStorageError> {
@@ -1035,7 +1025,7 @@ where
     }
 
     /// Reads a fixed-width record by ordinal rather than public archive position.
-    fn read_at_ordinal(&self, ordinal: u64) -> Result<RecordType, FileStorageError> {
+    fn read_at_ordinal(&self, ordinal: u64) -> Result<SnapshotRecord, FileStorageError> {
         self.read(Self::offset(ordinal)?)
     }
 
@@ -1049,9 +1039,7 @@ where
         }
         Ok(bytes / Self::FRAME_SIZE as u64)
     }
-}
 
-impl RecordArchive<'_, SnapshotRecord> {
     /// Selects a snapshot by ordered search, or reads the final ordinal for the latest.
     fn floor(
         &self,

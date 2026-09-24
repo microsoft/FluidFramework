@@ -8,7 +8,7 @@ The `buffered` and `durable` modules own independent admission and execution pol
 The former `sea-file-durable` crate and const-generic factory have been retired without changing journal bytes.
 
 Private `RecordArchive<RecordType>` access shares framing and pending-record reads through the `Record` trait.
-Ordinal access and frame-stride arithmetic require `RecordType: FixedSize`; snapshot records implement that capability, while variable-width event records use length and predecessor information.
+Ordinal access and frame-stride arithmetic are available only on `RecordArchive<SnapshotRecord>`, whose records have a fixed encoded width; variable-width event records use length and predecessor information.
 Binary search remains snapshot-specific because publication guarantees that snapshot event positions increase.
 Typed event and snapshot cursors own selection and advancement, leaving the shared stream responsible for bounds, progress, wakeups, and completion without knowledge of record layout.
 

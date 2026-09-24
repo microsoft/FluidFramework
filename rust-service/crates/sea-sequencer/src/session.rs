@@ -261,6 +261,14 @@ impl Drop for PublisherLease {
 }
 
 impl<Storage: SeaStorage + 'static> Runtime<Storage> {
+    /// Stops further mutation and terminates cached delivery without settling pending work.
+    fn require_recovery(&mut self) {
+        self.recovery_required = true;
+        if let Some(cache) = &self.live_cache {
+            cache.terminate(live_cache::Terminal::RecoveryRequired);
+        }
+    }
+
     /// Adds independent readiness only for experimental readers; default control futures are unchanged.
     fn retain_control(
         &self,
@@ -518,10 +526,7 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 .append_membership(session, SessionEventKind::Left, &[])
                 .await
         {
-            self.recovery_required = true;
-            if let Some(cache) = &self.live_cache {
-                cache.terminate(live_cache::Terminal::RecoveryRequired);
-            }
+            self.require_recovery();
             return Err(error);
         }
         Ok(())
@@ -557,18 +562,12 @@ impl<Storage: SeaStorage + 'static> Runtime<Storage> {
                 &result,
                 Err(SessionError::RecoveryRequired | SessionError::Corrupt(_))
             ) {
-                self.recovery_required = true;
-                if let Some(cache) = &self.live_cache {
-                    cache.terminate(live_cache::Terminal::RecoveryRequired);
-                }
+                self.require_recovery();
             }
             let position = result?;
             if let Some(event) = pending.event {
                 if let Err(error) = self.apply(&CommittedEvent { position, event }) {
-                    self.recovery_required = true;
-                    if let Some(cache) = &self.live_cache {
-                        cache.terminate(live_cache::Terminal::RecoveryRequired);
-                    }
+                    self.require_recovery();
                     return Err(error);
                 }
             } else {

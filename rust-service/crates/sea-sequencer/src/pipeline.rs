@@ -408,10 +408,7 @@ fn apply_result<Storage: SeaStorage + 'static>(
         &result,
         Err(SessionError::RecoveryRequired | SessionError::Corrupt(_))
     ) {
-        state.recovery_required = true;
-        if let Some(cache) = &state.live_cache {
-            cache.terminate(super::live_cache::Terminal::RecoveryRequired);
-        }
+        state.require_recovery();
     }
     result
 }
