@@ -46,7 +46,6 @@ pub use invalidation::{InvalidationCallback, InvalidationRegistration, Invalidat
 mod ordered_archive;
 mod referenceable_store;
 mod snapshot_archive;
-mod storage_surface;
 #[cfg(test)]
 mod tests;
 
@@ -61,7 +60,12 @@ pub use event_archive::{EventArchive, EventArchiveStream};
 pub use ordered_archive::{Archive, ArchiveStream};
 pub use referenceable_store::{ReferenceableStore, StorageHandle};
 pub use snapshot_archive::SnapshotArchive;
-pub use storage_surface::StorageSurface;
+
+/// Common error contract for independently useful storage surfaces.
+pub trait StorageSurface: Send + Sync {
+    /// Classified backend error.
+    type Error: ClassifiedError;
+}
 
 /// Stable backend-assigned identity of one Sea document.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]

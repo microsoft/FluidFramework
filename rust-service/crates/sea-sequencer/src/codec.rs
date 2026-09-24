@@ -15,7 +15,7 @@ use bytes::{Buf, BufMut, Bytes, BytesMut};
 use sea_core::archive::SessionEventKind;
 use sea_core::{CommittedEvent, Event, EventPosition, SessionCommittedEvent, SessionId};
 
-use crate::session::SessionError;
+use crate::error::SessionError;
 
 /// Identifies the submission-only encoding.
 const MAGIC: &[u8; 5] = b"SEAQ6";

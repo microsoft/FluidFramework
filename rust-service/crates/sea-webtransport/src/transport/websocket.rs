@@ -12,7 +12,7 @@ use js_sys::{Array, Function, Object, Promise, Reflect, Uint8Array};
 use wasm_bindgen::{JsCast as _, prelude::*};
 use wasm_bindgen_futures::{JsFuture, spawn_local};
 
-use super::{call_method, js_error, ordinary_websocket::OrdinarySocket};
+use super::{js_error, ordinary_websocket::OrdinarySocket};
 use crate::transport::{
     BidirectionalStream, ClientTransport,
     browser::{BrowserBidirectionalStream, BrowserTransport},
@@ -231,6 +231,16 @@ async fn deadline<Value>(
         Either::Left((result, _)) => result,
         Either::Right(_) => Err(js_error("transport establishment timed out")),
     }
+}
+
+/// Invokes a native streaming API method with its original receiver.
+fn call_method(receiver: &JsValue, name: &str, arguments: &[JsValue]) -> Result<JsValue, JsValue> {
+    let function = Reflect::get(receiver, &JsValue::from_str(name))?.dyn_into::<Function>()?;
+    let values = Array::new();
+    for argument in arguments {
+        values.push(argument);
+    }
+    function.apply(receiver, &values)
 }
 
 /// Selected streaming or ordinary socket with cancellation-safe reads.
