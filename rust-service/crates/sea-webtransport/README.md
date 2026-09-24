@@ -87,6 +87,10 @@ See [Decision 0012](../../historical/decisions/0012-fluid-snapshot-election-inte
 
 `SessionClient<Transport>` implements the session facets for native and browser transports.
 `SessionClient::open` accepts a configured transport and session parameters; `NativeSeaClient::connect` additionally configures SHA-256 certificate pinning.
+Opening also starts snapshot/replay/live delivery.
+Consume it with the first matching `load`: `LatestSnapshot` when opening without a reference, or `ReplayAtLeastAllAfter(reference)` when opening with one.
+Read that load's returned events to drain the opening stream.
+Other loads and direct `read` calls use separate content streams; they do not drain the opening stream.
 Private-provenance handles confirm availability within the resolving client; they are never wire authority.
 Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
 Disconnect and reconnect are explicit; operations are never retried automatically.

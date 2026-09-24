@@ -24,6 +24,7 @@ An issue described as open or a stage described as pending in an old report is n
 - [Codespaces transport investigation](CODESPACES_WEBTRANSPORT_PLAN.md): forwarding constraints, streaming and ordinary WebSocket implementation, external browser evidence, and compatibility limitations.
 - [Execution isolation investigation](EXECUTION_ISOLATION_INVESTIGATION.md): repeated workstream interference, terminal ownership mechanisms, mocked checks, and remaining upstream validation.
 - [Historical deferral reconciliation](DEFERRAL_RECONCILIATION.md): current dispositions and remaining gaps for the six product deferrals retained by iteration 0016.
+- [Sequential quality audit](QUALITY_AUDIT_REPORT.md): bounded full reassessment of cache delivery and typed-client opening ownership, with local regression evidence.
 - [Iterations](iterations/): charters, workstream instructions, reports, validation evidence, and retrospectives.
 - [Decisions](decisions/README.md): architectural and process decision history.
 - [Original benchmark specification](BENCHMARKS.md) and [storage optimization investigation](STORAGE_OPTIMIZATION.md): experiment procedures and observations at their recorded revisions.

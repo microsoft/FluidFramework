@@ -200,6 +200,12 @@ impl<TransportError: Into<SeaClientError>> From<ClientError<TransportError>> for
 pub type NativeSeaClient = SessionClient<NativeTransport>;
 
 /// Typed archive session reusable across native and browser transports and session decorators.
+///
+/// Opening starts a snapshot/replay/live event stream. The first [`SeaArchive::load`] whose
+/// policy matches [`SessionOpen::reference`] consumes that stream: [`LoadStart::LatestSnapshot`]
+/// without a reference, or [`LoadStart::ReplayAtLeastAllAfter`] with it.
+/// Read the returned events to consume opening delivery. Other loads and [`SeaArchive::read`]
+/// use separate content streams and do not consume the opening stream.
 pub struct SessionClient<Transport: ClientTransport> {
     /// Sequencer-allocated document-scoped identity.
     session: SessionId,
@@ -1016,8 +1022,204 @@ fn response_error(response: protocol::Response) -> SeaClientError {
 
 #[cfg(test)]
 mod tests {
-    use super::{SeaClientError, event_from_stream_response};
-    use crate::protocol::Response;
+    use super::*;
+    use crate::protocol::{Response, StreamRole};
+    use std::collections::VecDeque;
+
+    /// Supplies only the expected logical streams, detecting redundant content opens.
+    struct OpeningTransport {
+        /// Opening event and author streams, in admission order.
+        streams: std::sync::Mutex<VecDeque<OpeningStream>>,
+    }
+
+    /// Test-controlled incoming frames keep live delivery independent of session opening.
+    struct OpeningStream {
+        /// A pending receive wakes only when the test sends a frame or closes the channel.
+        incoming: mpsc::UnboundedReceiver<Vec<u8>>,
+    }
+
+    #[async_trait]
+    impl ClientTransport for OpeningTransport {
+        type Stream = OpeningStream;
+        type Error = SeaClientError;
+
+        async fn open_bidirectional(&self) -> Result<Self::Stream, Self::Error> {
+            Ok(self
+                .streams
+                .lock()
+                .expect("opening streams")
+                .pop_front()
+                .expect("load must reuse the opening stream"))
+        }
+
+        fn disconnect(&self) -> Result<(), Self::Error> {
+            Ok(())
+        }
+    }
+
+    #[async_trait]
+    impl BidirectionalStream for OpeningStream {
+        type Error = SeaClientError;
+
+        async fn send(&mut self, _bytes: &[u8]) -> Result<(), Self::Error> {
+            Ok(())
+        }
+
+        async fn finish(&mut self) -> Result<(), Self::Error> {
+            Ok(())
+        }
+
+        async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
+            Ok(self.incoming.recv().await)
+        }
+
+        async fn cancel(&mut self) -> Result<(), Self::Error> {
+            self.incoming.close();
+            Ok(())
+        }
+    }
+
+    /// Encodes one real protocol frame for the selected logical stream.
+    fn reply(sender: &mpsc::UnboundedSender<Vec<u8>>, role: StreamRole, response: &Response) {
+        sender
+            .send(
+                protocol::encode_response_frame(role, response, protocol::Limits::default())
+                    .unwrap(),
+            )
+            .unwrap();
+    }
+
+    /// Opens a session while leaving all snapshot, replay, and live frames under test control.
+    async fn opening_client(
+        reference: Option<EventPosition>,
+    ) -> (
+        SessionClient<OpeningTransport>,
+        mpsc::UnboundedSender<Vec<u8>>,
+    ) {
+        let (events, incoming) = mpsc::unbounded_channel();
+        let (author, author_incoming) = mpsc::unbounded_channel();
+        let transport = OpeningTransport {
+            streams: std::sync::Mutex::new(VecDeque::from([
+                OpeningStream { incoming },
+                OpeningStream {
+                    incoming: author_incoming,
+                },
+            ])),
+        };
+        reply(
+            &events,
+            StreamRole::Event,
+            &Response::EventStreamOpened {
+                session: 1,
+                document: b"document".to_vec(),
+                authority: vec![9; 32],
+            },
+        );
+        reply(&author, StreamRole::Author, &Response::Acknowledged);
+        let client = SessionClient::open(
+            transport,
+            protocol::Limits::default(),
+            SessionOpen {
+                archive: Bytes::from_static(b"document"),
+                intent: protocol::ArchiveIntent::Open,
+                reference,
+            },
+        )
+        .await
+        .unwrap();
+        (client, events)
+    }
+
+    #[tokio::test]
+    async fn matching_load_consumes_opening_prefix_and_continues_live_without_another_stream() {
+        use futures_util::FutureExt as _;
+
+        for reference in [None, Some(EventPosition::new(7))] {
+            for with_snapshot in [false, true] {
+                let (client, events) = opening_client(reference).await;
+                let snapshot = protocol::Snapshot {
+                    root: protocol::TreeId::Blob([3; 32]),
+                    at_event: 5,
+                };
+                if with_snapshot {
+                    reply(
+                        &events,
+                        StreamRole::Event,
+                        &Response::LoadSnapshot(snapshot.clone()),
+                    );
+                }
+                let cursor = with_snapshot.then_some(EventPosition::new(5));
+                reply(
+                    &events,
+                    StreamRole::Event,
+                    &Response::StreamProgress {
+                        previous: cursor.map(EventPosition::get),
+                        latest_known: Some(11),
+                        status: protocol::StreamStatus::StreamingBacklog,
+                    },
+                );
+                let start =
+                    reference.map_or(LoadStart::LatestSnapshot, LoadStart::ReplayAtLeastAllAfter);
+                let mut load = client
+                    .load(start)
+                    .now_or_never()
+                    .expect("queued opening prefix must make load ready")
+                    .unwrap();
+                assert!(client.event_stream.lock().await.is_none());
+                assert_eq!(
+                    load.snapshot.as_ref().map(|value| value.at_event.id()),
+                    cursor
+                );
+                if let Some(loaded) = &load.snapshot {
+                    assert_eq!(tree_to_wire(loaded.root.id()), snapshot.root);
+                }
+                assert!(matches!(
+                    load.events.next().now_or_never()
+                        .expect("load must preserve queued opening progress").unwrap().unwrap(),
+                    MonitoredStreamItem::Progress(progress)
+                        if progress.previous == cursor
+                            && progress.latest_known == Some(EventPosition::new(11))
+                            && progress.status == MonitoredStreamStatus::StreamingBacklog
+                ));
+                let mut next = Box::pin(load.events.next());
+                assert!(next.as_mut().now_or_never().is_none());
+                reply(
+                    &events,
+                    StreamRole::Event,
+                    &Response::LoadEvent(Box::new(protocol::StreamEvent {
+                        kind: protocol::SessionEventKind::Application,
+                        position: 11,
+                        session: 2,
+                        reference: Some(7),
+                        minimum_reference: Some(5),
+                        event: protocol::Event {
+                            payload: b"live".to_vec(),
+                            blob_tree: None,
+                        },
+                    })),
+                );
+                let MonitoredStreamItem::Item(event) = next
+                    .now_or_never()
+                    .expect("opening stream must continue live delivery")
+                    .unwrap()
+                    .unwrap()
+                else {
+                    panic!("expected live event after opening progress");
+                };
+                assert_eq!(event.committed.position, EventPosition::new(11));
+                assert_eq!(event.committed.event.payload, Bytes::from_static(b"live"));
+                assert_eq!(event.session_id, SessionId::new(2).unwrap());
+                assert_eq!(event.reference, Some(EventPosition::new(7)));
+                assert_eq!(event.minimum_reference, Some(EventPosition::new(5)));
+                assert_eq!(
+                    load.events.progress().previous,
+                    Some(EventPosition::new(11))
+                );
+                drop(load);
+                assert!(events.is_closed(), "returned load owns opening delivery");
+            }
+        }
+    }
 
     #[test]
     fn load_rejects_unexpected_response_kind() {
