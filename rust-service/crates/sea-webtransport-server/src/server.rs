@@ -828,20 +828,14 @@ async fn serve_author_stream(
         }
         let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
         loop {
-            let frame =
-                match read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout)
-                    .await
-                {
-                    Ok(Some(frame)) => frame,
-                    Ok(None) => {
-                        let _ = service.author_request(sea_v1::Request::Close).await;
-                        return send.finish().await.map_err(transport_error);
-                    }
-                    Err(error) => {
-                        let _ = service.author_request(sea_v1::Request::Close).await;
-                        return Err(error);
-                    }
-                };
+            let Some(frame) =
+                read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout)
+                    .await?
+            else {
+                // Revoke authority before finishing the send direction can suspend.
+                let _ = service.author_request(sea_v1::Request::Close).await;
+                return send.finish().await.map_err(transport_error);
+            };
             let request = sea_v1::decode_request_frame(role, &frame)?;
             if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
                 return Err(sea_v1::ProtocolError::WrongStream {
@@ -1278,8 +1272,10 @@ mod tests {
     struct TestSend {
         writes: Arc<AtomicUsize>,
         stopped: watch::Receiver<bool>,
-        /// Injects a response-write failure after a successful opening.
+        /// Injects a response-write failure.
         fail: Arc<AtomicBool>,
+        /// Records whether cleanup happened before or after send-side completion.
+        finished: Arc<AtomicBool>,
     }
 
     #[async_trait]
@@ -1293,6 +1289,7 @@ mod tests {
         }
 
         async fn finish(&mut self) -> Result<(), WebTransportError> {
+            self.finished.store(true, Ordering::Relaxed);
             Ok(())
         }
 
@@ -1307,8 +1304,10 @@ mod tests {
         admitted: Option<u64>,
         /// Replacement session selected by the connection.
         current: Arc<AtomicU64>,
-        /// Session and request observed at each dispatch, including cleanup.
-        calls: Arc<Mutex<Vec<(u64, sea_v1::Request)>>>,
+        /// Session, request, and send-completion state observed at each dispatch.
+        calls: Arc<Mutex<Vec<(u64, sea_v1::Request, bool)>>>,
+        /// Independent transport observation used to check cleanup ordering.
+        finished: Arc<AtomicBool>,
     }
 
     impl StreamBindingProbe {
@@ -1317,7 +1316,11 @@ mod tests {
             let session = self
                 .admitted
                 .unwrap_or_else(|| self.current.load(Ordering::Relaxed));
-            self.calls.lock().unwrap().push((session, request));
+            self.calls.lock().unwrap().push((
+                session,
+                request,
+                self.finished.load(Ordering::Relaxed),
+            ));
         }
     }
 
@@ -1337,6 +1340,7 @@ mod tests {
                 admitted: Some(self.current.load(Ordering::Relaxed)),
                 current: self.current.clone(),
                 calls: self.calls.clone(),
+                finished: self.finished.clone(),
             }))
         }
 
@@ -1408,7 +1412,9 @@ mod tests {
                 "eof",
                 "close",
                 "truncated-frame",
+                "decode-error",
                 "write-error",
+                "opening-write-error",
                 "invalid-authority",
             ] {
                 if role != sea_v1::StreamRole::Author
@@ -1450,10 +1456,12 @@ mod tests {
                 };
                 let current = Arc::new(AtomicU64::new(1));
                 let calls = Arc::new(Mutex::new(Vec::new()));
+                let finished = Arc::new(AtomicBool::new(false));
                 let service = Arc::new(StreamBindingProbe {
                     admitted: None,
                     current: current.clone(),
                     calls: calls.clone(),
+                    finished: finished.clone(),
                 });
                 let limits = sea_v1::Limits::default();
                 let opening = sea_v1::encode_request_frame(role, &opening, limits).unwrap();
@@ -1463,7 +1471,7 @@ mod tests {
                     requests.send(vec![*byte]).unwrap();
                 }
                 let (_stop, stopped) = watch::channel(false);
-                let fail = Arc::new(AtomicBool::new(false));
+                let fail = Arc::new(AtomicBool::new(ending == "opening-write-error"));
                 let writes = Arc::new(AtomicUsize::new(0));
                 let config = TransportConfig::default();
                 let metrics = Metrics::default();
@@ -1472,6 +1480,7 @@ mod tests {
                         writes: writes.clone(),
                         stopped,
                         fail: fail.clone(),
+                        finished: finished.clone(),
                     },
                     TestReceive(receive),
                     prefix,
@@ -1489,6 +1498,14 @@ mod tests {
                     );
                     continue;
                 }
+                if ending == "opening-write-error" {
+                    assert!(serving.await.is_err());
+                    let calls = calls.lock().unwrap();
+                    assert_eq!(calls.len(), 2, "failed opening must dispatch cleanup");
+                    assert_eq!(calls.last(), Some(&(1, sea_v1::Request::Close, false)));
+                    assert!(!finished.load(Ordering::Relaxed));
+                    continue;
+                }
                 assert!(futures_util::poll!(&mut serving).is_pending());
                 assert!(
                     writes.load(Ordering::Relaxed) > 0,
@@ -1503,6 +1520,9 @@ mod tests {
                 let mut encoded = sea_v1::encode_request_frame(role, &request, limits).unwrap();
                 if ending == "truncated-frame" {
                     encoded.pop();
+                } else if ending == "decode-error" {
+                    encoded.truncate(5);
+                    encoded[..4].copy_from_slice(&1_u32.to_be_bytes());
                 }
                 for byte in encoded {
                     requests.send(vec![byte]).unwrap();
@@ -1512,7 +1532,7 @@ mod tests {
                 let result = serving.await;
                 assert_eq!(
                     result.is_err(),
-                    matches!(ending, "truncated-frame" | "write-error")
+                    matches!(ending, "truncated-frame" | "decode-error" | "write-error")
                 );
                 let calls = calls.lock().unwrap();
                 assert!(
@@ -1520,15 +1540,29 @@ mod tests {
                     "{role:?}/{ending}: operation or cleanup missing"
                 );
                 assert!(
-                    calls.iter().all(|(session, _)| *session == 1),
+                    calls.iter().all(|(session, _, _)| *session == 1),
                     "{role:?}/{ending}: {calls:?}"
                 );
                 if role == sea_v1::StreamRole::Author {
                     assert!(
-                        calls
-                            .iter()
-                            .any(|(_, request)| matches!(request, sea_v1::Request::Close))
+                        calls.iter().any(|(_, request, after_finish)| {
+                            matches!(request, sea_v1::Request::Close) && !*after_finish
+                        }),
+                        "{ending}: author cleanup must precede send completion"
                     );
+                    assert_eq!(finished.load(Ordering::Relaxed), result.is_ok());
+                    if ending == "truncated-frame" {
+                        assert_eq!(
+                            calls
+                                .iter()
+                                .filter(|(_, request, _)| {
+                                    matches!(request, sea_v1::Request::Close)
+                                })
+                                .count(),
+                            1,
+                            "read failure must not dispatch duplicate cleanup"
+                        );
+                    }
                 }
             }
         }
@@ -1569,6 +1603,7 @@ mod tests {
                 writes: writes.clone(),
                 stopped,
                 fail: Arc::new(AtomicBool::new(false)),
+                finished: Arc::new(AtomicBool::new(false)),
             },
             TestReceive(receive),
             service,

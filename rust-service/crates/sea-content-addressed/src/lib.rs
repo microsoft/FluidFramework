@@ -171,9 +171,7 @@ impl ContentStore {
                 maximum: self.config.max_directory_bytes,
             });
         }
-        let id = directory
-            .id()
-            .map_err(|_| StoreError::Corrupt("directory cannot be identified"))?;
+        let id = BlobDirectoryId::for_encoded_bytes(&encoded);
         publish(&self.directories, &hex(id.as_bytes()), &encoded)?;
         Ok(id)
     }
@@ -190,11 +188,7 @@ impl ContentStore {
         )?;
         let directory = BlobDirectory::decode(&encoded)
             .map_err(|_| StoreError::Corrupt("directory encoding is invalid"))?;
-        if directory
-            .id()
-            .map_err(|_| StoreError::Corrupt("directory cannot be identified"))?
-            != id
-        {
+        if BlobDirectoryId::for_encoded_bytes(&encoded) != id {
             return Err(StoreError::Corrupt("directory identity mismatch"));
         }
         Ok(directory)
@@ -488,8 +482,12 @@ mod tests {
         .unwrap();
         assert!(matches!(
             bounded_store.put_directory(&directory),
-            Err(StoreError::DirectoryTooLarge { .. })
+            Err(StoreError::DirectoryTooLarge {
+                actual: 4,
+                maximum: 0
+            })
         ));
+        assert_eq!(fs::read_dir(&bounded_store.directories).unwrap().count(), 0);
         drop(bounded_store);
 
         let boundary_store = ContentStore::open(
@@ -528,7 +526,7 @@ mod tests {
         .unwrap();
         assert!(matches!(
             store.get_directory(directory_id),
-            Err(StoreError::Corrupt(_))
+            Err(StoreError::Corrupt("directory encoding is invalid"))
         ));
         fs::remove_dir_all(root).unwrap();
     }

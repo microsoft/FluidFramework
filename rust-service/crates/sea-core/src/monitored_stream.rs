@@ -107,10 +107,13 @@ struct PositionedMonitoredStream<S, F, P> {
     /// Ordered source whose allocation remains pinned while the wrapper moves.
     inner: Pin<Box<S>>,
     /// Extracts a delivered item's cursor; `None` leaves progress unchanged.
-    position_of: Box<F>,
+    position_of: F,
     /// Current progress, updated by source observations and positioned data delivery.
-    progress: Box<MonitoredStreamProgress<P>>,
+    progress: MonitoredStreamProgress<P>,
 }
+
+// Only the separately allocated source is pinned; no pinned references to callbacks or progress escape.
+impl<S, F, P> Unpin for PositionedMonitoredStream<S, F, P> {}
 
 impl<S, F, T, P, E> Stream for PositionedMonitoredStream<S, F, P>
 where
@@ -146,7 +149,7 @@ where
                 std::task::Poll::Ready(Some(Ok(MonitoredStreamItem::Item(item))))
             }
             std::task::Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress)))) => {
-                *this.progress = progress.clone();
+                this.progress = progress.clone();
                 std::task::Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(progress))))
             }
             other => other,
@@ -165,7 +168,7 @@ where
     type Error = E;
 
     fn progress(&self) -> MonitoredStreamProgress<Self::Position> {
-        (*self.progress).clone()
+        self.progress.clone()
     }
 }
 
@@ -190,8 +193,8 @@ where
 {
     Box::pin(PositionedMonitoredStream {
         inner: Box::pin(stream),
-        position_of: Box::new(position_of),
-        progress: Box::new(initial),
+        position_of,
+        progress: initial,
     })
 }
 
@@ -216,8 +219,8 @@ where
 {
     Box::pin(PositionedMonitoredStream {
         inner: Box::pin(stream),
-        position_of: Box::new(position_of),
-        progress: Box::new(initial),
+        position_of,
+        progress: initial,
     })
 }
 
@@ -226,10 +229,13 @@ struct MappedMonitoredStream<T, P, E, F, G> {
     /// Source that remains authoritative for progress, including after a mapping error.
     inner: BoxMonitoredStream<T, P, E>,
     /// Fallible transformation applied only to data items, not progress observations.
-    map_data: Box<F>,
+    map_data: F,
     /// Converts source errors independently of data-transformation errors.
-    map_error: Box<G>,
+    map_error: G,
 }
+
+// Moving this wrapper keeps its source pinned; neither callback is structurally pinned.
+impl<T, P, E, F, G> Unpin for MappedMonitoredStream<T, P, E, F, G> {}
 
 impl<T, U, P, E, O, F, G> Stream for MappedMonitoredStream<T, P, E, F, G>
 where
@@ -296,8 +302,8 @@ where
 {
     Box::pin(MappedMonitoredStream {
         inner: stream,
-        map_data: Box::new(map_data),
-        map_error: Box::new(map_error),
+        map_data,
+        map_error,
     })
 }
 
@@ -322,8 +328,8 @@ where
 {
     Box::pin(MappedMonitoredStream {
         inner: stream,
-        map_data: Box::new(map_data),
-        map_error: Box::new(map_error),
+        map_data,
+        map_error,
     })
 }
 
@@ -331,6 +337,7 @@ where
 mod tests {
     use std::{
         convert::Infallible,
+        marker::PhantomPinned,
         pin::Pin,
         task::{Context, Poll},
     };
@@ -364,6 +371,54 @@ mod tests {
         fn progress(&self) -> MonitoredStreamProgress<Self::Position> {
             self.progress.clone()
         }
+    }
+
+    #[test]
+    fn adapters_accept_pinned_sources_positions_and_callback_captures() {
+        let pinned = PhantomPinned;
+        let initial = MonitoredStreamProgress {
+            previous: None,
+            latest_known: Some((4, PhantomPinned)),
+            status: MonitoredStreamStatus::StreamingBacklog,
+        };
+        let source = futures_util::stream::unfold(0, |step| async move {
+            match step {
+                0 => Some((Ok(MonitoredStreamItem::Item(4_u64)), 1)),
+                1 => Some((Err("source failure"), 2)),
+                _ => None,
+            }
+        });
+        let positioned = boxed_monitored_stream(source, initial, move |position| {
+            std::hint::black_box(&pinned);
+            Some((*position, PhantomPinned))
+        });
+        let mut mapped = map_monitored_stream(
+            positioned,
+            move |value| {
+                std::hint::black_box(&pinned);
+                Ok::<_, &'static str>(value + 1)
+            },
+            move |error| {
+                std::hint::black_box(&pinned);
+                assert_eq!(error, "source failure");
+                "mapped failure"
+            },
+        );
+        let mut context = Context::from_waker(futures_util::task::noop_waker_ref());
+        assert!(matches!(
+            mapped.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Ok(MonitoredStreamItem::Item(5))))
+        ));
+        assert_eq!(mapped.progress().previous, Some((4, PhantomPinned)));
+        assert!(matches!(
+            mapped.as_mut().poll_next(&mut context),
+            Poll::Ready(Some(Err("mapped failure")))
+        ));
+        assert_eq!(mapped.progress().previous, Some((4, PhantomPinned)));
+        assert!(matches!(
+            mapped.as_mut().poll_next(&mut context),
+            Poll::Ready(None)
+        ));
     }
 
     #[test]

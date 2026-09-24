@@ -104,6 +104,14 @@ impl BlobId {
 pub struct BlobDirectoryId([u8; CONTENT_ID_BYTES]);
 
 impl BlobDirectoryId {
+    /// Computes the directory identity of the supplied encoded bytes.
+    ///
+    /// Hashes bytes as provided, without validating that they encode a canonical directory.
+    #[must_use]
+    pub fn for_encoded_bytes(bytes: &[u8]) -> Self {
+        Self(domain_hash(DIRECTORY_DOMAIN, bytes))
+    }
+
     /// Parses one raw identity.
     ///
     /// # Errors
@@ -191,7 +199,7 @@ impl BlobDirectory {
     /// Returns an error when the directory cannot be canonically encoded.
     pub fn encode_with_id(&self) -> Result<(Bytes, BlobDirectoryId), BlobTreeError> {
         let encoded = self.encode()?;
-        let id = BlobDirectoryId(domain_hash(DIRECTORY_DOMAIN, &encoded));
+        let id = BlobDirectoryId::for_encoded_bytes(&encoded);
         Ok((encoded, id))
     }
 
@@ -206,7 +214,7 @@ impl BlobDirectory {
         }
         let entry_count = encoded.get_u32();
         let mut entries = BTreeMap::new();
-        let mut previous_name: Option<String> = None;
+        let mut previous_name: Option<&str> = None;
         for _ in 0..entry_count {
             if encoded.remaining() < 4 {
                 return Err(BlobTreeError::TruncatedDirectory);
@@ -220,14 +228,10 @@ impl BlobDirectory {
                 return Err(BlobTreeError::TruncatedDirectory);
             }
             let name = std::str::from_utf8(&encoded[..name_length])
-                .map_err(|_| BlobTreeError::InvalidEntryEncoding)?
-                .to_owned();
+                .map_err(|_| BlobTreeError::InvalidEntryEncoding)?;
             encoded.advance(name_length);
-            validate_entry_name(&name)?;
-            if previous_name
-                .as_ref()
-                .is_some_and(|previous| previous >= &name)
-            {
+            validate_entry_name(name)?;
+            if previous_name.is_some_and(|previous| previous >= name) {
                 return Err(BlobTreeError::NonCanonicalEntryOrder);
             }
             let child_tag = encoded.get_u8();
@@ -238,8 +242,8 @@ impl BlobDirectory {
                 tag => return Err(BlobTreeError::InvalidChildTag(tag)),
             };
             encoded.advance(CONTENT_ID_BYTES);
-            previous_name = Some(name.clone());
-            entries.insert(name, child);
+            previous_name = Some(name);
+            entries.insert(name.to_owned(), child);
         }
         if encoded.has_remaining() {
             return Err(BlobTreeError::TrailingDirectoryBytes);
@@ -324,6 +328,19 @@ mod tests {
     }
 
     #[test]
+    fn directory_identity_hashes_encoded_bytes_without_validation() {
+        let encoded = [0, 0, 0, 0, 1];
+        assert_eq!(
+            BlobDirectory::decode(&encoded),
+            Err(BlobTreeError::TrailingDirectoryBytes)
+        );
+        assert_eq!(
+            BlobDirectoryId::for_encoded_bytes(&encoded),
+            BlobDirectoryId(super::domain_hash(super::DIRECTORY_DOMAIN, &encoded))
+        );
+    }
+
+    #[test]
     fn directories_round_trip_canonically() {
         let mut entries = BTreeMap::new();
         entries.insert(
@@ -345,6 +362,10 @@ mod tests {
                     super::DIRECTORY_DOMAIN,
                     &combined_encoding
                 ))
+            );
+            assert_eq!(
+                combined_id,
+                BlobDirectoryId::for_encoded_bytes(&combined_encoding)
             );
             assert_eq!(combined_id, source.id().unwrap());
         }
@@ -412,5 +433,27 @@ mod tests {
             malformed[offset] = value;
             assert_eq!(BlobDirectory::decode(&malformed), Err(error));
         }
+
+        let mut malformed = expected.clone();
+        malformed[47] = 2;
+        for (name, error) in [
+            (0xff, BlobTreeError::InvalidEntryEncoding),
+            (b'/', BlobTreeError::InvalidEntryName("/".to_owned())),
+            (b'a', BlobTreeError::NonCanonicalEntryOrder),
+            (b'0', BlobTreeError::NonCanonicalEntryOrder),
+        ] {
+            malformed[46] = name;
+            assert_eq!(
+                BlobDirectory::decode(&malformed),
+                Err(error),
+                "name validation must precede the invalid child tag"
+            );
+        }
+        malformed[46] = 0xff;
+        assert_eq!(
+            BlobDirectory::decode(&malformed[..47]),
+            Err(BlobTreeError::TruncatedDirectory),
+            "entry bounds must be checked before decoding the name"
+        );
     }
 }
