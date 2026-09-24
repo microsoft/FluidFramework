@@ -13,79 +13,11 @@ import {
 	checkSchemaCompatibility,
 	checkCompatibility,
 	type ImplicitFieldSchema,
-	type SchemaComparisonStatusAlpha,
 	SchemaFactoryAlpha,
 	toUpgradeSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { configureBenchmarkHooks, checkoutWithContent } from "../../utils.js";
-
-// Compare callers that only read flags with callers that access or serialize diagnostic lists.
-// Access order and repeated reads also provide comparison cases for any future lazy implementation.
-const accessPatterns = [
-	"flags only",
-	"view subset",
-	"all lists",
-	"reverse list order",
-	"repeated access",
-	"serialize",
-] as const;
-
-/**
- * Reads a compatibility result using the selected caller access pattern.
- *
- * @remarks
- * Conditional lists are accessed only when their corresponding flag is false.
- * The caller includes both compatibility computation and this access in the timed operation.
- * Array construction and JSON serialization are therefore part of the measured cost where used.
- *
- * @param status - Compatibility result produced for the current iteration.
- * @param access - Properties to read, or whether to serialize the entire status.
- * @returns The accessed value, collected values, or serialized status.
- * Returns undefined when the viewing subset is requested but viewing is permitted.
- */
-function consume(
-	status: SchemaComparisonStatusAlpha,
-	access: (typeof accessPatterns)[number],
-): unknown {
-	switch (access) {
-		case "flags only": {
-			return status.canView;
-		}
-		case "view subset": {
-			return status.canView ? undefined : status.viewDiscrepancies;
-		}
-		case "all lists": {
-			return [
-				status.canView ? undefined : status.viewDiscrepancies,
-				status.canUpgrade ? undefined : status.upgradeDiscrepancies,
-				status.isEquivalent ? undefined : status.equivalenceDiscrepancies,
-			];
-		}
-		case "reverse list order": {
-			return [
-				status.isEquivalent ? undefined : status.equivalenceDiscrepancies,
-				status.canUpgrade ? undefined : status.upgradeDiscrepancies,
-				status.canView ? undefined : status.viewDiscrepancies,
-			];
-		}
-		case "repeated access": {
-			return status.isEquivalent
-				? undefined
-				: [
-						status.equivalenceDiscrepancies,
-						status.equivalenceDiscrepancies,
-						status.equivalenceDiscrepancies,
-					];
-		}
-		case "serialize": {
-			return JSON.stringify(status);
-		}
-		default: {
-			assert.fail("Unknown benchmark access pattern");
-		}
-	}
-}
 
 /**
  * Registers a benchmark that times one operation per iteration.
@@ -146,11 +78,13 @@ describe("Schema compatibility benchmarks", () => {
 			});
 
 			// Compute a fresh status on every iteration; these cases do not measure cached live views.
-			for (const access of accessPatterns) {
-				measure(`${scenario}, ${fieldCount} fields, ${access}`, () =>
-					consume(checkSchemaCompatibility(view, stored), access),
-				);
-			}
+			measure(
+				`${scenario}, ${fieldCount} fields, flags only`,
+				() => checkSchemaCompatibility(view, stored).canView,
+			);
+			measure(`${scenario}, ${fieldCount} fields, serialize`, () =>
+				JSON.stringify(checkSchemaCompatibility(view, stored)),
+			);
 		}
 	}
 
@@ -175,11 +109,13 @@ describe("Schema compatibility benchmarks", () => {
 		);
 		const stored = toUpgradeSchema(original);
 		const view = new TreeViewConfigurationAlpha({ schema });
-		for (const access of ["flags only", "serialize"] as const) {
-			measure(`metadata only, ${size} entries, ${access}`, () =>
-				consume(checkSchemaCompatibility(view, stored), access),
-			);
-		}
+		measure(
+			`metadata only, ${size} entries, flags only`,
+			() => checkSchemaCompatibility(view, stored).canView,
+		);
+		measure(`metadata only, ${size} entries, serialize`, () =>
+			JSON.stringify(checkSchemaCompatibility(view, stored)),
+		);
 	}
 	// Measures an accepted staged type that produces no blocker lists.
 	const staged = new TreeViewConfigurationAlpha({

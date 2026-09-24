@@ -8,7 +8,6 @@ import { assert, fail, unreachableCase } from "@fluidframework/core-utils/intern
 import {
 	EmptyKey,
 	type FieldKey,
-	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	Multiplicity,
@@ -227,58 +226,22 @@ function* getFieldSupersetFailures(
 		yield { mismatch: "allowedType", allowedType };
 	}
 
-	// Check that the field-kind transition is allowed under the selected upgrade rules.
-	if (!allowsFieldKindSuperset(policy, original.kind, superset.kind, monotonicOnly)) {
-		yield { mismatch: "fieldKind" };
-	}
-}
-
-/**
- * Determines whether `superset` can replace `original` under the selected field-kind comparison rules.
- *
- * @remarks
- * Identical field-kind identifiers always return true.
- * For different identifiers, the comparison depends on `monotonicOnly`:
- *
- * - When true, the proposed kind must explicitly allow an upgrade from the original kind through
- * {@link FieldKindOptions.allowMonotonicUpgradeFrom}.
- * These rules prevent reversible field-kind upgrades that could cause repeated upgrades between clients.
- * - When false, only multiplicity (the allowed number of children) is compared.
- * The proposed kind must allow every child count allowed by the original kind.
- * This comparison can accept transitions in both directions between different kinds with the same multiplicity.
- *
- * This function does not compare allowed type identifiers or determine whether field content can be constructed.
- * Use {@link allowsFieldSuperset} to compare complete field schemas.
- *
- * @param policy - Schema policy containing the field-kind definitions and upgrade rules used by the comparison.
- * @param original - Identifier of the field kind to replace.
- * @param superset - Identifier of the proposed replacement field kind.
- * @param monotonicOnly - Whether to require an explicitly permitted upgrade for different field kinds.
- * Defaults to true. When false, compares multiplicities instead.
- *
- * @returns True if the kinds are identical or the selected comparison permits the replacement; otherwise false.
- */
-export function allowsFieldKindSuperset(
-	policy: FullSchemaPolicy,
-	original: FieldKindIdentifier,
-	superset: FieldKindIdentifier,
-	monotonicOnly: boolean = true,
-): boolean {
-	// Identical kinds are compatible without consulting the upgrade rules.
-	if (original === superset) {
-		return true;
+	if (original.kind === superset.kind) {
+		return;
 	}
 
-	// Look up the proposed kind's upgrade rules and multiplicity.
-	const supersetKind = policy.fieldKinds.get(superset) ?? fail(0xb1b /* missing kind */);
+	const supersetKind = policy.fieldKinds.get(superset.kind) ?? fail(0xb1b /* missing kind */);
 
 	if (monotonicOnly) {
-		// Require the proposed kind to explicitly permit an upgrade from the original kind.
-		return supersetKind.options.allowMonotonicUpgradeFrom.has(original);
+		if (!supersetKind.options.allowMonotonicUpgradeFrom.has(original.kind)) {
+			yield { mismatch: "fieldKind" };
+		}
 	} else {
-		// Without monotonic restrictions, check that every original child count remains allowed.
-		const originalKind = policy.fieldKinds.get(original) ?? fail(0xcab /* missing kind */);
-		return allowsMultiplicitySuperset(originalKind.multiplicity, supersetKind.multiplicity);
+		const originalKind =
+			policy.fieldKinds.get(original.kind) ?? fail(0xcab /* missing kind */);
+		if (!allowsMultiplicitySuperset(originalKind.multiplicity, supersetKind.multiplicity)) {
+			yield { mismatch: "fieldKind" };
+		}
 	}
 }
 

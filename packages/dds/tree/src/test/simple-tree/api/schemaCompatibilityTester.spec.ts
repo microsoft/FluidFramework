@@ -29,9 +29,6 @@ import {
 	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
-	resolveStoredSchemaGenerationOptions,
-	collectSchemaDiagnostics,
-	getDiscrepanciesInAllowedContent,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
@@ -75,33 +72,6 @@ function expectCompatibility(
 	});
 	assert.equal(discrepancies === undefined, compatibility.canView);
 
-	// Reconstruct the effective target, including already-enabled upgrades when the policy retains them.
-	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
-	const target = toUpgradeSchema(viewSchema.root, {
-		includeStaged: (upgrade) =>
-			configuredPolicy.includeStaged(upgrade) ||
-			(configuredPolicy.includeAlreadyEnabledUpgrades === true &&
-				enabledUpgrades.has(upgrade)),
-		includeStagedOptional: (upgrade) =>
-			configuredPolicy.includeStagedOptional(upgrade) ||
-			(configuredPolicy.includeAlreadyEnabledUpgrades === true &&
-				enabledUpgrades.has(upgrade)),
-	});
-	// Compare raw blocker lists with the viewing and stored-schema rules, including successful checks.
-	const raw = [...getDiscrepanciesInAllowedContent(viewSchema, stored)];
-	const diagnostics = collectSchemaDiagnostics(viewSchema, stored, target, raw);
-	assert.equal(diagnostics.view.length === 0, raw.length === 0);
-	assert.equal(
-		diagnostics.upgrade.length === 0,
-		allowsRepoSuperset(defaultSchemaPolicy, stored, target),
-	);
-	assert.equal(
-		diagnostics.equivalence.length === 0,
-		raw.length === 0 &&
-			allowsRepoSuperset(defaultSchemaPolicy, stored, target) &&
-			allowsRepoSuperset(defaultSchemaPolicy, target, stored),
-	);
-	assert.equal("allDiscrepancies" in compatibility, false);
 	for (const [flag, property] of [
 		["canView", "viewDiscrepancies"],
 		["canUpgrade", "upgradeDiscrepancies"],
@@ -116,10 +86,9 @@ function expectCompatibility(
 			assert.equal(new Set(subset.map((entry) => JSON.stringify(entry))).size, subset.length);
 		}
 	}
-	for (const entry of diagnostics.equivalence) {
-		for (const oldName of ["proposedView", "currentStored", "stored", "target"]) {
-			assert.equal(oldName in entry, false);
-		}
+	for (const entry of compatibility.isEquivalent
+		? []
+		: compatibility.equivalenceDiscrepancies) {
 		if (entry.mismatch === "missingNode") {
 			assert.deepEqual(
 				entry.missingFrom,
@@ -291,6 +260,8 @@ describe("checkSchemaCompatibility", () => {
 		// This single difference prevents viewing and both directions of the stored-schema comparison.
 		assert.deepEqual(status.upgradeDiscrepancies, status.viewDiscrepancies);
 		assert.deepEqual(status.equivalenceDiscrepancies, status.viewDiscrepancies);
+		assert.equal(status.upgradeDiscrepancies[0], status.viewDiscrepancies[0]);
+		assert.equal(status.equivalenceDiscrepancies[0], status.viewDiscrepancies[0]);
 	});
 
 	it("keeps viewing value failures separate from a missing proposed definition", () => {
@@ -564,8 +535,6 @@ describe("checkSchemaCompatibility", () => {
 		allowUnused(status.equivalenceDiscrepancies);
 		// @ts-expect-error Comparison helpers do not report initialization state.
 		allowUnused(status.canInitialize);
-		// @ts-expect-error A complete diff is not part of the alpha API.
-		allowUnused(status.allDiscrepancies);
 		if (status.canView) {
 			// @ts-expect-error Successful checks do not expose a blocker property.
 			allowUnused(status.viewDiscrepancies);
@@ -627,7 +596,6 @@ describe("checkSchemaCompatibility", () => {
 		});
 		const status = checkSchemaCompatibility(schema, toUpgradeSchema(factory.number));
 		assert.equal(status.isEquivalent, true);
-		assert.equal("allDiscrepancies" in status, false);
 		assert.equal("viewDiscrepancies" in status, false);
 		assert.equal("upgradeDiscrepancies" in status, false);
 		assert.equal("equivalenceDiscrepancies" in status, false);
@@ -726,7 +694,6 @@ describe("checkSchemaCompatibility", () => {
 	it("reports no alpha discrepancies for identical schemas", () => {
 		const schema = new TreeViewConfigurationAlpha({ schema: factory.number });
 		const status = checkSchemaCompatibility(schema, toUpgradeSchema(factory.number));
-		assert.equal("allDiscrepancies" in status, false);
 		assert.equal("viewDiscrepancies" in status, false);
 		assert.equal("upgradeDiscrepancies" in status, false);
 		assert.equal("equivalenceDiscrepancies" in status, false);
@@ -1478,7 +1445,6 @@ describe("checkSchemaCompatibility enabledUpgrades", () => {
 		const status = checkSchemaCompatibility(config, stored);
 		const { enabledUpgrades } = status;
 		assert.equal(enabledUpgrades.size, 0);
-		assert.equal("allDiscrepancies" in status, false);
 		assert(status.canView && status.canUpgrade && status.isEquivalent);
 		assert.equal("equivalenceDiscrepancies" in status, false);
 

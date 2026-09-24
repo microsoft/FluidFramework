@@ -35,8 +35,6 @@ export type {
 	ITreeAlpha,
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
-export { collectSchemaDiagnostics } from "./schemaDiagnostics.js";
-export { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
 export type {
 	SchemaDiscrepancyAlpha,
 	SchemaDiscrepancyValues,

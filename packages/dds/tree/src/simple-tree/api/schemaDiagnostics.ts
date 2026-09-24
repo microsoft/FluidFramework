@@ -393,24 +393,27 @@ export function collectSchemaDiagnostics(
 } {
 	// Include all staged content when representing the view; target retains the effective staging policy.
 	const viewed = toUpgradeSchema(view.root, StagedSchemaUpgradePolicy.permissive);
-	const entries = new Map<string, SchemaDiscrepancyAlpha>();
-	const blockers = new Map<SchemaDiscrepancyAlpha, Set<Blocker>>();
+	const entries = new Map<
+		string,
+		{ entry: SchemaDiscrepancyAlpha; view: boolean; upgrade: boolean }
+	>();
 
 	/**
-	 * Records one distinct aspect difference without classifying it as a blocker.
+	 * Records one distinct aspect difference and which check it prevents.
 	 *
 	 * @param mismatch - Aspect being compared. The caller must supply the matching value representation.
 	 * @param location - Schema element containing the difference.
 	 * @param values - Values on each side, with undefined for absent values.
 	 * @param allowedType - Type identifier, supplied only for allowed-type differences.
-	 * @returns The shared entry for the constraint failure, including relevant view context.
+	 * @param check - Check blocked by the difference.
 	 */
 	function add(
 		mismatch: SchemaDiscrepancyAlpha["mismatch"],
 		location: SchemaDiscrepancyLocationAlpha,
 		values: Values,
 		allowedType: string | undefined,
-	): SchemaDiscrepancyAlpha {
+		check: Blocker,
+	): void {
 		const normalized = {
 			view: values.view,
 			existingStored: values.stored,
@@ -474,13 +477,11 @@ export function collectSchemaDiagnostics(
 		const entry = data as SchemaDiscrepancyAlpha;
 		const key = JSON.stringify(entry);
 		// Reuse the same entry when multiple comparisons identify the same difference.
-		const previous = entries.get(key);
-		if (previous !== undefined) {
-			return previous;
+		const record = entries.get(key) ?? { entry, view: false, upgrade: false };
+		if (check !== "reverse") {
+			record[check] = true;
 		}
-		entries.set(key, entry);
-		blockers.set(entry, new Set());
-		return entry;
+		entries.set(key, record);
 	}
 
 	/**
@@ -542,7 +543,7 @@ export function collectSchemaDiagnostics(
 			const kind = getNodeKind(node);
 			return kind === undefined ? undefined : { kind };
 		}
-		const entry = add(
+		add(
 			entryMismatch,
 			location,
 			{
@@ -551,8 +552,8 @@ export function collectSchemaDiagnostics(
 				target: getValue("target"),
 			},
 			allowedType,
+			check,
 		);
-		blockers.get(entry)?.add(check);
 	}
 
 	/**
@@ -630,11 +631,11 @@ export function collectSchemaDiagnostics(
 	}
 	const ordered = [...entries.entries()]
 		.sort(([left], [right]) => (left < right ? -1 : left > right ? 1 : 0))
-		.map(([, entry]) => entry);
+		.map(([, record]) => record);
 	return {
-		view: ordered.filter((entry) => blockers.get(entry)?.has("view") === true),
-		upgrade: ordered.filter((entry) => blockers.get(entry)?.has("upgrade") === true),
+		view: ordered.filter((record) => record.view).map(({ entry }) => entry),
+		upgrade: ordered.filter((record) => record.upgrade).map(({ entry }) => entry),
 		// Equivalence requires viewing compatibility and superset checks in both directions.
-		equivalence: ordered,
+		equivalence: ordered.map(({ entry }) => entry),
 	};
 }

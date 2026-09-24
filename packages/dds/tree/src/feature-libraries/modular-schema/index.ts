@@ -8,7 +8,6 @@ export {
 	getStoredSchemaSupersetFailures,
 	allowsTreeSchemaIdentifierSuperset,
 	allowsFieldSuperset,
-	allowsFieldKindSuperset,
 	allowsTreeSuperset,
 	allowsMultiplicitySuperset,
 } from "./comparison.js";
