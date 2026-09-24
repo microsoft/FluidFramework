@@ -215,10 +215,7 @@ async function verifyMockLifecycle(bindings, hash) {
 		);
 
 		scenario = "datagram-failure";
-		await rejects(
-			connect(),
-			"datagram setup failure did not reject",
-		);
+		await rejects(connect(), "datagram setup failure did not reject");
 		assert(retainedConnections.length === 2, "setup probe did not construct WebTransport");
 		assert(retainedConnections[1].closes === 1, "failed datagram setup leaked its connection");
 		assert(retainedConnections[1].streams.length === 0, "failed setup opened a Sea stream");
@@ -226,7 +223,10 @@ async function verifyMockLifecycle(bindings, hash) {
 		scenario = "success";
 		owner = await connect();
 		const connection = retainedConnections[2];
-		assert(connection.closes === 0, "successful construction prematurely closed its connection");
+		assert(
+			connection.closes === 0,
+			"successful construction prematurely closed its connection",
+		);
 		stream = await owner.openStream();
 		const state = connection.streams[0];
 		clone = stream.cloneOwner();
@@ -237,7 +237,10 @@ async function verifyMockLifecycle(bindings, hash) {
 			state.aborts === 0 && state.cancellations === 0,
 			"nonfinal clone cancelled a direction",
 		);
-		assert(state.readable.locked && state.writable.locked, "nonfinal clone released shared locks");
+		assert(
+			state.readable.locked && state.writable.locked,
+			"nonfinal clone released shared locks",
+		);
 		clone.free();
 		clone = undefined;
 		await unlocked(state);
@@ -337,7 +340,12 @@ async function runLifecycle(hash) {
 				owner?.free();
 			}
 		}
-		return { status: "passed", browser: navigator.userAgent, ownership, physicalRelease: cases };
+		return {
+			status: "passed",
+			browser: navigator.userAgent,
+			ownership,
+			physicalRelease: cases,
+		};
 	} finally {
 		globalThis.WebTransport = NativeWebTransport;
 		for (const connection of retainedConnections) connection.close();

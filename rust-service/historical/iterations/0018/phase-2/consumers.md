@@ -287,3 +287,47 @@ Required focused coordinator checks after integrating this follow-up:
    The focused assembly test does not substitute for observing the formerly missing executable being built and launched.
 
 This follow-up is paused for coordinator validation and commit; pending browser execution remains unchanged.
+
+### Reopened Browser Navigation Readiness
+
+At 2026-09-24T02:02:40Z the coordinator authorized only the localized browser navigation-readiness repair on consumer base `d23af7ac551`.
+Integration run `full-2026-09-24T01-58-36.421Z-970271` passed the real browser task, including the new lifetime fixtures, but failed one Mocha benchmark case.
+The retained `0.log`, lines 943–980, reports 28 passing cases and `Rust WebTransport memory direct` failing with `Execution context was destroyed`.
+The coordinator's isolated retry passed in 876 ms with an inherited external Cargo target, confirming the artifact-selection repair but not establishing the cause of the earlier browser failure.
+That original failure remains evidence; no blanket retry or suppression was added.
+
+Direct inspection found an independent readiness gap: the first CDP page target can still be in its previous document when the runner evaluates its result Promise.
+`Runtime.enable` does not commit launch navigation, and a `Page.navigate` response alone is not document readiness.
+The normal path previously launched the requested URL directly, while only profiling performed explicit navigation from `about:blank`.
+
+The runner now always starts on `about:blank`, enables profiling first when requested, then explicitly navigates and awaits `DOMContentLoaded` for the exact returned frame and loader identity.
+The helper retains lifecycle events that arrive before the navigation command response.
+An old document or unrelated frame cannot satisfy the wait.
+The event wait uses the existing CDP command deadline; timeout, connection failure, and explicit close reject and remove its waiter and timer.
+Navigation errors and a response without a new document loader reject before evaluation.
+Process/profile teardown remains owned by the unchanged `withChromium` finally path.
+
+| Boundary | Owning decision and contract | Discriminating evidence | Disposition and revisit trigger |
+| --- | --- | --- | --- |
+| `browser-navigation-readiness` | `navigateToPage` plus `CdpClient.waitForEvent` gate `run-headless.mjs` evaluation on readiness of the explicitly requested document; profiling starts before its navigation. | New `browser/chromium.test.mjs` controls actual CDP-client responses: withholds readiness after the navigate response; supplies old-loader and unrelated-frame events; checks no evaluation command exists until the matching document event. Additional cases cover readiness before the response, timeout cleanup, close cleanup, and navigation failure. The existing Mocha browser-runner suite invokes this Node regression, so it remains part of normal package tests. | Localized repair complete, execution pending coordinator. Revisit navigation strategy, lifecycle identity, CDP event buffering, or profiling startup order. This establishes a deterministic boundary, not proven causality for the isolated earlier failure. |
+
+Only `browser/chromium.mjs`, `browser/run-headless.mjs`, new `browser/chromium.test.mjs`, `src/test/browserRunner.spec.ts`, and this report changed in this reopened batch.
+Tests use a controlled WebSocket/CDP fixture and event-loop checkpoints rather than navigation sleeps; production readiness is event-driven.
+No bash, assigned native task, server, peer message, browser transport fixture, manifest, or dependency change was made.
+Editor diagnostics are not acceptance evidence: a direct follow-up read caught and corrected an initially misplaced helper declaration despite a clean diagnostic response.
+
+Required coordinator checks from `rust-service/tests/sea-integration-tests`:
+
+1. `node --check browser/chromium.mjs`, `node --check browser/run-headless.mjs`, and `node --check browser/chromium.test.mjs`.
+2. `node --test browser/chromium.test.mjs` (five deterministic CDP tests; no browser or native build required).
+3. `pnpm run build:test:esm`, `pnpm run check:format`, and `pnpm run lint`.
+4. `pnpm exec mocha --no-config --no-package lib/test/browserRunner.spec.js --grep "gates evaluation|CPU profile"` to verify regression registration and preserve profiling failure cleanup.
+5. Rerun the failing Rust WebTransport memory-direct correctness case, then resume the full integration gate; retain the original failed run regardless of the outcome.
+
+This edit batch is paused for immediate coordinator validation; no new runtime pass is claimed.
+
+Coordinator acceptance supplement: all three JavaScript syntax checks and all five controlled CDP tests passed on the guarded consumer checkout at `d23af7ac551` with these edits.
+The editor test adapter found no registered tests for the `.mjs` file, so execution used the existing Node test runner directly.
+Root build run `build-2026-09-24T02-02-54.198Z-993081` completed all 1,766 tasks but failed its root Biome check on formatting in the previously added browser ownership fixture.
+The coordinator applied the repository formatter to that owned fixture and the new navigation files; this supplemental batch therefore also contains formatting-only changes to `tests/webtransport-browser/browser-test.mjs`.
+Package compilation, lint, browser execution, and the root build rerun remain required on the integrated source.

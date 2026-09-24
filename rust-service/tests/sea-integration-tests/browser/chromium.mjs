@@ -24,12 +24,15 @@ export async function freePort() {
 	return port;
 }
 
-/** CDP connection with bounded requests and rejection on connection loss. */
-class CdpClient {
+/**
+ * CDP connection with bounded requests and rejection on connection loss.
+ */
+export class CdpClient {
 	/** Opens a socket and records browser diagnostics for the owning scenario. */
 	constructor(url, timeoutMilliseconds) {
 		this.nextId = 1;
 		this.pending = new Map();
+		this.eventWaiters = new Set();
 		this.events = [];
 		this.timeoutMilliseconds = timeoutMilliseconds;
 		this.socket = new WebSocket(url);
@@ -57,6 +60,13 @@ class CdpClient {
 			const message = JSON.parse(data);
 			if (message.id === undefined) {
 				this.events.push(message);
+				for (const waiter of this.eventWaiters) {
+					if (waiter.method === message.method && waiter.matches(message.params)) {
+						this.eventWaiters.delete(waiter);
+						clearTimeout(waiter.timer);
+						waiter.resolve(message.params);
+					}
+				}
 				return;
 			}
 			const pending = this.pending.get(message.id);
@@ -97,7 +107,26 @@ class CdpClient {
 		});
 	}
 
-	/** Rejects all waiters without leaving request timers alive. */
+	/** Waits for a matching event, including one already received before its command response. */
+	waitForEvent(method, matches) {
+		if (this.socket.readyState !== WebSocket.OPEN) {
+			return Promise.reject(new Error("Chromium CDP socket is not open"));
+		}
+		const received = this.events.find(
+			(event) => event.method === method && matches(event.params),
+		);
+		if (received !== undefined) return Promise.resolve(received.params);
+		return new Promise((resolve, reject) => {
+			const waiter = { method, matches, resolve, reject };
+			waiter.timer = setTimeout(() => {
+				this.eventWaiters.delete(waiter);
+				reject(new Error(`timed out awaiting CDP event ${method}`));
+			}, this.timeoutMilliseconds);
+			this.eventWaiters.add(waiter);
+		});
+	}
+
+	/** Rejects all command and event waiters without leaving timers alive. */
 	fail(error) {
 		clearTimeout(this.connectionTimer);
 		this.rejectConnection(error);
@@ -106,6 +135,11 @@ class CdpClient {
 			pending.reject(error);
 		}
 		this.pending.clear();
+		for (const waiter of this.eventWaiters) {
+			clearTimeout(waiter.timer);
+			waiter.reject(error);
+		}
+		this.eventWaiters.clear();
 	}
 
 	/** Ends the socket and rejects outstanding commands before browser teardown. */
@@ -113,6 +147,25 @@ class CdpClient {
 		this.fail(new Error("Chromium CDP client closed"));
 		this.socket.close();
 	}
+}
+
+/**
+ * Navigates before evaluation and waits for the requested document, not the previous page context.
+ * Frame and loader identities prevent unrelated or earlier readiness events from satisfying the wait.
+ */
+export async function navigateToPage(client, url) {
+	await client.send("Page.enable");
+	await client.send("Page.setLifecycleEventsEnabled", { enabled: true });
+	const { frameId, loaderId, errorText } = await client.send("Page.navigate", { url });
+	if (errorText !== undefined) throw new Error(`Chromium navigation failed: ${errorText}`);
+	if (loaderId === undefined) throw new Error("Chromium navigation did not create a document");
+	await client.waitForEvent(
+		"Page.lifecycleEvent",
+		(event) =>
+			event.frameId === frameId &&
+			event.loaderId === loaderId &&
+			event.name === "DOMContentLoaded",
+	);
 }
 
 /** Owns a fresh Chromium process and profile until the scenario finishes or fails. */

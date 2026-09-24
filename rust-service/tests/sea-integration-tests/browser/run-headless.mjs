@@ -6,7 +6,7 @@
 import { createServer } from "node:http";
 import { readFile, writeFile } from "node:fs/promises";
 import { extname, join, normalize, resolve } from "node:path";
-import { freePort, withChromium } from "./chromium.mjs";
+import { freePort, navigateToPage, withChromium } from "./chromium.mjs";
 
 const [
 	siteRoot,
@@ -77,20 +77,19 @@ const pageUrl = `http://localhost:${httpPort}/${page}?${pageParameters}`;
 const cpuProfilePath = process.env.BENCHMARK_CPU_PROFILE_PATH;
 try {
 	await withChromium(
-		cpuProfilePath === undefined ? pageUrl : "about:blank",
+		"about:blank",
 		async (client) => {
 			let cpuProfileStarted = false;
 			try {
 				await client.send("Runtime.enable");
 				await client.send("Log.enable");
 				if (cpuProfilePath !== undefined) {
-					await client.send("Page.enable");
 					await client.send("Profiler.enable");
 					await client.send("Profiler.setSamplingInterval", { interval: 100 });
 					await client.send("Profiler.start");
 					cpuProfileStarted = true;
-					await client.send("Page.navigate", { url: pageUrl });
 				}
+				await navigateToPage(client, pageUrl);
 				const evaluation = await client.send("Runtime.evaluate", {
 					expression: `(async () => { const property = ${JSON.stringify(resultProperty)}; const timeout = error => ({ status: "failed", stage: window.__sharedTreeStage, error, telemetry: window.__sharedTreeTelemetry?.slice(-20) }); const deadline = Date.now() + ${benchmarkTimeoutMilliseconds}; while (!window[property] && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25)); if (!window[property]) return timeout("timed out waiting for " + property); return Promise.race([window[property], new Promise(resolve => setTimeout(() => resolve(timeout("timed out awaiting " + property)), ${benchmarkTimeoutMilliseconds}))]); })()`,
 					awaitPromise: true,

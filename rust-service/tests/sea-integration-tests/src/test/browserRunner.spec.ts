@@ -50,6 +50,12 @@ describe("Chromium runner lifecycle", function () {
 		}
 	});
 
+	it("gates evaluation on the requested document's readiness", async () => {
+		await execute(process.execPath, ["--test", join(browserDirectory, "chromium.test.mjs")], {
+			timeout: 10_000,
+		});
+	});
+
 	/** Records the Linux Chromium profile owner so cleanup proves process exit too. */
 	async function captureBrowserPid(): Promise<void> {
 		const profiles = await readdir(profileRoot);
