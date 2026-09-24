@@ -44,10 +44,29 @@ It also prints heartbeat, inactivity, reconnect-grace, and legacy live-lag setti
 | Connection loss | Revoke snapshot participation immediately; release author membership after reconnect grace. |
 | Author request error | Terminate append authority on the first decode, validation, receive, or response-write failure. |
 | Session close | Settle admitted work before the durable departure; unknown storage outcomes cannot claim completion. |
+| Session replacement | Close the previous session and issue fresh authority on the same connection; previously admitted streams never acquire the replacement's authority. |
 | Snapshot-stream loss | Revoke that registration, leaving other logical streams available. |
 
 These framed-I/O deadlines are server-owned; the native client's configured timeout covers connection and initial event/author opening only, not later native frame operations.
 See [snapshot participation](../sea-webtransport/README.md#snapshot-participation) for publication authority.
+
+### Logical Stream Authority
+
+An author, content, or snapshot stream validates its opening token once and retains the admitted session dispatcher for every later operation and cleanup.
+Opening a replacement event stream does not retarget existing logical streams, even when the replacement selects a different document.
+The previous session is closed, so subsequent operations on its bound streams are rejected or those streams end.
+Already-admitted work remains subject to the original session's settlement rules.
+Old author-stream EOF, close, decode failure, or response-write failure cannot close replacement membership.
+Old snapshot registration cleanup cannot revoke replacement participation.
+A rejected opening does not enter a session's operation or cleanup path.
+Closing or failing the current bound author session revokes its opening token without adding reconnect grace for membership that is already closed.
+This token cleanup removes the connection's current entry only if it still holds the same session dispatcher.
+These rules apply to QUIC and the optional WebSocket listener through the shared stream dispatcher.
+
+Custom `SeaConnectionService` implementations must implement `bind_session` to validate the token and return a dispatcher permanently scoped to the admitted session.
+Returning the mutable connection router is not a valid binding.
+`SessionDispatcher` provides the fixed-session implementation; it does not admit connection-level bindings itself.
+See [Decision 0026](../../historical/decisions/0026-bind-stream-session-incarnations.md) for compatibility and regression evidence.
 
 ## Ephemeral Signals
 

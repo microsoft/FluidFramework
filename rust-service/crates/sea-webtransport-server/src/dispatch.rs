@@ -17,7 +17,8 @@ use sea_webtransport::protocol;
 
 use crate::{SeaConnectionService, SeaResponseStream};
 
-/// Adapts narrow Sea service responsibilities to typed wire requests.
+/// Dispatches requests to one already-open session, never a connection's replacement session.
+/// The connection host validates authority before handing this dispatcher to a logical stream.
 pub struct SessionDispatcher<S: sea_core::SeaService> {
     session: Arc<S>,
 }
@@ -35,6 +36,15 @@ impl<S> SeaConnectionService for SessionDispatcher<S>
 where
     S: SeaArchive + SeaAuthorSession + SeaSnapshotCoordinator + Send + Sync + 'static,
 {
+    async fn bind_session(
+        self: Arc<Self>,
+        _authority: &[u8],
+    ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
+        Err(invalid(
+            "session dispatcher cannot admit connection streams",
+        ))
+    }
+
     async fn connection_closed(&self, _allow_reconnect_grace: bool) {
         let _ = self.session.close().await;
     }
@@ -77,6 +87,8 @@ where
     /// Every author-request error ends append authority, including input conversion failures.
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
         let response = match request {
+            // The connection validated authority before binding this dispatcher.
+            protocol::Request::OpenAuthorStream { .. } => protocol::Response::Acknowledged,
             protocol::Request::Submit { .. }
             | protocol::Request::AnnounceMembership { .. }
             | protocol::Request::Close => match self.request_inner(request).await {

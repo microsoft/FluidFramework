@@ -1,6 +1,10 @@
 //! Runtime-selected final Sea session hosting.
 
-use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    path::PathBuf,
+    sync::{Arc, Weak},
+};
 
 use async_trait::async_trait;
 use bytes::Bytes;
@@ -397,7 +401,7 @@ impl SeaServiceHost for BuiltInSeaHost {
         Arc::new(HostedConnection {
             signals: Mutex::new(None),
             host: self.clone(),
-            session: Mutex::new(None),
+            session: Arc::new(Mutex::new(None)),
             liveness,
         })
     }
@@ -407,17 +411,37 @@ struct HostedConnection {
     /// Current signal registration, released before author reconnect grace.
     signals: Mutex<Option<Arc<sea_signals::SignalConnection>>>,
     host: BuiltInSeaHost,
-    session: Mutex<Option<HostedSession>>,
+    session: Arc<Mutex<Option<HostedSession>>>,
     liveness: LivenessPolicy,
 }
 
+/// Fixed session authority with conditional removal from its connection's current slot.
+#[derive(Clone)]
 struct HostedSession {
+    /// Token admitted by this session, never a later replacement token.
     authority: Vec<u8>,
+    /// Immutable dispatcher for the admitted session.
     service: Arc<dyn SeaConnectionService>,
+    /// Weak registry ownership permits token revocation without retaining the connection.
+    current: Weak<Mutex<Option<Self>>>,
 }
 
 #[async_trait]
 impl SeaConnectionService for HostedConnection {
+    async fn bind_session(
+        self: Arc<Self>,
+        authority: &[u8],
+    ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
+        let current = self.session.lock().await;
+        match current.as_ref() {
+            Some(session) if session.authority == authority => Ok(Arc::new(session.clone())),
+            Some(_) => Err(rejected("logical stream authority does not match")),
+            None => Err(invalid(
+                "OpenEventStream is required before logical streams",
+            )),
+        }
+    }
+
     async fn signal_datagram(&self, submission: protocol::signals::Submission) {
         use sea_core::signals::SeaSignals as _;
         if let Some(connection) = self.signals.lock().await.as_ref() {
@@ -510,6 +534,7 @@ impl SeaConnectionService for HostedConnection {
             *current = Some(HostedSession {
                 authority: authority.clone(),
                 service: Arc::clone(&service),
+                current: Arc::downgrade(&self.session),
             });
             let opened = stream::once(async move {
                 protocol::Response::EventStreamOpened {
@@ -612,12 +637,74 @@ impl SeaConnectionService for HostedConnection {
     }
 }
 
-impl Clone for HostedSession {
-    fn clone(&self) -> Self {
-        Self {
-            authority: self.authority.clone(),
-            service: Arc::clone(&self.service),
+#[async_trait]
+impl SeaConnectionService for HostedSession {
+    async fn bind_session(
+        self: Arc<Self>,
+        _authority: &[u8],
+    ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
+        Err(invalid("session binding cannot admit connection streams"))
+    }
+
+    async fn connection_closed(&self, _allow_reconnect_grace: bool) {
+        let _ = self.author_request(protocol::Request::Close).await;
+    }
+
+    async fn open_event_stream(
+        &self,
+        _request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        Err(invalid("event stream must be opened by the service host"))
+    }
+
+    async fn event_stream(
+        &self,
+        resume_after: Option<u64>,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        self.service.event_stream(resume_after).await
+    }
+
+    async fn author_request(&self, request: protocol::Request) -> protocol::Response {
+        let close = matches!(request, protocol::Request::Close);
+        let response = self.service.author_request(request).await;
+        if (close || matches!(response, protocol::Response::Error { .. }))
+            && let Some(current) = self.current.upgrade()
+        {
+            let mut current = current.lock().await;
+            if current
+                .as_ref()
+                .is_some_and(|session| Arc::ptr_eq(&session.service, &self.service))
+            {
+                *current = None;
+            }
         }
+        response
+    }
+
+    async fn snapshot_stream(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        self.service.snapshot_stream(request).await
+    }
+
+    async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
+        self.service.snapshot_request(request).await
+    }
+
+    async fn revoke_snapshot_publisher(&self) {
+        self.service.revoke_snapshot_publisher().await;
+    }
+
+    async fn open_content_stream(&self, request: protocol::Request) -> protocol::Response {
+        self.service.open_content_stream(request).await
+    }
+
+    async fn content_request(
+        &self,
+        request: protocol::Request,
+    ) -> Result<SeaResponseStream, protocol::Response> {
+        self.service.content_request(request).await
     }
 }
 
@@ -695,8 +782,8 @@ mod tests {
 
     use super::{BuiltInSeaHost, DocumentRegistry, StorageMode};
     use crate::{
-        LivenessPolicy, SeaServiceHost, ShutdownDisposition, ShutdownMode, TransportConfig,
-        WebTransportServer,
+        LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost,
+        ShutdownDisposition, ShutdownMode, TransportConfig, WebTransportServer,
     };
 
     /// Exercises real file invalidation through experimental document recovery, without polling.
@@ -1654,7 +1741,235 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "known cross-incarnation routing defect; repair explicitly deferred"]
+    #[allow(clippy::too_many_lines)]
+    async fn bound_stream_operations_and_cleanup_cannot_reach_a_replacement_session() {
+        for replace_document in [false, true] {
+            let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+            let connection = host.connect(LivenessPolicy::default());
+            assert!(matches!(
+                connection.clone().bind_session(b"unopened").await,
+                Err(protocol::Response::Error {
+                    kind: protocol::ErrorKind::Invalid,
+                    ..
+                })
+            ));
+            let (authority, document, _events) = open_test_session(&connection, Vec::new()).await;
+            let old_author = connection.clone().bind_session(&authority).await.unwrap();
+            let old_content = connection.clone().bind_session(&authority).await.unwrap();
+            let old_snapshot = connection.clone().bind_session(&authority).await.unwrap();
+            assert_eq!(
+                old_author
+                    .author_request(protocol::Request::OpenAuthorStream {
+                        authority: authority.clone(),
+                    })
+                    .await,
+                protocol::Response::Acknowledged
+            );
+            let old_lease = old_snapshot
+                .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                    authority: authority.clone(),
+                    participation: protocol::SnapshotParticipation::ClientSelected,
+                })
+                .await
+                .unwrap();
+
+            let archive = if replace_document {
+                Vec::new()
+            } else {
+                document
+            };
+            let (replacement_authority, _, _replacement_events) =
+                open_test_session(&connection, archive).await;
+            assert_ne!(authority, replacement_authority);
+            assert!(matches!(
+                connection.clone().bind_session(&authority).await,
+                Err(protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    ..
+                })
+            ));
+            let replacement = connection
+                .clone()
+                .bind_session(&replacement_authority)
+                .await
+                .unwrap();
+            let _replacement_lease = replacement
+                .snapshot_stream(protocol::Request::OpenSnapshotStream {
+                    authority: replacement_authority.clone(),
+                    participation: protocol::SnapshotParticipation::ClientSelected,
+                })
+                .await
+                .unwrap();
+            let Some(protocol::Response::BlobStored { id: root }) = replacement
+                .content_request(protocol::Request::PutBlob {
+                    payload: b"replacement".to_vec(),
+                })
+                .await
+                .unwrap()
+                .next()
+                .await
+            else {
+                panic!("replacement must accept content");
+            };
+            let protocol::Response::EventCommitted { position } = replacement
+                .author_request(protocol::Request::Submit {
+                    reference: None,
+                    event: protocol::Event {
+                        payload: b"replacement".to_vec(),
+                        blob_tree: None,
+                    },
+                })
+                .await
+            else {
+                panic!("replacement must accept submissions");
+            };
+            assert!(matches!(
+                old_author
+                    .author_request(protocol::Request::Submit {
+                        reference: None,
+                        event: protocol::Event {
+                            payload: b"stale".to_vec(),
+                            blob_tree: None
+                        },
+                    })
+                    .await,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    ..
+                }
+            ));
+            assert!(matches!(
+                old_content
+                    .content_request(protocol::Request::PutBlob {
+                        payload: b"stale".to_vec(),
+                    })
+                    .await,
+                Err(protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    ..
+                })
+            ));
+            let publication = protocol::Request::PublishSnapshot {
+                fence: None,
+                expected_parent: None,
+                at_event: position,
+                root: protocol::TreeId::Blob(root),
+            };
+            assert!(matches!(
+                old_snapshot.snapshot_request(publication.clone()).await,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    ..
+                }
+            ));
+
+            assert_eq!(
+                old_author.author_request(protocol::Request::Close).await,
+                protocol::Response::Acknowledged
+            );
+            old_snapshot.revoke_snapshot_publisher().await;
+            drop(old_lease);
+            assert!(
+                connection
+                    .clone()
+                    .bind_session(&replacement_authority)
+                    .await
+                    .is_ok(),
+                "old cleanup must not revoke the replacement opening token"
+            );
+            assert!(
+                matches!(
+                    replacement.snapshot_request(publication).await,
+                    protocol::Response::Snapshot(Some(_))
+                ),
+                "old cleanup must not revoke the replacement registration"
+            );
+            assert!(
+                matches!(
+                    replacement
+                        .author_request(protocol::Request::Submit {
+                            reference: Some(position),
+                            event: protocol::Event {
+                                payload: b"still open".to_vec(),
+                                blob_tree: None
+                            },
+                        })
+                        .await,
+                    protocol::Response::EventCommitted { .. }
+                ),
+                "old author cleanup must not close replacement membership"
+            );
+            connection.connection_closed(false).await;
+        }
+    }
+
+    /// Opens or creates a session and retains its event stream independently of its token.
+    async fn open_test_session(
+        connection: &Arc<dyn SeaConnectionService>,
+        archive: Vec<u8>,
+    ) -> (Vec<u8>, Vec<u8>, SeaResponseStream) {
+        let intent = if archive.is_empty() {
+            protocol::ArchiveIntent::Create
+        } else {
+            protocol::ArchiveIntent::Open
+        };
+        let mut events = connection
+            .open_event_stream(protocol::Request::OpenEventStream {
+                version: protocol::PROTOCOL_VERSION,
+                archive,
+                intent,
+                resume_after: None,
+            })
+            .await
+            .unwrap();
+        let Some(protocol::Response::EventStreamOpened {
+            authority,
+            document,
+            ..
+        }) = events.next().await
+        else {
+            panic!("opening must return session authority");
+        };
+        (authority, document, events)
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn closing_bound_authority_revokes_its_token_without_reconnect_grace() {
+        for request in [
+            protocol::Request::Close,
+            protocol::Request::Read {
+                after: None,
+                stop_after: None,
+            },
+        ] {
+            let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+            let connection = host.connect(LivenessPolicy::default());
+            let (authority, _, _events) = open_test_session(&connection, Vec::new()).await;
+            let bound = connection.clone().bind_session(&authority).await.unwrap();
+            let response = bound.author_request(request.clone()).await;
+            if matches!(request, protocol::Request::Close) {
+                assert_eq!(response, protocol::Response::Acknowledged);
+            } else {
+                assert!(matches!(response, protocol::Response::Error { .. }));
+            }
+            assert!(
+                matches!(
+                    connection.clone().bind_session(&authority).await,
+                    Err(protocol::Response::Error {
+                        kind: protocol::ErrorKind::Invalid,
+                        ..
+                    })
+                ),
+                "closed session authority must not admit another stream"
+            );
+            assert!(
+                futures_util::poll!(connection.connection_closed(true)).is_ready(),
+                "already-closed membership must not incur reconnect grace"
+            );
+        }
+    }
+
+    #[tokio::test]
     async fn replaced_event_authority_cannot_be_used_by_an_old_author_stream() {
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let hash = identity.certificate_chain().as_slice()[0].hash();
@@ -1710,7 +2025,13 @@ mod tests {
         shutdown.shutdown(ShutdownMode::Immediate).unwrap();
         serving.await.unwrap().unwrap();
         assert!(
-            !matches!(response, protocol::Response::EventCommitted { .. }),
+            matches!(
+                response,
+                protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
+                    ..
+                }
+            ),
             "old session {old_session} author stream committed under replacement {replacement}: {response:?}"
         );
     }

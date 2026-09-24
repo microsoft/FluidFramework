@@ -283,9 +283,20 @@ pub enum WebTransportError {
 /// Response stream returned by a connection-scoped Sea service.
 pub type SeaResponseStream = Pin<Box<dyn Stream<Item = sea_v1::Response> + Send + 'static>>;
 
-/// Per-connection final Sea protocol dispatcher.
+/// Sea protocol dispatch for a connection or an immutable session binding.
+/// Transport loops bind author, content, and snapshot streams before invoking session operations.
 #[async_trait]
 pub trait SeaConnectionService: Send + Sync {
+    /// Validates an opening token and binds a logical stream to that session incarnation.
+    ///
+    /// The returned dispatcher must keep the admitted session for all subsequent operations
+    /// and cleanup, even if this connection opens a replacement session.
+    /// A rejected opening must not close or otherwise mutate the current session.
+    async fn bind_session(
+        self: Arc<Self>,
+        authority: &[u8],
+    ) -> Result<Arc<dyn SeaConnectionService>, sea_v1::Response>;
+
     /// Admits an authenticated connection's best-effort datagram after its signal handshake.
     async fn signal_datagram(&self, _submission: sea_v1::signals::Submission) {}
     /// Opens ephemeral messaging without creating author membership.
@@ -313,10 +324,10 @@ pub trait SeaConnectionService: Send + Sync {
         resume_after: Option<u64>,
     ) -> Result<SeaResponseStream, sea_v1::Response>;
 
-    /// Validates author-stream authority or handles one ordered author operation.
+    /// Acknowledges a bound author-stream opening or handles one ordered author operation.
     async fn author_request(&self, request: sea_v1::Request) -> sea_v1::Response;
 
-    /// Opens latest-value snapshot coordination after validating session authority.
+    /// Opens latest-value snapshot coordination on the bound session.
     async fn snapshot_stream(
         &self,
         request: sea_v1::Request,
@@ -329,7 +340,7 @@ pub trait SeaConnectionService: Send + Sync {
     /// Revokes the session's current publisher membership after connection loss.
     async fn revoke_snapshot_publisher(&self);
 
-    /// Validates content-stream authority.
+    /// Acknowledges a content-stream opening on the bound session.
     async fn open_content_stream(&self, request: sea_v1::Request) -> sea_v1::Response;
 
     /// Handles one bounded content operation.
@@ -699,6 +710,28 @@ async fn serve_network_stream(
         return serve_signal_stream(send, receive, service, config, metrics, opening, datagrams)
             .await;
     }
+    let service = match &request {
+        sea_v1::Request::OpenAuthorStream { authority }
+        | sea_v1::Request::OpenSnapshotStream { authority, .. }
+        | sea_v1::Request::OpenContentStream { authority } => {
+            match service.bind_session(authority).await {
+                Ok(session) => session,
+                Err(response) => {
+                    return write_network_response(
+                        &mut send,
+                        role,
+                        &response,
+                        limits,
+                        config.operation_timeout,
+                        metrics,
+                        true,
+                    )
+                    .await;
+                }
+            }
+        }
+        _ => service,
+    };
     if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
         return serve_author_stream(send, receive, service, config, metrics, role, request).await;
     }
@@ -1155,7 +1188,7 @@ pub(crate) fn transport_error(error: impl std::fmt::Display) -> WebTransportErro
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Mutex;
+    use std::sync::{Mutex, atomic::AtomicBool};
     use wtransport::ClientConfig;
 
     /// Records lifecycle callbacks for connections that never open Sea streams.
@@ -1174,6 +1207,13 @@ mod tests {
 
     #[async_trait]
     impl SeaConnectionService for AdmissionService {
+        async fn bind_session(
+            self: Arc<Self>,
+            _authority: &[u8],
+        ) -> Result<Arc<dyn SeaConnectionService>, sea_v1::Response> {
+            unreachable!("admission tests do not open Sea streams")
+        }
+
         async fn connection_closed(&self, allow_reconnect_grace: bool) {
             self.closures.lock().unwrap().push(allow_reconnect_grace);
         }
@@ -1238,11 +1278,16 @@ mod tests {
     struct TestSend {
         writes: Arc<AtomicUsize>,
         stopped: watch::Receiver<bool>,
+        /// Injects a response-write failure after a successful opening.
+        fail: Arc<AtomicBool>,
     }
 
     #[async_trait]
     impl SendStream for TestSend {
         async fn write_all(&mut self, _bytes: &[u8]) -> Result<(), WebTransportError> {
+            if self.fail.load(Ordering::Relaxed) {
+                return Err(WebTransportError::Disconnected);
+            }
             self.writes.fetch_add(1, Ordering::Relaxed);
             Ok(())
         }
@@ -1253,6 +1298,239 @@ mod tests {
 
         async fn stopped(&mut self) {
             let _ = self.stopped.wait_for(|stopped| *stopped).await;
+        }
+    }
+
+    /// Makes mutable connection routing distinguishable from a captured session dispatcher.
+    struct StreamBindingProbe {
+        /// Session captured by binding, or none for the mutable connection.
+        admitted: Option<u64>,
+        /// Replacement session selected by the connection.
+        current: Arc<AtomicU64>,
+        /// Session and request observed at each dispatch, including cleanup.
+        calls: Arc<Mutex<Vec<(u64, sea_v1::Request)>>>,
+    }
+
+    impl StreamBindingProbe {
+        /// Records the receiver's identity, not an identity supplied by the request.
+        fn record(&self, request: sea_v1::Request) {
+            let session = self
+                .admitted
+                .unwrap_or_else(|| self.current.load(Ordering::Relaxed));
+            self.calls.lock().unwrap().push((session, request));
+        }
+    }
+
+    #[async_trait]
+    impl SeaConnectionService for StreamBindingProbe {
+        async fn bind_session(
+            self: Arc<Self>,
+            authority: &[u8],
+        ) -> Result<Arc<dyn SeaConnectionService>, sea_v1::Response> {
+            if authority != b"probe" {
+                return Err(sea_v1::Response::Error {
+                    kind: sea_v1::ErrorKind::Rejected,
+                    message: "invalid probe authority".to_owned(),
+                });
+            }
+            Ok(Arc::new(Self {
+                admitted: Some(self.current.load(Ordering::Relaxed)),
+                current: self.current.clone(),
+                calls: self.calls.clone(),
+            }))
+        }
+
+        async fn connection_closed(&self, _allow_reconnect_grace: bool) {
+            unreachable!("logical-stream tests do not close a physical connection")
+        }
+
+        async fn open_event_stream(
+            &self,
+            _request: sea_v1::Request,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            unreachable!("the probe supplies session identity without an event stream")
+        }
+
+        async fn event_stream(
+            &self,
+            _resume_after: Option<u64>,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            unreachable!("the probe supplies session identity without an event stream")
+        }
+
+        async fn author_request(&self, request: sea_v1::Request) -> sea_v1::Response {
+            self.record(request);
+            sea_v1::Response::Acknowledged
+        }
+
+        async fn snapshot_stream(
+            &self,
+            request: sea_v1::Request,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            self.record(request);
+            Ok(Box::pin(stream::pending()))
+        }
+
+        async fn snapshot_request(&self, request: sea_v1::Request) -> sea_v1::Response {
+            self.record(request);
+            sea_v1::Response::Acknowledged
+        }
+
+        async fn revoke_snapshot_publisher(&self) {
+            unreachable!("logical-stream cleanup drops its lease, not connection participation")
+        }
+
+        async fn open_content_stream(&self, request: sea_v1::Request) -> sea_v1::Response {
+            self.record(request);
+            sea_v1::Response::Acknowledged
+        }
+
+        async fn content_request(
+            &self,
+            request: sea_v1::Request,
+        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            self.record(request);
+            Ok(Box::pin(stream::once(async {
+                sea_v1::Response::Acknowledged
+            })))
+        }
+    }
+
+    #[tokio::test]
+    #[allow(clippy::too_many_lines)]
+    async fn logical_stream_dispatch_and_cleanup_keep_the_admitted_session() {
+        for role in [
+            sea_v1::StreamRole::Author,
+            sea_v1::StreamRole::Content,
+            sea_v1::StreamRole::Snapshot,
+        ] {
+            for ending in [
+                "eof",
+                "close",
+                "truncated-frame",
+                "write-error",
+                "invalid-authority",
+            ] {
+                if role != sea_v1::StreamRole::Author
+                    && ending != "eof"
+                    && ending != "invalid-authority"
+                {
+                    continue;
+                }
+                let authority = if ending == "invalid-authority" {
+                    b"invalid".to_vec()
+                } else {
+                    b"probe".to_vec()
+                };
+                let (opening, request) = match role {
+                    sea_v1::StreamRole::Author => (
+                        sea_v1::Request::OpenAuthorStream { authority },
+                        sea_v1::Request::Submit {
+                            reference: None,
+                            event: sea_v1::Event {
+                                payload: b"payload".to_vec(),
+                                blob_tree: None,
+                            },
+                        },
+                    ),
+                    sea_v1::StreamRole::Content => (
+                        sea_v1::Request::OpenContentStream { authority },
+                        sea_v1::Request::PutBlob {
+                            payload: b"payload".to_vec(),
+                        },
+                    ),
+                    sea_v1::StreamRole::Snapshot => (
+                        sea_v1::Request::OpenSnapshotStream {
+                            authority,
+                            participation: sea_v1::SnapshotParticipation::ClientSelected,
+                        },
+                        sea_v1::Request::LatestSnapshot,
+                    ),
+                    _ => unreachable!(),
+                };
+                let current = Arc::new(AtomicU64::new(1));
+                let calls = Arc::new(Mutex::new(Vec::new()));
+                let service = Arc::new(StreamBindingProbe {
+                    admitted: None,
+                    current: current.clone(),
+                    calls: calls.clone(),
+                });
+                let limits = sea_v1::Limits::default();
+                let opening = sea_v1::encode_request_frame(role, &opening, limits).unwrap();
+                let prefix = opening[..4].try_into().unwrap();
+                let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
+                for byte in &opening[4..] {
+                    requests.send(vec![*byte]).unwrap();
+                }
+                let (_stop, stopped) = watch::channel(false);
+                let fail = Arc::new(AtomicBool::new(false));
+                let writes = Arc::new(AtomicUsize::new(0));
+                let config = TransportConfig::default();
+                let metrics = Metrics::default();
+                let serving = serve_network_stream(
+                    TestSend {
+                        writes: writes.clone(),
+                        stopped,
+                        fail: fail.clone(),
+                    },
+                    TestReceive(receive),
+                    prefix,
+                    service,
+                    &config,
+                    &metrics,
+                    None,
+                );
+                tokio::pin!(serving);
+                if ending == "invalid-authority" {
+                    serving.await.unwrap();
+                    assert!(
+                        calls.lock().unwrap().is_empty(),
+                        "rejected opening entered session dispatch or cleanup"
+                    );
+                    continue;
+                }
+                assert!(futures_util::poll!(&mut serving).is_pending());
+                assert!(
+                    writes.load(Ordering::Relaxed) > 0,
+                    "opening must finish before replacement"
+                );
+                current.store(2, Ordering::Relaxed);
+                let request = if ending == "close" {
+                    sea_v1::Request::Close
+                } else {
+                    request
+                };
+                let mut encoded = sea_v1::encode_request_frame(role, &request, limits).unwrap();
+                if ending == "truncated-frame" {
+                    encoded.pop();
+                }
+                for byte in encoded {
+                    requests.send(vec![byte]).unwrap();
+                }
+                drop(requests);
+                fail.store(ending == "write-error", Ordering::Relaxed);
+                let result = serving.await;
+                assert_eq!(
+                    result.is_err(),
+                    matches!(ending, "truncated-frame" | "write-error")
+                );
+                let calls = calls.lock().unwrap();
+                assert!(
+                    calls.len() >= 2,
+                    "{role:?}/{ending}: operation or cleanup missing"
+                );
+                assert!(
+                    calls.iter().all(|(session, _)| *session == 1),
+                    "{role:?}/{ending}: {calls:?}"
+                );
+                if role == sea_v1::StreamRole::Author {
+                    assert!(
+                        calls
+                            .iter()
+                            .any(|(_, request)| matches!(request, sea_v1::Request::Close))
+                    );
+                }
+            }
         }
     }
 
@@ -1290,6 +1568,7 @@ mod tests {
             TestSend {
                 writes: writes.clone(),
                 stopped,
+                fail: Arc::new(AtomicBool::new(false)),
             },
             TestReceive(receive),
             service,

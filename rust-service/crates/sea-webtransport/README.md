@@ -109,6 +109,8 @@ The server independently applies deadlines to active framed I/O, while an idle h
 Native client per-frame enforcement is deferred; a server deadline is not a timeout guarantee against an arbitrary stalled peer.
 Connection loss releases author membership and snapshot participation according to server liveness policy.
 Server failure handling preserves the listener for unrelated connections; ordinary logical-stream failure does not imply that the whole connection has closed.
+The built-in server binds author, content, and snapshot streams to the session that admitted them.
+Replacing a session on the same connection does not transfer authority to old streams, and their cleanup cannot close the replacement session or revoke its snapshot registration.
 
 Snapshot subscriptions own their registrations; replacement/cancellation/drop cannot release a newer registration.
 Native/browser-local tasks serialize requests independently of coordination notifications, allowing publication during a pending notification read.

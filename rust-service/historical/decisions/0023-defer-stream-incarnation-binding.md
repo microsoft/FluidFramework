@@ -1,11 +1,11 @@
 # Decision 0023: Defer Stream Incarnation Binding
 
-Status: accepted
+Status: superseded
 Date: 2026-09-24
 Iteration: 0018
 Owners: user, coordinator, transport workstream
 Supersedes: none
-Superseded by: none
+Superseded by: [0026: Bind Streams to Session Incarnations](0026-bind-stream-session-incarnations.md)
 
 ## Context
 

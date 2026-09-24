@@ -282,6 +282,14 @@ impl SeaServiceHost for TestHost {
 
 #[async_trait]
 impl SeaConnectionService for TestHost {
+    async fn bind_session(
+        self: Arc<Self>,
+        authority: &[u8],
+    ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
+        assert_eq!(authority, b"composition-test");
+        Ok(self)
+    }
+
     async fn connection_closed(&self, allow_reconnect_grace: bool) {
         self.dispatcher
             .connection_closed(allow_reconnect_grace)

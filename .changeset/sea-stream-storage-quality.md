@@ -11,5 +11,6 @@ Disconnected clients reject datagram operations even when physical disconnection
 The Rust service also bounds retained submission and signal payload backing, preserves completed file-stream ownership until drop, and strengthens content publication and namespace synchronization.
 Snapshots can use any committed session-event boundary, including membership events; this clarifies existing behavior rather than adding a restriction.
 
-Same-connection session replacement still has a known stale-stream authority limitation.
+Logical streams retain the session that admitted them when another session replaces it on the same connection.
+Stale submissions, content operations, and snapshot requests cannot use replacement authority, and old stream cleanup cannot close the replacement session or revoke its snapshot registration.
 Native client per-frame deadlines after opening remain unimplemented; server-side deadlines are not a substitute for that client guarantee.
