@@ -124,6 +124,53 @@ mod tests {
     use super::*;
 
     #[test]
+    fn checkpoint_announcements_preserve_metadata_and_reject_invalid_bounds() {
+        let session = SessionId::new(1).unwrap();
+        let announcement = SessionCommittedEvent {
+            kind: SessionEventKind::Joined,
+            session_id: session.clone(),
+            reference: None,
+            minimum_reference: None,
+            committed: CommittedEvent {
+                position: EventPosition::new(1),
+                event: Event {
+                    payload: Bytes::from_static(b"public metadata"),
+                    blob_tree: None,
+                },
+            },
+        };
+        let mut checkpoint = Checkpoint {
+            session_id_reserved_through: 256,
+            minimum_reference: Some(EventPosition::new(1)),
+            applied_through: Some(EventPosition::new(2)),
+            announced: [(session, announcement)].into_iter().collect(),
+        };
+        let encoded = checkpoint.encode::<()>().unwrap();
+        let decoded = Checkpoint::decode::<()>(encoded.clone()).unwrap();
+        assert_eq!(decoded.announced, checkpoint.announced);
+        for length in 0..encoded.len() {
+            assert!(Checkpoint::decode::<()>(encoded.slice(..length)).is_err());
+        }
+        checkpoint.session_id_reserved_through = 0;
+        assert!(matches!(
+            Checkpoint::decode::<()>(checkpoint.encode::<()>().unwrap()),
+            Err(SessionError::Corrupt("checkpoint announcement"))
+        ));
+        checkpoint.session_id_reserved_through = 256;
+        checkpoint
+            .announced
+            .values_mut()
+            .next()
+            .unwrap()
+            .committed
+            .position = EventPosition::new(3);
+        assert!(matches!(
+            Checkpoint::decode::<()>(checkpoint.encode::<()>().unwrap()),
+            Err(SessionError::Corrupt("checkpoint announcement"))
+        ));
+    }
+
+    #[test]
     fn checkpoint_rejects_every_truncation_and_trailing_bytes() {
         let checkpoint = Checkpoint {
             session_id_reserved_through: 256,

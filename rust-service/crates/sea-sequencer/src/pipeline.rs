@@ -131,7 +131,7 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                         runtime,
                         &mut state,
                         session,
-                        input.take().expect("unadmitted input"),
+                        retain_submission(input.take().expect("unadmitted input")),
                         bytes,
                     )
                     .await
@@ -154,7 +154,7 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
                     queue.bytes += bytes;
                     queue.entries.push_back(Entry {
                         session: session.clone(),
-                        submission: input.take().expect("unadmitted input"),
+                        submission: retain_submission(input.take().expect("unadmitted input")),
                         bytes,
                         completion,
                     });
@@ -377,6 +377,19 @@ impl<Storage: SeaStorage + 'static> Pipeline<Storage> {
             driver.take();
         }
     }
+}
+
+/// Bounds retained payload backing by its admission charge, even for caller-owned slices.
+fn retain_submission(mut submission: EventSubmission) -> EventSubmission {
+    submission.event.payload = bytes::Bytes::from(
+        submission
+            .event
+            .payload
+            .as_ref()
+            .to_vec()
+            .into_boxed_slice(),
+    );
+    submission
 }
 
 /// Applies a settled append before receipt publication and preserves ambiguous recovery barriers.

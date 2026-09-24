@@ -87,7 +87,7 @@ pub struct ActiveKey {
 
 /// Resolves the active write key and historical read keys.
 pub trait KeyProvider: Send + Sync {
-    /// Returns the key used for a new record or snapshot.
+    /// Returns the key used for a new event or blob payload.
     fn active_key(&self) -> Option<ActiveKey>;
 
     /// Resolves key material by its non-secret envelope identity.
@@ -211,7 +211,7 @@ where
     type Error = EncryptionError<S::Error>;
 }
 
-/// Builds and authenticates one record or snapshot envelope.
+/// Builds and authenticates one event or blob envelope.
 fn encrypt_payload<E, K, N>(
     keys: &K,
     nonces: &N,
@@ -319,7 +319,7 @@ mod tests {
         }
 
         /// Creates a provider with no active or historical key material.
-        fn empty() -> Self {
+        pub(super) fn empty() -> Self {
             Self {
                 state: Arc::new(Mutex::new((FIRST_ID, Vec::new()))),
             }
@@ -509,6 +509,40 @@ mod tests {
             .kind(),
             ErrorKind::Corrupt
         );
+    }
+
+    #[test]
+    fn key_identifier_is_authenticated_even_when_two_identifiers_resolve_to_the_same_key() {
+        let keys = TestKeys::new();
+        keys.state.lock().unwrap().1.push((SECOND_ID, [7; 32]));
+        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
+            &keys,
+            &FixedNonce([9; NONCE_LENGTH]),
+            &Bytes::from_static(b"authenticated"),
+            PayloadContext::Record,
+        )
+        .unwrap();
+        let mut changed = encoded.to_vec();
+        let key_start = MAGIC.len() + 3;
+        changed[key_start..key_start + KEY_ID_LENGTH].copy_from_slice(SECOND_ID.as_bytes());
+        assert!(matches!(
+            decrypt_payload::<MemoryStorageError, _>(
+                &keys,
+                &Bytes::from(changed),
+                PayloadContext::Record,
+            ),
+            Err(EncryptionError::CorruptEnvelope)
+        ));
+        let mut extended = encoded.to_vec();
+        extended.push(0);
+        assert!(matches!(
+            decrypt_payload::<MemoryStorageError, _>(
+                &keys,
+                &Bytes::from(extended),
+                PayloadContext::Record,
+            ),
+            Err(EncryptionError::CorruptEnvelope)
+        ));
     }
 
     #[test]

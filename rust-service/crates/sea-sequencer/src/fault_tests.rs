@@ -869,6 +869,83 @@ async fn grouped_ambiguity_poisoning_prevents_suffix_and_terminal_leave() {
 }
 
 #[tokio::test]
+async fn admitted_inputs_do_not_retain_oversized_caller_backing() {
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let first = member(&runtime, "first").await;
+    let second = member(&runtime, "second").await;
+    storage.events.arm(Failure::GateBefore);
+    let mut pending = Vec::new();
+    for writer in [&first, &second] {
+        let owner = Arc::<[u8]>::from(vec![7; 8192]);
+        let weak = Arc::downgrade(&owner);
+        let mut input = submission(b"");
+        input.event.payload = Bytes::from_owner(owner).slice(12..19);
+        let mut future = Box::pin(writer.submit(input));
+        assert!(future.as_mut().now_or_never().is_none());
+        assert!(
+            weak.upgrade().is_none(),
+            "admitted payload retains caller backing"
+        );
+        pending.push(future);
+    }
+    assert_eq!(runtime.pipeline.occupancy().0, 2);
+    storage.events.release.notify_one();
+    assert!(
+        settles(futures_util::future::join_all(pending))
+            .await
+            .iter()
+            .all(Result::is_ok)
+    );
+    assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+}
+
+#[tokio::test]
+async fn unavailable_tree_rejects_singleton_and_batch_before_storage_append() {
+    for batched in [false, true] {
+        let storage = FaultStorage::default();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+        let leader = member(&runtime, "leader").await;
+        let writer = member(&runtime, "writer").await;
+        let mut invalid = submission(b"unavailable tree");
+        invalid.event.blob_tree = Some(sea_core::BlobTreeId::Blob(BlobId::for_bytes(b"absent")));
+        if batched {
+            storage.events.arm(Failure::GateBefore);
+            let mut blocked = Box::pin(leader.submit(submission(b"leader")));
+            assert!(blocked.as_mut().now_or_never().is_none());
+            let mut invalid = Box::pin(writer.submit(invalid));
+            let mut suffix = Box::pin(writer.submit(submission(b"suffix")));
+            assert!(invalid.as_mut().now_or_never().is_none());
+            assert!(suffix.as_mut().now_or_never().is_none());
+            assert_eq!(runtime.pipeline.occupancy().0, 3);
+            storage.events.release.notify_one();
+            settles(blocked).await.unwrap();
+            assert!(matches!(
+                settles(invalid).await,
+                Err(SessionError::Rejected("event tree unavailable"))
+            ));
+            assert!(settles(suffix).await.is_err());
+        } else {
+            assert!(matches!(
+                writer.submit(invalid).await,
+                Err(SessionError::Rejected("event tree unavailable"))
+            ));
+        }
+        assert_eq!(
+            storage.events.calls.load(Ordering::SeqCst),
+            usize::from(batched)
+        );
+        assert_eq!(runtime.pipeline.occupancy(), (0, 0));
+        assert!(matches!(
+            writer.submit(submission(b"after failure")).await,
+            Err(SessionError::Closed)
+        ));
+    }
+}
+
+#[tokio::test]
 async fn byte_bound_backpressures_before_the_entry_limit() {
     let storage = FaultStorage::default();
     let (_, view) = storage.create_view().await.unwrap();
@@ -1466,6 +1543,47 @@ async fn failed_append_and_cancelled_ack_end_announced_prefix_before_later_work(
         assert_eq!(operations[0], Bytes::from_static(b"accepted"));
         assert_eq!(operations.len(), if cancelled { 2 } else { 1 });
     }
+}
+
+#[tokio::test]
+async fn revoking_publisher_does_not_cancel_an_admitted_snapshot() {
+    use sea_core::storage::StorageHandle;
+    let storage = FaultStorage::default();
+    let (_, view) = storage.create_view().await.unwrap();
+    let runtime = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
+    let session = member(&runtime, "publisher").await;
+    let position = session.submit(submission(b"boundary")).await.unwrap();
+    let snapshot = Snapshot {
+        root: session.put_blob(Bytes::new()).await.unwrap(),
+        at_event: session.resolve_position(position).await.unwrap().unwrap(),
+    };
+    let authority = session
+        .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+        .await
+        .unwrap();
+    storage.snapshots.arm(Failure::GateBefore);
+    let mut publication = Box::pin(session.publish_snapshot(None, None, snapshot.clone()));
+    assert!(publication.as_mut().now_or_never().is_none());
+    assert_eq!(storage.snapshots.calls.load(Ordering::SeqCst), 1);
+    drop(authority);
+    storage.snapshots.release.notify_one();
+    assert_eq!(settles(publication).await.unwrap().at_event.id(), position);
+    assert_eq!(
+        session
+            .get_snapshot(LoadStart::LatestSnapshot)
+            .await
+            .unwrap()
+            .unwrap()
+            .root
+            .id(),
+        snapshot.root.id()
+    );
+    assert!(
+        session
+            .publish_snapshot(None, None, snapshot)
+            .await
+            .is_err()
+    );
 }
 
 #[tokio::test]

@@ -13,10 +13,15 @@ Broadcast includes the sender; targeted messages reach only a matching live memb
 A missing target is a successful no-op, not an offline mailbox.
 
 Payloads are opaque and bounded.
+Connection identities and nonempty targets are limited to 256 bytes.
+`SignalLimits` bounds payload and membership metadata sizes, live member count, and receiver queue capacity; all configured limits must be nonzero.
 Reliable messages use bounded receiver queues; overflow terminates the slow receiver explicitly without blocking other recipients.
 Best-effort messages may be discarded when a receiver queue is full.
 Membership updates are always reliable and are never silently discarded.
 The maximum queued payload memory per receiver is bounded by queue capacity times maximum payload size, in addition to bounded membership metadata and shared allocation overhead.
+Admission copies identities, metadata, targets, and payloads into bounded backing allocations.
+A small `Bytes` slice therefore cannot make the relay retain a larger caller-owned allocation.
+Recipients share the admitted allocations; routing does not copy a payload for each recipient.
 
 No message is persisted, assigned an event position, or replayed to a new connection.
 Successful submission means local admission, not acknowledgment by recipients.

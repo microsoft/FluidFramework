@@ -33,6 +33,8 @@ mod checkpoint;
 mod live_cache;
 #[path = "live_read.rs"]
 mod live_read;
+#[path = "storage_read.rs"]
+mod storage_read;
 
 pub use live_cache::{LiveCacheStats, LiveReadRevocation};
 
@@ -43,19 +45,14 @@ use std::{
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use futures_util::{
-    StreamExt, TryStreamExt,
-    future::{Either, select},
-    stream,
-};
+use futures_util::{StreamExt, stream};
 use sea_core::{
     BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, CommittedEvent, ErrorKind,
-    Event, EventPosition, MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
+    Event, EventPosition, MonitoredStreamItem,
     archive::{
         EventSubmission, SessionCommittedEvent, SessionEventKind, SessionId, SessionStream,
         SnapshotParticipation,
     },
-    boxed_monitored_stream,
     session::{
         SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator, SessionLoad, SnapshotCoordination,
     },
@@ -1010,51 +1007,7 @@ impl<Storage: SeaStorage + 'static> SeaArchive for LocalSession<Storage> {
         {
             return live_read::read(self.clone(), cache, after).0;
         }
-        let session = self.clone();
-        let initial = MonitoredStreamProgress {
-            previous: after,
-            latest_known: after,
-            status: MonitoredStreamStatus::StreamingBacklog,
-        };
-        let initialized = stream::once(async move {
-            let _barrier = session.sequencer.barrier().await;
-            let mut runtime = session.sequencer.runtime.lock().await;
-            runtime.settle().await?;
-            let closed = runtime.member(&session.session)?.closed.subscribe();
-            let source = runtime.view()?.read(after, stop_after);
-            Ok::<_, Self::Error>(stream::unfold(
-                (source, closed, false),
-                |(mut source, mut closed, done)| async move {
-                    if done || *closed.borrow() {
-                        return None;
-                    }
-                    let next = {
-                        let read = Box::pin(source.next());
-                        let closing = Box::pin(closed.changed());
-                        match select(closing, read).await {
-                            Either::Left(_) => None,
-                            Either::Right((item, _)) => item,
-                        }
-                    };
-                    let item = match next? {
-                        Ok(MonitoredStreamItem::Progress(progress)) => {
-                            Ok(MonitoredStreamItem::Progress(progress))
-                        }
-                        Ok(MonitoredStreamItem::Item(record)) => {
-                            decode_committed(&record).map(MonitoredStreamItem::Item)
-                        }
-                        Err(error) => Err(SessionError::Storage(error)),
-                    };
-                    let done = item.is_err();
-                    Some((item, (source, closed, done)))
-                },
-            ))
-        });
-        boxed_monitored_stream(
-            initialized.try_flatten(),
-            initial,
-            |event: &SessionCommittedEvent| Some(event.committed.position),
-        )
+        storage_read::read(self.clone(), after, stop_after)
     }
 
     async fn load(
@@ -1218,7 +1171,7 @@ impl<Storage: SeaStorage + 'static> SeaSnapshotCoordinator for LocalSession<Stor
         let position = snapshot.at_event.id();
         if !runtime.known_reference(Some(position)).await? {
             return Err(SessionError::Rejected(
-                "snapshot boundary is not an application event",
+                "snapshot boundary is not a committed session event",
             ));
         }
         view.blobs()
@@ -1336,6 +1289,7 @@ async fn append_once<Storage: SeaStorage>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use sea_core::MonitoredStreamStatus;
     use sea_memory::MemoryStorage;
 
     #[tokio::test]
@@ -1819,10 +1773,17 @@ mod tests {
             positions.insert(task.await.unwrap());
         }
         assert_eq!(positions.len(), 32);
+        assert_eq!(live.progress().latest_known, positions.last().copied());
+        assert_eq!(live.progress().status, MonitoredStreamStatus::FallenBehind);
         for expected in &positions {
             let event = data(&mut live).await.unwrap();
             assert_eq!(event.committed.position, *expected);
             assert_eq!(live.progress().previous, Some(*expected));
+            let progress = live.progress();
+            assert!(progress.latest_known >= progress.previous);
+            if progress.status == MonitoredStreamStatus::FallenBehind {
+                assert!(progress.previous < progress.latest_known);
+            }
         }
         assert!(
             matches!(live.next().await, Some(Ok(MonitoredStreamItem::Progress(progress)))
@@ -1847,6 +1808,92 @@ mod tests {
         drop((live, invalid));
         runtime.shutdown().await.unwrap();
         assert!(storage.open_view(&id).await.unwrap().is_some());
+    }
+
+    #[tokio::test]
+    async fn recovery_rejects_inconsistent_floor_reservation_and_membership_metadata() {
+        let session = SessionId::new(1).unwrap();
+        let first = EventPosition::new(1);
+        let encode = |reference, floor| {
+            encode_submission::<sea_memory::MemoryStorageError>(
+                &session, reference, floor, b"payload",
+            )
+            .unwrap()
+        };
+        let joined = encode_membership::<sea_memory::MemoryStorageError>(
+            &session,
+            SessionEventKind::Joined,
+            None,
+            None,
+            b"member",
+        )
+        .unwrap();
+        let left = encode_membership::<sea_memory::MemoryStorageError>(
+            &session,
+            SessionEventKind::Left,
+            None,
+            None,
+            b"",
+        )
+        .unwrap();
+        for (records, expected) in [
+            (
+                vec![encode(Some(first), None)],
+                "invalid recovered reference",
+            ),
+            (
+                vec![encode(None, None), encode(None, Some(first))],
+                "invalid minimum reference floor",
+            ),
+            (
+                vec![
+                    encode(None, None),
+                    encode(Some(first), Some(first)),
+                    encode(Some(first), None),
+                ],
+                "invalid minimum reference floor",
+            ),
+            (
+                vec![
+                    encode_submission::<sea_memory::MemoryStorageError>(
+                        &SessionId::new(257).unwrap(),
+                        None,
+                        None,
+                        b"unreserved",
+                    )
+                    .unwrap(),
+                ],
+                "session exceeds persisted reservation",
+            ),
+            (
+                vec![joined.clone(), joined],
+                "duplicate membership announcement",
+            ),
+            (vec![left], "departure without announcement"),
+        ] {
+            let storage = MemoryStorage::new();
+            let (_, view) = storage.create_view().await.unwrap();
+            view.publish_checkpoint(
+                checkpoint::Checkpoint {
+                    session_id_reserved_through: 256,
+                    ..checkpoint::Checkpoint::default()
+                }
+                .encode::<()>()
+                .unwrap(),
+            )
+            .await
+            .unwrap();
+            for record in records {
+                view.append(record, None).await.unwrap();
+            }
+            assert!(
+                matches!(
+                    LocalSequencer::<MemoryStorage>::recover(view).await,
+                    Err(SessionError::Corrupt(reason)) if reason == expected
+                ),
+                "{expected}"
+            );
+        }
     }
 
     #[tokio::test]
@@ -1929,6 +1976,59 @@ mod tests {
         )
         .await
         .unwrap();
+    }
+
+    #[tokio::test]
+    async fn membership_positions_resolve_and_publish_snapshot_boundaries() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let publisher = member(&runtime, "publisher").await;
+        let participant = member(&runtime, "participant").await;
+        let root = publisher.put_blob(Bytes::new()).await.unwrap();
+        let _registration = publisher
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        let joined = participant.announce_membership(Bytes::new()).await.unwrap();
+        participant.close().await.unwrap();
+        let mut events = publisher.read(None, None);
+        let mut parent = None;
+        for kind in [SessionEventKind::Joined, SessionEventKind::Left] {
+            let event = data(&mut events).await.unwrap();
+            assert_eq!(event.kind, kind);
+            if kind == SessionEventKind::Joined {
+                assert_eq!(event.committed.position, joined);
+            }
+            let at_event = publisher
+                .resolve_position(event.committed.position)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(at_event.id(), event.committed.position);
+            let receipt = publisher
+                .publish_snapshot(
+                    parent,
+                    None,
+                    Snapshot {
+                        root: root.clone(),
+                        at_event,
+                    },
+                )
+                .await
+                .unwrap();
+            assert_eq!(receipt.at_event.id(), event.committed.position);
+            let stored = publisher
+                .get_snapshot(LoadStart::LatestSnapshot)
+                .await
+                .unwrap()
+                .unwrap();
+            assert_eq!(stored.at_event.id(), event.committed.position);
+            assert_eq!(stored.root.id(), root.id());
+            parent = Some(event.committed.position);
+        }
     }
 
     #[tokio::test]
@@ -2231,6 +2331,58 @@ mod tests {
         let mut absent = submission(b"invalid");
         absent.reference = Some(EventPosition::new(999));
         assert!(foreign.submit(absent).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn content_facade_resolves_stored_identities_and_requires_live_membership() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let session = member(&runtime, "content").await;
+        let peer = member(&runtime, "peer").await;
+        let payload = Bytes::from_static(b"content");
+        let blob = session.put_blob(payload.clone()).await.unwrap();
+        let BlobTreeId::Blob(id) = blob.id() else {
+            panic!("expected blob")
+        };
+        assert_eq!(id, BlobId::for_bytes(&payload));
+        assert_eq!(session.get_blob(id).await.unwrap(), payload);
+        assert_eq!(
+            session.resolve_tree(blob.id()).await.unwrap().unwrap().id(),
+            blob.id()
+        );
+        let directory =
+            BlobDirectory::new([("leaf".to_owned(), blob.id())].into_iter().collect()).unwrap();
+        let root = session.put_directory(directory.clone()).await.unwrap();
+        let BlobTreeId::Directory(directory_id) = root.id() else {
+            panic!("expected directory")
+        };
+        assert_eq!(
+            session.get_directory(directory_id).await.unwrap(),
+            directory
+        );
+        assert_eq!(
+            session.resolve_tree(root.id()).await.unwrap().unwrap().id(),
+            root.id()
+        );
+        let missing = BlobTreeId::Blob(BlobId::for_bytes(b"missing"));
+        assert!(session.resolve_tree(missing).await.unwrap().is_none());
+        session.close().await.unwrap();
+        assert!(matches!(
+            session.get_blob(id).await,
+            Err(SessionError::Closed)
+        ));
+        assert!(matches!(
+            session.put_directory(directory).await,
+            Err(SessionError::Closed)
+        ));
+        assert!(matches!(
+            session.resolve_tree(root.id()).await,
+            Err(SessionError::Closed)
+        ));
+        assert_eq!(peer.get_blob(id).await.unwrap(), payload);
     }
 
     #[tokio::test]

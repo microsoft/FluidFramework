@@ -11,10 +11,14 @@ The distinct contexts prevent swapping a stored event with a blob.
 
 | Failure | Classification |
 | --- | --- |
-| Malformed, truncated, tampered, wrongly keyed, or context-swapped envelope | `CorruptEnvelope` / `Corrupt` |
+| Malformed, truncated, context-swapped, or authentication-failing envelope | `CorruptEnvelope` / `Corrupt` |
 | Missing key or nonce-source failure | `Unavailable` |
 | Encryption failure | `Rejected` |
 | Underlying session error | Original classification |
+
+Historical-key lookup precedes authentication.
+A structurally valid envelope naming an unavailable key returns `Unavailable`, including when that identifier was tampered with.
+If the key is available, authentication rejects a changed identifier even when it resolves to the same key bytes.
 
 ## Keys And Nonces
 

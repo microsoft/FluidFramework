@@ -286,6 +286,20 @@ mod tests {
             Bytes::from_static(b"payload")
         );
         assert_eq!(decoded.reference, Some(EventPosition::new(2)));
+        let mut zero_identity = encoded.to_vec();
+        zero_identity[MAGIC.len()..MAGIC.len() + 8].fill(0);
+        record.event.payload = Bytes::from(zero_identity);
+        assert!(matches!(
+            decode_committed::<std::io::Error>(&record),
+            Err(SessionError::Corrupt("zero session identity"))
+        ));
+        let mut unknown_tag = encoded.to_vec();
+        unknown_tag[MAGIC.len() + 8] = 2;
+        record.event.payload = Bytes::from(unknown_tag);
+        assert!(matches!(
+            decode_committed::<std::io::Error>(&record),
+            Err(SessionError::Corrupt("invalid position"))
+        ));
         for length in 0..encoded.len() {
             record.event.payload = encoded.slice(..length);
             assert!(decode_committed::<std::io::Error>(&record).is_err());

@@ -29,6 +29,7 @@ flowchart TB
 ```
 
 Admission is bounded to 256 queued plus in-flight entries and 4 MiB of charged input bytes, including identities and envelope allowance.
+Admission copies each retained payload into an exact-sized backing allocation so a small `Bytes` slice cannot pin a larger caller allocation in the queue or in-flight entry.
 Allocator overhead and temporary batch encoding are additional bounded costs; waiting callers retain their inputs, so hosts must also bound outstanding requests.
 Oversized inputs terminate their session; full queues backpressure before admission.
 A retained, cooperatively polled future performs persistence without holding the runtime mutex or spawning a task.
@@ -47,6 +48,7 @@ Application events are delivered as `SessionEventKind::Application`, without a s
 Exact announcement retries return the original position; changing metadata is rejected.
 Membership metadata is public control data and is not transformed by payload compression or encryption.
 `read` lazily initializes the view's bounded or live read and preserves its progress and error classification.
+For storage-backed reads, progress observations after initialization delegate to the monitored backend even between reader polls; draining the last known item does not leave a stale backlog status.
 Closing or replacing membership terminates its initialized live reads.
 Loads use `LoadStart`, returning a selected handle-based snapshot and the live suffix without an atomic captured head.
 Backend monitored streams provide gap-free catch-up and live delivery.
@@ -166,6 +168,7 @@ An advance cannot exceed its carrying event's reference or lower the floor.
 Idle readers cannot indefinitely pin progressing writers; quiescent documents need no timer or extra append.
 
 Snapshots retain their exact event boundary, whose immutable envelope retains the floor at publication.
+Any committed session-event position can be resolved and used as a snapshot boundary, including `Joined` and `Left` membership records; the boundary need not be an application submission.
 The current backend retains that event and all history; snapshot consumers can read the boundary event, and recovery restores the internal checkpoint and suffix before admitting mutations.
 Any future compaction must preserve this floor metadata with the snapshot rather than discard the boundary envelope.
 The Fluid adapter maps the floor into its dense sequence space.

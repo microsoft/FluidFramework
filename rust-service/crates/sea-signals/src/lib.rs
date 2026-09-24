@@ -99,6 +99,8 @@ impl SignalRoom {
     }
 
     /// Registers a host-bound identity; the host must authorize document access first.
+    /// Identities must contain 1 to 256 bytes; metadata obeys `max_payload_bytes`.
+    /// Admission fails when `max_members` live identities are already registered.
     ///
     /// # Errors
     /// Rejects duplicate identities, invalid sizes, and rooms at capacity.
@@ -122,6 +124,10 @@ impl SignalRoom {
         if members.len() >= self.limits.max_members {
             return Err(SignalError::Invalid);
         }
+        let member = SignalMember {
+            id: retain_bytes(member.id),
+            metadata: retain_bytes(member.metadata),
+        };
         let (sender, receiver) = mpsc::channel(self.limits.queue_capacity);
         let (terminal, closed) = watch::channel(None);
         let registration = Arc::new(());
@@ -202,6 +208,13 @@ impl SignalRoom {
     }
 }
 
+/// Retains only the admitted bytes, not an arbitrarily large caller-owned backing allocation.
+fn retain_bytes(bytes: Bytes) -> Bytes {
+    let retained = Bytes::from(bytes.as_ref().to_vec().into_boxed_slice());
+    drop(bytes);
+    retained
+}
+
 /// A live connection whose final owner releases its room membership.
 pub struct SignalConnection {
     /// Registration lease distinct from a reusable public identity.
@@ -273,6 +286,11 @@ impl SeaSignals for SignalConnection {
         if self.terminal.borrow().is_some() || !members.contains_key(&self.id) {
             return Err(SignalError::Closed);
         }
+        let submission = SignalSubmission {
+            target: submission.target.map(retain_bytes),
+            payload: retain_bytes(submission.payload),
+            delivery: submission.delivery,
+        };
         let target = submission.target.clone();
         let best_effort = submission.delivery == SignalDelivery::BestEffort;
         SignalRoom::dispatch(
@@ -316,6 +334,214 @@ impl SeaSignals for SignalConnection {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Returns a small visible value backed by a much larger caller-owned allocation.
+    fn oversized_backing_slice(value: &[u8]) -> (Bytes, std::sync::Weak<[u8]>) {
+        let mut allocation = vec![0; 4096];
+        allocation[..value.len()].copy_from_slice(value);
+        let owner = Arc::<[u8]>::from(allocation);
+        let weak = Arc::downgrade(&owner);
+        (Bytes::from_owner(owner).slice(..value.len()), weak)
+    }
+
+    #[tokio::test]
+    async fn retained_membership_does_not_pin_oversized_caller_allocations() {
+        let room = SignalRoom::new(SignalLimits::default()).unwrap();
+        let (id, id_owner) = oversized_backing_slice(b"member");
+        let (metadata, metadata_owner) = oversized_backing_slice(b"public");
+        let connection = room.connect(SignalMember { id, metadata }).unwrap();
+        assert!(id_owner.upgrade().is_none(), "retained identity backing");
+        assert!(
+            metadata_owner.upgrade().is_none(),
+            "retained metadata backing"
+        );
+        assert_eq!(
+            connection.next_signal().await.unwrap(),
+            Some(SignalEvent::Members(vec![SignalMember {
+                id: Bytes::from_static(b"member"),
+                metadata: Bytes::from_static(b"public"),
+            }]))
+        );
+    }
+
+    #[tokio::test]
+    async fn queued_messages_do_not_pin_oversized_caller_allocations() {
+        let room = SignalRoom::new(SignalLimits::default()).unwrap();
+        let connection = connect(&room, "member").await;
+        let (target, target_owner) = oversized_backing_slice(b"member");
+        let (payload, payload_owner) = oversized_backing_slice(b"hello");
+        connection
+            .send_signal(SignalSubmission {
+                target: Some(target),
+                payload,
+                delivery: SignalDelivery::Reliable,
+            })
+            .await
+            .unwrap();
+        assert!(target_owner.upgrade().is_none(), "queued target backing");
+        assert!(payload_owner.upgrade().is_none(), "queued payload backing");
+        assert_eq!(
+            connection.next_signal().await.unwrap(),
+            Some(SignalEvent::Message(SignalMessage {
+                sender: Bytes::from_static(b"member"),
+                submission: message(Some("member"), SignalDelivery::Reliable),
+            }))
+        );
+    }
+
+    #[tokio::test]
+    async fn initial_snapshot_and_live_join_preserve_public_descriptors() {
+        let room = SignalRoom::new(SignalLimits::default()).unwrap();
+        let first_member = SignalMember {
+            id: Bytes::from_static(b"first"),
+            metadata: Bytes::from_static(b"first metadata"),
+        };
+        let second_member = SignalMember {
+            id: Bytes::from_static(b"second"),
+            metadata: Bytes::from_static(b"second metadata"),
+        };
+        let first = room.connect(first_member.clone()).unwrap();
+        assert_eq!(
+            first.next_signal().await.unwrap(),
+            Some(SignalEvent::Members(vec![first_member.clone()]))
+        );
+        let second = room.connect(second_member.clone()).unwrap();
+        let Some(SignalEvent::Members(members)) = second.next_signal().await.unwrap() else {
+            panic!("expected initial membership")
+        };
+        assert_eq!(members.len(), 2);
+        assert!(members.contains(&first_member));
+        assert!(members.contains(&second_member));
+        assert_eq!(
+            first.next_signal().await.unwrap(),
+            Some(SignalEvent::Joined(second_member))
+        );
+    }
+
+    #[tokio::test]
+    async fn admission_rejects_invalid_limits_identity_metadata_and_capacity() {
+        for limits in [
+            SignalLimits {
+                queue_capacity: 0,
+                ..SignalLimits::default()
+            },
+            SignalLimits {
+                max_payload_bytes: 0,
+                ..SignalLimits::default()
+            },
+            SignalLimits {
+                max_members: 0,
+                ..SignalLimits::default()
+            },
+        ] {
+            assert!(matches!(SignalRoom::new(limits), Err(SignalError::Invalid)));
+        }
+        let room = SignalRoom::new(SignalLimits {
+            max_payload_bytes: 5,
+            max_members: 1,
+            ..SignalLimits::default()
+        })
+        .unwrap();
+        for (id, metadata) in [
+            (Bytes::new(), Bytes::new()),
+            (Bytes::from(vec![0; 257]), Bytes::new()),
+            (
+                Bytes::from_static(b"member"),
+                Bytes::from_static(b"too big"),
+            ),
+        ] {
+            assert!(matches!(
+                room.connect(SignalMember { id, metadata }),
+                Err(SignalError::Invalid)
+            ));
+            assert!(room.members.lock().unwrap().is_empty());
+        }
+        let first = connect(&room, "first").await;
+        for (id, expected) in [
+            ("first", SignalError::Conflict),
+            ("second", SignalError::Invalid),
+        ] {
+            assert!(matches!(
+                room.connect(SignalMember { id: Bytes::from(id), metadata: Bytes::new() }),
+                Err(error) if error == expected
+            ));
+        }
+        for target in [Bytes::new(), Bytes::from(vec![0; 257])] {
+            assert_eq!(
+                first
+                    .send_signal(SignalSubmission {
+                        target: Some(target),
+                        ..message(None, SignalDelivery::Reliable)
+                    })
+                    .await,
+                Err(SignalError::Invalid)
+            );
+            assert_eq!(
+                first.receiver.lock().await.try_recv(),
+                Err(mpsc::error::TryRecvError::Empty)
+            );
+        }
+        first.close_signals().await.unwrap();
+        let replacement = connect(&room, "first").await;
+        assert_eq!(
+            first
+                .send_signal(message(None, SignalDelivery::Reliable))
+                .await,
+            Err(SignalError::Closed)
+        );
+        replacement
+            .send_signal(message(None, SignalDelivery::Reliable))
+            .await
+            .unwrap();
+        assert!(matches!(
+            replacement.next_signal().await.unwrap(),
+            Some(SignalEvent::Message(_))
+        ));
+    }
+
+    #[tokio::test]
+    async fn reliable_departure_overflow_evicts_each_affected_member() {
+        let room = SignalRoom::new(SignalLimits {
+            queue_capacity: 2,
+            ..SignalLimits::default()
+        })
+        .unwrap();
+        let sender = connect(&room, "sender").await;
+        let slow = connect(&room, "slow").await;
+        let peer = connect(&room, "peer").await;
+        sender.next_signal().await.unwrap();
+        sender.next_signal().await.unwrap();
+        slow.next_signal().await.unwrap();
+        for target in ["slow", "peer"] {
+            for _ in 0..2 {
+                sender
+                    .send_signal(message(Some(target), SignalDelivery::BestEffort))
+                    .await
+                    .unwrap();
+            }
+        }
+        sender
+            .send_signal(message(Some("slow"), SignalDelivery::Reliable))
+            .await
+            .unwrap();
+        assert_eq!(slow.next_signal().await, Err(SignalError::Lagged));
+        assert_eq!(peer.next_signal().await, Err(SignalError::Lagged));
+        for id in ["slow", "peer"] {
+            assert_eq!(
+                sender.next_signal().await.unwrap(),
+                Some(SignalEvent::Left(Bytes::from(id)))
+            );
+        }
+        assert_eq!(room.members.lock().unwrap().len(), 1);
+        sender
+            .send_signal(message(None, SignalDelivery::Reliable))
+            .await
+            .unwrap();
+        assert!(matches!(
+            sender.next_signal().await.unwrap(),
+            Some(SignalEvent::Message(_))
+        ));
+    }
 
     #[tokio::test]
     async fn cancelled_receive_preserves_messages_and_close_wakes_receive() {

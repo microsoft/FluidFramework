@@ -247,13 +247,277 @@ mod tests {
     use super::*;
     use crate::tests::{CountingNonce, TestKeys};
     use futures_util::FutureExt;
-    use sea_core::{Event, MonitoredStreamItem, storage::SeaStorage};
+    use sea_core::{
+        ClassifiedError, ErrorKind, Event, MonitoredStreamItem,
+        archive::SessionEventKind,
+        storage::{SeaStorage, StorageHandle},
+    };
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::LocalSequencer;
     use std::sync::{
         Arc,
         atomic::{AtomicUsize, Ordering},
     };
+
+    /// Reads one data item while leaving progress assertions to each boundary test.
+    async fn next_event<E: std::fmt::Debug>(
+        events: &mut ArchiveStream<SessionCommittedEvent, EventPosition, E>,
+    ) -> SessionCommittedEvent {
+        while let Some(item) = events.next().await {
+            if let MonitoredStreamItem::Item(event) = item.unwrap() {
+                return event;
+            }
+        }
+        panic!("expected an event");
+    }
+
+    #[tokio::test]
+    async fn encrypted_payloads_preserve_control_metadata_and_stored_tree_identities() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let raw = runtime.open_session(None).await.unwrap();
+        let keys = TestKeys::new();
+        let calls = Arc::new(AtomicUsize::new(0));
+        let wrapped = EncryptionSession::with_nonce_source(
+            raw.clone(),
+            keys.clone(),
+            CountingNonce {
+                calls: calls.clone(),
+            },
+        );
+        let payload = Bytes::from_static(b"application payload");
+        let blob = wrapped.put_blob(payload.clone()).await.unwrap();
+        let BlobTreeId::Blob(id) = blob.id() else {
+            panic!("expected blob")
+        };
+        let stored = raw.get_blob(id).await.unwrap();
+        assert_ne!(stored, payload);
+        assert_eq!(BlobId::for_bytes(&stored), id);
+        assert_eq!(wrapped.get_blob(id).await.unwrap(), payload);
+        assert!(
+            decrypt_payload::<sea_memory::MemoryStorageError, _>(
+                &keys,
+                &stored,
+                PayloadContext::Record,
+            )
+            .is_err()
+        );
+        assert_eq!(
+            wrapped.resolve_tree(blob.id()).await.unwrap().unwrap().id(),
+            blob.id()
+        );
+        let directory =
+            BlobDirectory::new([("leaf".to_owned(), blob.id())].into_iter().collect()).unwrap();
+        let root = wrapped.put_directory(directory.clone()).await.unwrap();
+        let BlobTreeId::Directory(directory_id) = root.id() else {
+            panic!("expected directory")
+        };
+        assert_eq!(raw.get_directory(directory_id).await.unwrap(), directory);
+        assert_eq!(
+            wrapped.get_directory(directory_id).await.unwrap(),
+            directory
+        );
+        let joined = wrapped
+            .announce_membership(Bytes::from_static(b"public"))
+            .await
+            .unwrap();
+        let position = wrapped
+            .submit(EventSubmission {
+                reference: Some(joined),
+                event: Event {
+                    payload: payload.clone(),
+                    blob_tree: Some(root.id()),
+                },
+            })
+            .await
+            .unwrap();
+        assert_eq!(calls.load(Ordering::Relaxed), 2);
+        let mut encoded = raw.read(None, Some(position));
+        let mut decoded = wrapped.read(None, Some(position));
+        let control = next_event(&mut encoded).await;
+        assert_eq!(control.kind, SessionEventKind::Joined);
+        assert_eq!(
+            control.committed.event.payload,
+            Bytes::from_static(b"public")
+        );
+        assert_eq!(next_event(&mut decoded).await, control);
+        let mut application = next_event(&mut encoded).await;
+        assert_eq!(
+            decrypt_payload::<sea_memory::MemoryStorageError, _>(
+                &keys,
+                &application.committed.event.payload,
+                PayloadContext::Record,
+            )
+            .unwrap(),
+            payload
+        );
+        application.committed.event.payload = payload;
+        assert_eq!(next_event(&mut decoded).await, application);
+        assert_eq!(decoded.progress().previous, Some(position));
+    }
+
+    #[tokio::test]
+    async fn load_and_coordination_forward_handles_fences_and_registration_lifetime() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let raw = runtime.open_session(None).await.unwrap();
+        let wrapped = EncryptionSession::new(raw.clone(), TestKeys::new());
+        let root = wrapped.put_blob(Bytes::new()).await.unwrap();
+        let submission = EventSubmission {
+            reference: None,
+            event: Event {
+                payload: Bytes::from_static(b"event"),
+                blob_tree: Some(root.id()),
+            },
+        };
+        let first = wrapped.submit(submission.clone()).await.unwrap();
+        let snapshot = Snapshot {
+            root: root.clone(),
+            at_event: wrapped.resolve_position(first).await.unwrap().unwrap(),
+        };
+        let mut authority = wrapped
+            .coordinate_snapshots(SnapshotParticipation::SeaSelected)
+            .await
+            .unwrap();
+        let fence = authority.next().await.unwrap().unwrap().fence;
+        assert!(fence.is_some());
+        assert!(matches!(
+            wrapped.publish_snapshot(None, None, snapshot.clone()).await,
+            Err(EncryptionError::Store(_))
+        ));
+        let published = wrapped
+            .publish_snapshot(None, fence, snapshot.clone())
+            .await
+            .unwrap();
+        assert_eq!(published.root.id(), root.id());
+        assert_eq!(published.at_event.id(), first);
+        assert_eq!(
+            wrapped
+                .get_snapshot(LoadStart::LatestSnapshot)
+                .await
+                .unwrap()
+                .unwrap()
+                .root
+                .id(),
+            root.id()
+        );
+        let mut loaded = wrapped.load(LoadStart::LatestSnapshot).await.unwrap();
+        assert_eq!(loaded.snapshot.unwrap().at_event.id(), first);
+        let second = wrapped.submit(submission.clone()).await.unwrap();
+        let suffix = next_event(&mut loaded.events).await;
+        assert_eq!(suffix.committed.position, second);
+        assert_eq!(suffix.committed.event, submission.event);
+        assert_eq!(loaded.events.progress().previous, Some(second));
+        drop(authority);
+        assert!(
+            raw.publish_snapshot(None, fence, snapshot.clone())
+                .await
+                .is_err()
+        );
+        let authority = wrapped
+            .coordinate_snapshots(SnapshotParticipation::ClientSelected)
+            .await
+            .unwrap();
+        wrapped.revoke_snapshot_publisher().await.unwrap();
+        assert!(raw.publish_snapshot(None, None, snapshot).await.is_err());
+        drop(authority);
+        let missing = BlobId::for_bytes(b"missing");
+        assert_eq!(
+            wrapped.get_blob(missing).await.unwrap_err().kind(),
+            raw.get_blob(missing).await.unwrap_err().kind()
+        );
+        wrapped.close().await.unwrap();
+        assert!(raw.submit(submission).await.is_err());
+    }
+
+    #[tokio::test]
+    async fn malformed_stored_envelopes_preserve_error_kind_and_delivery_progress() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let raw = runtime.open_session(None).await.unwrap();
+        let malformed_blob = raw
+            .put_blob(Bytes::from_static(b"not an envelope"))
+            .await
+            .unwrap();
+        let position = raw
+            .submit(EventSubmission {
+                reference: None,
+                event: Event {
+                    payload: Bytes::from_static(b"not an envelope"),
+                    blob_tree: None,
+                },
+            })
+            .await
+            .unwrap();
+        let wrapped = EncryptionSession::new(raw, TestKeys::new());
+        let BlobTreeId::Blob(id) = malformed_blob.id() else {
+            panic!("expected blob")
+        };
+        assert_eq!(
+            wrapped.get_blob(id).await.unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
+        let mut events = wrapped.read(None, Some(position));
+        assert!(matches!(
+            events.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
+        ));
+        assert_eq!(
+            events.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::Corrupt
+        );
+        assert_eq!(events.progress().previous, Some(position));
+        let mut invalid = wrapped.read(None, Some(EventPosition::new(u64::MAX)));
+        assert_eq!(
+            invalid.next().await.unwrap().unwrap_err().kind(),
+            ErrorKind::InvalidPosition
+        );
+    }
+
+    #[tokio::test]
+    async fn failed_key_preparation_closes_inner_author_and_wrapper_clones() {
+        let storage = MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
+            .await
+            .unwrap();
+        let raw = runtime.open_session(None).await.unwrap();
+        let observer = runtime.open_session(None).await.unwrap();
+        let wrapped = EncryptionSession::new(raw.clone(), TestKeys::empty());
+        wrapped.announce_membership(Bytes::new()).await.unwrap();
+        let clone = wrapped.clone();
+        let submission = EventSubmission {
+            reference: None,
+            event: Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            },
+        };
+        assert!(matches!(
+            wrapped.submit(submission.clone()).await,
+            Err(EncryptionError::KeyUnavailable { .. })
+        ));
+        assert!(matches!(
+            clone.submit(submission.clone()).await,
+            Err(EncryptionError::Closed)
+        ));
+        assert!(raw.submit(submission).await.is_err());
+        let mut history = observer.read(None, Some(EventPosition::new(2)));
+        assert_eq!(
+            next_event(&mut history).await.kind,
+            SessionEventKind::Joined
+        );
+        assert_eq!(next_event(&mut history).await.kind, SessionEventKind::Left);
+    }
 
     #[tokio::test]
     async fn compression_encryption_conformance() {
