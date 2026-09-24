@@ -354,9 +354,6 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
             .await?
             .ok_or(ClientError::ResponseEnded)?;
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
-        if matches!(response, Response::Error { .. }) {
-            return Err(ClientError::UnexpectedResponse(response));
-        }
         match response {
             Response::SignalEvent(event) => {
                 self.stream.end_request();
@@ -387,9 +384,6 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
                 .await?
                 .ok_or(ClientError::ResponseEnded)?;
             let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
-            if matches!(response, Response::Error { .. }) {
-                return Err(ClientError::UnexpectedResponse(response));
-            }
             if let Response::SignalEvent(event) = response {
                 receive(event)?;
                 continue;
@@ -572,18 +566,13 @@ where
                 .receive()
                 .await?
                 .ok_or(ClientError::ResponseEnded)?;
-            if frame.kind == protocol::MessageKind::SnapshotCoordination {
-                let response =
-                    protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
-                let Response::SnapshotCoordination { latest, fence } = response else {
-                    return Err(ClientError::UnexpectedResponse(response));
-                };
+            let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
+            if let Response::SnapshotCoordination { latest, fence } = response {
                 self.latest = latest;
                 self.fence = fence;
                 continue;
             }
 
-            let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
             let completed = matches!(
                 (&request, &response),
                 (_, Response::Error { .. })

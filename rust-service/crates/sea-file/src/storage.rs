@@ -744,37 +744,20 @@ impl State {
         self.path.with_extension("content").join(name)
     }
 
-    /// Fetches a complete checked frame by logical identity.
-    fn record(&self, key: &Key) -> Result<Option<Vec<u8>>, FileStorageError> {
+    /// Reads a content record and verifies persisted bytes against its typed identity.
+    fn content_record(&self, id: BlobTreeId) -> Result<Option<Vec<u8>>, FileStorageError> {
+        let key = Key::Content(id);
         let publication = self.unpublished.lock().unwrap();
-        if publication.contains(key) {
+        if publication.contains(&key) {
             return Ok(None);
         }
-        if let Some(record) = self.pending.lock().unwrap().get(key) {
+        if let Some(record) = self.pending.lock().unwrap().get(&key) {
             return Ok(Some(record.to_vec()));
         }
-        let record = if let Key::Content(id) = key {
-            let Some(record) = atomic_file::read(&self.content_path(*id))? else {
-                return Ok(None);
-            };
-            record
-        } else {
-            let Key::Event(position) = key else {
-                return Err(FileStorageError::Corrupt("event address"));
-            };
-            let offset = position.get();
-            if offset < 8 || offset > self.head {
-                return Ok(None);
-            }
-            read_record(
-                &mut *self
-                    .reader
-                    .lock()
-                    .map_err(|_| FileStorageError::Ambiguous)?,
-                offset,
-            )?
+        let Some(record) = atomic_file::read(&self.content_path(id))? else {
+            return Ok(None);
         };
-        if record_key(&record)? != *key {
+        if record_key(&record)? != key {
             return Err(FileStorageError::Corrupt("addressed record identity"));
         }
         Ok(Some(record))
@@ -1542,10 +1525,8 @@ impl FileEvents {
         let payloads: Vec<&[u8]> = records.iter().map(Vec::as_slice).collect();
         if let Err(error) = journal.append_batch(&payloads) {
             drop(journal);
-            if matches!(error, FileStorageError::Ambiguous) {
-                self.0.poison();
-            }
             return if matches!(error, FileStorageError::Ambiguous) {
+                self.0.poison();
                 (0..values.len())
                     .map(|_| Err(FileStorageError::Ambiguous))
                     .collect()
@@ -1817,7 +1798,7 @@ impl FileBlobs {
         let record = self
             .0
             .published()?
-            .record(&Key::Content(BlobTreeId::Blob(id)))?
+            .content_record(BlobTreeId::Blob(id))?
             .ok_or(FileStorageError::Rejected("missing blob"))?;
         Ok(Bytes::copy_from_slice(&record[1..]))
     }
@@ -1850,7 +1831,7 @@ impl FileBlobs {
         let record = self
             .0
             .published()?
-            .record(&Key::Content(BlobTreeId::Directory(id)))?
+            .content_record(BlobTreeId::Directory(id))?
             .ok_or(FileStorageError::Rejected("missing directory"))?;
         BlobDirectory::decode(&record[1..])
             .map_err(|_| FileStorageError::Corrupt("directory encoding"))

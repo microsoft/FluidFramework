@@ -29,17 +29,10 @@ pub struct LiveCacheStats {
 ///
 /// This capability cannot close the session, change author authority, or revoke a sibling.
 /// It remains useful during historical replay, before the subscription owns a live claim.
+#[derive(Clone)]
 pub struct LiveReadRevocation {
     /// Identity-scoped removal; a weak owner prevents extending the opening lifetime.
     revoke: Arc<dyn Fn() + Send + Sync>,
-}
-
-impl Clone for LiveReadRevocation {
-    fn clone(&self) -> Self {
-        Self {
-            revoke: self.revoke.clone(),
-        }
-    }
 }
 
 impl LiveReadRevocation {

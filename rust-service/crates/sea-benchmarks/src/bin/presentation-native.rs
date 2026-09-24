@@ -239,7 +239,7 @@ fn payload(sequence: usize, bytes: usize) -> Bytes {
 }
 
 /// Selects creation or opening of an archive before service identity allocation.
-fn session_open(archive: Bytes, create: bool, _index: usize) -> SessionOpen {
+fn session_open(archive: Bytes, create: bool) -> SessionOpen {
     SessionOpen {
         archive,
         intent: if create {
@@ -471,23 +471,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let result = if configuration.transport == "webtransport" {
         let mut pairs = Vec::new();
-        for index in 0..configuration.documents {
+        for _ in 0..configuration.documents {
             let writer = NativeSeaClient::connect(
                 &configuration.endpoint,
                 configuration.certificate_hash.parse()?,
                 TransportConfig::default(),
-                session_open(Bytes::new(), true, index * 2),
+                session_open(Bytes::new(), true),
             )
             .await?;
             let observer = NativeSeaClient::connect(
                 &configuration.endpoint,
                 configuration.certificate_hash.parse()?,
                 TransportConfig::default(),
-                session_open(
-                    Bytes::copy_from_slice(writer.document().as_bytes()),
-                    false,
-                    index * 2 + 1,
-                ),
+                session_open(Bytes::copy_from_slice(writer.document().as_bytes()), false),
             )
             .await?;
             pairs.push((writer, observer));
@@ -495,21 +491,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         measure(&configuration, pairs).await?
     } else if configuration.transport == "websocket" {
         let mut pairs = Vec::new();
-        for index in 0..configuration.documents {
+        for _ in 0..configuration.documents {
             let writer = SessionClient::open(
                 SocketTransport::connect(&configuration.endpoint).await?,
                 protocol::Limits::default(),
-                session_open(Bytes::new(), true, index * 2),
+                session_open(Bytes::new(), true),
             )
             .await?;
             let observer = SessionClient::open(
                 SocketTransport::connect(&configuration.endpoint).await?,
                 protocol::Limits::default(),
-                session_open(
-                    Bytes::copy_from_slice(writer.document().as_bytes()),
-                    false,
-                    index * 2 + 1,
-                ),
+                session_open(Bytes::copy_from_slice(writer.document().as_bytes()), false),
             )
             .await?;
             pairs.push((writer, observer));

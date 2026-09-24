@@ -306,24 +306,20 @@ impl Journal {
             return Ok(());
         }
         self.failed = true;
-        let result = {
+        {
             let mut cursor = boundary.to_be_bytes().to_vec();
             cursor.extend_from_slice(&last_record_offset.to_be_bytes());
             atomic_file::write(&self.path.with_extension("cursor"), &cursor, self.durable)
-        };
-        match result {
-            Ok(()) => {
-                self.last_record_offset = last_record_offset;
-                self.cursor = Some((boundary, last_record_offset));
-                #[cfg(test)]
-                {
-                    self.cursor_writes += 1;
-                }
-                self.failed = false;
-                Ok(())
-            }
-            Err(_) => Err(FileStorageError::Ambiguous),
         }
+        .map_err(|_| FileStorageError::Ambiguous)?;
+        self.last_record_offset = last_record_offset;
+        self.cursor = Some((boundary, last_record_offset));
+        #[cfg(test)]
+        {
+            self.cursor_writes += 1;
+        }
+        self.failed = false;
+        Ok(())
     }
 
     /// Returns the publication policy shared by this document's immutable files.

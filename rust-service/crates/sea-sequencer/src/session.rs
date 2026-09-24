@@ -882,7 +882,7 @@ impl<Storage: SeaStorage + 'static> LocalSession<Storage> {
         let mut guard = AppendGuard(Some(runtime.member(&self.session)?.failed.clone()));
         let result = self.announce_inner(&mut runtime, metadata).await;
         if result.is_ok() {
-            guard.0 = None;
+            guard.disarm();
         }
         drop(guard);
         if result.is_err() && !runtime.recovery_required {
