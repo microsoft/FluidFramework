@@ -4,6 +4,7 @@
  */
 
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 import { getTestPort } from "@fluidframework/test-tools";
 
@@ -17,7 +18,10 @@ export default defineConfig({
 	retries: 0,
 	timeout: 60_000,
 	outputDir: "nyc/test-results",
-	reporter: [["list"], ["junit", { outputFile: "nyc/junit-report.xml" }]],
+	reporter: [
+		["list"],
+		[fileURLToPath(new URL("../../../../scripts/playwright-reporter.cjs", import.meta.url))],
+	],
 	use: {
 		baseURL,
 		headless: true,

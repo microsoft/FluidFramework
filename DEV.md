@@ -19,6 +19,30 @@ hk fix    # auto-format files in place
 
 hk requires the [pkl](https://pkl-lang.org/) CLI. Both hk and pkl can be installed via [mise](https://mise.jdx.dev/).
 
+## Playwright test reports
+
+Client Playwright tests use the shared custom reporter in `scripts/playwright-reporter.cjs`.
+The example base configuration and the three independent client configurations reference the same file.
+Keep each configuration next to its package's `package.json`; the reporter reads the package name there and writes `nyc/junit-report.xml` in that directory.
+
+Each report contains one flat suite named `<package name> (Playwright)`, even with multiple test files or projects.
+This keeps Azure DevOps (ADO) Test Run grouping package-specific.
+Testcase classnames are repository-relative paths with forward slashes, which ADO uses for Test file grouping.
+Names include the project, test-directory-relative filename, and full describe/test title.
+Built tests retain their executed file paths, rather than claiming a source-map conversion.
+Changing these identities can start new test histories in ADO.
+
+The reporter uses Playwright's expected-outcome semantics: expected failures and tests that pass on retry count as passing.
+Retries contribute to one testcase's duration and logs; the report does not claim native ADO flaky-test support.
+Skipped tests, runner errors, annotations, stdout/stderr, and file-backed attachments are included.
+Unexpected test outcomes, including runtime errors and timeouts, use JUnit `failure`; errors outside individual tests use `error`.
+Keep attachments under `nyc` so the existing CI result-copy step preserves their report-relative paths.
+The reporter does not serialize inline attachment bodies.
+
+Run `pnpm run test:playwright-reporter` for browser-free reporter regression tests.
+The client Playwright CI command also runs these tests.
+The website has a separate dependency workspace and retains its existing built-in reporter.
+
 ## Dependencies
 
 This document tracks dependencies that cannot be upgraded to their latest major versions due to technical limitations.
