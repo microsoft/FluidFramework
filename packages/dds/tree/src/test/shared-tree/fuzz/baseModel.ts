@@ -19,8 +19,8 @@ import { currentVersion } from "../../../codec/index.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
-// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
-const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+// Schema operations run in a separate bounded workload while mid-transaction view replacement remains a harness limitation.
+export const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	set: 3,
 	clear: 1,
 	insert: 5,

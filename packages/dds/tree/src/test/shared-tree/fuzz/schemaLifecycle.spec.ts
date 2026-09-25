@@ -10,11 +10,16 @@ import { done, takeAsync } from "@fluid-private/stochastic-test-utils";
 import { type DDSFuzzHarnessEvents, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 
 import { toInitialSchema } from "../../../simple-tree/index.js";
-import { expectSchemaEqual, validateFuzzTreeConsistency } from "../../utils.js";
+import {
+	createTestUndoRedoStacks,
+	expectSchemaEqual,
+	validateFuzzTreeConsistency,
+} from "../../utils.js";
 
 import { baseTreeModel } from "./baseModel.js";
 import {
 	type FuzzTestState,
+	type FuzzView,
 	makeTreeEditGenerator,
 	simpleSchemaFromStoredSchema,
 	viewFromState,
@@ -27,12 +32,30 @@ import {
 	generateLeafNodeSchemas,
 } from "./fuzzEditReducers.js";
 import { createTreeViewSchema, deterministicIdCompressorFactory } from "./fuzzUtils.js";
-import { GeneratedFuzzValueType } from "./operationTypes.js";
+import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes.js";
 
 /**
  * Deterministic regressions for the schema lifecycle in the existing DDS fuzz harness.
  */
 describe("Fuzz schema lifecycle", () => {
+	function setValue(view: FuzzView, value: GeneratedFuzzNode): void {
+		applyFieldEdit(view, {
+			type: "fieldEdit",
+			parentNodePath: undefined,
+			change: { type: "optional", edit: { type: "set", value } },
+		});
+	}
+
+	function synchronizeAndCheckViews(state: FuzzTestState): void {
+		state.containerRuntimeFactory.processAllMessages();
+		for (const client of [...state.clients, state.summarizerClient]) {
+			const view = viewFromState(state, client);
+			assert.equal(view.compatibility.isEquivalent, true);
+			expectSchemaEqual(toInitialSchema(view.config.schema), view.checkout.storedSchema);
+			validateFuzzTreeConsistency(state.clients[0], client);
+		}
+	}
+
 	function scenario(name: string, run: (state: FuzzTestState) => void): void {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (state: FuzzTestState) => {
@@ -115,7 +138,11 @@ describe("Fuzz schema lifecycle", () => {
 	scenario("stored GUID schemas round-trip without changing their value type", (state) => {
 		const checkout = viewFromState(state).checkout;
 		checkout.updateSchema(
-			toInitialSchema(createTreeViewSchema(generateLeafNodeSchemas(["upgrade"]))),
+			toInitialSchema(
+				createTreeViewSchema(
+					generateLeafNodeSchemas(["upgrade", "nodeUpgrade", "arrayChildrenUpgrade"]),
+				),
+			),
 		);
 		expectSchemaEqual(
 			toInitialSchema(simpleSchemaFromStoredSchema(checkout.storedSchema)),
@@ -207,4 +234,121 @@ describe("Fuzz schema lifecycle", () => {
 			applyTransactionBoundary(state, "abort");
 		},
 	);
+
+	scenario("schema upgrades preserve existing detached content", (state) => {
+		const checkout = viewFromState(state).checkout;
+		setValue(viewFromState(state), { type: GeneratedFuzzValueType.Number, value: 42 });
+		applyFieldEdit(viewFromState(state), {
+			type: "fieldEdit",
+			parentNodePath: undefined,
+			change: { type: "optional", edit: { type: "clear" } },
+		});
+		const removed = checkout.getRemovedRoots();
+		assert(removed.length > 0);
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		assert.deepEqual(checkout.getRemovedRoots(), removed);
+		synchronizeAndCheckViews(state);
+	});
+
+	scenario("revertTo restores data within the upgraded schema", (state) => {
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		const checkout = viewFromState(state).checkout;
+		const revision = checkout.branchHistory.getHead()?.revision;
+		assert(revision !== undefined);
+		setValue(viewFromState(state), { type: GeneratedFuzzValueType.Number, value: 42 });
+		checkout.revertTo(revision);
+		synchronizeAndCheckViews(state);
+		assert.equal(viewFromState(state).root, undefined);
+	});
+
+	scenario("legacy undo across a schema change drops the inverse data edit", (state) => {
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(
+			viewFromState(state).checkout.events,
+		);
+		setValue(viewFromState(state), { type: GeneratedFuzzValueType.Number, value: 42 });
+		const undo = undoStack.pop();
+		assert(undo !== undefined);
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		undo.revert();
+		synchronizeAndCheckViews(state);
+		assert.equal(viewFromState(state).root, 42);
+		unsubscribe();
+	});
+
+	for (const boundary of ["commit", "abort"] as const) {
+		scenario(`remote schema changes while a data transaction later ${boundary}s`, (state) => {
+			applyTransactionBoundary(state, "start");
+			setValue(viewFromState(state), { type: GeneratedFuzzValueType.Number, value: 42 });
+			state.client = state.clients[1];
+			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+			state.containerRuntimeFactory.processAllMessages();
+			state.client = state.clients[0];
+			applyTransactionBoundary(state, boundary);
+			synchronizeAndCheckViews(state);
+			// The legacy policy drops concurrent data rebased over a schema change.
+			assert.equal(viewFromState(state).root, undefined);
+		});
+	}
+
+	scenario("a data fork merges after a concurrent root schema upgrade", (state) => {
+		applyForkMergeOperation(state, {
+			type: "forkMergeOperation",
+			contents: { type: "fork", branchNumber: undefined },
+		});
+		setValue(viewFromState(state, state.client, 0), {
+			type: GeneratedFuzzValueType.Number,
+			value: 42,
+		});
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		applyForkMergeOperation(state, {
+			type: "forkMergeOperation",
+			contents: { type: "merge", baseBranch: undefined, forkBranch: 0 },
+		});
+		synchronizeAndCheckViews(state);
+		assert.equal(viewFromState(state).root, undefined);
+	});
+
+	scenario(
+		"a schema upgrade dropped over concurrent data refreshes the client's view",
+		(state) => {
+			setValue(viewFromState(state), { type: GeneratedFuzzValueType.Number, value: 42 });
+			state.client = state.clients[1];
+			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+			setValue(viewFromState(state), {
+				type: GeneratedFuzzValueType.GUIDNode,
+				value: { guid: "treeFuzz.upgrade" },
+			});
+			synchronizeAndCheckViews(state);
+			assert.equal(viewFromState(state).root, 42);
+			const nodeTypes: readonly string[] = [
+				...viewFromState(state).checkout.storedSchema.nodeSchema.keys(),
+			];
+			assert.equal(nodeTypes.includes("treeFuzz.upgrade"), false);
+		},
+	);
+
+	for (const concurrentType of ["upgrade", "differentUpgrade"]) {
+		scenario(`reconnection with concurrent ${concurrentType} and dependent data`, (state) => {
+			state.clients[1].containerRuntime.connected = false;
+			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+			setValue(viewFromState(state), {
+				type: GeneratedFuzzValueType.GUIDNode,
+				value: { guid: "treeFuzz.upgrade" },
+			});
+			state.client = state.clients[1];
+			applySchemaOp(state, { type: "schemaChange", contents: { type: concurrentType } });
+			setValue(viewFromState(state), {
+				type: GeneratedFuzzValueType.GUIDNode,
+				value: { guid: `treeFuzz.${concurrentType}` },
+			});
+			state.clients[1].containerRuntime.connected = true;
+			synchronizeAndCheckViews(state);
+			const nodeTypes = new Set<string>(
+				viewFromState(state).checkout.storedSchema.nodeSchema.keys(),
+			);
+			assert(nodeTypes.has("treeFuzz.upgrade"));
+			assert.equal(nodeTypes.has("treeFuzz.differentUpgrade"), false);
+			assert.equal(state.client.channel.contentSnapshot().tree[0].type, "treeFuzz.upgrade");
+		});
+	}
 });

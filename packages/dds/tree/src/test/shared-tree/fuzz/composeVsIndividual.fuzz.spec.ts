@@ -18,7 +18,11 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateSnapshotConsistency,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -33,6 +37,7 @@ import {
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
+	applySchemaOp,
 } from "./fuzzEditReducers.js";
 import { createOnCreate, deterministicIdCompressorFactory } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -76,7 +81,9 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 		return state;
 	},
 	schemaChange: (state, operation) => {
-		return state;
+		assert.fail(
+			"Mid-transaction schema view replacement is not supported by this fuzz harness.",
+		);
 	},
 	constraint: (state, operation) => {
 		applyConstraint(state, operation);
@@ -135,6 +142,11 @@ describe("Fuzz - composed vs individual changes", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
+			applySchemaOp(
+				{ ...initialState, client: initialState.clients[0] },
+				{ type: "schemaChange", contents: { type: "compositionBaseline" } },
+			);
+			initialState.main = viewFromState(initialState, initialState.clients[0]);
 
 			const forkedView = initialState.main.fork() as unknown as FuzzTransactionView;
 			const treeSchema = initialState.main.currentSchema;
@@ -151,11 +163,22 @@ describe("Fuzz - composed vs individual changes", () => {
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
 			assert(finalState.branch !== undefined);
-			const childTreeView = toJsonableTree(finalState.branch.checkout);
+			const childTreeView = {
+				tree: toJsonableTree(finalState.branch.checkout),
+				schema: finalState.branch.checkout.storedSchema.clone(),
+				removed: finalState.branch.checkout.getRemovedRoots(),
+			};
 			finalState.branch.checkout.transaction.commit();
 			const tree = finalState.main ?? assert.fail();
 			tree.checkout.merge(finalState.branch.checkout);
-			validateTree(tree.checkout, childTreeView);
+			validateSnapshotConsistency(
+				{
+					tree: toJsonableTree(tree.checkout),
+					schema: tree.checkout.storedSchema,
+					removed: tree.checkout.getRemovedRoots(),
+				},
+				childTreeView,
+			);
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,

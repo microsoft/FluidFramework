@@ -14,11 +14,22 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import type { Anchor, JsonableTree, UpPath, Value } from "../../../core/index.js";
+import type {
+	Anchor,
+	JsonableTree,
+	TreeStoredSchema,
+	UpPath,
+	Value,
+} from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
 import type { NodeBuilderData } from "../../../internalTypes.js";
-import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	createTestUndoRedoStacks,
+	expectSchemaEqual,
+	validateTree,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -26,7 +37,7 @@ import {
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
-import { fuzzReducer } from "./fuzzEditReducers.js";
+import { applySchemaOp, fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	type RevertibleSharedTreeView,
 	createAnchors,
@@ -42,6 +53,7 @@ interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
 	anchors?: Map<Anchor, [UpPath, Value]>[];
 	initialJsonableTree?: JsonableTree[];
+	initialSchema?: TreeStoredSchema;
 }
 
 const initialTreeState: NodeBuilderData<typeof FuzzNode> = {
@@ -64,7 +76,7 @@ describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
-		// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
+		// Mid-transaction schema view replacement remains a fuzz harness limitation.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,
@@ -98,6 +110,11 @@ describe("Fuzz - anchor stability", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
+			applySchemaOp(
+				{ ...initialState, client: initialState.clients[0] },
+				{ type: "schemaChange", contents: { type: "anchorBaseline" } },
+			);
+			initialState.initialSchema = tree.storedSchema.clone();
 			tree.transaction.start();
 			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
 			initialState.initialJsonableTree = initialJsonableTree;
@@ -113,6 +130,8 @@ describe("Fuzz - anchor stability", () => {
 			tree.transaction.abort();
 			assert(finalState.initialJsonableTree !== undefined);
 			validateTree(tree, finalState.initialJsonableTree);
+			assert(finalState.initialSchema !== undefined);
+			expectSchemaEqual(tree.storedSchema, finalState.initialSchema);
 			validateAnchors(tree, anchors[0], true);
 		});
 
@@ -131,8 +150,6 @@ describe("Fuzz - anchor stability", () => {
 		});
 	});
 	describe("Anchors are stable", () => {
-		// TODO: Currently manually disposing the view when applying the schema op is causing a double dispose issue.
-		// Once this issue has been resolved, re-enable schema ops.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,
@@ -149,7 +166,7 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
-			schema: 0,
+			schema: 1,
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
