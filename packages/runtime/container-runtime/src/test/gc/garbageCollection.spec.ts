@@ -85,6 +85,10 @@ type GcWithPrivates = IGarbageCollector & {
 	>;
 	readonly autoRecovery: {
 		useFullGC: () => boolean;
+		requestFullGCOnNextRun: () => void;
+		onCompletedGCRun: () => void;
+		generationForSummary: () => number | undefined;
+		onSummaryAck: (generation: number | undefined) => void;
 	};
 	readonly telemetryTracker: GCTelemetryTracker;
 	readonly mc: MonitoringContext;
@@ -338,27 +342,29 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	it("Private Autorecovery API", () => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const autoRecovery: {
-			useFullGC: () => boolean;
-			requestFullGCOnNextRun: () => void;
-			onCompletedGCRun: () => void;
-			onSummaryAck: () => void;
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} = createGarbageCollector().autoRecovery as any;
+		const autoRecovery = createGarbageCollector().autoRecovery;
 
 		assert.equal(autoRecovery.useFullGC(), false, "Expect false by default");
 
 		autoRecovery.requestFullGCOnNextRun();
 		assert.equal(autoRecovery.useFullGC(), true, "Expect true after requesting full GC");
 
-		autoRecovery.onSummaryAck();
+		autoRecovery.onSummaryAck(undefined);
 		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after early Summary Ack");
 
 		autoRecovery.onCompletedGCRun();
 		assert.equal(autoRecovery.useFullGC(), true, "Expect true still after full GC alone");
 
-		autoRecovery.onSummaryAck();
+		const firstRecovery = autoRecovery.generationForSummary();
+		autoRecovery.requestFullGCOnNextRun();
+		autoRecovery.onCompletedGCRun();
+		autoRecovery.onSummaryAck(firstRecovery);
+		assert.equal(
+			autoRecovery.useFullGC(),
+			true,
+			"An older ACK must not clear a newer recovery",
+		);
+		autoRecovery.onSummaryAck(autoRecovery.generationForSummary());
 		assert.equal(autoRecovery.useFullGC(), false, "Expect false after post-GC Summary Ack");
 	});
 
@@ -494,10 +500,14 @@ describe("Garbage Collection Tests", () => {
 			// Nodes 0 and 1 are referenced (use correct gcData via fullGC true)
 			// Simulate successful summary ack to clear doesGCStateNeedReset flag so it doesn't interfere (it leads to fullGC too)
 			await gc.collectGarbage({ fullGC: true });
-			await gc.summaryStateTracker.refreshLatestSummary({
-				isSummaryTracked: true,
-				isSummaryNewer: false,
-			});
+			gc.completeSummary("initial", 0);
+			await gc.summaryStateTracker.refreshLatestSummary(
+				{
+					isSummaryTracked: true,
+					isSummaryNewer: false,
+				},
+				"initial",
+			);
 			assert(
 				!gc.unreferencedNodesState.has(nodes[0]),
 				"node 0 should not be unreferenced to start",
@@ -560,10 +570,14 @@ describe("Garbage Collection Tests", () => {
 			// GC Data corruption should be fixed (nodes[0] should be referenced again) and autorecovery fullGC state should be reset
 			spies.gc.runGC.resetHistory();
 			// BUG FIX: Start with a spurious summary ack arriving before GC runs. It should not yet reset the autoRecovery state.
-			await gc.refreshLatestSummary({
-				isSummaryTracked: true,
-				isSummaryNewer: false,
-			});
+			gc.completeSummary("before-recovery", 1);
+			await gc.refreshLatestSummary(
+				{
+					isSummaryTracked: true,
+					isSummaryNewer: false,
+				},
+				"before-recovery",
+			);
 			assert(
 				gc.autoRecovery.useFullGC(),
 				"autoRecovery.useFullGC should still be true after spurious summary ack (haven't run GC yet)",
@@ -578,10 +592,15 @@ describe("Garbage Collection Tests", () => {
 				gc.autoRecovery.useFullGC(),
 				"autoRecovery.useFullGC should still be true after GC run but before summary ack",
 			);
-			await gc.refreshLatestSummary({
-				isSummaryTracked: true,
-				isSummaryNewer: false,
-			});
+			gc.summarize(true /* fullTree */, true /* trackState */);
+			gc.completeSummary("after-recovery", 2);
+			await gc.refreshLatestSummary(
+				{
+					isSummaryTracked: true,
+					isSummaryNewer: false,
+				},
+				"after-recovery",
+			);
 			assert(
 				!gc.autoRecovery.useFullGC(),
 				"autoRecovery.useFullGC should have been reset to false now",
@@ -1571,10 +1590,14 @@ describe("Garbage Collection Tests", () => {
 				"Deleted nodes state should be a handle",
 			);
 
-			await garbageCollector.refreshLatestSummary({
-				isSummaryTracked: true,
-				isSummaryNewer: true,
-			});
+			garbageCollector.completeSummary("deleted-nodes", 0);
+			await garbageCollector.refreshLatestSummary(
+				{
+					isSummaryTracked: true,
+					isSummaryNewer: true,
+				},
+				"deleted-nodes",
+			);
 
 			// Run GC and summarize again. The whole GC summary should now be a summary handle.
 			await garbageCollector.collectGarbage({});
@@ -2139,6 +2162,44 @@ describe("Garbage Collection Tests", () => {
 		});
 	});
 
+	it("adopts only the recovery generation captured by the acknowledged proposal", async () => {
+		const garbageCollector = createGarbageCollector();
+		garbageCollector.autoRecovery.requestFullGCOnNextRun();
+		await garbageCollector.collectGarbage({});
+		garbageCollector.summarize(true /* fullTree */, true /* trackState */);
+		garbageCollector.completeSummary("first-recovery", 1);
+
+		garbageCollector.autoRecovery.requestFullGCOnNextRun();
+		await garbageCollector.collectGarbage({});
+		garbageCollector.summarize(true /* fullTree */, true /* trackState */);
+		garbageCollector.completeSummary("second-recovery", 2);
+
+		await garbageCollector.refreshLatestSummary(
+			{ isSummaryTracked: false, isSummaryNewer: true },
+			"remote",
+		);
+		assert(
+			garbageCollector.autoRecovery.useFullGC(),
+			"An untracked ACK cannot complete local recovery",
+		);
+		await garbageCollector.refreshLatestSummary(
+			{ isSummaryTracked: true, isSummaryNewer: true },
+			"first-recovery",
+		);
+		assert(
+			garbageCollector.autoRecovery.useFullGC(),
+			"An earlier proposal cannot complete newer recovery",
+		);
+		await garbageCollector.refreshLatestSummary(
+			{ isSummaryTracked: true, isSummaryNewer: true },
+			"second-recovery",
+		);
+		assert(
+			!garbageCollector.autoRecovery.useFullGC(),
+			"The matching proposal must complete recovery",
+		);
+	});
+
 	describe("No changes to GC between summaries", () => {
 		const fullTree = false;
 		const trackState = true;
@@ -2170,10 +2231,14 @@ describe("Garbage Collection Tests", () => {
 
 			checkGCSummaryType(tree1, SummaryType.Tree, "first");
 
-			await garbageCollector.refreshLatestSummary({
-				isSummaryTracked: true,
-				isSummaryNewer: true,
-			});
+			garbageCollector.completeSummary("first", 0);
+			await garbageCollector.refreshLatestSummary(
+				{
+					isSummaryTracked: true,
+					isSummaryNewer: true,
+				},
+				"first",
+			);
 			await garbageCollector.collectGarbage({});
 			const tree2 = garbageCollector.summarize(fullTree, trackState);
 
