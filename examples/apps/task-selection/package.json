@@ -48,8 +48,6 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/request-handler": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/task-manager": "workspace:~",
 		"css-loader": "^7.1.2",
 		"style-loader": "^4.0.0"

@@ -108,8 +108,6 @@
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
@@ -127,7 +125,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@3.1.0",
+		"@fluidframework/task-manager-previous": "npm:@fluidframework/task-manager@3.2.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",

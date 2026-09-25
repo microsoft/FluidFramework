@@ -22,8 +22,13 @@ import {
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
-import { normalizeProtocolError, throwProtocolError } from "./common.js";
+import {
+	normalizeProtocolError,
+	throwProtocolError,
+	validateTreePayloadVocabulary,
+} from "./common.js";
 import { Guest } from "./guest.js";
+import { normalizeTransportData } from "./transport.js";
 import { Host } from "./host.js";
 
 /**
@@ -142,6 +147,41 @@ export function setup(initialState: string[]) {
 }
 
 /**
+ * Initializes a new Guest from an existing Host, including application-managed replacement sessions.
+ * The caller owns the supplied port and must dispose the returned Guest.
+ */
+export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
+	host: Host<TSchema>,
+	config: TreeViewConfiguration<TSchema>,
+	port: MessagePort,
+	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
+	handleProtocolError: (error: Error) => void = throwProtocolError,
+	logger: (message: string) => void = () => {},
+): Guest<TSchema> {
+	const localRoot = host.local.root;
+	assert(localRoot !== undefined, "Expected an initialized root");
+	const startingState = TreeAlpha.exportCompressed(localRoot, {
+		// TODO: shard the compressor here?
+		idCompressor: hostCompressor,
+		minVersionForCollab: FluidClientVersion.v2_80,
+	});
+	const normalized = normalizeTransportData(startingState);
+	validateTreePayloadVocabulary(normalized);
+	return new Guest(
+		config,
+		{ jsonValidator: FormatValidatorBasic },
+		{
+			tree: structuredClone(host.codec.encode(normalized)) as typeof startingState,
+			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
+			idCompressor: hostCompressor,
+		},
+		port,
+		handleProtocolError,
+		logger,
+	);
+}
+
+/**
  * Sets up a Host, Guest, and peer with the given initial state, schema, and session ports.
  *
  * @param initialState - The initial state of the shared tree.
@@ -172,34 +212,26 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 			minVersionForCollab: FluidClientVersion.v2_80,
 		}).getFactory(),
 	);
-	const peerView = provider.trees[0].viewWith(config);
-	peerView.initialize(initialState);
-	const peer = asAlpha(peerView);
+	const mainView = provider.trees[1].viewWith(config);
+	mainView.initialize(initialState);
+	const main = asAlpha(mainView);
 	provider.synchronizeMessages();
 
-	const main = asAlpha(provider.trees[1].viewWith(config));
+	const peer = asAlpha(provider.trees[0].viewWith(config));
 	const sessionPorts = sessionPortsBuilder();
-	const host = new Host(main, sessionPorts.hostPort, handleProtocolError, logger);
+	const host = new Host(
+		main,
+		sessionPorts.hostPort,
+		provider.trees[1].handle,
+		handleProtocolError,
+		logger,
+	);
 
-	const hostCompressor = provider.getCompressor(provider.trees[1]);
-	const localRoot = host.local.root;
-	assert(localRoot !== undefined, "Expected an initialized root");
-	const startingState = TreeAlpha.exportCompressed(localRoot, {
-		// TODO: shard the compressor here?
-		idCompressor: hostCompressor,
-		minVersionForCollab: FluidClientVersion.v2_80,
-	});
-
-	const guest = new Guest(
+	const guest = createGuestForHost(
+		host,
 		config,
-		{ jsonValidator: FormatValidatorBasic },
-		{
-			tree: startingState,
-			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
-			// TODO: shard the compressor here?
-			idCompressor: hostCompressor,
-		},
 		sessionPorts.guestPort,
+		provider.getCompressor(provider.trees[1]),
 		handleProtocolError,
 		logger,
 	);
@@ -213,6 +245,7 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 			() => guest.dispose(),
 			() => host.dispose(),
 			() => sessionPorts.dispose(),
+			() => main.dispose(),
 		]) {
 			try {
 				dispose();
