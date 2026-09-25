@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
-	validateAssertionError,
-	validateUsageError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { Revertible } from "../../../core/index.js";
@@ -34,13 +31,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
-import {
-	expectJsonTree,
-	expectSchemaEqual,
-	getView,
-	StringArray,
-	TestTreeProviderLite,
-} from "../../utils.js";
+import { expectSchemaEqual, getView, StringArray, TestTreeProviderLite } from "../../utils.js";
 import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
@@ -629,6 +620,56 @@ describe("simple-tree tree", () => {
 		});
 	});
 
+	it("does not offer revertibles for initialization", () => {
+		const view = getView(new TreeViewConfiguration({ schema: schema.number }));
+		const log: string[] = [];
+		view.events.on("changed", (metadata, getRevertible) => {
+			assert(metadata.isLocal);
+			assert.equal(metadata.getRevertible(), undefined);
+			assert.equal(getRevertible, undefined);
+			log.push("changed");
+		});
+		view.events.on("commitApplied", (_metadata, getRevertible) => {
+			assert.equal(getRevertible, undefined);
+			log.push("commitApplied");
+		});
+
+		view.initialize(1);
+
+		assert.deepEqual(log, ["changed", "commitApplied"]);
+	});
+
+	for (const withDataChange of [false, true]) {
+		it(`does not offer revertibles for schema changes (with data: ${withDataChange})`, () => {
+			const view = getView(new TreeViewConfiguration({ schema: schema.number }));
+			view.initialize(1);
+
+			const upgradedView = view.checkout
+				.fork()
+				.viewWith(new TreeViewConfiguration({ schema: [schema.number, schema.string] }));
+			const log: string[] = [];
+			upgradedView.events.on("changed", (metadata, getRevertible) => {
+				assert(metadata.isLocal);
+				assert.equal(metadata.getRevertible(), undefined);
+				assert.equal(getRevertible, undefined);
+				log.push("changed");
+			});
+			upgradedView.events.on("commitApplied", (_metadata, getRevertible) => {
+				assert.equal(getRevertible, undefined);
+				log.push("commitApplied");
+			});
+			if (withDataChange) {
+				upgradedView.runTransaction(() => {
+					upgradedView.upgradeSchema();
+					upgradedView.root = "upgraded";
+				});
+			} else {
+				upgradedView.upgradeSchema();
+			}
+			assert.deepEqual(log, ["changed", "commitApplied"]);
+		});
+	}
+
 	describe("revertTo", () => {
 		it("restores the state of the given revision with a new commit", () => {
 			// Setup
@@ -687,10 +728,7 @@ describe("simple-tree tree", () => {
 			assert.equal(view.branchHistory.length, 8);
 		});
 
-		it("restores the schema and content from before a schema upgrade on a local branch", () => {
-			// This test verifies current behavior, not necessarily the desired specification.
-			// We will likely make revertTo skip schema changes,
-			// but that requires prerequisite work on rebasing interleaved data and schema changes.
+		it("rejects reverting a transaction containing schema and data changes on a local branch", () => {
 			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
 			const originalView = getView(originalConfig);
 			originalView.initialize(1);
@@ -702,28 +740,18 @@ describe("simple-tree tree", () => {
 					schema: [schema.number, schema.string],
 				}),
 			);
-			upgradedView.upgradeSchema();
-			assert.equal(upgradedView.compatibility.isEquivalent, true);
-			// Include content that is only valid under the upgraded schema.
-			upgradedView.root = "upgraded";
+			upgradedView.runTransaction(() => {
+				upgradedView.upgradeSchema();
+				upgradedView.root = "upgraded";
+			});
 
-			upgradedView.revertTo(revision);
-
-			expectSchemaEqual(
-				upgradedView.checkout.storedSchema,
-				originalView.checkout.storedSchema,
+			assert.throws(
+				() => upgradedView.revertTo(revision),
+				validateUsageError("Reverting commits that contain schema changes is not supported."),
 			);
-			expectJsonTree(upgradedView.checkout, [1]);
-			// Reverting also makes the upgraded view require a schema upgrade again.
-			assert.equal(upgradedView.compatibility.isEquivalent, false);
-			assert.equal(upgradedView.compatibility.canView, false);
-			assert.equal(upgradedView.compatibility.canUpgrade, true);
 		});
 
-		it("throws when transmitting a revert across a schema upgrade on a shared branch", () => {
-			// This test verifies current behavior, not necessarily the desired specification.
-			// We will likely make revertTo skip schema changes,
-			// but that requires prerequisite work on rebasing interleaved data and schema changes.
+		it("rejects reverting across a schema upgrade on a shared branch", () => {
 			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
 			const upgradedConfig = new TreeViewConfiguration({
 				schema: [schema.number, schema.string],
@@ -748,22 +776,41 @@ describe("simple-tree tree", () => {
 			assert.equal(viewB.compatibility.isEquivalent, true);
 			assert.equal(viewB.root, "upgraded");
 
-			// The inverse schema change can be applied locally, but cannot be encoded in an op.
 			assert.throws(
 				() => upgradedViewA.revertTo(revision),
-				validateAssertionError("Inverse schema changes should never be transmitted"),
+				validateUsageError("Reverting commits that contain schema changes is not supported."),
 			);
 			provider.synchronizeMessages();
 			assert.equal(viewB.compatibility.isEquivalent, true);
 			assert.equal(viewB.root, "upgraded");
 		});
 
-		it("is a no-op when given the revision of the head commit", () => {
+		it("can revert all data changes back to the most recent schema-changing commit", () => {
+			const originalView = getView(new TreeViewConfiguration({ schema: schema.number }));
+			originalView.initialize(1);
+			const upgradedView = originalView.checkout
+				.fork()
+				.viewWith(new TreeViewConfiguration({ schema: [schema.number, schema.string] }));
+			upgradedView.runTransaction(() => {
+				upgradedView.upgradeSchema();
+				upgradedView.root = "upgraded";
+			});
+			const schemaRevision = upgradedView.branchHistory.getHead()?.revision;
+			assert(schemaRevision !== undefined, "revision should be defined");
+			const upgradedSchema = upgradedView.checkout.storedSchema.clone();
+			upgradedView.root = "edited";
+
+			upgradedView.revertTo(schemaRevision);
+
+			assert.equal(upgradedView.root, "upgraded");
+			expectSchemaEqual(upgradedView.checkout.storedSchema, upgradedSchema);
+		});
+
+		it("is a no-op when given the revision of the head commit, even if it contains schema changes", () => {
 			// Setup
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			view.root = 2;
 			const revision = view.branchHistory.getHead()?.revision;
 			assert(revision !== undefined, "revision should be defined");
 
@@ -771,8 +818,8 @@ describe("simple-tree tree", () => {
 			view.revertTo(revision);
 
 			// Verify
-			assert.equal(view.root, 2);
-			assert.equal(view.branchHistory.length, 2);
+			assert.equal(view.root, 1);
+			assert.equal(view.branchHistory.length, 1);
 		});
 
 		it("produces a commit which can be reverted", () => {
@@ -807,7 +854,21 @@ describe("simple-tree tree", () => {
 			assert.equal(view.branchHistory.length, 5);
 		});
 
-		it("throws when the revision is not on the branch", () => {
+		it("throws when the revision is not on a branch with no schema changes", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			const fork = view.fork();
+			fork.initialize(1);
+			const forkRevision = fork.branchHistory.getHead()?.revision;
+			assert(forkRevision !== undefined, "revision should be defined");
+
+			assert.throws(
+				() => view.revertTo(forkRevision),
+				validateUsageError(/No commit found with revision/),
+			);
+		});
+
+		it("rejects a missing revision as soon as a schema change is encountered", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
@@ -820,7 +881,7 @@ describe("simple-tree tree", () => {
 
 			assert.throws(
 				() => view.revertTo(forkRevision),
-				validateUsageError(/No commit found with revision/),
+				validateUsageError("Reverting commits that contain schema changes is not supported."),
 			);
 		});
 

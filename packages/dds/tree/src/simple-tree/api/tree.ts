@@ -563,6 +563,7 @@ export interface UntypedTreeViewAlpha
 	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to restore the state of.
 	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
 	 * @param options - Optional {@link RevertToOptionsAlpha | options} for the revert.
+	 * @throws (without applying changes) if any commit after the given revision contains a schema change.
 	 *
 	 * @remarks
 	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:

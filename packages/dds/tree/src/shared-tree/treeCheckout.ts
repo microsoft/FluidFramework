@@ -1494,7 +1494,17 @@ export class TreeCheckout implements ITreeCheckout {
 		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
 		const targetCommit = findAncestor(
 			[this.#transaction.activeBranch.getHead(), commitsToUndo],
-			(commit) => commit.revision === revision,
+			(commit) => {
+				if (commit.revision === revision) {
+					return true;
+				}
+				if (hasSchemaChange(commit.change)) {
+					throw new UsageError(
+						"Reverting commits that contain schema changes is not supported.",
+					);
+				}
+				return false;
+			},
 		);
 		if (targetCommit === undefined) {
 			throw new UsageError(`No commit found with revision: ${revisionString}`);
