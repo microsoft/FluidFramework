@@ -37,6 +37,15 @@ describe("Local Server Stress", () => {
 		configurations: {
 			"Fluid.Container.enableOfflineFull": true,
 			"Fluid.ContainerRuntime.EnableRollback": true,
+			"Fluid.ContainerRuntime.SnapshotBasedFullTreeSummary": true,
+		},
+		clientJoinOptions: {
+			clientAddProbability: 0.01,
+			maxNumberOfClients: 6,
+		},
+		summarizeOnDemandOptions: {
+			probability: 0.01,
+			fullTreeProbability: 0.5,
 		},
 		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
 		skipMinimization: true,

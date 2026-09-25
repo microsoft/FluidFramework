@@ -42,6 +42,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
+	loadSummarizerContainerAndMakeSummary,
 	PendingLocalStateStore,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -127,6 +128,14 @@ interface AddClient {
 	type: "addClient";
 	clientTag: `client-${number}`;
 	fromClientTag: `client-${number}` | undefined;
+}
+
+/**
+ * @internal
+ */
+interface SummarizeOnDemand {
+	type: "summarizeOnDemand";
+	fullTree: boolean;
 }
 
 /**
@@ -254,6 +263,21 @@ export interface LocalServerStressOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
+	};
+
+	/**
+	 * Options for generating on-demand summaries during stress.
+	 */
+	summarizeOnDemandOptions?: {
+		/**
+		 * The probability that any generated operation is replaced with an on-demand summary.
+		 */
+		probability: number;
+
+		/**
+		 * The probability that an on-demand summary requests a full-tree summary.
+		 */
+		fullTreeProbability: number;
 	};
 
 	/**
@@ -386,6 +410,7 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 		clientAddProbability: 0.01,
 		maxNumberOfClients: 6,
 	},
+	summarizeOnDemandOptions: undefined,
 	only: [],
 	skip: [],
 	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
@@ -532,6 +557,63 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 		minimizationTransforms,
 		generatorFactory,
 		reducer,
+	};
+}
+
+function mixinSummarizeOnDemand<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | SummarizeOnDemand> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | SummarizeOnDemand,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (
+			state: LocalServerStressState,
+		): Promise<TOperation | SummarizeOnDemand | typeof done> => {
+			const summarizeOptions = options.summarizeOnDemandOptions;
+			if (
+				summarizeOptions !== undefined &&
+				state.validationClient.container.attachState !== AttachState.Detached &&
+				state.random.bool(summarizeOptions.probability)
+			) {
+				return {
+					type: "summarizeOnDemand",
+					fullTree: state.random.bool(summarizeOptions.fullTreeProbability),
+				};
+			}
+			return baseGenerator(state);
+		};
+	};
+
+	const reducer: AsyncReducer<TOperation | SummarizeOnDemand, LocalServerStressState> = async (
+		state,
+		operation,
+	) => {
+		if (isOperationType<SummarizeOnDemand>("summarizeOnDemand", operation)) {
+			const url = await state.validationClient.container.getAbsoluteUrl("");
+			assert(url !== undefined, "url of container must be available");
+			await createOnDemandSummary(
+				state.localDeltaConnectionServer,
+				state.codeLoader,
+				url,
+				state.seed,
+				options,
+				operation.fullTree,
+			);
+			return state;
+		}
+		return model.reducer(state, operation);
+	};
+
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+		minimizationTransforms: model.minimizationTransforms as
+			| MinimizationTransform<TOperation | SummarizeOnDemand>[]
+			| undefined,
 	};
 }
 
@@ -914,6 +996,37 @@ async function loadClient(
 		tag,
 		entryPoint: maybe.DefaultStressDataObject,
 	};
+}
+
+async function createOnDemandSummary(
+	localDeltaConnectionServer: ILocalDeltaConnectionServer,
+	codeLoader: ICodeDetailsLoader,
+	url: string,
+	seed: number,
+	options: LocalServerStressOptions,
+	fullTree: boolean,
+): Promise<void> {
+	const result = await loadSummarizerContainerAndMakeSummary({
+		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
+		request: { url },
+		urlResolver: new LocalResolver(),
+		codeLoader,
+		logger: createStressLogger(seed),
+		configProvider: {
+			getRawConfig: (name): ConfigTypes | undefined =>
+				name === "Fluid.Summarizer.FullTree.OnDemand"
+					? fullTree
+					: options.configurations?.[name],
+		},
+	});
+	if (!result.success) {
+		throw result.error;
+	}
+
+	assert(
+		result.summaryResults.summaryInfo.handle !== undefined,
+		"On-demand summary must provide a version",
+	);
 }
 
 async function synchronizeClients(connectedClients: Client[]): Promise<void> {
@@ -1411,12 +1524,16 @@ const getFullModel = <TOperation extends BaseOperation>(
 	| RemoveClient
 	| Attach
 	| Synchronize
+	| SummarizeOnDemand
 	| ChangeConnectionState
 > =>
 	mixinAttach(
 		mixinSynchronization(
-			mixinAddRemoveClient(
-				mixinClientSelection(mixinReconnect(ddsModel, options), options),
+			mixinSummarizeOnDemand(
+				mixinAddRemoveClient(
+					mixinClientSelection(mixinReconnect(ddsModel, options), options),
+					options,
+				),
 				options,
 			),
 			options,
