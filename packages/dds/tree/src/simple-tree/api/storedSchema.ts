@@ -76,9 +76,8 @@ export function extractPersistedSchema(
  *
  * @remarks
  * Viewing checks compare the view schema with the decoded stored schema.
- * Upgrade checks compare the decoded stored schema with the proposed stored schema generated from `view` using the default restrictive staged upgrade policy.
- * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
- * This function does not accept a staged upgrade policy or inspect document content.
+ * Upgrade checks compare the decoded stored schema with the "proposed" stored schema generated from `view` using the default restrictive staged upgrade policy.
+ * This function does not accept a staged upgrade policy, nor does it inspect document content.
  *
  * This compares schema constraints available in the persisted format.
  * Metadata and descriptions do not affect compatibility.
