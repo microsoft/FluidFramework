@@ -21,14 +21,12 @@ import type { TreeSchema } from "../treeSchema.js";
  * @remarks
  * See {@link incrementalEncodingPolicyForAllowedTypes} for more details.
  *
- * Use {@link SchemaStaticsBeta.types} to add this metadata to allowed types in a schema.
+ * Use {@link SchemaStaticsBeta.incrementalSummary} to mark an incremental-summary boundary.
  * @example
  * ```typescript
- * const sf = new SchemaFactoryAlpha("IncrementalSummarization");
- * class Foo extends sf.objectAlpha("foo", {
- *   bar: sf.types([{ type: sf.string, metadata: {} }], {
- *     custom: { [incrementalSummaryHint]: true },
- *   }),
+ * const sf = new SchemaFactoryBeta("IncrementalSummarization");
+ * class Foo extends sf.object("foo", {
+ *   bar: sf.incrementalSummary(sf.string),
  * }) {}
  * ```
  * @alpha
