@@ -616,9 +616,20 @@ describe("loadContainerToSequenceNumber", () => {
 				const opHandlerCall = onSpy.getCalls().find((call) => call.args[0] === "op");
 				assert(opHandlerCall !== undefined, "the replay op listener should be registered");
 				const replayOpHandler = opHandlerCall.args[1] as () => void;
+				const disposedHandlerCall = onSpy
+					.getCalls()
+					.find((call) => call.args[0] === "disposed");
+				assert(
+					disposedHandlerCall !== undefined,
+					"the replay disposed listener should be registered",
+				);
+				const replayDisposedHandler = disposedHandlerCall.args[1] as (
+					error?: ICriticalContainerError,
+				) => void;
 
 				replayOpHandler();
 				container.close(expectedError);
+				replayDisposedHandler();
 			});
 			assertContainerInteractions = (): void => {
 				assert.equal(connectStub.callCount, 1, "the replay should attempt to connect once");
@@ -628,6 +639,71 @@ describe("loadContainerToSequenceNumber", () => {
 					"a container closed after replay resolution should not be disconnected",
 				);
 				assert(disposeSpy.calledOnceWithExactly(expectedError));
+			};
+			return container;
+		});
+
+		try {
+			await assert.rejects(
+				loadContainerToSequenceNumber({
+					codeLoader: createTestCodeLoaderProxy({
+						runtimeWithout_setConnectionStatus: true,
+					}),
+					urlResolver,
+					documentServiceFactory: makeCapableFactory(async () => service),
+					request: { url: resolvedUrl.url },
+					loadToSequenceNumber: 1,
+				}),
+				(error: unknown) => error === expectedError,
+			);
+
+			assert(
+				assertContainerInteractions !== undefined,
+				"the point-in-time container should be instrumented",
+			);
+			assertContainerInteractions();
+		} finally {
+			sandbox.restore();
+		}
+	});
+
+	it("cleans up when connecting for replay throws synchronously", async () => {
+		const service = makeSnapshotService(await createSnapshot(0));
+		const expectedError = new GenericError(
+			"simulated synchronous connect failure",
+		) as ICriticalContainerError;
+		const sandbox = createSandbox();
+		const loadContainer = Container.load.bind(Container);
+		let assertContainerInteractions: (() => void) | undefined;
+		sandbox.stub(Container, "load").callsFake(async (loadProps, createProps) => {
+			const container = await loadContainer(loadProps, createProps);
+			const disposeSpy = sandbox.spy(container, "dispose");
+			const onSpy = sandbox.spy(container, "on");
+			const offSpy = sandbox.spy(container, "off");
+			const connectStub = sandbox.stub(container, "connect").throws(expectedError);
+			assertContainerInteractions = (): void => {
+				assert.equal(connectStub.callCount, 1, "the replay should attempt to connect once");
+				assert(disposeSpy.calledOnceWithExactly(expectedError));
+				assert.equal(
+					offSpy.getCalls().filter((call) => call.args[0] === "op").length,
+					1,
+					"the replay op listener should be removed once",
+				);
+				for (const eventName of ["closed", "disposed"] as const) {
+					const registeredListeners = onSpy
+						.getCalls()
+						.filter((call) => call.args[0] === eventName)
+						.map((call) => call.args[1]);
+					const removedListeners = offSpy
+						.getCalls()
+						.filter((call) => call.args[0] === eventName)
+						.map((call) => call.args[1]);
+					assert.deepEqual(
+						removedListeners,
+						registeredListeners,
+						`all ${eventName} listeners should be removed after connect fails`,
+					);
+				}
 			};
 			return container;
 		});

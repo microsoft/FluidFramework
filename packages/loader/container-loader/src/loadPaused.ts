@@ -72,7 +72,7 @@ export async function loadContainerPaused(
 	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
 	let setupContainerUnavailableError: ICriticalContainerError | undefined;
 	const captureSetupContainerUnavailableError = (error?: ICriticalContainerError): void => {
-		setupContainerUnavailableError = error;
+		setupContainerUnavailableError ??= error;
 	};
 	container.on("closed", captureSetupContainerUnavailableError);
 	container.on("disposed", captureSetupContainerUnavailableError);
@@ -148,7 +148,7 @@ export async function loadContainerPaused(
 				}),
 			);
 		onContainerUnavailable = (error?: ICriticalContainerError): void => {
-			replayContainerUnavailableError = normalizeError(
+			replayContainerUnavailableError ??= normalizeError(
 				error ??
 					new GenericError(
 						"Container closed or disposed without error while the paused load was waiting for ops.",
@@ -186,12 +186,15 @@ export async function loadContainerPaused(
 	// Thus, we have to ensure we connect to delta storage in order to make forward progress with ops.
 	// We also instructed not to fetch / apply any ops from storage above (to be able to install callback above before ops are processed),
 	// connect() call will fetch ops as needed.
-	if (signal?.aborted !== true) {
-		container.connect();
-	}
+	const connectAndWait = async (): Promise<void> => {
+		if (signal?.aborted !== true && !container.closed) {
+			container.connect();
+		}
+		await promise;
+	};
 
 	// Wait for the ops to be processed.
-	await promise
+	await connectAndWait()
 		.catch((error: unknown) => {
 			const normalizedError = normalizeError(error);
 			// The container was loaded from its base snapshot before replay began. Attach that known
