@@ -1,0 +1,196 @@
+# ============================================================================
+# Self-host Fluid — FULL Routerlicious with the Kafka + ZooKeeper broker
+# replaced by a single REDPANDA service. amd64 variant.
+#
+# Builds the Fluid images FROM SOURCE (the FluidFramework repo) so the images
+# match the selected source revision and this compose. The published images
+# evaluated during this project did not match the separate `nexus` topology and
+# `/healthz/startup` route used here, so this reference path builds from source.
+#
+# The helper ./scripts/run-local.* fetches the FluidFramework source from GitHub
+# (a shallow clone into ./.fluidframework) and builds. To reuse an existing
+# checkout, set FLUID_REPO_DIR to its repo root.
+#
+# This file targets amd64 hosts (uses the stock upstream Dockerfile, whose base
+# image is amd64). On arm64 use docker-compose.redpanda.arm64.yml, which patches
+# the Dockerfiles for native arm64.
+#
+# Run via the helper (recommended, handles the clone):
+#     ./scripts/run-local.ps1        (Windows / PowerShell)
+#     ./scripts/run-local.sh         (macOS / Linux)
+#
+# What differs from the stock full stack (ZERO application code changes):
+#   * kafka (wurstmeister) + zookeeper  ->  ONE redpanda service, aliased "kafka"
+#     so the baked `kafka:9092` config resolves to it (Kafka wire-compatible).
+#   * The optional ZooKeeper endpoint is blanked (`zookeeper__endpoint=`).
+#   * redpanda `--mode=dev-container` auto-creates the delta topics on demand.
+# ============================================================================
+name: selfhost-fluid-redpanda
+
+# Shared build config for the routerlicious-based microservices: they all build the
+# same image from the FluidFramework checkout and differ only by their run command.
+x-r11s-build: &r11s-build
+  context: ${FLUID_REPO_DIR:-.fluidframework}/server/routerlicious
+  dockerfile: Dockerfile
+  target: runner
+  additional_contexts:
+    root: ${FLUID_REPO_DIR:-.fluidframework}
+
+x-fluid-env: &fluid-env
+  - DEBUG=fluid:*
+  - NODE_ENV=development
+  - IS_FLUID_SERVER=true
+  # Blank the optional ZooKeeper endpoint so the rdkafka path skips ZK entirely.
+  - zookeeper__endpoint=
+
+services:
+  proxy:
+    image: nginx:latest
+    depends_on:
+      alfred:
+        condition: service_healthy
+      historian:
+        condition: service_healthy
+      nexus:
+        condition: service_healthy
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "3003:3003"
+      - "3002:3002"
+      - "3001:3001"
+
+  alfred:
+    build: *r11s-build
+    expose:
+      - "3000"
+    command: node packages/routerlicious/dist/alfred/www.js
+    environment: *fluid-env
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  nexus:
+    build: *r11s-build
+    expose:
+      - "3000"
+    command: node packages/routerlicious/dist/nexus/www.js
+    environment: *fluid-env
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/ping", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  deli:
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
+    environment: *fluid-env
+    restart: always
+
+  scriptorium:
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
+    environment: *fluid-env
+    restart: always
+
+  copier:
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js copier /usr/src/server/packages/routerlicious/dist/copier/index.js
+    environment: *fluid-env
+    restart: always
+
+  scribe:
+    build: *r11s-build
+    command: node packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
+    environment: *fluid-env
+    restart: always
+
+  riddler:
+    build: *r11s-build
+    ports:
+      - "5000:5000"
+    command: node packages/routerlicious/dist/riddler/www.js
+    environment: *fluid-env
+    restart: always
+
+  historian:
+    build:
+      context: ${FLUID_REPO_DIR:-.fluidframework}/server/historian
+      dockerfile: Dockerfile
+      target: runner
+      additional_contexts:
+        root: ${FLUID_REPO_DIR:-.fluidframework}
+    expose:
+      - "3000"
+    environment: *fluid-env
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/healthz/startup", "--max-time", "3"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  gitrest:
+    build:
+      context: ${FLUID_REPO_DIR:-.fluidframework}/server/gitrest
+      dockerfile: Dockerfile
+      target: runner
+      additional_contexts:
+        root: ${FLUID_REPO_DIR:-.fluidframework}
+    environment: *fluid-env
+    volumes:
+      - git:/home/node/documents
+    restart: always
+
+  git:
+    build:
+      context: ${FLUID_REPO_DIR:-.fluidframework}/server/gitssh
+    ports:
+      - "3022:22"
+    volumes:
+      - git:/home/git
+    restart: always
+
+  # Redpanda replaces BOTH kafka and zookeeper. Aliased as "kafka" so the baked
+  # `kafka:9092` config resolves here; dev-container mode auto-creates topics.
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://kafka:9092
+      - --smp=1
+      - --memory=1G
+      - --mode=dev-container
+    ports:
+      - "9092:9092"
+      - "9644:9644"
+    networks:
+      default:
+        aliases:
+          - kafka
+    restart: always
+
+  redis:
+    image: "redis:alpine"
+
+  mongodb:
+    # Historical validation pin only; select and retest a supported version for production.
+    image: "mongo:4"
+    volumes:
+      - mongodata:/data/db
+
+volumes:
+  git:
+    driver: local
+  mongodata:
+    driver: local

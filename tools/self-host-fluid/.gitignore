@@ -1,0 +1,20 @@
+# Local environment / secrets — never commit
+.env
+*.local
+
+# Node
+node_modules/
+
+# Fetched FluidFramework source
+.fluidframework/
+
+# Logs
+*.log
+
+# Local data / build output
+data/
+dist/
+
+# OS junk
+.DS_Store
+Thumbs.db
