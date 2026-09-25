@@ -27,10 +27,9 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * (described by `viewWhichCreatedStoredSchema.schema`).
  *
  * @remarks
- * See {@link SchemaCompatibilityStatus} for details on the compatibility results.
- *
  * Schema metadata does not affect compatibility.
- * This function does not inspect document content and does not report `canInitialize`.
+ *
+ * This function does not inspect document content.
  *
  * @example Checking the ability of the current view schema to view or upgrade an existing stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
@@ -74,7 +73,8 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * @param view - Configuration with the current view schema.
  * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  *
- * @returns The {@link SchemaCompatibilityStatus} for these schema (omitting `canInitialize`).
+ * @returns The ability of `view.schema` to view and/or upgrade an existing stored schema
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema, without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
