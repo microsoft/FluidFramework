@@ -721,7 +721,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
-	 * staged schema upgrades matching the configured policy are included in the proposed stored schema.
+	 * staged schema upgrades matching the configured policy are included in the derived stored schema.
 	 * Set {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `true` to
 	 * also include staged upgrades that are already enabled in the document.
 	 *
@@ -796,12 +796,12 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
- * A discrepancy that prevents read-write access through a view schema under the document's existing stored schema.
+ * A discrepancy that prevents a view schema from providing read/write access to a tree, based on that tree's existing stored schema.
  *
  * @remarks
  * The `mismatch` property discriminates the different discrepancy shapes.
  * These entries explain {@link SchemaCompatibilityStatus.canView}, not whether the stored schema can be upgraded.
- * They compare schema constraints, not the document's current content nor the proposed stored schema generated for an upgrade.
+ * They compare schema constraints, not the document's current content nor the resulting stored schema generated for an upgrade.
  * Staging annotations can provide context within an entry without themselves preventing access.
  *
  * @sealed @beta
@@ -923,16 +923,19 @@ export type SchemaDiscrepancy =
  */
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
 	/**
-	 * Schema differences that prevent read-write access through this view under the document's existing stored schema.
+	 * Differences that prevent a view schema from providing read/write access to a tree, based on that tree's stored schema.
 	 *
 	 * @remarks
-	 * This property is undefined when {@link SchemaCompatibilityStatus.canView} is true and present
+	 * This property is `undefined` when {@link SchemaCompatibilityStatus.canView} is true and present
 	 * when `canView` is false.
 	 * When present, the list is nonempty and explains why accessing {@link TreeView.root} throws.
-	 * It does not report all schema differences or failures of {@link SchemaCompatibilityStatus.canUpgrade} or {@link SchemaCompatibilityStatus.isEquivalent}.
-	 * Those checks also compare the existing stored schema with a proposed stored schema generated using the configured staged upgrade policy.
-	 * Entries can include non-blocking staging context alongside the constraint that prevents viewing.
-	 * It can include application-defined schema identifiers and field keys.
+	 *
+	 * It does not report all schema differences nor discrepancies that would prevent
+	 * {@link SchemaCompatibilityStatus.canUpgrade} or {@link SchemaCompatibilityStatus.isEquivalent}.
+	 *
+	 * Entries may include non-blocking staging context in addition to the constraint that prevents viewing.
+	 *
+	 * This data may include application-defined schema identifiers and field keys.
 	 *
 	 * @example Interpreting an allowed-types discrepancy
 	 *
@@ -1041,18 +1044,22 @@ export interface TreeViewAlpha<
 export interface SchemaCompatibilityStatus {
 	/**
 	 * Whether the view schema would generate an equivalent stored schema to the existing one.
-	 * That is, both stored schema allow the same subset of documents.
+	 * That is, whether both the existing stored schema and the stored schema derived
+	 * from the view allow the same subset of documents.
 	 *
 	 * @remarks
-	 * The proposed stored schema is generated from the view schema and the configured {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy},
-	 * as described by {@link SchemaCompatibilityStatus.canUpgrade}.
-	 * Staged changes are included according to that policy, rather than always being excluded.
 	 *
 	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and proposed stored schemas each satisfy the schema upgrade rules relative to the other.
 	 * Thus, a `true` value also implies that {@link SchemaCompatibilityStatus.canUpgrade} is true.
 	 *
 	 * Equivalence does not require the schemas to be identical.
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
+	 *
+	 * This check compares the existing stored schema with the stored schema that would
+	 * be generated from the current view schema with its corresponding configuration.
+	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
+	 * This policy determines which staged changes are included, including whether to
+	 * retain upgrades already enabled in the document.
 	 *
 	 * Allowing unknown optional fields through {@link ObjectSchemaOptions.allowUnknownOptionalFields} can permit viewing without equivalence:
 	 * fields present in the stored schema but absent from the proposed stored schema can still prevent equivalence.
@@ -1066,7 +1073,7 @@ export interface SchemaCompatibilityStatus {
 	readonly isEquivalent: boolean;
 
 	/**
-	 * Whether the view schema can provide read-write access to the document under its existing stored schema.
+	 * Whether the view schema can provide read/write access to a tree, based on the tree's existing stored schema.
 	 *
 	 * @remarks
 	 * If false, accessing {@link TreeView.root} throws.
@@ -1098,19 +1105,21 @@ export interface SchemaCompatibilityStatus {
 	readonly canView: boolean;
 
 	/**
-	 * Whether the document's stored schema can be upgraded to the stored schema generated from this view's configuration.
+	 * Whether the document's stored schema can be upgraded to be compatible with the view schema.
+	 * That is, whether the existing stored schema can be modified to allow all documents permitted by the view schema while adhering to the schema upgrade rules.
 	 *
 	 * @remarks
 	 * If false, calling {@link TreeView.upgradeSchema} throws a `UsageError`.
 	 *
-	 * The proposed stored schema is generated from the view schema and the configured {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
-	 * The policy determines which staged changes are included, including whether to retain upgrades already enabled in the document.
-	 * This check compares the existing and proposed stored schemas, not the view schema directly and not the document's current content.
-	 * It is true when the proposed stored schema preserves support for all content allowed by the existing stored schema and satisfies the schema upgrade rules.
-	 *
 	 * When true, it is valid to call {@link TreeView.upgradeSchema}.
 	 * This does not mean that an upgrade is needed or that the call will change the stored schema.
 	 * It also does not imply that {@link SchemaCompatibilityStatus.canView} is already true or that other clients can view the document after the upgrade.
+	 *
+	 * This check compares the existing stored schema with the stored schema that would
+	 * be generated from the current view schema with its corresponding configuration.
+	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
+	 * This policy determines which staged changes are included, including whether to
+	 * retain upgrades already enabled in the document.
 	 *
 	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
 	 * the schema upgrade (assuming no other changes are included) will allow the previous version to view.
@@ -1127,7 +1136,7 @@ export interface SchemaCompatibilityStatus {
 	 * If false, calling {@link TreeView.initialize} throws a `UsageError`.
 	 *
 	 * This checks only the document's state, independently of the view schema and staged upgrade policy.
-	 * An initialized document with no tree content is not uninitialized if it still has stored schema.
+	 * An initialized document with no tree content is considered initialized if it has stored schema.
 	 *
 	 * When true, you can call {@link TreeView.initialize} to set the initial stored schema and content.
 	 * The initial stored schema is generated from the view's configuration, including its staged upgrade policy.
