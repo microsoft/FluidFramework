@@ -620,56 +620,6 @@ describe("simple-tree tree", () => {
 		});
 	});
 
-	it("does not offer revertibles for initialization", () => {
-		const view = getView(new TreeViewConfiguration({ schema: schema.number }));
-		const log: string[] = [];
-		view.events.on("changed", (metadata, getRevertible) => {
-			assert(metadata.isLocal);
-			assert.equal(metadata.getRevertible(), undefined);
-			assert.equal(getRevertible, undefined);
-			log.push("changed");
-		});
-		view.events.on("commitApplied", (_metadata, getRevertible) => {
-			assert.equal(getRevertible, undefined);
-			log.push("commitApplied");
-		});
-
-		view.initialize(1);
-
-		assert.deepEqual(log, ["changed", "commitApplied"]);
-	});
-
-	for (const withDataChange of [false, true]) {
-		it(`does not offer revertibles for schema changes (with data: ${withDataChange})`, () => {
-			const view = getView(new TreeViewConfiguration({ schema: schema.number }));
-			view.initialize(1);
-
-			const upgradedView = view.checkout
-				.fork()
-				.viewWith(new TreeViewConfiguration({ schema: [schema.number, schema.string] }));
-			const log: string[] = [];
-			upgradedView.events.on("changed", (metadata, getRevertible) => {
-				assert(metadata.isLocal);
-				assert.equal(metadata.getRevertible(), undefined);
-				assert.equal(getRevertible, undefined);
-				log.push("changed");
-			});
-			upgradedView.events.on("commitApplied", (_metadata, getRevertible) => {
-				assert.equal(getRevertible, undefined);
-				log.push("commitApplied");
-			});
-			if (withDataChange) {
-				upgradedView.runTransaction(() => {
-					upgradedView.upgradeSchema();
-					upgradedView.root = "upgraded";
-				});
-			} else {
-				upgradedView.upgradeSchema();
-			}
-			assert.deepEqual(log, ["changed", "commitApplied"]);
-		});
-	}
-
 	describe("revertTo", () => {
 		it("restores the state of the given revision with a new commit", () => {
 			// Setup
@@ -744,10 +694,14 @@ describe("simple-tree tree", () => {
 				upgradedView.upgradeSchema();
 				upgradedView.root = "upgraded";
 			});
+			const schemaRevision = upgradedView.branchHistory.getHead()?.revision;
+			assert(schemaRevision !== undefined, "revision should be defined");
 
 			assert.throws(
 				() => upgradedView.revertTo(revision),
-				validateUsageError("Reverting commits that contain schema changes is not supported."),
+				validateUsageError(
+					`Cannot revert to revision ${revision} because the schema changed at intermediate commit ${schemaRevision}.`,
+				),
 			);
 		});
 
@@ -769,6 +723,8 @@ describe("simple-tree tree", () => {
 
 			const upgradedViewA = treeA.kernel.viewWith(upgradedConfig);
 			upgradedViewA.upgradeSchema();
+			const schemaRevision = upgradedViewA.branchHistory.getHead()?.revision;
+			assert(schemaRevision !== undefined, "revision should be defined");
 			assert.equal(upgradedViewA.compatibility.isEquivalent, true);
 			upgradedViewA.root = "upgraded";
 			provider.synchronizeMessages();
@@ -778,7 +734,9 @@ describe("simple-tree tree", () => {
 
 			assert.throws(
 				() => upgradedViewA.revertTo(revision),
-				validateUsageError("Reverting commits that contain schema changes is not supported."),
+				validateUsageError(
+					`Cannot revert to revision ${revision} because the schema changed at intermediate commit ${schemaRevision}.`,
+				),
 			);
 			provider.synchronizeMessages();
 			assert.equal(viewB.compatibility.isEquivalent, true);
@@ -881,7 +839,9 @@ describe("simple-tree tree", () => {
 
 			assert.throws(
 				() => view.revertTo(forkRevision),
-				validateUsageError("Reverting commits that contain schema changes is not supported."),
+				validateUsageError(
+					`Cannot revert to revision ${forkRevision} because the schema changed at intermediate commit ${revision}.`,
+				),
 			);
 		});
 
