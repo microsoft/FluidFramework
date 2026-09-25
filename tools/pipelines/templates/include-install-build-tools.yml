@@ -43,15 +43,19 @@ steps:
           pnpmStorePath: ${{ parameters.pnpmStorePath }}
           enableCache: false
 
+    - template: /tools/pipelines/templates/include-install.yml@self
+      parameters:
+        buildDirectory: $(FluidFrameworkDirectory)/build-tools
+        installPnpm: false
+
     - task: Bash@3
       name: InstallBuildTools
-      displayName: Install Fluid Build Tools (from repo)
+      displayName: Build and link Fluid Build Tools (from repo)
       inputs:
         targetType: 'inline'
         workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/build-tools
         script: |
           set -eu -o pipefail
-          pnpm i --frozen-lockfile
           pnpm build:compile
           cd packages/build-cli
           # Use npm link instead of pnpm link because it handles bins better
