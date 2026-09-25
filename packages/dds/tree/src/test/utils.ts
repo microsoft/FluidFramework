@@ -979,7 +979,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
 export function makeTreeFromJson(
 	json: JsonCompatible,
 	optionalRoot = false,
-	minVersionForCollab?: OldestSupportedClientVersion,
+	minVersionForCollab: OldestSupportedClientVersion = FluidClientVersion.v2_0,
 ): ITreeCheckout {
 	return checkoutWithContent(
 		{
