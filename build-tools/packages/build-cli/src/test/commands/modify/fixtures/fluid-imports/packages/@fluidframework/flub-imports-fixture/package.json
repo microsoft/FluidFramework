@@ -1,0 +1,38 @@
+{
+	"name": "@fluidframework/flub-imports-fixture",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Test package with Fluid API compatibility entry points.",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-cli/src/test/commands/modify/fixtures/fluid-imports/packages/@fluidframework/flub-imports-fixture"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./index.d.ts"
+		},
+		"./beta": {
+			"types": "./flub-beta.d.ts"
+		},
+		"./alpha": {
+			"types": "./flub-alpha.d.ts"
+		},
+		"./legacy": {
+			"types": "./flub-legacy.d.ts"
+		},
+		"./legacy/beta": {
+			"types": "./flub-legacy-beta.d.ts"
+		},
+		"./legacy/alpha": {
+			"types": "./flub-legacy-alpha.d.ts"
+		},
+		"./internal": {
+			"types": "./flub-internal.d.ts"
+		}
+	}
+}
