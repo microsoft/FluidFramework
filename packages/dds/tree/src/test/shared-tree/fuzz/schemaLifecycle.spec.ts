@@ -124,6 +124,25 @@ describe("Fuzz schema lifecycle", () => {
 	});
 
 	scenario(
+		"fork views refresh from their own stored schema without losing their history",
+		(state) => {
+			applyForkMergeOperation(state, {
+				type: "forkMergeOperation",
+				contents: { type: "fork", branchNumber: undefined },
+			});
+			const fork = viewFromState(state, state.client, 0);
+			fork.checkout.updateSchema(
+				toInitialSchema(createTreeViewSchema(generateLeafNodeSchemas(["forkUpgrade"]))),
+			);
+			const head = fork.branchHistory.getHead()?.revision;
+			const refreshed = viewFromState(state, state.client, 0);
+			assert.equal(refreshed.compatibility.isEquivalent, true);
+			assert.equal(refreshed.branchHistory.getHead()?.revision, head);
+			assert.equal(viewFromState(state).compatibility.isEquivalent, true);
+		},
+	);
+
+	scenario(
 		"fork edits use the selected fork's schema rather than the client's schema",
 		(state) => {
 			applyForkMergeOperation(state, {
@@ -131,7 +150,10 @@ describe("Fuzz schema lifecycle", () => {
 				contents: { type: "fork", branchNumber: undefined },
 			});
 			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
-			const generate = makeTreeEditGenerator({ set: 1 });
+			const generate = makeTreeEditGenerator({
+				set: 1,
+				fieldSelection: { optional: 1, required: 1, sequence: 0, recurse: 1 },
+			});
 			let forkEdits = 0;
 			for (let i = 0; i < 100; i++) {
 				const operation = generate(state);

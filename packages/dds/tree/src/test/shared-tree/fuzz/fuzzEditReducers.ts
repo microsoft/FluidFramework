@@ -133,12 +133,19 @@ export function applySynchronizationOp(
 export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 	const builder = new SchemaFactory("treeFuzz");
 	const leafNodeSchemas = [];
-	for (const nodeType of nodeTypes) {
+	for (const nodeType of new Set(
+		nodeTypes.map((type) =>
+			type.startsWith("treeFuzz.") || type.startsWith("com.fluidframework.leaf.")
+				? type
+				: `treeFuzz.${type}`,
+		),
+	)) {
 		if (
 			nodeType !== "treeFuzz.node" &&
 			nodeType !== "treeFuzz.FuzzStringNode" &&
 			nodeType !== "treeFuzz.FuzzNumberNode" &&
-			nodeType !== "treeFuzz.FuzzHandleNode"
+			nodeType !== "treeFuzz.FuzzHandleNode" &&
+			!nodeType.startsWith("com.fluidframework.leaf.")
 		) {
 			const fuzzNodeTypePrefix = "treeFuzz.";
 			const nodeIdentifier = nodeType.startsWith(fuzzNodeTypePrefix)
@@ -174,6 +181,11 @@ export function generateLeafNodeSchemas2(nodeTypes: string[]): TreeNodeSchema[] 
 	return leafNodeSchemas;
 }
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): void {
+	const view = viewFromState(state, state.client);
+	assert(
+		view.checkout.isSharedBranch && view.checkout.transaction.size === 0,
+		"Schema operations require a root view without a pending transaction",
+	);
 	const nodeTypes = getAllowableNodeTypes(state);
 	nodeTypes.push(operation.contents.type);
 	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
@@ -181,21 +193,20 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): vo
 
 	// Because we need the view for a schema change, and we can only have one view at a time,
 	// we must dispose of the client's view early.
-	const view = viewFromState(state, state.client);
 	view.dispose();
-	state.transactionViews?.delete(state.client.channel);
+	state.clientViews?.delete(state.client.channel);
 
-	const newView = state.client.channel.viewWith(
+	const newView = state.client.channel.kernel.checkout.viewWith(
 		new TreeViewConfiguration({ schema: newSchema }),
-	) as FuzzTransactionView;
+	);
 	newView.upgradeSchema();
 
-	newView.currentSchema =
-		nodeSchemaFromTreeSchema(newSchema) ?? assert.fail("nodeSchema should not be undefined.");
-
-	const transactionViews = state.transactionViews ?? new Map();
-	transactionViews.set(state.client.channel, newView);
-	state.transactionViews = transactionViews;
+	convertToFuzzView(
+		newView,
+		nodeSchemaFromTreeSchema(newSchema) ?? assert.fail("nodeSchema should not be undefined."),
+	);
+	assert(state.clientViews !== undefined);
+	state.clientViews.set(state.client.channel, newView);
 }
 
 export function applyForkMergeOperation(
