@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import type { requireAssignableTo } from "@fluidframework/build-tools";
 import { AttachState, type IAudience } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
@@ -28,6 +29,7 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
+	IFluidDataStoreRuntimeInternalConfig,
 	IDeltaManagerErased,
 } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -113,6 +115,16 @@ import {
 } from "./localChannelContext.js";
 import { pkgVersion } from "./packageVersion.js";
 import { RemoteChannelContext } from "./remoteChannelContext.js";
+
+// Keep this check in the source module: declaration emit erases private member types.
+// The interface is optional for layer compatibility, but this implementation provides every config.
+declare type _checkInternalConfig = requireAssignableTo<
+	{
+		submitMessagesWithoutEncodingHandles: FluidDataStoreRuntime["submitMessagesWithoutEncodingHandles"];
+		minVersionForCollab: FluidDataStoreRuntime["minVersionForCollab"];
+	},
+	Required<IFluidDataStoreRuntimeInternalConfig>
+>;
 
 type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T, K> &
 	Required<Pick<T, K>>;
@@ -380,16 +392,15 @@ export class FluidDataStoreRuntime
 	 *
 	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
 	 * and we keep this property as private, but consumers may optimistically cast
-	 * to the internal interface to access this property.
+	 * to the internal interface to access this property. _checkInternalConfig checks its type.
 	 */
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
 	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 *
-	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
-	 * and we keep this property as private, but consumers may optimistically cast
-	 * to the internal interface to access this property.
+	 * This class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig.
+	 * _checkInternalConfig checks the properties accessed through that interface.
 	 */
 	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
