@@ -23,8 +23,8 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
- * Reports the ability of `view.schema` to view and/or upgrade an existing stored schema
- * (described by `viewWhichCreatedStoredSchema.schema`).
+ * Reports the ability of a "current" view configuration to view and/or upgrade an existing stored schema
+ * (described by `existingView.schema`).
  *
  * @remarks
  * Schema metadata does not affect compatibility.
@@ -68,9 +68,9 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - Configuration whose `schema` was used to generate the existing stored schema.
+ * @param existingView - Configuration whose `schema` was used to generate the existing stored schema.
  * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
- * @param view - Configuration with the current view schema.
+ * @param currentView - Configuration with the current view schema.
  * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  *
  * @returns The ability of `view.schema` to view and/or upgrade an existing stored schema
@@ -82,11 +82,11 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * @alpha
  */
 export function checkCompatibility(
-	viewWhichCreatedStoredSchema: TreeViewConfiguration,
-	view: TreeViewConfiguration,
+	existingView: TreeViewConfiguration,
+	currentView: TreeViewConfiguration,
 ): SchemaComparisonStatusAlpha {
-	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
-	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
+	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: currentView.schema });
+	const stored = toInitialSchema(existingView.schema);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 

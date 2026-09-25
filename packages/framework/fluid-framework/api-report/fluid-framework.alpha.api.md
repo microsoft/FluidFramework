@@ -186,7 +186,7 @@ export enum AttachState {
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
-export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): SchemaComparisonStatusAlpha;
+export function checkCompatibility(existingView: TreeViewConfiguration, currentView: TreeViewConfiguration): SchemaComparisonStatusAlpha;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
