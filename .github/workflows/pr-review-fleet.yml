@@ -30,7 +30,6 @@ on:
           - "1"
           - "3"
           - "5"
-          - "6"
         default: "3"
       reviewers:
         description: "JSON array of reviewer names (overrides reviewer_count when provided, e.g. [\"correctness\",\"security\"])"
@@ -109,7 +108,7 @@ jobs:
 
           # If an explicit reviewer list was provided (e.g. from the confirm workflow
           # after the user toggled checkboxes), use it directly. Otherwise fall back
-          # to taking the first REVIEWER_COUNT entries from the complete reviewer list.
+          # to taking the first REVIEWER_COUNT entries from the priority-ordered list.
           # `jq -c` is required: pretty-printed (multi-line) JSON written via plain
           # `echo key=value >> $GITHUB_OUTPUT` truncates at the first newline,
           # which would silently break `fromJson(needs.setup.outputs.reviewers)`.
@@ -117,7 +116,7 @@ jobs:
             REVIEWERS=$(echo "$INPUT_REVIEWERS" | jq -c .)
             REVIEWER_COUNT=$(echo "$REVIEWERS" | jq 'length')
           else
-            ALL='["correctness","security","api-compatibility","performance","testing","documentation"]'
+            ALL='["correctness","security","api-compatibility","performance","testing"]'
             REVIEWERS=$(echo "$ALL" | jq -c --argjson n "$REVIEWER_COUNT" '.[:$n]')
           fi
 
