@@ -23,22 +23,22 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
- * Reports the ability of a "current" view configuration to view and/or upgrade an existing stored schema
- * (described by `existingView.schema`).
+ * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
+ * (described by `documentViewConfiguration.schema`).
  *
  * @remarks
  * Schema metadata does not affect compatibility.
  *
  * This function does not inspect document content.
  *
- * @example Checking the ability of the current view schema to view or upgrade an existing stored schema.
+ * @example Checking the ability of the client's view schema to view or upgrade a document's stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
  * that adds an optional z field.
  *
  * ```ts
  * // This snapshot is assumed to be the same as Point3D, except missing `z`.
- * const encodedSchema = JSON.parse(fs.readFileSync("PointSchema.json", "utf8"));
- * const oldViewSchema = importCompatibilitySchemaSnapshot(encodedSchema);
+ * const encodedDocumentSchema = JSON.parse(fs.readFileSync("PointSchema.json", "utf8"));
+ * const documentViewConfiguration = importCompatibilitySchemaSnapshot(encodedDocumentSchema);
  *
  * // Build the current view schema
  * class Point3D extends factory.object("Point", {
@@ -48,10 +48,10 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * 	// The current schema has a new optional field that was not present on Point2D
  * 	z: factory.optional(factory.number),
  * }) {}
- * const currentViewSchema = new TreeViewConfiguration({ schema: Point3D });
+ * const clientViewConfiguration = new TreeViewConfiguration({ schema: Point3D });
  *
  * // Check to see if the document created by the historical view schema can be opened with the current view schema
- * const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+ * const backwardsCompatibilityStatus = checkCompatibility(documentViewConfiguration, clientViewConfiguration);
  *
  * // z is not present in Point2D, so the schema must be upgraded
  * assert.equal(backwardsCompatibilityStatus.canView, false);
@@ -60,21 +60,23 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
  *
  * // Test what the old version of the application would do with a tree using the new schema:
- * const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+ * const forwardsCompatibilityStatus = checkCompatibility(clientViewConfiguration, documentViewConfiguration);
  *
- * // If the old schema set allowUnknownOptionalFields, this would be true, but since it did not,
+ * // If the old schema set `allowUnknownOptionalFields`, this would be true, but since it did not,
  * // this assert will fail, detecting the forwards compatibility break:
  * // this means these two versions of the application cannot collaborate on content using these schema.
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param existingView - Configuration whose `schema` was used to generate the existing stored schema.
+ * @param documentViewConfiguration - Configuration whose `schema` was used to generate the stored schema persisted in the document.
  * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
- * @param currentView - Configuration with the current view schema.
+ * @param clientViewConfiguration - Configuration with the view schema being used by the current client.
  * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  *
- * @returns The ability of `view.schema` to view and/or upgrade an existing stored schema
- * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema, without `canInitialize`.
+ * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade an document's stored schema.
+ *
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema,
+ * without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
@@ -82,11 +84,13 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * @alpha
  */
 export function checkCompatibility(
-	existingView: TreeViewConfiguration,
-	currentView: TreeViewConfiguration,
+	documentViewConfiguration: TreeViewConfiguration,
+	clientViewConfiguration: TreeViewConfiguration,
 ): SchemaComparisonStatusAlpha {
-	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: currentView.schema });
-	const stored = toInitialSchema(existingView.schema);
+	const viewAsAlpha = new TreeViewConfigurationAlpha({
+		schema: clientViewConfiguration.schema,
+	});
+	const stored = toInitialSchema(documentViewConfiguration.schema);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
