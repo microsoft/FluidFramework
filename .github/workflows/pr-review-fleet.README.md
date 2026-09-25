@@ -48,26 +48,9 @@ Four workflows compose the PR fleet review system:
 - **Permissions:** `contents: read`, `pull-requests: write`, `actions: read` (to download the dispatcher artifact), `checks: write` (to surface a "Fleet Review" check on the PR — `workflow_dispatch` runs aren't otherwise visible in the Checks tab).
 - **Concurrency:** Keyed per PR; cancels in-progress runs.
 
-### Adding a reviewer
-
-Add the reviewer ID, display label, and description to `REVIEWERS` in
-`../scripts/pr_review_propose.py`, then add a prompt with the same ID under
-`../prompts/reviewers/`. The prompt must instruct the agent to write
-`review-<id>.json` using the standard `findings` schema. Also add the ID to the
-fallback list in `pr-review-fleet.yml`. The fallback list is the complete set
-of reviewers; add the new total to the `reviewer_count` choice options and set
-`reviewer_count` to that value when the fallback should run the full fleet.
-
-New reviewers appear in the confirmation comment and can be selected
-explicitly. A single HIGH finding requests changes only when its area is in
-`PROMOTED_AREAS` in `../scripts/consolidate_reviews.py`; otherwise HIGH
-findings remain advisory unless there are at least three non-promoted HIGH
-findings in the same consolidated report. If a reviewer has a stricter
-severity cap, enforce it in `parse_review_file()` as well as in its prompt.
-
 ### Jobs
 
-1. **`setup`** — Resolves params (artifact for `workflow_run`, inputs for `workflow_dispatch`). The label path forces the default fleet size of 3 from the priority list `[correctness, security, api-compatibility, performance, testing]`; the documentation reviewer is available through explicit selection or the six-reviewer full-fleet fallback. The confirm path passes an explicit reviewer JSON array. Creates a check run on the PR head and posts an "in progress" sticky comment.
+1. **`setup`** — Resolves params (artifact for `workflow_run`, inputs for `workflow_dispatch`). The label path forces the default fleet size of 3 from the priority list `[correctness, security, api-compatibility, performance, testing]`. The confirm path passes an explicit reviewer JSON array. Creates a check run on the PR head and posts an "in progress" sticky comment.
 2. **`review`** (matrix, `fail-fast: false`) — One job per reviewer. Checks out PR head with `persist-credentials: false`, pre-computes the diff / changed-files / api-report-files, then loads the prompt **from the base branch** (`git show origin/${BASE_REF}:.github/prompts/reviewers/${REVIEWER}.md`). Installs `@github/copilot` and runs with `COPILOT_GITHUB_TOKEN`, model `claude-sonnet-4-6`, and **only `--allow-tool=read --allow-tool=write`**. The reviewer writes `review-${reviewer}.json`, uploaded as an artifact. See [Security Notes](#security-notes) for the prompt-injection and credential rationale.
 3. **`consolidate`** — Downloads all `review-*` artifacts, runs `.github/scripts/consolidate_reviews.py` (exit 0 = findings, 2 = clean), scrubs GitHub token patterns from the output as defense-in-depth, and posts the result via the same `pr-review-fleet` sticky header so it overwrites the in-progress comment.
 4. **`teardown`** — Always runs to finalize the check run (success / neutral with findings / failure), so a failed `setup` doesn't leave the "Fleet Review" check stuck in `in_progress`.
