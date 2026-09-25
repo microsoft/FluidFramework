@@ -356,6 +356,103 @@ describe("Runtime", () => {
 				});
 			});
 
+			describe("Handle Reuse After Parent Skip Recursion", () => {
+				it("Should not reuse handle for child when parent previously used a handle", async () => {
+					// Regression test: When a parent node emits a handle (skips recursion),
+					// its children's content is not directly stored in the new summary version.
+					// In the next summary, if the parent is re-summarized but a child hasn't changed,
+					// the child must NOT emit a handle, because the storage service cannot resolve
+					// nested paths through handle references (fluidElementNotFound error).
+
+					// Setup: root -> mid -> leaf, all loaded from a summary at refSeq 10
+					createRoot({ refSeq: 10 });
+					createMid({ type: CreateSummarizerNodeSource.FromSummary });
+					createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+					assert(midNode !== undefined, "midNode should be created");
+					assert(leafNode !== undefined, "leafNode should be created");
+					const mid = midNode;
+					const leaf = leafNode;
+
+					// Summary 1: mid has no changes -> emits handle (skips recursion)
+					// root is changed so it re-summarizes
+					rootNode.recordChange(fakeOp(11));
+					rootNode.startSummary(20, logger, 10);
+					const result1 = await rootNode.summarize(false);
+					assert(result1.summary.type === SummaryType.Tree, "root should be tree");
+					// root calls summarizeInternalFn which would call mid.summarize
+					// mid hasn't changed so it uses handle
+					const midResult1 = await mid.summarize(false);
+					assert(
+						midResult1.summary.type === SummaryType.Handle,
+						"mid should be handle in summary 1",
+					);
+					rootNode.completeSummary("handle-1");
+					await rootNode.refreshLatestSummary("handle-1", 20);
+
+					// Between summaries: mid gets marked dirty (e.g., GC state change)
+					// but leaf has not changed at all
+					mid.recordChange(fakeOp(21));
+
+					// Summary 2: mid is dirty -> will be fully re-summarized
+					// leaf has NOT changed -> previously would incorrectly emit a handle
+					rootNode.startSummary(30, logger, 20);
+					const leafResult2 = await leaf.summarize(false);
+
+					// The fix: leaf must NOT emit a handle because its content was not
+					// directly stored in the previous summary version (it was only
+					// transitively accessible via mid's handle reference).
+					assert(
+						leafResult2.summary.type === SummaryType.Tree,
+						"leaf should be tree (not handle) since its parent used a handle in the previous summary",
+					);
+					assertSummarizeCalls(1, 0, 1);
+				});
+
+				it("Should correctly re-enable handle reuse after child is directly summarized", async () => {
+					// After the child is fully re-summarized and the summary is acked,
+					// it should be able to use handles again in subsequent summaries.
+
+					createRoot({ refSeq: 10 });
+					createMid({ type: CreateSummarizerNodeSource.FromSummary });
+					createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+					assert(midNode !== undefined, "midNode should be created");
+					assert(leafNode !== undefined, "leafNode should be created");
+					const mid = midNode;
+					const leaf = leafNode;
+
+					// Summary 1: mid uses handle (unchanged), root is dirty
+					rootNode.recordChange(fakeOp(11));
+					rootNode.startSummary(20, logger, 10);
+					await rootNode.summarize(false);
+					await mid.summarize(false); // handle
+					rootNode.completeSummary("handle-1");
+					await rootNode.refreshLatestSummary("handle-1", 20);
+
+					// Summary 2: root and mid are dirty, leaf is re-summarized (forced by fix)
+					rootNode.recordChange(fakeOp(21));
+					mid.recordChange(fakeOp(21));
+					rootNode.startSummary(30, logger, 20);
+					await rootNode.summarize(false);
+					const midResult2 = await mid.summarize(false);
+					assert(midResult2.summary.type === SummaryType.Tree, "mid should be tree");
+					const leafResult2 = await leaf.summarize(false);
+					assert(leafResult2.summary.type === SummaryType.Tree, "leaf should be tree");
+					rootNode.completeSummary("handle-2");
+					await rootNode.refreshLatestSummary("handle-2", 30);
+
+					// Summary 3: root is dirty but mid and leaf are not -> leaf should use handle
+					rootNode.recordChange(fakeOp(31));
+					rootNode.startSummary(40, logger, 30);
+					await rootNode.summarize(false);
+					await mid.summarize(false);
+					const leafResult3 = await leaf.summarize(false);
+					assert(
+						leafResult3.summary.type === SummaryType.Handle,
+						"leaf should use handle after being directly summarized and acked",
+					);
+				});
+			});
+
 			describe("Refresh Latest Summary", () => {
 				it("Should not refresh latest if already passed ref seq number", async () => {
 					createRoot({ refSeq: summaryRefSeq });
