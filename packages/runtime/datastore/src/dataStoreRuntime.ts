@@ -52,6 +52,7 @@ import {
 	CreateSummarizerNodeSource,
 	type IAttachMessage,
 	type IEnvelope,
+	type IFluidDataStoreAttachData,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
 	VisibilityState,
@@ -452,8 +453,12 @@ export class FluidDataStoreRuntime
 			dataStoreContext,
 			encodeHandlesInContainerRuntime,
 		);
-		// We read this property here to avoid a compiler error (unused private member)
-		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
+		// Read internal capabilities here to avoid compiler errors for members accessed through optimistic casts.
+		debugAssert(
+			() =>
+				this.submitMessagesWithoutEncodingHandles !== undefined &&
+				this.getAttachData !== undefined,
+		);
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
@@ -937,6 +942,9 @@ export class FluidDataStoreRuntime
 		let currentAddress: string | undefined;
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 		const { messagesContent, local, envelope } = messageCollection;
+		// Number of bunches already flushed. Used to tell "the very first bunch" apart from a later one
+		// when diagnosing a missing channel context.
+		let bunchesProcessed = 0;
 
 		const sendBunchedMessages = (): void => {
 			// Current address will be undefined for the first message in the list.
@@ -946,7 +954,27 @@ export class FluidDataStoreRuntime
 
 			// process the last set of channel ops
 			const channelContext = this.contexts.get(currentAddress);
-			assert(!!channelContext, 0xa6b /* Channel context not found */);
+			if (channelContext === undefined) {
+				// Former assert 0xa6b
+				throw DataProcessingError.create(
+					"Channel context not found",
+					"processChannelMessages",
+					envelope,
+					{
+						local,
+						attachState: this.attachState,
+						visibilityState: this.visibilityState,
+						contextCount: this.contexts.size,
+						notBoundedContextCount: this.notBoundedChannelContextSet.size,
+						localContextQueueCount: this.localChannelContextQueue.size,
+						pendingAttachCount: this.pendingAttach.size,
+						bunchesProcessed,
+						bunchMessageCount: currentMessagesContent.length,
+						totalMessageCount: messagesContent.length,
+						...tagCodeArtifacts({ address: currentAddress }),
+					},
+				);
+			}
 
 			channelContext.processMessages({
 				envelope,
@@ -955,6 +983,7 @@ export class FluidDataStoreRuntime
 			});
 
 			currentMessagesContent = [];
+			bunchesProcessed++;
 		};
 
 		for (const { contents, ...restOfMessagesContent } of messagesContent) {
@@ -1174,30 +1203,12 @@ export class FluidDataStoreRuntime
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		const summaryBuilder = new SummaryTreeBuilder();
 		this.visitLocalBoundContextsDuringAttach(
+			new Set<string>(),
 			(contextId: string, context: LocalChannelContextBase) => {
-				let summaryTree: ISummaryTreeWithStats;
-				if (context.isLoaded) {
-					const contextSummary = context.getAttachSummary(telemetryContext);
-					assert(
-						contextSummary.summary.type === SummaryType.Tree,
-						0x180 /* "getAttachSummary should always return a tree" */,
-					);
-
-					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
-				} else {
-					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
-					// it was created as it is detached container. So just use the previous snapshot.
-					assert(
-						!!this.dataStoreContext.baseSnapshot,
-						0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
-					);
-					summaryTree = convertSnapshotTreeToSummaryTree(
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						this.dataStoreContext.baseSnapshot.trees[contextId]!,
-					);
-				}
-				summaryBuilder.addWithStats(contextId, summaryTree);
+				summaryBuilder.addWithStats(
+					contextId,
+					this.getContextAttachSummary(contextId, context, telemetryContext),
+				);
 			},
 		);
 
@@ -1210,19 +1221,125 @@ export class FluidDataStoreRuntime
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		const gcDataBuilder = new GCDataBuilder();
 		this.visitLocalBoundContextsDuringAttach(
+			new Set<string>(),
 			(contextId: string, context: LocalChannelContextBase) => {
-				if (context.isLoaded) {
-					const contextGCData = context.getAttachGCData(telemetryContext);
-
-					// Incorporate the GC Data for this context
-					gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
-				}
-				// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
+				this.addContextAttachGCData(gcDataBuilder, contextId, context, telemetryContext);
 			},
 		);
 		this.updateGCNodes(gcDataBuilder);
 
 		return gcDataBuilder.getGCData();
+	}
+
+	/**
+	 * Captures the attach summary and the attach GC data of this data store in a single pass, so that they
+	 * always describe the same set of channels.
+	 *
+	 * @remarks
+	 * This method is private to avoid adding cross-layer plumbing to the legacy-beta API surface. The container
+	 * runtime accesses it through `IFluidDataStoreChannelInternal`, following the same optimistic-cast pattern
+	 * used by other internal data store runtime capabilities.
+	 */
+	private getAttachData(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData {
+		const summaryBuilder = new SummaryTreeBuilder();
+		const gcDataBuilder = new GCDataBuilder();
+		// Contexts whose summary has already been captured in `summaryBuilder`.
+		const summarizedContexts = new Set<string>();
+		// Contexts whose GC data has already been considered for `gcDataBuilder`. A context is added here even if
+		// it was skipped (not loaded), so that each context is visited at most once per capture.
+		const gcCapturedContexts = new Set<string>();
+
+		/**
+		 * A channel's summary or GC data callback may synchronously create and bind more channels. Keep alternating
+		 * between draining summaries and draining GC data until neither makes progress. This guarantees that the
+		 * returned summary and GC data describe the same complete set of channels - if they didn't, a channel could
+		 * become visible locally (and start sending ops) without remote clients ever learning about it.
+		 */
+		let progressed: boolean;
+		do {
+			progressed = this.visitLocalBoundContextsDuringAttach(
+				summarizedContexts,
+				(contextId: string, context: LocalChannelContextBase) => {
+					summaryBuilder.addWithStats(
+						contextId,
+						this.getContextAttachSummary(contextId, context, telemetryContext),
+					);
+				},
+			);
+
+			// Only contexts that made it into the summary contribute GC data, so that the two always agree.
+			// The summary drain above has already visited every currently bound context.
+			for (const contextId of [...summarizedContexts]) {
+				if (gcCapturedContexts.has(contextId)) {
+					continue;
+				}
+				gcCapturedContexts.add(contextId);
+				progressed = true;
+
+				const context = this.contexts.get(contextId);
+				assert(
+					context instanceof LocalChannelContextBase,
+					"Should only be called with local channel handles",
+				);
+				this.addContextAttachGCData(gcDataBuilder, contextId, context, telemetryContext);
+			}
+		} while (progressed);
+
+		this.updateGCNodes(gcDataBuilder);
+
+		return {
+			attachSummary: summaryBuilder.getSummaryTree(),
+			attachGCData: gcDataBuilder.getGCData(),
+		};
+	}
+
+	/**
+	 * Generates the attach summary for a single local channel context.
+	 */
+	private getContextAttachSummary(
+		contextId: string,
+		context: LocalChannelContextBase,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
+		if (context.isLoaded) {
+			const contextSummary = context.getAttachSummary(telemetryContext);
+			assert(
+				contextSummary.summary.type === SummaryType.Tree,
+				0x180 /* "getAttachSummary should always return a tree" */,
+			);
+
+			return { stats: contextSummary.stats, summary: contextSummary.summary };
+		}
+
+		// If this channel is not yet loaded, then there should be no changes in the snapshot from which
+		// it was created as it is detached container. So just use the previous snapshot.
+		assert(
+			!!this.dataStoreContext.baseSnapshot,
+			0x181 /* "BaseSnapshot should be there as detached container loaded from snapshot" */,
+		);
+		return convertSnapshotTreeToSummaryTree(
+			// TODO why are we non null asserting here?
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.dataStoreContext.baseSnapshot.trees[contextId]!,
+		);
+	}
+
+	/**
+	 * Adds the attach GC data of a single local channel context to the given builder.
+	 */
+	private addContextAttachGCData(
+		gcDataBuilder: GCDataBuilder,
+		contextId: string,
+		context: LocalChannelContextBase,
+		telemetryContext?: ITelemetryContext,
+	): void {
+		if (context.isLoaded) {
+			const contextGCData = context.getAttachGCData(telemetryContext);
+
+			// Incorporate the GC Data for this context
+			gcDataBuilder.prefixAndAddNodes(contextId, contextGCData.gcNodes);
+		}
+		// else: Rehydrating detached container case. GC doesn't run until the container is attached, so nothing to do here.
 	}
 
 	/**
@@ -1242,17 +1359,22 @@ export class FluidDataStoreRuntime
 
 	/**
 	 * Helper method for preparing to attach this dataStore.
-	 * Runs the callback for each bound context to incorporate its data however the caller specifies
+	 * Runs the callback for each bound context that is not already in `visitedContexts`, adding each visited
+	 * context to that set.
+	 * @param visitedContexts - The set of context ids that have already been visited. Mutated by this method.
+	 * @param visitor - Called for each newly visited context to incorporate its data however the caller specifies.
+	 * @returns Whether any context was visited.
 	 */
 	private visitLocalBoundContextsDuringAttach(
+		visitedContexts: Set<string>,
 		visitor: (contextId: string, context: LocalChannelContextBase) => void,
-	): void {
+	): boolean {
 		assert(
 			this.visibilityState === VisibilityState.LocallyVisible,
 			0xc2c /* The data store should be locally visible when generating attach summary */,
 		);
 
-		const visitedContexts = new Set<string>();
+		let visitedAny = false;
 		let visitedLength = -1;
 		while (visitedLength !== visitedContexts.size) {
 			// detect changes in the visitedContexts set, as on visiting a context
@@ -1272,9 +1394,11 @@ export class FluidDataStoreRuntime
 				) {
 					visitor(contextId, context);
 					visitedContexts.add(contextId);
+					visitedAny = true;
 				}
 			}
 		}
+		return visitedAny;
 	}
 
 	/**

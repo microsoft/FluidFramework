@@ -528,6 +528,55 @@ export interface IFluidDataStoreChannel extends IDisposable {
 }
 
 /**
+ * The initial state of a data store channel captured for its attach message.
+ *
+ * @remarks
+ * The summary and the GC data describe the exact same set of channels. See
+ * {@link IFluidDataStoreChannelInternal.getAttachData} for why capturing them together matters.
+ *
+ * @internal
+ */
+export interface IFluidDataStoreAttachData {
+	/**
+	 * The summary of the data store channel's initial state.
+	 */
+	readonly attachSummary: ISummaryTreeWithStats;
+	/**
+	 * The outbound routes present in the data store channel's initial state.
+	 */
+	readonly attachGCData: IGarbageCollectionData;
+}
+
+/**
+ * Internal extension to {@link IFluidDataStoreChannel} for use across FluidFramework packages.
+ *
+ * @remarks
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns, i.e. all additions must be optional and callers must
+ * fall back to the base {@link IFluidDataStoreChannel} behavior when they are absent.
+ *
+ * @internal
+ */
+export interface IFluidDataStoreChannelInternal extends IFluidDataStoreChannel {
+	/**
+	 * Synchronously captures both the attach summary and the attach GC data of this channel in a single pass.
+	 *
+	 * @remarks
+	 * {@link IFluidDataStoreChannel.getAttachSummary} and {@link IFluidDataStoreChannel.getAttachGCData} can each
+	 * synchronously create and bind new children (a DDS may create another DDS while its summary or GC data is
+	 * being generated). Calling them one after the other can therefore produce an attach summary and attach GC data
+	 * that describe different sets of children, which corrupts the document: a child that only made it into the GC
+	 * data becomes visible locally and starts sending ops that remote clients have never heard about.
+	 *
+	 * Implementations must keep capturing until the summary and the GC data cover the same, complete set of
+	 * children. Callers that have this method available must use it instead of the two separate methods.
+	 *
+	 * Optional for back-compat with data store runtimes that predate this method.
+	 */
+	getAttachData?(telemetryContext?: ITelemetryContext): IFluidDataStoreAttachData;
+}
+
+/**
  * Describes a staging mode transition on the container runtime.
  * - `{ inStagingMode: true }` — the runtime has entered staging mode.
  *
