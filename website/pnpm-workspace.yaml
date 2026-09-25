@@ -59,6 +59,8 @@ updateNotifier: false
 
 # Security and compatibility overrides.
 overrides:
+  # Use TypeScript 6-compatible versions of the lint tooling.
+  "@typescript-eslint/utils@>=8 <8.58.0": ~8.58.0
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
   # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).

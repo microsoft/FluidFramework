@@ -16,6 +16,9 @@
 
 		// This config is for IDE support only, not compilation
 		"noEmit": true,
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false,
 		"allowImportingTsExtensions": true,
 
 		// ESLint plugin types violate this often which affects our own configs

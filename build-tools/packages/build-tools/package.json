@@ -92,7 +92,7 @@
 		"eslint": "~9.39.2",
 		"json-schema-to-typescript": "^15.0.4",
 		"mocha": "^11.7.5",
-		"typescript": "~5.9.3"
+		"typescript": "~6.0.3"
 	},
 	"engines": {
 		"node": ">=22.22.2"
