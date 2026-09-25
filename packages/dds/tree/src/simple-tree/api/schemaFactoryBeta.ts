@@ -9,7 +9,6 @@ import type { RestrictiveStringRecord as _RestrictiveStringRecord } from "../../
 import {
 	AnnotatedAllowedTypesInternal,
 	createSchemaUpgrade,
-	normalizeAllowedTypes,
 	normalizeToAnnotatedAllowedType,
 	type AllowedTypesFullFromMixed,
 	type AllowedTypesMetadata,
@@ -23,7 +22,13 @@ import {
 	type TreeNodeSchemaNonClass,
 	type WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import type {
+	FieldKind,
+	FieldProps,
+	FieldSchema,
+	FieldSchemaMetadata,
+	ImplicitFieldSchema,
+} from "../fieldSchema.js";
 /* eslint-disable unused-imports/no-unused-imports, import-x/no-duplicates -- These imports prevent a large number of type references in the API reports from showing up as *_2. */
 import type {
 	FieldProps as _FieldProps,
@@ -54,15 +59,48 @@ import {
 	type ObjectSchemaOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
-import { incrementalSummaryHint } from "./incrementalAllowedTypes.js";
+import { incrementalSummaryFieldOption } from "./incrementalAllowedTypes.js";
+import { schemaStatics } from "./schemaStatics.js";
 import type {
 	AllowedTypesFullFromMixedUnsafe,
 	AnnotatedAllowedTypeUnsafe,
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 	UnannotateAllowedTypeUnsafe,
+	UnannotateAllowedTypesListUnsafe,
 	Unenforced,
 } from "./typesUnsafe.js";
+
+/**
+ * Options for a field created by {@link SchemaStaticsBeta.field}.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
+ * @beta @input
+ */
+export interface FieldOptions<TCustomMetadata = unknown> {
+	/**
+	 * {@inheritDoc FieldProps.key}
+	 */
+	readonly key?: string;
+
+	/**
+	 * {@inheritDoc FieldProps.metadata}
+	 */
+	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
+
+	/**
+	 * Whether this field is an incremental-summary boundary.
+	 *
+	 * @remarks
+	 * During incremental summarization, an unchanged field with this option enabled can reuse its
+	 * previously generated summary instead of being re-encoded and uploaded again.
+	 *
+	 * @defaultValue `false`
+	 */
+	readonly incrementalSummary?: boolean;
+}
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
@@ -71,18 +109,19 @@ import type {
  */
 export interface SchemaStaticsBeta {
 	/**
-	 * Marks a set of allowed types as an incremental-summary boundary.
+	 * Creates a required field schema from a set of allowed types and field-level options.
 	 *
 	 * @remarks
-	 * During incremental summarization, an unchanged field marked with this helper can reuse its
-	 * previously generated summary instead of being re-encoded and uploaded again.
+	 * This is the explicit form of an object field declaration. Passing allowed types directly in
+	 * an object schema is syntactic sugar for calling this API without options.
 	 *
-	 * This helper accepts either a single schema or an array of allowed types.
+	 * This API accepts either a single schema or an array of allowed types.
 	 * For recursive schema declarations that require relaxed typing, use
-	 * {@link SchemaStaticsBeta.incrementalSummaryRecursive}.
+	 * {@link SchemaStaticsBeta.fieldRecursive}.
 	 *
-	 * @param allowedTypes - the types allowed at the incremental-summary boundary
-	 * @returns the normalized allowed types with incremental-summary metadata attached
+	 * @param allowedTypes - The types allowed in the field.
+	 * @param options - Additional options that apply to the field.
+	 * @returns A required field schema.
 	 *
 	 * @example
 	 * ```typescript
@@ -93,36 +132,51 @@ export interface SchemaStaticsBeta {
 	 * }) {}
 	 *
 	 * class Document extends sf.object("Document", {
-	 *   sections: sf.incrementalSummary(sf.map(Section)),
+	 *   sections: sf.field(sf.map(Section), { incrementalSummary: true }),
 	 * }) {}
 	 * ```
 	 */
-	readonly incrementalSummary: {
-		<const T extends TreeNodeSchema>(allowedType: T): AllowedTypesFullFromMixed<readonly [T]>;
-		<const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(
-			allowedTypes: T,
-		): AllowedTypesFullFromMixed<T>;
-	};
+	readonly field: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		allowedTypes: T,
+		options?: FieldOptions<TCustomMetadata>,
+	) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
 
 	/**
-	 * {@link SchemaStaticsBeta.incrementalSummary} except tweaked to work better for recursive types.
+	 * {@link SchemaStaticsBeta.field} except tweaked to work better for recursive types.
 	 *
 	 * @remarks
-	 * This version of {@link SchemaStaticsBeta.incrementalSummary} has fewer type constraints to
+	 * This version of {@link SchemaStaticsBeta.field} has fewer type constraints to
 	 * work around TypeScript limitations. Use with {@link ValidateRecursiveSchema} for improved type
 	 * safety.
 	 * It accepts either a single recursive allowed type or an array of recursive allowed types.
 	 *
-	 * @param allowedTypes - the types allowed at the incremental-summary boundary
-	 * @returns the normalized allowed types with incremental-summary metadata attached
+	 * @param allowedTypes - The types allowed in the field.
+	 * @param options - Additional options that apply to the field.
+	 * @returns A required field schema.
 	 */
-	readonly incrementalSummaryRecursive: {
-		<const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(
+	readonly fieldRecursive: {
+		<
+			const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
+			const TCustomMetadata = unknown,
+		>(
 			allowedTypes: T,
-		): AllowedTypesFullFromMixedUnsafe<T>;
-		<const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>>(
+			options?: FieldOptions<TCustomMetadata>,
+		): System_Unsafe.FieldSchemaUnsafe<
+			FieldKind.Required,
+			UnannotateAllowedTypesListUnsafe<T>,
+			TCustomMetadata
+		>;
+		<
+			const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>,
+			const TCustomMetadata = unknown,
+		>(
 			allowedType: T,
-		): AllowedTypesFullFromMixedUnsafe<readonly [T]>;
+			options?: FieldOptions<TCustomMetadata>,
+		): System_Unsafe.FieldSchemaUnsafe<
+			FieldKind.Required,
+			readonly [UnannotateAllowedTypeUnsafe<T>],
+			TCustomMetadata
+		>;
 	};
 
 	/**
@@ -222,23 +276,32 @@ const types = <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNod
 
 const typesRecursive = types as unknown as SchemaStaticsBeta["typesRecursive"];
 
-const incrementalSummaryMetadata = {
-	custom: { [incrementalSummaryHint]: true },
+const createRequiredField = (
+	allowedTypes: ImplicitAllowedTypes,
+	options?: FieldOptions,
+): FieldSchema => {
+	const { incrementalSummary, ...props } = options ?? {};
+	const fieldProps: Omit<FieldProps, "defaultProvider"> & {
+		readonly [incrementalSummaryFieldOption]?: true;
+	} =
+		incrementalSummary === true ? { ...props, [incrementalSummaryFieldOption]: true } : props;
+	return schemaStatics.required(allowedTypes, fieldProps);
 };
 
-const incrementalSummary = (<const T extends ImplicitAllowedTypes>(allowedTypes: T) => {
-	const normalizedAllowedTypes = normalizeAllowedTypes(allowedTypes);
-	return types(normalizedAllowedTypes.types, incrementalSummaryMetadata);
-}) as unknown as SchemaStaticsBeta["incrementalSummary"];
+const field = createRequiredField as SchemaStaticsBeta["field"];
 
-const incrementalSummaryRecursive = ((allowedTypes: unknown) => {
+const fieldRecursive = ((allowedTypes: unknown, options?: FieldOptions) => {
 	const normalizedAllowedTypes = isReadonlyArray(allowedTypes) ? allowedTypes : [allowedTypes];
-	return typesRecursive(normalizedAllowedTypes, incrementalSummaryMetadata);
-}) as SchemaStaticsBeta["incrementalSummaryRecursive"];
+	const annotatedAllowedTypes = typesRecursive(normalizedAllowedTypes);
+	return createRequiredField(
+		annotatedAllowedTypes as unknown as ImplicitAllowedTypes,
+		options,
+	);
+}) as SchemaStaticsBeta["fieldRecursive"];
 
 const schemaStaticsBeta: SchemaStaticsBeta = {
-	incrementalSummary,
-	incrementalSummaryRecursive,
+	field,
+	fieldRecursive,
 	staged,
 	types,
 
@@ -256,24 +319,24 @@ export class SchemaFactoryBeta<
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.incrementalSummary}
+	 * {@inheritDoc SchemaStaticsBeta.field}
 	 */
-	public static incrementalSummary = schemaStaticsBeta.incrementalSummary;
+	public static field = schemaStaticsBeta.field;
 
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.incrementalSummary}
+	 * {@inheritDoc SchemaStaticsBeta.field}
 	 */
-	public incrementalSummary = schemaStaticsBeta.incrementalSummary;
+	public field = schemaStaticsBeta.field;
 
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.incrementalSummaryRecursive}
+	 * {@inheritDoc SchemaStaticsBeta.fieldRecursive}
 	 */
-	public static incrementalSummaryRecursive = schemaStaticsBeta.incrementalSummaryRecursive;
+	public static fieldRecursive = schemaStaticsBeta.fieldRecursive;
 
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.incrementalSummaryRecursive}
+	 * {@inheritDoc SchemaStaticsBeta.fieldRecursive}
 	 */
-	public incrementalSummaryRecursive = schemaStaticsBeta.incrementalSummaryRecursive;
+	public fieldRecursive = schemaStaticsBeta.fieldRecursive;
 
 	/**
 	 * {@inheritDoc SchemaStaticsBeta.staged}

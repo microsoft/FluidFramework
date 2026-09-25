@@ -61,6 +61,7 @@ import {
 } from "../../../../feature-libraries/index.js";
 import {
 	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
 	numberSchema,
 	SchemaFactoryAlpha,
 	StagedSchemaUpgradePolicy,
@@ -359,7 +360,11 @@ describe("schemaBasedEncoding", () => {
 			const sf = new SchemaFactoryAlpha("test");
 			class HasOptionalFields extends sf.object("hasOptionalField", {
 				field: sf.optional(sf.number),
-				incrementalField: sf.optional(sf.incrementalSummary(sf.number)),
+				incrementalField: sf.optional(
+					sf.types([{ type: sf.number, metadata: {} }], {
+						custom: { [incrementalSummaryHint]: true },
+					}),
+				),
 			}) {}
 			const testReferenceId: ChunkReferenceId = brand(123);
 			const mockIncrementalEncoder: IncrementalEncoder = {

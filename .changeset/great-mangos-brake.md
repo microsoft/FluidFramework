@@ -3,16 +3,17 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Add an incremental summary schema helper
+Add a configurable field-schema API
 
-`SchemaFactoryBeta.incrementalSummary` marks a field as an incremental-summary boundary without requiring direct use of allowed-types metadata or the `incrementalSummaryHint` symbol.
-The helper accepts either a single allowed type or an array of allowed types while preserving exact read and insertable type inference.
-`incrementalSummaryRecursive` accepts either a single recursive allowed type or an allowed-types array with relaxed compile-time constraints.
+`SchemaFactoryBeta.field` explicitly creates a required field schema from a single allowed type or an allowed-types array and a set of field-level options.
+Passing allowed types directly in an object schema remains supported as shorthand for a required field without additional options.
+The initial field option, `incrementalSummary`, marks the field as an incremental-summary boundary without requiring direct use of allowed-types metadata or the `incrementalSummaryHint` symbol.
+`fieldRecursive` provides the same field configuration for recursive allowed types with relaxed compile-time constraints.
 
 ```typescript
 const sf = new SchemaFactoryBeta("example");
 
 class Document extends sf.object("Document", {
-	sections: sf.incrementalSummary(sf.map(Section)),
+	sections: sf.field(sf.map(Section), { incrementalSummary: true }),
 }) {}
 ```

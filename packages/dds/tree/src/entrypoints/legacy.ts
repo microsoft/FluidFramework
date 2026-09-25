@@ -114,6 +114,7 @@ export {
 	ForestTypeExpensiveDebug, 
 	ForestTypeOptimized, 
 	ForestTypeReference, 
+	FieldOptions,
 	IdentifierIndex, 
 	JsonCompatible, 
 	JsonCompatibleObject, 

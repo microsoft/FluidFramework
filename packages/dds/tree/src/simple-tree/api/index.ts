@@ -44,7 +44,11 @@ export {
 	type NodeSchemaOptionsAlpha,
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
-export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
+export {
+	type FieldOptions,
+	SchemaFactoryBeta,
+	type SchemaStaticsBeta,
+} from "./schemaFactoryBeta.js";
 export {
 	SchemaFactoryAlpha,
 	type SchemaStaticsAlpha,

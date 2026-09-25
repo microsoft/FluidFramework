@@ -1,6 +1,6 @@
 # Incremental Summary
 
-Incremental summary is an optimization that avoids re-summarizing parts of the tree that don't change between summaries. Fields in a schema can opt in to incremental summarization with `SchemaFactoryBeta.incrementalSummary`. These fields are tracked as independent chunks in the summary. During summarization, if their content hasn't changed since the last summary, their previously generated summaries are reused. As a result, their data doesn't need to be re-encoded (saving processing time), and their summary trees don't need to be uploaded again (reducing summary upload size).
+Incremental summary is an optimization that avoids re-summarizing parts of the tree that don't change between summaries. Fields in a schema can opt in to incremental summarization with `SchemaFactoryBeta.field`. These fields are tracked as independent chunks in the summary. During summarization, if their content hasn't changed since the last summary, their previously generated summaries are reused. As a result, their data doesn't need to be re-encoded (saving processing time), and their summary trees don't need to be uploaded again (reducing summary upload size).
 
 > **Warning:** Incremental summary is a beta API and is actively under development. Interfaces and behavior may change in future releases without notice.
 
@@ -14,14 +14,16 @@ All five of the following must be set for incremental summary to take effect:
 | Compression strategy | [`TreeCompressionStrategy.CompressedIncremental`](./src/feature-libraries/treeCompressionUtils.ts) |
 | [`shouldEncodeIncrementally`](./src/shared-tree/sharedTree.ts) option | result of [`incrementalEncodingPolicyForAllowedTypes(config)`](./src/simple-tree/api/incrementalAllowedTypes.ts) |
 | `minVersionForCollab` | [`FluidClientVersion.v2_74`](./src/codec/codec.ts) or higher |
-| Schema opt-in | Fields marked with [`SchemaFactoryBeta.incrementalSummary`](./src/simple-tree/api/schemaFactoryBeta.ts) |
+| Schema opt-in | Fields created with [`SchemaFactoryBeta.field`](./src/simple-tree/api/schemaFactoryBeta.ts) and `{ incrementalSummary: true }` |
 
 ## How to Enable
 
 ### 1. Mark fields in your schema
 
-Use `sf.incrementalSummary(...)` to opt a field in.
-For recursive schema, use `sf.incrementalSummaryRecursive(...)` with a single recursive allowed type or an allowed-types array.
+`sf.field(allowedTypes, options)` is the explicit way to define a required field.
+Passing allowed types directly in an object schema is syntactic sugar for `sf.field(allowedTypes)`.
+Use the explicit form with `{ incrementalSummary: true }` to opt a field in.
+For recursive schema, use `sf.fieldRecursive(...)` with a single recursive allowed type or an allowed-types array.
 
 ```typescript
 import { SchemaFactoryBeta } from "@fluidframework/tree/beta";
@@ -31,21 +33,18 @@ const sf = new SchemaFactoryBeta("my-app");
 class Item extends sf.object("Item", {
     id: sf.number,
     // This field will be incrementally summarized.
-    payload: sf.incrementalSummary(sf.string),
+    payload: sf.field(sf.string, { incrementalSummary: true }),
 }) {}
 
-class ItemList extends sf.array(
-    "ItemList",
-    // Each element of this array will be tracked as a separate incremental chunk.
-    sf.incrementalSummary(Item),
-) {}
+class ItemList extends sf.array("ItemList", Item) {}
 
 class Root extends sf.object("Root", {
-    items: ItemList,
+    // The items field will be tracked as a separate incremental chunk.
+    items: sf.field(ItemList, { incrementalSummary: true }),
 }) {}
 ```
 
-> **Note:** Incremental summarization is applied to **fields**, not node kinds. Leaf values (string, number, boolean, null) can be incrementally summarized when they are stored in a field wrapped by `incrementalSummary` (for example, an object field whose allowed type is `string`). Root fields themselves cannot be incrementally summarized, and leaf node kinds do not expose child fields for the policy to apply to.
+> **Note:** Incremental summarization is applied to **fields**, not node kinds. Leaf values (string, number, boolean, null) can be incrementally summarized when they are stored in a field whose `incrementalSummary` option is enabled. Root fields themselves cannot be incrementally summarized, and leaf node kinds do not expose child fields for the policy to apply to.
 
 ### 2. Configure the SharedTree
 
