@@ -362,11 +362,12 @@ export interface TreeBranchHistory {
  * An {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
  * Use `UntypedTreeViewAlpha` when your application needs to inspect or manipulate branch history directly.
- * The alpha designation means the shape of these APIs may still change before they become stable.
  *
- * To get the untyped view for a specific {@link TreeNode}, call {@link (TreeAlpha:interface).context} and check {@link TreeContextAlpha.isView | isView()}.
+ * To get the untyped view for a specific {@link TreeNode}, call {@link (TreeAlpha:interface).context}
+ * and check {@link TreeContextAlpha.isView | isView()}.
  *
- * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
+ * An untyped view does not necessarily know the schema of its SharedTree.
+ * To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
 export interface UntypedTreeViewAlpha extends UntypedTreeView, TreeContextAlpha {
