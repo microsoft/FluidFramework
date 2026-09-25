@@ -44,7 +44,8 @@ export interface IConnectionStateHandlerInputs {
 		reason?: IConnectionStateChangeReason,
 	) => void;
 	/**
-	 * Whether to expect the client to join in write mode on next connection
+	 * Whether pending local operations require a write connection.
+	 * Non-operation work may also require write mode, but is not included here.
 	 */
 	shouldClientJoinWrite: () => boolean;
 	/**
@@ -466,7 +467,8 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 
 	public containerSaved(): void {
 		// If we were waiting for moving to Connected state, then only apply for state change. Since the container
-		// is now saved and we don't have any ops to roundtrip, we can clear the timer and apply for connected state.
+		// has no pending ops to roundtrip, we can clear the timer and apply for connected state.
+		// Host-facing dirty state may remain true because of non-op work.
 		if (this.waitingForLeaveOp) {
 			this.prevClientLeftTimer.clear();
 			this.applyForConnectedState("containerSaved");

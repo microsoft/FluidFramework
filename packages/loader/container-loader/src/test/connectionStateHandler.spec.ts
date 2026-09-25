@@ -686,6 +686,23 @@ describe("ConnectionStateHandler Tests", () => {
 		);
 	});
 
+	it("write connection without pending ops does not wait for the previous client to leave", () => {
+		connectionDetails.mode = "write";
+		connectionStateHandler.receivedConnectEvent(connectionDetails);
+		connectionStateHandler_receivedAddMemberEvent(pendingClientId);
+		assert.strictEqual(connectionStateHandler.connectionState, ConnectionState.Connected);
+
+		shouldClientJoinWrite = false;
+		connectionStateHandler.receivedDisconnectEvent({ text: "Test" });
+		connectionStateHandler.receivedConnectEvent(connectionDetails2);
+		connectionStateHandler_receivedAddMemberEvent(pendingClientId2);
+		assert.strictEqual(
+			connectionStateHandler.connectionState,
+			ConnectionState.Connected,
+			"A write connection alone must not require waiting for the previous client's Leave",
+		);
+	});
+
 	it("Should wait for timeout before moving to connected state if no leave received", async () => {
 		connectionDetails.mode = "write";
 		connectionStateHandler.receivedConnectEvent(connectionDetails);
@@ -766,7 +783,7 @@ describe("ConnectionStateHandler Tests", () => {
 			"Client 2 should still be in connecting state as we are waiting for timeout",
 		);
 
-		// Fire the container saved event.
+		// Report that all pending operations have been saved.
 		connectionStateHandler.containerSaved();
 		assert.strictEqual(
 			connectionStateHandler.connectionState,
