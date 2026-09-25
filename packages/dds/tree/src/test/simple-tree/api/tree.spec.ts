@@ -812,7 +812,7 @@ describe("simple-tree tree", () => {
 			assert.equal(view.branchHistory.length, 5);
 		});
 
-		it("throws when the revision is not on a branch with no schema changes", () => {
+		it("throws when the revision is not on the current branch", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			const fork = view.fork();
