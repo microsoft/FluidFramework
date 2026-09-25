@@ -14,7 +14,7 @@ import { toStoredSchema } from "../toStoredSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
@@ -65,19 +65,28 @@ export function extractPersistedSchema(
 }
 
 /**
- * Compares two schema extracted using {@link extractPersistedSchema}.
- * Reports the same compatibility that {@link TreeView.compatibility} would report if
- * opening a document that used the `persisted` schema and provided `view` to {@link ViewableTree.viewWith}.
- *
- * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
- * @param view - Schema which would be used to view persisted content.
- * @param options - {@link ICodecOptions} used when parsing the provided schema.
- * @param canInitialize - Passed through to the return value unchanged and otherwise unused.
- * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema.
+ * Reports the ability of the provided view schema (`view`) to view and/or upgrade a persisted stored schema.
  *
  * @remarks
- * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.
+ * Uses the same schema compatibility checks as {@link TreeView.compatibility} for a document using `persisted` and a view configured with `view` and the default restrictive staged upgrade policy.
+ *
+ * Schema metadata does not affect compatibility.
+ *
+ * This function does not accept a staged upgrade policy, nor does it inspect document content.
+ *
+ * This compares schema constraints available in the persisted format.
+ *
+ * Staging annotations are available from the view, but are not reconstructed from persisted input.
  * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
+ *
+ * @param persisted - The persisted stored schema of a document.
+ * Typically persisted alongside the data and assumed to describe that data.
+ * @param view - The view schema being evaluated.
+ * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ * @param options - {@link ICodecOptions} used when parsing the provided schema.
+ *
+ * @returns The ability of `view` to view and/or upgrade the persisted stored schema.
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema, without `canInitialize`.
  *
  * @example
  * An application could use {@link extractPersistedSchema} to generate a `schema.json` file for various versions of the app,
@@ -88,7 +97,6 @@ export function extractPersistedSchema(
  * 		require("./schema.json"),
  * 		MySchema,
  * 		{ jsonValidator: typeboxValidator },
- * 		false,
  * 	).canUpgrade,
  * );
  * ```
@@ -98,7 +106,7 @@ export function comparePersistedSchema(
 	persisted: JsonCompatible,
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): SchemaComparisonStatusAlpha {
 	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
 	const stored = schemaCodec.decode(persisted);
 	const config = new TreeViewConfigurationAlpha({

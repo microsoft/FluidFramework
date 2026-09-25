@@ -20,13 +20,18 @@ import {
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
- * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
+ * Reports the ability of a "current" view configuration to view and/or upgrade an existing stored schema
+ * (described by `existingView.schema`).
  *
- * @remarks See {@link SchemaCompatibilityStatus} for details on the compatibility results.
+ * @remarks
+ * Schema metadata does not affect compatibility.
  *
- * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
+ * This function does not inspect document content.
+ *
+ * @example Checking the ability of the current view schema to view or upgrade an existing stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
  * that adds an optional z field.
  *
@@ -63,9 +68,13 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - From which to derive the stored schema, as if it initialized or upgraded a tree via {@link TreeView}.
- * @param view - The view being tested to see if it could view tree created or initialized using `viewWhichCreatedStoredSchema`.
- * @returns The compatibility status.
+ * @param existingView - Configuration whose `schema` was used to generate the existing stored schema.
+ * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
+ * @param currentView - Configuration with the current view schema.
+ * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ *
+ * @returns The ability of `view.schema` to view and/or upgrade an existing stored schema
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema, without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
@@ -73,17 +82,18 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function checkCompatibility(
-	viewWhichCreatedStoredSchema: TreeViewConfiguration,
-	view: TreeViewConfiguration,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
-	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
+	existingView: TreeViewConfiguration,
+	currentView: TreeViewConfiguration,
+): SchemaComparisonStatusAlpha {
+	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: currentView.schema });
+	const stored = toInitialSchema(existingView.schema);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
 /**
- * Returns a JSON compatible representation of the tree schema for snapshot compatibility checking.
+ * Returns a JSON-compatible representation of the tree schema for snapshot compatibility checking.
  *
+ * @remarks
  * Snapshots can be loaded by the same or newer package versions, but not necessarily older versions.
  *
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
@@ -91,7 +101,7 @@ export function checkCompatibility(
  * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
  * @returns The JSON representation of the schema.
  *
- * @example This example creates and persists a snapshot of a Point2D schema.
+ * @example Create and persist a snapshot of a Point2D schema.
  *
  * ```ts
  * const schemaFactory = new SchemaFactory("test");
@@ -127,13 +137,14 @@ export function exportCompatibilitySchemaSnapshot(
  * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
- * @example This example loads and parses a snapshot of a Point2D schema.
+ * @example Load and parse a snapshot of a Point2D schema.
  *
  * ```ts;
  * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("PointSchema.json", "utf8"));
  * ```
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
 export function importCompatibilitySchemaSnapshot(
@@ -448,11 +459,11 @@ export interface SnapshotSchemaCompatibilityOptions {
  * Libraries which export schema for use by others will need to take special care to ensure the stability contract they offer their users aligns which what is validated by this utility.
  *
  * This utility only tests compatibility of the historical snapshots against the current schema; it does not test them against each-other.
- * Generally any historical schemas should have been tested against the ones before them at the time they were current.
+ * Generally any historical schema should have been tested against the ones before them at the time they were current.
  * If for some reason a version of a schema made it into production that was not compatible with a previous version,
  * that can still be represented here (but may require manually generating a snapshot for that version)
  * and this will still allow testing that all historical version can be upgraded to the current one.
- * If a sufficiently incompatible historical schemas were used in production, it may be impossible to make a single schema which can accommodate all of them:
+ * If a sufficiently incompatible historical schema were used in production, it may be impossible to make a single schema which can accommodate all of them:
  * this utility can be used to confirm that is the case, as well as to avoid the problem in the first place by testing schema before each one is deployed.
  *
  * @example Mocha test which validates the current `config` can collaborate with all historical version back to 2.0.0, and load and update any versions older than that.

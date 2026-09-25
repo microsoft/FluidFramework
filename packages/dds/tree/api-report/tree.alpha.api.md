@@ -179,7 +179,7 @@ export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSche
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
-export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(existingView: TreeViewConfiguration, currentView: TreeViewConfiguration): SchemaComparisonStatusAlpha;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -228,7 +228,7 @@ export enum CommitOutcome {
 export type CommitRevision = string;
 
 // @alpha
-export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): SchemaComparisonStatusAlpha;
 
 // @alpha
 export namespace Component {
@@ -1240,6 +1240,17 @@ export interface RunTransactionParamsBeta {
     readonly label?: unknown;
 }
 
+// @alpha @sealed
+export type SchemaComparisonStatusAlpha = Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
+
+// @alpha @sealed
+export type SchemaCompatibilityEquivalenceStatus = {
+    readonly isEquivalent: true;
+} | {
+    readonly isEquivalent: false;
+    readonly equivalenceDiscrepancies: readonly SchemaDiscrepancyAlpha[];
+};
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -1248,10 +1259,29 @@ export interface SchemaCompatibilityStatus {
     readonly isEquivalent: boolean;
 }
 
+// @alpha @sealed
+export type SchemaCompatibilityStatusAlpha = SchemaCompatibilityStatusBeta & SchemaCompatibilityViewableStatus & SchemaCompatibilityUpgradeableStatus & SchemaCompatibilityEquivalenceStatus;
+
 // @beta @sealed
 export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus {
     readonly discrepancies: readonly SchemaDiscrepancy[] | undefined;
 }
+
+// @alpha @sealed
+export type SchemaCompatibilityUpgradeableStatus = {
+    readonly canUpgrade: true;
+} | {
+    readonly canUpgrade: false;
+    readonly upgradeDiscrepancies: readonly SchemaDiscrepancyAlpha[];
+};
+
+// @alpha @sealed
+export type SchemaCompatibilityViewableStatus = {
+    readonly canView: true;
+} | {
+    readonly canView: false;
+    readonly viewDiscrepancies: readonly SchemaDiscrepancyAlpha[];
+};
 
 // @beta @sealed
 export type SchemaDiscrepancy = {
@@ -1284,6 +1314,37 @@ export type SchemaDiscrepancy = {
     readonly view: string;
     readonly stored: string;
 };
+
+// @alpha @sealed
+export type SchemaDiscrepancyAlpha = {
+    readonly location: SchemaDiscrepancyLocationAlpha;
+    readonly viewIsStagedType?: true;
+    readonly viewIsStagedOptional?: true;
+    readonly viewAllowsUnknownOptionalFields?: true;
+} & (({
+    readonly mismatch: "allowedType";
+    readonly allowedType: string;
+} & SchemaDiscrepancyValues<boolean>) | ({
+    readonly mismatch: "fieldKind" | "valueSchema";
+} & SchemaDiscrepancyValues<string>) | ({
+    readonly mismatch: "nodeKind";
+} & SchemaDiscrepancyValues<SchemaNodeKindDescription>) | ({
+    readonly mismatch: "missingNode";
+    readonly missingFrom: readonly ("view" | "existingStored" | "proposedStored")[];
+} & SchemaDiscrepancyValues<SchemaNodeKindDescription>));
+
+// @alpha
+export type SchemaDiscrepancyLocationAlpha = "root" | {
+    readonly nodeType: string;
+    readonly fieldKey?: string | null;
+};
+
+// @alpha
+export interface SchemaDiscrepancyValues<T> {
+    readonly existingStored?: T;
+    readonly proposedStored?: T;
+    readonly view?: T;
+}
 
 // @public @sealed
 export class SchemaFactory<out TScope extends string | undefined = string | undefined, TName extends number | string = string> extends SchemaFactory_base {
@@ -1371,6 +1432,11 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
 
 // @public @system
 const schemaIdentifierBrand: unique symbol;
+
+// @alpha
+export interface SchemaNodeKindDescription {
+    readonly kind: "leaf" | "map" | "array" | "object";
+}
 
 // @public @sealed @system
 export interface SchemaStatics {
@@ -2171,6 +2237,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @alpha @sealed
 export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView">, UntypedTreeViewAlpha {
+    // @override
+    readonly compatibility: SchemaCompatibilityStatusAlpha;
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)

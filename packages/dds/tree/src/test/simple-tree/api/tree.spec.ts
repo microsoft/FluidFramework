@@ -703,7 +703,12 @@ describe("simple-tree tree", () => {
 				}),
 			);
 			upgradedView.upgradeSchema();
-			assert.equal(upgradedView.compatibility.isEquivalent, true);
+
+			// Roundabout assertion to avoid unwanted type narrowing before `revertTo` call below
+			assert.deepEqual(
+				{ isEquivalent: upgradedView.compatibility.isEquivalent },
+				{ isEquivalent: true },
+			);
 			// Include content that is only valid under the upgraded schema.
 			upgradedView.root = "upgraded";
 
