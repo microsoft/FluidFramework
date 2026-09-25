@@ -15,8 +15,8 @@ import {
 } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import Quill from "quill";
-import DeltaPackage from "quill-delta";
+import Quill from "quill-next";
+import Delta from "@quill-next/delta-es";
 
 import {
 	clipboardFormatMatcher,
@@ -32,10 +32,6 @@ import {
 	QuillMainView,
 	// Allow import of files being tested
 } from "../plain/index.js";
-
-// Workaround for quill-delta's export style not working well with node16 module resolution.
-type Delta = DeltaPackage.default;
-const Delta = DeltaPackage.default;
 
 // Configuration for creating formatted text views
 const formattedTreeConfig = new TreeViewConfiguration({
@@ -67,10 +63,6 @@ function createFormattedTreeViewWithEvents(
 // TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
 // @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
 describe("textEditor", () => {
-	// Note: JSDOM is initialized once in mochaHooks.ts before Quill is imported,
-	// since Quill requires document at import time. See src/test/mochaHooks.ts.
-	// These tests reset up a clean DOM.
-
 	let cleanup: () => void;
 
 	// TODO: why does making this beforeEach/afterEach instead of before/after cause cleanup to crash?

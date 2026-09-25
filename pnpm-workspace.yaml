@@ -278,6 +278,7 @@ packages:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
+  '@quill-next/delta-es@5.2.12': patches/@quill-next__delta-es@5.2.12.patch
 
 peerDependencyRules:
   # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't
