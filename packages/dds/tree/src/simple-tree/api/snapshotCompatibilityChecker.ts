@@ -86,7 +86,9 @@ export function checkCompatibility(
 	documentViewConfiguration: TreeViewConfiguration,
 	clientViewConfiguration: TreeViewConfiguration,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: clientViewConfiguration.schema });
+	const viewAsAlpha = new TreeViewConfigurationAlpha({
+		schema: clientViewConfiguration.schema,
+	});
 	const stored = toInitialSchema(documentViewConfiguration.schema);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
