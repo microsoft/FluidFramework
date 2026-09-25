@@ -15,12 +15,14 @@
 		"name": "myfluidacr"
 	},
 
+	"_aksComment": "tier: free/standard/premium -- standard (the default) adds the Uptime SLA; premium also extends Kubernetes version support lifecycle. nodeOsUpgradeChannel (None/Unmanaged/SecurityPatch/NodeImage) and upgradeChannel (none/patch/stable/rapid) are two separate, easily-confused settings: the former patches only the node OS image, the latter auto-upgrades the Kubernetes version (control plane, then node pools one by one) -- both, when enabled, roll node pools via the same rolling-upgrade/max-surge mechanism. If omitted, deploy.sh defaults nodeOsUpgradeChannel to None and upgradeChannel to none (fully manual), NOT Azure's own defaults (NodeImage / none respectively) -- live testing confirmed an unattended NodeImage rotation on a small node pool with no configured surge capacity can take every node NotReady near-simultaneously. The values below (NodeImage/stable) match a known-good reference deployment's configuration, not a resolution of that surge/headroom risk -- decide based on your own node pool size and configured max-surge, or omit both fields (or set them back to None/none) to keep OS and Kubernetes-version upgrades fully manual.",
 	"aks": {
 		"name": "my-fluid-aks",
 		"location": "",
 		"kubernetesVersion": "1.35",
 		"tier": "standard",
-		"nodeOsUpgradeChannel": "None",
+		"nodeOsUpgradeChannel": "NodeImage",
+		"upgradeChannel": "stable",
 		"osSku": "AzureLinux",
 		"availabilityZones": [1, 2, 3],
 		"systemNodeVmSize": "Standard_D8as_v5",

@@ -22,10 +22,10 @@ import {
 import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
-	TreeBeta,
 	TreeViewConfiguration,
 	type TreeView,
 } from "../../../simple-tree/index.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import { getOrCreate } from "../../../util/index.js";
 import { SharedTreeTestFactory } from "../../utils.js";
 

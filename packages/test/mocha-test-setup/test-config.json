@@ -1,6 +1,6 @@
 {
-	"reporterEnabled": "spec,xunit",
-	"xunitReporterOptions": {
+	"reporterEnabled": "spec,@fluid-internal/mocha-test-setup/xunit-reporter",
+	"fluidInternalMochaTestSetupXunitReporterReporterOptions": {
 		"output": "nyc/{id}junit-report.xml",
 		"suiteName": "{id}"
 	}

@@ -77,7 +77,7 @@ export async function stressTest(
 	const runnerArgs: string[][] = [];
 	for (let i = 0; i < profile.numClients; i++) {
 		const childArgs: string[] = [
-			"./dist/runner.js",
+			"./lib/runner.js",
 			"--driver",
 			testDriver.type,
 			"--profile",

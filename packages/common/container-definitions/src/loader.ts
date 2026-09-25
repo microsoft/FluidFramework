@@ -237,7 +237,7 @@ export interface IContainerEvents extends IEvent {
 
 	/**
 	 * Emitted upon the first local change while the Container is in the "saved" state.
-	 * That is, when {@link IContainer.isDirty} transitions from `true` to `false`.
+	 * That is, when {@link IContainer.isDirty} transitions from `false` to `true`.
 	 *
 	 * @remarks Listener parameters:
 	 *
@@ -249,7 +249,7 @@ export interface IContainerEvents extends IEvent {
 
 	/**
 	 * Emitted when all local changes/edits have been acknowledged by the service.
-	 * I.e., when {@link IContainer.isDirty} transitions from `false` to `true`.
+	 * I.e., when {@link IContainer.isDirty} transitions from `true` to `false`.
 	 *
 	 * @remarks Listener parameters:
 	 *

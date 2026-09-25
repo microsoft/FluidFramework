@@ -14,6 +14,7 @@ import type {
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { lt } from "semver-ts";
 
 import {
 	type CodecTree,
@@ -213,7 +214,7 @@ export class SharedTreeKernel
 			...defaultSharedTreeOptions,
 			...optionsParam,
 		};
-		if (options.minVersionForCollab < FluidClientVersion.v2_0) {
+		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
 		}
 		const schema = new TreeStoredSchemaRepository();
@@ -524,6 +525,7 @@ export const changeFormatVersionForEditManager = DependentFormatVersion.fromPair
 	[EditManagerFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[EditManagerFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[EditManagerFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
 /**
@@ -540,6 +542,7 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v4, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.vSharedBranches, SharedTreeChangeFormatVersion.v4],
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
+	[MessageFormatVersion.v7, SharedTreeChangeFormatVersion.v5],
 ]);
 
 function getCodecTreeForEditManagerFormat(

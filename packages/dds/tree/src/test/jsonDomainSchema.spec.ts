@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { JsonAsTree } from "../jsonDomainSchema.js";
-import { Tree } from "../shared-tree/index.js";
-import { TreeBeta, TreeViewConfiguration } from "../simple-tree/index.js";
+import { Tree, TreeBeta } from "../shared-tree/index.js";
+import { TreeViewConfiguration } from "../simple-tree/index.js";
 import type { areSafelyAssignable, requireTrue } from "../util/index.js";
 
 import { testSchemaCompatibilitySnapshots } from "./snapshots/index.js";

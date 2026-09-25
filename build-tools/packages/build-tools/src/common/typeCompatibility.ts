@@ -316,6 +316,7 @@ namespace TestNeverParameter {
 	type AnyNever<T extends never> = T;
 
 	// @ts-expect-error any not assignable to never
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` is the subject of this compile time test
 	type _check1 = FooNever<any>;
 
 	// never is assignable to any

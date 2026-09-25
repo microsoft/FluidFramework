@@ -14,14 +14,13 @@ import {
 	type TreeValue,
 } from "../core/index.js";
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
-import { TreeAlpha, Tree as TreeStatic } from "../shared-tree/index.js";
+import { TreeAlpha, Tree as TreeStatic, TreeBeta } from "../shared-tree/index.js";
 import {
 	createArrayInsertionAnchor,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
-	TreeBeta,
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetails,
 	isObjectNodeSchema,

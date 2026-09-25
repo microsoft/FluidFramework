@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { performanceNow } from "@fluid-internal/client-utils";
 import type {
 	IDocumentService,
 	IResolvedUrl,
@@ -14,6 +15,7 @@ import type {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	createChildLogger,
+	isILoggingError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -51,6 +53,7 @@ async function createVersionManager(
 	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
 	getStorageToken: IOdspPointInTimeDocumentServiceImplementationProps["getStorageToken"],
+	requestHeaders?: Readonly<Record<string, string>>,
 ): Promise<IOdspVersionManager> {
 	const urlParts: IOdspUrlParts = {
 		siteUrl: odspResolvedUrl.siteUrl,
@@ -67,6 +70,7 @@ async function createVersionManager(
 		getAuthHeader,
 		epochTracker,
 		logger,
+		requestHeaders,
 	});
 }
 
@@ -120,6 +124,7 @@ export async function createPointInTimeDocumentServiceCore(
 		clientIsSummarizer,
 		persistedCache,
 		getStorageToken,
+		requestHeaders,
 		createDocumentService,
 	}: IOdspPointInTimeDocumentServiceImplementationProps,
 	dependencies: IPointInTimeDocumentServiceDependencies = {},
@@ -137,23 +142,71 @@ export async function createPointInTimeDocumentServiceCore(
 		},
 		extLogger,
 		clientIsSummarizer,
+		requestHeaders,
 	);
 
-	const versionManager = await (
-		dependencies.createVersionManager ??
-		(async (url, versionLogger, epochTracker) =>
-			createVersionManager(url, versionLogger, epochTracker, getStorageToken))
-	)(odspResolvedUrl, extLogger, cacheAndTracker.epochTracker);
-	const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
+	const baseSelectionStartTime = performanceNow();
+	let baseResult: Awaited<ReturnType<IOdspVersionManager["findBaseForSeq"]>>;
+	try {
+		const versionManager = await (
+			dependencies.createVersionManager ??
+			(async (url, versionLogger, epochTracker) =>
+				createVersionManager(
+					url,
+					versionLogger,
+					epochTracker,
+					getStorageToken,
+					requestHeaders,
+				))
+		)(odspResolvedUrl, extLogger, cacheAndTracker.epochTracker);
+		baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
+	} catch (error) {
+		extLogger.sendErrorEvent(
+			{
+				eventName: "VersionMarkBaseVersionSelection",
+				outcome: "failed",
+				duration: performanceNow() - baseSelectionStartTime,
+				targetSequenceNumber,
+				errorType: (error as Partial<{ errorType: string }> | undefined)?.errorType,
+				availabilityOutcome: isILoggingError(error)
+					? error.getTelemetryProperties().versionMarkAvailabilityOutcome
+					: undefined,
+			},
+			error,
+		);
+		throw error;
+	}
 	if (baseResult.kind === "noBaseVersion") {
 		const oldestResolvedSequenceDetail =
 			baseResult.oldestResolvedSeq === undefined
 				? ""
 				: ` The oldest resolved file version is at sequence number ${baseResult.oldestResolvedSeq}.`;
-		throw new UsageError(
+		const error = new UsageError(
 			`No ODSP file version is available at or before sequence number ${targetSequenceNumber}.${oldestResolvedSequenceDetail}`,
 		);
+		error.addTelemetryProperties({
+			versionMarkAvailabilityOutcome: "baseVersionMissing",
+		});
+		extLogger.sendErrorEvent({
+			eventName: "VersionMarkBaseVersionSelection",
+			outcome: "failed",
+			duration: performanceNow() - baseSelectionStartTime,
+			targetSequenceNumber,
+			availabilityOutcome: "baseVersionMissing",
+			oldestResolvedSequenceNumber: baseResult.oldestResolvedSeq,
+			versionsProbed: baseResult.versionsProbed,
+			sequenceNumberFetchCount: baseResult.sequenceNumberFetchCount,
+			errorType: error.errorType,
+		});
+		throw error;
 	}
+	extLogger.sendPerformanceEvent({
+		eventName: "VersionMarkBaseVersionSelection",
+		outcome: "succeeded",
+		duration: performanceNow() - baseSelectionStartTime,
+		versionsProbed: baseResult.versionsProbed,
+		sequenceNumberFetchCount: baseResult.sequenceNumberFetchCount,
+	});
 
 	const recoverableResolvedUrl = await (dependencies.resolveFileVersion ?? resolveFileVersion)(
 		resolvedUrl,
@@ -165,12 +218,27 @@ export async function createPointInTimeDocumentServiceCore(
 		cacheAndTracker,
 		clientIsSummarizer,
 	);
-	const liveDocumentService = await createDocumentService(
-		resolvedUrl,
-		odspLogger,
-		cacheAndTracker,
-		clientIsSummarizer,
-	);
+	let liveDocumentService: IDocumentService;
+	try {
+		liveDocumentService = await createDocumentService(
+			resolvedUrl,
+			odspLogger,
+			cacheAndTracker,
+			clientIsSummarizer,
+		);
+	} catch (error) {
+		try {
+			recoverableDocumentService.dispose();
+		} catch (disposeError) {
+			extLogger.sendErrorEvent(
+				{
+					eventName: "VersionMarkRecoverableDocumentServiceDisposeError",
+				},
+				disposeError,
+			);
+		}
+		throw error;
+	}
 	return new OdspPointInTimeDocumentService(
 		recoverableResolvedUrl,
 		recoverableDocumentService,

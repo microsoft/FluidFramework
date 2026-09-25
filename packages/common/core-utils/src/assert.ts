@@ -13,7 +13,7 @@
  * Before a release, policy-check should be run, which will convert any asserts still using strings to
  * use numbered error codes instead.
  * @param debugMessageBuilder - An optional function that can be used to build a debug message to include in the error in development builds.
- * Only executed if `condition` is false. `debugMessageBuilder` is not executed in production builds, see `skipInProduction` for details.
+ * Only executed if `condition` is false. `debugMessageBuilder` is not executed in production builds, see {@link skipInProduction} for details.
  * @remarks
  * Use this instead of the node 'assert' package, which requires polyfills and has a big impact on bundle sizes.
  *
@@ -24,11 +24,7 @@
  * In cases where the assert is very unlikely to have an impact on production code but is still useful as documentation and for debugging, consider using {@link debugAssert} instead
  * to optimize bundle size.
  *
- * This API is not intended for use outside of the Fluid Framework client codebase: it will most likely be made internal in the future.
- * @privateRemarks
- * This should be deprecated (as a non internal API) then moved to purely internal.
- * When done, the `skipInProduction` reference above should be turned into a link.
- * @legacy @beta
+ * @internal
  */
 export function assert(
 	condition: boolean,

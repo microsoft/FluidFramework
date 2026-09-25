@@ -48,6 +48,8 @@ export { minimize } from "./transactionMinimize.js";
 export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";
 
+export { TreeBeta } from "./treeBeta.js";
+
 export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
@@ -57,11 +59,13 @@ export {
 export {
 	independentInitializedView,
 	type ViewContent,
+	createIndependentTreeViewAlpha,
 	independentView,
 	type IndependentViewOptions,
 	type IndependentViewTelemetryOptions,
-	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
+	createIndependentTreeBeta,
+	createIndependentTreeView,
 	type CreateIndependentTreeAlphaOptions,
 } from "./independentView.js";
 

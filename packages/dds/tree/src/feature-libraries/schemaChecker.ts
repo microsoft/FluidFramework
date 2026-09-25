@@ -12,12 +12,7 @@ import type {
 	ITelemetryBaseProperties,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import {
-	tagCodeArtifacts,
-	tagData,
-	TelemetryDataTag,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
+import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type TreeFieldStoredSchema,
@@ -63,10 +58,8 @@ export function throwOutOfSchema(details: SchemaValidationErrorDetails): never {
 	throw new UsageError(
 		appendDebugMessage(message, () => getSchemaValidationDebugMessage(details)),
 		{
-			...tagCodeArtifacts({
+			...tagSchemaArtifacts({
 				schemaValidationError: SchemaValidationError[details.error],
-			}),
-			...tagData(TelemetryDataTag.UserData, {
 				schemaValidationPath: JSON.stringify(details.path),
 			}),
 			...details.telemetryProperties,
@@ -200,7 +193,7 @@ export function isNodeInSchema<T extends NotUndefined>(
 		return onError(
 			schemaValidationError(
 				SchemaValidationError.Node_MissingSchema,
-				tagCodeArtifacts({ nodeType: node.type }),
+				tagSchemaArtifacts({ nodeType: node.type }),
 			),
 		);
 	}
@@ -212,8 +205,8 @@ export function isNodeInSchema<T extends NotUndefined>(
 			const unexpectedFields = [...mapIterable(node.fields, ([key]) => key)].sort();
 			return onError(
 				schemaValidationError(SchemaValidationError.LeafNode_FieldsNotAllowed, {
-					...tagCodeArtifacts({ nodeType: node.type }),
-					...tagData(TelemetryDataTag.UserData, {
+					...tagSchemaArtifacts({
+						nodeType: node.type,
 						unexpectedFields: JSON.stringify(unexpectedFields),
 					}),
 				}),
@@ -222,7 +215,7 @@ export function isNodeInSchema<T extends NotUndefined>(
 		if (!allowsValue(schema.leafValue, node.value)) {
 			return onError(
 				schemaValidationError(SchemaValidationError.LeafNode_InvalidValue, {
-					...tagCodeArtifacts({
+					...tagSchemaArtifacts({
 						nodeType: node.type,
 						expectedValueType: ValueSchema[schema.leafValue],
 					}),
@@ -234,7 +227,7 @@ export function isNodeInSchema<T extends NotUndefined>(
 		if (node.value !== undefined) {
 			return onError(
 				schemaValidationError(SchemaValidationError.NonLeafNode_ValueNotAllowed, {
-					...tagCodeArtifacts({ nodeType: node.type }),
+					...tagSchemaArtifacts({ nodeType: node.type }),
 					actualValueType: getValueType(node.value),
 				}),
 			);
@@ -262,8 +255,8 @@ export function isNodeInSchema<T extends NotUndefined>(
 			if (uncheckedFieldsFromNode.size > 0) {
 				return onError(
 					schemaValidationError(SchemaValidationError.ObjectNode_FieldNotInSchema, {
-						...tagCodeArtifacts({ nodeType: node.type }),
-						...tagData(TelemetryDataTag.UserData, {
+						...tagSchemaArtifacts({
+							nodeType: node.type,
 							unexpectedFields: JSON.stringify([...uncheckedFieldsFromNode].sort()),
 						}),
 					}),
@@ -308,7 +301,7 @@ export function isFieldInSchema<T extends NotUndefined>(
 		return onError(
 			schemaValidationError(
 				SchemaValidationError.Field_KindNotInSchemaPolicy,
-				tagCodeArtifacts({ fieldKind: schema.kind }),
+				tagSchemaArtifacts({ fieldKind: schema.kind }),
 			),
 		);
 	}
@@ -319,7 +312,7 @@ export function isFieldInSchema<T extends NotUndefined>(
 		if (multiplicityCheck !== undefined) {
 			return onError(
 				schemaValidationError(multiplicityCheck, {
-					...tagCodeArtifacts({ fieldKind: schema.kind }),
+					...tagSchemaArtifacts({ fieldKind: schema.kind }),
 					childCount: childNodes.length,
 				}),
 			);
@@ -337,7 +330,7 @@ export function isFieldInSchema<T extends NotUndefined>(
 			)(
 				schemaValidationError(
 					SchemaValidationError.Field_NodeTypeNotAllowed,
-					tagCodeArtifacts({
+					tagSchemaArtifacts({
 						nodeType: node.type,
 						allowedTypes: JSON.stringify(allowedTypes),
 					}),

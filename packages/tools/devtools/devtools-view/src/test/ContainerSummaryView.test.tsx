@@ -7,7 +7,6 @@ import {
 	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 } from "@fluidframework/devtools-core/internal";
-import "@testing-library/jest-dom";
 import { render } from "@testing-library/react";
 
 import { ContainerFeatureFlagContext } from "../ContainerFeatureFlagHelper.js";

@@ -5,7 +5,6 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
 import {
 	createDetachedLocalReferencePosition,
 	createRemoveRangeOp,
@@ -75,7 +74,9 @@ export const getDocSegmentKind = (segment: ISegment): DocSegmentKind => {
 		switch (markerType) {
 			case ReferenceType.Tile:
 				const kind = refGetTileLabels(segment)[0] as DocSegmentKind;
-				assert(tilesAndRanges.has(kind), `Unknown tile/range label.`);
+				if (!tilesAndRanges.has(kind)) {
+					throw new Error("Unknown tile/range label.");
+				}
 
 				return kind;
 			default:

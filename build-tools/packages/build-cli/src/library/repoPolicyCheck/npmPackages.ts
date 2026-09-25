@@ -1274,19 +1274,31 @@ export const handlers: Handler[] = [
 				return undefined;
 			}
 
-			const scriptsUsingInconsistentArgs = Object.entries(json.scripts)
-				.filter(([, scriptContent]) => {
+			const scriptsUsingNonPreferredArgs = Object.entries(json.scripts)
+				.map(([scriptName, scriptContent]) => {
 					const commandLine = scriptContent as string;
 					const preferredCommandLine = getPreferredScriptLine(commandLine);
-					return commandLine !== preferredCommandLine;
+					return {
+						scriptName,
+						commandLine,
+						preferredCommandLine,
+					};
 				})
-				.map(([scriptName]) => scriptName);
+				.filter(
+					({ commandLine, preferredCommandLine }) => commandLine !== preferredCommandLine,
+				);
 
-			return scriptsUsingInconsistentArgs.length > 0
-				? `${file} using inconsistent arguments in the following scripts:\n\t${scriptsUsingInconsistentArgs.join(
-						"\n\t",
-					)}`
-				: undefined;
+			if (scriptsUsingNonPreferredArgs.length === 0) {
+				return undefined;
+			}
+
+			const scriptDetails = scriptsUsingNonPreferredArgs
+				.map(
+					({ scriptName, commandLine, preferredCommandLine }) =>
+						`\t${scriptName}:\n\t\tCurrent:   ${commandLine}\n\t\tPreferred: ${preferredCommandLine}`,
+				)
+				.join("\n");
+			return `${file} uses non-preferred argument quoting or escaping in the following scripts:\n${scriptDetails}\nRun \`pnpm flub check policy --fix --handler npm-package-json-scripts-args\` to fix these scripts automatically.`;
 		},
 		resolver: (file: string): { resolved: boolean; message?: string } => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };

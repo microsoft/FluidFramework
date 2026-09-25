@@ -4,7 +4,6 @@
  */
 
 import { ModelLoader } from "@fluid-example/example-utils";
-import { assert } from "@fluidframework/core-utils/legacy";
 import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
 import {
 	createInsecureTinyliciousTestTokenProvider,
@@ -62,10 +61,9 @@ async function start(): Promise<void> {
 		// and upgrade the model if necessary.
 		id = location.hash.substring(1);
 		model = await modelLoader.loadExisting(id);
-		assert(
-			model.upgrade !== undefined && model.getCurrentVersion !== undefined,
-			"model should have upgrade and getCurrentVersion",
-		);
+		if (model.upgrade === undefined || model.getCurrentVersion === undefined) {
+			throw new Error("model should have upgrade and getCurrentVersion");
+		}
 		// If the model version is not the latest version, upgrade the container.
 		if (model.getCurrentVersion() !== modelVersion) {
 			await model.upgrade(modelVersion);

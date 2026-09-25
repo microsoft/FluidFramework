@@ -78,7 +78,7 @@ const connectionModeOf = (container: IFluidContainer): ConnectionMode => {
 	return getContainerConnectionMode(container.container);
 };
 
-for (const oldestSupportedClient of ["1.0.0", "2.0.0"] as const) {
+for (const oldestSupportedClient of ["2.0.0"] as const) {
 	describe(`AzureClient (oldestSupportedClient: ${oldestSupportedClient})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
@@ -364,10 +364,6 @@ for (const oldestSupportedClient of ["1.0.0", "2.0.0"] as const) {
 			});
 
 			it("preserves 'SharedTree' type", async function () {
-				// SharedTree is not supported with oldestSupportedClient "1.0.0" because it requires idCompressor to be enabled.
-				if (oldestSupportedClient === "1.0.0") {
-					this.skip();
-				}
 				const { container } = await client.createContainer(
 					{
 						initialObjects: {
@@ -402,25 +398,7 @@ for (const oldestSupportedClient of ["1.0.0", "2.0.0"] as const) {
 					oldestSupportedClient,
 				);
 
-				const expectedRuntimeOptions1 = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: 0,
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: false,
-					explicitSchemaControl: false,
-					createBlobPayloadPending: undefined,
-					disableSchemaUpgrade: false,
-					stagingModeAutoFlushThreshold: 1000,
-				} as const satisfies ContainerRuntimeOptionsInternal;
-				const expectedRuntimeOptions2 = {
+				const expectedRuntimeOptions = {
 					summaryOptions: {},
 					gcOptions: {},
 					loadSequenceNumberVerification: "close",
@@ -439,10 +417,6 @@ for (const oldestSupportedClient of ["1.0.0", "2.0.0"] as const) {
 					stagingModeAutoFlushThreshold: 1000,
 				} as const satisfies ContainerRuntimeOptionsInternal;
 
-				const expectedRuntimeOptions =
-					oldestSupportedClient === "1.0.0"
-						? expectedRuntimeOptions1
-						: expectedRuntimeOptions2;
 				assert(isInternalFluidContainer(container_defaultConfig));
 				const actualRuntimeOptions = getRuntimeOptions(
 					getContainerRuntime(container_defaultConfig.container),

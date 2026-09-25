@@ -5,7 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import type { GraphCommit, RevisionTag, TaggedChange } from "../../core/index.js";
+import type {
+	CustomMetadataTree,
+	GraphCommit,
+	RevisionTag,
+	TaggedChange,
+} from "../../core/index.js";
 import { type ChangeEnricher, DefaultResubmitMachine } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 
@@ -55,6 +60,11 @@ const revision1 = testIdCompressor.generateCompressedId();
 const revision2 = testIdCompressor.generateCompressedId();
 const revision3 = testIdCompressor.generateCompressedId();
 
+/** Distinct per-commit metadata, so that assertions catch it being dropped or mixed up. */
+function metadata(commit: number): CustomMetadataTree {
+	return { metadata: { commit }, children: [] };
+}
+
 const commit0: GraphCommit<MockEnrichableChange> = {
 	change: {
 		inputContext: revisionRoot,
@@ -62,6 +72,7 @@ const commit0: GraphCommit<MockEnrichableChange> = {
 		updateCount: 0,
 	},
 	revision: revision0,
+	customMetadata: metadata(0),
 };
 
 const commit1: GraphCommit<MockEnrichableChange> = {
@@ -72,6 +83,7 @@ const commit1: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision1,
 	parent: commit0,
+	customMetadata: metadata(1),
 };
 const commit2: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -81,6 +93,7 @@ const commit2: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision2,
 	parent: commit1,
+	customMetadata: metadata(2),
 };
 const commit3: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -90,6 +103,7 @@ const commit3: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision3,
 	parent: commit2,
+	customMetadata: metadata(3),
 };
 
 describe("DefaultResubmitMachine", () => {
@@ -237,6 +251,7 @@ describe("DefaultResubmitMachine", () => {
 					},
 					revision: revision1,
 					parent: commit0,
+					customMetadata: metadata(1),
 				});
 
 				machine.onCommitSubmitted(enriched1Resubmit);
@@ -253,6 +268,7 @@ describe("DefaultResubmitMachine", () => {
 					},
 					revision: revision2,
 					parent: rebased1,
+					customMetadata: metadata(2),
 				});
 				machine.onCommitSubmitted(enriched2Resubmit);
 
@@ -314,6 +330,7 @@ describe("DefaultResubmitMachine", () => {
 				},
 				revision: revision1,
 				parent: commit0,
+				customMetadata: metadata(1),
 			});
 
 			machine.onCommitSubmitted(enriched1Resubmit);
@@ -330,6 +347,7 @@ describe("DefaultResubmitMachine", () => {
 				},
 				revision: revision2,
 				parent: rebased1,
+				customMetadata: metadata(2),
 			});
 
 			machine.onCommitSubmitted(enriched2Resubmit);
@@ -398,6 +416,7 @@ describe("DefaultResubmitMachine", () => {
 				},
 				revision: revision2,
 				parent: commit1,
+				customMetadata: metadata(2),
 			});
 
 			machine.onCommitSubmitted(enriched2Resubmit);

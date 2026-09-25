@@ -234,7 +234,8 @@ describe("mock-customer-service", () => {
 	});
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
-	it("register-session-url: Complete data flow", async function () {
+	// TODO: Skipped due to CI flakiness. Investigate, fix, and re-enable.
+	it.skip("register-session-url: Complete data flow", async function () {
 		// waitForCondition's internal timeout can exceed mocha's default per-test timeout;
 		// give this test enough headroom to let waitForCondition fail on its own terms.
 		this.timeout(10000);

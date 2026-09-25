@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/map",
-	"version": "3.0.0",
+	"version": "3.3.0",
 	"description": "Distributed map",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,45 +14,27 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
+			"types": "./lib/public.d.ts",
+			"default": "./lib/index.js",
+			"internal-entrypoint-generation": {
+				"types": "./dist/public.d.ts"
 			}
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/index.js"
+			"types": "./lib/legacy.d.ts",
+			"default": "./lib/index.js",
+			"internal-entrypoint-generation": {
+				"types": "./dist/legacy.d.ts"
 			}
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		},
 		"./internal/test": {
 			"allow-ff-test-exports": {
-				"import": {
-					"types": "./lib/test/index.d.ts",
-					"default": "./lib/test/index.js"
-				},
-				"require": {
-					"types": "./dist/test/index.d.ts",
-					"default": "./dist/test/index.js"
-				}
+				"types": "./lib/test/index.d.ts",
+				"default": "./lib/test/index.js"
 			}
 		}
 	},
@@ -74,7 +56,7 @@
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/test",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only --exclude-entrypoints ./internal/test",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -152,7 +134,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/map-previous": "npm:@fluidframework/map@2.116.0",
+		"@fluidframework/map-previous": "npm:@fluidframework/map@3.2.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
@@ -167,14 +149,10 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IDirectoryBeta": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

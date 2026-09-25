@@ -52,16 +52,8 @@ const compressionSuite = (getProvider, apis?): void => {
 			},
 		};
 
-		let compatLocalVersionIsOld: boolean = false;
-		let compatOldRemoteVersionIsOld: boolean = false;
-
 		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
-			// If the runtime version for the local or remote container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				compatLocalVersionIsOld = apis.containerRuntime.version === "1.4.0";
-				compatOldRemoteVersionIsOld = apis.containerRuntimeForLoading.version === "1.4.0";
-			}
 		});
 
 		async function setupContainers(
@@ -94,9 +86,6 @@ const compressionSuite = (getProvider, apis?): void => {
 		});
 
 		it("Can compress and process compressed op", async function () {
-			if (compatLocalVersionIsOld || compatOldRemoteVersionIsOld) {
-				this.skip();
-			}
 			await setupContainers();
 			const values = [
 				generateRandomStringOfSize(100),
@@ -116,9 +105,6 @@ const compressionSuite = (getProvider, apis?): void => {
 		});
 
 		it("Processes ops that weren't worth compressing", async function () {
-			if (compatLocalVersionIsOld || compatOldRemoteVersionIsOld) {
-				this.skip();
-			}
 			await setupContainers();
 			const value = generateRandomStringOfSize(5);
 			localMap.set("testKey", value);
@@ -135,10 +121,6 @@ const compressionSuite = (getProvider, apis?): void => {
 			{ compression: true, grouping: true, chunking: false },
 		].forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
-				// The tests are skipped when it is testing cross compatibility and the remote version is 1.4.0.
-				if (compatOldRemoteVersionIsOld) {
-					this.skip();
-				}
 				// This test has unreproducible flakiness against r11s (non-FRS).
 				// This test simply verifies all combinations of compression, chunking, and op grouping work end-to-end.
 				if (

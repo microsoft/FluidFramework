@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/sharejs-json1",
-	"version": "3.0.0",
+	"version": "3.3.0",
 	"description": "Distributed data structure for hosting ottypes",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,14 +14,8 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {
@@ -36,7 +30,7 @@
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -84,10 +78,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/ot": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/shared-object-base": "workspace:~",
 		"ot-json1": "^1.0.1"
 	},
 	"devDependencies": {
@@ -113,7 +104,7 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
 		"disabled": true

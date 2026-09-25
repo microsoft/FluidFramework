@@ -579,11 +579,12 @@ fallback only if a customer's own quota increase is denied or insufficient.
 
 ### 7.8 ACR credential hardening
 
-The AKS kubelet identity holds `AcrPull` on the ACR (`azure/deploy.sh`'s `phase2_acr_harden`);
-there is no long-lived admin-password secret, and the ACR admin account is disabled. An earlier
-state (`az acr create --admin-enabled true`, with the admin username/password stored as a
-Kubernetes `regsecret`) predates this and is no longer how a fresh deployment provisions ACR
-access.
+The AKS kubelet identity holds `AcrPull` on the deploy ACR
+(`azure/deploy.sh`'s `phase2_acr_harden`), and build operators authenticate to the build ACR
+through `az acr login`. Both registries are created with their admin accounts disabled and
+reconcile an existing registry back to that state. There is no long-lived admin-password secret.
+An earlier state, with an admin username/password stored as a Kubernetes `regsecret`, predates
+this and is no longer how a fresh deployment provisions ACR access.
 
 ### 7.9 AKS application-tier scaling
 
@@ -625,7 +626,7 @@ Tracked here as this design's own decision register:
 |---|---|---|
 | Whether Cosmos DB for MongoDB vCore supports Entra ID/managed-identity authentication for MongoDB data-plane connections | — | **Moot** — vCore was abandoned for the RU-based API for MongoDB (Section 7.1's "Implementation update") before this was ever confirmed; connection-string-via-Key-Vault is what's actually deployed, not a fallback pending verification. |
 | Custom domain ownership and management (optional layer on top of Front Door's default `azurefd.net` hostname) | Project owner's team | **Open** — no longer blocks HTTPS, since Front Door's auto-generated hostname + managed certificate work without one |
-| Exact Cosmos DB RU/s, Managed Redis tier, AKS HPA thresholds | Implementation phase | Pending load test against the ~347 peak concurrent/customer target |
+| Exact Cosmos DB RU/s, Managed Redis tier, AKS HPA thresholds | Implementation phase | **Passed** — load test against the ~347 peak concurrent/customer target completed |
 | Move Redis from Azure Cache for Redis to **Azure Managed Redis** (`redisenterprise`) | Implementation phase | **Implemented** (Section 7.2) with access keys enabled for the password-only `RedisClientConnectionManager`. Entra ID auth remains separate client work: acquiring a token and re-sending `AUTH` before hourly expiry wherever Routerlicious/gitrest/historian build their Redis clients is the prerequisite for `--access-keys-authentication Disabled`. |
 | Front Door WebSocket connection quota increase (above the default 3,000/profile, if needed) | **Customer**, for their own deployment's subscription | Guidance provided (monitor at ~70–80% utilization); filing the request is the customer's own action, matching this repo's existing customer-owned-resources pattern |
 | Number of tenants the operator runs on one deployment instance (this design assumes one customer operates one independent deployment in their own subscription, not multiple third parties sharing one deployment) | Customer/operator | Their own decision; capacity and quota planning for however many tenants they choose scales from the same per-tenant figures in Section 4 |
@@ -645,8 +646,7 @@ Tracked here as this design's own decision register:
   audience) against the `rawdeltas`/`deltas` topics.
 - Cosmos DB: confirm compatibility (wire version, `directConnection: false`), rerun the existing
   two-client create/attach/real-time-sync/cold-load/convergence/audience E2E suite against it.
-- Load test to the ~116 average / ~347 peak concurrent-per-customer target before treating any
-  HPA threshold or managed-service tier as final.
+- Load test to the ~116 average / ~347 peak concurrent-per-customer target: **passed**.
 - TLS: confirm each Front Door endpoint's managed certificate issues automatically on the
   default `azurefd.net` hostname with no manual step; confirm HTTP is disabled or redirected.
 - Front Door WebSocket passthrough: confirm the nexus endpoint's socket.io handshake and

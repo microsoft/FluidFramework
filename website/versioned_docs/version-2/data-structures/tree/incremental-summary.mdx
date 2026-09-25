@@ -1,0 +1,114 @@
+---
+title: Incremental Summary
+sidebar_position: 9
+---
+
+:::caution
+
+The APIs described on this page are currently `@alpha` and may change in future releases.
+These APIs should not be used in production.
+See [API Support Levels](../../build/releases-and-apitags.mdx#api-support-levels) for more information.
+
+:::
+
+Incremental summary is an optimization that avoids re-summarizing parts of the tree that have not changed between summaries.
+Types in a schema can opt in to incremental summarization by being marked with `incrementalSummaryHint`.
+These types are tracked as independent chunks in the summary.
+During summarization, if their content has not changed since the last summary, their previously generated summaries are reused.
+As a result, their data does not need to be re-encoded (saving processing time), and their summary trees do not need to be uploaded again (reducing summary upload size).
+
+## How to Enable
+
+Enabling incremental summary requires two steps: marking fields in your schema and configuring the `SharedTree` with the required options.
+
+### 1. Mark Fields in Your Schema
+
+Use `sf.types(...)` with `incrementalSummaryHint` in the `custom` metadata to opt a field in to incremental summarization.
+
+```typescript
+import { SchemaFactoryAlpha, incrementalSummaryHint } from "@fluidframework/tree/alpha";
+
+const sf = new SchemaFactoryAlpha("my-app");
+
+class Item extends sf.objectAlpha("Item", {
+    id: sf.number,
+    // This field will be incrementally summarized.
+    payload: sf.types([{ type: sf.string, metadata: {} }], {
+        custom: { [incrementalSummaryHint]: true },
+    }),
+}) {}
+
+class ItemList extends sf.arrayAlpha(
+    "ItemList",
+    // Each element of this array will be tracked as a separate incremental chunk.
+    sf.types([{ type: Item, metadata: {} }], {
+        custom: { [incrementalSummaryHint]: true },
+    }),
+) {}
+
+class Root extends sf.objectAlpha("Root", {
+    items: ItemList,
+}) {}
+```
+
+:::note
+
+Incremental summarization is applied to **fields**, not node kinds.
+Leaf values (string, number, boolean, null) can be incrementally summarized when they are stored in a field that is opted in via `incrementalSummaryHint` (for example, an object field whose allowed type is `string`).
+Root fields themselves cannot be incrementally summarized, and leaf node kinds do not expose child fields for the policy to apply to.
+
+:::
+
+### 2. Configure the SharedTree
+
+Pass all four required options when creating the `SharedTree` using `configuredSharedTreeAlpha`:
+
+```typescript
+import {
+    configuredSharedTreeAlpha,
+    ForestTypeOptimized,
+    TreeCompressionStrategy,
+    TreeViewConfigurationAlpha,
+    incrementalEncodingPolicyForAllowedTypes,
+    FluidClientVersion,
+} from "@fluidframework/tree/alpha";
+
+const config = new TreeViewConfigurationAlpha({ schema: Root });
+
+const TreeFactory = configuredSharedTreeAlpha({
+    forest: ForestTypeOptimized,
+    treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+    shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(config),
+    minVersionForCollab: FluidClientVersion.v2_74,
+});
+
+const sharedTree = TreeFactory.create(runtime, "tree");
+```
+
+All four of the following configuration options must be set for incremental summary to take effect:
+
+| Option | Value |
+|---|---|
+| `forest` | `ForestTypeOptimized` |
+| `treeEncodeType` | `TreeCompressionStrategy.CompressedIncremental` |
+| `shouldEncodeIncrementally` | Result of `incrementalEncodingPolicyForAllowedTypes(config)` |
+| `minVersionForCollab` | `FluidClientVersion.v2_74` or higher |
+
+## How `incrementalEncodingPolicyForAllowedTypes` Works
+
+`incrementalEncodingPolicyForAllowedTypes` accepts a `TreeViewConfigurationAlpha` and returns a callback.
+During summarization, the callback is invoked for each field in the tree with the node identifier and field key.
+It returns `true` if the field was opted in via `incrementalSummaryHint`, directing the summarizer to encode that field as a separate, reusable chunk.
+
+Fields that are _not_ opted in are encoded into the main summary blob as usual.
+
+## Limitations
+
+-   Root fields cannot be incrementally summarized (the callback always returns `false` for them).
+-   If the view schema does not recognize a node type (for example, due to schema mismatch or unknown optional fields), that node falls back to non-incremental encoding.
+-   The `incrementalSummaryHint` symbol will be replaced by a dedicated metadata property once the APIs stabilize.
+
+## See Also
+
+-   [Schema Definition](./schema-definition/index.mdx) — Overview of defining schemas with `SchemaFactory`
+-   [API Support Levels](../../build/releases-and-apitags.mdx#api-support-levels) — Release channels and API stability

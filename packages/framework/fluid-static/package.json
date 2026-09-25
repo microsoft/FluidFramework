@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-static",
-	"version": "3.0.0",
+	"version": "3.3.0",
 	"description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,44 +14,29 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/public.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/public.d.ts",
-				"default": "./dist/index.js"
+			"types": "./lib/public.d.ts",
+			"default": "./lib/index.js",
+			"internal-entrypoint-generation": {
+				"types": "./dist/public.d.ts"
 			}
 		},
 		"./alpha": {
-			"import": {
-				"types": "./lib/alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/alpha.d.ts",
-				"default": "./dist/index.js"
+			"types": "./lib/alpha.d.ts",
+			"default": "./lib/index.js",
+			"internal-entrypoint-generation": {
+				"types": "./dist/alpha.d.ts"
 			}
 		},
 		"./legacy": {
-			"import": {
-				"types": "./lib/legacy.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy.d.ts",
-				"default": "./dist/index.js"
+			"types": "./lib/legacy.d.ts",
+			"default": "./lib/index.js",
+			"internal-entrypoint-generation": {
+				"types": "./dist/legacy.d.ts"
 			}
 		},
 		"./internal": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"types": "./lib/index.d.ts",
+			"default": "./lib/index.js"
 		}
 	},
 	"scripts": {
@@ -70,7 +55,7 @@
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --profile node16",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -128,16 +113,13 @@
 		"@fluid-internal/presence-runtime": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
@@ -151,7 +133,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.116.0",
+		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@3.2.0",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
@@ -166,15 +148,10 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {
-			"TypeAlias_CompatibilityMode": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }
