@@ -26,11 +26,10 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  *
  * @remarks
  * Only the `schema` property of each configuration is used.
- * The existing and proposed stored schemas are generated using the default restrictive staged upgrade policy;
+ * The "existing" (derived from `viewWhichCreatedStoredSchema`) and "proposed" (derived from `view`) stored schemas are generated using the default restrictive staged upgrade policy;
  * staged upgrade policies supplied through alpha configurations are not used.
  * Viewing checks compare `view.schema` with the generated existing stored schema.
  * Upgrade checks compare the generated existing and proposed stored schemas.
- * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
  * See {@link SchemaCompatibilityStatus} for the compatibility flags.
  *
  * Metadata and descriptions do not affect compatibility.
@@ -73,8 +72,8 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the existing stored schema with the default restrictive staged upgrade policy.
- * @param view - Configuration whose `schema` is used for viewing checks and to generate the proposed stored schema with the default restrictive staged upgrade policy.
+ * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the "existing" stored schema with the default restrictive staged upgrade policy.
+ * @param view - Configuration whose `schema` is used for viewing checks and to generate the "proposed" stored schema with the default restrictive staged upgrade policy.
  * @returns The {@link SchemaCompatibilityStatus} for these schemas, without `canInitialize`.
  *
  * @privateRemarks
