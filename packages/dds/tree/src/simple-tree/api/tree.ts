@@ -1118,7 +1118,7 @@ export interface SchemaCompatibilityStatus {
 	 * This check compares the existing stored schema with the stored schema that would
 	 * be generated from the current view schema with its corresponding configuration.
 	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
-	 * This policy determines which staged changes are included, including whether to
+	 * This policy determines which staged upgrades are enabled, including whether to
 	 * retain upgrades already enabled in the document.
 	 *
 	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}
