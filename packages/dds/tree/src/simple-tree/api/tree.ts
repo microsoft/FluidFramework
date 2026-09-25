@@ -147,16 +147,16 @@ export interface ITreeAlpha extends ITree {
 }
 
 /**
- * An untyped view of a branch of a SharedTree.
+ * An untyped view of a git-style branch of a SharedTree.
  * @remarks
  * Use `UntypedTreeView` to work with a SharedTree branch when you do not know, or do not need, the schema of the tree.
- * This is the primary public API for application code that needs branch-style editing of a SharedTree: an application can {@link UntypedTreeView.fork | fork} a new branch, make changes on it in isolation, and later {@link UntypedTreeView.merge | merge} those changes back.
+ * This is the primary public API for application code that needs branch-style editing of a SharedTree: an application can {@link UntypedTreeView.fork | fork} a new branch,
+ * make changes on it in isolation, and later {@link UntypedTreeView.merge | merge} those changes back.
  *
  * Every {@link ITree | SharedTree} has one "main" branch.
  * All other branches fork from the main branch, either directly or through another branch.
  *
  * @see {@link UntypedTreeViewAlpha} for more experimental APIs.
- * The alpha APIs are for application developers who need finer control over branch history, and who accept that these APIs may still change.
  * @sealed @beta
  */
 export interface UntypedTreeView extends IDisposable {
@@ -361,7 +361,7 @@ export interface TreeBranchHistory {
 /**
  * An {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
- * Use `UntypedTreeViewAlpha` when your application needs to inspect or manipulate branch history directly, for example to {@link UntypedTreeViewAlpha.rewindTo | rewind} a branch to an earlier commit, or to {@link UntypedTreeViewAlpha.revertTo | revert} a branch to a prior state.
+ * Use `UntypedTreeViewAlpha` when your application needs to inspect or manipulate branch history directly.
  * The alpha designation means the shape of these APIs may still change before they become stable.
  *
  * To get the untyped view for a specific {@link TreeNode}, call {@link (TreeAlpha:interface).context} and check {@link TreeContextAlpha.isView | isView()}.
