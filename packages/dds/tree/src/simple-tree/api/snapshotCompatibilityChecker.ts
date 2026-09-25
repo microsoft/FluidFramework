@@ -90,8 +90,9 @@ export function checkCompatibility(
 }
 
 /**
- * Returns a JSON compatible representation of the tree schema for snapshot compatibility checking.
+ * Returns a JSON-compatible representation of the tree schema for snapshot compatibility checking.
  *
+ * @remarks
  * Snapshots can be loaded by the same or newer package versions, but not necessarily older versions.
  *
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
@@ -99,7 +100,7 @@ export function checkCompatibility(
  * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
  * @returns The JSON representation of the schema.
  *
- * @example This example creates and persists a snapshot of a Point2D schema.
+ * @example Create and persist a snapshot of a Point2D schema.
  *
  * ```ts
  * const schemaFactory = new SchemaFactory("test");
@@ -135,13 +136,14 @@ export function exportCompatibilitySchemaSnapshot(
  * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
- * @example This example loads and parses a snapshot of a Point2D schema.
+ * @example Load and parse a snapshot of a Point2D schema.
  *
  * ```ts;
  * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("PointSchema.json", "utf8"));
  * ```
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
 export function importCompatibilitySchemaSnapshot(
