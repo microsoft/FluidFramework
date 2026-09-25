@@ -82,6 +82,9 @@ function generateFieldSchema(
 		metadata: simple.metadata,
 		key: storedKey,
 	};
+	if (simple.isStagedOptional !== undefined && simple.isStagedOptional !== false) {
+		return SchemaFactoryAlpha.stagedOptional(allowed, props);
+	}
 
 	// Using createFieldSchema could work, but would require setting up the default providers.
 	switch (simple.kind) {

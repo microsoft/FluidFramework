@@ -13,6 +13,7 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { currentVersion, FluidClientVersion } from "../../../codec/index.js";
 import { pkgVersion } from "../../../packageVersion.js";
 import {
 	checkCompatibility,
@@ -26,6 +27,7 @@ import {
 import {
 	normalizeFieldSchema,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	SchemaFactoryBeta,
@@ -50,6 +52,8 @@ describe("snapshotCompatibilityChecker", () => {
 
 		const view = new TreeViewConfiguration({ schema: Schema });
 		const snapshot = exportCompatibilitySchemaSnapshot(view);
+		assert(snapshot !== null && typeof snapshot === "object" && "version" in snapshot);
+		assert.equal(snapshot.version, 2);
 		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
 
 		const normalizedView = normalizeFieldSchema(parsedView.schema);
@@ -62,17 +66,8 @@ describe("snapshotCompatibilityChecker", () => {
 	});
 
 	describe("parse and snapshot preserve test schemas", () => {
-		// TODO:AB#82814: Fix compatibility logic and enable these staged optional cases, which are currently skipped below.
-		const stagedOptionalTestCases = new Set([
-			"hasStagedOptionalField",
-			"stagedOptionalRoot",
-			"nestedStagedOptional",
-		]);
-
 		for (const testCase of testSchema) {
-			// TODO:AB#82814: Fix compatibility logic and enable the staged optional cases.
-			const test = stagedOptionalTestCases.has(testCase.name) ? it.skip : it;
-			test(testCase.name, () => {
+			it(testCase.name, () => {
 				// Every test schema, including staged optional fields, must equal its snapshot.
 				const originalView = new TreeViewConfigurationAlpha({
 					schema: testCase.schema,
@@ -85,6 +80,84 @@ describe("snapshotCompatibilityChecker", () => {
 				assert.equal(result.currentViewOfSnapshotDocument.isEquivalent, true);
 				assert.equal(result.snapshotViewOfCurrentDocument.isEquivalent, true);
 				assert.equal(result.identicalCompatibility, true);
+			});
+		}
+	});
+
+	describe("snapshot format versions", () => {
+		it("keeps the version 1 format unchanged", () => {
+			const factory = new SchemaFactory("test");
+			class User extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			assert.deepEqual(
+				exportCompatibilitySchemaSnapshot(
+					new TreeViewConfiguration({ schema: User }),
+					FluidClientVersion.v2_117,
+				),
+				{
+					version: 1,
+					root: {
+						kind: 1,
+						simpleAllowedTypes: {
+							"test.User": { isStaged: false },
+						},
+					},
+					definitions: {
+						"com.fluidframework.leaf.string": {
+							leaf: {
+								kind: 3,
+								leafKind: 1,
+							},
+						},
+						"test.User": {
+							object: {
+								kind: 2,
+								fields: {
+									userName: {
+										kind: 1,
+										simpleAllowedTypes: {
+											"com.fluidframework.leaf.string": { isStaged: false },
+										},
+										storedKey: "name",
+									},
+								},
+								allowUnknownOptionalFields: false,
+							},
+						},
+					},
+				},
+			);
+		});
+
+		it("rejects staged optional fields when writing version 1", () => {
+			const schema = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+			const view = new TreeViewConfigurationAlpha({ schema });
+
+			assert.throws(
+				() => exportCompatibilitySchemaSnapshot(view, FluidClientVersion.v2_117),
+				validateUsageError(
+					`Staged optional fields require oldestSupportedClientVersion to be at least ${currentVersion}.`,
+				),
+			);
+		});
+
+		for (const [name, schema] of [
+			["root field", SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number)],
+			[
+				"object field",
+				new SchemaFactoryAlpha("test").objectAlpha("Object", {
+					field: SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number),
+				}),
+			],
+		] as const) {
+			it(`round-trips staged optional ${name} in version 2`, () => {
+				const originalView = new TreeViewConfigurationAlpha({ schema });
+				const snapshot = exportCompatibilitySchemaSnapshot(originalView, currentVersion);
+				const parsedView = importCompatibilitySchemaSnapshot(snapshot);
+
+				assert.equal(getCompatibility(originalView, parsedView).identicalCompatibility, true);
 			});
 		}
 	});
@@ -207,7 +280,7 @@ describe("snapshotCompatibilityChecker", () => {
 
 		const combinedCompatibility = getCompatibility(currentViewSchema, oldViewSchema);
 		assert.equal(combinedCompatibility.currentViewOfSnapshotDocument.isEquivalent, false);
-		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.isEquivalent, false);
+		assert.equal(combinedCompatibility.snapshotViewOfCurrentDocument.isEquivalent, true);
 	});
 
 	it("SnapshotFileSystem", () => {
@@ -327,6 +400,203 @@ Snapshots exist for versions: [
 				mode: "assert",
 				snapshotDirectory,
 			});
+		});
+
+		it("property keys do not impact schema compatibility snapshots", () => {
+			const factory = new SchemaFactory("test");
+
+			class Original extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class Renamed extends factory.object("User", {
+				displayName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class ChangedStoredKey extends factory.object("User", {
+				displayName: factory.string,
+			}) {}
+
+			const original = new TreeViewConfiguration({ schema: Original });
+			const renamed = new TreeViewConfiguration({ schema: Renamed });
+			const changedStoredKey = new TreeViewConfiguration({ schema: ChangedStoredKey });
+
+			assert.deepEqual(
+				exportCompatibilitySchemaSnapshot(original),
+				exportCompatibilitySchemaSnapshot(renamed),
+			);
+			assert.equal(getCompatibility(renamed, original).identicalCompatibility, true);
+			assert.equal(getCompatibility(changedStoredKey, original).identicalCompatibility, false);
+		});
+
+		it("rejects duplicate stored keys in version 1 snapshots", () => {
+			assert.throws(
+				() =>
+					importCompatibilitySchemaSnapshot({
+						version: 1,
+						root: {
+							kind: 1,
+							simpleAllowedTypes: {
+								"test.User": { isStaged: false },
+							},
+						},
+						definitions: {
+							"com.fluidframework.leaf.string": {
+								leaf: {
+									kind: 3,
+									leafKind: 1,
+								},
+							},
+							"test.User": {
+								object: {
+									kind: 2,
+									fields: {
+										firstProperty: {
+											kind: 1,
+											simpleAllowedTypes: {
+												"com.fluidframework.leaf.string": { isStaged: false },
+											},
+											storedKey: "name",
+										},
+										secondProperty: {
+											kind: 1,
+											simpleAllowedTypes: {
+												"com.fluidframework.leaf.string": { isStaged: false },
+											},
+											storedKey: "name",
+										},
+									},
+									allowUnknownOptionalFields: false,
+								},
+							},
+						},
+					}),
+				validateUsageError(/duplicate stored key "name"/),
+			);
+		});
+
+		it("asserts and normalizes version 1 snapshots", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const factory = new SchemaFactory("test");
+
+			class Original extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class Renamed extends factory.object("User", {
+				displayName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			const renamed = new TreeViewConfiguration({ schema: Renamed });
+			const version1Snapshot = exportCompatibilitySchemaSnapshot(
+				new TreeViewConfiguration({ schema: Original }),
+				FluidClientVersion.v2_117,
+			);
+			snapshots.set("1.0.0.json", JSON.stringify(version1Snapshot));
+
+			snapshotSchemaCompatibility({
+				version: "1.0.0",
+				schema: renamed,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "assert",
+				snapshotDirectory,
+				rejectSchemaChangesWithNoVersionChange: true,
+				snapshotUnchangedVersions: true,
+			});
+
+			snapshotSchemaCompatibility({
+				version: "2.0.0",
+				schema: renamed,
+				fileSystem,
+				minVersionForCollaboration: "1.0.0",
+				mode: "normalize",
+				snapshotDirectory,
+			});
+
+			assert.deepEqual([...snapshots.keys()], ["1.0.0.json"]);
+			assert.deepEqual(
+				JSON.parse(snapshots.get("1.0.0.json") ?? assert.fail("missing snapshot")),
+				exportCompatibilitySchemaSnapshot(renamed),
+			);
+		});
+
+		it("does not normalize a snapshot with a compatibility change", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const factory = new SchemaFactory("test");
+
+			class Original extends factory.object("User", {
+				userName: factory.required(factory.string, { key: "name" }),
+			}) {}
+
+			class ChangedStoredKey extends factory.object("User", {
+				displayName: factory.string,
+			}) {}
+
+			const version1Snapshot = exportCompatibilitySchemaSnapshot(
+				new TreeViewConfiguration({ schema: Original }),
+				FluidClientVersion.v2_117,
+			);
+			const originalSnapshotText = JSON.stringify(version1Snapshot);
+			snapshots.set("1.0.0.json", originalSnapshotText);
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						version: "1.0.0",
+						schema: new TreeViewConfiguration({ schema: ChangedStoredKey }),
+						fileSystem,
+						minVersionForCollaboration: "1.0.0",
+						mode: "normalize",
+						snapshotDirectory,
+					}),
+				/cannot be normalized because its schema has changed/,
+			);
+			assert.equal(snapshots.get("1.0.0.json"), originalSnapshotText);
+		});
+
+		it("does not normalize when historical compatibility validation fails", () => {
+			const snapshotDirectory = "dir";
+			const [fileSystem, snapshots] = inMemorySnapshotFileSystem();
+			const factory = new SchemaFactory("test");
+
+			class Historical extends factory.object("User", {
+				value: factory.string,
+			}) {}
+
+			class Current extends factory.object("User", {
+				value: factory.number,
+			}) {}
+
+			snapshots.set(
+				"1.0.0.json",
+				JSON.stringify(
+					exportCompatibilitySchemaSnapshot(new TreeViewConfiguration({ schema: Historical })),
+				),
+			);
+			const version1CurrentSnapshot = JSON.stringify(
+				exportCompatibilitySchemaSnapshot(
+					new TreeViewConfiguration({ schema: Current }),
+					FluidClientVersion.v2_117,
+				),
+			);
+			snapshots.set("2.0.0.json", version1CurrentSnapshot);
+
+			assert.throws(
+				() =>
+					snapshotSchemaCompatibility({
+						version: "2.0.0",
+						schema: new TreeViewConfiguration({ schema: Current }),
+						fileSystem,
+						minVersionForCollaboration: "2.0.0",
+						mode: "normalize",
+						snapshotDirectory,
+					}),
+				/Cannot upgrade documents from "1.0.0"/i,
+			);
+			assert.equal(snapshots.get("2.0.0.json"), version1CurrentSnapshot);
 		});
 
 		// Tests the various operations a user of the snapshotSchemaCompatibility function might perform across various versions of their codebase.
@@ -1131,8 +1401,7 @@ Snapshots exist for versions: [
 		}
 	});
 
-	// TODO:AB#82814: Fix compatibility logic and enable this test.
-	it.skip("getCompatibility handles staged schema symmetrically", () => {
+	it("getCompatibility handles staged schema symmetrically", () => {
 		const factory = new SchemaFactoryBeta("test");
 		const stagedString = factory.staged(factory.string);
 		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));
@@ -1148,8 +1417,7 @@ Snapshots exist for versions: [
 		assert.equal(result.identicalCompatibility, false);
 	});
 
-	// TODO:AB#82814: Fix compatibility logic and enable this test.
-	it.skip("getCompatibility distinguishes identical view schema with different staged policies", () => {
+	it("getCompatibility distinguishes identical view schema with different staged policies", () => {
 		const factory = new SchemaFactoryBeta("test");
 		const stagedString = factory.staged(factory.string);
 		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
@@ -1171,8 +1439,7 @@ Snapshots exist for versions: [
 		assert.equal(result.identicalCompatibility, false);
 	});
 
-	// TODO:AB#82814: Fix compatibility logic and enable this test.
-	it.skip("checkCompatibility uses the stored schema configuration's staged upgrade policy", () => {
+	it("checkCompatibility uses the stored schema configuration's staged upgrade policy", () => {
 		const factory = new SchemaFactoryBeta("test");
 		const stagedString = factory.staged(factory.string);
 		const stringUpgrade = stagedString.metadata.stagedSchemaUpgrade;
@@ -1192,8 +1459,7 @@ Snapshots exist for versions: [
 		assert.equal(result.isEquivalent, true);
 	});
 
-	// TODO:AB#82814: Fix compatibility logic and enable this test.
-	it.skip("checkCompatibility uses the viewing configuration's staged upgrade policy", () => {
+	it("checkCompatibility uses the viewing configuration's staged upgrade policy", () => {
 		const factory = new SchemaFactoryBeta("test");
 		const stagedString = factory.staged(factory.string);
 		const stagedSchema = factory.optional(factory.types([factory.number, stagedString]));

@@ -34,6 +34,13 @@ describe("schemaFromSimple", () => {
 		// This should not lose metadata like property keys as it doesn't go through the stored schema.
 		const simpleFromView = getSimpleSchema(root);
 		const roundTripped2 = generateSchemaFromSimpleSchema(simpleFromView);
+		assert.equal(
+			simpleFromView.root.isStagedOptional !== undefined &&
+				simpleFromView.root.isStagedOptional !== false,
+			roundTripped2.root.isStagedOptional !== undefined &&
+				roundTripped2.root.isStagedOptional !== false,
+			"Root staged-optional status must survive simple schema conversion",
+		);
 
 		// Lossy extraction of stored schema should still be the same
 		const stored3 = toInitialSchema(roundTripped2.root);
@@ -64,16 +71,8 @@ describe("schemaFromSimple", () => {
 			roundtrip(SchemaFactory.number);
 		});
 
-		const stagedOptionalTestCases = new Set([
-			"HasStagedOptionalFieldBeforeUpdate",
-			"Staged optional in root",
-			"NestedStagedOptional with no upgrades",
-		]);
-
 		for (const testSchema of testSimpleTrees) {
-			// TODO: AB#82814: Fix simple schema conversion for staged optional fields and enable these cases.
-			const test = stagedOptionalTestCases.has(testSchema.name) ? it.skip : it;
-			test(testSchema.name, () => {
+			it(testSchema.name, () => {
 				roundtrip(testSchema.schema);
 			});
 		}

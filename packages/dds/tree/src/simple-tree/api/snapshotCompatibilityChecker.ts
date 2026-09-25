@@ -4,15 +4,17 @@
  */
 
 import { assert, fail, transformMapValues } from "@fluidframework/core-utils/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { selectVersionRoundedDown } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as semver from "semver-ts";
 
+import { currentVersion as currentFluidClientVersion } from "../../codec/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
-import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
+import { type TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
@@ -76,9 +78,25 @@ export function checkCompatibility(
 	viewWhichCreatedStoredSchema: TreeViewConfiguration,
 	view: TreeViewConfiguration,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
-	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
-	return checkSchemaCompatibility(viewAsAlpha, stored);
+	return checkCompatibilityInternal(viewWhichCreatedStoredSchema, view, false);
+}
+
+function checkCompatibilityInternal(
+	viewWhichCreatedStoredSchema: TreeViewConfiguration,
+	view: TreeViewConfiguration,
+	includeAlreadyEnabledUpgrades: boolean,
+): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+	// TreeViewConfiguration's constructor guarantees that every instance implements the alpha API.
+	const storedSchemaConfig = viewWhichCreatedStoredSchema as TreeViewConfigurationAlpha;
+	const viewAsAlpha = view as TreeViewConfigurationAlpha;
+	const stored = toInitialSchema(
+		storedSchemaConfig.schema,
+		storedSchemaConfig.stagedUpgradePolicy,
+	);
+	const stagedUpgradePolicy = includeAlreadyEnabledUpgrades
+		? { ...viewAsAlpha.stagedUpgradePolicy, includeAlreadyEnabledUpgrades: true }
+		: viewAsAlpha.stagedUpgradePolicy;
+	return checkSchemaCompatibility(viewAsAlpha, stored, stagedUpgradePolicy);
 }
 
 /**
@@ -89,6 +107,8 @@ export function checkCompatibility(
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
  *
  * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
+ * @param oldestSupportedClientVersion - The oldest Fluid Framework client version that must be able to read the snapshot.
+ * Defaults to the current Fluid Framework version.
  * @returns The JSON representation of the schema.
  *
  * @example This example creates and persists a snapshot of a Point2D schema.
@@ -111,9 +131,10 @@ export function checkCompatibility(
  */
 export function exportCompatibilitySchemaSnapshot(
 	config: Pick<TreeViewConfiguration, "schema">,
+	oldestSupportedClientVersion?: OldestSupportedClientVersion,
 ): JsonCompatibleReadOnly {
 	const treeSchema = createTreeSchema(config.schema);
-	return encodeSchemaCompatibilitySnapshot(treeSchema);
+	return encodeSchemaCompatibilitySnapshot(treeSchema, oldestSupportedClientVersion);
 }
 
 /**
@@ -247,6 +268,16 @@ export interface CombinedSchemaCompatibilityStatus {
  * @beta
  */
 export interface SnapshotSchemaCompatibilityOptions {
+	/**
+	 * The oldest Fluid Framework client version that must be able to read newly written snapshots.
+	 * @remarks
+	 * This controls the persisted snapshot format and is independent from
+	 * {@link SnapshotSchemaCompatibilityOptions.minVersionForCollaboration}, which versions the application schema.
+	 *
+	 * @defaultValue The current Fluid Framework version.
+	 */
+	readonly oldestSupportedClientVersion?: OldestSupportedClientVersion;
+
 	/**
 	 * Directory where historical schema snapshots are stored.
 	 * @remarks
@@ -388,9 +419,9 @@ export interface SnapshotSchemaCompatibilityOptions {
 	readonly rejectSchemaChangesWithNoVersionChange?: true;
 
 	/**
-	 * The mode of operation, either "assert" or "update".
+	 * The mode of operation: "assert", "update", or "normalize".
 	 * @remarks
-	 * Both modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
+	 * All modes will throw errors if any compatibility issues are detected (but after updating snapshots in "update" mode so the diff can be used to help debug).
 	 *
 	 * In "assert" mode, an error is additionally thrown if the latest snapshot is not up to date (meaning "update" mode would make a change).
 	 *
@@ -398,15 +429,18 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * If {@link SnapshotSchemaCompatibilityOptions.rejectVersionsWithNoSchemaChange} or
 	 * {@link SnapshotSchemaCompatibilityOptions.rejectSchemaChangesWithNoVersionChange} disallows the update, an error is thrown instead.
 	 *
+	 * In "normalize" mode, the latest snapshot is rewritten using the latest snapshot format, but only if its schema has
+	 * identical compatibility to the current schema. This can be used after upgrading Fluid Framework to minimize future
+	 * snapshot diffs without combining the format update with a schema change.
+	 *
 	 * It is recommended that "assert" mode be used in automated tests to verify schema compatibility,
-	 * and "update" mode only be used manually to update snapshots when making schema or version changes.
+	 * and "update" or "normalize" mode only be used manually.
 	 *
 	 * @privateRemarks
 	 * Modes we might want to add in the future:
-	 * - normalize: update the latest snapshot (or maybe all of them) to the latest encoded format.
 	 * - some mode like assert but returns information instead of throwing.
 	 */
-	readonly mode: "assert" | "update";
+	readonly mode: "assert" | "update" | "normalize";
 }
 
 /**
@@ -414,7 +448,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  *
  * @throws Throws errors if the input version strings (including those in snapshot file names) are not valid semver versions when using default semver version comparison.
  * @throws Throws errors if the input version strings (including those in snapshot file names) are not ordered as expected (current being the highest, and `minVersionForCollaboration` corresponding to the current version or a lower snapshotted version).
- * @throws In `test` mode, throws an error if there is not an up to date snapshot for the current version.
+ * @throws In `assert` mode, throws an error if there is not an up to date snapshot for the current version.
  * @throws Throws an error if any snapshotted schema cannot be upgraded to the current schema.
  * @throws Throws an error if any snapshotted schema with a version greater than or equal to `minVersionForCollaboration` cannot view documents created with the current schema.
  * @remarks
@@ -463,7 +497,7 @@ export interface SnapshotSchemaCompatibilityOptions {
  * 		schema: config,
  * 		fileSystem: { ...fs, ...path },
  * 		minVersionForCollaboration: "2.0.0",
- * 		mode: process.argv.includes("--snapshot") ? "update" : "test",
+ * 		mode: process.argv.includes("--snapshot") ? "update" : "assert",
  * 		snapshotDirectory,
  * 	});
  * });
@@ -552,14 +586,28 @@ export function snapshotSchemaCompatibility(
 		);
 	}
 
-	if (mode !== "assert" && mode !== "update") {
+	if (mode !== "assert" && mode !== "update" && mode !== "normalize") {
 		throw new UsageError(
-			`Invalid mode: ${JSON.stringify(mode)}. Must be either "assert" or "update".`,
+			`Invalid mode: ${JSON.stringify(mode)}. Must be "assert", "update", or "normalize".`,
 		);
 	}
 
-	const currentEncodedForSnapshotting = exportCompatibilitySchemaSnapshot(currentViewSchema);
+	const currentEncodedForSnapshotting = exportCompatibilitySchemaSnapshot(
+		currentViewSchema,
+		options.oldestSupportedClientVersion,
+	);
 	const snapshots = checker.readAllSchemaSnapshots(versionComparer);
+	const rawSnapshots = new Map<string, JsonCompatibleReadOnly>();
+
+	function getRawSnapshot(version: string): JsonCompatibleReadOnly {
+		const cached = rawSnapshots.get(version);
+		if (cached !== undefined) {
+			return cached;
+		}
+		const snapshot = checker.readSchemaSnapshotRaw(version);
+		rawSnapshots.set(version, snapshot);
+		return snapshot;
+	}
 
 	const compatibilityErrors: string[] = [];
 
@@ -586,6 +634,7 @@ export function snapshotSchemaCompatibility(
 	// - the updateError message (update in update mode, error otherwise)
 	// - an error if the update is disallowed by the flags
 	let wouldUpdate: false | string | Error;
+	let snapshotToNormalize: string | undefined;
 
 	// Set wouldUpdate
 	{
@@ -600,7 +649,18 @@ export function snapshotSchemaCompatibility(
 			const schemaChange = !latestCompatibility.identicalCompatibility;
 			const versionChange = versionComparer(latestSnapshot[0], currentVersion) !== 0;
 
-			if (rejectVersionsWithNoSchemaChange === true && versionChange && !schemaChange) {
+			if (mode === "normalize") {
+				wouldUpdate = schemaChange
+					? `Snapshot for current version ${JSON.stringify(currentVersion)} cannot be normalized because its schema has changed since latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}.`
+					: false;
+				if (
+					!schemaChange &&
+					JSON.stringify(getRawSnapshot(latestSnapshot[0])) !==
+						JSON.stringify(currentEncodedForSnapshotting)
+				) {
+					snapshotToNormalize = latestSnapshot[0];
+				}
+			} else if (rejectVersionsWithNoSchemaChange === true && versionChange && !schemaChange) {
 				wouldUpdate = errorWithContext(
 					`Rejecting version change (${JSON.stringify(latestSnapshot[0])} to ${JSON.stringify(currentVersion)}) due to rejectVersionsWithNoSchemaChange being set.`,
 				);
@@ -616,10 +676,7 @@ export function snapshotSchemaCompatibility(
 				const currentRead = snapshots.get(currentVersion);
 				if (currentRead === undefined) {
 					wouldUpdate = `No snapshot found for version ${JSON.stringify(currentVersion)}: snapshotUnchangedVersions is true, so every version must be snapshotted.`;
-				} else if (
-					JSON.stringify(exportCompatibilitySchemaSnapshot(currentRead)) ===
-					JSON.stringify(currentEncodedForSnapshotting)
-				) {
+				} else if (getCompatibility(currentViewSchema, currentRead).identicalCompatibility) {
 					wouldUpdate = false;
 				} else {
 					wouldUpdate = `Snapshot for current version ${JSON.stringify(currentVersion)} is out of date.`;
@@ -633,19 +690,6 @@ export function snapshotSchemaCompatibility(
 					wouldUpdate = errorWithContext(
 						`Current version ${JSON.stringify(currentVersion)} is less than latest existing snapshot version ${JSON.stringify(latestSnapshot[0])}: version is expected to increase monotonically.`,
 					);
-				}
-			}
-
-			if (!schemaChange && (snapshotUnchangedVersions !== true || !versionChange)) {
-				// eslint-disable-next-line unicorn/no-lonely-if
-				if (
-					JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1])) !==
-					JSON.stringify(currentEncodedForSnapshotting)
-				) {
-					// Schema are compatibility wise equivalent, but differ in some way (excluding json formatting).
-					// TODO: add a "normalize" mode, which do an update only in this case (or maybe even normalize json formatting as well and just always rewrite when !schemaChange)
-					// This would be useful to minimize diffs from future schema changes.
-					// This would be particularly useful if adding a second version of the format used in the snapshots.
 				}
 			}
 		}
@@ -755,6 +799,10 @@ export function snapshotSchemaCompatibility(
 
 	if (compatibilityErrors.length > 0) {
 		throw errorWithContext(compatibilityErrors.map((e) => ` - ${e}`).join("\n"));
+	}
+
+	if (snapshotToNormalize !== undefined) {
+		checker.writeSchemaSnapshot(snapshotToNormalize, currentEncodedForSnapshotting);
 	}
 }
 
@@ -893,32 +941,28 @@ export function getCompatibility(
 	currentViewSchema: TreeViewConfiguration,
 	previousViewSchema: TreeViewConfiguration,
 ): CombinedSchemaCompatibilityStatus {
-	const backwardsCompatibilityStatus = checkCompatibility(
+	const backwardsCompatibilityStatus = checkCompatibilityInternal(
 		previousViewSchema,
 		currentViewSchema,
+		true,
 	);
 
-	const forwardsCompatibilityStatus = checkCompatibility(
+	const forwardsCompatibilityStatus = checkCompatibilityInternal(
 		currentViewSchema,
 		previousViewSchema,
-	);
-
-	assert(
-		backwardsCompatibilityStatus.isEquivalent === forwardsCompatibilityStatus.isEquivalent,
-		0xcd3 /* equality should be symmetric */,
+		true,
 	);
 
 	// This relies on exportCompatibilitySchemaSnapshot being well normalized, and not differing for non-significant changes.
 	const identicalCompatibility =
-		JSON.stringify(exportCompatibilitySchemaSnapshot(currentViewSchema)) ===
-		JSON.stringify(exportCompatibilitySchemaSnapshot(previousViewSchema));
-
-	if (identicalCompatibility) {
-		assert(
-			backwardsCompatibilityStatus.isEquivalent,
-			0xcd4 /* identicalCompatibility should have equivalent stored schema */,
-		);
-	}
+		backwardsCompatibilityStatus.isEquivalent &&
+		forwardsCompatibilityStatus.isEquivalent &&
+		JSON.stringify(
+			exportCompatibilitySchemaSnapshot(currentViewSchema, currentFluidClientVersion),
+		) ===
+			JSON.stringify(
+				exportCompatibilitySchemaSnapshot(previousViewSchema, currentFluidClientVersion),
+			);
 
 	return {
 		currentViewOfSnapshotDocument: backwardsCompatibilityStatus,
