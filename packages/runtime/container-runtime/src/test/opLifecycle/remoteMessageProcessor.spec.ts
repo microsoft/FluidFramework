@@ -11,6 +11,7 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedRuntimeMessage } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
@@ -87,8 +88,9 @@ describe("RemoteMessageProcessor", () => {
 		value: string,
 		seqNum: number,
 		clientSeqNum: number,
-		batchMetadata?: boolean,
-	): ISequencedDocumentMessage {
+		batchMetadata: boolean | undefined,
+		indexInBatch: number,
+	): ISequencedRuntimeMessage {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		return {
 			type: ContainerMessageType.FluidDataStoreOp,
@@ -101,11 +103,12 @@ describe("RemoteMessageProcessor", () => {
 			compression: undefined,
 			sequenceNumber: seqNum,
 			clientSequenceNumber: clientSeqNum,
+			indexInBatch,
 			referenceSequenceNumber: Number.POSITIVE_INFINITY,
 			contents: {
 				key: value,
 			},
-		} as ISequencedDocumentMessage;
+		} as unknown as ISequencedRuntimeMessage;
 	}
 
 	const messageGenerationOptions = generatePairwiseOptions<{
@@ -238,18 +241,18 @@ describe("RemoteMessageProcessor", () => {
 
 			const expected = option.grouping
 				? [
-						getProcessedMessage("a", startSeqNum, 1, true),
-						getProcessedMessage("b", startSeqNum, 2),
-						getProcessedMessage("c", startSeqNum, 3),
-						getProcessedMessage("d", startSeqNum, 4),
-						getProcessedMessage("e", startSeqNum, 5, false),
+						getProcessedMessage("a", startSeqNum, 1, true, 0),
+						getProcessedMessage("b", startSeqNum, 2, undefined, 1),
+						getProcessedMessage("c", startSeqNum, 3, undefined, 2),
+						getProcessedMessage("d", startSeqNum, 4, undefined, 3),
+						getProcessedMessage("e", startSeqNum, 5, false, 4),
 					]
 				: [
-						getProcessedMessage("a", startSeqNum, startSeqNum++, true),
-						getProcessedMessage("b", startSeqNum, startSeqNum++),
-						getProcessedMessage("c", startSeqNum, startSeqNum++),
-						getProcessedMessage("d", startSeqNum, startSeqNum++),
-						getProcessedMessage("e", startSeqNum, startSeqNum, false),
+						getProcessedMessage("a", startSeqNum, startSeqNum++, true, 0),
+						getProcessedMessage("b", startSeqNum, startSeqNum++, undefined, 1),
+						getProcessedMessage("c", startSeqNum, startSeqNum++, undefined, 2),
+						getProcessedMessage("d", startSeqNum, startSeqNum++, undefined, 3),
+						getProcessedMessage("e", startSeqNum, startSeqNum, false, 4),
 					];
 
 			assert.deepStrictEqual(inboundMessages, expected, "unexpected output");
@@ -299,6 +302,7 @@ describe("RemoteMessageProcessor", () => {
 			return {
 				...message,
 				...message.contents,
+				indexInBatch: messageIndex,
 			} as Partial<InboundSequencedContainerRuntimeMessage> as InboundSequencedContainerRuntimeMessage;
 		};
 		// biome-ignore format: Easier to read leaving batchStart as single lines
@@ -537,6 +541,7 @@ describe("RemoteMessageProcessor", () => {
 				clientId: "CLIENT_ID",
 				sequenceNumber: 10,
 				clientSequenceNumber: 1,
+				indexInBatch: 0,
 				compression: undefined,
 				metadata: { batch: true, batchId: "BATCH_ID" },
 				contents: {
@@ -548,6 +553,7 @@ describe("RemoteMessageProcessor", () => {
 				clientId: "CLIENT_ID",
 				sequenceNumber: 10,
 				clientSequenceNumber: 2,
+				indexInBatch: 1,
 				compression: undefined,
 				metadata: { batch: false },
 				contents: {

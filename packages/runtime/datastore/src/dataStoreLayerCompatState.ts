@@ -62,7 +62,11 @@ export const runtimeSupportRequirementsForDataStore: ILayerCompatSupportRequirem
 	/**
 	 * The features that the Runtime must support to be compatible with DataStore.
 	 */
-	requiredFeatures: [],
+	requiredFeatures: [
+		// TODO: Every generation 11 Runtime supports "runtimeMessagesHaveIndexInBatch". At generation
+		// 14, once the three-generation compatibility window excludes generation 10, require that
+		// feature and remove clientSequenceNumber fallbacks used for runtime-message ordering.
+	],
 };
 
 /**

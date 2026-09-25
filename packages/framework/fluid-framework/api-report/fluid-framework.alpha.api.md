@@ -1607,6 +1607,9 @@ export interface ObservationResults<TResult> {
 // @public
 export type Off = () => void;
 
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
+
 // @alpha @input
 export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
 
