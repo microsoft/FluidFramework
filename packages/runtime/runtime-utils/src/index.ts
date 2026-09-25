@@ -24,8 +24,11 @@ export {
 	lookupTemporaryBlobStorageId,
 	toFluidHandleErased,
 	toFluidHandleInternal,
+	waitForPayloadUploaded,
 } from "./handles.js";
 export type { ISerializedHandle } from "./handles.js";
+export { waitForEvent, withDisposalAbort } from "./waitForEvent.js";
+export type { WaitForEventOptions, IDisposalEventSource } from "./waitForEvent.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {
 	getNormalizedObjectStoragePathParts,
