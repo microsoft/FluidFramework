@@ -1040,7 +1040,7 @@ export interface TreeViewAlpha<
  */
 export interface SchemaCompatibilityStatus {
 	/**
-	 * Whether the view schema allows exactly the same set of documents as the stored schema.
+	 * Whether the view can access the document and the existing and proposed stored schemas pass the schema upgrade checks in both directions.
 	 *
 	 * @remarks
 	 * The proposed stored schema is generated from the view schema and the configured {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy},
