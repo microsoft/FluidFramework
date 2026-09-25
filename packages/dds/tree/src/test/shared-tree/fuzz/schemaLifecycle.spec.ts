@@ -1,0 +1,188 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "node:assert";
+
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { done, takeAsync } from "@fluid-private/stochastic-test-utils";
+import { type DDSFuzzHarnessEvents, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+
+import { toInitialSchema } from "../../../simple-tree/index.js";
+import { expectSchemaEqual, validateFuzzTreeConsistency } from "../../utils.js";
+
+import { baseTreeModel } from "./baseModel.js";
+import {
+	type FuzzTestState,
+	makeTreeEditGenerator,
+	simpleSchemaFromStoredSchema,
+	viewFromState,
+} from "./fuzzEditGenerators.js";
+import {
+	applyFieldEdit,
+	applyForkMergeOperation,
+	applySchemaOp,
+	applyTransactionBoundary,
+	generateLeafNodeSchemas,
+} from "./fuzzEditReducers.js";
+import { createTreeViewSchema, deterministicIdCompressorFactory } from "./fuzzUtils.js";
+import { GeneratedFuzzValueType } from "./operationTypes.js";
+
+/**
+ * Deterministic regressions for the schema lifecycle in the existing DDS fuzz harness.
+ */
+describe("Fuzz schema lifecycle", () => {
+	function scenario(name: string, run: (state: FuzzTestState) => void): void {
+		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		emitter.on("testStart", (state: FuzzTestState) => {
+			state.client = state.clients[0];
+			state.random.handle = () => state.client.channel.handle;
+			run(state);
+		});
+		createDDSFuzzSuite(
+			{
+				...baseTreeModel,
+				workloadName: name,
+				generatorFactory: () =>
+					takeAsync(1, async () => ({ type: "synchronizeTrees" as const })),
+			},
+			{
+				defaultTestCount: 1,
+				numberOfClients: 2,
+				detachedStartOptions: { numOpsBeforeAttach: 0 },
+				rollbackProbability: 0,
+				emitter,
+				idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			},
+		);
+	}
+
+	scenario(
+		"schema upgrades retain the root checkout without creating a transaction",
+		(state) => {
+			const checkout = viewFromState(state).checkout;
+			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+			assert.equal(state.transactionViews?.has(state.client.channel) ?? false, false);
+			assert.equal(viewFromState(state).checkout, checkout);
+			assert.equal(viewFromState(state).compatibility.isEquivalent, true);
+			applySchemaOp(state, { type: "schemaChange", contents: { type: "secondUpgrade" } });
+			assert.equal(viewFromState(state).checkout, checkout);
+		},
+	);
+
+	scenario("schema upgrades add only the requested node type", (state) => {
+		const checkout = viewFromState(state).checkout;
+		const originalTypes = [...checkout.storedSchema.nodeSchema.keys()];
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		assert.deepEqual(
+			[...checkout.storedSchema.nodeSchema.keys()].sort(),
+			[...originalTypes, "treeFuzz.upgrade"].sort(),
+		);
+	});
+
+	scenario("repeating the same schema upgrade is idempotent", (state) => {
+		const operation = { type: "schemaChange", contents: { type: "upgrade" } } as const;
+		applySchemaOp(state, operation);
+		const schema = viewFromState(state).checkout.storedSchema.clone();
+		applySchemaOp(state, operation);
+		expectSchemaEqual(viewFromState(state).checkout.storedSchema, schema);
+	});
+
+	scenario("remote upgrades reconstruct string-valued GUID schemas", (state) => {
+		viewFromState(state, state.clients[1]);
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		applyFieldEdit(viewFromState(state), {
+			type: "fieldEdit",
+			parentNodePath: undefined,
+			change: {
+				type: "optional",
+				edit: {
+					type: "set",
+					value: {
+						type: GeneratedFuzzValueType.GUIDNode,
+						value: { guid: "treeFuzz.upgrade" },
+					},
+				},
+			},
+		});
+		state.containerRuntimeFactory.processAllMessages();
+		const remoteView = viewFromState(state, state.clients[1]);
+		assert.equal(remoteView.compatibility.isEquivalent, true);
+		validateFuzzTreeConsistency(state.clients[0], state.clients[1]);
+	});
+
+	scenario("stored GUID schemas round-trip without changing their value type", (state) => {
+		const checkout = viewFromState(state).checkout;
+		checkout.updateSchema(
+			toInitialSchema(createTreeViewSchema(generateLeafNodeSchemas(["upgrade"]))),
+		);
+		expectSchemaEqual(
+			toInitialSchema(simpleSchemaFromStoredSchema(checkout.storedSchema)),
+			checkout.storedSchema,
+		);
+	});
+
+	scenario(
+		"fork edits use the selected fork's schema rather than the client's schema",
+		(state) => {
+			applyForkMergeOperation(state, {
+				type: "forkMergeOperation",
+				contents: { type: "fork", branchNumber: undefined },
+			});
+			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+			const generate = makeTreeEditGenerator({ set: 1 });
+			let forkEdits = 0;
+			for (let i = 0; i < 100; i++) {
+				const operation = generate(state);
+				assert.notEqual(operation, done);
+				assert(operation !== done);
+				if (operation.forkedViewIndex !== undefined) {
+					forkEdits++;
+					applyFieldEdit(
+						viewFromState(state, state.client, operation.forkedViewIndex),
+						operation.edit,
+					);
+				}
+			}
+			assert(forkEdits > 0);
+		},
+	);
+
+	scenario(
+		"a transaction after a schema upgrade can abort without disposing the client",
+		(state) => {
+			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+			const checkout = viewFromState(state).checkout;
+			applyTransactionBoundary(state, "start");
+			applyFieldEdit(viewFromState(state), {
+				type: "fieldEdit",
+				parentNodePath: undefined,
+				change: {
+					type: "optional",
+					edit: { type: "set", value: { type: GeneratedFuzzValueType.Number, value: 42 } },
+				},
+			});
+			applyTransactionBoundary(state, "abort");
+			assert.equal(checkout.disposed, false);
+			assert.equal(viewFromState(state).checkout, checkout);
+			assert.equal(viewFromState(state).root, undefined);
+			assert.equal(viewFromState(state).compatibility.isEquivalent, true);
+		},
+	);
+
+	scenario(
+		"mid-transaction schema operations fail before changing the harness state",
+		(state) => {
+			applyTransactionBoundary(state, "start");
+			const view = viewFromState(state);
+			assert.throws(
+				() => applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } }),
+				/Schema operations require a root view without a pending transaction/,
+			);
+			assert.equal(viewFromState(state), view);
+			assert.equal(view.checkout.transaction.size, 1);
+			applyTransactionBoundary(state, "abort");
+		},
+	);
+});
