@@ -216,7 +216,11 @@ stages:
             workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/${{ job.testPackageDir }}
             script: |
               set -eu -o pipefail
-              npm run ${{ job.testScript }}
+              if [ "${{ coalesce(job.endpointName, '') }}" = "frs" ]; then
+                bash "$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/tools/pipelines/scripts/run-frs-benchmark-with-retries.sh"
+              else
+                npm run ${{ job.testScript }}
+              fi
           ${{ if ne(coalesce(job.endpointName, ''), '') }}:
             env:
               FLUID_BUILD_ID: $(Build.BuildId)
