@@ -802,7 +802,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
  * @remarks
  * The `mismatch` property discriminates the different discrepancy shapes.
  * These entries explain {@link SchemaCompatibilityStatus.canView}, not whether the stored schema can be upgraded.
- * They compare schema constraints, not the document's current content or the proposed stored schema generated for an upgrade.
+ * They compare schema constraints, not the document's current content nor the proposed stored schema generated for an upgrade.
  * Staging annotations can provide context within an entry without themselves preventing access.
  *
  * @sealed @beta
@@ -1049,7 +1049,7 @@ export interface TreeViewAlpha<
  */
 export interface SchemaCompatibilityStatus {
 	/**
-	 * Whether the view schema allows exactly the same set of documents as the stored schema.
+	 * Whether the view can access the document and the existing and proposed stored schemas pass the schema upgrade checks in both directions.
 	 *
 	 * @remarks
 	 * The proposed stored schema is generated from the view schema and the configured {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy},

@@ -48,6 +48,9 @@ catalogs:
   # Type definitions
   types:
     "@types/node": "~22.19.17"
+  # TypeScript
+  TypeScript:
+    "typescript": "~6.0.3"
 
 engineStrict: true
 

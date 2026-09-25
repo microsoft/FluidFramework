@@ -65,25 +65,24 @@ export function extractPersistedSchema(
 }
 
 /**
- * Reports viewing compatibility and stored-schema upgrade diagnostics for a persisted schema and a view schema.
+ * Reports viewing and stored-schema upgrade compatibility for a persisted schema and a view schema.
  * Uses the same schema compatibility checks as {@link TreeView.compatibility} for a document using `persisted` and a view configured with `view` and the default restrictive staged upgrade policy.
  * The result does not include document initialization state.
+ *
+ * @remarks
+ * Viewing checks compare the view schema with the decoded stored schema.
+ * Upgrade checks compare the decoded stored schema with the "proposed" stored schema generated from `view` using the default restrictive staged upgrade policy.
+ * This function does not accept a staged upgrade policy, nor does it inspect document content.
+ *
+ * This compares schema constraints available in the persisted format.
+ * Metadata and descriptions do not affect compatibility.
+ * Staging annotations are available from the view, but are not reconstructed from persisted input.
+ * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
  *
  * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
  * @param view - Schema which would be used to view persisted content.
  * @param options - {@link ICodecOptions} used when parsing the provided schema.
- * @returns A {@link SchemaComparisonStatusAlpha} with conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
- *
- * @remarks
- * Viewing diagnostics compare the view schema with the decoded stored schema.
- * Upgrade diagnostics compare the decoded stored schema with the proposed stored schema generated from `view` using the default restrictive staged upgrade policy.
- * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
- * This function does not accept a staged upgrade policy or inspect document content.
- *
- * This compares schema constraints available in the persisted format.
- * Metadata and descriptions do not affect compatibility and are not reported.
- * Staging annotations are available from the view, but are not reconstructed from persisted input.
- * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
+ * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema, without `canInitialize`.
  *
  * @example
  * An application could use {@link extractPersistedSchema} to generate a `schema.json` file for various versions of the app,

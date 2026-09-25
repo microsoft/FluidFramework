@@ -23,19 +23,17 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
- * Reports viewing compatibility and stored-schema upgrade diagnostics for `view.schema` against a stored schema generated from `viewWhichCreatedStoredSchema.schema`.
+ * Reports viewing and stored-schema upgrade compatibility for `view.schema` against a stored schema generated from `viewWhichCreatedStoredSchema.schema`.
  *
  * @remarks
  * Only the `schema` property of each configuration is used.
- * The existing and proposed stored schemas are generated using the default restrictive staged upgrade policy;
+ * The "existing" (derived from `viewWhichCreatedStoredSchema`) and "proposed" (derived from `view`) stored schemas are generated using the default restrictive staged upgrade policy;
  * staged upgrade policies supplied through alpha configurations are not used.
- * Viewing diagnostics compare `view.schema` with the existing stored schema.
- * Upgrade diagnostics compare the generated existing and proposed stored schemas.
- * Equivalence also requires viewing compatibility and a successful reverse stored-schema comparison.
- * See {@link SchemaCompatibilityStatus} for the compatibility flags and {@link SchemaComparisonStatusAlpha} for the diagnostic lists.
+ * Viewing checks compare `view.schema` with the generated existing stored schema.
+ * Upgrade checks compare the generated existing and proposed stored schemas.
+ * See {@link SchemaCompatibilityStatus} for the compatibility flags.
  *
- * Diagnostic lists contain only constraint failures, with relevant staging and unknown optional field context.
- * Metadata and descriptions do not affect compatibility and are not reported.
+ * Metadata and descriptions do not affect compatibility.
  * This function does not inspect document content and does not report `canInitialize`.
  *
  * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
@@ -75,9 +73,9 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the existing stored schema with the default restrictive staged upgrade policy.
- * @param view - Configuration whose `schema` is used for viewing checks and to generate the proposed stored schema with the default restrictive staged upgrade policy.
- * @returns A {@link SchemaComparisonStatusAlpha} with conditional viewing, upgrade, and equivalence blocker lists, without `canInitialize`.
+ * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the "existing" stored schema with the default restrictive staged upgrade policy.
+ * @param view - Configuration whose `schema` is used for viewing checks and to generate the "proposed" stored schema with the default restrictive staged upgrade policy.
+ * @returns The {@link SchemaCompatibilityStatus} for these schemas (omitting `canInitialize`).
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.

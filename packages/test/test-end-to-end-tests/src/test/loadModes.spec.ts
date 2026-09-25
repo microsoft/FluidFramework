@@ -366,7 +366,7 @@ describeCompat("LoadModes", "NoCompat", (getTestObjectProvider, apis: CompatApis
 	describe("Expected error cases", () => {
 		itExpects(
 			"Throw if attempting to pause at a sequence number before the latest summary",
-			[{ eventName: "fluid:telemetry:Container:ContainerClose" }],
+			[{ eventName: "fluid:telemetry:Container:ContainerDispose" }],
 			async () => {
 				const { summarizer } = await createSummarizerFromFactory(
 					provider,
