@@ -45,6 +45,7 @@ import {
 import {
 	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedChunkShapeVTextExperimental,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNodeShape,
@@ -1222,7 +1223,7 @@ describe("chunkDecoding", () => {
 					{ f: { base: 0, fields: [["bold", 2]] } },
 				],
 				data: [[3]],
-			} as unknown as EncodedFieldBatchV1OrV2;
+			} as unknown as EncodedFieldBatchAnyVersion;
 
 			const result = decode(batch, idDecodingContext);
 

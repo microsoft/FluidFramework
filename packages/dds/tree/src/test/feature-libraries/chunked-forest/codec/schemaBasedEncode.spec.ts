@@ -10,17 +10,23 @@ import {
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { currentVersion } from "../../../../codec/index.js";
 import type {
+	FieldKey,
 	ITreeCursorSynchronous,
+	JsonableTree,
 	TreeChunk,
 	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 } from "../../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
+	FieldBatchDecodingContext,
 	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,
@@ -38,23 +44,34 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	FieldBatchFormatVersion,
-	type EncodedFieldBatchV2,
+	type EncodedFieldBatchAnyVersion,
 	SpecialField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
+import {
+	NodeShapeBasedEncoder,
+	SpecializedNodeShapeEncoder,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
 	buildContext,
+	chooseSpecialization,
 	getFieldEncoder,
 	getNodeEncoder,
+	newNodeGroupMap,
+	type NodeGroupCounts,
+	type NodeGroupKey,
+	type ReadonlyNodeGroupMap,
+	schemaCompressedEncodeVTextExperimental,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FieldKinds, fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import {
 	TreeCompressionStrategy,
+	chunkFieldSingle,
 	cursorForJsonableTreeField,
+	defaultChunkPolicy,
 	defaultSchemaPolicy,
 	emptyChunk,
 	jsonableTreeFromFieldCursor,
@@ -67,6 +84,7 @@ import {
 	StagedSchemaUpgradePolicy,
 	stringSchema,
 	TreeViewConfigurationAlpha,
+	type UnsafeUnknownSchema,
 } from "../../../../simple-tree/index.js";
 import {
 	toStoredSchema,
@@ -85,6 +103,7 @@ import {
 } from "../../../testTrees.js";
 import {
 	assertIsSessionId,
+	fieldCursorFromInsertable,
 	makeTestFieldBatchContexts,
 	testIdCompressor,
 } from "../../../utils.js";
@@ -373,7 +392,7 @@ describe("schemaBasedEncoding", () => {
 				),
 				encodeIncrementalField: (
 					cursor: ITreeCursorSynchronous,
-					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchV2,
+					chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatchAnyVersion,
 				): ChunkReferenceId[] => {
 					const fieldKey = cursor.getFieldKey();
 					assert(fieldKey === "incrementalField", "should only encode incremental fields");
@@ -457,6 +476,592 @@ describe("schemaBasedEncoding", () => {
 		assert.deepEqual(bufferFull, [[0]]);
 	});
 
+	describe("chooseSpecialization", () => {
+		/** Makes node group counts from a list of node values. */
+		function countNodes(
+			nodes: readonly NodeGroupKey[],
+		): ReadonlyNodeGroupMap<NodeGroupCounts> {
+			const groups = newNodeGroupMap<NodeGroupCounts>();
+			for (const values of nodes) {
+				const existing = groups.get(values);
+				groups.set(values, { count: (existing?.count ?? 0) + 1, values });
+			}
+			return groups;
+		}
+
+		function repeat(count: number, values: NodeGroupKey): NodeGroupKey[] {
+			return Array.from({ length: count }, () => values);
+		}
+
+		it("specializes uniform data into one monomorphic shape", () => {
+			const decision = chooseSpecialization(1, countNodes(repeat(10, ["Arial"])));
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [0],
+				specializedGroups: [["Arial"]],
+				polymorphic: false,
+			});
+		});
+
+		it("does not select a field with no repeated value", () => {
+			const decision = chooseSpecialization(
+				2,
+				countNodes(Array.from({ length: 10 }, (_, index) => [index, "Arial"])),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [1],
+				specializedGroups: [["Arial"]],
+				polymorphic: false,
+			});
+		});
+
+		it("removes the field with the most distinct values when no specialization saves bytes", () => {
+			// Field 0 has 50 values, each repeated twice, so it passes the "repeated value" filter.
+			// With both fields selected, each node group has only 2 instances and saves fewer bytes
+			// than its shape costs. Without field 0, all nodes form one worthwhile node group.
+			const decision = chooseSpecialization(
+				2,
+				countNodes(Array.from({ length: 100 }, (_, index) => [index % 50, "Arial"])),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [1],
+				specializedGroups: [["Arial"]],
+				polymorphic: false,
+			});
+		});
+
+		it("specializes several worthwhile node groups into a polymorphic type", () => {
+			const decision = chooseSpecialization(
+				1,
+				countNodes([...repeat(50, ["Arial"]), ...repeat(50, ["Times New Roman"])]),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [0],
+				specializedGroups: [["Arial"], ["Times New Roman"]],
+				polymorphic: true,
+			});
+		});
+
+		it("does not specialize when the dispatch token costs more than specialization saves", () => {
+			// A node that contains one boolean. Separate true and false shapes save fewer bytes than
+			// the dispatch token that each instance then writes.
+			const decision = chooseSpecialization(
+				1,
+				countNodes([...repeat(50, [true]), ...repeat(50, [false])]),
+			);
+			assert.deepEqual(decision, {
+				selectedFieldIndices: [],
+				specializedGroups: [],
+				polymorphic: false,
+			});
+		});
+	});
+
+	describe("schemaCompressedEncodeVTextExperimental", () => {
+		// Setup used in multiple tests below, so defined in the outer scope of the describe block.
+		const countSpecializedShapes = (batch: EncodedFieldBatchAnyVersion): number =>
+			batch.shapes.filter((shape) => "f" in shape).length;
+
+		const decodeRoundTrip = (
+			encoded: EncodedFieldBatchAnyVersion,
+		): ReturnType<typeof decode> => {
+			const decoded = decode(
+				encoded as unknown as Parameters<typeof decode>[0],
+				FieldBatchDecodingContext.forOp({
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				}).idDecodingContext,
+			);
+			assert.equal(decoded.length, 1);
+			return decoded;
+		};
+
+		const makeChunkingIncrementalEncoder = (
+			shouldEncodeIncrementally: IncrementalEncoder["shouldEncodeIncrementally"],
+			onEncode: (encodedSubBatch: EncodedFieldBatchAnyVersion) => void,
+		): IncrementalEncoder => {
+			let nextRefId = 1;
+			return {
+				shouldEncodeIncrementally,
+				encodeIncrementalField: (cursor, chunkEncoder) => {
+					const chunk = chunkFieldSingle(cursor, {
+						idCompressor: testIdCompressor,
+						policy: defaultChunkPolicy,
+					});
+					try {
+						onEncode(chunkEncoder(chunk));
+					} finally {
+						chunk.referenceRemoved();
+					}
+					return [brand<ChunkReferenceId>(nextRefId++)];
+				},
+			};
+		};
+
+		it("round-trips an object with a leaf field and emits f shapes", () => {
+			const sf = new SchemaFactoryAlpha("test");
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
+			}) {}
+
+			const storedSchema = toStoredSchema(TextNode, StagedSchemaUpgradePolicy.restrictive);
+
+			const makeText = (text: string): JsonableTree => ({
+				type: brand<TreeNodeSchemaIdentifier>(TextNode.identifier),
+				fields: {
+					text: [
+						{ type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier), value: text },
+					],
+				},
+			});
+
+			// One repeated value and one unique value. The specialization of the repeated value saves
+			// bytes. The specialization of the unique value costs more than it saves. Thus the
+			// encoder specializes exactly one node group.
+			const repeated = "the quick brown fox".repeat(4);
+			const tree = [makeText(repeated), makeText(repeated), makeText("unique value")];
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				testIdCompressor,
+				undefined,
+				false,
+			);
+
+			// Exactly one specialized shape: the encoder specializes only the repeated value.
+			assert.equal(countSpecializedShapes(encoded), 1);
+
+			// Round-trip: decode and compare to original tree.
+			const decoded = decodeRoundTrip(encoded);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			const resultTree = jsonableTreeFromFieldCursor(firstChunk.cursor());
+			assert.deepEqual(resultTree, tree);
+		});
+
+		it("does not force AnyShape indirection when every instance resolves to one shape", () => {
+			// All items of a nested array use one shape, because they are in one specialized node
+			// group. Thus the element shape of the array must refer to that shape directly. It must
+			// not refer to AnyShape (`d`), because then each item writes a shape index before its
+			// data. See the PR #27515 review comment on schemaBasedEncode.ts:516.
+			const sf = new SchemaFactoryAlpha("test");
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
+			}) {}
+			class TextArray extends sf.array("TextArray", TextNode) {}
+			class Doc extends sf.object("Doc", {
+				texts: TextArray,
+			}) {}
+
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
+
+			// Three equal values make one specialized node group. All three items use the same
+			// specialized shape, so the array is monomorphic.
+			const repeated = "monomorphic value".repeat(4);
+			const texts = Array.from({ length: 3 }, () => new TextNode({ text: repeated }));
+			const doc = new Doc({ texts: new TextArray(texts) });
+
+			const expected = jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc),
+			);
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
+				testIdCompressor,
+				undefined,
+				false,
+			);
+
+			// One specialized shape, for the one specialized node group.
+			assert.equal(countSpecializedShapes(encoded), 1);
+
+			// The nested array (`a`) for the `texts` field must point its element shape at the
+			// specialized (`f`) / concrete (`c`) shape, not at AnyShape (`d`).
+			const nestedArrayShapes = encoded.shapes.filter(
+				(shape): shape is { a: number } => "a" in shape,
+			);
+			assert.equal(nestedArrayShapes.length, 1, "expected exactly one nested array shape");
+			const innerIndex = nestedArrayShapes[0].a;
+			const innerShape = encoded.shapes[innerIndex] ?? assert.fail("missing inner shape");
+			assert.ok(
+				!("d" in innerShape),
+				`nested array element shape must not be AnyShape; got ${JSON.stringify(innerShape)}`,
+			);
+
+			// Round-trip preserves the tree.
+			const decoded = decodeRoundTrip(encoded);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			const resultTree = jsonableTreeFromFieldCursor(firstChunk.cursor());
+			assert.deepEqual(resultTree, expected);
+		});
+
+		it("incremental: outer count skips incremental fields, sub-chunks make their own decisions", () => {
+			// Schema:
+			//   TextNode — VText specialization candidate (one required string leaf).
+			//   Doc      — has an inline TextArray field and an incremental one
+			//              (marked with incrementalSummaryHint on its allowed types).
+			const sf = new SchemaFactoryAlpha("test");
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
+			}) {}
+			class TextArray extends sf.array("TextArray", TextNode) {}
+			class Doc extends sf.object("Doc", {
+				inline: sf.optional(TextArray),
+				inc: sf.optional(
+					sf.types([{ type: TextArray, metadata: {} }], {
+						custom: { [incrementalSummaryHint]: true },
+					}),
+				),
+			}) {}
+
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
+
+			// "a" occurs two times inline. Its specialization saves bytes. "b" occurs one time inline
+			// and two times in the incremental sub-chunk. If the outer count pass counted the nodes in
+			// the sub-chunk (incorrect), "b" would have a count of 3. Then the encoder would also
+			// specialize "b", and the output would have 2 specialized shapes, not 1.
+			const a = "alpha value here".repeat(6);
+			const b = "bravo value here".repeat(6);
+			const makeText = (text: string): TextNode => new TextNode({ text });
+			const inline = [makeText(a), makeText(a), makeText(b)];
+			const inc = new TextArray([makeText(b), makeText(b)]);
+			const doc = new Doc({ inline: new TextArray(inline), inc });
+
+			const subEncodings: EncodedFieldBatchAnyVersion[] = [];
+			const mockIncEncoder = makeChunkingIncrementalEncoder(
+				incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: Doc }),
+				),
+				(encodedSubBatch) => subEncodings.push(encodedSubBatch),
+			);
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
+				testIdCompressor,
+				mockIncEncoder,
+				true,
+			);
+
+			assert.equal(countSpecializedShapes(encoded), 1);
+
+			assert.equal(subEncodings.length, 1);
+			const subBatch = subEncodings[0] ?? assert.fail("missing sub-chunk encoding");
+			assert.equal(subBatch.version, FieldBatchFormatVersion.vTextExperimental);
+			assert.equal(countSpecializedShapes(subBatch), 1);
+
+			// Round-trip: the incremental decoder decodes the VText sub-chunk.
+			const decoded = decode(
+				encoded as unknown as Parameters<typeof decode>[0],
+				FieldBatchDecodingContext.forOp({
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				}).idDecodingContext,
+				{ decodeIncrementalChunk: (_, chunkDecoder) => chunkDecoder(subBatch) },
+			);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			assert.deepEqual(
+				jsonableTreeFromFieldCursor(firstChunk.cursor()),
+				jsonableTreeFromFieldCursor(fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)),
+			);
+		});
+
+		it("encodes a tree containing a Map node under the Alpha incremental policy without throwing", () => {
+			// Regression: pass-1 used to call shouldEncodeIncrementally(parentType, fieldKey)
+			// for every field, regardless of parent kind. The Alpha reference policy throws
+			// `Field key must not be provided for leaf, map or record node ...` whenever a
+			// non-undefined fieldKey reaches a Map/Record/Leaf parent. So encoding any tree
+			// containing a Map node would crash during the count pass before the fix.
+			const sf = new SchemaFactoryAlpha("test");
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
+			}) {}
+			class TextMap extends sf.map("TextMap", TextNode) {}
+			class Doc extends sf.object("Doc", {
+				map: TextMap,
+			}) {}
+
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
+
+			// Two TextNode children in a Map have the same value. The count pass must count both
+			// nodes. It must examine the policy of the Map parent one time, with an undefined
+			// fieldKey. The encode pass must use one specialized shape for the two nodes.
+			const repeated = "value in a map".repeat(6);
+			const doc = new Doc({
+				map: new TextMap(
+					new Map([
+						["a", new TextNode({ text: repeated })],
+						["b", new TextNode({ text: repeated })],
+					]),
+				),
+			});
+
+			const incEncoder: IncrementalEncoder = {
+				shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: Doc }),
+				),
+				encodeIncrementalField: () =>
+					assert.fail("no incremental encoding expected for this schema"),
+			};
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
+				testIdCompressor,
+				incEncoder,
+				true,
+			);
+
+			assert.equal(countSpecializedShapes(encoded), 1);
+
+			// Round-trip to confirm the encoded data is decodable.
+			decodeRoundTrip(encoded);
+		});
+
+		it("SpecializedNodeShapeEncoder asserts on duplicate keys in fieldOverrides", () => {
+			// Regression: the constructor used to silently mishandle duplicates — Map-based
+			// merge dropped earlier overrides for base-collisions, and non-base duplicates
+			// were appended twice into the merged-fields list. The decoder rejects such
+			// shapes at decode time, but the encoder claimed success.
+			const base = new NodeShapeBasedEncoder(
+				brand<TreeNodeSchemaIdentifier>("Base"),
+				false,
+				[],
+				undefined,
+			);
+			const leaf = new NodeShapeBasedEncoder(
+				brand<TreeNodeSchemaIdentifier>("leaf"),
+				true,
+				[],
+				undefined,
+			);
+			const dupKey = brand<FieldKey>("k");
+			assert.throws(
+				() =>
+					new SpecializedNodeShapeEncoder(base, [
+						{ key: dupKey, encoder: anyFieldEncoder },
+						{ key: dupKey, encoder: { encodeField: leaf.encodeNode.bind(leaf), shape: leaf } },
+					]),
+				validateAssertionError(
+					"duplicate field key in SpecializedNodeShapeEncoder fieldOverrides",
+				),
+			);
+		});
+
+		it("specializes multiple worthwhile node groups into separate specialized shapes", () => {
+			const sf = new SchemaFactoryAlpha("test");
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
+			}) {}
+
+			const storedSchema = toStoredSchema(TextNode, StagedSchemaUpgradePolicy.restrictive);
+
+			const makeText = (text: string): JsonableTree => ({
+				type: brand<TreeNodeSchemaIdentifier>(TextNode.identifier),
+				fields: {
+					text: [
+						{ type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier), value: text },
+					],
+				},
+			});
+
+			// Two different repeated values. The specialization of each value saves bytes. Thus the
+			// output has two specialized shapes.
+			const first = "first distinct value".repeat(4);
+			const second = "second distinct value".repeat(4);
+			const tree = [
+				...Array.from({ length: 2 }, () => makeText(first)),
+				...Array.from({ length: 2 }, () => makeText(second)),
+			];
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				testIdCompressor,
+				undefined,
+				false,
+			);
+
+			assert.equal(countSpecializedShapes(encoded), 2);
+
+			const decoded = decodeRoundTrip(encoded);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			assert.deepEqual(jsonableTreeFromFieldCursor(firstChunk.cursor()), tree);
+		});
+
+		it("specializes leaf fields but not sub-object fields", () => {
+			// Inner has a string leaf. Thus its node group uses a specialized shape.
+			// The only field of Outer is a sub-object (Inner), which is not a specializable leaf.
+			// Thus the encoder does not specialize Outer.
+			const sf = new SchemaFactoryAlpha("test");
+			class Inner extends sf.object("Inner", {
+				text: sf.string,
+			}) {}
+			class Outer extends sf.object("Outer", {
+				child: Inner,
+			}) {}
+
+			const storedSchema = toStoredSchema(Outer, StagedSchemaUpgradePolicy.restrictive);
+
+			const repeated = "shared inner value".repeat(4);
+			const tree: JsonableTree[] = Array.from({ length: 2 }, () => ({
+				type: brand<TreeNodeSchemaIdentifier>(Outer.identifier),
+				fields: {
+					child: [
+						{
+							type: brand<TreeNodeSchemaIdentifier>(Inner.identifier),
+							fields: {
+								text: [
+									{
+										type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
+										value: repeated,
+									},
+								],
+							},
+						},
+					],
+				},
+			}));
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				testIdCompressor,
+				undefined,
+				false,
+			);
+
+			// The encoder specializes Inner, which has a leaf field. It does not specialize Outer,
+			// which has only a sub-object field.
+			assert.equal(
+				countSpecializedShapes(encoded),
+				1,
+				"only Inner's leaf field should specialize; Outer's sub-object field should not",
+			);
+
+			const decoded = decodeRoundTrip(encoded);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			const resultTree = jsonableTreeFromFieldCursor(firstChunk.cursor());
+			assert.deepEqual(resultTree, tree);
+		});
+
+		it("does not specialize a leaf field that the incremental policy marks as incremental", () => {
+			// Regression: getNodeEncoderVText used to include all required leaves without consulting
+			// the incremental policy. If a policy marked a field as incremental, getNodeEncoder would
+			// substitute incrementalFieldEncoder in the base shape, but VText would still pull a
+			// constant value out and emit a specialized shape — silently overriding the caller's
+			// incremental decision.
+			const sf = new SchemaFactoryAlpha("test");
+			class Format extends sf.object("Format", {
+				body: sf.string,
+			}) {}
+
+			const storedSchema = toStoredSchema(Format, StagedSchemaUpgradePolicy.restrictive);
+
+			// A repeated long value. Without the incremental policy, this value would use a
+			// specialized shape.
+			const repeated = "incremental body".repeat(6);
+			const tree = Array.from(
+				{ length: 5 },
+				(): JsonableTree => ({
+					type: brand<TreeNodeSchemaIdentifier>(Format.identifier),
+					fields: {
+						body: [
+							{
+								type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
+								value: repeated,
+							},
+						],
+					},
+				}),
+			);
+
+			// Custom policy that marks Format.body as incremental. The policy returns false
+			// for the root field (parent undefined) and for any other call.
+			const customPolicy = (nodeId: string | undefined, fieldKey?: string): boolean =>
+				nodeId === Format.identifier && fieldKey === "body";
+
+			let chunkEncoderCalls = 0;
+			const incEncoder = makeChunkingIncrementalEncoder(customPolicy, () => {
+				chunkEncoderCalls += 1;
+			});
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				testIdCompressor,
+				incEncoder,
+				true,
+			);
+
+			// Without the fix, a specialized shape would keep the repeated body value. Then the
+			// output would have 1 specialized shape and 0 incremental calls.
+			assert.equal(countSpecializedShapes(encoded), 0);
+			assert.ok(chunkEncoderCalls > 0);
+		});
+
+		it("does not specialize identifier fields (they require id-compressor encoding)", () => {
+			// Regression: an earlier version found specializable fields by leaf ValueSchema
+			// (String/Number/Boolean) and did not examine field.kind. An identifier field is a
+			// required single string leaf. Thus it passed that test, and VText put its value in a
+			// specialized shape. This skipped the SpecialField.Identifier op-space normalization of
+			// the base encoder (see getFieldEncoder). Without that normalization, a different
+			// session cannot read the summary correctly. findSpecializableFields now examines
+			// field.kind.
+			const sf = new SchemaFactoryAlpha("test");
+			class Doc extends sf.object("Doc", {
+				id: sf.identifier,
+			}) {}
+
+			const storedSchema = toStoredSchema(Doc, StagedSchemaUpgradePolicy.restrictive);
+
+			// Use one id in many nodes. If the encoder used the identifier field as a usual string
+			// leaf, a specialized shape would keep its value.
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+			const tree = Array.from(
+				{ length: 5 },
+				(): JsonableTree => ({
+					type: brand<TreeNodeSchemaIdentifier>(Doc.identifier),
+					fields: {
+						id: [
+							{
+								type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
+								value: stableId,
+							},
+						],
+					},
+				}),
+			);
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				testIdCompressor,
+				undefined,
+				false,
+			);
+
+			// Without the fix, a specialized shape keeps the repeated identifier value. This
+			// overrides the id-compressor encoding, and no error shows it.
+			assert.equal(countSpecializedShapes(encoded), 0);
+
+			// The identifier values must still round-trip through the base SpecialField.Identifier path.
+			const decoded = decodeRoundTrip(encoded);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			const resultTree = jsonableTreeFromFieldCursor(firstChunk.cursor());
+			assert.deepEqual(resultTree, tree);
+		});
+	});
+
 	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
 		describe(`test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-schema-compressed/V${version}`);
@@ -490,6 +1095,14 @@ describe("schemaBasedEncoding", () => {
 					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,
+						...(version === FieldBatchFormatVersion.vTextExperimental
+							? {
+									writeVersionOverrides: new Map([
+										[fieldBatchCodecBuilder.name, FieldBatchFormatVersion.vTextExperimental],
+									]),
+									allowPossiblyIncompatibleWriteVersionOverrides: true,
+								}
+							: {}),
 					});
 					// End to end test
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
