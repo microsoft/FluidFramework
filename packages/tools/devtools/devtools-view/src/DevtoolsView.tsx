@@ -17,7 +17,7 @@ import {
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { type ReactElement, useCallback, useEffect, useMemo, useState } from "react";
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { FluentReactComponents } from "./FluentUi.cjs";
 import { useMessageRelay } from "./MessageRelayContext.js";
@@ -319,6 +319,17 @@ const useViewStyles = makeStyles({
 		overflowY: "auto",
 		boxSizing: "border-box",
 	},
+	pageHeading: {
+		position: "absolute",
+		width: "1px",
+		height: "1px",
+		padding: 0,
+		margin: "-1px",
+		overflow: "hidden",
+		clip: "rect(0, 0, 0, 0)",
+		whiteSpace: "nowrap",
+		border: 0,
+	},
 });
 
 /**
@@ -341,15 +352,18 @@ interface ViewProps {
 /**
  * View body component used by {@link DevtoolsView}.
  */
-function View(props: ViewProps): ReactElement {
+export function View(props: ViewProps): ReactElement {
 	const { menuSelection, containers } = props;
 
 	const styles = useViewStyles();
+	const pageHeadingRef = useRef<HTMLHeadingElement>(null);
 
 	let view: ReactElement;
+	let pageTitle: string;
 	switch (menuSelection?.type) {
 		case "telemetryMenuSelection": {
 			view = <TelemetryView />;
+			pageTitle = "Events";
 			break;
 		}
 		case "containerMenuSelection": {
@@ -362,25 +376,45 @@ function View(props: ViewProps): ReactElement {
 				) : (
 					<ContainerDevtoolsView containerKey={menuSelection.containerKey} />
 				);
+			pageTitle = `Container: ${menuSelection.containerKey}`;
 			break;
 		}
 		case "settingsMenuSelection": {
 			view = <SettingsView />;
+			pageTitle = "Settings";
 			break;
 		}
 		case "homeMenuSelection": {
 			view = <LandingView />;
+			pageTitle = "Home";
 			break;
 		}
 		case "opLatencyMenuSelection": {
 			view = <OpLatencyView />;
+			pageTitle = "Op Latency";
 			break;
 		}
 		default: {
 			view = <LandingView />;
+			pageTitle = "Home";
 			break;
 		}
 	}
 
-	return <div className={styles.root}>{view}</div>;
+	const previousPageTitleRef = useRef(pageTitle);
+	useEffect(() => {
+		if (previousPageTitleRef.current !== pageTitle) {
+			previousPageTitleRef.current = pageTitle;
+			pageHeadingRef.current?.focus();
+		}
+	}, [pageTitle]);
+
+	return (
+		<main className={styles.root}>
+			<h1 className={styles.pageHeading} ref={pageHeadingRef} tabIndex={-1}>
+				{pageTitle}
+			</h1>
+			{view}
+		</main>
+	);
 }

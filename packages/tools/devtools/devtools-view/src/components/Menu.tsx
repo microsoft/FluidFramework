@@ -348,6 +348,7 @@ export function MenuSectionButtonHeader(props: MenuSectionButtonHeaderProps): Re
 			onClick={onClick}
 			onKeyDown={handleKeyDown}
 			aria-label={altText}
+			aria-current={isActive ? "page" : undefined}
 			tabIndex={0}
 			role="button"
 		>
@@ -512,6 +513,7 @@ export function MenuItem(props: MenuItemProps): ReactElement {
 					className={mergeClasses(styles.root, style)}
 					onClick={onClick}
 					onKeyDown={handleKeyDown}
+					aria-current={isActive ? "page" : undefined}
 					tabIndex={0}
 				>
 					{stateIcon === undefined && onRemove === undefined ? (
@@ -973,6 +975,8 @@ export function Menu(props: MenuProps): ReactElement {
 	);
 
 	return (
-		<div className={styles.root}>{menuSections.length === 0 ? <Waiting /> : menuSections}</div>
+		<nav className={styles.root} aria-label="Developer tools">
+			{menuSections.length === 0 ? <Waiting /> : menuSections}
+		</nav>
 	);
 }
