@@ -70,6 +70,10 @@ export class OdspPointInTimeDocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
 	implements IDocumentService
 {
+	public readonly driverStatePersistence?: NonNullable<
+		IDocumentService["driverStatePersistence"]
+	>;
+
 	public constructor(
 		public readonly resolvedUrl: IResolvedUrl,
 		// Serves the snapshot: a read-only document service bound to the closest file version at or
@@ -80,6 +84,9 @@ export class OdspPointInTimeDocumentService
 	) {
 		super();
 		this.liveDocumentService.on("metadataUpdate", this.metadataUpdateHandler);
+		if (this.liveDocumentService.driverStatePersistence !== undefined) {
+			this.driverStatePersistence = this.liveDocumentService.driverStatePersistence;
+		}
 	}
 
 	// storageOnly makes the connection manager synthesize a read-only frozen delta stream (no live

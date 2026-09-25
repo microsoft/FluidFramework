@@ -114,8 +114,15 @@ export class FaultInjectionDocumentService
 		this._currentDeltaStorage?.goOnline();
 	}
 
+	public readonly driverStatePersistence?: NonNullable<
+		IDocumentService["driverStatePersistence"]
+	>;
+
 	constructor(private readonly internal: IDocumentService) {
 		super();
+		if (internal.driverStatePersistence !== undefined) {
+			this.driverStatePersistence = internal.driverStatePersistence;
+		}
 	}
 
 	public get resolvedUrl(): IResolvedUrl {

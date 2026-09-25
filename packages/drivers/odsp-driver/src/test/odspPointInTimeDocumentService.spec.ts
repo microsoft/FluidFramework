@@ -69,8 +69,18 @@ function fakeDeltaStorage(inner: IStream<ISequencedDocumentMessage[]>): {
 class FakeLiveDocumentService {
 	public disposeCount = 0;
 	private readonly metadataHandlers = new Set<(metadata: Record<string, string>) => void>();
+	public readonly driverStatePersistence?: NonNullable<
+		IDocumentService["driverStatePersistence"]
+	>;
 
-	public constructor(private readonly deltaStorage: IDocumentDeltaStorageService) {}
+	public constructor(
+		private readonly deltaStorage: IDocumentDeltaStorageService,
+		driverStatePersistence?: NonNullable<IDocumentService["driverStatePersistence"]>,
+	) {
+		if (driverStatePersistence !== undefined) {
+			this.driverStatePersistence = driverStatePersistence;
+		}
+	}
 
 	public get metadataHandlerCount(): number {
 		return this.metadataHandlers.size;
@@ -168,6 +178,7 @@ class FakeRecoverableDocumentService {
 function makeService(
 	target: number,
 	inner: IStream<ISequencedDocumentMessage[]>,
+	driverStatePersistence?: NonNullable<IDocumentService["driverStatePersistence"]>,
 ): {
 	service: OdspPointInTimeDocumentService;
 	calls: FetchCall[];
@@ -175,7 +186,7 @@ function makeService(
 	recoverable: FakeRecoverableDocumentService;
 } {
 	const { service: deltaStorage, calls } = fakeDeltaStorage(inner);
-	const live = new FakeLiveDocumentService(deltaStorage);
+	const live = new FakeLiveDocumentService(deltaStorage, driverStatePersistence);
 	const recoverable = new FakeRecoverableDocumentService();
 	const service = new OdspPointInTimeDocumentService(
 		{} as IResolvedUrl,
@@ -246,6 +257,25 @@ describe("OdspPointInTimeDocumentService", () => {
 	});
 
 	describe("storage, stream, and lifecycle", () => {
+		it("forwards driver state persistence from the live document service", () => {
+			let driverState: unknown = { epoch: "epoch1" };
+			const { service } = makeService(100, streamFromBatches([]), {
+				get: () => driverState,
+				set: (state) => {
+					driverState = state;
+				},
+			});
+
+			assert.deepEqual(service.driverStatePersistence?.get(), { epoch: "epoch1" });
+			service.driverStatePersistence?.set({ epoch: "epoch2" });
+			assert.deepEqual(driverState, { epoch: "epoch2" });
+		});
+
+		it("does not expose driver state persistence when the live service does not support it", () => {
+			const { service } = makeService(100, streamFromBatches([]));
+			assert.equal(service.driverStatePersistence, undefined);
+		});
+
 		it("advertises the storageOnly policy", () => {
 			const { service } = makeService(100, streamFromBatches([]));
 			assert.equal(service.policies?.storageOnly, true);
