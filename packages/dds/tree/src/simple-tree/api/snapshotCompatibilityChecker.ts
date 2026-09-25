@@ -74,7 +74,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  *
  * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the "existing" stored schema with the default restrictive staged upgrade policy.
  * @param view - Configuration whose `schema` is used for viewing checks and to generate the "proposed" stored schema with the default restrictive staged upgrade policy.
- * @returns The {@link SchemaCompatibilityStatus} for these schemas, without `canInitialize`.
+ * @returns The {@link SchemaCompatibilityStatus} for these schemas (omitting `canInitialize`).
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
