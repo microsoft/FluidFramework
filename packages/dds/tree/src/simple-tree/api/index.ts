@@ -28,6 +28,7 @@ export type {
 	TreeBranchAlpha,
 	UntypedTreeViewAlpha,
 	TreeBranchEvents,
+	TreeBranchEventsBeta,
 	TreeBranchCommitMetadata,
 	TreeBranchHistory,
 	TreeContextBeta,
