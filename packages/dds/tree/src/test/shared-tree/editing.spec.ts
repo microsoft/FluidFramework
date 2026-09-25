@@ -3101,6 +3101,51 @@ describe("Editing", () => {
 		});
 
 		describe("Inverse preconditions", () => {
+			it("rollbacks are not subject to revert constraints", () => {
+				const main = makeTreeFromJson(
+					{ foo: "MustExistForRevert", bar: "Old" },
+					false,
+					FluidClientVersion.v2_80,
+				);
+				const branch = main.fork();
+
+				// A transaction that replaces the value of "bar" and adds an inverse constraint on "foo".
+				branch.transaction.start();
+				branch.editor
+					.valueField({ parent: rootNode, field: brand("bar") })
+					.set(chunkFromJsonTrees(["New"]));
+				branch.editor.addNodeExistsConstraintOnRevert({
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				branch.editor.addNoChangeConstraintOnRevert();
+				branch.transaction.commit();
+				expectJsonTree(branch, [{ foo: "MustExistForRevert", bar: "New" }]);
+
+				// This change replaces the node "MustExistForRevert" on field "foo" to "RevertShouldNoOp" which would violate
+				// the revert constraints on the branch transaction when the branch is rebased onto main.
+				main.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(chunkFromJsonTrees(["RevertShouldNoOp"]));
+
+				// This first rebase leads to the transaction on the branch having violated revert constraints.
+				branch.rebaseOnto(main);
+
+				// Make another change on main so we can force the branch to rebase again.
+				main.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(chunkFromJsonTrees(["RevertShouldStillNoOp"]));
+
+				// This second rebase will generate a rollback for the transaction change whose revert constraints are violated.
+				// This is the behavior being tested: the rollback should occur even though the revert constraints are violated.
+				// If it does not, then the rebase composition will not restore the "Old" value from its grave before attempting to put it into that grave again,
+				// leading to assert 0x7ce (Detached node ID already exists in index).
+				branch.rebaseOnto(main);
+
+				expectJsonTree(branch, [{ foo: "RevertShouldStillNoOp", bar: "New" }]);
+			});
+
 			it("inverse constraint not violated by interim change", () => {
 				const tree = makeTreeFromJson({ foo: "A" });
 				const stack = createTestUndoRedoStacks(tree.events);

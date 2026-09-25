@@ -976,13 +976,20 @@ export const IdentifierSchema = sf.object("identifier-object", {
  * @param json - The JSON-compatible object to initialize the tree with.
  * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
-export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
-	return checkoutWithContent({
-		schema: toInitialSchema(
-			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
-		),
-		initialTree: singleJsonCursor(json),
-	});
+export function makeTreeFromJson(
+	json: JsonCompatible,
+	optionalRoot = false,
+	minVersionForCollab?: OldestSupportedClientVersion,
+): ITreeCheckout {
+	return checkoutWithContent(
+		{
+			schema: toInitialSchema(
+				optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
+			),
+			initialTree: singleJsonCursor(json),
+		},
+		{ codecOptions: { minVersionForCollab } },
+	);
 }
 
 export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
