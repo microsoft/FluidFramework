@@ -280,6 +280,7 @@ import {
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
 	aliasBlobName,
+	ApplicationSummaryProjectionController,
 	chunksBlobName,
 	createRootSummarizerNodeWithGC,
 	DefaultSummaryConfiguration,
@@ -288,6 +289,7 @@ import {
 	type EnqueueSummarizeResult,
 	extractSummaryMetadataMessage,
 	formCreateSummarizerFn,
+	type IApplicationSummaryProjection,
 	type IBaseSummarizeResult,
 	type IConnectableRuntime,
 	type IContainerRuntimeMetadata,
@@ -325,6 +327,7 @@ import {
 	summarizerRequestUrl,
 	SummaryCollection,
 	SummaryManager,
+	validateApplicationSummaryProjectionKey,
 	validateSummaryHeuristicConfiguration,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
@@ -805,6 +808,18 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 	/**
+	 * Optional application-owned summary projection.
+	 * @remarks
+	 * When provided, the runtime invokes {@link IApplicationSummaryProjection.summarize} during ordinary
+	 * container summarization and inserts the returned tree at {@link IApplicationSummaryProjection.key}
+	 * alongside the runtime's own summary roots (e.g. `.channels`, `.metadata`). This allows an application
+	 * to contribute its own incrementally-reusable projection of its data without reconstructing Fluid's
+	 * own summarization machinery. See `applicationSummaryProjection.ts` for the full contract and
+	 * `test/summaryProjectionExample` for a worked example.
+	 */
+	applicationSummaryProjection?: IApplicationSummaryProjection;
+
+	/**
 	 * Oldest version of Fluid Framework client that must be able to open and process documents
 	 * written by this container runtime.
 	 * @remarks
@@ -996,7 +1011,12 @@ export class ContainerRuntime
 			oldestSupportedClient: oldestSupportedClientParam,
 			// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
 			minVersionForCollab: deprecatedMinVersionForCollab,
+			applicationSummaryProjection,
 		} = params;
+
+		if (applicationSummaryProjection !== undefined) {
+			validateApplicationSummaryProjectionKey(applicationSummaryProjection.key);
+		}
 
 		if (
 			oldestSupportedClientParam !== undefined &&
@@ -1348,6 +1368,7 @@ export class ContainerRuntime
 		);
 
 		runtime.sharePendingBlobs();
+		runtime.initializeApplicationSummaryProjection(applicationSummaryProjection);
 
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
@@ -1656,6 +1677,36 @@ export class ContainerRuntime
 	 * The summary context of the last acked summary. The properties from this as used when uploading a summary.
 	 */
 	private lastAckedSummaryContext: ISummaryContext | undefined;
+
+	/**
+	 * Optional coordinator for an application-owned summary projection, set via
+	 * {@link ContainerRuntime.initializeApplicationSummaryProjection} shortly after construction.
+	 */
+	private applicationSummaryProjection: ApplicationSummaryProjectionController | undefined;
+
+	/**
+	 * Wires up an application-owned summary projection, if one was provided at load time.
+	 * @remarks
+	 * Called once, right after construction (see {@link ContainerRuntime.loadRuntime2}), so the projection's
+	 * `previousSummary` can be seeded from the version this runtime was loaded from.
+	 */
+	public initializeApplicationSummaryProjection(
+		projection: IApplicationSummaryProjection | undefined,
+	): void {
+		if (projection === undefined) {
+			return;
+		}
+		this.applicationSummaryProjection = new ApplicationSummaryProjectionController(
+			projection,
+			this.loadedFromVersionId === undefined
+				? undefined
+				: {
+						proposalHandle: undefined,
+						ackHandle: this.loadedFromVersionId,
+						referenceSequenceNumber: this.deltaManager.initialSequenceNumber,
+					},
+		);
+	}
 
 	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
@@ -4321,6 +4372,18 @@ export class ContainerRuntime
 		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
+		if (this.applicationSummaryProjection !== undefined) {
+			await this.applicationSummaryProjection.summarize(
+				summarizeResult,
+				{
+					fullTree,
+					trackState,
+					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					previousSummary: this.applicationSummaryProjection.previousSummary,
+				},
+				this.summarizerNode.isSummaryInProgress?.() === true,
+			);
+		}
 		return {
 			...summarizeResult,
 			id: "",
@@ -4796,6 +4859,9 @@ export class ContainerRuntime
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
+			let generatedApplicationSummaryProjection:
+				| ReturnType<ApplicationSummaryProjectionController["takeGeneratedSummary"]>
+				| undefined;
 			try {
 				summarizeResult = await this.summarize({
 					fullTree,
@@ -4804,6 +4870,8 @@ export class ContainerRuntime
 					runGC: this.garbageCollector.shouldRunGC,
 					telemetryContext,
 				});
+				generatedApplicationSummaryProjection =
+					this.applicationSummaryProjection?.takeGeneratedSummary(summarizeResult.summary);
 			} catch (error) {
 				return {
 					stage: "base",
@@ -4948,6 +5016,10 @@ export class ContainerRuntime
 
 			try {
 				this.summarizerNode.completeSummary(handle);
+				this.applicationSummaryProjection?.completeSummary(
+					handle,
+					generatedApplicationSummaryProjection,
+				);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -5528,6 +5600,10 @@ export class ContainerRuntime
 		 */
 		/* eslint-enable jsdoc/check-indentation */
 		if (!result.isSummaryTracked) {
+			await this.applicationSummaryProjection?.refreshLatestSummaryAck(
+				{ proposalHandle, ackHandle, summaryRefSeq },
+				false,
+			);
 			if (result.isSummaryNewer) {
 				await this.fetchLatestSnapshotAndMaybeClose(summaryRefSeq, ackHandle, summaryLogger);
 			}
@@ -5536,6 +5612,11 @@ export class ContainerRuntime
 
 		// Notify the garbage collector so it can update its latest summary state.
 		await this.garbageCollector.refreshLatestSummary(result);
+
+		await this.applicationSummaryProjection?.refreshLatestSummaryAck(
+			{ proposalHandle, ackHandle, summaryRefSeq },
+			true,
+		);
 
 		// If we here, the ack was tracked by this client. Update the summary context of the last ack.
 		this.lastAckedSummaryContext = {
