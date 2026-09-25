@@ -12,6 +12,7 @@ export {
 	loadContainerRuntime,
 	loadContainerRuntimeAlpha,
 	type LoadContainerRuntimeParams,
+	type IApplicationProjectionSummary,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,
@@ -20,6 +21,7 @@ export {
 	type RuntimeHeaderData,
 } from "./containerRuntime.js";
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export type { IDetachedRuntimeConstructionOptions } from "./detachedRuntimeConstruction.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export type {
 	ContainerRuntimeAliasMessage,
@@ -55,6 +57,8 @@ export {
 	type IGCStats,
 } from "./gc/index.js";
 export {
+	type ISummaryGenerationOptions,
+	type ISummaryGenerationContext,
 	type IAckedSummary,
 	type ISummarizer,
 	type ISummarizeResults,

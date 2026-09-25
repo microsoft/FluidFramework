@@ -87,6 +87,10 @@ export interface IRefreshSummaryAckOptions {
  */
 export interface ISummarizerInternalsProvider {
 	/**
+	 * Request a summary on startup when heuristics are enabled, even without application edits.
+	 */
+	readonly shouldSummarizeOnStartup?: boolean;
+	/**
 	 * Encapsulates the work to walk the internals of the running container to generate a summary
 	 */
 	submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;

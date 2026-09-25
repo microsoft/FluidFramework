@@ -10,7 +10,7 @@ import {
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IClient } from "@fluidframework/driver-definitions";
+import type { ConnectionMode, IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	type IAnyDriverError,
@@ -328,6 +328,202 @@ describe("connectionManager", () => {
 			"Reattempt for connection should continue to happen",
 		);
 		stubbedConnectToDeltaStream.restore();
+	});
+
+	describe("one-shot write connection requests", () => {
+		let managers: ConnectionManager[];
+		let modes: ConnectionMode[];
+
+		function makeConnection(mode: ConnectionMode): MockDocumentDeltaConnection {
+			modes.push(mode);
+			_mockDeltaConnection = new MockDocumentDeltaConnection(
+				`mock_client_${nextClientId++}`,
+				() => assert.fail("Requesting a connection must not submit an operation"),
+			);
+			_mockDeltaConnection.mode = mode;
+			return _mockDeltaConnection;
+		}
+
+		function makeManager(
+			reconnectAllowed = true,
+			customProps: IConnectionManagerFactoryArgs = props,
+		): ConnectionManager {
+			const readClient: IClient = {
+				details: { capabilities: { interactive: true } },
+				mode: "read",
+				permission: [],
+				scopes: [],
+				user: { id: "test" },
+			};
+			const manager = new ConnectionManager(
+				() => mockDocumentService,
+				() => false,
+				readClient,
+				reconnectAllowed,
+				mockLogger.toTelemetryLogger(),
+				customProps,
+			);
+			managers.push(manager);
+			return manager;
+		}
+
+		beforeEach(() => {
+			managers = [];
+			modes = [];
+			mockDocumentService = new MockDocumentService(undefined, (requested) =>
+				makeConnection(requested?.mode ?? "read"),
+			);
+		});
+
+		afterEach(() => {
+			for (const manager of managers) {
+				manager.dispose();
+			}
+		});
+
+		it("upgrades read asynchronously without ops and leaves later reconnections unchanged", async () => {
+			const manager = makeManager();
+			manager.connect({ text: "test" }, "read");
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read"], "Unconfigured clients must remain read connections");
+			manager.requestWriteConnection();
+			manager.requestWriteConnection();
+			assert.equal(disconnectCount, 0, "Do not disconnect inside the request callback");
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read", "write"]);
+			assert.equal(manager.connectionMode, "write");
+			assert.equal(
+				manager.shouldJoinWrite(),
+				false,
+				"No dirty state or pending ops fabricated",
+			);
+			manager.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.equal(connectionCount, 2, "An existing write connection needs no upgrade");
+			assert(_mockDeltaConnection !== undefined);
+			_mockDeltaConnection.emitError(
+				new RetryableError("reconnect", DriverErrorTypes.genericError, {
+					driverVersion: pkgVersion,
+				}),
+			);
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read", "write", "read"]);
+			assert.equal(closed, false);
+		});
+
+		it("waits for a pending read handshake before requesting write", async () => {
+			const handshake = new Deferred<void>();
+			let attempts = 0;
+			stub(mockDocumentService, "connectToDeltaStream").callsFake(async (requested) => {
+				if (attempts++ === 0) {
+					await handshake.promise;
+				}
+				return makeConnection(requested.mode);
+			});
+			const manager = makeManager();
+			manager.connect({ text: "test" }, "read");
+			manager.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.equal(attempts, 1);
+			assert.equal(connectionCount, 0);
+			handshake.resolve();
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read", "write"]);
+			assert.equal(closed, false);
+		});
+
+		it("does not start a delayed connection and honors the request when the host connects", async () => {
+			const manager = makeManager();
+			manager.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.equal(connectionCount, 0);
+			manager.connect({ text: "Host connects" }, "read");
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["write"]);
+		});
+
+		it("does not override disabled or forbidden reconnection", async () => {
+			const disabled = makeManager();
+			disabled.connect({ text: "test" }, "read");
+			await clock.tickAsync(0);
+			disabled.requestWriteConnection();
+			disabled.setAutoReconnect(ReconnectMode.Disabled, { text: "Host disconnects" });
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read"]);
+			assert.equal(disabled.connected, false);
+			disabled.setAutoReconnect(ReconnectMode.Enabled, { text: "Host reconnects" });
+			disabled.connect({ text: "Host reconnects" }, "read");
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read", "write"]);
+
+			const never = makeManager(false);
+			never.connect({ text: "test" }, "read");
+			await clock.tickAsync(0);
+			never.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read", "write", "read"]);
+			assert.equal(never.connected, true);
+			assert.equal(closed, false);
+		});
+
+		it("ignores permission-readonly connections, including a pending readonly handshake", async () => {
+			mockDocumentService = new MockDocumentService(undefined, () => {
+				const connection = makeConnection("read");
+				connection.claims.scopes = ["doc:read"];
+				return connection;
+			});
+			const manager = makeManager();
+			manager.connect({ text: "test" }, "read");
+			manager.requestWriteConnection();
+			await clock.tickAsync(0);
+			manager.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read"]);
+			assert.equal(manager.readOnlyInfo.readonly, true);
+			assert.equal(closed, false);
+		});
+
+		it("does not override forced readonly, even when forced after scheduling", async () => {
+			const manager = makeManager();
+			manager.connect({ text: "test" }, "read");
+			await clock.tickAsync(0);
+			manager.requestWriteConnection();
+			manager.forceReadonly(true);
+			await clock.tickAsync(0);
+			manager.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read", "read"]);
+			manager.forceReadonly(false);
+			await clock.tickAsync(0);
+			assert.deepEqual(
+				modes,
+				["read", "read"],
+				"Ignored requests are not permanent preferences",
+			);
+			manager.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, ["read", "read", "write"]);
+		});
+
+		it("does not connect storage-only or disposed managers", async () => {
+			const storageOnly = makeManager(true, { ...props, connectHandler: () => {} });
+			mockDocumentService.policies = { storageOnly: true };
+			storageOnly.requestWriteConnection();
+			storageOnly.connect({ text: "test" }, "read");
+			await clock.tickAsync(0);
+			storageOnly.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.equal(storageOnly.readOnlyInfo.readonly, true);
+			assert.deepEqual(modes, []);
+
+			const disposed = makeManager();
+			disposed.requestWriteConnection();
+			disposed.dispose();
+			disposed.requestWriteConnection();
+			await clock.tickAsync(0);
+			assert.deepEqual(modes, []);
+			assert.equal(closed, false);
+		});
 	});
 
 	describe("readonly", () => {

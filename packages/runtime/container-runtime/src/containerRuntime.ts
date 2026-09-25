@@ -212,6 +212,10 @@ import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import {
+	captureDetachedRuntimeConstructionOptions,
+	type IDetachedRuntimeConstructionOptions,
+} from "./detachedRuntimeConstruction.js";
+import {
 	BaseDeltaManagerProxy,
 	DeltaManagerPendingOpsProxy,
 	DeltaManagerSummarizerProxy,
@@ -280,6 +284,7 @@ import {
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
 	aliasBlobName,
+	captureSummaryGenerationOptions,
 	chunksBlobName,
 	createRootSummarizerNodeWithGC,
 	DefaultSummaryConfiguration,
@@ -301,6 +306,7 @@ import {
 	type IGeneratedSummaryStats,
 	type IGenerateSummaryTreeResult,
 	type IOnDemandSummarizeOptions,
+	type IPendingSummaryGeneration,
 	type IRefreshSummaryAckOptions,
 	type IRootSummarizerNodeWithGC,
 	type ISerializedElection,
@@ -311,6 +317,7 @@ import {
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
 	type ISummaryConfiguration,
+	type ISummaryGenerationOptions,
 	type ISummaryMetadataMessage,
 	metadataBlobName,
 	OrderedClientCollection,
@@ -324,6 +331,7 @@ import {
 	summarizerClientType,
 	summarizerRequestUrl,
 	SummaryCollection,
+	SummaryGenerationController,
 	SummaryManager,
 	validateSummaryHeuristicConfiguration,
 	wrapSummaryInChannelsTree,
@@ -766,6 +774,29 @@ export interface UnknownIncomingTypedMessage extends TypedMessage {
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
+ * An application projection and optional acceptance bookkeeping captured for one summary.
+ * @legacy @beta
+ */
+export interface IApplicationProjectionSummary {
+	/**
+	 * A fresh application-owned tree that will not subsequently be mutated.
+	 * It may specify a `groupId`; its payload format is opaque to the runtime.
+	 */
+	readonly summary: ISummaryTree;
+	/**
+	 * Synchronously promote the state captured when this tree was generated, not current mutable state.
+	 * Called at most once, only if this submitted proposal is adopted as the runtime's accepted parent,
+	 * after summarizer-node and garbage-collection state have been refreshed.
+	 * It can run after a later attempt was generated, so a returned closure can retain this attempt's exact application state.
+	 * Never called for attach, direct summarize calls, failed submissions, or untracked acknowledgments.
+	 *
+	 * This callback must not mutate the document, submit ops, summarize, or return a promise/thenable.
+	 * Throwing or returning a thenable closes the runtime: completed summary acceptance cannot be rolled back.
+	 */
+	readonly onAccepted?: (context: ISummaryContext) => void;
+}
+
+/**
  * This object holds the parameters necessary for the {@link loadContainerRuntime} function.
  * @legacy @beta
  */
@@ -788,6 +819,15 @@ export interface LoadContainerRuntimeParams {
 	 * Defaults to `{}`.
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
+	/**
+	 * Native summary generation policy and additional application content, captured at load time.
+	 */
+	summaryGenerationOptions?: ISummaryGenerationOptions;
+	/**
+	 * Construction identities for a temporary detached runtime that will only produce a native snapshot.
+	 * Do not supply these options when loading that snapshot into a live container.
+	 */
+	detachedConstructionOptions?: IDetachedRuntimeConstructionOptions;
 	/**
 	 * runtime services provided with context
 	 */
@@ -984,6 +1024,13 @@ export class ContainerRuntime
 			runtimeOptions?: IContainerRuntimeOptionsInternal;
 		},
 	): Promise<{ runtime: ContainerRuntime }> {
+		// Copy both levels before asynchronous loading so callers cannot replace the policy or callbacks.
+		const summaryGenerationOptions = captureSummaryGenerationOptions(
+			params.summaryGenerationOptions,
+		);
+		const detachedConstructionOptions = captureDetachedRuntimeConstructionOptions(
+			params.detachedConstructionOptions,
+		);
 		const {
 			context,
 			registry,
@@ -997,6 +1044,22 @@ export class ContainerRuntime
 			// eslint-disable-next-line import-x/no-deprecated -- accepted for compatibility. See #27851
 			minVersionForCollab: deprecatedMinVersionForCollab,
 		} = params;
+
+		if (
+			detachedConstructionOptions !== undefined &&
+			(existing ||
+				context.attachState !== AttachState.Detached ||
+				context.connected ||
+				(context.getConnectionState !== undefined &&
+					context.getConnectionState() !== ConnectionState.Disconnected) ||
+				context.baseSnapshot !== undefined ||
+				context.snapshotWithContents !== undefined ||
+				context.pendingLocalState !== undefined)
+		) {
+			throw new UsageError(
+				"Detached construction requires a new disconnected detached container without snapshot or pending local state",
+			);
+		}
 
 		if (
 			oldestSupportedClientParam !== undefined &&
@@ -1230,6 +1293,15 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
+		if (detachedConstructionOptions !== undefined) {
+			if (idCompressorMode !== "on") {
+				throw new UsageError("Detached construction requires ID compressor mode on");
+			}
+			if (mc.config.getBoolean("Fluid.Runtime.DisableShortIds") === true) {
+				throw new UsageError("Detached construction requires short data store IDs");
+			}
+		}
+
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1255,7 +1327,14 @@ export class ContainerRuntime
 					),
 				);
 			} else if (serializedIdCompressor === undefined) {
-				return toIdCompressorWithCore(createIdCompressor(compressorLogger));
+				return toIdCompressorWithCore(
+					detachedConstructionOptions === undefined
+						? createIdCompressor(compressorLogger)
+						: createIdCompressor(
+								detachedConstructionOptions.idCompressorSessionId,
+								compressorLogger,
+							),
+				);
 			} else {
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
@@ -1347,6 +1426,9 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
+		// Configure factory options outside the constructor so existing derived runtimes need no new arguments.
+		runtime.initializeSummaryGeneration(summaryGenerationOptions);
+		runtime.isDetachedConstruction = detachedConstructionOptions !== undefined;
 		runtime.sharePendingBlobs();
 
 		// Initialize the base state of the runtime before it's returned.
@@ -1355,6 +1437,16 @@ export class ContainerRuntime
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
+
+		if (
+			runtime.shouldSummarizeOnStartup &&
+			runtime.summaryConfiguration.state === "enabled" &&
+			context.attachState === AttachState.Attached &&
+			context.clientDetails.capabilities.interactive
+		) {
+			// An untouched read-mode client is not in the quorum and cannot elect a summarizer.
+			context.requestWriteConnection?.();
+		}
 
 		return { runtime };
 	}
@@ -1450,6 +1542,8 @@ export class ContainerRuntime
 	}
 
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	private isDetachedConstruction = false;
+	private detachedConstructionError: UsageError | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
 	// Once it loads, it will process all such ops and we will stop accumulating further ops - ops will be processes as they come in.
@@ -1653,9 +1747,49 @@ export class ContainerRuntime
 	private readonly isSnapshotInstanceOfISnapshot: boolean;
 
 	/**
-	 * The summary context of the last acked summary. The properties from this as used when uploading a summary.
+	 * Factory-selected generation policy and application state associated with submitted summary proposals.
 	 */
-	private lastAckedSummaryContext: ISummaryContext | undefined;
+	private defaultLastAckedSummaryContext: ISummaryContext | undefined;
+	private summaryGeneration: SummaryGenerationController | undefined;
+
+	private initializeSummaryGeneration(options: ISummaryGenerationOptions | undefined): void {
+		// Preserve ordinary generation and acceptance unless a policy or projection is selected.
+		if (
+			options?.fullTreePolicy === "untilFirstAck" ||
+			options?.fullTreePolicy === "always" ||
+			options?.additionalRootTree !== undefined
+		) {
+			this.summaryGeneration = new SummaryGenerationController(
+				options,
+				this.loadedFromVersionId,
+				this.deltaManager.initialSequenceNumber,
+				{
+					refreshSummary: async (proposalHandle, referenceSequenceNumber) =>
+						this.summarizerNode.refreshLatestSummary(proposalHandle, referenceSequenceNumber),
+					refreshGC: async (result, proposalHandle) =>
+						this.garbageCollector.refreshLatestSummary(result, proposalHandle),
+					handleUntrackedSummary: async ({ summaryRefSeq, ackHandle, summaryLogger }) =>
+						this.fetchLatestSnapshotAndMaybeClose(summaryRefSeq, ackHandle, summaryLogger),
+					verifyNotClosed: () => this.verifyNotClosed(),
+					getReferenceSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+					close: (error) => this.closeFn(error),
+				},
+			);
+		}
+	}
+
+	private get lastAckedSummaryContext(): ISummaryContext | undefined {
+		return this.summaryGeneration === undefined
+			? this.defaultLastAckedSummaryContext
+			: this.summaryGeneration.latestAcceptedSummary;
+	}
+
+	/**
+	 * Whether enabled summary heuristics must request an initial full summary.
+	 */
+	public get shouldSummarizeOnStartup(): boolean {
+		return this.summaryGeneration?.shouldSummarizeOnStartup ?? false;
+	}
 
 	/**
 	 * It a cache for holding mapping for loading groupIds with its snapshot from the service. Add expiry policy of 1 minute.
@@ -2621,6 +2755,7 @@ export class ContainerRuntime
 			this.summaryManager.dispose();
 		}
 		this.garbageCollector.dispose();
+		this.summaryGeneration?.dispose();
 		this._summarizer?.dispose();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
@@ -3122,11 +3257,30 @@ export class ContainerRuntime
 	private readonly notifyReadOnlyState = (_readonly?: boolean): void =>
 		this.channelCollection?.notifyReadOnlyState(this.isReadOnly());
 
+	private rejectDetachedConstructionOperation(operation: string): void {
+		if (!this.isDetachedConstruction) {
+			return;
+		}
+		if (this.detachedConstructionError === undefined) {
+			this.detachedConstructionError = new UsageError(
+				`Cannot ${operation} from a detached construction runtime`,
+			);
+			this.closeFn(this.detachedConstructionError);
+		}
+		throw this.detachedConstructionError;
+	}
+
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
+		if (canSendOps || clientId !== undefined) {
+			this.rejectDetachedConstructionOperation("connect");
+		}
 		this.setConnectionStateToConnectedOrDisconnected(canSendOps, clientId);
 	}
 
 	public setConnectionStatus(status: ConnectionStatus): void {
+		if (status.connectionState !== ConnectionState.Disconnected) {
+			this.rejectDetachedConstructionOperation("connect");
+		}
 		switch (status.connectionState) {
 			case ConnectionState.Connected: {
 				this.setConnectionStateToConnectedOrDisconnected(
@@ -4239,6 +4393,7 @@ export class ContainerRuntime
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
+		this.rejectDetachedConstructionOperation("attach");
 		if (attachState === AttachState.Attaching) {
 			assert(
 				this.attachState === AttachState.Attaching,
@@ -4268,6 +4423,7 @@ export class ContainerRuntime
 		blobRedirectTable?: Map<string, string>,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTree {
+		this.summaryGeneration?.shouldProduceFullSummary(true);
 		if (blobRedirectTable) {
 			this.blobManager.patchRedirectTable(blobRedirectTable);
 		}
@@ -4292,6 +4448,15 @@ export class ContainerRuntime
 			false /* trackState */,
 			telemetryContext,
 		);
+		this.summaryGeneration?.createSummary(
+			summarizeResult,
+			Object.freeze({
+				fullTree: true,
+				trackState: false,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				previousSummary: undefined,
+			}),
+		);
 		return summarizeResult.summary;
 	}
 
@@ -4304,10 +4469,14 @@ export class ContainerRuntime
 	 * so until we can provide a proper API for their scenario, we need to ensure this function doesn't change.
 	 */
 	private async summarizeInternal(
-		fullTree: boolean,
+		requestedFullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeInternalResult> {
+		// Enforce the load-time policy when summarizing data stores as well as in summarize().
+		// Every path through the root summarizer must pass fullTree down to data stores and GC.
+		const fullTree =
+			this.summaryGeneration?.shouldProduceFullSummary(requestedFullTree) ?? requestedFullTree;
 		const summarizeResult = await this.channelCollection.summarize(
 			fullTree,
 			trackState,
@@ -4321,6 +4490,16 @@ export class ContainerRuntime
 		this.loadIdCompressor();
 
 		this.addContainerStateToSummary(summarizeResult, fullTree, trackState, telemetryContext);
+		await this.summaryGeneration?.summarize(
+			summarizeResult,
+			Object.freeze({
+				fullTree,
+				trackState,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				previousSummary: this.summaryGeneration.previousSummary,
+			}),
+			this.summarizerNode.isSummaryInProgress?.() === true,
+		);
 		return {
 			...summarizeResult,
 			id: "",
@@ -4333,7 +4512,8 @@ export class ContainerRuntime
 	 */
 	public async summarize(options: {
 		/**
-		 * True to generate the full tree with no handle reuse optimizations; defaults to false
+		 * True to generate the full tree with no handle reuse optimizations; defaults to false.
+		 * The load-time full-tree generation policies take precedence over false.
 		 */
 		fullTree?: boolean;
 		/**
@@ -4364,7 +4544,7 @@ export class ContainerRuntime
 		this.verifyNotClosed();
 
 		const {
-			fullTree = false,
+			fullTree: requestedFullTree = false,
 			trackState = true,
 			summaryLogger = this.mc.logger,
 			runGC = this.garbageCollector.shouldRunGC,
@@ -4372,6 +4552,8 @@ export class ContainerRuntime
 			fullGC,
 			telemetryContext = new TelemetryContext(),
 		} = options;
+		const fullTree =
+			this.summaryGeneration?.shouldProduceFullSummary(requestedFullTree) ?? requestedFullTree;
 
 		// Add the options that are used to generate this summary to the telemetry context.
 		telemetryContext.setMultiple("fluid_Summarize", "Options", {
@@ -4403,10 +4585,16 @@ export class ContainerRuntime
 
 			return { stats, summary };
 		} finally {
-			summaryLogger.sendTelemetryEvent({
-				eventName: "SummarizeTelemetry",
-				details: telemetryContext.serialize(),
-			});
+			try {
+				if (this.summarizerNode.isSummaryInProgress?.() !== true) {
+					this.garbageCollector.clearSummary();
+				}
+			} finally {
+				summaryLogger.sendTelemetryEvent({
+					eventName: "SummarizeTelemetry",
+					details: telemetryContext.serialize(),
+				});
+			}
 		}
 	}
 
@@ -4796,6 +4984,7 @@ export class ContainerRuntime
 
 			const trace = Trace.start();
 			let summarizeResult: ISummaryTreeWithStats;
+			let summaryGeneration: IPendingSummaryGeneration | undefined;
 			try {
 				summarizeResult = await this.summarize({
 					fullTree,
@@ -4804,6 +4993,9 @@ export class ContainerRuntime
 					runGC: this.garbageCollector.shouldRunGC,
 					telemetryContext,
 				});
+				summaryGeneration = this.summaryGeneration?.takeGeneratedSummary(
+					summarizeResult.summary,
+				);
 			} catch (error) {
 				return {
 					stage: "base",
@@ -4948,6 +5140,8 @@ export class ContainerRuntime
 
 			try {
 				this.summarizerNode.completeSummary(handle);
+				this.garbageCollector.completeSummary(handle, summaryRefSeqNum);
+				this.summaryGeneration?.completeSummary(handle, summaryGeneration);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -4959,6 +5153,7 @@ export class ContainerRuntime
 		} finally {
 			// Cleanup wip summary in case of failure
 			this.summarizerNode.clearSummary();
+			this.garbageCollector.clearSummary();
 
 			// ! This needs to happen before we resume inbound queues to ensure heuristics are tracked correctly
 			this._summarizer?.recordSummaryAttempt?.(summaryRefSeqNum);
@@ -5500,9 +5695,12 @@ export class ContainerRuntime
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
+		if (this.summaryGeneration !== undefined) {
+			return this.summaryGeneration.refreshLatestSummaryAck(options);
+		}
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
-		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
+		assert(proposalHandle !== undefined, "Summary acknowledgment must identify its proposal");
 		const result = await this.summarizerNode.refreshLatestSummary(
 			proposalHandle,
 			summaryRefSeq,
@@ -5535,10 +5733,10 @@ export class ContainerRuntime
 		}
 
 		// Notify the garbage collector so it can update its latest summary state.
-		await this.garbageCollector.refreshLatestSummary(result);
+		await this.garbageCollector.refreshLatestSummary(result, proposalHandle);
 
 		// If we here, the ack was tracked by this client. Update the summary context of the last ack.
-		this.lastAckedSummaryContext = {
+		this.defaultLastAckedSummaryContext = {
 			proposalHandle,
 			ackHandle,
 			referenceSequenceNumber: summaryRefSeq,
@@ -5644,6 +5842,7 @@ export class ContainerRuntime
 	}
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
+		this.rejectDetachedConstructionOperation("export pending local state");
 		// AB#46464 - Add support for serializing pending state while in staging mode
 		if (this.inStagingMode) {
 			throw new UsageError("getPendingLocalState is not yet supported in staging mode");
