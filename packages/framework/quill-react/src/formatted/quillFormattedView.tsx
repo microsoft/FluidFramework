@@ -18,7 +18,7 @@ import {
 	utf16LengthForCodePoints,
 } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill-next";
-import Delta, { type Op as QuillDeltaOp } from "@quill-next/delta-es";
+import type { Op as QuillDeltaOp } from "@quill-next/delta-es";
 import {
 	forwardRef,
 	useEffect,
@@ -33,6 +33,7 @@ import { runGuarded } from "../shared/index.js";
 
 import {
 	clipboardFormatMatcher,
+	Delta,
 	formatToFullQuillAttributes,
 	formatToQuillAttributes,
 	lineTagToQuillAttributes,

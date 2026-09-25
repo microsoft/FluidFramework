@@ -5,12 +5,20 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { FormattedTextDefault } from "@fluidframework/tree/internal";
-import Delta, { type AttributeMap } from "@quill-next/delta-es";
+import DeltaPackage, { type AttributeMap } from "@quill-next/delta-es";
 
 /** Re-alias of {@link AttributeMap} (Quill's attributes record on delta ops). */
 type QuillAttributeMap = AttributeMap;
 
 export type { QuillAttributeMap };
+
+// Workaround for @quill-next/delta-es under node16 module resolution.
+// Its type declarations are CommonJS, so TypeScript types the default import as the module object.
+// At runtime, the default import is the `Delta` class itself.
+/** The Quill `Delta` class. */
+export type Delta = DeltaPackage.default;
+/** The Quill `Delta` class. */
+export const Delta = DeltaPackage as unknown as typeof DeltaPackage.default;
 
 /** Quill size names mapped to pixel values for tree storage. */
 const sizeMap = { small: 10, large: 18, huge: 24 } as const;

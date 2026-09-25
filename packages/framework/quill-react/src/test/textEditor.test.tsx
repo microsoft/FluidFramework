@@ -16,7 +16,6 @@ import {
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import Quill from "quill-next";
-import Delta from "@quill-next/delta-es";
 
 import {
 	clipboardFormatMatcher,
@@ -28,6 +27,8 @@ import {
 	// Allow import of files being tested
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../formatted/quillFormattedView.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { Delta } from "../formatted/quillAttributeUtils.js";
 import {
 	QuillMainView,
 	// Allow import of files being tested

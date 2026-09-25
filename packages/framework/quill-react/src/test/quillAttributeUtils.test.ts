@@ -8,12 +8,12 @@ import { strict as assert } from "node:assert";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { independentView, FormattedTextDefault } from "@fluidframework/tree/internal";
 import globalJsdom from "global-jsdom";
-import Delta from "@quill-next/delta-es";
 
 import {
 	clipboardFormatMatcher,
 	defaultFont,
 	defaultSize,
+	Delta,
 	formatToFullQuillAttributes,
 	formatToQuillAttributes,
 	parseCssFontFamily,

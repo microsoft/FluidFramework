@@ -104,7 +104,6 @@ pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': 949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa
-  '@quill-next/delta-es@5.2.12': 0947d087cf89d0f7f5d8739818061c141fa40bc312de034e8fe04ca144f1d2b9
 
 importers:
 
@@ -11257,7 +11256,7 @@ importers:
         version: link:../../dds/tree
       '@quill-next/delta-es':
         specifier: ^5.2.12
-        version: 5.2.12(patch_hash=0947d087cf89d0f7f5d8739818061c141fa40bc312de034e8fe04ca144f1d2b9)
+        version: 5.2.12
       quill-next:
         specifier: ^2.2.6
         version: 2.2.6
@@ -32221,7 +32220,7 @@ snapshots:
 
   '@polka/url@1.0.0-next.28': {}
 
-  '@quill-next/delta-es@5.2.12(patch_hash=0947d087cf89d0f7f5d8739818061c141fa40bc312de034e8fe04ca144f1d2b9)':
+  '@quill-next/delta-es@5.2.12':
     dependencies:
       fast-diff: 1.3.0
       lodash-es: 4.18.1
@@ -39607,7 +39606,7 @@ snapshots:
 
   quill-next@2.2.6:
     dependencies:
-      '@quill-next/delta-es': 5.2.12(patch_hash=0947d087cf89d0f7f5d8739818061c141fa40bc312de034e8fe04ca144f1d2b9)
+      '@quill-next/delta-es': 5.2.12
       eventemitter3: 5.0.1
       lodash-es: 4.18.1
       parchment: 3.0.0
