@@ -79,6 +79,7 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",

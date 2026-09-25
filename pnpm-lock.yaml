@@ -14128,6 +14128,9 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../mocha-test-setup
       '@fluid-internal/test-driver-definitions':
         specifier: workspace:~
         version: link:../test-driver-definitions
