@@ -22,6 +22,34 @@ test.describe("Accessibility", () => {
 	// A page that renders the docs version dropdown (only shown on doc pages).
 	const docsPageWithVersionDropdown = "/docs/start/tree-start/";
 
+	test("Homepage Learn more links have visible-label-first accessible names", async ({
+		page,
+	}) => {
+		await page.goto("/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+		for (const title of [
+			"Easy to use",
+			"Open Source",
+			"Industry-leading speed & performance",
+			"Azure Fluid Relay",
+			"SharePoint Embedded",
+			"Autodesk",
+			"Hexagon",
+			"Microsoft Loop",
+			"Microsoft Teams",
+			"Power Apps",
+			"Whiteboard",
+		]) {
+			await expect(
+				page.getByRole("link", {
+					name: `Learn more about ${title}`,
+					exact: true,
+				}),
+			).toBeVisible();
+		}
+	});
+
 	test("Version dropdown items do not use list ARIA attributes reserved for other roles", async ({
 		page,
 	}) => {

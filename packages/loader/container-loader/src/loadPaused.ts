@@ -7,10 +7,15 @@ import {
 	isIDeltaManagerFull,
 	LoaderHeader,
 	type IContainer,
+	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
-import type { IRequest, IErrorBase } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { GenericError, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	GenericError,
+	isFluidError,
+	normalizeError,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { loadExistingContainer } from "./createAndLoadContainerUtils.js";
 import type { ILoaderProps } from "./loader.js";
@@ -39,7 +44,9 @@ import type { ILoaderProps } from "./loader.js";
  * @param loaderProps - The loader props to use to load the container.
  * @param request - request identifying container instance / load parameters. LoaderHeader.loadMode headers are ignored (see above)
  * @param loadToSequenceNumber - optional sequence number. If provided, ops are processed up to this sequence number.
- * @param signal - optional abort signal that can be used to cancel waiting for the ops.
+ * @param signal - Optional abort signal. If replay is required and the signal is already aborted,
+ * the load rejects without connecting; otherwise, aborting cancels the load while it waits to reach
+ * the target sequence number.
  * @returns IContainer instance
  *
  * @internal
@@ -63,7 +70,32 @@ export async function loadContainerPaused(
 	});
 
 	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
-	container.forceReadonly?.(true);
+	let setupContainerUnavailableError: ICriticalContainerError | undefined;
+	const captureSetupContainerUnavailableError = (error?: ICriticalContainerError): void => {
+		setupContainerUnavailableError = error;
+	};
+	container.on("closed", captureSetupContainerUnavailableError);
+	container.on("disposed", captureSetupContainerUnavailableError);
+	try {
+		container.forceReadonly?.(true);
+	} catch (error) {
+		const normalizedError = normalizeError(error);
+		container.dispose(normalizedError);
+		throw normalizedError;
+	} finally {
+		container.off("closed", captureSetupContainerUnavailableError);
+		container.off("disposed", captureSetupContainerUnavailableError);
+	}
+	if (container.closed) {
+		const error = normalizeError(
+			setupContainerUnavailableError ??
+				new GenericError(
+					"Container closed or disposed without error before the paused load completed.",
+				),
+		);
+		container.dispose(error);
+		throw error;
+	}
 
 	const dm = container.deltaManager;
 	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
@@ -99,13 +131,14 @@ export async function loadContainerPaused(
 				versionMarkBaseSnapshotSequenceNumber: lastProcessedSequenceNumber,
 			},
 		);
-		container.close(error);
+		container.dispose(error);
 		throw error;
 	}
 
 	let opHandler: () => void;
 	let onAbort: () => void;
-	let onClose: (error?: IErrorBase) => void;
+	let onContainerUnavailable: (error?: ICriticalContainerError) => void;
+	let replayContainerUnavailableError: ReturnType<typeof normalizeError> | undefined;
 
 	const promise = new Promise<void>((resolve, reject) => {
 		onAbort = (): void =>
@@ -114,8 +147,15 @@ export async function loadContainerPaused(
 					versionMarkAvailabilityOutcome: "cancelled",
 				}),
 			);
-		// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-		onClose = (error?: IErrorBase): void => reject(error);
+		onContainerUnavailable = (error?: ICriticalContainerError): void => {
+			replayContainerUnavailableError = normalizeError(
+				error ??
+					new GenericError(
+						"Container closed or disposed without error while the paused load was waiting for ops.",
+					),
+			);
+			reject(replayContainerUnavailableError);
+		};
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
 		opHandler = (): void => {
@@ -132,8 +172,12 @@ export async function loadContainerPaused(
 
 		// If we have not yet reached the desired sequence number, setup a listener to pause once we reach it.
 		signal?.addEventListener("abort", onAbort);
+		if (signal?.aborted === true) {
+			onAbort();
+		}
 		container.on("op", opHandler);
-		container.on("closed", onClose);
+		container.on("closed", onContainerUnavailable);
+		container.on("disposed", onContainerUnavailable);
 	});
 
 	// There are no guarantees on when ops will land in storage.
@@ -142,38 +186,51 @@ export async function loadContainerPaused(
 	// Thus, we have to ensure we connect to delta storage in order to make forward progress with ops.
 	// We also instructed not to fetch / apply any ops from storage above (to be able to install callback above before ops are processed),
 	// connect() call will fetch ops as needed.
-	container.connect();
+	if (signal?.aborted !== true) {
+		container.connect();
+	}
 
 	// Wait for the ops to be processed.
 	await promise
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		.catch((error: any) => {
+		.catch((error: unknown) => {
+			const normalizedError = normalizeError(error);
 			// The container was loaded from its base snapshot before replay began. Attach that known
 			// sequence number to the actual replay/cancellation error so the public point-in-time
 			// terminal event can report it without inferring state independently.
-			if (isFluidError(error)) {
-				error.addTelemetryProperties({
+			if (isFluidError(normalizedError)) {
+				normalizedError.addTelemetryProperties({
 					versionMarkBaseSnapshotSequenceNumber: lastProcessedSequenceNumber,
 				});
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			container.close(error);
-			throw error;
+			container.dispose(normalizedError);
+			throw normalizedError;
 		})
 		.finally(() => {
 			try {
-				// There is not much value in leaving delta connection on. We are not processing ops, we also can't advance to "connected" state because of it.
-				// We are not sending ops (due to forceReadonly() call above). We are holding collab window and any consensus-based processes.
-				// It's better not to have connection in such case, as there are only nagatives, and no positives.
+				// A failure disposes the container in the catch above. Disconnecting it again would
+				// throw and replace the original replay or cancellation error.
 				if (!container.closed) {
 					container.disconnect();
 				}
 			} finally {
 				container.off("op", opHandler);
-				container.off("closed", onClose);
+				container.off("closed", onContainerUnavailable);
+				container.off("disposed", onContainerUnavailable);
 				signal?.removeEventListener("abort", onAbort);
 			}
 		});
+
+	// Resolving the replay promise does not stop later listeners in the same synchronous op
+	// emission. Recheck the lifecycle state before returning in case one of them closed the container.
+	if (container.closed) {
+		const error =
+			replayContainerUnavailableError ??
+			new GenericError(
+				"Container closed or disposed without error before the paused load completed.",
+			);
+		container.dispose(error);
+		throw error;
+	}
 
 	return container;
 }

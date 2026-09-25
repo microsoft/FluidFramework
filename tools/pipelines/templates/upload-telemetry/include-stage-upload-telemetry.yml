@@ -19,6 +19,13 @@ parameters:
   type: object
   default: []
 
+# Whether to upload telemetry when a dependency is skipped. Canceled pipelines remain excluded.
+# Use this when multiple stages are involved (especially if one might not run if prior fails)
+# and telemetry is still desired for failures (which is commonly the case).
+- name: runOnSkippedDependencies
+  type: boolean
+  default: false
+
 # The steps to take after configuring for telemetry upload
 - name: telemetry_upload_steps
   type: stepList
@@ -28,7 +35,10 @@ stages:
   displayName: Upload telemetry to Kusto ('${{ parameters.telemetryDescription }}')
   # Run for all possible pipeline triggers except manual
   # (manual runs tend to be for testing and can fail repeatedly, we don't want that creating incidents)
-  condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'Manual'))
+  ${{ if parameters.runOnSkippedDependencies }}:
+    condition: and(not(canceled()), ne(variables['Build.Reason'], 'Manual'))
+  ${{ else }}:
+    condition: and(succeededOrFailed(), ne(variables['Build.Reason'], 'Manual'))
   dependsOn:
     - ${{ each stage in parameters.dependsOn }}:
       - ${{ stage }}
