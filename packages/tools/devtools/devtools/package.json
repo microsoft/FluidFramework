@@ -102,7 +102,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~"
