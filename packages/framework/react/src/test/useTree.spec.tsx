@@ -54,6 +54,13 @@ describe("useTree", () => {
 			);
 		});
 
+		it("withTreeObservations supports rendering nothing", () => {
+			// eslint-disable-next-line unicorn/no-null -- React components use null to render nothing.
+			const NullComponent = withTreeObservations(() => null);
+			const rendered = render(<NullComponent />);
+			assert.equal(rendered.baseElement.textContent, "");
+		});
+
 		for (const reactStrictMode of [false, true]) {
 			/**
 			 * Check then clear, the contents of `log`.
