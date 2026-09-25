@@ -133,9 +133,7 @@ export interface BranchTrimmingEvents {
  * {@link SharedTreeBranch.merge | merging} incorporates another branch's divergent commits into this branch,
  * while {@link SharedTreeBranch.rebaseOnto | rebasing} replays this branch's divergent commits onto another branch's head.
  *
- * A branch emits {@link SharedTreeBranchEvents | events} whenever its head commit changes
- * (including as a result of applying, forking, merging, rebasing, or removing commits), when one of its commits is sequenced,
- * and when it is disposed.
+ * See {@link SharedTreeBranchEvents} for events emitted by SharedTreeBranch instances.
  */
 export class SharedTreeBranch<
 	TEditor extends ChangeFamilyEditor,
