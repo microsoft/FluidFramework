@@ -20,7 +20,10 @@ import {
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -651,7 +654,7 @@ describe("TextDomain benchmarks", () => {
 			readonly summary: ISummaryTree;
 			readonly idCompressor: ReturnType<typeof createIdCompressor>;
 		} {
-			const idCompressor = createIdCompressor();
+			const idCompressor = createIdCompressor(SerializationVersion.V3);
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			containerRuntimeFactory.createContainerRuntime(runtime);

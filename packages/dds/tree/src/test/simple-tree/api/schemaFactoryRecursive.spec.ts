@@ -7,7 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockFluidDataStoreRuntime,
 	validateTypeError,
@@ -138,7 +137,6 @@ describe("SchemaFactory Recursive methods", () => {
 
 			const tree = SharedTree.create(
 				new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(),
 					registry: [SharedTree.getFactory()],
 				}),
 				"tree",
