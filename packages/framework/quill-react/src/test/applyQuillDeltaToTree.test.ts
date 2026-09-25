@@ -11,15 +11,13 @@ import {
 	FormattedTextDefault,
 	FormattedText,
 } from "@fluidframework/tree/internal";
-import DeltaPackage from "quill-delta";
 
 import {
 	applyQuillDeltaToTree,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../formatted/quillFormattedView.js";
-
-const Delta = DeltaPackage.default;
-type Delta = DeltaPackage.default;
+// eslint-disable-next-line import-x/no-internal-modules
+import { Delta } from "../formatted/quillAttributeUtils.js";
 
 /**
  * Build a fresh, independent (unhydrated) `FormattedTextDefault.Tree` initialized from `initial`.
