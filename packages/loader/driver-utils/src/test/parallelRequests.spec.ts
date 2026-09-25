@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { isILoggingError, MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { useFakeTimers } from "sinon";
 
-import { ParallelRequests } from "../parallelRequests.js";
+import { ParallelRequests, requestOps } from "../parallelRequests.js";
 
 enum HowMany {
 	Exact,
@@ -259,5 +260,32 @@ describe("Parallel Requests", () => {
 		}
 		assert(!success);
 		logger.assertMatchNone([{ category: "error" }]);
+	});
+
+	it("classifies repeated successful empty responses as too many retries", async () => {
+		const clock = useFakeTimers({
+			toFake: ["clearTimeout", "performance", "setTimeout"],
+		});
+		try {
+			const logger = new MockLogger();
+			const stream = requestOps(
+				async () => ({ messages: [], partialResult: false }),
+				1,
+				1,
+				2,
+				1,
+				logger.toTelemetryLogger(),
+			);
+			const rejectedRead = assert.rejects(stream.read(), (error) => {
+				assert(isILoggingError(error), "expected a logging error");
+				assert.equal(error.getTelemetryProperties().opsFetchFailure, "tooManyRetries");
+				return true;
+			});
+
+			await clock.tickAsync(40_000);
+			await rejectedRead;
+		} finally {
+			clock.restore();
+		}
 	});
 });

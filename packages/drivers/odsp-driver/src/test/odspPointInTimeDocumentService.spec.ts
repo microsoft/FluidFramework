@@ -20,6 +20,12 @@ import {
 	type IStreamResult,
 	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	createGenericNetworkError,
+	NonRetryableError,
+} from "@fluidframework/driver-utils/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
@@ -42,6 +48,22 @@ function streamFromBatches(batches: number[][]): IStream<ISequencedDocumentMessa
 			return { done: true };
 		},
 	};
+}
+
+function failingStream(error: unknown): IStream<ISequencedDocumentMessage[]> {
+	return {
+		read: async () => {
+			throw error;
+		},
+	};
+}
+
+function assertVersionMarkAvailabilityOutcome(
+	error: unknown,
+	expected: string | undefined,
+): void {
+	assert(isILoggingError(error), "expected a logging error");
+	assert.equal(error.getTelemetryProperties().versionMarkAvailabilityOutcome, expected);
 }
 
 /** Records the (from, to, cachedOnly) each `fetchMessages` was called with, for bounding assertions. */
@@ -242,6 +264,74 @@ describe("OdspPointInTimeDocumentService", () => {
 
 		it("yields nothing when the stream serves no ops", async () => {
 			assert.deepEqual(await readAll(12, 10, []), []);
+		});
+	});
+
+	describe("connectToDeltaStorage: classifies unavailable bounded replay ops", () => {
+		it("classifies cannotCatchUp without changing the raw errorType", async () => {
+			const error = new NonRetryableError(
+				"required historical ops are unavailable",
+				OdspErrorTypes.cannotCatchUp,
+				{ driverVersion: "test" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				assert.equal(error.errorType, OdspErrorTypes.cannotCatchUp);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, "missingOps");
+		});
+
+		it("classifies the fixed-range empty-response timeout without changing its errorType", async () => {
+			const error = createGenericNetworkError(
+				"Failed to retrieve ops from storage (Too Many Retries)",
+				{ canRetry: false },
+				{ driverVersion: "test", opsFetchFailure: "tooManyRetries" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				assert.equal(error.errorType, OdspErrorTypes.genericNetworkError);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, "missingOps");
+		});
+
+		it("does not classify an error from its message alone", async () => {
+			const error = createGenericNetworkError(
+				"Failed to retrieve ops from storage (Too Many Retries)",
+				{ canRetry: false },
+				{ driverVersion: "test" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, undefined);
+		});
+
+		it("does not classify an ordinary network failure as missing ops", async () => {
+			const error = createGenericNetworkError(
+				"Failed to contact the storage service",
+				{ canRetry: false },
+				{ driverVersion: "test" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, undefined);
 		});
 	});
 

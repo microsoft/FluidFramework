@@ -58,7 +58,6 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",

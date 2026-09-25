@@ -353,6 +353,8 @@ describe("VersionMarkResolver", () => {
 					eventName: "Resolve",
 					outcome: "resolved",
 					path: "session",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 1,
 					sequenceNumber: 12,
 				},
 			]);
@@ -850,7 +852,12 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(before, [["client_[1]", 5]]);
 			assert.deepEqual(after, [["client_[1]", 5]]);
 			// The fault is logged rather than swallowed.
-			logger.assertMatch([{ eventName: "VersionMarkListenerException", category: "error" }]);
+			logger.assertMatch([
+				{
+					eventName: "ListenerException",
+					category: "error",
+				},
+			]);
 			// The batch is still recorded despite the fault, so it resolves via the live fast path.
 			assert.deepEqual(await resolver.resolve("client_[1]", 0), {
 				kind: "resolved",
@@ -931,11 +938,16 @@ describe("VersionMarkResolver", () => {
 				sequenceNumber: 21,
 				timestamp: 21000,
 			});
+			assert.equal(typeof logger.events[0]?.duration, "number");
+			assert.equal(logger.events[0]?.durationMs, undefined);
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
+					category: "generic",
 					outcome: "resolved",
 					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
 					sequenceNumber: 21,
 				},
 			]);
@@ -951,8 +963,11 @@ describe("VersionMarkResolver", () => {
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
+					category: "generic",
 					outcome: "pending",
 					path: "noReader",
+					historyAttempted: false,
+					sequenceNumberLowerBound: 5,
 					reason: "historicalOpsUnavailable",
 				},
 			]);
@@ -970,25 +985,121 @@ describe("VersionMarkResolver", () => {
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
+					category: "generic",
 					outcome: "resolved",
 					path: "session",
+					historyAttempted: false,
+					sequenceNumberLowerBound: 5,
 					sequenceNumber: 7,
 				},
 			]);
 		});
 
-		it("emits outcome 'error' (via finally) when the history scan throws", async () => {
+		it("reports a terminal history-trimmed outcome as unresolvable", async () => {
 			const logger = new MockLogger();
+			const resolver = makeResolver({
+				reader: makeReader([]),
+				currentSequenceNumber: 10,
+				logger,
+			});
+
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "unresolvable",
+				reason: "historyTrimmed",
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "generic",
+					outcome: "unresolvable",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					reason: "historyTrimmed",
+				},
+			]);
+		});
+
+		it("reports historyAttempted when the history scan returns pending", async () => {
+			const logger = new MockLogger();
+			const resolver = makeResolver({
+				reader: makeReader([]),
+				currentSequenceNumber: 0,
+				logger,
+			});
+
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "pending",
+				reason: "awaitingSequence",
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "generic",
+					outcome: "pending",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					reason: "awaitingSequence",
+				},
+			]);
+		});
+
+		it("emits outcome 'error' when the history scan throws", async () => {
+			const logger = new MockLogger();
+			const thrownError = new Error("delta storage boom");
 			const reader: IHistoricalOpReader = {
 				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
-					throw new Error("delta storage boom");
+					throw thrownError;
 				},
 			};
 			const resolver = makeResolver({ reader, logger });
-			// The throw propagates (resolve does not swallow it)...
-			await assert.rejects(resolver.resolve(generateBatchId("missing", 1), 5), /boom/);
-			// ...but the Resolve event still fires with outcome "error".
-			logger.assertMatch([{ eventName: "Resolve", outcome: "error", path: "history" }]);
+			await assert.rejects(
+				resolver.resolve(generateBatchId("missing", 1), 5),
+				(error) => error === thrownError,
+			);
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "error",
+					outcome: "error",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					error: "delta storage boom",
+				},
+			]);
+		});
+
+		it("routes an undefined thrown value to one Error-category terminal event", async () => {
+			const logger = new MockLogger();
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					// eslint-disable-next-line @typescript-eslint/only-throw-error
+					throw undefined;
+				},
+			};
+			const resolver = makeResolver({ reader, logger });
+			let caught = false;
+			try {
+				await resolver.resolve(generateBatchId("missing", 1), 5);
+			} catch (error) {
+				caught = true;
+				assert.equal(error, undefined);
+			}
+			assert.equal(caught, true, "resolve should rethrow the original undefined value");
+			assert.equal(logger.events.length, 1, "resolve should emit exactly one terminal event");
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "error",
+					outcome: "error",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					error: "Resolve",
+				},
+			]);
 		});
 	});
 });

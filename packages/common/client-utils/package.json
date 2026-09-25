@@ -120,7 +120,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
 		"base64-js": "^1.5.1",
 		"buffer": "^6.0.3",
@@ -130,7 +129,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.5",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@3.1.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@3.2.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",

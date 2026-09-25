@@ -44,7 +44,6 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"css-loader": "^7.1.2",
 		"style-loader": "^4.0.0"
