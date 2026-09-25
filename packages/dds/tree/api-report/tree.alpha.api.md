@@ -179,7 +179,7 @@ export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSche
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
-export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(viewWhichCreatedStoredSchema: ITreeViewConfigurationAlpha, view: ITreeViewConfigurationAlpha): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -359,7 +359,7 @@ export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = un
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
 // @alpha
-export function exportCompatibilitySchemaSnapshot(config: Pick<TreeViewConfiguration, "schema">): JsonCompatibleReadOnly;
+export function exportCompatibilitySchemaSnapshot(config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion">): JsonCompatibleReadOnly;
 
 // @beta
 export namespace ExtensibleUnionNode {
@@ -621,7 +621,7 @@ export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
 export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 
 // @alpha
-export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfiguration;
+export function importCompatibilitySchemaSnapshot(config: JsonCompatibleReadOnly): TreeViewConfigurationAlpha;
 
 // @alpha
 export type IncrementalEncodingPolicy = (nodeIdentifier: string | undefined, fieldKey?: string) => boolean;
@@ -753,6 +753,7 @@ export interface ITreeAlpha extends ITree {
     exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
+    readonly storedSchemaVersion: SchemaVersionMap | undefined;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -769,6 +770,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly schemaVersion?: SchemaVersionMap;
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
 
@@ -900,6 +902,11 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 // @public @sealed @system
 export interface LeafSchema<Name extends string, T extends TreeLeafValue> extends TreeNodeSchemaNonClass<`com.fluidframework.leaf.${Name}`, NodeKind.Leaf, T, T, true> {
 }
+
+// @alpha
+export type LibraryId = string & {
+    readonly "tree.LibraryId": "tree.LibraryId";
+};
 
 // @alpha @sealed
 export interface LocalChangeMetadata extends CommitMetadata {
@@ -1424,6 +1431,9 @@ export class SchemaUpgrade {
     protected _typeCheck: MakeNominal;
 }
 
+// @alpha
+export type SchemaVersionMap = Readonly<Record<LibraryId, number>>;
+
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
@@ -1520,6 +1530,7 @@ export interface SimpleRecordNodeSchema<Type extends SchemaType = SchemaType, ou
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
     readonly root: SimpleFieldSchema<Type>;
+    readonly schemaVersion?: SchemaVersionMap;
 }
 
 // @beta
@@ -2143,6 +2154,7 @@ export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.Implic
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     readonly root: FieldSchemaAlpha;
+    readonly schemaVersion?: SchemaVersionMap;
 }
 
 // @alpha @input
@@ -2180,6 +2192,8 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+    readonly schemaVersion: SchemaVersionMap | undefined;
+    readonly storedSchemaVersion: SchemaVersionMap | undefined;
 }
 
 // @beta @sealed
@@ -2206,6 +2220,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly schemaVersion: SchemaVersionMap | undefined;
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 

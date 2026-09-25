@@ -1,0 +1,22 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "com.fluidframework.leaf.string": {
+      "kind": {
+        "leaf": 1
+      }
+    }
+  },
+  "root": {
+    "kind": "Identifier",
+    "types": [
+      "com.fluidframework.leaf.string"
+    ]
+  },
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

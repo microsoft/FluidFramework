@@ -1,0 +1,22 @@
+{
+  "version": "schemaVersion",
+  "nodes": {
+    "test.minimal": {
+      "kind": {
+        "object": {}
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.minimal"
+    ]
+  },
+  "schemaVersion": [
+    [
+      "com.fluidframework.test",
+      1
+    ]
+  ]
+}

@@ -7,6 +7,7 @@ import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { NodeKind, SchemaUpgrade, SimpleNodeSchemaBase } from "./core/index.js";
+import type { SchemaVersionMap } from "../core/index.js";
 import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
@@ -318,6 +319,11 @@ export interface SimpleFieldSchema<Type extends SchemaType = SchemaType> {
  * @sealed
  */
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
+	/**
+	 * Application-defined versions associated with this schema.
+	 */
+	readonly schemaVersion?: SchemaVersionMap;
+
 	/**
 	 * The tree field representing the root of the tree.
 	 */
