@@ -22,7 +22,7 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Reports viewing and stored-schema upgrade compatibility for `view.schema` against a stored schema generated from `viewWhichCreatedStoredSchema.schema`.
+ * Reports the capability of `view`'s schema to view and/or upgrade an existing stored schema (described by `viewWhichCreatedStoredSchema`).
  *
  * @remarks
  * The "existing" (derived from `viewWhichCreatedStoredSchema`) and "proposed" (derived from `view`) stored schemas are generated using the default restrictive staged upgrade policy;
