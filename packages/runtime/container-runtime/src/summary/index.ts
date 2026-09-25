@@ -4,6 +4,12 @@
  */
 
 export {
+	captureSummaryGenerationOptions,
+	SummaryGenerationController,
+} from "./summaryGeneration.js";
+export type { ISummaryGenerationOptions } from "./summaryGenerationTypes.js";
+
+export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
 	type IRefreshSummaryResult,

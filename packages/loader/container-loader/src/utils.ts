@@ -143,7 +143,7 @@ export function combineAppAndProtocolSummary(
  * to align detached container format with IPendingContainerState
  * @param summary - ISummaryTree
  */
-function convertSummaryToISnapshot(
+export function convertSummaryToISnapshot(
 	summary: ISummaryTree,
 	blobContents = new Map<string, ArrayBuffer>(),
 ): ISnapshot {

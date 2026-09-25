@@ -39,6 +39,19 @@ import type { ConnectionState } from "./connectionState.js";
 import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 
 /**
+ * Loader capability used after a runtime factory detects application seed content.
+ * This is optional so seed factories can detect older loaders and fail safely.
+ * @legacy @alpha
+ */
+export interface SeedLoadContext extends IContainerContext {
+	/**
+	 * Stop offline snapshot tracking and reject pending-state capture for this container.
+	 * The stored seed snapshot cannot describe the materialized runtime's pending state.
+	 */
+	readonly disableOfflineLoad?: (() => void) | undefined;
+}
+
+/**
  * Configuration object for ContainerContext constructor.
  *
  * @remarks
@@ -76,6 +89,7 @@ export interface IContainerContextConfig
 	// fetchOps is an internal-only capability (IContainerContextInternal), not part of the public
 	// IContainerContext contract. Optional: hosts may not provide op reading.
 	readonly fetchOps: IContainerContextInternal["fetchOps"];
+	readonly disableOfflineLoad: () => void;
 }
 
 /**
@@ -147,6 +161,8 @@ export class ContainerContext
 	public readonly snapshotWithContents?: ISnapshot;
 
 	public readonly getConnectionState: () => ConnectionState;
+	public readonly requestWriteConnection: () => void;
+	public readonly disableOfflineLoad: () => void;
 
 	private readonly _getClientId: () => string | undefined;
 	private readonly _getContainerDiagnosticId: () => string | undefined;
@@ -209,6 +225,8 @@ export class ContainerContext
 		}
 
 		this.getConnectionState = config.getConnectionState;
+		this.requestWriteConnection = config.requestWriteConnection;
+		this.disableOfflineLoad = config.disableOfflineLoad;
 		this._getClientId = config.getClientId;
 		this._getContainerDiagnosticId = config.getContainerDiagnosticId;
 		this._getConnected = config.getConnected;
