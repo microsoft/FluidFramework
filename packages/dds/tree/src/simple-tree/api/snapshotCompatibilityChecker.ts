@@ -22,19 +22,16 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Reports the capability of `view`'s schema to view and/or upgrade an existing stored schema (described by `viewWhichCreatedStoredSchema`).
+ * Reports the ability of `view.schema` to view and/or upgrade an existing stored schema
+ * (described by `viewWhichCreatedStoredSchema.schema`).
  *
  * @remarks
- * The "existing" (derived from `viewWhichCreatedStoredSchema`) and "proposed" (derived from `view`) stored schema are generated using the default restrictive staged upgrade policy;
- * staged upgrade policies supplied through alpha configurations are not used.
- * Viewing checks compare `view.schema` with the generated existing stored schema.
- * Upgrade checks compare the generated existing and proposed stored schema.
- * See {@link SchemaCompatibilityStatus} for the compatibility flags.
+ * See {@link SchemaCompatibilityStatus} for details on the compatibility results.
  *
- * Metadata and descriptions do not affect compatibility.
+ * Schema metadata does not affect compatibility.
  * This function does not inspect document content and does not report `canInitialize`.
  *
- * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
+ * @example Checking the ability of the current view schema to view or upgrade an existing stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
  * that adds an optional z field.
  *
@@ -71,8 +68,11 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the "existing" stored schema with the default restrictive staged upgrade policy.
- * @param view - Configuration whose `schema` is used for viewing checks and to generate the "proposed" stored schema with the default restrictive staged upgrade policy.
+ * @param viewWhichCreatedStoredSchema - Configuration whose `schema` was used to generate the existing stored schema.
+ * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
+ * @param view - Configuration with the current view schema.
+ * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ *
  * @returns The {@link SchemaCompatibilityStatus} for these schema (omitting `canInitialize`).
  *
  * @privateRemarks
