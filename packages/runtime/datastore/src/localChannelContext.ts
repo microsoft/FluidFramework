@@ -37,6 +37,7 @@ import {
 	summarizeChannelAsync,
 } from "./channelContext.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import { verifyChannelConfigurationCapability } from "./channelConfiguration.js";
 
 /**
  * Channel context for a locally created channel
@@ -159,6 +160,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			true /* fullTree */,
 			false /* trackState */,
 			telemetryContext,
+			this.runtime,
 		);
 	}
 
@@ -185,6 +187,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
 		if (this.isLoaded) {
 			assert(!!this._channel, 0x192 /* "Channel should be there if loaded!!" */);
+			verifyChannelConfigurationCapability(this._channel, this.runtime);
 			this._channel.connect(this.services.value);
 		}
 		this.globallyVisible = true;

@@ -24,6 +24,7 @@ import {
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
+	ChannelConfigurationRuntime,
 	IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -412,6 +413,17 @@ export class FluidDataStoreRuntime
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
+		for (const key of [
+			"isChannelConfigurationEnabled",
+			"isChannelConfigurationCreationEnabled",
+		] as const) {
+			Object.defineProperty(this, key, {
+				value: (type: string): boolean =>
+					(this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime)[key]?.(
+						type,
+					) === true,
+			});
+		}
 		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(
@@ -1321,6 +1333,8 @@ export class FluidDataStoreRuntime
 			channel,
 			true /* fullTree */,
 			false /* trackState */,
+			undefined,
+			this,
 		);
 
 		// We need to include the channel's GC Data so remote clients can learn of this channel's outbound routes

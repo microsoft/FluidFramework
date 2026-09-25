@@ -272,6 +272,8 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Share validation without a package-level export.
+import { PersistedStringSet } from "./summary/documentSchema.js";
 import {
 	VersionMarkResolver,
 	type IVersionMarkResolver,
@@ -542,6 +544,13 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching: boolean;
+
+	/**
+	 * Stable channel type IDs allowed to create configured channels. Persisted types remain
+	 * readable when omitted. Existing documents request these types through normal schema
+	 * proposals; they may not become active this session. Publication requires the type to be active.
+	 */
+	readonly channelConfigurationTypes?: readonly string[];
 }
 
 /**
@@ -1086,7 +1095,19 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
+			channelConfigurationTypes,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
+		const channelConfigurationProperty = new PersistedStringSet();
+		if (!channelConfigurationProperty.validate(channelConfigurationTypes)) {
+			throw new UsageError("Channel configuration types must be an array of nonempty strings");
+		}
+		const requestedChannelConfigurationTypes = channelConfigurationProperty.or(
+			undefined,
+			channelConfigurationTypes,
+		);
+		if (requestedChannelConfigurationTypes !== undefined && !explicitSchemaControl) {
+			throw new UsageError("Channel configuration requires explicit schema control");
+		}
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {
@@ -1271,17 +1292,46 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		const persistedRuntimeSchema = metadata?.documentSchema?.runtime;
+		const persistedChannelConfigurationTypes = persistedRuntimeSchema?.channelConfiguration;
+		if (!channelConfigurationProperty.validate(persistedChannelConfigurationTypes)) {
+			throw new DataCorruptionError(
+				"Channel configuration types must be an array of nonempty strings",
+				{},
+			);
+		}
+		if (
+			persistedChannelConfigurationTypes !== undefined &&
+			persistedChannelConfigurationTypes.length > 0 &&
+			persistedRuntimeSchema?.explicitSchemaControl !== true
+		) {
+			throw new DataCorruptionError(
+				"Channel configuration requires explicit document schema control",
+				{},
+			);
+		}
+		const rehydratingConfiguredDocument =
+			!existing &&
+			persistedChannelConfigurationTypes !== undefined &&
+			persistedChannelConfigurationTypes.length > 0;
+
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
 			metadata?.documentSchema,
 			{
-				explicitSchemaControl,
+				explicitSchemaControl: explicitSchemaControl || rehydratingConfiguredDocument,
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
 				disallowedVersions: [],
+				channelConfiguration: rehydratingConfiguredDocument
+					? channelConfigurationProperty.or(
+							persistedChannelConfigurationTypes,
+							requestedChannelConfigurationTypes,
+						)
+					: requestedChannelConfigurationTypes,
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1321,6 +1371,9 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
+			...(requestedChannelConfigurationTypes === undefined
+				? {}
+				: { channelConfigurationTypes: requestedChannelConfigurationTypes }),
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1715,6 +1768,18 @@ export class ContainerRuntime
 		recentBatchInfo?: [number, string][],
 	) {
 		super();
+		Object.defineProperties(this, {
+			isChannelConfigurationEnabled: {
+				value: (type: string): boolean =>
+					this.documentsSchemaController.sessionSchema.runtime.channelConfiguration?.includes(
+						type,
+					) === true,
+			},
+			isChannelConfigurationCreationEnabled: {
+				value: (type: string): boolean =>
+					this.runtimeOptions.channelConfigurationTypes?.includes(type) === true,
+			},
+		});
 
 		const {
 			options,
