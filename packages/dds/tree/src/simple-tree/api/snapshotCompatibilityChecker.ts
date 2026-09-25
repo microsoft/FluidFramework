@@ -25,10 +25,10 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * Reports the capability of `view`'s schema to view and/or upgrade an existing stored schema (described by `viewWhichCreatedStoredSchema`).
  *
  * @remarks
- * The "existing" (derived from `viewWhichCreatedStoredSchema`) and "proposed" (derived from `view`) stored schemas are generated using the default restrictive staged upgrade policy;
+ * The "existing" (derived from `viewWhichCreatedStoredSchema`) and "proposed" (derived from `view`) stored schema are generated using the default restrictive staged upgrade policy;
  * staged upgrade policies supplied through alpha configurations are not used.
  * Viewing checks compare `view.schema` with the generated existing stored schema.
- * Upgrade checks compare the generated existing and proposed stored schemas.
+ * Upgrade checks compare the generated existing and proposed stored schema.
  * See {@link SchemaCompatibilityStatus} for the compatibility flags.
  *
  * Metadata and descriptions do not affect compatibility.
@@ -73,7 +73,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  *
  * @param viewWhichCreatedStoredSchema - Configuration whose `schema` is used to generate the "existing" stored schema with the default restrictive staged upgrade policy.
  * @param view - Configuration whose `schema` is used for viewing checks and to generate the "proposed" stored schema with the default restrictive staged upgrade policy.
- * @returns The {@link SchemaCompatibilityStatus} for these schemas (omitting `canInitialize`).
+ * @returns The {@link SchemaCompatibilityStatus} for these schema (omitting `canInitialize`).
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
@@ -456,11 +456,11 @@ export interface SnapshotSchemaCompatibilityOptions {
  * Libraries which export schema for use by others will need to take special care to ensure the stability contract they offer their users aligns which what is validated by this utility.
  *
  * This utility only tests compatibility of the historical snapshots against the current schema; it does not test them against each-other.
- * Generally any historical schemas should have been tested against the ones before them at the time they were current.
+ * Generally any historical schema should have been tested against the ones before them at the time they were current.
  * If for some reason a version of a schema made it into production that was not compatible with a previous version,
  * that can still be represented here (but may require manually generating a snapshot for that version)
  * and this will still allow testing that all historical version can be upgraded to the current one.
- * If a sufficiently incompatible historical schemas were used in production, it may be impossible to make a single schema which can accommodate all of them:
+ * If a sufficiently incompatible historical schema were used in production, it may be impossible to make a single schema which can accommodate all of them:
  * this utility can be used to confirm that is the case, as well as to avoid the problem in the first place by testing schema before each one is deployed.
  *
  * @example Mocha test which validates the current `config` can collaborate with all historical version back to 2.0.0, and load and update any versions older than that.
