@@ -1195,3 +1195,7 @@ The coordinator accepts Stage A's specified performance gates without changing t
 Only plan/report review and commit bookkeeping changes after verification.
 No production default is enabled, and no hard-memory or future-policy guarantee is inferred.
 The next implementation stage is B, but it does not start in this measurement run.
+
+Measurement checkpoint `27ff061eda2` (`perf(rust-service): validate document factory overhead`) commits the reviewed harness repair, regression, measurements, and acceptance record.
+The following documentation-only commit records that identity.
+The work stops at this committed boundary; nothing is merged or pushed.

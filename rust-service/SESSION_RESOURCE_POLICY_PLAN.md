@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: Stage A foundation and specified performance gates accepted after independent evidence review.
+Status: Stage A foundation and specified performance gates accepted; measurement checkpoint committed as `27ff061eda2`.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -268,6 +268,7 @@ The extra allocation-counter dependency exists only in the isolated measurement 
 Fresh Standard review found no actionable findings, independently recomputed all gates, and verified the complete source, binary, and measurement manifests.
 The coordinator verified the unchanged evidence afterward and accepts Stage A's specified performance gates without a threshold exception.
 Only review and commit bookkeeping changed after the reviewed snapshot.
+Commit `27ff061eda2` records the accepted campaign and tested no-reader harness repair; the following documentation-only commit records this stopping-point identity.
 The next implementation stage is B; do not start it in this measurement run.
 When moving to B, choose fixed durable-storage configuration and a minimal advisory observation before adding a policy.
 Check whether current storage-to-sequencer ownership actually leaves an unbounded interval; do not introduce a handoff ledger speculatively.
