@@ -85,4 +85,12 @@ Metadata is immutable public control data; payload decorators do not protect it.
 Close, replacement, and recovery settle a departure before later mutation, while unannounced sessions retain submission-only history.
 See [the membership decision](../../historical/decisions/0014-ordered-session-membership.md) for recovery, compatibility, and security boundaries.
 
+The [`factory`](src/factory.rs) module defines document-scoped session factories and their decorators.
+`SessionFactory` returns the source-allocated identity and a session with concrete availability handles.
+`PassThroughFactory` and `PassThroughSession` add no policy or cleanup ownership.
+The decorator returns existing session futures and streams directly, without additional steady-state allocations.
+Opening may allocate a future; pending-open cancellation remains the source's responsibility.
+Clones retain the source's ownership model, and dropping a wrapper does not promise session closure.
+Direct construction remains an explicit path without factory interception.
+
 Contributor validation commands are in [`DEV.md`](DEV.md).

@@ -28,7 +28,7 @@ The runner rejects missing timestamp schemas, clock discrepancies or sample brac
 Optional `serverBinary` and `generatorBinary` configuration paths select validated executable files from independently built source snapshots.
 `liveCache` controls and checks the experimental server marker.
 
-`checkpoint-no-reader` is a direct `LocalSequencer` fixture with 32 documents, no subscriptions during writes, four generator-equivalent shards, serial writes per document, and exact finite replay after measurement.
+`checkpoint-no-reader` is a local fixture with 32 documents, no subscriptions during writes, four generator-equivalent shards, serial writes per document, and exact finite replay after measurement.
 It offers 1,000 64-byte operations/s for 3 seconds warmup and 10 seconds measurement, with at most 10 seconds to drain.
 The baseline build uses default APIs; the candidate build enables the benchmark-only `checkpoint-live-cache` feature.
 The same source, pacing, acknowledgment timestamps, and replay checks apply to both builds.
@@ -37,6 +37,42 @@ It applies the same aligned CPU interval, 120-second deadline, 250-ms RSS sample
 Candidate no-reader allocation observations report exact `LiveCacheStats` fields, not inferred allocation counts.
 `checkpoint1-pairs.mjs ARTIFACT_DIRECTORY CELL` runs three alternating pairs and stops on a blocking gate; controls require a passed primary summary.
 The cumulative implementation report freezes the comparison source, commands, complete matrix, and unchanged acceptance thresholds.
+
+For factory comparisons, build with `--features checkpoint-live-cache` and select `direct` or `pass-through` using the optional third binary argument or `SEA_SESSION_FACTORY_MODE`.
+Explicit factory modes require the cached build, so both sides use the same 32 cached runtimes.
+The environment variable lets the existing `benchmark-no-reader.mjs` runner select the mode without changing its arguments.
+Both modes instantiate the same generic workload with concrete session types; only opening differs.
+The `ready`, `timed-result`, and `result` protocol, including the `liveCache` marker, is unchanged.
+
+## Local Session Factory Churn
+
+`session-factory memory|buffered-file|durable-file direct|pass-through NEW_DIRECTORY` emits one JSON row for a 320-open warmup and one for a fresh 3,200-open measured sample.
+Each sample retains 32 cached document runtimes and concrete factories, with one unannounced open/close at a time and no live subscriptions.
+`direct` uses `LocalSessionFactory`; `pass-through` uses `PassThroughFactory<LocalSessionFactory<_>>`.
+Mode selection is outside the common generic measurement loop.
+Before timing, each document checks an invalid-reference rejection, a closed-session error, sibling independence, and exact finite replay of one 64-byte application event.
+Those checks add 64 successful opens and closes per sample, reported separately from churn.
+
+Rows report `open_seconds`, `close_seconds`, `drop_seconds`, `churn_seconds` (including identical timing and count bookkeeping), `verification_seconds`, and `shutdown_seconds`; successful/requested open and close counts; `opens_per_document`; verified error, sibling, and replay counts; and exact `cache_before`/`cache_after` ownership fields.
+`allocation_count` is `null`: cache slots and payload bytes are not counts of heap allocations.
+The separate `sea-core` test `close_returns_the_source_future_and_preserves_poll_and_drop_boundaries` checks source-future pointer identity, not total allocations or factory-open allocation cost.
+No allocator instrumentation, dependencies, or unsafe allocator are added.
+Shutdown and resource drops follow each sample; the newly created directory is removed before successful exit.
+The directory must not exist and its parent must exist.
+Use an external deadline; replay, storage guarantees, and these local timings do not establish crash durability or network performance.
+
+From `rust-service/`:
+
+```bash
+cargo test -p sea-benchmarks --bin session-factory --bin checkpoint-no-reader --features checkpoint-live-cache
+cargo build --release -p sea-benchmarks --bin session-factory --bin checkpoint-no-reader --features checkpoint-live-cache
+timeout 180s target/release/session-factory memory direct target/factory-direct-data
+timeout 180s target/release/session-factory memory pass-through target/factory-wrapped-data
+SEA_SESSION_FACTORY_MODE=direct node scripts/benchmark-no-reader.mjs target/release/checkpoint-no-reader memory true target/no-reader-direct
+SEA_SESSION_FACTORY_MODE=pass-through node scripts/benchmark-no-reader.mjs target/release/checkpoint-no-reader memory true target/no-reader-wrapped
+```
+
+Repeat the paired commands with `buffered-file` and `durable-file` for their native storage guarantees.
 
 ## Local Storage Pipeline
 

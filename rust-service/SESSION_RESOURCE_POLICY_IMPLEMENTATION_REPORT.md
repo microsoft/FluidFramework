@@ -836,3 +836,204 @@ The original orchestration version and its stopped summary remain retained.
 The command `node rust-service/scripts/checkpoint1-pairs.mjs "$ARTIFACT" primary --resume` continues the same alternating schedule without discarding or repeating the first side.
 Resume verifies the original child command, server, generator, measurement runner, and alignment hashes before reading an existing successful result.
 No measured binary, timing instrumentation, denominator, workload, or numerical tolerance changes in this clarification.
+
+## Checkpoint 2: Pass-Through Interception (In Progress)
+
+### Authority And Frozen Limits
+
+- On 2026-09-24 the user authorized checkpoint 2 only, starting from `b89ec852722d3373bd38f9780f5676973a33c117`.
+- Worktree: `/workspaces/FluidFramework-session-interception`; branch: `rust-service-session-interception`.
+- Commits are authorized only after the plan's measurement, validation, and independent Standard review gates pass.
+  Checkpoints 3a, 3b, 4, and 5 remain unauthorized.
+- The attached plan snapshot is read-only; this checkout's plan and this cumulative report record execution.
+- Before any measurements, the user approved a maximum median paired CPU-per-delivered-event increase of 5%, each paired p95 increase of `max(10%, 1 ms)`, each paired mean/peak RSS increase of `max(10%, 16 MiB)`, a maximum median open/close cost increase of 10%, and no additional steady-state per-operation allocations.
+- Preserve the prior 32-document, one-writer/one-observer, 1,000-operation/s, 64-byte primary workload, alternating three-pair order, exact drains, 3-second warmup and 10-second measurement windows, no-reader and 8,192-byte controls, and existing duration/memory/disk guards.
+  Cache selection must be explicitly on for both factory-comparison sides.
+  Primary failures block later acceptance comparisons; no implicit tolerance exceptions carry forward from checkpoint 1.
+
+### Probe And Design Status
+
+The [proposed decision](historical/decisions/0028-session-factory-ownership-probe.md) records the factory boundary, provisional and constructed ownership, clone responsibility, native/WASM abandoned-close polling owners, failure/shutdown outcomes, and publication investigation.
+The user declined synchronous threshold enforcement inside cache/sequencer locks and requested investigation of publication restructuring.
+The current publication path cannot justify a finite outside-lock scheduling-based overshoot.
+A candidate one-obligation helping protocol is recorded, but its ordering and cancellation premises remain unproved.
+This is a checkpoint acceptance blocker, not permission to implement lag policy or a second settlement state machine.
+
+The draft core factory and local adapter compile on native and WASM without erasing availability handles.
+The native registry retains a pass-through document factory before opening a membership; interception is opt-in and is separate from live-cache activation.
+Pass-through forwards source futures and streams directly and introduces no cleanup task, reservation, receipt, rejection policy, or threshold.
+The work remains uncommitted and the factory shape is not yet accepted.
+
+The user subsequently authorized a preparatory publication design and probe, with a mandatory new authorization before any sequencing behavior change.
+The standalone `publication_shape_probe` integration-test target models the helpable one-obligation protocol without changing production publication.
+It requires refreshing stale cursor observations before clearing maintenance; advancing past a small item may still leave an oversized unread item above the byte threshold.
+The proposed decision identifies the remaining real lifecycle-gate, retained-intent, idle-maintenance, and settlement integration obligations.
+The factory checkpoint remains blocked on that integration design and its separately authorized evidence, not on a failure of the factory type probe.
+
+### Initial Focused Evidence
+
+- The editor test runner reported no discoverable Rust tests; validation used Cargo instead.
+- `cargo test -p sea-core -p sea-sequencer factory -- --nocapture`: passed four core forwarding/ownership tests and two local-factory tests.
+- `cargo check -p sea-core --tests --target wasm32-unknown-unknown`: passed, including the local-only `Rc` fixture and dynamic factory/session shape.
+- `cargo check -p sea-sequencer --lib --target wasm32-unknown-unknown`: passed.
+- `cargo test -p sea-webtransport-server --all-features --bin sea-webtransport-server session_interception`: passed the strict opt-in configuration test.
+- No performance acceptance, full validation, independent review, or checkpoint completion is claimed by these focused checks.
+
+### Construction-Path Inventory
+
+| Surface | Current path and checkpoint-2 status |
+| --- | --- |
+| Built-in native host, both transports | The document registry can retain an optional pass-through factory at document recovery; every advertised intercepted open goes through that factory before sequencer allocation. Default and generic storage hosts remain direct. |
+| Direct local Rust construction | `LocalSequencer::open_session` stays unmanaged. `LocalSessionFactory` plus `PassThroughService` is the explicit opt-in alternative; local memory tests exercise all facets. |
+| WASM memory bindings | `SeaMemoryService::open` in `crates/sea-wasm/src/bindings.rs` recovers/retains sequencers and directly calls `open_session`. It is not advertised as intercepted; the factory shape is cross-compiled separately. |
+| WASM remote and generated TypeScript consumers | Binding adapters wrap an already opened remote session. Remote membership allocation uses the selected server path. TypeScript `wrapSession` and the driver-owned `SeaSessionFactory` do not become Rust policy boundaries. No generated API changes are made. |
+| Compression and encryption | Generic decorators wrap caller-supplied sessions; their concrete handle/error mappings remain unchanged. They can wrap a pass-through result without opening another membership. Their local tests still construct direct sources. |
+| Existing benchmarks and example | The main local benchmark, `storage-pipeline`, `checkpoint-no-reader`, and `sea-counter` directly open sequencers. No benchmark result yet measures pass-through; local churn and paired performance integration remain pending. |
+| Conformance, composition, and failure tests | Existing fixtures retain direct construction to protect the unmanaged path. New factory tests cover opt-in forwarding; production publication and failure injection are unchanged. |
+
+### Draft Validation And Pause Boundary
+
+The final draft validation log is retained at `/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/checkpoint2-probe-validation.log`.
+It records the pinned toolchain, starting revision, command output, and successful completion of:
+
+- workspace formatting;
+- strict all-target/all-feature Clippy for `sea-core`, `sea-sequencer`, and `sea-webtransport-server`;
+- warnings-as-errors rustdoc for those crates;
+- complete all-target/all-feature suites for those crates: 150 passing tests and one intentionally ignored browser-owned fixture;
+- applicable doctest commands, which currently contain zero examples;
+- WASM compilation of the core factory tests and the standalone publication model; and
+- the documentation checker: 29 roots, 56 documents, and 346 local links.
+
+The native registry test verifies opt-in/off selection, retained document identity, no allocation during factory construction, consecutive allocated identities, dispatch, close, and sibling independence.
+The factory tests establish future/stream allocation identity and capability preservation; they are not a replacement for the still-pending allocation and churn measurements.
+No native production sequencing, cache publication, or settlement implementation was modified.
+The original `rust-service` worktree remains clean.
+
+This is a validated draft and design probe, not a completed checkpoint.
+Performance comparisons, the complete workspace/generated-consumer/browser gates, repository policy, and checkpoint acceptance remain pending.
+Further changes to sequencing behavior require the user's next explicit authorization.
+No commit, merge, or push has been made.
+
+### Initial Independent Draft Review And Repair
+
+The fresh `checkpoint2-draft-review` reviewer inspected the complete fixed-base diff and all untracked additions at Standard depth, including controlling baseline/current code and the validation log.
+The frozen manifest SHA-256 was `3123e2b7a3787eb03e0eff6789362612c466caf696d40f3590d4859d0b8c3db9`.
+All 16 manifest entries and the tracked/untracked inventories were verified unchanged during review.
+The reviewer requested one draft repair and independently retained the known feasibility, measurement, and full-validation blockers.
+
+The confirmed medium-severity finding concerned only the design model: `try_lock().is_ok()` detects whether any thread holds a lock, not whether the selector's caller retained a guard.
+A legitimate competing cache operation therefore made the model panic before policy selection.
+The requested deterministic reproduction failed against the reviewed code with `cache lock held by selector caller`.
+The complete failure is retained in `checkpoint2-review-reproduction.log` beside the validation log.
+
+Repair cycle 1 removes global lock-availability assertions from the concurrent helper.
+A separate single-threaded test verifies guard release, while the regression permits selection during another thread's cache-lock ownership and waits for that owner to release before reclamation.
+The eight model tests pass after repair.
+No production behavior changed.
+The initial log's silent command invocations were a review-evidence limitation; repair validation records the actual command lines.
+Fresh complete-diff review completed after repair validation.
+
+### Repaired Draft Review And Current Outcome
+
+The fresh `checkpoint2-repair-review` reviewer inspected the complete fixed-base draft at Standard depth, all six untracked additions, controlling source boundaries, the failed reproduction, and the command-attributed repair log.
+The reviewed manifest SHA-256 was `73f81ee0a13d687f2c5711ad942e178242092d789393d8700c6df6064bd5cac4`; the complete tracked diff SHA-256 was `7864fe31c753ede733e593546ca737bf5c53f24ecdb471f551019b3a2ed9f194`.
+All 16 source hashes and the scope inventory matched at the start and end of review and during coordinator verification afterward.
+Only this report's review bookkeeping changed after that verification.
+
+The review confirmed the model repair and returned **No actionable findings** for draft quality.
+It separately classified checkpoint acceptance as **blocked**, without waiving any missing evidence.
+Repair cycle 1 was sufficient; the second allowed repair cycle was not used.
+
+`checkpoint2-repair-validation.log`, alongside the earlier retained logs, records 152 passing native tests, one browser-owned ignored fixture, strict affected-crate checks, zero-example doctest commands, WASM compilation, documentation links, and whitespace validation.
+Its SHA-256 is `d1153fe88bcd3a8448524ed3fc1618511b884f595192932b0f8b95076871acac`.
+These are implementer-run checks directly inspected by the reviewer, not independent test reruns.
+
+The authorized preparatory design/model is complete as a probe.
+Execution is paused before changing real sequencing behavior, as requested.
+The new worktree retains the uncommitted factory/host draft, proposed ownership decision, executable model, and evidence record.
+Checkpoint 2 is not complete: production publication feasibility, measurement integration and acceptance, and full cross-stack/repository gates remain outstanding.
+There is no checkpoint commit, merge, or push.
+
+## 2026-09-26: Soft-Budget Plan Reset And Factory Salvage
+
+This section supersedes the previous draft's active prerequisites, not its historical evidence.
+The user authorized replacing the strict-bound plan with storage-owned inbound pressure, a soft outgoing queue/cache budget, and document-wide policy applied through session decorators.
+The user requested a clean committed stopping point before starting the next policy layer.
+[The revised plan](SESSION_RESOURCE_POLICY_PLAN.md) and [Decision 0029](historical/decisions/0029-document-soft-budget-policy.md) now control the work.
+
+The original draft is recoverable from `files/soft-budget-reset/original-draft.diff` and `original-additions.tar.gz` in session `/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8`.
+The standalone publication model was removed, and Decision 0028 was marked historical.
+No production sequencing, storage admission, settlement, or cache-publication code was restructured.
+The redundant generic service-factory hierarchy was removed.
+The retained document factory supports the local sequencer, native/browser network clients, and a pass-through decorator, preserving concrete handles and error types.
+Each network-factory open connects independently to its fixed document.
+The host retains an opt-in document factory; the default remains direct.
+
+The user explicitly approved committing a functionally validated, independently reviewed foundation with the inherited performance campaign pending.
+This is an exception to timing, not a change to thresholds or a performance pass.
+Future/stream identity assertions do not measure total allocations.
+The new bounded local churn and explicit no-reader modes prepare later measurements; their presence is not acceptance evidence.
+Stage A performance acceptance remains open.
+No pressure signals, policy implementation, or autonomous cleanup guarantee is included.
+
+### Validation Attempts
+
+- Focused core/local factory tests passed after pruning the service-factory hierarchy.
+- The first network regression compilation failed because `Sha256Digest` is not `Copy`; the adapter and test now clone it where reused.
+- Scoped repository policy initially failed because this new worktree lacked dependencies.
+  `pnpm install --frozen-lockfile --ignore-scripts` restored them, after which `pnpm policy-check --path rust-service` passed.
+  The installation and policy logs are retained in `files/soft-budget-reset/`.
+- The first extended run built generated WASM/TypeScript consumers but failed the new network regression.
+  The test expected an unprefixed message; the existing server forwards `SessionError::Rejected`'s full display text.
+  The assertion now checks both `Rejected` and `session rejected operation: invalid session reference`.
+  No production error mapping changed.
+  Factoring the facet checks into a helper also resolved strict Clippy's test-length failure without adding an allowance.
+  The focused test and affected Clippy passed; see `network-repair.log`.
+- Workspace format, strict all-target/all-feature Clippy, warnings-as-errors rustdoc, all-target build, and core WASM test compilation passed in `final-validation.log`.
+  An extra standalone WebTransport WASM check initially omitted the existing build script's required `--cfg=web_sys_unstable_apis`; it failed to import the experimental browser types.
+  The corrected check uses that same configuration, not a source workaround.
+- The corrected WebTransport WASM check passed.
+  The next extended run passed native tests, generated/package checks, and the real Chromium transport matrix, but failed the integration Mocha task.
+  Its browser-lifecycle case timed out, and its Tinylicious correctness case lacked the separate Routerlicious dependencies.
+  The unchanged lifecycle suite passed all ten tests in isolation.
+  `pnpm install --frozen-lockfile --ignore-scripts` in `server/routerlicious` restored the missing dependencies without changing manifests or lockfiles.
+  No timeout, assertion, or unrelated production source was weakened.
+- `SEA_EXPERIMENTAL_SESSION_FACTORY=true CARGO_BUILD_JOBS=4 bash test.sh --extended` then passed in full, including 380 native tests across 24 targets and one browser-owned ignored fixture.
+  Generated TypeScript/WASM consumer builds, package tests, integration/benchmark correctness cases, and the real Chromium transport matrix passed.
+  The host opt-in was enabled for the inherited server environment.
+  See `extended-restored.log`; earlier failures remain in `extended.log` and `final-extended.log`.
+- The four affected library doctest commands passed with zero examples.
+  The feature-enabled `session-factory` binary completed six debug correctness smoke runs: memory, buffered-file, and durable-file, each direct and pass-through.
+  These unpaired debug runs are not performance acceptance.
+  Commands are `cargo build -p sea-benchmarks --bin session-factory --features checkpoint-live-cache`, then `target/debug/session-factory BACKEND MODE NEW_DIRECTORY`, each under a 120-second timeout.
+  See `fixture-build.log` and `fixture-smoke.log`.
+- Final scoped policy passed in `policy-restored.log`.
+  The documentation graph passed with 29 roots, 55 documents, and 351 local links before final review bookkeeping.
+  The original worktree remains clean.
+
+### Independent Review
+
+The complete reset/foundation change is reviewed against `b89ec852722d3373bd38f9780f5676973a33c117`, not merely against the earlier draft.
+The performance deferral is explicitly authorized; it is not an unreported gap or a passing measurement.
+The first reviewer (`a389f075-a52b-4d98-8072-fb1aa5497d9f`) returned no significant issues but omitted the required snapshot, coverage, and evidence report.
+That result was not accepted as a completed gate.
+The synchronous agent could not accept follow-up messages, so a fresh evidence-completion reviewer inspected the entire frozen scope.
+
+Reviewer `foundation-gate-review` (`913f0262-6a79-4649-a59b-59e1cd2b9595`) completed Standard review of all 22 changed files and their controlling boundaries, with no exclusions.
+Its disposition was **No actionable findings**, with no requested reproductions.
+It verified all source hashes at the start and end and reproduced the supplied staged diff.
+The coordinator independently verified the same snapshot afterward:
+
+- fixed base and pre-commit HEAD: `b89ec852722d3373bd38f9780f5676973a33c117`;
+- full diff SHA-256: `0e86770cb41ef917fe70fc3a85cbe69ec191da1842ac31d65b14c15940d49ca4`;
+- source-manifest SHA-256: `d7e64c1323ccefd420493bd1f6e8b9162311493e3248439c1da236564b93311e`.
+
+The reviewer directly inspected the validation/failure logs listed above and traced core platform bounds and forwarding, local allocation/closure, client handshakes, incarnation-specific server cleanup, both host listeners, and benchmark replay/count boundaries.
+No test or build was run by the reviewer.
+The browser network factory was inspected and cross-compiled but has no new factory-specific browser runtime regression; the real transport matrix and native factory regression are separate evidence.
+The review retains the missing performance/allocation acceptance explicitly.
+No implementation repair was required after this complete review.
+
+The coordinator accepts the foundation for the authorized stopping-point commit under the explicit performance-timing exception.
+Only report/plan gate bookkeeping changes after snapshot verification.
+No resource-policy stage starts, and no merge or push is authorized.

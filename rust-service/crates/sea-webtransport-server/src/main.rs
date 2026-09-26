@@ -53,11 +53,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(env::VarError::NotPresent) => configured_live_cache(None)?,
         Err(error) => return Err(error.into()),
     };
-    let host = Arc::new(BuiltInSeaHost::new_with_live_cache(
-        data,
-        storage_mode,
-        live_cache,
-    ));
+    let session_factory = match env::var("SEA_EXPERIMENTAL_SESSION_FACTORY") {
+        Ok(value) => configured_session_factory(Some(&value))?,
+        Err(env::VarError::NotPresent) => configured_session_factory(None)?,
+        Err(error) => return Err(error.into()),
+    };
+    let host = Arc::new(if session_factory {
+        BuiltInSeaHost::new_with_pass_through(data, storage_mode, live_cache)
+    } else {
+        BuiltInSeaHost::new_with_live_cache(data, storage_mode, live_cache)
+    });
     let server = WebTransportServer::bind(bind, identity, host.clone(), transport_config.clone())?;
     let address = server.local_addr()?;
     let liveness = server.liveness_policy();
@@ -76,6 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if live_cache {
         println!("EXPERIMENTAL_LIVE_CACHE=true");
     }
+    println!("EXPERIMENTAL_SESSION_FACTORY={session_factory}");
     println!("PROTOCOL=sea");
     println!("MAX_CONNECTIONS={}", transport_config.max_connections);
     println!(
@@ -233,8 +239,26 @@ fn configured_live_cache(value: Option<&str>) -> Result<bool, &'static str> {
     }
 }
 
+/// Keeps interception opt-in and rejects malformed experimental settings.
+fn configured_session_factory(value: Option<&str>) -> Result<bool, &'static str> {
+    match value {
+        None | Some("false") => Ok(false),
+        Some("true") => Ok(true),
+        Some(_) => Err("invalid SEA_EXPERIMENTAL_SESSION_FACTORY; expected true or false"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn session_interception_is_opt_in_with_strict_values() {
+        assert_eq!(super::configured_session_factory(None), Ok(false));
+        assert_eq!(super::configured_session_factory(Some("false")), Ok(false));
+        assert_eq!(super::configured_session_factory(Some("true")), Ok(true));
+        for invalid in ["", "1", "TRUE", " true", "yes"] {
+            assert!(super::configured_session_factory(Some(invalid)).is_err());
+        }
+    }
     #[test]
     fn activation_is_default_on_with_explicit_off_and_strict_values() {
         assert_eq!(super::configured_live_cache(None), Ok(true));

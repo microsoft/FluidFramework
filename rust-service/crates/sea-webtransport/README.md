@@ -94,6 +94,16 @@ Read that load's returned events to drain the opening stream.
 Other loads and direct `read` calls use separate content streams; they do not drain the opening stream.
 Private-provenance handles confirm availability within the resolving client; they are never wire authority.
 Event-position resolution currently scans retained history, and tree resolution fetches the corresponding immutable content.
+
+`WebTransportSessionFactory` implements `sea_core::factory::SessionFactory` for one existing `DocumentId`.
+Each `open_session(reference)` makes a fresh connection and returns `OpenedSession { id, session }` with the server-assigned identity and the existing concrete client.
+It always requests `ArchiveIntent::Open`; create a document separately and retain its returned identity before constructing this factory.
+Native construction takes the URL, certificate digest, `TransportConfig`, and document identity.
+Browser construction takes the URL, 32-byte certificate pin, protocol limits, and document identity, and uses a non-`Send` open future.
+Both paths preserve the existing client errors, handle types, and pending-open cancellation behavior without retrying or retaining an open task.
+Cloning the factory copies settings, not a connection; dropping it does not close returned sessions.
+Use `sea_core::factory::PassThroughFactory::new(source)` to decorate this boundary without changing session behavior.
+
 Disconnect and reconnect are explicit.
 The generic client's disconnect attempt abandons logical authority and disables future request admission even if physical disconnect fails.
 The physical error is propagated; failure does not restore the old session.
@@ -216,9 +226,11 @@ Run from `rust-service/`:
 
 ```bash
 cargo test -p sea-webtransport --all-targets --all-features
+cargo test -p sea-integration-tests --test session_composition network_factory_opens_independent_sessions_and_forwards_facets
 cargo clippy -p sea-webtransport --all-targets --all-features -- -D warnings
 RUSTDOCFLAGS='-D warnings -D missing_docs' cargo doc -p sea-webtransport --no-deps
 ```
 
 The end-to-end browser setup is documented in the [browser harness](../../tests/webtransport-browser/README.md).
 Tests cover framing, queue policy, native reliable/datagram signals, generated bindings, oversized fallback, mixed transports, and physical release.
+The network factory regression uses a real listener and built-in host to check fixed document identity, independent sessions, reference and error forwarding, all session facets, and client-scoped handles through pass-through decoration.

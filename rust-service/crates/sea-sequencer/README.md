@@ -19,6 +19,13 @@ The returned session exposes its identity through `session_id()`.
 Sessions are independent; opening another session does not close an earlier one.
 Sea stores session incarnations, not author identities; applications own attribution in payloads or public membership metadata.
 
+`factory::LocalSessionFactory` exposes this allocation boundary through `sea_core::factory::SessionFactory`.
+Constructing or cloning it does not allocate a membership.
+`PassThroughFactory::new(LocalSessionFactory::new(sequencer.clone()))` opts into the experimental pass-through decorator while preserving concrete availability handles and all session facets.
+Direct construction remains available.
+Neither path promises automatic cleanup when a session handle or pending operation is dropped.
+The document-policy direction is recorded in [Decision 0029](../../historical/decisions/0029-document-soft-budget-policy.md); pressure and lifecycle policy are not implemented by pass-through.
+
 All sessions share one view and mutation order:
 
 ```mermaid

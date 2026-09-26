@@ -1,4 +1,4 @@
-//! Bounded zero-subscription fixture for the checkpoint-1 matched no-reader controls.
+//! Bounded zero-subscription fixture for matched cache and concrete factory controls.
 
 use std::{
     io::{BufRead as _, Write as _},
@@ -12,10 +12,16 @@ use futures_util::StreamExt as _;
 use sea_benchmarks::measurement::MeasurementClock;
 use sea_core::{
     Event, EventPosition, EventSubmission, MonitoredStreamItem, SeaAuthorSession, SessionId,
-    archive::SessionEventKind, session::SeaArchive, storage::SeaStorage,
+    archive::SessionEventKind,
+    factory::{PassThroughFactory, SessionFactory},
+    session::SeaArchive,
+    storage::SeaStorage,
 };
 use sea_memory::MemoryStorage;
-use sea_sequencer::session::LocalSequencer;
+use sea_sequencer::{
+    factory::LocalSessionFactory,
+    session::{LocalSequencer, SessionError},
+};
 use serde_json::{Value, json};
 
 /// Per-document acknowledgment telemetry, with no subscription or writer echo.
@@ -86,7 +92,7 @@ fn exchange(message: &Value) -> Result<(), String> {
     Ok(())
 }
 
-/// Keeps the identical fixture source compatible with approved baseline APIs.
+/// Retains the historical cache toggle; explicit factory comparisons require the cached build.
 async fn recover<Storage: SeaStorage + 'static>(
     view: sea_core::storage::SeaView<Storage::Blobs, Storage::Events, Storage::Snapshots>,
 ) -> Result<Arc<LocalSequencer<Storage>>, String> {
@@ -102,9 +108,18 @@ async fn recover<Storage: SeaStorage + 'static>(
     clippy::too_many_lines,
     reason = "Keeps the timed phase separate from finite replay"
 )]
-async fn exercise<Storage: SeaStorage + 'static>(storage: Storage) -> Result<(), String> {
+async fn exercise<Storage, Source>(
+    storage: Storage,
+    make_source: impl Fn(Arc<LocalSequencer<Storage>>) -> Source,
+) -> Result<(), String>
+where
+    Storage: SeaStorage + 'static,
+    Source: SessionFactory<Error = SessionError<Storage::Error>>,
+    Source::Session: 'static,
+{
     let clock = MeasurementClock::new();
     let mut sessions = Vec::new();
+    let mut identities = Vec::new();
     let mut sequencers = Vec::new();
     let mut states = Vec::new();
     let mut senders = Vec::new();
@@ -112,7 +127,12 @@ async fn exercise<Storage: SeaStorage + 'static>(storage: Storage) -> Result<(),
     for _ in 0..32 {
         let (_, view) = storage.create_view().await.map_err(display)?;
         let sequencer = recover::<Storage>(view).await?;
-        let session = Arc::new(sequencer.open_session(None).await.map_err(display)?);
+        let opened = make_source(sequencer.clone())
+            .open_session(None)
+            .await
+            .map_err(display)?;
+        identities.push(opened.id);
+        let session = Arc::new(opened.session);
         let state = Arc::new(Mutex::new(State::default()));
         let (sender, mut receiver) =
             tokio::sync::mpsc::channel::<(usize, Instant, bool, Instant)>(8192);
@@ -266,8 +286,13 @@ async fn exercise<Storage: SeaStorage + 'static>(storage: Storage) -> Result<(),
     let allocation: Vec<Value> = Vec::new();
     exchange(&json!({"type":"timed-result","workers":workers,"cacheAllocation":allocation}))?;
     let mut replayed = 0;
-    for ((session, sequencer), receipts) in sessions.iter().zip(&sequencers).zip(&receipts) {
-        replayed += verify_replay(session.as_ref(), session.session_id(), receipts).await?;
+    for (((session, sequencer), receipts), identity) in sessions
+        .iter()
+        .zip(&sequencers)
+        .zip(&receipts)
+        .zip(&identities)
+    {
+        replayed += verify_replay(session.as_ref(), identity, receipts).await?;
         session.close().await.map_err(display)?;
         sequencer.shutdown().await.map_err(display)?;
     }
@@ -284,24 +309,62 @@ fn display(error: impl std::fmt::Display) -> String {
     error.to_string()
 }
 
-/// Pins the direct fixture to eight execution workers; the caller controls CPU affinity.
+/// Chooses concrete factory and session types before entering the common paced workload.
+async fn select<Storage: SeaStorage + 'static>(storage: Storage, mode: &str) -> Result<(), String> {
+    match mode {
+        "direct" => exercise(storage, LocalSessionFactory::new).await,
+        "pass-through" => {
+            exercise(storage, |sequencer| {
+                PassThroughFactory::new(LocalSessionFactory::new(sequencer))
+            })
+            .await
+        }
+        _ => Err("unknown factory mode".into()),
+    }
+}
+
+/// Pins the fixture to eight execution workers; the caller controls CPU affinity.
 #[tokio::main(flavor = "multi_thread", worker_threads = 8)]
 async fn main() -> Result<(), String> {
     let arguments: Vec<_> = std::env::args().skip(1).collect();
-    let [backend, directory] = arguments.as_slice() else {
-        return Err(
-            "usage: checkpoint-no-reader memory|buffered-file|durable-file NEW_DIRECTORY".into(),
-        );
+    let (backend, directory, mode) = match arguments.as_slice() {
+        [backend, directory] => (
+            backend,
+            directory,
+            std::env::var("SEA_SESSION_FACTORY_MODE").ok(),
+        ),
+        [backend, directory, mode] => (backend, directory, Some(mode.clone())),
+        _ => {
+            return Err(
+                "usage: checkpoint-no-reader memory|buffered-file|durable-file NEW_DIRECTORY [direct|pass-through]"
+                    .into(),
+            );
+        }
     };
+    if mode.is_some() && !cfg!(feature = "checkpoint-live-cache") {
+        return Err("explicit factory comparisons require --features checkpoint-live-cache".into());
+    }
+    let mode = mode.as_deref().unwrap_or("direct");
+    if !matches!(mode, "direct" | "pass-through") {
+        return Err("unknown factory mode".into());
+    }
     let path = Path::new(directory);
     std::fs::create_dir(path).map_err(display)?;
     match backend.as_str() {
-        "memory" => exercise(MemoryStorage::new()).await,
+        "memory" => select(MemoryStorage::new(), mode).await,
         "buffered-file" => {
-            exercise(sea_file::buffered::FileStorage::open(path).map_err(display)?).await
+            select(
+                sea_file::buffered::FileStorage::open(path).map_err(display)?,
+                mode,
+            )
+            .await
         }
         "durable-file" => {
-            exercise(sea_file::durable::DurableStorage::open(path).map_err(display)?).await
+            select(
+                sea_file::durable::DurableStorage::open(path).map_err(display)?,
+                mode,
+            )
+            .await
         }
         _ => Err("unknown backend".into()),
     }

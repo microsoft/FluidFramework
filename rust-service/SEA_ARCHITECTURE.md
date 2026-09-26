@@ -90,6 +90,13 @@ Close and replacement append departures; recovery appends departures for outstan
 These generic joined/left records share the application event order; Fluid identity and quorum interpretation remain in the driver.
 The server owns document runtime management, including opening and sharing sequencers.
 
+The experimental [`sea-core::factory`](crates/sea-core/src/factory.rs) boundary composes a document factory and a complete session decorator before local session allocation.
+Its pass-through implementation preserves concrete availability handles and delegates cancellation and closure to the source without adding a lifecycle owner.
+The native host can opt in for both listeners; direct Rust construction and the local generated WASM memory service remain explicit direct paths.
+The native/browser [`WebTransportSessionFactory`](crates/sea-webtransport/README.md) opens independent connections to one fixed document through the same contract.
+Session creation is separate from network stream admission and incarnation binding.
+See the [soft-budget policy decision](historical/decisions/0029-document-soft-budget-policy.md) for the proposed resource-policy direction; pass-through does not implement it.
+
 Snapshot participants may observe only (`ReadOnly`), let Sea select a publisher (`SeaSelected`), or use application-owned election (`ClientSelected`).
 Client-selected publishers suppress Sea selection.
 Selection grants publication authority; it does not schedule snapshot generation.

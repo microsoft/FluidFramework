@@ -16,6 +16,7 @@ cargo run -p sea-webtransport-server -- \
 | `SEA_STORAGE_MODE` | `memory`, `buffered-file`, `durable-file` | `durable-file` |
 | `SEA_MAX_CONNECTIONS` | Integer from 1 through 4096 | 16 per listener |
 | `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `true` |
+| `SEA_EXPERIMENTAL_SESSION_FACTORY` | Exactly `true` or `false` | `false` |
 
 Invalid connection limits fail startup; `MAX_CONNECTIONS` reports the effective value.
 Limits apply independently to QUIC and WebSocket and do not bound total memory or guarantee throughput.
@@ -29,6 +30,14 @@ This experiment has unbounded stalled-reader retention and is not a production r
 Default-on is a controlled-use rollout accepting that risk, not merely a fixed memory overhead.
 Transport timeouts do not establish a cache-retention bound for every reader path.
 Invalid activation values fail startup rather than silently selecting a default.
+
+`SEA_EXPERIMENTAL_SESSION_FACTORY=true` selects pass-through session factories and decoration for both listeners.
+The process reports the effective choice as `EXPERIMENTAL_SESSION_FACTORY`.
+`BuiltInSeaHost::new_with_pass_through` selects the same experimental path for embedded hosts.
+This boundary adds no admission policy, automatic closure, delivery tracking, or resource guarantee.
+It retains the existing connection-incarnation cleanup and error semantics.
+Live-cache activation remains independent, so comparisons must explicitly enable caching on both direct and pass-through paths.
+Existing constructors and generic storage hosts remain direct.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
 Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.

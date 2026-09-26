@@ -37,17 +37,20 @@ use sea_compression::CompressionSession;
 use sea_core::{
     BlobDirectory, BlobTreeId, ClassifiedError, ErrorKind, Event, EventPosition, EventSubmission,
     MonitoredStreamItem, MonitoredStreamStatus, SeaArchive, SeaAuthorSession, SeaSession,
-    SessionCommittedEvent, SnapshotParticipation,
-    storage::{LoadStart, SeaStorage, Snapshot, StorageHandle},
+    SeaSnapshotCoordinator, SessionCommittedEvent, SnapshotParticipation,
+    factory::{OpenedSession, PassThroughFactory, PassThroughSession, SessionFactory},
+    storage::{DocumentId, LoadStart, SeaStorage, Snapshot, StorageHandle},
 };
 use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProvider};
 use sea_memory::MemoryStorage;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
-use sea_webtransport::{NativeSeaClient, NativeSessionOpen, protocol};
+use sea_webtransport::{
+    NativeSeaClient, NativeSessionOpen, SeaClientError, WebTransportSessionFactory, protocol,
+};
 use sea_webtransport_server::{
-    LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
-    ShutdownHandle, ShutdownMode, ShutdownOutcome, TransportConfig, WebTransportError,
-    WebTransportServer,
+    BuiltInSeaHost, LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost,
+    SessionDispatcher, ShutdownHandle, ShutdownMode, ShutdownOutcome, TransportConfig,
+    WebTransportError, WebTransportServer,
 };
 use tokio::{task::JoinHandle, time::timeout};
 use wtransport::Identity;
@@ -361,6 +364,173 @@ impl SeaConnectionService for TestHost {
     ) -> Result<SeaResponseStream, protocol::Response> {
         self.dispatcher.content_request(request).await
     }
+}
+
+#[tokio::test]
+async fn network_factory_opens_independent_sessions_and_forwards_facets() {
+    let storage = MemoryStorage::new();
+    let (document, view) = storage.create_view().await.unwrap();
+    drop(view);
+    let host = Arc::new(BuiltInSeaHost::with_storage(storage));
+    let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
+    let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+    let server = WebTransportServer::bind(
+        "127.0.0.1:0".parse().unwrap(),
+        identity,
+        host.clone(),
+        TransportConfig::default(),
+    )
+    .unwrap();
+    let url = format!("https://{}/sea", server.local_addr().unwrap());
+    let mut endpoint = Endpoint {
+        shutdown: server.shutdown_handle(),
+        task: tokio::spawn(server.serve_until_shutdown()),
+    };
+    let result = AssertUnwindSafe(timeout(Duration::from_secs(30), async {
+        let missing = PassThroughFactory::new(WebTransportSessionFactory::new(
+            url.clone(),
+            certificate_hash.clone(),
+            sea_webtransport::TransportConfig::default(),
+            DocumentId::from_bytes(Bytes::from_static(b"missing-factory-document")),
+        ));
+        let Err(error) = missing.open_session(None).await else {
+            panic!("the factory must open an existing document, not create one");
+        };
+        assert!(matches!(
+            error,
+            SeaClientError::Service(protocol::ErrorKind::Rejected, message)
+                if message == "document does not exist"
+        ));
+
+        let source = WebTransportSessionFactory::new(
+            url,
+            certificate_hash,
+            sea_webtransport::TransportConfig::default(),
+            document.clone(),
+        );
+        let factory = PassThroughFactory::new(source.clone());
+        let first = factory.open_session(None).await.unwrap();
+        let trace = write_trace(&first.session).await;
+        let Err(error) = factory
+            .open_session(Some(EventPosition::new(u64::MAX)))
+            .await
+        else {
+            panic!("an invalid opening reference must reach the server");
+        };
+        assert!(
+            matches!(
+                &error,
+                SeaClientError::Service(protocol::ErrorKind::Rejected, message)
+                    if message == "session rejected operation: invalid session reference"
+            ),
+            "unexpected opening failure: {error:?}"
+        );
+        let second = source.open_session(Some(trace.first)).await.unwrap();
+        assert_ne!(first.id, second.id);
+        assert_eq!(&second.id, second.session.session_id());
+        assert_eq!(second.session.document(), &document);
+        drop((factory, source));
+
+        verify_network_factory_facets(&first, &second, &trace).await;
+    }))
+    .catch_unwind()
+    .await;
+    endpoint
+        .shutdown
+        .shutdown(ShutdownMode::Drain {
+            timeout: Duration::from_secs(2),
+        })
+        .unwrap();
+    timeout(Duration::from_secs(3), &mut endpoint.task)
+        .await
+        .expect("factory server cleanup timed out")
+        .expect("factory server task panicked")
+        .expect("factory server failed");
+    host.shutdown().await.unwrap();
+    match result {
+        Ok(Ok(())) => {}
+        Ok(Err(_)) => panic!("network factory scenario timed out"),
+        Err(error) => std::panic::resume_unwind(error),
+    }
+}
+
+/// Checks shared history and concrete handles without sharing client provenance or close authority.
+async fn verify_network_factory_facets(
+    first: &OpenedSession<PassThroughSession<NativeSeaClient>>,
+    second: &OpenedSession<NativeSeaClient>,
+    trace: &Trace,
+) {
+    let mut loaded = second
+        .session
+        .load(LoadStart::ReplayAtLeastAllAfter(trace.first))
+        .await
+        .unwrap();
+    assert_eq!(
+        next_event(&mut loaded.events).await.committed.position,
+        trace.second
+    );
+    drop(loaded);
+    let snapshot = first
+        .session
+        .get_snapshot(LoadStart::LatestSnapshot)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(snapshot.at_event.id(), trace.first);
+    assert_eq!(
+        second
+            .session
+            .get_snapshot(LoadStart::LatestSnapshot)
+            .await
+            .unwrap()
+            .unwrap()
+            .root
+            .id(),
+        trace.root
+    );
+    // The concrete handle types cross the decorator unchanged, but their provenance
+    // must still reject use by the independently opened client.
+    let Err(error) = second.session.publish_snapshot(None, None, snapshot).await else {
+        panic!("independent clients must not share handle provenance");
+    };
+    assert!(matches!(
+        error,
+        SeaClientError::Service(protocol::ErrorKind::Rejected, message)
+            if message == "snapshot handles belong to another client"
+    ));
+
+    let joined = first
+        .session
+        .announce_membership(Bytes::from_static(b"factory member"))
+        .await
+        .unwrap();
+    let mut events = second.session.read(Some(trace.second), None);
+    let announcement = next_event(&mut events).await;
+    assert_eq!(announcement.committed.position, joined);
+    assert_eq!(announcement.session_id, first.id);
+    assert_eq!(
+        announcement.kind,
+        sea_core::archive::SessionEventKind::Joined
+    );
+    first.session.close().await.unwrap();
+    let departure = next_event(&mut events).await;
+    assert_eq!(departure.session_id, first.id);
+    assert_eq!(departure.kind, sea_core::archive::SessionEventKind::Left);
+    let position = second
+        .session
+        .submit(EventSubmission {
+            reference: Some(trace.second),
+            event: Event {
+                payload: Bytes::from_static(b"independent connection"),
+                blob_tree: None,
+            },
+        })
+        .await
+        .unwrap();
+    let delivered = next_event(&mut events).await;
+    assert_eq!(delivered.committed.position, position);
+    assert_eq!(delivered.session_id, second.id);
+    second.session.close().await.unwrap();
 }
 
 /// Stored identities and original plaintext survive stack teardown; availability handles do not.

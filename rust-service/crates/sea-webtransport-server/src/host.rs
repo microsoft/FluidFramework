@@ -10,11 +10,13 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use rand_core::{OsRng, RngCore as _};
+use sea_core::factory::{PassThroughFactory, SessionFactory};
 use sea_core::storage::{DocumentId, SeaStorage};
 use sea_core::{EventPosition, archive::SessionId};
 use sea_file::buffered::FileStorage;
 use sea_file::durable::DurableStorage;
 use sea_memory::MemoryStorage;
+use sea_sequencer::factory::LocalSessionFactory;
 use sea_webtransport::protocol;
 use tokio::{sync::Mutex, time::sleep};
 
@@ -24,13 +26,34 @@ use crate::{
 };
 
 /// Retained exclusive runtimes indexed by opaque document identity.
-type DocumentRuntimes<Storage> =
-    BTreeMap<Vec<u8>, Arc<sea_sequencer::session::LocalSequencer<Storage>>>;
+type DocumentRuntimes<Storage> = BTreeMap<Vec<u8>, Arc<HostedDocument<Storage>>>;
+
+/// Retains the creation boundary for the lifetime of one recovered document.
+struct HostedDocument<Storage: SeaStorage> {
+    /// Owns sequencing and existing shutdown behavior independently of interception.
+    sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
+    /// Experimental pass-through path; absence preserves direct session construction.
+    factory: Option<PassThroughFactory<LocalSessionFactory<Storage>>>,
+}
+
+impl<Storage: SeaStorage + 'static> HostedDocument<Storage> {
+    /// Creates a document factory without allocating a session.
+    fn new(
+        sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
+        intercept: bool,
+    ) -> Arc<Self> {
+        let factory =
+            intercept.then(|| PassThroughFactory::new(LocalSessionFactory::new(sequencer.clone())));
+        Arc::new(Self { sequencer, factory })
+    }
+}
 
 /// Serializes lazy runtime recovery within one backend namespace.
 struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
     /// Enables experimental live delivery for recovered documents; `DocumentRegistry::new` disables it.
     live_cache: bool,
+    /// Enables factory interception without adding admission or lifecycle policy.
+    intercept: bool,
     /// Factory retaining the backend namespace independently of active views.
     storage: Arc<Storage>,
     /// Serializes first recovery; failed attempts are never cached.
@@ -45,8 +68,14 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
 
     /// Selects the experiment independently of backend durability and session policy.
     fn with_live_cache(storage: Storage, live_cache: bool) -> Self {
+        Self::configured(storage, live_cache, false)
+    }
+
+    /// Selects interception separately from delivery and backend durability.
+    fn configured(storage: Storage, live_cache: bool, intercept: bool) -> Self {
         Self {
             live_cache,
+            intercept,
             storage: Arc::new(storage),
             documents: Arc::new(Mutex::new(BTreeMap::new())),
         }
@@ -57,6 +86,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
         let mut documents = self.documents.clone().lock_owned().await;
         let storage = self.storage.clone();
         let live_cache = self.live_cache;
+        let intercept = self.intercept;
         storage_worker(async move {
             let (id, view) = storage.create_view().await.map_err(error_response)?;
             let runtime = if live_cache {
@@ -65,7 +95,10 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
                 sea_sequencer::session::LocalSequencer::recover(view).await
             }
             .map_err(error_response)?;
-            documents.insert(id.as_bytes().to_vec(), runtime);
+            documents.insert(
+                id.as_bytes().to_vec(),
+                HostedDocument::new(runtime, intercept),
+            );
             Ok(id)
         })
         .await
@@ -75,13 +108,14 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
     async fn open(
         &self,
         id: &sea_core::storage::DocumentId,
-    ) -> Result<Arc<sea_sequencer::session::LocalSequencer<Storage>>, protocol::Response> {
+    ) -> Result<Arc<HostedDocument<Storage>>, protocol::Response> {
         let mut documents = self.documents.clone().lock_owned().await;
         if let Some(runtime) = documents.get(id.as_bytes().as_ref()) {
             return Ok(runtime.clone());
         }
         let storage = self.storage.clone();
         let live_cache = self.live_cache;
+        let intercept = self.intercept;
         let id = id.clone();
         storage_worker(async move {
             let view = storage
@@ -95,6 +129,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
                 sea_sequencer::session::LocalSequencer::recover(view).await
             }
             .map_err(error_response)?;
+            let runtime = HostedDocument::new(runtime, intercept);
             documents.insert(id.as_bytes().to_vec(), runtime.clone());
             Ok(runtime)
         })
@@ -201,7 +236,7 @@ impl<Storage: SeaStorage + 'static> HostedDocuments for DocumentRegistry<Storage
         let documents = self.documents.lock().await;
         let mut failure = None;
         for runtime in documents.values() {
-            if let Err(error) = runtime.shutdown().await {
+            if let Err(error) = runtime.sequencer.shutdown().await {
                 failure = Some(error.to_string());
             }
         }
@@ -236,8 +271,20 @@ where
             return Err(invalid("opening requires a document identity"));
         }
     };
-    let sequencer = registry.open(&id).await?;
-    let session = sequencer
+    let document = registry.open(&id).await?;
+    if let Some(factory) = &document.factory {
+        let opened = factory
+            .open_session(reference)
+            .await
+            .map_err(error_response)?;
+        return Ok((
+            id,
+            opened.id,
+            Arc::new(SessionDispatcher::new(Arc::new(opened.session))),
+        ));
+    }
+    let session = document
+        .sequencer
         .open_session(reference)
         .await
         .map_err(error_response)?;
@@ -296,20 +343,37 @@ impl BuiltInSeaHost {
     /// Stalled subscriptions can retain unbounded history until closed or revoked.
     #[must_use]
     pub fn new_with_live_cache(root: PathBuf, mode: StorageMode, enabled: bool) -> Self {
+        Self::configured(root, mode, enabled, false)
+    }
+
+    /// Enables experimental pass-through creation and decoration for both listeners.
+    ///
+    /// This adds no rejection, automatic closure, delivery tracking, or resource limits.
+    /// `live_cache` independently selects the unbounded-retention delivery experiment.
+    #[must_use]
+    pub fn new_with_pass_through(root: PathBuf, mode: StorageMode, live_cache: bool) -> Self {
+        Self::configured(root, mode, live_cache, true)
+    }
+
+    /// Keeps runtime-selected backend construction identical on both comparison paths.
+    fn configured(root: PathBuf, mode: StorageMode, enabled: bool, intercept: bool) -> Self {
         Self::with_initializer(move || {
             let root = root.join("documents");
             Ok(match mode {
-                StorageMode::Memory => Arc::new(DocumentRegistry::with_live_cache(
+                StorageMode::Memory => Arc::new(DocumentRegistry::configured(
                     MemoryStorage::new(),
                     enabled,
+                    intercept,
                 )),
-                StorageMode::BufferedFile => Arc::new(DocumentRegistry::with_live_cache(
+                StorageMode::BufferedFile => Arc::new(DocumentRegistry::configured(
                     FileStorage::open(root).map_err(error_response)?,
                     enabled,
+                    intercept,
                 )),
-                StorageMode::DurableFile => Arc::new(DocumentRegistry::with_live_cache(
+                StorageMode::DurableFile => Arc::new(DocumentRegistry::configured(
                     DurableStorage::open(root).map_err(error_response)?,
                     enabled,
+                    intercept,
                 )),
             })
         })
@@ -769,6 +833,65 @@ mod tests {
         ShutdownDisposition, ShutdownMode, TransportConfig, WebTransportServer,
     };
 
+    #[tokio::test]
+    async fn retained_document_factory_intercepts_before_allocation_and_dispatches_all_opens() {
+        for intercept in [false, true] {
+            let registry =
+                DocumentRegistry::configured(sea_memory::MemoryStorage::new(), true, intercept);
+            let id = registry.create().await.unwrap();
+            let document = registry.open(&id).await.unwrap();
+            assert_eq!(document.factory.is_some(), intercept);
+            assert!(Arc::ptr_eq(&document, &registry.open(&id).await.unwrap()));
+            let (_, first, author) = super::open(
+                &registry,
+                id.as_bytes().to_vec(),
+                protocol::ArchiveIntent::Open,
+                None,
+            )
+            .await
+            .unwrap();
+            assert_eq!(
+                first.get(),
+                1,
+                "factory construction must not allocate membership"
+            );
+            let (_, second, sibling) = super::open(
+                &registry,
+                id.as_bytes().to_vec(),
+                protocol::ArchiveIntent::Open,
+                None,
+            )
+            .await
+            .unwrap();
+            assert_eq!(second.get(), 2);
+            let submit = || protocol::Request::Submit {
+                reference: None,
+                event: protocol::Event {
+                    payload: b"pass-through".to_vec(),
+                    blob_tree: None,
+                },
+            };
+            assert!(matches!(
+                author.author_request(submit()).await,
+                protocol::Response::EventCommitted { .. }
+            ));
+            assert_eq!(
+                author.author_request(protocol::Request::Close).await,
+                protocol::Response::Acknowledged
+            );
+            assert!(matches!(
+                author.author_request(submit()).await,
+                protocol::Response::Error { .. }
+            ));
+            assert!(matches!(
+                sibling.author_request(submit()).await,
+                protocol::Response::EventCommitted { .. }
+            ));
+            sibling.connection_closed(false).await;
+            document.sequencer.shutdown().await.unwrap();
+        }
+    }
+
     /// Exercises real file invalidation through experimental document recovery, without polling.
     async fn assert_cache_shutdown<Storage: sea_core::storage::SeaStorage + 'static>(
         storage: Storage,
@@ -776,7 +899,7 @@ mod tests {
         let registry = DocumentRegistry::with_live_cache(storage, true);
         let id = registry.create().await.unwrap();
         let runtime = registry.open(&id).await.unwrap();
-        let author = runtime.open_session(None).await.unwrap();
+        let author = runtime.sequencer.open_session(None).await.unwrap();
         let mut live = author.read(None, None);
         let unpolled = author.read(None, None);
         assert!(matches!(
@@ -793,9 +916,9 @@ mod tests {
             })
             .await
             .unwrap();
-        assert_eq!(runtime.live_cache_stats().unwrap().entries, 1);
+        assert_eq!(runtime.sequencer.live_cache_stats().unwrap().entries, 1);
         registry.storage.shutdown().await.unwrap();
-        let stats = runtime.live_cache_stats().unwrap();
+        let stats = runtime.sequencer.live_cache_stats().unwrap();
         assert_eq!(
             (stats.subscriptions, stats.entries, stats.payload_bytes),
             (0, 0, 0)
@@ -832,12 +955,12 @@ mod tests {
         let registry = DocumentRegistry::new(storage.clone());
         let id = registry.create().await.unwrap();
         let runtime = registry.open(&id).await.unwrap();
-        let idle = runtime.open_session(None).await.unwrap();
+        let idle = runtime.sequencer.open_session(None).await.unwrap();
         idle.announce_membership(Bytes::from_static(b"idle"))
             .await
             .unwrap();
         let idle_id = idle.session_id().clone();
-        let writer = runtime.open_session(None).await.unwrap();
+        let writer = runtime.sequencer.open_session(None).await.unwrap();
         let mut reference = None;
         for size in (0..1152).map(|ordinal| ordinal % 127) {
             reference = Some(
@@ -875,7 +998,7 @@ mod tests {
         drop(view);
         let registry = DocumentRegistry::new(storage);
         let runtime = registry.open(&id).await.unwrap();
-        let reader = runtime.open_session(None).await.unwrap();
+        let reader = runtime.sequencer.open_session(None).await.unwrap();
         assert_eq!(reader.session_id().get(), 257);
         let mut departures = reader.read(Some(head), None);
         loop {

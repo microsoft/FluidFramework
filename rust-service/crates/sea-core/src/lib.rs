@@ -4,6 +4,7 @@ use std::error::Error;
 
 pub mod archive;
 pub mod blob;
+pub mod factory;
 pub mod monitored_stream;
 /// Session contracts above document storage.
 pub mod session;
