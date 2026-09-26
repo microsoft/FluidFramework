@@ -321,5 +321,6 @@ Fresh complete fixed-base Standard repair review found no actionable findings an
 The coordinator verified the frozen state unchanged afterward and accepts Stage B without a validation or performance exception.
 Only plan/report review and commit bookkeeping changed after that verification.
 Stop with B committed and the worktree clean; do not implement C in this run.
+Commit `66499d1d6fe` contains the reviewed Stage B implementation and acceptance record; the following documentation-only commit records this stopping-point identity.
 The next step is C: expose count/byte and soft-budget observations on the existing outgoing cache, preserving required entries and leaving accepted writes independent of reader progress.
 Later D/E must bound waiting caller memory and select concrete control/lifecycle ownership; this checkpoint does not solve those policies.

@@ -1392,3 +1392,7 @@ Stop after committing this checkpoint and recording its commit identity.
 The next authorized implementation would be Stage C: outgoing shared-cache count/byte and soft-budget observations, preserving reader-required entries and accepted-write progress.
 Stages D/E must still choose bounded waiting ownership, concrete decorator controls, and shared policy rules.
 Nothing is merged or pushed.
+
+Commit `66499d1d6fec2df4dabc6e707a8c437862c8a09b` (`feat(rust-service): expose durable storage write pressure`) contains the reviewed implementation, tests, changeset, and acceptance record.
+The following documentation-only commit records this identity.
+The implementation worktree was clean after the checkpoint commit; stop again after this bookkeeping commit, without beginning C.
