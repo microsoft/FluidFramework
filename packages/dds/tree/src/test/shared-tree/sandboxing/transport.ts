@@ -4,32 +4,15 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	FluidHandleBase,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
-import {
-	type ISharedObjectHandle,
-	isISharedObjectHandle,
-} from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { v4 as uuid } from "uuid";
-
-import { brand } from "../../../util/index.js";
 
 import {
-	type BlobRequestId,
-	type BlobRequestMessage,
-	type BlobResponseMessage,
 	type HandleToken,
 	createBufferPlaceholder,
 	escapedObjectType,
 	getTransportBuffer,
 	isEscapedObject,
-	isHandleToken,
 	isLocalHandle,
 	isSerializedHandle,
-	normalizeProtocolError,
 	SandboxProtocolError,
 	type SerializedHandle,
 	serializedHandleType,
@@ -41,7 +24,7 @@ import {
  * Decoded buffers remain placeholders until blob-response validation.
  * Callers must perform semantic validation after decoding; this layer checks only transport structure.
  */
-abstract class TransportCodec {
+export abstract class TransportCodec {
 	public encode(value: unknown): unknown {
 		return copyTransportData(
 			value,
@@ -119,6 +102,19 @@ abstract class TransportCodec {
  */
 export function normalizeTransportData(value: unknown): unknown {
 	return copyTransportData(value, (handle) => handle);
+}
+
+/**
+ * Validates transport data and visits each local handle in it.
+ */
+export function visitLocalHandles(
+	value: unknown,
+	visitor: (handle: IFluidHandle) => void,
+): void {
+	copyTransportData(value, (handle) => {
+		visitor(handle);
+		return handle;
+	});
 }
 
 function createNullPrototypeRecord<T extends object>(properties: T): T {
@@ -225,208 +221,4 @@ function defineDataProperty(target: object, key: string, value: unknown): void {
 		configurable: true,
 		writable: true,
 	});
-}
-
-/**
- * Owns the handles authorized for one Guest. Entries live until {@link HostTransportCodec.dispose}.
- * Equivalent handle paths share a token; returned tokens restore the original Host handles.
- * {@link HostTransportCodec.bindHandles} is separate from decoding so callers can first validate and apply the change locally.
- */
-export class HostTransportCodec extends TransportCodec {
-	private readonly handles: IFluidHandle[] = [];
-	private readonly tokens = new Map<string, HandleToken>();
-	private readonly bindingHandle: ISharedObjectHandle;
-	private disposed = false;
-
-	public constructor(bindingHandle: IFluidHandle) {
-		super();
-		const internal = toFluidHandleInternal(bindingHandle);
-		if (!isISharedObjectHandle(internal)) {
-			throw new UsageError("The Host requires a SharedTree handle for binding.");
-		}
-		this.bindingHandle = internal;
-	}
-
-	protected encodeHandle(handle: IFluidHandle): HandleToken {
-		this.checkActive();
-		const path = toFluidHandleInternal(handle).absolutePath;
-		let token = this.tokens.get(path);
-		if (token === undefined) {
-			token = brand<HandleToken>(this.handles.length);
-			this.handles.push(handle);
-			this.tokens.set(path, token);
-		}
-		return token;
-	}
-
-	protected decodeHandle(token: HandleToken): IFluidHandle {
-		return this.getHandle(token);
-	}
-
-	/**
-	 * Binds restored handles only after the receiving code has validated the change.
-	 */
-	public bindHandles(value: unknown): void {
-		const handles = new Set<IFluidHandle>();
-		copyTransportData(value, (handle) => {
-			handles.add(handle);
-			return handle;
-		});
-		for (const handle of handles) {
-			this.bindingHandle.bind(toFluidHandleInternal(handle));
-		}
-	}
-
-	private checkActive(): void {
-		if (this.disposed) {
-			throw new UsageError("The Host handle session is disposed.");
-		}
-	}
-
-	private getHandle(token: HandleToken): IFluidHandle {
-		this.checkActive();
-		if (!isHandleToken(token) || token >= this.handles.length) {
-			throw new SandboxProtocolError("Unknown sandbox handle token.");
-		}
-		return this.handles[token];
-	}
-
-	/**
-	 * Checks authorization before resolution errors are converted into nonfatal blob responses.
-	 */
-	public assertAuthorizedToken(token: HandleToken): void {
-		this.getHandle(token);
-	}
-
-	public async resolveBlob(token: HandleToken): Promise<ArrayBuffer> {
-		const result = await this.getHandle(token).get();
-		if (!(result instanceof ArrayBuffer)) {
-			// If needed, a customizable Host policy could support Guest get() calls for Fluid-object handles.
-			throw new UsageError(
-				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
-			);
-		}
-		return result;
-	}
-
-	public dispose(): void {
-		this.disposed = true;
-		this.handles.length = 0;
-		this.tokens.clear();
-	}
-}
-
-/**
- * Session-local proxy whose {@link GuestHandle.get} resolves blob content through the Host.
- * Caches one resolution promise, including failures, for concurrent and repeated calls.
- * Its {@link GuestHandle.absolutePath} provides session-local identity, not a Host URL. Only the Host performs Fluid attachment.
- */
-class GuestHandle extends FluidHandleBase<ArrayBuffer> {
-	public readonly isAttached = false;
-	private promise: Promise<ArrayBuffer> | undefined;
-
-	public constructor(
-		public readonly absolutePath: string,
-		private readonly resolve: () => Promise<ArrayBuffer>,
-	) {
-		super();
-	}
-
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Preserve the cached promise's identity.
-	public get(): Promise<ArrayBuffer> {
-		// Cache failures too: retries require a new session.
-		return (this.promise ??= this.resolve());
-	}
-
-	public attachGraph(): never {
-		throw new UsageError("Guest handles cannot attach. Return them to the Host instead.");
-	}
-}
-
-/**
- * Restores {@link GuestHandle} proxies and resolves blobs independently of tree synchronization.
- * Caches one proxy per {@link HandleToken} and permits sending only proxies created by this codec.
- * {@link GuestTransportCodec.dispose} rejects pending requests and clears the session's proxy tables.
- */
-export class GuestTransportCodec extends TransportCodec {
-	private readonly sessionId = uuid();
-	private readonly handles = new Map<HandleToken, GuestHandle>();
-	private readonly tokens = new Map<IFluidHandle, HandleToken>();
-	private readonly pending = new Map<
-		BlobRequestId,
-		{ resolve: (value: ArrayBuffer) => void; reject: (error: Error) => void }
-	>();
-	private nextRequestId = 0;
-	private disposed = false;
-
-	public constructor(private readonly send: (message: BlobRequestMessage) => void) {
-		super();
-	}
-
-	protected encodeHandle(handle: IFluidHandle): HandleToken {
-		const token = this.tokens.get(handle);
-		if (this.disposed || token === undefined) {
-			throw new UsageError("Cannot send a foreign or disposed handle to the Host.");
-		}
-		return token;
-	}
-
-	protected decodeHandle(token: HandleToken): IFluidHandle {
-		if (this.disposed) {
-			throw new UsageError("The Guest handle session is disposed.");
-		}
-		let handle = this.handles.get(token);
-		if (handle === undefined) {
-			handle = new GuestHandle(`/sandbox/${this.sessionId}/${token}`, async () =>
-				this.requestBlob(token),
-			);
-			this.handles.set(token, handle);
-			this.tokens.set(handle, token);
-		}
-		return handle;
-	}
-
-	private async requestBlob(token: HandleToken): Promise<ArrayBuffer> {
-		if (this.disposed) {
-			throw new UsageError("The Guest handle session is disposed.");
-		}
-		if (this.nextRequestId > Number.MAX_SAFE_INTEGER) {
-			throw new UsageError(
-				"Sandbox blob request identifiers are exhausted. Recreate the Host and Guest.",
-			);
-		}
-		const requestId = brand<BlobRequestId>(this.nextRequestId++);
-		return new Promise<ArrayBuffer>((resolve, reject) => {
-			this.pending.set(requestId, { resolve, reject });
-			try {
-				this.send({ type: "blobRequest", requestId, token });
-			} catch (error) {
-				this.pending.delete(requestId);
-				reject(normalizeProtocolError(error));
-			}
-		});
-	}
-
-	public receiveBlobResponse(message: BlobResponseMessage): void {
-		const pending = this.pending.get(message.requestId);
-		if (pending === undefined) {
-			throw new SandboxProtocolError("Unexpected sandbox blob response.");
-		}
-		this.pending.delete(message.requestId);
-		if ("error" in message) {
-			pending.reject(new Error(message.error));
-		} else {
-			pending.resolve(message.blob);
-		}
-	}
-
-	public dispose(error: Error = new Error("The Guest handle session is disposed.")): void {
-		this.disposed = true;
-		for (const pending of this.pending.values()) {
-			pending.reject(error);
-		}
-		this.pending.clear();
-		this.handles.clear();
-		this.tokens.clear();
-	}
 }
