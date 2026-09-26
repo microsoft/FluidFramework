@@ -1037,3 +1037,12 @@ No implementation repair was required after this complete review.
 The coordinator accepts the foundation for the authorized stopping-point commit under the explicit performance-timing exception.
 Only report/plan gate bookkeeping changes after snapshot verification.
 No resource-policy stage starts, and no merge or push is authorized.
+
+### Committed Stopping Point
+
+Commit `9edf2b2dc1a` (`feat(rust-service): salvage document factory foundation for soft budgets`) contains the reviewed 22-file reset and foundation.
+The following documentation-only commit records that identity and stopping state.
+Documentation and scoped policy checks passed again before the foundation commit.
+All implementation work is committed; no pressure/policy stage was started, merged, or pushed.
+Resume with the deferred Stage A measurements, or obtain explicit reprioritization before moving to storage pressure in B.
+The factory remains opt-in and Stage A remains performance-unaccepted.

@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: document-factory foundation functionally validated and independently reviewed; performance acceptance deferred by explicit user authorization.
+Status: document-factory foundation committed as `9edf2b2dc1a`; performance acceptance deferred by explicit user authorization.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -231,7 +231,8 @@ The clean stopping point accepts the foundation under the performance-timing exc
 
 First close the deferred Stage A measurement campaign, or obtain an explicit reprioritization before starting B.
 Do not treat the stopping-point exception as permission to skip measurements permanently.
-The commit that introduces Decision 0029 contains the reset and factory foundation; its parent is the fixed comparison base above.
+Commit `9edf2b2dc1a` contains the reset and reviewed factory foundation; its parent is the fixed comparison base above.
+The following documentation-only commit records this stopping point.
 Use the latest dated section of the cumulative report for final checks and review identity.
 
 The new `sea-benchmarks` `session-factory` binary provides bounded direct/pass-through open/close correctness and timing samples.
