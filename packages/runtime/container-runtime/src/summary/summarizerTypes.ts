@@ -80,6 +80,10 @@ export interface IRefreshSummaryAckOptions {
 	 * Telemetry logger to which telemetry events will be forwarded.
 	 */
 	readonly summaryLogger: TelemetryLoggerExt;
+	/**
+	 * The proposal timed out and must not become the accepted baseline, even if its handle was reused.
+	 */
+	readonly isRetired?: boolean;
 }
 
 /**
@@ -95,6 +99,15 @@ export interface ISummarizerInternalsProvider {
 	 * Callback whenever a new SummaryAck is received, to update internal tracking state
 	 */
 	refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
+
+	/**
+	 * Stop tracking a timed-out summary after its summarize op has appeared.
+	 */
+	retireSummary(
+		proposalHandle: string,
+		referenceSequenceNumber: number,
+		clientSequenceNumber: number,
+	): void;
 }
 
 /**

@@ -4947,7 +4947,7 @@ export class ContainerRuntime
 			} as const;
 
 			try {
-				this.summarizerNode.completeSummary(handle);
+				this.summarizerNode.completeSummary(handle, clientSequenceNumber);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -5500,17 +5500,21 @@ export class ContainerRuntime
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
-		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
+		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger, isRetired } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
-		const result = await this.summarizerNode.refreshLatestSummary(
-			proposalHandle,
-			summaryRefSeq,
-		);
+		const result =
+			isRetired === true
+				? {
+						isSummaryTracked: false,
+						isSummaryNewer: summaryRefSeq > this.summarizerNode.referenceSequenceNumber,
+					}
+				: await this.summarizerNode.refreshLatestSummary(proposalHandle, summaryRefSeq);
 
 		/* eslint-disable jsdoc/check-indentation */
 		/**
-		 * If the snapshot corresponding to the ack is not tracked by this client, it was submitted by another client.
+		 * If the snapshot corresponding to the ack is not tracked, it was submitted by another client or retired
+		 * after a timeout.
 		 * Take action as per the following scenarios:
 		 * 1. If that snapshot is older than the one tracked by this client, ignore the ack because only the latest
 		 *    snapshot is tracked.
@@ -5543,6 +5547,32 @@ export class ContainerRuntime
 			ackHandle,
 			referenceSequenceNumber: summaryRefSeq,
 		};
+	}
+
+	/**
+	 * Implementation of ISummarizerInternalsProvider.retireSummary
+	 */
+	public retireSummary(
+		proposalHandle: string,
+		referenceSequenceNumber: number,
+		clientSequenceNumber: number,
+	): void {
+		const wasPending = this.summarizerNode.retireSummary(
+			proposalHandle,
+			referenceSequenceNumber,
+			clientSequenceNumber,
+		);
+		// A newer accepted summary may already have removed this pending proposal.
+		if (
+			!wasPending &&
+			this.summarizerNode.referenceSequenceNumber <= referenceSequenceNumber
+		) {
+			throw new LoggingError("TimedOutSummaryMissingFromPending", {
+				proposalHandle,
+				referenceSequenceNumber,
+				clientSequenceNumber,
+			});
+		}
 	}
 
 	private readonly readAndParseBlob = async <T>(id: string): Promise<T> =>
