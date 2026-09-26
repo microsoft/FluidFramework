@@ -145,9 +145,15 @@ impl Factory {
         } else {
             state.snapshot_end - RecordArchive::<SnapshotRecord>::FRAME_SIZE as u64
         })?;
+        let pressure = crate::pressure::DurableWritePressure::new();
+        let preparation =
+            crate::common::PreparationBudget::with_budget(pressure.preparation.clone());
+        let durable_executor =
+            crate::durable::Executor::with_budget(workers.clone(), pressure.mutations.clone());
         let opening = Arc::new(Opening {
             invalidation: sea_core::storage::InvalidationSource::default(),
-            preparation: crate::common::PreparationBudget::new(),
+            preparation,
+            pressure,
             closed: self.closed.clone(),
             factory_failed: self.failed.clone(),
             buffered: (!journal.durable()).then(|| crate::buffered::Executor::new(workers.clone())),
@@ -161,12 +167,17 @@ impl Factory {
             snapshots: Mutex::new(snapshots),
             failed: AtomicBool::new(false),
             state: Mutex::new(state),
-            durable_executor: crate::durable::Executor::new(workers.clone()),
+            durable_executor,
             workers,
         });
         let mut openings = self.openings.lock().unwrap();
         openings.retain(|opening| opening.strong_count() != 0);
         openings.push(Arc::downgrade(&opening));
+        drop(openings);
+        // Registration precedes the fence check so concurrent shutdown cannot miss this opening.
+        if self.closed.load(Ordering::Acquire) {
+            opening.pressure.terminate(false);
+        }
         Ok(StorageComponents {
             checkpoints: Box::new(FileCheckpoint(opening.clone())),
             blobs: FileBlobs(opening.clone()),
@@ -197,6 +208,16 @@ impl SeaStorage for Factory {
 
     async fn shutdown(&self) -> Result<(), Self::Error> {
         self.closed.store(true, Ordering::Release);
+        let openings = self
+            .openings
+            .lock()
+            .unwrap()
+            .iter()
+            .filter_map(Weak::upgrade)
+            .collect::<Vec<_>>();
+        for opening in openings {
+            opening.pressure.terminate(false);
+        }
         let _initialization = self.initialization.write().await;
         self.drain(true).await
     }
@@ -357,6 +378,8 @@ impl<Identity: Copy + Send + Sync + 'static> StorageHandle for FileHandle<Identi
 
 /// Shared writer ownership retained by components, reads, and workers, not availability handles.
 struct Opening {
+    /// Observes existing inbound budgets without retaining this opening.
+    pressure: crate::pressure::DurableWritePressure,
     /// Independent terminal observers; callbacks never acquire storage or runtime locks.
     invalidation: sea_core::storage::InvalidationSource<FileStorageError>,
     /// Bounds content validation and encoding before mutation admission.
@@ -389,6 +412,12 @@ struct Opening {
     durable_executor: crate::durable::Executor,
     /// Shared bounded file-read and mutation worker capacity.
     workers: Arc<tokio::sync::Semaphore>,
+}
+
+impl Drop for Opening {
+    fn drop(&mut self) {
+        self.pressure.terminate(false);
+    }
 }
 
 impl Opening {
@@ -571,6 +600,7 @@ impl Opening {
     }
     /// Fails closed and notifies readers even when a worker panics after cancellation.
     fn poison(&self) {
+        self.pressure.terminate(true);
         self.factory_failed.store(true, Ordering::Release);
         self.failed.store(true, Ordering::Release);
         let mut state = self
@@ -1217,6 +1247,18 @@ pub struct FileEvents(Arc<Opening>);
 /// Independently usable sparse snapshot component.
 #[derive(Clone)]
 pub struct FileSnapshots(Arc<Opening>);
+
+impl FileBlobs {
+    /// Observes both inbound budgets of this durable document opening.
+    ///
+    /// Returns `None` for buffered storage, whose queue has a different admission policy.
+    /// Capture this handle through `SeaView::blobs()` before moving the view into a sequencer.
+    /// The handle does not retain the opening and never reserves capacity.
+    #[must_use]
+    pub fn write_pressure(&self) -> Option<crate::pressure::DurableWritePressure> {
+        self.0.durable.then(|| self.0.pressure.clone())
+    }
+}
 
 /// Snapshot carrying document-scoped availability evidence for its dependencies.
 type FileSnapshot = Snapshot<FileHandle<BlobTreeId>, FileHandle<EventPosition>>;
@@ -2575,6 +2617,153 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn pressure_handles_do_not_retain_openings_or_follow_replacements() {
+        let (root, storage, created) = create_test_document(true).await;
+        let id = created.id.clone();
+        let pressure = created.components.blobs.write_pressure().unwrap();
+        assert_eq!(pressure.current().unwrap().preparation.bytes, 0);
+        drop(created);
+        assert!(matches!(
+            pressure.current(),
+            Err(FileStorageError::Rejected(_))
+        ));
+        let reopened = storage.open_document(&id).await.unwrap().unwrap();
+        let replacement = reopened.blobs.write_pressure().unwrap();
+        assert!(replacement.current().is_ok());
+        assert!(pressure.wait_below(0, 0).await.is_err());
+        storage.shutdown().await.unwrap();
+        assert!(replacement.current().is_err());
+        drop((reopened, storage));
+        fs::remove_dir_all(root).unwrap();
+
+        let (root, storage, created) = create_test_document(false).await;
+        assert!(created.components.blobs.write_pressure().is_none());
+        drop((created, storage));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn pressure_observes_overlapping_stages_before_worker_and_wakes_on_completion() {
+        let (root, storage, created) = create_test_document(true).await;
+        let blobs = &created.components.blobs;
+        let pressure = blobs.write_pressure().unwrap();
+        {
+            let workers = storage
+                .workers
+                .clone()
+                .acquire_many_owned(32)
+                .await
+                .unwrap();
+            let payload = Bytes::from_static(b"preparation-pressure");
+            let write = blobs.put_blob(payload.clone());
+            tokio::pin!(write);
+            assert!(futures_util::poll!(&mut write).is_pending());
+            let sample = pressure.current().unwrap();
+            assert_eq!(sample.preparation.requests, 1);
+            assert_eq!(sample.preparation.bytes, payload.len() * 3 + 128);
+            assert_eq!(sample.mutations.requests, 1);
+            assert_eq!(sample.mutations.bytes, sample.preparation.bytes);
+            let waiting = pressure.wait_below(0, 0);
+            tokio::pin!(waiting);
+            assert!(futures_util::poll!(&mut waiting).is_pending());
+            drop(workers);
+            write.await.unwrap();
+            tokio::time::timeout(std::time::Duration::from_secs(5), waiting)
+                .await
+                .unwrap()
+                .unwrap();
+        }
+        storage.shutdown().await.unwrap();
+        drop((created, storage));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn cancelled_shutdown_terminates_pressure_before_initialization_drains() {
+        let (root, storage, created) = create_test_document(true).await;
+        let pressure = created.components.blobs.write_pressure().unwrap();
+        let retained = created.components.blobs.0.preparation.reserve(1).unwrap();
+        let counter = Arc::new(WakeCount(AtomicU64::new(0)));
+        let waker = futures_util::task::waker(counter.clone());
+        let mut context = std::task::Context::from_waker(&waker);
+        let waiting = pressure.wait_below(0, 0);
+        tokio::pin!(waiting);
+        assert!(waiting.as_mut().poll(&mut context).is_pending());
+        {
+            let workers = storage
+                .workers
+                .clone()
+                .acquire_many_owned(32)
+                .await
+                .unwrap();
+            let late = storage.create_document();
+            tokio::pin!(late);
+            assert!(futures_util::poll!(&mut late).is_pending());
+            {
+                let shutdown = storage.shutdown();
+                tokio::pin!(shutdown);
+                assert!(futures_util::poll!(&mut shutdown).is_pending());
+            }
+            assert_eq!(counter.0.load(Ordering::SeqCst), 1);
+            assert!(matches!(
+                pressure.current(),
+                Err(FileStorageError::Rejected(_))
+            ));
+            assert!(matches!(waiting.await, Err(FileStorageError::Rejected(_))));
+            drop(retained);
+            assert!(pressure.wait_below(0, 0).await.is_err());
+            drop(workers);
+            let initialized = late.await.unwrap();
+            let late_pressure = initialized.components.blobs.write_pressure().unwrap();
+            assert!(matches!(
+                late_pressure.current(),
+                Err(FileStorageError::Rejected(_))
+            ));
+            assert!(matches!(
+                initialized.components.blobs.put_blob(Bytes::new()).await,
+                Err(FileStorageError::Rejected(_))
+            ));
+        }
+        storage.shutdown().await.unwrap();
+        drop((created, storage));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn pressure_waiters_receive_terminal_failure_and_shutdown_without_capacity() {
+        for poison in [false, true] {
+            let (root, storage, created) = create_test_document(true).await;
+            let opening = &created.components.blobs.0;
+            let pressure = created.components.blobs.write_pressure().unwrap();
+            let retained = opening.preparation.reserve(1).unwrap();
+            let waiting = pressure.wait_below(0, 0);
+            tokio::pin!(waiting);
+            assert!(futures_util::poll!(&mut waiting).is_pending());
+            if poison {
+                opening.poison();
+            } else {
+                storage.shutdown().await.unwrap();
+            }
+            let error = tokio::time::timeout(std::time::Duration::from_secs(5), waiting)
+                .await
+                .unwrap()
+                .unwrap_err();
+            assert_eq!(
+                error.kind(),
+                if poison {
+                    sea_core::ErrorKind::Ambiguous
+                } else {
+                    sea_core::ErrorKind::Rejected
+                }
+            );
+            drop(retained);
+            assert_eq!(pressure.current().unwrap_err().kind(), error.kind());
+            drop((created, storage));
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn independent_invalidation_covers_poison_shutdown_and_late_registration() {
         for durable in [false, true] {
             for poison in [false, true] {
@@ -3559,9 +3748,13 @@ mod tests {
                     .is_pending()
             );
             let (entered, release) = block_write(&events, true);
+            let pressure = created.components.blobs.write_pressure().unwrap();
             let writer = events.clone();
             let append = tokio::spawn(async move { writer.append_batch(batch()).await });
             entered.await.unwrap();
+            let waiting = pressure.wait_below(0, 0);
+            tokio::pin!(waiting);
+            assert!(futures_util::poll!(&mut waiting).is_pending());
             if cancelled {
                 append.abort();
                 assert!(append.await.unwrap_err().is_cancelled());
@@ -3576,6 +3769,12 @@ mod tests {
                         .all(|result| matches!(result, Err(FileStorageError::Ambiguous)))
                 );
             }
+            assert!(matches!(
+                tokio::time::timeout(std::time::Duration::from_secs(5), waiting)
+                    .await
+                    .unwrap(),
+                Err(FileStorageError::Ambiguous)
+            ));
             tokio::time::timeout(std::time::Duration::from_secs(5), async {
                 while counter.0.load(Ordering::Relaxed) == 0 {
                     tokio::task::yield_now().await;

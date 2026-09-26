@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: Stage A foundation and specified performance gates accepted; measurement checkpoint committed as `27ff061eda2`.
+Status: Stages A and B accepted; stopping before Stage C.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -9,7 +9,7 @@ Evidence and historical checkpoint results: [implementation report](SESSION_RESO
 
 This is an implementation plan, not a claim of currently supported resource guarantees.
 On 2026-09-26 the user authorized updating this plan, salvaging useful local changes, and committing progress at the next clean stopping point.
-Stop after the revised factory foundation is committed and the worktree is clean; do not start resource-policy implementation in the same run.
+That authorization stopped after the revised factory foundation was committed and the worktree was clean.
 Do not merge or push.
 Use sequential checkpoints, not parallel-iteration machinery.
 
@@ -17,9 +17,10 @@ The user subsequently approved a clean commit of the functionally validated, ind
 This exception defers the measurement campaign below; it does not change its limits or count as a performance pass.
 The factory remains opt-in.
 At that stopping point Stage A was not performance-accepted.
-Stages B through E must not begin during this run.
+Stages B through E were not authorized in that foundation run.
 The user subsequently authorized resuming the performance campaign.
-Its completed measurements and harness repair are recorded below and in the cumulative report; stop again before implementing B.
+Its completed measurements and harness repair are recorded below and in the cumulative report.
+After that clean stopping point, the user authorized Stage B, stopping before C.
 
 ## Change Of Direction
 
@@ -118,7 +119,7 @@ Do not send local pressure observations over the protocol merely because network
 
 ## Stages And Exit Checks
 
-### A. Salvage The Document Factory Foundation — Current Stopping Target
+### A. Salvage The Document Factory Foundation — Accepted
 
 Keep the per-document factory contract, local-sequencer adapter, pass-through decorator, useful native/WASM tests, and opt-in host composition.
 Remove the redundant service-factory wrapper and the standalone publication protocol model.
@@ -136,6 +137,21 @@ Commit only after passing gates or an explicitly accepted, recorded exception.
 Do not reinterpret missing evidence as a pass to obtain a clean tree.
 
 ### B. Expose Storage Pressure
+
+The user authorized B after Stage A acceptance, stopping at another validated/reviewed commit before C.
+Fixed checkpoint base: `6fecba0ea093aa07f62038870bd2ea4b0d6aaca8`.
+The user selected separate durable-file preparation and mutation observations, without a new core trait or combined ledger.
+Expose a concrete handle through `FileBlobs` (available via `SeaView::blobs()`), preserving fixed 128-request/16-MiB budgets and immediate saturation rejection.
+The handle supplies advisory samples and a level-triggered wait for both stages to be at or below caller ceilings.
+It must not retain the document or its lock, reserve capacity, run policy, or follow replacement openings.
+Terminal errors remain sticky and wake waiters; cancellation removes only the wait registration.
+Memory and buffered storage have no advertised pressure observation.
+
+Before measurement, select the same conservative overhead limits as A for B's changed write path: median paired CPU increase at most 5%, each paired p95 increase at most `max(10%, 1 ms)`, and each paired mean/peak RSS increase at most `max(10%, 16 MiB)`.
+Use three alternating cached durable-file/64-byte native WebSocket pairs against this checkpoint's unchanged Rust baseline, with a buffered-file control because preparation is shared.
+Keep A's workload and sample-integrity/resource guards; require primary baseline CPU repeatability within 10%.
+These checks exercise publication with no pressure waiters; focused tests cover waiting observers.
+No new service dependency, extra per-operation heap allocation, storage protocol, or sequencer changes are intended.
 
 Reuse storage-owned accounting, starting with durable-file.
 Select fixed configuration and the smallest observation needed by the first policy.
@@ -218,7 +234,7 @@ Before stopping, record here and in the cumulative report:
 Current transition: the original draft is backed up outside the worktree in the session's `files/soft-budget-reset/` directory as a tracked diff plus an archive of untracked additions.
 Historical logs and reviews remain in the cumulative report.
 The strict-bound publication detour is retired, not accepted as production design.
-No new policy stage has started.
+At the foundation stopping point, no resource-observation or policy stage had started.
 
 The foundation passes workspace format, strict Clippy/rustdoc, native build, native/WASM checks, scoped policy, and the extended generated-consumer/integration/browser gate.
 The final extended run contains 380 passing native tests and one browser-owned ignored fixture.
@@ -273,3 +289,37 @@ The next implementation stage is B; do not start it in this measurement run.
 When moving to B, choose fixed durable-storage configuration and a minimal advisory observation before adding a policy.
 Check whether current storage-to-sequencer ownership actually leaves an unbounded interval; do not introduce a handoff ledger speculatively.
 Leave lifecycle ownership and dequeue-versus-delivery accounting decisions to the concrete controls in C through E.
+
+### Stage B Validation And Resume Boundary
+
+The concrete durable-file handle now observes the existing preparation and mutation semaphores without adding a core trait, combined accounting ledger, admission wait, or policy task.
+Each budget keeps its fixed 128-request/16-MiB limit and immediate rejection behavior.
+The observation handle does not retain the opening or filesystem lock.
+Release, cancellation, opening replacement, shutdown, and classified failure are covered by focused tests.
+There is no new storage-to-sequencer queue: the existing application pipeline retains its own 256-entry/4-MiB charge through result application; control settlement has one pending slot.
+Storage charges still end at blocking completion and do not measure returned results, caller-owned memory, or the outgoing cache.
+
+Workspace format, strict Clippy/rustdoc, all-target build, documentation checks, scoped policy, and the extended native/generated-consumer/integration/browser gate pass.
+After the review repair, the native workspace gate reports 389 passing tests and one browser-owned ignored fixture; the extended gate separately runs that fixture successfully.
+All 67 `sea-file` tests pass.
+The crate has no executable doctests; its doctest command succeeds with zero tests.
+
+All twelve performance samples on the repaired candidate pass the preselected CPU, paired p95, RSS, and integrity gates.
+Median paired CPU changes are -0.64% for durable64 and -0.81% for buffered64; no speedup is claimed.
+Primary baseline CPU variation is 1.88%, and its p95 repeatability check passes.
+The largest paired increases are 0.030296 ms p95, 0.311719 MiB mean RSS, and 0.296875 MiB peak RSS.
+The sample path has no pressure waiters; no waiter fan-out, storage saturation, or allocation-count performance claim is made.
+The timed generator submits events without blob trees; the buffered control does not establish sustained content-preparation overhead.
+Source inspection finds no new per-operation heap allocation, but the permit wrapper and retained futures are larger and notification adds work.
+Full provenance, commands, source/binary manifests, and raw samples are in the session's `files/stage-b-pressure/` evidence directory.
+
+Initial independent review identified a cancellation gap between the irreversible shutdown fence and pressure termination.
+The deterministic reproduction failed before repair; termination now precedes shutdown's first suspension, and late initializations check the fence after registration.
+A cancelled shutdown therefore leaves terminal observers, without claiming successful durable draining.
+The full lifecycle gates and exact-candidate measurements were rerun; initial evidence remains intact and repaired evidence is under `files/stage-b-pressure/repair/`.
+Fresh complete fixed-base Standard repair review found no actionable findings and verified the shutdown repair, all source/evidence manifests, and the repeated measurements.
+The coordinator verified the frozen state unchanged afterward and accepts Stage B without a validation or performance exception.
+Only plan/report review and commit bookkeeping changed after that verification.
+Stop with B committed and the worktree clean; do not implement C in this run.
+The next step is C: expose count/byte and soft-budget observations on the existing outgoing cache, preserving required entries and leaving accepted writes independent of reader progress.
+Later D/E must bound waiting caller memory and select concrete control/lifecycle ownership; this checkpoint does not solve those policies.

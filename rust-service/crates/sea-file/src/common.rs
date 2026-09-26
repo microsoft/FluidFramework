@@ -11,26 +11,24 @@ use tokio::sync::Semaphore;
 use journal::FileStorageError;
 
 /// Retained preprocessing capacity, shared with a worker if validation outlives its caller.
-pub(crate) type Preparation = Arc<(
-    tokio::sync::OwnedSemaphorePermit,
-    tokio::sync::OwnedSemaphorePermit,
-)>;
+pub(crate) type Preparation = Arc<crate::pressure::Reservation>;
 
 /// Bounds content inputs and encodings before they reach a backend mutation queue.
 pub(crate) struct PreparationBudget {
     /// Maximum concurrent content preparations per opening.
-    requests: Arc<Semaphore>,
-    /// Conservative input, encoding, and metadata charge.
-    bytes: Arc<Semaphore>,
+    budget: Arc<crate::pressure::Budget>,
 }
 
 impl PreparationBudget {
     /// Creates a separate bounded staging budget without worker ownership.
+    #[cfg(test)]
     pub(crate) fn new() -> Self {
-        Self {
-            requests: Arc::new(Semaphore::new(128)),
-            bytes: Arc::new(Semaphore::new(16 * 1024 * 1024)),
-        }
+        Self::with_budget(crate::pressure::DurableWritePressure::new().preparation)
+    }
+
+    /// Shares the opening's preparation authority with its observation handle.
+    pub(crate) fn with_budget(budget: Arc<crate::pressure::Budget>) -> Self {
+        Self { budget }
     }
 
     /// Rejects excess preprocessing before allocating encodings or waiting for metadata reads.
@@ -38,16 +36,25 @@ impl PreparationBudget {
         let bytes = u32::try_from(bytes)
             .map_err(|_| FileStorageError::Rejected("content preparation exceeds byte limit"))?;
         let request = self
+            .budget
             .requests
             .clone()
             .try_acquire_owned()
             .map_err(|_| FileStorageError::Rejected("content preparation queue is full"))?;
         let bytes = self
+            .budget
             .bytes
             .clone()
             .try_acquire_many_owned(bytes)
-            .map_err(|_| FileStorageError::Rejected("content preparation byte budget is full"))?;
-        Ok(Arc::new((request, bytes)))
+            .map_err(|_| FileStorageError::Rejected("content preparation byte budget is full"));
+        match bytes {
+            Ok(bytes) => Ok(Arc::new(self.budget.retain(request, bytes))),
+            Err(error) => {
+                drop(request);
+                self.budget.released();
+                Err(error)
+            }
+        }
     }
 }
 
@@ -405,7 +412,7 @@ mod tests {
         drop(retained);
         assert!(budget.reserve(1).is_err());
         drop(worker);
-        assert_eq!(budget.bytes.available_permits(), 16 * 1024 * 1024);
+        assert_eq!(budget.budget.bytes.available_permits(), 16 * 1024 * 1024);
         assert!(budget.reserve(16 * 1024 * 1024 + 1).is_err());
         assert!(budget.reserve(usize::MAX).is_err());
         let requests = (0..128)
@@ -413,7 +420,7 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(budget.reserve(0).is_err());
         drop(requests);
-        assert_eq!(budget.requests.available_permits(), 128);
+        assert_eq!(budget.budget.requests.available_permits(), 128);
         assert!(budget.reserve(1).is_ok());
     }
 }

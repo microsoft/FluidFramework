@@ -7,6 +7,8 @@ pub mod buffered;
 /// Synchronized storage execution and its factory.
 pub mod durable;
 
+pub mod pressure;
+
 pub use buffered::FileStorage;
 pub use durable::DurableStorage;
 pub use storage::{FileBlobs, FileEvents, FileHandle, FileSnapshots, FileStorageError};

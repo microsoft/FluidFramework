@@ -1199,3 +1199,196 @@ The next implementation stage is B, but it does not start in this measurement ru
 Measurement checkpoint `27ff061eda2` (`perf(rust-service): validate document factory overhead`) commits the reviewed harness repair, regression, measurements, and acceptance record.
 The following documentation-only commit records that identity.
 The work stops at this committed boundary; nothing is merged or pushed.
+
+## Stage B: Durable Storage Observations
+
+### Authority And Scope
+
+After accepting Stage A, the user authorized the next stage and another clean validated/reviewed stopping point.
+The checkpoint-start base and pre-commit HEAD are `6fecba0ea093aa07f62038870bd2ea4b0d6aaca8`.
+Work remains on `rust-service-session-interception` in `/workspaces/FluidFramework-session-interception`.
+The user explicitly selected separate durable-file preparation and mutation observations through a concrete handle, without a new core trait.
+Only Stage B is implemented; C through E, default factory activation, and session policy are unchanged.
+
+`FileBlobs::write_pressure()`, obtainable through `SeaView::blobs()` before constructing a sequencer, returns an optional `DurableWritePressure`.
+It is present only for durable storage.
+`current()` reports each stage's requests, conservative byte charge, and fixed limits.
+`wait_below(requests, bytes)` waits until both stages independently meet the inclusive ceilings, registering before checking to avoid lost releases.
+Above-limit ceilings reject; readiness never reserves capacity.
+The handle shares the existing semaphore authorities and a release notification, not the opening, worker, or filesystem lock.
+Old handles terminate and do not follow replacement openings.
+
+Both original 128-request/16-MiB budgets and their immediate saturation rejection remain unchanged.
+The preparation and mutation stages overlap for some writes and are not a unique-backing-byte ledger.
+Accepted mutation reservations remain in the same blocking-operation scope and survive caller cancellation.
+Partial byte-admission failure explicitly releases the request before notifying.
+Final preparation ownership releases both permits before notification.
+Opening failure is sticky `Ambiguous`; shutdown/drop is sticky `Rejected`; the first terminal transition wins, matching existing invalidation.
+There are no policy callbacks, permanent tasks, new service dependencies, or sequencer/transport changes.
+Buffered preparation shares the reservation implementation but does not advertise this observation API.
+
+No separate storage-to-sequencer handoff queue was introduced.
+The unchanged application pipeline keeps its own 256-entry/4-MiB admission charge until result application and completion; control settlement retains one pending slot.
+Storage pressure ends at blocking completion, not caller result consumption.
+This does not bound caller-owned buffers, returned handles/results, transport memory, waiting observers, OS buffering, or total process memory.
+Later decorators must bound pending payload work independently and admission must remain authoritative after an advisory wait.
+
+### Tests And Development Corrections
+
+Focused regressions cover separate and overlapping stage charges, actual final-owner release, waking every registered waiter, dropping a wait registration, and release racing the first poll.
+They also cover sticky failure/shutdown before capacity drains, handle drop/reopen isolation without retaining the OS lock, cancelled accepted work retaining charges, partial admission rollback, and another document progressing while a hot document waits.
+The existing cancelled-worker-panic regression now also checks that a waiting pressure observer receives `Ambiguous`.
+
+Initial test development exposed misplaced module braces, a pinned-future borrow extending beyond document cleanup, and a Clippy `similar_names` warning; these were corrected before the final gates.
+One initial expectation incorrectly assumed preparation and mutation never overlap while a blob write waits for worker capacity.
+The actual path acquires both; the corrected test asserts one request and the same conservative byte charge in each separate stage.
+These were development failures, not discarded measurements or changes to storage semantics.
+Earlier focused commands passed 58 existing tests, then 65 tests and eight pressure-filtered tests as the regressions were completed.
+Those early outputs are conversation history; the final command-attributed log is the acceptance evidence.
+
+Evidence root:
+`/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/stage-b-pressure/`.
+
+`validation.log` records successful:
+
+- `cargo fmt --all -- --check`;
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings`;
+- `RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps`;
+- `cargo build --workspace --all-targets`;
+- `cargo test -p sea-file --doc` (zero executable doctests, not additional coverage);
+- `node scripts/check-documentation.mjs`;
+- `CARGO_BUILD_JOBS=4 bash test.sh --extended`.
+
+The initial native workspace gate contains 388 passing tests and one browser-owned ignored fixture, including all 66 `sea-file` tests.
+The extended gate separately runs that native fixture successfully, giving 389 native passes across the initial extended run.
+The extended gate also passes the generated TypeScript/WASM consumers, integration and benchmark-correctness tests, and real Chromium transport matrix.
+`policy.log` records passing `pnpm policy-check --path rust-service`.
+Editor diagnostics report no errors in the changed Rust implementations.
+No unrelated monorepo build or dependency installation was required.
+
+### Frozen Write-Path Overhead Check
+
+Before measuring, the plan selected three alternating primary durable64 pairs and three buffered64 control pairs.
+Limits were the same conservative limits used for A: median paired CPU at most +5%, each p95 increase at most `max(10%, 1 ms)`, and each mean/peak RSS increase at most `max(10%, 16 MiB)`.
+Primary baseline CPU variation must be at most 10%; its p95 stability check is also retained.
+The workload uses 32 cached documents, eight service cores, native WebSocket generators, 1,000 operations/second, 64-byte payloads, three seconds of warmup and ten measured seconds.
+Both hosts use direct construction with `SEA_EXPERIMENTAL_SESSION_FACTORY=false`.
+The runner retains A's sample integrity, aligned CPU, offered-load, affinity, and resource guards.
+No builds or tests ran during timed samples.
+
+`provenance.log` establishes that the production crates, manifests, lockfile, Cargo configuration, and toolchain at the B base are unchanged from `02302fe93e75390d808392abf44edd02468762f9`.
+The original Stage A candidate release server is therefore reused as B's baseline, with the same prior generator for both sides.
+Its original build/source/binary evidence remains in the sibling `factory-performance/` directory.
+The B candidate was built from a separate `git archive` of B's exact base, overlaid only with the changed `sea-file` source and included README.
+`candidate-source.sha256` records every extracted file, including the new untracked pressure module; an archive of HEAD alone would not have included B.
+`release-build.log` records the isolated locked release build with the same server and benchmark features.
+The candidate-source manifest was verified unchanged after all samples.
+
+Reproduction commands, from `rust-service/`:
+
+```bash
+node /home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/stage-b-pressure/run-pairs.mjs primary
+node /home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/stage-b-pressure/run-pairs.mjs buffered64
+```
+
+The script refuses to overwrite an existing attempt; preserve evidence and use a distinct evidence directory for another campaign.
+Each sample records its exact binary/generator hashes, command, environment, timestamps, configuration, raw resource samples, and result.
+Both six-sample cells passed on their first attempt, without changing limits.
+
+| Cell | Median paired CPU change | Baseline CPU variation | Result |
+| --- | ---: | ---: | --- |
+| Durable-file, 64 bytes | -0.3034% | 0.8493% | Pass |
+| Buffered-file, 64 bytes | -1.0160% | 4.0214% | Pass |
+
+All paired latency/RSS and per-sample integrity checks pass.
+Primary p95 stability passes.
+The largest paired increases are 0.001903 ms p95, 0.143653 MiB mean RSS, and 0.121094 MiB peak RSS.
+The small negative CPU medians are not evidence of a speedup.
+Measurements exercise the changed storage path with no pressure waiters; focused tests, not timing measurements, cover waiting/cancellation/failure.
+No saturation, waiter-fan-out performance, or allocator-count result is claimed.
+The timed generator submits events with no blob tree; the buffered control does not establish sustained preparation-path overhead.
+Source inspection shows no new per-operation heap allocation: preparation replaces the contents of its existing `Arc`, and mutation reservations remain inline in the retained task.
+The wrapper adds an `Arc` reference and notification work, increases retained value sizes, and adds per-opening budget/signal ownership.
+These are not zero-overhead or total-memory-bound claims.
+
+### Review Gate And Next Stage
+
+Fresh Standard review must cover the complete tracked/untracked diff against the fixed B base, plus raw performance evidence, source/binary provenance, and all directly affected admission/lifecycle boundaries.
+The coordinator owns terminal execution; the reviewer is read-only and may request focused reproductions.
+At most two repair/review cycles are allowed after the initial review.
+No unresolved blocking findings or missing required evidence may be treated as accepted.
+The next implementation stage after a reviewed B commit is C, exposing the existing outgoing cache's count/byte and soft-budget observations without blocking accepted writes or enforcing a hard cache limit.
+Do not begin C in this run.
+
+### Initial Review Finding And Repair
+
+Reviewer `stage-b-pressure-review` (`6d802534-6219-419d-b4be-a3c864dec265`) returned **Changes requested** after complete Standard review.
+It verified all nine source hashes and all measurement/source/tool/binary manifests, inspected the full fixed-base diff and controlling lifecycle/admission paths, and independently recomputed all twelve samples and paired gates.
+It did not execute tests or benchmarks.
+The reviewed diff SHA-256 was `3ab247a9282027187d2e857aff500ae044d92bb13b3d84c1646200eb9fba1bea`; source-manifest SHA-256 was `4f83a1ae1a57a75e45abea9a1186d00818d9eefed1bb378444f17461fafe3aaa`.
+
+One **MEDIUM, blocking** finding concerned cancelled shutdown during initialization.
+`Factory::shutdown` irreversibly set the shared closed flag before awaiting initialization, but pressure was terminated only in the later drain.
+Cancelling at that await could leave observers live permanently although admission was closed.
+It could also let a registered waiter report available capacity instead of terminal rejection when its reservation drained.
+The reviewer requested a deterministic cancellation test including an opening initialized after the fence.
+
+`shutdown-reproduction.log` records the requested regression failing before the repair: the registered observer received zero wakeups instead of one.
+The test holds all worker capacity so a real create operation retains initialization ownership, polls and cancels shutdown, then checks prompt rejection and sticky terminal state before and after releasing preparation capacity.
+After releasing workers, it checks that the late-created opening's pressure is rejected and new mutation admission remains rejected.
+
+The repair publishes terminal pressure to retained openings before shutdown's first suspension.
+Newly initialized openings register first, release the registry lock, and then check the shared shutdown fence.
+Either the shutdown snapshot sees the registration or that post-registration check sees shutdown.
+Notification is outside the registry lock.
+The existing initialization wait, durable drain ownership, admission rules, and successful-shutdown meaning are unchanged.
+The README now distinguishes immediate terminal notification from successful draining.
+
+`repair-validation.log` records all 67 `sea-file` tests passing, then the complete canonical format/Clippy/rustdoc/build/doctest/documentation and extended lifecycle gate passing again.
+The extended run contains 389 workspace native passes, one ignored browser-owned fixture, and one separate successful execution of that fixture.
+No new editor diagnostics were reported.
+The reproduction failure and initial successful measurements remain preserved rather than overwritten.
+
+`repair/` contains a separate exact-source snapshot, manifest, locked release build, runner, and all twelve repeated samples.
+The only runner-path change resolves the prior accepted baseline directory from the additional nesting level; workload, activation, alternation, integrity gates, and thresholds are unchanged.
+All samples pass on the first repaired-candidate attempt:
+
+| Cell | Median paired CPU change | Baseline CPU variation | Result |
+| --- | ---: | ---: | --- |
+| Durable-file, 64 bytes | -0.6364% | 1.8828% | Pass |
+| Buffered-file, 64 bytes | -0.8097% | 3.1731% | Pass |
+
+Primary p95 stability passes; the largest paired increases are 0.030296 ms p95, 0.311719 MiB mean RSS, and 0.296875 MiB peak RSS.
+These supersede the earlier candidate's performance numbers for final acceptance, without invalidating its historical evidence.
+No speedup, sustained preparation-path, waiter-fan-out, allocation-count, or saturation claim is added.
+The finding is repaired and reproduced locally, pending fresh review of the complete updated checkpoint against the same fixed base.
+This uses the first of at most two repair/review cycles.
+
+### Stage B Acceptance And Stopping Point
+
+Fresh reviewer `stage-b-pressure-repair-review` (`45731bb2-5066-4534-b88a-2e72ae49ed5e`) reviewed the complete nine-file original-base checkpoint at Standard depth, not merely the repair.
+It returned **No actionable findings**, verified the prior shutdown-cancellation finding resolved, and requested no further reproduction.
+No changed scope or required boundary was excluded.
+It inspected baseline/current admission, cancellation, error/unwind, shutdown/initialization, wait registration, handle ownership/replacement, shared buffered preparation, and sequencer handoff ownership.
+
+The final reviewed identity is:
+
+- fixed base and pre-commit HEAD: `6fecba0ea093aa07f62038870bd2ea4b0d6aaca8`;
+- diff SHA-256: `967c7402ab5d35fd6300acbbf7896c755b03d0a11e8dc9dc122824601b776fc2`;
+- source-manifest SHA-256: `078159c55763d68377cb1f77815a8f6c7e45ac31d2589842e872f6c5606d4599`.
+
+The reviewer verified all nine worktree source hashes at both review boundaries, plus 703 frozen source files, 38 measurement files, nine tooling/log entries, and three binaries.
+It inspected the failure/passing validation evidence and independently recalculated all twelve repaired samples and paired gates.
+Its execution was limited to read-only inspection, hashing, and calculations; tests/builds/benchmarks remained coordinator-owned.
+The coordinator then verified all frozen source/evidence manifests unchanged in `repair/post-review-verification.log`.
+Only plan/report review and commit bookkeeping changed afterward.
+
+Stage B is accepted with no unresolved blocking finding and no validation or performance exception.
+The one confirmed review defect was reproduced, repaired, and independently re-reviewed within the first repair cycle.
+All stated measurement limitations remain: no sustained preparation-path, waiter-fan-out, saturation, allocator-count, hard-cache, or total-process-memory claim.
+No policy is enabled and default session construction remains direct.
+
+Stop after committing this checkpoint and recording its commit identity.
+The next authorized implementation would be Stage C: outgoing shared-cache count/byte and soft-budget observations, preserving reader-required entries and accepted-write progress.
+Stages D/E must still choose bounded waiting ownership, concrete decorator controls, and shared policy rules.
+Nothing is merged or pushed.

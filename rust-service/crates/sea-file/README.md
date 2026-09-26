@@ -125,6 +125,38 @@ Poisoning blocks authoritative observations during unwinding, before explicit fa
 
 ## Limits
 
+### Durable Write Pressure
+
+Call `view.blobs().write_pressure()` before moving a file-backed `SeaView` into a sequencer.
+For durable storage it returns a cloneable `pressure::DurableWritePressure` handle for that document opening; buffered storage returns `None`.
+No storage-independent trait or network API is added.
+The handle does not retain the document, filesystem lock, or worker, and cannot be reused for a replacement opening.
+
+`current()` reports the existing preparation and accepted-mutation budgets separately, with request counts, conservative byte charges, and their fixed limits.
+Preparation and mutation charges can overlap for the same write; their sum is not unique backing memory.
+Counts and bytes are sampled independently, may change immediately, and are not admission reservations.
+Mutation charges last through blocking completion, not until the sequencer consumes the result.
+Sequencer queues and returned handoff results remain outside these observations; their existing ownership bounds are unchanged.
+Reads, shared worker utilization, OS buffering, and total process memory are also excluded.
+
+`wait_below(requests, bytes)` returns when both budgets are at or below the supplied ceilings.
+For example, `wait_below(127, 8 * 1024 * 1024)` waits for both stages to be below their request limit and no more than half their byte limit.
+It does not promise enough capacity for a particular operation or bound waiting callers' payload memory.
+Future decorators must wait before accepting new payload work and retain their own bounded admission.
+Ceilings above the fixed limits are rejected.
+Release notification is registered before sampling, so a racing release or terminal transition cannot leave a waiter asleep.
+Dropping a wait unregisters it without changing storage admission or accepted work.
+
+Failure returns `Ambiguous`; shutdown or opening drop returns `Rejected`.
+The first terminal transition is sticky, including after charges drain.
+Shutdown terminates pressure observation before waiting for initialization or accepted work, even if the shutdown caller then cancels.
+An opening initialized after that shutdown fence starts with terminal pressure.
+This notification does not establish successful draining; the shutdown future must still complete for that guarantee.
+Budget releases wake waiters without running policy callbacks or starting a per-document task.
+This observation API does not automatically backpressure session writers; current storage saturation still rejects.
+
+### Storage Bounds
+
 Only the suffix after the storage cursor is recovered into memory; history is never pruned, and namespace allocation searches for an unused numeric filename.
 Publication write volume does not grow with retained history.
 A bounded snapshot lookup takes logarithmic frame reads, and streaming the full snapshot history takes linear frame reads with constant cursor space.

@@ -15,24 +15,33 @@ pub(crate) struct Executor {
     /// Async ordering authority; no worker waits for this mutex.
     order: Arc<Mutex<()>>,
     /// Bounds admitted requests, including work waiting for a worker.
-    requests: Arc<Semaphore>,
-    /// Bounds retained mutation input bytes, including in-flight work.
-    bytes: Arc<Semaphore>,
+    budget: Arc<crate::pressure::Budget>,
     /// Factory-wide blocking concurrency shared with reads and recovery.
     workers: Arc<Semaphore>,
 }
 
 /// Maximum retained mutation bytes in one document opening.
-pub(crate) const MAX_BYTES: usize = 16 * 1024 * 1024;
+pub(crate) const MAX_BYTES: usize = crate::pressure::MAX_BYTES;
 
 impl Executor {
     /// Creates an idle executor without starting a permanent worker.
+    #[cfg(test)]
     pub(crate) fn new(workers: Arc<Semaphore>) -> Self {
+        Self::with_budget(
+            workers,
+            crate::pressure::DurableWritePressure::new().mutations,
+        )
+    }
+
+    /// Shares the opening's existing mutation authority with pressure observers.
+    pub(crate) fn with_budget(
+        workers: Arc<Semaphore>,
+        budget: Arc<crate::pressure::Budget>,
+    ) -> Self {
         Self {
             admission: std::sync::Mutex::new(()),
             order: Arc::new(Mutex::new(())),
-            requests: Arc::new(Semaphore::new(128)),
-            bytes: Arc::new(Semaphore::new(MAX_BYTES)),
+            budget,
             workers,
         }
     }
@@ -61,21 +70,31 @@ impl Executor {
             return Err(FileStorageError::Rejected("mutation exceeds byte limit"));
         }
         let request = self
+            .budget
             .requests
             .clone()
             .try_acquire_owned()
             .map_err(|_| FileStorageError::Rejected("mutation queue is full"))?;
         let bytes = self
+            .budget
             .bytes
             .clone()
             .try_acquire_many_owned(u32::try_from(bytes).expect("bounded mutation bytes fit u32"))
-            .map_err(|_| FileStorageError::Rejected("mutation byte budget is full"))?;
+            .map_err(|_| FileStorageError::Rejected("mutation byte budget is full"));
+        let reservation = match bytes {
+            Ok(bytes) => self.budget.retain(request, bytes),
+            Err(error) => {
+                drop(request);
+                self.budget.released();
+                return Err(error);
+            }
+        };
         let order = self.register_order();
         let workers = self.workers.clone();
         Ok(tokio::spawn(async move {
             let _order = order.await;
             crate::common::blocking(workers, move || {
-                let (_request, _bytes) = (request, bytes);
+                let _reservation = reservation;
                 operation()
             })
             .await
@@ -97,7 +116,7 @@ impl Executor {
     /// Fences admission without waiting for a worker or earlier mutations.
     pub(crate) fn close(&self) {
         let _registration = self.admission.lock().unwrap();
-        self.requests.close();
+        self.budget.requests.close();
     }
 
     /// Waits for the captured admission prefix, closing admission first for shutdown.
@@ -105,7 +124,7 @@ impl Executor {
         let barrier = {
             let _registration = self.admission.lock().unwrap();
             if close {
-                self.requests.close();
+                self.budget.requests.close();
             }
             self.register_order()
         };
@@ -130,6 +149,40 @@ mod tests {
 
     /// Unique local namespace for concurrently executing tests.
     static NEXT_ROOT: AtomicU64 = AtomicU64::new(0);
+
+    #[tokio::test]
+    async fn pressure_retains_cancelled_admission_until_worker_completion() {
+        let pressure = crate::pressure::DurableWritePressure::new();
+        let workers = Arc::new(Semaphore::new(1));
+        let executor = Executor::with_budget(workers.clone(), pressure.mutations.clone());
+        let cold = Executor::new(workers.clone());
+        let held = executor.order.clone().lock_owned().await;
+        let (release, blocked) = std::sync::mpsc::channel();
+        {
+            let mutation = executor.run(MAX_BYTES, move || {
+                blocked.recv().unwrap();
+                Ok(())
+            });
+            tokio::pin!(mutation);
+            assert!(futures_util::poll!(&mut mutation).is_pending());
+        }
+        assert_eq!(pressure.current().unwrap().mutations.bytes, MAX_BYTES);
+        assert_eq!(pressure.current().unwrap().mutations.requests, 1);
+        assert!(executor.enqueue(1, || Ok(())).is_err());
+        assert_eq!(pressure.current().unwrap().mutations.requests, 1);
+        cold.run(1, || Ok(())).await.unwrap();
+        let waiting = pressure.wait_below(0, 0);
+        tokio::pin!(waiting);
+        assert!(futures_util::poll!(&mut waiting).is_pending());
+        drop(held);
+        release.send(()).unwrap();
+        tokio::time::timeout(std::time::Duration::from_secs(5), waiting)
+            .await
+            .unwrap()
+            .unwrap();
+        executor.flush(false).await;
+        assert_eq!(pressure.current().unwrap().mutations.requests, 0);
+    }
 
     #[tokio::test]
     async fn admission_limits_reject_without_running_and_release_after_settlement() {
@@ -169,8 +222,8 @@ mod tests {
             drop(held);
             executor.flush(false).await;
             assert_eq!(completed.load(Ordering::Relaxed), count);
-            assert_eq!(executor.requests.available_permits(), 128);
-            assert_eq!(executor.bytes.available_permits(), MAX_BYTES);
+            assert_eq!(executor.budget.requests.available_permits(), 128);
+            assert_eq!(executor.budget.bytes.available_permits(), MAX_BYTES);
         }
         executor.run(MAX_BYTES, || Ok(())).await.unwrap();
     }
