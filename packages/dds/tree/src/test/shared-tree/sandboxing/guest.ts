@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 
 import type { ICodecOptions } from "../../../codec/index.js";
-import type { ChangeMetadata } from "../../../core/index.js";
 import {
 	independentInitializedView,
 	type ForestOptions,
@@ -18,20 +17,15 @@ import type {
 	ImplicitFieldSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
-	type AcknowledgmentMessage,
-	type DataChangeMessage,
 	type HostGuestMessage,
-	getRevision,
-	makePromiseWithResolvers,
 	parseHostGuestMessage,
-	type PromiseWithResolvers,
 	SandboxProtocolError,
 	throwProtocolError,
 	validateTreePayloadVocabulary,
 } from "./common.js";
+import { GuestSynchronization } from "./guestSynchronization.js";
 import { GuestTransportCodec, normalizeTransportData } from "./transport.js";
 import { SandboxSessionEndpoint } from "./session.js";
 
@@ -43,22 +37,10 @@ import { SandboxSessionEndpoint } from "./session.js";
 export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
+	private readonly synchronization: GuestSynchronization<TSchema>;
 	private disposed = false;
 	/** The independent view on the Guest. */
 	public readonly view: TreeViewAlpha<TSchema>;
-	/** The number of local Guest changes that the Host has not acknowledged. */
-	private inFlight: number = 0;
-	/**
-	 * The promise and resolver for the process of sending changes to the Host.
-	 * When this is defined, the Host has not acknowledged all Guest changes.
-	 * The promise resolves when the Host acknowledges all Guest changes.
-	 * When this is undefined, the Host is up to date with the Guest.
-	 */
-	private pushInProgress?: PromiseWithResolvers;
-	/** The callback that unsubscribes from view changes. */
-	private readonly offViewChanged: () => void;
-	/** Whether the Guest is applying changes from the Host. */
-	private isApplyingChangesFromHost: boolean = false;
 
 	/** Receives and routes protocol messages from the Host. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
@@ -66,11 +48,11 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
 				case "dataChange": {
-					this.receiveChangeFromHost(message.change);
+					this.synchronization.receiveChangeFromHost(message.change);
 					break;
 				}
 				case "acknowledgment": {
-					this.receiveAckFromHost();
+					this.synchronization.receiveAckFromHost();
 					break;
 				}
 				case "blobResponse": {
@@ -107,15 +89,13 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
 		handleProtocolError: (error: Error) => void = throwProtocolError,
 		/** Receives diagnostic messages from the synchronization algorithm. */
-		private readonly logger: (message: string) => void = () => {},
+		logger: (message: string) => void = () => {},
 	) {
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
-				this.offViewChanged();
+				this.synchronization.stop(error);
 				this.codec.dispose(error);
-				this.pushInProgress?.rejecter(error);
-				this.pushInProgress = undefined;
 			},
 			handleProtocolError,
 		);
@@ -128,31 +108,13 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			...content,
 			tree: tree as ViewContent["tree"],
 		});
-		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
-			this.session.run(() => {
-				if (!metadata.isLocal || this.isApplyingChangesFromHost) {
-					return;
-				}
-				const newChange = metadata.getChange();
-				// MessagePort delivery is asynchronous. Validate and send before recording a pending edit.
-				this.postMessage({
-					type: "dataChange",
-					change: newChange,
-				} satisfies DataChangeMessage);
-				this.logger(
-					`Guest: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
-				);
-				if (this.pushInProgress === undefined) {
-					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
-					this.pushInProgress = makePromiseWithResolvers();
-					// Report through the session even when the application does not await synchronization.
-					this.pushInProgress.promise.catch((error: unknown) => this.session.fail(error));
-				} else {
-					this.logger("Guest:   Reusing existing push promise.");
-				}
-				this.inFlight += 1;
-			});
-		});
+		this.synchronization = new GuestSynchronization(
+			this.view,
+			(message) => this.postMessage(message),
+			(action) => this.session.run(action),
+			(error) => this.session.fail(error),
+			logger,
+		);
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
@@ -175,55 +137,10 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		return this.session.error;
 	}
 
-	/**
-	 * Attempts to apply a change from the Host.
-	 * The change is ignored if local changes have not yet been reflected on the Host.
-	 * The Guest sends an acknowledgment only if it applies the update.
-	 *
-	 * @param change - The change to apply.
-	 */
-	private receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
-		if (this.inFlight > 0) {
-			// This update does not account for the local changes that the Host has not received.
-			// Ignore it. The Host will send another update after it receives the local changes.
-			this.logger(`Guest: ignoring update from Host (inFlight=${this.inFlight})`);
-			return;
-		}
-		this.isApplyingChangesFromHost = true;
-		try {
-			this.view.applyChange(change);
-		} finally {
-			this.isApplyingChangesFromHost = false;
-		}
-		this.logger("Guest: applied update from Host");
-		this.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
-	}
-
 	private postMessage(message: HostGuestMessage): void {
 		const normalized = normalizeTransportData(message);
 		parseHostGuestMessage(normalized);
 		this.port.postMessage(this.codec.encode(normalized));
-	}
-
-	/** Processes the Host's acknowledgment of a local Guest change. */
-	private receiveAckFromHost(): void {
-		if (this.inFlight <= 0) {
-			throw new SandboxProtocolError("Unexpectedly received ack from Host");
-		}
-		this.logger(`Guest: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
-		this.inFlight -= 1;
-
-		if (this.inFlight === 0) {
-			// The Host has now caught up with all local changes.
-			assert(
-				this.pushInProgress !== undefined,
-				"Missing push promise despite in-flight changes",
-			);
-			const resolver = this.pushInProgress.resolver;
-			this.pushInProgress = undefined;
-			this.logger("Guest:   all my changes were acked. Resolving push promise.");
-			resolver();
-		}
 	}
 
 	/**
@@ -237,6 +154,6 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
-		return this.pushInProgress?.promise;
+		return this.synchronization.updateHostPromise;
 	}
 }
