@@ -25,9 +25,10 @@ import {
 	throwProtocolError,
 	validateTreePayloadVocabulary,
 } from "./common.js";
+import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
-import { GuestTransportCodec, normalizeTransportData } from "./transport.js";
 import { SandboxSessionEndpoint } from "./session.js";
+import { normalizeTransportData } from "./transport.js";
 
 /**
  * An independent TreeView synchronized with a Host through a message protocol.

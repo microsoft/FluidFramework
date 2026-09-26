@@ -19,9 +19,10 @@ import {
 	SandboxProtocolError,
 	throwProtocolError,
 } from "./common.js";
+import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
-import { HostTransportCodec, normalizeTransportData } from "./transport.js";
 import { SandboxSessionEndpoint } from "./session.js";
+import { normalizeTransportData } from "./transport.js";
 
 /**
  * The SharedTree that connects to Fluid services on behalf of a Guest.

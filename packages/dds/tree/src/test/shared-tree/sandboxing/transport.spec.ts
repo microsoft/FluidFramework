@@ -27,11 +27,9 @@ import {
 	SandboxProtocolError,
 	validateTreePayloadVocabulary,
 } from "./common.js";
-import {
-	GuestTransportCodec,
-	HostTransportCodec,
-	normalizeTransportData,
-} from "./transport.js";
+import { GuestTransportCodec } from "./guestTransport.js";
+import { HostTransportCodec } from "./hostTransport.js";
+import { normalizeTransportData } from "./transport.js";
 
 /**
  * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.
@@ -42,37 +40,37 @@ type _DistinctIds =
 	| requireFalse<isAssignableTo<number, HandleToken>>
 	| requireFalse<isAssignableTo<number, BlobRequestId>>;
 
-describe("Sandbox transport codecs", () => {
-	function assertNullPrototypeRecords(value: unknown): void {
-		if (typeof value !== "object" || value === null || isLocalHandle(value)) {
-			return;
-		}
-		if (value instanceof ArrayBuffer) {
-			assert.equal(Object.getPrototypeOf(value), ArrayBuffer.prototype);
-			return;
-		}
-		if (Array.isArray(value)) {
-			assert.equal(Object.getPrototypeOf(value), Array.prototype);
-		} else {
-			assert.equal(Object.getPrototypeOf(value), null);
-		}
-		for (const child of Object.values(value)) {
-			assertNullPrototypeRecords(child);
-		}
+function assertNullPrototypeRecords(value: unknown): void {
+	if (typeof value !== "object" || value === null || isLocalHandle(value)) {
+		return;
 	}
-
-	function setupTransportCodecs() {
-		const bound: IFluidHandleInternal[] = [];
-		const host = new HostTransportCodec(
-			Object.assign(new MockHandle(undefined), {
-				bind: (handle: IFluidHandleInternal) => bound.push(handle),
-			}),
-		);
-		const requests: BlobRequestMessage[] = [];
-		const guest = new GuestTransportCodec((message) => requests.push(message));
-		return { host, guest, bound, requests };
+	if (value instanceof ArrayBuffer) {
+		assert.equal(Object.getPrototypeOf(value), ArrayBuffer.prototype);
+		return;
 	}
+	if (Array.isArray(value)) {
+		assert.equal(Object.getPrototypeOf(value), Array.prototype);
+	} else {
+		assert.equal(Object.getPrototypeOf(value), null);
+	}
+	for (const child of Object.values(value)) {
+		assertNullPrototypeRecords(child);
+	}
+}
 
+function setupTransportCodecs() {
+	const bound: IFluidHandleInternal[] = [];
+	const host = new HostTransportCodec(
+		Object.assign(new MockHandle(undefined), {
+			bind: (handle: IFluidHandleInternal) => bound.push(handle),
+		}),
+	);
+	const requests: BlobRequestMessage[] = [];
+	const guest = new GuestTransportCodec((message) => requests.push(message));
+	return { host, guest, bound, requests };
+}
+
+describe("Transport and endpoint unit tests", () => {
 	it("replaces nested handles without mutating input and binds restored handles", () => {
 		const { host, guest, bound } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(1));
@@ -518,7 +516,9 @@ describe("Sandbox transport codecs", () => {
 		assert.equal(bound.length, 0);
 		assert.equal(requests.length, 0);
 	});
+});
 
+describe("Host and Guest round-trip integration tests", () => {
 	it("round-trips marker-shaped ordinary data in both directions", () => {
 		const { host, guest, bound } = setupTransportCodecs();
 		const inputs = [
