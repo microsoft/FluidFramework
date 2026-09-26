@@ -1046,3 +1046,152 @@ Documentation and scoped policy checks passed again before the foundation commit
 All implementation work is committed; no pressure/policy stage was started, merged, or pushed.
 Resume with the deferred Stage A measurements, or obtain explicit reprioritization before moving to storage pressure in B.
 The factory remains opt-in and Stage A remains performance-unaccepted.
+
+## 2026-09-26: Resumed Factory Performance Campaign
+
+The user authorized completing the deferred measurements.
+This campaign does not implement pressure signals or resource policy.
+Its change-review base is `02302fe93e75390d808392abf44edd02468762f9`.
+The performance comparison instead retains the original direct-host baseline `b89ec852722d3373bd38f9780f5676973a33c117`, so the host's extra retained document wrapper is not hidden in a common baseline.
+The candidate release source is `02302fe93e75390d808392abf44edd02468762f9`.
+
+### Artifacts And Reproduction
+
+Evidence root: `/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/factory-performance/`.
+This persistent session evidence contains source copies, isolated release targets, command logs, runners, manifests, raw results, and failed attempts; large generated artifacts are not committed.
+`provenance.log` records source archive hashes, Rust/Node versions, and host details.
+`sources.sha256` identifies both extracted source trees; `source-verification.log` confirms they remained unchanged after measurements.
+The host is a 32-logical-CPU AMD EPYC 7763 environment; service affinity is `0,2,4,6,8,10,12,14`, with four native generators on their existing separate CPUs.
+Service data uses the owned `/tmp` filesystem, not the artifact filesystem.
+No owned build or test ran during timed samples.
+
+`build.log` records isolated `cargo build --release --locked` commands for both sources, using `sea-webtransport-server/websocket-stream` and `sea-benchmarks/checkpoint-live-cache`.
+The candidate also builds `session-factory`.
+All network comparisons use the same candidate `presentation-native` generator.
+Each `samples/*/summary.json` records exact executable/helper hashes, commands, environment, start/finish times, paired metrics, and gate outcome.
+The original campaign runner is preserved as `run-pairs-original.mjs`, whose hash matches the completed pre-repair summaries.
+`run-pairs.mjs` adds only a new-attempt suffix to preserve failed attempts; it does not relax gates.
+
+From the evidence root, the recorded runner commands are:
+
+```bash
+node run-pairs.mjs primary
+node run-pairs.mjs same-foundation
+node run-pairs.mjs memory64
+node run-pairs.mjs buffered64
+node run-pairs.mjs memory8192
+node run-pairs.mjs buffered8192
+node run-pairs.mjs durable8192
+node run-pairs.mjs no-reader-memory path-repair
+node run-pairs.mjs no-reader-buffered path-repair
+node run-pairs.mjs no-reader-durable path-repair
+node run-churn.mjs
+node run-allocations.mjs
+```
+
+These runners refuse to overwrite completed attempts.
+Reproduction requires new artifact directories and the same recorded source-specific binaries and configuration, not deleting earlier evidence.
+The paired runner reuses sample-integrity and primary-repeatability helpers, but explicitly applies the factory RSS tolerance of 10%/16 MiB rather than the old cache helper's 20%/32 MiB.
+Every cell has three alternating pairs, with original/current direct first in pairs one and three and wrapped first in pair two.
+Both sides enable caching.
+The native WebSocket workload retains 32 documents, one writer and observer each, 1,000 total operations/s, three-second warmup, ten-second measurement, and exact bounded drain.
+The no-reader fixture instead checks exact finite replay after writes, without subscriptions during measurement.
+Existing 120-second, 4-GiB sampled RSS, 8-GiB available memory, and 4-GiB disk guards remain.
+Activation markers distinguish original, current-direct, and wrapped servers.
+
+### Workload Results
+
+All ten cells passed their frozen gates, totaling 60 successful samples.
+CPU changes below are median paired service CPU-per-aligned-operation ratios, not ratios of independently selected medians.
+
+| Comparison | Median CPU change | Paired p95/RSS and integrity |
+| --- | ---: | --- |
+| Original direct versus wrapped: durable-file, 64 bytes (primary) | +0.19% | Pass |
+| Current direct versus wrapped: durable-file, 64 bytes | +0.90% | Pass |
+| Original direct versus wrapped: memory, 64 bytes | -1.88% | Pass |
+| Original direct versus wrapped: buffered-file, 64 bytes | -1.28% | Pass |
+| Original direct versus wrapped: memory, 8,192 bytes | -1.43% | Pass |
+| Original direct versus wrapped: buffered-file, 8,192 bytes | -0.26% | Pass |
+| Original direct versus wrapped: durable-file, 8,192 bytes | -0.12% | Pass |
+| Original cached no-reader versus wrapped: memory | -0.02% | Pass |
+| Original cached no-reader versus wrapped: buffered-file | -5.68% | Pass |
+| Original cached no-reader versus wrapped: durable-file | +0.95% | Pass |
+
+Primary baseline CPU variation was 0.69%, below the frozen 10% gate; baseline p95 repeatability also passed.
+Across all successful cells, the largest paired p95 increase was 0.083195 ms and the largest mean/peak RSS increases were 1.1173/1.3672 MiB.
+The no-reader memory control had 21.18% baseline CPU variation.
+Only the primary has the frozen repeatability requirement; the control's median and all paired limits passed, but its coarse low-CPU measurements must not be presented as a reliable speedup.
+No retry selected a more favorable primary or discarded a measured regression.
+
+### Local Churn And Allocation Results
+
+`run-churn.mjs` runs the existing release fixture on CPU 2 for three alternating pairs per backend.
+Each sample uses 32 cached documents, a 320-open warmup and 3,200 measured opens/closes, with exact correctness and cleanup checks.
+The preselected metric is `(open_seconds + close_seconds) / successful_opens`, excluding the separately reported drop, verification, and shutdown durations.
+All 18 samples pass; median paired increases are 5.12% for memory, 1.33% for buffered-file, and 2.73% for durable-file, below the frozen 10% limit.
+
+The separate `allocation-probe/` uses pinned `allocation-counter` 0.8.1 with the candidate's path dependencies and an isolated `target-allocation` build.
+It adds no dependency or unsafe allocator to the service workspace.
+Its lockfile preserves the service dependency versions and records the additional instrumentation crate.
+Allocator sanity checks verify zero allocations for an empty region and one for an opaque boxed value.
+A single current-thread runtime executes the same generic cached-memory submit/live-read loop for direct and pass-through sessions.
+It performs 64 verified warmup operations before counting; factory opening, initial stream construction, close, and final shutdown are outside the measured region.
+Each operation reaches the pending live-read boundary before submitting, then checks exact identity, position, payload, and order.
+The probe verifies empty cache ownership after subscription drop.
+
+`allocations/summary.json` retains source/lock/binary hashes and twelve instrumented samples: three alternating pairs each at 1,000 and 2,000 measured operations.
+Both modes report exactly 17,359 allocations at 1,000 operations and 34,717 at 2,000.
+Every pair has zero additional allocations and zero additional allocated bytes.
+This measures the steady submit/live-read path, not whole-process network or file-worker allocations.
+The instrumented binary was never used for CPU, latency, RSS, or churn acceptance.
+Concrete forwarding source and the existing future/stream identity tests remain complementary evidence for the other session facets.
+
+### Failures, Repairs, And Validation
+
+The first `no-reader-memory` original-baseline attempt failed before the timed workload with `File exists (os error 17)`.
+Both original and candidate Rust fixtures create their requested data directory; the Node runner incorrectly supplied the already-created temporary root.
+The narrow repair passes `resolve(temporaryData.path, "fixture")` while retaining root ownership, filesystem provenance, and cleanup.
+The failed sample remains in `samples/no-reader-memory/`.
+The new runner regression failed before the repair (`no-reader-reproduction.log`) and passed afterward with the helper/gate tests (`no-reader-repair.log`).
+It checks a fresh child path and cleanup even when a fixture exits before measurement.
+The three `*-path-repair` no-reader cells then passed with unchanged binaries and workload.
+
+The first allocation-probe build needed an explicit `LocalSequencer<MemoryStorage>` type parameter.
+That compile failure remains in `allocation-build.log`; the corrected build, strict probe Clippy, and initial direct/wrapped smoke outputs are in `allocation-repair.log`.
+No service source changed for either repair.
+The editor test runner did not discover the Node regression, so validation used `node --test`.
+
+`validation.log` records passing targeted Biome checks, the complete script test suites, scoped repository policy, workspace formatting, strict Clippy/rustdoc, all-target native build, and `bash test.sh`.
+The scoped integration gate includes native tests and generated TypeScript/WASM consumer package tests.
+The extended transport matrix had already passed for the unchanged foundation; this repair affects only the no-reader harness path, which was additionally exercised on all three backends through the full paired cells.
+No policy stage, default activation, protocol, production Rust source, or service dependency changed.
+
+### Measurement Review And Stopping Point
+
+Final independent review covers the harness repair relative to `02302fe93e75390d808392abf44edd02468762f9`, the measurement scripts/probe and raw evidence, and the exact gate calculations above.
+Reviewer `factory-performance-review` (`a3ea9489-535b-4afa-a38b-0d6c0d3389e4`) completed Standard review of the entire five-file change and its measurement inputs, outputs, and controlling boundaries.
+Its disposition was **No actionable findings**, with no requested reproductions or implementation repair.
+It independently recomputed all 60 workload samples, 30 workload pairs, 18 churn samples, and 12 allocation samples against the unchanged limits.
+It also checked both source trees against their Git blobs and verified the source archive hashes, binary/configuration/activation provenance, directory repair, allocator behavior, and exact output/integrity contracts.
+It did not run tests or benchmarks.
+
+The frozen review identity is:
+
+- change-review base and pre-commit HEAD: `02302fe93e75390d808392abf44edd02468762f9`;
+- diff SHA-256: `d1d94862c216fbd91570915b73135a1928fca80f650f7f9d7ebddbb452dd3727`;
+- source-manifest SHA-256: `3c189f3ffaaf0fbbd5f3322d7271009bb6c84d21629321548b1f7b0ba7073b5c`.
+
+All five repository source hashes, 229 data/probe files, 15 tooling/log/provenance files, seven binaries, and 1,396 extracted source files matched at both reviewer boundaries and in the coordinator's verification afterward.
+The reviewer directly inspected the failed and passing validation logs, including 25 passing script tests and the scoped native/generated-consumer gate.
+Prior extended-matrix and editor-discovery results remain historical implementer-reported evidence.
+Recorded workload intervals do not overlap; historical absence of other owned work is an execution record rather than something source inspection alone proves.
+
+Six short memory churn executions ended before the 25-ms RSS sampler fired.
+Their recorded zero peak is an absent sample, not a zero-memory measurement.
+Churn acceptance concerns the measured open/close duration; the full workload cells provide the paired RSS evidence.
+The current-thread allocation and noisy no-reader control limitations above remain unchanged.
+
+The coordinator accepts Stage A's specified performance gates without changing thresholds or using the earlier deferral as a waiver.
+Only plan/report review and commit bookkeeping changes after verification.
+No production default is enabled, and no hard-memory or future-policy guarantee is inferred.
+The next implementation stage is B, but it does not start in this measurement run.

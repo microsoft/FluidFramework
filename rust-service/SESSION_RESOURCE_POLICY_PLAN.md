@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: document-factory foundation committed as `9edf2b2dc1a`; performance acceptance deferred by explicit user authorization.
+Status: Stage A foundation and specified performance gates accepted after independent evidence review.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -16,7 +16,10 @@ Use sequential checkpoints, not parallel-iteration machinery.
 The user subsequently approved a clean commit of the functionally validated, independently reviewed foundation with performance acceptance still pending.
 This exception defers the measurement campaign below; it does not change its limits or count as a performance pass.
 The factory remains opt-in.
-Stage A is not performance-accepted, and stages B through E must not begin during this run.
+At that stopping point Stage A was not performance-accepted.
+Stages B through E must not begin during this run.
+The user subsequently authorized resuming the performance campaign.
+Its completed measurements and harness repair are recorded below and in the cumulative report; stop again before implementing B.
 
 ## Change Of Direction
 
@@ -127,7 +130,7 @@ Generated local memory construction can remain explicitly direct; do not adverti
 No resource policy, pressure signals, automatic lifecycle owner, storage admission change, or production sequencing/cache rewrite belongs in A.
 Update API documentation and a changeset.
 Run the applicable [Development](DEVELOPMENT.md) gates and focused forwarding/cancellation tests.
-The frozen overhead comparison below remains pending under the explicit stopping-point exception.
+The frozen overhead comparison below has now run and passed independent evidence review.
 Obtain a fresh independent Standard review of the complete fixed-base change.
 Commit only after passing gates or an explicitly accepted, recorded exception.
 Do not reinterpret missing evidence as a pass to obtain a clean tree.
@@ -225,14 +228,12 @@ Default host construction remains direct.
 Fresh complete fixed-base Standard review found no actionable findings.
 The coordinator verified all 22 source hashes and the staged diff unchanged after review.
 Only gate/commit bookkeeping changed afterward.
-The clean stopping point accepts the foundation under the performance-timing exception, not Stage A performance acceptance.
+The original clean stopping point accepted the foundation under the performance-timing exception, not Stage A performance acceptance.
 
 ### Resume After The Foundation Commit
 
-First close the deferred Stage A measurement campaign, or obtain an explicit reprioritization before starting B.
-Do not treat the stopping-point exception as permission to skip measurements permanently.
 Commit `9edf2b2dc1a` contains the reset and reviewed factory foundation; its parent is the fixed comparison base above.
-The following documentation-only commit records this stopping point.
+Documentation commit `02302fe93e7` records that original stopping point.
 Use the latest dated section of the cumulative report for final checks and review identity.
 
 The new `sea-benchmarks` `session-factory` binary provides bounded direct/pass-through open/close correctness and timing samples.
@@ -243,6 +244,31 @@ Neither fixture alone supplies the full acceptance campaign.
 Preserve the original direct-host baseline when comparing the extra retained document wrapper.
 Do not reuse the old checkpoint-1 RSS helper unchanged: its 20%/32 MiB tolerance is not the frozen 10%/16 MiB factory tolerance.
 
+### Resumed Performance Campaign
+
+The original direct-host baseline is `b89ec852722d3373bd38f9780f5676973a33c117`; the candidate is `02302fe93e75390d808392abf44edd02468762f9`.
+Both use live caching.
+The candidate additionally runs a same-foundation direct-versus-wrapped comparison.
+Isolated release targets, source manifests, binary hashes, configurations, commands, raw samples, and failed attempts are retained under the session's `files/factory-performance/` directory.
+The cumulative report gives the full absolute evidence path and reproduction commands.
+
+All 60 successful workload samples across ten three-pair cells meet the frozen CPU, p95, RSS, and integrity gates.
+Primary median CPU cost is +0.19%; its baseline CPU variation is 0.69%.
+The largest paired p95 increase is 0.084 ms; largest mean/peak RSS increases are 1.12/1.37 MiB.
+The no-reader memory control is noisier (21.18% baseline CPU variation); only the primary has a frozen repeatability gate, and no control speedup is claimed.
+Open/close medians pass on memory (+5.12%), buffered-file (+1.33%), and durable-file (+2.73%).
+A separate current-thread allocator-instrumented memory submit/live-read probe reports zero extra allocations or allocated bytes in all six pairs.
+That probe excludes factory opening/closure and file-worker/network allocation totals; it is not a process-memory bound.
+
+The first no-reader run failed before measurement because its fixture received an already-created directory.
+The runner now passes a new child path inside its owned temporary root; a regression test and all three repaired no-reader cells pass.
+No production Rust source, dependency manifest, default activation, workload, or acceptance threshold changed.
+The extra allocation-counter dependency exists only in the isolated measurement probe, not the service workspace.
+
+Fresh Standard review found no actionable findings, independently recomputed all gates, and verified the complete source, binary, and measurement manifests.
+The coordinator verified the unchanged evidence afterward and accepts Stage A's specified performance gates without a threshold exception.
+Only review and commit bookkeeping changed after the reviewed snapshot.
+The next implementation stage is B; do not start it in this measurement run.
 When moving to B, choose fixed durable-storage configuration and a minimal advisory observation before adding a policy.
 Check whether current storage-to-sequencer ownership actually leaves an unbounded interval; do not introduce a handoff ledger speculatively.
 Leave lifecycle ownership and dequeue-versus-delivery accounting decisions to the concrete controls in C through E.

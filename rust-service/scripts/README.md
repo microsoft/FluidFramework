@@ -9,6 +9,8 @@ This includes Sea event and content data, Tinylicious LevelDB data, and Tinylici
 Each result records the temporary path, filesystem type, mount source, and device identity.
 The runner removes only its owned data directory after stopping the service and collecting file inventories.
 Benchmark artifacts can therefore use persistent storage without moving either service's file-backend input/output off `/tmp`.
+The no-reader runner gives its fixture a new child path inside the owned temporary root, because the fixture creates its own data directory.
+Run its path and cleanup regression with `node --test rust-service/scripts/benchmark-no-reader.test.mjs`.
 
 ## Commands
 

@@ -19,7 +19,13 @@ mkdirSync(output, { recursive: true });
 const temporaryData = createTemporaryBenchmarkData("sea-no-reader-data");
 const child = spawn(
 	"taskset",
-	["-c", "0,2,4,6,8,10,12,14", resolve(binary), backend, temporaryData.path],
+	[
+		"-c",
+		"0,2,4,6,8,10,12,14",
+		resolve(binary),
+		backend,
+		resolve(temporaryData.path, "fixture"),
+	],
 	{ stdio: ["pipe", "pipe", "pipe"] },
 );
 const ticks = Number(execFileSync("getconf", ["CLK_TCK"], { encoding: "utf8" }));
