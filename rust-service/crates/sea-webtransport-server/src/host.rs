@@ -34,6 +34,13 @@ struct HostedDocument<Storage: SeaStorage> {
     sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
     /// Experimental pass-through path; absence preserves direct session construction.
     factory: Option<PassThroughFactory<LocalSessionFactory<Storage>>>,
+    /// Opt-in bounded policy path; no pressure feedback or autonomous close owner.
+    policy_factory: Option<
+        sea_core::policy::PolicyFactory<
+            LocalSessionFactory<Storage>,
+            crate::resource_policy::AdmissionPolicy,
+        >,
+    >,
 }
 
 impl<Storage: SeaStorage + 'static> HostedDocument<Storage> {
@@ -44,7 +51,25 @@ impl<Storage: SeaStorage + 'static> HostedDocument<Storage> {
     ) -> Arc<Self> {
         let factory =
             intercept.then(|| PassThroughFactory::new(LocalSessionFactory::new(sequencer.clone())));
-        Arc::new(Self { sequencer, factory })
+        Arc::new(Self {
+            sequencer,
+            factory,
+            policy_factory: None,
+        })
+    }
+
+    /// Shares one admission policy across every decorated session of the document.
+    fn with_policy(sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>) -> Arc<Self> {
+        let policy = Arc::new(crate::resource_policy::AdmissionPolicy::new());
+        let policy_factory = Some(sea_core::policy::PolicyFactory::new(
+            LocalSessionFactory::new(sequencer.clone()),
+            policy,
+        ));
+        Arc::new(Self {
+            sequencer,
+            factory: None,
+            policy_factory,
+        })
     }
 }
 
@@ -54,6 +79,8 @@ struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
     live_cache: bool,
     /// Enables factory interception without adding admission or lifecycle policy.
     intercept: bool,
+    /// Selects bounded policy decoration independently of pass-through interception.
+    policy: bool,
     /// Factory retaining the backend namespace independently of active views.
     storage: Arc<Storage>,
     /// Serializes first recovery; failed attempts are never cached.
@@ -76,9 +103,17 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
         Self {
             live_cache,
             intercept,
+            policy: false,
             storage: Arc::new(storage),
             documents: Arc::new(Mutex::new(BTreeMap::new())),
         }
+    }
+
+    /// Creates the policy-enabled document registry without changing the default paths.
+    fn with_policy(storage: Storage, live_cache: bool) -> Self {
+        let mut registry = Self::configured(storage, live_cache, false);
+        registry.policy = true;
+        registry
     }
 
     /// Allocates a backend identity and retains its recovered exclusive view.
@@ -87,6 +122,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
         let storage = self.storage.clone();
         let live_cache = self.live_cache;
         let intercept = self.intercept;
+        let policy = self.policy;
         storage_worker(async move {
             let (id, view) = storage.create_view().await.map_err(error_response)?;
             let runtime = if live_cache {
@@ -97,7 +133,11 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
             .map_err(error_response)?;
             documents.insert(
                 id.as_bytes().to_vec(),
-                HostedDocument::new(runtime, intercept),
+                if policy {
+                    HostedDocument::with_policy(runtime)
+                } else {
+                    HostedDocument::new(runtime, intercept)
+                },
             );
             Ok(id)
         })
@@ -116,6 +156,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
         let storage = self.storage.clone();
         let live_cache = self.live_cache;
         let intercept = self.intercept;
+        let policy = self.policy;
         let id = id.clone();
         storage_worker(async move {
             let view = storage
@@ -129,7 +170,11 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
                 sea_sequencer::session::LocalSequencer::recover(view).await
             }
             .map_err(error_response)?;
-            let runtime = HostedDocument::new(runtime, intercept);
+            let runtime = if policy {
+                HostedDocument::with_policy(runtime)
+            } else {
+                HostedDocument::new(runtime, intercept)
+            };
             documents.insert(id.as_bytes().to_vec(), runtime.clone());
             Ok(runtime)
         })
@@ -272,6 +317,17 @@ where
         }
     };
     let document = registry.open(&id).await?;
+    if let Some(factory) = &document.policy_factory {
+        let opened = factory
+            .open_session(reference)
+            .await
+            .map_err(error_response)?;
+        return Ok((
+            id,
+            opened.id,
+            Arc::new(SessionDispatcher::new(Arc::new(opened.session))),
+        ));
+    }
     if let Some(factory) = &document.factory {
         let opened = factory
             .open_session(reference)
@@ -353,6 +409,31 @@ impl BuiltInSeaHost {
     #[must_use]
     pub fn new_with_pass_through(root: PathBuf, mode: StorageMode, live_cache: bool) -> Self {
         Self::configured(root, mode, live_cache, true)
+    }
+
+    /// Enables bounded document admission through policy decorators.
+    ///
+    /// This bounds pending logical inputs and live-reader admission, not total memory.
+    /// It does not yet wait for storage pressure or autonomously close rejected writers.
+    #[must_use]
+    pub fn new_with_policy(root: PathBuf, mode: StorageMode, live_cache: bool) -> Self {
+        Self::with_initializer(move || {
+            let root = root.join("documents");
+            Ok(match mode {
+                StorageMode::Memory => Arc::new(DocumentRegistry::with_policy(
+                    MemoryStorage::new(),
+                    live_cache,
+                )),
+                StorageMode::BufferedFile => Arc::new(DocumentRegistry::with_policy(
+                    FileStorage::open(root).map_err(error_response)?,
+                    live_cache,
+                )),
+                StorageMode::DurableFile => Arc::new(DocumentRegistry::with_policy(
+                    DurableStorage::open(root).map_err(error_response)?,
+                    live_cache,
+                )),
+            })
+        })
     }
 
     /// Keeps runtime-selected backend construction identical on both comparison paths.
@@ -816,6 +897,7 @@ mod tests {
     use sea_core::{
         BlobDirectory, BlobTreeId, Event, EventPosition,
         archive::{EventSubmission, SnapshotParticipation},
+        factory::SessionFactory,
         session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
         storage::{LoadStart, Snapshot, StorageHandle},
     };
@@ -835,12 +917,16 @@ mod tests {
 
     #[tokio::test]
     async fn retained_document_factory_intercepts_before_allocation_and_dispatches_all_opens() {
-        for intercept in [false, true] {
-            let registry =
-                DocumentRegistry::configured(sea_memory::MemoryStorage::new(), true, intercept);
+        for mode in 0..3 {
+            let registry = if mode == 2 {
+                DocumentRegistry::with_policy(sea_memory::MemoryStorage::new(), true)
+            } else {
+                DocumentRegistry::configured(sea_memory::MemoryStorage::new(), true, mode == 1)
+            };
             let id = registry.create().await.unwrap();
             let document = registry.open(&id).await.unwrap();
-            assert_eq!(document.factory.is_some(), intercept);
+            assert_eq!(document.factory.is_some(), mode == 1);
+            assert_eq!(document.policy_factory.is_some(), mode == 2);
             assert!(Arc::ptr_eq(&document, &registry.open(&id).await.unwrap()));
             let (_, first, author) = super::open(
                 &registry,
@@ -890,6 +976,36 @@ mod tests {
             sibling.connection_closed(false).await;
             document.sequencer.shutdown().await.unwrap();
         }
+    }
+
+    #[tokio::test]
+    async fn policy_reader_permits_are_document_wide_and_refusal_does_not_register() {
+        let registry = DocumentRegistry::with_policy(sea_memory::MemoryStorage::new(), true);
+        let id = registry.create().await.unwrap();
+        let document = registry.open(&id).await.unwrap();
+        let factory = document.policy_factory.as_ref().unwrap();
+        let first = factory.open_session(None).await.unwrap().session;
+        let second = factory.open_session(None).await.unwrap().session;
+        let readers = (0..128).map(|_| first.read(None, None)).collect::<Vec<_>>();
+        let mut refused = second.read(None, None);
+        assert!(refused.next().await.unwrap().is_err());
+        assert_eq!(
+            document.sequencer.live_cache_stats().unwrap().subscriptions,
+            128
+        );
+        assert!(
+            second
+                .load(sea_core::storage::LoadStart::LatestSnapshot)
+                .await
+                .is_err()
+        );
+        drop(readers);
+        let mut replacement = second.read(None, None);
+        assert!(replacement.next().await.unwrap().is_ok());
+        drop(replacement);
+        first.close().await.unwrap();
+        second.close().await.unwrap();
+        document.sequencer.shutdown().await.unwrap();
     }
 
     /// Exercises real file invalidation through experimental document recovery, without polling.

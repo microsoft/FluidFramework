@@ -1397,6 +1397,109 @@ Commit `66499d1d6fec2df4dabc6e707a8c437862c8a09b` (`feat(rust-service): expose d
 The following documentation-only commit records this identity.
 The implementation worktree was clean after the checkpoint commit; stop again after this bookkeeping commit, without beginning C.
 
+## Stage D: Bounded Policy Decorator Controls
+
+### Selected Contract And Implementation
+
+After C, the user selected the recommended existing caller/host-driven close path.
+Policy rejection makes decorated append authority terminal across clones, but no autonomous close owner or successful-durable-close claim is added.
+The exact checkpoint base is `7a482a307d056b14a9a392a5dd9968dbb6bee7d8`.
+The continued work remains in `/workspaces/FluidFramework-session-interception`, branch `rust-service-session-interception`.
+
+The core implementation was delegated to `stage-d-decorators` (`1c2aa99c-0c6b-4b0e-b0c4-6e85c64c4f42`); it modified only core implementation, shared test fixtures, localized policy tests, and core documentation.
+The coordinator implemented host composition, host limits/tests, activation, changeset, and plan/report updates and owns all validation and measurement execution.
+The implementer is not the independent reviewer.
+
+`DocumentPolicy` supplies synchronous session admission, live-reader admission returning a reader permit, write acquisition returning a bounded permit, and asynchronous write readiness.
+`WriteRequest` borrows a submit, blob, or directory input without copying payloads.
+`PolicyFactory` shares one `Arc<Policy>` across its document sessions and checks admission before opening the source.
+It does not suspend between successful source opening and wrapping the returned session.
+`PolicySession` preserves concrete blob/event handles and maps source/policy/terminal errors without hiding classification.
+
+Write permits precede all FIFO and pressure suspension and release before invoking the source.
+Submits share identity-scoped FIFO state and terminal authority across clones; only the head can enter source submission, and it retains its turn through completion.
+State locks protect only short transitions, never policy callbacks, source calls, or awaits; wakeups occur outside locks.
+Pre-source cancellation removes the turn without manufacturing acceptance.
+After source entry, cancellation/failure terminates decorated append authority while the source retains its own accepted-work semantics.
+Close marks terminal and wakes policy-paused operations without waiting for their admission.
+Source close/reconciliation remains caller/host-driven; an abandoned close is not a completion barrier.
+Control/snapshot operations bypass write-pressure waiting.
+
+Reader permits are acquired before constructing an unbounded source read or entering a pending load.
+They survive pending snapshot selection and remain owned by the returned live stream, releasing on cancellation, load failure, observed stream error/end, or drop.
+Finite reads do not acquire them.
+This prevents concurrent pending loads from bypassing document reader admission.
+Reader permits do not retain payloads or source/session capabilities.
+An unpolled revoked stream may keep its admission permit until dropped, even though the cache separately releases retained entries.
+The generic wrapper does not create a second cache-retention registry or promise unpolled generic-stream eviction.
+Stage E will use the existing opening-local cache revocation capabilities.
+
+The server adds default-off `SEA_EXPERIMENTAL_RESOURCE_POLICY=true` and `BuiltInSeaHost::new_with_policy`.
+The executable rejects simultaneous pass-through and policy activation and prints the selected policy mode.
+Each retained document owns one bounded policy with 128 pending-write slots, 16 MiB logical input charges, and 128 live-reader permits.
+The policy is immediately ready after bounded admission: no storage pressure waiting, output-pressure refusal, shedding task, or autonomous close owner yet.
+Normal and pass-through host modes remain unchanged.
+Logical input charges exclude larger shared backing allocations, never-polled caller futures, and transport buffers.
+
+### Validation And Development Repairs
+
+Evidence root:
+`/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/stage-d-controls/`.
+
+All 38 core tests pass, including twelve localized policy tests for pre-source admission, bounded waiting cancellation, FIFO/failure prefix, terminal clones, close independent of policy waits, pending-load reader admission, source error classification, progress/stream cleanup, and capability forwarding.
+The browser-local core fixtures compile with `cargo check -p sea-core --tests --target wasm32-unknown-unknown`.
+Host tests exercise direct/pass-through/policy opens, document-wide reader reservations, refusal before cache registration, load refusal, and release/replacement.
+The concrete bounded policy test verifies request/byte/reader saturation, partial acquisition rollback, and permit release.
+
+`focused-validation.log` preserves the first strict-lint failure: a policy test used similar names `clone` and `close`; the delegate renamed the clone binding.
+`host-validation.log` preserves a coordinator test-module placement error repaired before compilation.
+`validation.log` preserves a missing `SessionFactory` import in the new host test; it was added.
+`host-validation-repair.log` and `validation-repair.log` record the corrected successful checks.
+No failing attempt or measured sample was overwritten.
+
+Final checks pass: format, workspace strict all-target/all-feature Clippy, strict rustdoc, all-target build, core/server doctests (zero executable tests), core WASM test compilation, documentation checker, scoped policy, and the extended gate with policy activation.
+The extended native workspace has 410 passing tests and one ignored browser-owned fixture; the browser harness separately runs that fixture successfully.
+Generated TypeScript/WASM consumer, integration, benchmark-correctness, and Chromium transport tests pass.
+Executable activation markers in the integration log show `EXPERIMENTAL_RESOURCE_POLICY=true`.
+Default-mode core/server tests also passed before the enabled extended gate.
+Editor diagnostics report no errors.
+
+### Frozen Bounded-Policy Measurements
+
+Before measuring, the plan retained median CPU +5%, every paired p95 `max(10%, 1 ms)`, and every paired mean/peak RSS `max(10%, 16 MiB)` limits.
+The primary requires CPU variation at most 10% and stable p95.
+Three alternating pairs each compare the accepted C direct cached host to the D bounded-policy cached host for durable64, memory64, and memory8192.
+Workload, affinity, source/binary provenance, resource guards, aligned CPU and integrity checks are unchanged from C.
+The policy path intentionally adds guarded futures/streams; no zero-additional-allocation requirement or claim applies to it.
+
+`provenance.log` compares every production crate/configuration/manifest/toolchain file of C's frozen binary source with D's exact Git base.
+The candidate archive overlays all changed and untracked crate files, including the new policy modules/tests and included READMEs.
+`candidate-source.sha256` records the complete frozen inputs and is verified after samples.
+`release-build.log` records the locked isolated release build; both sides use the same earlier generator.
+The runner checks `EXPERIMENTAL_RESOURCE_POLICY=true` on candidate samples and the absence of that marker in the original C baseline.
+Pass-through remains off on both sides.
+No builds/tests ran during timed samples.
+
+All eighteen samples pass on their first attempt:
+
+| Cell | Median paired CPU change | Baseline CPU variation | Result |
+| --- | ---: | ---: | --- |
+| Durable-file, 64 bytes | +0.3590% | 1.2449% | Pass |
+| Memory, 64 bytes | +1.2387% | 4.7978% | Pass |
+| Memory, 8,192 bytes | +1.5652% | 1.8307% | Pass |
+
+Primary p95 stability and every paired/sample gate pass.
+Largest paired increases are 0.146724 ms p95, 0.546680 MiB mean RSS, and 0.539063 MiB peak RSS.
+This exercises full bounded policy decoration, not storage-pressure waiting, active shedding, waiter fan-out, or allocator counts.
+The frozen runner and per-sample commands/configuration/timestamps/resources/results remain in the evidence directory.
+
+### Review And E Boundary
+
+Fresh read-only Standard review must cover the complete original-base scope and the new policy/state-machine, host-composition, admission/lifecycle, stream/error/handle, native/WASM, and performance boundaries.
+The coordinator owns terminal reproductions and at most two repair/review cycles are allowed.
+Do not commit on unresolved blockers or missing evidence.
+After D acceptance, E supplies the concrete storage/cache feedback and independent coalesced reader-shedding driver, retaining the selected caller/host closure contract.
+
 ## Stage C: Outgoing Soft-Budget Observations
 
 ### Resumed Authority And Implementation
@@ -1521,3 +1624,27 @@ Commit `3e782da73c721b3a2d4a7c2f7867c6f74f2a13fd` (`feat(rust-service): expose o
 The following documentation-only commit records this identity.
 The worktree was clean after the implementation commit; pause for the recorded D/E lifecycle decision after committing this bookkeeping.
 Nothing is merged or pushed.
+
+### Current Resume State: Stage D
+
+The user resolved the C stopping-point decision in favor of caller/host-driven close.
+Stage D is implemented, validated, and measured; its detailed record is under [Stage D: Bounded Policy Decorator Controls](#stage-d-bounded-policy-decorator-controls).
+The C stopping-point directions above are historical and no longer pause execution.
+Fresh complete Stage D review is the next gate before committing and continuing to E.
+
+### Stage D Acceptance
+
+Reviewer `stage-d-controls-review` (`96d23802-dd92-4b94-abae-76cda24b58d9`) completed Standard review of all thirteen changed files against `7a482a307d056b14a9a392a5dd9968dbb6bee7d8`.
+It returned **No actionable findings**, with no scope exclusions or requested reproductions; no repair cycle was consumed.
+Coverage included admission/FIFO and cancellation, terminal clones, source settlement and close forwarding, reader/load lifetimes, concrete handles, transformations, document sharing, dispatcher closure, connection-token replacement/reconnect cleanup, and existing cache revocation.
+Third-party policy accounting and nonblocking callbacks remain documented responsibilities rather than enforced behavior of arbitrary policies.
+
+The reviewed diff SHA-256 was `415dc986493ce3e003d69710fc93547f05c8d571397ab4e94d2c1db9faf47a98`; source-manifest SHA-256 was `88e897eec3ac038f37812b41b2f1fab1de04f3acf793060c3ee1fa85ff47d99b`.
+All thirteen worktree hashes matched at both review boundaries.
+The reviewer inspected successful and failed validation logs, verified the source/binary/tool/measurement manifests, and independently compared baseline production inputs and recomputed all eighteen samples and gates.
+It ran only read-only inspection, hashing, and calculations.
+The coordinator reverified frozen manifests in `post-review-verification.log`.
+Only acceptance/commit bookkeeping changed afterward.
+
+Stage D is accepted without validation or performance exceptions.
+Continue to E after committing D; storage/output feedback and active shedding are not supplied by D's bounded immediately-ready host policy.

@@ -17,6 +17,7 @@ cargo run -p sea-webtransport-server -- \
 | `SEA_MAX_CONNECTIONS` | Integer from 1 through 4096 | 16 per listener |
 | `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `true` |
 | `SEA_EXPERIMENTAL_SESSION_FACTORY` | Exactly `true` or `false` | `false` |
+| `SEA_EXPERIMENTAL_RESOURCE_POLICY` | Exactly `true` or `false` | `false` |
 
 Invalid connection limits fail startup; `MAX_CONNECTIONS` reports the effective value.
 Limits apply independently to QUIC and WebSocket and do not bound total memory or guarantee throughput.
@@ -37,6 +38,19 @@ The process reports the effective choice as `EXPERIMENTAL_SESSION_FACTORY`.
 This boundary adds no admission policy, automatic closure, delivery tracking, or resource guarantee.
 It retains the existing connection-incarnation cleanup and error semantics.
 Live-cache activation remains independent, so comparisons must explicitly enable caching on both direct and pass-through paths.
+
+`SEA_EXPERIMENTAL_RESOURCE_POLICY=true`, or `BuiltInSeaHost::new_with_policy`, selects the bounded policy-decorator path instead.
+Resource-policy and pass-through modes are mutually exclusive in the executable.
+The process reports `EXPERIMENTAL_RESOURCE_POLICY` for activation provenance.
+One policy per document permits at most 128 pending writes with 16 MiB of logical input charges and 128 live-reader reservations.
+Write permits cover policy/FIFO waiting, then release before source invocation; source admission remains authoritative.
+Live-reader permits cover pending loads and returned unbounded streams and release on observed termination or drop.
+Finite reads and snapshot/control operations remain outside these limits.
+Larger shared payload backing allocations, never-polled caller futures, and transport buffers are excluded.
+This initial policy is immediately ready after bounded admission: storage-pressure waiting and output-pressure shedding are not yet enabled.
+Policy-rejected application writes make the decorated author terminal across clones; caller/host-driven close and reconciliation remain required.
+Close bypasses pressure waiting and does not cancel already-entered source work.
+No background close owner or total-memory guarantee is added.
 Existing constructors and generic storage hosts remain direct.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.

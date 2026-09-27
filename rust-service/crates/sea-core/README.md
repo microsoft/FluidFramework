@@ -93,4 +93,43 @@ Opening may allocate a future; pending-open cancellation remains the source's re
 Clones retain the source's ownership model, and dropping a wrapper does not promise session closure.
 Direct construction remains an explicit path without factory interception.
 
+### Optional Document Policy
+
+The [`policy`](src/policy.rs) module adds `PolicyFactory`, `PolicySession`, and `DocumentPolicy`.
+Construction supplies one `Arc<Policy>` per document; factory and session clones share that policy without requiring the policy itself to be cloneable.
+No production construction path enables it automatically.
+`PolicyError` preserves concrete source errors and distinguishes policy refusals from terminal wrapper authority.
+All facets preserve the source's concrete blob/event handles.
+
+The policy admits sessions before source open, and admits live readers before constructing an unbounded `read` or a `load` suffix.
+Reader admission synchronously reserves a policy-defined `ReaderPermit`, retained across source load creation and by the returned live stream.
+This bounds pending loads as well as registered readers; cancellation, load failure, observed stream termination, or drop releases the permit.
+Permits do not retain source/session capabilities or payloads.
+Successful source open is wrapped without another suspension.
+Bounded reads and standalone snapshot selection bypass reader admission.
+Streams preserve progress and release the source on an observed error or end; an unpolled generic stream has no extra revocation mechanism.
+Identity-scoped revocation and retention remain the source/cache's responsibility.
+A source-revoked but unpolled stream can retain its admission permit until dropped, even when source/cache retention has already been released independently.
+
+`acquire_write` synchronously reserves a policy-owned RAII permit before any ordering or pressure wait for `submit`, `put_blob`, or `put_directory`.
+Policies must independently bound waiting requests and charged bytes and reject when either reservation is unavailable.
+The borrowed `WriteRequest` exposes the input without requiring encoding or copying.
+The policy defines its byte unit; visible `Bytes` lengths do not bound larger shared backing allocations, upstream buffers, or never-polled caller futures.
+Permits cover both ordering and pressure waits and release on cancellation, refusal, or source entry.
+They are not storage reservations or an accounting ledger for accepted writes.
+`wait_write` can use host-supplied pressure observations; storage remains authoritative under racing writers.
+
+Wrapper clones share FIFO submission ordering, established by first polling admission in the intended caller order.
+The first failed submit makes subsequent wrapper submits terminal across clones.
+Canceling before source entry releases waiting ownership without creating acceptance or ending authority.
+Canceling after source entry ends wrapper authority while preserving source settlement semantics.
+Close bypasses policy and wakes all pre-source writes to refuse; it does not cancel already-entered source work.
+The caller or host still owns polling underlying close/reconciliation after rejection or cancellation.
+Dropping any wrapper or close future does not promise durable departure, and no autonomous task is created.
+
+Membership announcement, snapshot coordination/publication/revocation, reads of immutable content, and capability resolution bypass write pressure.
+This keeps source control and cleanup paths independent of application backpressure.
+Reader refusal alone neither terminates authors nor closes sibling subscriptions.
+The module has no file-backend dependency, resource-observation network protocol, or second reader-retention registry.
+
 Contributor validation commands are in [`DEV.md`](DEV.md).

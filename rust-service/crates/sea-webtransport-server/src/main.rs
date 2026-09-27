@@ -58,7 +58,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(env::VarError::NotPresent) => configured_session_factory(None)?,
         Err(error) => return Err(error.into()),
     };
-    let host = Arc::new(if session_factory {
+    let resource_policy = match env::var("SEA_EXPERIMENTAL_RESOURCE_POLICY") {
+        Ok(value) => configured_resource_policy(Some(&value))?,
+        Err(env::VarError::NotPresent) => configured_resource_policy(None)?,
+        Err(error) => return Err(error.into()),
+    };
+    if resource_policy && session_factory {
+        return Err("resource policy and pass-through factory modes are mutually exclusive".into());
+    }
+    let host = Arc::new(if resource_policy {
+        BuiltInSeaHost::new_with_policy(data, storage_mode, live_cache)
+    } else if session_factory {
         BuiltInSeaHost::new_with_pass_through(data, storage_mode, live_cache)
     } else {
         BuiltInSeaHost::new_with_live_cache(data, storage_mode, live_cache)
@@ -82,6 +92,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("EXPERIMENTAL_LIVE_CACHE=true");
     }
     println!("EXPERIMENTAL_SESSION_FACTORY={session_factory}");
+    println!("EXPERIMENTAL_RESOURCE_POLICY={resource_policy}");
     println!("PROTOCOL=sea");
     println!("MAX_CONNECTIONS={}", transport_config.max_connections);
     println!(
@@ -248,8 +259,27 @@ fn configured_session_factory(value: Option<&str>) -> Result<bool, &'static str>
     }
 }
 
+/// Keeps bounded policy decoration separate from ordinary and pass-through hosting.
+fn configured_resource_policy(value: Option<&str>) -> Result<bool, &'static str> {
+    match value {
+        None | Some("false") => Ok(false),
+        Some("true") => Ok(true),
+        Some(_) => Err("invalid SEA_EXPERIMENTAL_RESOURCE_POLICY; expected true or false"),
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn resource_policy_is_opt_in_with_strict_values() {
+        assert_eq!(super::configured_resource_policy(None), Ok(false));
+        assert_eq!(super::configured_resource_policy(Some("false")), Ok(false));
+        assert_eq!(super::configured_resource_policy(Some("true")), Ok(true));
+        for invalid in ["", "1", "TRUE", " true", "yes"] {
+            assert!(super::configured_resource_policy(Some(invalid)).is_err());
+        }
+    }
+
     #[test]
     fn session_interception_is_opt_in_with_strict_values() {
         assert_eq!(super::configured_session_factory(None), Ok(false));

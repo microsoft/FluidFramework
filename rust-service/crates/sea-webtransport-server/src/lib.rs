@@ -2,6 +2,7 @@
 
 mod dispatch;
 pub mod host;
+mod resource_policy;
 mod server;
 mod stream;
 #[cfg(feature = "websocket-stream")]

@@ -6,6 +6,7 @@ pub mod archive;
 pub mod blob;
 pub mod factory;
 pub mod monitored_stream;
+pub mod policy;
 /// Session contracts above document storage.
 pub mod session;
 pub mod signals;

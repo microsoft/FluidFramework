@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: Stages A through C accepted; D/E lifecycle ownership decision next.
+Status: Stages A through D accepted; Stage E feedback composition next.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -187,6 +187,21 @@ Do not add a publication barrier or block accepted writes to make the soft budge
 
 ### D. Add Minimal Decorator Controls
 
+Fixed checkpoint base: `7a482a307d056b14a9a392a5dd9968dbb6bee7d8`.
+The selected lifecycle guarantee is terminal wrapper append authority after rejection, with caller/host-driven close and no autonomous cleanup owner.
+Generic policy hooks reserve bounded write ownership before suspension and live-reader ownership before `read` or pending `load`.
+Live-reader permits remain with returned streams; they are distinct from cache retention.
+Use a bounded, immediately ready host policy to exercise the full native transport path before E adds storage/output feedback.
+The opt-in `SEA_EXPERIMENTAL_RESOURCE_POLICY=true` path has 128 pending write slots, 16 MiB logical input charges, and 128 live-reader permits per document.
+Default/direct and pass-through modes are unchanged and remain separate comparison paths.
+These logical charges exclude larger caller-owned backing allocations and never-polled inputs.
+
+Before measurements, select the existing median CPU +5%, paired p95 `max(10%, 1 ms)`, and paired mean/peak RSS `max(10%, 16 MiB)` thresholds.
+Run three alternating primary durable64 pairs and memory64/memory8192 controls, exact-base cached direct host against candidate bounded-policy host with the established workload and guards.
+Require primary CPU variation at most 10% and stable p95; preserve all failed attempts.
+The generic wrapper adds allocations for guarded futures/streams, so no zero-allocation-overhead claim applies to the policy path.
+Already-accepted source work, controls, snapshot publication/authority cleanup, and close bypass policy pressure waits.
+
 Support pre-allocation session rejection, pre-operation waiting, reader admission, subscription-only termination, and explicit session closure as required by the first policy.
 Keep native/WASM ownership and cancellation semantics explicit.
 For promised autonomous actions, identify who drives completion if the caller disappears.
@@ -365,3 +380,27 @@ The simpler option keeps the wrapper's append authority terminal and uses the ex
 The stronger option requires a retained, independently polled close owner when the rejecting caller disappears, with additional native/WASM lifecycle integration and tests.
 This choice does not concern ordinary pressure waiting (not yet accepted), reader-only refusal/revocation, or completion of already accepted storage work.
 Those distinctions and the selected cleanup guarantee must be explicit in the decorator API and tests.
+The user selected caller/host-driven close, with rejected append authority terminal across wrapper clones.
+Do not add an autonomous close owner.
+Continue D/E using that guarantee; do not interpret cancellation or wrapper termination as successful durable closure.
+
+### Stage D Validation Boundary
+
+The generic document policy factory/decorator and a separately opt-in bounded host adapter are implemented.
+Policies acquire write permits before FIFO/pressure waits and reader permits before source read/load construction.
+Close wakes paused operations without waiting for policy; already-entered source work remains source-owned.
+Rejected submits make append authority terminal across clones without an autonomous cleanup task.
+The bounded host adapter is immediately ready after admission and has no storage/output feedback yet.
+
+All 38 core tests pass, including twelve policy regressions, with browser-local fixture compilation.
+Workspace canonical gates and the extended integration/browser matrix pass with `SEA_EXPERIMENTAL_RESOURCE_POLICY=true`; activation markers confirm the managed executable path.
+The extended native workspace reports 410 passes and one ignored browser-owned fixture, which also passes separately.
+All eighteen performance samples pass: median CPU changes are +0.36% durable64, +1.24% memory64, and +1.57% memory8192.
+Primary CPU variation is 1.24%, with stable p95.
+Largest paired increases are 0.146724 ms p95, 0.546680 MiB mean RSS, and 0.539063 MiB peak RSS.
+These test the complete bounded decorator path without storage waiting or active reader shedding.
+Source/evidence is under the session's `files/stage-d-controls/`.
+Fresh complete fixed-base Standard review found no actionable findings.
+It inspected all thirteen files and affected lifecycle/transport boundaries and independently recomputed all eighteen samples.
+The coordinator verified the frozen source/evidence unchanged afterward and accepts D without a validation/performance exception.
+Only acceptance/commit bookkeeping changed after review; E may proceed after the D commit.

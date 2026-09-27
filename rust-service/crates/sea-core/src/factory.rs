@@ -438,6 +438,16 @@ mod tests {
         evidence: Arc<()>,
         /// Unchanged classified failure from the other facets.
         error: TestError,
+        /// Records source entry for policy admission tests.
+        calls: Arc<Mutex<Vec<&'static str>>>,
+        /// Makes submit suspend after source entry for cancellation and ordering tests.
+        pending_submit: Arc<std::sync::atomic::AtomicBool>,
+        /// Suspends snapshot/load creation before source subscription registration.
+        pending_load: Arc<std::sync::atomic::AtomicBool>,
+        /// Returns a load failure before creating a source subscription.
+        failed_load: Arc<std::sync::atomic::AtomicBool>,
+        /// Makes a nonpending submit succeed rather than return the sentinel error.
+        successful_submit: Arc<std::sync::atomic::AtomicBool>,
         #[cfg(target_arch = "wasm32")]
         /// Demonstrates that neither the factory nor decorator adds native bounds in browsers.
         local: std::rc::Rc<()>,
@@ -451,6 +461,11 @@ mod tests {
                 stream: Arc::default(),
                 evidence: Arc::default(),
                 error: TestError(Arc::default()),
+                calls: Arc::default(),
+                pending_submit: Arc::default(),
+                pending_load: Arc::default(),
+                failed_load: Arc::default(),
+                successful_submit: Arc::default(),
                 #[cfg(target_arch = "wasm32")]
                 local: std::rc::Rc::default(),
             }
@@ -501,7 +516,8 @@ mod tests {
             stop_after: Option<EventPosition>,
         ) -> ArchiveStream<SessionCommittedEvent, EventPosition, Self::Error> {
             assert_eq!(after, Some(EventPosition::new(7)));
-            assert_eq!(stop_after, None);
+            assert!(stop_after.is_none() || stop_after == Some(EventPosition::new(11)));
+            self.calls.lock().unwrap().push("read");
             self.stream.lock().unwrap().take().unwrap()
         }
 
@@ -510,7 +526,14 @@ mod tests {
             start: LoadStart,
         ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error>
         {
+            self.calls.lock().unwrap().push("load");
             assert!(matches!(start, LoadStart::LatestSnapshot));
+            if self.pending_load.load(Ordering::SeqCst) {
+                self.pending_operation().await?;
+            }
+            if self.failed_load.load(Ordering::SeqCst) {
+                return Err(self.error.clone());
+            }
             Ok(SessionLoad {
                 snapshot: Some(self.snapshot()),
                 events: self.read(Some(EventPosition::new(7)), None),
@@ -526,6 +549,7 @@ mod tests {
         }
 
         async fn put_blob(&self, payload: Bytes) -> Result<Self::BlobHandle, Self::Error> {
+            self.calls.lock().unwrap().push("put_blob");
             assert_eq!(payload, Bytes::from_static(b"payload"));
             Err(self.error.clone())
         }
@@ -539,6 +563,7 @@ mod tests {
             &self,
             directory: BlobDirectory,
         ) -> Result<Self::BlobHandle, Self::Error> {
+            self.calls.lock().unwrap().push("put_directory");
             assert_eq!(directory, BlobDirectory::default());
             Err(self.error.clone())
         }
@@ -574,9 +599,16 @@ mod tests {
         }
 
         async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
+            self.calls.lock().unwrap().push("submit");
             assert_eq!(submission.reference, Some(EventPosition::new(7)));
             assert_eq!(submission.event.payload, Bytes::from_static(b"payload"));
             assert_eq!(submission.event.blob_tree, None);
+            if self.pending_submit.load(Ordering::SeqCst) {
+                self.pending_operation().await?;
+            }
+            if self.successful_submit.load(Ordering::SeqCst) {
+                return Ok(EventPosition::new(8));
+            }
             Err(self.error.clone())
         }
 
@@ -587,6 +619,7 @@ mod tests {
             'life0: 'async_trait,
             Self: 'async_trait,
         {
+            self.calls.lock().unwrap().push("close");
             self.pending_operation()
         }
     }
@@ -636,6 +669,7 @@ mod tests {
             &self,
             reference: Option<EventPosition>,
         ) -> Result<OpenedSession<Self::Session>, Self::Error> {
+            self.0.calls.lock().unwrap().push("open");
             if reference.is_none() {
                 return Err(self.0.error.clone());
             }
@@ -675,6 +709,9 @@ mod tests {
     {
         session
     }
+
+    #[path = "policy_tests.rs"]
+    mod policy_tests;
 
     /// Confirms that a source failure retains both classification and its payload allocation.
     fn assert_error<T>(result: Result<T, TestError>, expected: &TestError) {
