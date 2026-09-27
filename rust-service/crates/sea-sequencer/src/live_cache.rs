@@ -25,6 +25,93 @@ pub struct LiveCacheStats {
     pub entry_capacity: usize,
 }
 
+/// Advisory, opening-local cache observations without retaining entries or storage.
+///
+/// Thresholds are soft targets supplied by the observer, not admission limits.
+/// Reader-required entries remain retained above either target.
+pub struct LiveCachePressure<E> {
+    /// Upgraded only while registering or sampling, never across a wait.
+    cache: Weak<LiveCache<E>>,
+}
+
+impl<E> Clone for LiveCachePressure<E> {
+    fn clone(&self) -> Self {
+        Self {
+            cache: self.cache.clone(),
+        }
+    }
+}
+
+impl<E> LiveCachePressure<E> {
+    /// Samples maintained ownership counts without walking retained events or readers.
+    ///
+    /// # Errors
+    /// Returns the opening's terminal error, or `Closed` after its cache is dropped.
+    /// # Panics
+    /// Panics if the cache state lock is poisoned.
+    pub fn current(&self) -> Result<LiveCacheStats, SessionError<E>> {
+        let cache = self.cache.upgrade().ok_or(SessionError::Closed)?;
+        let state = cache.state.lock().expect("live cache lock");
+        if let Some(terminal) = &state.terminal {
+            return Err(terminal.error());
+        }
+        Ok(state.stats())
+    }
+
+    /// Waits until either retained entries or canonical payload bytes exceeds its target.
+    ///
+    /// This does not reserve capacity, shed readers, or block publication.
+    /// # Errors
+    /// Returns the opening's terminal error, or `Closed` after its cache is dropped.
+    /// # Panics
+    /// Panics if the cache state lock is poisoned.
+    pub async fn wait_above(
+        &self,
+        entries: usize,
+        payload_bytes: usize,
+    ) -> Result<LiveCacheStats, SessionError<E>> {
+        self.wait_for(entries, payload_bytes, true).await
+    }
+
+    /// Waits until both retained counts are at or below the supplied targets.
+    ///
+    /// Registration precedes sampling; cancellation removes only the wait registration.
+    /// Returned handles and transport sends may still retain payloads after cache dequeue.
+    /// # Errors
+    /// Returns the opening's terminal error, or `Closed` after its cache is dropped.
+    /// # Panics
+    /// Panics if the cache state lock is poisoned.
+    pub async fn wait_below(
+        &self,
+        entries: usize,
+        payload_bytes: usize,
+    ) -> Result<LiveCacheStats, SessionError<E>> {
+        self.wait_for(entries, payload_bytes, false).await
+    }
+
+    /// Uses a coalesced wakeup only as a reason to recheck authoritative state.
+    async fn wait_for(
+        &self,
+        entries: usize,
+        payload_bytes: usize,
+        above: bool,
+    ) -> Result<LiveCacheStats, SessionError<E>> {
+        let mut changed = self
+            .cache
+            .upgrade()
+            .ok_or(SessionError::Closed)?
+            .pressure_changed
+            .subscribe();
+        loop {
+            let stats = self.current()?;
+            if (stats.entries > entries || stats.payload_bytes > payload_bytes) == above {
+                return Ok(stats);
+            }
+            changed.changed().await.map_err(|_| SessionError::Closed)?;
+        }
+    }
+}
+
 /// Subscription-only revocation, safe to clone and invoke repeatedly.
 ///
 /// This capability cannot close the session, change author authority, or revoke a sibling.
@@ -97,8 +184,12 @@ struct State<E> {
     reclaimed_through: Option<EventPosition>,
     /// Shared canonical entries, with exact-sized payload backing.
     entries: VecDeque<SessionCommittedEvent>,
+    /// Exact canonical payload bytes retained by the deque, excluding downstream handles.
+    payload_bytes: usize,
     /// Both historical observers and live retention owners.
     subscriptions: BTreeMap<u64, SubscriptionState<E>>,
+    /// Maintained attached-reader count, independent of historical subscriptions.
+    claims: usize,
     /// Checked, never-reused subscription identity.
     next: u64,
     /// Sticky opening termination; new reads must not rejoin.
@@ -111,6 +202,8 @@ pub(super) struct LiveCache<E> {
     state: Mutex<State<E>>,
     /// Coalesced publication, retained-work, and termination notification.
     changed: watch::Sender<()>,
+    /// Pressure-only wakeups do not reschedule live readers on every dequeue.
+    pressure_changed: watch::Sender<()>,
 }
 
 /// Invalidates cached delivery if checkpoint publication fails or is cancelled.
@@ -175,6 +268,17 @@ impl<E> Drop for Subscription<E> {
 }
 
 impl<E> State<E> {
+    /// Constant-time ownership observations under the state lock.
+    fn stats(&self) -> LiveCacheStats {
+        LiveCacheStats {
+            subscriptions: self.subscriptions.len(),
+            claims: self.claims,
+            entries: self.entries.len(),
+            payload_bytes: self.payload_bytes,
+            entry_capacity: self.entries.capacity(),
+        }
+    }
+
     /// Removes entries no attached reader needs and releases slots when entirely empty.
     fn reclaim(&mut self) {
         let floor = self
@@ -189,7 +293,8 @@ impl<E> State<E> {
             .front()
             .is_some_and(|event| Some(event.committed.position) <= through)
         {
-            self.entries.pop_front();
+            let event = self.entries.pop_front().expect("retained front");
+            self.payload_bytes -= event.committed.event.payload.len();
         }
         self.reclaimed_through = through;
         if self.entries.is_empty() {
@@ -217,12 +322,29 @@ impl<E> LiveCache<E> {
                 head,
                 reclaimed_through: head,
                 entries: VecDeque::new(),
+                payload_bytes: 0,
                 subscriptions: BTreeMap::new(),
+                claims: 0,
                 next: 0,
                 terminal: None,
             }),
             changed: watch::channel(()).0,
+            pressure_changed: watch::channel(()).0,
         })
+    }
+
+    /// Observes this cache without extending its lifetime.
+    pub(super) fn pressure(self: &Arc<Self>) -> LiveCachePressure<E> {
+        LiveCachePressure {
+            cache: Arc::downgrade(self),
+        }
+    }
+
+    /// Coalesces ownership changes separately from reader readiness.
+    fn notify_pressure(&self) {
+        if self.pressure_changed.receiver_count() != 0 {
+            self.pressure_changed.send_replace(());
+        }
     }
 
     /// Coalesces retained-work installation with publication notifications.
@@ -240,12 +362,16 @@ impl<E> LiveCache<E> {
         {
             let mut state = self.state.lock().expect("live cache lock");
             state.head = Some(event.committed.position);
-            if state.terminal.is_none() && state.subscriptions.values().any(|claim| claim.attached)
-            {
+            if state.terminal.is_none() && state.claims != 0 {
+                state.payload_bytes = state
+                    .payload_bytes
+                    .checked_add(event.committed.event.payload.len())
+                    .expect("cache payload byte count overflow");
                 state.entries.push_back(event.clone());
             }
             state.reclaim();
         }
+        self.notify_pressure();
         self.notify();
     }
 
@@ -254,12 +380,14 @@ impl<E> LiveCache<E> {
         {
             let mut state = self.state.lock().expect("live cache lock");
             if let Some(claim) = state.subscriptions.remove(&id) {
+                state.claims -= usize::from(claim.attached);
                 *claim.terminal.lock().expect("subscription terminal lock") = terminal;
                 state.reclaim();
             } else {
                 return;
             }
         }
+        self.notify_pressure();
         self.notify();
     }
 
@@ -267,8 +395,10 @@ impl<E> LiveCache<E> {
     pub(super) fn close_session(&self, session: &SessionId) {
         {
             let mut state = self.state.lock().expect("live cache lock");
+            let mut removed = 0;
             state.subscriptions.retain(|_, claim| {
                 if &claim.session == session {
+                    removed += usize::from(claim.attached);
                     *claim.terminal.lock().expect("subscription terminal lock") =
                         Some(Terminal::Closed);
                     false
@@ -276,8 +406,10 @@ impl<E> LiveCache<E> {
                     true
                 }
             });
+            state.claims -= removed;
             state.reclaim();
         }
+        self.notify_pressure();
         self.notify();
     }
 
@@ -292,30 +424,17 @@ impl<E> LiveCache<E> {
                 *claim.terminal.lock().expect("subscription terminal lock") =
                     Some(terminal.clone());
             }
+            state.claims = 0;
             state.terminal = Some(terminal);
             state.reclaim();
         }
+        self.notify_pressure();
         self.notify();
     }
 
     /// Returns ownership measurements without including downstream handles or archive storage.
     pub(super) fn stats(&self) -> LiveCacheStats {
-        let state = self.state.lock().expect("live cache lock");
-        LiveCacheStats {
-            subscriptions: state.subscriptions.len(),
-            claims: state
-                .subscriptions
-                .values()
-                .filter(|claim| claim.attached)
-                .count(),
-            entries: state.entries.len(),
-            payload_bytes: state
-                .entries
-                .iter()
-                .map(|event| event.committed.event.payload.len())
-                .sum(),
-            entry_capacity: state.entries.capacity(),
-        }
+        self.state.lock().expect("live cache lock").stats()
     }
 }
 
@@ -339,6 +458,8 @@ impl<E: Send + Sync + 'static> LiveCache<E> {
                 },
             );
         }
+        drop(state);
+        self.notify_pressure();
         Subscription {
             cache: self.clone(),
             id,
@@ -404,8 +525,12 @@ impl<E: Send + Sync + 'static> Subscription<E> {
             .subscriptions
             .get_mut(&self.id)
             .expect("active subscription");
+        let added = !claim.attached;
         claim.attached = true;
         claim.cursor = cursor;
+        state.claims += usize::from(added);
+        drop(state);
+        self.cache.notify_pressure();
         Ok(true)
     }
 
@@ -448,6 +573,10 @@ impl<E: Send + Sync + 'static> Subscription<E> {
                 .cursor = Some(event.committed.position);
             state.reclaim();
         }
+        drop(state);
+        if event.is_some() {
+            self.cache.notify_pressure();
+        }
         Ok(event)
     }
 }
@@ -457,6 +586,213 @@ mod tests {
     use super::*;
     use crate::codec::{decode_committed, encode_submission};
     use sea_core::{CommittedEvent, Event};
+
+    /// A canonical payload with deliberately sparse event positions.
+    fn event(index: u64, bytes: usize) -> SessionCommittedEvent {
+        SessionCommittedEvent {
+            kind: sea_core::archive::SessionEventKind::Application,
+            committed: CommittedEvent {
+                position: EventPosition::new(index * 101 + 7),
+                event: Event {
+                    payload: bytes::Bytes::from(vec![7; bytes]),
+                    blob_tree: None,
+                },
+            },
+            session_id: SessionId::new(1).unwrap(),
+            reference: None,
+            minimum_reference: None,
+        }
+    }
+
+    /// Checks maintained fields against an independent full ownership recount.
+    fn check_accounting(cache: &LiveCache<std::io::Error>) {
+        let state = cache.state.lock().unwrap();
+        assert_eq!(
+            state.payload_bytes,
+            state
+                .entries
+                .iter()
+                .map(|e| e.committed.event.payload.len())
+                .sum::<usize>()
+        );
+        assert_eq!(
+            state.claims,
+            state
+                .subscriptions
+                .values()
+                .filter(|claim| claim.attached)
+                .count()
+        );
+    }
+
+    /// Counts wakeups without relying on another poll to discover changed state.
+    #[derive(Default)]
+    struct WakeCount(std::sync::atomic::AtomicUsize);
+
+    impl futures_util::task::ArcWake for WakeCount {
+        fn wake_by_ref(this: &Arc<Self>) {
+            this.0.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        }
+    }
+
+    #[test]
+    fn pressure_wakes_all_waiters_and_cancellation_removes_registration() {
+        let cache = LiveCache::<std::io::Error>::new(None);
+        let subscription = cache.subscribe(SessionId::new(1).unwrap());
+        subscription.attach(None).unwrap();
+        let pressure = cache.pressure();
+        let notifications = Arc::new(WakeCount::default());
+        let waker = futures_util::task::waker(notifications.clone());
+        let mut context = std::task::Context::from_waker(&waker);
+        let mut first = Box::pin(pressure.wait_above(0, 0));
+        let mut second = Box::pin(pressure.wait_above(0, 0));
+        let mut cancelled = Box::pin(pressure.wait_above(0, 0));
+        assert!(first.as_mut().poll(&mut context).is_pending());
+        assert!(second.as_mut().poll(&mut context).is_pending());
+        assert!(cancelled.as_mut().poll(&mut context).is_pending());
+        assert_eq!(cache.pressure_changed.receiver_count(), 3);
+        drop(cancelled);
+        assert_eq!(cache.pressure_changed.receiver_count(), 2);
+        cache.publish(&event(0, 1));
+        assert_eq!(notifications.0.load(std::sync::atomic::Ordering::SeqCst), 2);
+        assert!(first.as_mut().poll(&mut context).is_ready());
+        assert!(second.as_mut().poll(&mut context).is_ready());
+    }
+
+    #[tokio::test]
+    async fn pressure_registration_racing_publication_cannot_strand_a_waiter() {
+        for _ in 0..32 {
+            let cache = LiveCache::<std::io::Error>::new(None);
+            let subscription = cache.subscribe(SessionId::new(1).unwrap());
+            subscription.attach(None).unwrap();
+            let pressure = cache.pressure();
+            let barrier = Arc::new(std::sync::Barrier::new(2));
+            let ready = barrier.clone();
+            let publisher = std::thread::spawn(move || {
+                ready.wait();
+                cache.publish(&event(0, 1));
+            });
+            barrier.wait();
+            tokio::time::timeout(std::time::Duration::from_secs(5), pressure.wait_above(0, 0))
+                .await
+                .unwrap()
+                .unwrap();
+            publisher.join().unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn pressure_targets_are_soft_and_dequeue_does_not_wake_sibling_readers() {
+        let cache = LiveCache::<std::io::Error>::new(None);
+        let pressure = cache.pressure();
+        let session = SessionId::new(1).unwrap();
+        let parked = cache.subscribe(session.clone());
+        let advancing = cache.subscribe(session);
+        assert!(parked.attach(None).unwrap());
+        assert!(advancing.attach(None).unwrap());
+        assert!(advancing.attach(None).unwrap());
+        check_accounting(&cache);
+        let above = pressure.wait_above(1, 8);
+        tokio::pin!(above);
+        assert!(futures_util::poll!(&mut above).is_pending());
+        cache.publish(&event(0, 8));
+        assert!(futures_util::poll!(&mut above).is_pending());
+        cache.publish(&event(1, 1));
+        assert_eq!(above.await.unwrap().payload_bytes, 9);
+        assert_eq!(pressure.wait_above(usize::MAX, 8).await.unwrap().entries, 2);
+        assert_eq!(pressure.wait_above(1, usize::MAX).await.unwrap().entries, 2);
+        let below = pressure.wait_below(0, 0);
+        tokio::pin!(below);
+        assert!(futures_util::poll!(&mut below).is_pending());
+        let mut reader_changes = cache.changes();
+        reader_changes.borrow_and_update();
+        let downstream = advancing.next().unwrap().unwrap();
+        assert!(!reader_changes.has_changed().unwrap());
+        assert_eq!(pressure.current().unwrap().payload_bytes, 9);
+        assert!(futures_util::poll!(&mut below).is_pending());
+        parked.revocation().revoke();
+        assert_eq!(pressure.current().unwrap().payload_bytes, 1);
+        check_accounting(&cache);
+        advancing.next().unwrap().unwrap();
+        assert_eq!(below.await.unwrap().payload_bytes, 0);
+        assert_eq!(downstream.committed.event.payload.len(), 8);
+        assert_eq!(pressure.current().unwrap().entry_capacity, 0);
+        drop(advancing);
+        check_accounting(&cache);
+    }
+
+    #[tokio::test]
+    async fn pressure_waits_do_not_retain_the_cache_and_termination_is_not_readiness() {
+        for terminal in [
+            Terminal::Closed,
+            Terminal::RecoveryRequired,
+            Terminal::Storage(Arc::new(std::io::Error::other("failed opening"))),
+        ] {
+            let cache = LiveCache::new(None);
+            let pressure = cache.pressure();
+            let subscription = cache.subscribe(SessionId::new(1).unwrap());
+            subscription.attach(None).unwrap();
+            cache.publish(&event(0, 1));
+            let below = pressure.wait_below(0, 0);
+            let above = pressure.wait_above(1, 1);
+            tokio::pin!(below, above);
+            assert!(futures_util::poll!(&mut below).is_pending());
+            assert!(futures_util::poll!(&mut above).is_pending());
+            cache.terminate(terminal.clone());
+            assert_eq!(
+                std::mem::discriminant(&below.await.unwrap_err()),
+                std::mem::discriminant(&terminal.error())
+            );
+            assert!(above.await.is_err());
+            cache.terminate(Terminal::Closed);
+            assert_eq!(
+                std::mem::discriminant(&pressure.current().unwrap_err()),
+                std::mem::discriminant(&terminal.error())
+            );
+            check_accounting(&cache);
+            assert_eq!(cache.stats(), LiveCacheStats::default());
+        }
+        let cache = LiveCache::<std::io::Error>::new(None);
+        let pressure = cache.pressure();
+        let waiting = pressure.wait_above(0, 0);
+        tokio::pin!(waiting);
+        assert!(futures_util::poll!(&mut waiting).is_pending());
+        assert_eq!(Arc::strong_count(&cache), 1);
+        drop(cache);
+        assert!(matches!(waiting.await, Err(SessionError::Closed)));
+        assert!(matches!(pressure.current(), Err(SessionError::Closed)));
+    }
+
+    #[test]
+    fn maintained_counts_cover_historical_handoff_and_session_cleanup() {
+        let cache = LiveCache::<std::io::Error>::new(None);
+        let session = SessionId::new(1).unwrap();
+        let historical = cache.subscribe(session.clone());
+        cache.publish(&event(0, 8));
+        assert!(!historical.attach(None).unwrap());
+        check_accounting(&cache);
+        assert_eq!(cache.stats().claims, 0);
+        assert!(
+            historical
+                .attach(Some(event(0, 8).committed.position))
+                .unwrap()
+        );
+        let sibling = cache.subscribe(SessionId::new(2).unwrap());
+        assert!(
+            sibling
+                .attach(Some(event(0, 8).committed.position))
+                .unwrap()
+        );
+        check_accounting(&cache);
+        cache.publish(&event(1, 13));
+        cache.close_session(&session);
+        check_accounting(&cache);
+        assert_eq!(cache.stats().claims, 1);
+        assert_eq!(cache.stats().payload_bytes, 13);
+        drop((historical, sibling));
+        check_accounting(&cache);
+        assert_eq!(cache.stats(), LiveCacheStats::default());
+    }
 
     #[test]
     fn advancing_reader_preserves_order_while_a_sibling_retains_the_prefix() {

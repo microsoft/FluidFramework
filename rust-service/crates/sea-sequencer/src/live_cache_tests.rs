@@ -54,6 +54,7 @@ async fn cache_is_opt_in_and_requires_independent_invalidation() {
     let (_, view) = storage.create_view().await.unwrap();
     let baseline = LocalSequencer::<FaultStorage>::recover(view).await.unwrap();
     assert_eq!(baseline.live_cache_stats(), None);
+    assert!(baseline.live_cache_pressure().is_none());
     let (_, view) = storage.create_view().await.unwrap();
     storage
         .events
@@ -65,6 +66,36 @@ async fn cache_is_opt_in_and_requires_independent_invalidation() {
             "backend does not support independent invalidation"
         ))
     ));
+}
+
+#[tokio::test]
+async fn soft_pressure_does_not_block_accepted_writes_and_drains_on_dequeue() {
+    let (_, runtime) = fixture().await;
+    let pressure = runtime.live_cache_pressure().unwrap();
+    let author = member(&runtime).await;
+    let mut reader = author.read(None, None);
+    caught_up(&mut reader).await;
+    let over = pressure.wait_above(1, 4);
+    tokio::pin!(over);
+    assert!(futures_util::poll!(&mut over).is_pending());
+    let first = settles(author.submit(submission(b"first"))).await.unwrap();
+    assert_eq!(over.await.unwrap().entries, 1);
+    let second = settles(author.submit(submission(b"second"))).await.unwrap();
+    assert_eq!(pressure.current().unwrap().payload_bytes, 11);
+    let drained = pressure.wait_below(0, 0);
+    tokio::pin!(drained);
+    assert!(futures_util::poll!(&mut drained).is_pending());
+    let retained = settles(data(&mut reader)).await.unwrap();
+    assert_eq!(retained.committed.position, first);
+    assert!(futures_util::poll!(&mut drained).is_pending());
+    assert_eq!(
+        settles(data(&mut reader)).await.unwrap().committed.position,
+        second
+    );
+    assert_eq!(drained.await.unwrap().payload_bytes, 0);
+    assert_eq!(&retained.committed.event.payload[..], b"first");
+    runtime.shutdown().await.unwrap();
+    assert!(matches!(pressure.current(), Err(SessionError::Closed)));
 }
 
 #[tokio::test]

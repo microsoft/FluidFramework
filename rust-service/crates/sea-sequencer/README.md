@@ -87,6 +87,7 @@ Each entry has one exact-sized canonical payload backing allocation shared by re
 The decoder parses metadata through a temporary shared view of the encoded record and copies only the application payload or membership metadata into that allocation.
 Publication shares this decoded backing without another payload copy; neither cached entries nor returned handles retain the encoded record's backing.
 `live_cache_stats` reports subscription and live-claim counts, retained entry count, exact payload backing bytes, and allocated entry capacity.
+Counts and payload bytes are maintained on ownership changes; snapshots do not scan retained events or subscriptions.
 Payload bytes exclude entry metadata, registry overhead, storage allocations, and downstream handles already returned to callers.
 No claims means no retained entries or entry capacity; returned handles can independently keep their allocation alive.
 `read_with_live_cache_revocation` pairs a stream with its neutral `LiveReadRevocation`.
@@ -94,6 +95,20 @@ No claims means no retained entries or entry capacity; returned handles can inde
 Revocation synchronously removes only that subscription and reports `SessionError::SubscriptionRevoked`; there is no storage fallback or automatic rejoin.
 Drop, membership close, shutdown, and independent backend invalidation remove ownership without another subscriber poll.
 Author authority, sibling subscriptions, and snapshot participation are not revoked by subscription-only revocation.
+
+`live_cache_pressure()` returns a cloneable, opening-local observer, or `None` when caching is disabled.
+Its `current()` samples the same ownership counts.
+`wait_above(entries, payload_bytes)` waits for either count to exceed its target; `wait_below` waits for both counts to be at or below their targets.
+Zero targets are valid.
+These are advisory soft targets: observations can change immediately and do not reserve capacity, reject writes, revoke subscriptions, or change reclamation.
+Required entries remain retained above the targets; unneeded entries are still reclaimed immediately.
+The observer holds no cache entries or storage ownership and does not follow a replacement opening.
+Failure and shutdown return the opening's classified terminal error; dropping the cache returns `Closed`.
+Waits register before sampling and coalesce changes without retaining an event backlog.
+Cancelling a wait removes only its registration.
+Pressure-only notifications are separate from reader readiness, so dequeue does not reschedule sibling readers.
+Progress is cache dequeue, not transport delivery: returned payload handles and in-flight sends are excluded and need separate downstream accounting.
+No session resource policy is enabled by obtaining an observer.
 
 The cache's short synchronous lock covers publication, delivered cursors, handoff, and reclamation, never I/O.
 Lock order is runtime then cache then subscription terminal state; cache and storage invalidation callbacks never enter the runtime or storage.

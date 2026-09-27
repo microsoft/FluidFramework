@@ -1396,3 +1396,123 @@ Nothing is merged or pushed.
 Commit `66499d1d6fec2df4dabc6e707a8c437862c8a09b` (`feat(rust-service): expose durable storage write pressure`) contains the reviewed implementation, tests, changeset, and acceptance record.
 The following documentation-only commit records this identity.
 The implementation worktree was clean after the checkpoint commit; stop again after this bookkeeping commit, without beginning C.
+
+## Stage C: Outgoing Soft-Budget Observations
+
+### Resumed Authority And Implementation
+
+After B's stopping point, the user authorized the remaining plan through completion, a blocker, or a need for guidance.
+Sequential validated/reviewed checkpoints remain mandatory; completing one stage alone no longer requires stopping.
+The Stage C fixed base and pre-commit HEAD are `e8fc540c3a2ada51c389267529b345bc4717a74d`.
+The worktree and branch remain `/workspaces/FluidFramework-session-interception` and `rust-service-session-interception`.
+
+The existing live cache keeps its deque, reader cursors, and immediate reclamation of entries no attached reader needs.
+It now maintains the canonical payload-byte total and attached-reader count at the ownership transitions that already occur under its short state lock.
+`LiveCacheStats` snapshots are constant-time rather than scanning retained events and subscriptions.
+Entry length, allocated entry capacity, and total subscription count still come directly from their owning collections.
+Reclamation subtracts each removed payload's exact canonical length; attach, removal, session cleanup, and termination maintain the claim count.
+
+`LocalSequencer::live_cache_pressure()` returns a concrete `LiveCachePressure<Storage::Error>` for cache-enabled openings and `None` otherwise.
+It holds only a weak cache reference, never a sequencer or storage view.
+`current()` reports ownership or the classified terminal error.
+`wait_above(entries, payload_bytes)` waits for either retained total to exceed its supplied target; `wait_below` waits for both to be at or below their targets.
+Zero and maximum-size targets are valid.
+Each wait registers before sampling, rechecks authoritative state after coalesced notifications, and holds no strong cache reference across suspension.
+Cancellation drops only its receiver; cache destruction wakes receivers and returns `Closed`.
+Targets are advisory and observer-selected, not per-document admission configuration or a hard memory bound.
+
+A separate coalesced watch channel carries pressure changes.
+This avoids making every dequeue into readiness for sibling live readers.
+When no pressure waiters exist, notification does not update the watch value.
+Ownership updates and notifications remain separate: notification occurs after releasing the cache state lock.
+No policy callback/task, storage/sequencing barrier, reader eviction, subscription admission rule, spare-history retention, or default activation is added.
+Progress remains cache dequeue: returned `Bytes`, transformation buffers, and transport in-flight items can retain memory after the reported total falls.
+
+### Validation
+
+Evidence root:
+`/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/stage-c-pressure/`.
+
+`initial-validation.log` and `focused-validation.log` record passing implementation and affected-crate checks.
+The final sequencer suite has 78 passing tests, including six new regressions:
+
+- inclusive/both versus exclusive/either threshold semantics, retained entries above targets, and downstream ownership after dequeue;
+- pressure notifications do not turn dequeue into sibling-reader readiness;
+- every registered waiter is woken and cancellation removes its registration;
+- registration racing publication cannot strand a waiter;
+- terminal classification and cache destruction, without a waiter retaining the cache;
+- independent recounts covering repeated attach, historical handoff, session cleanup, drop, and termination.
+
+The first two bullets share one test; the sixth new test exercises the public observer through the sequencer and confirms that continued writes settle above the soft targets, dequeue drains pressure, and shutdown is terminal.
+Existing cache tests continue to cover failed handoff, storage invalidation, revocation, cancellation, and exact backing ownership.
+No failed validation attempt was discarded.
+
+`validation.log` records passing workspace format, strict all-target/all-feature Clippy, strict rustdoc, all-target build, sequencer doctests, documentation check, and `CARGO_BUILD_JOBS=4 bash test.sh --extended`.
+The doctest target has zero executable tests.
+There are 395 passing workspace native tests and one ignored browser-owned fixture; the extended gate separately runs that fixture successfully and passes the generated TypeScript/WASM consumers, integration, benchmark-correctness, and Chromium transport matrix.
+`policy.log` records passing scoped repository policy; editor diagnostics report no errors in the changed Rust files.
+
+### Frozen Overhead Measurements
+
+Before measurement, the plan selected the existing CPU +5%, paired p95 `max(10%, 1 ms)`, and paired mean/peak RSS `max(10%, 16 MiB)` limits.
+The primary must retain CPU variation at most 10% and stable p95.
+Three alternating pairs each cover durable64, memory64, and memory8192.
+The workload remains direct cached hosts, 32 documents, eight service cores, native WebSocket generators, 1,000 operations/second, three warmup seconds and ten measured seconds.
+The runner retains the existing affinity, resource, offered-load, integrity, and aligned-CPU guards.
+No owned builds or tests ran during samples.
+
+The baseline reuses B's final repaired release server.
+`provenance.log` compares every production crate file, manifest, lockfile, Cargo configuration, and toolchain file in that frozen B source against the exact C Git base.
+The candidate is an archive of C's base overlaid only with the three changed sequencer Rust files and the included README.
+`candidate-source.sha256` records every source file and was verified unchanged after measurement.
+`release-build.log` records the isolated locked release build with the same server/benchmark features.
+Both sides use the same earlier native generator; no driver source or workload changed.
+
+`run-pairs.mjs` runs the `primary`, `memory64`, and `memory8192` cells.
+It refuses existing output directories; preserve the original evidence and use a distinct directory for another campaign.
+Each sample retains commands, environment, timestamps, binary/generator hashes, configurations, raw resources, and results.
+All eighteen samples passed on their first attempt:
+
+| Cell | Median paired CPU change | Baseline CPU variation | Result |
+| --- | ---: | ---: | --- |
+| Durable-file, 64 bytes | +0.1494% | 1.0202% | Pass |
+| Memory, 64 bytes | +1.0805% | 1.8385% | Pass |
+| Memory, 8,192 bytes | -2.2541% | 2.9881% | Pass |
+
+Primary p95 stability and every paired/sample gate pass.
+Largest paired increases are 0.037340 ms p95, 0.028418 MiB mean RSS, and 0.050781 MiB peak RSS.
+The negative control median is not a speedup claim.
+There are no pressure observers in the measured workload, and these samples do not establish waiter-fan-out, saturation-policy, or allocator-count performance.
+The implementation adds per-cache watch state and per-transition bookkeeping; it does not add a per-event heap object.
+No total-process or hard-cache memory guarantee is inferred.
+
+### Review And Continuation Gate
+
+Fresh Standard review must cover the complete tracked/untracked original-base diff and all affected publication, reclamation, handoff, lifecycle, notification, and observation boundaries.
+The reviewer is read-only; the coordinator owns execution and any requested reproductions.
+The usual maximum two repair/review cycles applies.
+Once C passes this gate and is committed, proceed to D/E under the user's resumed authority unless a concrete design decision requires guidance.
+
+### Stage C Acceptance
+
+Reviewer `stage-c-pressure-review` (`75c9bbea-9774-4c8f-9137-a71a4f273df4`) completed Standard review of the entire seven-file checkpoint against `e8fc540c3a2ada51c389267529b345bc4717a74d`.
+The disposition was **No actionable findings**, with no scope exclusions, unresolved required evidence, or requested reproductions.
+It inspected the actual fixed-base diff, counter ownership transitions, publication/handoff/reclamation, lifecycle and storage invalidation, exact backing ownership, generic error/Send constraints, and the pinned Tokio watch implementation.
+
+The reviewed diff SHA-256 was `888840fe0edb484372db6a8f2589354423c28aab1782e9d840340e9865142fef`; source-manifest SHA-256 was `8211d4b84ce520c5f7b2f583b403508f54db7af52473cd1c042a9b6489fbf1ac`.
+The reviewer verified all seven source hashes at both review boundaries, plus 703 candidate-source files, 57 measurement files, 12 tooling/log entries, and three binaries.
+It inspected the validation logs and independently recalculated all eighteen samples' alignment, integrity, resource, and paired gates.
+No tests, builds, benchmarks, edits, or delegation were performed by the reviewer.
+The coordinator reverified the unchanged frozen source and evidence in `post-review-verification.log`.
+Only acceptance/commit bookkeeping changed afterward.
+
+Stage C is accepted without a validation/performance exception or repair cycle.
+The same limitations remain: targets are advisory, cache dequeue excludes downstream retention, and the timed samples have no pressure waiters or saturated policy.
+
+Read-only exploration of D/E identified the next concrete design decision: cleanup ownership after policy rejects an application submission because bounded waiting admission is exhausted.
+The author-session contract requires the first append failure to terminate append authority across clones.
+Existing compression/encryption adapters and host closure provide prior art, but do not by themselves promise autonomous durable cleanup for a new generic decorator after its caller disappears.
+Choose between caller/host-driven close with explicitly terminal wrapper authority, or an independently polled retained close owner.
+The former is the simpler recommendation; the latter adds a stronger lifecycle guarantee requiring additional native/WASM ownership machinery.
+Ordinary pre-admission waiting cancellation, reader-only revocation, and already accepted source work must retain their distinct existing semantics.
+No D/E source changes have been made before this choice.

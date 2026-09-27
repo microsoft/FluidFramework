@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: Stages A and B accepted; stopping before Stage C.
+Status: Stages A through C accepted; D/E lifecycle ownership decision next.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -21,6 +21,8 @@ Stages B through E were not authorized in that foundation run.
 The user subsequently authorized resuming the performance campaign.
 Its completed measurements and harness repair are recorded below and in the cumulative report.
 After that clean stopping point, the user authorized Stage B, stopping before C.
+After B was committed, the user authorized continuing through C, D, and E until finished, blocked, or guidance is required.
+Keep the sequential validation/review commits, but do not stop merely because a stage is complete.
 
 ## Change Of Direction
 
@@ -162,6 +164,19 @@ Test races, bounded waiting ownership, cancellation, shutdown, and unrelated-doc
 No need to unify storage-to-sequencer accounting unless an actual unbounded interval is found.
 
 ### C. Expose Outgoing Soft-Budget Pressure
+
+Fixed checkpoint base: `e8fc540c3a2ada51c389267529b345bc4717a74d`.
+Keep the existing immediate-reclamation policy and deque/cursors.
+Maintain payload bytes and attached-reader counts so snapshots do not scan retained history or the reader registry.
+Expose a weak, concrete opening-local observer with `current`, `wait_above`, and inclusive `wait_below`.
+Targets are observer-selected soft thresholds, not cache admission settings.
+Use separate coalesced pressure notifications so dequeue does not reschedule sibling live readers.
+Terminal failure/shutdown/drop must end waits without retaining the cache or storage.
+
+Before measurement, retain the 5% median paired CPU, `max(10%, 1 ms)` paired p95 increase, and `max(10%, 16 MiB)` paired RSS increase limits.
+Run three alternating durable64 primary pairs and memory64/memory8192 controls with the established native WebSocket workload, source provenance, integrity/resource guards, and 10% primary baseline CPU stability limit.
+Compare direct cached hosts at this exact base and the frozen C candidate.
+No pressure observers are active in these overhead samples; focused tests cover observation and over-target progress.
 
 Add maintained count/byte observations and a soft-budget pressure signal to the existing shared cache.
 Preserve required entries when over budget; reclaim unneeded entries without invoking policy under locks.
@@ -324,3 +339,28 @@ Stop with B committed and the worktree clean; do not implement C in this run.
 Commit `66499d1d6fe` contains the reviewed Stage B implementation and acceptance record; the following documentation-only commit records this stopping-point identity.
 The next step is C: expose count/byte and soft-budget observations on the existing outgoing cache, preserving required entries and leaving accepted writes independent of reader progress.
 Later D/E must bound waiting caller memory and select concrete control/lifecycle ownership; this checkpoint does not solve those policies.
+
+### Resumed Stage C
+
+The user authorized completing the remaining stages without stopping at each commit unless blocked or guidance is needed.
+Stage C now maintains cache payload-byte and attached-reader counts and exposes weak opening-local `LiveCachePressure` observations.
+Soft targets are observer arguments, not admission limits or a new cache policy.
+Separate coalesced notifications cover publication, dequeue/reclamation, membership cleanup, and terminal state without turning every dequeue into sibling-reader readiness.
+
+All 78 sequencer tests pass, including six new pressure/accounting regressions.
+The complete canonical and extended native/generated-consumer/integration/browser gates pass; the native workspace has 395 passes and one browser-owned ignored fixture, which the extended gate separately runs successfully.
+All eighteen overhead samples pass the preselected limits: median CPU changes are +0.15% durable64, +1.08% memory64, and -2.25% memory8192.
+Primary CPU variation is 1.02%, with stable p95.
+Largest paired increases are 0.037340 ms p95, 0.028418 MiB mean RSS, and 0.050781 MiB peak RSS.
+No pressure observer is active in the timed workloads; no waiter-fan-out, saturated policy, or allocation-count claim follows.
+Full source provenance, logs, and samples are retained under the session's `files/stage-c-pressure/`.
+Fresh complete fixed-base Standard review found no actionable findings and independently verified all source/evidence manifests and measurement gates.
+The coordinator verified the snapshot unchanged afterward and accepts C without a validation or performance exception.
+Only acceptance/commit bookkeeping changed after review.
+
+Before implementing D/E, select ownership of close after a policy-rejected application submission.
+The existing author contract makes an append failure terminal across session clones; bounded waiting admission cannot silently introduce retryable append failures.
+The simpler option keeps the wrapper's append authority terminal and uses the existing caller/host close-and-reconciliation path, without promising autonomous durable closure after cancellation.
+The stronger option requires a retained, independently polled close owner when the rejecting caller disappears, with additional native/WASM lifecycle integration and tests.
+This choice does not concern ordinary pressure waiting (not yet accepted), reader-only refusal/revocation, or completion of already accepted storage work.
+Those distinctions and the selected cleanup guarantee must be explicit in the decorator API and tests.

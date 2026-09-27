@@ -37,7 +37,7 @@ mod live_read;
 #[path = "storage_read.rs"]
 mod storage_read;
 
-pub use live_cache::{LiveCacheStats, LiveReadRevocation};
+pub use live_cache::{LiveCachePressure, LiveCacheStats, LiveReadRevocation};
 
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -689,6 +689,14 @@ impl<Storage: SeaStorage + 'static> LocalSequencer<Storage> {
     /// Panics if the cache state lock is poisoned.
     pub fn live_cache_stats(&self) -> Option<LiveCacheStats> {
         self.live_cache.as_ref().map(|cache| cache.stats())
+    }
+
+    /// Observes soft-budget pressure without retaining this opening or its cache.
+    /// Default storage-backed openings return `None`; targets are selected by each observer.
+    pub fn live_cache_pressure(&self) -> Option<LiveCachePressure<Storage::Error>> {
+        self.live_cache
+            .as_ref()
+            .map(live_cache::LiveCache::pressure)
     }
 
     /// Issues neutral revocation capabilities for every current live subscription.
