@@ -1516,3 +1516,8 @@ Choose between caller/host-driven close with explicitly terminal wrapper authori
 The former is the simpler recommendation; the latter adds a stronger lifecycle guarantee requiring additional native/WASM ownership machinery.
 Ordinary pre-admission waiting cancellation, reader-only revocation, and already accepted source work must retain their distinct existing semantics.
 No D/E source changes have been made before this choice.
+
+Commit `3e782da73c721b3a2d4a7c2f7867c6f74f2a13fd` (`feat(rust-service): expose outgoing cache soft-budget pressure`) contains the reviewed Stage C implementation, tests, changeset, and acceptance record.
+The following documentation-only commit records this identity.
+The worktree was clean after the implementation commit; pause for the recorded D/E lifecycle decision after committing this bookkeeping.
+Nothing is merged or pushed.

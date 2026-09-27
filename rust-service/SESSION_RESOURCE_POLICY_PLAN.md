@@ -357,6 +357,7 @@ Full source provenance, logs, and samples are retained under the session's `file
 Fresh complete fixed-base Standard review found no actionable findings and independently verified all source/evidence manifests and measurement gates.
 The coordinator verified the snapshot unchanged afterward and accepts C without a validation or performance exception.
 Only acceptance/commit bookkeeping changed after review.
+Commit `3e782da73c7` contains Stage C and its acceptance record; the following documentation-only commit records this identity before the D/E decision.
 
 Before implementing D/E, select ownership of close after a policy-rejected application submission.
 The existing author contract makes an append failure terminal across session clones; bounded waiting admission cannot silently introduce retryable append failures.
