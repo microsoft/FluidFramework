@@ -181,11 +181,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		// Construct the expected schema independently of the helper used during reconstruction.
 		const expectedSchema = toInitialSchema(
 			createTreeViewSchema(
-				[
-					"upgrade",
-					"nodeUpgrade",
-					"arrayChildrenUpgrade",
-				].map((name) =>
+				["upgrade", "nodeUpgrade", "arrayChildrenUpgrade"].map((name) =>
 					schemaFactory.object(name, {
 						value: schemaFactory.required(schemaFactory.string),
 					}),
