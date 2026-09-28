@@ -21,6 +21,7 @@ sea-memory = { path = "../sea-memory" }
 sea-sequencer = { path = "../sea-sequencer" }
 sea-signals = { path = "../sea-signals" }
 sea-webtransport = { path = "../sea-webtransport" }
+socket2 = "0.6"
 tokio.workspace = true
 thiserror.workspace = true
 wtransport = "=0.7.2"

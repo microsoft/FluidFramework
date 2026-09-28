@@ -19,7 +19,10 @@ export function generatorLayout(configuration) {
 		0,
 		"documents must divide evenly across generator processes",
 	);
-	if (configuration.generator === "native") {
+	if (
+		configuration.generator === "native" &&
+		(configuration.loadMode === undefined || configuration.loadMode === "paced")
+	) {
 		assert.equal(
 			configuration.rate % count,
 			0,

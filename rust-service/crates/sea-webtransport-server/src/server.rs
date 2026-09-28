@@ -17,6 +17,7 @@ use futures_util::{StreamExt as _, stream, stream::FuturesUnordered};
 use thiserror::Error;
 use tokio::{
     sync::watch,
+    task::JoinSet,
     time::{Instant, timeout, timeout_at},
 };
 use wtransport::{
@@ -378,7 +379,7 @@ impl WebTransportServer {
     ///
     /// # Errors
     ///
-    /// Returns an error for invalid limits or endpoint binding failure.
+    /// Returns an error for invalid limits, UDP socket configuration, or endpoint binding failure.
     pub fn bind(
         address: SocketAddr,
         identity: Identity,
@@ -386,8 +387,23 @@ impl WebTransportServer {
         config: TransportConfig,
     ) -> Result<Self, WebTransportError> {
         config.validate()?;
+        let socket = std::net::UdpSocket::bind(address).map_err(transport_error)?;
+        let options = socket2::SockRef::from(&socket);
+        let existing = options.recv_buffer_size().map_err(transport_error)?;
+        let requested = 2 * 1024 * 1024;
+        if existing < requested {
+            options
+                .set_recv_buffer_size(requested)
+                .map_err(transport_error)?;
+            let effective = options.recv_buffer_size().map_err(transport_error)?;
+            if effective < requested {
+                eprintln!(
+                    "Sea UDP receive buffer limited by OS: requested {requested} bytes, effective {effective} bytes"
+                );
+            }
+        }
         let server_config = ServerConfig::builder()
-            .with_bind_address(address)
+            .with_bind_socket(socket)
             .with_identity(identity)
             .keep_alive_interval(Some(config.liveness.heartbeat_interval))
             .max_idle_timeout(Some(config.liveness.inactivity_timeout))
@@ -447,7 +463,7 @@ impl WebTransportServer {
     ///
     /// # Errors
     ///
-    /// Returns the first terminal established-connection error; failed admissions are local.
+    /// Returns a terminal established-connection or task error; failed admissions are local.
     pub async fn serve(self) -> Result<(), WebTransportError> {
         self.serve_until_shutdown().await.map(|_| ())
     }
@@ -456,13 +472,13 @@ impl WebTransportServer {
     ///
     /// # Errors
     ///
-    /// Returns the first terminal established-connection error; failed admissions are local.
+    /// Returns a terminal established-connection or task error; failed admissions are local.
     #[expect(
         clippy::too_many_lines,
         reason = "Keep connection drain and persistence deadline handling together"
     )]
     pub async fn serve_until_shutdown(mut self) -> Result<ShutdownOutcome, WebTransportError> {
-        let mut connections = FuturesUnordered::new();
+        let mut connections = JoinSet::new();
         let mut active_services = BTreeMap::new();
         let mut next_connection_id = 1_u64;
         let mode = loop {
@@ -475,7 +491,7 @@ impl WebTransportServer {
                     let config = self.config.clone();
                     let metrics = Arc::clone(&self.metrics);
                     let establishment_deadline = Instant::now() + config.operation_timeout;
-                    connections.push(async move {
+                    connections.spawn(async move {
                         let result = async {
                             let establishment = timeout_at(establishment_deadline, async {
                                 let request = incoming.await.map_err(transport_error)?;
@@ -497,15 +513,19 @@ impl WebTransportServer {
                         (connection_id, result)
                     });
                 }
-                result = connections.next(), if !connections.is_empty() => {
+                result = connections.join_next(), if !connections.is_empty() => {
                     match result {
-                        Some((connection_id, Ok(()))) => {
+                        Some(Ok((connection_id, Ok(())))) => {
                             active_services.remove(&connection_id);
                         }
-                        Some((connection_id, Err(error))) => {
+                        Some(Ok((connection_id, Err(error)))) => {
                             active_services.remove(&connection_id);
-                            cleanup_services(active_services, &self.metrics).await;
+                            cancel_connections(&mut connections, active_services, &self.metrics).await?;
                             return Err(error);
+                        }
+                        Some(Err(error)) => {
+                            cancel_connections(&mut connections, active_services, &self.metrics).await?;
+                            return Err(transport_error(error));
                         }
                         None => {}
                     }
@@ -526,22 +546,25 @@ impl WebTransportServer {
             ShutdownMode::Drain { timeout } => started + timeout,
         };
         while !connections.is_empty() {
-            match timeout_at(deadline, connections.next()).await {
-                Ok(Some((connection_id, Ok(())))) => {
+            match timeout_at(deadline, connections.join_next()).await {
+                Ok(Some(Ok((connection_id, Ok(()))))) => {
                     active_services.remove(&connection_id);
                 }
-                Ok(Some((connection_id, Err(error)))) => {
+                Ok(Some(Ok((connection_id, Err(error))))) => {
                     active_services.remove(&connection_id);
-                    cleanup_services(active_services, &self.metrics).await;
+                    cancel_connections(&mut connections, active_services, &self.metrics).await?;
                     return Err(error);
+                }
+                Ok(Some(Err(error))) => {
+                    cancel_connections(&mut connections, active_services, &self.metrics).await?;
+                    return Err(transport_error(error));
                 }
                 Ok(None) => break,
                 Err(_) => {
                     let cancelled_connections = connections.len();
                     self.endpoint
                         .close(CLOSE_CODE, b"server shutdown deadline elapsed");
-                    drop(connections);
-                    cleanup_services(active_services, &self.metrics).await;
+                    cancel_connections(&mut connections, active_services, &self.metrics).await?;
                     self.endpoint.wait_idle().await;
                     return Ok(ShutdownOutcome {
                         disposition: ShutdownDisposition::Cancelled,
@@ -568,6 +591,32 @@ impl WebTransportServer {
             elapsed: started.elapsed(),
         })
     }
+}
+
+async fn cancel_connections(
+    connections: &mut JoinSet<(u64, Result<(), WebTransportError>)>,
+    mut services: BTreeMap<u64, Arc<dyn SeaConnectionService>>,
+    metrics: &Metrics,
+) -> Result<(), WebTransportError> {
+    connections.abort_all();
+    let mut failure = None;
+    while let Some(result) = connections.join_next().await {
+        match result {
+            Ok((id, result)) => {
+                // Completed tasks already cleaned up, even if shutdown won the select race.
+                services.remove(&id);
+                if let Err(error) = result {
+                    failure.get_or_insert(error);
+                }
+            }
+            Err(error) if error.is_cancelled() => {}
+            Err(error) => {
+                failure.get_or_insert_with(|| transport_error(error));
+            }
+        }
+    }
+    cleanup_services(services, metrics).await;
+    failure.map_or(Ok(()), Err)
 }
 
 async fn cleanup_services(
@@ -1161,6 +1210,8 @@ async fn write_network_response(
     metrics: &Metrics,
     finish: bool,
 ) -> Result<(), WebTransportError> {
+    // QUIC writes and cached streams can both stay ready without spending Tokio's task budget.
+    tokio::task::consume_budget().await;
     let encoded = sea_v1::encode_response_frame(role, response, limits)?;
     timeout(operation_timeout, async {
         send.write_all(&encoded).await.map_err(transport_error)?;
@@ -1189,12 +1240,14 @@ mod tests {
     struct AdmissionService {
         /// Reconnect-grace arguments in callback order.
         closures: Arc<Mutex<Vec<bool>>>,
+        tasks: Arc<Mutex<Vec<Option<tokio::task::Id>>>>,
     }
 
     impl SeaServiceHost for AdmissionService {
         fn connect(&self, _liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
             Arc::new(Self {
                 closures: self.closures.clone(),
+                tasks: self.tasks.clone(),
             })
         }
     }
@@ -1210,6 +1263,7 @@ mod tests {
 
         async fn connection_closed(&self, allow_reconnect_grace: bool) {
             self.closures.lock().unwrap().push(allow_reconnect_grace);
+            self.tasks.lock().unwrap().push(tokio::task::try_id());
         }
 
         async fn open_event_stream(
@@ -1296,6 +1350,39 @@ mod tests {
         async fn stopped(&mut self) {
             let _ = self.stopped.wait_for(|stopped| *stopped).await;
         }
+    }
+
+    #[tokio::test]
+    async fn ready_responses_yield_to_other_work() {
+        let (_stop, stopped) = watch::channel(false);
+        let writes = Arc::new(AtomicUsize::new(0));
+        let mut send = TestSend {
+            writes: writes.clone(),
+            stopped,
+            fail: Arc::new(AtomicBool::new(false)),
+            finished: Arc::new(AtomicBool::new(false)),
+        };
+        let metrics = Metrics::default();
+        tokio::join!(
+            biased;
+            async {
+                for _ in 0..1024 {
+                    write_network_response(
+                        &mut send,
+                        sea_v1::StreamRole::Author,
+                        &sea_v1::Response::Acknowledged,
+                        sea_v1::Limits::default(),
+                        Duration::from_secs(5),
+                        &metrics,
+                        false,
+                    ).await.unwrap();
+                }
+            },
+            async {
+                assert!(writes.load(Ordering::Relaxed) < 1024);
+            },
+        );
+        assert_eq!(writes.load(Ordering::Relaxed), 1024);
     }
 
     /// Makes mutable connection routing distinguishable from a captured session dispatcher.
@@ -1678,16 +1765,17 @@ mod tests {
     }
 
     /// Creates a one-slot listener and a certificate-pinned client configuration.
-    fn admission_fixture() -> (WebTransportServer, ClientConfig, Arc<Mutex<Vec<bool>>>) {
+    fn admission_fixture() -> (WebTransportServer, ClientConfig, Arc<AdmissionService>) {
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
-        let closures = Arc::new(Mutex::new(Vec::new()));
+        let service = Arc::new(AdmissionService {
+            closures: Arc::default(),
+            tasks: Arc::default(),
+        });
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse().unwrap(),
             identity,
-            Arc::new(AdmissionService {
-                closures: closures.clone(),
-            }),
+            service.clone(),
             TransportConfig {
                 max_connections: 1,
                 operation_timeout: Duration::from_millis(500),
@@ -1699,7 +1787,7 @@ mod tests {
             .with_bind_default()
             .with_server_certificate_hashes([certificate_hash])
             .build();
-        (server, client, closures)
+        (server, client, service)
     }
 
     /// Completes QUIC without sending the HTTP/3 settings required for admission.
@@ -1720,7 +1808,7 @@ mod tests {
 
     #[tokio::test]
     async fn failed_admissions_release_capacity_and_preserve_listener() {
-        let (server, config, closures) = admission_fixture();
+        let (server, config, service) = admission_fixture();
         let address = server.local_addr().unwrap();
         let shutdown = server.shutdown_handle();
         let measurements = server.measurement_handle();
@@ -1746,7 +1834,7 @@ mod tests {
                 .await
                 .unwrap();
             assert_eq!(measurements.snapshot().connection_cleanups, 3);
-            assert_eq!(*closures.lock().unwrap(), [false, false, false]);
+            assert_eq!(*service.closures.lock().unwrap(), [false, false, false]);
             assert_eq!(measurements.snapshot().active_connections, 1);
             connected.close(VarInt::from_u32(0), b"finished");
             shutdown
@@ -1771,7 +1859,7 @@ mod tests {
                 timeout: Duration::ZERO,
             },
         ] {
-            let (server, config, closures) = admission_fixture();
+            let (server, config, service) = admission_fixture();
             let address = server.local_addr().unwrap();
             let shutdown = server.shutdown_handle();
             let measurements = server.measurement_handle();
@@ -1787,8 +1875,94 @@ mod tests {
             assert_eq!(outcome.owned_connections, 1);
             assert_eq!(outcome.cancelled_connections, 1);
             assert_eq!(measurements.snapshot().connection_cleanups, 1);
-            assert_eq!(*closures.lock().unwrap(), [false]);
+            assert_eq!(*service.closures.lock().unwrap(), [false]);
         }
+    }
+
+    #[tokio::test]
+    async fn connections_run_in_independent_owned_tasks() {
+        let (mut server, config, service) = admission_fixture();
+        server.config.max_connections = 2;
+        let address = server.local_addr().unwrap();
+        let shutdown = server.shutdown_handle();
+        let serving = tokio::spawn(server.serve_until_shutdown());
+        let listener_task = serving.id();
+        let client = Endpoint::client(config).unwrap();
+        let exercise = async {
+            let first = client
+                .connect(format!("https://{address}/sea"))
+                .await
+                .unwrap();
+            let second = client
+                .connect(format!("https://{address}/sea"))
+                .await
+                .unwrap();
+            first.close(VarInt::from_u32(0), b"finished");
+            second.close(VarInt::from_u32(0), b"finished");
+            shutdown
+                .shutdown(ShutdownMode::Drain {
+                    timeout: Duration::from_secs(2),
+                })
+                .unwrap();
+            assert_eq!(
+                serving.await.unwrap().unwrap().disposition,
+                ShutdownDisposition::Drained
+            );
+        };
+        timeout(Duration::from_secs(5), exercise).await.unwrap();
+        let tasks = service.tasks.lock().unwrap();
+        assert_eq!(tasks.len(), 2);
+        assert!(tasks.iter().all(Option::is_some));
+        assert_ne!(tasks[0], Some(listener_task));
+        assert_ne!(tasks[1], Some(listener_task));
+        assert_ne!(tasks[0], tasks[1]);
+    }
+
+    #[tokio::test]
+    async fn cancellation_joins_tasks_and_does_not_repeat_completed_cleanup() {
+        let (_, _, service) = admission_fixture();
+        let metrics = Arc::new(Metrics::default());
+        let mut connections = JoinSet::new();
+        let mut services = BTreeMap::new();
+        for id in 1..=2 {
+            services.insert(id, service.clone() as Arc<dyn SeaConnectionService>);
+        }
+        let (completed, completion) = tokio::sync::oneshot::channel();
+        let task_service = service.clone();
+        let task_metrics = metrics.clone();
+        connections.spawn(async move {
+            task_service.connection_closed(false).await;
+            task_metrics.record_connection_cleanup();
+            completed.send(()).unwrap();
+            (1, Ok(()))
+        });
+        completion.await.unwrap();
+        connections.spawn(std::future::pending());
+        cancel_connections(&mut connections, services, &metrics)
+            .await
+            .unwrap();
+        assert!(connections.is_empty());
+        assert_eq!(*service.closures.lock().unwrap(), [false, false]);
+        assert_eq!(metrics.snapshot().connection_cleanups, 2);
+    }
+
+    #[tokio::test]
+    async fn cancellation_reports_panics_and_releases_their_services() {
+        let (_, _, service) = admission_fixture();
+        let metrics = Metrics::default();
+        let mut connections = JoinSet::new();
+        let (started, start) = tokio::sync::oneshot::channel();
+        connections.spawn(async move {
+            started.send(()).unwrap();
+            panic!("injected connection task failure");
+        });
+        start.await.unwrap();
+        let services = BTreeMap::from([(1, service.clone() as Arc<dyn SeaConnectionService>)]);
+        let result = cancel_connections(&mut connections, services, &metrics).await;
+        assert!(matches!(result, Err(WebTransportError::Transport(_))));
+        assert!(connections.is_empty());
+        assert_eq!(*service.closures.lock().unwrap(), [false]);
+        assert_eq!(metrics.snapshot().connection_cleanups, 1);
     }
 
     /// Supplies storage settlement outcomes without involving a real network connection.
@@ -1848,7 +2022,10 @@ mod tests {
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse().unwrap(),
             identity,
-            Arc::new(AdmissionService { closures }),
+            Arc::new(AdmissionService {
+                closures,
+                tasks: Arc::default(),
+            }),
             TransportConfig {
                 max_connections: 1,
                 liveness: LivenessPolicy {

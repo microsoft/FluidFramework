@@ -29,6 +29,105 @@ export function assertDrainIntegrity(results, backend) {
 	);
 }
 
+/** Validates unpaced writes without treating explicitly shed subscriptions as drained readers. */
+export function closedLoopSummary(results, seconds, mode = "closed-loop") {
+	assert.ok(Number.isFinite(seconds) && seconds > 0);
+	assert.ok(["closed-loop", "streamed"].includes(mode));
+	let acknowledged = 0;
+	let received = 0;
+	let hasReadCounts = true;
+	let shedReaders = 0;
+	let shedMissing = 0;
+	for (const entry of results) {
+		assert.ok(Number.isSafeInteger(entry.sent) && entry.sent > 0, "missing submissions");
+		assert.equal(entry.acknowledged, entry.sent, "acknowledgment drain failure");
+		assert.deepEqual(entry.errors, [], "unpaced worker failure");
+		assert.ok(
+			Number.isSafeInteger(entry.acknowledgedInWindow) &&
+				entry.acknowledgedInWindow > 0 &&
+				entry.acknowledgedInWindow <= entry.acknowledged,
+			"invalid measured acknowledgments",
+		);
+		assert.ok(
+			Number.isSafeInteger(entry.documentCount) &&
+				entry.documentCount > 0 &&
+				Number.isSafeInteger(entry.maxInFlight) &&
+				entry.maxInFlight >= 0 &&
+				(mode === "streamed" || entry.maxInFlight <= entry.documentCount),
+			"invalid outstanding-write count",
+		);
+		if (mode === "streamed") {
+			assert.equal(entry.transportWritten, entry.sent, "transport write did not finish");
+			for (const key of [
+				"maxOutstandingBytes",
+				"outstandingAtEnd",
+				"outstandingBytesAtEnd",
+				"pendingTransportWriteCalls",
+			]) {
+				assert.ok(Number.isSafeInteger(entry[key]) && entry[key] >= 0, key);
+			}
+			for (const key of ["drainSeconds", "pendingTransportWriteSeconds"]) {
+				assert.ok(Number.isFinite(entry[key]) && entry[key] >= 0, key);
+			}
+		}
+		assert.equal(entry.readerOutcomes.length, 2 * entry.documentCount);
+		const entryHasReadCounts = entry.readerOutcomes.some(
+			(reader) => reader.receivedInWindow !== undefined,
+		);
+		hasReadCounts &&= entryHasReadCounts;
+		const identities = new Set();
+		let missing = 0;
+		let expectedMissing = 0;
+		let totalExpectedDeliveries = 0;
+		for (const reader of entry.readerOutcomes) {
+			assert.ok(
+				Number.isInteger(reader.document) &&
+					reader.document >= 0 &&
+					reader.document < entry.documentCount,
+			);
+			assert.ok(reader.recipient === 0 || reader.recipient === 1);
+			assert.equal(typeof reader.shed, "boolean");
+			const identity = `${reader.document}:${reader.recipient}`;
+			assert.ok(!identities.has(identity), "duplicate reader outcome");
+			identities.add(identity);
+			assert.ok(Number.isSafeInteger(reader.undelivered) && reader.undelivered >= 0);
+			assert.ok(Number.isSafeInteger(reader.delivered) && reader.delivered >= 0);
+			if (entryHasReadCounts) {
+				assert.ok(
+					Number.isSafeInteger(reader.receivedInWindow) &&
+						reader.receivedInWindow >= 0 &&
+						reader.receivedInWindow <= reader.delivered,
+					"invalid measured reader deliveries",
+				);
+				received += reader.receivedInWindow;
+			}
+			missing += reader.undelivered;
+			totalExpectedDeliveries += reader.delivered + reader.undelivered;
+			if (reader.shed) {
+				shedReaders++;
+				expectedMissing += reader.undelivered;
+			} else {
+				assert.equal(reader.undelivered, 0, "active reader failed to drain");
+			}
+		}
+		assert.equal(entry.missing, missing, "inconsistent delivery totals");
+		assert.equal(totalExpectedDeliveries, 2 * entry.sent, "inconsistent reader totals");
+		assert.equal(entry.shedMissing, expectedMissing, "inconsistent shed delivery totals");
+		assert.equal(missing, expectedMissing, "unexplained missing deliveries");
+		acknowledged += entry.acknowledgedInWindow;
+		shedMissing += expectedMissing;
+	}
+	assert.ok(acknowledged > 0, "no measured acknowledgments");
+	return {
+		acknowledgedOperationsPerSecond: acknowledged / seconds,
+		writeOperationsPerSecond: acknowledged / seconds,
+		readOperationsPerSecond: hasReadCounts ? received / seconds : null,
+		shedReaders,
+		shedMissing,
+		losslessDelivery: shedReaders === 0 && shedMissing === 0,
+	};
+}
+
 /** Applies the user-approved p95 repeatability floor without relaxing candidate latency gates. */
 export function baselineP95IsStable(values) {
 	assert.ok(

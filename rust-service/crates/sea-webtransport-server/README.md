@@ -73,6 +73,18 @@ It also prints heartbeat, inactivity, reconnect-grace, and legacy live-lag setti
 
 ## Connection Lifecycle
 
+Each admitted QUIC connection runs in an independently scheduled, server-owned task.
+The connection limit includes pending handshakes, and shutdown cancels and joins remaining tasks before releasing their services.
+Completed tasks are not cleaned up a second time when completion races with shutdown.
+Ready response streams spend Tokio's cooperative task budget so cached readers cannot run indefinitely without yielding.
+Author requests remain sequential within each stream; this does not introduce submission batching or change session APIs.
+
+The listener requests a 2 MiB UDP socket receive buffer when the existing buffer is smaller.
+The operating system can cap or adjust the effective size; a value below the request produces a startup diagnostic.
+No host-wide socket settings are changed, and an already larger buffer is left unchanged.
+QUIC flow-control windows and operation deadlines remain unchanged.
+This reduces sensitivity to receive bursts but is not a guarantee against packet loss or overload timeouts.
+
 | Stage or event | Behavior |
 | --- | --- |
 | QUIC admission | One `operation_timeout` covers the full handshake and path decision; pending admissions consume capacity and participate in shutdown. |

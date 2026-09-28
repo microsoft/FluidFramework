@@ -6,8 +6,8 @@ This workspace crate provides deterministic fixtures, correctness smoke workload
 
 `presentation-native` is a benchmark-only, single-core generator for the existing native session client over WebTransport and a local WebSocket adapter.
 The [collection harness](../../scripts/README.md) owns server startup, CPU affinity, start synchronization, resource sampling, deadlines, and result retention.
-The worker checks exact payload and per-document order at writer and observer, bounds outstanding operations, and drains deliveries before reporting.
-It uses one ordered submission queue per document for both transports and does not introduce a production client API.
+The worker checks exact payload and per-document order at writer and observer, caps timing records, and checks acknowledgment and active-reader drain before accepting a result.
+Paced mode uses one ordered submission queue per document for both transports and does not introduce a production client API.
 Local WebSocket is unencrypted; WebTransport includes QUIC/TLS with certificate pinning.
 
 `presentation-test-spans` parses Rust source with `syn` and emits outer test-module/function line spans for the source inventory.
@@ -27,6 +27,83 @@ Raw throughput, latency, backlog, and generator CPU remain separate observations
 The runner rejects missing timestamp schemas, clock discrepancies or sample brackets above 2 ms, and endpoint ambiguity above 1% of aligned deliveries.
 Optional `serverBinary` and `generatorBinary` configuration paths select validated executable files from independently built source snapshots.
 `liveCache` controls and checks the experimental server marker.
+
+### Closed-Loop Throughput
+
+Set `"loadMode":"closed-loop"` with `"generator":"native"` and omit `rate`.
+Each writer submits immediately after its previous acknowledgment, with one outstanding operation per document and no paced input backlog.
+Readers reach the live boundary before the worker reports ready and continue consuming independently.
+This measures acknowledgment throughput at the configured document concurrency, not proof of the server's global maximum capacity.
+Network round trips and generator capacity can still limit the result.
+
+`acknowledgedOperationsPerSecond` counts acknowledgments received during the measured window, including writes submitted before that window.
+`writeOperationsPerSecond` is an explicit alias for this write throughput.
+`readOperationsPerSecond` counts validated application-event deliveries to all readers in the same half-open window, including writer echoes and observers but not acknowledgments.
+Each recipient's delivery counts separately, including deliveries to readers that are later shed.
+The count uses receive time, so it includes warmup writes received during measurement and excludes deliveries during warmup or drain.
+Per-reader `receivedInWindow` counters provide the breakdown; older generators without these counters report read throughput as `null`, not an estimated multiple of write throughput.
+Keep read throughput and shedding alongside write throughput when comparing fanout-limited runs.
+Worker `acknowledgmentLatencyMilliseconds` uses the same completion window.
+Aligned CPU uses acknowledgment timestamps in this mode; inspect `aligned.eventKey` before comparing with delivery-based paced results.
+The compatibility name `aligned.serviceCpuSecondsPerDeliveredOperation` therefore means CPU per acknowledgment in closed-loop results.
+Delivery throughput and delivery latency remain separate observations.
+`sustainable` is `null`, because there is no offered-rate target.
+
+Only an explicit subscription-revoked response counts as reader shedding.
+Results include every reader's delivered/undelivered totals, `shedReaders`, `shedMissing`, and `losslessDelivery`.
+Shed readers are not reopened or silently counted as drained.
+Other reader failures, write rejection, malformed/out-of-order payloads, or missing acknowledgments fail the run.
+Active readers must drain exactly; writes are never retried.
+If readers are shed, subsequent throughput describes a workload with fewer active readers.
+
+Timing history is capped at a total of at most 1,000,000 operations per generator, divided evenly among documents.
+Reaching the cap fails the run rather than silently throttling it.
+The service RSS and wall-clock guards still apply; use bounded durations.
+See the [runner example](../../scripts/README.md#closed-loop-throughput) for policy activation.
+
+### Streamed Throughput
+
+Set `"loadMode":"streamed"`, `"generator":"native"`, and `"transport":"webtransport"`, and omit `rate`.
+The benchmark sends shared Sea protocol frames directly over WebTransport; it does not change the production session client.
+Each writer creates one frame at a time and waits only for transport write capacity before creating the next.
+An independent task consumes acknowledgments while two other tasks consume the writer echo and observer events.
+Unlike `closed-loop`, this mode does not wait for commitment before sending another operation.
+It uses the production client's default, certificate-pinned transport configuration without reducing transport windows.
+
+Transport write completion is not application commitment.
+Transport buffers can hold many operations before a writer suspends, particularly for small payloads.
+The server still processes each author stream sequentially; pipelining does not add concurrent storage operations on that stream.
+Acknowledgment throughput, completion-window latency, aligned CPU, reader shedding, and timing-record limits have the same definitions as in `closed-loop`.
+Legacy `deliveredInWindow` and `deliveredOperationsPerSecond` counters count only observer operations both submitted and observed in the measured window; a warmup backlog can therefore produce zero despite nonzero read and write throughput.
+Use `writeOperationsPerSecond` and `readOperationsPerSecond` for the separate completion-window rates.
+
+Workers report these additional fields:
+
+- `transportWritten`: complete request frames handed to the transport.
+- `documentOutcomes`: per-document generated, transport-written, and acknowledged counts, frame size, and sender completion.
+- `maxInFlight` and `maxOutstandingBytes`: sums of per-document peaks, not synchronized global peaks.
+  Bytes count encoded requests begun but not yet acknowledged, including at most one incomplete frame per writer; they do not measure resident memory.
+- `outstandingAtEnd` and `outstandingBytesAtEnd`: backlog at the end of measurement, before drain.
+  These are `null` if execution fails before that boundary.
+- `pendingTransportWriteCalls` and `pendingTransportWriteSeconds`: completed successful write calls that returned `Pending`, and their full elapsed durations.
+  They exclude still-pending or failed calls and include scheduling and network delay, not just storage backpressure.
+  Durations are summed across concurrent writers and can exceed elapsed wall time.
+- `drainSeconds`: time after measurement until exact drain or failure.
+- `backlog`: periodic outstanding, written, and acknowledged counts, with per-connection QUIC statistics.
+- `transportStats`: final per-connection QUIC statistics, including round-trip time, congestion window, packet loss, and transmitted/received bytes and stream-frame counts.
+  Connection entries alternate writer and observer for each document; they do not expose server-side transmit statistics.
+
+Writers finish the last frame started before the deadline.
+All writes, acknowledgments, and non-shed readers must drain within 30 seconds by default; an incomplete drain fails the sample and preserves worker diagnostics.
+For slow durable workloads, you can explicitly set `drainTimeoutSeconds` from 1 through 120.
+An override above 30 also raises the runner's wall-clock guard from 120 to 180 seconds; the measurement interval and integrity checks do not change.
+Record the override when comparing results, and retain earlier failed attempts.
+Task errors identify the document and writer, receipt, echo, or observer role.
+Cleanup retains other completed task failures rather than reporting only the first failure; expected task cancellation during cleanup is not a workload error.
+Do not report that sample's observed acknowledgment rate as an accepted throughput result, or its undrained suffix as proven data loss.
+The parent allows an additional reporting margin without extending the worker's drain budget.
+Use bounded runs: transport flow control is not a total-memory limit, and retained history and timing records still grow.
+See the [streamed runner example](../../scripts/README.md#streamed-throughput).
 
 `checkpoint-no-reader` is a local fixture with 32 documents, no subscriptions during writes, four generator-equivalent shards, serial writes per document, and exact finite replay after measurement.
 It offers 1,000 64-byte operations/s for 3 seconds warmup and 10 seconds measurement, with at most 10 seconds to drain.

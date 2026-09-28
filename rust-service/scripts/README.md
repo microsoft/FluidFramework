@@ -146,8 +146,66 @@ Payload throughput counts delivery to one remote observer per document, excludin
 Service CPU and memory cover the owned service process, which currently has no companion service processes in these configurations.
 Generator resource totals are separate and include warmup and draining.
 
+#### Closed-Loop Throughput
+
+For acknowledgment-driven native Sea traffic, set `loadMode` to `closed-loop` and omit `rate`.
+This mode sends the next operation on each document as soon as its previous acknowledgment arrives.
+It does not use a high offered rate as a substitute for backpressure.
+Readers consume continuously; explicit subscription shedding is reported separately, not retried.
+Write failures and unexpected reader failures still fail the sample.
+The existing resource/deadline guards remain active; the timing-record cap replaces the paced outstanding-delivery guard.
+
+```bash
+SEA_MAX_CONNECTIONS=128 SEA_EXPERIMENTAL_RESOURCE_POLICY=true \
+node rust-service/scripts/benchmark-stress.mjs run \
+	'{"backend":"sea","generator":"native","loadMode":"closed-loop","transport":"websocket","storage":"durable-file","liveCache":true,"payloadBytes":64,"documents":32,"cores":8,"seconds":10,"warmupSeconds":3}' \
+	/tmp/sea-closed-loop-sample
+```
+
+Use the native artifact build described above, or explicit `serverBinary` and `generatorBinary` paths.
+The primary result is `acknowledgedOperationsPerSecond`; `shedReaders`, `shedMissing`, per-reader outcomes, and `losslessDelivery` describe the delivery side.
+Report `writeOperationsPerSecond` (the acknowledgment-rate alias) and `readOperationsPerSecond` separately.
+Read throughput sums validated application-event deliveries across writer echoes and observers, with each recipient counted once per delivery and acknowledgments excluded.
+Both rates use completion times in the measured window, including warmup writes completed during that window and excluding drain completions.
+Per-reader `receivedInWindow` counters retain the fanout breakdown, including readers later shed.
+Read throughput is `null` for older generators without these counters; legacy observer-only delivery rates are not a substitute.
+The acknowledgment count includes completions inside the measured window regardless of when the write started.
+Aligned CPU uses `acknowledgmentEpochMicros`, rather than the observer delivery timestamps used in paced mode.
+The legacy aligned CPU-per-delivered-operation field consequently has acknowledgments as its denominator here.
+`sustainable` is `null`, since this mode has no offered-rate target.
+One outstanding write per document bounds client write concurrency, but may be round-trip-limited.
+These results do not establish a global server maximum or a hard memory bound.
+If shedding occurs, report that later traffic served fewer readers.
+
+#### Streamed Throughput
+
+For transport-backpressured streaming, select native Sea WebTransport and set `loadMode` to `streamed`.
+Omit `rate`.
+The benchmark generates the next frame after the previous transport write completes, without waiting for an application acknowledgment.
+Acknowledgments and both readers run independently.
+This uses shared wire-protocol frames, not a new production session-client API.
+
+```bash
+SEA_MAX_CONNECTIONS=128 SEA_EXPERIMENTAL_RESOURCE_POLICY=true \
+node rust-service/scripts/benchmark-stress.mjs run \
+	'{"backend":"sea","generator":"native","loadMode":"streamed","transport":"webtransport","storage":"durable-file","liveCache":true,"payloadBytes":64,"documents":32,"cores":8,"seconds":10,"warmupSeconds":3}' \
+	/tmp/sea-streamed-sample
+```
+
+Default transport windows are unchanged and can buffer substantial unacknowledged work before suspending writers.
+Inspect outstanding operations/encoded bytes, pending transport writes, drain duration, and reader shedding alongside acknowledgment throughput.
+Outstanding encoded bytes are not process-memory measurements; summed per-document peaks are not a simultaneous global peak.
+The worker fails if complete frames, acknowledgments, and non-shed readers do not drain within 30 seconds by default.
+Streamed mode accepts an explicit `drainTimeoutSeconds` from 1 through 120 for slow backends.
+Values above 30 extend the outer wall-clock guard to 180 seconds without changing the measured interval or exact drain requirements.
+Failed samples retain diagnostics but are not accepted throughput results.
+The parent result deadline includes a reporting margin beyond that drain deadline.
+See the [worker metrics and limitations](../crates/sea-benchmarks/README.md#streamed-throughput).
+
 For native Sea generation, run `CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh`, then add `"generator":"native"` and `"transport":"websocket"` or `"transport":"webtransport"` to the workload.
-The native worker uses the shared session client with one ordered submission queue per document and a single-thread Tokio runtime per pinned process.
+The native worker uses a single-thread Tokio runtime per pinned process.
+Paced and closed-loop modes use the shared session client; streamed mode uses independent WebTransport directions.
+Paced mode adds one ordered submission queue per document; closed-loop mode submits directly after each acknowledgment.
 Its benchmark-only WebSocket adapter uses bounded tungstenite messages and independent child sockets; it is not a new supported production client.
 WebTransport pins the server certificate and includes QUIC/TLS; the local WebSocket listener is unencrypted, so the comparison is not equal-security transport performance.
 Sea defaults to memory storage; set `"storage":"buffered-file"` or `"storage":"durable-file"` to measure either file backend.

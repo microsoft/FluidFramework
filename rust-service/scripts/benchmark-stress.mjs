@@ -22,7 +22,11 @@ import { createInterface } from "node:readline";
 import { setTimeout as delay } from "node:timers/promises";
 import { alignedMeasurement } from "./benchmark-alignment.mjs";
 import { verifyNativeBuild } from "./benchmark-artifacts.mjs";
-import { assertDrainIntegrity, hasPendingDrain } from "./benchmark-gates.mjs";
+import {
+	assertDrainIntegrity,
+	closedLoopSummary,
+	hasPendingDrain,
+} from "./benchmark-gates.mjs";
 import { generatorLayout } from "./benchmark-generator-layout.mjs";
 import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
@@ -442,7 +446,11 @@ async function run(configuration, output) {
 		guardFailure ??= message;
 		for (const child of [...workers, service]) child.kill("SIGTERM");
 	};
-	const outerTimer = setTimeout(() => failGuard("120 s wall-clock guard"), 120_000);
+	const wallClockSeconds = (configuration.drainTimeoutSeconds ?? 30) > 30 ? 180 : 120;
+	const outerTimer = setTimeout(
+		() => failGuard(`${wallClockSeconds} s wall-clock guard`),
+		wallClockSeconds * 1000,
+	);
 	const captureSample = () => {
 		try {
 			const before = epochMicros();
@@ -505,7 +513,9 @@ async function run(configuration, output) {
 				...configuration,
 				generatorProcesses: undefined,
 				documents: configuration.documents / generators.count,
-				rate: configuration.rate / generators.count,
+				rate: ["closed-loop", "streamed"].includes(configuration.loadMode)
+					? undefined
+					: configuration.rate / generators.count,
 				endpoint:
 					configuration.backend === "sea"
 						? configuration.transport === "webtransport"
@@ -563,7 +573,12 @@ async function run(configuration, output) {
 			messageFrom(
 				child,
 				"result",
-				(configuration.seconds + configuration.warmupSeconds + 30) * 1000,
+				(configuration.seconds +
+					configuration.warmupSeconds +
+					(configuration.loadMode === "streamed"
+						? (configuration.drainTimeoutSeconds ?? 30) + 15
+						: 30)) *
+					1000,
 			),
 		);
 		for (const child of workers) {
@@ -576,7 +591,11 @@ async function run(configuration, output) {
 		workerResults = results;
 		captureSample();
 		assert.equal(guardFailure, undefined);
-		assertDrainIntegrity(results, configuration.backend);
+		const closedLoop = ["closed-loop", "streamed"].includes(configuration.loadMode);
+		const closedLoopResult = closedLoop
+			? closedLoopSummary(results, configuration.seconds, configuration.loadMode)
+			: undefined;
+		if (!closedLoop) assertDrainIntegrity(results, configuration.backend);
 		const measured = samples.filter(
 			(sample) =>
 				sample.workloadStarted &&
@@ -609,8 +628,16 @@ async function run(configuration, output) {
 			clockTicks,
 			aligned:
 				configuration.generator === "native"
-					? alignedMeasurement(first, last, results, clockTicks)
+					? alignedMeasurement(
+							first,
+							last,
+							results,
+							clockTicks,
+							closedLoop ? "acknowledgmentEpochMicros" : "observerDeliveryEpochMicros",
+						)
 					: null,
+			loadMode: configuration.loadMode ?? "paced",
+			...closedLoopResult,
 			deliveredOperationsPerSecond: delivered / configuration.seconds,
 			payloadMiBPerSecond:
 				(delivered * configuration.payloadBytes) / configuration.seconds / 1048576,
@@ -627,17 +654,18 @@ async function run(configuration, output) {
 				1024,
 			servicePeakRssMiB:
 				Math.max(...samples.map((sample) => sample.service.peakRssKiB)) / 1024,
-			sustainable:
-				sent >= configuration.rate * configuration.seconds * 0.98 &&
-				delivered >= configuration.rate * configuration.seconds * 0.98 &&
-				results.every(
-					(entry) =>
-						entry.errors.length === 0 &&
-						entry.missing === 0 &&
-						entry.latencyMilliseconds.p95 !== null &&
-						entry.latencyMilliseconds.p95 <= 100 &&
-						entry.maxScheduleLagMilliseconds <= 100,
-				),
+			sustainable: closedLoop
+				? null
+				: sent >= configuration.rate * configuration.seconds * 0.98 &&
+					delivered >= configuration.rate * configuration.seconds * 0.98 &&
+					results.every(
+						(entry) =>
+							entry.errors.length === 0 &&
+							entry.missing === 0 &&
+							entry.latencyMilliseconds.p95 !== null &&
+							entry.latencyMilliseconds.p95 <= 100 &&
+							entry.maxScheduleLagMilliseconds <= 100,
+					),
 			workers: results,
 			resourceSamples: samples,
 			serviceData: temporaryData.provenance,
@@ -702,8 +730,35 @@ if (mode === "--help") {
 			configuration.documents >= 1 &&
 			configuration.documents <= 32,
 	);
-	assert.ok(Number.isFinite(configuration.rate) && configuration.rate > 0, "rate");
-	if (mode !== "worker") assert.ok(Number.isInteger(configuration.rate), "total rate");
+	assert.ok(
+		configuration.loadMode === undefined ||
+			["paced", "closed-loop", "streamed"].includes(configuration.loadMode),
+		"loadMode",
+	);
+	if (configuration.drainTimeoutSeconds !== undefined) {
+		assert.equal(configuration.loadMode, "streamed", "drain override requires streamed mode");
+		assert.ok(
+			Number.isInteger(configuration.drainTimeoutSeconds) &&
+				configuration.drainTimeoutSeconds >= 1 &&
+				configuration.drainTimeoutSeconds <= 120,
+			"drainTimeoutSeconds must be between 1 and 120",
+		);
+	}
+	if (["closed-loop", "streamed"].includes(configuration.loadMode)) {
+		assert.equal(configuration.generator, "native", "unpaced mode requires native generator");
+		assert.equal(configuration.backend, "sea", "unpaced mode requires Sea");
+		assert.equal(configuration.rate, undefined, "unpaced mode has no offered rate");
+		if (configuration.loadMode === "streamed") {
+			assert.equal(
+				configuration.transport,
+				"webtransport",
+				"streamed mode requires WebTransport",
+			);
+		}
+	} else {
+		assert.ok(Number.isFinite(configuration.rate) && configuration.rate > 0, "rate");
+		if (mode !== "worker") assert.ok(Number.isInteger(configuration.rate), "total rate");
+	}
 	for (const key of ["payloadBytes", "seconds", "warmupSeconds"])
 		assert.ok(Number.isInteger(configuration[key]) && configuration[key] > 0, key);
 	assert.ok(configuration.payloadBytes >= 8 && configuration.payloadBytes <= 8192);

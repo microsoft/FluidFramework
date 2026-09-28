@@ -14,6 +14,19 @@ test("preserves four generators by default", () => {
 	});
 });
 
+test("unpaced native generators do not partition an offered rate", () => {
+	for (const loadMode of ["closed-loop", "streamed"]) {
+		assert.equal(
+			generatorLayout({
+				documents: 32,
+				generator: "native",
+				loadMode,
+			}).count,
+			4,
+		);
+	}
+});
+
 test("supports eight generators on separate physical cores", () => {
 	assert.deepEqual(
 		generatorLayout({

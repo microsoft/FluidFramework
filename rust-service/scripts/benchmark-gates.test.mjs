@@ -10,8 +10,142 @@ import {
 	assertSampleGates,
 	baselineP95IsStable,
 	candidateRssLimit,
+	closedLoopSummary,
 	hasPendingDrain,
 } from "./benchmark-gates.mjs";
+
+test("closed-loop throughput counts acknowledgments and reports explicit shedding separately", () => {
+	const result = {
+		sent: 10,
+		acknowledged: 10,
+		acknowledgedInWindow: 8,
+		documentCount: 1,
+		errors: [],
+		maxInFlight: 1,
+		missing: 0,
+		shedMissing: 0,
+		readerOutcomes: [
+			{
+				document: 0,
+				recipient: 0,
+				shed: false,
+				delivered: 10,
+				undelivered: 0,
+				receivedInWindow: 7,
+			},
+			{
+				document: 0,
+				recipient: 1,
+				shed: false,
+				delivered: 10,
+				undelivered: 0,
+				receivedInWindow: 6,
+			},
+		],
+	};
+	assert.deepEqual(closedLoopSummary([result], 2), {
+		acknowledgedOperationsPerSecond: 4,
+		writeOperationsPerSecond: 4,
+		readOperationsPerSecond: 6.5,
+		shedReaders: 0,
+		shedMissing: 0,
+		losslessDelivery: true,
+	});
+	assert.equal(closedLoopSummary([result, result], 2).readOperationsPerSecond, 13);
+	assert.equal(closedLoopSummary([result, result], 2).writeOperationsPerSecond, 8);
+	const legacy = structuredClone(result);
+	for (const reader of legacy.readerOutcomes) delete reader.receivedInWindow;
+	assert.equal(closedLoopSummary([legacy], 2).readOperationsPerSecond, null);
+	assert.equal(closedLoopSummary([legacy, result], 2).readOperationsPerSecond, null);
+	const zeroReads = structuredClone(result);
+	for (const reader of zeroReads.readerOutcomes) reader.receivedInWindow = 0;
+	assert.equal(closedLoopSummary([zeroReads], 2).readOperationsPerSecond, 0);
+	for (const count of [-1, 11, 0.5, NaN, undefined]) {
+		const invalid = structuredClone(result);
+		invalid.readerOutcomes[0].receivedInWindow = count;
+		assert.throws(() => closedLoopSummary([invalid], 2), /invalid measured reader deliveries/);
+	}
+	for (const patch of [
+		{ acknowledged: 9 },
+		{ acknowledgedInWindow: 11 },
+		{ maxInFlight: 2 },
+		{ errors: ["rejected write"] },
+		{ missing: 1 },
+		{ shedMissing: 1 },
+		{ readerOutcomes: [result.readerOutcomes[0], result.readerOutcomes[0]] },
+	]) {
+		assert.throws(() => closedLoopSummary([{ ...result, ...patch }], 2));
+	}
+	result.readerOutcomes[1] = {
+		document: 0,
+		recipient: 1,
+		shed: true,
+		delivered: 3,
+		undelivered: 7,
+		receivedInWindow: 2,
+	};
+	result.missing = result.shedMissing = 7;
+	assert.deepEqual(closedLoopSummary([result], 2), {
+		acknowledgedOperationsPerSecond: 4,
+		writeOperationsPerSecond: 4,
+		readOperationsPerSecond: 4.5,
+		shedReaders: 1,
+		shedMissing: 7,
+		losslessDelivery: false,
+	});
+	result.readerOutcomes[1].shed = false;
+	assert.throws(() => closedLoopSummary([result], 2), /active reader failed to drain/);
+	assert.throws(() => closedLoopSummary([], 2), /no measured acknowledgments/);
+});
+
+test("streamed throughput permits pipelining but requires complete transport, receipt, and reader drain", () => {
+	const result = {
+		sent: 20000,
+		transportWritten: 20000,
+		acknowledged: 20000,
+		acknowledgedInWindow: 10000,
+		documentCount: 1,
+		errors: [],
+		maxInFlight: 17700,
+		maxOutstandingBytes: 1256700,
+		outstandingAtEnd: 12000,
+		outstandingBytesAtEnd: 852000,
+		pendingTransportWriteCalls: 2,
+		pendingTransportWriteSeconds: 3.5,
+		drainSeconds: 4,
+		missing: 0,
+		shedMissing: 0,
+		readerOutcomes: [0, 1].map((recipient) => ({
+			document: 0,
+			recipient,
+			shed: false,
+			delivered: 20000,
+			undelivered: 0,
+		})),
+	};
+	assert.deepEqual(closedLoopSummary([result], 2, "streamed"), {
+		acknowledgedOperationsPerSecond: 5000,
+		writeOperationsPerSecond: 5000,
+		readOperationsPerSecond: null,
+		shedReaders: 0,
+		shedMissing: 0,
+		losslessDelivery: true,
+	});
+	assert.throws(() => closedLoopSummary([result], 2), /outstanding-write count/);
+	for (const patch of [
+		{ transportWritten: 19999 },
+		{ acknowledged: 19999 },
+		{ errors: ["streamed workload did not drain within 30 seconds"] },
+		{ maxOutstandingBytes: -1 },
+		{ outstandingAtEnd: null },
+		{ outstandingBytesAtEnd: null },
+		{ pendingTransportWriteCalls: 0.5 },
+		{ pendingTransportWriteSeconds: Infinity },
+		{ drainSeconds: -1 },
+	]) {
+		assert.throws(() => closedLoopSummary([{ ...result, ...patch }], 2, "streamed"));
+	}
+});
 
 test("Sea drain waits for an acknowledgment that follows the final deliveries", async () => {
 	const document = { sent: 1, observed: [0, 0], acknowledgments: 0 };

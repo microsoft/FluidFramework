@@ -1435,6 +1435,7 @@ dependencies = [
  "sea-sequencer",
  "sea-signals",
  "sea-webtransport",
+ "socket2",
  "thiserror",
  "tokio",
  "tokio-tungstenite",
