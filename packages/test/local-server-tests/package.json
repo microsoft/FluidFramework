@@ -85,6 +85,7 @@
 		"@fluidframework/server-local-server": "^7.0.1",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@types/mocha": "^10.0.10",

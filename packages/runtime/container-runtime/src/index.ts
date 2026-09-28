@@ -20,6 +20,7 @@ export {
 	type RuntimeHeaderData,
 } from "./containerRuntime.js";
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export type { IDetachedRuntimeConstructionOptions } from "./detachedRuntimeConstruction.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export type {
 	ContainerRuntimeAliasMessage,
@@ -56,6 +57,7 @@ export {
 } from "./gc/index.js";
 export {
 	type IAckedSummary,
+	type ISummaryGenerationOptions,
 	type ISummarizer,
 	type ISummarizeResults,
 	type ISummaryCancellationToken,

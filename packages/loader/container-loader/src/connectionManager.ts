@@ -176,6 +176,13 @@ export class ConnectionManager implements IConnectionManager {
 	 */
 	private pendingReconnect = false;
 
+	/**
+	 * A one-shot preference consumed by the next permitted write connection attempt.
+	 * Unlike pending operations, this does not require waiting for a prior client's leave.
+	 */
+	private writeConnectionRequested = false;
+	private writeConnectionRequestScheduled = false;
+
 	private clientSequenceNumber = 0;
 	private clientSequenceNumberObserved = 0;
 	/**
@@ -471,6 +478,45 @@ export class ConnectionManager implements IConnectionManager {
 		});
 	}
 
+	public requestWriteConnection(): void {
+		if (
+			this._disposed ||
+			this.reconnectMode === ReconnectMode.Never ||
+			this.readonly === true ||
+			this.connectionMode === "write"
+		) {
+			return;
+		}
+		this.writeConnectionRequested = true;
+		this.scheduleWriteConnectionRequest();
+	}
+
+	private scheduleWriteConnectionRequest(): void {
+		if (!this.writeConnectionRequested || this.writeConnectionRequestScheduled) {
+			return;
+		}
+		this.writeConnectionRequestScheduled = true;
+		// Do not disconnect during runtime initialization or connection event dispatch.
+		Promise.resolve()
+			.then(async () => {
+				this.writeConnectionRequestScheduled = false;
+				if (
+					!this._disposed &&
+					this.writeConnectionRequested &&
+					this.reconnectMode === ReconnectMode.Enabled &&
+					this.readonly !== true &&
+					this.connection !== undefined &&
+					this.connectionMode === "read" &&
+					!this.pendingReconnect
+				) {
+					// connectCore consumes the preference after any asynchronous reconnect work,
+					// rechecking readonly and host policy rather than forcing a stale write mode.
+					await this.reconnect("read", { text: "Runtime requested write connection" });
+				}
+			})
+			.catch((error) => this.props.closeHandler(normalizeError(error)));
+	}
+
 	private async connectCore(
 		reason: IConnectionStateChangeReason,
 		connectionMode?: ConnectionMode,
@@ -508,6 +554,15 @@ export class ConnectionManager implements IConnectionManager {
 				});
 			}
 			return;
+		}
+
+		if (
+			this.writeConnectionRequested &&
+			this.reconnectMode === ReconnectMode.Enabled &&
+			this.readonly !== true
+		) {
+			requestedMode = "write";
+			this.writeConnectionRequested = false;
 		}
 
 		const docService = this.serviceProvider();
@@ -851,6 +906,10 @@ export class ConnectionManager implements IConnectionManager {
 				: undefined,
 		);
 
+		if (connection.mode === "write" || this.readonly === true) {
+			this.writeConnectionRequested = false;
+		}
+
 		if (this._disposed) {
 			// Raise proper events, Log telemetry event and close connection.
 			this.disconnectFromDeltaStream({ text: "ConnectionManager already closed" });
@@ -957,6 +1016,8 @@ export class ConnectionManager implements IConnectionManager {
 		}
 
 		this.props.signalHandler(signalsToProcess);
+		// A read attempt that was already pending when requested must finish before upgrading.
+		this.scheduleWriteConnectionRequest();
 	}
 
 	/**

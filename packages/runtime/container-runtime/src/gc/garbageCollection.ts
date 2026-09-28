@@ -919,9 +919,26 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
-	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+	public async refreshLatestSummary(
+		result: IRefreshSummaryResult,
+		proposalHandle?: string,
+	): Promise<void> {
 		this.autoRecovery.onSummaryAck();
-		return this.summaryStateTracker.refreshLatestSummary(result);
+		return this.summaryStateTracker.refreshLatestSummary(result, proposalHandle);
+	}
+
+	/**
+	 * Associate generated GC state with the submitted native summary.
+	 */
+	public completeSummary(proposalHandle: string, referenceSequenceNumber: number): void {
+		this.summaryStateTracker.completeSummary(proposalHandle, referenceSequenceNumber);
+	}
+
+	/**
+	 * Clear only unsubmitted GC state after a summary attempt.
+	 */
+	public clearSummary(): void {
+		this.summaryStateTracker.clearSummary();
 	}
 
 	/**
@@ -1184,6 +1201,7 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	public dispose(): void {
+		this.summaryStateTracker.dispose();
 		this.sessionExpiryTimer?.clear();
 		this.sessionExpiryTimer = undefined;
 

@@ -207,6 +207,75 @@ describe("serializedStateManager", () => {
 	});
 
 	describe("before refreshing the snapshot", () => {
+		it("stops capture, operation tracking, and snapshot refresh when seed loading disables offline state", async () => {
+			const clock = useFakeTimers();
+			const storageAdapter = new MockStorageAdapter();
+			const manager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+				10,
+			);
+			try {
+				await manager.fetchSnapshot(undefined, undefined);
+				manager.addProcessedOp(generateSavedOp(1));
+				assert.equal(clock.countTimers(), 1);
+				manager.disableOfflineLoad();
+				assert.equal(clock.countTimers(), 0);
+				manager.addProcessedOp(generateSavedOp(2));
+				// These fields must not retain a seed baseline or accumulate the live operation stream.
+				// eslint-disable-next-line @typescript-eslint/dot-notation -- Inspect private state to detect retained data.
+				assert.equal(manager["snapshotInfo"], undefined);
+				// eslint-disable-next-line @typescript-eslint/dot-notation -- Inspect private state to detect retained data.
+				assert.deepEqual(manager["processedOps"], []);
+				await assert.rejects(
+					manager.getPendingLocalState("clientId", new MockRuntime(), resolvedUrl),
+					/offline load is enabled/,
+				);
+				await clock.tickAsync(100);
+				assert.equal(manager.refreshSnapshotP, undefined);
+			} finally {
+				manager.dispose();
+				clock.restore();
+			}
+		});
+
+		it("does not adopt a refresh that finishes after offline tracking is disabled", async () => {
+			const clock = useFakeTimers();
+			const fetched = new Deferred<ISnapshotTree>();
+			const storageAdapter = new MockStorageAdapter();
+			storageAdapter.getSnapshotTree = async () => fetched.promise;
+			const manager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+				10,
+			);
+			try {
+				manager.setInitialSnapshot(initialSnapshot);
+				await clock.tickAsync(10);
+				const refresh = manager.refreshSnapshotP;
+				assert(refresh !== undefined);
+				manager.disableOfflineLoad();
+				fetched.resolve(snapshotTree);
+				assert.equal(await refresh, -1);
+				// eslint-disable-next-line @typescript-eslint/dot-notation -- Verify an in-flight refresh cannot restore private state.
+				assert.equal(manager["snapshotInfo"], undefined);
+				// eslint-disable-next-line @typescript-eslint/dot-notation -- Verify an in-flight refresh cannot restore private state.
+				assert.equal(manager["latestSnapshot"], undefined);
+				assert.equal(clock.countTimers(), 0);
+			} finally {
+				manager.dispose();
+				clock.restore();
+			}
+		});
+
 		it("can't get pending local state when offline load disabled", async () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(

@@ -84,6 +84,7 @@ export class RunningSummarizer
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 
 		runtime: ISummarizerRuntime,
+		initialSummaryRequired = false,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -96,6 +97,7 @@ export class RunningSummarizer
 			cancellationToken,
 			stopSummarizerCallback,
 			runtime,
+			initialSummaryRequired,
 		);
 
 		// If there have been any acks newer that the one this client loaded from until now, process them before
@@ -148,6 +150,10 @@ export class RunningSummarizer
 
 		// Start heuristics
 		summarizer.heuristicRunner?.start();
+		if (configuration.state === "enabled" && initialSummaryRequired) {
+			// Use the ordinary retry/cancellation path. No application operation or host request is needed.
+			summarizer.trySummarize("initialFullSummary");
+		}
 		summarizer.heuristicRunner?.run();
 
 		return summarizer;
@@ -206,6 +212,7 @@ export class RunningSummarizer
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 
 		private readonly runtime: ISummarizerRuntime,
+		initialSummaryRequired: boolean,
 	) {
 		super();
 
@@ -272,7 +279,10 @@ export class RunningSummarizer
 		});
 
 		const immediatelyRefreshLatestSummaryAck =
-			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ?? true;
+			// A materialized baseline must be adopted before the next summary can reuse its handles.
+			initialSummaryRequired ||
+			(this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ??
+				true);
 		this.generator = new SummaryGenerator(
 			this.pendingAckTimer,
 			this.heuristicData,

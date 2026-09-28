@@ -124,6 +124,11 @@ export interface IConnectionManager {
 	connect(reason: IConnectionStateChangeReason, connectionMode?: ConnectionMode): void;
 
 	/**
+	 * Request a one-shot write connection without submitting an operation or enabling connections.
+	 */
+	requestWriteConnection(): void;
+
+	/**
 	 * Disposed connection manager
 	 */
 	dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;

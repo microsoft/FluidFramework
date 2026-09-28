@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type ISummaryTreeWithStats,
@@ -45,6 +46,12 @@ export class GCSummaryStateTracker {
 	private latestSummaryData: IGCSummaryTrackingData | undefined;
 	// Keeps track of the GC data from the last summary submitted to the server but not yet acked.
 	private pendingSummaryData: IGCSummaryTrackingData | undefined;
+	// Policies that require an accepted full baseline must adopt the acknowledged proposal,
+	// not the most recently generated retry or an unsubmitted summary.
+	private readonly pendingSummaries = new Map<
+		string,
+		{ data: IGCSummaryTrackingData | undefined; referenceSequenceNumber: number }
+	>();
 
 	// Tracks the count of data stores whose state updated since the last summary, i.e., they went from referenced
 	// to unreferenced or vice-versa.
@@ -217,14 +224,54 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
-	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+	public async refreshLatestSummary(
+		result: IRefreshSummaryResult,
+		proposalHandle?: string,
+	): Promise<void> {
 		if (!this.configs.gcAllowed || !result.isSummaryTracked) {
 			return;
 		}
 
-		this.latestSummaryData = this.pendingSummaryData;
-		this.pendingSummaryData = undefined;
+		if (proposalHandle === undefined) {
+			// Preserve the existing tracking path for runtimes without a full-tree policy.
+			this.latestSummaryData = this.pendingSummaryData;
+			this.pendingSummaryData = undefined;
+		} else {
+			const pending = this.pendingSummaries.get(proposalHandle);
+			assert(pending !== undefined, "Tracked GC summary must have matching proposal state");
+			this.latestSummaryData = pending.data;
+			this.pendingSummaries.delete(proposalHandle);
+			for (const [handle, summary] of this.pendingSummaries) {
+				if (summary.referenceSequenceNumber < pending.referenceSequenceNumber) {
+					this.pendingSummaries.delete(handle);
+				}
+			}
+		}
 		this.updatedDSCountSinceLastSummary = 0;
+	}
+
+	/**
+	 * Retain the generated state for a submitted proposal, including a full summary.
+	 */
+	public completeSummary(proposalHandle: string, referenceSequenceNumber: number): void {
+		if (!this.configs.gcAllowed) return;
+		this.pendingSummaries.set(proposalHandle, {
+			data: this.pendingSummaryData,
+			referenceSequenceNumber,
+		});
+		this.clearSummary();
+	}
+
+	/**
+	 * Discard unsubmitted state without losing proposals awaiting acknowledgment.
+	 */
+	public clearSummary(): void {
+		this.pendingSummaryData = undefined;
+	}
+
+	public dispose(): void {
+		this.pendingSummaries.clear();
+		this.clearSummary();
 	}
 
 	/**

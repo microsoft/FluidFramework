@@ -66,6 +66,21 @@ export type {
 } from "./protocol/index.js";
 export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
 export {
+	assertDeterministicSeedConstruction,
+	createSeedRuntimeSnapshot,
+	createSeedSummary,
+	seedRuntimeFactory,
+	type AssertDeterministicSeedConstructionOptions,
+	type CreateSeedRuntimeSnapshotProps,
+	type CreateSeedSummaryProps,
+	type SeedProjector,
+	type SeedRuntimeFactoryOptions,
+	type SeedRuntimeLoad,
+	type SeedRuntimeConstructionResult,
+	type SeedRuntimeSnapshot,
+} from "./seedRuntime.js";
+export type { SeedLoadContext } from "./containerContext.js";
+export {
 	extractBlobAttachReferences,
 	wireFormatConstants,
 	type IBlobAttachReference,

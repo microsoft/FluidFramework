@@ -8,6 +8,14 @@
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @alpha @legacy
+export function assertDeterministicSeedConstruction(first: SeedRuntimeSnapshot, second: SeedRuntimeSnapshot, options?: AssertDeterministicSeedConstructionOptions): void;
+
+// @alpha @legacy
+export interface AssertDeterministicSeedConstructionOptions {
+    readonly excludeBlobNames?: readonly string[];
+}
+
+// @alpha @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
@@ -28,6 +36,25 @@ export function createDetachedContainer(createDetachedContainerProps: ICreateDet
 
 // @alpha @legacy
 export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
+
+// @alpha @legacy
+export function createSeedRuntimeSnapshot(input: CreateSeedRuntimeSnapshotProps): Promise<SeedRuntimeConstructionResult>;
+
+// @alpha @legacy
+export interface CreateSeedRuntimeSnapshotProps extends Pick<IContainerHostProps, "scope" | "logger" | "configProvider"> {
+    readonly codeDetails?: IFluidCodeDetails;
+    readonly initialize?: (container: IContainer) => Promise<void>;
+    readonly runtimeFactory: IRuntimeFactory;
+}
+
+// @alpha @legacy
+export function createSeedSummary(input: CreateSeedSummaryProps): ISummaryTree;
+
+// @alpha @legacy
+export interface CreateSeedSummaryProps {
+    readonly applicationProjection: ISummaryTree;
+    readonly codeDetails: IFluidCodeDetails;
+}
 
 // @beta @legacy (undocumented)
 export interface IBaseProtocolHandler {
@@ -269,6 +296,44 @@ export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IReh
 
 // @beta @legacy
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @alpha @legacy
+export interface SeedLoadContext extends IContainerContext {
+    readonly disableOfflineLoad?: (() => void) | undefined;
+}
+
+// @alpha @legacy
+export interface SeedProjector<TSeed = unknown> {
+    isNative(context: IContainerContext): boolean;
+    materialize(seed: TSeed, sequenceNumber: number): SeedRuntimeSnapshot | Promise<SeedRuntimeSnapshot>;
+    readSeed(context: IContainerContext): Promise<TSeed>;
+}
+
+// @alpha @legacy
+export interface SeedRuntimeConstructionResult extends SeedRuntimeSnapshot {
+    readonly summary: ISummaryTree;
+}
+
+// @alpha @legacy
+export function seedRuntimeFactory<TSeed = unknown>(projector: SeedProjector<TSeed>, delegate: (load: SeedRuntimeLoad, existing: boolean) => Promise<IRuntime>, options?: SeedRuntimeFactoryOptions): IRuntimeFactory;
+
+// @alpha @legacy
+export interface SeedRuntimeFactoryOptions {
+    readonly allowProjection?: boolean;
+}
+
+// @alpha @legacy
+export interface SeedRuntimeLoad {
+    readonly context: IContainerContext;
+    readonly fromSeed: boolean;
+    readonly original: IContainerContext;
+}
+
+// @alpha @legacy
+export interface SeedRuntimeSnapshot {
+    readonly blobs: ReadonlyMap<string, ArrayBuffer>;
+    readonly snapshot: ISnapshotTree;
+}
 
 // @alpha @legacy
 export type SummaryStage = "base" | "generate" | "upload" | "submit" | "unknown";
