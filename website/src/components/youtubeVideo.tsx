@@ -5,6 +5,8 @@
 
 import type { Element } from "react";
 
+import "@site/src/css/youtubeVideo.css";
+
 /**
  * {@link YoutubeVideo} component props.
  */
@@ -15,6 +17,11 @@ export interface YoutubeVideoProps {
 	videoId: string;
 
 	/**
+	 * Title of the YouTube video.
+	 */
+	title: string;
+
+	/**
 	 * Optional class name to apply to the video container.
 	 */
 	className?: string;
@@ -23,19 +30,25 @@ export interface YoutubeVideoProps {
 /**
  * Renders a YouTube video, utilizing `youtube-nocookie.com` to ensure our privacy requirements are being met (i.e., no cookies).
  */
-export function YoutubeVideo({ className, videoId }: YoutubeVideoProps): Element {
+export function YoutubeVideo({ className, title, videoId }: YoutubeVideoProps): Element {
 	const videoSourceUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
+	const videoPageUrl = `https://www.youtube.com/watch?v=${videoId}`;
 	return (
 		<div className={className}>
-			<iframe
-				width="100%"
-				height="100%"
-				src={videoSourceUrl}
-				title="Fluid Framework - Build collaborative apps fast!"
-				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-				referrerPolicy="strict-origin-when-cross-origin"
-				allowFullScreen
-			></iframe>
+			<div className="ffcom-rounded-video">
+				<a className="ffcom-video-title" href={videoPageUrl}>
+					{title}
+				</a>
+				<iframe
+					width="100%"
+					height="100%"
+					src={videoSourceUrl}
+					title={title}
+					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+					referrerPolicy="strict-origin-when-cross-origin"
+					allowFullScreen
+				></iframe>
+			</div>
 		</div>
 	);
 }

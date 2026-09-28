@@ -60,12 +60,6 @@
 	border-radius: 24px;
 }
 
-.ffcom-rounded-video {
-	height: 100%;
-	overflow: hidden;
-	border-radius: 15px;
-}
-
 .ffcom-title-box {
 	max-width: 500px;
 }
