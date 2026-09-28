@@ -35,7 +35,7 @@ import {
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
-import { applySchemaOp, checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers.js";
+import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	createAnchors,
 	createOnCreate,
@@ -72,7 +72,7 @@ describe("Fuzz - revert", () => {
 	describe("revert sequenced commits last-to-first", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			// The legacy policy can drop undo edits over schema changes, so restoring all initial content
-			// requires a fixed schema during this history. init applies an upgrade before recording it.
+			// requires a fixed schema during this history.
 			takeAsync(opsPerRun, makeOpGenerator({ ...undoRedoWeights, schema: 0 }));
 
 		const model: DDSFuzzModel<
@@ -226,10 +226,6 @@ describe("Fuzz - revert", () => {
 
 function init(state: UndoRedoFuzzTestState) {
 	const tree = viewFromState(state, state.clients[0]).checkout;
-	applySchemaOp(
-		{ ...state, client: state.clients[0] },
-		{ type: "schemaChange", contents: { type: "undoRedoBaseline" } },
-	);
 	state.initialTreeState = toJsonableTree(tree);
 	state.containerRuntimeFactory.processAllMessages();
 	const undoStack: Revertible[] = [];

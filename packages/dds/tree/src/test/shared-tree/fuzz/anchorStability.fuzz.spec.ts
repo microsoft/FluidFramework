@@ -37,7 +37,7 @@ import {
 	makeOpGenerator,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
-import { applySchemaOp, fuzzReducer } from "./fuzzEditReducers.js";
+import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
 	type RevertibleSharedTreeView,
 	createAnchors,
@@ -110,10 +110,6 @@ describe("Fuzz - anchor stability", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
-			applySchemaOp(
-				{ ...initialState, client: initialState.clients[0] },
-				{ type: "schemaChange", contents: { type: "anchorBaseline" } },
-			);
 			initialState.initialSchema = tree.storedSchema.clone();
 			tree.transaction.start();
 			const initialJsonableTree = jsonableTreeFromForest(tree.forest);
