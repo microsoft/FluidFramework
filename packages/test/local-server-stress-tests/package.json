@@ -88,8 +88,7 @@
 		"@fluidframework/task-manager": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
-		"uuid": "^11.1.0"
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",

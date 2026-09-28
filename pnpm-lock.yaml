@@ -612,12 +612,6 @@ importers:
       css-loader:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.109.0)
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.109.0)
@@ -736,9 +730,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      prop-types:
-        specifier: ^15.8.1
-        version: 15.8.1
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -751,9 +742,6 @@ importers:
       react-grid-layout:
         specifier: ^1.5.1
         version: 1.5.1(react-dom@18.3.1)(react@18.3.1)
-      scheduler:
-        specifier: ^0.20.0
-        version: 0.20.2
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -2842,18 +2830,9 @@ importers:
       '@fluidframework/sequence':
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
-      orderedmap:
-        specifier: ^2.1.0
-        version: 2.1.1
       prosemirror-example-setup:
         specifier: ^1.2.1
         version: 1.2.3
-      prosemirror-history:
-        specifier: ^1.3.0
-        version: 1.4.1
-      prosemirror-keymap:
-        specifier: ^1.2.0
-        version: 1.2.2
       prosemirror-menu:
         specifier: ^1.2.1
         version: 1.2.4
@@ -3165,12 +3144,6 @@ importers:
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      scheduler:
-        specifier: ^0.20.0
-        version: 0.20.2
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -3900,9 +3873,6 @@ importers:
       axios:
         specifier: 1.18.1
         version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
-      events_pkg:
-        specifier: npm:events@^3.1.0
-        version: events@3.3.0
       fluid-framework:
         specifier: workspace:~
         version: link:../../../../packages/framework/fluid-framework
@@ -4576,9 +4546,6 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -4706,9 +4673,6 @@ importers:
       html-webpack-plugin:
         specifier: ^5.6.0
         version: 5.6.3(webpack@5.109.0)
-      isomorphic-fetch:
-        specifier: ^3.0.0
-        version: 3.0.0
       nconf:
         specifier: ^0.12.0
         version: 0.12.1
@@ -5657,12 +5621,6 @@ importers:
       '@types/events_pkg':
         specifier: npm:@types/events@^3.0.0
         version: '@types/events@3.0.3'
-      ajv:
-        specifier: ^8.17.1
-        version: 8.18.0
-      async:
-        specifier: ^3.2.2
-        version: 3.2.6
       base64-js:
         specifier: ^1.5.1
         version: 1.5.1
@@ -5678,9 +5636,6 @@ importers:
       semver:
         specifier: ^7.7.1
         version: 7.8.5
-      traverse:
-        specifier: 0.6.6
-        version: 0.6.6
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -5790,9 +5745,6 @@ importers:
       axios:
         specifier: 1.18.1
         version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
       lodash:
         specifier: ^4.18.1
         version: 4.18.1
@@ -5911,9 +5863,6 @@ importers:
       '@fluid-experimental/property-common':
         specifier: workspace:~
         version: link:../property-common
-      ajv:
-        specifier: ^8.17.1
-        version: 8.18.0
       async:
         specifier: ^3.2.2
         version: 3.2.6
@@ -5923,9 +5872,6 @@ importers:
       semver:
         specifier: ^7.7.1
         version: 7.8.5
-      traverse:
-        specifier: 0.6.6
-        version: 0.6.6
       underscore:
         specifier: ^1.13.6
         version: 1.13.7
@@ -6551,9 +6497,6 @@ importers:
       base64-js:
         specifier: ^1.5.1
         version: 1.5.1
-      buffer:
-        specifier: ^6.0.3
-        version: 6.0.3
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -8525,9 +8468,6 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -10502,9 +10442,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
-      semver-ts:
-        specifier: ^1.0.3
-        version: 1.0.3
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -11252,9 +11189,6 @@ importers:
 
   packages/framework/tree-agent:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.39.0
-        version: 0.39.0
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
@@ -11270,9 +11204,6 @@ importers:
       '@fluidframework/type-factory':
         specifier: workspace:~
         version: link:../type-factory
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.5
@@ -12004,9 +11935,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      '@tylerbu/sorted-btree-es6':
-        specifier: ^2.1.1
-        version: 2.1.1
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -13019,12 +12947,6 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
-      sinon:
-        specifier: ^18.0.1
-        version: 18.0.1
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -13532,9 +13454,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -14582,9 +14501,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      best-random:
-        specifier: ^1.0.0
-        version: 1.0.3
       debug:
         specifier: ^4.3.4
         version: 4.4.3(supports-color@10.2.2)
@@ -14763,9 +14679,6 @@ importers:
       nconf:
         specifier: ^0.12.0
         version: 0.12.1
-      proper-lockfile:
-        specifier: ^4.1.2
-        version: 4.1.2
       semver:
         specifier: ^7.7.1
         version: 7.8.5
@@ -14860,15 +14773,9 @@ importers:
       '@changesets/cli':
         specifier: ^2.29.8
         version: 2.29.8(@types/node@22.19.17)
-      '@changesets/types':
-        specifier: ^6.0.0
-        version: 6.1.0
       changesets-format-with-issue-links:
         specifier: ^0.3.0
         version: 0.3.0(@changesets/cli@2.29.8)(supports-color@10.2.2)
-      typescript:
-        specifier: catalog:TypeScript
-        version: 6.0.3
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -16213,9 +16120,6 @@ importers:
       remark-mdx:
         specifier: ^3.1.1
         version: 3.1.1(supports-color@10.2.2)
-      unified:
-        specifier: ^11.0.5
-        version: 11.0.5
       yargs:
         specifier: 17.7.2
         version: 17.7.2
@@ -16251,9 +16155,6 @@ packages:
 
   '@andrewbranch/untar.js@1.0.3':
     resolution: {integrity: sha512-Jh15/qVmrLGhkKJBdXlK1+9tY4lZruYjsgkDFj08ZmDiWVBLJcqkok7Z0/R0In+i1rScBpJlSvrTS2Lm41Pbnw==}
-
-  '@anthropic-ai/sdk@0.39.0':
-    resolution: {integrity: sha512-eMyDIPRZbt1CCLErRCi3exlAvNkBtRe+kW5vvJyef93PmNr/clstYgHhtvmkxN82nlKgzyGPCyGxrm0JQ1ZIdg==}
 
   '@anthropic-ai/sdk@0.90.0':
     resolution: {integrity: sha512-MzZtPabJF1b0FTDl6Z6H5ljphPwACLGP13lu8MTiB8jXaW/YXlpOp+Po2cVou3MPM5+f5toyLnul9whKCy7fBg==}
@@ -19124,9 +19025,6 @@ packages:
   '@types/nock@9.3.1':
     resolution: {integrity: sha512-eOVHXS5RnWOjTVhu3deCM/ruy9E6JCgeix2g7wpFiekQh3AaEAK1cz43tZDukKmtSmQnwvSySq7ubijCA32I7Q==}
 
-  '@types/node-fetch@2.6.12':
-    resolution: {integrity: sha512-8nneRWKCg3rMtF69nLQJnOYUcbafYeFSjqkw3jCRLsqkWFlHaoQrr5mXmofFGOx3DKn7UfmBMyov8ySvLRVldA==}
-
   '@types/node@22.19.17':
     resolution: {integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==}
 
@@ -21723,9 +21621,6 @@ packages:
     resolution: {integrity: sha512-gIXjKqtFuWEgzFRJA9WCQeSJLZDjgJUOMCMzxtvFq/37KojM1BFGufqsCy0r4qSQmYLsZYMeyRqzIWOMup03sw==}
     engines: {node: '>=14'}
 
-  form-data-encoder@1.7.2:
-    resolution: {integrity: sha512-qfqtYan3rxrnCk1VYaA4H+Ms9xdpPqvLZa6xmMgFvhO32x7/3J/ExcTd6qpxM0vH2GdMI+poehyBZvqfMTto8A==}
-
   form-data-encoder@2.1.4:
     resolution: {integrity: sha512-yDYSgNMraqvnxiEXO4hi88+YZxaHC6QKzb5N84iRCTDeRO7ZALpir/lVmf/uXUhnwUr2O4HU8s/n6x+yNjQkHw==}
     engines: {node: '>= 14.17'}
@@ -21737,10 +21632,6 @@ packages:
   form-data@4.0.6:
     resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
     engines: {node: '>= 6'}
-
-  formdata-node@4.4.1:
-    resolution: {integrity: sha512-0iirZp3uVDjVGt9p49aTaqjk84TrglENEDuqfdlZQ1roC9CWlPk6Avf8EEnZNcAqPonwkG35x4n3ww/1THYAeQ==}
-    engines: {node: '>= 12.20'}
 
   formidable@1.2.6:
     resolution: {integrity: sha512-KcpbcpuLNOwrEjnbpMC0gS+X8ciDoZE1kkqzat4a8vrprf+s9pKNQ/QIwWfbfs4ltgmFl3MD177SNTkve3BwGQ==}
@@ -22537,9 +22428,6 @@ packages:
   isobject@3.0.1:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
     engines: {node: '>=0.10.0'}
-
-  isomorphic-fetch@3.0.0:
-    resolution: {integrity: sha512-qvUtwJ3j6qwsF3jLxkZ72qCgjMysPzDfeV240JHiGZsANBYd+EEuu35v7dfrJ9Up0Ak07D7GGSkGhCHTqg/5wA==}
 
   isomorphic-git@1.27.2:
     resolution: {integrity: sha512-nCiz+ieOkWb5kDJSSckDTiMjTcgkxqH2xuiQmw1Y6O/spwx4d6TKYSfGCd4f71HGvUYcRSUGqJEI+3uN6UQlOw==}
@@ -23670,11 +23558,6 @@ packages:
 
   node-addon-api@4.3.0:
     resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}
-
-  node-domexception@1.0.0:
-    resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
-    engines: {node: '>=10.5.0'}
-    deprecated: Use your platform's native DOMException instead
 
   node-emoji@2.2.0:
     resolution: {integrity: sha512-Z3lTE9pLaJF47NyMhd4ww1yFTAP8YhYI8SleJiHzM46Fgpm5cnNzSl9XfzFNqbaz+VlJrIj3fXQ4DeN1Rjm6cw==}
@@ -26020,10 +25903,6 @@ packages:
   wcwidth@1.0.1:
     resolution: {integrity: sha512-XHPEwS0q6TaxcvG85+8EYkbiCux2XtWG2mkc47Ng2A77BQu9+DqIOJldST4HgPkuea7dvKSj5VgX3P1d4rW8Tg==}
 
-  web-streams-polyfill@4.0.0-beta.3:
-    resolution: {integrity: sha512-QW95TCTaHmsYfHDybGMwO5IJIM93I/6vTRk+daHTWFPhwh+C8Cg7j7XyKrwrj8Ib6vYXe0ocYNrmzY4xAAN6ug==}
-    engines: {node: '>= 14'}
-
   webidl-conversions@3.0.1:
     resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
 
@@ -26116,9 +25995,6 @@ packages:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
     deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
-
-  whatwg-fetch@3.6.20:
-    resolution: {integrity: sha512-EqhiFU6daOA8kpjOWTL0olhVOF3i7OrFzSYiGsEMB8GcXS+RrzauAERX65xMeNWVqxA6HXH2m69Z9LaKKdisfg==}
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -26347,18 +26223,6 @@ snapshots:
   '@alloc/quick-lru@5.2.0': {}
 
   '@andrewbranch/untar.js@1.0.3': {}
-
-  '@anthropic-ai/sdk@0.39.0':
-    dependencies:
-      '@types/node': 22.19.17
-      '@types/node-fetch': 2.6.12
-      abort-controller: 3.0.0
-      agentkeepalive: 4.6.0
-      form-data-encoder: 1.7.2
-      formdata-node: 4.4.1
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
 
   '@anthropic-ai/sdk@0.90.0(zod@4.3.6)':
     dependencies:
@@ -32214,11 +32078,6 @@ snapshots:
     dependencies:
       '@types/node': 22.19.17
 
-  '@types/node-fetch@2.6.12':
-    dependencies:
-      '@types/node': 22.19.17
-      form-data: 4.0.6
-
   '@types/node@22.19.17':
     dependencies:
       undici-types: 6.21.0
@@ -35488,8 +35347,6 @@ snapshots:
       cross-spawn: 7.0.6
       signal-exit: 4.1.0
 
-  form-data-encoder@1.7.2: {}
-
   form-data-encoder@2.1.4: {}
 
   form-data@2.5.6:
@@ -35508,11 +35365,6 @@ snapshots:
       es-set-tostringtag: 2.1.0
       hasown: 2.0.4
       mime-types: 2.1.35
-
-  formdata-node@4.4.1:
-    dependencies:
-      node-domexception: 1.0.0
-      web-streams-polyfill: 4.0.0-beta.3
 
   formidable@1.2.6: {}
 
@@ -36362,13 +36214,6 @@ snapshots:
   isexe@2.0.0: {}
 
   isobject@3.0.1: {}
-
-  isomorphic-fetch@3.0.0:
-    dependencies:
-      node-fetch: 2.7.0
-      whatwg-fetch: 3.6.20
-    transitivePeerDependencies:
-      - encoding
 
   isomorphic-git@1.27.2:
     dependencies:
@@ -38262,8 +38107,6 @@ snapshots:
       semver: 7.8.5
 
   node-addon-api@4.3.0: {}
-
-  node-domexception@1.0.0: {}
 
   node-emoji@2.2.0:
     dependencies:
@@ -41194,8 +41037,6 @@ snapshots:
       defaults: 1.0.4
     optional: true
 
-  web-streams-polyfill@4.0.0-beta.3: {}
-
   webidl-conversions@3.0.1: {}
 
   webidl-conversions@4.0.2: {}
@@ -41358,8 +41199,6 @@ snapshots:
   whatwg-encoding@3.1.1:
     dependencies:
       iconv-lite: 0.6.3
-
-  whatwg-fetch@3.6.20: {}
 
   whatwg-mimetype@4.0.0: {}
 

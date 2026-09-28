@@ -122,8 +122,7 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
-		"semver-ts": "^1.0.3"
+		"@fluidframework/tree": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.5",
