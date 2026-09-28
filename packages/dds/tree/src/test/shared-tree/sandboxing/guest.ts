@@ -7,7 +7,9 @@ import { fail } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecOptions } from "../../../codec/index.js";
+import { asAlpha } from "../../../api.js";
 import {
+	createIndependentTreeAlpha,
 	independentInitializedView,
 	type ForestOptions,
 	type ViewContent,
@@ -18,6 +20,7 @@ import type {
 	ImplicitFieldSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
 	type HostGuestMessage,
@@ -28,6 +31,7 @@ import {
 } from "./common.js";
 import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
+import type { GuestBranchInitialization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 
@@ -49,12 +53,12 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
-				case "dataChange": {
-					this.synchronization.receiveChangeFromHost(message.change);
+				case "hostUpdate": {
+					this.synchronization.receiveHostUpdate(message);
 					break;
 				}
-				case "acknowledgment": {
-					this.synchronization.receiveAckFromHost();
+				case "guestChangeAck": {
+					this.synchronization.receiveChangeAck(message);
 					break;
 				}
 				case "blobResponse": {
@@ -63,6 +67,10 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				}
 				case "blobRequest": {
 					throw new SandboxProtocolError("The Guest cannot receive blob requests.");
+				}
+				case "guestChange":
+				case "hostUpdateAck": {
+					throw new SandboxProtocolError(`The Guest cannot receive ${message.type} messages.`);
 				}
 				case "sessionFailure": {
 					this.session.fail(new Error(message.error), false);
@@ -85,7 +93,8 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	public constructor(
 		config: TreeViewConfiguration<TSchema>,
 		options: ForestOptions & ICodecOptions,
-		content: ViewContent,
+		content: ViewContent | Pick<ViewContent, "idCompressor">,
+		initialization: GuestBranchInitialization,
 		/** The Guest endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
 		/** The Guest-scoped logger for diagnostic telemetry. */
@@ -105,19 +114,38 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.codec = new GuestTransportCodec((message) =>
 			this.session.run(() => this.postMessage(message)),
 		);
-		const tree = this.codec.decode(content.tree);
-		validateTreePayloadVocabulary(tree);
-		this.view = independentInitializedView(config, options, {
-			...content,
-			tree: tree as ViewContent["tree"],
-		});
+		let hostView: TreeViewAlpha<TSchema>;
+		if ("tree" in content) {
+			const tree = this.codec.decode(content.tree);
+			validateTreePayloadVocabulary(tree);
+			hostView = independentInitializedView(config, options, {
+				...content,
+				tree: tree as ViewContent["tree"],
+			});
+		} else {
+			hostView = asAlpha(
+				createIndependentTreeAlpha({
+					...options,
+					idCompressor: content.idCompressor,
+				}).viewWith(config),
+			);
+		}
 		this.synchronization = new GuestSynchronization(
-			this.view,
+			hostView,
+			{
+				...initialization,
+				commits: initialization.commits.map((commit) => {
+					const decoded = this.codec.decode(commit);
+					validateTreePayloadVocabulary(decoded);
+					return decoded as JsonCompatibleReadOnly;
+				}),
+			},
 			(message) => this.postMessage(message),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
 			logger,
 		);
+		this.view = this.synchronization.view;
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
@@ -131,6 +159,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
+		this.synchronization.dispose();
 		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
 		this.view.dispose();
 	}

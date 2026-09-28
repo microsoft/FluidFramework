@@ -3,24 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { LogLevel } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { ChangeMetadata } from "../../../core/index.js";
+import type { ChangeMetadata, GraphCommit, RevisionTag } from "../../../core/index.js";
+import { findAncestor } from "../../../core/index.js";
+import type { SharedTreeChange } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 import {
-	type AcknowledgmentMessage,
-	type DataChangeMessage,
+	type GuestChangeAckMessage,
+	type GuestChangeId,
+	type GuestChangeMessage,
 	getRevision,
+	type HostUpdateAckMessage,
+	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
+import type { GuestBranchInitialization } from "./hostSynchronization.js";
+import { applyBranchUpdate, getBranch } from "./synchronizationUtils.js";
 
 /**
  * Synchronizes the Guest's view with the Host.
@@ -29,127 +36,156 @@ import {
  * The `Guest` owns initialization, transport encoding, message routing, and session lifetime.
  */
 export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
-	/** The number of local Guest changes that the Host has not acknowledged. */
-	private inFlight: number = 0;
-	/**
-	 * The promise and resolver for the process of sending changes to the Host.
-	 * When this is defined, the Host has not acknowledged all Guest changes.
-	 */
+	/** The Guest's copy of the Host main branch. */
+	public readonly host: TreeViewAlpha<TSchema>;
+	/** The Guest's authoring view, rebased over updates applied to {@link host}. */
+	public readonly view: TreeViewAlpha<TSchema>;
+	/** Guest changes sent to the Host that have not been acknowledged. */
+	private readonly pendingChanges = new Set<GuestChangeId>();
+	/** The promise and resolver for acknowledgment of all pending Guest changes. */
 	private pushInProgress?: PromiseWithResolvers;
-	/** The callback that unsubscribes from view changes. */
+	/** The Host main revision on which the next Guest change will be based. */
+	private mainRevision: RevisionTag;
+	/** The sequenced Host revision on which the next Guest change will be based. */
+	private trunkRevision: RevisionTag;
+	/** Host commits indexed by revision for validating and applying branch updates. */
+	private readonly hostCommits = new Map<RevisionTag, GraphCommit<SharedTreeChange>>();
+	/** The identifier to assign to the next Guest change. */
+	private nextChangeId = 0;
+	/** The identifier expected on the next Host update. */
+	private nextHostUpdateId = 0;
+	/** The callback that unsubscribes from authoring-view changes. */
 	private readonly offViewChanged: () => void;
-	/** Whether the Guest is applying changes from the Host. */
-	private isApplyingChangesFromHost: boolean = false;
 	/**
 	 * Whether synchronization has stopped.
 	 *
 	 * @remarks
 	 * Stopping is terminal and removes the view-change listener.
-	 * It occurs when the Guest session is disposed or fails, including when the Guest receives a
-	 * failure notification from the Host.
-	 * An idle session with no changes in flight is not stopped.
-	 * Closing the Host endpoint without a failure notification does not set this state.
-	 *
-	 * TODO: add an explicit close message to the protocol to trigger a close event, and set this flag.
+	 * An idle session with no pending changes is not stopped.
 	 */
 	private stopped = false;
+	/** Whether the hidden Host branch has been disposed. */
+	private disposed = false;
 
 	public constructor(
-		/**
-		 * The Guest view to synchronize with the Host.
-		 */
-		private readonly view: TreeViewAlpha<TSchema>,
-		/**
-		 * Sends a synchronization protocol message to the Host.
-		 */
-		private readonly send: (message: DataChangeMessage | AcknowledgmentMessage) => void,
-		/**
-		 * Runs an action within the Guest session's error-handling boundary.
-		 */
+		/** The Guest's initial copy of the Host main branch. */
+		host: TreeViewAlpha<TSchema>,
+		/** The revisions and commits needed to initialize the Host branch. */
+		initialization: GuestBranchInitialization,
+		/** Sends a synchronization protocol message to the Host. */
+		private readonly send: (message: GuestChangeMessage | HostUpdateAckMessage) => void,
+		/** Runs an action within the Guest session's error-handling boundary. */
 		private readonly run: (action: () => void) => void,
-		/**
-		 * Reports an asynchronous synchronization failure to the Guest session.
-		 */
+		/** Reports an asynchronous synchronization failure to the Guest session. */
 		private readonly fail: (error: unknown) => void,
-		/**
-		 * The scoped logger for synchronization diagnostics.
-		 */
+		/** The scoped logger for synchronization diagnostics. */
 		private readonly logger: TelemetryLoggerExt,
 	) {
+		this.host = host;
+		this.mainRevision = initialization.mainRevision;
+		this.trunkRevision = initialization.trunkRevision;
+		this.hostCommits.set(initialization.baseRevision, getBranch(this.host).getHead());
+		this.applyHostBranchUpdate(initialization);
+		this.view = host.fork();
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			this.run(() => {
-				// Only send Guest-authored changes. Sending a change received from the Host back to it
-				// would create a synchronization feedback loop.
-				if (!metadata.isLocal || this.isApplyingChangesFromHost) {
+				// Only Guest-authored changes are sent. Host updates rebase this view non-locally.
+				if (!metadata.isLocal) {
 					return;
 				}
-				const newChange = metadata.getChange();
-				// MessagePort delivery is asynchronous. Validate and send before recording a pending edit.
-				this.send({
-					type: "dataChange",
-					change: newChange,
-				});
-				this.log(
-					`New change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
-				);
-				if (this.pushInProgress === undefined) {
-					this.log("No pre-existing push in progress. Creating new push promise.");
-					this.pushInProgress = makePromiseWithResolvers();
-					// Report through the session even when the application does not await synchronization.
-					this.pushInProgress.promise.catch((error: unknown) => this.fail(error));
-				} else {
-					this.log("Reusing existing push promise.");
+				if (this.nextChangeId > Number.MAX_SAFE_INTEGER) {
+					throw new SandboxProtocolError("Guest change identifiers are exhausted.");
 				}
-				this.inFlight += 1;
+				const change = metadata.getChange();
+				const changeId = brand<GuestChangeId>(this.nextChangeId++);
+				if (this.pushInProgress === undefined) {
+					this.pushInProgress = makePromiseWithResolvers();
+					this.pushInProgress.promise.catch((error: unknown) => this.fail(error));
+				}
+				this.pendingChanges.add(changeId);
+				this.log(
+					`Sending change ${changeId} [${getRevision(change)}] based on main ${this.mainRevision}`,
+				);
+				this.send({
+					type: "guestChange",
+					changeId,
+					mainRevision: this.mainRevision,
+					trunkRevision: this.trunkRevision,
+					change,
+				});
 			});
 		});
 	}
 
 	/**
-	 * Attempts to apply a change from the Host.
-	 * The change is ignored if local changes have not yet been reflected on the Host.
-	 * The Guest sends an acknowledgment only if it applies the update.
+	 * Applies a Host branch transition and rebases Guest-local commits over it.
 	 */
-	public receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
-		if (this.inFlight > 0) {
-			// This update does not account for the local changes that the Host has not received.
-			// Ignore it. The Host will send another update after it receives the local changes.
-			this.log(`Ignoring update from Host (inFlight=${this.inFlight})`);
-			return;
+	public receiveHostUpdate(message: HostUpdateMessage): void {
+		if (message.updateId !== this.nextHostUpdateId) {
+			throw new SandboxProtocolError("Host updates must arrive in identifier order.");
 		}
-		this.isApplyingChangesFromHost = true;
-		try {
-			this.view.applyChange(change);
-		} finally {
-			this.isApplyingChangesFromHost = false;
-		}
-		this.log("Applied update from Host");
-		this.send({ type: "acknowledgment" });
+		this.nextHostUpdateId++;
+		this.log(
+			`Applying update ${message.updateId} from ${message.baseRevision} to ${message.mainRevision}`,
+		);
+		this.applyHostBranchUpdate(message);
+		this.mainRevision = message.mainRevision;
+		this.trunkRevision = message.trunkRevision;
+		this.view.rebaseOnto(this.host);
+		this.send({ type: "hostUpdateAck", updateId: message.updateId });
 	}
 
-	/** Processes the Host's acknowledgment of a local Guest change. */
-	public receiveAckFromHost(): void {
-		if (this.inFlight <= 0) {
-			throw new SandboxProtocolError("Unexpectedly received ack from Host");
+	private applyHostBranchUpdate(message: GuestBranchInitialization): void {
+		const base = this.hostCommits.get(message.baseRevision);
+		const currentHead = getBranch(this.host).getHead();
+		if (
+			base === undefined ||
+			findAncestor(currentHead, (commit) => commit === base) === undefined
+		) {
+			throw new SandboxProtocolError("Host update has an unknown base revision.");
 		}
-		this.log(`Local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
-		this.inFlight -= 1;
-
-		if (this.inFlight === 0) {
-			assert(
-				this.pushInProgress !== undefined,
-				"Missing push promise despite in-flight changes",
+		applyBranchUpdate(this.host, base, message.commits);
+		for (
+			let commit: GraphCommit<SharedTreeChange> | undefined = getBranch(this.host).getHead();
+			commit !== base;
+			commit = commit.parent
+		) {
+			assert(commit !== undefined, "Updated Host branch must descend from its base");
+			this.hostCommits.set(commit.revision, commit);
+		}
+		// The snapshot's baseline revision aliases the independent checkout's initial head.
+		if (this.hostCommits.get(message.mainRevision) !== getBranch(this.host).getHead()) {
+			throw new SandboxProtocolError(
+				"Host update did not produce its declared main revision.",
 			);
+		}
+		const trunk = this.hostCommits.get(message.trunkRevision);
+		if (
+			trunk === undefined ||
+			findAncestor(getBranch(this.host).getHead(), (commit) => commit === trunk) === undefined
+		) {
+			throw new SandboxProtocolError(
+				"Host trunk revision is not an ancestor of its main revision.",
+			);
+		}
+	}
+
+	/** Processes the Host's acknowledgment of a Guest change. */
+	public receiveChangeAck(message: GuestChangeAckMessage): void {
+		if (!this.pendingChanges.delete(message.changeId)) {
+			throw new SandboxProtocolError("Unexpected Guest change acknowledgment.");
+		}
+		this.log(`Change ${message.changeId} acknowledged`);
+		if (this.pendingChanges.size === 0) {
+			assert(this.pushInProgress !== undefined, "Missing push promise for Guest changes");
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
-			this.log("All local changes were acked. Resolving push promise.");
 			resolver();
 		}
 	}
 
 	/**
-	 * Returns a promise that resolves when the Host acknowledges all changes made on the Guest,
-	 * or `undefined` if no such changes are in flight.
+	 * Returns a promise that resolves when the Host acknowledges all Guest changes.
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		return this.pushInProgress?.promise;
@@ -162,8 +198,24 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		}
 		this.stopped = true;
 		this.offViewChanged();
+		this.pendingChanges.clear();
 		this.pushInProgress?.rejecter(error);
 		this.pushInProgress = undefined;
+	}
+
+	/**
+	 * Stops synchronization and releases the hidden Host branch.
+	 *
+	 * @remarks
+	 * Disposal is terminal and idempotent.
+	 */
+	public dispose(): void {
+		if (this.disposed) {
+			return;
+		}
+		this.stop(new Error("Guest synchronization disposed before synchronization completed."));
+		this.disposed = true;
+		this.host.dispose();
 	}
 
 	private log(message: string): void {

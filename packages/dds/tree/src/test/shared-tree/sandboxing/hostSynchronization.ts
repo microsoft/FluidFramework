@@ -3,54 +3,44 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { LogLevel } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { findCommonAncestor, type GraphCommit } from "../../../core/index.js";
-import { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import {
+	findAncestor,
+	findCommonAncestor,
+	type GraphCommit,
+	type RevisionTag,
+} from "../../../core/index.js";
+import type { SharedTreeChange } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema, UnsafeUnknownSchema } from "../../../simple-tree/index.js";
+import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 import {
-	type AcknowledgmentMessage,
-	type DataChangeMessage,
-	getRevision,
+	type GuestChangeAckMessage,
+	type GuestChangeMessage,
+	type HostUpdateAckMessage,
+	type HostUpdateId,
+	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
+import { getBranch, serializeCommit } from "./synchronizationUtils.js";
 
 /**
- * Gets the revisions of the commits that are in the `ahead` view but not in the `behind` view.
- * The returned list includes commits that are in both views but have a different base.
- * Used for debugging and logging purposes only.
+ * A baseline snapshot and the retained commits needed to reconstruct the Host branch.
+ * Pending commits must be replayed so that the Guest can rebase them after sequencing.
  */
-function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	behind: TreeViewAlpha<TSchema>,
-	ahead: TreeViewAlpha<TSchema>,
-): string {
-	/**
-	 * Gets the head commit of a view.
-	 * Used for debugging and logging purposes only.
-	 */
-	const headFromView = (view: TreeViewAlpha<TSchema>): GraphCommit<unknown> => {
-		// Commit information is not exposed through the public APIs,
-		// so this diagnostic helper relies on implementation details.
-		assert(
-			view instanceof SchematizingSimpleTreeView,
-			"Expected view to be a SchematizingSimpleTreeView",
-		);
-		return view.checkout.mainBranch.getHead();
-	};
-	const behindHead = headFromView(behind);
-	const aheadHead = headFromView(ahead);
-	const targetPath: GraphCommit<unknown>[] = [];
-	const ancestor = findCommonAncestor(behindHead, [aheadHead, targetPath]);
-	assert(ancestor !== undefined, "Branches do not share a common ancestor.");
-	return `[${targetPath.map((commit) => commit.revision).join(", ")}]`;
+export interface GuestBranchInitialization {
+	readonly baseRevision: RevisionTag;
+	readonly mainRevision: RevisionTag;
+	readonly trunkRevision: RevisionTag;
+	readonly commits: readonly JsonCompatibleReadOnly[];
 }
 
 /**
@@ -61,21 +51,27 @@ function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSc
  */
 export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	/**
-	 * The local branch on the Host.
-	 * It reflects the state of the Guest, but can lag because synchronization is asynchronous.
+	 * The Guest's authoring branch, advanced only by Guest changes and acknowledged Host updates.
 	 */
 	public readonly local: TreeViewAlpha<TSchema>;
+	private readonly pendingUpdates = new Map<
+		HostUpdateId,
+		{ readonly branch: ReturnType<typeof getBranch>; readonly trunkRevision: RevisionTag }
+	>();
 	/**
-	 * The promise and resolver for the process of sending changes to the Guest.
-	 * When this is defined, the Guest is behind the Host's main branch.
+	 * The baseline and retained commits used to initialize this session.
 	 */
+	public readonly guestInitialization: GuestBranchInitialization;
+	private guestMainRevision: RevisionTag;
+	private guestTrunkRevision: RevisionTag;
 	private updateInProgress?: PromiseWithResolvers;
-	/** A clone of the main branch from when the last update to the Guest started. */
-	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
-	/** Whether the Host is applying changes from the Guest to the main branch. */
-	private isApplyingGuestChanges: boolean = false;
-	/** The callback that unsubscribes from main branch changes. */
-	private readonly offMainChanged: () => void;
+	private sentHead: GraphCommit<SharedTreeChange>;
+	private trunkRevision: RevisionTag;
+	private sentTrunkRevision: RevisionTag;
+	private nextUpdateId = 0;
+	private nextGuestChangeId = 0;
+	private readonly offAfterChange: () => void;
+	private readonly offCommitSequenced: () => void;
 	/** Whether synchronization has stopped. Any work pending when it stopped was rejected. */
 	private stopped = false;
 	/** Whether the branches owned by this synchronization state have been disposed. */
@@ -89,7 +85,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
-		private readonly send: (message: DataChangeMessage | AcknowledgmentMessage) => void,
+		private readonly send: (message: HostUpdateMessage | GuestChangeAckMessage) => void,
 		/**
 		 * Binds handles in a change from the Guest to the Host's SharedTree.
 		 */
@@ -108,72 +104,88 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.local = main.fork();
-		this.offMainChanged = this.main.events.on("changed", () => {
-			// The Host might need to update the Guest after applying changes from the Guest,
-			// but receiveChangeFromGuest must first send an acknowledgment to the Guest.
+		const branch = getBranch(main);
+		this.sentHead = branch.getHead();
+		const commits: GraphCommit<SharedTreeChange>[] = [];
+		const base = findAncestor(
+			[this.sentHead, commits],
+			(commit) => commit.parent === undefined,
+		);
+		assert(base !== undefined, "Host branch must have an initialization base");
+		this.trunkRevision = base.revision;
+		this.sentTrunkRevision = this.trunkRevision;
+		this.guestMainRevision = this.sentHead.revision;
+		this.guestTrunkRevision = this.trunkRevision;
+		this.guestInitialization = {
+			baseRevision: base.revision,
+			mainRevision: this.guestMainRevision,
+			trunkRevision: this.guestTrunkRevision,
+			commits: commits.map((commit) => serializeCommit(main, commit)),
+		};
+		this.offAfterChange = branch.events.on("afterChange", () => {
+			this.run(() => this.sendMainUpdate());
+		});
+		this.offCommitSequenced = branch.events.on("commitSequenced", (commit) => {
 			this.run(() => {
-				if (!this.isApplyingGuestChanges) {
-					this.tryUpdateGuest("after main branch changed");
-				}
+				this.trunkRevision = commit.revision;
+				this.sendMainUpdate();
 			});
 		});
 	}
 
 	/**
-	 * Informs the Host of a new change made on the Guest.
-	 * This method synchronously applies the change to the Host's local and main branches,
-	 * then asynchronously attempts to update the Guest if necessary.
+	 * Applies a Guest change from the Host state on which the Guest authored it.
 	 */
-	public receiveChangeFromGuest(change: JsonCompatibleReadOnly): void {
-		this.log(`Received change [${getRevision(change)}] from Guest`);
-		if (this.mainHeadFromLastUpdate !== undefined) {
-			// The Guest authored this change before applying the update that is in progress.
-			// That update does not account for the new change, so the Guest will reject it as
-			// out of date. A new update based on the updated main head will replace it.
-			this.log(
-				`Abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
+	public receiveChangeFromGuest(message: GuestChangeMessage): void {
+		if (message.changeId !== this.nextGuestChangeId) {
+			throw new SandboxProtocolError("Guest changes must arrive in identifier order.");
+		}
+		this.nextGuestChangeId++;
+		if (message.mainRevision !== this.guestMainRevision) {
+			throw new SandboxProtocolError(
+				"Guest main revision does not match its acknowledged Host state.",
 			);
-			this.mainHeadFromLastUpdate.dispose();
-			this.mainHeadFromLastUpdate = undefined;
 		}
-		this.local.applyChange(change);
-		// applyChange runs the tree codec before handles are bound or the main branch is updated.
-		this.bindHandles(change);
-		this.log(`Merging changes from Guest: ${getMissingCommits(this.main, this.local)}`);
-		this.isApplyingGuestChanges = true;
-		try {
-			// TODO: Establish isolation for failures during main-tree merge, beyond validation on local.
-			this.main.merge(this.local, false);
-		} finally {
-			this.isApplyingGuestChanges = false;
+		if (message.trunkRevision !== this.guestTrunkRevision) {
+			throw new SandboxProtocolError(
+				"Guest trunk revision does not match its acknowledged Host state.",
+			);
 		}
-		this.send({ type: "acknowledgment" });
-		this.tryUpdateGuest("after receiving change from Guest");
-	}
 
-	/**
-	 * Informs the Host that the Guest acknowledged a change that the Host sent.
-	 */
-	public receiveAckFromGuest(): void {
-		if (this.mainHeadFromLastUpdate === undefined) {
-			throw new SandboxProtocolError("Unexpectedly received ack from Guest");
-		}
-		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
 		this.log(
-			`Received ack of update from Guest for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
+			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
-		// Reflect the acknowledged update on the local branch.
-		this.local.rebaseOnto(this.mainHeadFromLastUpdate);
-		this.mainHeadFromLastUpdate.dispose();
-		this.mainHeadFromLastUpdate = undefined;
-		// Changes can arrive after an update is sent. Try again to make sure that the Guest is
-		// fully up to date.
-		this.tryUpdateGuest("after receiving ack of update");
+		this.local.applyChange(message.change);
+		this.bindHandles(message.change);
+		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
+		this.main.merge(this.local, false);
+		this.send({ type: "guestChangeAck", changeId: message.changeId });
 	}
 
 	/**
-	 * Returns a promise that resolves when all changes known to the Host are reflected in the Guest,
-	 * or undefined if all such changes are already reflected in the Guest.
+	 * Processes an acknowledgment for a Host branch update.
+	 */
+	public receiveUpdateAck(message: HostUpdateAckMessage): void {
+		const update = this.pendingUpdates.get(message.updateId);
+		if (update === undefined || this.pendingUpdates.keys().next().value !== message.updateId) {
+			throw new SandboxProtocolError("Unexpected Host update acknowledgment.");
+		}
+		// A revision can be rebased while its update is in flight. Use the exact state sent.
+		getBranch(this.local).rebaseOnto(update.branch);
+		this.guestMainRevision = update.branch.getHead().revision;
+		this.guestTrunkRevision = update.trunkRevision;
+		this.pendingUpdates.delete(message.updateId);
+		update.branch.dispose();
+		this.log(`Update ${message.updateId} acknowledged`);
+		if (this.pendingUpdates.size === 0) {
+			const resolver = this.updateInProgress?.resolver;
+			this.updateInProgress = undefined;
+			resolver?.();
+		}
+	}
+
+	/**
+	 * Returns a promise that resolves when the Guest acknowledges all Host branch updates.
 	 */
 	public get updateGuestPromise(): Promise<void> | undefined {
 		return this.updateInProgress?.promise;
@@ -191,7 +203,12 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			return;
 		}
 		this.stopped = true;
-		this.offMainChanged();
+		this.offAfterChange();
+		this.offCommitSequenced();
+		for (const update of this.pendingUpdates.values()) {
+			update.branch.dispose();
+		}
+		this.pendingUpdates.clear();
 		this.updateInProgress?.rejecter(error);
 		this.updateInProgress = undefined;
 	}
@@ -210,52 +227,40 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		}
 		this.stop(new Error("Host synchronization disposed before synchronization completed."));
 		this.disposed = true;
-		this.mainHeadFromLastUpdate?.dispose();
-		this.mainHeadFromLastUpdate = undefined;
 		this.local.dispose();
 	}
 
-	/**
-	 * Attempts to send changes to the Guest if the Guest is behind the Host's main branch.
-	 */
-	private tryUpdateGuest(prompt: string): void {
-		this.log(`Considering sync ${prompt}...`);
-		if (this.local.isMissingEditsFrom(this.main)) {
-			this.log(
-				`Detected changes that need to be reflected in Guest ${getMissingCommits(this.local, this.main)}`,
-			);
-			if (this.mainHeadFromLastUpdate !== undefined) {
-				this.log("Update already in progress. Will wait for it to complete or fail.");
-				return;
-			}
-			if (this.updateInProgress === undefined) {
-				this.log("No pre-existing update in progress. Creating new update promise.");
-				this.updateInProgress = makePromiseWithResolvers();
-				// Report through the session even when the application does not await synchronization.
-				this.updateInProgress.promise.catch((error: unknown) => this.fail(error));
-			} else {
-				this.log("Reusing existing update promise.");
-			}
-			this.mainHeadFromLastUpdate = this.main.fork();
-			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
-			assert(
-				update !== undefined,
-				"Expected update to be defined since local is missing edits from main",
-			);
-			this.log("Sending update to Guest");
-			this.send({
-				type: "dataChange",
-				change: update,
-			});
-		} else {
-			this.log("No changes that need to be reflected in Guest");
-			if (this.updateInProgress !== undefined) {
-				this.log("Resolving update promise");
-				const resolver = this.updateInProgress.resolver;
-				this.updateInProgress = undefined;
-				resolver();
-			}
+	private sendMainUpdate(): void {
+		const head = getBranch(this.main).getHead();
+		const commits: GraphCommit<SharedTreeChange>[] = [];
+		const base = findCommonAncestor(this.sentHead, [head, commits]);
+		assert(base !== undefined, "Host branch updates must share ancestry");
+		if (head === this.sentHead && this.trunkRevision === this.sentTrunkRevision) {
+			return;
 		}
+		if (this.nextUpdateId > Number.MAX_SAFE_INTEGER) {
+			throw new SandboxProtocolError("Host update identifiers are exhausted.");
+		}
+		const updateId = brand<HostUpdateId>(this.nextUpdateId++);
+		if (this.updateInProgress === undefined) {
+			this.updateInProgress = makePromiseWithResolvers();
+			this.updateInProgress.promise.catch((error: unknown) => this.fail(error));
+		}
+		this.pendingUpdates.set(updateId, {
+			branch: getBranch(this.main).fork(),
+			trunkRevision: this.trunkRevision,
+		});
+		this.sentHead = head;
+		this.sentTrunkRevision = this.trunkRevision;
+		this.log(`Sending update ${updateId} from ${base.revision} to ${head.revision}`);
+		this.send({
+			type: "hostUpdate",
+			updateId,
+			baseRevision: base.revision,
+			mainRevision: head.revision,
+			trunkRevision: this.trunkRevision,
+			commits: commits.map((commit) => serializeCommit(this.main, commit)),
+		});
 	}
 
 	private log(message: string): void {

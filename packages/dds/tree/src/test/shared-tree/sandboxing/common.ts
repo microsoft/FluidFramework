@@ -51,6 +51,26 @@ const BlobRequestId = brandedNumberType<BlobRequestId>({
 });
 
 /**
+ * Identifies one Host branch update and its acknowledgment.
+ */
+export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
+const HostUpdateId = brandedNumberType<HostUpdateId>({
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
+/**
+ * Identifies one Guest change and its acknowledgment.
+ */
+export type GuestChangeId = Brand<number, "sandbox.GuestChangeId">;
+const GuestChangeId = brandedNumberType<GuestChangeId>({
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
+/**
  * Wire discriminator for {@link SerializedHandle}. Ordinary records with this value must be escaped.
  */
 export const serializedHandleType = "__sandbox_handle__";
@@ -231,30 +251,82 @@ export function isSerializedHandle(value: unknown): value is SerializedHandle {
 	return serializedHandleValidator.check(value);
 }
 
-/**
- * A serialized SharedTree change that one participant sends to the other participant.
- */
-export interface DataChangeMessage {
-	/** Identifies this message as a data-change message. */
-	readonly type: "dataChange";
-	/** The serialized SharedTree change to apply. */
+const SessionRevisionTag = Type.Union([Type.Literal("root"), Type.Number({ multipleOf: 1 })]);
+
+/** Advances the Guest's copy of the Host main branch. */
+export interface HostUpdateMessage {
+	readonly type: "hostUpdate";
+	readonly updateId: HostUpdateId;
+	readonly baseRevision: RevisionTag;
+	readonly mainRevision: RevisionTag;
+	readonly trunkRevision: RevisionTag;
+	readonly commits: readonly JsonCompatibleReadOnly[];
+}
+const HostUpdateMessageSchema = Type.Object(
+	{
+		type: Type.Readonly(Type.Literal("hostUpdate")),
+		updateId: Type.Readonly(HostUpdateId),
+		baseRevision: Type.Readonly(SessionRevisionTag),
+		mainRevision: Type.Readonly(SessionRevisionTag),
+		trunkRevision: Type.Readonly(SessionRevisionTag),
+		commits: Type.Readonly(Type.Array(TreePayloadVocabulary)),
+	},
+	{ additionalProperties: false },
+);
+
+/** Confirms that the Guest applied one {@link HostUpdateMessage}. */
+export interface HostUpdateAckMessage {
+	readonly type: "hostUpdateAck";
+	readonly updateId: HostUpdateId;
+}
+const HostUpdateAckMessageSchema = Type.Object(
+	{
+		type: Type.Readonly(Type.Literal("hostUpdateAck")),
+		updateId: Type.Readonly(HostUpdateId),
+	},
+	{ additionalProperties: false },
+);
+
+/** A Guest commit and the Host branch revisions on which the Guest based it. */
+export interface GuestChangeMessage {
+	readonly type: "guestChange";
+	readonly changeId: GuestChangeId;
+	readonly mainRevision: RevisionTag;
+	readonly trunkRevision: RevisionTag;
 	readonly change: JsonCompatibleReadOnly;
 }
+const GuestChangeMessageSchema = Type.Object(
+	{
+		type: Type.Readonly(Type.Literal("guestChange")),
+		changeId: Type.Readonly(GuestChangeId),
+		mainRevision: Type.Readonly(SessionRevisionTag),
+		trunkRevision: Type.Readonly(SessionRevisionTag),
+		change: Type.Readonly(TreePayloadVocabulary),
+	},
+	{ additionalProperties: false },
+);
 
-/**
- * Confirms that the receiver applied one data-change message.
- */
-export interface AcknowledgmentMessage {
-	/** Identifies this message as an acknowledgment message. */
-	readonly type: "acknowledgment";
+/** Confirms that the Host applied one {@link GuestChangeMessage}. */
+export interface GuestChangeAckMessage {
+	readonly type: "guestChangeAck";
+	readonly changeId: GuestChangeId;
 }
+const GuestChangeAckMessageSchema = Type.Object(
+	{
+		type: Type.Readonly(Type.Literal("guestChangeAck")),
+		changeId: Type.Readonly(GuestChangeId),
+	},
+	{ additionalProperties: false },
+);
 
 /**
  * A message that the Host and the Guest can send through their shared protocol.
  */
 export type HostGuestMessage =
-	| DataChangeMessage
-	| AcknowledgmentMessage
+	| HostUpdateMessage
+	| HostUpdateAckMessage
+	| GuestChangeMessage
+	| GuestChangeAckMessage
 	| BlobRequestMessage
 	| BlobResponseMessage
 	| SessionFailureMessage;
@@ -321,6 +393,10 @@ const blobRequestValidator = validator.compile(BlobRequestMessage);
 const blobResponseValidator = validator.compile(
 	Type.Union([BlobSuccessMessage, BlobErrorMessage]),
 );
+const hostUpdateValidator = validator.compile(HostUpdateMessageSchema);
+const hostUpdateAckValidator = validator.compile(HostUpdateAckMessageSchema);
+const guestChangeValidator = validator.compile(GuestChangeMessageSchema);
+const guestChangeAckValidator = validator.compile(GuestChangeAckMessageSchema);
 
 /**
  * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
@@ -356,17 +432,24 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 	}
 
-	if (data.type === "acknowledgment") {
-		return data as AcknowledgmentMessage;
+	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
+		return data as HostUpdateMessage;
+	}
+
+	if (data.type === "hostUpdateAck" && hostUpdateAckValidator.check(data)) {
+		return data as HostUpdateAckMessage;
+	}
+
+	if (data.type === "guestChange" && guestChangeValidator.check(data)) {
+		return data as GuestChangeMessage;
+	}
+
+	if (data.type === "guestChangeAck" && guestChangeAckValidator.check(data)) {
+		return data as GuestChangeAckMessage;
 	}
 
 	if (data.type === "sessionFailure" && sessionFailureValidator.check(data)) {
 		return data;
-	}
-
-	if (data.type === "dataChange" && Object.hasOwn(data, "change") && "change" in data) {
-		validateTreePayloadVocabulary(data.change);
-		return data as DataChangeMessage;
 	}
 
 	if (data.type === "blobRequest" && blobRequestValidator.check(data)) {

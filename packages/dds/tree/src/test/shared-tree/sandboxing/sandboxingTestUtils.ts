@@ -12,12 +12,20 @@ import {
 
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
-	extractPersistedSchema,
-	// eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
-} from "../../../simple-tree/api/index.js";
+	castCursorToSynchronous,
+	findAncestor,
+	moveToDetachedField,
+	schemaDataIsEmpty,
+} from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import {
+	defaultSchemaPolicy,
+	fieldBatchCodecBuilder,
+	schemaCodecBuilder,
+	TreeCompressionStrategy,
+} from "../../../feature-libraries/index.js";
+import type { ViewContent } from "../../../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -25,6 +33,7 @@ import {
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
 import {
@@ -35,6 +44,7 @@ import {
 import { Guest } from "./guest.js";
 import { normalizeTransportData } from "./transport.js";
 import { Host } from "./host.js";
+import { getBranch, getCheckout } from "./synchronizationUtils.js";
 
 /**
  * The ports and test controls for one Host and Guest session.
@@ -153,6 +163,7 @@ export function setup(initialState: string[]) {
 
 /**
  * Initializes a new Guest from an existing Host, including application-managed replacement sessions.
+ * Exports the baseline before retained commits, then transfers those commits for replay on the Guest.
  * The caller owns the supplied port and must dispose the returned Guest.
  */
 export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
@@ -163,22 +174,66 @@ export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
 	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
 ): Guest<TSchema> {
-	const localRoot = host.local.root;
-	assert(localRoot !== undefined, "Expected an initialized root");
-	const startingState = TreeAlpha.exportCompressed(localRoot, {
-		// TODO: shard the compressor here?
-		idCompressor: hostCompressor,
+	const initialization = host.guestInitialization;
+	const snapshot = host.local.fork();
+	const branch = getBranch(snapshot);
+	const base = findAncestor(
+		branch.getHead(),
+		(commit) => commit.revision === initialization.baseRevision,
+	);
+	assert(base !== undefined, "Expected the Guest initialization base in Host history");
+	const options = {
+		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: FluidClientVersion.v2_80,
-	});
-	const normalized = normalizeTransportData(startingState);
-	validateTreePayloadVocabulary(normalized);
+	};
+	let content: ViewContent | Pick<ViewContent, "idCompressor">;
+	try {
+		const checkout = getCheckout(snapshot);
+		checkout.switchBranch(branch.fork(base));
+		branch.dispose();
+		if (schemaDataIsEmpty(checkout.storedSchema)) {
+			assert(checkout.forest.isEmpty, "An uninitialized snapshot must have an empty forest");
+			content = { idCompressor: hostCompressor };
+		} else {
+			const cursor = checkout.forest.allocateCursor();
+			try {
+				moveToDetachedField(checkout.forest, cursor);
+				const tree = fieldBatchCodecBuilder
+					.build(options)
+					.encode([castCursorToSynchronous(cursor)], {
+						encodeType: TreeCompressionStrategy.Compressed,
+						idCompressor: hostCompressor,
+						schema: { schema: checkout.storedSchema, policy: defaultSchemaPolicy },
+						isSummary: true,
+					});
+				const normalized = normalizeTransportData(tree);
+				validateTreePayloadVocabulary(normalized);
+				content = {
+					tree: structuredClone(host.codec.encode(normalized)) as ViewContent["tree"],
+					schema: structuredClone(
+						schemaCodecBuilder.build(options).encode(checkout.storedSchema),
+					) as ViewContent["schema"],
+					idCompressor: hostCompressor,
+				};
+			} finally {
+				cursor.free();
+			}
+		}
+	} finally {
+		snapshot.dispose();
+	}
 	return new Guest(
 		config,
 		{ jsonValidator: FormatValidatorBasic },
+		content,
 		{
-			tree: structuredClone(host.codec.encode(normalized)) as typeof startingState,
-			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
-			idCompressor: hostCompressor,
+			...initialization,
+			commits: initialization.commits.map(
+				(commit) =>
+					structuredClone(
+						host.codec.encode(normalizeTransportData(commit)),
+					) as JsonCompatibleReadOnly,
+			),
 		},
 		port,
 		logger,

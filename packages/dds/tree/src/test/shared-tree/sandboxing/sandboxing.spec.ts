@@ -5,6 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import {
+	createFuzzDescribe,
+	generateTestSeeds,
+	makeRandom,
+	StressMode,
+} from "@fluid-private/stochastic-test-utils";
 import { fail } from "@fluidframework/core-utils/internal";
 import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -14,20 +20,19 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-// eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import { SchemaFactoryAlpha, TreeViewConfiguration } from "../../../simple-tree/index.js";
-import { hasSome } from "../../../util/index.js";
-import { StringArray, createTestUndoRedoStacks } from "../../utils.js";
+import { brand, hasSome } from "../../../util/index.js";
+import { createTestUndoRedoStacks, mintRevisionTag } from "../../utils.js";
 
 import {
-	type DataChangeMessage,
+	type GuestChangeMessage,
 	type HostGuestMessage,
 	makePromiseWithResolvers,
 	parseHostGuestMessage,
 	SandboxProtocolError,
 } from "./common.js";
 import { Host } from "./host.js";
+import { GuestSynchronization } from "./guestSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 import {
@@ -43,21 +48,42 @@ import {
 } from "./sandboxingTestUtils.js";
 
 describe("Host and Guest message protocol", () => {
-	it("accepts data changes and acknowledgments", () => {
-		const dataChange = normalizeTransportData({ type: "dataChange", change: { value: 1 } });
-		const acknowledgment = normalizeTransportData({ type: "acknowledgment" });
+	it("accepts branch updates, Guest changes, and their acknowledgments", () => {
+		const messages = [
+			{
+				type: "hostUpdate",
+				updateId: 0,
+				baseRevision: "root",
+				mainRevision: 1,
+				trunkRevision: "root",
+				commits: [{ value: 1 }],
+			},
+			{
+				type: "guestChange",
+				changeId: 0,
+				mainRevision: 1,
+				trunkRevision: "root",
+				change: { value: 2 },
+			},
+			{ type: "hostUpdateAck", updateId: 0 },
+			{ type: "guestChangeAck", changeId: 0 },
+		];
 
-		assert.equal(parseHostGuestMessage(dataChange), dataChange);
-		assert.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
+		for (const message of messages) {
+			const normalized = normalizeTransportData(message);
+			assert.equal(parseHostGuestMessage(normalized), normalized);
+		}
 	});
 
 	it("rejects invalid message envelopes", () => {
 		const invalidMessages: unknown[] = [
 			null,
-			"dataChange",
+			"guestChange",
 			{},
 			{ type: "unknown" },
-			{ type: "dataChange" },
+			{ type: "guestChange" },
+			{ type: "hostUpdateAck" },
+			{ type: "guestChangeAck" },
 			{ type: "sessionFailure" },
 			{ type: "sessionFailure", error: 0 },
 			{ type: "sessionFailure", error: "failure", extra: true },
@@ -133,7 +159,13 @@ describe("Host and Guest correctness", () => {
 	it("uses structured clones for protocol messages", async () => {
 		const channel = new MessageChannel();
 		const change = { revision: "test revision" };
-		const message: DataChangeMessage = { type: "dataChange", change };
+		const message: GuestChangeMessage = {
+			type: "guestChange",
+			changeId: brand(0),
+			mainRevision: "root",
+			trunkRevision: "root",
+			change,
+		};
 		const received = new Promise<HostGuestMessage>((resolve) => {
 			channel.port2.addEventListener(
 				"message",
@@ -149,7 +181,7 @@ describe("Host and Guest correctness", () => {
 
 		assert.deepEqual(receivedMessage, normalizeTransportData(message));
 		assert.notEqual(receivedMessage, message);
-		if (receivedMessage.type === "dataChange") {
+		if (receivedMessage.type === "guestChange") {
 			assert.notEqual(receivedMessage.change, change);
 		}
 		channel.port1.close();
@@ -370,7 +402,13 @@ describe("Host and Guest correctness", () => {
 	for (const [receiver, message, expected] of [
 		[
 			"Host",
-			{ type: "dataChange", change: { type: "__sandbox_handle__", token: 99 } },
+			{
+				type: "guestChange",
+				changeId: 0,
+				mainRevision: "root",
+				trunkRevision: "root",
+				change: { type: "__sandbox_handle__", token: 99 },
+			},
 			/Unknown sandbox handle token/,
 		],
 		["Host", { type: "blobRequest", requestId: 0, token: 99 }, /Unknown sandbox handle token/],
@@ -592,14 +630,52 @@ describe("Host and Guest correctness", () => {
 				() => reported.resolver(),
 			);
 			const port = receiver === "Host" ? interop.sendToHost : interop.sendToGuest;
-			port.postMessage({ type: "acknowledgment" });
+			port.postMessage(
+				receiver === "Host"
+					? { type: "hostUpdateAck", updateId: 99 }
+					: { type: "guestChangeAck", changeId: 99 },
+			);
 			await reported.promise;
 			const error = receiver === "Host" ? host.error : guest.error;
 			assert(error?.cause instanceof SandboxProtocolError);
-			assert.match(error.cause.message, /Unexpectedly received ack/);
+			assert.match(error.cause.message, /Unexpected .* acknowledgment/);
 			host.main.root.push("still usable");
 			provider.synchronizeMessages();
 			assert.deepEqual([...peer.root], ["still usable"]);
+		});
+
+		it(`rejects out-of-order changes sent to the ${receiver}`, async () => {
+			const reported = makePromiseWithResolvers();
+			const { host, guest, interop } = setupCustom(
+				[],
+				stringArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
+			const { mainRevision, trunkRevision } = host.guestInitialization;
+			if (receiver === "Host") {
+				interop.sendToHost.postMessage({
+					type: "guestChange",
+					changeId: 1,
+					mainRevision,
+					trunkRevision,
+					change: {},
+				});
+			} else {
+				interop.sendToGuest.postMessage({
+					type: "hostUpdate",
+					updateId: 1,
+					baseRevision: mainRevision,
+					mainRevision,
+					trunkRevision,
+					commits: [],
+				});
+			}
+			await reported.promise;
+			const error = receiver === "Host" ? host.error : guest.error;
+			assert(error?.cause instanceof SandboxProtocolError);
+			assert.match(error.cause.message, /identifier order/);
 		});
 
 		it(`classifies message deserialization failure on the ${receiver} as a protocol error`, async () => {
@@ -642,46 +718,32 @@ describe("Host and Guest correctness", () => {
 		assert(error.cause instanceof SandboxProtocolError);
 	});
 
-	it("does not acknowledge an invalid SharedTree change", async () => {
+	it("does not acknowledge a Guest change with an unknown base", async () => {
 		let reportProtocolError: ((error: Error) => void) | undefined;
 		const protocolError = new Promise<Error>((resolve) => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const channel = new MessageChannel();
-		const local = {
-			applyChange: () => {
-				throw new Error("Cannot apply change. Invalid serialized change format.");
-			},
-			dispose: () => {},
-		} as unknown as TreeViewAlpha<typeof StringArray>;
-		const main = {
-			fork: () => local,
-			events: { on: () => () => {} },
-			dispose: () => {},
-		} as unknown as TreeViewAlpha<typeof StringArray>;
-		let bindings = 0;
-		const host = new Host(
-			main,
-			channel.port1,
-			Object.assign(new MockHandle(undefined), {
-				bind: () => {
-					bindings++;
-				},
-			}),
-			createChildLogger({ namespace: "Host" }),
+		const { host, interop } = setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
 			reportProtocolError,
 		);
 		let acknowledgmentReceived = false;
-		channel.port2.addEventListener("message", (event: MessageEvent<unknown>) => {
+		interop.sendToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
 			const message = parseHostGuestMessage(normalizeTransportData(event.data));
-			acknowledgmentReceived ||= message.type === "acknowledgment";
+			acknowledgmentReceived ||= message.type === "guestChangeAck";
 		});
-		channel.port2.start();
+		interop.sendToHost.start();
 
-		channel.port2.postMessage(
+		interop.sendToHost.postMessage(
 			host.codec.encode({
-				type: "dataChange",
+				type: "guestChange",
+				changeId: 0,
+				mainRevision: mintRevisionTag(),
+				trunkRevision: mintRevisionTag(),
 				change: { handle: new MockHandle(new ArrayBuffer(0)) },
 			}),
 		);
@@ -689,10 +751,139 @@ describe("Host and Guest correctness", () => {
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
 		assert.equal(acknowledgmentReceived, false);
-		assert.equal(bindings, 0);
-		host.dispose();
-		channel.port2.close();
+		assert.equal(host.main.root.length, 0);
 	});
+
+	it("applies consecutive Guest changes to their authoring state despite concurrent insertions", async () => {
+		const { peer, host, guest, provider } = setup(["a", "b"]);
+		guest.view.root.push("g1");
+		guest.view.root.removeAt(0);
+		peer.root.insertAtStart("p");
+		provider.synchronizeMessages();
+
+		await guest.updateHostPromise;
+		await host.updateGuestPromise;
+		provider.synchronizeMessages();
+		await host.updateGuestPromise;
+
+		const expected = ["p", "b", "g1"];
+		for (const view of [host.main, host.local, guest.view, peer]) {
+			assert.deepEqual([...view.root], expected);
+		}
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+	});
+
+	it("accepts an empty update at an aliased initialization revision", () => {
+		const { host } = setup(["a"]);
+		const revision = mintRevisionTag();
+		const sent: HostGuestMessage[] = [];
+		const synchronization = new GuestSynchronization(
+			host.main.fork(),
+			{
+				baseRevision: revision,
+				mainRevision: revision,
+				trunkRevision: revision,
+				commits: [],
+			},
+			(message) => sent.push(message),
+			(action) => action(),
+			(error) => assert.fail(String(error)),
+			createChildLogger({ namespace: "Guest" }),
+		);
+		try {
+			synchronization.receiveHostUpdate({
+				type: "hostUpdate",
+				updateId: brand(0),
+				baseRevision: revision,
+				mainRevision: revision,
+				trunkRevision: revision,
+				commits: [],
+			});
+			assert.deepEqual(sent, [{ type: "hostUpdateAck", updateId: 0 }]);
+			assert.deepEqual([...synchronization.view.root], ["a"]);
+		} finally {
+			synchronization.stop(new Error("Test complete"));
+			synchronization.view.dispose();
+			synchronization.dispose();
+		}
+	});
+
+	for (const [trimHistory, concurrentPeerEdit] of [
+		[false, false],
+		[false, true],
+		[true, false],
+		[true, true],
+	]) {
+		it(`initializes with pending Host edits (trimmed history: ${trimHistory}, concurrent peer: ${concurrentPeerEdit})`, async () => {
+			const { peer, host, guest, provider } = setup(["a", "b"]);
+			guest.dispose();
+			host.dispose();
+			if (trimHistory) {
+				for (let i = 0; i < 5; i++) {
+					peer.root.push("temporary");
+					provider.synchronizeMessages();
+					host.main.root.removeAt(2);
+					provider.synchronizeMessages();
+				}
+			}
+			if (concurrentPeerEdit) {
+				peer.root.insertAtStart("p");
+			}
+			host.main.root.push("first");
+			host.main.root.push("second");
+			host.main.root.removeAt(0);
+
+			const ports = buildDirectSessionPorts();
+			const replacementHost = new Host(
+				host.main,
+				ports.hostPort,
+				provider.trees[1].handle,
+				createChildLogger({ namespace: "Host" }),
+			);
+			if (trimHistory) {
+				assert.notEqual(replacementHost.guestInitialization.baseRevision, "root");
+			}
+			const replacementGuest = createGuestForHost(
+				replacementHost,
+				stringArrayConfig,
+				ports.guestPort,
+				provider.getCompressor(provider.trees[1]),
+			);
+			try {
+				assert.deepEqual([...replacementGuest.view.root], ["b", "first", "second"]);
+				replacementGuest.view.root.push("guest");
+				const push = replacementGuest.updateHostPromise;
+				provider.synchronizeMessages();
+				await push;
+				await replacementHost.updateGuestPromise;
+				provider.synchronizeMessages();
+				await replacementHost.updateGuestPromise;
+
+				const expected = [
+					...(concurrentPeerEdit ? ["p"] : []),
+					"b",
+					"first",
+					"second",
+					"guest",
+				];
+				for (const view of [
+					replacementHost.main,
+					replacementHost.local,
+					replacementGuest.view,
+					peer,
+				]) {
+					assert.deepEqual([...view.root], expected);
+				}
+				assert.equal(replacementHost.error, undefined);
+				assert.equal(replacementGuest.error, undefined);
+			} finally {
+				replacementGuest.dispose();
+				replacementHost.dispose();
+				ports.dispose();
+			}
+		});
+	}
 
 	it("attempts by the Host and Guest to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
 		const { peer, host, guest, provider } = setup([]);
@@ -714,10 +905,9 @@ describe("Host and Guest correctness", () => {
 		peer.root.push("B(p)");
 		assert.deepEqual([...peer.root], ["B(p)"]);
 		provider.synchronizeMessages();
-		// The peer edit is now reflected in the Host but not the local or Guest yet
+		// The Host forwards the peer edit without waiting for the Guest edits.
 		assert.deepEqual([...host.main.root], ["B(p)"]);
 		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
@@ -770,10 +960,6 @@ describe("Host and Guest correctness", () => {
 		assert.deepEqual([...host.main.root], ["P", "H"]);
 		assert.deepEqual([...peer.root], ["P", "H"]);
 
-		// The Guest is still in the process of updating
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], []);
-
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
@@ -802,10 +988,6 @@ describe("Host and Guest correctness", () => {
 		// The peer and Host edits are sequenced
 		assert.deepEqual([...host.main.root], ["H", "P"]);
 		assert.deepEqual([...peer.root], ["H", "P"]);
-
-		// The Guest is still in the process of updating
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], []);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
@@ -849,10 +1031,9 @@ describe("Host and Guest correctness", () => {
 
 		assert.deepEqual(
 			undoStack.length,
-			4,
-			"Expected Host change to add an entry to the undo stack",
+			3,
+			"Expected Host change not to add a Guest-local undo entry",
 		);
-		undoStack.pop()?.dispose();
 
 		// Undo the Guest edits
 		undoStack.pop()?.revert();
@@ -882,353 +1063,391 @@ describe("Host and Guest correctness", () => {
 		unsubscribe();
 	});
 
-	// TODO: investigate and fix the memory leaks in this test, then run it with higher number of steps.
-	it("All permutations", async function () {
-		this.timeout(20_000);
-		/**
-		 * The number of {@link Step | steps} in each scenario.
-		 */
-		const maxSteps = 4;
-		/**
-		 * A potential action that could be taken at each step of a run.
-		 */
-		enum Step {
-			/** Make an edit on the Host */
-			HostEdit = "He",
-			/** Make an edit on the Guest */
-			GuestEdit = "Ge",
-			/** Make an edit on the peer */
-			PeerEdit = "Pe",
-			/** Make the Host receive a sequenced edit from the peer */
-			SequenceEdit = "Se",
-			/** Make the Host receive its own sequenced edit */
-			SequenceAck = "Sa",
-			/** Notify the Guest of an update sent by the Host. */
-			HostToGuestEdit = "H2Ge",
-			/** Notify the Host of a Guest-bound update ack sent by the Guest. */
-			GuestToHostAck = "G2Ha",
-			/** Notify the Host of an edit sent by the Guest. */
-			GuestToHostEdit = "G2He",
-			/** Notify the Guest of a Host-bound edit ack sent by the Host. */
-			HostToGuestAck = "H2Ga",
-		}
+	createFuzzDescribe({ defaultTestCount: 50 })(
+		"Synchronization schedules",
+		function ({ testCount, stressMode }) {
+			this.timeout(10_000);
+			/**
+			 * The number of {@link Step | steps} in each scenario.
+			 */
+			const maxSteps = stressMode === StressMode.Short ? 20 : 100;
+			/**
+			 * A potential action that could be taken at each step of a run.
+			 */
+			enum Step {
+				/** Make an edit on the Host */
+				HostEdit = "He",
+				/** Make an edit on the Guest */
+				GuestEdit = "Ge",
+				/** Remove the first element on the Guest. */
+				GuestDelete = "Gd",
+				/** Make an edit on the peer */
+				PeerEdit = "Pe",
+				/** Make the Host receive a sequenced edit from the peer */
+				SequenceEdit = "Se",
+				/** Make the Host receive its own sequenced edit */
+				SequenceAck = "Sa",
+				/** Notify the Guest of an update sent by the Host. */
+				HostToGuestEdit = "H2Ge",
+				/** Notify the Host of a Guest-bound update ack sent by the Guest. */
+				GuestToHostAck = "G2Ha",
+				/** Notify the Host of an edit sent by the Guest. */
+				GuestToHostEdit = "G2He",
+				/** Notify the Guest of a Host-bound edit ack sent by the Host. */
+				HostToGuestAck = "H2Ga",
+			}
 
-		/** Controls queued message delivery between the Host and the Guest. */
-		interface MessageRelay {
-			/** Messages that the Host sent and the relay has not sent to the Guest. */
-			readonly hostToGuest: HostGuestMessage[];
-			/** Messages that the Guest sent and the relay has not sent to the Host. */
-			readonly guestToHost: HostGuestMessage[];
+			/** Controls queued message delivery between the Host and the Guest. */
+			interface MessageRelay {
+				/** Messages that the Host sent and the relay has not sent to the Guest. */
+				readonly hostToGuest: HostGuestMessage[];
+				/** Messages that the Guest sent and the relay has not sent to the Host. */
+				readonly guestToHost: HostGuestMessage[];
 
-			/** Sends the first queued Host message to the Guest. */
-			dispatchToGuest(): void;
-			/** Sends the first queued Guest message to the Host. */
-			dispatchToHost(): void;
-			/** Waits until all dispatched messages reach a relay queue or participant. */
-			waitForMessages(): Promise<void>;
-		}
-
-		/**
-		 * Builds a two-channel relay that controls message delivery.
-		 *
-		 * @remarks
-		 * Serves as a middle-man between the Host and Guest, allowing
-		 * tests to control when messages are delivered, and to monitor them.
-		 *
-		 * @returns The session ports and relay controls.
-		 */
-		function buildMessageRelay(): SessionPorts<MessageRelay> {
-			// Host <--hostRelayChannel--> Relay <--guestRelayChannel--> Guest
-
-			/** Connects the Host to the relay. */
-			const hostRelayChannel = new MessageChannel();
-
-			/** Connects the relay to the Guest. */
-			const guestRelayChannel = new MessageChannel();
-
-			/** The relay-owned endpoint that receives Host messages and sends messages to the Host. */
-			const relayPortConnectedToHost = hostRelayChannel.port2;
-
-			/** The relay-owned endpoint that receives Guest messages and sends messages to the Guest. */
-			const relayPortConnectedToGuest = guestRelayChannel.port1;
-
-			/** The number of messages that participants sent but the relay has not received. */
-			let messagesMovingToRelay = 0;
-
-			/** The number of messages that the relay sent but participants have not processed. */
-			let messagesMovingToParticipants = 0;
-
-			/** Functions that resolve calls to `waitForMessages()`. */
-			const settledResolvers: (() => void)[] = [];
-
-			/** Resolves each waiter when no message is moving through a channel. */
-			const resolveIfSettled = (): void => {
-				if (messagesMovingToRelay === 0 && messagesMovingToParticipants === 0) {
-					for (const resolve of settledResolvers.splice(0)) {
-						resolve();
-					}
-				}
-			};
+				/** Sends the first queued Host message to the Guest. */
+				dispatchToGuest(): void;
+				/** Sends the first queued Guest message to the Host. */
+				dispatchToHost(): void;
+				/** Waits until all dispatched messages reach a relay queue or participant. */
+				waitForMessages(): Promise<void>;
+			}
 
 			/**
-			 * Tracks messages that move between a participant and its relay endpoint.
+			 * Builds a two-channel relay that controls message delivery.
+			 *
+			 * @remarks
+			 * Serves as a middle-man between the Host and Guest, allowing
+			 * tests to control when messages are delivered, and to monitor them.
+			 *
+			 * @returns The session ports and relay controls.
 			 */
-			class TrackedParticipantPort extends EventTarget {
-				public constructor(
-					/** The MessagePort that is being observed and tracked. */
-					private readonly observedPort: MessagePort,
-				) {
-					super();
-					this.observedPort.addEventListener("message", (event: MessageEvent<unknown>) => {
-						try {
-							this.dispatchEvent(new MessageEvent("message", { data: event.data }));
-						} finally {
-							messagesMovingToParticipants -= 1;
-							resolveIfSettled();
+			function buildMessageRelay(): SessionPorts<MessageRelay> {
+				// Host <--hostRelayChannel--> Relay <--guestRelayChannel--> Guest
+
+				/** Connects the Host to the relay. */
+				const hostRelayChannel = new MessageChannel();
+
+				/** Connects the relay to the Guest. */
+				const guestRelayChannel = new MessageChannel();
+
+				/** The relay-owned endpoint that receives Host messages and sends messages to the Host. */
+				const relayPortConnectedToHost = hostRelayChannel.port2;
+
+				/** The relay-owned endpoint that receives Guest messages and sends messages to the Guest. */
+				const relayPortConnectedToGuest = guestRelayChannel.port1;
+
+				/** The number of messages that participants sent but the relay has not received. */
+				let messagesMovingToRelay = 0;
+
+				/** The number of messages that the relay sent but participants have not processed. */
+				let messagesMovingToParticipants = 0;
+
+				/** Functions that resolve calls to `waitForMessages()`. */
+				const settledResolvers: (() => void)[] = [];
+
+				/** Resolves each waiter when no message is moving through a channel. */
+				const resolveIfSettled = (): void => {
+					if (messagesMovingToRelay === 0 && messagesMovingToParticipants === 0) {
+						for (const resolve of settledResolvers.splice(0)) {
+							resolve();
 						}
-					});
-					this.observedPort.addEventListener("messageerror", () => {
-						try {
-							this.dispatchEvent(new MessageEvent("messageerror"));
-						} finally {
-							messagesMovingToParticipants -= 1;
-							resolveIfSettled();
-						}
-					});
-				}
+					}
+				};
 
 				/**
-				 * Sends a message to the relay and tracks its delivery.
-				 *
-				 * @param message - The message to send.
-				 * @param transferOrOptions - Transferable objects or structured-clone options.
+				 * Tracks messages that move between a participant and its relay endpoint.
 				 */
-				public postMessage(
-					message: unknown,
-					transferOrOptions?: Transferable[] | StructuredSerializeOptions,
-				): void {
-					messagesMovingToRelay += 1;
-					try {
-						// The branches select different `MessagePort.postMessage` overloads.
-						// TypeScript cannot pass the union directly because no overload accepts both types.
-						if (Array.isArray(transferOrOptions)) {
-							this.observedPort.postMessage(message, transferOrOptions);
-						} else {
-							this.observedPort.postMessage(message, transferOrOptions);
+				class TrackedParticipantPort extends EventTarget {
+					public constructor(
+						/** The MessagePort that is being observed and tracked. */
+						private readonly observedPort: MessagePort,
+					) {
+						super();
+						this.observedPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+							try {
+								this.dispatchEvent(new MessageEvent("message", { data: event.data }));
+							} finally {
+								messagesMovingToParticipants -= 1;
+								resolveIfSettled();
+							}
+						});
+						this.observedPort.addEventListener("messageerror", () => {
+							try {
+								this.dispatchEvent(new MessageEvent("messageerror"));
+							} finally {
+								messagesMovingToParticipants -= 1;
+								resolveIfSettled();
+							}
+						});
+					}
+
+					/**
+					 * Sends a message to the relay and tracks its delivery.
+					 *
+					 * @param message - The message to send.
+					 * @param transferOrOptions - Transferable objects or structured-clone options.
+					 */
+					public postMessage(
+						message: unknown,
+						transferOrOptions?: Transferable[] | StructuredSerializeOptions,
+					): void {
+						messagesMovingToRelay += 1;
+						try {
+							// The branches select different `MessagePort.postMessage` overloads.
+							// TypeScript cannot pass the union directly because no overload accepts both types.
+							if (Array.isArray(transferOrOptions)) {
+								this.observedPort.postMessage(message, transferOrOptions);
+							} else {
+								this.observedPort.postMessage(message, transferOrOptions);
+							}
+						} catch (error) {
+							messagesMovingToRelay -= 1;
+							resolveIfSettled();
+							throw error;
 						}
-					} catch (error) {
-						messagesMovingToRelay -= 1;
-						resolveIfSettled();
-						throw error;
+					}
+
+					/** Starts message delivery on the inner port. */
+					public start(): void {
+						this.observedPort.start();
+					}
+
+					/** Closes the inner port. */
+					public close(): void {
+						this.observedPort.close();
 					}
 				}
 
-				/** Starts message delivery on the inner port. */
-				public start(): void {
-					this.observedPort.start();
-				}
+				/** The Host-owned endpoint, wrapped to track messages moving through its channel. */
+				const trackedHostPort = new TrackedParticipantPort(hostRelayChannel.port1);
+				/** The Guest-owned endpoint, wrapped to track messages moving through its channel. */
+				const trackedGuestPort = new TrackedParticipantPort(guestRelayChannel.port2);
 
-				/** Closes the inner port. */
-				public close(): void {
-					this.observedPort.close();
-				}
+				const relay: MessageRelay = {
+					hostToGuest: [],
+					guestToHost: [],
+					dispatchToGuest: (): void => {
+						const message =
+							relay.hostToGuest.shift() ?? assert.fail("No Guest-bound messages");
+						messagesMovingToParticipants += 1;
+						try {
+							relayPortConnectedToGuest.postMessage(message);
+						} catch (error) {
+							messagesMovingToParticipants -= 1;
+							resolveIfSettled();
+							throw error;
+						}
+					},
+					dispatchToHost: (): void => {
+						const message = relay.guestToHost.shift() ?? assert.fail("No Host-bound messages");
+						messagesMovingToParticipants += 1;
+						try {
+							relayPortConnectedToHost.postMessage(message);
+						} catch (error) {
+							messagesMovingToParticipants -= 1;
+							resolveIfSettled();
+							throw error;
+						}
+					},
+					waitForMessages: async (): Promise<void> => {
+						if (messagesMovingToRelay !== 0 || messagesMovingToParticipants !== 0) {
+							await new Promise<void>((resolve) => settledResolvers.push(resolve));
+						}
+					},
+				};
+
+				relayPortConnectedToHost.addEventListener(
+					"message",
+					(event: MessageEvent<unknown>) => {
+						try {
+							relay.hostToGuest.push(
+								parseHostGuestMessage(normalizeTransportData(event.data)),
+							);
+						} finally {
+							messagesMovingToRelay -= 1;
+							resolveIfSettled();
+						}
+					},
+				);
+				relayPortConnectedToGuest.addEventListener(
+					"message",
+					(event: MessageEvent<unknown>) => {
+						try {
+							relay.guestToHost.push(
+								parseHostGuestMessage(normalizeTransportData(event.data)),
+							);
+						} finally {
+							messagesMovingToRelay -= 1;
+							resolveIfSettled();
+						}
+					},
+				);
+				relayPortConnectedToHost.start();
+				relayPortConnectedToGuest.start();
+
+				return {
+					hostPort: trackedHostPort as unknown as MessagePort,
+					guestPort: trackedGuestPort as unknown as MessagePort,
+					interop: relay,
+					dispose: () => {
+						relayPortConnectedToHost.close();
+						relayPortConnectedToGuest.close();
+					},
+				};
 			}
 
-			/** The Host-owned endpoint, wrapped to track messages moving through its channel. */
-			const trackedHostPort = new TrackedParticipantPort(hostRelayChannel.port1);
-			/** The Guest-owned endpoint, wrapped to track messages moving through its channel. */
-			const trackedGuestPort = new TrackedParticipantPort(guestRelayChannel.port2);
-
-			const relay: MessageRelay = {
-				hostToGuest: [],
-				guestToHost: [],
-				dispatchToGuest: (): void => {
-					const message = relay.hostToGuest.shift() ?? assert.fail("No Guest-bound messages");
-					messagesMovingToParticipants += 1;
-					try {
-						relayPortConnectedToGuest.postMessage(message);
-					} catch (error) {
-						messagesMovingToParticipants -= 1;
-						resolveIfSettled();
-						throw error;
-					}
-				},
-				dispatchToHost: (): void => {
-					const message = relay.guestToHost.shift() ?? assert.fail("No Host-bound messages");
-					messagesMovingToParticipants += 1;
-					try {
-						relayPortConnectedToHost.postMessage(message);
-					} catch (error) {
-						messagesMovingToParticipants -= 1;
-						resolveIfSettled();
-						throw error;
-					}
-				},
-				waitForMessages: async (): Promise<void> => {
-					if (messagesMovingToRelay !== 0 || messagesMovingToParticipants !== 0) {
-						await new Promise<void>((resolve) => settledResolvers.push(resolve));
-					}
-				},
-			};
-
-			relayPortConnectedToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
-				try {
-					relay.hostToGuest.push(parseHostGuestMessage(normalizeTransportData(event.data)));
-				} finally {
-					messagesMovingToRelay -= 1;
-					resolveIfSettled();
-				}
-			});
-			relayPortConnectedToGuest.addEventListener("message", (event: MessageEvent<unknown>) => {
-				try {
-					relay.guestToHost.push(parseHostGuestMessage(normalizeTransportData(event.data)));
-				} finally {
-					messagesMovingToRelay -= 1;
-					resolveIfSettled();
-				}
-			});
-			relayPortConnectedToHost.start();
-			relayPortConnectedToGuest.start();
-
-			return {
-				hostPort: trackedHostPort as unknown as MessagePort,
-				guestPort: trackedGuestPort as unknown as MessagePort,
-				interop: relay,
-				dispose: () => {
-					relayPortConnectedToHost.close();
-					relayPortConnectedToGuest.close();
-				},
-			};
-		}
-
-		type Edit = "Edit";
-		const Edit: Edit = "Edit";
-		let scenario = 0;
-		/**
-		 * The steps that could be taken at each step of a run.
-		 * The inner arrays represents alternative steps that could be taken at that step of the run.
-		 * The outer array represents the steps of the run.
-		 *
-		 * Note: to test a specific scenario, you can initialize `potential` with a specific sequence of steps.
-		 * E.g., `[[Step.GuestEdit], [Step.GuestEdit], [Step.GuestToHostEdit], [Step.SequenceAck], [Step.GuestToHostEdit], [Step.SequenceAck]]`.
-		 */
-		const potential: Step[][] = [[Step.GuestEdit, Step.HostEdit, Step.PeerEdit]];
-		while (hasSome(potential)) {
-			scenario += 1;
-			const { teardown, peer, host, guest, provider, interop, logger } = setupCustom(
-				[],
-				stringArrayConfig,
-				buildMessageRelay,
-				false,
-			);
-			let peerEditCounter = 0;
-			let hostEditCounter = 0;
-			let guestEditCounter = 0;
-			const serviceQueue: (Step.SequenceEdit | Step.SequenceAck)[] = [];
-			const offPeerChange = peer.events.on("changed", ({ isLocal }) => {
-				if (isLocal) {
-					serviceQueue.push(Step.SequenceEdit);
-				}
-			});
-			const offHostChange = host.main.events.on("changed", ({ isLocal }) => {
-				if (isLocal) {
-					serviceQueue.push(Step.SequenceAck);
-				}
-			});
-			const actual: Step[] = [];
-			while (actual.length < maxSteps) {
-				if (actual.length === potential.length) {
-					const potentialNext: Step[] = [Step.GuestEdit, Step.HostEdit, Step.PeerEdit];
-					if (hasSome(serviceQueue)) {
-						potentialNext.push(serviceQueue[0]);
-					}
-					if (hasSome(interop.hostToGuest)) {
-						potentialNext.push(
-							interop.hostToGuest[0].type === "acknowledgment"
-								? Step.HostToGuestAck
-								: Step.HostToGuestEdit,
-						);
-					}
-					if (hasSome(interop.guestToHost)) {
-						potentialNext.push(
-							interop.guestToHost[0].type === "acknowledgment"
-								? Step.GuestToHostAck
-								: Step.GuestToHostEdit,
-						);
-					}
-					potential.push(potentialNext);
-				}
-				const step: Step =
-					potential[actual.length][0] ?? assert.fail("No next step available");
-				logger(`--> [${actual.join(", ")}] + ${step}`);
-				switch (step) {
-					case Step.GuestEdit: {
-						guestEditCounter += 1;
-						guest.view.root.push(`G${guestEditCounter}`);
-						break;
-					}
-					case Step.HostEdit: {
-						hostEditCounter += 1;
-						host.main.root.push(`H${hostEditCounter}`);
-						break;
-					}
-					case Step.PeerEdit: {
-						peerEditCounter += 1;
-						peer.root.push(`P${peerEditCounter}`);
-						break;
-					}
-					case Step.SequenceEdit:
-					case Step.SequenceAck: {
-						const expected = serviceQueue.shift();
-						assert.equal(expected, step);
-						let nextMessage = provider.peekNextMessage();
-						while (
-							nextMessage?.type === "op" &&
-							(nextMessage.contents as { type?: string }).type === "idAllocation"
-						) {
-							provider.synchronizeMessages({ count: 1 });
-							nextMessage = provider.peekNextMessage();
+			for (const seed of generateTestSeeds(testCount, stressMode)) {
+				it(`seed ${seed}`, async () => {
+					const random = makeRandom(seed);
+					const { teardown, peer, host, guest, provider, interop, logger } = setupCustom(
+						["a", "b"],
+						stringArrayConfig,
+						buildMessageRelay,
+						false,
+					);
+					let peerEditCounter = 0;
+					let hostEditCounter = 0;
+					let guestEditCounter = 0;
+					const serviceQueue: (Step.SequenceEdit | Step.SequenceAck)[] = [];
+					const offPeerChange = peer.events.on("changed", ({ isLocal }) => {
+						if (isLocal) {
+							serviceQueue.push(Step.SequenceEdit);
 						}
-						provider.synchronizeMessages({ count: 1 });
-						break;
-					}
-					case Step.HostToGuestEdit:
-					case Step.HostToGuestAck: {
-						interop.dispatchToGuest();
-						break;
-					}
-					case Step.GuestToHostEdit:
-					case Step.GuestToHostAck: {
-						interop.dispatchToHost();
-						break;
-					}
-					default: {
-						throw new Error(`Unexpected step: ${step}`);
-					}
-				}
-				await interop.waitForMessages();
-				actual.push(step);
-				if (interop.hostToGuest.length === 0 && interop.guestToHost.length === 0) {
-					assert.deepEqual([...host.main.root], [...guest.view.root]);
-					assert.deepEqual([...host.local.root], [...guest.view.root]);
-				}
+					});
+					const offHostChange = host.main.events.on("changed", ({ isLocal }) => {
+						if (isLocal) {
+							serviceQueue.push(Step.SequenceAck);
+						}
+					});
+					const actual: Step[] = [];
+					try {
+						while (actual.length < maxSteps) {
+							const potentialNext: Step[] = [Step.GuestEdit, Step.HostEdit, Step.PeerEdit];
+							if (guest.view.root.length > 0) {
+								potentialNext.push(Step.GuestDelete);
+							}
+							if (hasSome(serviceQueue)) {
+								potentialNext.push(serviceQueue[0]);
+							}
+							if (hasSome(interop.hostToGuest)) {
+								potentialNext.push(
+									interop.hostToGuest[0].type === "guestChangeAck"
+										? Step.HostToGuestAck
+										: Step.HostToGuestEdit,
+								);
+							}
+							if (hasSome(interop.guestToHost)) {
+								potentialNext.push(
+									interop.guestToHost[0].type === "hostUpdateAck"
+										? Step.GuestToHostAck
+										: Step.GuestToHostEdit,
+								);
+							}
+							const step = random.pick(potentialNext);
+							logger(`--> [${actual.join(", ")}] + ${step}`);
+							actual.push(step);
+							switch (step) {
+								case Step.GuestEdit: {
+									guestEditCounter += 1;
+									guest.view.root.push(`G${guestEditCounter}`);
+									break;
+								}
+								case Step.HostEdit: {
+									hostEditCounter += 1;
+									host.main.root.insertAtStart(`H${hostEditCounter}`);
+									break;
+								}
+								case Step.PeerEdit: {
+									peerEditCounter += 1;
+									peer.root.insertAtStart(`P${peerEditCounter}`);
+									break;
+								}
+								case Step.GuestDelete: {
+									guest.view.root.removeAt(0);
+									break;
+								}
+								case Step.SequenceEdit:
+								case Step.SequenceAck: {
+									const expected = serviceQueue.shift();
+									assert.equal(expected, step, actual.join(", "));
+									let nextMessage = provider.peekNextMessage();
+									while (
+										nextMessage?.type === "op" &&
+										(nextMessage.contents as { type?: string }).type === "idAllocation"
+									) {
+										provider.synchronizeMessages({ count: 1 });
+										nextMessage = provider.peekNextMessage();
+									}
+									provider.synchronizeMessages({ count: 1 });
+									break;
+								}
+								case Step.HostToGuestEdit:
+								case Step.HostToGuestAck: {
+									interop.dispatchToGuest();
+									break;
+								}
+								case Step.GuestToHostEdit:
+								case Step.GuestToHostAck: {
+									interop.dispatchToHost();
+									break;
+								}
+								default: {
+									throw new Error(`Unexpected step: ${step}`);
+								}
+							}
+							await interop.waitForMessages();
+							if (interop.hostToGuest.length === 0 && interop.guestToHost.length === 0) {
+								assert.deepEqual([...host.main.root], [...guest.view.root], actual.join(", "));
+								assert.deepEqual(
+									[...host.local.root],
+									[...guest.view.root],
+									actual.join(", "),
+								);
+							}
 
-				if (host.updateGuestPromise === undefined) {
-					assert.equal(host.local.isMissingEditsFrom(host.main), false);
-				}
-
-				if (actual.length === maxSteps) {
-					potential.push([]);
-					do {
-						potential.pop();
-						potential.at(-1)?.shift();
-					} while (potential.at(-1)?.length === 0);
-				}
+							if (host.updateGuestPromise === undefined) {
+								assert.equal(
+									host.local.isMissingEditsFrom(host.main),
+									false,
+									actual.join(", "),
+								);
+							}
+						}
+						// Complete every schedule so that undelivered changes cannot hide divergence.
+						let remainingRounds = maxSteps * 8;
+						do {
+							assert(
+								remainingRounds-- > 0,
+								`Synchronization did not finish: ${actual.join(", ")}`,
+							);
+							provider.synchronizeMessages();
+							await interop.waitForMessages();
+							if (hasSome(interop.guestToHost)) {
+								interop.dispatchToHost();
+							}
+							if (hasSome(interop.hostToGuest)) {
+								interop.dispatchToGuest();
+							}
+							await interop.waitForMessages();
+						} while (
+							provider.peekNextMessage() !== undefined ||
+							hasSome(interop.hostToGuest) ||
+							hasSome(interop.guestToHost)
+						);
+						for (const view of [host.local, guest.view, peer]) {
+							assert.deepEqual([...view.root], [...host.main.root], actual.join(", "));
+						}
+						assert.equal(host.updateGuestPromise, undefined);
+						assert.equal(guest.updateHostPromise, undefined);
+						assert.equal(host.error, undefined);
+						assert.equal(guest.error, undefined);
+					} finally {
+						offPeerChange();
+						offHostChange();
+						teardown();
+					}
+				});
 			}
-			offPeerChange();
-			offHostChange();
-			teardown();
-		}
-		console.log(`${scenario} scenarios tested`);
-	});
+		},
+	);
 });

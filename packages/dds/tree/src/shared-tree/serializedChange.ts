@@ -100,7 +100,12 @@ function decodeSerializedChangeV1(
 /**
  * Provides utilities for serializing and deserializing SharedTree changes.
  *
- * @remarks Such changes are not expected to be durable beyond the scope of a single session.
+ * @remarks
+ * This format is **not** used in persisted Fluid containers or Ops.
+ *
+ * These changes are not expected to be durable beyond the scope of a single session.
+ * Due to this limitation, there is no need to support older formats,
+ * and thus no need for using the {@link VersionDispatchingCodecBuilder}.
  */
 export const SerializedChange = {
 	/** Utilities for version 1 of the serialized change format. */

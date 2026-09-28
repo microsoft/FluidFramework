@@ -1028,6 +1028,18 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction.branch.apply(change, CommitKind.Default, undefined);
 	}
 
+	/**
+	 * Serializes an existing commit for application to another checkout in the same ID-compressor session.
+	 */
+	public serializeCommit(commit: GraphCommit<SharedTreeChange>): JsonCompatibleReadOnly {
+		return SerializedChange.V1.encode(
+			this.idCompressor,
+			this.changeFamily,
+			commit.change,
+			commit.revision,
+		);
+	}
+
 	// #region UntypedTreeViewAlpha
 
 	@throwIfBroken

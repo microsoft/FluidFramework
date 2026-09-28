@@ -31,7 +31,7 @@ These terms are similar to the terms for virtual machines.
 - **Guest-local edits**: Edits on the Guest that the Host has not acknowledged.
 - **Host-originated edits**: Edits that the Host makes directly, not edits received from a Guest.
 - **Main branch**: The Host branch that participates in Fluid collaboration.
-  The Host also maintains a **local branch** to track and reconcile Guest edits.
+  The Host also maintains a **local branch** that reconstructs the Guest's authoring state.
   The main view belongs to the application; the sandbox Host borrows it and owns its session branches.
 - **Data change**: A sandbox message containing an encoded SharedTree change.
 - **Acknowledgment**: A sandbox message confirming that the receiver applied a data change.
@@ -98,10 +98,38 @@ Blob requests use the same channel as changes and acknowledgments, but do not bl
 flowchart LR
     P["Peers"] <--> F["Fluid services"]
     F <--> H["Host<br/>Main and local branches<br/>Authorized handle table"]
-    H <-->|"Data changes and acknowledgments"| G["Guest<br/>Independent TreeView<br/>Handle proxies"]
+    H <-->|"Branch updates, Guest changes, and acknowledgments"| G["Guest<br/>Host branch copy and local TreeView<br/>Handle proxies"]
     G -->|"Blob requests"| H
     H -->|"Blob responses: buffer or error"| G
 ```
+
+### Full-Duplex Synchronization
+
+The Guest keeps a copy of the Host main branch and a separate branch for Guest edits.
+The Host sends branch transitions without waiting for outstanding Guest edits.
+The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
+
+The Host preserves the Guest's authoring state in its local branch.
+It applies Guest changes there and merges them into main without rebasing the local branch itself.
+Only a Guest acknowledgment advances that branch over a Host update.
+Each outstanding update retains the exact Host branch snapshot that was sent, because a revision can be rebased while a message is in flight.
+The Host disposes each snapshot after acknowledgment, or when the session stops.
+
+Ordered messages in each direction let the Host check a Guest change's main and trunk revisions against the last acknowledged update.
+Revisions alone are not enough to select an authoring state from the current main branch.
+
+### Initialization
+
+Initialization transfers a snapshot at the oldest retained Host revision, followed by the retained commits in order.
+The snapshot can be uninitialized if history still includes the original schema and content initialization.
+Otherwise, it contains compressed tree content and its stored schema.
+The Guest replays the commits before exposing its local view.
+This preserves pending Host edits as commits that can be rebased, including insertions and deletions made before the session started.
+
+The baseline revision aliases the independent checkout's initial head.
+Branch validation recognizes this alias even when an update contains no commits.
+Initialization commits use the same handle encoding and decoding as subsequent changes.
+The ID compressor is still shared; see [ID Sharding](#id-sharding).
 
 ### Message Conversion and Validation
 
@@ -219,7 +247,38 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 
 [Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
-The tests use real `MessagePort` channels; the permutation test uses a two-channel relay to control delivery in each direction.
+The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
+Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
+Initialization tests also sequence concurrent Peer edits before the pending Host edits.
+The schedule tests use `createFuzzDescribe`, `generateTestSeeds`, and `makeRandom` from `@fluid-private/stochastic-test-utils`.
+Each step samples from the actions that are currently legal, including Guest deletions and Host/Peer insertions at the start.
+This state-dependent sampling fits message schedules better than a fixed pairwise configuration matrix.
+Each schedule starts with nonempty content and ends by draining all sandbox and Fluid messages and verifying convergence.
+
+By default, the suite runs 50 deterministic seeds with 20 sampled steps each.
+`FUZZ_TEST_COUNT` increases the number of seeds.
+`FUZZ_STRESS_RUN=normal` increases each schedule to 100 steps while keeping seeds deterministic.
+Every seed is a separate named test, and convergence failures include the action sequence.
+The targeted regression tests remain separate from the sampled schedules.
+
+Run these commands from `packages/dds/tree` after building the tests:
+
+```bash
+# Run the default sample.
+pnpm test:mocha:esm --grep 'Synchronization schedules'
+
+# Run more seeds at the default depth.
+FUZZ_TEST_COUNT=500 pnpm test:mocha:esm --grep 'Synchronization schedules'
+
+# Run more seeds with longer schedules.
+FUZZ_TEST_COUNT=200 FUZZ_STRESS_RUN=normal pnpm test:mocha:esm --grep 'Synchronization schedules'
+
+# Replay one seed from the default sample.
+pnpm test:mocha:esm --grep 'Synchronization schedules seed 7$'
+```
+
+For a seed outside the default sample, set `FUZZ_TEST_COUNT` to at least the seed plus one.
+To replay a normal stress run, also set `FUZZ_STRESS_RUN=normal` to preserve the schedule length.
 
 ## Remaining Work Before Production
 
@@ -247,7 +306,7 @@ Fix, restore, and use that implementation, or implement a different solution.
 
 Before using the sandbox with an untrusted participant, extend the existing [transport validation](#transport-validation):
 
-- Complete schemas for data changes, acknowledgments, and the full initialization payload.
+- Complete validation of the full initialization payload.
 - Validate codec-specific change structure before mutation, beyond the value vocabulary, to prevent partial application of malformed changes.
 - Verify that tree codecs reject handles in structural-record positions, including record-node data, without traversing handle internals or invoking getters.
 - Define resource limits for message size, nesting depth, outstanding requests, and blob data.
@@ -296,35 +355,14 @@ Extend undo and redo coverage, including an operation that reverses a deletion a
 Make sure that timeline APIs such as `TreeView.branchHistory` operate in the Guest.
 
 The Guest timeline must match the Host timeline.
-The current architecture adds corrective changes instead of editing history, which makes the timeline incorrect.
-The [Full-Duplex Architecture](#full-duplex-architecture-required-for-timeline-compatibility) is necessary for the correct behavior.
-Also complete these tasks:
+The [full-duplex architecture](#full-duplex-synchronization) preserves branch transitions and retained initialization commits.
+Complete these remaining tasks:
 
 - Make sure that the timeline operates correctly for changes that are still local to the Guest.
-- Give the Guest all Host history during initialization. The timeline must include changes from before the Guest was created.
-    - Consider a Host snapshot or summary for this initialization. The snapshot or summary might have to include local edits. If it includes local edits, add an option that permits this behavior.
-    - Consider serializing the revision manager directly instead of using a SharedTree snapshot.
-    - Validate when Host has local changes.
+- Define how much pre-session history the timeline retains beyond the history still available on the Host at initialization.
 - Make sure that history operations on a local branch do not cause incorrect behavior.
 - If the protocol uses our codecs, use versions that preserve commit metadata. One possible solution is to set the minimum collaboration version to the current version.
 
-### Full-Duplex Architecture (Required for Timeline Compatibility)
+### Sampled Test Resource Usage (optional)
 
-Application developers can reproduce the current architecture with their own protocols, without access to SharedTree internals.
-The architecture does not require merge resolution in the Guest.
-However, it delays updates to the Guest while the Guest has local changes.
-As a result, the Guest can receive updates late.
-A very active Guest editor can also cause increasingly expensive local rebase operations.
-
-Consider this alternative architecture:
-
-* On the Guest, keep a copy of the sequenced trunk branch, the local Host main branch, and the local Guest branches.
-* Do not perform merge resolution for the Guest on the Host. Instead, the Host notifies the Guest of new commits on the trunk and main branches. The Guest then rebases its local branches.
-* When the Guest sends edits to the Host, include the revisions of the latest commits on the main and trunk branches. Use the revisions that were current when the Guest created the edits. The Host uses this information to update its branches.
-
-This design is a simple variant of the edit manager.
-The edit manager does a similar task for the Host, but it manages the branches of all remote clients instead of one Guest.
-
-### Fix Memory Leak in Exhaustive Test (optional)
-
-See the comment on the "All permutations" test.
+Profile memory use and runtime before further increasing the default seed count or depth of the schedule tests.

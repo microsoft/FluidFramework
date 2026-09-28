@@ -76,6 +76,43 @@ describe("Host and Guest Demo", () => {
 		assert.deepEqual([...peer.root], ["B(g)", "C(g)", "D(g)"]);
 	});
 
+	it("concurrent Guest, Host, and peer edits converge", async () => {
+		const { peer, host, guest, provider } = setup([]);
+
+		// Each participant edits independently before any synchronization completes.
+		guest.view.root.push("Guest");
+		const pushPromise =
+			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
+		host.main.root.push("Host");
+		peer.root.push("Peer");
+
+		assert.deepEqual([...guest.view.root], ["Guest"]);
+		assert.deepEqual([...host.main.root], ["Host"]);
+		assert.deepEqual([...peer.root], ["Peer"]);
+
+		// Sequence the Host and peer edits while the Guest edit is still being pushed.
+		provider.synchronizeMessages();
+		const updatePromise =
+			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
+		assert.equal(guest.updateHostPromise, pushPromise);
+
+		// Full-duplex synchronization processes both directions concurrently.
+		await Promise.all([pushPromise, updatePromise]);
+
+		// Sequence the Guest edit and wait for the resulting Host update.
+		provider.synchronizeMessages();
+		await host.updateGuestPromise;
+
+		// The provider flushes immediately, so Host is submitted before Peer.
+		// Guest crosses the asynchronous sandbox channel and is submitted last.
+		// Concurrent inserts at the same position end up in reverse sequencing order.
+		const expected = ["Guest", "Peer", "Host"];
+		assert.deepEqual([...guest.view.root], expected);
+		assert.deepEqual([...host.local.root], expected);
+		assert.deepEqual([...host.main.root], expected);
+		assert.deepEqual([...peer.root], expected);
+	});
+
 	it("one peer edit", async () => {
 		const { peer, host, guest, provider } = setup([]);
 

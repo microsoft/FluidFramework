@@ -43,12 +43,12 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
-				case "dataChange": {
-					this.synchronization.receiveChangeFromGuest(message.change);
+				case "guestChange": {
+					this.synchronization.receiveChangeFromGuest(message);
 					break;
 				}
-				case "acknowledgment": {
-					this.synchronization.receiveAckFromGuest();
+				case "hostUpdateAck": {
+					this.synchronization.receiveUpdateAck(message);
 					break;
 				}
 				case "blobRequest": {
@@ -59,6 +59,10 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				}
 				case "blobResponse": {
 					throw new SandboxProtocolError("The Host cannot receive blob responses.");
+				}
+				case "hostUpdate":
+				case "guestChangeAck": {
+					throw new SandboxProtocolError(`The Host cannot receive ${message.type} messages.`);
 				}
 				case "sessionFailure": {
 					this.session.fail(new Error(message.error), false);
@@ -174,5 +178,12 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	 */
 	public get local(): TreeViewAlpha<TSchema> {
 		return this.synchronization.local;
+	}
+
+	/**
+	 * The baseline revision and retained history needed to initialize a new Guest.
+	 */
+	public get guestInitialization() {
+		return this.synchronization.guestInitialization;
 	}
 }
