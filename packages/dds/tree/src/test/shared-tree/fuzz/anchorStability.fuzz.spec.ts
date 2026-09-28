@@ -76,7 +76,6 @@ describe("Fuzz - anchor stability", () => {
 	const opsPerRun = 20;
 	const runsPerBatch = 50;
 	describe("Anchors are unaffected by aborted transaction", () => {
-		// Mid-transaction schema view replacement remains a fuzz harness limitation.
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			set: 2,
 			clear: 1,
@@ -90,6 +89,8 @@ describe("Fuzz - anchor stability", () => {
 				sequence: 2,
 				recurse: 1,
 			},
+			// This workload opens a transaction at the start of the test. Mid-transaction schema upgrades aren't supported
+			// by the harness, so we disable schema operations in this workload.
 			schema: 0,
 		};
 		const generatorFactory = () =>

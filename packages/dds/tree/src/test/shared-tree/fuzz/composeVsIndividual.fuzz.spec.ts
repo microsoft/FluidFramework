@@ -161,7 +161,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			const childTreeView = toJsonableTree(finalState.branch.checkout);
 			finalState.branch.checkout.transaction.commit();
 			const tree = finalState.main ?? assert.fail();
-			tree.checkout.merge(finalState.branch.checkout, false);
+			tree.checkout.merge(finalState.branch.checkout, /* disposeMerged */ false);
 			validateTree(tree.checkout, childTreeView);
 			validateCheckoutSnapshotConsistency(tree.checkout, finalState.branch.checkout);
 			finalState.branch.dispose();

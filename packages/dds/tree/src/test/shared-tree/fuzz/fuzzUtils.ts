@@ -148,7 +148,6 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 	return node as unknown as typeof fuzzFieldSchema;
 }
 
-// TODO: Update this function to be done in a more ergonomic way using libraries
 /**
  * Creates schemas for the dynamically added node types allowed by the fuzz schema.
  * Each generated object schema has one required string field named `value`.
