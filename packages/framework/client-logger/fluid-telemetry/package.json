@@ -116,7 +116,7 @@
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^7.0.1",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"fluidBuild": {
 		"tasks": {

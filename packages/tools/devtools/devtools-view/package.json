@@ -99,7 +99,7 @@
 		"prop-types": "^15.8.1",
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"fluid": {
 		"browser": {

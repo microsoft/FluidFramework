@@ -69,6 +69,8 @@ SEVERITY_LABEL_SETS: list[SeverityLabelSet] = [
 ]
 
 VALID_SEVERITIES = frozenset({"CRITICAL", "HIGH", "MEDIUM"})
+SEVERITY_RANK = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2}
+MAX_SEVERITY_BY_AREA = {"Documentation / Developer Experience": "MEDIUM"}
 
 
 @dataclass
@@ -107,6 +109,12 @@ def parse_review_file(path: Path, area: str) -> list[Finding] | None:
         severity = item.get("severity", "")
         if severity not in VALID_SEVERITIES:
             continue
+        maximum_severity = MAX_SEVERITY_BY_AREA.get(area)
+        if (
+            maximum_severity is not None
+            and SEVERITY_RANK[severity] < SEVERITY_RANK[maximum_severity]
+        ):
+            severity = maximum_severity
         location = item.get("location", "")
         description = item.get("description", "")
         fix = item.get("fix", "")
