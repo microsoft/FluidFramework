@@ -37,7 +37,6 @@ import {
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
-	applySchemaOp,
 } from "./fuzzEditReducers.js";
 import { createOnCreate, deterministicIdCompressorFactory } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
@@ -141,11 +140,6 @@ describe("Fuzz - composed vs individual changes", () => {
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
-			initialState.main = viewFromState(initialState, initialState.clients[0]);
-			applySchemaOp(
-				{ ...initialState, client: initialState.clients[0] },
-				{ type: "schemaChange", contents: { type: "compositionBaseline" } },
-			);
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
 
 			const forkedView = initialState.main.fork() as unknown as FuzzTransactionView;
