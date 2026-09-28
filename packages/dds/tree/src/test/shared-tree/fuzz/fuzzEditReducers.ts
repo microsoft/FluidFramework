@@ -156,26 +156,6 @@ export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 	return leafNodeSchemas;
 }
 
-export function generateLeafNodeSchemas2(nodeTypes: string[]): TreeNodeSchema[] {
-	const builder = new SchemaFactory("treeFuzz");
-	const leafNodeSchemas = [];
-	for (const nodeType of nodeTypes) {
-		if (
-			nodeType !== "treeFuzz.node" &&
-			nodeType !== "treeFuzz.FuzzStringNode" &&
-			nodeType !== "treeFuzz.FuzzNumberNode"
-		) {
-			const fuzzNodeTypePrefix = "treeFuzz.";
-			if (!nodeType.startsWith(fuzzNodeTypePrefix)) {
-				class GuidNode extends builder.object(nodeType, {
-					value: builder.required(builder.string),
-				}) {}
-				leafNodeSchemas.push(GuidNode);
-			}
-		}
-	}
-	return leafNodeSchemas;
-}
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): void {
 	const view = viewFromState(state, state.client);
 	assert(
