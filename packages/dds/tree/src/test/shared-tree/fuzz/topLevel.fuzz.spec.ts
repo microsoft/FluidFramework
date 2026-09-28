@@ -89,8 +89,8 @@ describe("Fuzz - Top-Level", () => {
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			skip: [
 				...[30], //  0x92a
-				// 0xaf9: see chunkTree.spec.ts,
-				// "cloned chunkers retain their own schema when the parent schema changes".
+				// 0xaf9: see treeCheckout.spec.ts,
+				// "can edit a fork after its parent's schema upgrade loses a rebase".
 				1,
 			],
 		};

@@ -725,31 +725,6 @@ describe("chunkTree", () => {
 		});
 	});
 
-	// TODO: 0xaf9: cloned chunkers still use a schema lookup that captures the parent schema.
-	// Minimized from topLevel.fuzz.spec.ts, Everything - Comparison Forest seed 1.
-	it.skip("cloned chunkers retain their own schema when the parent schema changes", () => {
-		const parentSchema = new TreeStoredSchemaRepository(
-			toInitialSchema([builder.number, structValue]),
-		);
-		const chunker = makeTreeChunker(
-			parentSchema,
-			defaultSchemaPolicy,
-			defaultIncrementalEncodingPolicy,
-		);
-		const type = brand<TreeNodeSchemaIdentifier>(structValue.identifier);
-		const expectedShape = chunker.shapeFromSchema(type);
-		const forkSchema = parentSchema.clone();
-		const forkChunker = chunker.clone(forkSchema);
-
-		// A parent can lose a schema upgrade during rebase while its fork retains the upgraded schema.
-		parentSchema.apply(toInitialSchema(builder.number));
-		assert(forkSchema.nodeSchema.has(type));
-		expectEqual(forkChunker.shapeFromSchema(type), expectedShape);
-
-		forkChunker.dispose();
-		chunker.dispose();
-	});
-
 	describe("tryShapeFromNodeSchema", () => {
 		it("leaf", () => {
 			const info = tryShapeFromNodeSchema(

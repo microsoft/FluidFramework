@@ -37,6 +37,7 @@ import {
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
+	ForestTypeOptimized,
 } from "../../shared-tree/index.js";
 import {
 	createTransactionPostProcessor,
@@ -74,6 +75,7 @@ import {
 	testRevisionTagCodec,
 	validateViewConsistency,
 	viewCheckout,
+	SharedTreeTestFactory,
 } from "../utils.js";
 
 const rootField: NormalizedFieldUpPath = {
@@ -1300,6 +1302,44 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("branches with schema edits can be rebased", () => {
+		// TODO: 0xaf9: the fork's chunker looks up types using its parent's schema.
+		// Minimized from topLevel.fuzz.spec.ts, Everything - Comparison Forest seed 1.
+		it.skip("can edit a fork after its parent's schema upgrade loses a rebase", () => {
+			const sf = new SchemaFactory("forkSchemaRebase");
+			class Added extends sf.object("Added", { value: sf.string }) {}
+			const oldSchema = sf.optional(sf.string);
+			const newSchema = sf.optional([sf.string, Added]);
+			const provider = new TestTreeProviderLite(
+				2,
+				new SharedTreeTestFactory(() => {}, undefined, { forest: ForestTypeOptimized }),
+			);
+			const [a, b] = provider.trees;
+			const aView = a.kernel.viewWith(new TreeViewConfiguration({ schema: oldSchema }));
+			aView.initialize("initial");
+			provider.synchronizeMessages();
+			const bView = b.kernel.viewWith(new TreeViewConfiguration({ schema: newSchema }));
+
+			aView.root = "concurrent edit";
+			bView.upgradeSchema();
+			const fork = bView.fork();
+			provider.synchronizeMessages();
+
+			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
+			assert.equal(bView.compatibility.isEquivalent, false);
+			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
+			assert.equal(fork.compatibility.isEquivalent, true);
+			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
+			assert.equal(fork.checkout.transaction.size, 0);
+			fork.root = new Added({ value: "fork data" });
+			assert(Tree.is(fork.root, Added));
+			assert.equal(fork.root.value, "fork data");
+			assert.equal(aView.root, "concurrent edit");
+
+			fork.dispose();
+			bView.dispose();
+			aView.dispose();
+		});
+
 		it("over non-schema changes", () => {
 			const provider = new TestTreeProviderLite(1);
 
