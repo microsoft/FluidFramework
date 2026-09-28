@@ -84,7 +84,8 @@ are ignored until they are applied into the current session's pending queue.
   any connected client can promote a matching pending mark in its own store (resolution is not tied to the capturing
   client). The timestamp is from the batch's final op and is optional in the callback type for source compatibility with
   existing listeners. Returns an unsubscribe. Listeners run synchronously on the inbound op path, so each invocation is
-  isolated: a throwing listener is caught, logged (`VersionMarkListenerException`), and skipped — it cannot abort op
+  isolated: a throwing listener is caught, logged
+  (`VersionMarkResolver:ListenerException`), and skipped — it cannot abort op
   processing or starve later listeners (mirroring the container's `EventEmitterWithErrorHandling`). A missed live
   promotion is recoverable — the app can still resolve that mark later via `resolve()`'s history scan — so a listener
   fault logs and continues rather than faulting the container.
@@ -249,7 +250,7 @@ batch never causes that irreversible side effect.
 sequence number or timestamp; retaining the first-landed point avoids turning a tolerated duplicate into a container
 fault or remapping an already-promoted mark. For a new id, the resolver inserts the resolved point, evicts entries below
 the current MSN, and synchronously invokes every subscribed listener. Each listener has its own `try/catch`; a fault
-emits `VersionMarkListenerException` and iteration continues.
+emits `VersionMarkResolver:ListenerException` and iteration continues.
 
 The runtime does not store or mutate app marks. The listener only lets the app replace its own pending locator with the
 supplied sequence number and server timestamp.
@@ -267,7 +268,7 @@ supplied sequence number and server timestamp.
 1. Return the matched completed batch's last sequence number and server timestamp, or classify the miss.
 1. Abort the controller in `finally`, both on success and on exhaustion/error, so the underlying fetch can stop any
    remaining work.
-1. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `durationMs`) before returning — on every path,
+1. `resolve()` emits one `Resolve` telemetry event (`outcome`, `path`, `duration`) before returning — on every path,
    including a thrown scan (`outcome: "error"`, emitted via `finally`). See [Telemetry](#telemetry).
 
 For each raw op, the scan records the first returned sequence number before filtering because that value is also the
@@ -368,15 +369,55 @@ so all apps can feed one shared dashboard. Design events around the questions a 
 - **Instrument the infrequent control points** (capture, resolve) directly — they are savepoint/load-time, not hot.
   Never emit per-op/per-batch events on `onBatchSequenced`; aggregate (counters or `SampledTelemetryHelper`) if
   per-batch signal is ever needed.
-- The resolver's logger is namespaced `VersionMarkResolver`, so event names below are emitted as
-  `VersionMarkResolver:<name>`.
+- The resolver reuses its existing `VersionMarkResolver`-namespaced logger. The namespace keeps the
+  concise event-name segments searchable as
+  `VersionMarkResolver:Capture`, `VersionMarkResolver:Resolve`, and
+  `VersionMarkResolver:ListenerException`.
 
 ### Events
 
-| Event                                  | When                                                                   | Dimensions                                                                                                                                                                                                          | Answers                                                                                                                                                                                                                                                                      |
-| -------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Resolve` **(implemented)**            | end of `resolve()` (via `finally`, so a thrown scan is still reported) | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `durationMs`, `sequenceNumber` (when resolved), `reason` (the diagnostic string when the result carries one) | success rate; how often history is needed; latency; `unresolvable` = data-loss KPI; `error` = the scan threw; `reason` = why a mark did not resolve. `session` means the final result came from the live map, including a live resolution found by the post-history recheck. |
-| `Capture` **(implemented — AB#80270)** | `sealAndCaptureVersionMark()`                                          | `kind` (`pending`\|`resolved`)                                                                                                                                                                                      | capture volume; pending ratio                                                                                                                                                                                                                                                |
+| Event                                              | When                                                                   | Dimensions                                                                                                                                                                                                                                                                                                                                                 | Answers                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `VersionMarkResolver:Resolve` **(implemented)**            | end of `resolve()`; normal results emit after resolution, while thrown scans emit from `catch` before the error is rethrown | `outcome` (`resolved`\|`pending`\|`unresolvable`\|`error`), `path` (`session`\|`history`\|`noReader`), `historyAttempted`, `sequenceNumberLowerBound`, `duration`, `sequenceNumber` (when resolved), `reason` (the diagnostic string when the result carries one) | success rate; whether retained op history was attempted; final resolution source/path; latency; `unresolvable` = data-loss KPI; `error` = the scan threw; `reason` = why a mark did not resolve. |
+| `VersionMarkResolver:Capture` **(implemented)**            | after `sealAndCaptureVersionMark()` successfully produces a result     | `kind` (`pending`\|`resolved`)                                                                                                                                                                                                                                                                                                                              | successful resolver capture-result volume across hosts; pending-result ratio. This does not indicate that the host persisted a usable mark.                                                                                                                  |
+
+`Resolve` emits exactly one terminal event per invocation. Normal `resolved`, `pending`, and
+`unresolvable` outcomes use Generic routing. A thrown resolution failure uses Error routing, passes the
+original thrown value to `sendErrorEvent` for error telemetry, and is then rethrown unchanged.
+`path` records the final source/outcome path. `historyAttempted` is set immediately before invoking the
+historical scan, so a post-scan live-map recovery reports `path: "session", historyAttempted: true`,
+while an immediate session hit or missing reader reports `historyAttempted: false`.
+Resolver, driver, and loader timings use Fluid's standard `duration` property, emitted as
+`Data_duration` in the FluidRuntime Kusto tables.
+
+The loader and ODSP driver own the separate materialization telemetry. Their event names begin with
+`VersionMark`: the loader reports the end-to-end point-in-time load, while the driver reports
+base-version selection. Existing lower-level snapshot and op-fetch events retain their established names
+and ownership. These rollout events are terminal outcomes rather than `PerformanceEvent` lifecycle pairs.
+Each operation uses one event name with `outcome` (`succeeded` or `failed`) and carries its own duration:
+the loader emits `fluid:telemetry:VersionMarkPointInTimeLoad`; the ODSP driver emits
+`OdspDriver:VersionMarkBaseVersionSelection`.
+
+The successful loader event reports `replayedOpCount`, the aggregate amount of replay work required,
+without emitting document-specific sequence numbers. The successful base-selection event reports
+`versionsProbed`, the number of sealed candidates examined, and `sequenceNumberFetchCount`, the subset
+that required an uncached ODSP sequence-number fetch. Together with duration, these fields make future
+base-selection caching and fuzzy-search optimizations directly measurable.
+
+The failed loader event uses `baseSnapshotSequenceNumber` for the selected snapshot sequence when that
+value is available. Once the paused loader has established a base container, it attaches that sequence
+number to any Fluid error raised during bounded replay; failures before a base is established leave the
+field absent. Failures obtain feature-specific `availabilityOutcome` values from metadata on the actual
+error rather than from ambient request state. `missingOps` is attached by the bounded ODSP replay only
+when the driver has established that the required fixed range cannot be served: either its canonical
+`cannotCatchUp` error or the non-retryable empty-response exhaustion
+(`genericNetworkError`, "Failed to retrieve ops from storage (Too Many Retries)"). The terminal event
+preserves that underlying `errorType`; `availabilityOutcome` is the stable Version Mark classification,
+while `errorType` remains the lower-level diagnostic taxonomy. Ordinary transport failures are not
+classified as `missingOps`. A selected base from a different document epoch is classified as
+`lineageMismatch` while preserving the driver's `fileOverwrittenInStorage` error type. Likewise,
+`cancelled` is attached only to the cancellation error raised by the paused-load wait, so an unrelated
+failure is not mislabeled merely because the caller's signal is also aborted.
 
 ### Correlation and the app funnel (planned)
 
@@ -385,10 +426,43 @@ initiated/applied, trigger source (user vs. NiTL agent), user accept/discard —
 AB#80271) and cannot be emitted from FF. For a shared cross-app dashboard, both layers must:
 
 - use this **stable, app-agnostic schema** plus an `app`/`host` dimension (the host logger supplies host context), and
-- stamp shared **correlation keys** — `containerId` (auto-tagged by the FF logger) and the mark's `batchId` (as a tagged
-  detail) — so FF `Resolve` events join to the app's restore events for the same mark.
+- retain the correlation context supplied by the host logger plus the target/base sequence-number diagnostics needed
+  for aggregate rollout analysis. Internal container-scoped identifiers are not guaranteed on these events.
+
+`VersionMarkResolver:Capture` is a resolver-stage event. It is emitted once after
+`sealAndCaptureVersionMark()` successfully returns a `pending` or `resolved` result. An error before a result is
+produced does not emit this event. The event therefore measures successful resolver results and their `kind`; it is
+not the canonical count of capture attempts or persisted product marks.
+
+Each host owns the terminal event for its persistence boundary. For example, office-bohemia uses
+`VersionMarkCaptureCompleted` / `VersionMarkCaptureFailed` to report whether the resolver result was persisted as a
+usable mark. A successful office-bohemia capture normally produces both the Fluid resolver event and the host
+persistence event. Dashboard queries must not union those events as capture attempts or average their nested
+durations. A future host automatically receives the Fluid resolver-result telemetry when it supplies logger context,
+but must add its own terminal persistence/workflow telemetry.
+
+The intended dashboard boundaries are:
+
+- Fluid `VersionMarkResolver:Capture`: successful resolver results across hosts.
+- Host `VersionMarkCaptureCompleted` / `VersionMarkCaptureFailed`: persisted mark attempts.
+- LWS `VersionMarkLwsWriteCompleted` / `VersionMarkLwsWriteFailed`: complete agentic write attempts.
 
 The shared rollout dashboard is tracked in AB#80150.
+
+### Future consideration: opaque per-mark correlation
+
+An opaque per-mark correlation ID is **not part of the current telemetry contract**. It could
+eventually support optional cross-session and cross-layer tracing of a persisted product mark when
+existing session, container, and activity identifiers cannot bridge Bohemia and Fluid events.
+At the Fluid materialization layer, document lineage plus target sequence number identifies the
+materialization point; repeated captures at the same sequence are not distinct Fluid targets. For
+retry analysis, a per-attempt activity ID may therefore be more appropriate than a per-mark ID.
+
+This is deferred because it requires a coordinated Bohemia/Fluid contract and propagation through
+persisted and request data. Any resulting high-cardinality value must be an opaque tagged diagnostic
+property, never a grouping dimension, with telemetry/privacy review. Host-supplied context plus
+target/base sequence-number diagnostics are sufficient for the current aggregate rollout dashboard,
+which does not need an additional correlation ID.
 
 ## Loading a mark
 

@@ -3,26 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "node:assert";
+import { strict as assert } from "node:assert";
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
+import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockHandle,
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules -- The test requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
+import { SchemaFactoryAlpha, TreeViewConfiguration } from "../../../simple-tree/index.js";
 import { hasSome } from "../../../util/index.js";
 import { StringArray, createTestUndoRedoStacks } from "../../utils.js";
 
 import {
-	type AcknowledgmentMessage,
 	type DataChangeMessage,
 	type HostGuestMessage,
+	makePromiseWithResolvers,
 	parseHostGuestMessage,
+	SandboxProtocolError,
 } from "./common.js";
 import { Host } from "./host.js";
+import { SandboxSessionEndpoint } from "./session.js";
+import { normalizeTransportData } from "./transport.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
+	createGuestForHost,
 	disposeActiveSessions,
 	handleArrayConfig,
 	type SessionPorts,
@@ -33,11 +44,11 @@ import {
 
 describe("Host and Guest message protocol", () => {
 	it("accepts data changes and acknowledgments", () => {
-		const dataChange: DataChangeMessage = { type: "dataChange", change: { value: 1 } };
-		const acknowledgment: AcknowledgmentMessage = { type: "acknowledgment" };
+		const dataChange = normalizeTransportData({ type: "dataChange", change: { value: 1 } });
+		const acknowledgment = normalizeTransportData({ type: "acknowledgment" });
 
-		strict.equal(parseHostGuestMessage(dataChange), dataChange);
-		strict.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
+		assert.equal(parseHostGuestMessage(dataChange), dataChange);
+		assert.equal(parseHostGuestMessage(acknowledgment), acknowledgment);
 	});
 
 	it("rejects invalid message envelopes", () => {
@@ -47,13 +58,67 @@ describe("Host and Guest message protocol", () => {
 			{},
 			{ type: "unknown" },
 			{ type: "dataChange" },
+			{ type: "sessionFailure" },
+			{ type: "sessionFailure", error: 0 },
+			{ type: "sessionFailure", error: "failure", extra: true },
 		];
 
 		for (const message of invalidMessages) {
-			strict.throws(
-				() => parseHostGuestMessage(message),
-				/Invalid Host and Guest protocol message/,
+			assert.throws(
+				() => parseHostGuestMessage(normalizeTransportData(message)),
+				SandboxProtocolError,
 			);
+		}
+	});
+
+	it("preserves error identity and classification in local session reports", async () => {
+		const causes: Error[] = [
+			new SandboxProtocolError("Invalid protocol data"),
+			new UsageError("Invalid application use"),
+			new Error("Transport unavailable"),
+		];
+		assert.throws(
+			() => fail("Sandbox test invariant"),
+			(error: unknown) => {
+				assert(error instanceof Error);
+				assert(validateAssertionError("Sandbox test invariant")(error));
+				causes.push(error);
+				return true;
+			},
+		);
+		for (const cause of causes) {
+			const channel = new MessageChannel();
+			const reported = makePromiseWithResolvers();
+			const stoppedWith: Error[] = [];
+			const reportedWith: Error[] = [];
+			const endpoint = new SandboxSessionEndpoint(
+				channel.port1,
+				(error) => {
+					stoppedWith.push(error);
+				},
+				(error) => {
+					reportedWith.push(error);
+					reported.resolver();
+				},
+			);
+			try {
+				assert.doesNotThrow(() => endpoint.fail(cause));
+				assert.equal(reportedWith.length, 0);
+				await reported.promise;
+				assert.equal(endpoint.active, false);
+				assert.equal(endpoint.error, stoppedWith[0]);
+				assert.equal(endpoint.error, reportedWith[0]);
+				assert.equal(endpoint.error?.cause, cause);
+				assert.match(endpoint.error?.message ?? "", /recreate the Host and Guest/);
+				endpoint.fail(new Error("Later failure"));
+				assert.equal(endpoint.error?.cause, cause);
+				assert.equal(stoppedWith.length, 1);
+				assert.equal(reportedWith.length, 1);
+				assert.throws(() => endpoint.breaker.use(), validateUsageError(/Invalid use/));
+			} finally {
+				endpoint.dispose();
+				channel.port2.close();
+			}
 		}
 	});
 });
@@ -72,7 +137,8 @@ describe("Host and Guest correctness", () => {
 		const received = new Promise<HostGuestMessage>((resolve) => {
 			channel.port2.addEventListener(
 				"message",
-				(event: MessageEvent<unknown>) => resolve(parseHostGuestMessage(event.data)),
+				(event: MessageEvent<unknown>) =>
+					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
 				{ once: true },
 			);
 			channel.port2.start();
@@ -81,35 +147,474 @@ describe("Host and Guest correctness", () => {
 		channel.port1.postMessage(message);
 		const receivedMessage = await received;
 
-		strict.deepEqual(receivedMessage, message);
-		strict.notEqual(receivedMessage, message);
+		assert.deepEqual(receivedMessage, normalizeTransportData(message));
+		assert.notEqual(receivedMessage, message);
 		if (receivedMessage.type === "dataChange") {
-			strict.notEqual(receivedMessage.change, change);
+			assert.notEqual(receivedMessage.change, change);
 		}
 		channel.port1.close();
 		channel.port2.close();
 	});
 
-	// TODO: Enable these tests after the protocol serializes handles as tokens and restores them across the MessagePort boundary.
-	it.skip("passes handles from the Host to the Guest", async () => {
+	it("preserves marker-shaped tree data during initialization and edits in both directions", async () => {
+		const factory = new SchemaFactoryAlpha("sandbox.marker-data");
+		/** Allows transport discriminators and prototype-related names as ordinary tree keys. */
+		class RecordNode extends factory.record("Record", [factory.string, factory.number]) {}
+		/** Holds the lookalike records through initialization and edits. */
+		class Records extends factory.array("Records", RecordNode) {}
+		const values: Record<string, string | number>[] = [
+			{ type: "__sandbox_handle__", token: 0 },
+			{ type: "__sandbox_handle__", label: "ordinary user data" },
+			{ type: "__sandbox_handle__", token: 0, extra: "data" },
+			{ type: "__sandbox_object__", entries: "ordinary user data" },
+			{ ["__proto__"]: "data", constructor: "data", prototype: "data" },
+		];
+		const config = new TreeViewConfiguration({ schema: Records });
+		const { host, guest, provider, peer } = setupCustom(
+			values,
+			config,
+			buildDirectSessionPorts,
+		);
+		const read = (nodes: Iterable<RecordNode>) =>
+			Array.from(nodes, (node) => Object.fromEntries(Object.entries(node)));
+		assert.deepEqual(read(guest.view.root), values);
+		host.main.root.insertAtEnd(...values);
+		await host.updateGuestPromise;
+		assert.deepEqual(read(guest.view.root), [...values, ...values]);
+		guest.view.root.insertAtEnd(...values);
+		await guest.updateHostPromise;
+		assert.deepEqual(read(host.main.root), [...values, ...values, ...values]);
+		provider.synchronizeMessages();
+		assert.deepEqual(read(peer.root), [...values, ...values, ...values]);
+	});
+
+	it("passes blob handles from the Host to the Guest", async () => {
 		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
-		const value = "Host handle value";
+		const value = new Uint8Array([1, 2, 3]).buffer;
 
 		host.main.root.push(new MockHandle(value));
-		await (host.updateGuestPromise ?? strict.fail("Expected update to be in progress"));
+		await (host.updateGuestPromise ?? assert.fail("Expected update to be in progress"));
 
-		strict.equal(await guest.view.root[0].get(), value);
+		const resolved = await guest.view.root[0].get();
+		assert.deepEqual(resolved, value);
+		assert.notEqual(resolved, value);
+		assert.equal(value.byteLength, 3);
 	});
 
-	it.skip("passes handles from the Guest to the Host", async () => {
+	it("passes existing handles from the Guest back to the Host and peers", async () => {
+		const value = new Uint8Array([4, 5]).buffer;
+		const handle = new MockHandle(value);
+		const { host, guest, peer, provider } = setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+
+		guest.view.root.push(guest.view.root[0]);
+		await (guest.updateHostPromise ?? assert.fail("Expected push to be in progress"));
+
+		assert.equal(host.main.root[1], host.main.root[0]);
+		assert.deepEqual(await host.main.root[1].get(), value);
+		provider.synchronizeMessages();
+		assert(compareFluidHandles(peer.root[1], handle));
+	});
+
+	it("preserves proxy identity across initialization and updates", async () => {
+		const handle = new MockHandle(new ArrayBuffer(2));
+		const { host, guest } = setupCustom(
+			[handle, handle],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
+		const proxy = guest.view.root[0];
+		assert.equal(proxy, guest.view.root[1]);
+		assert.notEqual(proxy, host.main.root[0]);
+		host.main.root.push(host.main.root[0]);
+		await host.updateGuestPromise;
+		assert.equal(proxy, guest.view.root[2]);
+		assert.deepEqual(await proxy.get(), new ArrayBuffer(2));
+	});
+
+	it("clearly rejects resolution of handles to Fluid objects", async () => {
+		const { host, guest, provider } = setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
+		host.main.root.push(provider.trees[1].handle);
+		await host.updateGuestPromise;
+		await assert.rejects(guest.view.root[0].get(), {
+			name: "Error",
+			message:
+				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
+		});
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+	});
+
+	it("propagates Host resolution failures through the port", async () => {
 		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
-		const value = "Guest handle value";
-
-		guest.view.root.push(new MockHandle(value));
-		await (guest.updateHostPromise ?? strict.fail("Expected push to be in progress"));
-
-		strict.equal(await host.main.root[0].get(), value);
+		const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
+			get: async () => {
+				throw new Error("Blob retrieval failed");
+			},
+		});
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		await assert.rejects(guest.view.root[0].get(), {
+			name: "Error",
+			message: "Blob retrieval failed",
+		});
+		guest.view.root.push(guest.view.root[0]);
+		await guest.updateHostPromise;
+		assert.equal(host.main.root.length, 2);
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
 	});
+
+	for (const transaction of [false, true]) {
+		it(`fails both endpoints on a foreign Guest handle and allows application-managed replacement (transaction: ${transaction})`, async () => {
+			const errors: Error[] = [];
+			const failed = makePromiseWithResolvers();
+			const releaseBlob = makePromiseWithResolvers();
+			const handle = Object.assign(new MockHandle(new ArrayBuffer(1)), {
+				get: async () => {
+					await releaseBlob.promise;
+					return new ArrayBuffer(1);
+				},
+			});
+			const { host, guest, provider, peer } = setupCustom(
+				[handle],
+				handleArrayConfig,
+				buildDirectSessionPorts,
+				false,
+				(error) => {
+					errors.push(error);
+					if (errors.length === 2) {
+						failed.resolver();
+					}
+				},
+			);
+			const proxy = guest.view.root[0];
+			const blobRejected = assert.rejects(proxy.get(), /recreate the Host and Guest/);
+			guest.view.root.push(proxy);
+			const push = guest.updateHostPromise ?? assert.fail("Expected pending Guest change");
+			const pushRejected = assert.rejects(push, /recreate the Host and Guest/);
+			const insertForeignHandle = () => {
+				guest.view.root.push(new MockHandle(new ArrayBuffer(2)));
+			};
+			if (transaction) {
+				guest.view.runTransaction(insertForeignHandle);
+			} else {
+				insertForeignHandle();
+			}
+			await Promise.all([failed.promise, blobRejected, pushRejected]);
+
+			assert.match(guest.error?.message ?? "", /foreign/);
+			assert.match(host.error?.message ?? "", /foreign/);
+			assert(guest.error?.cause instanceof UsageError);
+			assert(host.error?.cause instanceof Error);
+			assert.equal(host.error.cause.constructor, Error);
+			assert.equal(errors[0], guest.error);
+			assert.equal(errors[1], host.error);
+			assert.throws(
+				(): Promise<void> | undefined => guest.updateHostPromise,
+				validateUsageError(/Invalid use/),
+			);
+			assert.throws(
+				(): Promise<void> | undefined => host.updateGuestPromise,
+				validateUsageError(/Invalid use/),
+			);
+			releaseBlob.resolver();
+			await releaseBlob.promise;
+			guest.dispose();
+			host.dispose();
+			// The valid edit sent before the failure remains on main; the foreign handle never reaches it.
+			assert.equal(host.main.root.length, 2);
+			host.main.root.push(handle);
+			provider.synchronizeMessages();
+			assert.equal(peer.root.length, 3);
+
+			const ports = buildDirectSessionPorts();
+			const replacementHost = new Host(host.main, ports.hostPort, provider.trees[1].handle);
+			const replacementGuest = createGuestForHost(
+				replacementHost,
+				handleArrayConfig,
+				ports.guestPort,
+				provider.getCompressor(provider.trees[1]),
+			);
+			try {
+				assert.equal(replacementGuest.view.root.length, 3);
+				replacementGuest.view.root.push(replacementGuest.view.root[0]);
+				await replacementGuest.updateHostPromise;
+				replacementHost.main.root.push(handle);
+				await replacementHost.updateGuestPromise;
+				assert.equal(replacementGuest.view.root.length, 5);
+				assert.equal(replacementHost.main.root.length, 5);
+				assert.equal(errors.length, 2);
+			} finally {
+				replacementGuest.dispose();
+				replacementHost.dispose();
+				ports.dispose();
+			}
+		});
+	}
+
+	for (const [receiver, message, expected] of [
+		[
+			"Host",
+			{ type: "dataChange", change: { type: "__sandbox_handle__", token: 99 } },
+			/Unknown sandbox handle token/,
+		],
+		["Host", { type: "blobRequest", requestId: 0, token: 99 }, /Unknown sandbox handle token/],
+		["Guest", { type: "blobResponse", blob: new ArrayBuffer(0) }, /Invalid Host and Guest/],
+		[
+			"Guest",
+			{ type: "blobResponse", requestId: 99, blob: new ArrayBuffer(0) },
+			/Unexpected sandbox blob response/,
+		],
+	] as const) {
+		it(`fails the ${receiver} and rejects pending work for ${JSON.stringify(message)}`, async () => {
+			const reported = makePromiseWithResolvers();
+			const handle = new MockHandle(new ArrayBuffer(1));
+			const { host, guest, interop, provider, peer } = setupCustom(
+				[handle],
+				handleArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
+			let synchronization: Promise<void> | undefined;
+			let blobRejected: Promise<void> | undefined;
+			if (receiver === "Host") {
+				host.main.root.push(handle);
+				synchronization = host.updateGuestPromise;
+			} else {
+				guest.view.root.push(guest.view.root[0]);
+				synchronization = guest.updateHostPromise;
+				blobRejected = assert.rejects(guest.view.root[0].get(), expected);
+			}
+			assert(synchronization !== undefined);
+			const synchronizationRejected = assert.rejects(synchronization, expected);
+			const target = receiver === "Host" ? interop.sendToHost : interop.sendToGuest;
+			target.postMessage(message);
+			await Promise.all([reported.promise, synchronizationRejected, blobRejected]);
+			assert.match((receiver === "Host" ? host.error : guest.error)?.message ?? "", expected);
+			assert(
+				(receiver === "Host" ? host.error : guest.error)?.cause instanceof
+					SandboxProtocolError,
+			);
+			host.main.root.push(handle);
+			provider.synchronizeMessages();
+			assert.equal(peer.root.length, host.main.root.length);
+		});
+	}
+
+	it("fails the session when a resolved blob cannot be serialized", async () => {
+		const reported = makePromiseWithResolvers();
+		let reports = 0;
+		const handle = new MockHandle(Object.assign(new ArrayBuffer(1), { extra: true }));
+		const { host, guest } = setupCustom(
+			[handle],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+			false,
+			() => {
+				if (++reports === 2) {
+					reported.resolver();
+				}
+			},
+		);
+		await assert.rejects(guest.view.root[0].get(), /buffers cannot have custom properties/);
+		await reported.promise;
+		assert(host.error !== undefined);
+		assert(guest.error !== undefined);
+		assert(host.error.cause instanceof SandboxProtocolError);
+		assert(guest.error.cause instanceof Error);
+		assert.equal(guest.error.cause.constructor, Error);
+		host.main.root.push(handle);
+		assert.equal(host.main.root.length, 2);
+	});
+
+	it("contains send failures in main-tree callbacks even when peer notification also fails", async () => {
+		const reported = makePromiseWithResolvers();
+		const transportError = new Error("Transport unavailable");
+		const { host, guest } = setupCustom(
+			[],
+			stringArrayConfig,
+			() => {
+				const ports = buildDirectSessionPorts();
+				ports.hostPort.postMessage = () => {
+					throw transportError;
+				};
+				return ports;
+			},
+			false,
+			() => reported.resolver(),
+		);
+		assert.doesNotThrow(() => host.main.root.push("retained edit"));
+		await reported.promise;
+		assert.match(host.error?.message ?? "", /Peer notification failed: Transport unavailable/);
+		assert.equal(host.error?.cause, transportError);
+		assert.equal(guest.error, undefined);
+		host.dispose();
+		host.main.root.push("still usable");
+		assert.deepEqual([...host.main.root], ["retained edit", "still usable"]);
+	});
+
+	it("continues synchronizing edits while a blob request is pending", async () => {
+		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const requested = makePromiseWithResolvers();
+		const release = makePromiseWithResolvers();
+		const blob = new Uint8Array([7]).buffer;
+		let requests = 0;
+		const handle = Object.assign(new MockHandle(blob), {
+			get: async () => {
+				requests++;
+				requested.resolver();
+				await release.promise;
+				return blob;
+			},
+		});
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		const proxy = guest.view.root[0];
+		const first = proxy.get();
+		assert.equal(proxy.get(), first);
+		await requested.promise;
+		guest.view.root.push(proxy);
+		await guest.updateHostPromise;
+		assert.equal(host.main.root.length, 2);
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		assert.equal(guest.view.root.length, 3);
+		release.resolver();
+		assert.deepEqual(await first, blob);
+		assert.equal(requests, 1);
+	});
+
+	it("retains a handle for Guest deletion, undo, and redo", async () => {
+		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const blob = new Uint8Array([8]).buffer;
+		const handle = new MockHandle(blob);
+		host.main.root.push(handle);
+		await host.updateGuestPromise;
+		const proxy = guest.view.root[0];
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
+		try {
+			guest.view.root.removeAt(0);
+			await guest.updateHostPromise;
+			assert.equal(host.main.root.length, 0);
+			assert.deepEqual(await proxy.get(), blob);
+			undoStack.pop()?.revert();
+			await guest.updateHostPromise;
+			assert.equal(guest.view.root[0], proxy);
+			assert.equal(host.main.root[0], handle);
+			redoStack.pop()?.revert();
+			await guest.updateHostPromise;
+			assert.equal(host.main.root.length, 0);
+		} finally {
+			unsubscribe();
+		}
+	});
+
+	it("notifies the peer that an unauthorized blob token terminates the session", async () => {
+		const { interop, host } = setupCustom(
+			[],
+			handleArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => {},
+		);
+		const received = new Promise<HostGuestMessage>((resolve) => {
+			interop.sendToHost.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) =>
+					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+				{ once: true },
+			);
+			interop.sendToHost.start();
+		});
+		interop.sendToHost.postMessage({ type: "blobRequest", requestId: 0, token: 0 });
+		assert.deepEqual(
+			await received,
+			normalizeTransportData({
+				type: "sessionFailure",
+				error: "Unknown sandbox handle token.",
+			}),
+		);
+		assert(host.error !== undefined);
+	});
+
+	for (const receiver of ["Host", "Guest"] as const) {
+		it(`rejects blob messages sent in the wrong direction to the ${receiver}`, async () => {
+			let reportError: (error: Error) => void = () => assert.fail("Missing error resolver");
+			const error = new Promise<Error>((resolve) => {
+				reportError = resolve;
+			});
+			const { interop } = setupCustom(
+				[],
+				handleArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				reportError,
+			);
+			if (receiver === "Host") {
+				interop.sendToHost.postMessage({
+					type: "blobResponse",
+					requestId: 0,
+					error: "failure",
+				});
+			} else {
+				interop.sendToGuest.postMessage({ type: "blobRequest", requestId: 0, token: 0 });
+			}
+			const reported = await error;
+			assert.match(reported.message, /cannot receive blob/);
+			assert(reported.cause instanceof SandboxProtocolError);
+		});
+	}
+
+	for (const receiver of ["Host", "Guest"] as const) {
+		it(`classifies an unsolicited acknowledgment to the ${receiver} as a protocol error`, async () => {
+			const reported = makePromiseWithResolvers();
+			const { host, guest, interop, provider, peer } = setupCustom(
+				[],
+				stringArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
+			const port = receiver === "Host" ? interop.sendToHost : interop.sendToGuest;
+			port.postMessage({ type: "acknowledgment" });
+			await reported.promise;
+			const error = receiver === "Host" ? host.error : guest.error;
+			assert(error?.cause instanceof SandboxProtocolError);
+			assert.match(error.cause.message, /Unexpectedly received ack/);
+			host.main.root.push("still usable");
+			provider.synchronizeMessages();
+			assert.deepEqual([...peer.root], ["still usable"]);
+		});
+
+		it(`classifies message deserialization failure on the ${receiver} as a protocol error`, async () => {
+			const reported = makePromiseWithResolvers();
+			const ports = buildDirectSessionPorts();
+			const { host, guest } = setupCustom(
+				[],
+				stringArrayConfig,
+				() => ports,
+				false,
+				() => reported.resolver(),
+			);
+			const port = receiver === "Host" ? ports.hostPort : ports.guestPort;
+			port.dispatchEvent(new MessageEvent("messageerror"));
+			await reported.promise;
+			const error = receiver === "Host" ? host.error : guest.error;
+			assert(error?.cause instanceof SandboxProtocolError);
+			assert.match(error.cause.message, /could not deserialize/);
+		});
+	}
 
 	it("routes invalid messages to the protocol-error handler", async () => {
 		let reportProtocolError: ((error: Error) => void) | undefined;
@@ -128,7 +633,8 @@ describe("Host and Guest correctness", () => {
 		interop.sendToHost.postMessage({ type: "unknown" });
 
 		const error = await protocolError;
-		strict.match(error.message, /Invalid Host and Guest protocol message/);
+		assert.match(error.message, /Invalid Host and Guest protocol message/);
+		assert(error.cause instanceof SandboxProtocolError);
 	});
 
 	it("does not acknowledge an invalid SharedTree change", async () => {
@@ -149,18 +655,35 @@ describe("Host and Guest correctness", () => {
 			events: { on: () => () => {} },
 			dispose: () => {},
 		} as unknown as TreeViewAlpha<typeof StringArray>;
-		const host = new Host(main, channel.port1, reportProtocolError);
+		let bindings = 0;
+		const host = new Host(
+			main,
+			channel.port1,
+			Object.assign(new MockHandle(undefined), {
+				bind: () => {
+					bindings++;
+				},
+			}),
+			reportProtocolError,
+		);
 		let acknowledgmentReceived = false;
-		channel.port2.addEventListener("message", () => {
-			acknowledgmentReceived = true;
+		channel.port2.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = parseHostGuestMessage(normalizeTransportData(event.data));
+			acknowledgmentReceived ||= message.type === "acknowledgment";
 		});
 		channel.port2.start();
 
-		channel.port2.postMessage({ type: "dataChange", change: {} });
+		channel.port2.postMessage(
+			host.codec.encode({
+				type: "dataChange",
+				change: { handle: new MockHandle(new ArrayBuffer(0)) },
+			}),
+		);
 		await protocolError;
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
-		strict.equal(acknowledgmentReceived, false);
+		assert.equal(acknowledgmentReceived, false);
+		assert.equal(bindings, 0);
 		host.dispose();
 		channel.port2.close();
 	});
@@ -172,48 +695,48 @@ describe("Host and Guest correctness", () => {
 		guest.view.root.push("B(g)");
 		guest.view.root.push("C(g)");
 		// The Guest edits are synchronously reflected in the Guest
-		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
+		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
 		// The Guest edits are not reflected in the Host yet
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...host.main.root], []);
 
 		// The Guest should have started the process of pushing the edit to the Host
 		const pushPromise =
-			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
+			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 
 		// Before the Host has a chance to process the edits from the Guest, the peer makes an edit
 		peer.root.push("B(p)");
-		strict.deepEqual([...peer.root], ["B(p)"]);
+		assert.deepEqual([...peer.root], ["B(p)"]);
 		provider.synchronizeMessages();
 		// The peer edit is now reflected in the Host but not the local or Guest yet
-		strict.deepEqual([...host.main.root], ["B(p)"]);
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
+		assert.deepEqual([...host.main.root], ["B(p)"]);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 
 		// Wait for the Guest edits to be pushed to the Host
 		await pushPromise;
 
 		// The Guest edits are now reflected in the Host
-		strict.deepEqual([...host.local.root], ["B(g)", "C(g)"]);
-		strict.deepEqual([...host.main.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...host.local.root], ["B(g)", "C(g)"]);
+		assert.deepEqual([...host.main.root], ["B(g)", "C(g)", "B(p)"]);
 		// The Guest edits are not reflected in the peer yet
-		strict.deepEqual([...peer.root], ["B(p)"]);
+		assert.deepEqual([...peer.root], ["B(p)"]);
 
 		provider.synchronizeMessages();
 
 		// The Guest edits are now reflected in the peer
-		strict.deepEqual([...peer.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...peer.root], ["B(g)", "C(g)", "B(p)"]);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		strict.deepEqual([...host.local.root], ["B(g)", "C(g)", "B(p)"]);
-		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...host.local.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)", "B(p)"]);
 	});
 
 	it("Host edits sequenced before peer edits", async () => {
@@ -221,36 +744,36 @@ describe("Host and Guest correctness", () => {
 
 		// Make an edit on the Host
 		host.main.root.push("H");
-		strict.deepEqual([...host.main.root], ["H"]);
+		assert.deepEqual([...host.main.root], ["H"]);
 
 		// The Guest edits are not reflected in the Guest or peer yet
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
-		strict.deepEqual([...peer.root], []);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...peer.root], []);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 
 		// Before the Guest has a chance to process the edits from the Host, the peer makes an edit
 		peer.root.push("P");
-		strict.deepEqual([...peer.root], ["P"]);
+		assert.deepEqual([...peer.root], ["P"]);
 
 		provider.synchronizeMessages();
 		// The peer and Host edits are sequenced
-		strict.deepEqual([...host.main.root], ["P", "H"]);
-		strict.deepEqual([...peer.root], ["P", "H"]);
+		assert.deepEqual([...host.main.root], ["P", "H"]);
+		assert.deepEqual([...peer.root], ["P", "H"]);
 
 		// The Guest is still in the process of updating
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...guest.view.root], []);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		strict.deepEqual([...host.local.root], ["P", "H"]);
-		strict.deepEqual([...guest.view.root], ["P", "H"]);
+		assert.deepEqual([...host.local.root], ["P", "H"]);
+		assert.deepEqual([...guest.view.root], ["P", "H"]);
 	});
 
 	it("peer edits sequenced before Host edits", async () => {
@@ -258,32 +781,32 @@ describe("Host and Guest correctness", () => {
 
 		// Make an edit on the peer
 		peer.root.push("P");
-		strict.deepEqual([...peer.root], ["P"]);
+		assert.deepEqual([...peer.root], ["P"]);
 
 		// Make an edit on the Host
 		host.main.root.push("H");
-		strict.deepEqual([...host.main.root], ["H"]);
+		assert.deepEqual([...host.main.root], ["H"]);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 
 		provider.synchronizeMessages();
 
 		// The peer and Host edits are sequenced
-		strict.deepEqual([...host.main.root], ["H", "P"]);
-		strict.deepEqual([...peer.root], ["H", "P"]);
+		assert.deepEqual([...host.main.root], ["H", "P"]);
+		assert.deepEqual([...peer.root], ["H", "P"]);
 
 		// The Guest is still in the process of updating
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...guest.view.root], []);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		strict.deepEqual([...host.local.root], ["H", "P"]);
-		strict.deepEqual([...guest.view.root], ["H", "P"]);
+		assert.deepEqual([...host.local.root], ["H", "P"]);
+		assert.deepEqual([...guest.view.root], ["H", "P"]);
 	});
 
 	it("Guest edits can be reverted", async () => {
@@ -294,31 +817,31 @@ describe("Host and Guest correctness", () => {
 		guest.view.root.push("Ga");
 		guest.view.root.push("Gb");
 		guest.view.root.push("Gc");
-		strict.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
-		strict.deepEqual(undoStack.length, 3, "Expected undo stack to have 3 entries");
+		assert.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual(undoStack.length, 3, "Expected undo stack to have 3 entries");
 
 		// The Guest should have started the process of pushing the edit to the Host
 		let pushPromise =
-			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
+			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		strict.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
-		strict.deepEqual([...host.local.root], ["Ga", "Gb", "Gc"]);
-		strict.deepEqual([...host.main.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...host.local.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...host.main.root], ["Ga", "Gb", "Gc"]);
 
 		// Make an edit on the Host
 		host.main.root.insertAtStart("H");
-		strict.deepEqual([...host.main.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...host.main.root], ["H", "Ga", "Gb", "Gc"]);
 
 		// Wait for the update to be applied to the Guest
 		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 		await updatePromise;
 
-		strict.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
-		strict.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
 
-		strict.deepEqual(
+		assert.deepEqual(
 			undoStack.length,
 			4,
 			"Expected Host change to add an entry to the undo stack",
@@ -331,12 +854,12 @@ describe("Host and Guest correctness", () => {
 		undoStack.pop()?.revert();
 
 		// The Guest should have started the process of pushing the edits to the Host
-		pushPromise = guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
+		pushPromise = guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		strict.deepEqual([...guest.view.root], ["H"]);
-		strict.deepEqual([...host.local.root], ["H"]);
-		strict.deepEqual([...host.main.root], ["H"]);
+		assert.deepEqual([...guest.view.root], ["H"]);
+		assert.deepEqual([...host.local.root], ["H"]);
+		assert.deepEqual([...host.main.root], ["H"]);
 		assert(redoStack.length === 3, "Expected redo stack to have 3 entries");
 
 		// Undo the Guest edits
@@ -345,11 +868,11 @@ describe("Host and Guest correctness", () => {
 		redoStack.pop()?.revert();
 
 		// The Guest should have started the process of pushing the edits to the Host
-		pushPromise = guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
+		pushPromise = guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		strict.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
-		strict.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
 		unsubscribe();
 	});
 
@@ -514,7 +1037,7 @@ describe("Host and Guest correctness", () => {
 				hostToGuest: [],
 				guestToHost: [],
 				dispatchToGuest: (): void => {
-					const message = relay.hostToGuest.shift() ?? fail("No Guest-bound messages");
+					const message = relay.hostToGuest.shift() ?? assert.fail("No Guest-bound messages");
 					messagesMovingToParticipants += 1;
 					try {
 						relayPortConnectedToGuest.postMessage(message);
@@ -525,7 +1048,7 @@ describe("Host and Guest correctness", () => {
 					}
 				},
 				dispatchToHost: (): void => {
-					const message = relay.guestToHost.shift() ?? fail("No Host-bound messages");
+					const message = relay.guestToHost.shift() ?? assert.fail("No Host-bound messages");
 					messagesMovingToParticipants += 1;
 					try {
 						relayPortConnectedToHost.postMessage(message);
@@ -544,7 +1067,7 @@ describe("Host and Guest correctness", () => {
 
 			relayPortConnectedToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
 				try {
-					relay.hostToGuest.push(parseHostGuestMessage(event.data));
+					relay.hostToGuest.push(parseHostGuestMessage(normalizeTransportData(event.data)));
 				} finally {
 					messagesMovingToRelay -= 1;
 					resolveIfSettled();
@@ -552,7 +1075,7 @@ describe("Host and Guest correctness", () => {
 			});
 			relayPortConnectedToGuest.addEventListener("message", (event: MessageEvent<unknown>) => {
 				try {
-					relay.guestToHost.push(parseHostGuestMessage(event.data));
+					relay.guestToHost.push(parseHostGuestMessage(normalizeTransportData(event.data)));
 				} finally {
 					messagesMovingToRelay -= 1;
 					resolveIfSettled();
@@ -629,7 +1152,8 @@ describe("Host and Guest correctness", () => {
 					}
 					potential.push(potentialNext);
 				}
-				const step: Step = potential[actual.length][0] ?? fail("No next step available");
+				const step: Step =
+					potential[actual.length][0] ?? assert.fail("No next step available");
 				logger(`--> [${actual.join(", ")}] + ${step}`);
 				switch (step) {
 					case Step.GuestEdit: {
@@ -650,7 +1174,7 @@ describe("Host and Guest correctness", () => {
 					case Step.SequenceEdit:
 					case Step.SequenceAck: {
 						const expected = serviceQueue.shift();
-						strict.equal(expected, step);
+						assert.equal(expected, step);
 						let nextMessage = provider.peekNextMessage();
 						while (
 							nextMessage?.type === "op" &&
@@ -679,12 +1203,12 @@ describe("Host and Guest correctness", () => {
 				await interop.waitForMessages();
 				actual.push(step);
 				if (interop.hostToGuest.length === 0 && interop.guestToHost.length === 0) {
-					strict.deepEqual([...host.main.root], [...guest.view.root]);
-					strict.deepEqual([...host.local.root], [...guest.view.root]);
+					assert.deepEqual([...host.main.root], [...guest.view.root]);
+					assert.deepEqual([...host.local.root], [...guest.view.root]);
 				}
 
 				if (host.updateGuestPromise === undefined) {
-					strict.equal(host.local.isMissingEditsFrom(host.main), false);
+					assert.equal(host.local.isMissingEditsFrom(host.main), false);
 				}
 
 				if (actual.length === maxSteps) {

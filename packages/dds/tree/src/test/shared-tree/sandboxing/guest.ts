@@ -23,13 +23,17 @@ import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
 	type AcknowledgmentMessage,
 	type DataChangeMessage,
+	type HostGuestMessage,
 	getRevision,
-	makePromiseWithResolver,
-	normalizeProtocolError,
+	makePromiseWithResolvers,
 	parseHostGuestMessage,
-	type PromiseWithResolver,
+	type PromiseWithResolvers,
+	SandboxProtocolError,
 	throwProtocolError,
+	validateTreePayloadVocabulary,
 } from "./common.js";
+import { GuestTransportCodec, normalizeTransportData } from "./transport.js";
+import { SandboxSessionEndpoint } from "./session.js";
 
 /**
  * An independent TreeView synchronized with a Host through a message protocol.
@@ -37,6 +41,9 @@ import {
  * @typeParam TSchema - The schema of the synchronized tree.
  */
 export class Guest<const TSchema extends ImplicitFieldSchema> {
+	private readonly codec: GuestTransportCodec;
+	private readonly session: SandboxSessionEndpoint;
+	private disposed = false;
 	/** The independent view on the Guest. */
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** The number of local Guest changes that the Host has not acknowledged. */
@@ -47,7 +54,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * The promise resolves when the Host acknowledges all Guest changes.
 	 * When this is undefined, the Host is up to date with the Guest.
 	 */
-	private pushInProgress?: PromiseWithResolver;
+	private pushInProgress?: PromiseWithResolvers;
 	/** The callback that unsubscribes from view changes. */
 	private readonly offViewChanged: () => void;
 	/** Whether the Guest is applying changes from the Host. */
@@ -55,8 +62,8 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 	/** Receives and routes protocol messages from the Host. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
-		try {
-			const message = parseHostGuestMessage(event.data);
+		this.session.run(() => {
+			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
 				case "dataChange": {
 					this.receiveChangeFromHost(message.change);
@@ -66,18 +73,29 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 					this.receiveAckFromHost();
 					break;
 				}
+				case "blobResponse": {
+					this.codec.receiveBlobResponse(message);
+					break;
+				}
+				case "blobRequest": {
+					throw new SandboxProtocolError("The Guest cannot receive blob requests.");
+				}
+				case "sessionFailure": {
+					this.session.fail(new Error(message.error), false);
+					break;
+				}
 				default: {
 					fail("Unexpected Host and Guest message type");
 				}
 			}
-		} catch (error) {
-			this.handleProtocolError(normalizeProtocolError(error));
-		}
+		});
 	};
 
 	/** Reports a protocol message that the platform cannot deserialize. */
 	private readonly onMessageError = (): void => {
-		this.handleProtocolError(new Error("The Guest could not deserialize a protocol message."));
+		this.session.fail(
+			new SandboxProtocolError("The Guest could not deserialize a protocol message."),
+		);
 	};
 
 	public constructor(
@@ -86,30 +104,54 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		content: ViewContent,
 		/** The Guest endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
-		/** Receives errors from protocol validation and message processing. */
-		private readonly handleProtocolError: (error: Error) => void = throwProtocolError,
+		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
+		handleProtocolError: (error: Error) => void = throwProtocolError,
 		/** Receives diagnostic messages from the synchronization algorithm. */
 		private readonly logger: (message: string) => void = () => {},
 	) {
-		this.view = independentInitializedView(config, options, content);
+		this.session = new SandboxSessionEndpoint(
+			port,
+			(error) => {
+				this.offViewChanged();
+				this.codec.dispose(error);
+				this.pushInProgress?.rejecter(error);
+				this.pushInProgress = undefined;
+			},
+			handleProtocolError,
+		);
+		this.codec = new GuestTransportCodec((message) =>
+			this.session.run(() => this.postMessage(message)),
+		);
+		const tree = this.codec.decode(content.tree);
+		validateTreePayloadVocabulary(tree);
+		this.view = independentInitializedView(config, options, {
+			...content,
+			tree: tree as ViewContent["tree"],
+		});
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
-			if (metadata.isLocal && !this.isApplyingChangesFromHost) {
+			this.session.run(() => {
+				if (!metadata.isLocal || this.isApplyingChangesFromHost) {
+					return;
+				}
 				const newChange = metadata.getChange();
+				// MessagePort delivery is asynchronous. Validate and send before recording a pending edit.
+				this.postMessage({
+					type: "dataChange",
+					change: newChange,
+				} satisfies DataChangeMessage);
 				this.logger(
 					`Guest: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
 				);
 				if (this.pushInProgress === undefined) {
 					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
-					this.pushInProgress = makePromiseWithResolver();
+					this.pushInProgress = makePromiseWithResolvers();
+					// Report through the session even when the application does not await synchronization.
+					this.pushInProgress.promise.catch((error: unknown) => this.session.fail(error));
 				} else {
 					this.logger("Guest:   Reusing existing push promise.");
 				}
 				this.inFlight += 1;
-				this.port.postMessage({
-					type: "dataChange",
-					change: newChange,
-				} satisfies DataChangeMessage);
-			}
+			});
 		});
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
@@ -117,12 +159,20 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public dispose(): void {
+		if (this.disposed) {
+			return;
+		}
+		this.disposed = true;
+		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.port.close();
-		this.pushInProgress = undefined;
-		this.offViewChanged();
+		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
 		this.view.dispose();
+	}
+
+	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
+	public get error(): Error | undefined {
+		return this.session.error;
 	}
 
 	/**
@@ -146,12 +196,20 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			this.isApplyingChangesFromHost = false;
 		}
 		this.logger("Guest: applied update from Host");
-		this.port.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
+		this.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
+	}
+
+	private postMessage(message: HostGuestMessage): void {
+		const normalized = normalizeTransportData(message);
+		parseHostGuestMessage(normalized);
+		this.port.postMessage(this.codec.encode(normalized));
 	}
 
 	/** Processes the Host's acknowledgment of a local Guest change. */
 	private receiveAckFromHost(): void {
-		assert(this.inFlight > 0, "Unexpectedly received ack from Host");
+		if (this.inFlight <= 0) {
+			throw new SandboxProtocolError("Unexpectedly received ack from Host");
+		}
 		this.logger(`Guest: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
 		this.inFlight -= 1;
 
@@ -175,8 +233,10 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * If new local changes are made while a promise is in progress, the existing promise resolves
 	 * only after the Host acknowledges the new changes too.
 	 * A caller does not need to get the promise again after making new changes while it is pending.
+	 * Pending promises reject on failure or disposal. Access after failure throws.
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
+		this.session.breaker.use();
 		return this.pushInProgress?.promise;
 	}
 }
