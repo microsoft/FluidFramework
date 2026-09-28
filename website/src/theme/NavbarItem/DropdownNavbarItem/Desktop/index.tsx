@@ -7,7 +7,7 @@ import NavbarItem from "@theme/NavbarItem";
 import type { Props } from "@theme/NavbarItem/DropdownNavbarItem/Desktop";
 import NavbarNavLink from "@theme/NavbarItem/NavbarNavLink";
 import clsx from "clsx";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
 export default function DropdownNavbarItemDesktop({
@@ -19,6 +19,14 @@ export default function DropdownNavbarItemDesktop({
 }: Props): ReactNode {
 	const dropdownRef = useRef<HTMLDivElement>(null);
 	const [showDropdown, setShowDropdown] = useState(false);
+	// Keep keyboard-open menus visible when the pointer leaves.
+	const [showDropdownOnHover, setShowDropdownOnHover] = useState(false);
+	const isDropdownVisible = showDropdown === true || showDropdownOnHover === true;
+
+	const closeDropdown = useCallback((): void => {
+		setShowDropdown(false);
+		setShowDropdownOnHover(false);
+	}, []);
 
 	const getDropdownLinks = (): HTMLAnchorElement[] => {
 		const dropdown = dropdownRef.current as HTMLDivElement | null;
@@ -55,7 +63,7 @@ export default function DropdownNavbarItemDesktop({
 			) {
 				return;
 			}
-			setShowDropdown(false);
+			closeDropdown();
 		};
 
 		document.addEventListener("mousedown", handleClickOutside);
@@ -67,7 +75,7 @@ export default function DropdownNavbarItemDesktop({
 			document.removeEventListener("touchstart", handleClickOutside);
 			document.removeEventListener("focusin", handleClickOutside);
 		};
-	}, []);
+	}, [closeDropdown]);
 
 	const handleMenuKeyDown = (event: KeyboardEvent<HTMLUListElement>): void => {
 		const links = getDropdownLinks();
@@ -77,7 +85,7 @@ export default function DropdownNavbarItemDesktop({
 
 		if (event.key === "Escape") {
 			event.preventDefault();
-			setShowDropdown(false);
+			closeDropdown();
 			focusTrigger();
 			return;
 		}
@@ -116,14 +124,20 @@ export default function DropdownNavbarItemDesktop({
 	return (
 		<div
 			ref={dropdownRef}
-			className={clsx("navbar__item", "dropdown", "dropdown--hoverable", {
+			className={clsx("navbar__item", "dropdown", {
 				"dropdown--right": position === "right",
-				"dropdown--show": showDropdown === true,
+				"dropdown--show": isDropdownVisible === true,
 			})}
+			onMouseEnter={() => {
+				setShowDropdownOnHover(true);
+			}}
+			onMouseLeave={() => {
+				setShowDropdownOnHover(false);
+			}}
 		>
 			<NavbarNavLink
 				aria-haspopup="true"
-				aria-expanded={showDropdown}
+				aria-expanded={isDropdownVisible}
 				role="button"
 				href={props.to === undefined ? "#" : undefined}
 				className={clsx("navbar__link", className)}
@@ -144,13 +158,17 @@ export default function DropdownNavbarItemDesktop({
 						case "Enter":
 						case " ": {
 							event.preventDefault();
-							setShowDropdown((visible) => visible === false);
+							if (isDropdownVisible === true) {
+								closeDropdown();
+							} else {
+								setShowDropdown(true);
+							}
 							break;
 						}
 						case "Escape": {
-							if (showDropdown === true) {
+							if (isDropdownVisible === true) {
 								event.preventDefault();
-								setShowDropdown(false);
+								closeDropdown();
 							}
 							break;
 						}
