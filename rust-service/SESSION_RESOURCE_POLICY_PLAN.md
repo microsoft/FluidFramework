@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: Stages A through E complete and accepted; all implementation work is ready for the final checkpoint commit.
+Status: Stages A through E complete, accepted, and committed.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -503,3 +503,7 @@ Do not merge or push.
 Default host construction remains direct.
 Enable the composed policy explicitly with `SEA_EXPERIMENTAL_RESOURCE_POLICY=true` and live caching enabled.
 Durable pressure waits, bounded logical pending inputs/readers, and independent subscription shedding are provided; total process memory, finite cache overshoot, autonomous session close, and interruption of an in-flight transport send are not promised.
+
+Commit `ce8c4ae65c64c67c799748b507711feafad9f45f` contains the reviewed Stage E implementation and final acceptance record.
+The following documentation-only commit records that identity.
+No remaining implementation work is in progress; nothing has been merged or pushed.

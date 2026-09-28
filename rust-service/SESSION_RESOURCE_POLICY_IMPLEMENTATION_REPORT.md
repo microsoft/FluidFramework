@@ -1907,3 +1907,8 @@ Caller/host-driven close remains the selected lifecycle guarantee.
 Historical pause instructions in this report are superseded by this completed state.
 Commit the reviewed scope and record its identity, leaving the worktree clean.
 Nothing is merged or pushed.
+
+Commit `ce8c4ae65c64c67c799748b507711feafad9f45f` (`feat(rust-service): compose document pressure and reader shedding`) contains the accepted Stage E implementation, regression tests, documentation, changeset, and review record.
+The worktree was clean immediately after that commit.
+The following documentation-only commit records its identity and the completed plan status.
+All authorized implementation work is complete; no source changes remain in progress.
