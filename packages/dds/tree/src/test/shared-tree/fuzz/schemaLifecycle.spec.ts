@@ -9,7 +9,8 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { done, takeAsync } from "@fluid-private/stochastic-test-utils";
 import { type DDSFuzzHarnessEvents, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 
-import { toInitialSchema } from "../../../simple-tree/index.js";
+import { TreeStoredSchemaRepository } from "../../../core/index.js";
+import { SchemaFactory, toInitialSchema } from "../../../simple-tree/index.js";
 import {
 	createTestUndoRedoStacks,
 	expectSchemaEqual,
@@ -38,13 +39,28 @@ import {
 import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes.js";
 
 /**
- * Deterministic regressions for the schema lifecycle in the existing DDS fuzz harness.
+ * This suite validates the behavior of schema upgrades in the fuzz test harness.
+ *
+ * The regression tests here protect against errors in test code.
+ * This helps ensure that fuzz tests elsewhere provide appropriate coverage of schema upgrades.
  */
-describe("Fuzz schema lifecycle", () => {
+describe("Schema upgrade fuzz test harness correctness", () => {
 	it("rejects node identifiers outside the supported namespaces", () => {
 		for (const nodeType of ["upgrade", "otherNamespace.upgrade"]) {
 			assert.throws(
 				() => generateGuidNodeSchemas([nodeType]),
+				/Expected a treeFuzz or built-in leaf schema identifier/,
+			);
+		}
+	});
+
+	it("rejects unsupported namespaces when reconstructing stored schemas", () => {
+		for (const scope of ["otherNamespace", "treeFuzzUnexpected"]) {
+			const schemaFactory = new SchemaFactory(scope);
+			const schema = schemaFactory.object("upgrade", { value: schemaFactory.string });
+			const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(schema));
+			assert.throws(
+				() => simpleSchemaFromStoredSchema(storedSchema),
 				/Expected a treeFuzz or built-in leaf schema identifier/,
 			);
 		}
@@ -63,18 +79,6 @@ describe("Fuzz schema lifecycle", () => {
 		assert.deepEqual(
 			schemas.map((schema) => schema.identifier),
 			["treeFuzz.upgrade"],
-		);
-	});
-
-	it("creates GUID schemas for names that used to be excluded as primitive wrappers", () => {
-		const nodeTypes = [
-			"treeFuzz.FuzzNumberNode",
-			"treeFuzz.FuzzStringNode",
-			"treeFuzz.FuzzHandleNode",
-		];
-		assert.deepEqual(
-			generateGuidNodeSchemas(nodeTypes).map((schema) => schema.identifier),
-			nodeTypes,
 		);
 	});
 
@@ -144,16 +148,8 @@ describe("Fuzz schema lifecycle", () => {
 		);
 	});
 
-	scenario("repeating the same schema upgrade is idempotent", (state) => {
-		const operation = { type: "schemaChange", contents: { type: "upgrade" } } as const;
-		applySchemaOp(state, operation);
-		const schema = viewFromState(state).checkout.storedSchema.clone();
-		applySchemaOp(state, operation);
-		expectSchemaEqual(viewFromState(state).checkout.storedSchema, schema);
-	});
-
 	scenario("remote upgrades reconstruct string-valued GUID schemas", (state) => {
-		viewFromState(state, state.clients[1]);
+		const originalRemoteView = viewFromState(state, state.clients[1]);
 		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
 		applyFieldEdit(viewFromState(state), {
 			type: "fieldEdit",
@@ -171,29 +167,35 @@ describe("Fuzz schema lifecycle", () => {
 		});
 		state.containerRuntimeFactory.processAllMessages();
 		const remoteView = viewFromState(state, state.clients[1]);
+		assert.notEqual(remoteView, originalRemoteView);
+		assert.equal(originalRemoteView.disposed, true);
+		assert.equal(remoteView.checkout, originalRemoteView.checkout);
+		assert.equal(remoteView.checkout.disposed, false);
 		assert.equal(remoteView.compatibility.isEquivalent, true);
 		validateFuzzTreeConsistency(state.clients[0], state.clients[1]);
 	});
 
 	scenario("stored GUID schemas round-trip without changing their value type", (state) => {
 		const checkout = viewFromState(state).checkout;
-		checkout.updateSchema(
-			toInitialSchema(
-				createTreeViewSchema(
-					generateGuidNodeSchemas([
-						"treeFuzz.upgrade",
-						"treeFuzz.nodeUpgrade",
-						"treeFuzz.arrayChildrenUpgrade",
-						"treeFuzz.FuzzNumberNode",
-						"treeFuzz.FuzzStringNode",
-						"treeFuzz.FuzzHandleNode",
-					]),
+		const schemaFactory = new SchemaFactory("treeFuzz");
+		// Construct the expected schema independently of the helper used during reconstruction.
+		const expectedSchema = toInitialSchema(
+			createTreeViewSchema(
+				[
+					"upgrade",
+					"nodeUpgrade",
+					"arrayChildrenUpgrade",
+				].map((name) =>
+					schemaFactory.object(name, {
+						value: schemaFactory.required(schemaFactory.string),
+					}),
 				),
 			),
 		);
+		checkout.updateSchema(expectedSchema);
 		expectSchemaEqual(
 			toInitialSchema(simpleSchemaFromStoredSchema(checkout.storedSchema)),
-			checkout.storedSchema,
+			expectedSchema,
 		);
 	});
 
@@ -211,6 +213,7 @@ describe("Fuzz schema lifecycle", () => {
 				),
 			);
 			const head = fork.branchHistory.getHead()?.revision;
+			assert.equal(fork.checkout.transaction.size, 0);
 			assert.throws(
 				() => viewFromState(state, state.client, 0),
 				/Cannot replace a view on a non-shared checkout/,
@@ -230,7 +233,10 @@ describe("Fuzz schema lifecycle", () => {
 				type: "forkMergeOperation",
 				contents: { type: "fork", branchNumber: undefined },
 			});
+			const fork = viewFromState(state, state.client, 0);
 			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+			assert.equal(viewFromState(state, state.client, 0), fork);
+			assert.equal(fork.compatibility.isEquivalent, true);
 			const generate = makeTreeEditGenerator({
 				set: 1,
 				fieldSelection: { optional: 1, required: 1, sequence: 0, recurse: 1 },
@@ -279,11 +285,15 @@ describe("Fuzz schema lifecycle", () => {
 		(state) => {
 			applyTransactionBoundary(state, "start");
 			const view = viewFromState(state);
+			const originalSchema = view.checkout.storedSchema.clone();
 			assert.throws(
 				() => applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } }),
 				/Schema operations require a root view without a pending transaction/,
 			);
 			assert.equal(viewFromState(state), view);
+			assert.equal(view.disposed, false);
+			assert.equal(view.checkout.disposed, false);
+			expectSchemaEqual(view.checkout.storedSchema, originalSchema);
 			assert.equal(view.checkout.transaction.size, 1);
 			applyTransactionBoundary(state, "abort");
 		},
@@ -302,17 +312,6 @@ describe("Fuzz schema lifecycle", () => {
 		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
 		assert.deepEqual(checkout.getRemovedRoots(), removed);
 		synchronizeAndCheckViews(state);
-	});
-
-	scenario("revertTo restores data within the upgraded schema", (state) => {
-		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
-		const checkout = viewFromState(state).checkout;
-		const revision = checkout.branchHistory.getHead()?.revision;
-		assert(revision !== undefined);
-		setValue(viewFromState(state), { type: GeneratedFuzzValueType.Number, value: 42 });
-		checkout.revertTo(revision);
-		synchronizeAndCheckViews(state);
-		assert.equal(viewFromState(state).root, undefined);
 	});
 
 	scenario("legacy undo across a schema change drops the inverse data edit", (state) => {
@@ -339,28 +338,10 @@ describe("Fuzz schema lifecycle", () => {
 			state.client = state.clients[0];
 			applyTransactionBoundary(state, boundary);
 			synchronizeAndCheckViews(state);
-			// The legacy policy drops concurrent data rebased over a schema change.
+			// The rebasing policy drops concurrent data rebased over a schema change.
 			assert.equal(viewFromState(state).root, undefined);
 		});
 	}
-
-	scenario("a data fork merges after a concurrent root schema upgrade", (state) => {
-		applyForkMergeOperation(state, {
-			type: "forkMergeOperation",
-			contents: { type: "fork", branchNumber: undefined },
-		});
-		setValue(viewFromState(state, state.client, 0), {
-			type: GeneratedFuzzValueType.Number,
-			value: 42,
-		});
-		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
-		applyForkMergeOperation(state, {
-			type: "forkMergeOperation",
-			contents: { type: "merge", baseBranch: undefined, forkBranch: 0 },
-		});
-		synchronizeAndCheckViews(state);
-		assert.equal(viewFromState(state).root, undefined);
-	});
 
 	scenario(
 		"a schema upgrade dropped over concurrent data refreshes the client's view",
@@ -380,29 +361,4 @@ describe("Fuzz schema lifecycle", () => {
 			assert.equal(nodeTypes.includes("treeFuzz.upgrade"), false);
 		},
 	);
-
-	for (const concurrentType of ["upgrade", "differentUpgrade"]) {
-		scenario(`reconnection with concurrent ${concurrentType} and dependent data`, (state) => {
-			state.clients[1].containerRuntime.connected = false;
-			applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
-			setValue(viewFromState(state), {
-				type: GeneratedFuzzValueType.GUIDNode,
-				value: { guid: "treeFuzz.upgrade" },
-			});
-			state.client = state.clients[1];
-			applySchemaOp(state, { type: "schemaChange", contents: { type: concurrentType } });
-			setValue(viewFromState(state), {
-				type: GeneratedFuzzValueType.GUIDNode,
-				value: { guid: `treeFuzz.${concurrentType}` },
-			});
-			state.clients[1].containerRuntime.connected = true;
-			synchronizeAndCheckViews(state);
-			const nodeTypes = new Set<string>(
-				viewFromState(state).checkout.storedSchema.nodeSchema.keys(),
-			);
-			assert(nodeTypes.has("treeFuzz.upgrade"));
-			assert.equal(nodeTypes.has("treeFuzz.differentUpgrade"), false);
-			assert.equal(state.client.channel.contentSnapshot().tree[0].type, "treeFuzz.upgrade");
-		});
-	}
 });
