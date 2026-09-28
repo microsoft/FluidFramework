@@ -19,9 +19,8 @@ import { currentVersion } from "../../../codec/index.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
-// Schema operations are generally safe to enable unless the workload keeps long-lived transactions (i.e. across fuzz operations).
-// It's left as 0 for now to avoid churning existing fuzz tests.
-export const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+// The generator excludes schema operations while the selected checkout has an active transaction.
+const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	set: 3,
 	clear: 1,
 	insert: 5,
@@ -32,7 +31,7 @@ export const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	commit: 1,
 	abort: 1,
 	fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
-	schema: 0,
+	schema: 1,
 	nodeConstraint: 3,
 	fork: 1,
 	merge: 1,

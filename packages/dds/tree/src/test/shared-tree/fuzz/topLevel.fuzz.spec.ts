@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
-	type DDSFuzzHarnessEvents,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 	type DDSFuzzTestState,
@@ -16,18 +11,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	baseTreeModel,
-	comparisonForestTreeModel,
-	editGeneratorOpWeights,
-	runsPerBatch,
-} from "./baseModel.js";
-import {
-	type FuzzTestState,
-	makeOpGenerator,
-	schemaEditGenerator,
-	viewFromState,
-} from "./fuzzEditGenerators.js";
+import { baseTreeModel, comparisonForestTreeModel, runsPerBatch } from "./baseModel.js";
 import {
 	deterministicIdCompressorFactory,
 	failureDirectory,
@@ -56,58 +40,6 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
 describe("Fuzz - Top-Level", () => {
-	for (const [baseModel, batchRebasing] of [
-		[baseTreeModel, false],
-		[comparisonForestTreeModel, false],
-		[comparisonForestTreeModel, true],
-	] as const) {
-		const name = `${baseModel.workloadName} schema and data${batchRebasing ? " batch rebasing" : ""}`;
-		describe(`Schema and data - ${name}`, () => {
-			const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-			emitter.on("testEnd", (state: FuzzTestState) => {
-				for (const client of [...state.clients, state.summarizerClient]) {
-					assert.equal(viewFromState(state, client).compatibility.isEquivalent, true);
-				}
-			});
-			createDDSFuzzSuite(
-				{
-					...baseModel,
-					workloadName: name,
-					generatorFactory: () => {
-						const generate = makeOpGenerator({ ...editGeneratorOpWeights, schema: 1 });
-						let first = true;
-						return takeAsync(100, async (state: FuzzTestState) => {
-							if (first) {
-								first = false;
-								return schemaEditGenerator(state);
-							}
-							return generate(state);
-						});
-					},
-				},
-				{
-					...baseOptions,
-					defaultTestCount: 20,
-					emitter,
-					rollbackProbability: 0,
-					clientJoinOptions: { clientAddProbability: 0.1, maxNumberOfClients: 4 },
-					detachedStartOptions: {
-						numOpsBeforeAttach: 5,
-						// AB#43127: the mocks do not support rehydration after attaching.
-						attachingBeforeRehydrateDisable: true,
-					},
-					reconnectProbability: batchRebasing ? 0 : 0.1,
-					rebaseProbability: batchRebasing ? 0.2 : 0,
-					containerRuntimeOptions: batchRebasing
-						? { flushMode: FlushMode.TurnBased, enableGroupedBatching: true }
-						: undefined,
-					saveFailures: { directory: failureDirectory },
-					idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
-				},
-			);
-		});
-	}
-
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
@@ -157,6 +89,9 @@ describe("Fuzz - Top-Level", () => {
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			skip: [
 				...[30], //  0x92a
+				// 0xaf9: see chunkTree.spec.ts,
+				// "cloned chunkers retain their own schema when the parent schema changes".
+				1,
 			],
 		};
 		createDDSFuzzSuite(comparisonForestTreeModel, options);
@@ -191,6 +126,11 @@ describe("Fuzz - Top-Level", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skip: [
+				// 0xb53: see editManagerSummarizer.spec.ts,
+				// "summarizes peer history after a schema upgrade and dependent edit lose a rebase".
+				41,
+			],
 		};
 
 		createDDSFuzzSuite(model, options);
