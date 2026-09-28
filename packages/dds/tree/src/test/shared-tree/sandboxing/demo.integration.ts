@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
 
@@ -14,9 +14,9 @@ describe("Host and Guest Demo", () => {
 
 	it("the initial state is consistent across the Host and Guest", () => {
 		const { host, guest } = setup(["A"]);
-		strict.deepEqual([...guest.view.root], ["A"]);
-		strict.deepEqual([...host.local.root], ["A"]);
-		strict.deepEqual([...host.main.root], ["A"]);
+		assert.deepEqual([...guest.view.root], ["A"]);
+		assert.deepEqual([...host.local.root], ["A"]);
+		assert.deepEqual([...host.main.root], ["A"]);
 	});
 
 	it("one Guest edit", async () => {
@@ -25,26 +25,26 @@ describe("Host and Guest Demo", () => {
 		// Edit in the Guest.
 		guest.view.root.push("B(g)");
 		// The edit is synchronously reflected in the Guest.
-		strict.deepEqual([...guest.view.root], ["B(g)"]);
+		assert.deepEqual([...guest.view.root], ["B(g)"]);
 		// The edit is not reflected in the Host yet.
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...host.main.root], []);
 
 		// The Guest should have started to push the edit to the Host.
 		const pushPromise =
-			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
+			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		// Wait for the edit to be pushed to the Host.
 		await pushPromise;
 
 		// The edit is now reflected in the Host.
-		strict.deepEqual([...host.local.root], ["B(g)"]);
-		strict.deepEqual([...host.main.root], ["B(g)"]);
+		assert.deepEqual([...host.local.root], ["B(g)"]);
+		assert.deepEqual([...host.main.root], ["B(g)"]);
 		// The edit is not reflected in the peer yet.
-		strict.deepEqual([...peer.root], []);
+		assert.deepEqual([...peer.root], []);
 
 		provider.synchronizeMessages();
 		// The edit is now reflected in the peer.
-		strict.deepEqual([...peer.root], ["B(g)"]);
+		assert.deepEqual([...peer.root], ["B(g)"]);
 	});
 
 	it("new Guest edits during Guest edit push", async () => {
@@ -53,27 +53,27 @@ describe("Host and Guest Demo", () => {
 		// Edit in the Guest.
 		guest.view.root.push("B(g)");
 		const pushPromise =
-			guest.updateHostPromise ?? strict.fail("Expected push to be in progress");
+			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 
 		// Before the push completes, make more edits in the Guest.
 		guest.view.root.push("C(g)");
 		guest.view.root.push("D(g)");
 		// The new edits are synchronously reflected in the Guest.
-		strict.deepEqual([...guest.view.root], ["B(g)", "C(g)", "D(g)"]);
+		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)", "D(g)"]);
 		// The new edits are not reflected in the Host yet.
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...host.main.root], []);
 
 		await pushPromise;
 		// The edits are now reflected in the Host.
-		strict.deepEqual([...host.local.root], ["B(g)", "C(g)", "D(g)"]);
-		strict.deepEqual([...host.main.root], ["B(g)", "C(g)", "D(g)"]);
+		assert.deepEqual([...host.local.root], ["B(g)", "C(g)", "D(g)"]);
+		assert.deepEqual([...host.main.root], ["B(g)", "C(g)", "D(g)"]);
 		// The edits are not reflected in the peer yet.
-		strict.deepEqual([...peer.root], []);
+		assert.deepEqual([...peer.root], []);
 
 		provider.synchronizeMessages();
 		// The edits are now reflected in the peer.
-		strict.deepEqual([...peer.root], ["B(g)", "C(g)", "D(g)"]);
+		assert.deepEqual([...peer.root], ["B(g)", "C(g)", "D(g)"]);
 	});
 
 	it("one peer edit", async () => {
@@ -82,27 +82,27 @@ describe("Host and Guest Demo", () => {
 		// Edit on the peer.
 		peer.root.push("B(p)");
 		// The edit is synchronously reflected in the peer.
-		strict.deepEqual([...peer.root], ["B(p)"]);
+		assert.deepEqual([...peer.root], ["B(p)"]);
 		// The edit is not reflected in the Host or the Guest yet.
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...host.main.root], []);
-		strict.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...host.main.root], []);
+		assert.deepEqual([...guest.view.root], []);
 
 		provider.synchronizeMessages();
 		// The edit is now reflected in the Host but not in the local branch or Guest.
-		strict.deepEqual([...host.main.root], ["B(p)"]);
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...host.main.root], ["B(p)"]);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...guest.view.root], []);
 
 		// The Host should have started to update the Guest with the peer change.
 		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 		// Wait for the update to be applied to the Guest.
 		await updatePromise;
 
 		// The peer edit is now reflected in the local branch and Guest.
-		strict.deepEqual([...host.local.root], ["B(p)"]);
-		strict.deepEqual([...guest.view.root], ["B(p)"]);
+		assert.deepEqual([...host.local.root], ["B(p)"]);
+		assert.deepEqual([...guest.view.root], ["B(p)"]);
 	});
 
 	it("new peer edits during Guest update", async () => {
@@ -112,26 +112,26 @@ describe("Host and Guest Demo", () => {
 		peer.root.push("B(p)");
 		provider.synchronizeMessages();
 		// The new peer edit is reflected in the Host but not in the local branch or Guest.
-		strict.deepEqual([...host.main.root], ["B(p)"]);
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...host.main.root], ["B(p)"]);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...guest.view.root], []);
 
 		// The Host should have started to update the Guest with the peer change.
 		const updatePromise =
-			host.updateGuestPromise ?? strict.fail("Expected update to be in progress");
+			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 
 		// Before the update is applied to the Guest, more edits arrive from the peer.
 		peer.root.push("C(p)");
 		peer.root.push("D(p)");
 		provider.synchronizeMessages();
 		// The new peer edits are reflected in the Host but not in the local branch or Guest.
-		strict.deepEqual([...host.main.root], ["B(p)", "C(p)", "D(p)"]);
-		strict.deepEqual([...host.local.root], []);
-		strict.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...host.main.root], ["B(p)", "C(p)", "D(p)"]);
+		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...guest.view.root], []);
 
 		await updatePromise;
 		// After the promise resolves, all peer edits are reflected in the local branch and Guest.
-		strict.deepEqual([...host.local.root], ["B(p)", "C(p)", "D(p)"]);
-		strict.deepEqual([...guest.view.root], ["B(p)", "C(p)", "D(p)"]);
+		assert.deepEqual([...host.local.root], ["B(p)", "C(p)", "D(p)"]);
+		assert.deepEqual([...guest.view.root], ["B(p)", "C(p)", "D(p)"]);
 	});
 });
