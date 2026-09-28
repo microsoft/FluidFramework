@@ -5,6 +5,15 @@ Primary source revision: `240798434cf591f4db2366a1a3b6b6a7438bd015`.
 Summary-harness revision: `22309cf9d169c4f7986b6ce1db184427269f9656`.
 Status: refreshed investigation report; native WebTransport benchmark lifecycle repair included.
 
+## September 28 Follow-Up
+
+The [project overview update](historical/PROJECT_OVERVIEW.md#unpaced-throughput-and-reader-fanout-september-28) adds unpaced measurements and a completed WebTransport connection-scheduling fix.
+Matched memory acknowledgment-paced throughput improved from 25,820 to 113,327 writes/s.
+A later zero-shedding streamed sample reached 302,515 writes/s and 605,040 read deliveries/s; higher write-rate samples served less reader work after shedding.
+Durable throughput remained near 6,000 writes/s, consistent with the absence of new same-author storage batching.
+These workloads do not replace the September 23 offered-rate thresholds below.
+Use the [retained dataset](historical/measurements/unpaced-throughput-20260928/README.md) for exact modes, configurations, failed attempts, source identities, and the explicit durable drain allowance.
+
 ## Summary
 
 The shared live-event cache is implemented, enabled by default, and materially changes the performance picture.

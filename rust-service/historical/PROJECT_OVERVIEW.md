@@ -1,6 +1,6 @@
 # Sea: Project Overview
 
-Project record as of 2026-09-24; measurements use the revisions listed below.
+Project record as of 2026-09-28; measurements use the revisions listed below.
 For the current implementation and limitations, start with the [project README](../README.md).
 
 Sea (Snapshotted Event Archive) is an experimental Rust service for ordered application events, immutable blob trees, and snapshots.
@@ -16,6 +16,8 @@ For setup and usage, see the [project README](../README.md); for service contrac
 Native and browser clients access the sequencer locally or over a network transport.
 Storage options include memory, buffered-file, and durable-file backends with different persistence guarantees.
 The built-in host uses a shared live-event cache by default while retaining storage as the authority for recovery and historical catch-up.
+Optional document-wide session policy adds storage-pressure admission and live-reader shedding through decorators, without moving policy into the sequencer.
+The policy is disabled by default; the September 28 unpaced experiments below enable it explicitly.
 
 ```mermaid
 flowchart LR
@@ -56,7 +58,7 @@ They support the method and its limits, not the complete private-evaluation chro
 
 ## Measurement Scope
 
-The current refresh uses clean commit `dfadc07d6e03afa2bf55795d669fdf3e60901d20`.
+The September 24 refresh uses clean commit `dfadc07d6e03afa2bf55795d669fdf3e60901d20`.
 Source inventory, repeated stress, native transport, capacity, browser, summary/cold-load, and Sea end-to-end groups below have been refreshed.
 Dependency counts are unchanged from the 2026-09-23 campaign.
 The Tinylicious end-to-end inventory also retains that campaign because no Tinylicious changes were pulled into the branch.
@@ -66,7 +68,7 @@ All file-backed Sea and Tinylicious service data used fresh owned directories di
 The host reported AMD EPYC 7763, Linux `6.8.0-1064-azure`, Node.js `22.23.2`, Rust `1.98.1`, and 32 logical CPUs.
 `/tmp` was ext4 on `/dev/sdb1[/containerTmp]`; benchmark artifacts remained outside service-data directories.
 
-The current refresh has retained:
+The September 24 refresh has retained:
 
 - 180 primary repeated stress attempts and 11 bounded replacement attempts;
 - 136 capacity probes across all 30 storage/core/payload rows;
@@ -75,15 +77,21 @@ The current refresh has retained:
 - the complete Sea end-to-end test inventory;
 - current source inventory.
 
-The [retained dataset](measurements/overview-refresh-20260924/README.md) records every refreshed value and identifies the unchanged 2026-09-23 inventories.
+The [September 24 dataset](measurements/overview-refresh-20260924/README.md) records every refreshed value and identifies the unchanged 2026-09-23 inventories.
 These are local, single-host stack comparisons with different features, transports, and persistence guarantees.
 They are not production capacity estimates or language-only comparisons.
+
+The September 28 addition records [unpaced throughput and reader fanout](#unpaced-throughput-and-reader-fanout-september-28).
+It adds acknowledgment-paced and transport-backpressured measurements, scheduling controls, and separate write/read rates.
+The implementation is integrated at `0c518931158769b5897f7db28bdb0e1cd20eb7be`; measured binary hashes and working-tree source snapshots are retained in the [new dataset](measurements/unpaced-throughput-20260928/README.md).
+The source/dependency/test inventories, offered-rate thresholds, browser results, and summary measurements elsewhere in this overview remain the dated September 24 results; they were not rerun for this addition.
 
 ## At a Glance
 
 Throughput cells give **64-byte / 8,192-byte offered operations/s**.
 Sea eight-core capacity uses eight service cores and eight separate generator cores; Tinylicious uses four generators because its measured ceiling does not require more.
 Values are the highest observed threshold pass, not repeated maximum-capacity estimates.
+These are September 24 offered-rate results, not the newer unpaced measurements.
 The corresponding higher failure appears in [Storage and Core Exploration](#storage-and-core-exploration).
 ✅ marks a favorable measured result or a shared positive outcome within the stated scope, not overall superiority.
 
@@ -253,6 +261,119 @@ The historical one-core 12,000-small point failed all ten runs at full service-c
 | 8,192 bytes | 1 | 6,000 | 5,998.4 (5,984.9-5,999.2) | 90.40 | 425.21 | 8.28-39.34 |
 | 8,192 bytes | 4 | 8,000 | 7,997.0 (7,995.4-7,999.0) | 154.54 | 555.13 | 3.66-11.61 |
 
+## Unpaced Throughput and Reader Fanout, September 28
+
+### Measurement Approaches
+
+The earlier `paced` mode offers a configured rate and checks delivery, latency, backlog, and exact drain.
+The new modes omit the offered rate:
+
+- `closed-loop` submits the next write on each document after the previous application acknowledgment.
+  It allows one outstanding write per document and can be limited by round trips.
+- `streamed` generates one frame at a time and waits for transport write capacity, not an application acknowledgment.
+  Receipt consumption, writer echoes, and observer reads run independently.
+  This benchmark-only mode uses shared Sea wire frames over certificate-pinned WebTransport; it does not change the production session-client API.
+
+Write ops/s counts application acknowledgments received in the half-open measurement window.
+Read ops/s counts validated application-event deliveries received in the same window, summed across all subscriptions, including writer echoes and excluding acknowledgments.
+Warmup writes that complete in the window count; completions during warmup or drain do not.
+The older observer-only delivery counter is not this read-rate metric.
+Generators without the new per-reader counters report total read throughput as unavailable, not twice the write rate.
+
+Each run creates 32 documents with one writer and two read subscriptions per document: the writer echo and a separate observer, for 64 subscriptions in total.
+Only an explicit subscription-revoked response counts as shedding.
+A shed subscription stops permanently for that run; it does not reconnect or resume.
+Shedding the writer echo leaves its author and acknowledgment stream active.
+Writes and every non-shed reader must drain exactly; missing acknowledgments, corrupt or reordered payloads, unexpected reader failures, and incomplete drains fail the sample.
+
+### Configurations
+
+All rows use 64-byte application payloads, eight service cores, the live cache, and the optional resource policy.
+Each generator process is pinned to a separate core and uses a single-thread Tokio runtime.
+
+| Campaign | Transport | Generator cores | Warmup / measurement | Repetitions | Streamed drain allowance |
+| --- | --- | ---: | --- | --- | --- |
+| Initial acknowledgment-paced measurements | WebSocket | 4; memory control also 8 | 3 s / 10 s | 3 per cell | Not applicable |
+| Initial streamed measurements | WebTransport | 4 | 3 s / 10 s | 3 memory, 3 buffered, 1 durable recheck | 30 s |
+| Matched original/updated scheduling comparison | WebTransport | 8 | 1 s / 8 s | 3 per backend, mode, and server variant; 24 total | Memory 30 s; durable 120 s |
+| Separate write/read counter follow-up | WebTransport | 8 | 1 s / 8 s | 3 streamed-memory samples; 1 each for the other rows below | Memory 30 s; durable 120 s |
+
+The environment sets `SEA_MAX_CONNECTIONS=128`, `SEA_EXPERIMENTAL_RESOURCE_POLICY=true`, and `SEA_EXPERIMENTAL_SESSION_FACTORY=false`.
+Policy defaults include 128 pending writes with 16 MiB logical input charges, 128 live-reader reservations per document, durable preparation/mutation readiness thresholds of 127 requests and 8 MiB each, and output targets of 1,024 cache entries or 8 MiB canonical payload bytes.
+These are not total-memory bounds: transport buffers, retained archive history, already-dequeued values, and benchmark timing records are separate.
+The [server guide](../crates/sea-webtransport-server/README.md) defines the exact admission and shedding behavior.
+
+The final campaigns pin service work to CPUs `0,2,4,6,8,10,12,14` and generators to `16,18,20,22,24,26,28,30`.
+File data uses fresh owned `/tmp` directories on ext4, recorded as `/dev/sdb1[/containerTmp]`.
+QUIC flow-control windows are unchanged.
+Timing records are capped at one million per generator; exceeding the cap fails rather than throttles the workload.
+The default drain allowance remains 30 seconds.
+An explicit `drainTimeoutSeconds: 120` permits the slow durable backlog to settle and raises the benchmark wall-clock guard to 180 seconds; it does not change the measured interval or production timeouts.
+Exact commands, configurations, hashes, and per-run results are in the [dataset](measurements/unpaced-throughput-20260928/README.md).
+
+### Initial Observations and Diagnosis
+
+The initial WebSocket acknowledgment-paced medians were 88,358 memory, 60,370 buffered-file, and 6,212 durable-file writes/s, with no shedding.
+An eight-generator memory control reached 87,992 writes/s rather than improving throughput.
+Initial WebTransport streaming produced 23,444-47,113 memory writes/s with 0-27 subscriptions shed, and 30,702-31,300 buffered-file writes/s without shedding.
+These were not pacing-only comparisons: transport and listener scheduling differed.
+
+Default windows held approximately 520,000-555,000 unacknowledged operations across the documents at measurement end, or 37-39 MB of encoded requests.
+This was transport backlog, not a storage batch.
+The initial durable recheck observed 6,366 acknowledgments/s but failed its 30-second drain allowance; it is not an accepted throughput result or proof of data loss.
+
+The WebTransport listener previously polled all application connections in one Tokio task.
+The update independently schedules a bounded set of owned connection tasks, joins cancellation before cleanup, and spends cooperative task budget in ready response loops.
+Faster execution exposed UDP receive-buffer overflow and partial-request timeouts.
+A process-local request for a 2 MiB receive buffer, where the existing buffer is smaller, reduced that sensitivity.
+Operating-system limits are reported; no host-wide settings, QUIC windows, session APIs, author ordering, or production operation deadlines changed.
+Packet loss still occurred in successful runs, so the result is not a guarantee against overload timeouts.
+
+### Matched Scheduling Results
+
+The original server is the saved pre-scheduling implementation at the `ec25dd4c8b5` comparison base.
+Each cell below is a median of three runs with the same WebTransport workload and generator binary across server variants.
+Original and updated campaigns ran sequentially, not as randomized pairs.
+
+| Backend / mode | Original write ops/s | Updated write ops/s | Read ops/s | Subscriptions shed out of 64, original / updated |
+| --- | ---: | ---: | --- | --- |
+| Memory, acknowledgment-paced | 25,820 | 113,327 | Not recorded | 0, 0, 0 / 0, 0, 0 |
+| Memory, streamed | 42,462 | 307,021 | Not recorded | 9, 4, 6 / 1, 0, 30 |
+| Durable, acknowledgment-paced | 6,267 | 6,250 | Not recorded | 0, 0, 0 / 0, 0, 0 |
+| Durable, streamed | 6,066 | 6,055 | Not recorded | 0, 0, 0 / 0, 0, 0 |
+
+All 24 final comparison runs passed receipt and non-shed reader drain checks.
+The memory acknowledgment-paced improvement is approximately 4.4 times.
+The approximately 7.2-times streamed write-rate ratio includes different shedding and is not an equal-reader-capacity comparison.
+The updated zero-shedding streamed sample reached 297,200 writes/s.
+Durable throughput remains effectively unchanged; its updated streamed backlogs needed approximately 84 seconds to drain.
+Neither the network author loop nor the generic policy wrapper introduces concurrent same-author storage submissions, so scheduling alone does not create durable batches.
+
+### Separate Write and Read Rates
+
+The following are fresh individual samples from the unchanged updated server and a generator with per-reader window counters.
+They are not replacements for the preceding medians.
+
+| Backend / mode | Write ops/s | Read ops/s | Subscriptions shed out of 64 |
+| --- | ---: | ---: | ---: |
+| Memory, acknowledgment-paced | 111,725 | 223,450 | 0 |
+| Memory, streamed, run 1 | 302,515 | 605,040 | 0 |
+| Memory, streamed, run 2 | 342,045 | 546,524 | 17 |
+| Memory, streamed, run 3 | 326,793 | 556,773 | 12 |
+| Durable, acknowledgment-paced | 6,367 | 12,735 | 0 |
+| Durable, streamed | 6,138 | 12,277 | 0 |
+
+All six follow-up runs passed integrity checks.
+The highest memory write rate delivered fewer read operations than the zero-shedding sample.
+In run 2, 11 writer-echo subscriptions and six observer subscriptions were shed; the other 47 drained completely.
+Shedding is counted across the full run, while rates cover only the measurement window.
+Different document rates, shedding times, and receive/acknowledgment completion boundaries mean the read/write-rate ratio is not simply the final surviving-reader count divided by 32.
+
+The merge validation reran 94 affected Rust tests and 28 Node tests, strict Clippy/rustdoc, and formatting checks.
+The normally ignored real-browser connection-release regression also passed separately on the unchanged server source.
+This is targeted validation, not a rerun of the full project test inventory.
+Short loopback samples, variable shedding, transport loss, and the explicit durable drain override remain important limits on interpretation.
+
 ## Optimized Browser Results
 
 Ten repetitions per path and DDS mode; 100 warmup edits and 1,000 measured edits.
@@ -394,5 +515,7 @@ All persistence assertions passed, but these samples do not establish healthy ch
 - Direct browser paths omit Fluid runtime responsibilities.
 - Source, dependency, and test counts describe different feature sets and are not quality or maintenance scores.
 - Native WebTransport results after the opening-stream lifecycle fix are not directly comparable with the original broken-stream samples.
+- The September 28 unpaced measurements use different load semantics and opt-in policy; they do not replace the offered-rate thresholds or establish equivalent Tinylicious capacity.
+- Write-rate comparisons with reader shedding include different fanout work; use separate read rates and subscription outcomes where recorded.
 - Tinylicious checkpoint cleanup errors remain unresolved.
 - Sea is experimental and lacks production hardening, distributed failover, and physical-device durability qualification.
