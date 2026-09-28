@@ -26,11 +26,11 @@ Skip any steps that already have merged PRs or open branches.
 
 ## Overview
 
-Open four PRs (can be opened in parallel, but merge order matters):
+Open four PRs (they can be opened in parallel, but merge order matters):
 1. Tag untagged asserts
 2. Update compatibility generation
-3. Generate release notes and changelogs
-4. Bump to next version (**must merge last**)
+3. Generate release notes and changelogs, then freeze client changesets
+4. Bump to next version and reopen client changesets (**must merge last**)
 
 Then create the release branch from the commit before the version bump.
 
@@ -63,6 +63,27 @@ Check the current version in the root `package.json`. This is the version being 
 - **Interactive:** Ask the user to confirm the version.
 - **Autonomous:** Use the version provided upfront. If none was provided, read it from `package.json` and proceed.
 
+### Determine the next version
+
+Determine the next development version before creating either the release-notes or version-bump branch.
+
+- **Interactive:** Ask the user what the next version should be.
+- **Autonomous:** Use the next version provided upfront.
+
+Default suggestion: increment the minor version by 1 (e.g., 2.90.0 -> 2.91.0). Trust the user-provided version if different; only flag it if it is more than 7-8 minor versions away from the current version.
+
+### Verify changesets are open
+
+Read `__fluidChangesetState` from `.changeset/config.json`.
+Before generating release notes:
+
+- `currentVersion` must equal `<VERSION>`.
+- `currentVersion` and `lockedVersion` must differ.
+
+If the values are equal, client changesets are already frozen.
+Stop and resume or repair the version-bump PR instead of generating release notes again.
+If `currentVersion` does not equal `<VERSION>`, stop and correct the stale release state before continuing.
+
 ### Generate release notes
 
 ```bash
@@ -77,14 +98,30 @@ pnpm flub generate releaseNotes -g client -t minor --outFile RELEASE_NOTES/<VERS
 pnpm flub generate changelog -g client
 ```
 
-Create branch `release-prep/<VERSION>/3-release-notes`, commit both the release notes and changelog changes, push to upstream, and create a PR. Must merge before the version bump PR.
+### Freeze client changesets
+
+Update `__fluidChangesetState` in `.changeset/config.json`:
+
+```json
+"__fluidChangesetState": {
+	"currentVersion": "<VERSION>",
+	"lockedVersion": "<VERSION>"
+}
+```
+
+Create branch `release-prep/<VERSION>/3-release-notes`, commit the release notes, changelog changes, deleted changesets, and freeze state, push to upstream, and create a PR. This PR must merge before the version bump PR.
 
 ### If changeset edits are needed after generation
 
-If feedback requires changeset wording changes:
-1. Make changeset edits in a **separate PR**, merge it
+If feedback requires changeset wording changes before the release-notes PR merges:
+
+1. Make the changeset edits in a **separate PR** while changesets are still open, and merge it
 2. Regenerate release notes and changelogs
-3. This ensures changeset changes have a commit in main (since changesets are deleted during changelog generation)
+3. Update the release-notes PR with the regenerated output
+
+This ensures changeset changes have a commit in main, because changesets are deleted during changelog generation.
+If the release-notes PR has already merged, client changesets are frozen.
+Revert the release-notes PR first, as described below, before making changeset edits.
 
 ### If release notes need to be reverted and regenerated
 
@@ -108,13 +145,6 @@ Note: only changesets that were _restored by the revert_ are affected. New chang
 
 ## Step 4: Bump Main to Next Version
 
-### Determine the next version
-
-- **Interactive:** Ask the user what the next version should be.
-- **Autonomous:** Use the next version provided upfront.
-
-Default suggestion: increment the minor version by 1 (e.g., 2.90.0 -> 2.91.0). Trust the user-provided version if different; only flag it if it's more than 7-8 minor versions away from the current version.
-
 ### Bump versions
 
 ```bash
@@ -131,6 +161,23 @@ pnpm -r --include-workspace-root exec npm pkg set version=<NEXT_VERSION>
 pnpm -r run build:genver
 pnpm install --no-frozen-lockfile
 ```
+
+### Reopen client changesets
+
+On the version-bump branch, update `__fluidChangesetState` in `.changeset/config.json`:
+
+```json
+"__fluidChangesetState": {
+	"currentVersion": "<NEXT_VERSION>",
+	"lockedVersion": "<VERSION>"
+}
+```
+
+The release-notes and version-bump branches can make their state changes in parallel.
+The release-notes PR must merge first.
+After it merges, update or rebase the version-bump PR.
+If there is a conflict, preserve `{ currentVersion: <NEXT_VERSION>, lockedVersion: <VERSION> }`.
+Verify that the update does not restore any changesets deleted by the release-notes PR.
 
 ### Update compat workspace versions
 
@@ -149,7 +196,7 @@ This regenerates:
 
 If the bump doesn't cross a compatibility checkpoint and the newly released version isn't yet on npm, this is often a no-op — but **always run it** so the next release doesn't conflate changes. The script will be re-run during [type test updates](type-test-updates.md) Step 8 to pick up the freshly published version as N-1.
 
-Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to upstream, and create a PR. **This PR must merge LAST.**
+Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit the version and changeset-state updates, push to upstream, and create a PR. **This PR must merge LAST.**
 
 ## Step 5: Create the Release Branch
 
@@ -157,6 +204,7 @@ Create branch `release-prep/<VERSION>/4-bump-<NEXT_VERSION>`, commit, push to up
 
 ### Pre-checks
 - Verify all four PRs are merged
+- Verify `.changeset/config.json` has `currentVersion: <NEXT_VERSION>` and `lockedVersion: <VERSION>`
 - Check again for release-blocking issues:
 
 ```bash
@@ -171,7 +219,7 @@ If blockers are found, **stop and report them**. Do not create the release branc
 > **Phase complete.** Created the following PRs (merge in this order, version bump last):
 > 1. [list PRs]
 >
-> After all PRs are merged, re-invoke to create the release branch and continue with release execution.
+> Merge the release-notes PR before the version-bump PR. After all PRs are merged, re-invoke to create the release branch and continue with release execution.
 
 If the user has indicated that PRs are already merged (e.g., re-invoked after merging), proceed with branch creation.
 

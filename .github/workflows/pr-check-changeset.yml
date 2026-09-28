@@ -16,6 +16,29 @@ permissions:
   pull-requests: read
 
 jobs:
+  # Reject changeset changes after release notes are generated and before the next version bump merges.
+  changeset-freeze:
+    name: Changeset freeze
+    runs-on: ubuntu-latest
+    steps:
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: "0"
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check changeset freeze
+        run: >-
+          node .github/scripts/check_changeset_freeze.mjs
+          --base "${{ github.event.pull_request.base.sha }}"
+          --head "${{ github.event.pull_request.head.sha }}"
+
   # When a PR has the changeset-required label, check if it has a changeset.
   changeset-required:
     name: Changeset required

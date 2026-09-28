@@ -248,6 +248,22 @@ const config: ISummaryConfiguration = { maxOps: 100 };
 If your [release process](#when-should-i-use-a-changeset) uses changesets, add one for each change that customers or partners need to know about.
 You can start with an empty changeset and complete it before release.
 
+## Changeset freeze during release preparation
+
+Each release unit that uses this freeze mechanism has a `__fluidChangesetState` object in its `.changeset/config.json`:
+
+- `currentVersion` is the development version that can receive changesets.
+- `lockedVersion` is the version whose changesets were consumed to generate release notes and changelogs.
+
+Changesets are open when the values differ.
+Changesets are frozen when the values are equal.
+During the frozen window, CI rejects additions, edits, renames, and deletions of changeset Markdown files for that release unit.
+Wait for the version-bump PR to merge before updating those changesets.
+
+The state is independent for each changeset-based release unit.
+For example, a client changeset freeze does not block changes in `server/routerlicious/.changeset`.
+Release groups and independent packages that use another release-note mechanism do not need a `.changeset/config.json` or this state.
+
 ## More information
 
 - [Official changesets documentation](https://github.com/changesets/changesets)

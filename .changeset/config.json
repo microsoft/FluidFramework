@@ -1,5 +1,9 @@
 {
 	"$schema": "https://unpkg.com/@changesets/config@2.3.0/schema.json",
+	"__fluidChangesetState": {
+		"currentVersion": "3.3.0",
+		"lockedVersion": null
+	},
 	"changelog": [
 		"@fluid-private/changelog-generator-wrapper",
 		{

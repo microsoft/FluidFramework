@@ -63,6 +63,8 @@ git ls-remote --heads upstream 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
 git tag -l 'client_v<NEXT_VERSION>'
 # Check for open PRs
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<NEXT_VERSION>" --state all
+# Check whether client changesets are frozen
+jq '.__fluidChangesetState' .changeset/config.json
 ```
 
 For a release branch with no completed release, also inspect ADO pipeline state:
@@ -77,6 +79,7 @@ For a release branch with no completed release, also inspect ADO pipeline state:
 |-------|--------|
 | No release-prep branches, no release branch | Start **minor release prep** (Steps 1-5) |
 | Release-prep branches/PRs exist, some not merged | Resume **minor release prep** from where it left off |
+| Client changesets are frozen (`currentVersion == lockedVersion`) | Resume **minor release prep** at the version bump; do not accept new client changesets |
 | Release branch exists, no successful release build | Resume **release execution** — queue the ADO release build |
 | Successful release build exists, no successful public publish run | Resume **release execution** — queue the ADO publish pipeline using that build as the candidate |
 | Successful public publish run exists, exact GitHub/npm release not yet available | Wait for publication to propagate; investigate the publish run if it does not appear |
@@ -109,7 +112,7 @@ For **patch releases**, skip directly to release execution on an existing releas
 
 These steps require human action and should be clearly reported in CI workflow logs:
 
-1. **Merge release-prep PRs** in the correct order (version bump last) after CI creates them
+1. **Merge release-prep PRs** in the correct order (release notes before version bump; version bump last) after CI creates them
 2. **Create the release branch** (Step 5) — requires elevated permissions on the `release/` branch prefix
 3. **Queue the ADO release build** (Step 6) — choose the "release" option in ADO
 4. **Queue the ADO publish pipeline** (Step 6) — after the release build succeeds, select it as the candidate and enable public npm publication
@@ -122,6 +125,9 @@ These steps require human action and should be clearly reported in CI workflow l
 - **Version scheme**: The version numbering is not a simple incrementing pattern (it is NOT always multiples of 10). When suggesting a next version, default to incrementing the minor version by 1 (e.g., 2.90.0 -> 2.91.0). Trust the version the user provides unless it is more than 7-8 minor versions away from the current version (which likely indicates an error).
 - Release branch naming: `release/client/<major>.<minor>` (e.g., `release/client/2.90`)
 - The release branch is created from the commit **before** the version bump on `main`
+- Changeset-based release units store release freeze state in `__fluidChangesetState` in their `.changeset/config.json`
+- `currentVersion == lockedVersion` means that release unit's changesets are frozen; differing values mean changesets are open
+- The client release-notes PR sets `lockedVersion` to the release version; the version-bump PR sets `currentVersion` to the next version and keeps `lockedVersion` at the released version
 - There is no `lerna.json` in this repo
 - **Git remote preference**: When pushing branches, prefer pushing to `upstream` if one is configured for the repo. Check with `git remote -v` if unsure. Only fall back to `origin` if no `upstream` remote exists. **Exception:** In CI (`CI=true`), always use `origin` — there is no `upstream`.
 - **Working branch naming**: Do NOT use the `release/` prefix for working branches because `release/` is protected on upstream. Use the standard naming convention below — these branches double as progress markers.
