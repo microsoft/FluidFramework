@@ -763,18 +763,10 @@ export function expectSchemaEqual(
 	);
 }
 
-export function validateViewConsistency(
-	treeA: ITreeCheckout,
-	treeB: ITreeCheckout,
-	idDifferentiator: string | undefined = undefined,
-): void {
-	validateCheckoutSnapshotConsistency(treeA, treeB, idDifferentiator);
-}
-
 /**
  * Compares the visible content, stored schema, and retained detached content of two checkouts.
  */
-export function validateCheckoutSnapshotConsistency(
+export function validateViewConsistency(
 	treeA: ITreeCheckout,
 	treeB: ITreeCheckout,
 	idDifferentiator: string | undefined = undefined,

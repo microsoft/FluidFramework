@@ -20,7 +20,6 @@ import {
 	getView,
 	prepareTreeForCompare,
 	snapshotSessionId,
-	validateCheckoutSnapshotConsistency,
 	validateViewConsistency,
 } from "./utils.js";
 
@@ -99,7 +98,7 @@ describe("Test utils", () => {
 		});
 	});
 
-	describe("validateCheckoutSnapshotConsistency", () => {
+	describe("validateViewConsistency", () => {
 		const config = new TreeViewConfiguration({
 			schema: SchemaFactory.optional(SchemaFactory.number),
 		});
@@ -111,7 +110,7 @@ describe("Test utils", () => {
 				view.root = 2;
 				const checkout = view.checkout;
 				const fork = checkout.fork();
-				validateCheckoutSnapshotConsistency(checkout, fork);
+				validateViewConsistency(checkout, fork);
 				switch (difference) {
 					case "tree": {
 						fork.viewWith(config).root = 3;
@@ -137,16 +136,13 @@ describe("Test utils", () => {
 					}
 				}
 				assert.throws(
-					() => validateCheckoutSnapshotConsistency(checkout, fork, difference),
+					() => validateViewConsistency(checkout, fork, difference),
 					new RegExp(`Inconsistent .*: ${difference}`),
 				);
 				fork.dispose();
 				view.dispose();
 			});
 		}
-	});
-
-	describe("validateViewConsistency", () => {
 		it("compares the detached content of both checkouts", () => {
 			const view = getView(
 				new TreeViewConfiguration({ schema: SchemaFactory.optional(SchemaFactory.number) }),
