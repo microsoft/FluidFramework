@@ -34,11 +34,11 @@ struct HostedDocument<Storage: SeaStorage> {
     sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
     /// Experimental pass-through path; absence preserves direct session construction.
     factory: Option<PassThroughFactory<LocalSessionFactory<Storage>>>,
-    /// Opt-in bounded policy path; no pressure feedback or autonomous close owner.
+    /// Opt-in pressure policy; close remains caller/host-driven.
     policy_factory: Option<
         sea_core::policy::PolicyFactory<
             LocalSessionFactory<Storage>,
-            crate::resource_policy::AdmissionPolicy,
+            crate::resource_policy::AdmissionPolicy<Storage::Error>,
         >,
     >,
 }
@@ -59,17 +59,25 @@ impl<Storage: SeaStorage + 'static> HostedDocument<Storage> {
     }
 
     /// Shares one admission policy across every decorated session of the document.
-    fn with_policy(sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>) -> Arc<Self> {
-        let policy = Arc::new(crate::resource_policy::AdmissionPolicy::new());
+    fn with_policy(
+        sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
+        storage: Option<sea_file::pressure::DurableWritePressure>,
+    ) -> Result<Arc<Self>, protocol::Response> {
+        let output = sequencer
+            .live_cache_pressure()
+            .ok_or_else(|| rejected("resource policy requires live caching"))?;
+        let policy = Arc::new(crate::resource_policy::AdmissionPolicy::new(
+            storage, output,
+        ));
         let policy_factory = Some(sea_core::policy::PolicyFactory::new(
             LocalSessionFactory::new(sequencer.clone()),
             policy,
         ));
-        Arc::new(Self {
+        Ok(Arc::new(Self {
             sequencer,
             factory: None,
             policy_factory,
-        })
+        }))
     }
 }
 
@@ -81,6 +89,8 @@ struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
     intercept: bool,
     /// Selects bounded policy decoration independently of pass-through interception.
     policy: bool,
+    /// Backend-specific observation captured before the view moves into its sequencer.
+    storage_pressure: fn(&Storage::Blobs) -> Option<sea_file::pressure::DurableWritePressure>,
     /// Factory retaining the backend namespace independently of active views.
     storage: Arc<Storage>,
     /// Serializes first recovery; failed attempts are never cached.
@@ -104,6 +114,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
             live_cache,
             intercept,
             policy: false,
+            storage_pressure: |_| None,
             storage: Arc::new(storage),
             documents: Arc::new(Mutex::new(BTreeMap::new())),
         }
@@ -123,8 +134,14 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
         let live_cache = self.live_cache;
         let intercept = self.intercept;
         let policy = self.policy;
+        let storage_pressure = self.storage_pressure;
         storage_worker(async move {
             let (id, view) = storage.create_view().await.map_err(error_response)?;
+            let pressure = if policy {
+                storage_pressure(view.blobs())
+            } else {
+                None
+            };
             let runtime = if live_cache {
                 sea_sequencer::session::LocalSequencer::recover_with_live_cache(view).await
             } else {
@@ -134,7 +151,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
             documents.insert(
                 id.as_bytes().to_vec(),
                 if policy {
-                    HostedDocument::with_policy(runtime)
+                    HostedDocument::with_policy(runtime, pressure)?
                 } else {
                     HostedDocument::new(runtime, intercept)
                 },
@@ -157,6 +174,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
         let live_cache = self.live_cache;
         let intercept = self.intercept;
         let policy = self.policy;
+        let storage_pressure = self.storage_pressure;
         let id = id.clone();
         storage_worker(async move {
             let view = storage
@@ -164,6 +182,11 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
                 .await
                 .map_err(error_response)?
                 .ok_or_else(|| rejected("document does not exist"))?;
+            let pressure = if policy {
+                storage_pressure(view.blobs())
+            } else {
+                None
+            };
             let runtime = if live_cache {
                 sea_sequencer::session::LocalSequencer::recover_with_live_cache(view).await
             } else {
@@ -171,7 +194,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
             }
             .map_err(error_response)?;
             let runtime = if policy {
-                HostedDocument::with_policy(runtime)
+                HostedDocument::with_policy(runtime, pressure)?
             } else {
                 HostedDocument::new(runtime, intercept)
             };
@@ -414,10 +437,16 @@ impl BuiltInSeaHost {
     /// Enables bounded document admission through policy decorators.
     ///
     /// This bounds pending logical inputs and live-reader admission, not total memory.
-    /// It does not yet wait for storage pressure or autonomously close rejected writers.
+    /// Durable storage pauses new writes above its low-water targets.
+    /// Output pressure refuses readers and sheds lagging subscriptions independently of polling.
+    /// Disabling live caching is rejected on initialization, before creating storage.
+    /// Rejected writers still require caller/host-driven close.
     #[must_use]
     pub fn new_with_policy(root: PathBuf, mode: StorageMode, live_cache: bool) -> Self {
         Self::with_initializer(move || {
+            if !live_cache {
+                return Err(rejected("resource policy requires live caching"));
+            }
             let root = root.join("documents");
             Ok(match mode {
                 StorageMode::Memory => Arc::new(DocumentRegistry::with_policy(
@@ -428,10 +457,14 @@ impl BuiltInSeaHost {
                     FileStorage::open(root).map_err(error_response)?,
                     live_cache,
                 )),
-                StorageMode::DurableFile => Arc::new(DocumentRegistry::with_policy(
-                    DurableStorage::open(root).map_err(error_response)?,
-                    live_cache,
-                )),
+                StorageMode::DurableFile => {
+                    let mut registry = DocumentRegistry::with_policy(
+                        DurableStorage::open(root).map_err(error_response)?,
+                        live_cache,
+                    );
+                    registry.storage_pressure = sea_file::FileBlobs::write_pressure;
+                    Arc::new(registry)
+                }
             })
         })
     }
@@ -1006,6 +1039,15 @@ mod tests {
         first.close().await.unwrap();
         second.close().await.unwrap();
         document.sequencer.shutdown().await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn resource_policy_refuses_disabled_cache_before_creating_storage() {
+        let root = std::env::temp_dir().join(format!("sea-policy-disabled-{}", std::process::id()));
+        assert!(!root.exists());
+        let host = BuiltInSeaHost::new_with_policy(root.clone(), StorageMode::DurableFile, false);
+        assert!(host.backend().await.is_err());
+        assert!(!root.exists());
     }
 
     /// Exercises real file invalidation through experimental document recovery, without polling.

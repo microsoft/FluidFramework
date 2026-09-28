@@ -47,10 +47,24 @@ Write permits cover policy/FIFO waiting, then release before source invocation; 
 Live-reader permits cover pending loads and returned unbounded streams and release on observed termination or drop.
 Finite reads and snapshot/control operations remain outside these limits.
 Larger shared payload backing allocations, never-polled caller futures, and transport buffers are excluded.
-This initial policy is immediately ready after bounded admission: storage-pressure waiting and output-pressure shedding are not yet enabled.
+The policy requires live caching; disabling it is rejected rather than silently dropping output-pressure management.
+Durable-file writes wait, before source invocation, until both preparation and mutation budgets are at most 127 requests and 8 MiB each.
+Memory and buffered-file backends do not wait for a disk-pressure signal.
+Readiness is advisory; racing writers and larger operations may still receive source admission rejection.
+Terminal observations refuse new operations before source invocation.
+An ambiguous observation cause is retained for diagnostics but classified as unavailable for the refused operation, since that operation cannot have committed.
+Failures after source invocation keep their source classification.
+Output targets are 1,024 retained cache entries and 8 MiB canonical payload bytes.
+Above either target, the policy refuses new sessions and live readers but does not pause existing authors.
+One coalesced task per managed document sheds the oldest unread live subscription per turn until targets are met.
+It rechecks targets before selecting a subscription and does not revoke historical or caught-up readers.
+The task runs without a slow reader polling and ends on cache termination or policy drop; it holds no strong document/cache ownership.
+Required entries remain retained until their owners dequeue, drop, or are revoked, so no finite overshoot is promised.
+Reader-admission permits and already-dequeued payloads can survive cache revocation until their stream observes termination or is dropped.
+An in-flight transport write is not interrupted by cache shedding; existing transport frame limits and operation timeouts still apply.
 Policy-rejected application writes make the decorated author terminal across clones; caller/host-driven close and reconciliation remain required.
 Close bypasses pressure waiting and does not cancel already-entered source work.
-No background close owner or total-memory guarantee is added.
+The shedding task is not a background close owner, and no total-memory guarantee is added.
 Existing constructors and generic storage hosts remain direct.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.

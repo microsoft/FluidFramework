@@ -109,6 +109,10 @@ Cancelling a wait removes only its registration.
 Pressure-only notifications are separate from reader readiness, so dequeue does not reschedule sibling readers.
 Progress is cache dequeue, not transport delivery: returned payload handles and in-flight sends are excluded and need separate downstream accounting.
 No session resource policy is enabled by obtaining an observer.
+`revoke_lagging(entries, payload_bytes)` is a narrow optional action: it rechecks the targets and revokes one live subscription with the oldest unread cursor.
+It leaves historical and caught-up readers alone and cannot close author membership or revoke snapshot authority.
+Selection and ownership removal are atomic; notifications occur after releasing the cache lock.
+No action is taken when both targets are met.
 
 The cache's short synchronous lock covers publication, delivered cursors, handoff, and reclamation, never I/O.
 Lock order is runtime then cache then subscription terminal state; cache and storage invalidation callbacks never enter the runtime or storage.

@@ -58,6 +58,56 @@ impl<E> LiveCachePressure<E> {
         Ok(state.stats())
     }
 
+    /// Revokes one live claim with the oldest unread cursor if either target is exceeded.
+    ///
+    /// Threshold recheck and identity selection are atomic with cache ownership changes.
+    /// Historical subscriptions and caught-up readers are not selected.
+    /// This is subscription-only shedding, not session closure or a hard retention bound.
+    /// # Errors
+    /// Returns the opening's terminal error or `Closed` after cache destruction.
+    /// # Panics
+    /// Panics if a cache or subscription lock is poisoned.
+    pub fn revoke_lagging(
+        &self,
+        entries: usize,
+        payload_bytes: usize,
+    ) -> Result<bool, SessionError<E>> {
+        let cache = self.cache.upgrade().ok_or(SessionError::Closed)?;
+        let removed = {
+            let mut state = cache.state.lock().expect("live cache lock");
+            if let Some(terminal) = &state.terminal {
+                return Err(terminal.error());
+            }
+            if state.entries.len() <= entries && state.payload_bytes <= payload_bytes {
+                return Ok(false);
+            }
+            let selected = state
+                .subscriptions
+                .iter()
+                .filter(|(_, claim)| claim.attached && claim.cursor < state.head)
+                .min_by_key(|(_, claim)| claim.cursor)
+                .map(|(id, _)| *id);
+            if let Some(id) = selected {
+                let claim = state
+                    .subscriptions
+                    .remove(&id)
+                    .expect("selected live claim");
+                *claim.terminal.lock().expect("subscription terminal lock") =
+                    Some(Terminal::Revoked);
+                state.claims -= 1;
+                state.reclaim();
+                true
+            } else {
+                false
+            }
+        };
+        if removed {
+            cache.notify_pressure();
+            cache.notify();
+        }
+        Ok(removed)
+    }
+
     /// Waits until either retained entries or canonical payload bytes exceeds its target.
     ///
     /// This does not reserve capacity, shed readers, or block publication.
@@ -792,6 +842,40 @@ mod tests {
         drop((historical, sibling));
         check_accounting(&cache);
         assert_eq!(cache.stats(), LiveCacheStats::default());
+    }
+
+    #[test]
+    fn lagged_shedding_rechecks_targets_and_preserves_siblings_and_history() {
+        let cache = LiveCache::<std::io::Error>::new(None);
+        let pressure = cache.pressure();
+        let session = SessionId::new(1).unwrap();
+        let slow = cache.subscribe(session.clone());
+        let fast = cache.subscribe(session.clone());
+        let historical = cache.subscribe(session);
+        slow.attach(None).unwrap();
+        fast.attach(None).unwrap();
+        cache.publish(&event(0, 8));
+        fast.next().unwrap().unwrap();
+        assert!(!pressure.revoke_lagging(1, 8).unwrap());
+        assert!(pressure.revoke_lagging(0, 8).unwrap());
+        assert!(matches!(
+            slow.next(),
+            Err(SessionError::SubscriptionRevoked)
+        ));
+        assert!(fast.next().unwrap().is_none());
+        assert!(historical.terminal().is_none());
+        assert!(!historical.attach(None).unwrap());
+        assert!(!pressure.revoke_lagging(0, 0).unwrap());
+        check_accounting(&cache);
+        cache.publish(&event(1, 9));
+        assert!(pressure.revoke_lagging(usize::MAX, 8).unwrap());
+        assert!(matches!(
+            fast.next(),
+            Err(SessionError::SubscriptionRevoked)
+        ));
+        assert!(historical.terminal().is_none());
+        assert_eq!(pressure.current().unwrap().entries, 0);
+        check_accounting(&cache);
     }
 
     #[test]

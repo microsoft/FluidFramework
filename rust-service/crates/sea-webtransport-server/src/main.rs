@@ -66,6 +66,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if resource_policy && session_factory {
         return Err("resource policy and pass-through factory modes are mutually exclusive".into());
     }
+    if resource_policy && !live_cache {
+        return Err("resource policy requires live caching".into());
+    }
     let host = Arc::new(if resource_policy {
         BuiltInSeaHost::new_with_policy(data, storage_mode, live_cache)
     } else if session_factory {

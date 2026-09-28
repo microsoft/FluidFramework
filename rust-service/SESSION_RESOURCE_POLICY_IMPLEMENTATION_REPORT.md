@@ -1648,3 +1648,262 @@ Only acceptance/commit bookkeeping changed afterward.
 
 Stage D is accepted without validation or performance exceptions.
 Continue to E after committing D; storage/output feedback and active shedding are not supplied by D's bounded immediately-ready host policy.
+
+Commit `bef8c847122b306bdbdbaf6e5ae55f72880375af` contains the reviewed Stage D implementation and acceptance record.
+It is the fixed comparison base for Stage E.
+
+## Stage E: Shared Storage And Outgoing Feedback
+
+The user authorized finishing the revised plan, subject to unresolved issues or design guidance.
+The selected lifecycle guarantee remains caller/host-driven close after terminal append refusal; no independently polled close owner is added.
+Stage E retains the generic Stage D factory/decorator and changes only its concrete opt-in host policy and the narrow outgoing-cache action.
+
+### Implementation And Limits
+
+- Capture the concrete durable pressure handle from each newly created or recovered view before moving that view into sequencing.
+  Memory and buffered-file construction supply no inbound disk-pressure signal.
+  No new core storage trait or storage-to-sequencer accounting ledger is introduced.
+- Retain the 128-request/16-MiB logical pending-input permits and 128 live-reader permits from D.
+  Application and content writes wait before entering their sources until both durable budgets are at most 127 requests and 8 MiB.
+  The wait is advisory rather than a reservation; source saturation races can still reject writes.
+  Caller backing allocations, source-accepted work, and returned handles are outside the logical pending-input bound.
+- Use output soft targets of 1,024 retained entries and 8 MiB canonical payload bytes.
+  Refuse new sessions/live readers above either target.
+  Do not pause existing authors for output pressure.
+- A single coalesced Tokio task per managed document waits on the weak cache pressure observer.
+  Above target it calls `revoke_lagging`, then yields before another check.
+  The action atomically rechecks current counts, selects the oldest unread live cursor, removes only that subscription, and reclaims newly unowned entries.
+  Historical and caught-up readers are not selected.
+  Notifications follow lock release; no policy callback executes under cache, storage, or sequencing locks.
+- The task holds no strong cache/runtime reference and is aborted on policy drop.
+  Cache closure ends it normally; other terminal observations preserve classification and produce a diagnostic.
+  It is a shedding driver, not a close owner.
+  Cache reclamation does not depend on the revoked reader polling.
+- Required entries remain retained above targets until their ownership is released.
+  A revoked but unpolled stream can still hold its admission permit and already-dequeued payloads.
+  A currently blocked transport send remains subject to the existing frame limits and operation timeout, not synchronous cancellation by this policy.
+  Total resident memory and finite publication overshoot remain explicitly unbounded by these targets.
+- `SEA_EXPERIMENTAL_RESOURCE_POLICY=true` remains default-off and incompatible with the separate pass-through experiment.
+  Policy-enabled construction requires live caching and rejects invalid configuration before creating storage.
+
+### Validation And Failed Attempts
+
+Evidence root: `/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/stage-e-feedback/`.
+
+`initial-validation.log` records passing tests/Clippy for the first production draft.
+The first new durable-pressure test failed to compile because a pinned waiting future still borrowed a permit at its explicit drop.
+`focused-validation.log` preserves that failure; the future now has a narrower scope, and `focused-validation-repair.log` records passing focused validation.
+The final durable test exercises both normal drain/resumption and shutdown while pressure is high, using a real durable opening and a constrained blocking pool.
+It verifies that the pending policy permit remains charged while waiting and is released afterward.
+Shutdown is deliberately cancelled after its fence; the existing terminal pressure contract still wakes the policy waiter.
+
+Five new regression tests cover atomic threshold recheck, historical/sibling preservation, count-based shedding without reader polling, byte-based shedding and task lifetime, normal durable drain/shutdown wakeup, and invalid cache configuration.
+The concrete policy tests keep memory writes ready under output pressure, preserve existing author use, and restore reader admission after reclamation.
+Existing generic cancellation/FIFO/load/close, transport blocked-send, replacement, transformation, and recovery tests run unchanged in the full policy-enabled gate.
+The timed workloads are not a substitute for these active-pressure tests.
+
+`validation.log` records successful:
+
+```text
+cargo fmt --all
+cargo test -p sea-sequencer -p sea-webtransport-server
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+RUSTDOCFLAGS='-D warnings' cargo doc --workspace --all-features --no-deps
+cargo build --workspace --all-targets
+cargo check -p sea-core --tests --target wasm32-unknown-unknown
+node scripts/check-documentation.mjs
+SEA_EXPERIMENTAL_RESOURCE_POLICY=true CARGO_BUILD_JOBS=4 bash test.sh --extended
+```
+
+The full native workspace run reports 415 passes and one browser-owned ignored fixture.
+The extended gate separately executes that fixture successfully and passes generated-consumer, TypeScript, integration, and browser checks.
+The targeted sequencer suite has 79 passes; affected doctest commands complete successfully with zero examples.
+`policy-check.log` records successful `pnpm policy-check --path rust-service` (725 files).
+The editor-diagnostics tool timed out without returning a result; no editor diagnostic pass is claimed.
+Compiler, lint, and runtime validation supply the executable evidence.
+
+### Frozen Performance Campaign
+
+The plan records numerical gates before measuring.
+Both sides use the same E source and release binary, with cache enabled and pass-through disabled; only resource-policy activation changes.
+`candidate-source.sha256` covers the exact working Rust tree including edited production source, tests, and included READMEs.
+`release-build.log`, `provenance.log`, and `candidate-binaries.sha256` identify the isolated release build and its inputs.
+The generator is the unchanged accepted Stage A `presentation-native` binary.
+Three alternating pairs per cell use 32 documents, eight service cores, rate 1,000, three-second warmup and ten-second measurement, with durable64 primary and buffered64/memory64/memory8192 controls.
+The existing CPU affinity, aligned service CPU, complete delivery/order/drain, memory/disk preflight, RSS, p95, and primary stability checks apply.
+CPU must remain within +5% at the paired median; every p95 and mean/peak RSS pair must meet the plan's unchanged limits.
+
+The first campaign stopped after one successful baseline sample because the reused D runner expected an absent policy marker for its older baseline binary.
+The same E binary correctly prints `false` on the policy-off side.
+This harness assertion was corrected to require explicit `false`/`true`; no source, binary, workload, or threshold changed.
+The original runner/log/sample remain under `run-pairs-marker-failure.mjs`, `primary-marker-failure.log`, and `samples-marker-failure/`.
+The restarted complete campaign uses fresh `samples/` paths.
+Measurements exercise active feedback observers under normal traffic, not forced saturation; no active-shedding throughput or allocator-count claim is made.
+
+### Stage E Blocked Measurement Result And Resume State
+
+| Cell | Completed samples | Median paired CPU change | Baseline CPU variation | Result |
+| --- | ---: | ---: | ---: | --- |
+| durable64 primary | 6 | +1.5414% | 1.5366% | Passed |
+| buffered64 | 6 | +2.6251% | 0.7548% | Passed |
+| memory64 | 6 | +6.0206% | 1.1914% | Failed +5% CPU gate |
+| memory8192 | 0 | Not measured | Not measured | Not started after failure |
+
+All completed samples pass delivery/order/drain, aligned CPU, and resource guards.
+All nine completed pairs pass p95 and mean/peak RSS gates; all three cells have stable baseline p95.
+The memory64 paired CPU increases are +5.4433%, +6.0206%, and +6.6011%.
+Their consistency and stable baseline do not establish that the result is noise.
+No causal profiling has isolated the cost yet; the new observer task and its wakeups are a hypothesis, not a demonstrated root cause.
+The campaign stopped at this acceptance failure as required by the plan.
+
+Stage E is functionally validated but not accepted.
+Its working changes remain uncommitted against `bef8c847122b306bdbdbaf6e5ae55f72880375af`.
+No independent E reviewer has been launched and no review/repair allowance has been consumed.
+No performance exception is assumed.
+The next decision is whether to investigate a small overhead reduction within the unchanged gate, or explicitly accept this memory64 result and retain the simple design while completing the remaining measurements and review.
+Do not grow the architecture or change thresholds merely to label this failed campaign a pass.
+Frozen source/evidence and the worktree diff are retained for resumption; no changes are merged or pushed.
+
+### Follow-Up: Stage D Versus E With Policy Disabled
+
+On 2026-09-28 the user requested a direct comparison against the saved performance baseline to check the non-opt-in path.
+This is a separate experiment, not a retry or replacement of the failed opt-in overhead gate.
+Evidence root: `/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8/files/stage-e-policy-off/`.
+
+The baseline is the saved Stage D release executable (SHA-256 `20e2fd5d58d25601ca65eab6222d0721a2238909a1b1751b17920af623058b11`).
+The candidate is the unchanged frozen Stage E release executable (SHA-256 `f9673161d4ce04aaa1680fb79d129c4586ed61b616cb2bb299d266dd42fd0c60`).
+Both use `SEA_EXPERIMENTAL_RESOURCE_POLICY=false`, `SEA_EXPERIMENTAL_SESSION_FACTORY=false`, and live caching enabled.
+The runner checks both disabled activation markers in each service log.
+Both saved source manifests and binary manifests were verified before sampling; `provenance.log` retains those checks.
+No build, source change, or functional test ran during measurement.
+
+Reused the established 32-document native/WebSocket workload, rate 1,000, eight service cores, three-second warmup, ten-second measurement, unchanged generator and CPU affinity, and three alternating pairs per cell.
+The preselected limits remain +5% median CPU, paired p95 `max(10%, 1 ms)`, paired mean/peak RSS `max(10%, 16 MiB)`, and the primary stability gate.
+Commands were `node run-pairs.mjs primary`, `memory64`, `buffered64`, and `memory8192`, executed sequentially with separate logs and fresh sample directories.
+
+| Cell | Samples | Median paired CPU change | Baseline CPU variation | Result |
+| --- | ---: | ---: | ---: | --- |
+| durable64 primary | 6 | -1.1305% | 1.1641% | Passed |
+| memory64 | 6 | -0.7093% | 1.4495% | Passed |
+| buffered64 | 6 | +0.0102% | 1.5921% | Passed |
+| memory8192 | 6 | +0.0205% | 0.5746% | Passed |
+
+All 24 samples pass delivery/order/drain, aligned CPU, and resource guards.
+All twelve pairs pass latency and mean/peak RSS gates; baseline p95 is stable in every cell.
+The largest paired increases across the campaign are 0.004527 ms p95, 0.201465 MiB mean RSS, and 0.226563 MiB peak RSS.
+Raw commands, binary/generator hashes, activation, per-sample data, and paired calculations are retained in `samples/`.
+The runner and measurement manifests preserve the complete campaign separately from the earlier opt-in results.
+
+No non-opt-in regression was detected within these measured workloads and limits.
+This is not proof of identical performance for every workload, and the small negative CPU values are not claimed as speedups.
+Live caching was enabled on both sides; cache-disabled operation was not measured here.
+The earlier +6.02% memory64 result remains the measured overhead of enabling the complete policy path on E.
+This follow-up does not waive that acceptance gate, complete the remaining opt-in memory8192 cell, or authorize E acceptance or commit.
+No independent review of this follow-up has yet occurred.
+
+### Authorized Performance Exception
+
+On 2026-09-28 the user accepted the approximately 6% CPU overhead when the optional feature is enabled and authorized continuation.
+This resolves the existing memory64 +6.0206% acceptance blocker by explicit exception.
+It does not relabel that measurement as meeting +5%, change thresholds for unmeasured cells, or erase failed evidence.
+Resume with the frozen E binary and unchanged runner for memory8192, then complete independent fixed-base review and commit on convergence.
+
+### Completed Measurement And Review Input
+
+The remaining memory8192 off/on cell passed with six new samples on the unchanged frozen binary.
+Median CPU is +0.5181%; baseline CPU variation is 1.0154% and p95 is stable.
+All sample-integrity/resource and paired latency/RSS gates pass.
+All 24 planned off/on samples are now complete, with the original memory64 CPU failure retained and explicitly accepted by the user.
+The 24 separate policy-off comparison samples also pass; do not combine the two experiments into one overhead estimate.
+
+Stage E is ready for fresh Standard checkpoint review against `bef8c847122b306bdbdbaf6e5ae55f72880375af` in `/workspaces/FluidFramework-session-interception`, branch `rust-service-session-interception`, with HEAD still at that base.
+Scope is all nine changed files: the two plan/report documents, the sequencer cache source/README, server host/main/resource-policy source and README, and the new feedback changeset.
+There are no scope exclusions.
+The reviewer owns the whole diff and all directly affected interactions, including generic decorator lifecycle, durable pressure capture on create/open, cache ownership/reclamation and wakeups, host activation, native/WASM consumers, and performance provenance.
+The coordinator owns terminal execution for builds/tests/reproductions; the reviewer may only inspect source and evidence, hash files, and recompute measurements.
+No implementation edits occur during review.
+Full diff, changed-file manifest, saved source snapshots, baseline Git objects, binary manifests, and validation/measurement evidence remain accessible under the two E evidence directories.
+At most two repair/review cycles are allowed after this initial review.
+
+### Initial Stage E Review And Classification Repair
+
+Reviewer `stage-e-feedback-review` (`de1f8245-09db-4dbb-8a3e-7bdf87d6e64d`) completed Standard review of the entire nine-file checkpoint against the fixed Stage D base.
+It inspected the frozen diff `dceeabbfb1a11f380d75c9af1b88f2774df4c2c2c904d12d3b099b6f73c8678f` and source manifest `b9edb7ac5e9061f20b5d83a01fa374dc1ca02429db65d34f2fe447c9a182b45b`.
+There were no scope exclusions.
+It verified source/evidence manifests at both boundaries, checked all 704 build inputs except updated plan/report bookkeeping, established the Stage D build inputs' equivalence to the fixed base, and independently recalculated all 48 samples.
+It confirmed validation provenance and the explicit performance exception.
+
+The reviewer requested changes for one MEDIUM finding: forwarding an ambiguous terminal *observation* through the concrete policy contradicted `DocumentPolicy`'s definitive pre-source error contract.
+Earlier source work can be uncertain while a new operation refused before source invocation cannot have committed.
+This is a blocking classification defect, independent of the accepted performance result.
+The coordinator reproduced it in `repair/reproduction.log`: a terminal observation was classified `Ambiguous` rather than `Unavailable`.
+
+The repair maps only ambiguous observation classifications to `Unavailable` at the concrete admission-error boundary.
+It retains the typed underlying cause and diagnostic context, preserves all other observation classifications, and leaves actual source-operation errors unchanged.
+No generic decorator, pressure signal, notification, or hot-path admission/wait design changes.
+New regressions check storage ambiguity, cache recovery-required and invalidated-storage causes, preserved corruption, retained error sources, concrete permit release, terminal wrapper clones, no published event from refused submissions, and continued use of the healthy underlying author followed by explicit close.
+The integration fixture injects terminal observation results at the policy boundary; it does not manufacture a real filesystem failure.
+The existing real durable-pressure tests still cover waiting, release, and shutdown termination.
+
+The first integrated test incorrectly expected an item immediately after a source submit; monitored streams can first report progress.
+`repair/validation.log` preserves that failed test.
+The test now consumes progress until the first item; no production change was needed for this test expectation.
+Retain the initial review and failures and obtain a fresh complete repair review against the same fixed base.
+
+### Repair Validation And Exact-Candidate Measurements
+
+The repair passes focused tests, strict workspace Clippy/rustdoc, all-target build, and documentation checks in `repair/validation-final.log`.
+That run's extended integration phase encountered a 20-second timeout in the unchanged Chromium lifecycle test on `about:blank`, followed by its cleanup assertion.
+The dedicated transport browser fixture still passed.
+The failure is retained; no browser helper, timeout, or implementation was changed.
+The isolated lifecycle rerun passed all ten tests (`repair/browser-lifecycle-recheck.log`), and a full repeated policy-enabled extended gate passed (`repair/extended-recheck.log`).
+The successful native workspace gate has 417 passes and one ignored browser-owned fixture, separately executed successfully by the extended gate.
+Scoped policy checking passes in `repair/policy-check.log`.
+
+Rebuilt the exact repaired source in a new isolated release target and reran both complete 24-sample campaigns without changing workloads, thresholds, or the accepted generator.
+Repair input/binary manifests and release logs are under `stage-e-feedback/repair/`.
+The refreshed policy-off comparison is separately under `stage-e-policy-off/repair/`.
+Each campaign retains its own runner, raw samples, activation checks, provenance, and summaries.
+
+| Campaign | durable64 CPU | buffered64 CPU | memory64 CPU | memory8192 CPU |
+| --- | ---: | ---: | ---: | ---: |
+| Repaired E off/on | +0.7780% | +2.5979% | +2.1739% | +1.5595% |
+| Stage D/repaired E, policy off | -0.0102% | -0.3481% | -0.7296% | -0.4898% |
+
+All 48 repaired-candidate samples and all original numerical gates pass.
+Both primary stability checks pass; every cell has stable baseline p95.
+The largest paired increases across the repaired campaigns are 0.010675 ms p95, 0.504883 MiB mean RSS, and 0.5 MiB peak RSS.
+The original +6.0206% opt-in result and the user's explicit exception remain part of the record.
+The correctness repair changes error classification, not successful-path policy algorithms; do not attribute the lower rerun CPU result to a demonstrated performance optimization or discard the earlier measurement.
+The repaired candidate does not require a new threshold exception.
+
+Freeze the complete updated nine-file diff against the original Stage D base for fresh Standard repair review.
+Include the original MEDIUM finding and its reproduction/disposition, both failed validation attempts, successful reruns, original and repaired performance campaigns, and user exception.
+One of the maximum two repair/review cycles is now being used.
+
+### Stage E Acceptance And Plan Completion
+
+Fresh reviewer `stage-e-feedback-repair-review` (`ffdee9ce-2d54-4a7d-ad1e-0c158731dd57`) completed Standard repair review of the entire nine-file checkpoint and directly affected interactions against `bef8c847122b306bdbdbaf6e5ae55f72880375af`.
+Disposition: **No actionable findings**.
+The previous MEDIUM pre-source classification defect is resolved.
+There are no scope exclusions, uncovered required interactions, evidence gaps, or further requested reproductions.
+One repair/review cycle was used.
+
+Reviewed diff SHA-256: `529410a774904977b7fcbad895e9c86a76d7343512804ddd6e8ac37f6bedb710`.
+Reviewed source-manifest SHA-256: `4f4bafd0df2b6858e023da46cc564a540522928cdcd089e6d768e81ad951ba83`.
+The reviewer verified frozen identity before and after inspection, reconstructed the actual tracked/untracked diff, verified all nine changed source hashes, and established equivalence of all 704 non-bookkeeping inputs to the repaired snapshot and the Stage D baseline to the fixed base.
+It inspected validation failures and successful reruns, retained typed error causes, definitive pre-source classification, source-error preservation, permit release, terminal clones, cache/monitor ownership, host capture, and transport limits.
+It independently recalculated all 48 repaired-candidate samples and their guards from raw data.
+No reviewer builds, tests, edits, or nested delegation occurred.
+
+The coordinator reverified reviewed source and evidence in `repair/post-review-verification.log`.
+Only acceptance/commit bookkeeping changed afterward.
+Stage E is accepted: current functional and numerical performance gates pass, and the original optional-feature CPU result and user-authorized exception remain in the record.
+No additional exception was required for the repair.
+Stages A through E of the revised plan are complete.
+
+The final implementation remains opt-in, requires live caching for the composed policy, preserves direct default construction, and does not claim a hard outgoing-cache or total-memory bound.
+Caller/host-driven close remains the selected lifecycle guarantee.
+Historical pause instructions in this report are superseded by this completed state.
+Commit the reviewed scope and record its identity, leaving the worktree clean.
+Nothing is merged or pushed.

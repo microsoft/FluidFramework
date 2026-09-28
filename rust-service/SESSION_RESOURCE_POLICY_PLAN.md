@@ -1,7 +1,7 @@
 # Document Session And Soft-Budget Resource Policy Plan
 
 Revised: 2026-09-26.
-Status: Stages A through D accepted; Stage E feedback composition next.
+Status: Stages A through E complete and accepted; all implementation work is ready for the final checkpoint commit.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
@@ -211,6 +211,24 @@ Only add delivery receipts or retained-close infrastructure where a concrete req
 
 ### E. Compose One Shared Document Policy
 
+Fixed checkpoint base: `bef8c847122b306bdbdbaf6e5ae55f72880375af`, the reviewed Stage D commit.
+Use the existing opt-in bounded host policy; durable construction captures `FileBlobs::write_pressure()` before moving the view.
+Memory/buffered construction supplies no inbound disk-pressure signal.
+Admitted application/content writes wait until both durable budgets have at most 127 requests and 8 MiB charged bytes; saturation races remain subject to source rejection.
+Keep the 128-slot/16-MiB logical pending-write and 128-reader admission bounds from D.
+Cache targets are 1,024 retained entries and 8 MiB canonical payload bytes.
+Refuse new sessions/live readers while either is exceeded; never pause existing authors for output pressure.
+A single coalesced, abort-on-policy-drop task per managed document waits independently of readers, then revokes one oldest unread live claim per turn until under target.
+Recheck targets and select identity under the cache lock, but invoke no policy callback there.
+Historical and caught-up subscriptions are not selected.
+The task holds only a weak cache observer, and terminal observations stop it with classified diagnostics; it does not own source closure.
+Policy activation requires caching and remains default-off.
+
+Before measurement, retain median CPU +5%, every paired p95 `max(10%, 1 ms)`, and every paired mean/peak RSS `max(10%, 16 MiB)` thresholds.
+Compare policy-off and policy-on cached hosts on the same frozen implementation.
+Use three alternating durable64 primary pairs plus buffered64, memory64, and memory8192 controls with existing workload, resource/integrity guards, 10% primary CPU variation and p95 stability checks.
+Performance samples exercise active feedback observers without intentional saturation; deterministic tests cover actual paused storage, independent shedding, terminal state, and ownership.
+
 Construct one policy from storage and outgoing-pressure observations; share it across document session decorators.
 Start with explicit rules: storage pressure pauses new application writes; output pressure can reject new live subscriptions and shed lagging readers.
 If output pressure also pauses writers, select an independent finite resumption/failure route.
@@ -404,3 +422,84 @@ Fresh complete fixed-base Standard review found no actionable findings.
 It inspected all thirteen files and affected lifecycle/transport boundaries and independently recomputed all eighteen samples.
 The coordinator verified the frozen source/evidence unchanged afterward and accepts D without a validation/performance exception.
 Only acceptance/commit bookkeeping changed after review; E may proceed after the D commit.
+
+### Stage E Performance Blocker
+
+Stage D is committed as `bef8c847122b306bdbdbaf6e5ae55f72880375af`.
+Stage E's production changes, regression tests, documentation, and changeset are currently uncommitted against that fixed base.
+Canonical workspace checks and the complete policy-enabled extended gate pass, including 415 native workspace tests and the separately executed browser-owned fixture.
+Exact source, isolated binaries, successful and failed validation, and measurements are under the session's `files/stage-e-feedback/`.
+
+The same-binary off/on campaign passed durable64 (+1.54% median CPU) and buffered64 (+2.63%).
+The memory64 control failed the preselected +5% CPU limit: its median is +6.02%, with paired increases of +5.44%, +6.02%, and +6.60%.
+Memory64 baseline CPU variation is 1.19% and p95 is stable; do not dismiss this consistent result as demonstrated noise.
+All eighteen completed samples pass delivery/order/drain and resource checks; all completed pairs pass latency and RSS limits.
+The campaign stopped at the failed gate, so memory8192 has not run.
+A preceding runner-marker assertion failure is separately preserved and was repaired without changing source, binary, workload, or thresholds.
+
+No E independent review, acceptance, or commit has occurred.
+No repair/review allowance has been consumed, and no threshold exception has been authorized.
+Pause for guidance on a bounded overhead investigation versus accepting this specific memory64 result while preserving the simpler design.
+Do not silently expand notification machinery or weaken the gate.
+After that decision, finish outstanding measurements, freeze full evidence, obtain fresh complete Standard review, then commit only on convergence or an explicitly accepted exception.
+Nothing is merged or pushed.
+
+### Policy-Off Baseline Comparison
+
+The user subsequently requested a separate check of the non-opt-in path.
+Fresh alternating pairs compare the saved Stage D and E release executables, with resource policy and pass-through both disabled and live caching enabled on both.
+All 24 samples across durable64, memory64, buffered64, and memory8192 pass the existing CPU, latency, RSS, integrity, and resource gates.
+Median paired CPU changes are -1.13%, -0.71%, +0.01%, and +0.02%, respectively.
+No regression was detected within these workloads and thresholds; small negative changes are not claimed as speedups.
+Source and binary manifests were verified before execution, and the campaign is preserved separately under the session's `files/stage-e-policy-off/`.
+This comparison does not cover cache-disabled operation or replace the earlier off/on result.
+The +6.02% opt-in memory64 overhead remains a separate unresolved acceptance decision; no exception, E acceptance, or commit is implied by the policy-off pass.
+
+### Authorized Stage E Resumption
+
+On 2026-09-28, after reviewing the policy-off comparison, the user explicitly accepted the measured approximately 6% overhead when the optional feature is enabled and authorized continuing the plan.
+Accept the existing +6.0206% memory64 result as a specific performance exception, not a passing +5% measurement.
+Retain all original samples, failures, and unchanged thresholds for the remaining memory8192 cell.
+Finish that cell, freeze the complete checkpoint evidence, and obtain fresh Standard review against the fixed Stage D base before committing.
+The earlier pause instructions are historical; no implementation optimization or architecture expansion is required to address the accepted overhead.
+
+The remaining memory8192 off/on cell now passes: +0.5181% median CPU, 1.0154% baseline CPU variation, stable p95, and passing paired latency/RSS and sample-integrity gates.
+All 24 planned off/on samples are complete: three cells pass the original limits and memory64 has the explicit user exception.
+All 24 separate Stage D/E policy-off samples pass.
+Freeze the complete nine-file checkpoint for Standard review, with no scope exclusions and no incomplete implementation paths claimed.
+The coordinator owns execution; the fresh reviewer is read-only and may request reproductions.
+The maximum two repair/review cycles remains unchanged.
+
+Initial complete Standard review identified one pre-source classification mismatch: terminal observation ambiguity must not imply that a newly refused operation may have committed.
+The reproduced defect is repaired by mapping only ambiguous observation causes to unavailable at the concrete policy boundary, retaining the cause and leaving source-operation error classification intact.
+Focused and full affected validation, refreshed performance evidence, and fresh complete fixed-base review are required before acceptance.
+The original optional-feature performance exception remains recorded; it is not a waiver of this correctness finding.
+
+The repair now passes focused/canonical checks and the full policy-enabled extended gate (417 native passes plus the separately run browser-owned fixture).
+An unchanged browser lifecycle timeout is preserved with a ten-test isolated pass and full successful rerun.
+Both exact-repaired-binary 24-sample campaigns pass all original numerical gates.
+Off/on CPU medians are +0.78% durable64, +2.60% buffered64, +2.17% memory64, and +1.56% memory8192.
+Stage D/repaired E policy-off medians are -0.01%, -0.35%, -0.73%, and -0.49%, respectively.
+Do not infer that the error-only correctness repair caused the lower memory64 overhead; retain the original result and accepted exception.
+Evidence is under each E campaign's `repair/` subdirectory.
+Fresh complete Standard repair review is the remaining gate before acceptance and commit.
+
+### Final Acceptance And Completion
+
+Fresh Standard repair reviewer `ffdee9ce-2d54-4a7d-ad1e-0c158731dd57` found no actionable findings across the complete nine-file checkpoint and its directly affected boundaries.
+It verified the prior classification finding is resolved, inspected successful and failed validation, and independently recalculated all 48 repaired-candidate samples.
+No scope exclusions, required evidence gaps, or requested reproductions remain.
+The coordinator reverified the frozen source and evidence before recording this acceptance.
+One repair/review cycle was used.
+Only acceptance and commit bookkeeping changed after review.
+
+Stages A through E are complete under the revised soft-budget architecture.
+The final repaired candidate passes the original numerical performance gates; the earlier +6.0206% result and explicit user acceptance remain preserved, not retroactively reclassified.
+No additional implementation stage or unresolved design decision remains in this plan.
+Earlier pause and resume instructions above are historical.
+Commit the accepted checkpoint and its identity record, then stop with the worktree clean.
+Do not merge or push.
+
+Default host construction remains direct.
+Enable the composed policy explicitly with `SEA_EXPERIMENTAL_RESOURCE_POLICY=true` and live caching enabled.
+Durable pressure waits, bounded logical pending inputs/readers, and independent subscription shedding are provided; total process memory, finite cache overshoot, autonomous session close, and interruption of an in-flight transport send are not promised.
