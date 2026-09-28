@@ -151,7 +151,7 @@ describe("Fuzz schema lifecycle", () => {
 	});
 
 	scenario(
-		"fork views refresh from their own stored schema without losing their history",
+		"incompatible fork views are rejected without replacing or disposing their checkout",
 		(state) => {
 			applyForkMergeOperation(state, {
 				type: "forkMergeOperation",
@@ -162,9 +162,14 @@ describe("Fuzz schema lifecycle", () => {
 				toInitialSchema(createTreeViewSchema(generateLeafNodeSchemas(["forkUpgrade"]))),
 			);
 			const head = fork.branchHistory.getHead()?.revision;
-			const refreshed = viewFromState(state, state.client, 0);
-			assert.equal(refreshed.compatibility.isEquivalent, true);
-			assert.equal(refreshed.branchHistory.getHead()?.revision, head);
+			assert.throws(
+				() => viewFromState(state, state.client, 0),
+				/Cannot replace a view on a non-shared checkout/,
+			);
+			assert.equal(state.forkedViews?.get(state.client.channel)?.[0], fork);
+			assert.equal(fork.disposed, false);
+			assert.equal(fork.checkout.disposed, false);
+			assert.equal(fork.branchHistory.getHead()?.revision, head);
 			assert.equal(viewFromState(state).compatibility.isEquivalent, true);
 		},
 	);

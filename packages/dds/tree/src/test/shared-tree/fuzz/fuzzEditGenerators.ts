@@ -78,7 +78,7 @@ export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
 	 *
-	 * Recreated from the selected checkout's stored schema when {@link viewFromState} observes a schema change.
+	 * For shared checkouts, recreated from the stored schema when {@link viewFromState} observes a schema change.
 	 */
 	currentSchema: FuzzNodeSchema;
 };
@@ -91,7 +91,7 @@ export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSch
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
 	 *
-	 * Recreated from the selected checkout's stored schema when {@link viewFromState} observes a schema change.
+	 * Schema changes during transactions are not supported by the fuzz harness.
 	 */
 	currentSchema: FuzzNodeSchema;
 };
@@ -138,16 +138,12 @@ export function viewFromState(
 				forkedViews.length > forkedBranchIndex,
 			"branch does not exist",
 		);
-		const view = refreshFuzzView(forkedViews[forkedBranchIndex]);
-		forkedViews[forkedBranchIndex] = view;
-		return view;
+		return refreshFuzzView(forkedViews[forkedBranchIndex]);
 	}
 
 	const transactionView = state.transactionViews?.get(client.channel);
 	if (transactionView !== undefined) {
-		const view = refreshFuzzView(transactionView);
-		state.transactionViews?.set(client.channel, view);
-		return view;
+		return refreshFuzzView(transactionView);
 	}
 
 	const rootView = refreshFuzzView(
@@ -179,8 +175,9 @@ function refreshFuzzView(view: FuzzView): FuzzView {
 		0,
 		"Cannot replace a view during a transaction",
 	);
-	// Disposing a non-shared view also disposes its checkout. Preserve its history in a new fork first.
-	const checkout = view.checkout.isSharedBranch ? view.checkout : view.checkout.fork();
+	// Disposing a non-shared view also disposes its checkout, so only shared views can be replaced.
+	assert(view.checkout.isSharedBranch, "Cannot replace a view on a non-shared checkout");
+	const checkout = view.checkout;
 	view.dispose();
 	return fuzzViewFromCheckout(checkout);
 }
