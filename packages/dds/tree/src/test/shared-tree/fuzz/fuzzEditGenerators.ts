@@ -206,10 +206,7 @@ export function simpleSchemaFromStoredSchema(
 ): typeof fuzzFieldSchema {
 	const schemaFactory = new SchemaFactory("treeFuzz");
 	const nodeSchemas = filterFuzzNodeSchemas(storedSchema.nodeSchema.keys(), "treeFuzz", [
-		"treeFuzz.FuzzNumberNode",
-		"treeFuzz.FuzzStringNode",
 		"treeFuzz.node",
-		"treeFuzz.FuzzHandleNode",
 		"treeFuzz.arrayChildren",
 	]);
 	const fuzzNodeSchemas: TreeNodeSchema[] = [];

@@ -130,30 +130,40 @@ export function applySynchronizationOp(
 }
 
 // TODO: Update this function to be done in a more ergonomic way using libraries
-export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
+/**
+ * Creates schemas for the dynamically added node types allowed by the fuzz schema.
+ * Each generated object schema has one required string field named `value`.
+ *
+ * @param nodeTypes - Fully qualified node-type identifiers.
+ * Duplicate identifiers produce a single schema.
+ * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are omitted.
+ */
+export function generateGuidNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 	const builder = new SchemaFactory("treeFuzz");
-	const leafNodeSchemas = [];
+	const guidNodeSchemas = [];
+	const fuzzNodeTypePrefix = "treeFuzz.";
+	const fluidLeafTypePrefix = "com.fluidframework.leaf.";
+	const shortIdentifierOf = (fullIdentifier: string) =>
+		fullIdentifier.slice(fuzzNodeTypePrefix.length);
+	// Schemas that are present in all fuzz tests and don't require dynamic creation.
+	const commonNodes = new Set(["node", "arrayChildren"]);
 	for (const nodeType of new Set(nodeTypes)) {
 		assert(
-			nodeType.startsWith("treeFuzz.") || nodeType.startsWith("com.fluidframework.leaf."),
+			nodeType.startsWith(fuzzNodeTypePrefix) || nodeType.startsWith(fluidLeafTypePrefix),
 			"Expected a treeFuzz or built-in leaf schema identifier",
 		);
-		if (
-			nodeType !== "treeFuzz.node" &&
-			nodeType !== "treeFuzz.FuzzStringNode" &&
-			nodeType !== "treeFuzz.FuzzNumberNode" &&
-			nodeType !== "treeFuzz.FuzzHandleNode" &&
-			!nodeType.startsWith("com.fluidframework.leaf.")
-		) {
-			const fuzzNodeTypePrefix = "treeFuzz.";
-			const nodeIdentifier = nodeType.slice(fuzzNodeTypePrefix.length);
+		if (nodeType.startsWith(fluidLeafTypePrefix)) {
+			continue;
+		}
+		const nodeIdentifier = shortIdentifierOf(nodeType);
+		if (!commonNodes.has(nodeIdentifier)) {
 			class GuidNode extends builder.object(nodeIdentifier, {
 				value: builder.required(builder.string),
 			}) {}
-			leafNodeSchemas.push(GuidNode);
+			guidNodeSchemas.push(GuidNode);
 		}
 	}
-	return leafNodeSchemas;
+	return guidNodeSchemas;
 }
 
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): void {
@@ -164,8 +174,8 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): vo
 	);
 	const nodeTypes = getAllowableNodeTypes(state);
 	nodeTypes.push(`treeFuzz.${operation.contents.type}`);
-	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
-	const newSchema = createTreeViewSchema(leafNodeSchemas);
+	const guidNodeSchemas = generateGuidNodeSchemas(nodeTypes);
+	const newSchema = createTreeViewSchema(guidNodeSchemas);
 
 	// Because we need the view for a schema change, and we can only have one view at a time,
 	// we must dispose of the client's view early.

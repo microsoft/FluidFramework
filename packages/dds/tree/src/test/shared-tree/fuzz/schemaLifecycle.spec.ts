@@ -29,7 +29,7 @@ import {
 	applyForkMergeOperation,
 	applySchemaOp,
 	applyTransactionBoundary,
-	generateLeafNodeSchemas,
+	generateGuidNodeSchemas,
 } from "./fuzzEditReducers.js";
 import { createTreeViewSchema, deterministicIdCompressorFactory } from "./fuzzUtils.js";
 import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes.js";
@@ -41,16 +41,18 @@ describe("Fuzz schema lifecycle", () => {
 	it("rejects node identifiers outside the supported namespaces", () => {
 		for (const nodeType of ["upgrade", "otherNamespace.upgrade"]) {
 			assert.throws(
-				() => generateLeafNodeSchemas([nodeType]),
+				() => generateGuidNodeSchemas([nodeType]),
 				/Expected a treeFuzz or built-in leaf schema identifier/,
 			);
 		}
 	});
 
-	it("deduplicates qualified node identifiers and excludes built-in leaves", () => {
-		const schemas = generateLeafNodeSchemas([
+	it("deduplicates qualified node identifiers and excludes structural and built-in types", () => {
+		const schemas = generateGuidNodeSchemas([
 			"treeFuzz.upgrade",
 			"treeFuzz.upgrade",
+			"treeFuzz.node",
+			"treeFuzz.arrayChildren",
 			"com.fluidframework.leaf.string",
 			"com.fluidframework.leaf.number",
 			"com.fluidframework.leaf.handle",
@@ -58,6 +60,18 @@ describe("Fuzz schema lifecycle", () => {
 		assert.deepEqual(
 			schemas.map((schema) => schema.identifier),
 			["treeFuzz.upgrade"],
+		);
+	});
+
+	it("creates GUID schemas for names that used to be excluded as primitive wrappers", () => {
+		const nodeTypes = [
+			"treeFuzz.FuzzNumberNode",
+			"treeFuzz.FuzzStringNode",
+			"treeFuzz.FuzzHandleNode",
+		];
+		assert.deepEqual(
+			generateGuidNodeSchemas(nodeTypes).map((schema) => schema.identifier),
+			nodeTypes,
 		);
 	});
 
@@ -163,10 +177,13 @@ describe("Fuzz schema lifecycle", () => {
 		checkout.updateSchema(
 			toInitialSchema(
 				createTreeViewSchema(
-					generateLeafNodeSchemas([
+					generateGuidNodeSchemas([
 						"treeFuzz.upgrade",
 						"treeFuzz.nodeUpgrade",
 						"treeFuzz.arrayChildrenUpgrade",
+						"treeFuzz.FuzzNumberNode",
+						"treeFuzz.FuzzStringNode",
+						"treeFuzz.FuzzHandleNode",
 					]),
 				),
 			),
@@ -187,7 +204,7 @@ describe("Fuzz schema lifecycle", () => {
 			const fork = viewFromState(state, state.client, 0);
 			fork.checkout.updateSchema(
 				toInitialSchema(
-					createTreeViewSchema(generateLeafNodeSchemas(["treeFuzz.forkUpgrade"])),
+					createTreeViewSchema(generateGuidNodeSchemas(["treeFuzz.forkUpgrade"])),
 				),
 			);
 			const head = fork.branchHistory.getHead()?.revision;
