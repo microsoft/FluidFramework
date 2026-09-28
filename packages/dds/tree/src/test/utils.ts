@@ -768,32 +768,28 @@ export function validateViewConsistency(
 	treeB: ITreeCheckout,
 	idDifferentiator: string | undefined = undefined,
 ): void {
-	validateCheckoutSnapshotConsistency(
-		treeA,
+	validateCheckoutSnapshotConsistency(treeA, treeB, idDifferentiator);
+}
+
+/**
+ * Compares the visible content, stored schema, and retained detached content of two checkouts.
+ */
+export function validateCheckoutSnapshotConsistency(
+	treeA: ITreeCheckout,
+	treeB: ITreeCheckout,
+	idDifferentiator: string | undefined = undefined,
+): void {
+	validateSnapshotConsistency(
+		{
+			tree: toJsonableTree(treeA),
+			schema: treeA.storedSchema,
+			removed: treeA.getRemovedRoots(),
+		},
 		{
 			tree: toJsonableTree(treeB),
 			schema: treeB.storedSchema,
 			removed: treeB.getRemovedRoots(),
 		},
-		idDifferentiator,
-	);
-}
-
-/**
- * Compares a checkout's visible content, stored schema, and retained detached content with a snapshot.
- */
-export function validateCheckoutSnapshotConsistency(
-	checkout: ITreeCheckout,
-	snapshot: SharedTreeContentSnapshot,
-	idDifferentiator: string | undefined = undefined,
-): void {
-	validateSnapshotConsistency(
-		{
-			tree: toJsonableTree(checkout),
-			schema: checkout.storedSchema,
-			removed: checkout.getRemovedRoots(),
-		},
-		snapshot,
 		idDifferentiator,
 	);
 }

@@ -20,7 +20,6 @@ import {
 	getView,
 	prepareTreeForCompare,
 	snapshotSessionId,
-	toJsonableTree,
 	validateCheckoutSnapshotConsistency,
 	validateViewConsistency,
 } from "./utils.js";
@@ -111,24 +110,26 @@ describe("Test utils", () => {
 				view.initialize(1);
 				view.root = 2;
 				const checkout = view.checkout;
-				const snapshot = {
-					tree: toJsonableTree(checkout),
-					schema: toInitialSchema(config.schema),
-					removed: checkout.getRemovedRoots(),
-				};
-				validateCheckoutSnapshotConsistency(checkout, snapshot);
+				const fork = checkout.fork();
+				validateCheckoutSnapshotConsistency(checkout, fork);
 				switch (difference) {
 					case "tree": {
-						snapshot.tree[0] = { ...snapshot.tree[0], value: 3 };
+						fork.viewWith(config).root = 3;
 						break;
 					}
 					case "schema": {
-						snapshot.schema = toInitialSchema(SchemaFactory.optional(SchemaFactory.string));
+						fork.updateSchema(
+							toInitialSchema(
+								SchemaFactory.optional([SchemaFactory.number, SchemaFactory.string]),
+							),
+						);
 						break;
 					}
 					case "removed": {
-						assert(snapshot.removed.length > 0);
-						snapshot.removed[0][2] = { ...snapshot.removed[0][2], value: 3 };
+						const removed = fork.getRemovedRoots();
+						assert(removed.length > 0);
+						removed[0][2] = { ...removed[0][2], value: 3 };
+						fork.getRemovedRoots = () => removed;
 						break;
 					}
 					default: {
@@ -136,9 +137,10 @@ describe("Test utils", () => {
 					}
 				}
 				assert.throws(
-					() => validateCheckoutSnapshotConsistency(checkout, snapshot, difference),
+					() => validateCheckoutSnapshotConsistency(checkout, fork, difference),
 					new RegExp(`Inconsistent .*: ${difference}`),
 				);
+				fork.dispose();
 				view.dispose();
 			});
 		}

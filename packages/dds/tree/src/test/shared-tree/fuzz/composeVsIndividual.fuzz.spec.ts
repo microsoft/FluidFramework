@@ -22,6 +22,7 @@ import {
 	SharedTreeTestFactory,
 	toJsonableTree,
 	validateCheckoutSnapshotConsistency,
+	validateTree,
 } from "../../utils.js";
 
 import {
@@ -157,15 +158,13 @@ describe("Fuzz - composed vs individual changes", () => {
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
 			assert(finalState.branch !== undefined);
-			const childTreeView = {
-				tree: toJsonableTree(finalState.branch.checkout),
-				schema: finalState.branch.checkout.storedSchema,
-				removed: finalState.branch.checkout.getRemovedRoots(),
-			};
+			const childTreeView = toJsonableTree(finalState.branch.checkout);
 			finalState.branch.checkout.transaction.commit();
 			const tree = finalState.main ?? assert.fail();
-			tree.checkout.merge(finalState.branch.checkout);
-			validateCheckoutSnapshotConsistency(tree.checkout, childTreeView);
+			tree.checkout.merge(finalState.branch.checkout, false);
+			validateTree(tree.checkout, childTreeView);
+			validateCheckoutSnapshotConsistency(tree.checkout, finalState.branch.checkout);
+			finalState.branch.dispose();
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
