@@ -4,6 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { LogLevel } from "@fluidframework/core-interfaces";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { findCommonAncestor, type GraphCommit } from "../../../core/index.js";
 import { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
@@ -83,7 +85,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		private readonly bindHandles: (change: JsonCompatibleReadOnly) => void,
 		private readonly run: (action: () => void) => void,
 		private readonly fail: (error: unknown) => void,
-		private readonly logger: (message: string) => void,
+		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.local = main.fork();
 		this.offMainChanged = this.main.events.on("changed", () => {
@@ -103,13 +105,13 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * then asynchronously attempts to update the Guest if necessary.
 	 */
 	public receiveChangeFromGuest(change: JsonCompatibleReadOnly): void {
-		this.logger(`Host: received change [${getRevision(change)}] from Guest`);
+		this.log(`Received change [${getRevision(change)}] from Guest`);
 		if (this.mainHeadFromLastUpdate !== undefined) {
 			// The Guest authored this change before applying the update that is in progress.
 			// That update does not account for the new change, so the Guest will reject it as
 			// out of date. A new update based on the updated main head will replace it.
-			this.logger(
-				`Host:   abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
+			this.log(
+				`Abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
 			);
 			this.mainHeadFromLastUpdate.dispose();
 			this.mainHeadFromLastUpdate = undefined;
@@ -117,9 +119,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.local.applyChange(change);
 		// applyChange runs the tree codec before handles are bound or the main branch is updated.
 		this.bindHandles(change);
-		this.logger(
-			`Host:   merging changes from Guest: ${getMissingCommits(this.main, this.local)}`,
-		);
+		this.log(`Merging changes from Guest: ${getMissingCommits(this.main, this.local)}`);
 		this.isApplyingGuestChanges = true;
 		try {
 			// TODO: Establish isolation for failures during main-tree merge, beyond validation on local.
@@ -139,8 +139,8 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			throw new SandboxProtocolError("Unexpectedly received ack from Guest");
 		}
 		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
-		this.logger(
-			`Host: received ack of update from Guest for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
+		this.log(
+			`Received ack of update from Guest for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
 		);
 		// Reflect the acknowledged update on the local branch.
 		this.local.rebaseOnto(this.mainHeadFromLastUpdate);
@@ -185,26 +185,22 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * Attempts to send changes to the Guest if the Guest is behind the Host's main branch.
 	 */
 	private tryUpdateGuest(prompt: string): void {
-		this.logger(`Host: considering sync ${prompt}...`);
+		this.log(`Considering sync ${prompt}...`);
 		if (this.local.isMissingEditsFrom(this.main)) {
-			this.logger(
-				`Host:   detected changes that need to be reflected in Guest ${getMissingCommits(this.local, this.main)}`,
+			this.log(
+				`Detected changes that need to be reflected in Guest ${getMissingCommits(this.local, this.main)}`,
 			);
 			if (this.mainHeadFromLastUpdate !== undefined) {
-				this.logger(
-					"Host:   update already in progress. Will wait for it to complete or fail.",
-				);
+				this.log("Update already in progress. Will wait for it to complete or fail.");
 				return;
 			}
 			if (this.updateInProgress === undefined) {
-				this.logger(
-					"Host:   no pre-existing update in progress. Creating new update promise.",
-				);
+				this.log("No pre-existing update in progress. Creating new update promise.");
 				this.updateInProgress = makePromiseWithResolvers();
 				// Report through the session even when the application does not await synchronization.
 				this.updateInProgress.promise.catch((error: unknown) => this.fail(error));
 			} else {
-				this.logger("Host:   Reusing existing update promise.");
+				this.log("Reusing existing update promise.");
 			}
 			this.mainHeadFromLastUpdate = this.main.fork();
 			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
@@ -212,19 +208,27 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 				update !== undefined,
 				"Expected update to be defined since local is missing edits from main",
 			);
-			this.logger("Host:   sending update to Guest");
+			this.log("Sending update to Guest");
 			this.send({
 				type: "dataChange",
 				change: update,
 			});
 		} else {
-			this.logger("Host:   no changes that need to be reflected in Guest");
+			this.log("No changes that need to be reflected in Guest");
 			if (this.updateInProgress !== undefined) {
-				this.logger("Host:   resolving update promise");
+				this.log("Resolving update promise");
 				const resolver = this.updateInProgress.resolver;
 				this.updateInProgress = undefined;
 				resolver();
 			}
 		}
+	}
+
+	private log(message: string): void {
+		this.logger.sendTelemetryEvent(
+			{ eventName: "Synchronization", message },
+			undefined,
+			LogLevel.verbose,
+		);
 	}
 }

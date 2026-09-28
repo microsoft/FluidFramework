@@ -4,6 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { LogLevel } from "@fluidframework/core-interfaces";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ChangeMetadata } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires internal Simple Tree APIs.
@@ -70,9 +72,9 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		 */
 		private readonly fail: (error: unknown) => void,
 		/**
-		 * Records a synchronization diagnostic message.
+		 * The scoped logger for synchronization diagnostics.
 		 */
-		private readonly logger: (message: string) => void,
+		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			this.run(() => {
@@ -85,16 +87,16 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 					type: "dataChange",
 					change: newChange,
 				});
-				this.logger(
-					`Guest: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
+				this.log(
+					`New change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
 				);
 				if (this.pushInProgress === undefined) {
-					this.logger("Guest:   no pre-existing push in progress. Creating new push promise.");
+					this.log("No pre-existing push in progress. Creating new push promise.");
 					this.pushInProgress = makePromiseWithResolvers();
 					// Report through the session even when the application does not await synchronization.
 					this.pushInProgress.promise.catch((error: unknown) => this.fail(error));
 				} else {
-					this.logger("Guest:   Reusing existing push promise.");
+					this.log("Reusing existing push promise.");
 				}
 				this.inFlight += 1;
 			});
@@ -110,7 +112,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		if (this.inFlight > 0) {
 			// This update does not account for the local changes that the Host has not received.
 			// Ignore it. The Host will send another update after it receives the local changes.
-			this.logger(`Guest: ignoring update from Host (inFlight=${this.inFlight})`);
+			this.log(`Ignoring update from Host (inFlight=${this.inFlight})`);
 			return;
 		}
 		this.isApplyingChangesFromHost = true;
@@ -119,7 +121,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		} finally {
 			this.isApplyingChangesFromHost = false;
 		}
-		this.logger("Guest: applied update from Host");
+		this.log("Applied update from Host");
 		this.send({ type: "acknowledgment" });
 	}
 
@@ -128,7 +130,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		if (this.inFlight <= 0) {
 			throw new SandboxProtocolError("Unexpectedly received ack from Host");
 		}
-		this.logger(`Guest: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
+		this.log(`Local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
 		this.inFlight -= 1;
 
 		if (this.inFlight === 0) {
@@ -138,7 +140,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 			);
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
-			this.logger("Guest:   all my changes were acked. Resolving push promise.");
+			this.log("All local changes were acked. Resolving push promise.");
 			resolver();
 		}
 	}
@@ -160,5 +162,13 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.offViewChanged();
 		this.pushInProgress?.rejecter(error);
 		this.pushInProgress = undefined;
+	}
+
+	private log(message: string): void {
+		this.logger.sendTelemetryEvent(
+			{ eventName: "Synchronization", message },
+			undefined,
+			LogLevel.verbose,
+		);
 	}
 }

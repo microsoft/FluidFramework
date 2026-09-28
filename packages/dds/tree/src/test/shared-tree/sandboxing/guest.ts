@@ -4,6 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecOptions } from "../../../codec/index.js";
 import {
@@ -87,11 +88,11 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		content: ViewContent,
 		/** The Guest endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
+		/** The Guest-scoped logger for diagnostic telemetry. */
+		logger: TelemetryLoggerExt,
 		// TODO: Replace this callback `Listenable` event API for session errors and closure.
 		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
 		handleProtocolError: (error: Error) => void = throwProtocolError,
-		/** Receives diagnostic messages from the synchronization algorithm. */
-		logger: (message: string) => void = () => {},
 	) {
 		this.session = new SandboxSessionEndpoint(
 			port,

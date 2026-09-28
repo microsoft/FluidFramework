@@ -5,6 +5,7 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { fail } from "@fluidframework/core-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
@@ -84,11 +85,11 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		private readonly port: MessagePort,
 		/** The SharedTree handle to which restored handles are bound. */
 		bindingHandle: IFluidHandle,
+		/** The Host-scoped logger for diagnostic telemetry. */
+		logger: TelemetryLoggerExt,
 		// TODO: Replace this callback with `Listenable` event API for session errors and closure.
 		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
 		handleProtocolError: (error: Error) => void = throwProtocolError,
-		/** Receives diagnostic messages from the synchronization algorithm. */
-		logger: (message: string) => void = () => {},
 	) {
 		this.codec = new HostTransportCodec(bindingHandle);
 		this.main = main;

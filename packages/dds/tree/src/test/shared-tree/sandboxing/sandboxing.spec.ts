@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { fail } from "@fluidframework/core-utils/internal";
 import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockHandle,
 	validateAssertionError,
@@ -338,7 +338,12 @@ describe("Host and Guest correctness", () => {
 			assert.equal(peer.root.length, 3);
 
 			const ports = buildDirectSessionPorts();
-			const replacementHost = new Host(host.main, ports.hostPort, provider.trees[1].handle);
+			const replacementHost = new Host(
+				host.main,
+				ports.hostPort,
+				provider.trees[1].handle,
+				createChildLogger({ namespace: "Host" }),
+			);
 			const replacementGuest = createGuestForHost(
 				replacementHost,
 				handleArrayConfig,
@@ -664,6 +669,7 @@ describe("Host and Guest correctness", () => {
 					bindings++;
 				},
 			}),
+			createChildLogger({ namespace: "Host" }),
 			reportProtocolError,
 		);
 		let acknowledgmentReceived = false;

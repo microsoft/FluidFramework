@@ -4,6 +4,11 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	createChildLogger,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
@@ -155,8 +160,8 @@ export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	port: MessagePort,
 	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
+	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
-	logger: (message: string) => void = () => {},
 ): Guest<TSchema> {
 	const localRoot = host.local.root;
 	assert(localRoot !== undefined, "Expected an initialized root");
@@ -176,8 +181,8 @@ export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
 			idCompressor: hostCompressor,
 		},
 		port,
-		handleProtocolError,
 		logger,
+		handleProtocolError,
 	);
 }
 
@@ -205,6 +210,9 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 			console.log(message);
 		}
 	};
+	const telemetryLogger: ITelemetryBaseLogger = {
+		send: (event) => logger(JSON.stringify(event)),
+	};
 	const provider = new TestTreeProviderLite(
 		2,
 		configuredSharedTree({
@@ -223,8 +231,8 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 		main,
 		sessionPorts.hostPort,
 		provider.trees[1].handle,
+		createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
-		logger,
 	);
 
 	const guest = createGuestForHost(
@@ -232,8 +240,8 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 		config,
 		sessionPorts.guestPort,
 		provider.getCompressor(provider.trees[1]),
+		createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
 		handleProtocolError,
-		logger,
 	);
 
 	const teardown = () => {
