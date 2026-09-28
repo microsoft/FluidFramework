@@ -78,11 +78,13 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	};
 
 	public constructor(
+		// TODO: once we have a proper API for branches with a forest without requiring a full view, that should be used here.
 		main: TreeViewAlpha<TSchema>,
 		/** The Host endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
 		/** The SharedTree handle to which restored handles are bound. */
 		bindingHandle: IFluidHandle,
+		// TODO: Replace this callback with `Listenable` event API for session errors and closure.
 		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
 		handleProtocolError: (error: Error) => void = throwProtocolError,
 		/** Receives diagnostic messages from the synchronization algorithm. */
