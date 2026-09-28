@@ -149,7 +149,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	/**
 	 * Returns a promise that resolves when the Host acknowledges all changes made on the Guest,
-	 * or undefined if no such changes are in flight.
+	 * or `undefined` if no such changes are in flight.
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		return this.pushInProgress?.promise;
