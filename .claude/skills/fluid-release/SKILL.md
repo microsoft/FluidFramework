@@ -112,7 +112,7 @@ For **patch releases**, skip directly to release execution on an existing releas
 
 These steps require human action and should be clearly reported in CI workflow logs:
 
-1. **Merge release-prep PRs** in the correct order (release notes before version bump; version bump last) after CI creates them
+1. **Merge release-prep PRs** in the correct order (version bump last) after CI creates them
 2. **Create the release branch** (Step 5) — requires elevated permissions on the `release/` branch prefix
 3. **Queue the ADO release build** (Step 6) — choose the "release" option in ADO
 4. **Queue the ADO publish pipeline** (Step 6) — after the release build succeeds, select it as the candidate and enable public npm publication

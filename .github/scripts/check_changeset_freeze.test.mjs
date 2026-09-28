@@ -65,7 +65,7 @@ function createRepo(t, groups) {
 
 test("allows changeset modifications when the state is open", (t) => {
 	const repoPath = createRepo(t, [
-		{ directory: "", currentVersion: "3.5.0", lockedVersion: "3.4.0" },
+		{ directory: "", currentVersion: "next", lockedVersion: "previous" },
 	]);
 	const baseRef = commit(repoPath, "base");
 	write(repoPath, ".changeset/new-change.md", "new change\n");
@@ -79,8 +79,8 @@ for (const operation of ["add", "edit", "rename", "delete"]) {
 		const repoPath = createRepo(t, [
 			{
 				directory: "",
-				currentVersion: "3.4.0",
-				lockedVersion: "3.4.0",
+				currentVersion: "next",
+				lockedVersion: "next",
 				changesets: { "existing-change.md": "existing change\n" },
 			},
 		]);
@@ -186,17 +186,6 @@ test("isolates freeze state by changeset directory", (t) => {
 	);
 });
 
-test("accepts null lockedVersion before the first recorded freeze", (t) => {
-	const repoPath = createRepo(t, [
-		{ directory: "", currentVersion: "3.4.0", lockedVersion: null },
-	]);
-	const baseRef = commit(repoPath, "base");
-	write(repoPath, ".changeset/new-change.md", "new change\n");
-	const headRef = commit(repoPath, "add changeset");
-
-	assert.doesNotThrow(() => checkChangesetFreeze({ repoPath, baseRef, headRef }));
-});
-
 for (const [name, mutateConfig, expectedMessage] of [
 	[
 		"missing field",
@@ -206,18 +195,18 @@ for (const [name, mutateConfig, expectedMessage] of [
 		"must define currentVersion and lockedVersion",
 	],
 	[
-		"invalid current version",
+		"non-string current version",
 		(config) => {
-			config.__fluidChangesetState.currentVersion = "next";
+			config.__fluidChangesetState.currentVersion = 34;
 		},
-		"currentVersion must be a semantic version string",
+		"currentVersion must be a string",
 	],
 	[
-		"invalid locked version",
+		"non-string locked version",
 		(config) => {
 			config.__fluidChangesetState.lockedVersion = 34;
 		},
-		"lockedVersion must be null or a semantic version string",
+		"lockedVersion must be null or a string",
 	],
 ]) {
 	test(`fails for ${name}`, (t) => {

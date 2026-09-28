@@ -109,6 +109,8 @@ Update `__fluidChangesetState` in `.changeset/config.json`:
 }
 ```
 
+### Create the release-notes PR
+
 Create branch `release-prep/<VERSION>/3-release-notes`, commit the release notes, changelog changes, deleted changesets, and freeze state, push to upstream, and create a PR. This PR must merge before the version bump PR.
 
 ### If changeset edits are needed after generation
@@ -219,7 +221,7 @@ If blockers are found, **stop and report them**. Do not create the release branc
 > **Phase complete.** Created the following PRs (merge in this order, version bump last):
 > 1. [list PRs]
 >
-> Merge the release-notes PR before the version-bump PR. After all PRs are merged, re-invoke to create the release branch and continue with release execution.
+> After all PRs are merged, re-invoke to create the release branch and continue with release execution.
 
 If the user has indicated that PRs are already merged (e.g., re-invoked after merging), proceed with branch creation.
 

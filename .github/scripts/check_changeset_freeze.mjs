@@ -3,8 +3,6 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 
 const changesetStateProperty = "__fluidChangesetState";
-const versionPattern =
-	/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 
 export class ChangesetFreezeError extends Error {}
 
@@ -18,20 +16,6 @@ function runGit(repoPath, args) {
 
 function readFileAtRef(repoPath, ref, filePath) {
 	return runGit(repoPath, ["show", `${ref}:${filePath}`]);
-}
-
-function validateVersion(value, fieldName, configPath, allowNull) {
-	if (allowNull && value === null) {
-		return;
-	}
-
-	if (typeof value !== "string" || !versionPattern.test(value)) {
-		throw new ChangesetFreezeError(
-			`${configPath}: ${changesetStateProperty}.${fieldName} must be ${
-				allowNull ? "null or " : ""
-			}a semantic version string.`,
-		);
-	}
 }
 
 function loadChangesetStates(repoPath, baseRef) {
@@ -70,8 +54,16 @@ function loadChangesetStates(repoPath, baseRef) {
 			);
 		}
 
-		validateVersion(state.currentVersion, "currentVersion", configPath, false);
-		validateVersion(state.lockedVersion, "lockedVersion", configPath, true);
+		if (typeof state.currentVersion !== "string") {
+			throw new ChangesetFreezeError(
+				`${configPath}: ${changesetStateProperty}.currentVersion must be a string.`,
+			);
+		}
+		if (state.lockedVersion !== null && typeof state.lockedVersion !== "string") {
+			throw new ChangesetFreezeError(
+				`${configPath}: ${changesetStateProperty}.lockedVersion must be null or a string.`,
+			);
+		}
 
 		const changesetDirectory = path.posix.dirname(configPath);
 		return [
