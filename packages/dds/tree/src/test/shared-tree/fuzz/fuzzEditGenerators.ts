@@ -805,7 +805,9 @@ export function makeOpGenerator(
 				[
 					() => schemaEditGenerator,
 					schema,
-					// Replacing a non-shared view would dispose the transaction's checkout.
+					// SharedTree's fuzz harness does not currently support schema edits during an active transaction.
+					// This limitation exists because schema upgrades need to reconstruct the view of the client applying the edit,
+					// which would lose any ongoing transaction edits (which are applied to a fork of the view that must be disposed).
 					(state: FuzzTestState) =>
 						viewFromState(state).checkout.isSharedBranch &&
 						viewFromState(state).checkout.transaction.size === 0,
