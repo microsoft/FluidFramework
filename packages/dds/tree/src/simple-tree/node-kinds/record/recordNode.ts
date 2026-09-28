@@ -269,6 +269,10 @@ export function recordSchema<
 		/**
 		 * Record-like index signature for the node.
 		 */
+		// TODO: Once TypeScript supports separate getter/setter index signatures, define them here
+		// and update TreeRecordNode and TreeRecordNodeUnsafe accordingly.
+		// https://github.com/microsoft/TypeScript/issues/43826
+		// Until then, Object.entries/Object.values also include undefined in their value types.
 		[key: string]: TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined;
 
 		public static override prepareInstance<T2>(

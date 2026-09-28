@@ -241,6 +241,8 @@ describe("RecordNode", () => {
 				// Confirm the entry was removed, rather than being present with an undefined value.
 				assert(!("foo" in record));
 				assert.deepEqual(Object.keys(record), ["bar"]);
+				assert.deepEqual(Object.entries(record), [["bar", 2]]);
+				assert.deepEqual(Object.values(record), [2]);
 			});
 
 			it("can delete values", () => {
