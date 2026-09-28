@@ -722,18 +722,6 @@ importers:
 
   packages/routerlicious:
     dependencies:
-      '@fluidframework/common-utils':
-        specifier: ^3.1.0
-        version: 3.1.0
-      '@fluidframework/gitresources':
-        specifier: workspace:~
-        version: link:../gitresources
-      '@fluidframework/protocol-definitions':
-        specifier: ^3.2.0
-        version: 3.2.0
-      '@fluidframework/server-kafka-orderer':
-        specifier: workspace:~
-        version: link:../kafka-orderer
       '@fluidframework/server-lambdas':
         specifier: workspace:~
         version: link:../lambdas
@@ -749,9 +737,6 @@ importers:
       '@fluidframework/server-services':
         specifier: workspace:~
         version: link:../services
-      '@fluidframework/server-services-client':
-        specifier: workspace:~
-        version: link:../services-client
       '@fluidframework/server-services-core':
         specifier: workspace:~
         version: link:../services-core
@@ -825,9 +810,6 @@ importers:
       '@fluidframework/common-utils':
         specifier: ^3.1.0
         version: 3.1.0
-      '@fluidframework/gitresources':
-        specifier: workspace:~
-        version: link:../gitresources
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
@@ -1030,9 +1012,6 @@ importers:
 
   packages/services:
     dependencies:
-      '@fluidframework/common-utils':
-        specifier: ^3.1.0
-        version: 3.1.0
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
@@ -1709,9 +1688,6 @@ importers:
 
   packages/services-telemetry:
     dependencies:
-      '@fluidframework/common-utils':
-        specifier: ^3.1.0
-        version: 3.1.0
       json-stringify-safe:
         specifier: ^5.0.1
         version: 5.0.1
@@ -2018,9 +1994,6 @@ importers:
       '@fluidframework/gitresources':
         specifier: workspace:~
         version: link:../gitresources
-      '@fluidframework/protocol-base':
-        specifier: workspace:~
-        version: link:../protocol-base
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0

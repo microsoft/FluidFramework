@@ -10,12 +10,18 @@ refs, write Cosmos DB records, or copy Azure Fluid Relay deli/scribe state. If
 the self-hosted service cannot preserve the requested document ID, the results
 file records the Azure Fluid Relay-to-self-hosted ID mapping.
 
+If the self-hosted document already exists, the copy is skipped and recorded as a
+warning instead of attempting to create it.
+
 ## Prerequisites
 
 - Complete the [inventory step](../inventory/README.md) and review its
 	`document-inventory.json` output. Its `errors` collection must be empty.
 - Complete the [configuration step](../configuration/README.md) and provide the
 	self-hosted tenant mapping for every document selected for copying.
+- Ensure Alfred sets `alfred.enforceServerGeneratedDocumentId` to `false`.
+	The self-hosted document ID must match the requested Azure Fluid Relay ID so
+	the copy tool can detect documents that were already copied.
 
 ## Commands
 

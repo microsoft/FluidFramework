@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/local-driver",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"description": "Fluid local driver",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -113,7 +113,6 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-base": "workspace:~",
@@ -138,7 +137,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.116.0",
+		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@3.2.0",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/jsrsasign": "^10.5.12",
@@ -154,7 +153,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
 		"socket.io-client": "^4.8.3",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
 		"broken": {},

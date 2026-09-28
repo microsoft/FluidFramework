@@ -5,6 +5,7 @@
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { FluidContainer } from "@fluidframework/driver-definitions/internal";
 
 import { BaseDevtools } from "./BaseDevtools.js";
 import type { HasContainerKey } from "./CommonInterfaces.js";
@@ -20,7 +21,6 @@ import {
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
  * @beta
  * @input
- * @sealed
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
@@ -44,6 +44,23 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	readonly containerData?: Record<string, IFluidLoadable>;
 
 	// TODO: Add ability for customers to specify custom visualizer overrides
+}
+
+/**
+ * Properties for registering a container created by a
+ * {@link @fluidframework/driver-definitions#ServiceClient} with the Devtools.
+ * @remarks
+ * Container data is not discovered automatically from the container's application-defined data.
+ * Provide {@link ContainerDevtoolsProps.containerData | containerData} to enable data visualization.
+ * @alpha
+ * @input
+ */
+export interface FluidContainerDevtoolsProps
+	extends Omit<ContainerDevtoolsProps, "container"> {
+	/**
+	 * The service client's container to register with the Devtools.
+	 */
+	readonly container: FluidContainer;
 }
 
 /**
