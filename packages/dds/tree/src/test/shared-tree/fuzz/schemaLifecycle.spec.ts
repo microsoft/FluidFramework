@@ -38,6 +38,29 @@ import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes
  * Deterministic regressions for the schema lifecycle in the existing DDS fuzz harness.
  */
 describe("Fuzz schema lifecycle", () => {
+	it("rejects node identifiers outside the supported namespaces", () => {
+		for (const nodeType of ["upgrade", "otherNamespace.upgrade"]) {
+			assert.throws(
+				() => generateLeafNodeSchemas([nodeType]),
+				/Expected a treeFuzz or built-in leaf schema identifier/,
+			);
+		}
+	});
+
+	it("deduplicates qualified node identifiers and excludes built-in leaves", () => {
+		const schemas = generateLeafNodeSchemas([
+			"treeFuzz.upgrade",
+			"treeFuzz.upgrade",
+			"com.fluidframework.leaf.string",
+			"com.fluidframework.leaf.number",
+			"com.fluidframework.leaf.handle",
+		]);
+		assert.deepEqual(
+			schemas.map((schema) => schema.identifier),
+			["treeFuzz.upgrade"],
+		);
+	});
+
 	function setValue(view: FuzzView, value: GeneratedFuzzNode): void {
 		applyFieldEdit(view, {
 			type: "fieldEdit",
@@ -140,7 +163,11 @@ describe("Fuzz schema lifecycle", () => {
 		checkout.updateSchema(
 			toInitialSchema(
 				createTreeViewSchema(
-					generateLeafNodeSchemas(["upgrade", "nodeUpgrade", "arrayChildrenUpgrade"]),
+					generateLeafNodeSchemas([
+						"treeFuzz.upgrade",
+						"treeFuzz.nodeUpgrade",
+						"treeFuzz.arrayChildrenUpgrade",
+					]),
 				),
 			),
 		);
@@ -159,7 +186,9 @@ describe("Fuzz schema lifecycle", () => {
 			});
 			const fork = viewFromState(state, state.client, 0);
 			fork.checkout.updateSchema(
-				toInitialSchema(createTreeViewSchema(generateLeafNodeSchemas(["forkUpgrade"]))),
+				toInitialSchema(
+					createTreeViewSchema(generateLeafNodeSchemas(["treeFuzz.forkUpgrade"])),
+				),
 			);
 			const head = fork.branchHistory.getHead()?.revision;
 			assert.throws(

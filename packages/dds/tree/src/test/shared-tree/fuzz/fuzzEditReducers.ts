@@ -133,13 +133,11 @@ export function applySynchronizationOp(
 export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 	const builder = new SchemaFactory("treeFuzz");
 	const leafNodeSchemas = [];
-	for (const nodeType of new Set(
-		nodeTypes.map((type) =>
-			type.startsWith("treeFuzz.") || type.startsWith("com.fluidframework.leaf.")
-				? type
-				: `treeFuzz.${type}`,
-		),
-	)) {
+	for (const nodeType of new Set(nodeTypes)) {
+		assert(
+			nodeType.startsWith("treeFuzz.") || nodeType.startsWith("com.fluidframework.leaf."),
+			"Expected a treeFuzz or built-in leaf schema identifier",
+		);
 		if (
 			nodeType !== "treeFuzz.node" &&
 			nodeType !== "treeFuzz.FuzzStringNode" &&
@@ -148,9 +146,7 @@ export function generateLeafNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
 			!nodeType.startsWith("com.fluidframework.leaf.")
 		) {
 			const fuzzNodeTypePrefix = "treeFuzz.";
-			const nodeIdentifier = nodeType.startsWith(fuzzNodeTypePrefix)
-				? nodeType.slice(fuzzNodeTypePrefix.length)
-				: nodeType;
+			const nodeIdentifier = nodeType.slice(fuzzNodeTypePrefix.length);
 			class GuidNode extends builder.object(nodeIdentifier, {
 				value: builder.required(builder.string),
 			}) {}
@@ -187,7 +183,7 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): vo
 		"Schema operations require a root view without a pending transaction",
 	);
 	const nodeTypes = getAllowableNodeTypes(state);
-	nodeTypes.push(operation.contents.type);
+	nodeTypes.push(`treeFuzz.${operation.contents.type}`);
 	const leafNodeSchemas = generateLeafNodeSchemas(nodeTypes);
 	const newSchema = createTreeViewSchema(leafNodeSchemas);
 
