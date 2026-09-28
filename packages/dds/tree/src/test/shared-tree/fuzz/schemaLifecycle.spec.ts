@@ -29,9 +29,12 @@ import {
 	applyForkMergeOperation,
 	applySchemaOp,
 	applyTransactionBoundary,
-	generateGuidNodeSchemas,
 } from "./fuzzEditReducers.js";
-import { createTreeViewSchema, deterministicIdCompressorFactory } from "./fuzzUtils.js";
+import {
+	createTreeViewSchema,
+	deterministicIdCompressorFactory,
+	generateGuidNodeSchemas,
+} from "./fuzzUtils.js";
 import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes.js";
 
 /**

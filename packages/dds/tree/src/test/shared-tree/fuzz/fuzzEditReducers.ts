@@ -16,11 +16,9 @@ import type { DownPath } from "../../../feature-libraries/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 import { getInnerNode } from "../../../simple-tree/index.js";
 import {
-	SchemaFactory,
 	TreeArrayNode,
 	TreeViewConfiguration,
 	type TreeNode,
-	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
@@ -42,6 +40,7 @@ import {
 	nodeSchemaFromTreeSchema,
 	type GUIDNode,
 	convertToFuzzView,
+	generateGuidNodeSchemas,
 } from "./fuzzUtils.js";
 import {
 	type FieldEdit,
@@ -127,43 +126,6 @@ export function applySynchronizationOp(
 			validateFuzzTreeConsistency(client, readonlyClient);
 		}
 	}
-}
-
-// TODO: Update this function to be done in a more ergonomic way using libraries
-/**
- * Creates schemas for the dynamically added node types allowed by the fuzz schema.
- * Each generated object schema has one required string field named `value`.
- *
- * @param nodeTypes - Fully qualified node-type identifiers.
- * Duplicate identifiers produce a single schema.
- * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are omitted.
- */
-export function generateGuidNodeSchemas(nodeTypes: string[]): TreeNodeSchema[] {
-	const builder = new SchemaFactory("treeFuzz");
-	const guidNodeSchemas = [];
-	const fuzzNodeTypePrefix = "treeFuzz.";
-	const fluidLeafTypePrefix = "com.fluidframework.leaf.";
-	const shortIdentifierOf = (fullIdentifier: string) =>
-		fullIdentifier.slice(fuzzNodeTypePrefix.length);
-	// Schemas that are present in all fuzz tests and don't require dynamic creation.
-	const commonNodes = new Set(["node", "arrayChildren"]);
-	for (const nodeType of new Set(nodeTypes)) {
-		assert(
-			nodeType.startsWith(fuzzNodeTypePrefix) || nodeType.startsWith(fluidLeafTypePrefix),
-			"Expected a treeFuzz or built-in leaf schema identifier",
-		);
-		if (nodeType.startsWith(fluidLeafTypePrefix)) {
-			continue;
-		}
-		const nodeIdentifier = shortIdentifierOf(nodeType);
-		if (!commonNodes.has(nodeIdentifier)) {
-			class GuidNode extends builder.object(nodeIdentifier, {
-				value: builder.required(builder.string),
-			}) {}
-			guidNodeSchemas.push(GuidNode);
-		}
-	}
-	return guidNodeSchemas;
 }
 
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): void {

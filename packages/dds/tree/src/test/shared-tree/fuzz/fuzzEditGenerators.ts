@@ -22,19 +22,13 @@ import type {
 	FieldKey,
 	FieldUpPath,
 	UpPath,
-	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
 import { Tree, type ITreePrivate, type TreeCheckout } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
 import { getInnerNode, type CommitRevision } from "../../../simple-tree/index.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type TreeNode,
-	type TreeNodeSchema,
-} from "../../../simple-tree/index.js";
+import { TreeViewConfiguration, type TreeNode } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
@@ -45,6 +39,7 @@ import {
 	type fuzzFieldSchema,
 	nodeSchemaFromTreeSchema,
 	convertToFuzzView,
+	generateGuidNodeSchemas,
 } from "./fuzzUtils.js";
 import {
 	type Insert,
@@ -182,41 +177,10 @@ function refreshFuzzView(view: FuzzView): FuzzView {
 	return fuzzViewFromCheckout(checkout);
 }
 
-function filterFuzzNodeSchemas(
-	nodeSchemas: Iterable<TreeNodeSchemaIdentifier>,
-	prefix: string,
-	omitInitialNodeSchemas: string[],
-): TreeNodeSchemaIdentifier[] {
-	const values: TreeNodeSchemaIdentifier[] = [];
-
-	for (const key of nodeSchemas) {
-		if (
-			typeof key === "string" &&
-			key.startsWith(prefix) &&
-			!omitInitialNodeSchemas.includes(key)
-		) {
-			values.push(key);
-		}
-	}
-
-	return values;
-}
 export function simpleSchemaFromStoredSchema(
 	storedSchema: TreeStoredSchemaRepository,
 ): typeof fuzzFieldSchema {
-	const schemaFactory = new SchemaFactory("treeFuzz");
-	const nodeSchemas = filterFuzzNodeSchemas(storedSchema.nodeSchema.keys(), "treeFuzz", [
-		"treeFuzz.node",
-		"treeFuzz.arrayChildren",
-	]);
-	const fuzzNodeSchemas: TreeNodeSchema[] = [];
-	for (const nodeSchema of nodeSchemas) {
-		class GUIDNodeSchema extends schemaFactory.object(nodeSchema.slice("treeFuzz.".length), {
-			value: schemaFactory.string,
-		}) {}
-		fuzzNodeSchemas.push(GUIDNodeSchema);
-	}
-	return createTreeViewSchema(fuzzNodeSchemas);
+	return createTreeViewSchema(generateGuidNodeSchemas(storedSchema.nodeSchema.keys()));
 }
 
 /**
