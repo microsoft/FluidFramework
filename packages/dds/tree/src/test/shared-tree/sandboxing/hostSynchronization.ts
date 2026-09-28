@@ -76,15 +76,35 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private isApplyingGuestChanges: boolean = false;
 	/** The callback that unsubscribes from main branch changes. */
 	private readonly offMainChanged: () => void;
+	/** Whether synchronization has stopped. Any work pending when it stopped was rejected. */
 	private stopped = false;
+	/** Whether the branches owned by this synchronization state have been disposed. */
 	private disposed = false;
 
 	public constructor(
+		/**
+		 * The Host's main view to synchronize with the Guest.
+		 */
 		private readonly main: TreeViewAlpha<TSchema>,
+		/**
+		 * Sends a synchronization protocol message to the Guest.
+		 */
 		private readonly send: (message: DataChangeMessage | AcknowledgmentMessage) => void,
+		/**
+		 * Binds handles in a change from the Guest to the Host's SharedTree.
+		 */
 		private readonly bindHandles: (change: JsonCompatibleReadOnly) => void,
+		/**
+		 * Runs an action within the Host session's error-handling boundary.
+		 */
 		private readonly run: (action: () => void) => void,
+		/**
+		 * Reports an asynchronous synchronization failure to the Host session.
+		 */
 		private readonly fail: (error: unknown) => void,
+		/**
+		 * The scoped logger for synchronization diagnostics.
+		 */
 		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.local = main.fork();
@@ -159,7 +179,13 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		return this.updateInProgress?.promise;
 	}
 
-	/** Stops synchronization and rejects pending work without disposing the branches. */
+	/**
+	 * Stops synchronization and rejects pending work without disposing the owned branches.
+	 *
+	 * @remarks
+	 * Stopping is terminal for synchronization but does not release branch resources.
+	 * Call {@link HostSynchronization.dispose} to release those resources.
+	 */
 	public stop(error: Error): void {
 		if (this.stopped) {
 			return;
@@ -170,11 +196,19 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.updateInProgress = undefined;
 	}
 
-	/** Releases branches owned by this synchronization state. */
+	/**
+	 * Stops synchronization and releases the branches owned by this synchronization state.
+	 *
+	 * @remarks
+	 * Disposal is terminal and idempotent.
+	 * If synchronization has not already stopped, this method stops it and rejects pending work
+	 * with a disposal error before releasing branch resources.
+	 */
 	public dispose(): void {
 		if (this.disposed) {
 			return;
 		}
+		this.stop(new Error("Host synchronization disposed before synchronization completed."));
 		this.disposed = true;
 		this.mainHeadFromLastUpdate?.dispose();
 		this.mainHeadFromLastUpdate = undefined;

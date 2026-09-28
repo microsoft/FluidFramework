@@ -40,6 +40,10 @@ type _DistinctIds =
 	| requireFalse<isAssignableTo<number, HandleToken>>
 	| requireFalse<isAssignableTo<number, BlobRequestId>>;
 
+/**
+ * Recursively asserts that records have null prototypes while arrays and buffers retain their
+ * built-in prototypes.
+ */
 function assertNullPrototypeRecords(value: unknown): void {
 	if (typeof value !== "object" || value === null || isLocalHandle(value)) {
 		return;
@@ -58,6 +62,9 @@ function assertNullPrototypeRecords(value: unknown): void {
 	}
 }
 
+/**
+ * Creates paired Host and Guest transport codecs with captured blob requests and bound handles.
+ */
 function setupTransportCodecs() {
 	const bound: IFluidHandleInternal[] = [];
 	const host = new HostTransportCodec(

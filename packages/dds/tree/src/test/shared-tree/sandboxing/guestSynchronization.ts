@@ -78,6 +78,8 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	) {
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			this.run(() => {
+				// Only send Guest-authored changes. Sending a change received from the Host back to it
+				// would create a synchronization feedback loop.
 				if (!metadata.isLocal || this.isApplyingChangesFromHost) {
 					return;
 				}

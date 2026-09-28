@@ -22,11 +22,20 @@ import { TransportCodec, visitLocalHandles } from "./transport.js";
  * {@link HostTransportCodec.bindHandles} is separate from decoding so callers can first validate and apply the change locally.
  */
 export class HostTransportCodec extends TransportCodec {
+	/** Host handles indexed by the token that authorizes Guest access. */
 	private readonly handles: IFluidHandle[] = [];
+	/** Maps each authorized handle path to its stable session-local token. */
 	private readonly tokens = new Map<string, HandleToken>();
+	/** The SharedTree handle used to bind handles returned by the Guest. */
 	private readonly bindingHandle: ISharedObjectHandle;
+	/** Whether this codec has released its session-local handle tables. */
 	private disposed = false;
 
+	/**
+	 * Creates a Host transport codec that binds returned handles to the provided SharedTree.
+	 *
+	 * @param bindingHandle - The SharedTree handle that owns handles returned by the Guest.
+	 */
 	public constructor(bindingHandle: IFluidHandle) {
 		super();
 		const internal = toFluidHandleInternal(bindingHandle);
@@ -36,6 +45,10 @@ export class HostTransportCodec extends TransportCodec {
 		this.bindingHandle = internal;
 	}
 
+	/**
+	 * Authorizes a Host handle for the Guest and returns its session-local token.
+	 * Handles with the same absolute path share a token.
+	 */
 	protected encodeHandle(handle: IFluidHandle): HandleToken {
 		this.checkActive();
 		const path = toFluidHandleInternal(handle).absolutePath;
@@ -48,6 +61,7 @@ export class HostTransportCodec extends TransportCodec {
 		return token;
 	}
 
+	/** Restores the Host handle authorized by a session-local token. */
 	protected decodeHandle(token: HandleToken): IFluidHandle {
 		return this.getHandle(token);
 	}
@@ -63,12 +77,14 @@ export class HostTransportCodec extends TransportCodec {
 		}
 	}
 
+	/** Throws if this codec has been disposed. */
 	private checkActive(): void {
 		if (this.disposed) {
 			throw new UsageError("The Host handle session is disposed.");
 		}
 	}
 
+	/** Returns the Host handle authorized by a valid token in this session. */
 	private getHandle(token: HandleToken): IFluidHandle {
 		this.checkActive();
 		if (!isHandleToken(token) || token >= this.handles.length) {
@@ -84,6 +100,10 @@ export class HostTransportCodec extends TransportCodec {
 		this.getHandle(token);
 	}
 
+	/**
+	 * Resolves an authorized handle to blob content for the Guest.
+	 * Fluid-object handles are not supported.
+	 */
 	public async resolveBlob(token: HandleToken): Promise<ArrayBuffer> {
 		const result = await this.getHandle(token).get();
 		if (!(result instanceof ArrayBuffer)) {
@@ -95,6 +115,7 @@ export class HostTransportCodec extends TransportCodec {
 		return result;
 	}
 
+	/** Disables this codec and releases its session-local handle tables. */
 	public dispose(): void {
 		this.disposed = true;
 		this.handles.length = 0;
