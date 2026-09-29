@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	createIdCompressor,
 	createSessionId,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 
@@ -17,8 +18,8 @@ import { testIdCompressor } from "../utils.js";
 describe("RevisionTagCodec", () => {
 	it("handles the root constant revision tag", () => {
 		const rootRevisionTag: RevisionTag = "root";
-		const localCompressor = createIdCompressor(createSessionId());
-		const remoteCompressor = createIdCompressor(createSessionId());
+		const localCompressor = createIdCompressor(SerializationVersion.V3);
+		const remoteCompressor = createIdCompressor(SerializationVersion.V3);
 		const codec = new RevisionTagCodec(localCompressor);
 		const encoded = codec.encode(rootRevisionTag);
 		assert.deepEqual(encoded, rootRevisionTag);
@@ -42,8 +43,8 @@ describe("RevisionTagCodec", () => {
 	it("normalizes compressed IDs between op and session space", () => {
 		const localSession = createSessionId();
 		const remoteSession = createSessionId();
-		const localCompressor = createIdCompressor(localSession);
-		const remoteCompressor = createIdCompressor(remoteSession);
+		const localCompressor = createIdCompressor(localSession, SerializationVersion.V3);
+		const remoteCompressor = createIdCompressor(remoteSession, SerializationVersion.V3);
 		const localCodec = new RevisionTagCodec(localCompressor);
 		const remoteCodec = new RevisionTagCodec(remoteCompressor);
 		// Generate a compressed ID in the local space

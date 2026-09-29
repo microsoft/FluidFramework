@@ -42,7 +42,6 @@
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
-		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/react": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",

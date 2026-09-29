@@ -73,7 +73,7 @@ import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
  * @param clientViewConfiguration - Configuration with the view schema being used by the current client.
  * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
  *
- * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade an document's stored schema.
+ * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
  *
  * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema,
  * without `canInitialize`.

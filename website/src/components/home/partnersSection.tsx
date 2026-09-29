@@ -140,7 +140,7 @@ function PartnerEntryLabel({ title }: PartnerEntryLabelProps): ReactElement {
 				<div className="ffcom-partner-entry-label-indicator-container">
 					<div className="ffcom-partner-entry-label-indicator-shape" />
 				</div>
-				<p className="ffcom-partner-entry-label-text">{title}</p>
+				<h3 className="ffcom-partner-entry-label-text">{title}</h3>
 			</div>
 		</div>
 	);

@@ -153,12 +153,16 @@ export interface ITreeAlpha extends ITree {
 }
 
 /**
- * An untyped view of a (version-control-style) branch of a SharedTree.
- * @remarks An `UntypedTreeView` allows for the {@link UntypedTreeView.fork | creation of branches} and for those branches to later be {@link UntypedTreeView.merge | merged}.
+ * An untyped view of a git-style branch of a SharedTree.
+ * @remarks
+ * Use `UntypedTreeView` to work with a SharedTree branch when you do not know, or do not need, the schema of the tree.
+ * This is the primary public API for application code that needs branch-style editing of a SharedTree: an application can {@link UntypedTreeView.fork | fork} a new branch,
+ * make changes on it in isolation, and later {@link UntypedTreeView.merge | merge} those changes back.
  *
- * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
+ * Every {@link ITree | SharedTree} has one "main" branch.
+ * All other branches fork from the main branch, either directly or through another branch.
  *
- * See {@link UntypedTreeViewAlpha} for additional APIs that are in an earlier stage of development.
+ * @see {@link UntypedTreeViewAlpha} for more experimental APIs.
  * @sealed @beta
  */
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
@@ -502,11 +506,15 @@ export interface TreeBranchHistory {
 }
 
 /**
- * An untyped view of a {@link UntypedTreeView} with alpha-level APIs.
+ * An {@link UntypedTreeView} with alpha-level APIs.
  * @remarks
- * The untyped view for a specific {@link TreeNode} may be acquired by calling {@link (TreeAlpha:interface).context} and checking {@link TreeContextAlpha.isView | isView()}.
+ * Use `UntypedTreeViewAlpha` when your application needs to inspect or manipulate branch history directly.
  *
- * An untyped view does not necessarily know the schema of its SharedTree. To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
+ * To get the untyped view for a specific {@link TreeNode}, call {@link (TreeAlpha:interface).context}
+ * and check {@link TreeContextAlpha.isView | isView()}.
+ *
+ * An untyped view does not necessarily know the schema of its SharedTree.
+ * To convert it to a {@link TreeViewAlpha | view with a schema}, use {@link UntypedTreeViewAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
 export interface UntypedTreeViewAlpha
@@ -564,6 +572,7 @@ export interface UntypedTreeViewAlpha
 	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to restore the state of.
 	 * Can be obtained by navigating the commits on the {@link UntypedTreeViewAlpha.branchHistory | branch history}.
 	 * @param options - Optional {@link RevertToOptionsAlpha | options} for the revert.
+	 * @throws a `UsageError` (without applying changes) if any commit after the given revision contains a schema change.
 	 *
 	 * @remarks
 	 * The generated change is subject to the same merge semantics as the {@link Revertible.(revert:1) | reverts of individual commits}:
@@ -1127,7 +1136,7 @@ export interface SchemaCompatibilityStatus {
 	 * This check compares the existing stored schema with the stored schema that would
 	 * be generated from the current view schema with its corresponding configuration.
 	 * This includes {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy | staged upgrade policy}.
-	 * This policy determines which staged changes are included, including whether to
+	 * This policy determines which staged upgrades are enabled, including whether to
 	 * retain upgrades already enabled in the document.
 	 *
 	 * When adding optional fields to schema which previously were marked with {@link ObjectSchemaOptions.allowUnknownOptionalFields}

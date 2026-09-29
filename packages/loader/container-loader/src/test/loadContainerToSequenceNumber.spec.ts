@@ -7,7 +7,8 @@
  * Unit and integration coverage for the point-in-time load entry point.
  *
  * Input-validation tests use tripwire dependencies to prove malformed targets fail before loading
- * begins. Cancellation coverage uses a locally generated Fluid snapshot and requires no service
+ * begins. Cancellation and telemetry coverage use a locally generated Fluid snapshot to exercise
+ * successful loading, snapshot-boundary validation, and failure reporting without service
  * credentials.
  */
 
@@ -18,7 +19,11 @@ import type {
 	ICodeDetailsLoader,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
-import { FluidErrorTypes, type IErrorBase } from "@fluidframework/core-interfaces/internal";
+import {
+	FluidErrorTypes,
+	LogLevel,
+	type IErrorBase,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -26,7 +31,15 @@ import type {
 	ISnapshot,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { GenericError, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createGenericNetworkError,
+	NonRetryableError,
+} from "@fluidframework/driver-utils/internal";
+import {
+	GenericError,
+	isFluidError,
+	MockLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { createSandbox, type SinonSpy } from "sinon";
 import { v4 as uuid } from "uuid";
 
@@ -166,13 +179,17 @@ function makeSnapshotService(snapshot: ISnapshot): IDocumentService {
 
 describe("loadContainerToSequenceNumber", () => {
 	describe("target sequence number validation", () => {
-		const loadTo = async (loadToSequenceNumber: number): Promise<unknown> =>
+		const loadTo = async (
+			loadToSequenceNumber: number,
+			logger?: MockLogger,
+		): Promise<unknown> =>
 			loadContainerToSequenceNumber({
 				codeLoader: tripwireCodeLoader,
 				urlResolver: tripwireUrlResolver,
 				documentServiceFactory: tripwireDocumentServiceFactory,
 				request: { url: "https://example.com/point-in-time-validation" },
 				loadToSequenceNumber,
+				...(logger === undefined ? {} : { logger }),
 			});
 
 		const malformedTargets: [name: string, target: number][] = [
@@ -197,16 +214,245 @@ describe("loadContainerToSequenceNumber", () => {
 		}
 
 		it("accepts a well-formed target (fails later, on the capability check)", async () => {
+			const logger = new MockLogger(LogLevel.essential);
 			// 0 is the boundary value: valid, so validation must fall through to the point-in-time
 			// capability check. This pins the boundary and proves the guard rejects only malformed
 			// targets rather than everything.
 			await assert.rejects(
-				loadTo(0),
+				loadTo(0, logger),
 				(error: IErrorBase) =>
 					error.errorType === FluidErrorTypes.usageError &&
 					/does not support point-in-time loading/i.test(error.message),
 				"a valid target should pass validation and reach the capability check",
 			);
+			assert.deepEqual(
+				logger.events,
+				[],
+				"capability misuse is not a materialization attempt",
+			);
+		});
+	});
+
+	describe("telemetry", () => {
+		const loadWithFactoryFailure = async (
+			error: Error & IErrorBase,
+			logger: MockLogger,
+			loadToSequenceNumber = 42,
+			signal?: AbortSignal,
+		): Promise<unknown> =>
+			loadContainerToSequenceNumber({
+				codeLoader: tripwireCodeLoader,
+				urlResolver,
+				documentServiceFactory: makeCapableFactory(async () => {
+					throw error;
+				}),
+				request: { url: resolvedUrl.url },
+				loadToSequenceNumber,
+				logger,
+				...(signal === undefined ? {} : { signal }),
+			});
+
+		it("reports a successful sequence-zero load through an essential-only logger", async () => {
+			const service = makeSnapshotService(await createSnapshot(0));
+			const logger = new MockLogger(LogLevel.essential);
+
+			const container = await loadContainerToSequenceNumber({
+				codeLoader: createTestCodeLoaderProxy({
+					runtimeWithout_setConnectionStatus: true,
+				}),
+				urlResolver,
+				documentServiceFactory: makeCapableFactory(async () => service),
+				request: { url: resolvedUrl.url },
+				loadToSequenceNumber: 0,
+				logger,
+			});
+			assert.equal(container.closed, false);
+			logger.assertMatchNone([{ category: "error" }], undefined, false, false);
+
+			const terminalEvent = logger.events.find(
+				(event) => event.eventName === "fluid:telemetry:VersionMarkPointInTimeLoad",
+			);
+			assert(Number.isInteger(terminalEvent?.duration));
+			logger.assertMatch([
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					category: "performance",
+					outcome: "succeeded",
+					replayedOpCount: 0,
+				},
+			]);
+			container.dispose();
+		});
+
+		it("classifies a snapshot newer than the target", async () => {
+			const logger = new MockLogger(LogLevel.essential);
+
+			await assert.rejects(
+				loadContainerToSequenceNumber({
+					codeLoader: createTestCodeLoaderProxy({
+						runtimeWithout_setConnectionStatus: true,
+					}),
+					urlResolver,
+					documentServiceFactory: makeCapableFactory(async () =>
+						makeSnapshotService(await createSnapshot(50)),
+					),
+					request: { url: resolvedUrl.url },
+					loadToSequenceNumber: 42,
+					logger,
+				}),
+				/Most recent snapshot is newer/,
+			);
+
+			logger.assertMatch([
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					category: "error",
+					outcome: "failed",
+					targetSequenceNumber: 42,
+					availabilityOutcome: "targetOlderThanSnapshot",
+					baseSnapshotSequenceNumber: 50,
+					errorType: FluidErrorTypes.genericError,
+					error: "VersionMarkPointInTimeLoad",
+					stack: undefined,
+				},
+			]);
+		});
+
+		async function assertMissingOpsTerminalEvent(
+			error: Error & IErrorBase,
+			expectedErrorType: string,
+			assertErrorPropertiesExcluded = false,
+		): Promise<void> {
+			const logger = new MockLogger(LogLevel.essential);
+
+			await assert.rejects(
+				loadWithFactoryFailure(error, logger),
+				(candidate: IErrorBase) => candidate === error,
+			);
+
+			logger.assertMatch([
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					category: "error",
+					outcome: "failed",
+					targetSequenceNumber: 42,
+					availabilityOutcome: "missingOps",
+					baseSnapshotSequenceNumber: undefined,
+					errorType: expectedErrorType,
+					...(assertErrorPropertiesExcluded
+						? {
+								error: "VersionMarkPointInTimeLoad",
+								stack: undefined,
+								driverVersion: undefined,
+								versionLabel: undefined,
+							}
+						: {}),
+				},
+			]);
+		}
+
+		it("propagates missingOps for cannotCatchUp without copying error payloads", async () => {
+			await assertMissingOpsTerminalEvent(
+				new NonRetryableError("missing ops", "cannotCatchUp", {
+					driverVersion: "test-driver",
+					versionLabel: "high-cardinality-version-label",
+					versionMarkAvailabilityOutcome: "missingOps",
+				}),
+				"cannotCatchUp",
+				true,
+			);
+		});
+
+		it("propagates missingOps for the bounded-replay genericNetworkError", async () => {
+			await assertMissingOpsTerminalEvent(
+				createGenericNetworkError(
+					"Failed to retrieve ops from storage (Too Many Retries)",
+					{ canRetry: false },
+					{
+						driverVersion: "test-driver",
+						versionLabel: "high-cardinality-version-label",
+						versionMarkAvailabilityOutcome: "missingOps",
+					},
+				),
+				"genericNetworkError",
+			);
+		});
+
+		it("does not classify an ordinary network failure as missing ops", async () => {
+			const logger = new MockLogger(LogLevel.essential);
+			const error = createGenericNetworkError(
+				"Failed to contact the storage service",
+				{ canRetry: false },
+				{ driverVersion: "test-driver" },
+			);
+
+			await assert.rejects(
+				loadWithFactoryFailure(error, logger),
+				(candidate: IErrorBase) => candidate === error,
+			);
+
+			logger.assertMatch([
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					category: "error",
+					outcome: "failed",
+					targetSequenceNumber: 42,
+					availabilityOutcome: undefined,
+					baseSnapshotSequenceNumber: undefined,
+					errorType: "genericNetworkError",
+				},
+			]);
+		});
+
+		it("propagates a known base snapshot on a missing-ops replay failure", async () => {
+			const logger = new MockLogger(LogLevel.essential);
+			const error = new NonRetryableError("missing ops", "cannotCatchUp", {
+				driverVersion: "test-driver",
+				versionMarkAvailabilityOutcome: "missingOps",
+				versionMarkBaseSnapshotSequenceNumber: 10,
+			});
+
+			await assert.rejects(
+				loadWithFactoryFailure(error, logger, 12),
+				(candidate: IErrorBase) => candidate.errorType === "cannotCatchUp",
+			);
+
+			logger.assertMatch([
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					category: "error",
+					outcome: "failed",
+					targetSequenceNumber: 12,
+					availabilityOutcome: "missingOps",
+					baseSnapshotSequenceNumber: 10,
+					errorType: "cannotCatchUp",
+				},
+			]);
+		});
+
+		it("does not classify an unrelated failure as cancellation when the signal is aborted", async () => {
+			const logger = new MockLogger(LogLevel.essential);
+			const abortController = new AbortController();
+			abortController.abort();
+			const error = new GenericError("factory failed");
+
+			await assert.rejects(
+				loadWithFactoryFailure(error, logger, 42, abortController.signal),
+				(candidate: IErrorBase) => candidate === error,
+			);
+
+			logger.assertMatch([
+				{
+					eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+					category: "error",
+					outcome: "failed",
+					targetSequenceNumber: 42,
+					availabilityOutcome: undefined,
+					errorType: FluidErrorTypes.genericError,
+					error: "VersionMarkPointInTimeLoad",
+					stack: undefined,
+				},
+			]);
 		});
 	});
 
@@ -370,9 +616,20 @@ describe("loadContainerToSequenceNumber", () => {
 				const opHandlerCall = onSpy.getCalls().find((call) => call.args[0] === "op");
 				assert(opHandlerCall !== undefined, "the replay op listener should be registered");
 				const replayOpHandler = opHandlerCall.args[1] as () => void;
+				const disposedHandlerCall = onSpy
+					.getCalls()
+					.find((call) => call.args[0] === "disposed");
+				assert(
+					disposedHandlerCall !== undefined,
+					"the replay disposed listener should be registered",
+				);
+				const replayDisposedHandler = disposedHandlerCall.args[1] as (
+					error?: ICriticalContainerError,
+				) => void;
 
 				replayOpHandler();
 				container.close(expectedError);
+				replayDisposedHandler();
 			});
 			assertContainerInteractions = (): void => {
 				assert.equal(connectStub.callCount, 1, "the replay should attempt to connect once");
@@ -382,6 +639,71 @@ describe("loadContainerToSequenceNumber", () => {
 					"a container closed after replay resolution should not be disconnected",
 				);
 				assert(disposeSpy.calledOnceWithExactly(expectedError));
+			};
+			return container;
+		});
+
+		try {
+			await assert.rejects(
+				loadContainerToSequenceNumber({
+					codeLoader: createTestCodeLoaderProxy({
+						runtimeWithout_setConnectionStatus: true,
+					}),
+					urlResolver,
+					documentServiceFactory: makeCapableFactory(async () => service),
+					request: { url: resolvedUrl.url },
+					loadToSequenceNumber: 1,
+				}),
+				(error: unknown) => error === expectedError,
+			);
+
+			assert(
+				assertContainerInteractions !== undefined,
+				"the point-in-time container should be instrumented",
+			);
+			assertContainerInteractions();
+		} finally {
+			sandbox.restore();
+		}
+	});
+
+	it("cleans up when connecting for replay throws synchronously", async () => {
+		const service = makeSnapshotService(await createSnapshot(0));
+		const expectedError = new GenericError(
+			"simulated synchronous connect failure",
+		) as ICriticalContainerError;
+		const sandbox = createSandbox();
+		const loadContainer = Container.load.bind(Container);
+		let assertContainerInteractions: (() => void) | undefined;
+		sandbox.stub(Container, "load").callsFake(async (loadProps, createProps) => {
+			const container = await loadContainer(loadProps, createProps);
+			const disposeSpy = sandbox.spy(container, "dispose");
+			const onSpy = sandbox.spy(container, "on");
+			const offSpy = sandbox.spy(container, "off");
+			const connectStub = sandbox.stub(container, "connect").throws(expectedError);
+			assertContainerInteractions = (): void => {
+				assert.equal(connectStub.callCount, 1, "the replay should attempt to connect once");
+				assert(disposeSpy.calledOnceWithExactly(expectedError));
+				assert.equal(
+					offSpy.getCalls().filter((call) => call.args[0] === "op").length,
+					1,
+					"the replay op listener should be removed once",
+				);
+				for (const eventName of ["closed", "disposed"] as const) {
+					const registeredListeners = onSpy
+						.getCalls()
+						.filter((call) => call.args[0] === eventName)
+						.map((call) => call.args[1]);
+					const removedListeners = offSpy
+						.getCalls()
+						.filter((call) => call.args[0] === eventName)
+						.map((call) => call.args[1]);
+					assert.deepEqual(
+						removedListeners,
+						registeredListeners,
+						`all ${eventName} listeners should be removed after connect fails`,
+					);
+				}
 			};
 			return container;
 		});

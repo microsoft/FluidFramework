@@ -51,7 +51,6 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/runtime-utils": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
 	},

@@ -5,12 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
-	validateAssertionError,
+	MockFluidDataStoreRuntime,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
@@ -34,13 +32,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
-import {
-	expectJsonTree,
-	expectSchemaEqual,
-	getView,
-	StringArray,
-	TestTreeProviderLite,
-} from "../../utils.js";
+import { expectSchemaEqual, getView, StringArray, TestTreeProviderLite } from "../../utils.js";
 import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
@@ -152,20 +144,14 @@ describe("simple-tree tree", () => {
 	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
-		const treeSrc = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const treeSrc = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const view = treeSrc.viewWith(config);
 		view.initialize({});
 		const idFromInitialize = Tree.shortId(view.root);
 		assert(typeof idFromInitialize === "number");
 
-		const treeDst = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const treeDst = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const viewDst = treeDst.viewWith(config);
 		viewDst.initialize({});
@@ -179,10 +165,7 @@ describe("simple-tree tree", () => {
 	it("viewWith twice errors", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const view = tree.viewWith(config);
 		assert.throws(
@@ -687,10 +670,7 @@ describe("simple-tree tree", () => {
 			assert.equal(view.branchHistory.length, 8);
 		});
 
-		it("restores the schema and content from before a schema upgrade on a local branch", () => {
-			// This test verifies current behavior, not necessarily the desired specification.
-			// We will likely make revertTo skip schema changes,
-			// but that requires prerequisite work on rebasing interleaved data and schema changes.
+		it("rejects reverting a transaction containing schema and data changes on a local branch", () => {
 			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
 			const originalView = getView(originalConfig);
 			originalView.initialize(1);
@@ -702,33 +682,22 @@ describe("simple-tree tree", () => {
 					schema: [schema.number, schema.string],
 				}),
 			);
-			upgradedView.upgradeSchema();
+			upgradedView.runTransaction(() => {
+				upgradedView.upgradeSchema();
+				upgradedView.root = "upgraded";
+			});
+			const schemaRevision = upgradedView.branchHistory.getHead()?.revision;
+			assert(schemaRevision !== undefined, "revision should be defined");
 
-			// Roundabout assertion to avoid unwanted type narrowing before `revertTo` call below
-			assert.deepEqual(
-				{ isEquivalent: upgradedView.compatibility.isEquivalent },
-				{ isEquivalent: true },
+			assert.throws(
+				() => upgradedView.revertTo(revision),
+				validateUsageError(
+					`Cannot revert to revision ${revision} because the schema changed at intermediate commit ${schemaRevision}.`,
+				),
 			);
-			// Include content that is only valid under the upgraded schema.
-			upgradedView.root = "upgraded";
-
-			upgradedView.revertTo(revision);
-
-			expectSchemaEqual(
-				upgradedView.checkout.storedSchema,
-				originalView.checkout.storedSchema,
-			);
-			expectJsonTree(upgradedView.checkout, [1]);
-			// Reverting also makes the upgraded view require a schema upgrade again.
-			assert.equal(upgradedView.compatibility.isEquivalent, false);
-			assert.equal(upgradedView.compatibility.canView, false);
-			assert.equal(upgradedView.compatibility.canUpgrade, true);
 		});
 
-		it("throws when transmitting a revert across a schema upgrade on a shared branch", () => {
-			// This test verifies current behavior, not necessarily the desired specification.
-			// We will likely make revertTo skip schema changes,
-			// but that requires prerequisite work on rebasing interleaved data and schema changes.
+		it("rejects reverting across a schema upgrade on a shared branch", () => {
 			const originalConfig = new TreeViewConfiguration({ schema: schema.number });
 			const upgradedConfig = new TreeViewConfiguration({
 				schema: [schema.number, schema.string],
@@ -746,6 +715,8 @@ describe("simple-tree tree", () => {
 
 			const upgradedViewA = treeA.kernel.viewWith(upgradedConfig);
 			upgradedViewA.upgradeSchema();
+			const schemaRevision = upgradedViewA.branchHistory.getHead()?.revision;
+			assert(schemaRevision !== undefined, "revision should be defined");
 			assert.equal(upgradedViewA.compatibility.isEquivalent, true);
 			upgradedViewA.root = "upgraded";
 			provider.synchronizeMessages();
@@ -753,22 +724,43 @@ describe("simple-tree tree", () => {
 			assert.equal(viewB.compatibility.isEquivalent, true);
 			assert.equal(viewB.root, "upgraded");
 
-			// The inverse schema change can be applied locally, but cannot be encoded in an op.
 			assert.throws(
 				() => upgradedViewA.revertTo(revision),
-				validateAssertionError("Inverse schema changes should never be transmitted"),
+				validateUsageError(
+					`Cannot revert to revision ${revision} because the schema changed at intermediate commit ${schemaRevision}.`,
+				),
 			);
 			provider.synchronizeMessages();
 			assert.equal(viewB.compatibility.isEquivalent, true);
 			assert.equal(viewB.root, "upgraded");
 		});
 
-		it("is a no-op when given the revision of the head commit", () => {
+		it("can revert all data changes back to the most recent schema-changing commit", () => {
+			const originalView = getView(new TreeViewConfiguration({ schema: schema.number }));
+			originalView.initialize(1);
+			const upgradedView = originalView.checkout
+				.fork()
+				.viewWith(new TreeViewConfiguration({ schema: [schema.number, schema.string] }));
+			upgradedView.runTransaction(() => {
+				upgradedView.upgradeSchema();
+				upgradedView.root = "upgraded";
+			});
+			const schemaRevision = upgradedView.branchHistory.getHead()?.revision;
+			assert(schemaRevision !== undefined, "revision should be defined");
+			const upgradedSchema = upgradedView.checkout.storedSchema.clone();
+			upgradedView.root = "edited";
+
+			upgradedView.revertTo(schemaRevision);
+
+			assert.equal(upgradedView.root, "upgraded");
+			expectSchemaEqual(upgradedView.checkout.storedSchema, upgradedSchema);
+		});
+
+		it("is a no-op when given the revision of the head commit, even if it contains schema changes", () => {
 			// Setup
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
-			view.root = 2;
 			const revision = view.branchHistory.getHead()?.revision;
 			assert(revision !== undefined, "revision should be defined");
 
@@ -776,8 +768,8 @@ describe("simple-tree tree", () => {
 			view.revertTo(revision);
 
 			// Verify
-			assert.equal(view.root, 2);
-			assert.equal(view.branchHistory.length, 2);
+			assert.equal(view.root, 1);
+			assert.equal(view.branchHistory.length, 1);
 		});
 
 		it("produces a commit which can be reverted", () => {
@@ -812,7 +804,21 @@ describe("simple-tree tree", () => {
 			assert.equal(view.branchHistory.length, 5);
 		});
 
-		it("throws when the revision is not on the branch", () => {
+		it("throws when the revision is not on the current branch", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const view = getView(config);
+			const fork = view.fork();
+			fork.initialize(1);
+			const forkRevision = fork.branchHistory.getHead()?.revision;
+			assert(forkRevision !== undefined, "revision should be defined");
+
+			assert.throws(
+				() => view.revertTo(forkRevision),
+				validateUsageError(/No commit found with revision/),
+			);
+		});
+
+		it("rejects a missing revision as soon as a schema change is encountered", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
 			const view = getView(config);
 			view.initialize(1);
@@ -825,7 +831,9 @@ describe("simple-tree tree", () => {
 
 			assert.throws(
 				() => view.revertTo(forkRevision),
-				validateUsageError(/No commit found with revision/),
+				validateUsageError(
+					`Cannot revert to revision ${forkRevision} because the schema changed at intermediate commit ${revision}.`,
+				),
 			);
 		});
 

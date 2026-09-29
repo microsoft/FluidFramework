@@ -87,7 +87,6 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
@@ -103,7 +102,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@3.1.0",
+		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@3.2.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^10.0.10",
