@@ -214,9 +214,11 @@ function makeRealUnpackerFactory(): () => (
 describe("VersionMarkResolver", () => {
 	describe("sealAndCaptureVersionMark", () => {
 		it("returns a pending capture with the pending batchId and sequence number lower bound", () => {
+			const logger = new MockLogger();
 			const resolver = makeResolver({
 				currentSequenceNumber: 42,
 				currentPendingBatchId: "client_[3]",
+				logger,
 			});
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "pending",
@@ -225,15 +227,22 @@ describe("VersionMarkResolver", () => {
 				// so its first possible sequence number is 43.
 				sequenceNumberLowerBound: 43,
 			});
+			logger.assertMatch([{ eventName: "Capture", kind: "pending" }]);
 		});
 
 		it("returns a resolved capture at the current sequence number when nothing is pending", () => {
-			const resolver = makeResolver({ currentSequenceNumber: 42, currentTimestamp: 42000 });
+			const logger = new MockLogger();
+			const resolver = makeResolver({
+				currentSequenceNumber: 42,
+				currentTimestamp: 42000,
+				logger,
+			});
 			assert.deepEqual(resolver.sealAndCaptureVersionMark(), {
 				kind: "resolved",
 				sequenceNumber: 42,
 				timestamp: 42000,
 			});
+			logger.assertMatch([{ eventName: "Capture", kind: "resolved" }]);
 		});
 
 		it("flushes the current batch before reading, so a just-submitted edit's batchId is captured", () => {
@@ -282,6 +291,14 @@ describe("VersionMarkResolver", () => {
 			resolver.onBatchSequenced(() => {});
 			assert.equal(resolver.isTracking, true);
 		});
+
+		it("starts tracking after resolve(), even without a prior capture or subscription", async () => {
+			// resolve() must enable tracking so the runtime records a batch that sequences during the scan.
+			const resolver = makeResolver();
+			assert.equal(resolver.isTracking, false);
+			await resolver.resolve("client_[1]", 0);
+			assert.equal(resolver.isTracking, true);
+		});
 	});
 
 	describe("resolve - in-session fast path", () => {
@@ -308,12 +325,49 @@ describe("VersionMarkResolver", () => {
 			});
 			assert.equal(calls.length, 0, "history reader should not be called on a live-map hit");
 		});
+
+		it("prefers a live resolution that arrives while the history scan is in progress", async () => {
+			const logger = new MockLogger();
+			// eslint-disable-next-line prefer-const -- it is assigned below
+			let resolver: VersionMarkResolver;
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					return {
+						async read(): Promise<IStreamResult<ISequencedDocumentMessage[]>> {
+							// The batch sequences live mid-scan, after the resolver is assigned below.
+							resolver.processInboundBatch("client_[5]", 12, 12000);
+							return { done: true };
+						},
+					};
+				},
+			};
+			resolver = makeResolver({ reader, logger });
+
+			assert.deepEqual(await resolver.resolve("client_[5]", 1), {
+				kind: "resolved",
+				sequenceNumber: 12,
+				timestamp: 12000,
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					outcome: "resolved",
+					path: "session",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 1,
+					sequenceNumber: 12,
+				},
+			]);
+		});
 	});
 
 	describe("resolve - no reader wired", () => {
 		it("reports an unknown batchId as pending when no reader is available", async () => {
 			const resolver = makeResolver();
-			assert.deepEqual(await resolver.resolve("missing_[1]", 0), { kind: "pending" });
+			assert.deepEqual(await resolver.resolve("missing_[1]", 0), {
+				kind: "pending",
+				reason: "historicalOpsUnavailable",
+			});
 		});
 	});
 
@@ -579,6 +633,7 @@ describe("VersionMarkResolver", () => {
 
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 	});
@@ -592,6 +647,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 12 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -601,6 +657,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 20 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -611,6 +668,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 6 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "unresolvable",
+				reason: "historyTrimmed",
 			});
 		});
 
@@ -625,6 +683,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 7 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 
@@ -634,6 +693,7 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ reader, currentSequenceNumber: 5 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
 				kind: "pending",
+				reason: "awaitingSequence",
 			});
 		});
 
@@ -792,7 +852,12 @@ describe("VersionMarkResolver", () => {
 			assert.deepEqual(before, [["client_[1]", 5]]);
 			assert.deepEqual(after, [["client_[1]", 5]]);
 			// The fault is logged rather than swallowed.
-			logger.assertMatch([{ eventName: "VersionMarkListenerException", category: "error" }]);
+			logger.assertMatch([
+				{
+					eventName: "ListenerException",
+					category: "error",
+				},
+			]);
 			// The batch is still recorded despite the fault, so it resolves via the live fast path.
 			assert.deepEqual(await resolver.resolve("client_[1]", 0), {
 				kind: "resolved",
@@ -821,7 +886,10 @@ describe("VersionMarkResolver", () => {
 			minimumSequenceNumber = 8;
 			resolver.processInboundBatch("c_[3]", 12, 12000);
 
-			assert.deepEqual(await resolver.resolve("a_[1]", 0), { kind: "pending" });
+			assert.deepEqual(await resolver.resolve("a_[1]", 0), {
+				kind: "pending",
+				reason: "historicalOpsUnavailable",
+			});
 			assert.deepEqual(await resolver.resolve("b_[2]", 0), {
 				kind: "resolved",
 				sequenceNumber: 10,
@@ -870,11 +938,16 @@ describe("VersionMarkResolver", () => {
 				sequenceNumber: 21,
 				timestamp: 21000,
 			});
+			assert.equal(typeof logger.events[0]?.duration, "number");
+			assert.equal(logger.events[0]?.durationMs, undefined);
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
+					category: "generic",
 					outcome: "resolved",
 					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
 					sequenceNumber: 21,
 				},
 			]);
@@ -885,12 +958,17 @@ describe("VersionMarkResolver", () => {
 			const resolver = makeResolver({ logger });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
 				kind: "pending",
+				reason: "historicalOpsUnavailable",
 			});
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
+					category: "generic",
 					outcome: "pending",
 					path: "noReader",
+					historyAttempted: false,
+					sequenceNumberLowerBound: 5,
+					reason: "historicalOpsUnavailable",
 				},
 			]);
 		});
@@ -907,25 +985,121 @@ describe("VersionMarkResolver", () => {
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
+					category: "generic",
 					outcome: "resolved",
 					path: "session",
+					historyAttempted: false,
+					sequenceNumberLowerBound: 5,
 					sequenceNumber: 7,
 				},
 			]);
 		});
 
-		it("emits outcome 'error' (via finally) when the history scan throws", async () => {
+		it("reports a terminal history-trimmed outcome as unresolvable", async () => {
 			const logger = new MockLogger();
+			const resolver = makeResolver({
+				reader: makeReader([]),
+				currentSequenceNumber: 10,
+				logger,
+			});
+
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "unresolvable",
+				reason: "historyTrimmed",
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "generic",
+					outcome: "unresolvable",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					reason: "historyTrimmed",
+				},
+			]);
+		});
+
+		it("reports historyAttempted when the history scan returns pending", async () => {
+			const logger = new MockLogger();
+			const resolver = makeResolver({
+				reader: makeReader([]),
+				currentSequenceNumber: 0,
+				logger,
+			});
+
+			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
+				kind: "pending",
+				reason: "awaitingSequence",
+			});
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "generic",
+					outcome: "pending",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					reason: "awaitingSequence",
+				},
+			]);
+		});
+
+		it("emits outcome 'error' when the history scan throws", async () => {
+			const logger = new MockLogger();
+			const thrownError = new Error("delta storage boom");
 			const reader: IHistoricalOpReader = {
 				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
-					throw new Error("delta storage boom");
+					throw thrownError;
 				},
 			};
 			const resolver = makeResolver({ reader, logger });
-			// The throw propagates (resolve does not swallow it)...
-			await assert.rejects(resolver.resolve(generateBatchId("missing", 1), 5), /boom/);
-			// ...but the Resolve event still fires with outcome "error".
-			logger.assertMatch([{ eventName: "Resolve", outcome: "error", path: "history" }]);
+			await assert.rejects(
+				resolver.resolve(generateBatchId("missing", 1), 5),
+				(error) => error === thrownError,
+			);
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "error",
+					outcome: "error",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					error: "delta storage boom",
+				},
+			]);
+		});
+
+		it("routes an undefined thrown value to one Error-category terminal event", async () => {
+			const logger = new MockLogger();
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					// eslint-disable-next-line @typescript-eslint/only-throw-error
+					throw undefined;
+				},
+			};
+			const resolver = makeResolver({ reader, logger });
+			let caught = false;
+			try {
+				await resolver.resolve(generateBatchId("missing", 1), 5);
+			} catch (error) {
+				caught = true;
+				assert.equal(error, undefined);
+			}
+			assert.equal(caught, true, "resolve should rethrow the original undefined value");
+			assert.equal(logger.events.length, 1, "resolve should emit exactly one terminal event");
+			logger.assertMatch([
+				{
+					eventName: "Resolve",
+					category: "error",
+					outcome: "error",
+					path: "history",
+					historyAttempted: true,
+					sequenceNumberLowerBound: 5,
+					error: "Resolve",
+				},
+			]);
 		});
 	});
 });

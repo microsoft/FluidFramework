@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/example-webpack-integration",
-	"version": "3.0.0",
+	"version": "3.3.0",
 	"private": true,
 	"description": "Webpack configuration used by examples in the FluidFramework repo.",
 	"homepage": "https://fluidframework.com",
@@ -48,7 +48,7 @@
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"fluidBuild": {
 		"_tasksComment1": "Only builds ESM; so, CJS deps are remapped to ESM.",

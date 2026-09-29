@@ -68,6 +68,7 @@ import {
 	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
+import { mergeRequestHeaders } from "./requestHeaders.js";
 
 /**
  * Enum to support different types of snapshot formats.
@@ -131,6 +132,7 @@ export async function fetchSnapshotWithRedeem(
 	removeEntries: () => Promise<void>,
 	loadingGroupIds: string[] | undefined,
 	enableRedeemFallback?: boolean,
+	requestHeaders?: Readonly<Record<string, string>>,
 ): Promise<ISnapshot> {
 	// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -154,7 +156,7 @@ export async function fetchSnapshotWithRedeem(
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			if (enableRedeemFallback && isRedeemSharingLinkError(odspResolvedUrl, error)) {
 				// Execute the redeem fallback
-				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
+				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger, requestHeaders);
 
 				const shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo };
 				delete shareLinkInfo.sharingLinkToRedeem;
@@ -205,7 +207,12 @@ export async function fetchSnapshotWithRedeem(
 						...getOdspResolvedUrl(error.redirectUrl),
 						shareLinkInfo: odspResolvedUrl.shareLinkInfo,
 					};
-					await redeemSharingLink(redirectedResolvedUrl, storageTokenFetcher, logger);
+					await redeemSharingLink(
+						redirectedResolvedUrl,
+						storageTokenFetcher,
+						logger,
+						requestHeaders,
+					);
 				} catch (redeemError) {
 					logger.sendErrorEvent({ eventName: "RedirectRedeemFallbackError" }, redeemError);
 				}
@@ -236,6 +243,7 @@ async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	logger: TelemetryLoggerExt,
+	requestHeaders?: Readonly<Record<string, string>>,
 ): Promise<void> {
 	await PerformanceEvent.timedExecAsync(
 		logger,
@@ -272,7 +280,10 @@ async function redeemSharingLink(
 					);
 					const headers = getHeadersWithAuth(authHeader);
 					headers.prefer = isRedemptionNonDurable ? "nonDurableRedeem" : "redeemSharingLink";
-					await fetchAndParseAsJSONHelper(url, { headers, method });
+					await fetchAndParseAsJSONHelper(url, {
+						headers: mergeRequestHeaders(requestHeaders, headers),
+						method,
+					});
 				});
 			}
 
@@ -735,6 +746,7 @@ export const downloadSnapshot = mockify(
 		controller?: AbortController,
 		epochTracker?: EpochTracker,
 		scenarioName?: string,
+		requestHeaders?: Readonly<Record<string, string>>,
 	): Promise<ISnapshotRequestAndResponseOptions> => {
 		// back-compat: This block to be removed with #8784 when we only consume/consider odsp resolvers that are >= 0.51
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -791,7 +803,7 @@ export const downloadSnapshot = mockify(
 		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
 		const fetchOptions = {
 			body,
-			headers,
+			headers: mergeRequestHeaders(requestHeaders, headers),
 			signal: controller?.signal,
 			method,
 		};
@@ -806,6 +818,7 @@ export const downloadSnapshot = mockify(
 				headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
 			}
 		}
+		fetchOptions.headers = mergeRequestHeaders(requestHeaders, headers);
 
 		const odspResponse = await (epochTracker?.fetch(
 			url,

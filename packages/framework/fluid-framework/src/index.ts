@@ -122,6 +122,7 @@ export type {
 } from "@fluidframework/driver-definitions/internal";
 export {
 	createBasicRegistryKey,
+	featureVersion,
 	lookupInRegistry,
 	// Due to this currently referencing several existing public types we do not want to stabilize as reexports from here,
 	// do not reexport getContainerAudience for now.
@@ -129,6 +130,7 @@ export {
 } from "@fluidframework/driver-definitions/internal";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { SharedObjectKindAlpha } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree";
 import {
 	SharedTree as OriginalSharedTree,
@@ -173,7 +175,9 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
  * ```
  * @alpha
  */
-export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree> {
+export function configuredSharedTree(
+	options: SharedTreeOptions,
+): SharedObjectKindAlpha<ITree> {
 	return originalConfiguredSharedTree(options);
 }
 

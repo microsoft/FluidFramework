@@ -31,6 +31,7 @@ import {
 	assertIsStableId,
 	createIdCompressor,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
@@ -172,7 +173,7 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	independentView,
+	createIndependentTreeViewAlpha,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	buildConfiguredForest,
@@ -493,7 +494,7 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
-			const idCompressor = createIdCompressor(sessionId);
+			const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 			this.compressorMap.set(`tree-${i}`, idCompressor);
 			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
@@ -976,13 +977,20 @@ export const IdentifierSchema = sf.object("identifier-object", {
  * @param json - The JSON-compatible object to initialize the tree with.
  * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
-export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
-	return checkoutWithContent({
-		schema: toInitialSchema(
-			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
-		),
-		initialTree: singleJsonCursor(json),
-	});
+export function makeTreeFromJson(
+	json: JsonCompatible,
+	optionalRoot = false,
+	minVersionForCollab: OldestSupportedClientVersion = FluidClientVersion.v2_0,
+): ITreeCheckout {
+	return checkoutWithContent(
+		{
+			schema: toInitialSchema(
+				optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
+			),
+			initialTree: singleJsonCursor(json),
+		},
+		{ codecOptions: { minVersionForCollab } },
+	);
 }
 
 export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
@@ -1479,7 +1487,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations
 	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
-	const view = independentView(config, {
+	const view = createIndependentTreeViewAlpha(config, {
 		...options,
 		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
 		minVersionForCollab,

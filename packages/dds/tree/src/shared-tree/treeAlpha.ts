@@ -11,7 +11,10 @@ import {
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -42,7 +45,6 @@ import {
 	getKernel,
 	TreeNode,
 	type Unhydrated,
-	TreeBeta,
 	tryGetSchema,
 	createFromCursor,
 	FieldKind,
@@ -77,9 +79,6 @@ import {
 	type NodeChangedData,
 	type TreeChangeEventsBeta,
 	type ConciseTree,
-	importConcise,
-	exportConcise,
-	borrowCursorFromTreeNodeOrValue,
 	contentSchemaSymbol,
 	type TreeContextAlpha,
 	type TreeNodeSchema,
@@ -88,7 +87,13 @@ import {
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 
 import { independentInitializedView, type ViewContent } from "./independentView.js";
-import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import {
+	borrowCursorFromTreeNodeOrValue,
+	exportConcise,
+	importConcise,
+	TreeBeta,
+} from "./treeBeta.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
@@ -360,7 +365,7 @@ export interface TreeAlpha {
 	 * @param options - If {@link (TreeAlpha:interface).exportCompressed} was given an `idCompressor`, it must be provided here.
 	 *
 	 * @remarks
-	 * If the data could have been encoded with a different schema, consider encoding the schema along side it using {@link extractPersistedSchema} and loading the data using {@link independentView}.
+	 * If the data could have been encoded with a different schema, consider encoding the schema along side it using {@link extractPersistedSchema} and loading the data using {@link createIndependentTreeViewAlpha}.
 	 *
 	 * @privateRemarks
 	 * This API could be improved:
@@ -821,12 +826,7 @@ export const TreeAlpha: TreeAlpha = {
 		if (!kernel.isHydrated()) {
 			return UnhydratedTreeContext.instance;
 		}
-		const view = kernel.anchorNode.anchorSet.slots.get(ViewSlot);
-		assert(
-			view instanceof SchematizingSimpleTreeView,
-			0xa5c /* Unexpected view implementation */,
-		);
-		return view;
+		return TreeBeta.context(node) as TreeContextAlpha;
 	},
 
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
@@ -912,7 +912,7 @@ export const TreeAlpha: TreeAlpha = {
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];
 		// If none provided, create a compressor which will not compress anything.
-		const idCompressor = options.idCompressor ?? createIdCompressor();
+		const idCompressor = options.idCompressor ?? createIdCompressor(SerializationVersion.V3);
 
 		// Grabbing an existing stored schema from the node is important to ensure that unknown optional fields can be preserved.
 		// Note that if the node is unhydrated, this can result in all staged allowed types being included in the schema, which might be undesired.
@@ -946,7 +946,7 @@ export const TreeAlpha: TreeAlpha = {
 			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
 			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
-			idCompressor: options.idCompressor ?? createIdCompressor(),
+			idCompressor: options.idCompressor ?? createIdCompressor(SerializationVersion.V3),
 		};
 		const view = independentInitializedView(config, options, content);
 		return TreeBeta.clone<TSchema>(view.root);

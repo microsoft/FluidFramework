@@ -7,6 +7,7 @@ import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
+	ChangesetLocalId,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeRename,
@@ -150,7 +151,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TChangeset,
 		isRollback: boolean,
-		genId: IdAllocator,
+		genId: AtomIdAliasAllocator,
 		revision: RevisionTag | undefined,
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
@@ -182,7 +183,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * @param filterDetach - This should be called for each range of detaches in the changeset,
 	 * and the detach should be preserved, removed, or converted to a non-move detach as specified.
 	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
-	 * @param filterDetach - This should be called for each range of attaches in the changeset,
+	 * @param filterAttach - This should be called for each range of attaches in the changeset,
 	 * and the attach should be preserved, removed, or converted to a non-move attach as specified.
 	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
 	 * @param preserveOtherEdits - Whether edits other than attaches and detaches (e.g. root renames),
@@ -377,4 +378,25 @@ export interface FieldChangeEncodingContext {
 export interface FieldChangeDecodingContext {
 	readonly baseContext: ChangeEncodingContext;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
+}
+
+/**
+ * Allocates and manages aliases for local IDs within different revisions.
+ */
+export interface AtomIdAliasAllocator extends IdAllocator<ChangesetLocalId> {
+	/**
+	 * Reserves a contiguous block of IDs for the given original revision up to the specified maximum local ID.
+	 * Can be called multiple times for the same revision (later calls have no effect), but the maximum local ID must be consistent across calls.
+	 */
+	reserve(
+		originalRevision: RevisionTag | undefined,
+		originalMaxLocalId: ChangesetLocalId,
+	): void;
+	/**
+	 * @returns The alias for the given original local ID within the specified revision.
+	 */
+	getAlias(
+		originalRevision: RevisionTag | undefined,
+		originalLocalId: ChangesetLocalId,
+	): ChangesetLocalId;
 }

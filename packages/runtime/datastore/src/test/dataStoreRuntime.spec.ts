@@ -634,7 +634,7 @@ describe("FluidDataStoreRuntime.minVersionForCollab", () => {
 	}
 
 	it("minVersionForCollab is read from the FluidDataStoreContext and stored on FluidDataStoreRuntime", () => {
-		const runtime = createRuntime("minVersionTest", "1.2.3");
-		assert.deepStrictEqual(runtime.minVersionForCollab, "1.2.3");
+		const runtime = createRuntime("minVersionTest", "2.2.3");
+		assert.deepStrictEqual(runtime.minVersionForCollab, "2.2.3");
 	});
 });

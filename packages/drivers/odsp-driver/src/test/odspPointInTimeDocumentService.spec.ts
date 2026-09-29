@@ -6,16 +6,26 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { strict as assert } from "node:assert";
 
-import type {
-	IClient,
-	IDocumentDeltaStorageService,
-	IDocumentService,
-	IDocumentStorageService,
-	IResolvedUrl,
-	ISequencedDocumentMessage,
-	IStream,
-	IStreamResult,
+import {
+	FetchSource,
+	type IClient,
+	type IDocumentDeltaStorageService,
+	type IDocumentService,
+	type IDocumentStorageService,
+	type IResolvedUrl,
+	type ISequencedDocumentMessage,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
+	type IStream,
+	type IStreamResult,
+	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	createGenericNetworkError,
+	NonRetryableError,
+} from "@fluidframework/driver-utils/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
@@ -38,6 +48,22 @@ function streamFromBatches(batches: number[][]): IStream<ISequencedDocumentMessa
 			return { done: true };
 		},
 	};
+}
+
+function failingStream(error: unknown): IStream<ISequencedDocumentMessage[]> {
+	return {
+		read: async () => {
+			throw error;
+		},
+	};
+}
+
+function assertVersionMarkAvailabilityOutcome(
+	error: unknown,
+	expected: string | undefined,
+): void {
+	assert(isILoggingError(error), "expected a logging error");
+	assert.equal(error.getTelemetryProperties().versionMarkAvailabilityOutcome, expected);
 }
 
 /** Records the (from, to, cachedOnly) each `fetchMessages` was called with, for bounding assertions. */
@@ -109,7 +135,47 @@ class FakeLiveDocumentService {
 class FakeRecoverableDocumentService {
 	public disposeCount = 0;
 	public connectToStorageCount = 0;
-	public readonly storage = {} as IDocumentStorageService;
+	public snapshotFetchOptions: ISnapshotFetchOptions | undefined;
+	public versionsFetchSource: FetchSource | undefined;
+	public readonly snapshot = {
+		snapshotTree: { blobs: {}, trees: {} },
+		blobContents: new Map(),
+		ops: [],
+		sequenceNumber: 0,
+		latestSequenceNumber: 0,
+		snapshotFormatV: 1,
+	} satisfies ISnapshot;
+	public readonly storage = {
+		getSnapshot: async (snapshotFetchOptions?: ISnapshotFetchOptions) => {
+			this.snapshotFetchOptions = snapshotFetchOptions;
+			return this.snapshot;
+		},
+		getVersions: async (
+			// eslint-disable-next-line @rushstack/no-new-null -- IDocumentStorageService is a legacy API that requires null.
+			_versionId: string | null,
+			_count: number,
+			_scenarioName?: string,
+			fetchSource?: FetchSource,
+		): Promise<IVersion[]> => {
+			this.versionsFetchSource = fetchSource;
+			return [{ id: "version", treeId: undefined! }];
+		},
+		getSnapshotTree: async () => null,
+		createBlob: async () => {
+			throw new Error("createBlob should not be used by the point-in-time service");
+		},
+		readBlob: async () => {
+			throw new Error("readBlob should not be used by this test");
+		},
+		uploadSummaryWithContext: async () => {
+			throw new Error(
+				"uploadSummaryWithContext should not be used by the point-in-time service",
+			);
+		},
+		downloadSummary: async () => {
+			throw new Error("downloadSummary should not be used by the point-in-time service");
+		},
+	} satisfies IDocumentStorageService;
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
 		this.connectToStorageCount++;
@@ -201,17 +267,97 @@ describe("OdspPointInTimeDocumentService", () => {
 		});
 	});
 
+	describe("connectToDeltaStorage: classifies unavailable bounded replay ops", () => {
+		it("classifies cannotCatchUp without changing the raw errorType", async () => {
+			const error = new NonRetryableError(
+				"required historical ops are unavailable",
+				OdspErrorTypes.cannotCatchUp,
+				{ driverVersion: "test" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				assert.equal(error.errorType, OdspErrorTypes.cannotCatchUp);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, "missingOps");
+		});
+
+		it("classifies the fixed-range empty-response timeout without changing its errorType", async () => {
+			const error = createGenericNetworkError(
+				"Failed to retrieve ops from storage (Too Many Retries)",
+				{ canRetry: false },
+				{ driverVersion: "test", opsFetchFailure: "tooManyRetries" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				assert.equal(error.errorType, OdspErrorTypes.genericNetworkError);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, "missingOps");
+		});
+
+		it("does not classify an error from its message alone", async () => {
+			const error = createGenericNetworkError(
+				"Failed to retrieve ops from storage (Too Many Retries)",
+				{ canRetry: false },
+				{ driverVersion: "test" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, undefined);
+		});
+
+		it("does not classify an ordinary network failure as missing ops", async () => {
+			const error = createGenericNetworkError(
+				"Failed to contact the storage service",
+				{ canRetry: false },
+				{ driverVersion: "test" },
+			);
+			const { service } = makeService(12, failingStream(error));
+			const deltaStorage = await service.connectToDeltaStorage();
+
+			await assert.rejects(deltaStorage.fetchMessages(10, undefined).read(), (candidate) => {
+				assert.equal(candidate, error);
+				return true;
+			});
+			assertVersionMarkAvailabilityOutcome(error, undefined);
+		});
+	});
+
 	describe("storage, stream, and lifecycle", () => {
 		it("advertises the storageOnly policy", () => {
 			const { service } = makeService(100, streamFromBatches([]));
 			assert.equal(service.policies?.storageOnly, true);
 		});
 
-		it("serves storage from the recoverable (snapshot) document service", async () => {
+		it("serves the recoverable snapshot without consulting snapshot caches", async () => {
 			const { service, recoverable } = makeService(100, streamFromBatches([]));
 			const storage = await service.connectToStorage();
-			assert.equal(storage, recoverable.storage);
+			const snapshot = await storage.getSnapshot?.({ scenarioName: "point-in-time-test" });
+			assert.equal(snapshot, recoverable.snapshot);
+			assert.deepEqual(recoverable.snapshotFetchOptions, {
+				scenarioName: "point-in-time-test",
+				fetchSource: FetchSource.noCache,
+			});
 			assert.equal(recoverable.connectToStorageCount, 1);
+		});
+
+		it("bypasses caches when the loader uses the getVersions snapshot path", async () => {
+			const { service, recoverable } = makeService(100, streamFromBatches([]));
+			const storage = await service.connectToStorage();
+			await storage.getVersions(null, 1, "point-in-time-test");
+			assert.equal(recoverable.versionsFetchSource, FetchSource.noCache);
 		});
 
 		it("refuses connectToDeltaStream (the service is storage-only)", async () => {

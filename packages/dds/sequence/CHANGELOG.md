@@ -1,5 +1,78 @@
 # @fluidframework/sequence
 
+## 3.2.0
+
+### Patch Changes
+
+- Fix intervals sharing an end position being dropped from the endpoint index ([#28191](https://github.com/microsoft/FluidFramework/pull/28191)) [63e64bf06cd](https://github.com/microsoft/FluidFramework/commit/63e64bf06cd3129e7335d288c830b1d716259f84)
+
+  [`ISequenceIntervalCollection.previousInterval`](https://fluidframework.com/docs/api/sequence/isequenceintervalcollection-interface#previousinterval-methodsignature) and
+  [`nextInterval`](https://fluidframework.com/docs/api/sequence/isequenceintervalcollection-interface#nextinterval-methodsignature) are backed by an index that ordered
+  intervals by end position alone. Because that ordering treats any two intervals ending at the same
+  position as the same entry, only one of them could be held at a time: adding a second interval with
+  an existing end position overwrote the first, and removing either one evicted both. Intervals that
+  were still present in the collection could therefore be missing from the results of
+  `previousInterval` and `nextInterval`.
+
+  The index now orders by end position and then by interval ID, so intervals sharing an end position
+  are stored and removed individually. Lookups continue to match on end position alone, so
+  `previousInterval` and `nextInterval` return the same results as before whenever end positions were
+  already distinct.
+
+- Fix interval iteration by start and end position returning nothing ([#28241](https://github.com/microsoft/FluidFramework/pull/28241)) [50c58d5cda1](https://github.com/microsoft/FluidFramework/commit/50c58d5cda1d720c674385f06893c157b4b3492e)
+
+  [`ISequenceOverlappingIntervalsIndex.gatherIterationResults`](https://fluidframework.com/docs/api/sequence/isequenceoverlappingintervalsindex-interface#gatheriterationresults-methodsignature)
+  gathered no intervals at all when it was given both a start and an end position. It compared the
+  range being searched for against each interval using an ordering that includes interval ID, and the
+  range being searched for is described by a temporary interval assigned a fresh random ID, so nothing
+  could ever compare equal to it.
+  Gathering by start position alone, by end position alone, or with no bounds was unaffected.
+
+  Interval IDs are no longer considered when gathering, so passing both a start and an end position now
+  yields every interval spanning exactly that range.
+
+## 3.1.0
+
+Dependency updates only.
+
+## 3.0.0
+
+### Minor Changes
+
+- Removal of direct CommonJS support ([#28124](https://github.com/microsoft/FluidFramework/pull/28124)) [0f84e3b8878](https://github.com/microsoft/FluidFramework/commit/0f84e3b8878a5e75b2253976d98fd963bbd9db88)
+
+  Direct `require()` import is no longer directly supported.
+  Package is transpiled as ECMAScript Module.
+
+  See [Removal of direct CommonJS support in v3.0](https://github.com/microsoft/FluidFramework/issues/27444) for more information.
+
+- Require modern TypeScript module resolution ([#27970](https://github.com/microsoft/FluidFramework/pull/27970)) [325e2016ca9](https://github.com/microsoft/FluidFramework/commit/325e2016ca9978d4a1f7552c97ba34feac9df41f)
+
+  Fluid Framework Client packages no longer include type declaration compatibility entrypoints for TypeScript's legacy Node10 resolution mode (`"moduleResolution": "node"` or `"node10"`).
+  Applications upgrading to Fluid Framework 3.0 must use one of the following supported configurations:
+  - `"module": "Node16"` with `"moduleResolution": "Node16"`
+  - `"module": "NodeNext"` with `"moduleResolution": "NodeNext"`
+  - `"module": "ESNext"` with `"moduleResolution": "Bundler"`
+
+  Existing public package entrypoints exposed through `package.json` exports, including `/alpha`, `/beta`, and `/legacy`, remain available under supported module resolution modes.
+
+  See [Removal of Node10 resolutions in v3.0](https://github.com/microsoft/FluidFramework/issues/27457) for more information.
+
+- Client packages now target ES2022 ([#27846](https://github.com/microsoft/FluidFramework/pull/27846)) [91c78541bdd](https://github.com/microsoft/FluidFramework/commit/91c78541bddcbca5d6c5f357b023eeaee617d885)
+
+  The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+  The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+  All actively supported Node.js versions and evergreen browsers already meet this requirement.
+
+  Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+  It is possible this change could impact users of less up to date JavaScript runtimes.
+  Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
+
+- Build with TypeScript 6 ([#28052](https://github.com/microsoft/FluidFramework/pull/28052)) [7ab015c49de](https://github.com/microsoft/FluidFramework/commit/7ab015c49deec84833cdfe1fb5e1606b901f6e81)
+
+  FluidFramework Client SDK is now built using TypeScript 6. Consumers should build with TypeScript v6 or v7 or compatible tooling.
+
 ## 2.116.0
 
 Dependency updates only.

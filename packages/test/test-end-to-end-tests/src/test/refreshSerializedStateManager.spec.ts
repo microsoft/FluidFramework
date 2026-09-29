@@ -88,7 +88,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			runtimeOptions,
 			loaderProps: {
 				logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
-					send: (tb) => (event, logLevel?: LogLevel) => {
+					send: (tb) => (event, logLevel: LogLevel) => {
 						tb.send(event, logLevel);
 						if (
 							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
@@ -160,7 +160,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			runtimeOptions,
 			loaderProps: {
 				logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
-					send: (tb) => (event, logLevel?: LogLevel) => {
+					send: (tb) => (event, logLevel: LogLevel) => {
 						tb.send(event, logLevel);
 						if (
 							event.eventName === "fluid:telemetry:serializedStateManager:SnapshotRefreshed"
@@ -220,7 +220,7 @@ describeCompat("Snapshot refresh at loading", "NoCompat", (getTestObjectProvider
 			runtimeOptions,
 			loaderProps: {
 				logger: wrapObjectAndOverride<ITelemetryBaseLogger>(mockLogger, {
-					send: (tb) => (event, logLevel?: LogLevel) => {
+					send: (tb) => (event, logLevel: LogLevel) => {
 						tb.send(event, logLevel);
 						if (
 							event.eventName ===

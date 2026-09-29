@@ -413,6 +413,7 @@ export function createTreeCheckout(
 				change: changeFamily.rebaser.compose([]),
 				revision: "root",
 				customMetadata: undefined,
+				wasTrimmed: true,
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
@@ -1493,7 +1494,22 @@ export class TreeCheckout implements ITreeCheckout {
 		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
 		const targetCommit = findAncestor(
 			[this.#transaction.activeBranch.getHead(), commitsToUndo],
-			(commit) => commit.revision === revision,
+			(commit) => {
+				if (commit.revision === revision) {
+					return true;
+				}
+				if (hasSchemaChange(commit.change)) {
+					assert(
+						commit.revision !== "root",
+						0xd4f /* Unexpected schema change in root commit */,
+					);
+					const schemaRevision = this.idCompressor.decompress(commit.revision);
+					throw new UsageError(
+						`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${schemaRevision}.`,
+					);
+				}
+				return false;
+			},
 		);
 		if (targetCommit === undefined) {
 			throw new UsageError(`No commit found with revision: ${revisionString}`);

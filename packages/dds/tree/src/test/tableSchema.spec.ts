@@ -13,14 +13,13 @@ import {
 	FluidClientVersion,
 	FormatValidatorBasic,
 } from "../index.js";
-import { Tree, TreeAlpha } from "../shared-tree/index.js";
+import { Tree, TreeAlpha, TreeBeta } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
-	TreeBeta,
 	TreeViewConfiguration,
 	type ConciseTree,
 	type TreeNode,

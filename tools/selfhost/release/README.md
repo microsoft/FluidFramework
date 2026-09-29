@@ -33,8 +33,47 @@ Run from the `tools/selfhost` root:
 TARGET_PLATFORM=linux/amd64 \
 ACR_LOGIN_SERVER=myacr.azurecr.io \
 FLUID_DIR=~/src/FluidFramework \
-./release/generate-release.sh client_v2.43.0 r0.1.0
+./release/generate-release.sh <reviewed-server-or-client-tag> r0.1.0
 ```
+
+Fluid Framework server and client release tags are published on the
+[FluidFramework tags page](https://github.com/microsoft/FluidFramework/tags). Prefer a `server_v*`
+release for a self-host deployment: server releases identify a tested set of Routerlicious,
+Historian, Gitrest, and related server-package changes. Server releases are published less
+frequently than client releases, so a reviewed `client_v*` release is also a valid source when a
+more recent monorepo revision is required.
+
+Both tag families are Git references to a specific commit in the FluidFramework monorepo. The
+release scripts check out that complete commit and build the server images from the server source
+present at that revision; they do not install the published client or server npm packages. Fetch
+and list both tag families from the dedicated clone:
+
+```bash
+cd "$FLUID_DIR"
+git fetch origin --tags
+git tag --list 'server_v*' --sort=-version:refname | head -20
+git tag --list 'client_v*' --sort=-version:refname | head -20
+```
+
+After selecting and reviewing either a server or client tag, pass it directly to
+`generate-release.sh`. For example:
+
+```bash
+FLUID_TAG=server_vX.Y.Z
+git -C "$FLUID_DIR" show --no-patch --format=fuller "$FLUID_TAG"
+
+TARGET_PLATFORM=linux/amd64 \
+ACR_LOGIN_SERVER=myacr.azurecr.io \
+FLUID_DIR="$FLUID_DIR" \
+./release/generate-release.sh "$FLUID_TAG" r0.1.0
+```
+
+Review the selected tag and its commit according to your source-review and change-management
+process before generating the release. The release tooling resolves either tag family to its
+immutable 40-character commit SHA and records that SHA in
+`release-artifacts/<release-id>/source.json`. You can pass a reviewed full 40-character commit SHA
+directly instead of a tag, including when a required server fix has not yet been included in a
+server or client release.
 
 This runs:
 

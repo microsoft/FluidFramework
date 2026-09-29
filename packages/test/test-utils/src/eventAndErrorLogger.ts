@@ -64,7 +64,7 @@ export class EventAndErrorTrackingLogger
 		);
 	}
 
-	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {

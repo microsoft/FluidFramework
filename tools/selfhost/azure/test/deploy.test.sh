@@ -14,6 +14,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AZURE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+export TMPDIR="$WORK/tmp"
+mkdir -p "$TMPDIR"
 
 PASS=0; FAIL=0; SKIP=0
 ok()    { printf '  \033[32mPASS\033[0m %s\n' "$1"; PASS=$((PASS+1)); }
@@ -32,11 +34,25 @@ absorb() { while IFS= read -r l; do case "$l" in PASS\ *) ok "${l#PASS }";; FAIL
 BIN="$WORK/bin"; mkdir -p "$BIN"
 export CALLS="$WORK/calls.log"; : > "$CALLS"
 export MOCK_NS_EXISTS=0 MOCK_TIER=Standard MOCK_REDIS_EXISTS=0 MOCK_REDIS_HA=Enabled
+export MOCK_ACR_EXISTS=0 MOCK_ACR_ADMIN_ENABLED=false MOCK_BUSYBOX_DIGEST_EXISTS=0
+export MOCK_DNS_LINK_TO_VNET=0
 
 cat > "$BIN/az" <<'STUB'
 #!/usr/bin/env bash
 echo "az $*" >> "$CALLS"
 case "$*" in
+  *"acr repository show"*"busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*)
+    [ "${MOCK_BUSYBOX_DIGEST_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
+  *"acr repository show"*"routerlicious:mock-tag"*|*"acr repository show"*"historian:mock-tag"*|*"acr repository show"*"gitrest:mock-tag"*)
+    exit 0 ;;
+  *"acr show"*"--query provisioningState"*) echo "Succeeded"; exit 0 ;;
+  *"acr show"*"--query adminUserEnabled"*)
+    if grep -q "acr update .*--admin-enabled false" "$CALLS"; then echo "false"; else echo "${MOCK_ACR_ADMIN_ENABLED:-false}"; fi
+    exit 0 ;;
+  *"acr show"*"--query resourceGroup"*)
+    [ "${MOCK_ACR_EXISTS:-0}" = 1 ] && echo "mock-rg" && exit 0 || exit 1 ;;
+  *"acr show"*"--query loginServer"*) echo "mockbuildacr.azurecr.io"; exit 0 ;;
+  *"acr show"*) [ "${MOCK_ACR_EXISTS:-0}" = 1 ] && exit 0 || exit 1 ;;
   *"extension show"*"redisenterprise"*)                                  exit 0 ;;
   *"redisenterprise create --help"*)
     printf '%s\n' "--access-keys-authentication"
@@ -66,6 +82,10 @@ case "$*" in
   *"authorization-rule keys list"*)                           echo 'Endpoint=sb://ns.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=abc+/='; exit 0 ;;
   *"keyvault secret show"*)                                   echo "https://kv.vault.azure.net/secrets/eventhub-connection-string/1"; exit 0 ;;
   *"privateLinkServiceConnections"*)                          echo "Approved"; exit 0 ;;
+  *"network vnet show"*"--query id"*)                         echo "/subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Network/virtualNetworks/mock-vnet"; exit 0 ;;
+  *"private-dns link vnet list"*)
+    [ "${MOCK_DNS_LINK_TO_VNET:-0}" = 1 ] && echo "link-legacy-resource"
+    exit 0 ;;
   *"private-endpoint show"*|*"private-dns zone show"*|*"private-dns link vnet show"*) exit 1 ;;
 esac
 exit 0
@@ -84,8 +104,9 @@ export PATH="$BIN:$PATH"
 # at import, so the extracted function block has to sit in a repo-shaped tree with preflight
 # stubbed out -- the real one makes live Azure calls.
 # ---------------------------------------------------------------------------
-REPO="$WORK/repo"; mkdir -p "$REPO/azure"
+REPO="$WORK/repo"; mkdir -p "$REPO/azure" "$REPO/release"
 cp "$AZURE_DIR"/*.yaml "$AZURE_DIR"/*.json "$AZURE_DIR"/*.sh "$REPO/azure/" 2>/dev/null || true
+cp "$AZURE_DIR/../release/lib.sh" "$REPO/release/lib.sh"
 printf '#!/usr/bin/env bash\nexit 0\n' > "$REPO/azure/preflight-check.sh"
 chmod +x "$REPO/azure/preflight-check.sh"
 
@@ -95,12 +116,15 @@ REL_DIR="$RELEASE_ROOT/$REL_ID"
 mkdir -p "$REL_DIR/deployment/azure"
 cp "$AZURE_DIR"/*.yaml "$REL_DIR/deployment/azure/" 2>/dev/null || true
 printf '{"sourceRepo":"https://github.com/microsoft/FluidFramework","resolvedCommitSha":"0123456789abcdef0123456789abcdef01234567"}\n' > "$REL_DIR/source.json"
-printf '{"builtImages":[{"name":"routerlicious","status":"pinned","tag":"mock-tag"}]}\n' > "$REL_DIR/images.json"
+printf '{"builtImages":[{"name":"routerlicious","status":"pinned","tag":"mock-tag"}],"dependencyImages":[{"name":"busybox","tag":"1.38.0-glibc","digest":"sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","status":"pinned"}]}\n' > "$REL_DIR/images.json"
 
 PARAMS="$WORK/params.json"
 # fluidRepoDir is mandatory since the release-pipeline merge; git is stubbed, so a directory with
-# a .git marker is enough to get past the checkout logic.
+# a .git marker and compatible Historian source are enough to get past the checkout logic.
 mkdir -p "$WORK/fluid/.git"
+mkdir -p "$WORK/fluid/server/historian/packages/historian-base/src/services"
+printf '%s\n' 'const tokenLifetimeInSec = Math.floor(tokenLifetimeInMSec / 1000);' \
+  > "$WORK/fluid/server/historian/packages/historian-base/src/services/riddlerService.ts"
 cat > "$PARAMS" <<JSON
 {
   "subscriptionId": "00000000-0000-0000-0000-000000000000",
@@ -168,7 +192,7 @@ group "1. Parameter parsing"
 while IFS='=' read -r k v; do printf -v "V_$k" '%s' "$v"; done < <(
   read_vars "$PARAMS" EVENTHUBS_NAMESPACE EVENTHUBS_SKU EVENTHUBS_CAPACITY EVENTHUBS_PARTITIONS \
             EVENTHUBS_RETENTION_HOURS EVENTHUBS_ZONE_REDUNDANT KAFKA_ENDPOINT REDIS_SKU \
-            REDIS_HIGH_AVAILABILITY REDIS_PORT)
+            REDIS_HIGH_AVAILABILITY REDIS_PORT BUSYBOX_IMAGE)
 assert_eq "namespaceName parsed"  "${V_EVENTHUBS_NAMESPACE:-}"       "mock-eventhubs"
 assert_eq "sku parsed"            "${V_EVENTHUBS_SKU:-}"             "Standard"
 assert_eq "capacity parsed"       "${V_EVENTHUBS_CAPACITY:-}"        "1"
@@ -180,10 +204,15 @@ assert_eq "KAFKA_ENDPOINT is the TLS Kafka head on 9093" \
 assert_eq "Azure Managed Redis defaults to Balanced_B5" "${V_REDIS_SKU:-}" "Balanced_B5"
 assert_eq "Azure Managed Redis high availability is parsed" "${V_REDIS_HIGH_AVAILABILITY:-}" "Enabled"
 assert_eq "Azure Managed Redis uses port 10000" "${V_REDIS_PORT:-}" "10000"
+assert_eq "secret init image uses the release-pinned ACR digest" "${V_BUSYBOX_IMAGE:-}" \
+  "mockacr.azurecr.io/busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 TILDE="$WORK/params-tilde.json"
 jq '.fluidRepoDir = "~/fluid"' "$PARAMS" > "$TILDE"
 mkdir -p "$WORK/home/fluid/.git"
+mkdir -p "$WORK/home/fluid/server/historian/packages/historian-base/src/services"
+printf '%s\n' 'const tokenLifetimeInSec = Math.floor(tokenLifetimeInMSec / 1000);' \
+  > "$WORK/home/fluid/server/historian/packages/historian-base/src/services/riddlerService.ts"
 tilde_root="$(HOME="$WORK/home" read_vars "$TILDE" FLUID_REPO_DIR | sed -n 's/^FLUID_REPO_DIR=//p')"
 assert_eq "fluidRepoDir expands a leading tilde" "$tilde_root" "$WORK/home/fluid"
 
@@ -216,6 +245,12 @@ assert_has "hub deltas created"                         "$CALLS" "-n deltas"
 assert_has "hubs at 32 partitions"                      "$CALLS" "--partition-count 32"
 assert_has "hubs at 72h retention"                      "$CALLS" "--retention-time-in-hours 72"
 assert_has "connection string written to Key Vault"     "$CALLS" "eventhub-connection-string"
+assert_has "Key Vault receives secret values through a private file" "$CALLS" "--file"
+if grep "keyvault secret set" "$CALLS" | grep -q "SharedAccessKey"; then
+  no "Event Hubs credentials never enter the Azure CLI argument list"
+else
+  ok "Event Hubs credentials never enter the Azure CLI argument list"
+fi
 assert_has "public network access disabled"             "$CALLS" "--public-network-access Disabled"
 assert_has "private endpoint created"                   "$CALLS" "private-endpoint create"
 assert_has "private DNS zone privatelink.servicebus"    "$CALLS" "privatelink.servicebus.windows.net"
@@ -234,6 +269,18 @@ else ok "re-run does not recreate the namespace"; fi
 printf '%s' "$out" | grep -q "already exists, skipping create" \
   && ok "re-run reports the skip" || no "re-run reports the skip"
 export MOCK_NS_EXISTS=0
+
+: > "$CALLS"; export MOCK_DNS_LINK_TO_VNET=1
+out="$(run_phase 'create_private_endpoint /subscriptions/s/resourceGroups/mock-rg/providers/Microsoft.Storage/storageAccounts/new-storage file new-storage privatelink.file.core.windows.net')"; rc=$?
+assert_eq "renamed resource reuses the VNet's existing private DNS link" "$rc" "0"
+if grep -q "private-dns link vnet create" "$CALLS"; then
+  no "existing VNet link is not recreated under the new resource name"
+else
+  ok "existing VNet link is not recreated under the new resource name"
+fi
+printf '%s' "$out" | grep -q "reusing it" \
+  && ok "existing private DNS link reuse is reported" || no "existing private DNS link reuse is reported"
+export MOCK_DNS_LINK_TO_VNET=0
 
 # ---------------------------------------------------------------------------
 group "4. Mock deploy: Azure Managed Redis"
@@ -275,6 +322,70 @@ export MOCK_REDIS_HA=Enabled
 # ---------------------------------------------------------------------------
 group "5. Guard rails"
 # ---------------------------------------------------------------------------
+: > "$CALLS"; export MOCK_ACR_EXISTS=0 MOCK_ACR_ADMIN_ENABLED=false
+out="$(run_phase 'phase0_rg_acr')"; rc=$?
+assert_eq "fresh deploy ACR provisioning exits 0" "$rc" "0"
+assert_has "fresh deploy ACR disables the admin account at creation" "$CALLS" "--admin-enabled false"
+
+: > "$CALLS"; export MOCK_ACR_EXISTS=1 MOCK_ACR_ADMIN_ENABLED=true
+out="$(run_phase 'phase0_rg_acr')"; rc=$?
+assert_eq "existing deploy ACR reconciliation exits 0" "$rc" "0"
+assert_has "existing deploy ACR has its admin account disabled" "$CALLS" "acr update -g mock-rg -n mockacr --admin-enabled false"
+
+: > "$CALLS"; export MOCK_ACR_EXISTS=1 MOCK_ACR_ADMIN_ENABLED=true
+build_registry="$(
+  PARAMETERS_FILE="$PARAMS" "$AZURE_DIR/../release/setup-build-registry.sh" mockbuildacr 2>/dev/null
+)"; rc=$?
+assert_eq "existing build ACR reconciliation exits 0" "$rc" "0"
+assert_eq "build ACR setup still returns its login server" "$build_registry" "mockbuildacr.azurecr.io"
+assert_has "existing build ACR has its admin account disabled" "$CALLS" \
+  "acr update -g mock-rg -n mockbuildacr --admin-enabled false"
+
+: > "$CALLS"; export MOCK_BUSYBOX_DIGEST_EXISTS=0
+out="$(run_phase 'phase1_images')"; rc=$?
+assert_eq "dependency image import exits 0" "$rc" "0"
+assert_has "dependency import checks the release-pinned digest" "$CALLS" \
+  "busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+assert_has "missing pinned busybox digest is imported into the deploy ACR" "$CALLS" \
+  "acr import --name mockacr --source docker.io/library/busybox@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+: > "$CALLS"; export MOCK_BUSYBOX_DIGEST_EXISTS=1
+out="$(run_phase 'phase1_images')"; rc=$?
+assert_eq "existing dependency digest check exits 0" "$rc" "0"
+if grep -q "acr import .*busybox" "$CALLS"; then
+  no "existing pinned busybox digest is not re-imported"
+else
+  ok "existing pinned busybox digest is not re-imported"
+fi
+
+export MOCK_ACR_EXISTS=0 MOCK_ACR_ADMIN_ENABLED=false MOCK_BUSYBOX_DIGEST_EXISTS=0
+assert_has "deploy ACR is created with its admin account disabled" "$AZURE_DIR/deploy.sh" "--admin-enabled false"
+if grep -qF -- "--admin-enabled true" "$AZURE_DIR/deploy.sh"; then
+  no "deploy.sh never enables the ACR admin account"
+else
+  ok "deploy.sh never enables the ACR admin account"
+fi
+assert_has "build ACR is created with its admin account disabled" \
+  "$AZURE_DIR/../release/setup-build-registry.sh" "--admin-enabled false"
+if grep -qF -- "--admin-enabled true" "$AZURE_DIR/../release/setup-build-registry.sh"; then
+  no "setup-build-registry.sh never enables the ACR admin account"
+else
+  ok "setup-build-registry.sh never enables the ACR admin account"
+fi
+assert_has "secret init patch receives the pinned image reference" "$AZURE_DIR/deploy.sh" \
+  '--arg busyboxImage "$busybox_image"'
+assert_has "secret init patch renders the pinned image reference" "$AZURE_DIR/deploy.sh" \
+  '"name": "load-secrets", "image": $busyboxImage'
+assert_has "dependency imports verify the expected digest, not only a mutable tag" "$AZURE_DIR/deploy.sh" \
+  '--image "$target_repo@$digest"'
+if grep -qF "source \"\$AFD_HOSTS_FILE\"" "$AZURE_DIR/deploy.sh"; then
+  no "Front Door deployment state is never executed as shell"
+else
+  ok "Front Door deployment state is never executed as shell"
+fi
+assert_has "deployment artifacts use a private unpredictable directory" "$AZURE_DIR/deploy.sh" \
+  'mktemp -d "$TEMP_BASE/selfhost-fluid-${AKS}.XXXXXX"'
+
 export MOCK_NS_EXISTS=1 MOCK_TIER=Basic
 out="$(run_phase 'phase3_eventhubs')"; rc=$?
 [[ $rc -ne 0 ]] && ok "Basic tier rejected (it has no Kafka endpoint)" \
@@ -459,6 +570,22 @@ grep -q "create-time only"             "$P" && ok "preflight warns zoneRedundant
 grep -q "Microsoft.Cache/redisEnterprise" "$P" && ok "preflight checks Azure Managed Redis names"       || no "preflight checks Azure Managed Redis names"
 grep -q "REDIS_HIGH_AVAILABILITY STORAGE" "$P" && ok "preflight requires Redis highAvailability"         || no "preflight requires Redis highAvailability"
 grep -q "must be exactly 'Enabled' or 'Disabled'" "$P" && ok "preflight validates Redis highAvailability" || no "preflight validates Redis highAvailability"
+
+PREFLIGHT_FAIL_BIN="$WORK/preflight-fail-bin"
+mkdir -p "$PREFLIGHT_FAIL_BIN"
+cat > "$PREFLIGHT_FAIL_BIN/mktemp" <<'STUB'
+#!/usr/bin/env bash
+exit 1
+STUB
+chmod +x "$PREFLIGHT_FAIL_BIN/mktemp"
+preflight_mktemp_out="$(PATH="$PREFLIGHT_FAIL_BIN:$PATH" bash "$P" "$WORK/missing-parameters.json" 2>&1)"
+preflight_mktemp_rc=$?
+assert_eq "preflight exits when its private temporary directory cannot be created" "$preflight_mktemp_rc" "1"
+if grep -qF "ERROR: could not create a private preflight temporary directory." <<<"$preflight_mktemp_out"; then
+  ok "preflight reports temporary-directory creation failures"
+else
+  no "preflight reports temporary-directory creation failures" "$preflight_mktemp_out"
+fi
 
 printf '\n\033[1mTotal: %d passed, %d failed, %d skipped\033[0m\n' "$PASS" "$FAIL" "$SKIP"
 [[ $FAIL -eq 0 ]] || exit 1

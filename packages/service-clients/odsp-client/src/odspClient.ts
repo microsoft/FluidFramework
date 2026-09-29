@@ -123,8 +123,7 @@ export class OdspClient {
 	 */
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		// OdspClient does not support 1.x clients, so we exclude them from `oldestSupportedClient`.
-		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`>,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -144,7 +143,7 @@ export class OdspClient {
 	}>;
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`> = "2.0.0",
+		oldestSupportedClient: OldestSupportedClientVersion = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -182,7 +181,7 @@ export class OdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`>,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -205,7 +204,7 @@ export class OdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		oldestSupportedClient: Exclude<OldestSupportedClientVersion, `1.${string}`> = "2.0.0",
+		oldestSupportedClient: OldestSupportedClientVersion = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -231,7 +230,7 @@ export class OdspClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		minVersionForCollaboration: Exclude<OldestSupportedClientVersion, `1.${string}`>,
+		minVersionForCollaboration: OldestSupportedClientVersion,
 	): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,

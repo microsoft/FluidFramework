@@ -26,6 +26,7 @@ import { FieldKinds } from "../../../feature-libraries/index.js";
 import {
 	SchematizingSimpleTreeView,
 	TreeAlpha,
+	TreeBeta,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
 /* eslint-disable import-x/no-internal-modules */
@@ -65,7 +66,6 @@ import {
 	toStoredSchema,
 	type TransactionVoidResult,
 	treeNodeApi as Tree,
-	TreeBeta,
 	type TreeChangeEvents,
 	type TreeLeafValue,
 	type TreeNode,

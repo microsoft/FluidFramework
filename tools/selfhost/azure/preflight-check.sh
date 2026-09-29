@@ -9,6 +9,17 @@ set -uo pipefail   # deliberately NOT -e: a single failed check must not abort t
 
 SELFHOST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PARAMS_FILE="${1:-$SELFHOST_ROOT/azure/deploy.parameters.json}"
+PREFLIGHT_TEMP_DIR=""
+if ! PREFLIGHT_TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/selfhost-preflight.XXXXXX")"; then
+  echo "ERROR: could not create a private preflight temporary directory." >&2
+  exit 1
+fi
+if ! chmod 700 "$PREFLIGHT_TEMP_DIR"; then
+  echo "ERROR: could not secure the preflight temporary directory." >&2
+  rm -rf -- "$PREFLIGHT_TEMP_DIR"
+  exit 1
+fi
+trap 'rm -rf -- "$PREFLIGHT_TEMP_DIR"' EXIT
 
 if [[ ! -f "$PARAMS_FILE" ]]; then
   echo "ERROR: parameters file not found: $PARAMS_FILE" >&2
@@ -407,20 +418,21 @@ banner "Azure Front Door profile count quota"
 if az afd profile show -g "$RG" --profile-name "$AFD" >/dev/null 2>&1; then
   ok "Front Door profile '$AFD' already exists in target RG $RG -- deploy.sh will reuse it (skipping quota check)"
 else
+  afd_quota_err="$PREFLIGHT_TEMP_DIR/afd-quota.err"
   afd_sub_id="$(az account show --query id -o tsv)"
   afd_resp="$(az rest --method post \
     --url "https://management.azure.com/subscriptions/$afd_sub_id/providers/Microsoft.Cdn/checkResourceUsage?api-version=2026-04-01-preview" \
-    2>/tmp/afd_quota_err.$$)"
+    2>"$afd_quota_err")"
   read -r afd_current afd_limit <<<"$(jq -r '.value[]? | select(.resourceType=="afdprofile") | "\(.currentValue) \(.limit)"' <<<"$afd_resp" 2>/dev/null)"
   if [[ -z "$afd_limit" ]]; then
-    note "could not read Front Door profile quota ($(head -1 /tmp/afd_quota_err.$$ 2>/dev/null))"
+    note "could not read Front Door profile quota ($(head -1 "$afd_quota_err" 2>/dev/null))"
   elif [[ $afd_current -lt $afd_limit ]]; then
     ok "quota OK: $afd_current/$afd_limit Azure Front Door (Standard/Premium) profiles used"
   else
     fail "quota SHORTFALL: $afd_current/$afd_limit Azure Front Door profiles already used -- request a quota increase or delete unused profiles"
   fi
-  rm -f /tmp/afd_quota_err.$$
-  unset afd_resp afd_sub_id
+  rm -f "$afd_quota_err"
+  unset afd_resp afd_sub_id afd_quota_err
 fi
 
 # ---------------------------------------------------------------------------
@@ -434,17 +446,19 @@ CHART_DIR="$FLUID_ROOT/server/routerlicious/kubernetes/routerlicious"
 if [[ ! -d "$CHART_DIR" ]]; then
   note "FluidFramework checkout not found at $FLUID_ROOT -- skipping Helm template check (deploy.sh clones it fresh if needed)"
 else
-  tmp_values="$(mktemp)"
+  tmp_values="$PREFLIGHT_TEMP_DIR/routerlicious-values.yaml"
+  helm_template_out="$PREFLIGHT_TEMP_DIR/helm-template.out"
+  helm_template_err="$PREFLIGHT_TEMP_DIR/helm-template.err"
   sed -e "s|<ACR>|placeholderacr|g" -e "s|<IMAGE_TAG>|placeholder-tag|g" \
       -e "s|<REDIS_HOSTNAME>|placeholder.eastus.redis.azure.net|g" \
       "$SELFHOST_ROOT/azure/routerlicious-values.yaml" > "$tmp_values"
-  if helm template fluid "$CHART_DIR" -f "$tmp_values" >/tmp/helm_template_out.$$ 2>/tmp/helm_template_err.$$; then
-    ok "helm template rendered successfully ($(wc -l </tmp/helm_template_out.$$ | tr -d ' ') lines of manifests)"
+  if helm template fluid "$CHART_DIR" -f "$tmp_values" >"$helm_template_out" 2>"$helm_template_err"; then
+    ok "helm template rendered successfully ($(wc -l <"$helm_template_out" | tr -d ' ') lines of manifests)"
   else
     fail "helm template failed to render -- see errors below"
-    sed 's/^/    /' /tmp/helm_template_err.$$ >&2
+    sed 's/^/    /' "$helm_template_err" >&2
   fi
-  rm -f "$tmp_values" /tmp/helm_template_out.$$ /tmp/helm_template_err.$$
+  rm -f "$tmp_values" "$helm_template_out" "$helm_template_err"
 fi
 
 # ---------------------------------------------------------------------------

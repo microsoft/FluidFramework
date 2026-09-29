@@ -101,6 +101,16 @@ export function TelemetryView(): ReactElement {
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = useState<number>(DEFAULT_PAGE_SIZE);
 	const [selectedIndex, setSelectedIndex] = useState<number | undefined>();
 	const [refreshStatusMessage, setRefreshStatusMessage] = useState("");
+	/** Stores the pending status reset. The component cancels this timer before replacement and on unmount. */
+	const refreshStatusTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+	useEffect(() => {
+		return (): void => {
+			if (refreshStatusTimerRef.current !== undefined) {
+				clearTimeout(refreshStatusTimerRef.current);
+			}
+		};
+	}, []);
 
 	useEffect(() => {
 		/**
@@ -184,7 +194,10 @@ export function TelemetryView(): ReactElement {
 		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
 		setRefreshStatusMessage("Telemetry events refreshed");
 		// Clear the message after a delay so subsequent clicks trigger a new announcement
-		setTimeout(() => setRefreshStatusMessage(""), 1000);
+		if (refreshStatusTimerRef.current !== undefined) {
+			clearTimeout(refreshStatusTimerRef.current);
+		}
+		refreshStatusTimerRef.current = setTimeout(() => setRefreshStatusMessage(""), 1000);
 	};
 
 	return (

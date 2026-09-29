@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
+import type {
+	ErasedBaseType,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * This file defines the external facing API for the {@link ServiceClient} and related types.
@@ -120,7 +123,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * Oldest Fluid Framework client version that must be able to open and process documents written
  * by a service client.
  * @remarks
- * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * A string in SemVer format indicating a specific stable version of the Fluid Framework client package.
  *
  * Service clients use this value to select write formats and features. Clients using this version
  * or newer must be able to open and process documents written by the service client. Choosing an
@@ -134,7 +137,6 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  * This differs in that:
  * - This is `alpha` instead of `public`.
  * - This is available to drivers due to its location in `driver-definitions` instead of `runtime-definitions`.
- * - This does not allow requesting collaboration with pre-2.0.0 versions, including the special case of `2.0.0-defaults`.
  * - Patch versions cannot be set: a given minor release is not guaranteed to be greater or equal compat wise to all patches of the previous release, so we do not enable features based on patch versions (instead fall back to the next minor if needed).
  * Therefore allowing patch versions here could be misleading and could lead to bugs.
  *
@@ -144,7 +146,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
 export type OldestSupportedServiceClientVersion = `${2 | 3}.${bigint}.0`;
 
 /**
- * Strips patch and prerelease from a SemVer string, returning only the major and minor version.
+ * Strips patch and prerelease from a SemVer string, returning only the major and minor version with a ".0" patch.
  * @remarks
  * This formats a version in the same style used by {@link OldestSupportedServiceClientVersion}, specifying only the major and minor versions,
  * which are the portions used for feature selection.
@@ -178,6 +180,11 @@ export function featureVersion<major extends `${bigint}`, minor extends `${bigin
  */
 export interface ServiceOptions {
 	/**
+	 * Optional logger that receives telemetry from containers created or loaded by this client.
+	 */
+	readonly logger?: ITelemetryBaseLogger;
+
+	/**
 	 * Oldest Fluid Framework client version that must be able to open and process documents written
 	 * by the service client.
 	 *
@@ -185,9 +192,8 @@ export interface ServiceOptions {
 	 * Choosing an older version may limit the features and write formats the application can use to
 	 * those supported by that version.
 	 *
-	 * A service may provide a default when this option is omitted.
 	 */
-	readonly oldestSupportedClient?: OldestSupportedServiceClientVersion;
+	readonly oldestSupportedClient: OldestSupportedServiceClientVersion;
 }
 
 /**

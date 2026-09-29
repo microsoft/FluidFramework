@@ -8,12 +8,12 @@ import { strict as assert } from "node:assert";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { independentView, FormattedTextDefault } from "@fluidframework/tree/internal";
 import globalJsdom from "global-jsdom";
-import DeltaPackage from "quill-delta";
 
 import {
 	clipboardFormatMatcher,
 	defaultFont,
 	defaultSize,
+	Delta,
 	formatToFullQuillAttributes,
 	formatToQuillAttributes,
 	parseCssFontFamily,
@@ -25,8 +25,6 @@ import {
 	sizeToQuillAttribute,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../formatted/quillAttributeUtils.js";
-
-const Delta = DeltaPackage.default;
 
 /**
  * Build a fresh, hydrated CharacterFormat with the given properties.
@@ -70,8 +68,7 @@ function makeElement(style: { fontSize?: string; fontFamily?: string } = {}): HT
 }
 
 describe("quillAttributeUtils", () => {
-	// JSDOM is set up once in mochaHooks.ts but torn down before tests run; reinitialize
-	// here so `document` is available for the parseCss*/clipboardFormatMatcher cases.
+	// Set up JSDOM so `document` is available for the parseCss*/clipboardFormatMatcher cases.
 	let cleanup: () => void;
 	before(() => {
 		cleanup = globalJsdom();

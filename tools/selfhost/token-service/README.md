@@ -451,10 +451,18 @@ So, starting from this service signing with `key1`:
 
 ```bash
 # 1. Rotate the key nobody is using. Allowed, because key1 is the one in the vault.
-NEW_KEY=$(tenant-admin/tenant-admin.sh rotate fluid --key key2 | jq -r .keys.key2)
+(
+  NEW_KEY=$(tenant-admin/tenant-admin.sh rotate fluid --key key2 | jq -r .keys.key2)
 
-# 2. Point this service at it.
-az keyvault secret set --vault-name <vault> --name fluid-tenant-key-fluid --value "$NEW_KEY"
+  # 2. Point this service at it.
+  KEY_FILE="$(mktemp)"
+  trap 'rm -f "$KEY_FILE"' EXIT
+  chmod 600 "$KEY_FILE"
+  printf '%s' "$NEW_KEY" > "$KEY_FILE"
+  unset NEW_KEY
+  az keyvault secret set --vault-name <vault> --name fluid-tenant-key-fluid \
+    --file "$KEY_FILE" --encoding utf-8
+)
 az functionapp restart -g <rg> -n <function app>
 
 # 3. Confirm minting is healthy, then retire the old key. Now allowed: key2 is in the vault.

@@ -1401,6 +1401,60 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("revertibles", () => {
+		const revertibleSchema = new SchemaFactory("revertibles");
+
+		it("initialization events omit revertibles", () => {
+			const view = getView(new TreeViewConfiguration({ schema: revertibleSchema.number }));
+			const log: string[] = [];
+			view.events.on("changed", (metadata, getRevertible) => {
+				assert(metadata.isLocal);
+				assert.equal(metadata.getRevertible(), undefined);
+				assert.equal(getRevertible, undefined);
+				log.push("changed");
+			});
+			view.events.on("commitApplied", (_metadata, getRevertible) => {
+				assert.equal(getRevertible, undefined);
+				log.push("commitApplied");
+			});
+
+			view.initialize(1);
+
+			assert.deepEqual(log, ["changed", "commitApplied"]);
+		});
+
+		for (const withDataChange of [false, true]) {
+			it(`schema change events omit revertibles (with data: ${withDataChange})`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: revertibleSchema.number }));
+				view.initialize(1);
+
+				const upgradedView = view.checkout.fork().viewWith(
+					new TreeViewConfiguration({
+						schema: [revertibleSchema.number, revertibleSchema.string],
+					}),
+				);
+				const log: string[] = [];
+				upgradedView.events.on("changed", (metadata, getRevertible) => {
+					assert(metadata.isLocal);
+					assert.equal(metadata.getRevertible(), undefined);
+					assert.equal(getRevertible, undefined);
+					log.push("changed");
+				});
+				upgradedView.events.on("commitApplied", (_metadata, getRevertible) => {
+					assert.equal(getRevertible, undefined);
+					log.push("commitApplied");
+				});
+				if (withDataChange) {
+					upgradedView.runTransaction(() => {
+						upgradedView.upgradeSchema();
+						upgradedView.root = "upgraded";
+					});
+				} else {
+					upgradedView.upgradeSchema();
+				}
+				assert.deepEqual(log, ["changed", "commitApplied"]);
+			});
+		}
+
 		itView("can be generated for changes made to the local branch", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {

@@ -4,13 +4,10 @@
  */
 
 import { assert, debugAssert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
@@ -26,7 +23,6 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaBoth,
-	UnhydratedFlexTreeNode,
 	NodeSchemaMetadata,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -39,8 +35,6 @@ import {
 	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 	type FieldProps,
 	createFieldSchema,
-	type DefaultProvider,
-	getDefaultProvider,
 } from "../fieldSchema.js";
 import {
 	booleanSchema,
@@ -62,8 +56,8 @@ import {
 	type TreeMapNode,
 	type TreeObjectNode,
 } from "../node-kinds/index.js";
-import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
 
+import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 import type { System_Unsafe } from "./typesUnsafe.js";
 
@@ -767,22 +761,6 @@ export class SchemaFactory<
 	 * A node may have more than one identifier field (though note that this precludes the use of the {@link TreeNodeApi.shortId|Tree.shortId()} API).
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
-		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
-			(
-				context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
-			): UnhydratedFlexTreeNode[] => {
-				const id =
-					context === "UseGlobalContext"
-						? globalIdentifierAllocator.decompress(
-								globalIdentifierAllocator.generateCompressedId(),
-							)
-						: context.nodeKeyManager.stabilizeNodeIdentifier(
-								context.nodeKeyManager.generateLocalNodeIdentifier(),
-							);
-
-				return [unhydratedFlexTreeFromInsertable(id, this.string)];
-			},
-		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {
 			defaultProvider: defaultIdentifierProvider,
 		});
@@ -965,14 +943,6 @@ export function scoped<
 		factory.scope === undefined ? `${name}` : `${factory.scope}.${name}`
 	) as ScopedSchemaName<TScope, Name>;
 }
-
-/**
- * Used to allocate default identifiers for unhydrated nodes when no context is available.
- * @remarks
- * The identifiers allocated by this will never be compressed to Short Ids.
- * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
- */
-const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
 
 /**
  * Additional information to provide to Node Schema creation.

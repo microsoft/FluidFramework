@@ -1,4 +1,5 @@
 **IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
+**The APIs can change without notice.**
 
-**Do not use in production scenarios.**
+**Do not use it as a dependency in production scenarios.**
+**We do not guarantee the stability of this package or its APIs.**

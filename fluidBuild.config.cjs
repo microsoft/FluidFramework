@@ -148,11 +148,23 @@ module.exports = {
 			script: false,
 		},
 		"build:package:cjs": {
-			dependsOn: ["build:entrypoints:cjs", "build:cjs"],
+			// CJS entrypoints are off and fall to ESM default via require-esm.
+			// Continue building CJS to verify require-esm, support CJS testing,
+			// and ability to rollback entrypoint trimming without new issues
+			// sneaking in.
+			dependsOn: [
+				// keep verifying CJS buildability
+				"build:entrypoints:cjs",
+				"build:cjs",
+				// build the real requirements for require-esm that will be used.
+				"build:entrypoints:esm",
+				"build:esm",
+				"check:types:require-esm",
+			],
 			script: false,
 		},
 		"build:package:esm": {
-			dependsOn: ["build:entrypoints:esm", "build:esm"],
+			dependsOn: ["build:entrypoints:esm", "build:esm", "build:copy"],
 			script: false,
 		},
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
@@ -554,6 +566,9 @@ module.exports = {
 				".*/eslint.*.mts",
 			],
 			"no-js-file-extensions": [
+				// Test coverage for loading .js as ESM based on the package type.
+				"^build-tools/packages/build-tools/src/test/data/webpack/webpack.config.js$",
+
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
 				"azure/packages/azure-local-service/index.js",

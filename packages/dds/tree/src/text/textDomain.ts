@@ -21,8 +21,8 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
-	TreeBeta,
 } from "../simple-tree/index.js";
+import { TreeBeta } from "../shared-tree/index.js";
 import type {
 	ArrayPlaceAnchor,
 	ArrayNodeDeltaOp,

@@ -7,6 +7,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { FieldKey } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
+import type { CommitRevision } from "../../../simple-tree/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -14,6 +15,7 @@ export type TreeOperation =
 	| TreeEdit
 	| TransactionBoundary
 	| UndoRedo
+	| RevertTo
 	| SchemaChange
 	| Constraint
 	| ForkMergeOperation;
@@ -42,6 +44,12 @@ export interface TransactionBoundary {
 export interface UndoRedo {
 	type: "undoRedo";
 	operation: "undo" | "redo";
+}
+
+export interface RevertTo {
+	type: "revertTo";
+	/** The revision to revert the tree to. */
+	revision: CommitRevision;
 }
 
 export interface SchemaChange {

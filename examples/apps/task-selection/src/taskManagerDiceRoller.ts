@@ -5,7 +5,6 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
 import { TaskManager } from "@fluidframework/task-manager/legacy";
 
 import type { IDiceRoller } from "./interface.js";
@@ -53,13 +52,17 @@ export class TaskManagerDiceRoller extends DataObject implements IDiceRoller {
 	}
 
 	private get taskManager(): TaskManager {
-		assert(this._taskManager !== undefined, "TaskManager not initialized");
+		if (this._taskManager === undefined) {
+			throw new Error("TaskManager not initialized");
+		}
 		return this._taskManager;
 	}
 
 	public get value(): number {
 		const value = this.root.get<number>(diceValueKey);
-		assert(value !== undefined, "Dice value not initialized");
+		if (value === undefined) {
+			throw new Error("Dice value not initialized");
+		}
 		return value;
 	}
 

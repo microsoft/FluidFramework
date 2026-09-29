@@ -17,13 +17,14 @@ import fs from "fs-extra";
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const versions = ["1", "2"];
+const versions = ["1", "2", "3"];
 
 // TODO: automate the generation of these URLs and output directories
 const artifactUrlBase = "https://storage.fluidframework.com/api-extractor-json/latest";
 const artifacts = {
 	1: `${artifactUrlBase}-v1.tar.gz`,
 	2: `${artifactUrlBase}-v2.tar.gz`,
+	3: `${artifactUrlBase}-v2.tar.gz`, // TODO: set to v3 when the v3 docs are published to storage
 };
 
 const docModelsDirectory = path.resolve(dirname, "..", ".doc-models");
@@ -31,6 +32,7 @@ const docModelsDirectory = path.resolve(dirname, "..", ".doc-models");
 const outputDirectories = {
 	1: path.resolve(docModelsDirectory, "v1"),
 	2: path.resolve(docModelsDirectory, "v2"),
+	3: path.resolve(docModelsDirectory, "v3"),
 };
 
 try {

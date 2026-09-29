@@ -129,7 +129,20 @@ export function taggedOptAtomId(
 }
 
 export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
-	return { ...id, localId: brand(id.localId + offset) };
+	return { ...id, localId: offsetChangesetLocalId(id.localId, offset) };
+}
+
+/**
+ * Offsets a changeset local ID by the specified amount.
+ * @param value - The original changeset local ID.
+ * @param offset - The amount by which to offset the local ID.
+ * @returns The offset changeset local ID.
+ */
+export function offsetChangesetLocalId(
+	value: ChangesetLocalId,
+	offset: number,
+): ChangesetLocalId {
+	return brand(value + offset);
 }
 
 // #region These comparison functions are used instead of e.g. `compareNumbers` as a performance optimization
@@ -165,7 +178,11 @@ export interface GraphCommit<TChange> {
 	readonly revision: RevisionTag;
 	/** The change that will result from applying this commit */
 	readonly change: TChange;
-	/** The parent of this commit, on whose change this commit's change is based */
+	/**
+	 * The parent of this commit, on whose change this commit's change is based.
+	 * @remarks
+	 * This property is only `undefined` for the trunk base commit, which is the root of the commit graph.
+	 */
 	readonly parent?: GraphCommit<TChange>;
 	/**
 	 * Arbitrary, application-defined metadata that is persisted alongside this commit.
@@ -176,6 +193,13 @@ export interface GraphCommit<TChange> {
 	 * Always copy this property when copying a commit.
 	 */
 	readonly customMetadata: CustomMetadataTree | undefined;
+
+	/**
+	 * Indicates whether this commit was trimmed from the history.
+	 * @remarks
+	 * During trunk trimming, this property is set to `true` on all trimmed commits (including the new trunk base).
+	 */
+	readonly wasTrimmed?: true;
 }
 
 /**

@@ -65,11 +65,17 @@ if EXISTING_ACR_RESOURCE_GROUP="$(az acr show -n "$ACR_NAME" --query resourceGro
 else
   log "Creating ACR $ACR_NAME ($ACR_SKU) in $LOCATION"
   az acr create -g "$RESOURCE_GROUP" -n "$ACR_NAME" -l "$LOCATION" \
-    --sku "$ACR_SKU" --admin-enabled true --only-show-errors >/dev/null
+    --sku "$ACR_SKU" --admin-enabled false --only-show-errors >/dev/null
 fi
 
 [ "$(az acr show -g "$RESOURCE_GROUP" -n "$ACR_NAME" --query provisioningState -o tsv)" = "Succeeded" ] \
   || fail "ACR $ACR_NAME was not created successfully."
+if [ "$(az acr show -g "$RESOURCE_GROUP" -n "$ACR_NAME" --query adminUserEnabled -o tsv)" = "true" ]; then
+  log "Disabling the admin account on existing ACR $ACR_NAME"
+  az acr update -g "$RESOURCE_GROUP" -n "$ACR_NAME" --admin-enabled false --only-show-errors >/dev/null
+fi
+[ "$(az acr show -g "$RESOURCE_GROUP" -n "$ACR_NAME" --query adminUserEnabled -o tsv)" = "false" ] \
+  || fail "ACR $ACR_NAME admin account is still enabled."
 
 # --- Authenticate for docker push ---------------------------------------------
 log "Authenticating docker to $ACR_NAME (az acr login)"

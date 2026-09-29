@@ -18,12 +18,6 @@ const config: Linter.Config[] = [
 			"unicorn/no-null": "off",
 			"unicorn/no-useless-undefined": "off",
 			"no-restricted-imports": ["error", "@fluentui/react"],
-			"import-x/no-unassigned-import": [
-				"error",
-				{
-					"allow": ["@testing-library/jest-dom"],
-				},
-			],
 		},
 	},
 	{

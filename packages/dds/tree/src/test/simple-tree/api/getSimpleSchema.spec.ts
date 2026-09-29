@@ -32,7 +32,7 @@ import { transformSimpleSchema } from "../../../simple-tree/toStoredSchema.js";
 import type { Mutable } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { HasUnknownOptionalFields } from "../../testTrees.js";
+import { AllowsUnknownOptionalFields } from "../../testTrees.js";
 
 const simpleString: SimpleLeafNodeSchema<SchemaType.View> = {
 	leafKind: ValueSchema.String,
@@ -660,7 +660,7 @@ describe("getSimpleSchema", () => {
 	});
 
 	describe("With allowUnknownOptionalFields in object schema", () => {
-		const schema = HasUnknownOptionalFields;
+		const schema = AllowsUnknownOptionalFields;
 
 		it("Should preserve allowUnknownOptionalFields when converting to SimpleTreeSchema", () => {
 			const expected: SimpleTreeSchema = {

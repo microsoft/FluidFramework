@@ -84,8 +84,19 @@ export function extractTelemetryLoggerExt<
 export enum TelemetryDataTag {
 	/**
 	 * Data containing terms or IDs from code packages that may have been dynamically loaded
+	 *
+	 * @remarks
+	 * For identifiers or other metadata derived from a DDS's schema (e.g. SharedTree schema
+	 * identifiers), use {@link TelemetryDataTag.SchemaArtifact} instead.
 	 */
 	CodeArtifact = "CodeArtifact",
+	/**
+	 * Data containing identifiers or other metadata from a DDS's schema (e.g. SharedTree schema
+	 * identifiers) that may have been dynamically defined by application code.
+	 * @remarks
+	 * Note: only log schema artifacts that do not contain user data, or that have been sanitized to remove user data.
+	 */
+	SchemaArtifact = "SchemaArtifact",
 	/**
 	 * Personal data of a variety of classifications that pertains to the user
 	 */
@@ -364,10 +375,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
-	// `logLevel` stays optional on purpose: older layers may still call `send` without one, so
-	// implementations must keep handling `undefined`. It is forwarded as-is so the base logger
-	// applies its own default rather than this adapter guessing one.
-	public send(eventWithTagsMaybe: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(eventWithTagsMaybe: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		const newEvent: ITelemetryBaseEvent = {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
@@ -384,9 +392,10 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 					break;
 				}
 				case "PackageData": // For back-compat
-				case TelemetryDataTag.CodeArtifact: {
-					// For Microsoft applications, CodeArtifact is safe for now
-					// (we don't load 3P code in 1P apps)
+				case TelemetryDataTag.CodeArtifact:
+				case TelemetryDataTag.SchemaArtifact: {
+					// For Microsoft applications, CodeArtifact and SchemaArtifact are safe for now
+					// (we don't load 3P code or schema in 1P apps)
 					newEvent[key] = value;
 					break;
 				}
@@ -1081,6 +1090,9 @@ export const tagData = <
  * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
  * as well as callbacks that return that type.
  *
+ * Note: for identifiers or other metadata derived from a DDS's schema (e.g. SharedTree schema
+ * identifiers), use {@link tagSchemaArtifacts} instead.
+ *
  * @example Sample usage
  * ```typescript
  * {
@@ -1115,3 +1127,47 @@ export const tagCodeArtifacts = <
 					})
 		| (T[P] extends undefined ? undefined : never);
 } => tagData<TelemetryDataTag.CodeArtifact, T>(TelemetryDataTag.CodeArtifact, values);
+
+/**
+ * Tags all provided `values` as {@link TelemetryDataTag.SchemaArtifact}.
+ *
+ * @param values - The values to be tagged.
+ *
+ * @remarks
+ * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
+ * as well as callbacks that return that type.
+ *
+ * @example Sample usage
+ * ```typescript
+ * {
+ * 	// ...Other properties being added to a telemetry event
+ * 	...tagSchemaArtifacts({ nodeType: node.type }),
+ * 	// ...
+ * }
+ * ```
+ * This will result in `foo` and `bar` added to the event with their values tagged as {@link TelemetryDataTag.SchemaArtifact}.
+ *
+ * @see {@link tagData}
+ *
+ * @internal
+ */
+export const tagSchemaArtifacts = <
+	T extends Record<
+		string,
+		TelemetryBaseEventPropertyType | (() => TelemetryBaseEventPropertyType)
+	>,
+>(
+	values: T,
+): {
+	[P in keyof T]:
+		| (T[P] extends () => TelemetryBaseEventPropertyType
+				? () => {
+						value: ReturnType<T[P]>;
+						tag: TelemetryDataTag.SchemaArtifact;
+					}
+				: {
+						value: Exclude<T[P], undefined>;
+						tag: TelemetryDataTag.SchemaArtifact;
+					})
+		| (T[P] extends undefined ? undefined : never);
+} => tagData<TelemetryDataTag.SchemaArtifact, T>(TelemetryDataTag.SchemaArtifact, values);

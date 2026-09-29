@@ -124,11 +124,15 @@ export class ReplayControllerStatic extends ReplayController {
 	): Promise<void> {
 		let current = this.skipToIndex(fetchedOps);
 
-		return new Promise((resolve) => {
+		return new Promise((resolve, reject) => {
 			const replayNextOps = (): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
 				const currentOp = fetchedOps[current];
+				if (currentOp === undefined) {
+					reject(new Error(`No op found at replay index ${current}`));
+					return;
+				}
 				const playbackOps = [currentOp];
 				let nextInterval = ReplayControllerStatic.DelayInterval;
 				current += 1;
@@ -140,6 +144,10 @@ export class ReplayControllerStatic extends ReplayController {
 
 						while (current < fetchedOps.length) {
 							const op = fetchedOps[current];
+							if (op === undefined) {
+								reject(new Error(`No op found at replay index ${current}`));
+								return;
+							}
 							if (op.timestamp === undefined) {
 								// Missing timestamp, just delay the standard amount of time
 								break;
@@ -335,7 +343,11 @@ export class ReplayDocumentDeltaConnection
 
 				const messages = result.value;
 				currentOp += messages.length;
-				done = controller.isDoneFetch(currentOp, messages[messages.length - 1].timestamp);
+				const lastMessage = messages[messages.length - 1];
+				if (lastMessage === undefined) {
+					throw new Error("Delta storage returned an empty batch of messages");
+				}
+				done = controller.isDoneFetch(currentOp, lastMessage.timestamp);
 			} while (!done);
 
 			abortController.abort();

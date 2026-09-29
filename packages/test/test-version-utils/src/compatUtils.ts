@@ -62,27 +62,46 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
  * - runtimeVersionForLoading: "1.4.0"
  * We will return "1.4.0" since it's the lower of the two versions.
  */
-function getMinVersionForCollab(
+export function getMinVersionForCollab(
 	runtimeVersion: string,
 	runtimeVersionForLoading: string,
 ): OldestSupportedClientVersion {
-	assertValidMinVersionForCollab(runtimeVersion);
-	assertValidMinVersionForCollab(runtimeVersionForLoading);
+	// Represent the current package and all 3.x-or-later packages by their major/minor feature
+	// versions. Active compatibility settings at those major versions require patch zero.
+	// Preserve stable 1.x/2.x patches needed when compatibility tests run older runtime packages.
+	const normalizedRuntimeVersion = normalizeRuntimeVersion(runtimeVersion);
+	const normalizedRuntimeVersionForLoading = normalizeRuntimeVersion(runtimeVersionForLoading);
+	assertValidMinVersionForCollab(normalizedRuntimeVersion);
+	assertValidMinVersionForCollab(normalizedRuntimeVersionForLoading);
 	// Use the lower of the two versions to ensure compatibility between the two runtimes.
 	// (Outside of cross-client compat the two versions are the same, so this is a no-op.)
-	return semver.compare(runtimeVersion, runtimeVersionForLoading) <= 0
-		? runtimeVersion
-		: runtimeVersionForLoading;
+	return semver.compare(normalizedRuntimeVersion, normalizedRuntimeVersionForLoading) <= 0
+		? normalizedRuntimeVersion
+		: normalizedRuntimeVersionForLoading;
+}
+
+function normalizeRuntimeVersion(version: string): string {
+	const parsed = semver.parse(version);
+	if (parsed === null) {
+		return version;
+	}
+	return version === pkgVersion || parsed.major >= 3
+		? `${parsed.major}.${parsed.minor}.0`
+		: version;
 }
 
 /**
- * Asserts the given version is valid semver and is type OldestSupportedClientVersion.
+ * Asserts the given version is stable, valid semver and is type OldestSupportedClientVersion.
+ *
+ * @remarks
+ * Compatibility tests can exercise older runtime packages whose accepted floor predates the
+ * current `OldestSupportedClientVersion` type, so this intentionally does not apply today's floor.
  */
 function assertValidMinVersionForCollab(
 	version: string,
 ): asserts version is OldestSupportedClientVersion {
-	if (semver.valid(version) === null) {
-		throw new Error(`Runtime version must be valid semver: ${version}`);
+	if (semver.valid(version) === null || semver.prerelease(version) !== null) {
+		throw new Error(`Runtime version must be stable, valid semver: ${version}`);
 	}
 }
 

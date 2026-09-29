@@ -15,6 +15,18 @@ validate_checkout() {
   [ -z "$status" ] || fail "FLUID_DIR '$dir' has tracked edits or untracked files. This directory is used as the Docker build context and cannot have any uncommitted changes. Please stash or commit the changes and try again."
 }
 
+# Reject Fluid revisions with the Historian token-cache TTL unit bug fixed by
+# microsoft/FluidFramework#24984. The affected code passes milliseconds to Redis SET EX, causing
+# one-hour access tokens to remain cached for roughly 41 days under sustained unique-token load.
+validate_selfhost_source_compatibility() {
+  local dir="$1" revision
+  local riddler_service="$dir/server/historian/packages/historian-base/src/services/riddlerService.ts"
+  [ -f "$riddler_service" ] || fail "FluidFramework checkout is missing $riddler_service."
+  revision="$(git -C "$dir" rev-parse --short=12 HEAD 2>/dev/null || printf 'unknown')"
+  grep -qF 'Math.floor(tokenLifetimeInMSec / 1000)' "$riddler_service" \
+    || fail "FluidFramework revision $revision has the Historian token-cache TTL unit bug. Select a revision containing microsoft/FluidFramework#24984 (commit ed66a4d10427) and create a new release."
+}
+
 # Escape a value for safe embedding in a JSON string (backslash and double-quote only).
 json_escape() {
   local value="$1"
