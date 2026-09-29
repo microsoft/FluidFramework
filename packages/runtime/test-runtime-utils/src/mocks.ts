@@ -254,14 +254,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: unknown): void {
+	private finalizeIdRange(range: IdCreationRange): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(
-			range as IdCreationRange,
-		);
+		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(range);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
