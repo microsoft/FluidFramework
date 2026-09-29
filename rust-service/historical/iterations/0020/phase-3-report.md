@@ -2,7 +2,7 @@
 
 Status: complete
 Phase 2 integration commit: `9f64365338a1c317a31ccccd9031ac2f9286fd39`.
-Phase 3 commit: the commit containing the completed closeout records.
+Phase 3 commit: `731ce0e9a65b18d02bb859423b6741a5b078e435`; final cleanup evidence is recorded in the following bookkeeping commit.
 
 ## Evidence Summary
 
@@ -111,4 +111,5 @@ The user explicitly approved recording this historical-formatting exception and 
 Iteration 0020 inventory and Phase 2 checks pass; the complete-validator result is an accepted exception, not a passing check.
 The user approved closeout rather than another iteration.
 Worker checkouts, owned temporary fixture roots and temporary tasks were cleaned up with source mappings and retained evidence verified.
-Final integration-checkout removal follows acceptance of the closeout commit into the primary branch and is recorded in the integration report.
+The primary branch accepted the closeout commit by fast-forward, and the clean integration checkout was then removed non-forcibly.
+Its directory and registration are absent; final provenance and cleanup evidence are recorded in the integration report.

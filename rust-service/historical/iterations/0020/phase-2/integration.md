@@ -181,7 +181,13 @@ Owned short fixture roots were removed after their processes finished.
 Required patches and command logs are preserved in coordinator session storage outside the disposable worktrees.
 Coordinator documentation, the added admission test and Phase 2 records are included in the acceptance commit.
 Reviewed Phase 3 bookkeeping is committed separately.
-The integration checkout is retained only until its final commits are accepted into the primary branch; its final removal is recorded at closeout.
+The primary `rust-service` branch fast-forwarded from kickoff to closeout `731ce0e9a65b18d02bb859423b6741a5b078e435`.
+The integration checkout was clean at that exact commit, which was verified as an ancestor of primary.
+After all owned commands and review work finished, `/workspaces/FluidFramework-rust-service-iteration-0020` was removed with non-forced `git worktree remove`.
+Its absent registration and absent directory were verified.
+Worktree-local dependency installs and generated outputs were disposable; required command logs, frozen patches, baseline/review snapshots and consumer reports remain outside those checkouts in coordinator session storage.
+No temporary symlinks, owned processes, persistent environment overrides or task edits remain.
+Unrelated worktrees were untouched, iteration branches retain provenance, and nothing was pushed.
 An accidental inventory-validation invocation from the still-kickoff primary checkout found its expected placeholders; the guarded invocation from integration passed.
 A supplementary heading scan checked 229 links and found only the unchanged pre-existing `storage-and-core-exploration` anchor in Known Issues, outside this incremental repair.
 Final `validate 0020 complete` reports nine missing-template-heading errors, all in pre-existing Decisions 0028 and 0029.
