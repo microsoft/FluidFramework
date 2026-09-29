@@ -774,6 +774,61 @@ describe("Host and Guest correctness", () => {
 		assert.equal(guest.error, undefined);
 	});
 
+	it("preserves nested Host commit metadata in Guest updates", async () => {
+		const { host, guest } = setup([]);
+		host.main.runTransaction(
+			() => {
+				host.main.runTransaction(() => host.main.root.push("a"), {
+					customMetadata: { tag: "inner" },
+				});
+			},
+			{ customMetadata: { tag: "outer" } },
+		);
+		await host.updateGuestPromise;
+
+		const customTree = guest.view.branchHistory.getHead()?.customTree;
+		assert(customTree !== undefined, "Expected custom metadata on the Guest commit");
+		assert.deepEqual(customTree.metadata, normalizeTransportData({ tag: "outer" }));
+		assert.equal(customTree.children.length, 1);
+		assert.deepEqual(
+			customTree.children[0]?.metadata,
+			normalizeTransportData({ tag: "inner" }),
+		);
+		assert.deepEqual(customTree.children[0]?.children, []);
+	});
+
+	it("preserves Host commit metadata during Guest initialization", () => {
+		const { host, guest, provider } = setup([]);
+		guest.dispose();
+		host.dispose();
+		host.main.runTransaction(() => host.main.root.push("a"), {
+			customMetadata: { tag: "initialization" },
+		});
+
+		const ports = buildDirectSessionPorts();
+		const replacementHost = new Host(
+			host.main,
+			ports.hostPort,
+			provider.trees[1].handle,
+			createChildLogger({ namespace: "Host" }),
+		);
+		const replacementGuest = createGuestForHost(
+			replacementHost,
+			stringArrayConfig,
+			ports.guestPort,
+			provider.getCompressor(provider.trees[1]),
+		);
+		try {
+			assert.deepEqual(replacementGuest.view.branchHistory.getHead()?.custom, {
+				tag: "initialization",
+			});
+		} finally {
+			replacementGuest.dispose();
+			replacementHost.dispose();
+			ports.dispose();
+		}
+	});
+
 	it("accepts an empty update at an aliased initialization revision", () => {
 		const { host } = setup(["a"]);
 		const revision = mintRevisionTag();

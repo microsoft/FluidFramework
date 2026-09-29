@@ -931,7 +931,7 @@ export class TreeCheckout implements ITreeCheckout {
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
 						);
-						return SerializedChange.V1.encode(
+						return SerializedChange.V2.encode(
 							this.idCompressor,
 							this.changeFamily,
 							change,
@@ -1019,24 +1019,26 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	@throwIfBroken
 	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
-		const change = SerializedChange.V1.decode(
+		const { change, customMetadata } = SerializedChange.V2.decode(
 			this.idCompressor,
 			this.changeFamily,
 			serializedChange,
 		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(change, CommitKind.Default, undefined);
+		this.#transaction.branch.apply(change, CommitKind.Default, customMetadata);
 	}
 
 	/**
 	 * Serializes an existing commit for application to another checkout in the same ID-compressor session.
 	 */
 	public serializeCommit(commit: GraphCommit<SharedTreeChange>): JsonCompatibleReadOnly {
-		return SerializedChange.V1.encode(
+		return SerializedChange.V2.encode(
 			this.idCompressor,
 			this.changeFamily,
 			commit.change,
 			commit.revision,
+			undefined,
+			commit.customMetadata,
 		);
 	}
 
@@ -1600,7 +1602,7 @@ export class TreeCheckout implements ITreeCheckout {
 			return undefined;
 		}
 		const revision = this.mintRevisionTag();
-		return SerializedChange.V1.encode(
+		return SerializedChange.V2.encode(
 			this.idCompressor,
 			this.changeFamily,
 			rebased.sourceChange,
