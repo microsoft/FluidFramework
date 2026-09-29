@@ -13,6 +13,7 @@
 }
 
 .youtube-video__play-button {
+	/* Keep the preview visible, but route pointer input to the native play button. */
 	position: absolute;
 	inset: 0;
 
@@ -27,7 +28,8 @@
 	cursor: pointer;
 }
 
-.youtube-video__play-button:focus-visible {
+/* Keep a visible boundary when focus moves into the cross-origin player. */
+.youtube-video:focus-within {
 	outline: 3px solid var(--ifm-color-primary);
 	outline-offset: 3px;
 }

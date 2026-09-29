@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Element, useEffect, useRef, useState } from "react";
+import { type ReactElement, useEffect, useRef, useState } from "react";
 
 import "@site/src/css/youtubeVideo.css";
 
@@ -23,9 +23,10 @@ export interface YoutubeVideoProps {
 }
 
 /**
- * Renders a YouTube video, utilizing `youtube-nocookie.com` to ensure our privacy requirements are being met (i.e., no cookies).
+ * Renders a YouTube video through `youtube-nocookie.com` to meet our privacy requirements.
+ * The preview exposes one play button before playback starts.
  */
-export function YoutubeVideo({ className, videoId }: YoutubeVideoProps): Element {
+export function YoutubeVideo({ className, videoId }: YoutubeVideoProps): ReactElement {
 	const [isActivated, setIsActivated] = useState(false);
 	const iframeRef = useRef<HTMLIFrameElement>(null);
 	const videoSourceUrl = `https://www.youtube-nocookie.com/embed/${videoId}${
@@ -33,8 +34,13 @@ export function YoutubeVideo({ className, videoId }: YoutubeVideoProps): Element
 	}`;
 
 	useEffect(() => {
-		if (isActivated === true) {
-			iframeRef.current?.focus();
+		const iframe = iframeRef.current;
+		if (iframe !== null) {
+			// React 18 does not support the inert attribute as a JSX property.
+			iframe.inert = isActivated !== true;
+			if (isActivated === true) {
+				iframe.focus();
+			}
 		}
 	}, [isActivated]);
 
@@ -56,7 +62,7 @@ export function YoutubeVideo({ className, videoId }: YoutubeVideoProps): Element
 				<button
 					className="youtube-video__play-button"
 					type="button"
-					aria-label="Play Fluid Framework overview video"
+					aria-label="Play video"
 					onClick={() => {
 						setIsActivated(true);
 					}}
