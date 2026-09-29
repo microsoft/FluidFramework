@@ -348,4 +348,57 @@ mod tests {
             assert!(result["allocation_count"].is_null());
         }
     }
+
+    #[tokio::test]
+    async fn finite_replay_rejects_wrong_identity_payload_kind_and_additional_history() {
+        let storage = MemoryStorage::new();
+        for altered_payload in [false, true] {
+            let (_, view) = storage.create_view().await.unwrap();
+            let sequencer = LocalSequencer::<MemoryStorage>::recover_with_live_cache(view)
+                .await
+                .unwrap();
+            let session = sequencer.open_session(None).await.unwrap();
+            let mut event = submission();
+            if altered_payload {
+                event.event.payload = Bytes::from_static(b"wrong");
+            }
+            let position = session.submit(event).await.unwrap();
+            let identity = session.session_id();
+            if altered_payload {
+                assert_eq!(
+                    verify_replay(&session, identity, position).await,
+                    Err("sibling finite replay mismatch".to_owned())
+                );
+            } else {
+                assert_eq!(verify_replay(&session, identity, position).await, Ok(()));
+                assert_eq!(
+                    verify_replay(&session, &SessionId::new(u64::MAX).unwrap(), position).await,
+                    Err("sibling finite replay mismatch".to_owned())
+                );
+                let second = session.submit(submission()).await.unwrap();
+                assert_eq!(
+                    verify_replay(&session, identity, second).await,
+                    Err("sibling finite replay mismatch".to_owned())
+                );
+            }
+            session.close().await.unwrap();
+            sequencer.shutdown().await.unwrap();
+        }
+        let (_, view) = storage.create_view().await.unwrap();
+        let sequencer = LocalSequencer::<MemoryStorage>::recover_with_live_cache(view)
+            .await
+            .unwrap();
+        let session = sequencer.open_session(None).await.unwrap();
+        let position = session
+            .announce_membership(submission().event.payload)
+            .await
+            .unwrap();
+        assert_eq!(
+            verify_replay(&session, session.session_id(), position).await,
+            Err("sibling finite replay mismatch".to_owned())
+        );
+        session.close().await.unwrap();
+        sequencer.shutdown().await.unwrap();
+        storage.shutdown().await.unwrap();
+    }
 }

@@ -317,6 +317,47 @@ fn session_open(archive: Bytes, create: bool) -> SessionOpen {
     }
 }
 
+/// Admits one operation at a time, stopping on the first failure, deadline, or timing-record cap.
+async fn closed_loop_writer<
+    Submission: std::future::Future<Output = Result<(), SeaClientError>>,
+>(
+    mut submit: impl FnMut(usize) -> Submission,
+    state: &Mutex<State>,
+    operation_limit: usize,
+    window: std::ops::Range<Instant>,
+    clock: MeasurementClock,
+) {
+    loop {
+        let now = Instant::now();
+        if now >= window.end {
+            break;
+        }
+        let sequence = {
+            let mut state = state.lock().expect("state lock");
+            if state.times.len() >= operation_limit {
+                state.error = Some("bounded timing-record limit reached".to_owned());
+            }
+            if state.error.is_some() {
+                break;
+            }
+            state.times.push((now, now >= window.start));
+            state.times.len()
+        };
+        let result = submit(sequence).await;
+        let mut state = state.lock().expect("state lock");
+        match result {
+            Ok(()) => {
+                let sent_at = state.times[sequence - 1].0;
+                state.acknowledge(sent_at, Instant::now(), window.start, window.end, clock);
+            }
+            Err(error) => {
+                state.error = Some(error.to_string());
+                break;
+            }
+        }
+    }
+}
+
 /// Executes the selected workload and observation logic for either native transport.
 #[allow(
     clippy::too_many_lines,
@@ -412,34 +453,35 @@ where
         let mut start_signal = start_signal.clone();
         let operation_limit = 1_000_000 / configuration.documents;
         tasks.push(tokio::spawn(async move {
-            let window = if closed_loop {
-                *start_signal
+            if closed_loop {
+                let (warm_end, end) = start_signal
                     .wait_for(Option::is_some)
                     .await
                     .expect("workload start signal")
-            } else {
-                None
-            };
-            loop {
-                let sequence = if let Some((warm_end, end)) = window {
-                    let now = Instant::now();
-                    if now >= end {
-                        break;
-                    }
-                    let mut state = state.lock().expect("state lock");
-                    if state.times.len() >= operation_limit {
-                        state.error = Some("bounded timing-record limit reached".to_owned());
-                    }
-                    if state.error.is_some() {
-                        break;
-                    }
-                    state.times.push((now, now >= warm_end));
-                    state.times.len()
-                } else if let Some(sequence) = receiver.recv().await {
-                    sequence
-                } else {
-                    break;
-                };
+                    .expect("closed-loop window");
+                let session = writer.as_ref();
+                closed_loop_writer(
+                    |sequence| async move {
+                        session
+                            .submit(EventSubmission {
+                                reference: None,
+                                event: Event {
+                                    payload: payload(sequence, bytes),
+                                    blob_tree: None,
+                                },
+                            })
+                            .await
+                            .map(|_| ())
+                    },
+                    &state,
+                    operation_limit,
+                    warm_end..end,
+                    clock,
+                )
+                .await;
+                return;
+            }
+            while let Some(sequence) = receiver.recv().await {
                 let submission = EventSubmission {
                     reference: None,
                     event: Event {
@@ -450,11 +492,6 @@ where
                 let result = writer.submit(submission).await;
                 let mut state = state.lock().expect("state lock");
                 match result {
-                    Ok(_) if closed_loop => {
-                        let (warm_end, end) = window.expect("closed-loop window");
-                        let sent_at = state.times[sequence - 1].0;
-                        state.acknowledge(sent_at, Instant::now(), warm_end, end, clock);
-                    }
                     Ok(_) => state.acknowledged += 1,
                     Err(error) => {
                         state.error = Some(error.to_string());
@@ -723,6 +760,81 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[tokio::test]
+    async fn closed_loop_waits_for_each_acknowledgment_and_stops_after_failure() {
+        let (first, first_result) = tokio::sync::oneshot::channel();
+        let (second, second_result) = tokio::sync::oneshot::channel();
+        let mut results = std::collections::VecDeque::from([first_result, second_result]);
+        let state = Mutex::new(State::default());
+        let now = Instant::now();
+        let writer = closed_loop_writer(
+            |sequence| {
+                assert_eq!(sequence, 3 - results.len());
+                let result = results.pop_front().unwrap();
+                async move { result.await.unwrap() }
+            },
+            &state,
+            10,
+            now..now + Duration::from_secs(30),
+            MeasurementClock::new(),
+        );
+        tokio::pin!(writer);
+        assert!(futures_util::poll!(&mut writer).is_pending());
+        assert_eq!(state.lock().unwrap().times.len(), 1);
+        assert_eq!(state.lock().unwrap().acknowledged, 0);
+        first.send(Ok(())).unwrap();
+        assert!(futures_util::poll!(&mut writer).is_pending());
+        assert_eq!(state.lock().unwrap().times.len(), 2);
+        assert_eq!(state.lock().unwrap().acknowledged, 1);
+        second.send(Err(SeaClientError::Closed)).unwrap();
+        assert!(futures_util::poll!(&mut writer).is_ready());
+        let state = state.lock().unwrap();
+        assert_eq!(state.times.len(), 2);
+        assert_eq!(state.acknowledged, 1);
+        assert_eq!(state.error, Some(SeaClientError::Closed.to_string()));
+    }
+
+    #[tokio::test]
+    async fn closed_loop_honors_record_cap_deadline_and_reader_failure() {
+        for (expired, reader_failed) in [(false, false), (true, false), (false, true)] {
+            let state = Mutex::new(State {
+                error: reader_failed.then(|| "reader failed".to_owned()),
+                ..State::default()
+            });
+            let now = Instant::now();
+            let mut calls = Vec::new();
+            closed_loop_writer(
+                |sequence| {
+                    calls.push(sequence);
+                    std::future::ready(Ok(()))
+                },
+                &state,
+                2,
+                now..if expired {
+                    now
+                } else {
+                    now + Duration::from_secs(30)
+                },
+                MeasurementClock::new(),
+            )
+            .await;
+            let state = state.lock().unwrap();
+            if expired || reader_failed {
+                assert!(calls.is_empty());
+                assert!(state.times.is_empty());
+                assert_eq!(state.error.is_some(), reader_failed);
+            } else {
+                assert_eq!(calls, [1, 2]);
+                assert_eq!(state.times.len(), 2);
+                assert_eq!(state.acknowledged, 2);
+                assert_eq!(
+                    state.error.as_deref(),
+                    Some("bounded timing-record limit reached")
+                );
+            }
+        }
+    }
 
     #[test]
     fn acknowledgments_use_completion_window_not_submission_window() {

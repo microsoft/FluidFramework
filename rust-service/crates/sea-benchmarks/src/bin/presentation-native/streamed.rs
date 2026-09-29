@@ -11,10 +11,11 @@ use std::{
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
-use tokio::task::JoinSet;
-use wtransport::{
-    ClientConfig, Connection, Endpoint, RecvStream, SendStream, endpoint::endpoint_side::Client,
+use tokio::{
+    io::{AsyncWrite, AsyncWriteExt as _},
+    task::JoinSet,
 };
+use wtransport::{ClientConfig, Connection, Endpoint, RecvStream, endpoint::endpoint_side::Client};
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -223,8 +224,10 @@ impl Tracking {
     }
 }
 
-async fn write(
-    send: Arc<tokio::sync::Mutex<SendStream>>,
+/// Sends complete frames without waiting for receipts, stopping at the deadline or timing-record cap.
+/// Only successful complete writes contribute transport-written and pending-call telemetry.
+async fn write<Writer: AsyncWrite + Unpin>(
+    send: Arc<tokio::sync::Mutex<Writer>>,
     state: Arc<Mutex<Tracking>>,
     payload_bytes: usize,
     limit: usize,
@@ -616,22 +619,96 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn write_capacity_not_receipts_controls_production() {
-        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
-        let (mut send, mut receive) = tokio::io::duplex(8);
-        let (result, pending, _) = transport_write(send.write_all(&[1; 8])).await;
-        result.unwrap();
-        assert!(!pending);
-        let next = transport_write(send.write_all(&[2; 8]));
-        tokio::pin!(next);
-        assert!(matches!(futures_util::poll!(&mut next), Poll::Pending));
-        let mut first = [0; 8];
-        receive.read_exact(&mut first).await.unwrap();
-        let (result, pending, _) = next.await;
-        result.unwrap();
-        assert!(pending);
-        assert_eq!(first, [1; 8]);
-        // No acknowledgments were produced or consumed to complete either write.
+    async fn writer_pipelines_until_transport_capacity_and_enforces_record_limit() {
+        use tokio::io::AsyncReadExt as _;
+        let frame = |sequence| {
+            encode(
+                protocol::StreamRole::Author,
+                &protocol::Request::Submit {
+                    reference: None,
+                    event: protocol::Event {
+                        payload: payload(sequence, 64).to_vec(),
+                        blob_tree: None,
+                    },
+                },
+            )
+            .unwrap()
+        };
+        let first = frame(1);
+        let (send, mut receive) = tokio::io::duplex(first.len());
+        let state = Arc::new(Mutex::new(Tracking::default()));
+        let now = Instant::now();
+        let writer = write(
+            Arc::new(tokio::sync::Mutex::new(send)),
+            state.clone(),
+            64,
+            2,
+            now,
+            now + Duration::from_secs(30),
+        );
+        tokio::pin!(writer);
+        assert!(matches!(futures_util::poll!(&mut writer), Poll::Pending));
+        {
+            let state = state.lock().unwrap();
+            assert_eq!(state.common.times.len(), 2);
+            assert_eq!(state.written, 1);
+            assert_eq!(state.common.acknowledged, 0);
+            assert_eq!(state.max_outstanding, 2);
+            assert_eq!(state.frame_bytes, first.len());
+            assert_eq!(state.pending_write_calls, 0);
+            assert!(!state.sending_done);
+        }
+        let mut received = vec![0; first.len()];
+        receive.read_exact(&mut received).await.unwrap();
+        assert_eq!(received, first);
+        assert_eq!(
+            futures_util::poll!(&mut writer),
+            Poll::Ready(Err("bounded timing-record limit reached".to_owned()))
+        );
+        receive.read_exact(&mut received).await.unwrap();
+        assert_eq!(received, frame(2));
+        let state = state.lock().unwrap();
+        assert_eq!(state.common.times.len(), 2);
+        assert_eq!(state.written, 2);
+        assert_eq!(state.outstanding(), 2);
+        assert_eq!(state.pending_write_calls, 1);
+        assert!(!state.sending_done);
+    }
+
+    #[tokio::test]
+    async fn writer_deadline_and_transport_failure_do_not_report_complete_frames() {
+        let now = Instant::now();
+        for expired in [true, false] {
+            let (send, receive) = tokio::io::duplex(1);
+            let state = Arc::new(Mutex::new(Tracking::default()));
+            let writer = write(
+                Arc::new(tokio::sync::Mutex::new(send)),
+                state.clone(),
+                64,
+                2,
+                now,
+                if expired {
+                    now
+                } else {
+                    now + Duration::from_secs(30)
+                },
+            );
+            tokio::pin!(writer);
+            if !expired {
+                assert!(matches!(futures_util::poll!(&mut writer), Poll::Pending));
+                assert_eq!(state.lock().unwrap().written, 0);
+            }
+            drop(receive);
+            let result = writer.await;
+            assert_eq!(result.is_ok(), expired);
+            let state = state.lock().unwrap();
+            assert_eq!(state.common.times.len(), usize::from(!expired));
+            assert_eq!(state.written, 0);
+            assert_eq!(state.common.acknowledged, 0);
+            assert_eq!(state.pending_write_calls, 0);
+            assert_eq!(state.pending_write_seconds.to_bits(), 0.0_f64.to_bits());
+            assert_eq!(state.sending_done, expired);
+        }
     }
 
     #[test]
@@ -643,7 +720,12 @@ mod tests {
         assert!(state.receipt(1, now, now, end, clock).is_err());
         state.common.times.extend([(now, true); 2]);
         state.receipt(2, now, now, end, clock).unwrap();
-        assert!(state.receipt(2, now, now, end, clock).is_err());
+        for position in [1, 2] {
+            assert!(state.receipt(position, now, now, end, clock).is_err());
+            assert_eq!(state.common.acknowledged, 1);
+            assert_eq!(state.last_receipt, Some(2));
+            assert_eq!(state.common.acknowledgment_epoch_micros.len(), 1);
+        }
         state.receipt(3, now, now, end, clock).unwrap();
         assert!(state.receipt(4, now, now, end, clock).is_err());
         assert_eq!(state.outstanding(), 0);
