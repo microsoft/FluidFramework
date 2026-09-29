@@ -22,6 +22,7 @@ import {
 	type FuzzTestState,
 	type FuzzView,
 	makeTreeEditGenerator,
+	schemaEditGenerator,
 	simpleSchemaFromStoredSchema,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
@@ -31,11 +32,7 @@ import {
 	applySchemaOp,
 	applyTransactionBoundary,
 } from "./fuzzEditReducers.js";
-import {
-	createTreeViewSchema,
-	deterministicIdCompressorFactory,
-	generateGuidNodeSchemas,
-} from "./fuzzUtils.js";
+import { createFuzzSchema, deterministicIdCompressorFactory } from "./fuzzUtils.js";
 import { type GeneratedFuzzNode, GeneratedFuzzValueType } from "./operationTypes.js";
 
 /**
@@ -48,7 +45,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 	it("rejects node identifiers outside the supported namespaces", () => {
 		for (const nodeType of ["upgrade", "otherNamespace.upgrade"]) {
 			assert.throws(
-				() => generateGuidNodeSchemas([nodeType]),
+				() => createFuzzSchema([nodeType]),
 				/Expected a treeFuzz or built-in leaf schema identifier/,
 			);
 		}
@@ -66,20 +63,20 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		}
 	});
 
-	it("deduplicates qualified node identifiers and excludes structural and built-in types", () => {
-		const schemas = generateGuidNodeSchemas([
-			"treeFuzz.upgrade",
+	it("rejects duplicate node identifiers, including structural and built-in types", () => {
+		for (const nodeType of [
 			"treeFuzz.upgrade",
 			"treeFuzz.node",
 			"treeFuzz.arrayChildren",
 			"com.fluidframework.leaf.string",
 			"com.fluidframework.leaf.number",
 			"com.fluidframework.leaf.handle",
-		]);
-		assert.deepEqual(
-			schemas.map((schema) => schema.identifier),
-			["treeFuzz.upgrade"],
-		);
+		]) {
+			assert.throws(
+				() => createFuzzSchema([nodeType, nodeType]),
+				/Duplicate fuzz node schema identifier/,
+			);
+		}
 	});
 
 	function setValue(view: FuzzView, value: GeneratedFuzzNode): void {
@@ -138,15 +135,66 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		},
 	);
 
-	scenario("schema upgrades add only the requested node type", (state) => {
+	scenario("schema upgrades add only requested types and preserve prior types", (state) => {
 		const checkout = viewFromState(state).checkout;
 		const originalTypes = [...checkout.storedSchema.nodeSchema.keys()];
 		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "secondUpgrade" } });
 		assert.deepEqual(
 			[...checkout.storedSchema.nodeSchema.keys()].sort(),
-			[...originalTypes, "treeFuzz.upgrade"].sort(),
+			[...originalTypes, "treeFuzz.upgrade", "treeFuzz.secondUpgrade"].sort(),
 		);
+		synchronizeAndCheckViews(state);
 	});
+
+	scenario("duplicate schema operations fail before changing the harness state", (state) => {
+		const remoteView = viewFromState(state, state.clients[1]);
+		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
+		state.containerRuntimeFactory.processAllMessages();
+		assert.equal(remoteView.compatibility.isEquivalent, false);
+		for (const client of state.clients) {
+			state.client = client;
+			const view = state.clientViews?.get(client.channel);
+			assert(view !== undefined);
+			const originalSchema = view.checkout.storedSchema.clone();
+			const head = view.branchHistory.getHead()?.revision;
+			for (const type of ["upgrade", "node", "arrayChildren"]) {
+				assert.throws(
+					() => applySchemaOp(state, { type: "schemaChange", contents: { type } }),
+					/Duplicate fuzz node schema identifier/,
+				);
+				assert.equal(state.clientViews?.get(client.channel), view);
+				assert.equal(view.disposed, false);
+				assert.equal(view.checkout.disposed, false);
+				assert.equal(view.branchHistory.getHead()?.revision, head);
+				expectSchemaEqual(view.checkout.storedSchema, originalSchema);
+			}
+		}
+	});
+
+	scenario(
+		"schema generation retries identifiers in the selected checkout's current schema",
+		(state) => {
+			const originalView = viewFromState(state);
+			const existingType = state.random.uuid4();
+			const newType = state.random.uuid4();
+			state.client = state.clients[1];
+			applySchemaOp(state, { type: "schemaChange", contents: { type: existingType } });
+			state.containerRuntimeFactory.processAllMessages();
+			state.client = state.clients[0];
+			assert.equal(originalView.compatibility.isEquivalent, false);
+
+			const uuid4 = state.random.uuid4;
+			const candidates = [existingType, existingType, newType];
+			state.random.uuid4 = () => candidates.shift() ?? assert.fail("No UUID candidates left");
+			const operation = schemaEditGenerator(state);
+			state.random.uuid4 = uuid4;
+			assert.deepEqual(operation, { type: "schemaChange", contents: { type: newType } });
+			assert.equal(candidates.length, 0);
+			applySchemaOp(state, operation);
+			synchronizeAndCheckViews(state);
+		},
+	);
 
 	scenario("remote upgrades reconstruct string-valued GUID schemas", (state) => {
 		const originalRemoteView = viewFromState(state, state.clients[1]);
@@ -179,14 +227,26 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		const checkout = viewFromState(state).checkout;
 		const schemaFactory = new SchemaFactory("treeFuzz");
 		// Construct the expected schema independently of the helper used during reconstruction.
-		const expectedSchema = toInitialSchema(
-			createTreeViewSchema(
-				["upgrade", "nodeUpgrade", "arrayChildrenUpgrade"].map((name) =>
-					schemaFactory.object(name, {
-						value: schemaFactory.required(schemaFactory.string),
-					}),
-				),
+		const allowedTypes = [
+			schemaFactory.string,
+			schemaFactory.number,
+			schemaFactory.handle,
+			...["upgrade", "nodeUpgrade", "arrayChildrenUpgrade"].map((name) =>
+				schemaFactory.object(name, {
+					value: schemaFactory.required(schemaFactory.string),
+				}),
 			),
+		];
+		class Node extends schemaFactory.objectRecursive("node", {
+			requiredChild: [() => Node, ...allowedTypes],
+			optionalChild: schemaFactory.optionalRecursive([() => Node, ...allowedTypes]),
+			arrayChildren: schemaFactory.arrayRecursive("arrayChildren", [
+				() => Node,
+				...allowedTypes,
+			]),
+		}) {}
+		const expectedSchema = toInitialSchema(
+			schemaFactory.optionalRecursive([() => Node, ...allowedTypes]),
 		);
 		checkout.updateSchema(expectedSchema);
 		expectSchemaEqual(
@@ -203,11 +263,7 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 				contents: { type: "fork", branchNumber: undefined },
 			});
 			const fork = viewFromState(state, state.client, 0);
-			fork.checkout.updateSchema(
-				toInitialSchema(
-					createTreeViewSchema(generateGuidNodeSchemas(["treeFuzz.forkUpgrade"])),
-				),
-			);
+			fork.checkout.updateSchema(toInitialSchema(createFuzzSchema(["treeFuzz.forkUpgrade"])));
 			const head = fork.branchHistory.getHead()?.revision;
 			assert.equal(fork.checkout.transaction.size, 0);
 			assert.throws(

@@ -41,7 +41,6 @@ import type {
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
 	type ViewableTree,
 	type NodeBuilderData,
@@ -95,69 +94,19 @@ type _checkFuzzNode = ValidateRecursiveSchema<typeof FuzzNode>;
 
 export type FuzzNodeSchema = typeof FuzzNode;
 
-export const initialFuzzSchema = createTreeViewSchema([]);
+export const initialFuzzSchema = createFuzzSchema([]);
 export const fuzzFieldSchema = FuzzNode.info.optionalChild;
 
 /**
- * Returns the {@link FuzzNodeSchema} with the {@link initialAllowedTypes}, as well as the additional nodeTypes passed in.
- * @param nodeTypes - The additional node types outside of the {@link initialAllowedTypes} that the fuzzNode is allowed to contain
- * @param schemaFactory - The schemaFactory used to build the {@link FuzzNodeSchema}. The scope prefix must be "treeFuzz".
- */
-function createFuzzNodeSchema(
-	nodeTypes: TreeNodeSchema[],
-	schemaFactory: SchemaFactory<"treeFuzz">,
-): FuzzNodeSchema {
-	class ArrayChildren2 extends schemaFactory.arrayRecursive("arrayChildren", [
-		() => Node,
-		schemaFactory.string,
-		schemaFactory.number,
-		schemaFactory.handle,
-		...nodeTypes,
-	]) {}
-	class Node extends schemaFactory.objectRecursive("node", {
-		requiredChild: [
-			() => Node,
-			schemaFactory.string,
-			schemaFactory.number,
-			schemaFactory.handle,
-			...nodeTypes,
-		],
-		optionalChild: schemaFactory.optionalRecursive([
-			() => Node,
-			schemaFactory.string,
-			schemaFactory.number,
-			schemaFactory.handle,
-			...nodeTypes,
-		]),
-		arrayChildren: ArrayChildren2,
-	}) {}
-
-	{
-		type _check = ValidateRecursiveSchema<typeof Node>;
-	}
-	return Node as unknown as FuzzNodeSchema;
-}
-
-/**
- * This function is used to create a new schema which is a superset of the previous tree's schema.
- * @param allowedTypes - additional allowedTypes outside of the {@link initialAllowedTypes} for the {@link FuzzNode}
- * @returns the tree's schema used for the fuzzView.
- */
-export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuzzFieldSchema {
-	const schemaFactory = new SchemaFactory("treeFuzz");
-	const node = createFuzzNodeSchema(allowedTypes, schemaFactory).info.optionalChild;
-	return node as unknown as typeof fuzzFieldSchema;
-}
-
-/**
- * Creates schemas for the dynamically added node types allowed by the fuzz schema.
- * Each generated object schema has one required string field named `value`.
+ * Creates the complete fuzz root schema from node-type identifiers.
+ * The schema includes the recursive fuzz node, its array children, and the built-in string, number, and handle types.
+ * Each dynamically added object schema has one required string field named `value`.
  *
- * @param nodeTypes - Fully qualified node-type identifiers.
- * Duplicate identifiers produce a single schema.
- * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are omitted.
+ * @param nodeTypes - Unique, fully qualified node-type identifiers.
+ * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are already included.
+ * @returns The tree's schema used for the fuzz view.
  */
-export function generateGuidNodeSchemas(nodeTypes: Iterable<string>): TreeNodeSchema[] {
+export function createFuzzSchema(nodeTypes: Iterable<string>): typeof fuzzFieldSchema {
 	const schemaFactory = new SchemaFactory("treeFuzz");
 	const guidNodeSchemas = [];
 	const fuzzNodeTypePrefix = "treeFuzz.";
@@ -166,7 +115,10 @@ export function generateGuidNodeSchemas(nodeTypes: Iterable<string>): TreeNodeSc
 		fullIdentifier.slice(fuzzNodeTypePrefix.length);
 	// Schemas that are present in all fuzz tests and don't require dynamic creation.
 	const commonNodes = new Set(["node", "arrayChildren"]);
-	for (const nodeType of new Set(nodeTypes)) {
+	const seen = new Set<string>();
+	for (const nodeType of nodeTypes) {
+		assert(!seen.has(nodeType), "Duplicate fuzz node schema identifier");
+		seen.add(nodeType);
 		assert(
 			nodeType.startsWith(fuzzNodeTypePrefix) || nodeType.startsWith(fluidLeafTypePrefix),
 			"Expected a treeFuzz or built-in leaf schema identifier",
@@ -182,7 +134,35 @@ export function generateGuidNodeSchemas(nodeTypes: Iterable<string>): TreeNodeSc
 			guidNodeSchemas.push(GuidNode);
 		}
 	}
-	return guidNodeSchemas;
+	class ArrayChildren2 extends schemaFactory.arrayRecursive("arrayChildren", [
+		() => Node,
+		schemaFactory.string,
+		schemaFactory.number,
+		schemaFactory.handle,
+		...guidNodeSchemas,
+	]) {}
+	class Node extends schemaFactory.objectRecursive("node", {
+		requiredChild: [
+			() => Node,
+			schemaFactory.string,
+			schemaFactory.number,
+			schemaFactory.handle,
+			...guidNodeSchemas,
+		],
+		optionalChild: schemaFactory.optionalRecursive([
+			() => Node,
+			schemaFactory.string,
+			schemaFactory.number,
+			schemaFactory.handle,
+			...guidNodeSchemas,
+		]),
+		arrayChildren: ArrayChildren2,
+	}) {}
+
+	{
+		type _check = ValidateRecursiveSchema<typeof Node>;
+	}
+	return Node.info.optionalChild as unknown as typeof fuzzFieldSchema;
 }
 
 export function nodeSchemaFromTreeSchema(
