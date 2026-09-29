@@ -1,11 +1,11 @@
 ---
 "@fluidframework/tree": minor
 "fluid-framework": minor
-"__section": tree
+"__section": fix
 ---
-Record node property reads now include undefined
+Record node property read types now include undefined
 
-Reading a property from a record node now returns `T | undefined` instead of `T`, matching the runtime behavior when the key is absent.
+Reading a property from a record node is now typed as `T | undefined` instead of `T`, matching the existing runtime behavior when the key is absent.
 Consumers must narrow the result before using it as `T`.
 
 ```typescript
