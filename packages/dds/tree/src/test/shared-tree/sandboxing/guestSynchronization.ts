@@ -138,11 +138,15 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private applyHostBranchUpdate(message: GuestBranchInitialization): void {
 		const base = this.hostCommits.get(message.baseRevision);
 		const currentHead = getBranch(this.host).getHead();
+		const removedCommits: GraphCommit<SharedTreeChange>[] = [];
 		if (
 			base === undefined ||
-			findAncestor(currentHead, (commit) => commit === base) === undefined
+			findAncestor([currentHead, removedCommits], (commit) => commit === base) === undefined
 		) {
 			throw new SandboxProtocolError("Host update has an unknown base revision.");
+		}
+		for (const commit of removedCommits) {
+			this.hostCommits.delete(commit.revision);
 		}
 		applyBranchUpdate(this.host, base, message.commits);
 		for (
