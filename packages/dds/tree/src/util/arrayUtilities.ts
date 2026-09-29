@@ -119,8 +119,10 @@ export function replaceArrayRange<T>(
 ): void {
 	validateIndexRange(startIndex, endIndex, array, "replaceArrayRange");
 
-	// Benchmarks show native splice is faster at 250 replacement items, while the argument-safe
-	// implementation is faster at 500.
+	// Benchmarks (see arrayUtilities.bench.ts) show native splice is faster up to ~250 replacement
+	// items, while the argument-safe implementation is faster at 500 and above. Native splice must also
+	// be avoided for very large replacements, where spreading `replacement` into arguments would exceed
+	// the engine's argument limit.
 	if (replacement.length < 500) {
 		array.splice(startIndex, endIndex - startIndex, ...replacement);
 		return;
@@ -176,9 +178,9 @@ export function replaceArrayRangeWithoutSpread<T>(
 	) {
 		// replacementIndex is within bounds by construction, so this cast to drop `T | undefined` is safe.
 		// `?? oob()` must not be used here: it would mishandle array values that are legitimately `null` or
-		// `undefined`. `for ... of replacementItems.entries()` is cleaner but was measured to be roughly
-		// 10-15x slower for the large replacements this path handles (the gap narrows for tiny arrays, but
-		// small replacements go through native `splice` in `replaceArrayRange` and never reach here).
+		// `undefined`. `for ... of replacementItems.entries()` reads cleaner but is measurably slower due
+		// to per-element iterator-protocol overhead (see arrayUtilities.bench.ts; roughly 1.2x-4x slower
+		// across the benchmarked sizes, growing with size), so an indexed loop is used instead.
 		array[startIndex + replacementIndex] = replacementItems[replacementIndex] as T;
 	}
 }
