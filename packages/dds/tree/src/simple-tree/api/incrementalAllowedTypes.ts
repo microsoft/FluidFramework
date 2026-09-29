@@ -9,8 +9,13 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { FieldKey } from "../../core/index.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
-import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
-import type { FieldSchema } from "../fieldSchema.js";
+import {
+	AnnotatedAllowedTypesInternal,
+	getTreeNodeSchemaPrivateData,
+	normalizeAllowedTypes,
+	type AllowedTypesFull,
+	type ImplicitAllowedTypes,
+} from "../core/index.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeSchema } from "../treeSchema.js";
 
@@ -22,45 +27,62 @@ import type { TreeSchema } from "../treeSchema.js";
  * @remarks
  * See {@link incrementalEncodingPolicyForAllowedTypes} for more details.
  *
- * Use {@link SchemaStaticsBeta.field} to mark an incremental-summary boundary.
+ * Use field creation APIs such as {@link SchemaStaticsBeta.required} or
+ * {@link SchemaStaticsBeta.optional} to mark an incremental-summary boundary.
  * @example
  * ```typescript
  * const sf = new SchemaFactoryBeta("IncrementalSummarization");
  * class Foo extends sf.object("foo", {
- *   bar: sf.field(sf.string, { incrementalSummary: true }),
+ *   bar: sf.required(sf.string, { incrementalSummary: true }),
  * }) {}
  * ```
  * @alpha
  */
 export const incrementalSummaryHint: unique symbol = Symbol("IncrementalSummaryHint");
 
-/**
- * Package-private field option used to mark an incremental-summary boundary.
- *
- * @internal
- */
-export const incrementalSummaryFieldOption: unique symbol = Symbol(
-	"IncrementalSummaryFieldOption",
-);
+function isPlainObject(value: unknown): value is Readonly<Record<PropertyKey, unknown>> {
+	if (typeof value !== "object" || value === null) {
+		return false;
+	}
+
+	const prototype = Object.getPrototypeOf(value);
+	return prototype === Object.prototype || prototype === null;
+}
 
 /**
- * Returns whether a field schema is an incremental-summary boundary.
+ * Applies the incremental-summary field option to allowed-types metadata.
+ *
+ * @remarks
+ * An omitted option preserves existing metadata, while an explicit value overrides the existing
+ * hint.
  */
-function isIncrementalSummaryField(fieldSchema: FieldSchema): boolean {
-	return (
-		fieldSchema.props !== undefined &&
-		(fieldSchema.props as FieldSchema["props"] & Record<symbol, unknown>)[
-			incrementalSummaryFieldOption
-		] === true
-	);
+export function applyIncrementalSummaryOption(
+	allowedTypes: ImplicitAllowedTypes,
+	incrementalSummary: boolean | undefined,
+): ImplicitAllowedTypes {
+	if (incrementalSummary === undefined) {
+		return allowedTypes;
+	}
+
+	const normalizedAllowedTypes = normalizeAllowedTypes(allowedTypes);
+	const customMetadata = normalizedAllowedTypes.metadata.custom;
+	if (customMetadata !== undefined && !isPlainObject(customMetadata)) {
+		throw new UsageError(
+			"The incrementalSummary field option cannot be combined with allowed-types custom metadata unless that metadata is a plain object.",
+		);
+	}
+
+	return AnnotatedAllowedTypesInternal.createMixed(normalizedAllowedTypes.types, {
+		...normalizedAllowedTypes.metadata,
+		custom: {
+			...customMetadata,
+			[incrementalSummaryHint]: incrementalSummary,
+		},
+	});
 }
 
 /**
  * Returns true if the provided allowed types's custom metadata has {@link incrementalSummaryHint} as true.
- *
- * @remarks
- * This supports the legacy alpha metadata API. New schema should use
- * {@link SchemaStaticsBeta.field} instead.
  */
 function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull): boolean {
 	const customMetadata = allowedTypes.metadata.custom;
@@ -80,7 +102,7 @@ function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull):
  * @param rootSchema - The schema for the root of the tree.
  * @returns A callback function of type {@link IncrementalEncodingPolicy} which determines if fields should
  * be incrementally summarized based on whether they have opted in via
- * {@link FieldOptions.incrementalSummary}.
+ * {@link FieldOptionsAlpha.incrementalSummary}.
  *
  * @remarks
  * This only works for forest type {@link ForestTypeOptimized} and compression strategy
@@ -94,6 +116,8 @@ export function incrementalEncodingPolicyForAllowedTypes(
 	return (targetNodeIdentifier: string | undefined, targetFieldKey?: string) => {
 		if (targetNodeIdentifier === undefined) {
 			// Root fields cannot be incrementally summarized.
+			// TODO: Revisit this restriction now that incremental summarization is configured on
+			// field schemas rather than directly on sets of allowed types.
 			return false;
 		}
 
@@ -119,10 +143,7 @@ export function incrementalEncodingPolicyForAllowedTypes(
 			if (targetPropertyKey !== undefined) {
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
-					return (
-						isIncrementalSummaryField(fieldSchema) ||
-						isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull)
-					);
+					return isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull);
 				}
 			}
 			return false;

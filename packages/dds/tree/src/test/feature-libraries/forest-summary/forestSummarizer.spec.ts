@@ -57,6 +57,7 @@ import {
 	StagedSchemaUpgradePolicy,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	SchemaFactoryBeta,
 	toStoredSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
@@ -278,7 +279,7 @@ async function summarizeAndValidateIncrementality<TSchema extends ImplicitFieldS
 const sf = new SchemaFactoryAlpha("IncrementalSummarization");
 
 class ObjectNodeSchema extends sf.object("objectNodeSchema", {
-	foo: sf.field(sf.types([sf.number, sf.staged(sf.string)]), {
+	foo: sf.required(sf.types([sf.number, sf.staged(sf.string)]), {
 		incrementalSummary: true,
 	}),
 }) {}
@@ -314,20 +315,49 @@ class RecordNodeSchema extends sf.object("recordNodeSchema", {
 }) {}
 
 class RecursiveNodeSchema extends sf.objectRecursive("recursiveNodeSchema", {
-	child: sf.fieldRecursive([sf.string, () => RecursiveNodeSchema], {
+	child: sf.requiredRecursive([sf.string, () => RecursiveNodeSchema], {
+		incrementalSummary: true,
+	}),
+	optionalChild: sf.optionalRecursive([() => RecursiveNodeSchema], {
+		incrementalSummary: true,
+	}),
+	stagedChild: sf.stagedOptionalRecursive([() => RecursiveNodeSchema], {
 		incrementalSummary: true,
 	}),
 }) {}
 type _checkRecursiveNode = ValidateRecursiveSchema<typeof RecursiveNodeSchema>;
 
 class DirectRecursiveNodeSchema extends sf.objectRecursive("directRecursiveNodeSchema", {
-	child: sf.fieldRecursive(() => DirectRecursiveNodeSchema, {
+	child: sf.requiredRecursive([() => DirectRecursiveNodeSchema], {
 		incrementalSummary: true,
 	}),
 }) {}
 type _checkDirectRecursiveNode = ValidateRecursiveSchema<typeof DirectRecursiveNodeSchema>;
 
-const LeafNodeSchema = sf.field(sf.string, { incrementalSummary: true });
+const optionEnablesCustomMetadata = {
+	preserved: "custom metadata",
+	[incrementalSummaryHint]: false,
+};
+
+class IncrementalSummaryPrecedenceSchema extends sf.object("incrementalSummaryPrecedence", {
+	optionEnables: sf.required(sf.types([sf.string], { custom: optionEnablesCustomMetadata }), {
+		incrementalSummary: true,
+	}),
+	optionDisables: sf.required(
+		sf.types([sf.string], { custom: { [incrementalSummaryHint]: true } }),
+		{ incrementalSummary: false },
+	),
+	metadataPreserved: sf.required(
+		sf.types([sf.string], { custom: { [incrementalSummaryHint]: true } }),
+	),
+	optional: sf.optional(sf.string, { incrementalSummary: true }),
+	stagedOptional: sf.stagedOptional(
+		sf.types([sf.string], { custom: { [incrementalSummaryHint]: false } }),
+		{ incrementalSummary: true },
+	),
+}) {}
+
+const LeafNodeSchema = sf.required(sf.string, { incrementalSummary: true });
 
 describe("ForestSummarizer", () => {
 	describe("Summarize and Load", () => {
@@ -433,6 +463,12 @@ describe("ForestSummarizer", () => {
 	});
 
 	describe("Incremental summarization", () => {
+		it("exposes the field option only through alpha types", () => {
+			const betaSf = new SchemaFactoryBeta("IncrementalSummarization");
+			// @ts-expect-error The incrementalSummary field option is alpha.
+			betaSf.required(betaSf.string, { incrementalSummary: true });
+		});
+
 		describe("simple schema", () => {
 			it("object nodes", async () => {
 				await summarizeAndValidateIncrementality(
@@ -480,6 +516,13 @@ describe("ForestSummarizer", () => {
 				assert(recursiveNode.child instanceof RecursiveNodeSchema);
 				const inferredChild: RecursiveNodeSchema = recursiveNode.child;
 				assert.equal(inferredChild, child);
+				assert.equal(recursiveNode.optionalChild, undefined);
+
+				const policy = incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: RecursiveNodeSchema }),
+				);
+				assert.equal(policy(RecursiveNodeSchema.identifier, "optionalChild"), true);
+				assert.equal(policy(RecursiveNodeSchema.identifier, "stagedChild"), true);
 
 				await summarizeAndValidateIncrementality(
 					RecursiveNodeSchema,
@@ -500,6 +543,43 @@ describe("ForestSummarizer", () => {
 				assert.equal(policy(DirectRecursiveNodeSchema.identifier, "child"), true);
 			});
 
+			it("prefers the field option over conflicting allowed-types metadata", () => {
+				const policy = incrementalEncodingPolicyForAllowedTypes(
+					new TreeViewConfigurationAlpha({ schema: IncrementalSummaryPrecedenceSchema }),
+				);
+				assert.equal(
+					policy(IncrementalSummaryPrecedenceSchema.identifier, "optionEnables"),
+					true,
+				);
+				assert.equal(
+					policy(IncrementalSummaryPrecedenceSchema.identifier, "optionDisables"),
+					false,
+				);
+				assert.equal(
+					policy(IncrementalSummaryPrecedenceSchema.identifier, "metadataPreserved"),
+					true,
+				);
+				assert.equal(policy(IncrementalSummaryPrecedenceSchema.identifier, "optional"), true);
+				assert.equal(
+					policy(IncrementalSummaryPrecedenceSchema.identifier, "stagedOptional"),
+					true,
+				);
+				const customMetadata = IncrementalSummaryPrecedenceSchema.info.optionEnables
+					.allowedTypesFull.metadata.custom as Record<PropertyKey, unknown>;
+				assert.equal(customMetadata.preserved, "custom metadata");
+				assert.equal(customMetadata[incrementalSummaryHint], true);
+			});
+
+			it("rejects incompatible allowed-types custom metadata", () => {
+				const allowedTypes = sf.types([sf.string], { custom: "custom metadata" });
+				assert.throws(
+					() => sf.required(allowedTypes, { incrementalSummary: true }),
+					validateUsageError(
+						/The incrementalSummary field option cannot be combined with allowed-types custom metadata unless that metadata is a plain object\./,
+					),
+				);
+			});
+
 			it("leaf nodes", async () => {
 				// Leaf nodes are not incrementally summarized.
 				await summarizeAndValidateIncrementality(
@@ -518,7 +598,7 @@ describe("ForestSummarizer", () => {
 			 */
 			class BarItem extends sf.objectAlpha("barItem", {
 				id: sf.number,
-				bar: sf.field(sf.string, { incrementalSummary: true }),
+				bar: sf.required(sf.string, { incrementalSummary: true }),
 			}) {}
 
 			/**
@@ -849,7 +929,7 @@ describe("ForestSummarizer", () => {
 		describe("4-depth schema with parameterized incremental summarization", () => {
 			/**
 			 * A 4-depth nested schema where each level's map field carries
-			 * {@link SchemaStaticsBeta.field}, creating 4 independent incremental chunks:
+			 * {@link SchemaStaticsBeta.required}, creating 4 independent incremental chunks:
 			 * - Depth 1: the `documents` map (outermost chunk).
 			 * - Depth 2: each document's `sections` map.
 			 * - Depth 3: each section's `items` map.
@@ -869,7 +949,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Tag} entries is the depth-4 incremental chunk.
 				 */
-				tags: sf.field(sf.map(Tag), { incrementalSummary: true }),
+				tags: sf.required(sf.map(Tag), { incrementalSummary: true }),
 			}) {}
 
 			/** Depth 2: a section whose `items` map is the depth-3 incremental chunk. */
@@ -878,7 +958,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Item} entries is the depth-3 incremental chunk.
 				 */
-				items: sf.field(sf.map(Item), { incrementalSummary: true }),
+				items: sf.required(sf.map(Item), { incrementalSummary: true }),
 			}) {}
 
 			/** Depth 1: a document whose `sections` map is the depth-2 incremental chunk. */
@@ -887,7 +967,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Section} entries is the depth-2 incremental chunk.
 				 */
-				sections: sf.field(sf.map(Section), { incrementalSummary: true }),
+				sections: sf.required(sf.map(Section), { incrementalSummary: true }),
 			}) {}
 
 			/** Depth 0 (root): workspace whose `documents` map is the depth-1 incremental chunk. */
@@ -896,7 +976,7 @@ describe("ForestSummarizer", () => {
 				/**
 				 * The entire anonymous map of {@link Document} entries is the depth-1 incremental chunk.
 				 */
-				documents: sf.field(sf.map(Document), { incrementalSummary: true }),
+				documents: sf.required(sf.map(Document), { incrementalSummary: true }),
 			}) {}
 
 			function setupForestSummarization(initialData: Workspace | undefined) {

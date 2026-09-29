@@ -61,7 +61,7 @@ For the remainder of this article, we use the inline style.
 ### Fields and allowed types
 
 Each property in an object schema is a field.
-The explicit way to define a required field is `SchemaFactoryBeta.field()`: its first argument is the node type or set of node types allowed in the field, and its second argument contains options that apply to the field itself.
+The explicit way to define a field is `SchemaFactoryBeta.required()` or `SchemaFactoryBeta.optional()`: the first argument is the node type or set of node types allowed in the field, and the second argument contains options that apply to the field itself.
 
 ```typescript
 import { SchemaFactoryBeta } from "@fluidframework/tree/beta";
@@ -73,25 +73,26 @@ class Content extends sf.object("Content", {
 }) {}
 
 class Container extends sf.object("Container", {
-    content: sf.field(Content),
-    flexibleContent: sf.field([Content, sf.string]),
+    content: sf.required(Content),
+    flexibleContent: sf.required([Content, sf.string]),
 }) {}
 ```
 
-When a required field has no field-level options, passing the allowed type or allowed-types array directly is syntactic sugar for calling `field()`:
+When a required field has no field-level options, passing the allowed type or allowed-types array directly is syntactic sugar for calling `required()`:
 
 ```typescript
 class Container extends sf.object("Container", {
     // These declarations are equivalent.
-    explicitContent: sf.field(Content),
+    explicitContent: sf.required(Content),
     shorthandContent: Content,
 }) {}
 ```
 
-Use the explicit `field()` form when the field has additional configuration.
-For example, `{ incrementalSummary: true }` makes the field an incremental-summary boundary.
-Use `fieldRecursive()` for an explicitly configured field that contains a recursive allowed type.
-Optional fields continue to use `SchemaFactory.optional()`.
+Use the explicit `required()` or `optional()` form when the field has additional configuration.
+Use `requiredRecursive()` or `optionalRecursive()` for an explicitly configured field that
+contains a recursive allowed type.
+The alpha `FieldOptionsAlpha.incrementalSummary` option makes a field an incremental-summary
+boundary and is available from the corresponding constructors on `SchemaFactoryAlpha`.
 
 You can add fields, properties, and methods like any TypeScript class.
 For example, the `Note` class can have the following `updateText` method.

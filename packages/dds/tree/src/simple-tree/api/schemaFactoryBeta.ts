@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { isReadonlyArray, type RestrictiveStringRecord } from "../../util/index.js";
+import type { RestrictiveStringRecord } from "../../util/index.js";
 // eslint-disable-next-line unused-imports/no-unused-imports, import-x/no-duplicates -- This import prevents a large number of type references in the API reports from showing up as *_2.
 import type { RestrictiveStringRecord as _RestrictiveStringRecord } from "../../util/index.js";
 import {
@@ -24,9 +24,8 @@ import {
 } from "../core/index.js";
 import type {
 	FieldKind,
-	FieldProps,
+	FieldOptions,
 	FieldSchema,
-	FieldSchemaMetadata,
 	ImplicitFieldSchema,
 } from "../fieldSchema.js";
 /* eslint-disable unused-imports/no-unused-imports, import-x/no-duplicates -- These imports prevent a large number of type references in the API reports from showing up as *_2. */
@@ -59,7 +58,6 @@ import {
 	type ObjectSchemaOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
-import { incrementalSummaryFieldOption } from "./incrementalAllowedTypes.js";
 import { schemaStatics } from "./schemaStatics.js";
 import type {
 	AllowedTypesFullFromMixedUnsafe,
@@ -67,40 +65,10 @@ import type {
 	System_Unsafe,
 	TreeRecordNodeUnsafe,
 	UnannotateAllowedTypeUnsafe,
-	UnannotateAllowedTypesListUnsafe,
 	Unenforced,
 } from "./typesUnsafe.js";
 
-/**
- * Options for a field created by {@link SchemaStaticsBeta.field}.
- *
- * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
- * See {@link FieldSchemaMetadata.custom}.
- *
- * @beta @input
- */
-export interface FieldOptions<TCustomMetadata = unknown> {
-	/**
-	 * {@inheritDoc FieldProps.key}
-	 */
-	readonly key?: string;
-
-	/**
-	 * {@inheritDoc FieldProps.metadata}
-	 */
-	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
-
-	/**
-	 * Whether this field is an incremental-summary boundary.
-	 *
-	 * @remarks
-	 * During incremental summarization, an unchanged field with this option enabled can reuse its
-	 * previously generated summary instead of being re-encoded and uploaded again.
-	 *
-	 * @defaultValue `false`
-	 */
-	readonly incrementalSummary?: boolean;
-}
+export type { FieldOptions } from "../fieldSchema.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactoryBeta} as both instance properties and as statics.
@@ -109,17 +77,26 @@ export interface FieldOptions<TCustomMetadata = unknown> {
  */
 export interface SchemaStaticsBeta {
 	/**
-	 * Creates a required field schema from a set of allowed types and field-level options.
+	 * Make a field optional instead of the default, which is required.
+	 *
+	 * @param allowedTypes - The types allowed under the field.
+	 * @param options - Additional options that apply to the field.
+	 * @returns An optional field schema.
+	 */
+	readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		allowedTypes: T,
+		options?: FieldOptions<TCustomMetadata>,
+	) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
+
+	/**
+	 * Make a field explicitly required.
 	 *
 	 * @remarks
-	 * This is the explicit form of an object field declaration. Passing allowed types directly in
-	 * an object schema is syntactic sugar for calling this API without options.
+	 * Fields are required by default, but this API can be used to make the required nature explicit
+	 * and to specify field-level options. Passing allowed types directly in an object schema is
+	 * syntactic sugar for calling this API without options.
 	 *
-	 * This API accepts either a single schema or an array of allowed types.
-	 * For recursive schema declarations that require relaxed typing, use
-	 * {@link SchemaStaticsBeta.fieldRecursive}.
-	 *
-	 * @param allowedTypes - The types allowed in the field.
+	 * @param allowedTypes - The types allowed under the field.
 	 * @param options - Additional options that apply to the field.
 	 * @returns A required field schema.
 	 *
@@ -132,52 +109,52 @@ export interface SchemaStaticsBeta {
 	 * }) {}
 	 *
 	 * class Document extends sf.object("Document", {
-	 *   sections: sf.field(sf.map(Section), { incrementalSummary: true }),
+	 *   sections: sf.required(sf.map(Section), { key: "documentSections" }),
 	 * }) {}
 	 * ```
 	 */
-	readonly field: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+	readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		allowedTypes: T,
 		options?: FieldOptions<TCustomMetadata>,
 	) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
 
 	/**
-	 * {@link SchemaStaticsBeta.field} except tweaked to work better for recursive types.
+	 * {@link SchemaStaticsBeta.optional} except tweaked to work better for recursive types.
 	 *
 	 * @remarks
-	 * This version of {@link SchemaStaticsBeta.field} has fewer type constraints to
-	 * work around TypeScript limitations. Use with {@link ValidateRecursiveSchema} for improved type
-	 * safety.
-	 * It accepts either a single recursive allowed type or an array of recursive allowed types.
+	 * This version of {@link SchemaStaticsBeta.optional} has fewer type constraints to work around
+	 * TypeScript limitations. Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 *
+	 * @param allowedTypes - The types allowed in the field.
+	 * @param options - Additional options that apply to the field.
+	 * @returns An optional field schema.
+	 */
+	readonly optionalRecursive: <
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		allowedTypes: T,
+		options?: FieldOptions<TCustomMetadata>,
+	) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
+
+	/**
+	 * {@link SchemaStaticsBeta.required} except tweaked to work better for recursive types.
+	 *
+	 * @remarks
+	 * This version of {@link SchemaStaticsBeta.required} has fewer type constraints to work around
+	 * TypeScript limitations. Use with {@link ValidateRecursiveSchema} for improved type safety.
 	 *
 	 * @param allowedTypes - The types allowed in the field.
 	 * @param options - Additional options that apply to the field.
 	 * @returns A required field schema.
 	 */
-	readonly fieldRecursive: {
-		<
-			const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[],
-			const TCustomMetadata = unknown,
-		>(
-			allowedTypes: T,
-			options?: FieldOptions<TCustomMetadata>,
-		): System_Unsafe.FieldSchemaUnsafe<
-			FieldKind.Required,
-			UnannotateAllowedTypesListUnsafe<T>,
-			TCustomMetadata
-		>;
-		<
-			const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>,
-			const TCustomMetadata = unknown,
-		>(
-			allowedType: T,
-			options?: FieldOptions<TCustomMetadata>,
-		): System_Unsafe.FieldSchemaUnsafe<
-			FieldKind.Required,
-			readonly [UnannotateAllowedTypeUnsafe<T>],
-			TCustomMetadata
-		>;
-	};
+	readonly requiredRecursive: <
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+		const TCustomMetadata = unknown,
+	>(
+		allowedTypes: T,
+		options?: FieldOptions<TCustomMetadata>,
+	) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
 
 	/**
 	 * Declares a staged type in a set of {@link AllowedTypes}.
@@ -274,39 +251,16 @@ const types = <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNod
 	return AnnotatedAllowedTypesInternal.createMixed<T>(t, metadata);
 };
 
-const typesRecursive = types as unknown as SchemaStaticsBeta["typesRecursive"];
-
-const createRequiredField = (
-	allowedTypes: ImplicitAllowedTypes,
-	options?: FieldOptions,
-): FieldSchema => {
-	const { incrementalSummary, ...props } = options ?? {};
-	const fieldProps: Omit<FieldProps, "defaultProvider"> & {
-		readonly [incrementalSummaryFieldOption]?: true;
-	} =
-		incrementalSummary === true ? { ...props, [incrementalSummaryFieldOption]: true } : props;
-	return schemaStatics.required(allowedTypes, fieldProps);
-};
-
-const field = createRequiredField as SchemaStaticsBeta["field"];
-
-const fieldRecursive = ((allowedTypes: unknown, options?: FieldOptions) => {
-	const normalizedAllowedTypes = isReadonlyArray(allowedTypes) ? allowedTypes : [allowedTypes];
-	const annotatedAllowedTypes = typesRecursive(normalizedAllowedTypes);
-	return createRequiredField(
-		annotatedAllowedTypes as unknown as ImplicitAllowedTypes,
-		options,
-	);
-}) as SchemaStaticsBeta["fieldRecursive"];
-
 const schemaStaticsBeta: SchemaStaticsBeta = {
-	field,
-	fieldRecursive,
+	optional: schemaStatics.optional,
+	required: schemaStatics.required,
+	optionalRecursive: schemaStatics.optionalRecursive,
+	requiredRecursive: schemaStatics.requiredRecursive,
 	staged,
 	types,
 
 	stagedRecursive: staged as SchemaStaticsBeta["stagedRecursive"],
-	typesRecursive,
+	typesRecursive: types as unknown as SchemaStaticsBeta["typesRecursive"],
 };
 
 /**
@@ -319,24 +273,44 @@ export class SchemaFactoryBeta<
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.field}
+	 * {@inheritDoc SchemaStaticsBeta.optional}
 	 */
-	public static field = schemaStaticsBeta.field;
+	public static override optional = schemaStaticsBeta.optional;
 
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.field}
+	 * {@inheritDoc SchemaStaticsBeta.optional}
 	 */
-	public field = schemaStaticsBeta.field;
+	public override optional = schemaStaticsBeta.optional;
 
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.fieldRecursive}
+	 * {@inheritDoc SchemaStaticsBeta.required}
 	 */
-	public static fieldRecursive = schemaStaticsBeta.fieldRecursive;
+	public static override required = schemaStaticsBeta.required;
 
 	/**
-	 * {@inheritDoc SchemaStaticsBeta.fieldRecursive}
+	 * {@inheritDoc SchemaStaticsBeta.required}
 	 */
-	public fieldRecursive = schemaStaticsBeta.fieldRecursive;
+	public override required = schemaStaticsBeta.required;
+
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.optionalRecursive}
+	 */
+	public static override optionalRecursive = schemaStaticsBeta.optionalRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.optionalRecursive}
+	 */
+	public override optionalRecursive = schemaStaticsBeta.optionalRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.requiredRecursive}
+	 */
+	public static override requiredRecursive = schemaStaticsBeta.requiredRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsBeta.requiredRecursive}
+	 */
+	public override requiredRecursive = schemaStaticsBeta.requiredRecursive;
 
 	/**
 	 * {@inheritDoc SchemaStaticsBeta.staged}

@@ -51,6 +51,7 @@ export {
 } from "./schemaFactoryBeta.js";
 export {
 	SchemaFactoryAlpha,
+	type FieldOptionsAlpha,
 	type SchemaStaticsAlpha,
 	type NodeProvider,
 } from "./schemaFactoryAlpha.js";

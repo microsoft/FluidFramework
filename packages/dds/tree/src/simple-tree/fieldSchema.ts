@@ -168,6 +168,47 @@ export interface FieldProps<TCustomMetadata = unknown> {
 }
 
 /**
+ * Options for fields created by {@link SchemaStaticsBeta.required},
+ * {@link SchemaStaticsBeta.optional}, and their recursive variants.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldProps.metadata}.
+ *
+ * @sealed @beta @input
+ */
+export interface FieldOptions<TCustomMetadata = unknown>
+	extends Omit<FieldProps<TCustomMetadata>, "defaultProvider"> {}
+
+/**
+ * {@link FieldOptions} extended with options for alpha features.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldProps.metadata}.
+ *
+ * @alpha @input
+ */
+export interface FieldOptionsAlpha<TCustomMetadata = unknown>
+	extends FieldOptions<TCustomMetadata> {
+	/**
+	 * Whether this field is an incremental-summary boundary.
+	 *
+	 * @remarks
+	 * During incremental summarization, an unchanged field with this option enabled can reuse its
+	 * previously generated summary instead of being re-encoded and uploaded again.
+	 *
+	 * If this option conflicts with incremental-summary configuration in the allowed types'
+	 * custom metadata, this option takes precedence.
+	 *
+	 * Allowed-types custom metadata is preserved when it is a plain object. Other custom metadata
+	 * shapes cannot be combined with this option.
+	 *
+	 * @defaultValue When omitted, preserves the incremental-summary hint from the allowed types'
+	 * custom metadata.
+	 */
+	readonly incrementalSummary?: boolean;
+}
+
+/**
  * {@link FieldProps} extended with additional `alpha` options.
  *
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.

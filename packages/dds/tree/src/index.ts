@@ -83,6 +83,7 @@ export {
 	SchemaFactoryBeta,
 	type SchemaStaticsBeta,
 	SchemaFactoryAlpha,
+	type FieldOptionsAlpha,
 	type ObjectSchemaOptionsAlpha,
 	type ObjectSchemaOptions,
 	type ImplicitFieldSchema,
