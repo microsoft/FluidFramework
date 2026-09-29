@@ -1035,6 +1035,10 @@ describe("loadContainerToSequenceNumber", () => {
 		const replayStarted = new Promise<void>((resolve) => {
 			markReplayStarted = resolve;
 		});
+		let markDeltaStorageReadSettled: (() => void) | undefined;
+		const deltaStorageReadSettled = new Promise<void>((resolve) => {
+			markDeltaStorageReadSettled = resolve;
+		});
 		const fetchCalls: { from: number; to: number | undefined }[] = [];
 		const service = {
 			...snapshotService,
@@ -1048,6 +1052,7 @@ describe("loadContainerToSequenceNumber", () => {
 							await new Promise<void>((resolve) => {
 								signal.addEventListener("abort", () => resolve(), { once: true });
 							});
+							markDeltaStorageReadSettled?.();
 							return { done: true, value: undefined };
 						},
 					};
@@ -1109,6 +1114,7 @@ describe("loadContainerToSequenceNumber", () => {
 				rejectedError = error;
 				return /cancel/i.test(error.message);
 			});
+			await deltaStorageReadSettled;
 
 			assert(
 				assertContainerInteractions !== undefined,
