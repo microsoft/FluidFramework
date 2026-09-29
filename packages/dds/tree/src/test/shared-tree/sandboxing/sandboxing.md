@@ -312,9 +312,7 @@ The Host and the Guest currently use the same id-compressor instance.
 This design is not practical because the Host and the Guest can run in different processes.
 Update the code to serialize a sharded id-compressor.
 
-Sharding support was added in https://github.com/microsoft/FluidFramework/pull/26294.
-The change was reverted in https://github.com/microsoft/FluidFramework/pull/26394.
-Fix, restore, and use that implementation, or implement a different solution.
+Sharding support was added in https://github.com/microsoft/FluidFramework/pull/27559.
 
 ### Protocol Validation and Security Hardening
 
