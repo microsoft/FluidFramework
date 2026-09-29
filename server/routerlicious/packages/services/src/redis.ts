@@ -15,15 +15,16 @@ import type {
  * @internal
  */
 export class RedisCache implements ICache {
-	private readonly expireAfterSeconds: number = 60 * 60 * 24;
+	private readonly expireAfterSeconds: number | undefined;
 	private readonly prefix: string = "page";
 	constructor(
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
-		if (parameters?.expireAfterSeconds !== undefined) {
-			this.expireAfterSeconds = parameters.expireAfterSeconds;
-		}
+		this.expireAfterSeconds =
+			parameters?.expireAfterSeconds === 0
+				? undefined
+				: parameters?.expireAfterSeconds ?? 60 * 60 * 24;
 
 		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
@@ -63,9 +64,12 @@ export class RedisCache implements ICache {
 
 	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
 		try {
-			const result = await this.redisClientConnectionManager
-				.getRedisClient()
-				.set(this.getKey(key), value, "EX", expireAfterSeconds ?? this.expireAfterSeconds);
+			const expiration = expireAfterSeconds ?? this.expireAfterSeconds;
+			const redisClient = this.redisClientConnectionManager.getRedisClient();
+			const result =
+				expiration === undefined
+					? await redisClient.set(this.getKey(key), value)
+					: await redisClient.set(this.getKey(key), value, "EX", expiration);
 			if (result !== "OK") {
 				throw new Error(result);
 			}

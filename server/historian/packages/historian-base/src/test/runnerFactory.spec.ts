@@ -5,13 +5,14 @@
 
 import { strict as assert } from "assert";
 
-import * as services from "@fluidframework/server-services";
 import type { IDocumentManager } from "@fluidframework/server-services-core";
 import { TestRedisClientConnectionManager } from "@fluidframework/server-test-utils";
 import * as nconf from "nconf";
+import { stub } from "sinon";
 
 import type { IHistorianResourcesCustomizations } from "../customizations";
 import { HistorianResourcesFactory } from "../runnerFactory";
+import { DocumentManager } from "../services/documentManager";
 import { TestDocumentManager } from "./utils";
 
 const throttleConfig = {
@@ -64,14 +65,17 @@ function createCustomizations(
 
 describe("HistorianResourcesFactory", () => {
 	describe(".create", () => {
-		it("uses the injected document manager", async () => {
+		it("wraps the injected document manager with summary authorization protections", async () => {
 			const documentManager = new TestDocumentManager();
+			const readDocument = stub(documentManager, "readDocument").resolves(null);
 			const resources = await new HistorianResourcesFactory().create(
 				createConfig(),
 				createCustomizations(documentManager),
 			);
 
-			assert.strictEqual(resources.documentManager, documentManager);
+			assert.ok(resources.documentManager instanceof DocumentManager);
+			await resources.documentManager.readDocument("tenantId", "documentId");
+			assert.ok(readDocument.calledOnceWithExactly("tenantId", "documentId", undefined));
 
 			await resources.dispose();
 		});
@@ -82,7 +86,7 @@ describe("HistorianResourcesFactory", () => {
 				createCustomizations(),
 			);
 
-			assert.ok(resources.documentManager instanceof services.DocumentManager);
+			assert.ok(resources.documentManager instanceof DocumentManager);
 
 			await resources.dispose();
 		});

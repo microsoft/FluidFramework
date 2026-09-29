@@ -213,10 +213,15 @@ export async function deliCreate(
 		expireAfterSeconds: redisConfig.keyExpireAfterSeconds,
 		prefix: "git",
 	});
+	const documentDeletionMarkerCache = new services.RedisCache(redisClientConnectionManager, {
+		expireAfterSeconds: 0,
+		prefix: "git",
+	});
 	const documentManager = new services.DocumentManager(
 		"http://invalid-api-use",
 		tenantManager,
 		documentStaticCache,
+		documentDeletionMarkerCache,
 	);
 
 	const deliLambdaFactory = new DeliLambdaFactory(

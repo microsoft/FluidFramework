@@ -234,6 +234,7 @@ describe("Routerlicious", () => {
 
 			describe(".handler", () => {
 				it("purges static ownership data before soft-deleting an ephemeral document", async () => {
+					const createTime = Date.now();
 					const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 					const mongoManager = new MongoManager(dbFactory);
 					const documentRepository = new TestNotImplementedDocumentRepository();
@@ -248,7 +249,7 @@ describe("Routerlicious", () => {
 						"readOne",
 						Sinon.fake.resolves({
 							...testData[0],
-							createTime: Date.now(),
+							createTime,
 							isEphemeralContainer: true,
 						}),
 					);
@@ -311,7 +312,12 @@ describe("Routerlicious", () => {
 						});
 					}
 
-					Sinon.assert.calledOnceWithExactly(purgeStaticCache, testTenantId, testId);
+					Sinon.assert.calledOnceWithExactly(
+						purgeStaticCache,
+						testTenantId,
+						testId,
+						createTime,
+					);
 					assert.ok(purgeStaticCache.firstCall.calledBefore(updateOne.lastCall));
 					await ephemeralFactory.dispose();
 				});

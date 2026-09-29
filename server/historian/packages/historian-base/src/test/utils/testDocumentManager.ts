@@ -9,8 +9,10 @@ import type {
 	IDocument,
 	IDocumentStaticProperties,
 } from "@fluidframework/server-services-core";
+import type { ISummaryDocumentManager } from "../../services/documentManager";
 
-export class TestDocumentManager implements IDocumentManager {
+export class TestDocumentManager implements IDocumentManager, ISummaryDocumentManager {
+	public readonly supportsSummaryStaticProperties = true;
 	/* eslint-disable @rushstack/no-new-null */
 	public async readDocument(
 		tenantId: string,
@@ -29,11 +31,18 @@ export class TestDocumentManager implements IDocumentManager {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}
 
-	public async purgeStaticCache(documentId: string): Promise<void>;
-	public async purgeStaticCache(tenantId: string, documentId: string): Promise<void>;
+	public async readStaticPropertiesForSummary(
+		tenantId: string,
+		documentId: string,
+		options?: { accessToken?: string },
+	): Promise<IDocumentStaticProperties | undefined> {
+		return this.readStaticProperties(tenantId, documentId, options);
+	}
+
 	public async purgeStaticCache(
-		tenantIdOrDocumentId: string,
-		documentId?: string,
+		tenantId: string,
+		documentId: string,
+		createTime?: number,
 	): Promise<void> {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}

@@ -6,6 +6,7 @@
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	LatestSummaryId,
+	NetworkError,
 	type IWholeFlatSummary,
 	type IWholeSummaryPayload,
 	type IWriteSummaryResponse,
@@ -15,6 +16,7 @@ import type {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IDocumentStaticProperties,
 	IDenyList,
 } from "@fluidframework/server-services-core";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
@@ -40,6 +42,7 @@ import type {
 	IPostEphemeralContainerChecker,
 	RestGitService,
 } from "../services";
+import { isSummaryDocumentManager } from "../services/documentManager";
 import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
 
 import * as utils from "./utils";
@@ -111,7 +114,7 @@ export function create(
 		routeType: utils.SummaryRouteType,
 		allowDisabledTenant = false,
 		query?: Query,
-	): Promise<RestGitService> {
+	): Promise<{ service: RestGitService; document: IDocumentStaticProperties }> {
 		const document = await utils.validateSummaryDocument({
 			tenantId,
 			authorization,
@@ -122,7 +125,7 @@ export function create(
 			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 			reuseCustomerAccessToken: reuseCustomerAccessTokenForSummaryOwnership,
 		});
-		return utils.createGitService({
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
@@ -137,6 +140,7 @@ export function create(
 			postEphemeralContainerChecker,
 			query,
 		});
+		return { service, document };
 	}
 
 	async function getSummary(
@@ -147,7 +151,7 @@ export function create(
 		query?: Query,
 	): Promise<IWholeFlatSummary> {
 		const routeType: utils.SummaryRouteType = sha === LatestSummaryId ? "latest" : "sha";
-		const service = await createProtectedSummaryService(
+		const { service } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"get",
@@ -198,14 +202,14 @@ export function create(
 				query,
 			});
 		} else {
-			service = await createProtectedSummaryService(
+			({ service } = await createProtectedSummaryService(
 				tenantId,
 				authorization,
 				"post",
 				"notApplicable",
 				false,
 				query,
-			);
+			));
 		}
 		return service.createSummary(params, initial);
 	}
@@ -215,7 +219,7 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await createProtectedSummaryService(
+		const { service, document } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"delete",
@@ -223,7 +227,13 @@ export function create(
 			true,
 		);
 		const documentId = utils.getDocumentIdFromAuthorization(tenantId, authorization);
-		await documentManager.purgeStaticCache(tenantId, documentId);
+		if (!isSummaryDocumentManager(documentManager)) {
+			throw new NetworkError(
+				500,
+				"Document manager does not support protected summary validation.",
+			);
+		}
+		await documentManager.purgeStaticCache(tenantId, documentId, document.createTime);
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);

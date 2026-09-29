@@ -14,6 +14,7 @@ import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemet
 import { configureGlobalTelemetryContext } from "@fluidframework/server-services-utils";
 import * as historianApp from "../app";
 import { RestGitService } from "../services";
+import { DocumentManager as SummaryDocumentManager } from "../services/documentManager";
 import { TestTenantService, TestCache, TestDocumentManager } from "./utils";
 import { Constants } from "../utils";
 import { createRouteContext } from "../routes/utils";
@@ -1515,9 +1516,54 @@ describe("summary ownership routes", () => {
 
 		sinon.assert.calledTwice(deleteSummary);
 		sinon.assert.calledTwice(purgeStaticCache);
-		sinon.assert.alwaysCalledWithExactly(purgeStaticCache, tenantId, documentId);
+		sinon.assert.alwaysCalledWithExactly(
+			purgeStaticCache,
+			tenantId,
+			documentId,
+			activeDocument.createTime,
+		);
 		assert.ok(purgeStaticCache.firstCall.calledBefore(deleteSummary.firstCall));
 		assert.ok(purgeStaticCache.secondCall.calledBefore(deleteSummary.secondCall));
+	});
+
+	it("keeps GET and non-initial POST denied after direct summary deletion outlives normal cache entries", async () => {
+		const authoritativeManager = new TestDocumentManager();
+		sandbox.stub(authoritativeManager, "readDocument").resolves(activeDocument);
+		cache = new TestCache();
+		documentManager = new SummaryDocumentManager(
+			authoritativeManager,
+			cache,
+		) as unknown as TestDocumentManager;
+		superTest = createSummaryOwnershipSuperTest(defaultProvider);
+		sandbox.stub(defaultTenantService, "deleteFromCache").resolves(true);
+		sandbox.stub(RestGitService.prototype, "deleteSummary").resolves(true);
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
+		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+		await cache.delete(`staticData:${tenantId}:${documentId}`);
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(404);
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "false" })
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(404);
+
+		assert.notStrictEqual(
+			await cache.get(`deletedDocument:${tenantId}:${documentId}`),
+			undefined,
+		);
+		sinon.assert.notCalled(getSummary);
+		sinon.assert.notCalled(createSummary);
 	});
 
 	it("requires ownership for non-initial POST and ignores caller routing metadata", async () => {

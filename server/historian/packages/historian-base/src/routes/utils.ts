@@ -12,7 +12,6 @@ import {
 	type IRevokedTokenChecker,
 	type IDocumentStaticProperties,
 	type IDocumentManager,
-	type IReadDocumentOptions,
 	type IThrottler,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
@@ -40,6 +39,7 @@ import {
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
 } from "../services";
+import { isSummaryDocumentManager } from "../services/documentManager";
 import { Constants, parseToken } from "../utils";
 
 const MAX_TOKEN_LENGTH = 1000; // Maximum allowed token length in characters
@@ -79,14 +79,6 @@ export interface IValidateSummaryDocumentArgs {
 	ignoreEphemeralFlag?: boolean;
 	reuseCustomerAccessToken?: boolean;
 }
-
-type DocumentManagerWithStaticReadOptions = IDocumentManager & {
-	readStaticProperties(
-		tenantId: string,
-		documentId: string,
-		options?: IReadDocumentOptions,
-	): Promise<IDocumentStaticProperties | undefined>;
-};
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
 	return `isEphemeralContainer:${encodeURIComponent(tenantId)}:${encodeURIComponent(documentId)}`;
@@ -379,13 +371,20 @@ export async function validateSummaryDocument({
 	reuseCustomerAccessToken = false,
 }: IValidateSummaryDocumentArgs): Promise<IDocumentStaticProperties> {
 	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
-	const staticDocumentManager = documentManager as DocumentManagerWithStaticReadOptions;
+	if (!isSummaryDocumentManager(documentManager)) {
+		const error = new NetworkError(
+			500,
+			"Document manager does not support protected summary validation.",
+		);
+		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
+		throw error;
+	}
 	const readStaticProperties = reuseCustomerAccessToken
 		? async () =>
-				staticDocumentManager.readStaticProperties(tenantId, documentId, {
+				documentManager.readStaticPropertiesForSummary(tenantId, documentId, {
 					accessToken,
 				})
-		: async () => documentManager.readStaticProperties(tenantId, documentId);
+		: async () => documentManager.readStaticPropertiesForSummary(tenantId, documentId);
 	let document: IDocumentStaticProperties | undefined;
 	try {
 		document = await runWithRetry(

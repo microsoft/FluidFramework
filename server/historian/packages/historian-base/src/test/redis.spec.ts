@@ -68,6 +68,23 @@ testCache.forEach((fileSystem) => {
 			}
 			assert.strictEqual(await redis.delete("foo"), true);
 		});
+		if (fileSystem === "redisCache") {
+			it("atomically deletes a persistent value only when it is unchanged", async () => {
+				const cache = redis as RedisCache;
+				await cache.setWithoutExpiry("deletion-marker", { createTime: 100 });
+
+				assert.strictEqual(
+					await cache.deleteIfValueMatches("deletion-marker", { createTime: 200 }),
+					false,
+				);
+				assert.deepStrictEqual(await cache.get("deletion-marker"), { createTime: 100 });
+				assert.strictEqual(
+					await cache.deleteIfValueMatches("deletion-marker", { createTime: 100 }),
+					true,
+				);
+				assert.strictEqual(await cache.get("deletion-marker"), null);
+			});
+		}
 		it("single key CRD operations should not succeed without client recreation", async () => {
 			redisClientConnectionManager.invalidateRedisClient(false);
 			assert.rejects(async () => {

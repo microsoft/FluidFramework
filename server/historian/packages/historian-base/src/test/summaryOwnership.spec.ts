@@ -11,7 +11,7 @@ import {
 	getAuthorizationTokenFromCredentials,
 	NetworkError,
 } from "@fluidframework/server-services-client";
-import type { IDocument } from "@fluidframework/server-services-core";
+import type { IDocument, IDocumentManager } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as nconf from "nconf";
 import * as sinon from "sinon";
@@ -53,6 +53,26 @@ describe("summary ownership", function () {
 
 	afterEach(() => sandbox.restore());
 
+	it("rejects a document manager that bypasses the summary validation contract", async () => {
+		const documentManager = {
+			readDocument: sandbox.stub().resolves(activeDocument),
+		} as unknown as IDocumentManager;
+
+		await assert.rejects(
+			validateSummaryDocument({
+				tenantId,
+				authorization,
+				documentManager,
+				operation: "get",
+				routeType: "latest",
+				ephemeralDocumentTTLSec: 24 * 60 * 60,
+			}),
+			(error: NetworkError) =>
+				error.code === 500 &&
+				error.message === "Document manager does not support protected summary validation.",
+		);
+	});
+
 	it("returns the exact active Alfred document", async () => {
 		const documentManager = new TestDocumentManager();
 		const readStaticProperties = sandbox
@@ -70,7 +90,7 @@ describe("summary ownership", function () {
 		});
 
 		assert.strictEqual(result, activeDocument);
-		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId);
+		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId, undefined);
 		sinon.assert.notCalled(readDocument);
 	});
 

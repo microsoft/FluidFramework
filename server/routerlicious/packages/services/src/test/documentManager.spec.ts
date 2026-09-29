@@ -272,7 +272,7 @@ describe("DocumentManager", () => {
 
 		assert.strictEqual(properties?.tenantId, "tenant-a");
 		assert.strictEqual(properties?.documentId, "document-a");
-		sinon.assert.callCount(cacheGet, 3);
+		sinon.assert.callCount(cacheGet, 4);
 		sinon.assert.calledOnce(readDocument);
 		assert.deepStrictEqual(cache.deletes, ["staticData:tenant-a:document-a"]);
 	});
@@ -302,7 +302,8 @@ describe("DocumentManager", () => {
 		await manager.purgeStaticCache("tenant:a", "shared:id");
 
 		assert.deepStrictEqual(cache.deletes, ["staticData:tenant%3Aa:shared%3Aid"]);
-		assert.strictEqual(cache.values.get("deletedDocument:tenant%3Aa:shared%3Aid"), "true");
+		assert.strictEqual(cache.values.get("deletedDocument:tenant%3Aa:shared%3Aid"), "{}");
+		assert.deepStrictEqual(cache.sets, ["deletedDocument:tenant%3Aa:shared%3Aid"]);
 		assert.strictEqual(cache.values.has("staticData:tenant%3Ab:shared%3Aid"), true);
 	});
 
@@ -320,5 +321,46 @@ describe("DocumentManager", () => {
 
 		assert.strictEqual(await manager.readStaticProperties("tenant-a", "document-a"), undefined);
 		sinon.assert.notCalled(readDocument);
+	});
+
+	it("denies and removes a cached positive when deletion is marked during the cache read", async () => {
+		const staticKey = "staticData:tenant-a:document-a";
+		const deletedKey = "deletedDocument:tenant-a:document-a";
+		class InterleavingCache extends RecordingCache {
+			public override async get(key: string): Promise<string | null> {
+				const value = await super.get(key);
+				if (key === staticKey) {
+					this.values.set(deletedKey, "{}");
+				}
+				return value;
+			}
+		}
+		const cache = new InterleavingCache();
+		cache.values.set(staticKey, JSON.stringify(createDocument("tenant-a", "document-a")));
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+
+		assert.strictEqual(await manager.readStaticProperties("tenant-a", "document-a"), undefined);
+		assert.strictEqual(cache.values.has(staticKey), false);
+	});
+
+	it("denies and removes an authoritative result when deletion is marked during cache population", async () => {
+		const staticKey = "staticData:tenant-a:document-a";
+		const deletedKey = "deletedDocument:tenant-a:document-a";
+		class InterleavingCache extends RecordingCache {
+			public override async set(key: string, value: string): Promise<void> {
+				await super.set(key, value);
+				if (key === staticKey) {
+					this.values.set(deletedKey, "{}");
+				}
+			}
+		}
+		const cache = new InterleavingCache();
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		sandbox.stub(manager, "readDocument").resolves(createDocument("tenant-a", "document-a"));
+
+		assert.strictEqual(await manager.readStaticProperties("tenant-a", "document-a"), undefined);
+		assert.strictEqual(cache.values.has(staticKey), false);
 	});
 });

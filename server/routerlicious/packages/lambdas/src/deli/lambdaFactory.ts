@@ -73,7 +73,13 @@ export class DeliLambdaFactory
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker | undefined,
 		private readonly ephemeralDocumentTTLSec?: number,
-		private readonly documentManager?: IDocumentManager,
+		private readonly documentManager?: IDocumentManager & {
+			purgeStaticCache(
+				tenantId: string,
+				documentId: string,
+				createTime?: number,
+			): Promise<void>;
+		},
 	) {
 		super();
 	}
@@ -261,7 +267,11 @@ export class DeliLambdaFactory
 							documentId,
 							tenantId,
 						};
-						await this.documentManager?.purgeStaticCache(tenantId, documentId);
+						await this.documentManager?.purgeStaticCache(
+							tenantId,
+							documentId,
+							document.createTime,
+						);
 						if (
 							this.serviceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs >= 0
 						) {

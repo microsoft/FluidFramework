@@ -441,14 +441,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 				prefix: "git",
 			},
 		);
+		const documentDeletionMarkerCache = new services.RedisCache(
+			redisClientConnectionManagerForDocumentStaticCache,
+			{ expireAfterSeconds: 0, prefix: "git" },
+		);
 		const documentManager = new services.DocumentManager(
 			"http://invalid-api-use",
 			tenantManager,
 			documentStaticCache,
+			documentDeletionMarkerCache,
 		);
 		const documentDeleteService = new DocumentDeleteServiceWithCacheInvalidation(
 			baseDocumentDeleteService,
 			documentManager,
+			documentRepository,
+			documentDeletionMarkerCache,
 		);
 
 		// Service Message setup

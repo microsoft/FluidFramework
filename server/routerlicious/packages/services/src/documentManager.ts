@@ -22,6 +22,10 @@ import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 import { getRefreshTokenIfNeededCallback } from "./tenant";
 
+interface IDeletionMarker {
+	createTime?: number;
+}
+
 /**
  * Manager to fetch document from Alfred using the internal URL.
  * @internal
@@ -31,6 +35,7 @@ export class DocumentManager implements IDocumentManager {
 		private readonly internalAlfredUrl: string,
 		private readonly tenantManager: ITenantManager,
 		private readonly documentStaticDataCache?: ICache,
+		private readonly documentDeletionMarkerCache = documentStaticDataCache,
 	) {
 		if (!this.documentStaticDataCache) {
 			Lumberjack.info(
@@ -71,7 +76,7 @@ export class DocumentManager implements IDocumentManager {
 			return this.getDocumentStaticProperties(tenantId, documentId, options);
 		}
 
-		if (await this.isDocumentDeleted(tenantId, documentId)) {
+		if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
 			return undefined;
 		}
 
@@ -120,18 +125,26 @@ export class DocumentManager implements IDocumentManager {
 			await this.deleteStaticCacheEntry(tenantId, documentId);
 			return this.getDocumentStaticProperties(tenantId, documentId, options);
 		}
+		if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
+			await this.deleteStaticCacheEntry(tenantId, documentId);
+			return undefined;
+		}
 		return staticProps;
 	}
 
-	public async purgeStaticCache(tenantId: string, documentId: string): Promise<void> {
-		if (!this.documentStaticDataCache) {
-			Lumberjack.error(
-				"Cannot purge document static properties cache, because the DocumentManager cache is undefined.",
-			);
-			return;
+	public async purgeStaticCache(
+		tenantId: string,
+		documentId: string,
+		createTime?: number,
+	): Promise<void> {
+		if (!this.documentDeletionMarkerCache) {
+			throw new Error("Document deletion requires a cache for persistent deletion markers.");
 		}
 		const deletedKey = DocumentManager.getDocumentDeletedKey(tenantId, documentId);
-		await this.documentStaticDataCache.set(deletedKey, "true");
+		await this.documentDeletionMarkerCache.set(
+			deletedKey,
+			JSON.stringify(Number.isFinite(createTime) ? { createTime } : {}),
+		);
 		await this.deleteStaticCacheEntry(tenantId, documentId);
 	}
 
@@ -162,7 +175,7 @@ export class DocumentManager implements IDocumentManager {
 			);
 			return undefined;
 		}
-		if (await this.isDocumentDeleted(tenantId, documentId)) {
+		if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
 			return undefined;
 		}
 
@@ -170,6 +183,10 @@ export class DocumentManager implements IDocumentManager {
 		if (this.documentStaticDataCache && DocumentManager.areStaticPropertiesValid(staticProps)) {
 			const staticPropsKey = DocumentManager.getDocumentStaticKey(tenantId, documentId);
 			await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
+			if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
+				await this.deleteStaticCacheEntry(tenantId, documentId);
+				return undefined;
+			}
 		}
 		return staticProps;
 	}
@@ -234,12 +251,16 @@ export class DocumentManager implements IDocumentManager {
 		return `deletedDocument:${encodeURIComponent(tenantId)}:${encodeURIComponent(documentId)}`;
 	}
 
-	private async isDocumentDeleted(tenantId: string, documentId: string): Promise<boolean> {
-		if (!this.documentStaticDataCache) {
-			return false;
+	private async getDeletionMarker(
+		tenantId: string,
+		documentId: string,
+	): Promise<IDeletionMarker | undefined> {
+		if (!this.documentDeletionMarkerCache) {
+			return undefined;
 		}
 		const deletedKey = DocumentManager.getDocumentDeletedKey(tenantId, documentId);
-		return (await this.documentStaticDataCache.get(deletedKey)) !== null;
+		const marker = await this.documentDeletionMarkerCache.get(deletedKey);
+		return marker === null ? undefined : (JSON.parse(marker) as IDeletionMarker);
 	}
 
 	private async deleteStaticCacheEntry(tenantId: string, documentId: string): Promise<void> {
@@ -249,6 +270,7 @@ export class DocumentManager implements IDocumentManager {
 			);
 			return;
 		}
+
 		const staticPropsKey = DocumentManager.getDocumentStaticKey(tenantId, documentId);
 		await this.documentStaticDataCache.delete(staticPropsKey);
 	}

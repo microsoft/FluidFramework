@@ -16,6 +16,16 @@ export class TestCache implements ICache {
 		this.dictionary.set(key, value);
 		return Promise.resolve();
 	}
+	async setWithoutExpiry<T>(key: string, value: T): Promise<void> {
+		this.dictionary.set(key, value);
+		return Promise.resolve();
+	}
+	async deleteIfValueMatches<T>(key: string, value: T): Promise<boolean> {
+		if (JSON.stringify(this.dictionary.get(key)) !== JSON.stringify(value)) {
+			return false;
+		}
+		return this.dictionary.delete(key);
+	}
 	async delete(key: string): Promise<boolean> {
 		return Promise.resolve(this.dictionary.delete(key));
 	}
