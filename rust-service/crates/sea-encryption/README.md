@@ -32,6 +32,8 @@ Injected sources must provide a fresh nonce per payload/key; deterministic sourc
 Each submission encrypts independently with a fresh nonce and is admitted under the current author membership.
 Equal plaintext submissions are distinct events; the wrapper performs no committed-event lookup or ciphertext reuse.
 Author operations are serialized across wrapper clones.
+Append admission reserves FIFO order on first poll, so a later caller cannot overtake an already-waiting submission when the gate is released.
+This also preserves ordering when an outer policy decorator hands off concurrent submissions.
 An admitted append that fails or is cancelled leaves the wrapper terminal; a later append cannot bypass that state even when the inner session never received the cancelled request.
 Close, or the next attempted append, drives inner closure and its durable departure barrier.
 The departure record applies to announced memberships.

@@ -5,6 +5,25 @@
 
 import assert from "node:assert/strict";
 
+/** Parses every listener snapshot without inventing counters absent from older binaries. */
+export function transportEvidence(log) {
+	const snapshots = [...log.matchAll(/^TRANSPORT_EVIDENCE (.+)$/gm)].map((match) => {
+		const snapshot = {};
+		for (const field of match[1].trim().split(/\s+/)) {
+			const pair = /^([a-z_]+)=(\d+)$/.exec(field);
+			assert.ok(pair, `invalid transport evidence: ${field}`);
+			const [, name, text] = pair;
+			assert.ok(!Object.hasOwn(snapshot, name), `duplicate transport evidence: ${name}`);
+			const value = Number(text);
+			assert.ok(Number.isSafeInteger(value), `invalid transport counter: ${name}`);
+			snapshot[name] = value;
+		}
+		return snapshot;
+	});
+	assert.ok(snapshots.length > 0, "missing transport evidence");
+	return snapshots;
+}
+
 /** Keeps the bounded worker drain open until deliveries and observable acknowledgments finish. */
 export function hasPendingDrain(documents, backend) {
 	assert.ok(backend === "sea" || backend === "tinylicious", "unknown backend");

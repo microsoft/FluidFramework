@@ -64,6 +64,13 @@ Each takes a new output directory; `matrix` also takes a JSON array of stress-ru
 - `native-repeat`: ten paired four-core native runs, higher WebSocket loads, and 750 ops/s Tinylicious on one/four service cores.
 - `matrix`: custom workload configurations.
 
+For a separate diagnostic Sea stress run, set `captureTransportEvidence: true`.
+After stopping the generators, the runner requests graceful service shutdown and records every listener's `TRANSPORT_EVIDENCE` snapshot in `result.json`.
+Missing evidence or a failed shutdown fails that diagnostic run.
+Older binaries retain only the counters they actually report; missing counters are not filled with zero.
+Author high-water counters describe transport-owned outstanding requests and encoded input charges, not sequencer or storage queue occupancy.
+Keep this setting identical within performance comparisons, since enabling the shutdown marker also enables its periodic check during the workload.
+
 ### Summary and Cold-Load Setup
 
 `benchmark-summaries.mjs` uses the built current-version Fluid test runtime and drivers, real SharedMaps, and on-demand Fluid summaries.

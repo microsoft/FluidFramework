@@ -101,6 +101,8 @@ pub trait SeaArchive: crate::SeaService {
 /// The first append failure terminates that session's append authority, including its clones;
 /// later queued submissions must not commit. Concurrent callers must establish submission order
 /// before calling this API; a transport must preserve its stream's received order.
+/// Ordered first polls establish submission order; an implementation that suspends before
+/// forwarding must retain that order through its own admission waits.
 /// For announced sessions, a durable departure follows all accepted submissions and is final:
 /// no application event from that session may follow it, including after recovery.
 /// A client replays through that departure, counts its accepted application events, and transforms

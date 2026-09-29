@@ -374,6 +374,35 @@ The normally ignored real-browser connection-release regression also passed sepa
 This is targeted validation, not a rerun of the full project test inventory.
 Short loopback samples, variable shedding, transport loss, and the explicit durable drain override remain important limits on interpretation.
 
+## Durable Author Admission, September 29
+
+The [admission checkpoint dataset](measurements/durable-admission-20260929/README.md) compares the frozen `de1a93a99c4` server with bounded author pipelining and a policy FIFO handoff that ends after the source's first poll rather than its durable receipt.
+The sequencer, file backend, persistence format, filesystem worker count, and QUIC windows are unchanged.
+
+Each row is a median of three fresh runs with the preceding 32-document, eight-core, eight-generator WebTransport workload: 64-byte payloads, one second warmup, eight measured seconds, and two readers per document.
+All backend data was on `/tmp`, recorded as `ext4` on `/dev/sdb1[/containerTmp]`, not the workspace filesystem.
+
+| Backend / mode | Before writes/s | After writes/s | Before reads/s | After reads/s |
+| --- | ---: | ---: | ---: | ---: |
+| Durable, acknowledgement-paced | 6,128 | 6,172 | 12,257 | 12,344 |
+| Durable, streamed | 6,086 | 231,170 | 12,171 | 462,347 |
+| Memory, acknowledgement-paced control | 113,437 | 112,293 | 226,874 | 224,587 |
+
+All 18 runs passed acknowledgement, payload/order, and reader-drain checks with zero shed readers.
+Durable streamed throughput improved approximately 38 times; median maximum-worker drain time fell from 82.208 seconds to 2.283 seconds.
+Acknowledgement pacing remains effectively unchanged.
+The interleaved memory control's median is approximately 1% lower, with overlapping observed ranges.
+Durable campaigns ran sequentially rather than as randomized pairs.
+
+Separate single-document syscall profiles observed one application per journal write before the fix, versus 63.88 on average and 127 at most afterward.
+The candidate reached its 128-request transport window, with 9,088 encoded input bytes pending.
+These are transport high-water counts and observed batch sizes, not a direct storage-queue time series or a total-memory bound.
+The existing batching path works once it can receive concurrent individual submissions; no additional storage batcher or `io_uring` mechanism was added.
+
+The dataset records latency-window censoring, higher completed work and RSS, binary/source identities, full configuration, profiling limits, and validation.
+The historical September 28 measurements above remain unchanged.
+These short loopback measurements do not establish production capacity or physical power-loss durability.
+
 ## Optimized Browser Results
 
 Ten repetitions per path and DDS mode; 100 warmup edits and 1,000 measured edits.

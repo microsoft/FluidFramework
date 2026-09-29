@@ -183,8 +183,8 @@ pub struct EncryptionSession<S, K, N = OsNonceSource> {
     keys: K,
     /// Source consulted independently for each encrypted payload.
     nonces: N,
-    /// Shared fail-stop admission state, including preparation before an inner append.
-    author_terminal: std::sync::Arc<futures_util::lock::Mutex<bool>>,
+    /// FIFO fail-stop admission state, including preparation before an inner append.
+    author_terminal: std::sync::Arc<tokio::sync::Mutex<bool>>,
 }
 
 impl<S, K> EncryptionSession<S, K, OsNonceSource> {
@@ -203,7 +203,7 @@ impl<S, K, N> EncryptionSession<S, K, N> {
             inner,
             keys,
             nonces,
-            author_terminal: std::sync::Arc::new(futures_util::lock::Mutex::new(false)),
+            author_terminal: std::sync::Arc::new(tokio::sync::Mutex::new(false)),
         }
     }
 

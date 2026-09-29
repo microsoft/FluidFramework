@@ -12,7 +12,29 @@ import {
 	candidateRssLimit,
 	closedLoopSummary,
 	hasPendingDrain,
+	transportEvidence,
 } from "./benchmark-gates.mjs";
+
+test("transport evidence preserves multiple listeners and missing legacy counters", () => {
+	assert.deepEqual(
+		transportEvidence(
+			"startup\nTRANSPORT_EVIDENCE wire_bytes=12\nTRANSPORT_EVIDENCE wire_bytes=99 peak_pending_author_requests=128 peak_pending_author_bytes=8192\n",
+		),
+		[
+			{ wire_bytes: 12 },
+			{ wire_bytes: 99, peak_pending_author_requests: 128, peak_pending_author_bytes: 8192 },
+		],
+	);
+	for (const log of [
+		"startup only",
+		"TRANSPORT_EVIDENCE wire_bytes=-1",
+		"TRANSPORT_EVIDENCE wire_bytes=NaN",
+		"TRANSPORT_EVIDENCE wire_bytes=999999999999999999999",
+		"TRANSPORT_EVIDENCE wire_bytes=1 wire_bytes=2",
+	]) {
+		assert.throws(() => transportEvidence(log));
+	}
+});
 
 test("closed-loop throughput counts acknowledgments and reports explicit shedding separately", () => {
 	const result = {

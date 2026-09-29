@@ -120,6 +120,8 @@ They are not storage reservations or an accounting ledger for accepted writes.
 `wait_write` can use host-supplied pressure observations; storage remains authoritative under racing writers.
 
 Wrapper clones share FIFO submission ordering, established by first polling admission in the intended caller order.
+The ordering turn lasts through the first source poll, not the storage receipt, so pending submissions can fill the source's bounded queue.
+The cancellation/failure guard remains active through completion; the source owns ordering and settlement after entry.
 The first failed submit makes subsequent wrapper submits terminal across clones.
 Canceling before source entry releases waiting ownership without creating acceptance or ending authority.
 Canceling after source entry ends wrapper authority while preserving source settlement semantics.

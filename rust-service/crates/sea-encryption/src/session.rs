@@ -51,13 +51,16 @@ impl<Session: SeaArchive, Keys: KeyProvider + Clone + 'static, Nonces: NonceSour
 impl<Session: SeaAuthorSession, Keys: KeyProvider + Clone + 'static, Nonces: NonceSource>
     EncryptionSession<Session, Keys, Nonces>
 {
-    /// Serializes admission and leaves authority terminal unless the admitted operation succeeds.
+    /// Reserves FIFO admission on first poll and leaves authority terminal unless the operation succeeds.
     ///
     /// Hold the returned guard through preparation and the inner append, then clear the flag only on success.
     /// Leaving the flag set makes cancellation terminal even before the inner session receives a request.
     async fn begin_append(
         &self,
-    ) -> Result<futures_util::lock::MutexGuard<'_, bool>, EncryptionError<Session::Error>> {
+    ) -> Result<tokio::sync::MutexGuard<'_, bool>, EncryptionError<Session::Error>> {
+        #[cfg(not(target_arch = "wasm32"))]
+        let mut terminal = tokio::task::unconstrained(self.author_terminal.lock()).await;
+        #[cfg(target_arch = "wasm32")]
         let mut terminal = self.author_terminal.lock().await;
         if *terminal {
             let _ = self.inner.close().await;
@@ -270,6 +273,70 @@ mod tests {
         LocalSequencer::recover(view)
             .await
             .expect("recover the empty in-memory document")
+    }
+
+    /// Immediately admits the fixed, small workload in the composed ordering regression.
+    struct OrderingPolicy;
+
+    #[async_trait]
+    impl sea_core::policy::DocumentPolicy for OrderingPolicy {
+        type Error = sea_memory::MemoryStorageError;
+        type Permit = ();
+        type ReaderPermit = ();
+
+        fn admit_session(&self, _: Option<EventPosition>) -> Result<(), Self::Error> {
+            Ok(())
+        }
+
+        fn admit_live_reader(&self) -> Result<(), Self::Error> {
+            Ok(())
+        }
+
+        fn acquire_write(&self, _: sea_core::policy::WriteRequest<'_>) -> Result<(), Self::Error> {
+            Ok(())
+        }
+
+        async fn wait_write(&self, (): &()) -> Result<(), Self::Error> {
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn policy_handoff_preserves_encryption_waiter_order() {
+        let runtime = new_runtime().await;
+        let encrypted =
+            EncryptionSession::new(runtime.open_session(None).await.unwrap(), TestKeys::new());
+        let wrapped =
+            sea_core::policy::PolicySession::new(encrypted.clone(), Arc::new(OrderingPolicy));
+        // Model the prior append's still-held encryption gate at its completion boundary.
+        let preceding = encrypted.author_terminal.lock().await;
+        let submission = |payload| EventSubmission {
+            reference: None,
+            event: Event {
+                payload: Bytes::from_static(payload),
+                blob_tree: None,
+            },
+        };
+        let mut first = wrapped.submit(submission(b"first"));
+        assert!(first.as_mut().now_or_never().is_none());
+        drop(preceding);
+        let mut later = wrapped.submit(submission(b"later"));
+        assert!(
+            later.as_mut().now_or_never().is_none(),
+            "a new caller must not steal the released turn"
+        );
+        let first_position = first.await.unwrap();
+        let later_position = later.await.unwrap();
+        assert!(first_position < later_position);
+        let mut events = encrypted.read(None, Some(later_position));
+        assert_eq!(
+            next_event(&mut events).await.committed.event.payload,
+            b"first"[..]
+        );
+        assert_eq!(
+            next_event(&mut events).await.committed.event.payload,
+            b"later"[..]
+        );
     }
 
     /// Reads one data item while leaving progress assertions to each boundary test.

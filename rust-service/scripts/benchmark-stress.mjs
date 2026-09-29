@@ -26,6 +26,7 @@ import {
 	assertDrainIntegrity,
 	closedLoopSummary,
 	hasPendingDrain,
+	transportEvidence,
 } from "./benchmark-gates.mjs";
 import { generatorLayout } from "./benchmark-generator-layout.mjs";
 import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
@@ -82,6 +83,21 @@ async function stop(child) {
 	const timer = setTimeout(() => child.kill("SIGKILL"), 3000);
 	await exited;
 	clearTimeout(timer);
+}
+
+/** Requests a complete Sea shutdown so listener measurements are flushed before collection. */
+async function drainService(child, marker) {
+	assert.equal(child.exitCode, null, "service exited before measurement shutdown");
+	assert.equal(child.signalCode, null, "service was terminated before measurement shutdown");
+	const closed = once(child, "close");
+	const timer = setTimeout(() => child.kill("SIGKILL"), 10000);
+	try {
+		writeFileSync(marker, "collect transport measurements\n");
+		const [code, signal] = await closed;
+		assert.equal(code, 0, `measurement shutdown failed: ${signal}`);
+	} finally {
+		clearTimeout(timer);
+	}
 }
 
 /** Opens two minimal sessions using existing production clients, without a Fluid runtime. */
@@ -393,6 +409,7 @@ async function run(configuration, output) {
 	const port = await freePort();
 	const serviceCpu = { 1: "2", 4: "2,4,6,8", 8: "0,2,4,6,8,10,12,14" }[configuration.cores];
 	const certificate = resolve(root, "rust-service/tests/webtransport-browser/.certs");
+	const shutdownMarker = resolve(temporaryData.path, "shutdown");
 	const argumentsList =
 		configuration.backend === "sea"
 			? [
@@ -401,6 +418,7 @@ async function run(configuration, output) {
 					`${certificate}/cert.pem`,
 					`${certificate}/key.pem`,
 					resolve(temporaryData.path, "sea-data"),
+					...(configuration.captureTransportEvidence ? [shutdownMarker] : []),
 				]
 			: [
 					process.execPath,
@@ -685,6 +703,14 @@ async function run(configuration, output) {
 		clearInterval(sampleTimer);
 		clearTimeout(outerTimer);
 		await Promise.all(workers.map(stop));
+		if (configuration.captureTransportEvidence) {
+			try {
+				await drainService(service, shutdownMarker);
+				result.transportEvidence = transportEvidence(serviceLog);
+			} catch (error) {
+				result = { ...result, status: "failed", transportEvidenceError: String(error) };
+			}
+		}
 		await stop(service);
 		try {
 			temporaryData.remove();
@@ -717,6 +743,10 @@ if (mode === "--help") {
 } else {
 	const configuration = JSON.parse(configurationText);
 	assert.ok(["sea", "tinylicious"].includes(configuration.backend));
+	if (configuration.captureTransportEvidence !== undefined) {
+		assert.equal(configuration.backend, "sea", "transport evidence requires Sea");
+		assert.equal(typeof configuration.captureTransportEvidence, "boolean");
+	}
 	assert.ok([1, 4, 8].includes(configuration.cores));
 	assert.ok(
 		configuration.storage === undefined ||

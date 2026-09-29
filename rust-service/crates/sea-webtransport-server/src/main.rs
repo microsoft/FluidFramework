@@ -41,7 +41,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(env::VarError::NotPresent) => None,
         Err(error) => return Err(error.into()),
     };
-    let transport_config = configured_transport(maximum_connections.as_deref())?;
+    let author_window = match env::var("SEA_AUTHOR_WINDOW") {
+        Ok(value) => Some(value),
+        Err(env::VarError::NotPresent) => None,
+        Err(error) => return Err(error.into()),
+    };
+    let transport_config =
+        configured_transport(maximum_connections.as_deref(), author_window.as_deref())?;
     let live_cache = match env::var("SEA_EXPERIMENTAL_LIVE_CACHE") {
         Ok(value) => configured_live_cache(Some(&value))?,
         Err(env::VarError::NotPresent) => configured_live_cache(None)?,
@@ -92,6 +98,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("EXPERIMENTAL_RESOURCE_POLICY={resource_policy}");
     println!("PROTOCOL=sea");
     println!("MAX_CONNECTIONS={}", transport_config.max_connections);
+    println!(
+        "AUTHOR_WINDOW={}",
+        transport_config.max_pending_author_requests
+    );
     println!(
         "LIVENESS heartbeat_ms={} inactivity_ms={} reconnect_grace_ms={} max_event_lag={}",
         liveness.heartbeat_interval.as_millis(),
@@ -247,18 +257,31 @@ async fn optional_websocket_server(
 /// Applies a bounded per-listener connection override without changing other transport defaults.
 fn configured_transport(
     maximum_connections: Option<&str>,
-) -> Result<TransportConfig, &'static str> {
+    author_window: Option<&str>,
+) -> Result<TransportConfig, String> {
     let mut config = TransportConfig::default();
-    if let Some(value) = maximum_connections {
-        let invalid = "SEA_MAX_CONNECTIONS must be an integer from 1 through 4096";
+    for (value, target, name) in [
+        (
+            maximum_connections,
+            &mut config.max_connections,
+            "SEA_MAX_CONNECTIONS",
+        ),
+        (
+            author_window,
+            &mut config.max_pending_author_requests,
+            "SEA_AUTHOR_WINDOW",
+        ),
+    ] {
+        let Some(value) = value else { continue };
+        let invalid = format!("{name} must be an integer from 1 through 4096");
         if value.is_empty() || !value.bytes().all(|byte| byte.is_ascii_digit()) {
             return Err(invalid);
         }
-        let maximum = value.parse::<usize>().map_err(|_| invalid)?;
+        let maximum = value.parse::<usize>().map_err(|_| invalid.clone())?;
         if !(1..=4096).contains(&maximum) {
             return Err(invalid);
         }
-        config.max_connections = maximum;
+        *target = maximum;
     }
     Ok(config)
 }
@@ -282,12 +305,14 @@ fn print_shutdown_outcome(
         outcome.elapsed.as_millis()
     );
     println!(
-        "TRANSPORT_EVIDENCE wire_bytes={} peak_connections={} peak_streams={} connection_cleanups={} active_connections={}",
+        "TRANSPORT_EVIDENCE wire_bytes={} peak_connections={} peak_streams={} connection_cleanups={} active_connections={} peak_pending_author_requests={} peak_pending_author_bytes={}",
         measurement.wire_bytes,
         measurement.peak_active_connections,
         measurement.peak_active_streams,
         measurement.connection_cleanups,
         measurement.active_connections,
+        measurement.peak_pending_author_requests,
+        measurement.peak_pending_author_bytes,
     );
 }
 
@@ -375,10 +400,19 @@ mod tests {
     #[test]
     fn connection_override_preserves_defaults_and_rejects_invalid_limits() {
         let defaults = TransportConfig::default();
-        assert_eq!(configured_transport(None).unwrap().max_connections, 16);
+        assert_eq!(
+            configured_transport(None, None).unwrap().max_connections,
+            16
+        );
+        assert_eq!(
+            configured_transport(None, None)
+                .unwrap()
+                .max_pending_author_requests,
+            128
+        );
         for maximum in [1, 64, 4096] {
             let text = maximum.to_string();
-            let config = configured_transport(Some(&text)).unwrap();
+            let config = configured_transport(Some(&text), None).unwrap();
             assert_eq!(config.max_connections, maximum);
             assert_eq!(config.max_frame_bytes, defaults.max_frame_bytes);
             assert_eq!(
@@ -386,6 +420,9 @@ mod tests {
                 defaults.max_streams_per_connection
             );
             assert_eq!(config.operation_timeout, defaults.operation_timeout);
+            let config = configured_transport(None, Some(&text)).unwrap();
+            assert_eq!(config.max_pending_author_requests, maximum);
+            assert_eq!(config.max_connections, defaults.max_connections);
         }
         for invalid in [
             "",
@@ -397,7 +434,14 @@ mod tests {
             "1.5",
             "184467440737095516160",
         ] {
-            assert!(configured_transport(Some(invalid)).is_err(), "{invalid}");
+            assert!(
+                configured_transport(Some(invalid), None).is_err(),
+                "{invalid}"
+            );
+            assert!(
+                configured_transport(None, Some(invalid)).is_err(),
+                "{invalid}"
+            );
         }
     }
 }

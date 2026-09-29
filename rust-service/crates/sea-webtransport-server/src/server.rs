@@ -2,17 +2,22 @@
 
 use std::{
     collections::BTreeMap,
+    future::poll_fn,
     net::SocketAddr,
     sync::{
         Arc,
         atomic::{AtomicU64, AtomicUsize, Ordering},
     },
+    task::Poll,
     time::Duration,
 };
 
 #[cfg(test)]
 use async_trait::async_trait;
-use futures_util::{StreamExt as _, stream, stream::FuturesUnordered};
+use futures_util::{
+    StreamExt as _, stream,
+    stream::{FuturesOrdered, FuturesUnordered},
+};
 use thiserror::Error;
 use tokio::{
     sync::watch,
@@ -44,6 +49,10 @@ pub struct TransportMeasurement {
     pub peak_active_streams: usize,
     /// Connections whose session membership cleanup completed.
     pub connection_cleanups: u64,
+    /// Highest number of dispatched author requests awaiting an ordered response on one stream.
+    pub peak_pending_author_requests: usize,
+    /// Highest encoded input-byte charge awaiting ordered responses on one author stream.
+    pub peak_pending_author_bytes: usize,
 }
 
 /// Policy requested when stopping a WebTransport server.
@@ -123,6 +132,8 @@ pub(crate) struct Metrics {
     active_streams: AtomicUsize,
     peak_active_streams: AtomicUsize,
     connection_cleanups: AtomicU64,
+    peak_pending_author_requests: AtomicUsize,
+    peak_pending_author_bytes: AtomicUsize,
 }
 
 /// Cloneable view of transport measurements.
@@ -167,6 +178,8 @@ impl Metrics {
             peak_active_connections: self.peak_active_connections.load(Ordering::Relaxed),
             peak_active_streams: self.peak_active_streams.load(Ordering::Relaxed),
             connection_cleanups: self.connection_cleanups.load(Ordering::Relaxed),
+            peak_pending_author_requests: self.peak_pending_author_requests.load(Ordering::Relaxed),
+            peak_pending_author_bytes: self.peak_pending_author_bytes.load(Ordering::Relaxed),
         }
     }
 }
@@ -220,6 +233,10 @@ pub struct TransportConfig {
     pub max_connections: usize,
     /// Maximum bidirectional streams per connection.
     pub max_streams_per_connection: usize,
+    /// Maximum author requests awaiting ordered responses per stream; one restores serial dispatch.
+    /// Their total encoded input bytes are bounded by `max_frame_bytes`.
+    /// Framing may additionally retain one lookahead frame and its decoder buffer.
+    pub max_pending_author_requests: usize,
     /// One deadline for connection establishment, and a per-operation framed I/O timeout.
     pub operation_timeout: Duration,
     /// Connection heartbeat, inactivity, reconnect, and lag policy.
@@ -232,6 +249,7 @@ impl Default for TransportConfig {
             max_frame_bytes: 4 * 1024 * 1024,
             max_connections: 16,
             max_streams_per_connection: 16,
+            max_pending_author_requests: 128,
             operation_timeout: Duration::from_secs(5),
             liveness: LivenessPolicy::default(),
         }
@@ -243,6 +261,7 @@ impl TransportConfig {
         if self.max_frame_bytes < sea_v1::MIN_FRAME_BYTES
             || self.max_connections == 0
             || self.max_streams_per_connection == 0
+            || self.max_pending_author_requests == 0
             || self.operation_timeout.is_zero()
             || self.liveness.heartbeat_interval.is_zero()
             || self.liveness.inactivity_timeout <= self.liveness.heartbeat_interval
@@ -766,10 +785,10 @@ async fn serve_network_stream(
     .await
 }
 
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
 async fn serve_author_stream(
     mut send: impl SendStream,
-    mut receive: impl ReceiveStream,
+    receive: impl ReceiveStream,
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
@@ -795,39 +814,76 @@ async fn serve_author_stream(
         if matches!(response, sea_v1::Response::Error { .. }) {
             return send.finish().await.map_err(transport_error);
         }
-        let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+        let mut incoming = Box::pin(stream::try_unfold(
+            (receive, sea_v1::NetworkFrameDecoder::new(limits)),
+            |(mut receive, mut decoder)| async move {
+                let frame = read_next_network_frame(
+                    &mut receive, &mut decoder, config.operation_timeout,
+                ).await?;
+                Ok::<_, WebTransportError>(frame.map(|frame| (frame, (receive, decoder))))
+            },
+        ));
+        let mut pending = FuturesOrdered::new();
+        let mut pending_bytes = 0;
+        let mut lookahead = None;
+        let mut eof = false;
+        let mut barrier = false;
         loop {
-            let Some(frame) =
-                read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout)
-                    .await?
-            else {
-                // Revoke authority before finishing the send direction can suspend.
+            if eof && pending.is_empty() {
                 let _ = service.author_request(sea_v1::Request::Close).await;
                 return send.finish().await.map_err(transport_error);
-            };
-            let request = sea_v1::decode_request_frame(role, &frame)?;
-            if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
-                return Err(sea_v1::ProtocolError::WrongStream {
-                    kind: request.kind(),
-                    role,
-                }
-                .into());
             }
-            metrics.add_wire_bytes(frame.encoded_len()?);
-            let close = matches!(request, sea_v1::Request::Close);
-            let response = service.author_request(request).await;
-            write_network_response(
-                &mut send,
-                role,
-                &response,
-                limits,
-                config.operation_timeout,
-                metrics,
-                false,
-            )
-            .await?;
-            if close || matches!(response, sea_v1::Response::Error { .. }) {
-                return send.finish().await.map_err(transport_error);
+            if let Some((request, bytes)) = lookahead.as_ref()
+                && pending.len() < config.max_pending_author_requests
+                && *bytes <= config.max_frame_bytes - pending_bytes
+                && (pending.is_empty() || matches!(request, sea_v1::Request::Submit { .. }))
+            {
+                let (request, bytes) = lookahead.take().expect("admissible lookahead");
+                barrier = !matches!(request, sea_v1::Request::Submit { .. });
+                let close = matches!(request, sea_v1::Request::Close);
+                let mut response = service.author_request(request);
+                // Establish call order independently of the completion queue's polling order.
+                let first = poll_fn(|context| Poll::Ready(response.as_mut().poll(context))).await;
+                pending.push_back(async move {
+                    let response = match first {
+                        Poll::Ready(response) => response,
+                        Poll::Pending => response.await,
+                    };
+                    (bytes, close, response)
+                });
+                pending_bytes += bytes;
+                metrics.peak_pending_author_requests.fetch_max(pending.len(), Ordering::Relaxed);
+                metrics.peak_pending_author_bytes.fetch_max(pending_bytes, Ordering::Relaxed);
+            }
+            tokio::select! {
+                biased;
+                response = pending.next(), if !pending.is_empty() => {
+                    let (bytes, close, response) = response.expect("pending author response");
+                    write_network_response(
+                        &mut send, role, &response, limits, config.operation_timeout, metrics, false,
+                    ).await?;
+                    pending_bytes -= bytes;
+                    barrier = false;
+                    if close || matches!(response, sea_v1::Response::Error { .. }) {
+                        return send.finish().await.map_err(transport_error);
+                    }
+                }
+                frame = incoming.next(), if !eof && !barrier && lookahead.is_none()
+                    && pending.len() < config.max_pending_author_requests
+                    && pending_bytes < config.max_frame_bytes => {
+                    let Some(frame) = frame else {
+                        eof = true;
+                        continue;
+                    };
+                    let frame = frame?;
+                    let bytes = frame.encoded_len()?;
+                    let request = sea_v1::decode_request_frame(role, &frame)?;
+                    if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
+                        return Err(sea_v1::ProtocolError::WrongStream { kind: request.kind(), role }.into());
+                    }
+                    metrics.add_wire_bytes(bytes);
+                    lookahead = Some((request, bytes));
+                }
             }
         }
     }
@@ -1245,6 +1301,8 @@ mod tests {
     /// Observes writes and exposes peer cancellation independently of response production.
     struct TestSend {
         writes: Arc<AtomicUsize>,
+        /// Retains wire responses when ordering or acknowledgement timing is under test.
+        responses: Option<tokio::sync::mpsc::UnboundedSender<Vec<u8>>>,
         stopped: watch::Receiver<bool>,
         /// Injects a response-write failure.
         fail: Arc<AtomicBool>,
@@ -1254,11 +1312,14 @@ mod tests {
 
     #[async_trait]
     impl SendStream for TestSend {
-        async fn write_all(&mut self, _bytes: &[u8]) -> Result<(), WebTransportError> {
+        async fn write_all(&mut self, bytes: &[u8]) -> Result<(), WebTransportError> {
             if self.fail.load(Ordering::Relaxed) {
                 return Err(WebTransportError::Disconnected);
             }
             self.writes.fetch_add(1, Ordering::Relaxed);
+            if let Some(responses) = &self.responses {
+                responses.send(bytes.to_vec()).unwrap();
+            }
             Ok(())
         }
 
@@ -1278,6 +1339,7 @@ mod tests {
         let writes = Arc::new(AtomicUsize::new(0));
         let mut send = TestSend {
             writes: writes.clone(),
+            responses: None,
             stopped,
             fail: Arc::new(AtomicBool::new(false)),
             finished: Arc::new(AtomicBool::new(false)),
@@ -1315,6 +1377,10 @@ mod tests {
         calls: Arc<Mutex<Vec<(u64, sea_v1::Request, bool)>>>,
         /// Independent transport observation used to check cleanup ordering.
         finished: Arc<AtomicBool>,
+        /// Lets tests settle individual submissions independently of their first poll.
+        submissions: Option<
+            tokio::sync::mpsc::UnboundedSender<tokio::sync::oneshot::Sender<sea_v1::Response>>,
+        >,
     }
 
     impl StreamBindingProbe {
@@ -1348,6 +1414,7 @@ mod tests {
                 current: self.current.clone(),
                 calls: self.calls.clone(),
                 finished: self.finished.clone(),
+                submissions: self.submissions.clone(),
             }))
         }
 
@@ -1370,7 +1437,13 @@ mod tests {
         }
 
         async fn author_request(&self, request: sea_v1::Request) -> sea_v1::Response {
+            let submit = matches!(request, sea_v1::Request::Submit { .. });
             self.record(request);
+            if submit && let Some(submissions) = &self.submissions {
+                let (complete, receipt) = tokio::sync::oneshot::channel();
+                submissions.send(complete).unwrap();
+                return receipt.await.unwrap();
+            }
             sea_v1::Response::Acknowledged
         }
 
@@ -1405,6 +1478,348 @@ mod tests {
                 sea_v1::Response::Acknowledged
             })))
         }
+    }
+
+    /// Runs the real author loop with independently controlled admission, receipts, and output.
+    struct AuthorHarness {
+        /// Dropping the input models a clean receive EOF.
+        requests: Option<tokio::sync::mpsc::UnboundedSender<Vec<u8>>>,
+        /// Wire responses emitted by the transport.
+        responses: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
+        /// A receipt controller for each first-polled submission.
+        submissions:
+            tokio::sync::mpsc::UnboundedReceiver<tokio::sync::oneshot::Sender<sea_v1::Response>>,
+        /// Dispatch identity, request, and send-finish observations.
+        calls: Arc<Mutex<Vec<(u64, sea_v1::Request, bool)>>>,
+        /// High-water evidence from the production loop.
+        metrics: Arc<Metrics>,
+        /// Response-write failure injection.
+        fail: Arc<AtomicBool>,
+        /// Stream-owned task, including its authority cleanup.
+        serving: tokio::task::JoinHandle<Result<(), WebTransportError>>,
+    }
+
+    impl AuthorHarness {
+        /// Starts a bound author stream and consumes its opening acknowledgement.
+        async fn start(config: TransportConfig) -> Self {
+            let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
+            let (responses, output) = tokio::sync::mpsc::unbounded_channel();
+            let (submissions, admitted) = tokio::sync::mpsc::unbounded_channel();
+            let calls = Arc::new(Mutex::new(Vec::new()));
+            let finished = Arc::new(AtomicBool::new(false));
+            let metrics = Arc::new(Metrics::default());
+            let fail = Arc::new(AtomicBool::new(false));
+            let service = Arc::new(StreamBindingProbe {
+                admitted: Some(1),
+                current: Arc::new(AtomicU64::new(1)),
+                calls: calls.clone(),
+                finished: finished.clone(),
+                submissions: Some(submissions),
+            });
+            let send = TestSend {
+                writes: Arc::new(AtomicUsize::new(0)),
+                responses: Some(responses),
+                stopped: watch::channel(false).1,
+                fail: fail.clone(),
+                finished,
+            };
+            let observations = metrics.clone();
+            let serving = tokio::spawn(async move {
+                serve_author_stream(
+                    send,
+                    TestReceive(receive),
+                    service,
+                    &config,
+                    &observations,
+                    sea_v1::StreamRole::Author,
+                    sea_v1::Request::OpenAuthorStream {
+                        authority: b"probe".to_vec(),
+                    },
+                )
+                .await
+            });
+            let mut harness = Self {
+                requests: Some(requests),
+                responses: output,
+                submissions: admitted,
+                calls,
+                metrics,
+                fail,
+                serving,
+            };
+            assert_eq!(harness.response().await, sea_v1::Response::Acknowledged);
+            harness
+        }
+
+        /// Queues a complete request without awaiting a service receipt.
+        fn request(&self, request: &sea_v1::Request) {
+            self.requests
+                .as_ref()
+                .unwrap()
+                .send(
+                    sea_v1::encode_request_frame(
+                        sea_v1::StreamRole::Author,
+                        request,
+                        sea_v1::Limits::default(),
+                    )
+                    .unwrap(),
+                )
+                .unwrap();
+        }
+
+        /// Awaits a first-polled submission, with a deadline that detects serial dispatch.
+        async fn submission(&mut self) -> tokio::sync::oneshot::Sender<sea_v1::Response> {
+            timeout(Duration::from_secs(1), self.submissions.recv())
+                .await
+                .unwrap()
+                .unwrap()
+        }
+
+        /// Decodes the actual response bytes instead of trusting the fixture's intended value.
+        async fn response(&mut self) -> sea_v1::Response {
+            let bytes = timeout(Duration::from_secs(1), self.responses.recv())
+                .await
+                .unwrap()
+                .unwrap();
+            let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits::default());
+            decoder.push(&bytes);
+            let frame = decoder.next_frame().unwrap().unwrap();
+            decoder.finish().unwrap();
+            sea_v1::decode_response_network_frame(sea_v1::StreamRole::Author, &frame).unwrap()
+        }
+    }
+
+    /// Supplies distinguishable, equally sized application submissions.
+    fn author_submission(value: u8) -> sea_v1::Request {
+        sea_v1::Request::Submit {
+            reference: None,
+            event: sea_v1::Event {
+                payload: vec![value; 8],
+                blob_tree: None,
+            },
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn author_pipeline_bounds_admission_and_preserves_both_orders() {
+        let bytes = sea_v1::encode_request_frame(
+            sea_v1::StreamRole::Author,
+            &author_submission(0),
+            sea_v1::Limits::default(),
+        )
+        .unwrap()
+        .len();
+        for byte_bound in [false, true] {
+            let config = TransportConfig {
+                max_pending_author_requests: if byte_bound { 4 } else { 2 },
+                max_frame_bytes: if byte_bound { 2 * bytes } else { 4096 },
+                ..TransportConfig::default()
+            };
+            let mut harness = AuthorHarness::start(config).await;
+            for value in 0..3 {
+                harness.request(&author_submission(value));
+            }
+            let first = harness.submission().await;
+            let second = harness.submission().await;
+            second
+                .send(sea_v1::Response::EventCommitted { position: 11 })
+                .unwrap();
+            tokio::task::yield_now().await;
+            assert!(
+                harness.responses.try_recv().is_err(),
+                "no early or reordered acknowledgement"
+            );
+            assert!(
+                harness.submissions.try_recv().is_err(),
+                "completed suffix still consumes capacity"
+            );
+            first
+                .send(sea_v1::Response::EventCommitted { position: 10 })
+                .unwrap();
+            assert_eq!(
+                harness.response().await,
+                sea_v1::Response::EventCommitted { position: 10 }
+            );
+            assert_eq!(
+                harness.response().await,
+                sea_v1::Response::EventCommitted { position: 11 }
+            );
+            let third = harness.submission().await;
+            third
+                .send(sea_v1::Response::EventCommitted { position: 12 })
+                .unwrap();
+            assert_eq!(
+                harness.response().await,
+                sea_v1::Response::EventCommitted { position: 12 }
+            );
+            drop(harness.requests.take());
+            harness.serving.await.unwrap().unwrap();
+            let calls = harness.calls.lock().unwrap();
+            let submissions: Vec<_> = calls
+                .iter()
+                .filter_map(|(_, request, _)| match request {
+                    sea_v1::Request::Submit { event, .. } => Some(event.payload[0]),
+                    _ => None,
+                })
+                .collect();
+            assert_eq!(submissions, [0, 1, 2]);
+            assert_eq!(harness.metrics.snapshot().peak_pending_author_requests, 2);
+            assert_eq!(
+                harness.metrics.snapshot().peak_pending_author_bytes,
+                2 * bytes
+            );
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn author_pipeline_drains_before_controls_and_clean_eof() {
+        for ending in ["eof", "close", "membership"] {
+            let mut harness = AuthorHarness::start(TransportConfig::default()).await;
+            harness.request(&author_submission(0));
+            harness.request(&author_submission(1));
+            if ending == "membership" {
+                harness.request(&sea_v1::Request::AnnounceMembership { metadata: vec![42] });
+                harness.request(&author_submission(2));
+            }
+            if ending != "eof" {
+                harness.request(&sea_v1::Request::Close);
+                harness.request(&author_submission(3));
+            }
+            drop(harness.requests.take());
+            let first = harness.submission().await;
+            let second = harness.submission().await;
+            first
+                .send(sea_v1::Response::EventCommitted { position: 10 })
+                .unwrap();
+            assert_eq!(
+                harness.response().await,
+                sea_v1::Response::EventCommitted { position: 10 }
+            );
+            tokio::task::yield_now().await;
+            assert_eq!(
+                harness.calls.lock().unwrap().len(),
+                3,
+                "control or EOF overtook pending writes"
+            );
+            second
+                .send(sea_v1::Response::EventCommitted { position: 11 })
+                .unwrap();
+            assert_eq!(
+                harness.response().await,
+                sea_v1::Response::EventCommitted { position: 11 }
+            );
+            if ending == "membership" {
+                assert_eq!(harness.response().await, sea_v1::Response::Acknowledged);
+                let third = harness.submission().await;
+                {
+                    let calls = harness.calls.lock().unwrap();
+                    assert!(matches!(
+                        calls[3].1,
+                        sea_v1::Request::AnnounceMembership { .. }
+                    ));
+                    assert_eq!(calls[4].1, author_submission(2));
+                }
+                third
+                    .send(sea_v1::Response::EventCommitted { position: 12 })
+                    .unwrap();
+                assert_eq!(
+                    harness.response().await,
+                    sea_v1::Response::EventCommitted { position: 12 }
+                );
+            }
+            harness.serving.await.unwrap().unwrap();
+            assert!(
+                harness.submissions.try_recv().is_err(),
+                "nothing may follow close"
+            );
+            assert!(
+                harness
+                    .calls
+                    .lock()
+                    .unwrap()
+                    .iter()
+                    .any(|(_, request, finished)| {
+                        matches!(request, sea_v1::Request::Close) && !finished
+                    })
+            );
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn author_pipeline_errors_drop_pending_receipts_and_close_authority() {
+        for failure in ["service", "write", "decode", "truncated", "cancel"] {
+            let mut harness = AuthorHarness::start(TransportConfig::default()).await;
+            harness.request(&author_submission(0));
+            harness.request(&author_submission(1));
+            let first = harness.submission().await;
+            let second = harness.submission().await;
+            match failure {
+                "service" => first
+                    .send(sea_v1::Response::Error {
+                        kind: sea_v1::ErrorKind::Rejected,
+                        message: "injected failure".to_owned(),
+                    })
+                    .unwrap(),
+                "write" => {
+                    harness.fail.store(true, Ordering::Relaxed);
+                    first.send(sea_v1::Response::Acknowledged).unwrap();
+                }
+                "decode" => {
+                    harness
+                        .requests
+                        .as_ref()
+                        .unwrap()
+                        .send(
+                            sea_v1::encode_request_frame(
+                                sea_v1::StreamRole::Snapshot,
+                                &sea_v1::Request::LatestSnapshot,
+                                sea_v1::Limits::default(),
+                            )
+                            .unwrap(),
+                        )
+                        .unwrap();
+                }
+                "truncated" => {
+                    harness.requests.as_ref().unwrap().send(vec![0]).unwrap();
+                    drop(harness.requests.take());
+                }
+                "cancel" => harness.serving.abort(),
+                _ => unreachable!(),
+            }
+            let result = harness.serving.await;
+            if failure == "cancel" {
+                assert!(result.unwrap_err().is_cancelled());
+            } else {
+                assert_eq!(result.unwrap().is_ok(), failure == "service");
+                assert!(matches!(
+                    harness.calls.lock().unwrap().last().unwrap().1,
+                    sea_v1::Request::Close
+                ));
+            }
+            assert!(
+                second.is_closed(),
+                "{failure}: pending future must not outlive its stream"
+            );
+        }
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn author_receipts_do_not_restart_partial_frame_deadlines() {
+        let mut harness = AuthorHarness::start(TransportConfig::default()).await;
+        harness.request(&author_submission(0));
+        let first = harness.submission().await;
+        harness.requests.as_ref().unwrap().send(vec![0]).unwrap();
+        tokio::task::yield_now().await;
+        tokio::time::advance(Duration::from_secs(3)).await;
+        first
+            .send(sea_v1::Response::EventCommitted { position: 10 })
+            .unwrap();
+        harness.response().await;
+        tokio::time::advance(Duration::from_secs(2)).await;
+        assert!(matches!(
+            harness.serving.await.unwrap(),
+            Err(WebTransportError::Timeout)
+        ));
     }
 
     #[tokio::test]
@@ -1469,6 +1884,7 @@ mod tests {
                     current: current.clone(),
                     calls: calls.clone(),
                     finished: finished.clone(),
+                    submissions: None,
                 });
                 let limits = sea_v1::Limits::default();
                 let opening = sea_v1::encode_request_frame(role, &opening, limits).unwrap();
@@ -1485,6 +1901,7 @@ mod tests {
                 let serving = serve_network_stream(
                     TestSend {
                         writes: writes.clone(),
+                        responses: None,
                         stopped,
                         fail: fail.clone(),
                         finished: finished.clone(),
@@ -1608,6 +2025,7 @@ mod tests {
         let serving = serve_content_stream(
             TestSend {
                 writes: writes.clone(),
+                responses: None,
                 stopped,
                 fail: Arc::new(AtomicBool::new(false)),
                 finished: Arc::new(AtomicBool::new(false)),

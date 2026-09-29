@@ -775,10 +775,11 @@ where
         }
     }
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
-        match self
-            .author_stream
-            .lock()
-            .await
+        #[cfg(not(target_arch = "wasm32"))]
+        let mut author = tokio::task::unconstrained(self.author_stream.lock()).await;
+        #[cfg(target_arch = "wasm32")]
+        let mut author = self.author_stream.lock().await;
+        match author
             .as_mut()
             .ok_or(SeaClientError::Closed)?
             .request(protocol::Request::Submit {
@@ -1139,6 +1140,32 @@ mod tests {
         .await
         .unwrap();
         (client, events)
+    }
+
+    #[tokio::test]
+    async fn submission_reserves_fifo_even_when_cooperative_budget_is_exhausted() {
+        use futures_util::FutureExt as _;
+
+        let (client, _events) = opening_client(None).await;
+        let preceding = client.author_stream.lock().await;
+        while tokio::task::coop::has_budget_remaining() {
+            tokio::task::consume_budget().await;
+        }
+        let mut submit = client.submit(EventSubmission {
+            reference: None,
+            event: sea_core::Event {
+                payload: Bytes::new(),
+                blob_tree: None,
+            },
+        });
+        assert!(submit.as_mut().now_or_never().is_none());
+        drop(preceding);
+        assert!(
+            client.author_stream.try_lock().is_err(),
+            "the first poll must reserve its turn"
+        );
+        drop(submit);
+        assert!(client.author_stream.try_lock().is_ok());
     }
 
     #[tokio::test]

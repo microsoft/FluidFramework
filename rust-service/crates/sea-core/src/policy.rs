@@ -197,6 +197,8 @@ impl<S: SessionFactory, P: DocumentPolicy> SessionFactory for PolicyFactory<S, P
 ///
 /// Clones share terminal authority and FIFO submission order, established when each future first
 /// polls its synchronous admission hooks. Callers must poll submissions in their intended order.
+/// FIFO ownership ends after the source submission's first poll, not its completion, so the source
+/// can queue and batch concurrent submissions. The source owns ordering and settlement after entry.
 /// Policy/order waits never hold a source or close gate. The first submit failure ends wrapper
 /// append authority across clones; it does not autonomously close the underlying membership.
 /// Cancellation before source invocation removes the waiter without creating acceptance or ending
@@ -233,12 +235,12 @@ impl<S: Clone, P> Clone for PolicySession<S, P> {
     }
 }
 
-/// Only pre-source writes and the current source submit retain entries here.
+/// Only pre-source writes and the submission entering its first source poll retain entries here.
 #[derive(Default)]
 struct AdmissionState {
     /// Sticky append/close refusal, independent of source settlement.
     terminal: bool,
-    /// Bounded by policy permits, plus at most one source-entered submit.
+    /// Bounded by policy permits, plus at most one first-poll handoff.
     waiting: VecDeque<Arc<Waiter>>,
 }
 
@@ -256,6 +258,8 @@ struct Admission {
     state: Arc<Mutex<AdmissionState>>,
     /// Stable identity used for cancellation/removal.
     waiter: Arc<Waiter>,
+    /// Cleared after source entry so completion does not retain FIFO ownership.
+    queued: bool,
     /// Armed only while a source submit might have been admitted.
     entered: bool,
 }
@@ -292,6 +296,7 @@ impl Admission {
         Some(Self {
             state,
             waiter,
+            queued: true,
             entered: false,
         })
     }
@@ -315,13 +320,13 @@ impl Admission {
             Poll::Pending
         }
     }
-}
 
-impl Drop for Admission {
-    fn drop(&mut self) {
-        if self.entered {
-            terminate(&self.state);
+    /// Releases admission order after the source's first poll or a pre-source exit.
+    fn release_turn(&mut self) {
+        if !self.queued {
+            return;
         }
+        self.queued = false;
         let next = {
             let mut shared = self.state.lock().expect("policy admission lock");
             shared
@@ -332,6 +337,15 @@ impl Drop for Admission {
         if let Some(next) = next {
             next.waker.wake();
         }
+    }
+}
+
+impl Drop for Admission {
+    fn drop(&mut self) {
+        if self.entered {
+            terminate(&self.state);
+        }
+        self.release_turn();
     }
 }
 
@@ -573,11 +587,16 @@ impl<S: SeaSession, P: DocumentPolicy> SeaAuthorSession for PolicySession<S, P> 
     async fn submit(&self, submission: EventSubmission) -> Result<EventPosition, Self::Error> {
         let mut admission = self.admit_write(WriteRequest::Submit(&submission)).await?;
         admission.entered = true;
-        let result = self
-            .source
-            .submit(submission)
-            .await
-            .map_err(PolicyError::Source);
+        let mut source = self.source.submit(submission);
+        let result = poll_fn(|context| {
+            let result = source.as_mut().poll(context);
+            if result.is_pending() {
+                admission.release_turn();
+            }
+            result
+        })
+        .await
+        .map_err(PolicyError::Source);
         if result.is_ok() {
             admission.entered = false;
         }

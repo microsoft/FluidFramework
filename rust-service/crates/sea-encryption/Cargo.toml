@@ -15,12 +15,17 @@ sea-core = { path = "../sea-core" }
 thiserror.workspace = true
 zeroize = { version = "1.8.1", features = ["derive"] }
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio.workspace = true
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+tokio = { version = "1.47.1", features = ["sync"] }
+
 [dev-dependencies]
 sea-compression = { path = "../sea-compression" }
 sea-conformance = { path = "../sea-conformance" }
 sea-memory = { path = "../sea-memory" }
 sea-sequencer = { path = "../sea-sequencer" }
-tokio.workspace = true
 
 [lints]
 workspace = true

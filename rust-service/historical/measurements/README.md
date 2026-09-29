@@ -5,6 +5,7 @@ The overview records the tested revisions, workloads, environment, and compariso
 
 | Dataset | Purpose |
 | --- | --- |
+| [Durable author admission](durable-admission-20260929/README.md) | Matched durable streamed/acknowledgement-paced measurements, a memory control, and separate queue/batch diagnostics after removing completion-gated admission. |
 | [Current overview refresh](overview-refresh-20260924/README.md) | Current source, Sea test, stress, browser, capacity, summary, cold-load, and persisted-size measurements; unchanged dependency and Tinylicious test inventories are identified explicitly. |
 | [Previous complete overview refresh](overview-refresh-20260923/README.md) | Previous source, dependency, test, stress, browser, capacity, summary, cold-load, and persisted-size measurements. |
 | [Session resource policy checkpoint 1](session-resource-policy-checkpoint1-20260923.json.gz) | Experimental cache provenance, surviving measurements, validation, and explicit performance/missing-data exceptions; see the [cumulative report](../../SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md). |

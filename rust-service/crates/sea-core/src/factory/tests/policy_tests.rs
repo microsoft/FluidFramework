@@ -446,38 +446,56 @@ fn rejected_submit_terminates_clones_without_autonomous_close() {
 }
 
 #[test]
-fn ordered_submits_cannot_overtake_waiting_or_failed_prefix_and_cancel_keeps_source_semantics() {
-    let source = TestSession::new();
-    source.pending_submit.store(true, Ordering::SeqCst);
-    let policy = TestPolicy::new(2, 14);
-    policy.blocked.store(true, Ordering::SeqCst);
-    let session = PolicySession::new(source.clone(), policy.clone());
-    let clone = session.clone();
-    let mut first = session.submit(submission());
-    let mut second = clone.submit(submission());
-    let wake = Arc::<WakeCount>::default();
-    pending(&mut first, &wake);
-    pending(&mut second, &wake);
-    policy.blocked.store(false, Ordering::SeqCst);
-    pending(&mut second, &wake);
-    assert!(source.calls.lock().unwrap().is_empty());
-    pending(&mut first, &wake);
-    assert_eq!(*source.calls.lock().unwrap(), ["submit"]);
-    assert_eq!(policy.capacity.lock().unwrap().requests, 1);
-    pending(&mut second, &wake);
-    drop(first);
-    assert!(matches!(ready(second), Err(PolicyError::Terminal)));
-    assert_eq!(*source.calls.lock().unwrap(), ["submit"]);
-    assert_eq!(source.observation.drops.load(Ordering::SeqCst), 1);
+fn ordered_submits_release_fifo_after_source_entry_and_preserve_cancellation() {
+    for enter_suffix in [false, true] {
+        let source = TestSession::new();
+        source.pending_submit.store(true, Ordering::SeqCst);
+        let policy = TestPolicy::new(2, 14);
+        policy.blocked.store(true, Ordering::SeqCst);
+        let session = PolicySession::new(source.clone(), policy.clone());
+        let clone = session.clone();
+        let mut first = session.submit(submission());
+        let mut second = clone.submit(submission());
+        let wake = Arc::<WakeCount>::default();
+        pending(&mut first, &wake);
+        pending(&mut second, &wake);
+        policy.blocked.store(false, Ordering::SeqCst);
+        pending(&mut second, &wake);
+        assert!(source.calls.lock().unwrap().is_empty());
+        pending(&mut first, &wake);
+        assert_eq!(*source.calls.lock().unwrap(), ["submit"]);
+        assert_eq!(policy.capacity.lock().unwrap().requests, 1);
+        if enter_suffix {
+            pending(&mut second, &wake);
+            assert_eq!(*source.calls.lock().unwrap(), ["submit", "submit"]);
+            assert_eq!(policy.capacity.lock().unwrap().requests, 0);
+        }
+        drop(first);
+        if enter_suffix {
+            pending(&mut second, &wake);
+            drop(second);
+        } else {
+            assert!(matches!(ready(second), Err(PolicyError::Terminal)));
+            assert_eq!(*source.calls.lock().unwrap(), ["submit"]);
+        }
+        assert_eq!(
+            source.observation.drops.load(Ordering::SeqCst),
+            if enter_suffix { 2 } else { 1 }
+        );
+        assert!(matches!(
+            ready(clone.submit(submission())),
+            Err(PolicyError::Terminal)
+        ));
 
-    let session = PolicySession::new(source.clone(), policy.clone());
-    source.pending_submit.store(false, Ordering::SeqCst);
-    source_error(ready(session.submit(submission())), &source.error);
-    assert!(matches!(
-        ready(session.clone().submit(submission())),
-        Err(PolicyError::Terminal)
-    ));
-    assert_eq!(policy.capacity.lock().unwrap().requests, 0);
+        let session = PolicySession::new(source.clone(), policy.clone());
+        source.pending_submit.store(false, Ordering::SeqCst);
+        source_error(ready(session.submit(submission())), &source.error);
+        assert!(matches!(
+            ready(session.clone().submit(submission())),
+            Err(PolicyError::Terminal)
+        ));
+        assert_eq!(policy.capacity.lock().unwrap().requests, 0);
+    }
 }
 
 #[test]

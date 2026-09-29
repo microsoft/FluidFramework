@@ -15,11 +15,12 @@ cargo run -p sea-webtransport-server -- \
 | --- | --- | --- |
 | `SEA_STORAGE_MODE` | `memory`, `buffered-file`, `durable-file` | `durable-file` |
 | `SEA_MAX_CONNECTIONS` | Integer from 1 through 4096 | 16 per listener |
+| `SEA_AUTHOR_WINDOW` | Integer from 1 through 4096 | 128 per author stream |
 | `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `true` |
 | `SEA_EXPERIMENTAL_SESSION_FACTORY` | Exactly `true` or `false` | `false` |
 | `SEA_EXPERIMENTAL_RESOURCE_POLICY` | Exactly `true` or `false` | `false` |
 
-Invalid connection limits fail startup; `MAX_CONNECTIONS` reports the effective value.
+Invalid connection or author-window limits fail startup; `MAX_CONNECTIONS` and `AUTHOR_WINDOW` report the effective values.
 Limits apply independently to QUIC and WebSocket and do not bound total memory or guarantee throughput.
 An optional fifth argument is a shutdown-marker path used by process harnesses.
 Enabled live caching, including the default, prints `EXPERIMENTAL_LIVE_CACHE=true`.
@@ -66,6 +67,25 @@ Policy-rejected application writes make the decorated author terminal across clo
 Close bypasses pressure waiting and does not cancel already-entered source work.
 The shedding task is not a background close owner, and no total-memory guarantee is added.
 Session setup without a decorator remains direct.
+
+### Bounded author admission
+
+Both listeners admit ordered application submissions while earlier submissions wait for storage.
+This lets the existing sequencer queue and batch writes without changing persistence or acknowledging undurable data.
+Policy decorators also release their admission-order turn after the source submission's first poll, rather than holding it until completion.
+Their cancellation and failure guard remains active until completion; already-entered operations retain source-owned settlement.
+Responses remain in request order and successful submission responses still wait for the storage commit.
+Membership announcements and explicit close are barriers: all earlier responses finish before the control operation starts.
+Clean receive EOF drains pending submissions before closing authority.
+Malformed input, failed output, or a service error ends the stream and releases its pending futures; connection cleanup still owns settlement after transport cancellation.
+
+`TransportConfig::max_pending_author_requests` bounds outstanding requests, including completed requests whose ordered responses have not been written.
+Their encoded input-byte charges also cannot exceed `max_frame_bytes` (4 MiB by default).
+The reader can additionally retain one bounded lookahead request and its framing buffer.
+These are logical input bounds, not a bound on allocator overhead, decoded object overhead, transient encoding copies, downstream storage, or network buffers.
+Backpressure stops further reads when capacity is exhausted; storage and session policies remain authoritative for their own admission.
+The process setting `SEA_AUTHOR_WINDOW=1` restores completion-paced dispatch for comparison or rollback.
+Shutdown `TRANSPORT_EVIDENCE` reports the maximum pending request count and encoded input-byte charge observed on any one author stream.
 
 ### Configured storage and session composition
 

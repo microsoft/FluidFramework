@@ -70,6 +70,11 @@ pub trait SeaConnectionService: Send + Sync {
     ) -> Result<SeaResponseStream, sea_v1::Response>;
 
     /// Acknowledges a bound author-stream opening or handles one ordered author operation.
+    ///
+    /// Transports first-poll submissions in receive order but may poll later submissions before
+    /// earlier calls finish. Implementations must preserve admission order and fence the suffix
+    /// after a failed submission. Successful responses must still wait for the storage commit.
+    /// Other operations are barriers: earlier submissions finish before the operation is invoked.
     async fn author_request(&self, request: sea_v1::Request) -> sea_v1::Response;
 
     /// Opens latest-value snapshot coordination on the bound session.

@@ -87,6 +87,7 @@ See [Decision 0012](../../historical/decisions/0012-fluid-snapshot-election-inte
 ## Lifecycle And Ownership
 
 `SessionClient<Transport>` implements the session facets for native and browser transports.
+Concurrent submissions reserve their author-stream FIFO turn on first poll, including when the native executor's cooperative budget is exhausted.
 `SessionClient::open` accepts a configured transport and session parameters; `NativeSeaClient::connect` additionally configures SHA-256 certificate pinning.
 Opening also starts snapshot/replay/live delivery.
 Consume it with the first matching `load`: `LatestSnapshot` when opening without a reference, or `ReplayAtLeastAllAfter(reference)` when opening with one.
