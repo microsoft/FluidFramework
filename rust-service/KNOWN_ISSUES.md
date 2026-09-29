@@ -13,6 +13,12 @@ Historical findings and resolved investigations are retained in [Historical reco
   Passing isolated and workspace retries do not resolve the failure.
   Checkpoint integration at `f1d4a366267` also recorded a durable-file connection timeout before the storage-initialization fixes were merged; isolated and workspace retries passed.
   That occurrence has no captured failing-stage/syscall evidence linking it to the fixed mechanism.
+- **Audit recurrence:** [Iteration 0020 transport validation](historical/iterations/0020/phase-2/transport.md#validation-evidence) recorded a durable-file opening timeout after 5.008 seconds, with nine wire bytes, one active connection, one peak stream, and no completed cleanup.
+  The final affected-crate run passed without a targeted timeout repair.
+  These observations do not establish a cause or close the issue.
+- **Integrated recurrence:** [Iteration 0020 repair validation](historical/iterations/0020/phase-2/integration.md#independent-review) recorded another durable-file timeout after 5.011 seconds with the same nine-byte/one-connection/one-stream measurements.
+  The exact test and complete serialized server suite then passed.
+  The user accepted a validation exception for closeout while keeping this issue open; serialization is diagnostic evidence, not a causal fix.
 - **Investigation:** Temporary diagnostics distinguished handshake, event-stream opening, and author-stream opening timeouts.
   The failure did not recur in 92 server-suite runs, six complete workspace runs, or 80 additional server-suite processes in ten waves of eight concurrent processes.
   No failed stage was captured, and scheduling pressure did not establish a cause.
@@ -48,6 +54,21 @@ Historical findings and resolved investigations are retained in [Historical reco
   No evidence connects this fixture failure to filesystem initialization, so the storage fixes do not close it.
 - **Follow-up:** Preserve the failing fixture name, child-process lifecycle output, and timeout/cleanup stage on recurrence.
   Close only after the failing mechanism is identified and a targeted regression validates its repair.
+
+## Client timeout classification can be lost when cleanup fails
+
+- **Status:** Confirmed; repair deferred by user decision
+- **Severity:** Medium
+- **Area:** Generic client request deadlines and recovery classification
+- **Evidence:** When a finite request times out and the stream's cancellation also fails, `FramedStream::cancel_on_error` returns the cleanup error instead of the initiating timeout.
+  Author and snapshot handling no longer recognize the timeout, so an uncertain submit, membership append, or snapshot publication can lose its promised ambiguous classification.
+  The [iteration 0020 transport report](historical/iterations/0020/phase-2/transport.md) records a deterministic failing regression and a successful compound-error experiment.
+- **Impact:** Consumers must not interpret the cleanup failure as evidence that the mutating request did not commit.
+  Ordinary successful-cleanup paths do not exercise this defect.
+- **Disposition:** The user deferred the proposed new public Rust error variants and bug fix in [Decision 0030](historical/decisions/0030-defer-compound-client-errors.md).
+  The experimental fix and its representation-dependent tests are not part of the accepted source.
+- **Trigger:** Revisit when an error representation/API migration is approved or a consumer requires classification under failed cleanup.
+  Preserve the initiating recovery classification and secondary cleanup diagnostics; test mutating and nonmutating requests independently.
 
 ## Rust CI support
 

@@ -411,6 +411,65 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn byte_only_output_pressure_checks_both_admission_paths_inclusively() {
+        let storage = sea_memory::MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<sea_memory::MemoryStorage>::recover_with_live_cache(view)
+            .await
+            .unwrap();
+        let author = runtime.open_session(None).await.unwrap();
+        let mut slow = author.read(None, None);
+        catch_up(&mut slow).await;
+        let output = runtime.live_cache_pressure().unwrap();
+        let mut policy = AdmissionPolicy::new(None, output.clone());
+        // Keep admission pressure observable instead of allowing background shedding to mask it.
+        policy.monitor.abort();
+        assert!((&mut policy.monitor).await.unwrap_err().is_cancelled());
+        let reader_permits = policy.readers.available_permits();
+        for (index, (payload_bytes, retained_bytes)) in [
+            (3 * 1024 * 1024, 3 * 1024 * 1024),
+            (3 * 1024 * 1024, 6 * 1024 * 1024),
+            (2 * 1024 * 1024, OUTPUT_BYTES),
+            (1, OUTPUT_BYTES + 1),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            author
+                .submit(EventSubmission {
+                    reference: None,
+                    event: Event {
+                        payload: Bytes::from(vec![1; payload_bytes]),
+                        blob_tree: None,
+                    },
+                })
+                .await
+                .unwrap();
+            let sample = output.current().unwrap();
+            assert_eq!(sample.entries, index + 1);
+            assert!(sample.entries < OUTPUT_ENTRIES);
+            assert_eq!(sample.payload_bytes, retained_bytes);
+            if retained_bytes <= OUTPUT_BYTES {
+                policy.admit_session(None).unwrap();
+                let permit = policy.admit_live_reader().unwrap();
+                assert_eq!(policy.readers.available_permits(), reader_permits - 1);
+                drop(permit);
+            } else {
+                assert!(matches!(
+                    policy.admit_session(None),
+                    Err(AdmissionError::Rejected(_))
+                ));
+                assert!(matches!(
+                    policy.admit_live_reader(),
+                    Err(AdmissionError::Rejected(_))
+                ));
+            }
+            assert_eq!(policy.readers.available_permits(), reader_permits);
+        }
+        runtime.shutdown().await.unwrap();
+    }
+
+    #[tokio::test]
     async fn byte_pressure_sheds_stopped_readers_and_monitor_does_not_own_the_document() {
         let storage = sea_memory::MemoryStorage::new();
         let (_, view) = storage.create_view().await.unwrap();

@@ -82,20 +82,26 @@ It owns author identity, reference validation, event ordering, and snapshot publ
 Persisted numeric session reservations and immutable event positions survive recovery; active memberships and publisher authority do not.
 Independent internal checkpoints restore the applied boundary, durable floor, session-ID reservation, and outstanding announcements before replaying a bounded event tail.
 Recovery settles departures for prior sessions and resets runtime-only lag-window history before admitting fresh sessions.
-File storage restores settled-tail cursors without scanning older journal payloads; content is hash-addressed, events use byte offsets, and snapshot lookup traverses storage-private history backward.
+File storage restores settled-tail cursors without scanning older journal payloads; content is hash-addressed and events use byte offsets with predecessor traversal.
+Sparse snapshot lookup uses binary search over fixed-width records.
 Application snapshots do not control this recovery path.
 Clients identify their own accepted submissions by session and application-event ordinal, not by a separate Sea operation ID.
 Sessions can opt into ordered durable announcements with immutable public metadata.
 Close and replacement append departures; recovery appends departures for outstanding announcements before new sessions are admitted.
 These generic joined/left records share the application event order; Fluid identity and quorum interpretation remain in the driver.
-The server owns document runtime management, including opening and sharing sequencers.
+The typed `DocumentHost` owns document runtime management, including recovery and shared document factories.
+`SeaProtocolHost` adapts that typed host to the network protocol.
 
 The experimental [`sea-core::factory`](crates/sea-core/src/factory.rs) boundary composes a document factory and a complete session decorator before local session allocation.
 Its pass-through implementation preserves concrete availability handles and delegates cancellation and closure to the source without adding a lifecycle owner.
-The native host can opt in for both listeners; direct Rust construction and the local generated WASM memory service remain explicit direct paths.
+Embedded hosts select session decorators explicitly; their default setup enables live caching without a resource-policy decorator.
+The server executable enables storage-pressure waiting and reader shedding by default for both listeners, with an explicit opt-out.
+These are soft resource targets, not hard total-memory bounds.
+Direct Rust construction and the local generated WASM memory service remain explicit direct paths.
 The native/browser [`WebTransportSessionFactory`](crates/sea-webtransport/README.md) opens independent connections to one fixed document through the same contract.
 Session creation is separate from network stream admission and incarnation binding.
-See the [soft-budget policy decision](historical/decisions/0029-document-soft-budget-policy.md) for the proposed resource-policy direction; pass-through does not implement it.
+See the [server guide](crates/sea-webtransport-server/README.md) for current resource-policy defaults, limits, and configuration constraints.
+The [soft-budget policy decision](historical/decisions/0029-document-soft-budget-policy.md) records the design rationale; pass-through does not implement the policy.
 
 Snapshot participants may observe only (`ReadOnly`), let Sea select a publisher (`SeaSelected`), or use application-owned election (`ClientSelected`).
 Client-selected publishers suppress Sea selection.
@@ -123,6 +129,9 @@ It consumes the shared protocol; the production client does not depend on the se
 | --- | --- |
 | [`CompressionSession`](crates/sea-compression/README.md) | Compresses event payloads and blob content. |
 | [`EncryptionSession`](crates/sea-encryption/README.md) | Encrypts and authenticates event payloads and blob content. |
+
+These decorators transform application-event payloads and blob leaves.
+Membership, directory, and snapshot metadata remain visible.
 
 ## Application Adapters
 
