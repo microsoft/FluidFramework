@@ -160,7 +160,7 @@ overrides:
   express@>=4 <5: ^4.22.1
 
   # fast-uri CVE-2026-75899 (SSRF via repeated hostname decoding). Fixed in 4.1.3.
-  fast-uri: 4.1.3
+  fast-uri: ^4.1.3
 
   # Resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow).
   # Stays within @langchain/anthropic's declared ^4.4.1 range.
