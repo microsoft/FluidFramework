@@ -48,7 +48,7 @@ export class Context {
 	public constructor(
 		public readonly flexContext: FlexTreeContext,
 		/**
-		 * All schema which could transitively be used under the associated node.
+		 * All schemas which could transitively be used under the associated node.
 		 * @remarks
 		 * While generally {@link TreeNodeSchema} are referenced as objects and thus do not need to be looked up by identifier,
 		 * there are a few cases (mainly constructing new TreeNodes from existing tree data) where such a lookup is useful.

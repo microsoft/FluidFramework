@@ -292,7 +292,7 @@ export interface FieldSchemaWithContext {
  *
  * @remarks
  * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
- * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
+ * encoded schemas are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
  * optimize for patterns of specific values.
  */
 export function tryShapeFromNodeSchema(

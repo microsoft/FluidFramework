@@ -667,7 +667,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myList: factory.array(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural list schema are not typed as classes.
+				// @ts-expect-error structural list schemas are not typed as classes.
 				class NotAClass extends factory.array(factory.number) {}
 			}
 
@@ -740,7 +740,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myMap: factory.map(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural map schema are not typed as classes.
+				// @ts-expect-error structural map schemas are not typed as classes.
 				class NotAClass extends factory.map(factory.number) {}
 			}
 		});
@@ -811,7 +811,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myMap: factory.record(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural map schema are not typed as classes.
+				// @ts-expect-error structural map schemas are not typed as classes.
 				class NotAClass extends factory.record(factory.number) {}
 			}
 		});
