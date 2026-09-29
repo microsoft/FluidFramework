@@ -24,9 +24,9 @@ Limits apply independently to QUIC and WebSocket and do not bound total memory o
 An optional fifth argument is a shutdown-marker path used by process harnesses.
 Enabled live caching, including the default, prints `EXPERIMENTAL_LIVE_CACHE=true`.
 It configures document recovery for all backend modes and both transports without changing clients.
-`BuiltInSeaHost::new` also enables the cache.
-Set `SEA_EXPERIMENTAL_LIVE_CACHE=false`, or use `BuiltInSeaHost::new_with_live_cache(..., false)`, to restore storage-backed delivery.
-Generic `BuiltInSeaHost::with_storage` and direct Rust/WASM sequencer construction remain storage-backed unless separately opted in.
+`SessionSetup::default()` also enables the cache.
+Set `SEA_EXPERIMENTAL_LIVE_CACHE=false`, or use `SessionSetup::default().with_live_cache(false)`, to restore storage-backed delivery.
+Direct Rust/WASM sequencer construction remains storage-backed unless separately opted in.
 This experiment has unbounded stalled-reader retention and is not a production resource policy.
 Default-on is a controlled-use rollout accepting that risk, not merely a fixed memory overhead.
 Transport timeouts do not establish a cache-retention bound for every reader path.
@@ -34,12 +34,12 @@ Invalid activation values fail startup rather than silently selecting a default.
 
 `SEA_EXPERIMENTAL_SESSION_FACTORY=true` selects pass-through session factories and decoration for both listeners.
 The process reports the effective choice as `EXPERIMENTAL_SESSION_FACTORY`.
-`BuiltInSeaHost::new_with_pass_through` selects the same experimental path for embedded hosts.
+`SessionSetup::default().decorate(PassThrough)` selects the same experimental path for embedded hosts.
 This boundary adds no admission policy, automatic closure, delivery tracking, or resource guarantee.
 It retains the existing connection-incarnation cleanup and error semantics.
 Live-cache activation remains independent, so comparisons must explicitly enable caching on both direct and pass-through paths.
 
-`SEA_EXPERIMENTAL_RESOURCE_POLICY=true`, or `BuiltInSeaHost::new_with_policy`, selects the bounded policy-decorator path instead.
+`SEA_EXPERIMENTAL_RESOURCE_POLICY=true`, or `SessionSetup::default().decorate(ReaderShedding)`, selects the bounded policy-decorator path instead.
 Resource-policy and pass-through modes are mutually exclusive in the executable.
 The process reports `EXPERIMENTAL_RESOURCE_POLICY` for activation provenance.
 One policy per document permits at most 128 pending writes with 16 MiB of logical input charges and 128 live-reader reservations.
@@ -65,7 +65,75 @@ An in-flight transport write is not interrupted by cache shedding; existing tran
 Policy-rejected application writes make the decorated author terminal across clones; caller/host-driven close and reconciliation remain required.
 Close bypasses pressure waiting and does not cancel already-entered source work.
 The shedding task is not a background close owner, and no total-memory guarantee is added.
-Existing constructors and generic storage hosts remain direct.
+Session setup without a decorator remains direct.
+
+### Configured storage and session composition
+
+Embedded servers use one constructor: `BuiltInSeaHost::new(storage, sessions)`.
+Pass the resulting host, or its clones, to the existing WebTransport and WebSocket listeners.
+The executable's environment flags and default policy are unchanged.
+
+```rust
+use sea_webtransport_server::{
+    BuiltInSeaHost, PassThrough, ReaderShedding, SessionSetup, StorageSetup,
+};
+
+let memory = BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default())?;
+
+let durable = BuiltInSeaHost::new(
+    StorageSetup::durable("./sea-data/documents".into()),
+    SessionSetup::default()
+        .decorate(ReaderShedding)
+        .decorate(PassThrough),
+)?;
+# Ok::<(), sea_webtransport_server::LiveCacheRequired>(())
+```
+
+`StorageSetup::memory()` creates an independent namespace and requires no path.
+`StorageSetup::buffered(root)` and `StorageSetup::durable(root)` own their exact namespace paths; they do not append a directory name.
+`StorageSetup::from_storage(storage)` accepts an already configured `SeaStorage`, without requiring `Clone`.
+`StorageSetup::open_with(callback)` keeps custom synchronous initialization off the executor and retryable.
+Custom storage setups can attach a durable-pressure accessor with `with_write_pressure`; it is not inferred from the storage type.
+
+Decorator construction follows `.decorate(...)` call order, with each new decorator outside the previous factory.
+The example uses `PassThroughFactory<PolicyFactory<LocalSessionFactory<_>, _>>`.
+The identity configuration returns the local factory without an extra wrapper.
+Any decorator requiring live caching causes `new` to return `LiveCacheRequired` if caching is disabled, before storage initialization.
+The library permits decorator combinations; the executable keeps its mutually exclusive comparison flags.
+
+#### Application-defined decorators and policies
+
+Implement `SessionDecorator<Source, E>` to transform a source `SessionFactory` into another factory.
+This is not restricted to resource policies: decorators can produce transparent wrappers or other compatible session implementations.
+For policy injection, return `PolicyFactory::new(source, Arc::new(your_policy))`.
+The `E` parameter preserves backend observation errors independently of errors introduced by earlier decorators.
+The host calls each decorator once per recovered document opening, then shares the completed factory across that document's sessions.
+Other documents receive separate factories; reopening a persistent document with a new host constructs a new chain.
+Construction is serialized with document initialization, so keep decorators short and nonblocking.
+`DocumentContext` supplies the document ID, optional storage pressure, and an optional live-cache observer.
+Declare `requires_live_cache()` when the decorator needs that observer.
+No membership is allocated before the composed factory opens a session.
+To preserve readers instead of shedding them, implement `wait_write` using `output.wait_below(entry_target, byte_target)` and do not call `revoke_lagging`.
+The [public-host integration test](tests/policy_injection.rs) contains a complete application decorator and bounded test policy, including durable-pressure waiting.
+Its policy allows only small event submissions; a production policy must also decide admission for blob and directory writes.
+Custom policies must provide their own bounded request/byte charges, reader permits, admission decisions, and observation-error classification.
+An observation failure before source invocation must not classify the refused operation as ambiguous.
+There is no hidden default shedding task: `ReaderShedding` runs only when explicitly included.
+
+Reader dequeue or drop can release pressure and resume writers.
+Close interrupts a pre-source policy wait, but does not cancel source-accepted work.
+A permanently stalled reader can deliberately stall writers indefinitely.
+Cache pressure ends at dequeue, not network delivery; durable pressure excludes sequencer handoff retention and OS buffering.
+These signals and admission limits do not bound total process or transport memory.
+
+#### Migration from the constructor family
+
+The previous `new(root, mode)`, `new_with_*`, and `with_storage` constructors are replaced by `new(storage, sessions)`, which returns a configuration result.
+Select storage in the application rather than supplying a path that memory storage ignores.
+To preserve existing on-disk namespaces, pass the previous `root.join("documents")` to the file recipe.
+Replace pass-through and policy constructors with the corresponding decorators.
+When migrating `with_storage`, explicitly use `.with_live_cache(false)` to preserve its former storage-backed delivery.
+Applications using the earlier `DocumentPolicyBuilder` injection should instead implement `SessionDecorator` and return a `PolicyFactory`.
 
 On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
 Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.
@@ -185,12 +253,12 @@ cargo test -p sea-webtransport-server --features websocket-stream websocket
 ## Document Ownership
 
 The host uses `SeaStorage` factories and `LocalSequencer`.
-`BuiltInSeaHost::with_storage(storage)` accepts any `SeaStorage` implementation.
+`StorageSetup::from_storage(storage)` accepts any `SeaStorage` implementation.
 The generic document registry provides session opening, document existence checks, flush, and shutdown through one backend-independent interface.
-Only the built-in constructor selects memory, buffered-file, or durable-file storage; transport operations do not dispatch on backend kinds.
+Storage selection belongs to the application or executable; neither the host nor transport operations dispatch on backend kinds.
 Creation allocates an opaque backend document ID and returns it with session authority; callers retain that ID for reopening.
 No caller-name mapping is maintained.
-File modes keep their namespace below `root/documents`.
+The executable keeps file namespaces below its data directory's `documents` subdirectory; embedded callers supply exact namespace paths.
 
 A host serializes lazy factory initialization and first document recovery.
 Factory initialization, document creation, and recovery run on Tokio blocking workers so slow filesystem synchronization does not stall network polling or operation deadlines.

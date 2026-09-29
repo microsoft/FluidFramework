@@ -7,8 +7,8 @@ use std::{
 };
 
 use sea_webtransport_server::{
-    BuiltInSeaHost, ShutdownMode, StorageMode, TransportConfig, TransportMeasurement,
-    WebTransportServer,
+    BuiltInSeaHost, LiveCacheRequired, PassThrough, ReaderShedding, SessionSetup, ShutdownMode,
+    StorageSetup, TransportConfig, TransportMeasurement, WebTransportServer,
 };
 use wtransport::{Identity, tls::Sha256DigestFmt};
 
@@ -32,13 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let identity = Identity::load_pemfiles(certificate, private_key).await?;
-    let storage_mode_name =
-        env::var("SEA_STORAGE_MODE").unwrap_or_else(|_| StorageMode::DurableFile.name().to_owned());
-    let storage_mode = StorageMode::from_name(&storage_mode_name).ok_or_else(|| {
-        format!(
-            "invalid SEA_STORAGE_MODE {storage_mode_name:?}; expected memory, buffered-file, or durable-file"
-        )
-    })?;
+    let storage_mode = env::var("SEA_STORAGE_MODE").unwrap_or_else(|_| "durable-file".to_owned());
     let certificate_hash = identity.certificate_chain().as_slice()[0]
         .hash()
         .fmt(Sha256DigestFmt::DottedHex);
@@ -69,13 +63,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if resource_policy && !live_cache {
         return Err("resource policy requires live caching".into());
     }
-    let host = Arc::new(if resource_policy {
-        BuiltInSeaHost::new_with_policy(data, storage_mode, live_cache)
-    } else if session_factory {
-        BuiltInSeaHost::new_with_pass_through(data, storage_mode, live_cache)
-    } else {
-        BuiltInSeaHost::new_with_live_cache(data, storage_mode, live_cache)
-    });
+    let host = Arc::new(configured_storage(
+        &storage_mode,
+        &data,
+        live_cache,
+        session_factory,
+        resource_policy,
+    )?);
     let server = WebTransportServer::bind(bind, identity, host.clone(), transport_config.clone())?;
     let address = server.local_addr()?;
     let liveness = server.liveness_policy();
@@ -90,7 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .await?;
     println!("WEBTRANSPORT_URL=https://{address}/sea");
     println!("CERTIFICATE_SHA256={certificate_hash}");
-    println!("STORAGE_MODE={}", storage_mode.name());
+    println!("STORAGE_MODE={storage_mode}");
     if live_cache {
         println!("EXPERIMENTAL_LIVE_CACHE=true");
     }
@@ -160,6 +154,59 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     tokio::time::timeout(Duration::from_secs(5), host.shutdown()).await??;
     Ok(())
+}
+
+/// Selects a storage recipe while preserving the executable's existing namespace layout.
+fn configured_storage(
+    mode: &str,
+    data: &Path,
+    live_cache: bool,
+    pass_through: bool,
+    resource_policy: bool,
+) -> Result<BuiltInSeaHost, Box<dyn std::error::Error>> {
+    Ok(match mode {
+        "memory" => configured_host(
+            StorageSetup::memory(),
+            live_cache,
+            pass_through,
+            resource_policy,
+        )?,
+        "buffered-file" => configured_host(
+            StorageSetup::buffered(data.join("documents")),
+            live_cache,
+            pass_through,
+            resource_policy,
+        )?,
+        "durable-file" => configured_host(
+            StorageSetup::durable(data.join("documents")),
+            live_cache,
+            pass_through,
+            resource_policy,
+        )?,
+        _ => {
+            return Err(format!(
+                "invalid SEA_STORAGE_MODE {mode:?}; expected memory, buffered-file, or durable-file"
+            )
+            .into());
+        }
+    })
+}
+
+/// Maps executable comparison flags to the same composable library setup used by embedded hosts.
+fn configured_host<S: sea_core::storage::SeaStorage + 'static>(
+    storage: StorageSetup<S>,
+    live_cache: bool,
+    pass_through: bool,
+    resource_policy: bool,
+) -> Result<BuiltInSeaHost, LiveCacheRequired> {
+    let sessions = SessionSetup::default().with_live_cache(live_cache);
+    if resource_policy {
+        BuiltInSeaHost::new(storage, sessions.decorate(ReaderShedding))
+    } else if pass_through {
+        BuiltInSeaHost::new(storage, sessions.decorate(PassThrough))
+    } else {
+        BuiltInSeaHost::new(storage, sessions)
+    }
 }
 
 /// Binds the optional fallback only when both feature and runtime settings opt in.
@@ -273,6 +320,27 @@ fn configured_resource_policy(value: Option<&str>) -> Result<bool, &'static str>
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn storage_selection_preserves_modes_and_rejects_unknown_values() {
+        let root = std::env::temp_dir().join(format!("sea-cli-storage-{}", std::process::id()));
+        assert!(!root.exists());
+        for mode in ["memory", "buffered-file", "durable-file"] {
+            for (cache, pass, policy) in [
+                (false, false, false),
+                (true, true, false),
+                (true, false, true),
+            ] {
+                assert!(super::configured_storage(mode, &root, cache, pass, policy).is_ok());
+            }
+            assert!(super::configured_storage(mode, &root, false, false, true).is_err());
+        }
+        let error = super::configured_storage("unknown", &root, true, false, false)
+            .err()
+            .unwrap();
+        assert!(error.to_string().contains("invalid SEA_STORAGE_MODE"));
+        assert!(!root.exists(), "configuration must not initialize storage");
+    }
+
     #[test]
     fn resource_policy_is_opt_in_with_strict_values() {
         assert_eq!(super::configured_resource_policy(None), Ok(false));

@@ -1,8 +1,7 @@
-//! Runtime-selected final Sea session hosting.
+//! Shared document recovery and Sea protocol hosting over configured session factories.
 
 use std::{
     collections::BTreeMap,
-    path::PathBuf,
     sync::{Arc, Weak},
 };
 
@@ -10,139 +9,100 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use rand_core::{OsRng, RngCore as _};
-use sea_core::factory::{PassThroughFactory, SessionFactory};
+use sea_core::factory::SessionFactory;
 use sea_core::storage::{DocumentId, SeaStorage};
 use sea_core::{EventPosition, archive::SessionId};
-use sea_file::buffered::FileStorage;
-use sea_file::durable::DurableStorage;
-use sea_memory::MemoryStorage;
 use sea_sequencer::factory::LocalSessionFactory;
 use sea_webtransport::protocol;
 use tokio::{sync::Mutex, time::sleep};
 
 use crate::{
-    LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost, SessionDispatcher,
-    dispatch::error_response,
+    DocumentContext, LiveCacheRequired, LivenessPolicy, SeaConnectionService, SeaResponseStream,
+    SeaServiceHost, SessionDecorator, SessionDispatcher, SessionSetup, StorageSetup,
+    dispatch::error_response, setup::Undecorated,
 };
 
 /// Retained exclusive runtimes indexed by opaque document identity.
-type DocumentRuntimes<Storage> = BTreeMap<Vec<u8>, Arc<HostedDocument<Storage>>>;
+type DocumentRuntimes<Storage, Decorator> =
+    BTreeMap<Vec<u8>, Arc<HostedDocument<Storage, Decorator>>>;
 
 /// Retains the creation boundary for the lifetime of one recovered document.
-struct HostedDocument<Storage: SeaStorage> {
+struct HostedDocument<
+    Storage: SeaStorage + 'static,
+    D: SessionDecorator<LocalSessionFactory<Storage>, Storage::Error>,
+> {
     /// Owns sequencing and existing shutdown behavior independently of interception.
     sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
-    /// Experimental pass-through path; absence preserves direct session construction.
-    factory: Option<PassThroughFactory<LocalSessionFactory<Storage>>>,
-    /// Opt-in pressure policy; close remains caller/host-driven.
-    policy_factory: Option<
-        sea_core::policy::PolicyFactory<
-            LocalSessionFactory<Storage>,
-            crate::resource_policy::AdmissionPolicy<Storage::Error>,
-        >,
-    >,
+    /// One composed factory shared by every session in this document opening.
+    factory: D::Factory,
 }
 
-impl<Storage: SeaStorage + 'static> HostedDocument<Storage> {
-    /// Creates a document factory without allocating a session.
+impl<Storage, D> HostedDocument<Storage, D>
+where
+    Storage: SeaStorage + 'static,
+    D: SessionDecorator<LocalSessionFactory<Storage>, Storage::Error>,
+{
+    /// Composes the document factory without allocating a session.
     fn new(
-        sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
-        intercept: bool,
-    ) -> Arc<Self> {
-        let factory =
-            intercept.then(|| PassThroughFactory::new(LocalSessionFactory::new(sequencer.clone())));
-        Arc::new(Self {
-            sequencer,
-            factory,
-            policy_factory: None,
-        })
-    }
-
-    /// Shares one admission policy across every decorated session of the document.
-    fn with_policy(
+        id: &DocumentId,
         sequencer: Arc<sea_sequencer::session::LocalSequencer<Storage>>,
         storage: Option<sea_file::pressure::DurableWritePressure>,
-    ) -> Result<Arc<Self>, protocol::Response> {
-        let output = sequencer
-            .live_cache_pressure()
-            .ok_or_else(|| rejected("resource policy requires live caching"))?;
-        let policy = Arc::new(crate::resource_policy::AdmissionPolicy::new(
-            storage, output,
-        ));
-        let policy_factory = Some(sea_core::policy::PolicyFactory::new(
-            LocalSessionFactory::new(sequencer.clone()),
-            policy,
-        ));
-        Ok(Arc::new(Self {
-            sequencer,
-            factory: None,
-            policy_factory,
-        }))
+        decorator: &D,
+    ) -> Arc<Self> {
+        let context = DocumentContext {
+            document: id,
+            storage,
+            output: sequencer.live_cache_pressure(),
+        };
+        let factory = decorator.decorate(LocalSessionFactory::new(sequencer.clone()), &context);
+        Arc::new(Self { sequencer, factory })
     }
 }
 
 /// Serializes lazy runtime recovery within one backend namespace.
-struct DocumentRegistry<Storage: sea_core::storage::SeaStorage> {
-    /// Enables experimental live delivery for recovered documents; `DocumentRegistry::new` disables it.
-    live_cache: bool,
-    /// Enables factory interception without adding admission or lifecycle policy.
-    intercept: bool,
-    /// Selects bounded policy decoration independently of pass-through interception.
-    policy: bool,
+struct DocumentRegistry<
+    Storage: SeaStorage + 'static,
+    D: SessionDecorator<LocalSessionFactory<Storage>, Storage::Error> = Undecorated,
+> {
+    /// Validated sequencer delivery and session-factory composition.
+    sessions: Arc<SessionSetup<D>>,
     /// Backend-specific observation captured before the view moves into its sequencer.
     storage_pressure: fn(&Storage::Blobs) -> Option<sea_file::pressure::DurableWritePressure>,
     /// Factory retaining the backend namespace independently of active views.
     storage: Arc<Storage>,
     /// Serializes first recovery; failed attempts are never cached.
-    documents: Arc<Mutex<DocumentRuntimes<Storage>>>,
+    documents: Arc<Mutex<DocumentRuntimes<Storage, D>>>,
 }
 
-impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage> {
-    /// Creates an empty cache over one backend namespace.
-    fn new(storage: Storage) -> Self {
-        Self::with_live_cache(storage, false)
-    }
-
-    /// Selects the experiment independently of backend durability and session policy.
-    fn with_live_cache(storage: Storage, live_cache: bool) -> Self {
-        Self::configured(storage, live_cache, false)
-    }
-
-    /// Selects interception separately from delivery and backend durability.
-    fn configured(storage: Storage, live_cache: bool, intercept: bool) -> Self {
+impl<Storage, D> DocumentRegistry<Storage, D>
+where
+    Storage: SeaStorage + 'static,
+    D: SessionDecorator<LocalSessionFactory<Storage>, Storage::Error>,
+{
+    /// Retains the configured storage and validated composition until document recovery.
+    fn new(
+        storage: Arc<Storage>,
+        sessions: Arc<SessionSetup<D>>,
+        storage_pressure: fn(&Storage::Blobs) -> Option<sea_file::pressure::DurableWritePressure>,
+    ) -> Self {
         Self {
-            live_cache,
-            intercept,
-            policy: false,
-            storage_pressure: |_| None,
-            storage: Arc::new(storage),
+            sessions,
+            storage_pressure,
+            storage,
             documents: Arc::new(Mutex::new(BTreeMap::new())),
         }
-    }
-
-    /// Creates the policy-enabled document registry without changing the default paths.
-    fn with_policy(storage: Storage, live_cache: bool) -> Self {
-        let mut registry = Self::configured(storage, live_cache, false);
-        registry.policy = true;
-        registry
     }
 
     /// Allocates a backend identity and retains its recovered exclusive view.
     async fn create(&self) -> Result<sea_core::storage::DocumentId, protocol::Response> {
         let mut documents = self.documents.clone().lock_owned().await;
         let storage = self.storage.clone();
-        let live_cache = self.live_cache;
-        let intercept = self.intercept;
-        let policy = self.policy;
+        let sessions = self.sessions.clone();
         let storage_pressure = self.storage_pressure;
         storage_worker(async move {
             let (id, view) = storage.create_view().await.map_err(error_response)?;
-            let pressure = if policy {
-                storage_pressure(view.blobs())
-            } else {
-                None
-            };
-            let runtime = if live_cache {
+            let pressure = storage_pressure(view.blobs());
+            let runtime = if sessions.live_cache {
                 sea_sequencer::session::LocalSequencer::recover_with_live_cache(view).await
             } else {
                 sea_sequencer::session::LocalSequencer::recover(view).await
@@ -150,11 +110,7 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
             .map_err(error_response)?;
             documents.insert(
                 id.as_bytes().to_vec(),
-                if policy {
-                    HostedDocument::with_policy(runtime, pressure)?
-                } else {
-                    HostedDocument::new(runtime, intercept)
-                },
+                HostedDocument::new(&id, runtime, pressure, &sessions.decorator),
             );
             Ok(id)
         })
@@ -165,15 +121,13 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
     async fn open(
         &self,
         id: &sea_core::storage::DocumentId,
-    ) -> Result<Arc<HostedDocument<Storage>>, protocol::Response> {
+    ) -> Result<Arc<HostedDocument<Storage, D>>, protocol::Response> {
         let mut documents = self.documents.clone().lock_owned().await;
         if let Some(runtime) = documents.get(id.as_bytes().as_ref()) {
             return Ok(runtime.clone());
         }
         let storage = self.storage.clone();
-        let live_cache = self.live_cache;
-        let intercept = self.intercept;
-        let policy = self.policy;
+        let sessions = self.sessions.clone();
         let storage_pressure = self.storage_pressure;
         let id = id.clone();
         storage_worker(async move {
@@ -182,22 +136,14 @@ impl<Storage: sea_core::storage::SeaStorage + 'static> DocumentRegistry<Storage>
                 .await
                 .map_err(error_response)?
                 .ok_or_else(|| rejected("document does not exist"))?;
-            let pressure = if policy {
-                storage_pressure(view.blobs())
-            } else {
-                None
-            };
-            let runtime = if live_cache {
+            let pressure = storage_pressure(view.blobs());
+            let runtime = if sessions.live_cache {
                 sea_sequencer::session::LocalSequencer::recover_with_live_cache(view).await
             } else {
                 sea_sequencer::session::LocalSequencer::recover(view).await
             }
             .map_err(error_response)?;
-            let runtime = if policy {
-                HostedDocument::with_policy(runtime, pressure)?
-            } else {
-                HostedDocument::new(runtime, intercept)
-            };
+            let runtime = HostedDocument::new(&id, runtime, pressure, &sessions.decorator);
             documents.insert(id.as_bytes().to_vec(), runtime.clone());
             Ok(runtime)
         })
@@ -243,43 +189,12 @@ trait HostedDocuments: Send + Sync {
 type InitializeDocuments =
     dyn Fn() -> Result<Arc<dyn HostedDocuments>, protocol::Response> + Send + Sync;
 
-/// Runtime-selected built-in archive backend.
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub enum StorageMode {
-    /// Process-local ephemeral storage.
-    Memory,
-    /// Buffered single-process file storage.
-    BufferedFile,
-    /// Crash-durable single-process file storage.
-    #[default]
-    DurableFile,
-}
-
-impl StorageMode {
-    /// Parses one stable command-line backend name.
-    #[must_use]
-    pub fn from_name(value: &str) -> Option<Self> {
-        match value {
-            "memory" => Some(Self::Memory),
-            "buffered-file" => Some(Self::BufferedFile),
-            "durable-file" => Some(Self::DurableFile),
-            _ => None,
-        }
-    }
-
-    /// Returns the stable command-line backend name.
-    #[must_use]
-    pub const fn name(self) -> &'static str {
-        match self {
-            Self::Memory => "memory",
-            Self::BufferedFile => "buffered-file",
-            Self::DurableFile => "durable-file",
-        }
-    }
-}
-
 #[async_trait]
-impl<Storage: SeaStorage + 'static> HostedDocuments for DocumentRegistry<Storage> {
+impl<Storage, D> HostedDocuments for DocumentRegistry<Storage, D>
+where
+    Storage: SeaStorage + 'static,
+    D: SessionDecorator<LocalSessionFactory<Storage>, Storage::Error>,
+{
     async fn open_session(
         &self,
         document: Vec<u8>,
@@ -318,14 +233,15 @@ impl<Storage: SeaStorage + 'static> HostedDocuments for DocumentRegistry<Storage
 }
 
 /// Resolves backend identity before opening author membership in the shared runtime.
-async fn open<Storage>(
-    registry: &DocumentRegistry<Storage>,
+async fn open<Storage, D>(
+    registry: &DocumentRegistry<Storage, D>,
     document: Vec<u8>,
     intent: protocol::ArchiveIntent,
     reference: Option<EventPosition>,
 ) -> Result<(DocumentId, SessionId, Arc<dyn SeaConnectionService>), protocol::Response>
 where
     Storage: SeaStorage + 'static,
+    D: SessionDecorator<LocalSessionFactory<Storage>, Storage::Error>,
 {
     let id = match intent {
         protocol::ArchiveIntent::Create if document.is_empty() => registry.create().await?,
@@ -340,37 +256,15 @@ where
         }
     };
     let document = registry.open(&id).await?;
-    if let Some(factory) = &document.policy_factory {
-        let opened = factory
-            .open_session(reference)
-            .await
-            .map_err(error_response)?;
-        return Ok((
-            id,
-            opened.id,
-            Arc::new(SessionDispatcher::new(Arc::new(opened.session))),
-        ));
-    }
-    if let Some(factory) = &document.factory {
-        let opened = factory
-            .open_session(reference)
-            .await
-            .map_err(error_response)?;
-        return Ok((
-            id,
-            opened.id,
-            Arc::new(SessionDispatcher::new(Arc::new(opened.session))),
-        ));
-    }
-    let session = document
-        .sequencer
+    let opened = document
+        .factory
         .open_session(reference)
         .await
         .map_err(error_response)?;
     Ok((
         id,
-        session.session_id().clone(),
-        Arc::new(SessionDispatcher::new(Arc::new(session))),
+        opened.id,
+        Arc::new(SessionDispatcher::new(Arc::new(opened.session))),
     ))
 }
 
@@ -386,7 +280,7 @@ struct HostInner {
     backend: Arc<Mutex<Option<Arc<dyn HostedDocuments>>>>,
 }
 
-/// Final Sea protocol host using the server's runtime-selected backend.
+/// Sea protocol host sharing configured storage and document session factories across listeners.
 #[derive(Clone)]
 pub struct BuiltInSeaHost {
     inner: Arc<HostInner>,
@@ -407,99 +301,42 @@ impl BuiltInSeaHost {
         }
         Ok(())
     }
-    /// Creates an empty archive registry rooted at `root`.
+    /// Hosts a configured storage namespace with one composed session factory per document.
     ///
-    /// Enables the experimental live cache. Stalled readers can retain unbounded history.
-    /// Use [`Self::new_with_live_cache`] with `false` for storage-backed delivery.
-    #[must_use]
-    pub fn new(root: PathBuf, mode: StorageMode) -> Self {
-        Self::new_with_live_cache(root, mode, true)
-    }
-
-    /// Selects the experimental shared live cache for every recovered document.
+    /// Construction validates setup without opening storage or allocating memberships.
+    /// Storage initialization remains lazy, retryable, and off the async executor.
+    /// Decorators run once per recovered document; all sharing listeners use the same factory.
     ///
-    /// This is a controlled-use delivery optimization, not a production resource policy.
-    /// Stalled subscriptions can retain unbounded history until closed or revoked.
-    #[must_use]
-    pub fn new_with_live_cache(root: PathBuf, mode: StorageMode, enabled: bool) -> Self {
-        Self::configured(root, mode, enabled, false)
-    }
-
-    /// Enables experimental pass-through creation and decoration for both listeners.
+    /// # Errors
+    /// Returns [`LiveCacheRequired`] if any decorator requires disabled live caching.
     ///
-    /// This adds no rejection, automatic closure, delivery tracking, or resource limits.
-    /// `live_cache` independently selects the unbounded-retention delivery experiment.
-    #[must_use]
-    pub fn new_with_pass_through(root: PathBuf, mode: StorageMode, live_cache: bool) -> Self {
-        Self::configured(root, mode, live_cache, true)
-    }
-
-    /// Enables bounded document admission through policy decorators.
-    ///
-    /// This bounds pending logical inputs and live-reader admission, not total memory.
-    /// Durable storage pauses new writes above its low-water targets.
-    /// Output pressure refuses readers and sheds lagging subscriptions independently of polling.
-    /// Disabling live caching is rejected on initialization, before creating storage.
-    /// Rejected writers still require caller/host-driven close.
-    #[must_use]
-    pub fn new_with_policy(root: PathBuf, mode: StorageMode, live_cache: bool) -> Self {
-        Self::with_initializer(move || {
-            if !live_cache {
-                return Err(rejected("resource policy requires live caching"));
-            }
-            let root = root.join("documents");
-            Ok(match mode {
-                StorageMode::Memory => Arc::new(DocumentRegistry::with_policy(
-                    MemoryStorage::new(),
-                    live_cache,
-                )),
-                StorageMode::BufferedFile => Arc::new(DocumentRegistry::with_policy(
-                    FileStorage::open(root).map_err(error_response)?,
-                    live_cache,
-                )),
-                StorageMode::DurableFile => {
-                    let mut registry = DocumentRegistry::with_policy(
-                        DurableStorage::open(root).map_err(error_response)?,
-                        live_cache,
-                    );
-                    registry.storage_pressure = sea_file::FileBlobs::write_pressure;
-                    Arc::new(registry)
-                }
-            })
-        })
-    }
-
-    /// Keeps runtime-selected backend construction identical on both comparison paths.
-    fn configured(root: PathBuf, mode: StorageMode, enabled: bool, intercept: bool) -> Self {
-        Self::with_initializer(move || {
-            let root = root.join("documents");
-            Ok(match mode {
-                StorageMode::Memory => Arc::new(DocumentRegistry::configured(
-                    MemoryStorage::new(),
-                    enabled,
-                    intercept,
-                )),
-                StorageMode::BufferedFile => Arc::new(DocumentRegistry::configured(
-                    FileStorage::open(root).map_err(error_response)?,
-                    enabled,
-                    intercept,
-                )),
-                StorageMode::DurableFile => Arc::new(DocumentRegistry::configured(
-                    DurableStorage::open(root).map_err(error_response)?,
-                    enabled,
-                    intercept,
-                )),
-            })
-        })
-    }
-
-    /// Hosts any storage implementation without backend-specific transport dispatch.
-    /// The caller owns any synchronous factory construction required by the backend.
-    /// Keeps storage-backed delivery; custom backends need not support cache invalidation.
-    #[must_use]
-    pub fn with_storage<Storage: SeaStorage + 'static>(storage: Storage) -> Self {
-        let documents: Arc<dyn HostedDocuments> = Arc::new(DocumentRegistry::new(storage));
-        Self::with_initializer(move || Ok(documents.clone()))
+    /// ```
+    /// use sea_webtransport_server::{BuiltInSeaHost, ReaderShedding, SessionSetup, StorageSetup};
+    /// let host = BuiltInSeaHost::new(
+    ///     StorageSetup::durable("./sea-data/documents".into()),
+    ///     SessionSetup::default().decorate(ReaderShedding),
+    /// )?;
+    /// # Ok::<(), sea_webtransport_server::LiveCacheRequired>(())
+    /// ```
+    pub fn new<Storage, D>(
+        storage: StorageSetup<Storage>,
+        sessions: SessionSetup<D>,
+    ) -> Result<Self, LiveCacheRequired>
+    where
+        Storage: SeaStorage + 'static,
+        D: SessionDecorator<LocalSessionFactory<Storage>, Storage::Error>,
+    {
+        if !sessions.live_cache && sessions.decorator.requires_live_cache() {
+            return Err(LiveCacheRequired);
+        }
+        let sessions = Arc::new(sessions);
+        Ok(Self::with_initializer(move || {
+            Ok(Arc::new(DocumentRegistry::new(
+                (storage.initialize)().map_err(error_response)?,
+                sessions.clone(),
+                storage.pressure,
+            )))
+        }))
     }
 
     /// Retains a retryable construction policy without initializing storage eagerly.
@@ -942,81 +779,131 @@ mod tests {
         ClientConfig, Connection, Endpoint, Identity, endpoint::endpoint_side::Client,
     };
 
-    use super::{BuiltInSeaHost, DocumentRegistry, StorageMode};
+    use super::{BuiltInSeaHost, DocumentRegistry};
     use crate::{
-        LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost,
-        ShutdownDisposition, ShutdownMode, TransportConfig, WebTransportServer,
+        LivenessPolicy, PassThrough, ReaderShedding, SeaConnectionService, SeaResponseStream,
+        SeaServiceHost, SessionDecorator, SessionSetup, ShutdownDisposition, ShutdownMode,
+        StorageSetup, TransportConfig, WebTransportServer,
     };
+
+    /// Builds a direct cached host for the network backend matrix.
+    fn test_host(root: &std::path::Path, mode: &str) -> BuiltInSeaHost {
+        let sessions = SessionSetup::default();
+        match mode {
+            "memory" => BuiltInSeaHost::new(StorageSetup::memory(), sessions),
+            "buffered-file" => {
+                BuiltInSeaHost::new(StorageSetup::buffered(root.join("documents")), sessions)
+            }
+            "durable-file" => {
+                BuiltInSeaHost::new(StorageSetup::durable(root.join("documents")), sessions)
+            }
+            _ => panic!("unknown test backend"),
+        }
+        .unwrap()
+    }
+
+    /// Creates an independent path-free memory host.
+    fn memory_host() -> BuiltInSeaHost {
+        BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap()
+    }
+
+    /// Keeps storage-backed fixtures explicit without coupling them to production defaults.
+    fn registry<S: sea_core::storage::SeaStorage + 'static>(storage: S) -> DocumentRegistry<S> {
+        registry_with(storage, SessionSetup::default().with_live_cache(false))
+    }
+
+    /// Constructs a fixture registry with a chosen document-factory composition.
+    fn registry_with<S, D>(storage: S, sessions: SessionSetup<D>) -> DocumentRegistry<S, D>
+    where
+        S: sea_core::storage::SeaStorage + 'static,
+        D: SessionDecorator<sea_sequencer::factory::LocalSessionFactory<S>, S::Error>,
+    {
+        DocumentRegistry::new(Arc::new(storage), Arc::new(sessions), |_| None)
+    }
 
     #[tokio::test]
     async fn retained_document_factory_intercepts_before_allocation_and_dispatches_all_opens() {
-        for mode in 0..3 {
-            let registry = if mode == 2 {
-                DocumentRegistry::with_policy(sea_memory::MemoryStorage::new(), true)
-            } else {
-                DocumentRegistry::configured(sea_memory::MemoryStorage::new(), true, mode == 1)
-            };
-            let id = registry.create().await.unwrap();
-            let document = registry.open(&id).await.unwrap();
-            assert_eq!(document.factory.is_some(), mode == 1);
-            assert_eq!(document.policy_factory.is_some(), mode == 2);
-            assert!(Arc::ptr_eq(&document, &registry.open(&id).await.unwrap()));
-            let (_, first, author) = super::open(
-                &registry,
-                id.as_bytes().to_vec(),
-                protocol::ArchiveIntent::Open,
-                None,
-            )
-            .await
-            .unwrap();
-            assert_eq!(
-                first.get(),
-                1,
-                "factory construction must not allocate membership"
-            );
-            let (_, second, sibling) = super::open(
-                &registry,
-                id.as_bytes().to_vec(),
-                protocol::ArchiveIntent::Open,
-                None,
-            )
-            .await
-            .unwrap();
-            assert_eq!(second.get(), 2);
-            let submit = || protocol::Request::Submit {
-                reference: None,
-                event: protocol::Event {
-                    payload: b"pass-through".to_vec(),
-                    blob_tree: None,
-                },
-            };
-            assert!(matches!(
-                author.author_request(submit()).await,
-                protocol::Response::EventCommitted { .. }
-            ));
-            assert_eq!(
-                author.author_request(protocol::Request::Close).await,
-                protocol::Response::Acknowledged
-            );
-            assert!(matches!(
-                author.author_request(submit()).await,
-                protocol::Response::Error { .. }
-            ));
-            assert!(matches!(
-                sibling.author_request(submit()).await,
-                protocol::Response::EventCommitted { .. }
-            ));
-            sibling.connection_closed(false).await;
-            document.sequencer.shutdown().await.unwrap();
-        }
+        assert_factory(SessionSetup::default()).await;
+        assert_factory(SessionSetup::default().decorate(PassThrough)).await;
+        assert_factory(SessionSetup::default().decorate(ReaderShedding)).await;
+        assert_factory(
+            SessionSetup::default()
+                .decorate(ReaderShedding)
+                .decorate(PassThrough),
+        )
+        .await;
+    }
+
+    /// Verifies allocation, document sharing and author closure through the composed factory.
+    async fn assert_factory<D>(sessions: SessionSetup<D>)
+    where
+        D: SessionDecorator<
+                sea_sequencer::factory::LocalSessionFactory<sea_memory::MemoryStorage>,
+                <sea_memory::MemoryStorage as sea_core::storage::SeaStorage>::Error,
+            >,
+    {
+        let registry = registry_with(sea_memory::MemoryStorage::new(), sessions);
+        let id = registry.create().await.unwrap();
+        let document = registry.open(&id).await.unwrap();
+        assert!(Arc::ptr_eq(&document, &registry.open(&id).await.unwrap()));
+        let (_, first, author) = super::open(
+            &registry,
+            id.as_bytes().to_vec(),
+            protocol::ArchiveIntent::Open,
+            None,
+        )
+        .await
+        .unwrap();
+        assert_eq!(
+            first.get(),
+            1,
+            "factory construction must not allocate membership"
+        );
+        let (_, second, sibling) = super::open(
+            &registry,
+            id.as_bytes().to_vec(),
+            protocol::ArchiveIntent::Open,
+            None,
+        )
+        .await
+        .unwrap();
+        assert_eq!(second.get(), 2);
+        let submit = || protocol::Request::Submit {
+            reference: None,
+            event: protocol::Event {
+                payload: b"pass-through".to_vec(),
+                blob_tree: None,
+            },
+        };
+        assert!(matches!(
+            author.author_request(submit()).await,
+            protocol::Response::EventCommitted { .. }
+        ));
+        assert_eq!(
+            author.author_request(protocol::Request::Close).await,
+            protocol::Response::Acknowledged
+        );
+        assert!(matches!(
+            author.author_request(submit()).await,
+            protocol::Response::Error { .. }
+        ));
+        assert!(matches!(
+            sibling.author_request(submit()).await,
+            protocol::Response::EventCommitted { .. }
+        ));
+        sibling.connection_closed(false).await;
+        document.sequencer.shutdown().await.unwrap();
     }
 
     #[tokio::test]
     async fn policy_reader_permits_are_document_wide_and_refusal_does_not_register() {
-        let registry = DocumentRegistry::with_policy(sea_memory::MemoryStorage::new(), true);
+        let registry = registry_with(
+            sea_memory::MemoryStorage::new(),
+            SessionSetup::default().decorate(ReaderShedding),
+        );
         let id = registry.create().await.unwrap();
         let document = registry.open(&id).await.unwrap();
-        let factory = document.policy_factory.as_ref().unwrap();
+        let factory = &document.factory;
         let first = factory.open_session(None).await.unwrap().session;
         let second = factory.open_session(None).await.unwrap().session;
         let readers = (0..128).map(|_| first.read(None, None)).collect::<Vec<_>>();
@@ -1045,8 +932,14 @@ mod tests {
     async fn resource_policy_refuses_disabled_cache_before_creating_storage() {
         let root = std::env::temp_dir().join(format!("sea-policy-disabled-{}", std::process::id()));
         assert!(!root.exists());
-        let host = BuiltInSeaHost::new_with_policy(root.clone(), StorageMode::DurableFile, false);
-        assert!(host.backend().await.is_err());
+        let host = BuiltInSeaHost::new(
+            StorageSetup::durable(root.clone()),
+            SessionSetup::default()
+                .with_live_cache(false)
+                .decorate(ReaderShedding)
+                .decorate(PassThrough),
+        );
+        assert!(host.is_err());
         assert!(!root.exists());
     }
 
@@ -1054,7 +947,7 @@ mod tests {
     async fn assert_cache_shutdown<Storage: sea_core::storage::SeaStorage + 'static>(
         storage: Storage,
     ) {
-        let registry = DocumentRegistry::with_live_cache(storage, true);
+        let registry = registry_with(storage, SessionSetup::default());
         let id = registry.create().await.unwrap();
         let runtime = registry.open(&id).await.unwrap();
         let author = runtime.sequencer.open_session(None).await.unwrap();
@@ -1110,7 +1003,7 @@ mod tests {
         let root =
             std::env::temp_dir().join(format!("sea-registry-checkpoint-{}", std::process::id()));
         let storage = sea_file::durable::DurableStorage::open(&root).unwrap();
-        let registry = DocumentRegistry::new(storage.clone());
+        let registry = registry(storage.clone());
         let id = registry.create().await.unwrap();
         let runtime = registry.open(&id).await.unwrap();
         let idle = runtime.sequencer.open_session(None).await.unwrap();
@@ -1154,7 +1047,7 @@ mod tests {
                 .is_none()
         );
         drop(view);
-        let registry = DocumentRegistry::new(storage);
+        let registry = self::registry(storage);
         let runtime = registry.open(&id).await.unwrap();
         let reader = runtime.sequencer.open_session(None).await.unwrap();
         assert_eq!(reader.session_id().get(), 257);
@@ -1174,23 +1067,24 @@ mod tests {
 
     #[tokio::test]
     async fn slow_backend_initialization_preserves_executor_progress_and_cancellation_ownership() {
-        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
         let (entered, entering) = tokio::sync::oneshot::channel();
         let (release, released) = std::sync::mpsc::channel();
+        let pause = std::sync::Mutex::new(Some((entered, released)));
+        let host = BuiltInSeaHost::new(
+            StorageSetup::open_with(move || {
+                let (entered, released) = pause.lock().unwrap().take().expect("initialize once");
+                entered.send(()).unwrap();
+                released
+                    .recv_timeout(Duration::from_secs(5))
+                    .expect("executor must release initialization");
+                Ok(sea_memory::MemoryStorage::new())
+            }),
+            SessionSetup::default(),
+        )
+        .unwrap();
+        assert!(host.inner.backend.lock().await.is_none());
         let initializing_host = host.clone();
-        let initialization = tokio::spawn(async move {
-            initializing_host
-                .initialize_backend(move || {
-                    entered.send(()).unwrap();
-                    released
-                        .recv_timeout(Duration::from_secs(5))
-                        .expect("executor must release initialization");
-                    Ok(Arc::new(DocumentRegistry::new(
-                        sea_memory::MemoryStorage::new(),
-                    )))
-                })
-                .await
-        });
+        let initialization = tokio::spawn(async move { initializing_host.backend().await });
         entering.await.unwrap();
         assert!(
             timeout(Duration::from_millis(10), host.backend())
@@ -1210,22 +1104,39 @@ mod tests {
 
     #[tokio::test]
     async fn backend_initialization_failure_remains_retryable() {
-        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
-        assert!(
-            host.initialize_backend(|| Err(super::rejected("injected failure")))
-                .await
-                .is_err()
-        );
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let attempts = Arc::new(AtomicUsize::new(0));
+        let observed = attempts.clone();
+        let host = BuiltInSeaHost::new(
+            StorageSetup::open_with(move || {
+                if observed.fetch_add(1, Ordering::SeqCst) == 0 {
+                    Err(sea_memory::MemoryStorageError::AlreadyOpen)
+                } else {
+                    Ok(sea_memory::MemoryStorage::new())
+                }
+            }),
+            SessionSetup::default(),
+        )
+        .unwrap();
+        assert_eq!(attempts.load(Ordering::SeqCst), 0);
+        assert!(matches!(
+            host.backend().await,
+            Err(protocol::Response::Error {
+                kind: protocol::ErrorKind::Conflict,
+                ..
+            })
+        ));
         assert!(host.inner.backend.lock().await.is_none());
         let backend = host.backend().await.unwrap();
         assert!(Arc::ptr_eq(&backend, &host.backend().await.unwrap()));
+        assert_eq!(attempts.load(Ordering::SeqCst), 2);
     }
 
     #[tokio::test]
     async fn signal_admission_requires_existing_document_and_one_registration_per_connection() {
         use sea_core::signals::SeaSignals as _;
 
-        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+        let host = memory_host();
         let connection = host.connect(LivenessPolicy::default());
         let mut opening = protocol::signals::OpenSignals {
             version: protocol::PROTOCOL_VERSION,
@@ -1284,10 +1195,7 @@ mod tests {
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(
-                std::env::temp_dir().join("sea-signals-test"),
-                StorageMode::Memory,
-            )),
+            Arc::new(memory_host()),
             TransportConfig::default(),
         )
         .unwrap();
@@ -1408,7 +1316,7 @@ mod tests {
             .await
             .expect("create persisted document");
         drop(view);
-        let registry = DocumentRegistry::new(storage);
+        let registry = self::registry(storage);
         let (first, second) = tokio::join!(registry.open(&id), registry.open(&id));
         assert!(Arc::ptr_eq(
             &first.expect("first"),
@@ -1486,11 +1394,17 @@ mod tests {
     #[tokio::test]
     async fn custom_storage_uses_generic_document_and_lifecycle_dispatch() {
         let lifecycle = Arc::new(std::sync::Mutex::new(Vec::new()));
-        let host = BuiltInSeaHost::with_storage(PausedStorage {
-            inner: sea_memory::MemoryStorage::new(),
-            pause: std::sync::Mutex::new(None),
-            lifecycle: lifecycle.clone(),
-        });
+        let host = BuiltInSeaHost::new(
+            StorageSetup::from_storage(PausedStorage {
+                inner: sea_memory::MemoryStorage::new(),
+                pause: std::sync::Mutex::new(None),
+                lifecycle: lifecycle.clone(),
+            }),
+            SessionSetup::default()
+                .with_live_cache(false)
+                .decorate(PassThrough),
+        )
+        .unwrap();
         let (document, _, session) = host
             .open_session(Vec::new(), protocol::ArchiveIntent::Create, None)
             .await
@@ -1526,7 +1440,7 @@ mod tests {
             drop(view);
             let (entered, entering) = tokio::sync::oneshot::channel();
             let (release, released) = std::sync::mpsc::channel();
-            let registry = Arc::new(DocumentRegistry::new(PausedStorage {
+            let registry = Arc::new(self::registry(PausedStorage {
                 inner: storage,
                 lifecycle: Arc::default(),
                 pause: std::sync::Mutex::new(Some(Box::new(move || {
@@ -1575,7 +1489,7 @@ mod tests {
 
         let storage = sea_memory::MemoryStorage::new();
         let (id, external_view) = storage.create_view().await.expect("external writer");
-        let registry = DocumentRegistry::new(storage);
+        let registry = self::registry(storage);
         assert!(registry.open(&id).await.is_err());
         assert!(registry.documents.lock().await.is_empty());
         drop(external_view);
@@ -1594,18 +1508,14 @@ mod tests {
 
     #[tokio::test]
     async fn archive_create_and_open_intent_is_explicit() {
-        for mode in [
-            StorageMode::Memory,
-            StorageMode::BufferedFile,
-            StorageMode::DurableFile,
-        ] {
+        for mode in ["memory", "buffered-file", "durable-file"] {
             let root = std::env::temp_dir().join(format!(
                 "sea-webtransport-archive-intent-{}-{}",
                 std::process::id(),
-                mode.name()
+                mode
             ));
             let _ = std::fs::remove_dir_all(&root);
-            let host = BuiltInSeaHost::new(root.clone(), mode);
+            let host = test_host(&root, mode);
             assert!(
                 host.open_session(vec![0; 8], protocol::ArchiveIntent::Open, None)
                     .await
@@ -1653,9 +1563,9 @@ mod tests {
             opened.connection_closed(false).await;
             drop((created, opened));
 
-            if mode != StorageMode::Memory {
+            if mode != "memory" {
                 drop(host);
-                let recovered = BuiltInSeaHost::new(root.clone(), mode);
+                let recovered = test_host(&root, mode);
                 assert!(
                     recovered
                         .open_session(
@@ -1674,7 +1584,7 @@ mod tests {
     #[tokio::test]
     #[allow(clippy::too_many_lines)]
     async fn event_stream_returns_distinct_authority_before_recovery() {
-        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+        let host = memory_host();
         let first_connection = host.connect(LivenessPolicy::default());
         let mut first_stream = first_connection
             .open_event_stream(protocol::Request::OpenEventStream {
@@ -1896,7 +1806,7 @@ mod tests {
 
     #[tokio::test]
     async fn concurrent_close_is_idempotent_during_reconnect_grace() {
-        let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+        let host = memory_host();
         let connection = host.connect(LivenessPolicy {
             reconnect_grace: Duration::from_millis(25),
             ..LivenessPolicy::default()
@@ -1983,11 +1893,7 @@ mod tests {
 
     #[tokio::test]
     async fn native_client_round_trip_in_every_storage_mode() {
-        for mode in [
-            StorageMode::Memory,
-            StorageMode::BufferedFile,
-            StorageMode::DurableFile,
-        ] {
+        for mode in ["memory", "buffered-file", "durable-file"] {
             native_client_round_trip(mode).await;
         }
     }
@@ -1996,7 +1902,7 @@ mod tests {
     #[allow(clippy::too_many_lines)]
     async fn bound_stream_operations_and_cleanup_cannot_reach_a_replacement_session() {
         for replace_document in [false, true] {
-            let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+            let host = memory_host();
             let connection = host.connect(LivenessPolicy::default());
             assert!(matches!(
                 connection.clone().bind_session(b"unopened").await,
@@ -2194,7 +2100,7 @@ mod tests {
                 stop_after: None,
             },
         ] {
-            let host = BuiltInSeaHost::new(std::path::PathBuf::new(), StorageMode::Memory);
+            let host = memory_host();
             let connection = host.connect(LivenessPolicy::default());
             let (authority, _, _events) = open_test_session(&connection, Vec::new()).await;
             let bound = connection.clone().bind_session(&authority).await.unwrap();
@@ -2228,10 +2134,7 @@ mod tests {
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(
-                std::path::PathBuf::new(),
-                StorageMode::Memory,
-            )),
+            Arc::new(memory_host()),
             TransportConfig::default(),
         )
         .unwrap();
@@ -2291,10 +2194,7 @@ mod tests {
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(
-                std::path::PathBuf::new(),
-                StorageMode::Memory,
-            )),
+            Arc::new(memory_host()),
             TransportConfig {
                 liveness: LivenessPolicy {
                     reconnect_grace: Duration::from_secs(30),
@@ -2334,11 +2234,11 @@ mod tests {
     }
 
     #[allow(clippy::too_many_lines)]
-    async fn native_client_round_trip(mode: StorageMode) {
+    async fn native_client_round_trip(mode: &str) {
         let root = std::env::temp_dir().join(format!(
             "sea-webtransport-server-test-{}-{}",
             std::process::id(),
-            mode.name()
+            mode
         ));
         let _ = std::fs::remove_dir_all(&root);
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
@@ -2346,7 +2246,7 @@ mod tests {
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(root.clone(), mode)),
+            Arc::new(test_host(&root, mode)),
             TransportConfig::default(),
         )
         .unwrap();
@@ -2370,7 +2270,7 @@ mod tests {
             .unwrap_or_else(|error| {
                 panic!(
                     "{} connection failed after {:?}: {error:?}; server: {:?}",
-                    mode.name(),
+                    mode,
                     started.elapsed(),
                     measurements.snapshot(),
                 )
@@ -2457,10 +2357,7 @@ mod tests {
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
-            Arc::new(BuiltInSeaHost::new(
-                std::path::PathBuf::new(),
-                StorageMode::Memory,
-            )),
+            Arc::new(memory_host()),
             TransportConfig {
                 operation_timeout: Duration::from_millis(50),
                 ..TransportConfig::default()
@@ -2928,17 +2825,5 @@ mod tests {
                 .expect("response frame");
             decoder.push(&buffer[..count]);
         }
-    }
-
-    #[test]
-    fn storage_mode_names_round_trip_and_reject_unknown_values() {
-        for mode in [
-            StorageMode::Memory,
-            StorageMode::BufferedFile,
-            StorageMode::DurableFile,
-        ] {
-            assert_eq!(StorageMode::from_name(mode.name()), Some(mode));
-        }
-        assert_eq!(StorageMode::from_name("unknown"), None);
     }
 }

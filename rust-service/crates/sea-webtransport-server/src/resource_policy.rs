@@ -18,9 +18,37 @@ const OUTPUT_ENTRIES: usize = 1024;
 /// Soft canonical payload target, excluding downstream handles.
 const OUTPUT_BYTES: usize = 8 * 1024 * 1024;
 
+/// Selects bounded input admission and independent outgoing-reader shedding.
+///
+/// Requires live caching. See the crate documentation for fixed budgets and exclusions.
+#[derive(Default)]
+pub struct ReaderShedding;
+
+impl<S, E> crate::SessionDecorator<S, E> for ReaderShedding
+where
+    S: sea_core::factory::SessionFactory<Session: 'static> + 'static,
+    E: ClassifiedError,
+{
+    type Factory = sea_core::policy::PolicyFactory<S, AdmissionPolicy<E>>;
+
+    fn requires_live_cache(&self) -> bool {
+        true
+    }
+
+    fn decorate(&self, source: S, context: &crate::DocumentContext<'_, E>) -> Self::Factory {
+        sea_core::policy::PolicyFactory::new(
+            source,
+            Arc::new(AdmissionPolicy::new(
+                context.storage.clone(),
+                context.output.clone().expect("host validated live caching"),
+            )),
+        )
+    }
+}
+
 /// Definitive policy refusal before invoking a source operation.
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum AdmissionError<E: ClassifiedError> {
+pub enum AdmissionError<E: ClassifiedError> {
     /// Refused before source invocation.
     #[error("{0}")]
     Rejected(&'static str),
@@ -47,7 +75,7 @@ impl<E: ClassifiedError> ClassifiedError for AdmissionError<E> {
 }
 
 /// Pending input ownership, released before the source takes responsibility.
-pub(crate) struct WritePermit {
+pub struct WritePermit {
     /// Retains one bounded waiter slot.
     _request: OwnedSemaphorePermit,
     /// Retains the conservative logical input charge.
@@ -55,7 +83,7 @@ pub(crate) struct WritePermit {
 }
 
 /// Shared admission, durable pressure waiting, and independent outgoing-reader shedding.
-pub(crate) struct AdmissionPolicy<E: ClassifiedError> {
+pub struct AdmissionPolicy<E: ClassifiedError> {
     /// Bounds pending operations, including same-session FIFO waits.
     requests: Arc<Semaphore>,
     /// Bounds pending logical content bytes.
