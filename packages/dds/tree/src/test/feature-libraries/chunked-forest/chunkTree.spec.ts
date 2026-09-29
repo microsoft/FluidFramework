@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -1152,7 +1155,7 @@ describe("chunkTree", () => {
 				// callers. Silently merging would decompress one side's compressed-id values
 				// under the wrong compressor.
 				const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
-				const otherCompressor = createIdCompressor();
+				const otherCompressor = createIdCompressor(SerializationVersion.V3);
 				const left = new UniformChunk(
 					stringShape.withTopLevelLength(1),
 					[testIdCompressor.generateCompressedId()],
