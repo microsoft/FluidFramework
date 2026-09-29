@@ -1515,7 +1515,7 @@ describe("SchemaFactory Recursive methods", () => {
 	 * 2. Make it easier to communicate to customers which might have accidentally used these unsupported patterns when and how they might need to adjust their code.
 	 * 3. Detect if/when the TypeScript compiler changes and starts to support these patterns to possibly enable out schema to explicitly allow them.
 	 *
-	 * Currently this collection of test cases covers one specific edge case: schema which do not use explicit sub-classing.
+	 * Currently this collection of test cases covers one specific edge case: schemas which do not use explicit sub-classing.
 	 * Our current guidance says this pattern is not supported for recursive schema.
 	 *
 	 * These patterns also {@link https://github.com/microsoft/TypeScript/issues/55832 | break type safety in .d.ts generation}:
