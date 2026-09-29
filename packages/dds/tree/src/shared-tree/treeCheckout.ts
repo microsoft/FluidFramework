@@ -1499,7 +1499,10 @@ export class TreeCheckout implements ITreeCheckout {
 					return true;
 				}
 				if (hasSchemaChange(commit.change)) {
-					assert(commit.revision !== "root", "Unexpected schema change in root commit");
+					assert(
+						commit.revision !== "root",
+						0xd4f /* Unexpected schema change in root commit */,
+					);
 					const schemaRevision = this.idCompressor.decompress(commit.revision);
 					throw new UsageError(
 						`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${schemaRevision}.`,
