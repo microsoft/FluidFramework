@@ -32,15 +32,22 @@ import { SharedTreeChangeFormatVersion } from "./sharedTreeChangeCodecs.js";
  * Data in this format is not expected to be durable beyond the scope of a single session.
  */
 interface SerializedChange {
+	/** Identifies the serialized change format. */
 	readonly version: 2;
+	/** Identifies the commit containing the change. */
 	readonly revision: RevisionTag;
+	/** The encoded SharedTree change. */
 	readonly change: JsonCompatibleReadOnly;
+	/** Identifies the ID-compressor session required to decode the change. */
 	readonly originatorId: SessionId;
+	/** Application-defined metadata attached to the commit. */
 	readonly customMetadata?: EncodedCustomMetadataTree;
 }
 
 interface DecodedSerializedChange {
+	/** The decoded SharedTree change and its revision. */
 	readonly change: TaggedChange<SharedTreeChange>;
+	/** Application-defined metadata attached to the commit. */
 	readonly customMetadata: CustomMetadataTree | undefined;
 }
 

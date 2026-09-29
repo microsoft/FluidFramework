@@ -37,10 +37,22 @@ import { getBranch, getTrunkHead, serializeCommit } from "./synchronizationUtils
  * Pending commits must be replayed so that the Guest can rebase them after sequencing.
  */
 export interface GuestBranchInitialization {
+	/** Identifies the commit represented by the initialization snapshot. */
 	readonly baseRevision: RevisionTag;
+	/** Identifies the Host main-branch head produced by replaying {@link commits}. */
 	readonly mainRevision: RevisionTag;
+	/** Identifies the newest sequenced commit in the reconstructed Host branch. */
 	readonly trunkRevision: RevisionTag;
+	/** Serialized commits after {@link baseRevision}, in application order. */
 	readonly commits: readonly JsonCompatibleReadOnly[];
+}
+
+/** A Host update awaiting the Guest's acknowledgment. */
+interface PendingHostUpdate {
+	/** The exact Host main-branch state sent in the update. */
+	readonly branch: ReturnType<typeof getBranch>;
+	/** The sequenced trunk revision sent in the update. */
+	readonly trunkRevision: RevisionTag;
 }
 
 /**
@@ -54,22 +66,29 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * The Guest's authoring branch, advanced only by Guest changes and acknowledged Host updates.
 	 */
 	public readonly local: TreeViewAlpha<TSchema>;
-	private readonly pendingUpdates = new Map<
-		HostUpdateId,
-		{ readonly branch: ReturnType<typeof getBranch>; readonly trunkRevision: RevisionTag }
-	>();
+	/** Host updates awaiting ordered acknowledgments, with the exact branch state sent for each update. */
+	private readonly pendingUpdates = new Map<HostUpdateId, PendingHostUpdate>();
 	/**
 	 * The baseline and retained commits used to initialize this session.
 	 */
 	public readonly guestInitialization: GuestBranchInitialization;
+	/** Host main revision included in the latest update acknowledged by the Guest. */
 	private guestMainRevision: RevisionTag;
+	/** Host trunk revision included in the latest update acknowledged by the Guest. */
 	private guestTrunkRevision: RevisionTag;
+	/** The promise and resolver for acknowledgment of all pending Host updates. */
 	private updateInProgress?: PromiseWithResolvers;
+	/** Host main-branch head included in the latest update sent to the Guest. */
 	private sentHead: GraphCommit<SharedTreeChange>;
+	/** Host trunk revision included in the latest update sent to the Guest. */
 	private sentTrunkRevision: RevisionTag;
+	/** The identifier to assign to the next Host update. */
 	private nextUpdateId = 0;
+	/** The identifier expected on the next Guest change. */
 	private nextGuestChangeId = 0;
+	/** The callback that unsubscribes from Host main-branch changes. */
 	private readonly offAfterChange: () => void;
+	/** The callback that unsubscribes from Host commit sequencing. */
 	private readonly offCommitSequenced: () => void;
 	/** Whether synchronization has stopped. Any work pending when it stopped was rejected. */
 	private stopped = false;
@@ -134,7 +153,9 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 */
 	public receiveChangeFromGuest(message: GuestChangeMessage): void {
 		if (message.changeId !== this.nextGuestChangeId) {
-			throw new SandboxProtocolError("Guest changes must arrive in identifier order.");
+			throw new SandboxProtocolError(
+				`Guest change identifier order mismatch: received ${message.changeId}, expected ${this.nextGuestChangeId}.`,
+			);
 		}
 		this.nextGuestChangeId++;
 		if (message.mainRevision !== this.guestMainRevision) {

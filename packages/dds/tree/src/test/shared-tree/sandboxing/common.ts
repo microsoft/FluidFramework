@@ -251,69 +251,84 @@ export function isSerializedHandle(value: unknown): value is SerializedHandle {
 	return serializedHandleValidator.check(value);
 }
 
-const SessionRevisionTag = Type.Union([Type.Literal("root"), Type.Number({ multipleOf: 1 })]);
+/** Runtime schema for revision tags used within one sandbox session. */
+const SessionRevisionTag = Type.Unsafe<RevisionTag>(
+	Type.Union([Type.Literal("root"), Type.Number({ multipleOf: 1 })]),
+);
 
-/** Advances the Guest's copy of the Host main branch. */
-export interface HostUpdateMessage {
-	readonly type: "hostUpdate";
-	readonly updateId: HostUpdateId;
-	readonly baseRevision: RevisionTag;
-	readonly mainRevision: RevisionTag;
-	readonly trunkRevision: RevisionTag;
-	readonly commits: readonly JsonCompatibleReadOnly[];
-}
-const HostUpdateMessageSchema = Type.Object(
+/** A serialized SharedTree change validated against the sandbox payload vocabulary. */
+const SerializedTreeChange = Type.Unsafe<JsonCompatibleReadOnly>(TreePayloadVocabulary);
+
+/** Serialized SharedTree commits in application order. */
+const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
+	Type.Array(TreePayloadVocabulary),
+);
+
+/**
+ * Advances the Guest's copy of the Host main branch.
+ */
+export type HostUpdateMessage = Static<typeof HostUpdateMessage>;
+const HostUpdateMessage = Type.Object(
 	{
+		/** Identifies this message as a Host branch update. */
 		type: Type.Readonly(Type.Literal("hostUpdate")),
+		/** Identifies this update and the acknowledgment that completes it. */
 		updateId: Type.Readonly(HostUpdateId),
+		/** Identifies the retained commit after which `commits` replaces the Guest's Host branch. */
 		baseRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the Host main-branch head produced by applying `commits`. */
 		mainRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the newest sequenced commit in the resulting Host branch. */
 		trunkRevision: Type.Readonly(SessionRevisionTag),
-		commits: Type.Readonly(Type.Array(TreePayloadVocabulary)),
+		/** Serialized commits after `baseRevision`, in application order. */
+		commits: Type.Readonly(SerializedTreeCommits),
 	},
 	{ additionalProperties: false },
 );
 
-/** Confirms that the Guest applied one {@link HostUpdateMessage}. */
-export interface HostUpdateAckMessage {
-	readonly type: "hostUpdateAck";
-	readonly updateId: HostUpdateId;
-}
-const HostUpdateAckMessageSchema = Type.Object(
+/**
+ * Confirms that the Guest applied one {@link HostUpdateMessage}.
+ */
+export type HostUpdateAckMessage = Static<typeof HostUpdateAckMessage>;
+const HostUpdateAckMessage = Type.Object(
 	{
+		/** Identifies this message as a Host update acknowledgment. */
 		type: Type.Readonly(Type.Literal("hostUpdateAck")),
+		/** Identifies the applied Host update. */
 		updateId: Type.Readonly(HostUpdateId),
 	},
 	{ additionalProperties: false },
 );
 
-/** A Guest commit and the Host branch revisions on which the Guest based it. */
-export interface GuestChangeMessage {
-	readonly type: "guestChange";
-	readonly changeId: GuestChangeId;
-	readonly mainRevision: RevisionTag;
-	readonly trunkRevision: RevisionTag;
-	readonly change: JsonCompatibleReadOnly;
-}
-const GuestChangeMessageSchema = Type.Object(
+/**
+ * A Guest commit and the Host branch revisions on which the Guest based it.
+ */
+export type GuestChangeMessage = Static<typeof GuestChangeMessage>;
+const GuestChangeMessage = Type.Object(
 	{
+		/** Identifies this message as a Guest-authored change. */
 		type: Type.Readonly(Type.Literal("guestChange")),
+		/** Identifies this change and the acknowledgment that completes it. */
 		changeId: Type.Readonly(GuestChangeId),
+		/** Identifies the Host main-branch head that the Guest had acknowledged when it authored the change. */
 		mainRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the newest sequenced Host commit that the Guest had acknowledged. */
 		trunkRevision: Type.Readonly(SessionRevisionTag),
-		change: Type.Readonly(TreePayloadVocabulary),
+		/** The serialized Guest-authored SharedTree change. */
+		change: Type.Readonly(SerializedTreeChange),
 	},
 	{ additionalProperties: false },
 );
 
-/** Confirms that the Host applied one {@link GuestChangeMessage}. */
-export interface GuestChangeAckMessage {
-	readonly type: "guestChangeAck";
-	readonly changeId: GuestChangeId;
-}
-const GuestChangeAckMessageSchema = Type.Object(
+/**
+ * Confirms that the Host applied one {@link GuestChangeMessage}.
+ */
+export type GuestChangeAckMessage = Static<typeof GuestChangeAckMessage>;
+const GuestChangeAckMessage = Type.Object(
 	{
+		/** Identifies this message as a Guest change acknowledgment. */
 		type: Type.Readonly(Type.Literal("guestChangeAck")),
+		/** Identifies the applied Guest change. */
 		changeId: Type.Readonly(GuestChangeId),
 	},
 	{ additionalProperties: false },
@@ -393,10 +408,10 @@ const blobRequestValidator = validator.compile(BlobRequestMessage);
 const blobResponseValidator = validator.compile(
 	Type.Union([BlobSuccessMessage, BlobErrorMessage]),
 );
-const hostUpdateValidator = validator.compile(HostUpdateMessageSchema);
-const hostUpdateAckValidator = validator.compile(HostUpdateAckMessageSchema);
-const guestChangeValidator = validator.compile(GuestChangeMessageSchema);
-const guestChangeAckValidator = validator.compile(GuestChangeAckMessageSchema);
+const hostUpdateValidator = validator.compile(HostUpdateMessage);
+const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
+const guestChangeValidator = validator.compile(GuestChangeMessage);
+const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
 
 /**
  * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
@@ -433,19 +448,19 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	}
 
 	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
-		return data as HostUpdateMessage;
+		return data;
 	}
 
 	if (data.type === "hostUpdateAck" && hostUpdateAckValidator.check(data)) {
-		return data as HostUpdateAckMessage;
+		return data;
 	}
 
 	if (data.type === "guestChange" && guestChangeValidator.check(data)) {
-		return data as GuestChangeMessage;
+		return data;
 	}
 
 	if (data.type === "guestChangeAck" && guestChangeAckValidator.check(data)) {
-		return data as GuestChangeAckMessage;
+		return data;
 	}
 
 	if (data.type === "sessionFailure" && sessionFailureValidator.check(data)) {

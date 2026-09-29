@@ -94,6 +94,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		config: TreeViewConfiguration<TSchema>,
 		options: ForestOptions & ICodecOptions,
 		content: ViewContent | Pick<ViewContent, "idCompressor">,
+		/** The revisions and retained commits used to reconstruct the Host branch. */
 		initialization: GuestBranchInitialization,
 		/** The Guest endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
@@ -115,6 +116,8 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			this.session.run(() => this.postMessage(message)),
 		);
 		let hostView: TreeViewAlpha<TSchema>;
+		// A retained base can be either a populated snapshot or the original uninitialized commit.
+		// Construct the matching checkout state before replaying the retained Host commits.
 		if ("tree" in content) {
 			const tree = this.codec.decode(content.tree);
 			validateTreePayloadVocabulary(tree);

@@ -34,10 +34,13 @@ import { applyBranchUpdate, getBranch } from "./synchronizationUtils.js";
  * @remarks
  * This class owns branch synchronization only.
  * The `Guest` owns initialization, transport encoding, message routing, and session lifetime.
+ *
+ * The hidden {@link host} branch reconstructs the Host's main branch from ordered updates.
+ * The public {@link view} branch contains Guest-authored commits on top of the last received Host state.
+ * Each Host update replaces a suffix of {@link host}, after which {@link view} rebases its local commits
+ * onto the updated Host head.
  */
 export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
-	/** The Guest's copy of the Host main branch. */
-	public readonly host: TreeViewAlpha<TSchema>;
 	/** The Guest's authoring view, rebased over updates applied to {@link host}. */
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** Guest changes sent to the Host that have not been acknowledged. */
@@ -69,7 +72,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	public constructor(
 		/** The Guest's initial copy of the Host main branch. */
-		host: TreeViewAlpha<TSchema>,
+		public readonly host: TreeViewAlpha<TSchema>,
 		/** The revisions and commits needed to initialize the Host branch. */
 		initialization: GuestBranchInitialization,
 		/** Sends a synchronization protocol message to the Host. */
@@ -81,7 +84,6 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		/** The scoped logger for synchronization diagnostics. */
 		private readonly logger: TelemetryLoggerExt,
 	) {
-		this.host = host;
 		this.mainRevision = initialization.mainRevision;
 		this.trunkRevision = initialization.trunkRevision;
 		this.hostCommits.set(initialization.baseRevision, getBranch(this.host).getHead());
@@ -122,7 +124,9 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 */
 	public receiveHostUpdate(message: HostUpdateMessage): void {
 		if (message.updateId !== this.nextHostUpdateId) {
-			throw new SandboxProtocolError("Host updates must arrive in identifier order.");
+			throw new SandboxProtocolError(
+				`Host update identifier order mismatch: received ${message.updateId}, expected ${this.nextHostUpdateId}.`,
+			);
 		}
 		this.nextHostUpdateId++;
 		this.log(

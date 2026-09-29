@@ -385,6 +385,7 @@ export function createTreeCheckout(
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		codecOptions?: Partial<CodecWriteOptions>;
+		/** Gets the authoritative sequenced trunk head for a collaborative checkout. */
 		getTrunkHead?: () => GraphCommit<SharedTreeChange>;
 	},
 ): TreeCheckout {
@@ -648,6 +649,7 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly idCompressor: IIdCompressor,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
+		/** Gets the authoritative sequenced trunk head, if this is a collaborative checkout. */
 		private readonly getTrunkHeadFromEditManager?: () => GraphCommit<SharedTreeChange>,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
