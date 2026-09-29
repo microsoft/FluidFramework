@@ -22,7 +22,6 @@ import {
 	type FuzzTestState,
 	type FuzzView,
 	makeTreeEditGenerator,
-	schemaEditGenerator,
 	simpleSchemaFromStoredSchema,
 	viewFromState,
 } from "./fuzzEditGenerators.js";
@@ -171,30 +170,6 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 			}
 		}
 	});
-
-	scenario(
-		"schema generation retries identifiers in the selected checkout's current schema",
-		(state) => {
-			const originalView = viewFromState(state);
-			const existingType = state.random.uuid4();
-			const newType = state.random.uuid4();
-			state.client = state.clients[1];
-			applySchemaOp(state, { type: "schemaChange", contents: { type: existingType } });
-			state.containerRuntimeFactory.processAllMessages();
-			state.client = state.clients[0];
-			assert.equal(originalView.compatibility.isEquivalent, false);
-
-			const uuid4 = state.random.uuid4;
-			const candidates = [existingType, existingType, newType];
-			state.random.uuid4 = () => candidates.shift() ?? assert.fail("No UUID candidates left");
-			const operation = schemaEditGenerator(state);
-			state.random.uuid4 = uuid4;
-			assert.deepEqual(operation, { type: "schemaChange", contents: { type: newType } });
-			assert.equal(candidates.length, 0);
-			applySchemaOp(state, operation);
-			synchronizeAndCheckViews(state);
-		},
-	);
 
 	scenario("remote upgrades reconstruct string-valued GUID schemas", (state) => {
 		const originalRemoteView = viewFromState(state, state.clients[1]);

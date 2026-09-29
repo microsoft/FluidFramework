@@ -633,16 +633,10 @@ export const makeBranchEditGenerator = (
 	]);
 };
 
-export const schemaEditGenerator: Generator<SchemaChange, FuzzTestState> = (state) => {
-	const nodeTypes = new Set<string>(
-		viewFromState(state).checkout.storedSchema.nodeSchema.keys(),
-	);
-	let type: string;
-	do {
-		type = state.random.uuid4();
-	} while (nodeTypes.has(`treeFuzz.${type}`));
-	return { type: "schemaChange", contents: { type } };
-};
+export const schemaEditGenerator: Generator<SchemaChange, FuzzTestState> = (state) => ({
+	type: "schemaChange",
+	contents: { type: state.random.uuid4() },
+});
 
 export const makeUndoRedoEditGenerator = (
 	opWeightsArg: Partial<EditGeneratorOpWeights>,
