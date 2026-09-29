@@ -750,8 +750,8 @@ async function run(configuration, output) {
 			failureCategory: pipelined
 				? guardFailure
 					? "guard"
-					: (workerResults.find((entry) => entry?.failures?.length)?.failures[0]
-							.category ?? phase)
+					: (workerResults.find((entry) => entry?.failures?.length)?.failures[0].category ??
+						phase)
 				: undefined,
 			pipeline: pipelined ? pipelinedConfiguration(configuration) : undefined,
 			liveCache: configuration.backend === "sea" ? liveCache : null,
@@ -783,8 +783,7 @@ async function run(configuration, output) {
 						"SEA_MAX_CONNECTIONS",
 					].map((key) => [
 						key,
-						key === "SEA_EXPERIMENTAL_LIVE_CACHE" &&
-						configuration.liveCache !== undefined
+						key === "SEA_EXPERIMENTAL_LIVE_CACHE" && configuration.liveCache !== undefined
 							? String(configuration.liveCache)
 							: (process.env[key] ?? null),
 					]),

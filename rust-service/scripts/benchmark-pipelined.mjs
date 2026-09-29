@@ -16,7 +16,11 @@ export function pipelinedConfiguration(configuration) {
 	assert.equal(configuration.backend, "tinylicious", "pipelined mode requires Tinylicious");
 	assert.equal(configuration.loadMode, "pipelined");
 	assert.equal(configuration.rate, undefined, "pipelined mode has no offered rate");
-	assert.equal(configuration.generator, undefined, "pipelined mode requires the Node generator");
+	assert.equal(
+		configuration.generator,
+		undefined,
+		"pipelined mode requires the Node generator",
+	);
 	assert.equal(
 		configuration.transport,
 		undefined,
@@ -32,9 +36,7 @@ export function pipelinedConfiguration(configuration) {
 				? 2 * 1024 * 1024
 				: configuration.maxOutstandingBytes,
 		drainTimeoutSeconds:
-			configuration.drainTimeoutSeconds === undefined
-				? 30
-				: configuration.drainTimeoutSeconds,
+			configuration.drainTimeoutSeconds === undefined ? 30 : configuration.drainTimeoutSeconds,
 		yieldEveryOperations: 64,
 		chargeBytesPerOperation: configuration.payloadBytes,
 		windowScope: "generator",
@@ -174,10 +176,7 @@ export async function runPipelinedWorker(
 			) {
 				const state = documents[sent % documents.length];
 				if (state.sent === 99_999_999) {
-					failure(
-						"eight-digit per-document sequence capacity reached",
-						"sequence-capacity",
-					);
+					failure("eight-digit per-document sequence capacity reached", "sequence-capacity");
 					break;
 				}
 				const sequence = ++state.sent;
