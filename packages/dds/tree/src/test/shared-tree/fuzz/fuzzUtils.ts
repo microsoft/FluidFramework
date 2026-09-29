@@ -106,63 +106,70 @@ export const fuzzFieldSchema = FuzzNode.info.optionalChild;
  * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are already included.
  * @returns The tree's schema used for the fuzz view.
  */
-export function createFuzzSchema(nodeTypes: Iterable<string>): typeof fuzzFieldSchema {
-	const schemaFactory = new SchemaFactory("treeFuzz");
-	const guidNodeSchemas = [];
-	const fuzzNodeTypePrefix = "treeFuzz.";
+export function createFuzzSchema(nodeTypes: string[]): typeof fuzzFieldSchema {
+	assertUnique(nodeTypes, "Duplicate fuzz node schema identifier");
+
+	const fuzzNodeTypePrefix = `${builder.scope}.`;
 	const fluidLeafTypePrefix = "com.fluidframework.leaf.";
+	// Schemas that are present in all fuzz tests and don't require dynamic creation.
 	const shortIdentifierOf = (fullIdentifier: string) =>
 		fullIdentifier.slice(fuzzNodeTypePrefix.length);
-	// Schemas that are present in all fuzz tests and don't require dynamic creation.
-	const commonNodes = new Set(["node", "arrayChildren"]);
-	const seen = new Set<string>();
+	const commonNodes = new Set<string>([FuzzNode.identifier, ArrayChildren.identifier]);
+
+	const schemaFactory = new SchemaFactory(builder.scope);
+	const guidNodeSchemas = [];
 	for (const nodeType of nodeTypes) {
-		assert(!seen.has(nodeType), "Duplicate fuzz node schema identifier");
-		seen.add(nodeType);
 		assert(
 			nodeType.startsWith(fuzzNodeTypePrefix) || nodeType.startsWith(fluidLeafTypePrefix),
 			"Expected a treeFuzz or built-in leaf schema identifier",
 		);
-		if (nodeType.startsWith(fluidLeafTypePrefix)) {
+		if (nodeType.startsWith(fluidLeafTypePrefix) || commonNodes.has(nodeType)) {
 			continue;
 		}
-		const nodeIdentifier = shortIdentifierOf(nodeType);
-		if (!commonNodes.has(nodeIdentifier)) {
-			class GuidNode extends schemaFactory.object(nodeIdentifier, {
-				value: schemaFactory.required(schemaFactory.string),
-			}) {}
-			guidNodeSchemas.push(GuidNode);
-		}
+		class GuidNode extends schemaFactory.object(shortIdentifierOf(nodeType), {
+			value: schemaFactory.required(schemaFactory.string),
+		}) {}
+		guidNodeSchemas.push(GuidNode);
 	}
-	class ArrayChildren2 extends schemaFactory.arrayRecursive("arrayChildren", [
-		() => Node,
+
+	const leafTypes = [
 		schemaFactory.string,
 		schemaFactory.number,
 		schemaFactory.handle,
-		...guidNodeSchemas,
-	]) {}
-	class Node extends schemaFactory.objectRecursive("node", {
-		requiredChild: [
-			() => Node,
-			schemaFactory.string,
-			schemaFactory.number,
-			schemaFactory.handle,
-			...guidNodeSchemas,
-		],
-		optionalChild: schemaFactory.optionalRecursive([
-			() => Node,
-			schemaFactory.string,
-			schemaFactory.number,
-			schemaFactory.handle,
-			...guidNodeSchemas,
-		]),
-		arrayChildren: ArrayChildren2,
-	}) {}
+	] as const;
+	// All fields in fuzz schema can have any of the leaf types, recursive nodes, or dynamically created GUID nodes.
+	const allowedTypes = [() => UpgradedNode, ...leafTypes, ...guidNodeSchemas] as const;
+	// The class names have "Upgraded" to reflect the fact that they are widenings of the original node and array types
+	// used at the start of a given fuzz test. This also avoids shadowing the original `Node` and `ArrayChildren` classes.
+	// Note that they should still use the original identifiers, since we're simulating a scenario where a data model has
+	// expanded over time.
+	class UpgradedArrayChildren extends schemaFactory.arrayRecursive(
+		shortIdentifierOf(ArrayChildren.identifier),
+		allowedTypes,
+	) {}
+	class UpgradedNode extends schemaFactory.objectRecursive(
+		shortIdentifierOf(FuzzNode.identifier),
+		{
+			requiredChild: allowedTypes,
+			optionalChild: schemaFactory.optionalRecursive(allowedTypes),
+			arrayChildren: UpgradedArrayChildren,
+		},
+	) {}
 
 	{
-		type _check = ValidateRecursiveSchema<typeof Node>;
+		type _check = ValidateRecursiveSchema<typeof UpgradedNode>;
 	}
-	return Node.info.optionalChild as unknown as typeof fuzzFieldSchema;
+	return UpgradedNode.info.optionalChild as unknown as typeof fuzzFieldSchema;
+}
+
+function assertUnique<T>(iterable: Iterable<T>, errorMessage: string): void {
+	const seen = new Set<T>();
+	for (const item of iterable) {
+		if (seen.has(item)) {
+			throw new Error(errorMessage);
+		}
+		seen.add(item);
+	}
 }
 
 export function nodeSchemaFromTreeSchema(

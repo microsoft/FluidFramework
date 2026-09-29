@@ -179,7 +179,7 @@ function refreshFuzzView(view: FuzzView): FuzzView {
 export function simpleSchemaFromStoredSchema(
 	storedSchema: TreeStoredSchemaRepository,
 ): typeof fuzzFieldSchema {
-	return createFuzzSchema(storedSchema.nodeSchema.keys());
+	return createFuzzSchema([...storedSchema.nodeSchema.keys()]);
 }
 
 /**
