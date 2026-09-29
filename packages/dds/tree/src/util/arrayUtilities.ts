@@ -126,6 +126,33 @@ export function replaceArrayRange<T>(
 		return;
 	}
 
+	replaceArrayRangeWithoutSpread(array, startIndex, endIndex, replacement);
+}
+
+/**
+ * Argument-safe fallback for {@link replaceArrayRange} used for large replacements.
+ *
+ * @param array - The array to modify.
+ * @param startIndex - The index at which to start replacing, inclusive.
+ * @param endIndex - The index at which to stop replacing, exclusive.
+ * @param replacement - The items with which to replace the range.
+ *
+ * @remarks
+ * Equivalent to `array.splice(startIndex, endIndex - startIndex, ...replacement)`, but uses
+ * `copyWithin` and indexed assignment instead of spreading `replacement` into a function call, which
+ * can exceed the runtime's argument limit for large arrays.
+ *
+ * Assumes `[startIndex, endIndex)` is a valid range of `array`; callers are responsible for validating
+ * (see {@link replaceArrayRange}). Exported separately so this path can be tested and benchmarked
+ * directly (e.g. to re-evaluate the size cutoff in {@link replaceArrayRange}) rather than only through
+ * the public function, which dispatches small replacements to native `splice`.
+ */
+export function replaceArrayRangeWithoutSpread<T>(
+	array: T[],
+	startIndex: number,
+	endIndex: number,
+	replacement: readonly T[],
+): void {
 	// Preserve splice semantics when the replacement aliases the array being modified.
 	const replacementItems = replacement === array ? [...replacement] : replacement;
 	const originalLength = array.length;
@@ -136,14 +163,22 @@ export function replaceArrayRange<T>(
 	if (newLength > originalLength) {
 		array.length = newLength;
 	}
+
+	// copy the items after the replaced range to their new location
 	array.copyWithin(startIndex + replacementItems.length, endIndex, originalLength);
 	array.length = newLength;
 
+	// overwrite the old copies (from above) with the inserted content, completing the splice
 	for (
 		let replacementIndex = 0;
 		replacementIndex < replacementItems.length;
 		replacementIndex++
 	) {
+		// replacementIndex is within bounds by construction, so this cast to drop `T | undefined` is safe.
+		// `?? oob()` must not be used here: it would mishandle array values that are legitimately `null` or
+		// `undefined`. `for ... of replacementItems.entries()` is cleaner but was measured to be roughly
+		// 10-15x slower for the large replacements this path handles (the gap narrows for tiny arrays, but
+		// small replacements go through native `splice` in `replaceArrayRange` and never reach here).
 		array[startIndex + replacementIndex] = replacementItems[replacementIndex] as T;
 	}
 }

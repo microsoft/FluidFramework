@@ -10,6 +10,7 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import {
 	collectContiguousRanges,
 	replaceArrayRange,
+	replaceArrayRangeWithoutSpread,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
@@ -179,6 +180,11 @@ describe("arrayUtilities unit tests", () => {
 			replacement: readonly number[],
 		];
 
+		// The table-driven cases below are all small, so `replaceArrayRange` would dispatch them to native
+		// `splice` — testing `splice` against `splice`. To actually exercise the argument-safe
+		// implementation on these cases, assert `replaceArrayRangeWithoutSpread` (the large-replacement
+		// path) matches `splice` directly. Also assert the public `replaceArrayRange` matches, so its
+		// dispatch (and validation) is covered too.
 		function assertMatchesSplice(
 			input: readonly number[],
 			start: number,
@@ -187,11 +193,14 @@ describe("arrayUtilities unit tests", () => {
 		): void {
 			const expected = [...input];
 			expected.splice(start, end - start, ...replacement);
-			const actual = [...input];
 
-			replaceArrayRange(actual, start, end, replacement);
+			const withoutSpread = [...input];
+			replaceArrayRangeWithoutSpread(withoutSpread, start, end, replacement);
+			assert.deepEqual(withoutSpread, expected);
 
-			assert.deepEqual(actual, expected);
+			const viaPublic = [...input];
+			replaceArrayRange(viaPublic, start, end, replacement);
+			assert.deepEqual(viaPublic, expected);
 		}
 
 		const cases: readonly ReplaceCase[] = [
