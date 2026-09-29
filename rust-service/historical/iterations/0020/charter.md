@@ -1,6 +1,6 @@
 # Iteration 0020 Charter
 
-Status: active
+Status: complete
 Source commit: `8a3889518d537d6a85bd55cc31a1b7404eee78e7`
 Coordinator: Copilot SDK assistant.
 

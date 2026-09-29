@@ -5,7 +5,7 @@ Integration branch: `rust-service-iteration-0020`
 Integration worktree: `/workspaces/FluidFramework-rust-service-iteration-0020`
 Iteration base commit: `b06b46be6b88723ea64f4ef1a77a5895781c21bc`
 Integrated source HEAD: `2e6d36a0b7cc798bb06d69566243db2bf192a4a4`.
-Integration acceptance commit: the commit containing this completed Phase 2 record.
+Integration acceptance commit: `9f64365338a1c317a31ccccd9031ac2f9286fd39`.
 
 ## Accepted Work
 
@@ -184,3 +184,8 @@ Reviewed Phase 3 bookkeeping is committed separately.
 The integration checkout is retained only until its final commits are accepted into the primary branch; its final removal is recorded at closeout.
 An accidental inventory-validation invocation from the still-kickoff primary checkout found its expected placeholders; the guarded invocation from integration passed.
 A supplementary heading scan checked 229 links and found only the unchanged pre-existing `storage-and-core-exploration` anchor in Known Issues, outside this incremental repair.
+Final `validate 0020 complete` reports nine missing-template-heading errors, all in pre-existing Decisions 0028 and 0029.
+The coordinator verified both records and the validator are unchanged from approved source `8a3889518d537d6a85bd55cc31a1b7404eee78e7`; `validate 0019 complete` reproduces the same nine errors.
+The user explicitly approved a historical-formatting exception and instructed finishing closeout without editing those earlier decisions.
+This exception does not waive checks for the new Decision 0030 or iteration 0020 records; no errors name those files.
+Quality-inventory, Phase 2, documentation and policy checks pass.

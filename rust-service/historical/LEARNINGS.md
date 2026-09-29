@@ -58,6 +58,7 @@ Each entry must link to its supporting artifact and state whether the lesson is 
 
 ## Agentic Development
 
+- **Confirmed:** A worktree-owned temporary directory can still be unsuitable for Chromium: the long iteration path exceeded the Unix-domain socket limit before scenarios ran. A short uniquely owned temporary root passed a focused browser probe and the complete transport matrix; this was environment setup, not a browser-readiness regression. [Evidence](iterations/0020/retrospective.md#costly-issues-and-dead-ends)
 - **Confirmed:** Reconcile cumulative report state once after evidence handoffs and immediately before review; separately updating provenance, validation, dirty-path, and cycle text produced repeated report-only review cycles. [Evidence](iterations/0019/retrospective.md#costly-issues-and-dead-ends)
 - **Confirmed:** Iteration 0018 delegates discovered and invoked assigned tasks where 0017 delegates could not; execution capability must be observed in the current environment. **Provisional:** Isolated per-worktree Cargo targets resolved a surprising assertion's provenance concern, but exact shared-cache artifact reuse was not proven. Neither observation establishes cancellation isolation or a throughput improvement. [Evidence](iterations/0018/retrospective.md#agentic-development-findings)
 
