@@ -214,6 +214,7 @@ export class SharedTreeCore<
 		const editManagerCodec = makeEditManagerCodecBuilder<TChange>().build({
 			...coreOptions,
 			changeCodecs: this.editManager.changeFamily.codecs,
+			hasSchemaChange: (change) => this.editManager.changeFamily.hasSchemaChange(change),
 			dependentChangeFormatVersion: changeFormatVersionForEditManager,
 			revisionTagCodec,
 		});

@@ -12,7 +12,11 @@ import {
 	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
-import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	MockStorage,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	currentVersion,
@@ -71,6 +75,7 @@ function createEditManagerSummarizer(options?: {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab,
 		changeCodecs: family.codecs,
+		hasSchemaChange: (change) => family.hasSchemaChange(change),
 		dependentChangeFormatVersion: changeFormatVersion,
 		revisionTagCodec,
 	});
@@ -84,18 +89,17 @@ function createEditManagerSummarizer(options?: {
 }
 
 describe("EditManagerSummarizer", () => {
-	// TODO: 0xb53: peer data commits are encoded using the current document schema rather than
-	// the schema established by the preceding peer commit.
+	// Peer data commits must not use the current document schema when a preceding peer commit changes schema.
 	// Minimized from topLevel.fuzz.spec.ts, Batch rebasing seed 41.
-	it.skip("summarizes peer history after a schema upgrade and dependent edit lose a rebase", async () => {
+	it("summarizes peer history after a schema upgrade and dependent edit lose a rebase", async () => {
 		const sf = new SchemaFactory("summarySchemaRebase");
 		class Added extends sf.object("Added", { value: sf.string }) {}
 		const oldConfig = new TreeViewConfiguration({ schema: sf.optional(sf.string) });
 		const newConfig = new TreeViewConfiguration({ schema: sf.optional([sf.string, Added]) });
-		const provider = new TestTreeProviderLite(
-			2,
-			new SharedTreeTestFactory(() => {}, undefined, { minVersionForCollab: currentVersion }),
-		);
+		const factory = new SharedTreeTestFactory(() => {}, undefined, {
+			minVersionForCollab: currentVersion,
+		});
+		const provider = new TestTreeProviderLite(2, factory);
 		const [a, b] = provider.trees;
 		const aView = a.viewWith(oldConfig);
 		aView.initialize("initial");
@@ -112,7 +116,22 @@ describe("EditManagerSummarizer", () => {
 		expectSchemaEqual(a.kernel.checkout.storedSchema, toInitialSchema(oldConfig.schema));
 		// A retains B's original schema and data commits in peer history, although its current
 		// document schema no longer includes Added. Encoding that history must still succeed.
-		await a.summarize();
+		const { summary } = await a.summarize();
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: provider.getCompressor(a),
+		});
+		const loaded = await factory.load(
+			runtime,
+			"loaded",
+			{
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary),
+			},
+			factory.attributes,
+		);
+		assert.equal(loaded.viewWith(oldConfig).root, "concurrent edit");
+		expectSchemaEqual(loaded.kernel.checkout.storedSchema, toInitialSchema(oldConfig.schema));
+		await loaded.summarize();
 	});
 
 	describe("Summary metadata validation", () => {

@@ -27,6 +27,10 @@ const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
+	hasSchemaChange: (change: string): boolean => {
+		assert.equal(change, arg1);
+		throw new Error("hasSchemaChange");
+	},
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
@@ -70,6 +74,10 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 	},
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
+	hasSchemaChange: (change: string): boolean => {
+		assert.equal(change, arg1);
+		return true;
+	},
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
@@ -126,6 +134,10 @@ const returningRebaser = returningFamily.rebaser;
 
 describe("makeMitigatedChangeFamily", () => {
 	it("does not interfere so long as nothing is thrown", () => {
+		assert.equal(
+			mitigatedReturningFamily.hasSchemaChange(arg1),
+			returningFamily.hasSchemaChange(arg1),
+		);
 		assert.equal(
 			mitigatedReturningFamily.buildEditor(mintRevisionTag, arg1),
 			returningFamily.buildEditor(mintRevisionTag, arg1),
@@ -190,6 +202,14 @@ describe("makeMitigatedChangeFamily", () => {
 		assert.throws(
 			() => mitigatedThrowingFamily.buildEditor(mintRevisionTag, arg1),
 			new Error("buildEditor"),
+		);
+		assert.deepEqual(errorLog, []);
+	});
+	it("does not catch errors from hasSchemaChange", () => {
+		errorLog.length = 0;
+		assert.throws(
+			() => mitigatedThrowingFamily.hasSchemaChange(arg1),
+			new Error("hasSchemaChange"),
 		);
 		assert.deepEqual(errorLog, []);
 	});

@@ -43,6 +43,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
+	hasSchemaChange: (change: TChangeset) => boolean,
 ): CodecAndSchema<
 	SummaryData<TChangeset>,
 	EditManagerEncodingContext,
@@ -71,6 +72,7 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				context,
 				data.originator,
 				includeCustomMetadata,
+				hasSchemaChange,
 			);
 			const encoded: EncodedEditManager<JsonCompatibleReadOnly> = {
 				trunk: mainBranch.trunk,

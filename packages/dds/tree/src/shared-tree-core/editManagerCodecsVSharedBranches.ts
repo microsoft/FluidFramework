@@ -39,6 +39,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
+	hasSchemaChange: (change: TChangeset) => boolean,
 ): CodecAndSchema<
 	SummaryData<TChangeset>,
 	EditManagerEncodingContext,
@@ -60,6 +61,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				context,
 				data.originator,
 				true,
+				hasSchemaChange,
 			);
 			assert(
 				data.originator !== undefined,
@@ -81,6 +83,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							context,
 							data.originator,
 							true,
+							hasSchemaChange,
 						),
 					);
 				}

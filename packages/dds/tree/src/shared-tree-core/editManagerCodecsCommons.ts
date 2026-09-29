@@ -139,6 +139,7 @@ export function encodeSharedBranch<TChangeset>(
 	context: EditManagerEncodingContext,
 	originatorId: SessionId | undefined,
 	includeCustomMetadata: boolean,
+	hasSchemaChange: (change: TChangeset) => boolean,
 ): EncodedSharedBranch<JsonCompatibleReadOnly> {
 	const json: Mutable<EncodedSharedBranch<JsonCompatibleReadOnly>> = {
 		trunk: data.trunk.map((commit) => {
@@ -159,32 +160,40 @@ export function encodeSharedBranch<TChangeset>(
 			copyProperty(commit, "indexInBatch", encoded);
 			return encoded;
 		}),
-		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-			sessionId,
-			{
-				base: revisionTagCodec.encode(branch.base, {
-					originatorId: sessionId,
-					idCompressor: context.idCompressor,
-					revision: undefined,
-					isSummary: context.isSummary,
-				}),
-				commits: branch.commits.map((commit) =>
-					encodeCommit(
-						changeCodec,
-						revisionTagCodec,
-						commit,
-						{
-							originatorId: commit.sessionId,
-							idCompressor: context.idCompressor,
-							schema: context.schema,
-							revision: undefined,
-							isSummary: context.isSummary,
-						},
-						includeCustomMetadata,
+		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => {
+			// A peer's schema change may be rejected on the trunk while its original commits remain here.
+			// Without schema changes, peer data remains compatible with the trunk's schema upgrades.
+			// Otherwise, omit the inherited schema; the change codec can still use schemas within a commit.
+			const schema = branch.commits.some((commit) => hasSchemaChange(commit.change))
+				? undefined
+				: context.schema;
+			return [
+				sessionId,
+				{
+					base: revisionTagCodec.encode(branch.base, {
+						originatorId: sessionId,
+						idCompressor: context.idCompressor,
+						revision: undefined,
+						isSummary: context.isSummary,
+					}),
+					commits: branch.commits.map((commit) =>
+						encodeCommit(
+							changeCodec,
+							revisionTagCodec,
+							commit,
+							{
+								originatorId: commit.sessionId,
+								idCompressor: context.idCompressor,
+								schema,
+								revision: undefined,
+								isSummary: context.isSummary,
+							},
+							includeCustomMetadata,
+						),
 					),
-				),
-			},
-		]),
+				},
+			];
+		}),
 	};
 	if (data.session !== undefined) {
 		json.session = data.session;

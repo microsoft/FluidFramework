@@ -125,6 +125,22 @@ const sharedTreeFamily = new SharedTreeChangeFamily(
 );
 
 describe("SharedTreeChangeFamily", () => {
+	it("detects schema changes in individual and composed changesets", () => {
+		assert.equal(sharedTreeFamily.hasSchemaChange(emptyTreeChange), false);
+		assert.equal(sharedTreeFamily.hasSchemaChange(treeDataChange1), false);
+		assert.equal(sharedTreeFamily.hasSchemaChange(treeSchemaChange), true);
+		assert.equal(
+			sharedTreeFamily.hasSchemaChange(
+				sharedTreeFamily.compose([
+					makeAnonChange(treeDataChange1),
+					makeAnonChange(treeSchemaChange),
+					makeAnonChange(treeDataChange2),
+				]),
+			),
+			true,
+		);
+	});
+
 	it("composition composes runs of data changes", () => {
 		assert.deepEqual(
 			sharedTreeFamily.compose([

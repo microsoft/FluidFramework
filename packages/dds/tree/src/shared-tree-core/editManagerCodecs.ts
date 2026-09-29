@@ -39,6 +39,8 @@ export const editManagerCodecName = "EditManager";
 interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 	/** Codecs for encoding changesets. */
 	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>;
+	/** Returns whether a changeset contains a schema change. */
+	hasSchemaChange: (change: TChangeset) => boolean;
 	/** Maps each EditManager format version to the corresponding changeset format version. */
 	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>;
 	/** Codec for encoding revision tags within changesets. */
@@ -81,6 +83,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v3,
+					options.hasSchemaChange,
 				),
 		},
 		{
@@ -93,6 +96,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v4,
+					options.hasSchemaChange,
 				),
 		},
 		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v5, "2.74.0"),
@@ -106,6 +110,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v6,
+					options.hasSchemaChange,
 				),
 		},
 		{
@@ -118,6 +123,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.v7,
+					options.hasSchemaChange,
 				),
 		},
 		{
@@ -132,6 +138,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					),
 					options.revisionTagCodec,
 					EditManagerFormatVersion.vSharedBranches,
+					options.hasSchemaChange,
 				),
 		},
 	];
