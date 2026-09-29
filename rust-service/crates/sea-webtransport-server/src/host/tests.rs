@@ -389,6 +389,40 @@ async fn shutdown_waits_for_cancelled_callers_document_worker() {
 }
 
 #[tokio::test]
+async fn unused_lifecycle_operations_do_not_initialize_storage() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    let attempts = Arc::new(AtomicUsize::new(0));
+    let observed = attempts.clone();
+    let host = DocumentHost::new(
+        StorageSetup::open_with(move || {
+            observed.fetch_add(1, Ordering::SeqCst);
+            Ok(sea_memory::MemoryStorage::new())
+        }),
+        SessionSetup::default(),
+    )
+    .unwrap();
+    host.flush().await.unwrap();
+    assert_eq!(attempts.load(Ordering::SeqCst), 0);
+    host.clone().shutdown().await.unwrap();
+    host.flush().await.unwrap();
+    let missing = DocumentId::from_bytes(Bytes::from_static(b"unused"));
+    assert!(matches!(
+        host.create_document().await,
+        Err(HostError::Closed)
+    ));
+    assert!(matches!(
+        host.ensure_document(&missing).await,
+        Err(HostError::Closed)
+    ));
+    assert!(matches!(
+        host.open_session(&missing, None).await,
+        Err(HostError::Closed)
+    ));
+    assert_eq!(attempts.load(Ordering::SeqCst), 0);
+}
+
+#[tokio::test]
 async fn backend_initialization_failure_remains_retryable() {
     use std::sync::atomic::{AtomicUsize, Ordering};
     let attempts = Arc::new(AtomicUsize::new(0));

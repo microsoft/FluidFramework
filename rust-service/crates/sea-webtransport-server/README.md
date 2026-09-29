@@ -210,7 +210,8 @@ Each admitted QUIC connection runs in an independently scheduled, server-owned t
 The connection limit includes pending handshakes, and shutdown cancels and joins remaining tasks before releasing their services.
 Completed tasks are not cleaned up a second time when completion races with shutdown.
 Ready response streams spend Tokio's cooperative task budget so cached readers cannot run indefinitely without yielding.
-Author requests remain sequential within each stream; this does not introduce submission batching or change session APIs.
+Author submissions enter the service in receive order and can overlap while awaiting storage, as described in [bounded author admission](#bounded-author-admission).
+Scheduling connections independently does not change session APIs or storage commit semantics.
 
 The listener requests a 2 MiB UDP socket receive buffer when the existing buffer is smaller.
 The operating system can cap or adjust the effective size; a value below the request produces a startup diagnostic.

@@ -352,7 +352,7 @@ mod tests {
         catch_up(&mut fast).await;
         let pressure = runtime.live_cache_pressure().unwrap();
         let policy = AdmissionPolicy::new(None, pressure.clone());
-        for _ in 0..=OUTPUT_ENTRIES {
+        for index in 0..=OUTPUT_ENTRIES {
             author
                 .submit(EventSubmission {
                     reference: None,
@@ -370,6 +370,11 @@ mod tests {
                 ) {
                     break;
                 }
+            }
+            if index + 1 == OUTPUT_ENTRIES {
+                assert_eq!(pressure.current().unwrap().entries, OUTPUT_ENTRIES);
+                policy.admit_session(None).unwrap();
+                drop(policy.admit_live_reader().unwrap());
             }
         }
         assert_eq!(pressure.current().unwrap().entries, OUTPUT_ENTRIES + 1);
@@ -523,6 +528,63 @@ mod tests {
                 drop((policy, runtime, blobs, storage));
                 std::fs::remove_dir_all(root).unwrap();
             });
+        }
+    }
+
+    #[tokio::test]
+    async fn every_write_kind_reserves_its_logical_bytes_before_source_admission() {
+        use sea_core::{BlobDirectory, BlobId, BlobTreeId};
+        use std::collections::BTreeMap;
+
+        let storage = sea_memory::MemoryStorage::new();
+        let (_, view) = storage.create_view().await.unwrap();
+        let runtime = LocalSequencer::<sea_memory::MemoryStorage>::recover_with_live_cache(view)
+            .await
+            .unwrap();
+        let policy = AdmissionPolicy::new(None, runtime.live_cache_pressure().unwrap());
+        let payload = Bytes::from_static(b"payload");
+        let submission = EventSubmission {
+            reference: None,
+            event: Event {
+                payload: payload.clone(),
+                blob_tree: None,
+            },
+        };
+        let directory = BlobDirectory::new(BTreeMap::from([
+            (
+                "first".to_owned(),
+                BlobTreeId::Blob(BlobId::for_bytes(b"first")),
+            ),
+            (
+                "second".to_owned(),
+                BlobTreeId::Blob(BlobId::for_bytes(b"second")),
+            ),
+        ]))
+        .unwrap();
+        for (request, charge) in [
+            (WriteRequest::Blob(&payload), 128 + payload.len()),
+            (WriteRequest::Submit(&submission), 128 + payload.len()),
+            (WriteRequest::Directory(&directory), 128 + 64 + 5 + 64 + 6),
+        ] {
+            let permit = policy
+                .acquire_write(match &request {
+                    WriteRequest::Blob(payload) => WriteRequest::Blob(payload),
+                    WriteRequest::Submit(submission) => WriteRequest::Submit(submission),
+                    WriteRequest::Directory(directory) => WriteRequest::Directory(directory),
+                })
+                .unwrap();
+            assert_eq!(policy.requests.available_permits(), 127);
+            assert_eq!(policy.bytes.available_permits(), WRITE_BYTES - charge);
+            let remaining = policy
+                .bytes
+                .clone()
+                .try_acquire_many_owned(u32::try_from(WRITE_BYTES - charge).unwrap())
+                .unwrap();
+            assert!(policy.acquire_write(request).is_err());
+            assert_eq!(policy.requests.available_permits(), 127);
+            drop((remaining, permit));
+            assert_eq!(policy.requests.available_permits(), 128);
+            assert_eq!(policy.bytes.available_permits(), WRITE_BYTES);
         }
     }
 
