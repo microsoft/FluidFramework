@@ -232,9 +232,10 @@ Use separate blocks for distinct error conditions when that makes the documentat
 Include errors propagated from other APIs only when they are part of the supported contract, not merely incidental implementation failures.
 
 When an input is not currently supported but its error behavior is not intended as a stable contract, document the restriction with `@param` or `@remarks` without an `@throws` block.
-This preserves the ability to support the input later without changing a documented error contract.
+Alternatively, note in `@throws` that the API may throw while the input remains unsupported, documenting that it will either throw or otherwise handle the input correctly.
+These approaches preserve the ability to support the input later without changing a documented error contract.
 
-Use `{@link ...}` to reference exported project error types when they are available at the API's support level.
+Use `{@link ...}` to reference exported project error types when they are available at the API's support level and their use is part of the API contract.
 Use code formatting for standard JavaScript error types, such as `RangeError`.
 Otherwise, describe the error using properties that callers can observe, such as `errorType: "usageError"`, without linking to an internal implementation type.
 

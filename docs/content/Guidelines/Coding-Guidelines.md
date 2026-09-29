@@ -561,7 +561,7 @@ Assertion failures are implementation bugs, not supported API behavior; do not d
 #### ✘ DO NOT use assertions for validating supported API input
 
 An assertion failure indicates a bug in the Fluid Framework implementation, not incorrect usage by a caller of a supported API.
-Do not use `assert` or `debugAssert` to reject input or usage that callers of a supported, non-internal API can provide.
+Do not use `assert`, `debugAssert`, or `fail` to reject input or usage that callers of a supported, non-internal API can provide.
 Such an API can contain assertions about its implementation, but validate caller input at the API boundary with an appropriate error.
 
 #### ✔ DO use assertions to document and validate internal invariants
@@ -609,9 +609,6 @@ Do not invent numeric or hexadecimal assertion codes or copy a code from another
 Where [assert tagging](../../../build-tools/packages/build-cli/docs/generate.md#flub-generate-asserttags) is configured for a package, repository tooling replaces these messages with assigned codes.
 Assert tagging does not apply to every package or test, so follow the applicable package conventions and leave existing generated codes unchanged.
 
-> [!NOTE]
-> Unlike `assert`, `fail` is not tagged by default; a package's `assertTagging.config.mjs` must explicitly enable it.
-
 Never specifically catch assertion failures in production code.
 Tests that intentionally exercise assertions can validate them with [validateAssertionError](../../../packages/runtime/test-runtime-utils/src/validateAssertionError.ts).
 
@@ -637,6 +634,8 @@ debugAssert(() => cachedValues.size <= capacity || "The cache must stay within c
 ```
 
 `debugAssert` can be disabled or removed from production builds, which can reduce runtime cost and bundle size.
+Do not perform side effects or catch errors in a `debugAssert` callback because doing so can cause behavior to differ between test and production configurations.
+When in doubt, do not use `debugAssert`.
 
 ### Events
 
