@@ -10,12 +10,16 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import {
 	collectContiguousRanges,
 	replaceArrayRange,
-	replaceArrayRangeWithoutSpread,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
 	validateSafeInteger,
 } from "../../util/index.js";
+import {
+	replaceArrayRangeWithoutSpread,
+	// Allow importing from this specific file which is being tested:
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../util/arrayUtilities.js";
 
 describe("arrayUtilities unit tests", () => {
 	it("validateSafeInteger", () => {

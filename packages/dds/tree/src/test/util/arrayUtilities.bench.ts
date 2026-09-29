@@ -11,7 +11,12 @@ import {
 	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 
-import { replaceArrayRange, replaceArrayRangeWithoutSpread } from "../../util/index.js";
+import { replaceArrayRange } from "../../util/index.js";
+import {
+	replaceArrayRangeWithoutSpread,
+	// Allow importing from this specific file which is being tested:
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../util/arrayUtilities.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 describe("array range replacement", () => {
