@@ -153,10 +153,8 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			historyAttempted,
 			sequenceNumberLowerBound,
 			duration: performanceNow() - startTime,
-			...(resolvedSequenceNumber === undefined
-				? {}
-				: { sequenceNumber: resolvedSequenceNumber }),
-			...(resolvedReason === undefined ? {} : { reason: resolvedReason }),
+			sequenceNumber: resolvedSequenceNumber,
+			reason: resolvedReason,
 		});
 
 		let result: ResolveResult;

@@ -46,22 +46,20 @@ class PointInTimeDocumentStorageService extends DocumentStorageServiceProxy {
 	}
 }
 
-function annotateMissingOps(error: unknown): void {
-	if (!isFluidError(error)) {
-		return;
-	}
-
+function rethrowWithMissingOpsClassification(error: unknown): never {
 	// Attach a stable Version Mark availability classification only when the driver error
 	// confirms that the required historical ops are unavailable.
-	const historyIsUnavailable =
-		error.errorType === OdspErrorTypes.cannotCatchUp ||
-		(error.errorType === OdspErrorTypes.genericNetworkError &&
-			error.getTelemetryProperties().opsFetchFailure === "tooManyRetries");
-	if (historyIsUnavailable) {
+	if (
+		isFluidError(error) &&
+		(error.errorType === OdspErrorTypes.cannotCatchUp ||
+			(error.errorType === OdspErrorTypes.genericNetworkError &&
+				error.getTelemetryProperties().opsFetchFailure === "tooManyRetries"))
+	) {
 		error.addTelemetryProperties({
 			versionMarkAvailabilityOutcome: "missingOps",
 		});
 	}
+	throw error;
 }
 
 /**
@@ -139,14 +137,12 @@ export class OdspPointInTimeDocumentService
 								// The bounded replay owns the conclusion that these specific failures mean
 								// the bridge to the target cannot be materialized. Preserve the driver's raw
 								// errorType while attaching the stable Version Mark availability outcome.
-								annotateMissingOps(error);
-								throw error;
+								rethrowWithMissingOpsClassification(error);
 							}
 						},
 					};
 				} catch (error) {
-					annotateMissingOps(error);
-					throw error;
+					rethrowWithMissingOpsClassification(error);
 				}
 			},
 		};
