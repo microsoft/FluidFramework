@@ -22,8 +22,8 @@ import type { TreeSchema } from "../treeSchema.js";
  * @remarks
  * See {@link incrementalEncodingPolicyForAllowedTypes} for more details.
  *
- * Use the field creation APIs on {@link SchemaFactoryAlpha}, such as
- * {@link SchemaStatics.required} or {@link SchemaStatics.optional}, to mark an incremental-summary boundary.
+ * For new schemas, prefer setting {@link FieldPropsAlpha.summarizeIncrementally} through a
+ * {@link SchemaFactoryAlpha} field creation API rather than using this symbol directly.
  * @example
  * ```typescript
  * const sf = new SchemaFactoryAlpha("IncrementalSummarization");
@@ -61,6 +61,8 @@ function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull):
  * @remarks
  * This only works for forest type {@link ForestTypeOptimized} and compression strategy
  * {@link TreeCompressionStrategy.CompressedIncremental}.
+ * See the {@link https://fluidframework.com/docs/data-structures/tree/incremental-summary/ | Incremental Summary documentation}
+ * for setup instructions and details about how incremental summary works.
  *
  * @alpha
  */
@@ -69,9 +71,7 @@ export function incrementalEncodingPolicyForAllowedTypes(
 ): IncrementalEncodingPolicy {
 	return (targetNodeIdentifier: string | undefined, targetFieldKey?: string) => {
 		if (targetNodeIdentifier === undefined) {
-			// Root fields cannot be incrementally summarized.
-			// TODO: Revisit this restriction now that incremental summarization is configured on
-			// field schemas rather than directly on sets of allowed types.
+			// The root is already an independent summary boundary.
 			return false;
 		}
 
@@ -98,7 +98,8 @@ export function incrementalEncodingPolicyForAllowedTypes(
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
 					return (
-						(fieldSchema.props as FieldPropsAlpha | undefined)?.summarizeIncrementally ??
+						(fieldSchema.props as Partial<FieldPropsAlpha> | undefined)
+							?.summarizeIncrementally ??
 						isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull)
 					);
 				}

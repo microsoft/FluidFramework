@@ -184,11 +184,9 @@ export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	 * During incremental summarization, an unchanged field with this option enabled can reuse its
 	 * previously generated summary instead of being re-encoded and uploaded again.
 	 *
-	 * If this option conflicts with incremental-summary configuration in the allowed types'
-	 * custom metadata, this option takes precedence.
-	 *
-	 * @defaultValue When omitted, preserves the incremental-summary hint from the allowed types'
-	 * custom metadata.
+	 * @defaultValue `false`, unless the legacy
+	 * {@link @fluidframework/tree#incrementalSummaryHint | incremental-summary hint} is present,
+	 * in which case the hint is respected.
 	 */
 	readonly summarizeIncrementally?: boolean;
 
