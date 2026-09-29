@@ -1087,6 +1087,34 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		) {
 			return false;
 		}
+		// Shard ownership affects future local ID allocation, even when the generated IDs match.
+		// It is not part of finalized state, so ignore it when comparing only that state.
+		if (includeLocalState) {
+			const state = this.shardingState;
+			const otherState = other.shardingState;
+			if (state === undefined || otherState === undefined) {
+				// Two unsharded compressors match here; a sharded and an unsharded compressor do not.
+				if (state !== otherState) {
+					return false;
+				}
+			} else {
+				if (
+					state.currentStride !== otherState.currentStride ||
+					state.originalStride !== otherState.originalStride ||
+					state.shardId !== otherState.shardId ||
+					state.activeChildIds.size !== otherState.activeChildIds.size
+				) {
+					return false;
+				}
+				// Child ownership is an unordered set. Equal sizes and membership imply equal sets,
+				// regardless of insertion order or whether the state was deserialized.
+				for (const childId of state.activeChildIds) {
+					if (!otherState.activeChildIds.has(childId)) {
+						return false;
+					}
+				}
+			}
+		}
 		return (
 			this.sessions.equals(other.sessions, includeLocalState) &&
 			this.finalSpace.equals(other.finalSpace)
@@ -1219,9 +1247,15 @@ function makeCompressorUnusable(compressor: IdCompressor): void {
 	// Get all method names from the prototype (where class methods live)
 	const proto = Object.getPrototypeOf(compressor) as object;
 	for (const key of Reflect.ownKeys(proto)) {
-		if (key !== "constructor" && typeof proto[key] === "function") {
-			// Create an instance-specific override (doesn't mutate shared prototype)
-			compressor[key] = throwDisposed;
+		if (key !== "constructor" && typeof Reflect.get(proto, key) === "function") {
+			// Shadow the method only on this instance so other compressors remain usable.
+			// Omitting `enumerable` keeps new overrides non-enumerable, like class methods.
+			// Reflection supports string and symbol keys without adding an index signature.
+			Object.defineProperty(compressor, key, {
+				value: throwDisposed,
+				configurable: true,
+				writable: true,
+			});
 		}
 	}
 }

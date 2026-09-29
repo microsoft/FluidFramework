@@ -700,6 +700,153 @@ describe("IdCompressor Sharding", () => {
 
 			otherCompressor.generateCompressedId();
 		});
+
+		it("disables all shard methods without adding enumerable properties or changing other compressors", () => {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const children = root.shard(2).map((serialized) =>
+				IdCompressor.deserialize({
+					serialized,
+					requestedWriteVersion: SerializationVersion.V3,
+				}),
+			);
+			const [child, sibling] = children;
+			const enumerableKeys = Object.keys(child);
+			const prototype = Object.getPrototypeOf(child) as object;
+
+			child.disposeShard();
+
+			// Disposal must not turn prototype methods into enumerable instance properties.
+			assert.deepEqual(Object.keys(child), enumerableKeys);
+			// Discover methods dynamically so newly added operations are covered by the disposal contract.
+			for (const key of Reflect.ownKeys(prototype)) {
+				const original: unknown = Reflect.get(prototype, key);
+				if (key === "constructor" || typeof original !== "function") {
+					continue;
+				}
+				const disposedMethod: unknown = Reflect.get(child, key);
+				assert(typeof disposedMethod === "function");
+				// A disposed method must reject the call before inspecting its arguments.
+				assert.throws(
+					() => Reflect.apply(disposedMethod, child, []),
+					/disposed/,
+					`${String(key)} should throw after disposal`,
+				);
+				// Checking method identity catches accidental mutation of the shared prototype.
+				assert.equal(Reflect.get(root, key), original);
+				assert.equal(Reflect.get(sibling, key), original);
+			}
+			assert(isLocalId(root.generateCompressedId()));
+			assert(isLocalId(sibling.generateCompressedId()));
+		});
+	});
+
+	describe("Equality", () => {
+		/**
+		 * Creates a shard with active children and an independent copy of its serialized state.
+		 */
+		function createEqualShards(): readonly [IdCompressor, IdCompressor] {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [serializedChild] = root.shard(1);
+			const child = IdCompressor.deserialize({
+				serialized: serializedChild,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+			// An intermediate shard has a shard ID, different current and original strides,
+			// and multiple child IDs, so every sharding field can be tested.
+			child.shard(2);
+			const restored = IdCompressor.deserialize({
+				serialized: child.serialize(true),
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+			assert(child.equals(restored, true));
+			assert(restored.equals(child, true));
+			return [child, restored];
+		}
+
+		it("distinguishes sharded and unsharded compressors only when including local state", () => {
+			const sessionId = createSessionId();
+			const sharded = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+			const unsharded = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+			assert(sharded.equals(unsharded, true));
+			// Sharding changes ownership without advancing this root's generation count.
+			// Equality must therefore detect sharding state rather than rely on generated IDs.
+			sharded.shard(1);
+
+			assert.equal(sharded.equals(unsharded, true), false);
+			assert.equal(unsharded.equals(sharded, true), false);
+			assert(sharded.equals(unsharded, false));
+			assert(unsharded.equals(sharded, false));
+		});
+
+		for (const field of [
+			"currentStride",
+			"originalStride",
+			"shardId",
+			"activeChildIds",
+		] as const) {
+			it(`compares ${field} when including local state`, () => {
+				const [child, restored] = createEqualShards();
+				// Public sharding operations change several fields together. Mutate one field
+				// directly so a comparison of another field cannot conceal a missing check.
+				// eslint-disable-next-line @typescript-eslint/dot-notation -- Isolate one private field for equality testing.
+				const state = restored["shardingState"];
+				assert(state !== undefined);
+				switch (field) {
+					case "currentStride":
+					case "originalStride": {
+						state[field]++;
+						break;
+					}
+					case "shardId": {
+						state.shardId = createSessionId();
+						break;
+					}
+					case "activeChildIds": {
+						// Keep the size unchanged to test membership, not just the size check.
+						const [childId] = state.activeChildIds;
+						state.activeChildIds.delete(childId);
+						state.activeChildIds.add(createSessionId());
+						break;
+					}
+					default: {
+						fail("Unexpected sharding field");
+					}
+				}
+				// Equality must be symmetric, and shard-only differences must not affect
+				// comparisons that exclude local state.
+				assert.equal(child.equals(restored, true), false);
+				assert.equal(restored.equals(child, true), false);
+				assert(child.equals(restored, false));
+				assert(restored.equals(child, false));
+			});
+		}
+
+		it("compares the number of active children", () => {
+			const [child, restored] = createEqualShards();
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- Isolate the private child set for equality testing.
+			const state = restored["shardingState"];
+			assert(state !== undefined);
+			// The original set is a strict subset of the modified one. Both comparison
+			// directions must reject it, including the direction where every ID is present.
+			state.activeChildIds.add(createSessionId());
+
+			assert.equal(child.equals(restored, true), false);
+			assert.equal(restored.equals(child, true), false);
+			assert(child.equals(restored, false));
+			assert(restored.equals(child, false));
+		});
+
+		it("ignores the insertion order of active children", () => {
+			const [child, restored] = createEqualShards();
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- Isolate the private child set for equality testing.
+			const state = restored["shardingState"];
+			assert(state !== undefined);
+			// Ownership is unchanged even though Set iteration now visits the IDs in reverse.
+			state.activeChildIds = new Set([...state.activeChildIds].reverse());
+
+			assert(child.equals(restored, true));
+			assert(restored.equals(child, true));
+		});
 	});
 
 	describe("Serialization", () => {
@@ -722,6 +869,8 @@ describe("IdCompressor Sharding", () => {
 				serialized,
 				requestedWriteVersion: SerializationVersion.V3,
 			});
+			assert(parent.equals(restored, true));
+			assert(restored.equals(parent, true));
 
 			// Verify sharding state preserved by checking ID generation continues correctly
 
@@ -797,6 +946,9 @@ describe("IdCompressor Sharding", () => {
 				serialized: grandchild1Serialized,
 				requestedWriteVersion: SerializationVersion.V3,
 			});
+			assert(root.equals(rootRestored, true));
+			assert(child1.equals(child1Restored, true));
+			assert(grandchild1.equals(grandchild1Restored, true));
 
 			// Verify sharding state is preserved after deserialization
 			// by checking that they continue generating IDs correctly
