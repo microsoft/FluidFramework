@@ -19,9 +19,9 @@ export type RootProps = PropsWithChildren;
  * @see {@link https://docusaurus.io/docs/swizzling#wrapper-your-site-with-root}
  */
 export default function Root({ children }: RootProps): ReactElement {
+	// Connect the route callback to a separate root render so the focus effect runs after the theme resets focus.
 	const [focusRequest, requestFocus] = useReducer((value: number) => value + 1, 0);
 	useEffect(() => registerDocsSidebarFocus(requestFocus), [requestFocus]);
-	// Apply focus after the theme's route effects reset it.
 	useEffect(focusDocsSidebarDestination, [focusRequest]);
 	return <>{children}</>;
 }

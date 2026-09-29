@@ -144,6 +144,7 @@ test.describe("Nav", () => {
 		await expect(page.locator("main h1")).toHaveText("Quick Start");
 	});
 
+	// These widths cover the desktop sidebar and the narrow-screen menu, which use different containers and close behavior.
 	for (const width of [1280, 768]) {
 		test(`Slow keyboard navigation waits for the new content at ${width}px`, async ({
 			page,
