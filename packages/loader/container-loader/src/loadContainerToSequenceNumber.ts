@@ -107,12 +107,12 @@ export async function loadContainerToSequenceNumber(
 			loadToSequenceNumber,
 			props.signal,
 		);
-		const baseSnapshotSequenceNumber = container.deltaManager.initialSequenceNumber;
-		const finalSequenceNumber = container.deltaManager.lastSequenceNumber;
 		logger.sendPerformanceEvent({
 			eventName: "VersionMarkPointInTimeLoad",
 			outcome: "succeeded",
-			replayedOpCount: finalSequenceNumber - baseSnapshotSequenceNumber,
+			replayedOpCount:
+				container.deltaManager.lastSequenceNumber -
+				container.deltaManager.initialSequenceNumber,
 			duration: performanceNow() - startTime,
 		});
 		return container;
@@ -125,10 +125,12 @@ export async function loadContainerToSequenceNumber(
 			eventName: "VersionMarkPointInTimeLoad",
 			outcome: "failed",
 			targetSequenceNumber: loadToSequenceNumber,
-			...(typeof availabilityOutcome === "string" ? { availabilityOutcome } : {}),
-			...(typeof baseSnapshotSequenceNumber === "number"
-				? { baseSnapshotSequenceNumber }
-				: {}),
+			availabilityOutcome:
+				typeof availabilityOutcome === "string" ? availabilityOutcome : undefined,
+			baseSnapshotSequenceNumber:
+				typeof baseSnapshotSequenceNumber === "number"
+					? baseSnapshotSequenceNumber
+					: undefined,
 			duration: performanceNow() - startTime,
 			errorType: (error as Partial<{ errorType: string }> | undefined)?.errorType,
 		});

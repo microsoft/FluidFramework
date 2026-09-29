@@ -11,11 +11,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	GenericError,
-	isFluidError,
-	normalizeError,
-} from "@fluidframework/telemetry-utils/internal";
+import { GenericError, normalizeError } from "@fluidframework/telemetry-utils/internal";
 
 import { loadExistingContainer } from "./createAndLoadContainerUtils.js";
 import type { ILoaderProps } from "./loader.js";
@@ -135,9 +131,9 @@ export async function loadContainerPaused(
 		throw error;
 	}
 
-	let opHandler: () => void;
-	let onAbort: () => void;
-	let onContainerUnavailable: (error?: ICriticalContainerError) => void;
+	let opHandler!: () => void;
+	let onAbort!: () => void;
+	let onContainerUnavailable!: (error?: ICriticalContainerError) => void;
 	let replayContainerUnavailableError: ReturnType<typeof normalizeError> | undefined;
 
 	const promise = new Promise<void>((resolve, reject) => {
@@ -186,42 +182,36 @@ export async function loadContainerPaused(
 	// Thus, we have to ensure we connect to delta storage in order to make forward progress with ops.
 	// We also instructed not to fetch / apply any ops from storage above (to be able to install callback above before ops are processed),
 	// connect() call will fetch ops as needed.
-	const connectAndWait = async (): Promise<void> => {
+	try {
 		if (signal?.aborted !== true && !container.closed) {
 			container.connect();
 		}
 		await promise;
-	};
-
-	// Wait for the ops to be processed.
-	await connectAndWait()
-		.catch((error: unknown) => {
-			const normalizedError = normalizeError(error);
-			// The container was loaded from its base snapshot before replay began. Attach that known
-			// sequence number to the actual replay/cancellation error so the public point-in-time
-			// terminal event can report it without inferring state independently.
-			if (isFluidError(normalizedError)) {
-				normalizedError.addTelemetryProperties({
-					versionMarkBaseSnapshotSequenceNumber: lastProcessedSequenceNumber,
-				});
-			}
-			container.dispose(normalizedError);
-			throw normalizedError;
-		})
-		.finally(() => {
-			try {
-				// A failure disposes the container in the catch above. Disconnecting it again would
-				// throw and replace the original replay or cancellation error.
-				if (!container.closed) {
-					container.disconnect();
-				}
-			} finally {
-				container.off("op", opHandler);
-				container.off("closed", onContainerUnavailable);
-				container.off("disposed", onContainerUnavailable);
-				signal?.removeEventListener("abort", onAbort);
-			}
+	} catch (error) {
+		// The container was loaded from its base snapshot before replay began. Attach that known
+		// sequence number to the actual replay/cancellation error so the public point-in-time
+		// terminal event can report it without inferring state independently.
+		const normalizedError = normalizeError(error, {
+			props: {
+				versionMarkBaseSnapshotSequenceNumber: lastProcessedSequenceNumber,
+			},
 		});
+		container.dispose(normalizedError);
+		throw normalizedError;
+	} finally {
+		try {
+			// A failure disposes the container in the catch above. Disconnecting it again would
+			// throw and replace the original replay or cancellation error.
+			if (!container.closed) {
+				container.disconnect();
+			}
+		} finally {
+			container.off("op", opHandler);
+			container.off("closed", onContainerUnavailable);
+			container.off("disposed", onContainerUnavailable);
+			signal?.removeEventListener("abort", onAbort);
+		}
+	}
 
 	// Resolving the replay promise does not stop later listeners in the same synchronous op
 	// emission. Recheck the lifecycle state before returning in case one of them closed the container.
