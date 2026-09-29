@@ -12,7 +12,7 @@ See [API Support Levels](../../build/releases-and-apitags.mdx#api-support-levels
 :::
 
 Incremental summary is an optimization that avoids re-summarizing parts of the tree that have not changed between summaries.
-Fields in a schema can opt in to incremental summarization through the `summarizeIncrementally` field option.
+Fields in a schema can opt into incremental summarization through the `summarizeIncrementally` field option.
 These fields are tracked as independent chunks in the summary.
 During summarization, if their content has not changed since the last summary, their previously generated summaries are reused.
 As a result, their data does not need to be re-encoded (saving processing time), and their summary trees do not need to be uploaded again (reducing summary upload size).
