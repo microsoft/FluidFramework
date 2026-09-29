@@ -23,6 +23,9 @@ import {
  * A violation of the sandbox protocol's data or state requirements.
  * Used by either endpoint, including shared validation on send and receive.
  * This identifies the failed contract, not which participant is at fault.
+ *
+ * TODO: Ensure we have an established pattern for communicating a telemetry safe portion of the message,
+ * and a separate one which might include document contents directly.
  */
 export class SandboxProtocolError extends Error {
 	public override readonly name = "SandboxProtocolError";
