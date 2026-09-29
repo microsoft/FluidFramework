@@ -43,6 +43,7 @@ import {
 	getFailMessage,
 	neverCancelledSummaryToken,
 	type ISummaryConfiguration,
+	type IRefreshSummaryAckOptions,
 } from "../../summary/index.js";
 import {
 	defaultMaxAttempts,
@@ -76,7 +77,7 @@ describe("Runtime", () => {
 			let fullTreeRunCount: number;
 			let clock: sinon.SinonFakeTimers;
 			let mockLogger: MockLogger;
-			let settings = {};
+			let settings: Record<string, ConfigTypes> = {};
 			let mockDeltaManager: MockDeltaManager;
 			let summaryCollection: SummaryCollection;
 			let summarizer: RunningSummarizer;
@@ -274,6 +275,11 @@ describe("Runtime", () => {
 				disableHeuristics?: boolean,
 				submitSummaryCallback: () => Promise<SubmitSummaryResult> = successfulSubmitSummary,
 				cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
+				initialSummaryRequired = false,
+				summaryOnRequest = false,
+				refreshLatestSummaryAck: (
+					options: IRefreshSummaryAckOptions,
+				) => Promise<void> = async () => {},
 			): Promise<void> => {
 				heuristicData = new SummarizeHeuristicData(0, {
 					refSequenceNumber: 0,
@@ -282,7 +288,11 @@ describe("Runtime", () => {
 				summarizer = await RunningSummarizer.start(
 					mockLogger,
 					summaryCollection.createWatcher(summarizerClientId),
-					disableHeuristics === true ? summaryConfigDisableHeuristics : summaryConfig,
+					summaryOnRequest
+						? { ...summaryCommon, state: "summaryOnRequest" }
+						: disableHeuristics === true
+							? summaryConfigDisableHeuristics
+							: summaryConfig,
 					async (options) => {
 						runCount++;
 						heuristicData.recordAttempt(lastRefSeq);
@@ -293,7 +303,7 @@ describe("Runtime", () => {
 						}
 						return submitSummaryCallback();
 					},
-					async (options) => {},
+					refreshLatestSummaryAck,
 					heuristicData,
 					summaryCollection,
 					cancellationToken,
@@ -302,6 +312,7 @@ describe("Runtime", () => {
 						stopCall++;
 					},
 					mockRuntime as unknown as ISummarizerRuntime,
+					initialSummaryRequired,
 				);
 			};
 
@@ -331,6 +342,98 @@ describe("Runtime", () => {
 					mockDeltaManager,
 					mockLogger.toTelemetryLogger(),
 				);
+			});
+
+			describe("Initial full summary scheduling", () => {
+				afterEach(() => {
+					summarizer.dispose();
+				});
+
+				for (const initialSummaryRequired of [true, false]) {
+					it(`honors baseline adoption before completion with host refresh disabled, initialSummaryRequired=${initialSummaryRequired}`, async () => {
+						settings["Fluid.Summarizer.immediatelyRefreshLatestSummaryAck"] = false;
+						const refresh = new Deferred<void>();
+						let completed = false;
+						await startRunningSummarizer(
+							true,
+							undefined,
+							undefined,
+							initialSummaryRequired,
+							true,
+							async () => refresh.promise,
+						);
+						await emitNextOp();
+						const result = summarizer.summarizeOnDemand({ reason: "baseline adoption" });
+						const completion = result.receivedSummaryAckOrNack.then(() => {
+							completed = true;
+						});
+						await flushPromises();
+						await emitAck();
+						assert.equal(completed, !initialSummaryRequired);
+						refresh.resolve();
+						await completion;
+						await flushPromises();
+						const ack = await result.receivedSummaryAckOrNack;
+						assert.equal(ack.success, true);
+					});
+				}
+
+				it("requests the initial summary without application ops, then resumes normal heuristics", async () => {
+					await startRunningSummarizer(false, undefined, undefined, true);
+					assertRunCounts(1, 0);
+					assert.equal(heuristicData.numRuntimeOps, 0);
+					await emitAck();
+					// Summary protocol ops can trigger the ordinary idle heuristic, but not another immediate request.
+					await tickAndFlushPromises(summaryConfig.minIdleTime - 1);
+					assertRunCounts(1, 0);
+					await emitNextOp(summaryConfig.maxOps + 1);
+					assertRunCounts(2, 0);
+					await emitAck();
+				});
+
+				it("uses normal failure retries for the initial summary without application ops", async () => {
+					let attempts = 0;
+					await startRunningSummarizer(
+						false,
+						async () => {
+							if (++attempts === 1) {
+								return {
+									stage: "base",
+									referenceSequenceNumber: 0,
+									minimumSequenceNumber: 0,
+									error: new RetriableSummaryError("Retry initial summary", 0),
+								};
+							}
+							return successfulSubmitSummary();
+						},
+						undefined,
+						true,
+					);
+					await flushPromises();
+					assertRunCounts(2, 0);
+					assert.equal(heuristicData.numRuntimeOps, 0);
+					await emitAck();
+				});
+
+				it("leaves unconfigured startup unchanged", async () => {
+					await startRunningSummarizer();
+					await tickAndFlushPromises(summaryConfig.maxTime);
+					assertRunCounts(0, 0);
+				});
+
+				for (const summaryOnRequest of [false, true]) {
+					it(`preserves explicit scheduling with summaryOnRequest=${summaryOnRequest}`, async () => {
+						await startRunningSummarizer(true, undefined, undefined, true, summaryOnRequest);
+						await tickAndFlushPromises(summaryConfig.maxTime);
+						assertRunCounts(0, 0);
+						const result = summarizer.summarizeOnDemand({ reason: "explicit baseline" });
+						await flushPromises();
+						assertRunCounts(1, 0);
+						await emitAck();
+						const ack = await result.receivedSummaryAckOrNack;
+						assert.equal(ack.success, true);
+					});
+				}
 			});
 
 			describe("Summary Schedule", () => {

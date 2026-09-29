@@ -3,6 +3,15 @@
  * Licensed under the MIT License.
  */
 
+export type {
+	ISummaryGenerationContext,
+	ISummaryGenerationOptions,
+} from "./summaryGenerationTypes.js";
+export {
+	captureSummaryGenerationOptions,
+	SummaryGenerationController,
+	type IPendingSummaryGeneration,
+} from "./summaryGeneration.js";
 export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,

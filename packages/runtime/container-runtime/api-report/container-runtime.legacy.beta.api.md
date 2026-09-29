@@ -85,6 +85,12 @@ export interface IAckSummaryResult {
 }
 
 // @beta @legacy
+export interface IApplicationProjectionSummary {
+    readonly onAccepted?: (context: ISummaryContext) => void;
+    readonly summary: ISummaryTree;
+}
+
+// @beta @legacy
 export interface IBaseSummarizeResult {
     readonly error: IRetriableFailureError | undefined;
     // (undocumented)
@@ -121,6 +127,11 @@ export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
 // @beta @legacy
 export type IdCompressorMode = "on" | "delayed" | undefined;
+
+// @beta @legacy
+export interface IDetachedRuntimeConstructionOptions {
+    readonly idCompressorSessionId: string;
+}
 
 // @beta @legacy
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
@@ -308,6 +319,24 @@ export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseC
 }
 
 // @beta @legacy
+export interface ISummaryGenerationContext {
+    readonly fullTree: boolean;
+    readonly previousSummary: ISummaryContext | undefined;
+    readonly referenceSequenceNumber: number;
+    readonly trackState: boolean;
+}
+
+// @beta @legacy
+export interface ISummaryGenerationOptions {
+    readonly additionalRootTree?: {
+        readonly key: string;
+        readonly summarize: (context: ISummaryGenerationContext) => IApplicationProjectionSummary | Promise<IApplicationProjectionSummary>;
+        readonly createSummary?: (context: ISummaryGenerationContext) => IApplicationProjectionSummary | undefined;
+    };
+    readonly fullTreePolicy?: "default" | "untilFirstAck" | "always";
+}
+
+// @beta @legacy
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
     // (undocumented)
     contents: ISummaryNack;
@@ -352,6 +381,7 @@ export function loadContainerRuntime(params: LoadContainerRuntimeParams): Promis
 export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
+    detachedConstructionOptions?: IDetachedRuntimeConstructionOptions;
     existing: boolean;
     // @deprecated
     minVersionForCollab?: OldestSupportedClientVersion;
@@ -361,6 +391,7 @@ export interface LoadContainerRuntimeParams {
     // @deprecated
     requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
     runtimeOptions?: IContainerRuntimeOptions;
+    summaryGenerationOptions?: ISummaryGenerationOptions;
 }
 
 // @beta @deprecated @legacy (undocumented)

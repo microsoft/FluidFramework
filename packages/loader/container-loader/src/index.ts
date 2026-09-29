@@ -66,6 +66,17 @@ export type {
 } from "./protocol/index.js";
 export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
 export {
+	createSeedRuntimeSnapshot,
+	createSeedSummary,
+	seedRuntimeFactory,
+	type CreateSeedRuntimeSnapshotProps,
+	type CreateSeedSummaryProps,
+	type SeedProjector,
+	type SeedRuntimeFactoryOptions,
+	type SeedRuntimeLoad,
+	type SeedRuntimeSnapshot,
+} from "./seedRuntime.js";
+export {
 	extractBlobAttachReferences,
 	wireFormatConstants,
 	type IBlobAttachReference,
