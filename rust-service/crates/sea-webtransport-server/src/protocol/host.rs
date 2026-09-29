@@ -103,6 +103,9 @@ struct HostInner {
     documents: Arc<dyn HostedDocuments>,
     /// Rooms shared across listeners, independent of retained document runtimes.
     signals: Mutex<BTreeMap<Vec<u8>, Weak<sea_signals::SignalRoom>>>,
+    /// Native-test opening evidence shared with the typed storage host.
+    #[cfg(test)]
+    trace: crate::host::opening_trace::OpeningTrace,
 }
 
 /// Adapts a typed document host to the Sea wire protocol for one or more listeners.
@@ -132,6 +135,8 @@ impl SeaProtocolHost {
     {
         Self {
             inner: Arc::new(HostInner {
+                #[cfg(test)]
+                trace: documents.opening_trace(),
                 documents: Arc::new(documents),
                 signals: Mutex::new(BTreeMap::new()),
             }),
@@ -167,6 +172,8 @@ impl SeaServiceHost for SeaProtocolHost {
     }
 
     fn connect(&self, liveness: LivenessPolicy) -> Arc<dyn SeaConnectionService> {
+        #[cfg(test)]
+        self.inner.trace.record("connection: service created");
         Arc::new(HostedConnection {
             signals: Mutex::new(None),
             host: self.clone(),
@@ -193,6 +200,9 @@ struct HostedSession {
     service: Arc<dyn SeaConnectionService>,
     /// Weak registry ownership permits token revocation without retaining the connection.
     current: Weak<Mutex<Option<Self>>>,
+    /// Shared test observer for the bound author-opening response.
+    #[cfg(test)]
+    trace: crate::host::opening_trace::OpeningTrace,
 }
 
 #[async_trait]
@@ -276,6 +286,11 @@ impl SeaConnectionService for HostedConnection {
         &self,
         request: protocol::Request,
     ) -> Result<SeaResponseStream, protocol::Response> {
+        #[cfg(test)]
+        self.host
+            .inner
+            .trace
+            .record("event stream: request received");
         if let protocol::Request::OpenEventStream {
             version,
             archive,
@@ -303,6 +318,8 @@ impl SeaConnectionService for HostedConnection {
                 authority: authority.clone(),
                 service: Arc::clone(&service),
                 current: Arc::downgrade(&self.session),
+                #[cfg(test)]
+                trace: self.host.inner.trace.clone(),
             });
             let opened = stream::once(async move {
                 protocol::Response::EventStreamOpened {
@@ -311,6 +328,8 @@ impl SeaConnectionService for HostedConnection {
                     authority,
                 }
             });
+            #[cfg(test)]
+            self.host.inner.trace.record("event stream: response ready");
             let recovery = stream::once(open_recovery_stream(service, resume_after)).flatten();
             return Ok(Box::pin(opened.chain(recovery)));
         }
@@ -434,7 +453,17 @@ impl SeaConnectionService for HostedSession {
 
     async fn author_request(&self, request: protocol::Request) -> protocol::Response {
         let close = matches!(request, protocol::Request::Close);
+        #[cfg(test)]
+        let opening = matches!(request, protocol::Request::OpenAuthorStream { .. });
+        #[cfg(test)]
+        if opening {
+            self.trace.record("author stream: request received");
+        }
         let response = self.service.author_request(request).await;
+        #[cfg(test)]
+        if opening {
+            self.trace.record("author stream: response ready");
+        }
         if (close || matches!(response, protocol::Response::Error { .. }))
             && let Some(current) = self.current.upgrade()
         {
@@ -1475,10 +1504,12 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
+        let host = test_host(&root, mode);
+        let trace = host.inner.trace.clone();
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse::<SocketAddr>().unwrap(),
             identity,
-            Arc::new(test_host(&root, mode)),
+            Arc::new(host),
             TransportConfig::default(),
         )
         .unwrap();
@@ -1488,6 +1519,7 @@ mod tests {
         let serving = server.serve_until_shutdown();
         let exercise = async {
             let started = std::time::Instant::now();
+            trace.record("client: connect started");
             let client = NativeSeaClient::connect(
                 format!("https://{address}/sea"),
                 certificate_hash,
@@ -1501,12 +1533,35 @@ mod tests {
             .await
             .unwrap_or_else(|error| {
                 panic!(
-                    "{} connection failed after {:?}: {error:?}; server: {:?}",
+                    "{} connection failed after {:?}: {error:?}; root: {}; server: {:?}; opening: {:?}",
                     mode,
                     started.elapsed(),
+                    root.display(),
                     measurements.snapshot(),
+                    trace.snapshot(),
                 )
             });
+            trace.record("client: connected");
+            let stages = trace.snapshot();
+            for stage in [
+                "backend: worker queued",
+                "backend: worker started",
+                "backend: storage initialized",
+                "create: worker queued",
+                "create: worker started",
+                "create: storage view created",
+                "create: sequencer recovered",
+                "membership: opened",
+                "event stream: response ready",
+                "author stream: request received",
+                "author stream: response ready",
+                "client: connected",
+            ] {
+                assert!(
+                    stages.iter().any(|(_, observed)| *observed == stage),
+                    "missing opening diagnostic {stage}: {stages:?}"
+                );
+            }
             let mut events = client.load(LoadStart::LatestSnapshot).await.unwrap().events;
             loop {
                 let sea_core::MonitoredStreamItem::Progress(progress) =

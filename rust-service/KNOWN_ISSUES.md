@@ -5,7 +5,8 @@ Historical findings and resolved investigations are retained in [Historical reco
 
 ## Intermittent native connection timeout
 
-- **Status:** Open for unattributed connection timeouts only; the reproduced storage-initialization stall mechanism is fixed
+- **Status:** Open; a new recurrence is localized to durable-storage initialization, but its blocking operation remains unidentified.
+  The previously reproduced executor-blocking mechanism is fixed.
 - **Severity:** Medium
 - **Area:** Native WebTransport connection setup and test reliability
 - **Evidence:** `host::tests::native_client_round_trip_in_every_storage_mode` failed during initial `NativeSeaClient::connect` with `Transport(Timeout)` in workspace validation on 2026-09-20.
@@ -23,6 +24,21 @@ Historical findings and resolved investigations are retained in [Historical reco
   The failure did not recur in 92 server-suite runs, six complete workspace runs, or 80 additional server-suite processes in ten waves of eight concurrent processes.
   No failed stage was captured, and scheduling pressure did not establish a cause.
   Temporary production logging was removed; the round-trip test now reports storage mode, elapsed connection time, and server measurements on failure.
+- **Targeted recurrence (2026-09-29):** On `0949d4ae905` with test-only stage diagnostics, the first concurrent server-library run failed in durable-file mode after 5.009 seconds.
+  The event-opening request arrived at 10.330 ms, backend initialization was queued at 10.339 ms, and the blocking worker started at 10.386 ms.
+  Storage initialization had not returned when the client timed out; document creation and membership opening had not started.
+  This localizes this occurrence to the synchronous durable factory constructor, not blocking-worker queue delay.
+  The deadline was observed promptly, unlike the earlier executor-blocking incident.
+  It does not identify the stalled filesystem operation or establish the cause of the older occurrences.
+  The fixture used `TMPDIR=rust-service/target/native-timeout-fixtures` on the workspace ext4 filesystem; the failure retained nine wire bytes, one connection, and one peak stream.
+- **Bounded controls:** Nine syscall-traced concurrent server-library runs, twelve subsequent untraced concurrent runs, two serialized runs, and two isolated round-trip runs passed.
+  Each run had a 90-second external deadline and stopped its batch on failure.
+  The traced runs included synchronizations taking seconds, but no traced connection timeout; they do not attribute the untraced failure.
+  Passing controls do not close the issue or justify permanent serialization.
+- **Retained diagnostics:** The native round-trip test now reports the fixture root and a bounded, host-local monotonic timeline on connection failure.
+  It records server connection setup, event and author opening, backend lock/worker/init progress, document creation/recovery, and membership opening.
+  A controlled blocked-initializer test verifies that the trace distinguishes a started worker from completed initialization and survives caller cancellation.
+  The diagnostics are compiled only in server unit tests; public APIs, production logging, synchronization guarantees, and the five-second client timeout are unchanged.
 - **Impact:** Native test runs can fail without an established product or test-harness cause.
   The transport timeout must not be classified as harmless host variability or resolved by a passing retry.
 - **Storage findings (2026-09-22):** A durable-file connection failed after 74.44 seconds despite a five-second client operation timeout.
@@ -39,7 +55,8 @@ Historical findings and resolved investigations are retained in [Historical reco
   Steady-state durable throughput variance remains unisolated: namespace initialization is not performed for every append, and virtualized storage can make necessary journal synchronization variable.
   The file-storage execution refactor additionally isolates blob, snapshot, checkpoint, metadata, and lazy historical I/O on bounded workers.
   This closes those known executor-blocking paths, not the unattributed timeout investigation or filesystem latency variability.
-- **Follow-up:** For a recurrence on the integrated code, capture the storage mode, elapsed time, server measurements, failing connection stage, and storage/worker timing before attributing it to the repaired initialization path.
+- **Follow-up:** Capture filesystem syscall timings during a failing run of the instrumented test to distinguish directory creation, canonicalization, namespace synchronization, and other constructor work.
+  Retain storage mode, fixture filesystem, elapsed time, server measurements, and the opening timeline alongside that trace.
   A timely timeout during genuinely slow required synchronization is distinct from executor starvation that prevents the deadline from being observed.
   Preserve the original failure when retrying; do not increase deadlines or suppress the test without causal evidence.
 - **Trigger:** Close the remaining unattributed issue only with causal evidence for the remaining failure, not successful retries or the existence of the initialization fix.

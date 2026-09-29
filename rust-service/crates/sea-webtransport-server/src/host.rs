@@ -18,6 +18,9 @@ use crate::{
     setup::Undecorated,
 };
 
+#[cfg(test)]
+pub(crate) mod opening_trace;
+
 /// The composed factory selected by a storage-specific session setup.
 pub type DocumentFactory<S, D> =
     <D as SessionDecorator<LocalSessionFactory<S>, <S as SeaStorage>::Error>>::Factory;
@@ -125,6 +128,9 @@ struct DocumentRegistry<
     storage: Arc<Storage>,
     /// Serializes first recovery; failed attempts are never cached.
     documents: Arc<Mutex<DocumentRuntimes<Storage, D>>>,
+    /// Bounded test-only timing evidence for the actual opening path.
+    #[cfg(test)]
+    trace: opening_trace::OpeningTrace,
 }
 
 impl<Storage, D> DocumentRegistry<Storage, D>
@@ -137,6 +143,7 @@ where
         storage: Arc<Storage>,
         sessions: Arc<SessionSetup<D>>,
         storage_pressure: fn(&Storage::Blobs) -> Option<sea_file::pressure::DurableWritePressure>,
+        #[cfg(test)] trace: opening_trace::OpeningTrace,
     ) -> Self {
         Self {
             storage,
@@ -146,11 +153,15 @@ where
                 closed: false,
                 entries: BTreeMap::new(),
             })),
+            #[cfg(test)]
+            trace,
         }
     }
 
     /// Allocates a backend identity and retains its recovered exclusive view.
     async fn create(&self) -> Result<DocumentId, DocumentHostError<Storage, D>> {
+        #[cfg(test)]
+        self.trace.record("create: waiting for registry");
         let mut documents = self.documents.clone().lock_owned().await;
         if documents.closed {
             return Err(HostError::Closed);
@@ -158,8 +169,16 @@ where
         let storage = self.storage.clone();
         let sessions = self.sessions.clone();
         let storage_pressure = self.storage_pressure;
+        #[cfg(test)]
+        let trace = self.trace.clone();
+        #[cfg(test)]
+        trace.record("create: worker queued");
         storage_worker(async move {
+            #[cfg(test)]
+            trace.record("create: worker started");
             let (id, view) = storage.create_view().await.map_err(HostError::Storage)?;
+            #[cfg(test)]
+            trace.record("create: storage view created");
             let pressure = storage_pressure(view.blobs());
             let runtime = if sessions.live_cache {
                 LocalSequencer::recover_with_live_cache(view).await
@@ -167,6 +186,8 @@ where
                 LocalSequencer::recover(view).await
             }
             .map_err(HostError::Recovery)?;
+            #[cfg(test)]
+            trace.record("create: sequencer recovered");
             documents.entries.insert(
                 id.as_bytes().to_vec(),
                 HostedDocument::new(&id, runtime, pressure, &sessions.decorator),
@@ -251,6 +272,9 @@ struct HostInner<S: SeaStorage + 'static, D: SessionDecorator<LocalSessionFactor
     sessions: Arc<SessionSetup<D>>,
     /// Successful initialization; errors leave this empty for retry.
     backend: Arc<Mutex<Option<SharedRegistry<S, D>>>>,
+    /// Shared with test protocol observers, without retaining the host.
+    #[cfg(test)]
+    trace: opening_trace::OpeningTrace,
 }
 
 /// Hosts typed documents and sessions without protocol dispatch or connection ownership.
@@ -299,6 +323,8 @@ where
                 storage,
                 sessions: Arc::new(sessions),
                 backend: Arc::new(Mutex::new(None)),
+                #[cfg(test)]
+                trace: opening_trace::OpeningTrace::default(),
             }),
         })
     }
@@ -333,14 +359,23 @@ where
         OpenedSession<<DocumentFactory<S, D> as SessionFactory>::Session>,
         DocumentHostError<S, D>,
     > {
-        self.backend()
-            .await?
-            .open(id)
-            .await?
+        let document = self.backend().await?.open(id).await?;
+        #[cfg(test)]
+        self.inner.trace.record("membership: opening");
+        let opened = document
             .factory
             .open_session(reference)
             .await
-            .map_err(HostError::Factory)
+            .map_err(HostError::Factory)?;
+        #[cfg(test)]
+        self.inner.trace.record("membership: opened");
+        Ok(opened)
+    }
+
+    /// Returns test diagnostics without extending the host's lifetime.
+    #[cfg(test)]
+    pub(crate) fn opening_trace(&self) -> opening_trace::OpeningTrace {
+        self.inner.trace.clone()
     }
 
     /// Flushes initialized storage without stopping admission or initializing unused storage.
@@ -375,6 +410,10 @@ where
     /// Retains serialized initialization after cancellation, off the async executor.
     async fn backend(&self) -> Result<SharedRegistry<S, D>, DocumentHostError<S, D>> {
         let inner = self.inner.clone();
+        #[cfg(test)]
+        inner
+            .trace
+            .record("backend: waiting for initialization lock");
         let mut current = inner.backend.clone().lock_owned().await;
         if inner.closed.load(std::sync::atomic::Ordering::Acquire) {
             return Err(HostError::Closed);
@@ -382,12 +421,20 @@ where
         if let Some(backend) = current.as_ref() {
             return Ok(backend.clone());
         }
+        #[cfg(test)]
+        inner.trace.record("backend: worker queued");
         tokio::task::spawn_blocking(move || {
+            #[cfg(test)]
+            inner.trace.record("backend: worker started");
             let storage = (inner.storage.initialize)().map_err(HostError::Storage)?;
+            #[cfg(test)]
+            inner.trace.record("backend: storage initialized");
             let backend = Arc::new(DocumentRegistry::new(
                 storage,
                 inner.sessions.clone(),
                 inner.storage.pressure,
+                #[cfg(test)]
+                inner.trace.clone(),
             ));
             *current = Some(backend.clone());
             Ok(backend)

@@ -46,7 +46,12 @@ where
     S: sea_core::storage::SeaStorage + 'static,
     D: SessionDecorator<sea_sequencer::factory::LocalSessionFactory<S>, S::Error>,
 {
-    DocumentRegistry::new(Arc::new(storage), Arc::new(sessions), |_| None)
+    DocumentRegistry::new(
+        Arc::new(storage),
+        Arc::new(sessions),
+        |_| None,
+        opening_trace::OpeningTrace::default(),
+    )
 }
 
 #[tokio::test]
@@ -283,6 +288,19 @@ async fn slow_backend_initialization_preserves_executor_progress_and_cancellatio
     let initializing_host = host.clone();
     let initialization = tokio::spawn(async move { initializing_host.backend().await });
     entering.await.unwrap();
+    let trace = host.opening_trace();
+    assert_eq!(
+        trace
+            .snapshot()
+            .iter()
+            .map(|(_, stage)| *stage)
+            .collect::<Vec<_>>(),
+        [
+            "backend: waiting for initialization lock",
+            "backend: worker queued",
+            "backend: worker started",
+        ]
+    );
     assert!(
         timeout(Duration::from_millis(10), host.backend())
             .await
@@ -294,6 +312,14 @@ async fn slow_backend_initialization_preserves_executor_progress_and_cancellatio
     release.send(()).unwrap();
     let backend = host.backend().await.unwrap();
     assert!(Arc::ptr_eq(&backend, &host.backend().await.unwrap()));
+    assert_eq!(
+        trace
+            .snapshot()
+            .iter()
+            .filter(|(_, stage)| *stage == "backend: storage initialized")
+            .count(),
+        1
+    );
 }
 
 #[tokio::test]
