@@ -8,9 +8,6 @@ Supersedes: none
 Superseded by: [Decision 0029](0029-document-soft-budget-policy.md)
 
 This record preserves the 2026-09-24 proposal and its probe results, not current implementation requirements.
-On 2026-09-26 the user selected an outgoing soft budget, removing the reason for strict publication-overshoot enforcement.
-The executable publication model was retired from the active test suite; its complete draft is preserved in the transition backup identified in the cumulative report.
-Factory code was salvaged separately, without the generic service-factory layer.
 The supervisor and lifecycle-intent mechanisms below are historical proposals, not approved prerequisites.
 
 ## Context
@@ -19,7 +16,15 @@ The user authorized checkpoint 2 from `b89ec852722d3373bd38f9780f5676973a33c117`
 The [plan](../../SESSION_RESOURCE_POLICY_PLAN.md) requires a native/WebAssembly (WASM) factory probe and a future ownership design before accepting pass-through interception.
 This record distinguishes the implementation under test from later, unauthorized lifecycle and lag-policy work.
 
-## Factory Shape Under Test
+## Decision Drivers
+
+The user explicitly declined enforcement of policy-issued retention grants under the cache lock.
+All threshold evaluation must remain outside cache and sequencer locks.
+No threshold enforcement is added in checkpoint 2.
+
+## Options and Evidence
+
+### Factory Shape Under Test
 
 `sea_core::factory::SessionFactory` opens one source-allocated membership and returns `OpenedSession<Session>`.
 Its associated session type preserves the concrete error and availability-handle types.
@@ -41,7 +46,7 @@ WASM factories and futures can retain `Rc` and local-only ownership.
 The compile probe instantiates non-`Send` WASM source/session ownership, dynamic factories, dynamic session facets, and capability-bearing handles.
 This is not an implementation of lifecycle cleanup.
 
-## Ownership Design For Checkpoint 3a
+### Ownership Design For Checkpoint 3a
 
 The future lifecycle service owns a registry of constructed memberships.
 There is at most one retained cleanup record per constructed membership, not a separately growing queue of abandoned operations.
@@ -85,11 +90,7 @@ Rejected bindings do not enter cleanup.
 Signal/publisher revocation and author reconnect grace remain distinct.
 Subscription termination in checkpoint 3b removes only its claim and interrupts its send; it does not request whole-session closure.
 
-## Outside-Lock Lag-Enforcement Investigation
-
-The user explicitly declined enforcement of policy-issued retention grants under the cache lock.
-All threshold evaluation must remain outside cache and sequencer locks.
-No threshold enforcement is added in checkpoint 2.
+### Outside-Lock Lag-Enforcement Investigation
 
 The current publication path cannot establish a finite scheduling-based overshoot:
 
@@ -102,7 +103,7 @@ The current publication path cannot establish a finite scheduling-based overshoo
 Therefore, moving threshold checks into a background task without changing publication is not a valid solution.
 Treating the application batch limit as the bound for membership publication is also invalid.
 
-### Candidate Restructuring, Not Implemented Or Accepted
+#### Candidate Restructuring, Not Implemented Or Accepted
 
 A possible neutral publication protocol retains at most one opening-local publication obligation at a time:
 
@@ -133,7 +134,7 @@ In particular, releasing the lifecycle gate during membership settlement require
 Checkpoint 2 must not claim that outside-lock bounded enforcement has been established merely because this candidate protocol can be described.
 Any preparatory implementation requires explicit scope, performance tolerances, validation, and independent review.
 
-### Authorized Preparatory Model
+#### Authorized Preparatory Model
 
 After the initial investigation, the user authorized the preparatory design and probe only.
 Changing sequencing behavior still requires another explicit authorization.
@@ -154,7 +155,9 @@ The repaired probe checks guard release in isolation and separately verifies tha
 The synchronous model compiles for WASM without a thread-capable executor.
 Its native threaded scenario is excluded on WASM; cross-compilation is not a browser execution result.
 
-The real integration still needs all of the following:
+## Consequences
+
+The proposed real integration would have needed all of the following:
 
 - Move policy calls out of both runtime and lifecycle-gate guards.
   Releasing only the runtime mutex is insufficient: `barrier()` retains the pipeline write gate while draining and settling.
@@ -175,8 +178,17 @@ The model demonstrates that the cache-side helping protocol is expressible witho
 It does not validate the real lifecycle-intent transformation, storage settlement, accepted-prefix ordering, invalidation, or transport delivery.
 No such production behavior has changed.
 
-## Acceptance
+## Decision
 
-The record remains proposed until the checkpoint's ownership, feasibility, performance, validation, and independent-review gates pass.
+On 2026-09-26 the user selected an outgoing soft budget, removing the reason for strict publication-overshoot enforcement.
+The executable publication model was retired from the active test suite; its complete draft is preserved in the transition backup identified in the cumulative report.
+Factory code was salvaged separately, without the generic service-factory layer.
+This proposal was not pursued and was superseded by [Decision 0029](0029-document-soft-budget-policy.md).
+
+## Validation and Follow-Up
+
+### Acceptance
+
+At the time of the probe, acceptance required the checkpoint's ownership, feasibility, performance, validation, and independent-review gates to pass.
 The factory shape can express the intended shared owner without changing its creation boundary, but it does not by itself establish that owner's progress.
 No checkpoint-3 or checkpoint-4 behavior is authorized by this record.

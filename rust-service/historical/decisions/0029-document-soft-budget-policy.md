@@ -6,11 +6,24 @@ Owners: user, coordinator
 Supersedes: the proposed publication protocol and mandatory lifecycle machinery in [Decision 0028](0028-session-factory-ownership-probe.md)
 Superseded by: none
 
-## Context And Decision
+## Context
+
+### Context And Decision
 
 The user clarified that required live-reader entries must be retained even when the outgoing queue exceeds its configured budget.
-Storage should own inbound accounting, primarily for durable-file storage, while document-wide session policy can consume storage/output observations and choose admission, backpressure, and shedding.
 The user authorized revising the plan and salvaging the existing factory work, stopping at a clean committed boundary.
+
+## Decision Drivers
+
+Storage should own inbound accounting, primarily for durable-file storage, while document-wide session policy can consume storage/output observations and choose admission, backpressure, and shedding.
+
+## Options and Evidence
+
+[Decision 0028](0028-session-factory-ownership-probe.md#outside-lock-lag-enforcement-investigation) records the strict publication-overshoot investigation and preparatory model.
+That model did not validate the real lifecycle-intent transformation, storage settlement, accepted-prefix ordering, invalidation, or transport delivery.
+The user instead selected a soft outgoing budget, retaining required reader entries even above the target without requiring the proposed publication protocol or mandatory lifecycle machinery.
+
+## Decision
 
 Treat outgoing capacity as a soft target and pressure signal, not a hard bound.
 Retain the existing shared cache, cursors, neutral revocation, and sequencing semantics.
@@ -32,6 +45,8 @@ This is intentional and must remain visible in documentation and tests.
 Accepted writes, internal controls, reconciliation, and close must never wait for reader consumption.
 Policy callbacks remain outside storage, cache, and sequencing locks.
 Transport delivery ownership and bounded waiting payloads still require explicit contracts.
+
+## Validation and Follow-Up
 
 The [revised plan](../../SESSION_RESOURCE_POLICY_PLAN.md) replaces old future checkpoints with stages A through E.
 The next stopping point is the validated, reviewed document-factory foundation, not resource-policy implementation.
