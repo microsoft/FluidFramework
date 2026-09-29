@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -91,20 +91,20 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					});
 					break;
 				}
-				case "blobResponse": {
-					throw new SandboxProtocolError("The Host cannot receive blob responses.");
-				}
+				case "blobResponse":
 				case "hostUpdate":
 				case "hostInitialization":
 				case "guestChangeAck": {
-					throw new SandboxProtocolError(`The Host cannot receive ${message.type} messages.`);
+					throw new SandboxProtocolError(
+						`Host received a message with type ${JSON.stringify(message.type)}.`,
+					);
 				}
 				case "sessionFailure": {
 					this.session.fail(new Error(message.error), false);
 					break;
 				}
 				default: {
-					fail("Unexpected Host and Guest message type");
+					unreachableCase(message);
 				}
 			}
 		});

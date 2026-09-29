@@ -650,8 +650,8 @@ describe("Host and Guest correctness", () => {
 				interop.sendToGuest.postMessage({ type: "blobRequest", requestId: 0, token: 0 });
 			}
 			const reported = await error;
-			assert.match(reported.message, /cannot receive blob/);
 			assert(reported.cause instanceof SandboxProtocolError);
+			assert.match(reported.cause.message, /received a message with type "blob/);
 		});
 	}
 
