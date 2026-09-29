@@ -122,11 +122,39 @@ Once a receive observes an incomplete frame, its completion has an absolute dead
 Complete buffered subscription frames do not expire merely because the application pauses consumption.
 These are I/O deadlines, not limits on caller-side queueing or mutex acquisition; finite streamed responses include consumer pauses in their request budget.
 
-Timeout cancels both directions of the affected stream and prevents reuse.
-Append, membership-append, and snapshot-publication timeouts report `Ambiguous`, because the peer might have committed before the receipt was lost.
+Timeout attempts to cancel both directions of the affected stream and prevents reuse, even if cancellation fails.
+Append, membership-append, and snapshot-publication timeouts report `Ambiguous`, because the peer might have committed without a received acknowledgement or might still commit later.
+Cancellation is not rollback.
 No operation is automatically retried; callers must reconcile uncertain outcomes before deciding what to submit next.
 The server still enforces its own independent deadlines.
 Browser transports retain their existing timeout policy; custom native transports opt in through `ClientTransport::operation_timeout`.
+
+`ClientError<TransportError>` and `SeaClientError` separate their primary typed reason from supplementary errors.
+Use `reason()` to match `ClientErrorReason` or `SeaClientErrorReason`; typed recovery can continue to use `ClassifiedError::kind()`.
+Cleanup failures appear in `additional_errors()` and never replace the primary reason or change its classification.
+Each supplementary error can have its own diagnostics, and generic-to-typed conversion preserves them.
+`Display` includes supplementary failures; `Error::source()` follows only the primary causal chain, not later cleanup failures.
+Generic transport payloads do not need to implement `Error`; formatting requires `Debug`, and the standard `Error` implementation is available when the payload implements `Error`.
+Use `into_parts()` when you need ownership of the reason and diagnostics.
+
+When migrating from the former error enums, construct an error from its reason and match on the reason accessor:
+
+```rust
+use sea_core::{ClassifiedError, ErrorKind};
+use sea_webtransport::{SeaClientError, SeaClientErrorReason};
+
+let error = SeaClientError::new(SeaClientErrorReason::Closed)
+    .with_additional_error(SeaClientError::new(SeaClientErrorReason::UnexpectedResponse));
+assert!(matches!(error.reason(), SeaClientErrorReason::Closed));
+assert_eq!(error.kind(), ErrorKind::Rejected);
+assert_eq!(error.additional_errors().len(), 1);
+```
+
+Framed I/O and author error handling share one completed cleanup attempt.
+A cleanup deadline is supplementary to the initiating failure; it cannot turn a definite service rejection into an ambiguous mutation.
+If the caller drops a future during cleanup, terminal reuse can attempt cleanup again.
+Cancellation-only pump shutdown and drop paths remain best-effort and do not expose a request-result error.
+
 Connection loss releases author membership and snapshot participation according to server liveness policy.
 Server failure handling preserves the listener for unrelated connections; ordinary logical-stream failure does not imply that the whole connection has closed.
 The built-in server binds author, content, and snapshot streams to the session that admitted them.

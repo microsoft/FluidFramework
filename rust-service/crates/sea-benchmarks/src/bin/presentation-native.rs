@@ -9,7 +9,8 @@ use sea_core::{
     archive::SessionEventKind, storage::LoadStart,
 };
 use sea_webtransport::{
-    NativeSeaClient, SeaClientError, SessionClient, SessionOpen, TransportConfig, protocol,
+    NativeSeaClient, SeaClientError, SeaClientErrorReason, SessionClient, SessionOpen,
+    TransportConfig, protocol,
     transport::{BidirectionalStream, ClientTransport},
     websocket::{self, CHUNK_BYTES, DATA, FIN, MAX_RECORD_BYTES, RECORD_HEADER_BYTES, SUBPROTOCOL},
 };
@@ -293,7 +294,7 @@ impl State {
 
 /// The protocol currently preserves the subscription-only outcome as a classified diagnostic.
 fn subscription_was_shed(error: &SeaClientError) -> bool {
-    matches!(error, SeaClientError::Service(protocol::ErrorKind::Rejected, message)
+    matches!(error.reason(), SeaClientErrorReason::Service(protocol::ErrorKind::Rejected, message)
         if matches!(message.as_str(), "live subscription revoked" | "source: live subscription revoked"))
 }
 
@@ -787,12 +788,17 @@ mod tests {
         assert!(futures_util::poll!(&mut writer).is_pending());
         assert_eq!(state.lock().unwrap().times.len(), 2);
         assert_eq!(state.lock().unwrap().acknowledged, 1);
-        second.send(Err(SeaClientError::Closed)).unwrap();
+        second
+            .send(Err(SeaClientError::new(SeaClientErrorReason::Closed)))
+            .unwrap();
         assert!(futures_util::poll!(&mut writer).is_ready());
         let state = state.lock().unwrap();
         assert_eq!(state.times.len(), 2);
         assert_eq!(state.acknowledged, 1);
-        assert_eq!(state.error, Some(SeaClientError::Closed.to_string()));
+        assert_eq!(
+            state.error,
+            Some(SeaClientError::new(SeaClientErrorReason::Closed).to_string())
+        );
     }
 
     #[tokio::test]
@@ -863,19 +869,24 @@ mod tests {
             "live subscription revoked",
             "source: live subscription revoked",
         ] {
-            assert!(subscription_was_shed(&SeaClientError::Service(
-                protocol::ErrorKind::Rejected,
-                message.to_owned(),
+            assert!(subscription_was_shed(&SeaClientError::new(
+                SeaClientErrorReason::Service(protocol::ErrorKind::Rejected, message.to_owned(),)
             )));
         }
-        assert!(!subscription_was_shed(&SeaClientError::Closed));
-        assert!(!subscription_was_shed(&SeaClientError::Service(
-            protocol::ErrorKind::Rejected,
-            "session is closed".to_owned(),
+        assert!(!subscription_was_shed(&SeaClientError::new(
+            SeaClientErrorReason::Closed
         )));
-        assert!(!subscription_was_shed(&SeaClientError::Service(
-            protocol::ErrorKind::Ambiguous,
-            "live subscription revoked".to_owned(),
+        assert!(!subscription_was_shed(&SeaClientError::new(
+            SeaClientErrorReason::Service(
+                protocol::ErrorKind::Rejected,
+                "session is closed".to_owned(),
+            )
+        )));
+        assert!(!subscription_was_shed(&SeaClientError::new(
+            SeaClientErrorReason::Service(
+                protocol::ErrorKind::Ambiguous,
+                "live subscription revoked".to_owned(),
+            )
         )));
         let mut state = State {
             times: vec![(Instant::now(), true)],

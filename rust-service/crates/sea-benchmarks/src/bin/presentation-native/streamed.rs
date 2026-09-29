@@ -3,7 +3,7 @@
 use super::{Configuration, MeasurementClock, State, payload, protocol, subscription_was_shed};
 use bytes::Bytes;
 use futures_util::TryFutureExt as _;
-use sea_webtransport::SeaClientError;
+use sea_webtransport::{SeaClientError, SeaClientErrorReason};
 use serde_json::{Value, json};
 use std::{
     future::Future,
@@ -329,7 +329,10 @@ async fn read(
             }
             protocol::Response::StreamProgress { .. } | protocol::Response::LoadEvent(_) => {}
             protocol::Response::Error { kind, message }
-                if subscription_was_shed(&SeaClientError::Service(kind, message.clone())) =>
+                if subscription_was_shed(&SeaClientError::new(SeaClientErrorReason::Service(
+                    kind,
+                    message.clone(),
+                ))) =>
             {
                 state.lock().expect("tracking lock").common.shed[recipient] = true;
                 return Ok(());

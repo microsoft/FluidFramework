@@ -3,7 +3,7 @@
 use std::{
     sync::{
         Arc, Mutex,
-        atomic::{AtomicBool, Ordering},
+        atomic::{AtomicBool, AtomicUsize, Ordering},
     },
     time::Duration,
 };
@@ -33,6 +33,12 @@ struct Calls {
     send_ready: tokio::sync::Notify,
     /// Holds send-side finish pending.
     stall_finish: AtomicBool,
+    /// Makes cleanup report a transport failure after recording its attempt.
+    fail_cancel: AtomicBool,
+    /// Holds cleanup pending until its separate budget expires.
+    stall_cancel: AtomicBool,
+    /// Distinguishes one cleanup attempt from repeated error-layer cleanup.
+    cancellations: AtomicUsize,
 }
 
 /// Channel-backed byte stream with independently stallable operations.
@@ -69,7 +75,16 @@ impl BidirectionalStream for ProbeStream {
 
     async fn cancel(&mut self) -> Result<(), Self::Error> {
         self.calls.cancelled.store(true, Ordering::Relaxed);
-        Ok(())
+        let attempt = self.calls.cancellations.fetch_add(1, Ordering::Relaxed) + 1;
+        if self.calls.stall_cancel.load(Ordering::Relaxed) {
+            std::future::pending().await
+        } else if self.calls.fail_cancel.load(Ordering::Relaxed) {
+            Err(crate::WebTransportError::Transport(format!(
+                "cleanup failure {attempt}"
+            )))
+        } else {
+            Ok(())
+        }
     }
 }
 
@@ -199,7 +214,10 @@ async fn every_logical_opening_and_snapshot_initial_state_have_a_deadline() {
                 .map(|_| ()),
         };
         assert!(
-            matches!(result, Err(ClientError::Timeout)),
+            matches!(
+                (result).as_ref().map_err(super::ClientError::reason),
+                Err(ClientErrorReason::Timeout)
+            ),
             "{role:?}: {result:?}"
         );
         assert_eq!(Instant::now() - start, BUDGET);
@@ -210,7 +228,12 @@ async fn every_logical_opening_and_snapshot_initial_state_have_a_deadline() {
         peer.send(frame(StreamRole::Signal, &Response::Acknowledged))
             .unwrap();
         let mut signal = client.open_signal_stream(signal_opening()).await.unwrap();
-        assert!(matches!(signal.next().await, Err(ClientError::Timeout)));
+        assert!(matches!(
+            (signal.next().await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::Timeout)
+        ));
         assert!(calls.cancelled.load(Ordering::Relaxed));
     }
 
@@ -218,10 +241,12 @@ async fn every_logical_opening_and_snapshot_initial_state_have_a_deadline() {
     peer.send(frame(StreamRole::Snapshot, &Response::Acknowledged))
         .unwrap();
     assert!(matches!(
-        client
+        (client
             .open_snapshot_stream(protocol::SnapshotParticipation::ReadOnly)
-            .await,
-        Err(ClientError::Timeout)
+            .await)
+            .as_ref()
+            .map_err(super::ClientError::reason),
+        Err(ClientErrorReason::Timeout)
     ));
     assert!(calls.cancelled.load(Ordering::Relaxed));
 }
@@ -237,8 +262,10 @@ async fn opening_send_and_finish_are_bounded_and_cancelled() {
             .store(stage == "finish", Ordering::Relaxed);
         let start = Instant::now();
         assert!(matches!(
-            client.open_event_stream(event_opening()).await,
-            Err(ClientError::Timeout)
+            (client.open_event_stream(event_opening()).await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::Timeout)
         ));
         assert_eq!(Instant::now() - start, BUDGET);
         assert_eq!(calls.cancelled.load(Ordering::Relaxed), stage != "open");
@@ -262,11 +289,18 @@ async fn idle_receives_survive_cancellation_but_partial_frames_do_not_reset_the_
     peer.send(encoded[1..2].to_vec()).unwrap();
     assert!(stream.receive().now_or_never().is_none());
     advance(Duration::from_secs(1)).await;
-    assert!(matches!(stream.receive().await, Err(ClientError::Timeout)));
+    assert!(matches!(
+        (stream.receive().await)
+            .as_ref()
+            .map_err(super::ClientError::reason),
+        Err(ClientErrorReason::Timeout)
+    ));
     assert!(calls.cancelled.load(Ordering::Relaxed));
     assert!(matches!(
-        stream.receive().await,
-        Err(ClientError::State(ClientStateError::Closed))
+        (stream.receive().await)
+            .as_ref()
+            .map_err(super::ClientError::reason),
+        Err(ClientErrorReason::State(ClientStateError::Closed))
     ));
 }
 
@@ -286,7 +320,10 @@ async fn author_timeouts_are_ambiguous_terminal_and_never_retried() {
             },
         };
         let result = author.request(request.clone()).await;
-        assert!(matches!(result, Err(ClientError::AmbiguousTimeout)));
+        assert!(matches!(
+            (result).as_ref().map_err(super::ClientError::reason),
+            Err(ClientErrorReason::AmbiguousTimeout)
+        ));
         let error = crate::SeaClientError::from(result.unwrap_err());
         assert_eq!(
             sea_core::ClassifiedError::kind(&error),
@@ -299,11 +336,255 @@ async fn author_timeouts_are_ambiguous_terminal_and_never_retried() {
         ))
         .unwrap();
         assert!(matches!(
-            author.request(request).await,
-            Err(ClientError::State(ClientStateError::Closed))
+            (author.request(request).await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::State(ClientStateError::Closed))
         ));
         assert_eq!(calls.writes.lock().unwrap().len(), 2);
     }
+}
+
+/// Verifies the exact secondary transport payload before and after typed conversion.
+fn assert_cleanup_failure(
+    error: ClientError<crate::WebTransportError>,
+    expected: sea_core::ErrorKind,
+) {
+    assert_eq!(error.additional_errors().len(), 1);
+    assert!(matches!(
+        error.additional_errors()[0].reason(),
+        ClientErrorReason::Transport(crate::WebTransportError::Transport(message))
+            if message == "cleanup failure 1"
+    ));
+    let error = crate::SeaClientError::from(error);
+    assert_eq!(sea_core::ClassifiedError::kind(&error), expected);
+    assert_eq!(error.additional_errors().len(), 1);
+    assert!(matches!(
+        error.additional_errors()[0].reason(),
+        crate::SeaClientErrorReason::Transport(crate::WebTransportError::Transport(message))
+            if message == "cleanup failure 1"
+    ));
+    assert!(
+        error
+            .to_string()
+            .contains("additional failure: transport failed: transport failed: cleanup failure 1")
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn author_cleanup_failure_preserves_ambiguous_timeouts_without_retry() {
+    for request in [
+        Request::Submit {
+            reference: None,
+            event: protocol::Event {
+                payload: vec![7],
+                blob_tree: None,
+            },
+        },
+        Request::AnnounceMembership { metadata: vec![] },
+    ] {
+        for stall_send in [false, true] {
+            let (client, peer, calls) = probe();
+            peer.send(frame(StreamRole::Author, &Response::Acknowledged))
+                .unwrap();
+            let mut author = client.open_author_stream().await.unwrap();
+            calls.fail_cancel.store(true, Ordering::Relaxed);
+            calls.stall_send.store(stall_send, Ordering::Relaxed);
+            let error = author.request(request.clone()).await.unwrap_err();
+            assert!(matches!(
+                error.reason(),
+                ClientErrorReason::AmbiguousTimeout
+            ));
+            assert_cleanup_failure(error, sea_core::ErrorKind::Ambiguous);
+            assert_eq!(calls.cancellations.load(Ordering::Relaxed), 1);
+            peer.send(frame(
+                StreamRole::Author,
+                &Response::EventCommitted { position: 1 },
+            ))
+            .unwrap();
+            assert!(matches!(
+                author.request(request.clone()).await.unwrap_err().reason(),
+                ClientErrorReason::State(ClientStateError::Closed)
+            ));
+            assert_eq!(calls.writes.lock().unwrap().len(), 2);
+        }
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn snapshot_cleanup_failure_preserves_primary_timeout_classification() {
+    for publishing in [false, true] {
+        let (client, peer, calls) = probe();
+        peer.send(frame(StreamRole::Snapshot, &Response::Acknowledged))
+            .unwrap();
+        peer.send(frame(
+            StreamRole::Snapshot,
+            &Response::SnapshotCoordination {
+                latest: None,
+                fence: None,
+            },
+        ))
+        .unwrap();
+        let mut snapshot = client
+            .open_snapshot_stream(protocol::SnapshotParticipation::ReadOnly)
+            .await
+            .unwrap();
+        calls.fail_cancel.store(true, Ordering::Relaxed);
+        let request = if publishing {
+            Request::PublishSnapshot {
+                fence: None,
+                expected_parent: None,
+                at_event: 1,
+                root: protocol::TreeId::Directory([0; 32]),
+            }
+        } else {
+            Request::LatestSnapshot
+        };
+        let error = snapshot.request(request.clone()).await.unwrap_err();
+        assert!(matches!(
+            (publishing, error.reason()),
+            (true, ClientErrorReason::AmbiguousTimeout) | (false, ClientErrorReason::Timeout)
+        ));
+        assert_cleanup_failure(
+            error,
+            if publishing {
+                sea_core::ErrorKind::Ambiguous
+            } else {
+                sea_core::ErrorKind::Unavailable
+            },
+        );
+        assert_eq!(calls.cancellations.load(Ordering::Relaxed), 1);
+        assert!(matches!(
+            snapshot.request(request).await.unwrap_err().reason(),
+            ClientErrorReason::State(ClientStateError::Closed)
+        ));
+        assert_eq!(calls.writes.lock().unwrap().len(), 2);
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn content_cleanup_failure_preserves_nonmutating_timeout() {
+    let (client, peer, calls) = probe();
+    peer.send(frame(StreamRole::Content, &Response::Acknowledged))
+        .unwrap();
+    let mut content = client.open_content_stream().await.unwrap();
+    calls.fail_cancel.store(true, Ordering::Relaxed);
+    let error = content
+        .request(Request::GetBlob { id: [0; 32] })
+        .await
+        .unwrap_err();
+    assert!(matches!(error.reason(), ClientErrorReason::Timeout));
+    assert_cleanup_failure(error, sea_core::ErrorKind::Unavailable);
+    assert_eq!(calls.cancellations.load(Ordering::Relaxed), 1);
+    assert_eq!(calls.writes.lock().unwrap().len(), 2);
+}
+
+#[tokio::test(start_paused = true)]
+async fn cleanup_timeout_does_not_turn_service_rejection_into_ambiguity() {
+    let (client, peer, calls) = probe();
+    peer.send(frame(StreamRole::Author, &Response::Acknowledged))
+        .unwrap();
+    let mut author = client.open_author_stream().await.unwrap();
+    calls.stall_cancel.store(true, Ordering::Relaxed);
+    let response = Response::Error {
+        kind: protocol::ErrorKind::Rejected,
+        message: "submission rejected".to_owned(),
+    };
+    peer.send(frame(StreamRole::Author, &response)).unwrap();
+    let start = Instant::now();
+    let error = author
+        .request(Request::AnnounceMembership { metadata: vec![] })
+        .await
+        .unwrap_err();
+    assert_eq!(Instant::now() - start, BUDGET);
+    assert!(matches!(
+        error.reason(),
+        ClientErrorReason::UnexpectedResponse(actual) if actual == &response
+    ));
+    assert_eq!(error.additional_errors().len(), 1);
+    assert!(matches!(
+        error.additional_errors()[0].reason(),
+        ClientErrorReason::Timeout
+    ));
+    let error = crate::SeaClientError::from(error);
+    assert_eq!(
+        sea_core::ClassifiedError::kind(&error),
+        sea_core::ErrorKind::Rejected
+    );
+    assert_eq!(
+        sea_core::ClassifiedError::kind(&error.additional_errors()[0]),
+        sea_core::ErrorKind::Unavailable
+    );
+    assert_eq!(calls.cancellations.load(Ordering::Relaxed), 1);
+}
+
+#[tokio::test(start_paused = true)]
+async fn cleanup_timeout_preserves_mutation_ambiguity_and_has_its_own_budget() {
+    let (client, peer, calls) = probe();
+    peer.send(frame(StreamRole::Author, &Response::Acknowledged))
+        .unwrap();
+    let mut author = client.open_author_stream().await.unwrap();
+    calls.stall_cancel.store(true, Ordering::Relaxed);
+    let start = Instant::now();
+    let error = author
+        .request(Request::AnnounceMembership { metadata: vec![] })
+        .await
+        .unwrap_err();
+    assert_eq!(Instant::now() - start, BUDGET * 2);
+    assert!(matches!(
+        error.reason(),
+        ClientErrorReason::AmbiguousTimeout
+    ));
+    assert_eq!(error.additional_errors().len(), 1);
+    assert!(matches!(
+        error.additional_errors()[0].reason(),
+        ClientErrorReason::Timeout
+    ));
+    assert_eq!(calls.cancellations.load(Ordering::Relaxed), 1);
+}
+
+#[tokio::test(start_paused = true)]
+async fn cancelled_cleanup_is_attempted_again_on_terminal_reuse() {
+    let (client, peer, calls) = probe();
+    peer.send(frame(StreamRole::Author, &Response::Acknowledged))
+        .unwrap();
+    let mut author = client.open_author_stream().await.unwrap();
+    calls.stall_cancel.store(true, Ordering::Relaxed);
+    let request = Request::AnnounceMembership { metadata: vec![] };
+    let mut pending = Box::pin(author.request(request.clone()));
+    assert!(pending.as_mut().now_or_never().is_none());
+    advance(BUDGET).await;
+    assert!(pending.as_mut().now_or_never().is_none());
+    assert_eq!(calls.cancellations.load(Ordering::Relaxed), 1);
+    drop(pending);
+    calls.stall_cancel.store(false, Ordering::Relaxed);
+    calls.fail_cancel.store(true, Ordering::Relaxed);
+    let error = author.request(request).await.unwrap_err();
+    assert!(matches!(
+        error.reason(),
+        ClientErrorReason::State(ClientStateError::Closed)
+    ));
+    assert_eq!(error.additional_errors().len(), 1);
+    assert!(matches!(
+        error.additional_errors()[0].reason(),
+        ClientErrorReason::Transport(crate::WebTransportError::Transport(message))
+            if message == "cleanup failure 2"
+    ));
+    assert_eq!(calls.cancellations.load(Ordering::Relaxed), 2);
+    assert_eq!(calls.writes.lock().unwrap().len(), 2);
+}
+
+#[tokio::test(start_paused = true)]
+async fn opening_finish_timeout_retains_cleanup_failure_without_mutation_ambiguity() {
+    let (client, _peer, calls) = probe();
+    calls.stall_finish.store(true, Ordering::Relaxed);
+    calls.fail_cancel.store(true, Ordering::Relaxed);
+    let Err(error) = client.open_event_stream(event_opening()).await else {
+        panic!("opening finish must time out");
+    };
+    assert!(matches!(error.reason(), ClientErrorReason::Timeout));
+    assert_cleanup_failure(error, sea_core::ErrorKind::Unavailable);
+    assert_eq!(calls.cancellations.load(Ordering::Relaxed), 1);
 }
 
 #[tokio::test(start_paused = true)]
@@ -331,14 +612,18 @@ async fn content_requires_completion_within_one_budget() {
         .unwrap();
     let start = Instant::now();
     assert!(matches!(
-        content.request(Request::GetBlob { id: [0; 32] }).await,
-        Err(ClientError::Timeout)
+        (content.request(Request::GetBlob { id: [0; 32] }).await)
+            .as_ref()
+            .map_err(super::ClientError::reason),
+        Err(ClientErrorReason::Timeout)
     ));
     assert_eq!(Instant::now() - start, BUDGET);
     assert!(calls.cancelled.load(Ordering::Relaxed));
     assert!(matches!(
-        content.request(Request::GetBlob { id: [0; 32] }).await,
-        Err(ClientError::State(ClientStateError::Closed))
+        (content.request(Request::GetBlob { id: [0; 32] }).await)
+            .as_ref()
+            .map_err(super::ClientError::reason),
+        Err(ClientErrorReason::State(ClientStateError::Closed))
     ));
 }
 
@@ -369,8 +654,10 @@ async fn finite_requests_reset_between_exchanges_but_not_between_write_and_read(
     assert!(pending.as_mut().now_or_never().is_none());
     advance(Duration::from_secs(1)).await;
     assert!(matches!(
-        pending.as_mut().now_or_never(),
-        Some(Err(ClientError::Timeout))
+        (pending.as_mut().now_or_never())
+            .as_ref()
+            .map(|result| result.as_ref().map_err(super::ClientError::reason)),
+        Some(Err(ClientErrorReason::Timeout))
     ));
     drop(pending);
     assert!(calls.cancelled.load(Ordering::Relaxed));
@@ -423,7 +710,10 @@ async fn interleaved_snapshot_notifications_cannot_extend_publication_budget() {
     peer.send(notification).unwrap();
     assert!(pending.as_mut().now_or_never().is_none());
     advance(Duration::from_secs(1)).await;
-    assert!(matches!(pending.await, Err(ClientError::AmbiguousTimeout)));
+    assert!(matches!(
+        (pending.await).as_ref().map_err(super::ClientError::reason),
+        Err(ClientErrorReason::AmbiguousTimeout)
+    ));
     assert!(calls.cancelled.load(Ordering::Relaxed));
 }
 
@@ -460,7 +750,10 @@ async fn interleaved_signals_cannot_extend_request_budget() {
     peer.send(notification).unwrap();
     assert!(pending.as_mut().now_or_never().is_none());
     advance(Duration::from_secs(1)).await;
-    assert!(matches!(pending.await, Err(ClientError::Timeout)));
+    assert!(matches!(
+        (pending.await).as_ref().map_err(super::ClientError::reason),
+        Err(ClientErrorReason::Timeout)
+    ));
     assert_eq!(received, 1);
     assert!(calls.cancelled.load(Ordering::Relaxed));
 }

@@ -250,12 +250,12 @@ mod tests {
                 .unwrap();
                 let id = sea_core::BlobId::from_bytes(&[0; 32]).unwrap();
                 assert!(matches!(
-                    client.get_blob(id).await,
-                    Err(crate::SeaClientError::Transport(WebTransportError::Timeout))
+                    client.get_blob(id).await.unwrap_err().reason(),
+                    crate::SeaClientErrorReason::Transport(WebTransportError::Timeout)
                 ));
                 assert!(matches!(
-                    client.get_blob(id).await,
-                    Err(crate::SeaClientError::Closed)
+                    client.get_blob(id).await.unwrap_err().reason(),
+                    crate::SeaClientErrorReason::Closed
                 ));
                 // Retain the connection until the peer observes the stream reset.
                 client

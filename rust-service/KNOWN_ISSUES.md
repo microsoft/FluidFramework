@@ -57,18 +57,19 @@ Historical findings and resolved investigations are retained in [Historical reco
 
 ## Client timeout classification can be lost when cleanup fails
 
-- **Status:** Confirmed; repair deferred by user decision
+- **Status:** Resolved by the primary-reason and supplementary-error API migration
 - **Severity:** Medium
 - **Area:** Generic client request deadlines and recovery classification
-- **Evidence:** When a finite request times out and the stream's cancellation also fails, `FramedStream::cancel_on_error` returns the cleanup error instead of the initiating timeout.
-  Author and snapshot handling no longer recognize the timeout, so an uncertain submit, membership append, or snapshot publication can lose its promised ambiguous classification.
+- **Original evidence:** When a finite request timed out and the stream's cancellation also failed, `FramedStream::cancel_on_error` returned the cleanup error instead of the initiating timeout.
+  Author and snapshot handling no longer recognized the timeout, so an uncertain submit, membership append, or snapshot publication could lose its promised ambiguous classification.
   The [iteration 0020 transport report](historical/iterations/0020/phase-2/transport.md) records a deterministic failing regression and a successful compound-error experiment.
 - **Impact:** Consumers must not interpret the cleanup failure as evidence that the mutating request did not commit.
   Ordinary successful-cleanup paths do not exercise this defect.
-- **Disposition:** The user deferred the proposed new public Rust error variants and bug fix in [Decision 0030](historical/decisions/0030-defer-compound-client-errors.md).
-  The experimental fix and its representation-dependent tests are not part of the accepted source.
-- **Trigger:** Revisit when an error representation/API migration is approved or a consumer requires classification under failed cleanup.
-  Preserve the initiating recovery classification and secondary cleanup diagnostics; test mutating and nonmutating requests independently.
+- **Disposition:** The user initially deferred compound error variants in [Decision 0030](historical/decisions/0030-defer-compound-client-errors.md), then approved the struct-based representation in [Decision 0031](historical/decisions/0031-primary-client-error-context.md).
+  The client now preserves the primary reason, attaches cleanup errors separately, and retains both through ambiguity promotion and typed conversion.
+- **Regression evidence:** [Controlled deadline tests](crates/sea-webtransport/src/client/deadline_tests.rs) cover mutating and nonmutating timeouts, cleanup failures and timeouts, terminal reuse, interrupted cleanup, and no request retry.
+  [Typed error tests](crates/sea-webtransport/src/native.rs) verify nested diagnostics, classification, display, and primary causal sources.
+  This repair does not resolve the independent intermittent native connection timeout above.
 
 ## Rust CI support
 

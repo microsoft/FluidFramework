@@ -45,7 +45,7 @@ use sea_encryption::{ActiveKey, EncryptionKey, EncryptionSession, KeyId, KeyProv
 use sea_memory::MemoryStorage;
 use sea_sequencer::session::{LocalSequencer, LocalSession};
 use sea_webtransport::{
-    NativeSeaClient, NativeSessionOpen, SeaClientError, WebTransportSessionFactory, protocol,
+    NativeSeaClient, NativeSessionOpen, SeaClientErrorReason, WebTransportSessionFactory, protocol,
 };
 use sea_webtransport_server::{
     LivenessPolicy, SeaConnectionService, SeaProtocolHost, SeaResponseStream, SeaServiceHost,
@@ -402,9 +402,8 @@ async fn network_factory_opens_independent_sessions_and_forwards_facets() {
         let Err(error) = missing.open_session(None).await else {
             panic!("the factory must open an existing document, not create one");
         };
-        assert!(matches!(
-            error,
-            SeaClientError::Service(protocol::ErrorKind::Rejected, message)
+        assert!(matches!((error).reason(),
+            SeaClientErrorReason::Service(protocol::ErrorKind::Rejected, message)
                 if message == "document does not exist"
         ));
 
@@ -424,9 +423,8 @@ async fn network_factory_opens_independent_sessions_and_forwards_facets() {
             panic!("an invalid opening reference must reach the server");
         };
         assert!(
-            matches!(
-                &error,
-                SeaClientError::Service(protocol::ErrorKind::Rejected, message)
+            matches!(error.reason(),
+                SeaClientErrorReason::Service(protocol::ErrorKind::Rejected, message)
                     if message == "session rejected operation: invalid session reference"
             ),
             "unexpected opening failure: {error:?}"
@@ -499,9 +497,8 @@ async fn verify_network_factory_facets(
     let Err(error) = second.session.publish_snapshot(None, None, snapshot).await else {
         panic!("independent clients must not share handle provenance");
     };
-    assert!(matches!(
-        error,
-        SeaClientError::Service(protocol::ErrorKind::Rejected, message)
+    assert!(matches!((error).reason(),
+        SeaClientErrorReason::Service(protocol::ErrorKind::Rejected, message)
             if message == "snapshot handles belong to another client"
     ));
 

@@ -14,9 +14,9 @@ pub mod transport;
 mod factory;
 mod native;
 pub use factory::WebTransportSessionFactory;
-pub use native::SeaClientError;
 #[cfg(not(target_arch = "wasm32"))]
 pub use native::{NativeSeaClient, NativeSessionOpen};
+pub use native::{SeaClientError, SeaClientErrorReason};
 pub use native::{SessionClient, SessionOpen};
 
 #[cfg(not(target_arch = "wasm32"))]

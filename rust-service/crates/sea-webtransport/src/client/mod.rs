@@ -1,6 +1,9 @@
 //! Platform-independent Sea client connection state.
 
-use std::sync::{Arc, Mutex};
+use std::{
+    fmt,
+    sync::{Arc, Mutex},
+};
 
 use thiserror::Error;
 
@@ -13,9 +16,65 @@ use framed::FramedStream;
 #[cfg(all(test, not(target_arch = "wasm32")))]
 mod deadline_tests;
 
-/// Failure from the shared protocol client.
+/// Failure from the shared protocol client, with supplementary diagnostic failures.
+///
+/// Handling depends on [`Self::reason`], not on whether cleanup also failed.
 #[derive(Debug)]
-pub enum ClientError<TransportError> {
+pub struct ClientError<TransportError> {
+    /// Initiating failure, used for recovery decisions.
+    reason: ClientErrorReason<TransportError>,
+    /// Later failures that do not change the initiating reason.
+    additional_errors: Vec<Self>,
+}
+
+impl<TransportError> ClientError<TransportError> {
+    /// Creates a failure without supplementary diagnostics.
+    #[must_use]
+    pub fn new(reason: ClientErrorReason<TransportError>) -> Self {
+        Self {
+            reason,
+            additional_errors: Vec::new(),
+        }
+    }
+
+    /// Returns the primary reason, independently of supplementary failures.
+    #[must_use]
+    pub fn reason(&self) -> &ClientErrorReason<TransportError> {
+        &self.reason
+    }
+
+    /// Returns supplementary failures in observation order, each with its own context.
+    #[must_use]
+    pub fn additional_errors(&self) -> &[Self] {
+        &self.additional_errors
+    }
+
+    /// Attaches a diagnostic failure without changing the primary reason.
+    #[must_use]
+    pub fn with_additional_error(mut self, error: Self) -> Self {
+        self.additional_errors.push(error);
+        self
+    }
+
+    /// Transfers the primary reason and all supplementary failures to a consumer.
+    #[must_use]
+    pub fn into_parts(self) -> (ClientErrorReason<TransportError>, Vec<Self>) {
+        (self.reason, self.additional_errors)
+    }
+
+    /// Retains diagnostics when a mutating request's timeout leaves commitment unknown.
+    #[cfg(not(target_arch = "wasm32"))]
+    fn ambiguous_timeout(mut self) -> Self {
+        if matches!(self.reason, ClientErrorReason::Timeout) {
+            self.reason = ClientErrorReason::AmbiguousTimeout;
+        }
+        self
+    }
+}
+
+/// Primary reason for a shared protocol client failure.
+#[derive(Debug)]
+pub enum ClientErrorReason<TransportError> {
     /// A native request or partial frame exceeded its absolute deadline.
     #[cfg(not(target_arch = "wasm32"))]
     Timeout,
@@ -30,19 +89,76 @@ pub enum ClientError<TransportError> {
     Transport(TransportError),
     /// An ordered response ended before its required value arrived.
     ResponseEnded,
-    /// An event stream did not begin with its authority response.
+    /// A response did not match the expected success, including a service error response.
     UnexpectedResponse(Response),
+}
+
+impl<TransportError> From<ClientErrorReason<TransportError>> for ClientError<TransportError> {
+    fn from(reason: ClientErrorReason<TransportError>) -> Self {
+        Self::new(reason)
+    }
+}
+
+impl<TransportError: fmt::Debug> fmt::Display for ClientErrorReason<TransportError> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            #[cfg(not(target_arch = "wasm32"))]
+            Self::Timeout => formatter.write_str("transport operation timed out"),
+            #[cfg(not(target_arch = "wasm32"))]
+            Self::AmbiguousTimeout => {
+                formatter.write_str("transport operation timed out; commitment is unknown")
+            }
+            Self::State(error) => error.fmt(formatter),
+            Self::Protocol(error) => error.fmt(formatter),
+            Self::Transport(error) => write!(formatter, "transport failed: {error:?}"),
+            Self::ResponseEnded => formatter.write_str("response stream ended"),
+            Self::UnexpectedResponse(response) => {
+                write!(formatter, "unexpected response: {response:?}")
+            }
+        }
+    }
+}
+
+impl<TransportError: std::error::Error + 'static> std::error::Error
+    for ClientErrorReason<TransportError>
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::State(error) => Some(error),
+            Self::Protocol(error) => Some(error),
+            Self::Transport(error) => Some(error),
+            _ => None,
+        }
+    }
+}
+
+impl<TransportError: fmt::Debug> fmt::Display for ClientError<TransportError> {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.reason.fmt(formatter)?;
+        for error in &self.additional_errors {
+            write!(formatter, "; additional failure: {error}")?;
+        }
+        Ok(())
+    }
+}
+
+impl<TransportError: std::error::Error + 'static> std::error::Error
+    for ClientError<TransportError>
+{
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.reason.source()
+    }
 }
 
 impl<TransportError> From<ClientStateError> for ClientError<TransportError> {
     fn from(error: ClientStateError) -> Self {
-        Self::State(error)
+        Self::new(ClientErrorReason::State(error))
     }
 }
 
 impl<TransportError> From<ProtocolError> for ClientError<TransportError> {
     fn from(error: ProtocolError) -> Self {
-        Self::Protocol(error)
+        Self::new(ClientErrorReason::Protocol(error))
     }
 }
 
@@ -89,11 +205,16 @@ where
         )?;
         let mut stream = FramedStream::open(&self.transport, self.limits).await?;
         stream.send(&outgoing).await?;
-        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
+        let frame = stream
+            .receive()
+            .await?
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
         if response != Response::Acknowledged {
-            return Err(ClientError::UnexpectedResponse(response));
+            return Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            )));
         }
         Ok(SignalStream {
             terminal: false,
@@ -125,7 +246,7 @@ where
         self.transport
             .send_datagram(&bytes)
             .await
-            .map_err(ClientError::Transport)
+            .map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))
     }
 
     /// Receives exactly one framed best-effort message, rejecting reliable/control datagrams.
@@ -140,10 +261,12 @@ where
             .transport
             .receive_datagram()
             .await
-            .map_err(ClientError::Transport)?;
+            .map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))?;
         let mut decoder = NetworkFrameDecoder::new(self.limits);
         decoder.push(&bytes);
-        let frame = decoder.next_frame()?.ok_or(ClientError::ResponseEnded)?;
+        let frame = decoder
+            .next_frame()?
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
         decoder.finish()?;
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
         match response {
@@ -156,7 +279,9 @@ where
                     ..
                 },
             ) => Ok(event),
-            response => Err(ClientError::UnexpectedResponse(response)),
+            response => Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            ))),
         }
     }
 
@@ -177,14 +302,19 @@ where
             stream,
             role: StreamRole::Event,
         };
-        let response = responses.next().await?.ok_or(ClientError::ResponseEnded)?;
+        let response = responses
+            .next()
+            .await?
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
         let Response::EventStreamOpened {
             session,
             document,
             authority,
         } = response
         else {
-            return Err(ClientError::UnexpectedResponse(response));
+            return Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            )));
         };
         self.state.set_authority(authority.clone())?;
         responses.stream.end_request();
@@ -207,11 +337,16 @@ where
         let outgoing = protocol::encode_request_frame(StreamRole::Author, &request, self.limits)?;
         let mut stream = FramedStream::open(&self.transport, self.limits).await?;
         stream.send(&outgoing).await?;
-        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
+        let frame = stream
+            .receive()
+            .await?
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
         if response != Response::Acknowledged {
-            return Err(ClientError::UnexpectedResponse(response));
+            return Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            )));
         }
         stream.end_request();
         Ok(AuthorStream {
@@ -237,11 +372,16 @@ where
         let outgoing = protocol::encode_request_frame(StreamRole::Snapshot, &request, self.limits)?;
         let mut stream = FramedStream::open(&self.transport, self.limits).await?;
         stream.send(&outgoing).await?;
-        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
+        let frame = stream
+            .receive()
+            .await?
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
         if response != Response::Acknowledged {
-            return Err(ClientError::UnexpectedResponse(response));
+            return Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            )));
         }
         let mut snapshot = SnapshotStream {
             terminal: false,
@@ -267,11 +407,16 @@ where
         let outgoing = protocol::encode_request_frame(StreamRole::Content, &request, self.limits)?;
         let mut stream = FramedStream::open(&self.transport, self.limits).await?;
         stream.send(&outgoing).await?;
-        let frame = stream.receive().await?.ok_or(ClientError::ResponseEnded)?;
+        let frame = stream
+            .receive()
+            .await?
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
         if response != Response::Acknowledged {
-            return Err(ClientError::UnexpectedResponse(response));
+            return Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            )));
         }
         stream.end_request();
         Ok(ContentStream {
@@ -299,7 +444,7 @@ where
     pub fn disconnect(&self) -> Result<(), ClientError<Transport::Error>> {
         let result = self.transport.disconnect();
         self.state.disconnect()?;
-        result.map_err(ClientError::Transport)
+        result.map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))
     }
 
     /// Re-enables requests after the caller explicitly replaces or reconnects the transport.
@@ -345,21 +490,25 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
     /// Receives an unsolicited signal or terminal service error.
     pub async fn next(&mut self) -> Result<protocol::signals::Event, ClientError<Stream::Error>> {
         if self.terminal {
-            let _ = self.stream.cancel().await;
-            return Err(ClientStateError::Closed.into());
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
         }
         let frame = self
             .stream
             .receive()
             .await?
-            .ok_or(ClientError::ResponseEnded)?;
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
         let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
         match response {
             Response::SignalEvent(event) => {
                 self.stream.end_request();
                 Ok(event)
             }
-            response => Err(ClientError::UnexpectedResponse(response)),
+            response => Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            ))),
         }
     }
 
@@ -370,8 +519,10 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
         mut receive: impl FnMut(protocol::signals::Event) -> Result<(), ClientError<Stream::Error>>,
     ) -> Result<(), ClientError<Stream::Error>> {
         if std::mem::replace(&mut self.terminal, true) {
-            let _ = self.stream.cancel().await;
-            return Err(ClientStateError::Closed.into());
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
         }
         self.state.check_connected()?;
         let outgoing = protocol::encode_request_frame(StreamRole::Signal, &request, self.limits)?;
@@ -382,7 +533,7 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
                 .stream
                 .receive()
                 .await?
-                .ok_or(ClientError::ResponseEnded)?;
+                .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
             let response = protocol::decode_response_network_frame(StreamRole::Signal, &frame)?;
             if let Response::SignalEvent(event) = response {
                 receive(event)?;
@@ -394,7 +545,9 @@ impl<Stream: BidirectionalStream> SignalStream<Stream> {
                 self.terminal = false;
                 Ok(())
             } else {
-                Err(ClientError::UnexpectedResponse(response))
+                Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                    response,
+                )))
             };
         }
     }
@@ -439,8 +592,10 @@ where
         request: Request,
     ) -> Result<ResponseStream<Stream>, ClientError<Stream::Error>> {
         if self.terminal {
-            let _ = self.stream.cancel().await;
-            return Err(ClientStateError::Closed.into());
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
         }
         self.state.check_connected()?;
 
@@ -462,8 +617,10 @@ where
         request: Request,
     ) -> Result<Vec<Response>, ClientError<Stream::Error>> {
         if std::mem::replace(&mut self.terminal, true) {
-            let _ = self.stream.cancel().await;
-            return Err(ClientStateError::Closed.into());
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
         }
         self.state.check_connected()?;
 
@@ -476,7 +633,7 @@ where
                 .stream
                 .receive()
                 .await?
-                .ok_or(ClientError::ResponseEnded)?;
+                .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
             let response = protocol::decode_response_network_frame(StreamRole::Content, &frame)?;
             if response == Response::ResponseComplete {
                 self.stream.end_request();
@@ -513,21 +670,25 @@ where
     /// Waits for and applies the next latest-value coordination notification.
     pub async fn next_coordination(&mut self) -> Result<(), ClientError<Stream::Error>> {
         if self.terminal {
-            let _ = self.stream.cancel().await;
-            return Err(ClientStateError::Closed.into());
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
         }
         let frame = self
             .stream
             .receive()
             .await?
-            .ok_or(ClientError::ResponseEnded)?;
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
         let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
         if let Response::SnapshotCoordination { latest, fence } = response {
             self.latest = latest;
             self.fence = fence;
             return Ok(());
         }
-        Err(ClientError::UnexpectedResponse(response))
+        Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+            response,
+        )))
     }
 
     /// Sends one ordered snapshot operation while retaining interleaved coordination updates.
@@ -540,8 +701,8 @@ where
         let publishing = matches!(request, Request::PublishSnapshot { .. });
         let result = self.request_inner(request).await;
         #[cfg(not(target_arch = "wasm32"))]
-        if publishing && matches!(result, Err(ClientError::Timeout)) {
-            return Err(ClientError::AmbiguousTimeout);
+        if publishing {
+            return result.map_err(ClientError::ambiguous_timeout);
         }
         result
     }
@@ -552,8 +713,10 @@ where
         request: Request,
     ) -> Result<Response, ClientError<Stream::Error>> {
         if std::mem::replace(&mut self.terminal, true) {
-            let _ = self.stream.cancel().await;
-            return Err(ClientStateError::Closed.into());
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
         }
         self.state.check_connected()?;
 
@@ -565,7 +728,7 @@ where
                 .stream
                 .receive()
                 .await?
-                .ok_or(ClientError::ResponseEnded)?;
+                .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
             let response = protocol::decode_response_network_frame(StreamRole::Snapshot, &frame)?;
             if let Response::SnapshotCoordination { latest, fence } = response {
                 self.latest = latest;
@@ -583,7 +746,9 @@ where
                     )
             );
             if !completed {
-                return Err(ClientError::UnexpectedResponse(response));
+                return Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                    response,
+                )));
             }
             self.stream.end_request();
             self.terminal = false;
@@ -616,24 +781,33 @@ where
         request: Request,
     ) -> Result<Response, ClientError<Stream::Error>> {
         if std::mem::replace(&mut self.terminal, true) {
-            let _ = self.stream.cancel().await;
-            return Err(ClientStateError::Closed.into());
+            return self
+                .stream
+                .cancel_on_error(Err(ClientStateError::Closed.into()))
+                .await;
         }
         #[cfg(not(target_arch = "wasm32"))]
         let appending = matches!(
             request,
             Request::Submit { .. } | Request::AnnounceMembership { .. }
         );
-        let result = self.request_inner(request).await;
+        let mut result = self.request_inner(request).await;
         if matches!(&result, Ok(response) if !matches!(response, Response::Error { .. })) {
             self.stream.end_request();
             self.terminal = false;
-        } else {
-            let _ = self.stream.cancel().await;
+        } else if result.is_err() {
+            result = self.stream.cancel_on_error(result).await;
+        } else if let Err(cleanup) = self.stream.cancel().await {
+            result = result.and_then(|response| {
+                Err(
+                    ClientError::new(ClientErrorReason::UnexpectedResponse(response))
+                        .with_additional_error(cleanup),
+                )
+            });
         }
         #[cfg(not(target_arch = "wasm32"))]
-        if appending && matches!(result, Err(ClientError::Timeout)) {
-            return Err(ClientError::AmbiguousTimeout);
+        if appending {
+            return result.map_err(ClientError::ambiguous_timeout);
         }
         result
     }
@@ -661,7 +835,7 @@ where
             .stream
             .receive()
             .await?
-            .ok_or(ClientError::ResponseEnded)?;
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
         if matches!(
@@ -675,7 +849,9 @@ where
         ) {
             Ok(response)
         } else {
-            Err(ClientError::UnexpectedResponse(response))
+            Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            )))
         }
     }
 
@@ -703,11 +879,13 @@ where
             .stream
             .receive()
             .await?
-            .ok_or(ClientError::ResponseEnded)?;
+            .ok_or(ClientError::new(ClientErrorReason::ResponseEnded))?;
 
         let response = protocol::decode_response_network_frame(StreamRole::Author, &frame)?;
         if response != Response::Acknowledged {
-            return Err(ClientError::UnexpectedResponse(response));
+            return Err(ClientError::new(ClientErrorReason::UnexpectedResponse(
+                response,
+            )));
         }
         Ok(())
     }
@@ -777,7 +955,7 @@ where
             self.stream.end_request();
         } else if self.role == StreamRole::Content {
             self.ended = true;
-            return Err(ClientError::ResponseEnded);
+            return Err(ClientError::new(ClientErrorReason::ResponseEnded));
         }
         self.ended = true;
         Ok(None)
@@ -916,7 +1094,7 @@ mod tests {
 
     use async_trait::async_trait;
 
-    use super::{Client, ClientState, ClientStateError};
+    use super::{Client, ClientErrorReason, ClientState, ClientStateError};
     use crate::protocol::{self, Request, Response, StreamRole};
     use crate::transport::{BidirectionalStream, ClientTransport};
 
@@ -1073,8 +1251,6 @@ mod tests {
 
     #[tokio::test]
     async fn failed_physical_disconnect_abandons_authority_and_rejects_later_requests() {
-        use super::ClientError;
-
         let calls = Arc::new(AtomicUsize::new(0));
         let state = Arc::new(ClientState::default());
         state.set_authority(vec![9; 32]).unwrap();
@@ -1086,8 +1262,10 @@ mod tests {
             protocol::Limits::default(),
         );
         assert!(matches!(
-            client.disconnect(),
-            Err(ClientError::Transport("physical disconnect failed"))
+            (client.disconnect())
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::Transport("physical disconnect failed"))
         ));
         assert_eq!(calls.load(Ordering::Relaxed), 1);
         assert!(matches!(
@@ -1099,8 +1277,10 @@ mod tests {
             Err(ClientStateError::MissingAuthority)
         ));
         assert!(matches!(
-            client.open_content_stream().await,
-            Err(ClientError::State(ClientStateError::MissingAuthority))
+            (client.open_content_stream().await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::State(ClientStateError::MissingAuthority))
         ));
         let opening = Request::OpenEventStream {
             version: protocol::PROTOCOL_VERSION,
@@ -1109,22 +1289,28 @@ mod tests {
             resume_after: None,
         };
         assert!(matches!(
-            client.open_event_stream(opening.clone()).await,
-            Err(ClientError::State(ClientStateError::Disconnected))
+            (client.open_event_stream(opening.clone()).await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::State(ClientStateError::Disconnected))
         ));
         assert!(matches!(
-            client
+            (client
                 .send_signal_datagram(&protocol::signals::Submission {
                     target: None,
                     payload: Vec::new(),
                     best_effort: true,
                 })
-                .await,
-            Err(ClientError::State(ClientStateError::Disconnected))
+                .await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::State(ClientStateError::Disconnected))
         ));
         assert!(matches!(
-            client.receive_signal_datagram().await,
-            Err(ClientError::State(ClientStateError::Disconnected))
+            (client.receive_signal_datagram().await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::State(ClientStateError::Disconnected))
         ));
         assert_eq!(calls.load(Ordering::Relaxed), 1);
         client.reconnect().unwrap();
@@ -1133,12 +1319,18 @@ mod tests {
             Err(ClientStateError::MissingAuthority)
         ));
         assert!(matches!(
-            client.open_author_stream().await,
-            Err(ClientError::State(ClientStateError::MissingAuthority))
+            (client.open_author_stream().await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::State(ClientStateError::MissingAuthority))
         ));
         assert!(matches!(
-            client.open_event_stream(opening).await,
-            Err(ClientError::Transport("transport requires replacement"))
+            (client.open_event_stream(opening).await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(ClientErrorReason::Transport(
+                "transport requires replacement"
+            ))
         ));
         assert_eq!(calls.load(Ordering::Relaxed), 2);
     }
@@ -1307,7 +1499,10 @@ mod tests {
             };
             let result = responses.next().await;
             if role == StreamRole::Content && !complete {
-                assert!(matches!(result, Err(super::ClientError::ResponseEnded)));
+                assert!(matches!(
+                    result.as_ref().map_err(super::ClientError::reason),
+                    Err(super::ClientErrorReason::ResponseEnded)
+                ));
             } else {
                 assert!(matches!(result, Ok(None)));
             }
@@ -1361,8 +1556,10 @@ mod tests {
                 ));
             }
             assert!(matches!(
-                author.request(request).await,
-                Err(super::ClientError::State(ClientStateError::Closed))
+                (author.request(request).await)
+                    .as_ref()
+                    .map_err(super::ClientError::reason),
+                Err(super::ClientErrorReason::State(ClientStateError::Closed))
             ));
             assert!(cancelled.load(Ordering::Relaxed));
             author.finish().await.unwrap();
@@ -1394,8 +1591,10 @@ mod tests {
                 .is_none()
         );
         assert!(matches!(
-            content.request(Request::GetBlob { id: [0; 32] }).await,
-            Err(super::ClientError::State(ClientStateError::Closed))
+            (content.request(Request::GetBlob { id: [0; 32] }).await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(super::ClientErrorReason::State(ClientStateError::Closed))
         ));
         assert!(cancelled.swap(false, Ordering::Relaxed));
         let mut snapshot = super::SnapshotStream {
@@ -1413,8 +1612,10 @@ mod tests {
                 .is_none()
         );
         assert!(matches!(
-            snapshot.request(Request::LatestSnapshot).await,
-            Err(super::ClientError::State(ClientStateError::Closed))
+            (snapshot.request(Request::LatestSnapshot).await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(super::ClientErrorReason::State(ClientStateError::Closed))
         ));
         assert!(cancelled.swap(false, Ordering::Relaxed));
         let mut signal = super::SignalStream {
@@ -1435,8 +1636,10 @@ mod tests {
                 .is_none()
         );
         assert!(matches!(
-            signal.request(request, |_| Ok(())).await,
-            Err(super::ClientError::State(ClientStateError::Closed))
+            (signal.request(request, |_| Ok(())).await)
+                .as_ref()
+                .map_err(super::ClientError::reason),
+            Err(super::ClientErrorReason::State(ClientStateError::Closed))
         ));
         assert!(cancelled.load(Ordering::Relaxed));
     }
@@ -1478,14 +1681,17 @@ mod tests {
                 state: Arc::new(ClientState::default()),
                 limits,
             };
-            assert!(matches!(
-                author.request(request.clone()).await,
-                Err(super::ClientError::UnexpectedResponse(actual)) if actual == response
-            ));
+            assert!(
+                matches!((author.request(request.clone()).await).as_ref().map_err(super::ClientError::reason),
+                    Err(super::ClientErrorReason::UnexpectedResponse(actual)) if actual == &response
+                )
+            );
             assert!(cancelled.load(Ordering::Relaxed));
             assert!(matches!(
-                author.request(request).await,
-                Err(super::ClientError::State(ClientStateError::Closed))
+                (author.request(request).await)
+                    .as_ref()
+                    .map_err(super::ClientError::reason),
+                Err(super::ClientErrorReason::State(ClientStateError::Closed))
             ));
         }
     }

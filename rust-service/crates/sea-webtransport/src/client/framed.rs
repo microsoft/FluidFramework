@@ -2,7 +2,7 @@
 
 use std::future::Future;
 
-use super::ClientError;
+use super::{ClientError, ClientErrorReason};
 use crate::{
     protocol::{self, NetworkFrameDecoder},
     transport::{BidirectionalStream, ClientTransport},
@@ -19,6 +19,8 @@ pub(super) struct FramedStream<Stream> {
     deadline: Deadline,
     /// Failed or cancelled I/O must not be reused.
     terminal: bool,
+    /// Completed cleanup, successful or not, must not repeat at each error-handling layer.
+    cleanup_finished: bool,
 }
 
 impl<Stream: BidirectionalStream> FramedStream<Stream> {
@@ -30,6 +32,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
             decoder: NetworkFrameDecoder::new(limits),
             deadline: Deadline::default(),
             terminal: false,
+            cleanup_finished: false,
         }
     }
 
@@ -49,7 +52,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
                 transport
                     .open_bidirectional()
                     .await
-                    .map_err(ClientError::Transport)
+                    .map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))
             })
             .await?;
         Ok(Self {
@@ -57,6 +60,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
             decoder: NetworkFrameDecoder::new(limits),
             deadline,
             terminal: false,
+            cleanup_finished: false,
         })
     }
 
@@ -70,15 +74,21 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
         self.deadline.end_request();
     }
 
-    /// Cancels failed I/O, reporting cleanup failure if cancellation also fails.
-    async fn cancel_on_error<T>(
+    /// Cancels failed I/O without replacing its primary reason when cleanup also fails.
+    pub(super) async fn cancel_on_error<T>(
         &mut self,
         result: Result<T, ClientError<Stream::Error>>,
     ) -> Result<T, ClientError<Stream::Error>> {
-        if result.is_err() {
-            self.cancel().await?;
+        if self.cleanup_finished {
+            return result;
         }
-        result
+        match result {
+            Err(error) => Err(match self.cancel().await {
+                Ok(()) => error,
+                Err(cleanup) => error.with_additional_error(cleanup),
+            }),
+            Ok(value) => Ok(value),
+        }
     }
 
     /// Writes one encoded frame without allowing a cancelled write to be reused.
@@ -91,7 +101,7 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
                 self.stream
                     .send(bytes)
                     .await
-                    .map_err(ClientError::Transport)
+                    .map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))
             })
             .await;
         self.cancel_on_error(result).await?;
@@ -105,7 +115,12 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
         self.terminal = true;
         let result = self
             .deadline
-            .run(async { self.stream.finish().await.map_err(ClientError::Transport) })
+            .run(async {
+                self.stream
+                    .finish()
+                    .await
+                    .map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))
+            })
             .await;
         self.cancel_on_error(result).await?;
         self.terminal = false;
@@ -138,7 +153,12 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
             }
             let chunk = self
                 .deadline
-                .run(async { self.stream.receive().await.map_err(ClientError::Transport) })
+                .run(async {
+                    self.stream
+                        .receive()
+                        .await
+                        .map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))
+                })
                 .await?;
             let Some(chunk) = chunk else {
                 self.decoder.finish()?;
@@ -164,9 +184,16 @@ impl<Stream: BidirectionalStream> FramedStream<Stream> {
         let mut cleanup = self.deadline;
         cleanup.end_frame();
         cleanup.begin_request();
-        cleanup
-            .run(async { self.stream.cancel().await.map_err(ClientError::Transport) })
-            .await
+        let result = cleanup
+            .run(async {
+                self.stream
+                    .cancel()
+                    .await
+                    .map_err(|error| ClientError::new(ClientErrorReason::Transport(error)))
+            })
+            .await;
+        self.cleanup_finished = true;
+        result
     }
 }
 
@@ -235,7 +262,7 @@ impl Deadline {
             .expires()
             .is_some_and(|expires| tokio::time::Instant::now() >= expires)
         {
-            return Err(ClientError::Timeout);
+            return Err(ClientError::new(ClientErrorReason::Timeout));
         }
         Ok(())
     }
@@ -250,7 +277,7 @@ impl Deadline {
         if let Some(expires) = self.expires() {
             return tokio::time::timeout_at(expires, future)
                 .await
-                .map_err(|_| ClientError::Timeout)?;
+                .map_err(|_| ClientError::new(ClientErrorReason::Timeout))?;
         }
         future.await
     }

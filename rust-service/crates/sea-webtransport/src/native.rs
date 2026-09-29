@@ -36,8 +36,8 @@ use wtransport::tls::Sha256Digest;
 use crate::{TransportConfig, WebTransportError, connect_once, transport::native::NativeTransport};
 use crate::{
     client::{
-        AuthorStream, Client, ClientError, ClientStateError, ContentStream, EventStream,
-        SnapshotStream,
+        AuthorStream, Client, ClientError, ClientErrorReason, ClientStateError, ContentStream,
+        EventStream, SnapshotStream,
     },
     protocol,
     transport::{BidirectionalStream, ClientTransport},
@@ -55,9 +55,21 @@ pub trait SessionStreamBounds {}
 #[cfg(target_arch = "wasm32")]
 impl<Value> SessionStreamBounds for Value {}
 
-/// Failure from a typed Sea client.
+/// Failure from a typed Sea client, classified solely by its primary reason.
+///
+/// Supplementary failures are available through [`Self::additional_errors`] and are included
+/// in display output, but do not change recovery decisions or the primary causal chain.
 #[derive(Debug)]
-pub enum SeaClientError {
+pub struct SeaClientError {
+    /// Initiating failure that determines classification.
+    reason: SeaClientErrorReason,
+    /// Diagnostic failures observed while handling the initiating failure.
+    additional_errors: Vec<Self>,
+}
+
+/// Primary reason for a typed Sea client failure.
+#[derive(Debug)]
+pub enum SeaClientErrorReason {
     /// The underlying connection or framing failed.
     #[cfg(not(target_arch = "wasm32"))]
     Transport(WebTransportError),
@@ -72,7 +84,7 @@ pub enum SeaClientError {
     Closed,
 }
 
-impl fmt::Display for SeaClientError {
+impl fmt::Display for SeaClientErrorReason {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Transport(error) => write!(formatter, "transport failed: {error}"),
@@ -85,7 +97,7 @@ impl fmt::Display for SeaClientError {
     }
 }
 
-impl Error for SeaClientError {
+impl Error for SeaClientErrorReason {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             #[cfg(not(target_arch = "wasm32"))]
@@ -97,7 +109,7 @@ impl Error for SeaClientError {
     }
 }
 
-impl ClassifiedError for SeaClientError {
+impl ClassifiedError for SeaClientErrorReason {
     fn kind(&self) -> ErrorKind {
         match self {
             Self::Transport(_) | Self::UnexpectedResponse => ErrorKind::Unavailable,
@@ -118,7 +130,7 @@ impl ClassifiedError for SeaClientError {
 #[cfg(not(target_arch = "wasm32"))]
 impl From<WebTransportError> for SeaClientError {
     fn from(error: WebTransportError) -> Self {
-        Self::Transport(error)
+        Self::new(SeaClientErrorReason::Transport(error))
     }
 }
 
@@ -126,11 +138,13 @@ impl From<protocol::ProtocolError> for SeaClientError {
     fn from(error: protocol::ProtocolError) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            Self::Transport(WebTransportError::SeaProtocol(error))
+            Self::new(SeaClientErrorReason::Transport(
+                WebTransportError::SeaProtocol(error),
+            ))
         }
         #[cfg(target_arch = "wasm32")]
         {
-            Self::Transport(error.to_string())
+            Self::new(SeaClientErrorReason::Transport(error.to_string()))
         }
     }
 }
@@ -138,20 +152,56 @@ impl From<protocol::ProtocolError> for SeaClientError {
 #[cfg(target_arch = "wasm32")]
 impl From<wasm_bindgen::JsValue> for SeaClientError {
     fn from(error: wasm_bindgen::JsValue) -> Self {
-        Self::Transport(format!("{error:?}"))
+        Self::new(SeaClientErrorReason::Transport(format!("{error:?}")))
     }
 }
 
 impl SeaClientError {
+    /// Creates a failure without supplementary diagnostics.
+    #[must_use]
+    pub fn new(reason: SeaClientErrorReason) -> Self {
+        Self {
+            reason,
+            additional_errors: Vec::new(),
+        }
+    }
+
+    /// Returns the primary reason for callers needing more detail than classification.
+    #[must_use]
+    pub fn reason(&self) -> &SeaClientErrorReason {
+        &self.reason
+    }
+
+    /// Returns supplementary failures in observation order, each with its own context.
+    #[must_use]
+    pub fn additional_errors(&self) -> &[Self] {
+        &self.additional_errors
+    }
+
+    /// Attaches a diagnostic failure without changing the primary reason or classification.
+    #[must_use]
+    pub fn with_additional_error(mut self, error: Self) -> Self {
+        self.additional_errors.push(error);
+        self
+    }
+
+    /// Transfers the primary reason and all supplementary failures to a consumer.
+    #[must_use]
+    pub fn into_parts(self) -> (SeaClientErrorReason, Vec<Self>) {
+        (self.reason, self.additional_errors)
+    }
+
     /// Reports a transport failure without retaining platform-owned error values.
     fn transport_message(message: &str) -> Self {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            Self::Transport(WebTransportError::Transport(message.to_owned()))
+            Self::new(SeaClientErrorReason::Transport(
+                WebTransportError::Transport(message.to_owned()),
+            ))
         }
         #[cfg(target_arch = "wasm32")]
         {
-            Self::Transport(message.to_owned())
+            Self::new(SeaClientErrorReason::Transport(message.to_owned()))
         }
     }
 
@@ -168,12 +218,42 @@ impl SeaClientError {
     }
 }
 
+impl From<SeaClientErrorReason> for SeaClientError {
+    fn from(reason: SeaClientErrorReason) -> Self {
+        Self::new(reason)
+    }
+}
+
+impl fmt::Display for SeaClientError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.reason.fmt(formatter)?;
+        for error in &self.additional_errors {
+            write!(formatter, "; additional failure: {error}")?;
+        }
+        Ok(())
+    }
+}
+
+impl Error for SeaClientError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        self.reason.source()
+    }
+}
+
+impl ClassifiedError for SeaClientError {
+    fn kind(&self) -> ErrorKind {
+        self.reason.kind()
+    }
+}
+
 impl From<ClientStateError> for SeaClientError {
     fn from(error: ClientStateError) -> Self {
         match error {
-            ClientStateError::Closed => Self::Closed,
+            ClientStateError::Closed => Self::new(SeaClientErrorReason::Closed),
             ClientStateError::Disconnected => Self::disconnected(),
-            ClientStateError::MissingAuthority => Self::UnexpectedResponse,
+            ClientStateError::MissingAuthority => {
+                Self::new(SeaClientErrorReason::UnexpectedResponse)
+            }
             ClientStateError::Poisoned => {
                 Self::transport_message("shared client state is unavailable")
             }
@@ -183,20 +263,25 @@ impl From<ClientStateError> for SeaClientError {
 
 impl<TransportError: Into<SeaClientError>> From<ClientError<TransportError>> for SeaClientError {
     fn from(error: ClientError<TransportError>) -> Self {
-        match error {
+        let (reason, additional_errors) = error.into_parts();
+        let mut error: Self = match reason {
             #[cfg(not(target_arch = "wasm32"))]
-            ClientError::Timeout => WebTransportError::Timeout.into(),
+            ClientErrorReason::Timeout => WebTransportError::Timeout.into(),
             #[cfg(not(target_arch = "wasm32"))]
-            ClientError::AmbiguousTimeout => Self::Service(
+            ClientErrorReason::AmbiguousTimeout => Self::new(SeaClientErrorReason::Service(
                 protocol::ErrorKind::Ambiguous,
                 "transport operation timed out; commitment is unknown".into(),
-            ),
-            ClientError::State(error) => error.into(),
-            ClientError::Protocol(error) => error.into(),
-            ClientError::Transport(error) => error.into(),
-            ClientError::ResponseEnded => Self::disconnected(),
-            ClientError::UnexpectedResponse(response) => response_error(response),
-        }
+            )),
+            ClientErrorReason::State(error) => error.into(),
+            ClientErrorReason::Protocol(error) => error.into(),
+            ClientErrorReason::Transport(error) => error.into(),
+            ClientErrorReason::ResponseEnded => Self::disconnected(),
+            ClientErrorReason::UnexpectedResponse(response) => response_error(response),
+        };
+        error
+            .additional_errors
+            .extend(additional_errors.into_iter().map(Self::from));
+        error
     }
 }
 
@@ -334,8 +419,10 @@ impl SnapshotPump {
         self.commands
             .send(SnapshotCommand { request, response })
             .await
-            .map_err(|_| SeaClientError::Closed)?;
-        received.await.map_err(|_| SeaClientError::Closed)?
+            .map_err(|_| SeaClientError::new(SeaClientErrorReason::Closed))?;
+        received
+            .await
+            .map_err(|_| SeaClientError::new(SeaClientErrorReason::Closed))?
     }
 }
 
@@ -421,7 +508,7 @@ where
     ) -> Result<Self, SeaClientError> {
         Ok(Self {
             session: SessionId::new(event_stream.session)
-                .map_err(|_| SeaClientError::UnexpectedResponse)?,
+                .map_err(|_| SeaClientError::new(SeaClientErrorReason::UnexpectedResponse))?,
             document: DocumentId::from_bytes(Bytes::copy_from_slice(event_stream.document())),
             scope: Arc::new(()),
             client: Arc::new(client),
@@ -506,7 +593,9 @@ where
     ) -> Result<protocol::Response, SeaClientError> {
         let mut responses = self.content_request(request).await?;
         if responses.len() != 1 {
-            return Err(SeaClientError::UnexpectedResponse);
+            return Err(SeaClientError::new(
+                SeaClientErrorReason::UnexpectedResponse,
+            ));
         }
         Ok(responses.remove(0))
     }
@@ -542,10 +631,9 @@ where
         if start == opened_start {
             let mut opened = self.event_stream.lock().await;
             if let Some(mut events) = opened.take() {
-                let first = events
-                    .next()
-                    .await?
-                    .ok_or(SeaClientError::UnexpectedResponse)?;
+                let first = events.next().await?.ok_or(SeaClientError::new(
+                    SeaClientErrorReason::UnexpectedResponse,
+                ))?;
                 let (snapshot, pending) = match first {
                     protocol::Response::LoadSnapshot(snapshot) => {
                         (Some(self.snapshot_from_wire(&snapshot)), None)
@@ -681,10 +769,13 @@ where
                         .insert(entry.name, tree_from_wire(entry.child))
                         .is_some()
                     {
-                        return Err(SeaClientError::UnexpectedResponse);
+                        return Err(SeaClientError::new(
+                            SeaClientErrorReason::UnexpectedResponse,
+                        ));
                     }
                 }
-                BlobDirectory::new(directory).map_err(|_| SeaClientError::UnexpectedResponse)
+                BlobDirectory::new(directory)
+                    .map_err(|_| SeaClientError::new(SeaClientErrorReason::UnexpectedResponse))
             }
             response => Err(response_error(response)),
         }
@@ -764,7 +855,7 @@ where
             .lock()
             .await
             .as_mut()
-            .ok_or(SeaClientError::Closed)?
+            .ok_or(SeaClientError::new(SeaClientErrorReason::Closed))?
             .request(protocol::Request::AnnounceMembership {
                 metadata: metadata.to_vec(),
             })
@@ -781,7 +872,7 @@ where
         let mut author = self.author_stream.lock().await;
         match author
             .as_mut()
-            .ok_or(SeaClientError::Closed)?
+            .ok_or(SeaClientError::new(SeaClientErrorReason::Closed))?
             .request(protocol::Request::Submit {
                 reference: submission.reference.map(EventPosition::get),
                 event: event_to_wire(&submission.event),
@@ -802,7 +893,7 @@ where
             .lock()
             .await
             .take()
-            .ok_or(SeaClientError::Closed)?;
+            .ok_or(SeaClientError::new(SeaClientErrorReason::Closed))?;
         author.close().await?;
         if let Some(pump) = self
             .snapshot_stream
@@ -836,10 +927,10 @@ where
         if !Arc::ptr_eq(&self.scope, &snapshot.root.scope)
             || !Arc::ptr_eq(&self.scope, &snapshot.at_event.scope)
         {
-            return Err(SeaClientError::Service(
+            return Err(SeaClientError::new(SeaClientErrorReason::Service(
                 protocol::ErrorKind::Rejected,
                 "snapshot handles belong to another client".to_owned(),
-            ));
+            )));
         }
         let pump = self
             .snapshot_stream
@@ -847,7 +938,7 @@ where
             .await
             .as_ref()
             .and_then(Weak::upgrade)
-            .ok_or(SeaClientError::Closed)?;
+            .ok_or(SeaClientError::new(SeaClientErrorReason::Closed))?;
         match pump
             .request(protocol::Request::PublishSnapshot {
                 fence,
@@ -887,7 +978,10 @@ where
                     return Ok(None);
                 }
                 let state = receiver.borrow_and_update().clone().map_err(|message| {
-                    SeaClientError::Service(protocol::ErrorKind::Unavailable, message)
+                    SeaClientError::new(SeaClientErrorReason::Service(
+                        protocol::ErrorKind::Unavailable,
+                        message,
+                    ))
                 })?;
                 Ok(Some((state, (pump, receiver, false))))
             },
@@ -965,7 +1059,7 @@ fn session_event_from_wire(
         },
 
         session_id: SessionId::new(event.session)
-            .map_err(|_| SeaClientError::UnexpectedResponse)?,
+            .map_err(|_| SeaClientError::new(SeaClientErrorReason::UnexpectedResponse))?,
 
         reference: event.reference.map(EventPosition::new),
         minimum_reference: event.minimum_reference.map(EventPosition::new),
@@ -1006,8 +1100,10 @@ fn tree_to_wire(id: BlobTreeId) -> protocol::TreeId {
 
 fn response_error(response: protocol::Response) -> SeaClientError {
     match response {
-        protocol::Response::Error { kind, message } => SeaClientError::Service(kind, message),
-        _ => SeaClientError::UnexpectedResponse,
+        protocol::Response::Error { kind, message } => {
+            SeaClientError::new(SeaClientErrorReason::Service(kind, message))
+        }
+        _ => SeaClientError::new(SeaClientErrorReason::UnexpectedResponse),
     }
 }
 
@@ -1016,6 +1112,111 @@ mod tests {
     use super::*;
     use crate::protocol::{Response, StreamRole};
     use std::collections::VecDeque;
+
+    #[test]
+    fn converting_error_context_preserves_nested_payloads_and_primary_classification() {
+        let primary = SeaClientError::new(SeaClientErrorReason::Service(
+            protocol::ErrorKind::Conflict,
+            "primary conflict".to_owned(),
+        ))
+        .with_additional_error(SeaClientError::new(SeaClientErrorReason::Closed));
+        let nested = SeaClientError::new(SeaClientErrorReason::Service(
+            protocol::ErrorKind::Rejected,
+            "nested rejection".to_owned(),
+        ));
+        let additional = ClientError::new(ClientErrorReason::Transport(
+            SeaClientError::new(SeaClientErrorReason::UnexpectedResponse)
+                .with_additional_error(nested),
+        ))
+        .with_additional_error(ClientError::new(ClientErrorReason::ResponseEnded));
+        let error = ClientError::new(ClientErrorReason::Transport(primary))
+            .with_additional_error(additional)
+            .with_additional_error(ClientStateError::Closed.into());
+        let error = SeaClientError::from(error);
+        assert_eq!(error.kind(), ErrorKind::Conflict);
+        assert!(matches!(
+            error.reason(),
+            SeaClientErrorReason::Service(protocol::ErrorKind::Conflict, message)
+                if message == "primary conflict"
+        ));
+        let additional = error.additional_errors();
+        assert_eq!(additional.len(), 3);
+        assert!(matches!(
+            additional[0].reason(),
+            SeaClientErrorReason::Closed
+        ));
+        assert!(matches!(
+            additional[1].reason(),
+            SeaClientErrorReason::UnexpectedResponse
+        ));
+        assert!(matches!(
+            additional[2].reason(),
+            SeaClientErrorReason::Closed
+        ));
+        let nested = additional[1].additional_errors();
+        assert_eq!(nested.len(), 2);
+        assert!(matches!(
+            nested[0].reason(),
+            SeaClientErrorReason::Service(protocol::ErrorKind::Rejected, message)
+                if message == "nested rejection"
+        ));
+        assert_eq!(nested[1].kind(), ErrorKind::Unavailable);
+        assert!(error.source().is_none());
+        let display = error.to_string();
+        assert!(display.starts_with("primary conflict; additional failure:"));
+        assert!(display.contains("nested rejection"));
+        assert_eq!(display.matches("additional failure:").count(), 5);
+        let (reason, additional) = error.into_parts();
+        assert_eq!(reason.kind(), ErrorKind::Conflict);
+        assert_eq!(additional.len(), 3);
+    }
+
+    #[test]
+    #[cfg(not(target_arch = "wasm32"))]
+    fn error_sources_describe_primary_causes_not_supplementary_failures() {
+        let error = ClientError::new(ClientErrorReason::Transport(
+            WebTransportError::InvalidConfig,
+        ))
+        .with_additional_error(ClientError::new(ClientErrorReason::Transport(
+            WebTransportError::Timeout,
+        )));
+        assert!(matches!(
+            error.source().unwrap().downcast_ref::<WebTransportError>(),
+            Some(WebTransportError::InvalidConfig)
+        ));
+        assert!(error.to_string().contains("additional failure:"));
+        let error = SeaClientError::from(error);
+        assert!(matches!(
+            error.source().unwrap().downcast_ref::<WebTransportError>(),
+            Some(WebTransportError::InvalidConfig)
+        ));
+        assert!(matches!(
+            error.additional_errors()[0]
+                .source()
+                .unwrap()
+                .downcast_ref::<WebTransportError>(),
+            Some(WebTransportError::Timeout)
+        ));
+        assert_eq!(error.kind(), ErrorKind::Unavailable);
+    }
+
+    #[test]
+    fn generic_error_context_does_not_require_transport_error_traits() {
+        let error = ClientError::new(ClientErrorReason::Transport("primary"))
+            .with_additional_error(ClientError::new(ClientErrorReason::Transport("cleanup")));
+        assert!(matches!(
+            error.reason(),
+            ClientErrorReason::Transport("primary")
+        ));
+        assert!(error.to_string().contains("cleanup"));
+        let (reason, additional) = error.into_parts();
+        assert!(matches!(reason, ClientErrorReason::Transport("primary")));
+        assert_eq!(additional.len(), 1);
+        assert!(matches!(
+            additional[0].reason(),
+            ClientErrorReason::Transport("cleanup")
+        ));
+    }
 
     /// Supplies only the expected logical streams, detecting redundant content opens.
     struct OpeningTransport {
@@ -1262,8 +1463,10 @@ mod tests {
     #[test]
     fn load_rejects_unexpected_response_kind() {
         assert!(matches!(
-            event_from_stream_response(Response::Acknowledged),
-            Err(SeaClientError::UnexpectedResponse)
+            (event_from_stream_response(Response::Acknowledged))
+                .as_ref()
+                .map_err(super::SeaClientError::reason),
+            Err(SeaClientErrorReason::UnexpectedResponse)
         ));
     }
 
@@ -1325,11 +1528,12 @@ mod tests {
                 at_event: other.handle(position),
             },
         ] {
-            assert!(matches!(
-                client.publish_snapshot(None, None, snapshot).await,
-                Err(SeaClientError::Service(protocol::ErrorKind::Rejected, message))
-                    if message == "snapshot handles belong to another client"
-            ));
+            assert!(
+                matches!((client.publish_snapshot(None, None, snapshot).await).as_ref().map_err(super::SeaClientError::reason),
+                    Err(SeaClientErrorReason::Service(protocol::ErrorKind::Rejected, message))
+                        if message == "snapshot handles belong to another client"
+                )
+            );
         }
     }
 

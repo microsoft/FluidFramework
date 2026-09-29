@@ -1,11 +1,11 @@
 # Decision 0030: Defer Compound Client Errors
 
-Status: accepted
+Status: superseded
 Date: 2026-09-29
 Iteration: 0020
 Owners: User and iteration coordinator
 Supersedes: none
-Superseded by: none
+Superseded by: [0031: Primary Client Errors With Supplementary Diagnostics](0031-primary-client-error-context.md)
 
 ## Context
 

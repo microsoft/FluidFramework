@@ -1,8 +1,8 @@
 //! Native and browser signal pumping, independent of archive progress.
 
 use crate::{
-    client::{Client, ClientError, ClientStateError, SignalStream},
-    native::{SeaClientError, SessionStreamBounds},
+    client::{Client, ClientError, ClientErrorReason, ClientStateError, SignalStream},
+    native::{SeaClientError, SeaClientErrorReason, SessionStreamBounds},
     protocol,
     transport::{BidirectionalStream, ClientTransport},
 };
@@ -59,10 +59,10 @@ where
         let initial = stream.next().await?;
         if !matches!(initial, protocol::signals::Event::Members(_)) {
             stream.cancel().await;
-            return Err(SeaClientError::Service(
+            return Err(SeaClientError::new(SeaClientErrorReason::Service(
                 protocol::ErrorKind::Rejected,
                 "signal registration must start with a membership snapshot".to_owned(),
-            ));
+            )));
         }
         Ok(SignalClient::start(stream, self.client.clone(), initial))
     }
@@ -126,7 +126,7 @@ impl SignalClient {
                                 }
                             }
                             let result = stream.request(protocol::Request::SendSignal(submission), |event| {
-                                deliver(&events, event).map_err(|()| ClientError::State(ClientStateError::Closed))
+                                deliver(&events, event).map_err(|()| ClientError::new(ClientErrorReason::State(ClientStateError::Closed)))
                             }).await.map_err(SeaClientError::from);
                             let error = result.as_ref().err().map(ToString::to_string);
                             let _ = command.response.send(result);
@@ -185,7 +185,7 @@ impl SeaService for SignalClient {
 impl SeaSignals for SignalClient {
     async fn send_signal(&self, submission: SignalSubmission) -> Result<(), SeaClientError> {
         if self.terminal.borrow().is_some() {
-            return Err(SeaClientError::Closed);
+            return Err(SeaClientError::new(SeaClientErrorReason::Closed));
         }
         let (response, received) = oneshot::channel();
         self.commands
@@ -194,33 +194,35 @@ impl SeaSignals for SignalClient {
                 response,
             })
             .map_err(|_| {
-                SeaClientError::Service(
+                SeaClientError::new(SeaClientErrorReason::Service(
                     protocol::ErrorKind::Unavailable,
                     "signal submission queue is full or closed".to_owned(),
-                )
+                ))
             })?;
-        received.await.map_err(|_| SeaClientError::Closed)?
+        received
+            .await
+            .map_err(|_| SeaClientError::new(SeaClientErrorReason::Closed))?
     }
     async fn next_signal(&self) -> Result<Option<SignalEvent>, SeaClientError> {
         let mut terminal = self.terminal.subscribe();
         let mut events = self.events.try_lock().map_err(|_| {
-            SeaClientError::Service(
+            SeaClientError::new(SeaClientErrorReason::Service(
                 protocol::ErrorKind::Conflict,
                 "signal receive is already pending".to_owned(),
-            )
+            ))
         })?;
         loop {
             if let Some(error) = terminal.borrow().clone() {
                 return if error.is_empty() {
                     Ok(None)
                 } else {
-                    Err(SeaClientError::Service(
+                    Err(SeaClientError::new(SeaClientErrorReason::Service(
                         protocol::ErrorKind::Unavailable,
                         error,
-                    ))
+                    )))
                 };
             }
-            tokio::select! { biased; _ = terminal.changed() => {}, event = events.recv() => return event.map(Some).ok_or(SeaClientError::Closed), }
+            tokio::select! { biased; _ = terminal.changed() => {}, event = events.recv() => return event.map(Some).ok_or(SeaClientError::new(SeaClientErrorReason::Closed)), }
         }
     }
     async fn close_signals(&self) -> Result<(), SeaClientError> {
@@ -252,8 +254,13 @@ mod tests {
             tokio::pin!(pending);
             assert!(pending.as_mut().now_or_never().is_none());
             assert!(matches!(
-                client.next_signal().await,
-                Err(SeaClientError::Service(protocol::ErrorKind::Conflict, _))
+                (client.next_signal().await)
+                    .as_ref()
+                    .map_err(super::super::native::SeaClientError::reason),
+                Err(SeaClientErrorReason::Service(
+                    protocol::ErrorKind::Conflict,
+                    _
+                ))
             ));
         }
         let event = SignalEvent::Members(Vec::new());
@@ -265,14 +272,16 @@ mod tests {
         client.close_signals().await.unwrap();
         assert!(pending.await.unwrap().is_none());
         assert!(matches!(
-            client
+            (client
                 .send_signal(SignalSubmission {
                     target: None,
                     payload: bytes::Bytes::new(),
                     delivery: sea_core::signals::SignalDelivery::Reliable,
                 })
-                .await,
-            Err(SeaClientError::Closed)
+                .await)
+                .as_ref()
+                .map_err(super::super::native::SeaClientError::reason),
+            Err(SeaClientErrorReason::Closed)
         ));
     }
 
@@ -288,11 +297,12 @@ mod tests {
             terminal,
             task: AbortHandle::new_pair().0,
         };
-        assert!(matches!(
-            client.next_signal().await,
-            Err(SeaClientError::Service(protocol::ErrorKind::Unavailable, message))
-                if message == "overflow"
-        ));
+        assert!(
+            matches!((client.next_signal().await).as_ref().map_err(super::super::native::SeaClientError::reason),
+                Err(SeaClientErrorReason::Service(protocol::ErrorKind::Unavailable, message))
+                    if message == "overflow"
+            )
+        );
     }
 
     #[test]
