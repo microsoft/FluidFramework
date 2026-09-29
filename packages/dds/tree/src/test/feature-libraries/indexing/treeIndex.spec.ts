@@ -194,7 +194,7 @@ describe("tree indexes", () => {
 	});
 
 	describe("can re-index nodes in the spine of a replaced value", () => {
-		// schemas for the nested objects
+		// schema for the nested objects
 		class Egg extends sf.object("Egg", {
 			color: sf.string,
 		}) {}

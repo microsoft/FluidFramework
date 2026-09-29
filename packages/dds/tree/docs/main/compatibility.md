@@ -43,7 +43,7 @@ Current organizational standards put:
 -   Codecs into a file ending in `Codec.ts` / `Codecs.ts`
 
 Having consistent conventions for these files helps to make changes to persisted formats obvious at review time.
-Schemas for primitive types which are used in persisted formats but don't intrinsically define formats (such as branded strings) can be defined where convenient.
+Schema for primitive types which are used in persisted formats but don't intrinsically define formats (such as branded strings) can be defined where convenient.
 Codec logic should generally be self-contained: all imports should either be of the form `import type`, or should import from another persisted format file.
 Importing Fluid Framework libraries that have the same guarantees (e.g. `SummaryTreeBuilder`) is also acceptable.
 Codecs should expose the minimal necessary set of types.
@@ -52,7 +52,7 @@ Decoding should validate that the data is not malformed: see [encoding validatio
 
 With the exception of primitives, storage format types should never be exposed in the public API.
 
-> Note: due to API-extractor implementation details, the typebox schemas for primitive types _cannot_ share a name with the primitive type,
+> Note: due to API-extractor implementation details, the typebox schema for primitive types _cannot_ share a name with the primitive type,
 > as it exposes _both_ the value and the type exported under the same name, even if the export is specified via `export type`.
 > For example, the typebox schema for `ChangesetLocalId` is named `ChangesetLocalIdSchema`.
 
@@ -66,7 +66,7 @@ it's a lot easier to investigate and deploy fixes for documents when incompatibl
 
 For this reason, encoded data formats should declare JSON schema for the purpose of runtime validation.
 
-> In the near term, we're using [typebox](https://github.com/sinclairzx81/typebox) to declare these schemas.
+> In the near term, we're using [typebox](https://github.com/sinclairzx81/typebox) to declare these schema.
 > This choice is a matter of convenience: its API naturally matches the expressiveness of typescript types.
 
 Since format validation does incur runtime and bundle-size cost to obtain additional safety,

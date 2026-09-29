@@ -852,7 +852,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 /**
  * Build the allowed types for a Stored Schema.
  *
- * @remarks Staged upgrades do not apply to stored schemas, so we omit the {@link SimpleAllowedTypeAttributes.isStaged | staging flag } when building {@link SimpleAllowedTypeAttributes}.
+ * @remarks Staged upgrades do not apply to stored schema, so we omit the {@link SimpleAllowedTypeAttributes.isStaged | staging flag } when building {@link SimpleAllowedTypeAttributes}.
  * @param types - The types to create allowed types for.
  * @returns The allowed types.
  */
@@ -861,7 +861,7 @@ function buildSimpleAllowedTypeAttributesForStoredSchema(
 ): ReadonlyMap<string, SimpleAllowedTypeAttributes<SchemaType.Stored>> {
 	const allowedTypesInfo = new Map<string, SimpleAllowedTypeAttributes<SchemaType.Stored>>();
 	for (const type of types) {
-		// Stored schemas do not have staged upgrades
+		// Stored schema do not have staged upgrades
 		allowedTypesInfo.set(type, { isStaged: undefined });
 	}
 	return allowedTypesInfo;

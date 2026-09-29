@@ -126,7 +126,7 @@ export interface SchemaStaticsAlpha {
 	 *
 	 * Defaults are evaluated eagerly during node construction.
 	 *
-	 * For recursive schemas, use {@link SchemaStaticsAlpha.withDefaultRecursive} instead.
+	 * For recursive schema, use {@link SchemaStaticsAlpha.withDefaultRecursive} instead.
 	 *
 	 * See the {@link https://fluidframework.com/docs/data-structures/tree/schema-definition/default-field-values | Default Field Values documentation}
 	 * for a comprehensive guide with additional examples.

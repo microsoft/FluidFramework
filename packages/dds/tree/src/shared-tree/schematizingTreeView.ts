@@ -153,7 +153,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * This is set to true while an edit impacting the document schema is in progress.
 	 * This allows suppressing extra rootChanged / schemaChanged events until the edit concludes.
-	 * This is useful especially for some initialization edits, since document initialization can involve transient schemas
+	 * This is useful especially for some initialization edits, since document initialization can involve transient schema
 	 * which are implementation details and should not be exposed to the user.
 	 */
 	private midUpgrade = false;

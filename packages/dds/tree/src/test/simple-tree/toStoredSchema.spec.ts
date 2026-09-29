@@ -139,7 +139,7 @@ describe("toStoredSchema", () => {
 							StagedSchemaUpgradePolicy.permissive,
 						);
 
-						// The restrictive case, used for initial schemas and upgrades, does not include any staged schema features.
+						// The restrictive case, used for initial schema and upgrades, does not include any staged schema features.
 						// The permissive case, used for unhydrated trees, includes all staged schema features.
 						// They should be equal if and only if there are no staged schema features.
 						if (getStagedSchemaUpgrades(testCase.schema).size > 0) {

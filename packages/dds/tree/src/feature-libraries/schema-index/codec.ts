@@ -43,7 +43,7 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 }
 
 /**
- * Shared logic for encoding node schemas.
+ * Shared logic for encoding node schema.
  * @param repo - The stored schema to encode.
  * @param encodeValue - A function which encodes a single node schema.
  * @returns The encoded node schema.

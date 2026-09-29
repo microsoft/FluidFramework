@@ -81,7 +81,7 @@ class Table extends TableSchema.table({
 
 describe("TableFactory unit tests", () => {
 	it("compatibility", () => {
-		// There is not a single fixed table schema, but instead a collection of utilities that generate table schemas.
+		// There is not a single fixed table schema, but instead a collection of utilities that generate table schema.
 		// Therefore, we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of TableSchema.table
 		// which is what this test does.
 		const currentViewSchema = new TreeViewConfiguration({ schema: Table });

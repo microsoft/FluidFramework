@@ -33,7 +33,7 @@ import * as Format from "../simpleSchemaFormatV1.js";
 /**
  * Encodes the compatibility impacting subset of simple schema (view or stored) into a serializable format.
  *
- * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schemas.
+ * @remarks The JSON-compatible schema returned from this method is only intended for use in snapshots/comparisons of schema.
  * It is not possible to reconstruct a full schema (including metadata and persistedMetadata) from the encoded format.
  * @param treeSchema - The tree schema to convert.
  * @returns A serializable representation of the schema.

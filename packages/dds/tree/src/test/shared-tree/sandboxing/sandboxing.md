@@ -49,7 +49,7 @@ These terms are similar to the terms for virtual machines.
 - **Tree payload**: The encoded initial tree or encoded change carried by the sandbox.
   Its **value vocabulary** is the set of permitted values, independent of the structure required by a particular tree codec.
 - **Semantic validation**: Sandbox message and payload checks performed after normalization or transport decoding.
-  TypeBox validates schemas, including custom checks for local handles, records, and buffer placeholders.
+  TypeBox validates schema, including custom checks for local handles, records, and buffer placeholders.
   This is not complete validation of every message or encoded change.
 - **Tree codec**: An existing SharedTree codec that interprets encoded tree content or changes.
   It receives local handles, not wire handle markers.
@@ -114,7 +114,7 @@ flowchart TB
     subgraph Sending["Sender"]
         S["Local message<br/>Local handles and actual buffers"]
         N["Restricted copy and normalization<br/>Records to null prototypes<br/>Buffers to registered placeholders"]
-        V["Semantic validation<br/>Message checks and TypeBox schemas"]
+        V["Semantic validation<br/>Message checks and TypeBox schema"]
         E["Transport encoding<br/>Handles to tokens; colliding records escaped<br/>Buffer placeholders to actual buffers"]
         S --> N --> V --> E
     end
@@ -125,7 +125,7 @@ flowchart TB
     subgraph Receiving["Receiver"]
         C["Restricted copy of the entire message<br/>Records to null prototypes<br/>Buffers to registered placeholders"]
         U["Transport unescaping<br/>Check handle and escape marker structure<br/>Restore authorized handles and ordinary records"]
-        Q["Semantic validation<br/>Message checks and TypeBox schemas<br/>Reject buffer placeholders in tree payloads"]
+        Q["Semantic validation<br/>Message checks and TypeBox schema<br/>Reject buffer placeholders in tree payloads"]
         B["Unwrap only a validated blob-response field<br/>No recursive buffer restoration"]
         R["Route message<br/>Check direction and protocol state"]
         C --> U --> Q --> B --> R
@@ -188,7 +188,7 @@ The [pipeline](#message-conversion-and-validation) enforces these additional rul
 - **Buffers:** Blob-response fields require registered buffer placeholders; tree payloads reject them.
   Marker-shaped user data remains ordinary data and cannot forge a buffer.
 - **Identifiers and messages:** Use distinct branded types for handle tokens and blob request IDs; brands do not confer authorization.
-  Handle-marker and blob-message schemas require nonnegative safe-integer IDs, required fields, and no extra properties.
+  Handle-marker and blob-message schema require nonnegative safe-integer IDs, required fields, and no extra properties.
   Blob responses contain either a blob or an error string, never both.
 - **Protocol state:** Enforce the [message directions](#participants-and-message-directions), token authorization, and response matching against outstanding requests.
 - **Local handles:** Legacy string-property lookalikes remain ordinary data.
@@ -247,7 +247,7 @@ Fix, restore, and use that implementation, or implement a different solution.
 
 Before using the sandbox with an untrusted participant, extend the existing [transport validation](#transport-validation):
 
-- Complete schemas for data changes, acknowledgments, and the full initialization payload.
+- Complete schema for data changes, acknowledgments, and the full initialization payload.
 - Validate codec-specific change structure before mutation, beyond the value vocabulary, to prevent partial application of malformed changes.
 - Verify that tree codecs reject handles in structural-record positions, including record-node data, without traversing handle internals or invoking getters.
 - Define resource limits for message size, nesting depth, outstanding requests, and blob data.

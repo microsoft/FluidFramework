@@ -262,7 +262,7 @@ describe("Schema Discrepancies", () => {
 	});
 
 	it("Differing fields on object node schema", () => {
-		// Both utilize ObjectNode but with differing fieldSchemas
+		// Both utilize ObjectNode but with differing fieldSchema
 		class ObjectNode1 extends schemaFactory.objectAlpha(testTreeNodeName, {
 			x: SchemaFactory.number,
 		}) {}

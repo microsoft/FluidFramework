@@ -72,7 +72,7 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 		 */
 		kind: TreeNodeSchemaUnionFormat,
 
-		// Data in common for all TreeNode schemas:
+		// Data in common for all TreeNode schema:
 		/**
 		 * Persisted subset of metadata for this node schema.
 		 */

@@ -327,11 +327,11 @@ export interface ITreeCheckout
 	fork(): ITreeCheckout;
 
 	/**
-	 * Replaces all schemas with the provided schema.
-	 * Can overwrite preexisting schemas, and removes unmentioned schemas.
+	 * Replaces all schema with the provided schema.
+	 * Can overwrite preexisting schema, and removes unmentioned schema.
 	 *
 	 * @param newSchema - The new schema to replace the existing schema.
-	 * @param allowNonSupersetSchema - Whether to allow non-superset schemas.
+	 * @param allowNonSupersetSchema - Whether to allow non-superset schema.
 	 * Defaults to false.
 	 * If false, an assert will be thrown if the new schema does not permit all possible documents which were permitted under the old schema.
 	 */

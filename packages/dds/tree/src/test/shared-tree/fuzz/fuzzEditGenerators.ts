@@ -75,7 +75,7 @@ export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
 	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
-	 * However, fuzz schemas always have the same field names, so schema-dependent
+	 * However, fuzz schema always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
 	 *
 	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
@@ -89,7 +89,7 @@ export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSch
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
 	 * @remarks The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
 	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
-	 * However, fuzz schemas always have the same field names, so schema-dependent
+	 * However, fuzz schema always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
 	 *
 	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
@@ -100,14 +100,14 @@ export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSch
 
 export interface FuzzTestState extends DDSFuzzTestState<IChannelFactory<ISharedTree>> {
 	/**
-	 * Schematized view of clients and their nodeSchemas. Created lazily by viewFromState.
+	 * Schematized view of clients and their nodeSchema. Created lazily by viewFromState.
 	 *
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.
 	 */
 	clientViews?: Map<ISharedTree, FuzzView>;
 	/**
-	 * Schematized view of clients undergoing transactions with their nodeSchemas.
+	 * Schematized view of clients undergoing transactions with their nodeSchema.
 	 * Edits to this view are not visible to other clients until the transaction is closed.
 	 *
 	 * Maintaining a separate view here is necessary since async transactions are not supported on the root checkout,
@@ -116,7 +116,7 @@ export interface FuzzTestState extends DDSFuzzTestState<IChannelFactory<ISharedT
 	transactionViews?: Map<ITreePrivate, FuzzTransactionView>;
 
 	/**
-	 * Schematized view of clients' forked views and their nodeSchemas.
+	 * Schematized view of clients' forked views and their nodeSchema.
 	 *
 	 * SharedTrees undergoing a transaction will have a forked view in {@link transactionViews} instead,
 	 * which should be used in place of this view until the transaction is complete.

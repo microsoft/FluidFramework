@@ -50,7 +50,7 @@ export class Row extends TableSchema.row({
 
 /**
  * Defines the schema for a table, which includes columns and rows.
- * It uses the previously defined Cell, Column, and Row schemas.
+ * It uses the previously defined Cell, Column, and Row schema.
  */
 export class Table extends TableSchema.table({
 	schemaFactory,

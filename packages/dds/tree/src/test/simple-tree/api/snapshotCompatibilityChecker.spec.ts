@@ -406,7 +406,7 @@ Snapshots exist for versions: [].`,
 
 			// Point2 has allowUnknownOptionalFields but is otherwise equivalent to Point1, so it should not a compatibility error.
 			// It should however error due to the snapshot not being up to date.
-			// This verifies that the implementation correctly considers these schemas equivalent.
+			// This verifies that the implementation correctly considers these schema equivalent.
 			assert.throws(
 				() =>
 					snapshotSchemaCompatibility({

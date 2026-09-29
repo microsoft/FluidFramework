@@ -739,7 +739,7 @@ export namespace FormattedText {
 	 * and navigation/selection (which typically uses grapheme clusters).
 	 *
 	 * @see {@link FormattedText.Statics.fromString} for construction.
-	 * @see {@link FormattedText.createSchema} for creating schemas whose nodes implement this.
+	 * @see {@link FormattedText.createSchema} for creating schema whose nodes implement this.
 	 * @sealed
 	 * @alpha
 	 */

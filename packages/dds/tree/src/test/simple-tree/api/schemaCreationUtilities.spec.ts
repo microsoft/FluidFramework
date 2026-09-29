@@ -37,7 +37,7 @@ const schema = new SchemaFactoryBeta("test");
 
 describe("schemaCreationUtilities", () => {
 	it("enumFromStrings compatibility", () => {
-		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
+		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schema.
 		// Therefore we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of enumFromStrings
 		// which is what this test does.
 		const Mode = enumFromStrings(schema.scopedFactory("Mode"), ["Fun", "Cool"]);
@@ -46,7 +46,7 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum compatibility", () => {
-		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schemas.
+		// There is not a single fixed enum schema, but instead a collection of utilities that generate enum schema.
 		// Therefore, we cannot directly utilize `testSchemaCompatibilitySnapshots`, but we can apply it to one example use of adaptEnum
 		// which is what this test does.
 		enum Mode {

@@ -87,7 +87,7 @@ export interface SchemaStaticsBeta {
 	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
 	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type into a tree whose stored schema does not permit it.
 	 *
-	 * For recursive schemas, use {@link SchemaStaticsBeta.stagedRecursive} instead.
+	 * For recursive schema, use {@link SchemaStaticsBeta.stagedRecursive} instead.
 	 * It offers equivalent runtime behavior with relaxed compile-time typing for recursive type.
 	 *
 	 * @example

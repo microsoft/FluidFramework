@@ -4,18 +4,18 @@
 
 ### Minor Changes
 
-- createIdentifierIndex handles schemas with multiple identifiers consistently ([#28233](https://github.com/microsoft/FluidFramework/pull/28233)) [7663ec8ca5d](https://github.com/microsoft/FluidFramework/commit/7663ec8ca5df5ec6f60d0c6a4e9991fbb0fa5d04)
+- createIdentifierIndex handles schema with multiple identifiers consistently ([#28233](https://github.com/microsoft/FluidFramework/pull/28233)) [7663ec8ca5d](https://github.com/microsoft/FluidFramework/commit/7663ec8ca5df5ec6f60d0c6a4e9991fbb0fa5d04)
 
   [`createIdentifierIndex`](https://fluidframework.com/docs/api/tree/#createidentifierindex-function) now indexes a node only when its schema has exactly one [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) field.
-  Schemas with multiple identifier fields are skipped instead of arbitrarily indexing the first identifier field.
-  This avoids field-order-dependent behavior while allowing identifier indexes to be created for trees containing such schemas.
+  Schema with multiple identifier fields are skipped instead of arbitrarily indexing the first identifier field.
+  This avoids field-order-dependent behavior while allowing identifier indexes to be created for trees containing such schema.
 
   Identifier indexes now also take advantage of identifier fields being immutable.
   This avoids unnecessarily re-indexing existing nodes after tree edits while continuing to index newly created nodes and filter detached nodes from index results.
 
 - createTreeIndex now interprets object field selectors as property keys ([#28233](https://github.com/microsoft/FluidFramework/pull/28233)) [7663ec8ca5d](https://github.com/microsoft/FluidFramework/commit/7663ec8ca5df5ec6f60d0c6a4e9991fbb0fa5d04)
 
-  [`createTreeIndex`](https://fluidframework.com/docs/api/tree/#createtreeindex-function) previously interpreted keys returned by [`TreeIndexKeyFieldSelector`](https://fluidframework.com/docs/api/tree/treeindexkeyfieldselector-typealias) as stored keys. This was inconsistent with the Simple Tree schema API and caused indexes to fail when an object field's property key differed from its stored key. Object field selectors are now translated from property keys to stored keys internally. Selectors must return `undefined` for non-object schemas.
+  [`createTreeIndex`](https://fluidframework.com/docs/api/tree/#createtreeindex-function) previously interpreted keys returned by [`TreeIndexKeyFieldSelector`](https://fluidframework.com/docs/api/tree/treeindexkeyfieldselector-typealias) as stored keys. This was inconsistent with the Simple Tree schema API and caused indexes to fail when an object field's property key differed from its stored key. Object field selectors are now translated from property keys to stored keys internally. Selectors must return `undefined` for non-object schema.
 
 ## 3.1.0
 
@@ -102,7 +102,7 @@
 
 - Rename TreeBranch and TreeBranchAlpha to UntypedTreeView ([#27932](https://github.com/microsoft/FluidFramework/pull/27932)) [22e5b4ee1cd](https://github.com/microsoft/FluidFramework/commit/22e5b4ee1cd24467e3ba5be96f5f62eb54d5249d)
 
-  `UntypedTreeView` and `UntypedTreeViewAlpha` replace the beta `TreeBranch` and alpha `TreeBranchAlpha` interfaces, clarifying that they represent tree views without known schemas. The old names remain available as deprecated compatibility aliases and will be removed in a future release.
+  `UntypedTreeView` and `UntypedTreeViewAlpha` replace the beta `TreeBranch` and alpha `TreeBranchAlpha` interfaces, clarifying that they represent tree views without known schema. The old names remain available as deprecated compatibility aliases and will be removed in a future release.
 
   Update API imports and type annotations to use the new names:
 
@@ -295,7 +295,7 @@
   ]
   ```
 
-  Applications can see from `mismatch: "allowedTypes"` that the schemas differ in their allowed types, compare `view` with `stored` to determine which types each schema permits, and use `location` to find the field where the mismatch occurs.
+  Applications can see from `mismatch: "allowedTypes"` that the schema differ in their allowed types, compare `view` with `stored` to determine which types each schema permits, and use `location` to find the field where the mismatch occurs.
 
 - SharedTree schema errors now explain the mismatch ([#27950](https://github.com/microsoft/FluidFramework/pull/27950)) [0e44043224e](https://github.com/microsoft/FluidFramework/commit/0e44043224e1ac08433f71917e4350aa7f3e4047)
 
@@ -1222,8 +1222,8 @@
 
   Previously, passing their output to a recursive schema (for example `factory.arrayRecursive` or `factory.mapRecursive`) computed the node's insertable content type as `never`.
   This caused valid insertions to fail to compile.
-  Recursive schemas built from a `typesRecursive` list with two or more types now accept insertable content for each of the allowed types as expected.
-  Recursive schemas that use a single type were unaffected.
+  Recursive schema built from a `typesRecursive` list with two or more types now accept insertable content for each of the allowed types as expected.
+  Recursive schema that use a single type were unaffected.
 
 ## 2.111.0
 
@@ -1379,7 +1379,7 @@ Dependency updates only.
 
 - Add SchemaFactoryAlpha.stagedOptionalRecursive for recursive staged-optional fields ([#27042](https://github.com/microsoft/FluidFramework/pull/27042)) [a6e084e2b66](https://github.com/microsoft/FluidFramework/commit/a6e084e2b66a1dd020aecafc74d163806481e55c)
 
-  `SchemaFactoryAlpha.stagedOptionalRecursive(T)` is the recursive-type variant of `stagedOptional` (released in [2.93.0](https://github.com/microsoft/FluidFramework/pull/26918)). Use it for schemas whose types are recursive - the relaxed type constraints work around TypeScript's limitations with recursive schema definitions. Pair it with `ValidateRecursiveSchema` for improved type safety.
+  `SchemaFactoryAlpha.stagedOptionalRecursive(T)` is the recursive-type variant of `stagedOptional` (released in [2.93.0](https://github.com/microsoft/FluidFramework/pull/26918)). Use it for schema whose types are recursive - the relaxed type constraints work around TypeScript's limitations with recursive schema definitions. Pair it with `ValidateRecursiveSchema` for improved type safety.
 
   Example:
 
@@ -1738,8 +1738,8 @@ Dependency updates only.
 
   #### Recursive types
 
-  `withDefaultRecursive` is available for use inside recursive schemas. Use `objectRecursiveAlpha` (rather than
-  `objectRecursive`) when defining recursive schemas with defaults, as it correctly makes defaulted fields optional in
+  `withDefaultRecursive` is available for use inside recursive schema. Use `objectRecursiveAlpha` (rather than
+  `objectRecursive`) when defining recursive schema with defaults, as it correctly makes defaulted fields optional in
   the constructor for all field kinds including `requiredRecursive`. It works the same as `withDefault` but is
   necessary to avoid TypeScript's circular reference limitations.
 
@@ -2234,7 +2234,7 @@ Dependency updates only.
   assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
   ```
 
-  Additionally, they a regression test to ensure that older view schemas can read content written by the current view
+  Additionally, they a regression test to ensure that older view schema can read content written by the current view
   schema (`SchemaCompatibilityStatus.canView`):
 
   ```ts
@@ -3088,11 +3088,11 @@ Dependency updates only.
 - Rename and change type of annotatedAllowedTypeSet on FieldSchemaAlpha to more closely align with allowedTypesSet ([#24820](https://github.com/microsoft/FluidFramework/pull/24820)) [f4e8dc8cd09](https://github.com/microsoft/FluidFramework/commit/f4e8dc8cd09f052f21e436e2c0584a1a34d2be77)
 
   This changes the `annotatedAllowedTypeSet` property on [`FieldSchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/fieldschemaalpha-class).
-  It is now called `annotatedAllowedTypesNormalized` and stores evaluated schemas along with their annotations in a list of objects rather than as a mapping from the schemas to their annotations. This makes the API easier to use and better aligns with the current public APIs.
+  It is now called `annotatedAllowedTypesNormalized` and stores evaluated schema along with their annotations in a list of objects rather than as a mapping from the schema to their annotations. This makes the API easier to use and better aligns with the current public APIs.
 
-- Persisted metadata for Shared Tree schemas (Alpha) ([#24812](https://github.com/microsoft/FluidFramework/pull/24812)) [3f81ab52ff7](https://github.com/microsoft/FluidFramework/commit/3f81ab52ff7265a8533c0e192c8b77d298b70eea)
+- Persisted metadata for Shared Tree schema (Alpha) ([#24812](https://github.com/microsoft/FluidFramework/pull/24812)) [3f81ab52ff7](https://github.com/microsoft/FluidFramework/commit/3f81ab52ff7265a8533c0e192c8b77d298b70eea)
 
-  The persisted metadata feature for Shared Tree allows an application author to write document-persisted metadata along with the schema. This feature is supported for both node and field schemas.
+  The persisted metadata feature for Shared Tree allows an application author to write document-persisted metadata along with the schema. This feature is supported for both node and field schema.
 
   #### Using the persisted metadata feature
 
@@ -3127,7 +3127,7 @@ Dependency updates only.
 
   #### Examples
 
-  ##### Field schemas with persisted metadata
+  ##### Field schema with persisted metadata
 
   ```ts
   // Construct a schema factory with alpha APIs
@@ -3151,7 +3151,7 @@ Dependency updates only.
   ) {}
   ```
 
-  ##### Recursive field schemas
+  ##### Recursive field schema
 
   ```ts
   // Construct a schema factory with alpha APIs
@@ -3176,7 +3176,7 @@ Dependency updates only.
   );
   ```
 
-  ##### Recursive object schemas
+  ##### Recursive object schema
 
   ```ts
   // Construct a schema factory with alpha APIs
@@ -4437,7 +4437,7 @@ Dependency updates only.
   class A extends sf.array("A", B) {}
   ```
 
-- The strictness of input tree types when inexact schemas are provided has been improved ([#22874](https://github.com/microsoft/FluidFramework/pull/22874)) [645b9ed695](https://github.com/microsoft/FluidFramework/commit/645b9ed69540338843ad14f1144ff4d1f80d6f09)
+- The strictness of input tree types when inexact schema are provided has been improved ([#22874](https://github.com/microsoft/FluidFramework/pull/22874)) [645b9ed695](https://github.com/microsoft/FluidFramework/commit/645b9ed69540338843ad14f1144ff4d1f80d6f09)
 
   Consider the following code where the type of the schema is not exactly specified:
 
@@ -4902,7 +4902,7 @@ Dependency updates only.
   const fromRecord = new Schema({ x: 5 });
   ```
 
-  This new feature makes it possible for schemas to construct a tree entirely from JSON-compatible objects using their constructors,
+  This new feature makes it possible for schema to construct a tree entirely from JSON-compatible objects using their constructors,
   as long as they do not require unhydrated nodes to differentiate ambiguous unions,
   or IFluidHandles (which themselves are not JSON compatible).
 
@@ -4970,7 +4970,7 @@ Dependency updates only.
   Currently it's very difficult to invoke the create function or constructor associated with a `TreeNodeSchema` as doing so already requires narrowing to `TreeNodeSchemaClass` or `TreeNodeSchemaNonClass`.
   It is possible some such code exists which will need to have an explicit cast added because it happened to work with the more specific (but incorrect) constructor input type.
 
-- Recursive SharedTree schemas using MapNodes no longer produce invalid d.ts files ([#22106](https://github.com/microsoft/FluidFramework/pull/22106)) [554fc5a94e](https://github.com/microsoft/FluidFramework/commit/554fc5a94e57e2d109ea9008b7c64517c58a6b73)
+- Recursive SharedTree schema using MapNodes no longer produce invalid d.ts files ([#22106](https://github.com/microsoft/FluidFramework/pull/22106)) [554fc5a94e](https://github.com/microsoft/FluidFramework/commit/554fc5a94e57e2d109ea9008b7c64517c58a6b73)
 
   Consider a recursive SharedTree schema like the following, which follows all our recommended best practices:
 
@@ -5356,7 +5356,7 @@ Dependency updates only.
 
   This change adjusts some top-level APIs for using SharedTree to better accommodate applications that need to change their schema.
   These changes enable forwards compatibility with future work to relax `SharedTree`'s restrictions around view schema and stored schema compatibility.
-  That future work will enable more flexible policies around how applications can update their documents' schemas over time.
+  That future work will enable more flexible policies around how applications can update their documents' schema over time.
 
   Application authors are encouraged to develop a compatibility policy which they are comfortable with using the guidance in the
   "Schema Evolvability" section of `@fluidframework/tree`'s readme.
@@ -5423,7 +5423,7 @@ Dependency updates only.
   ```
 
   Besides only making the initial tree required to specify in places that actually perform document initialization, this is beneficial for mutation semantics: `tree.viewWith` never modifies the state of the underlying tree.
-  This means applications are free to attempt to view a document using multiple schemas (e.g. legacy versions of their document format) without worrying about altering the document state.
+  This means applications are free to attempt to view a document using multiple schema (e.g. legacy versions of their document format) without worrying about altering the document state.
 
   If existing code used schematize in a context where it wasn't known whether the document needed to be initialized, you can leverage `TreeView.compatibility` like so:
 
@@ -5508,9 +5508,9 @@ Dependency updates only.
 
   [Read more about SharedTree Events at fluidframework.com](https://fluidframework.com/docs/data-structures/tree/#event-handling)
 
-- Recursive schemas [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
+- Recursive schema [97d68aa06b](https://github.com/microsoft/FluidFramework/commit/97d68aa06bd5c022ecb026655814aea222a062ae)
 
-  Schemas are even more powerful now with the added support for recursive types, which allows you to define types that
+  Schema are even more powerful now with the added support for recursive types, which allows you to define types that
   reference nodes of the same type in their subtree.
 
   Users of the beta APIs via `SchemaFactoryRecursive` can now find them on `SchemaFactory`.

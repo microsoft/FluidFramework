@@ -138,7 +138,7 @@ export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
  * it would still need to walk the schema to avoid including schema that become unreachable due to filtered out staged schema.
  *
  * @throws
- * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
+ * Throws a `UsageError` if multiple schema are encountered with the same identifier.
  */
 export function toStoredSchema(
 	root: ImplicitFieldSchema,
@@ -241,7 +241,7 @@ export function transformSimpleSchema(
 /**
  * Convert a {@link SimpleTreeSchema} for a stored schema into a {@link TreeStoredSchema}.
  * @remarks
- * This only supports simple schemas that are already logically stored schemas.
+ * This only supports simple schema that are already logically stored schema.
  * @privateRemarks
  * To correctly support view schema here, this would need to filter out unreferenced schema after excluding staged schema.
  * @see {@link ExpectStored}.

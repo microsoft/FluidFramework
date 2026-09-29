@@ -351,7 +351,7 @@ function* getNodeDiscrepancies(
 }
 
 /**
- * Returns the allowed types that are not present in both the given view and stored schemas.
+ * Returns the allowed types that are not present in both the given view and stored schema.
  */
 export function findExtraAllowedTypes(
 	viewAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[],
@@ -512,10 +512,10 @@ function* computeObjectNodeDiscrepancies(
 	upgradeCollector?: UpgradeLocationCollector,
 ): Iterable<FieldDiscrepancy> {
 	/**
-	 * Similar to the logic used for tracking discrepancies between two node schemas, we will identify
+	 * Similar to the logic used for tracking discrepancies between two node schema, we will identify
 	 * three types of differences:
 	 * 1. Fields that exist in the view schema but not in the stored schema.
-	 * 2. Fields that exist in both schemas but have different contents.
+	 * 2. Fields that exist in both schema but have different contents.
 	 * 3. Fields that exist in the stored schema but not in the view schema.
 	 *
 	 * First, the view schema is iterated to track the first two types of differences.

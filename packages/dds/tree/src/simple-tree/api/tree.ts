@@ -674,7 +674,7 @@ export type TreeBranchAlpha = UntypedTreeViewAlpha;
  *
  * @remarks
  * This schema (known as the view schema) may or may not align with the stored schema of the document.
- * Information about discrepancies between the two schemas is available via {@link TreeView.compatibility | compatibility}.
+ * Information about discrepancies between the two schema is available via {@link TreeView.compatibility | compatibility}.
  *
  * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
  * and choose a schema compatibility policy that aligns with their application's needs.
@@ -818,7 +818,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export type SchemaDiscrepancy =
 	| {
 			/**
-			 * Indicates that a field allows different node types in the view and stored schemas.
+			 * Indicates that a field allows different node types in the view and stored schema.
 			 */
 			readonly mismatch: "allowedTypes";
 			/**
@@ -857,7 +857,7 @@ export type SchemaDiscrepancy =
 	  }
 	| {
 			/**
-			 * Indicates that a field has different field kinds in the view and stored schemas.
+			 * Indicates that a field has different field kinds in the view and stored schema.
 			 */
 			readonly mismatch: "fieldKind";
 			/**
@@ -890,7 +890,7 @@ export type SchemaDiscrepancy =
 	  }
 	| {
 			/**
-			 * Indicates that a leaf node accepts different value types in the view and stored schemas.
+			 * Indicates that a leaf node accepts different value types in the view and stored schema.
 			 */
 			readonly mismatch: "valueSchema";
 			/**
@@ -908,7 +908,7 @@ export type SchemaDiscrepancy =
 	  }
 	| {
 			/**
-			 * Indicates that a node is represented by different node kinds in the view and stored schemas.
+			 * Indicates that a node is represented by different node kinds in the view and stored schema.
 			 */
 			readonly mismatch: "nodeKind";
 			/**
@@ -1040,7 +1040,7 @@ export interface TreeViewAlpha<
 }
 
 /**
- * Information about whether a view's configuration permits viewing, upgrading, or initializing a document, and whether its schemas are equivalent.
+ * Information about whether a view's configuration permits viewing, upgrading, or initializing a document, and whether its schema are equivalent.
  *
  * @see
  * See SharedTree's README for more information about choosing a compatibility policy.
@@ -1058,10 +1058,10 @@ export interface SchemaCompatibilityStatus {
 	 *
 	 * @remarks
 	 *
-	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and proposed stored schemas each satisfy the schema upgrade rules relative to the other.
+	 * This is true only when {@link SchemaCompatibilityStatus.canView} is true and the existing and proposed stored schema each satisfy the schema upgrade rules relative to the other.
 	 * Thus, a `true` value also implies that {@link SchemaCompatibilityStatus.canUpgrade} is true.
 	 *
-	 * Equivalence does not require the schemas to be identical.
+	 * Equivalence does not require the schema to be identical.
 	 * Differences that do not affect schema compatibility, such as {@link NodeSchemaOptionsAlpha.persistedMetadata}, do not affect this flag.
 	 *
 	 * This check compares the existing stored schema with the stored schema that would

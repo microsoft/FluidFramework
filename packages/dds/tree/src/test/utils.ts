@@ -702,7 +702,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 }
 
 // If you are adding a new schema format, consider changing the encoding format used for this codec, given
-// that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
+// that equality of two schema in tests is achieved by deep-comparing their persisted representations.
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
 const schemaCodec = schemaCodecBuilder.build({

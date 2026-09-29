@@ -56,7 +56,7 @@ export type TreeIndexKey = TreeLeafValue;
  * @remarks
  * A selector is logically a pure function. For convenience, an object with a `get` method, such as a
  * `ReadonlyMap`, is also accepted. Return the object property key, not the stored key.
- * Return `undefined` for non-object schemas and schemas that should not be indexed.
+ * Return `undefined` for non-object schema and schema that should not be indexed.
  * The selected field must always contain exactly one leaf value directly on the indexed node.
  * The index is invalidated when that field changes.
  * Keys derived from descendants are not supported: Simple Tree indexes use node-level invalidation and therefore do not
@@ -74,7 +74,7 @@ export type TreeIndexKeyFieldSelector<TSchema extends TreeNodeSchema = TreeNodeS
  * Creates a {@link TreeIndex}, selecting the key field for each schema in the view.
  *
  * @remarks
- * This overload discovers the schemas to consider by walking the view's schema.
+ * This overload discovers the schema to consider by walking the view's schema.
  * When multiple nodes have the same key, they are passed together to `getValue`.
  * For every selected schema, the selected property must be a required field that only allows leaf values.
  * Invalid properties and values rejected by `isKeyValid` cause a `UsageError`.
@@ -155,7 +155,7 @@ export type TreeIndexKeyFieldSelector<TSchema extends TreeNodeSchema = TreeNodeS
  * This API is rather awkward and may want to be adjusted.
  * We should probably do one of:
  * - Restrict `keyFieldSelector` to only ObjectNodeSchema.
- * - Support `keyFieldSelector` returning optional fields, and values other than undefined for non-object schemas.
+ * - Support `keyFieldSelector` returning optional fields, and values other than undefined for non-object schema.
  * @beta
  */
 export function createTreeIndex<
@@ -170,11 +170,11 @@ export function createTreeIndex<
 ): TreeIndex<TKey, TValue>;
 
 /**
- * Creates a {@link TreeIndex}, selecting the key field for an explicit set of schemas.
+ * Creates a {@link TreeIndex}, selecting the key field for an explicit set of schema.
  *
  * @remarks
  * Supplying `indexableSchema` avoids schema discovery and narrows the nodes passed to `getValue` to
- * {@link NodeFromSchema} of the supplied schema types. Schemas omitted from `indexableSchema` are not indexed.
+ * {@link NodeFromSchema} of the supplied schema types. Schema omitted from `indexableSchema` are not indexed.
  * When multiple nodes have the same key, they are passed together to `getValue`.
  * For every selected schema, the selected property must be a required field that only allows leaf values.
  * Invalid properties and values rejected by `isKeyValid` cause a `UsageError`.

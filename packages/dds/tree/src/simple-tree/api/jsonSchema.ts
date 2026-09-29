@@ -35,7 +35,7 @@ export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 /**
- * Base interface for node schemas represented in {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} format.
+ * Base interface for node schema represented in {@link https://json-schema.org/draft/2020-12/json-schema-core | JSON Schema} format.
  *
  * @sealed
  * @alpha
@@ -247,7 +247,7 @@ export type JsonFieldSchema = {
  *
  * Also note that this schema format contains Fluid-specific extensions, such as the {@link JsonNodeSchemaBase._treeNodeSchemaKind}
  * property, meaning that it is not a *strict* subset.
- * When using these schemas with validation tools (for example, {@link https://ajv.js.org/}), you will need to opt out
+ * When using these schema with validation tools (for example, {@link https://ajv.js.org/}), you will need to opt out
  * of *strict* validation to ensure extra properties are allowed.
  *
  * @privateRemarks

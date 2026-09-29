@@ -422,7 +422,7 @@ const library = {
 } satisfies Partial<TreeStoredSchema>;
 
 /**
- * Named simple-tree schemas used by schema-focused test suites.
+ * Named simple-tree schema used by schema-focused test suites.
  *
  * Each schema must have at least one matching entry in {@link testSimpleTrees}.
  */

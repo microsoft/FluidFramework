@@ -70,7 +70,7 @@ export interface SimpleObjectNodeSchema<
 	out TCustomMetadata = unknown,
 > extends SimpleNodeSchemaBaseAlpha<Type, NodeKind.Object, TCustomMetadata> {
 	/**
-	 * Schemas for each of the object's fields, keyed off of schema's keys.
+	 * Schema for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
 	 * The keys are the property keys if known, otherwise they are the stored keys.
 	 * Use {@link SimpleObjectFieldSchema.storedKey} to get the stored key.
@@ -86,7 +86,7 @@ export interface SimpleObjectNodeSchema<
 	 *
 	 * @see {@link ObjectSchemaOptions.allowUnknownOptionalFields} for the API where this field is set as part of authoring a schema.
 	 *
-	 * @remarks Only populated for view schemas, undefined otherwise. Relevant for compatibility checking scenarios.
+	 * @remarks Only populated for view schema, undefined otherwise. Relevant for compatibility checking scenarios.
 	 */
 	readonly allowUnknownOptionalFields: Type extends SchemaType.View ? boolean : undefined;
 }
@@ -326,10 +326,10 @@ export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
 	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
 	 * @remarks
-	 * The keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
+	 * The keys are the schema's {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 *
 	 * Information about if a schema is {@link SchemaStaticsBeta.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
-	 * Options for filtering out staged schemas from view schema are available in {@link extractPersistedSchema}.
+	 * Options for filtering out staged schema from view schema are available in {@link extractPersistedSchema}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
 }

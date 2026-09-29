@@ -333,7 +333,7 @@ export class SchemaFactory<
 	/**
 	 * Construct a SchemaFactory with a given {@link SchemaFactory.scope|scope}.
 	 * @remarks
-	 * There are no restrictions on mixing schemas from different schema factories.
+	 * There are no restrictions on mixing schema from different schema factories.
 	 * Typically each library will create one or more SchemaFactories and use them to define its schema.
 	 */
 	public constructor(

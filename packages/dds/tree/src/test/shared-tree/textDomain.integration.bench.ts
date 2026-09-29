@@ -596,7 +596,7 @@ describe("TextDomain benchmarks", () => {
 		};
 
 		/**
-		 * A retained text-document view. Formatted and plain have different node schemas, so the view's
+		 * A retained text-document view. Formatted and plain have different node schema, so the view's
 		 * schema parameter is erased to the common handle here; what they share and all the benchmarks use
 		 * is a {@link TextRoot} at the root. Narrowing `root` to `TextRoot` lets the benchmarks read/edit the
 		 * document without a per-access cast.
@@ -628,7 +628,7 @@ describe("TextDomain benchmarks", () => {
 			const view = createIndependentTreeAlpha({ forest }).viewWith(viewConfiguration);
 			view.initialize(content);
 			// `viewWith` types the view over the caller's `TSchema`, but the two domains use different node
-			// schemas whose nodes both implement the `TextRoot` editing surface. The compiler can't prove
+			// schema whose nodes both implement the `TextRoot` editing surface. The compiler can't prove
 			// that for the open generic, so erase through `unknown` to the shared `TextDocumentView` handle.
 			return view as unknown as TextDocumentView;
 		}
@@ -665,7 +665,7 @@ describe("TextDomain benchmarks", () => {
 			});
 			const view = (tree as unknown as ITreePrivate).kernel.viewWith(viewConfiguration);
 			// `viewWith` here returns the alpha view, whose `initialize` is typed over `ReadSchema<TSchema>`;
-			// that equals `TSchema` for these (non-recursive) text schemas, but the compiler can't prove it
+			// that equals `TSchema` for these (non-recursive) text schema, but the compiler can't prove it
 			// for the open generic, so cast. Every concrete call site passes correctly-typed content.
 			view.initialize(content as never);
 			// Sequence the initialization op so the content is part of the attach summary (and the

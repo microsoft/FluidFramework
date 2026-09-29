@@ -46,7 +46,7 @@ import { collectContiguousRanges, validateIndex, validateIndexRange } from "./ut
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
 // - Record-like type parameters / input parameters?
-// - Omit `props` properties from Row and Column schemas when not provided?
+// - Omit `props` properties from Row and Column schema when not provided?
 
 // Longer-term work:
 // - Use more focused constraint APIs to protect against leaked cells

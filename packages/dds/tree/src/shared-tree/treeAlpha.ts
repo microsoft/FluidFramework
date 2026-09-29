@@ -553,7 +553,7 @@ export interface TreeAlpha {
 	 * This does not validate that the content actually conforms to the given schema (such validation will be done at insert time).
 	 * If the content is not compatible with the tagged schema, an error will be thrown when the content is inserted.
 	 *
-	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schemas.
+	 * This is particularly useful when the content's schema cannot be inferred from its structure alone because it is compatible with multiple schema.
 	 * @example
 	 * ```typescript
 	 * const sf = new SchemaFactory("example");

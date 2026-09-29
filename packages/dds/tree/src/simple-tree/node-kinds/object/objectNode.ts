@@ -152,7 +152,7 @@ export type TreeObjectNode<
  * 1. Optional fields (which have an implicit undefined default)
  * 2. Identifier fields (which have auto-generated defaults)
  *
- * Note that this cannot tell if required fields have defaults. Use `FieldHasDefaultAlpha` for alpha schemas if you need to check for required field defaults.
+ * Note that this cannot tell if required fields have defaults. Use `FieldHasDefaultAlpha` for alpha schema if you need to check for required field defaults.
  *
  * @system @public
  */
@@ -164,7 +164,7 @@ export type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
 
 /**
  * Type utility for determining if an implicit field schema is known to have a default value.
- * Supports alpha field schemas with explicit default providers.
+ * Supports alpha field schema with explicit default providers.
  *
  * @remarks Yields `false` when unknown.
  *
@@ -186,7 +186,7 @@ export type FieldHasDefaultAlpha<T extends ImplicitFieldSchema> =
 				TProps extends { defaultProvider: DefaultProvider }
 				? true
 				: false
-		: // Fallback to base FieldHasDefault for non-Alpha schemas
+		: // Fallback to base FieldHasDefault for non-Alpha schema
 			FieldHasDefault<T>;
 
 /**
@@ -281,7 +281,7 @@ export type SimpleKeyMap = ReadonlyMap<
 >;
 
 /**
- * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
+ * Caches the mappings from property keys to stored keys for the provided object field schema in {@link simpleKeyToFlexKeyCache}.
  */
 function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();

@@ -46,7 +46,7 @@ describe("test tree catalogs", () => {
 
 	it("includes the schema for every simple tree", () => {
 		const schemas = new Set(testSchema.map((testCase) => testCase.schema));
-		// Check for duplicate schemas in the testSchema array.
+		// Check for duplicate schema in the testSchema array.
 		assert.equal(schemas.size, testSchema.length);
 
 		for (const tree of testSimpleTrees) {

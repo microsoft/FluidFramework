@@ -53,7 +53,7 @@ If existing data will always be compatible with the new schema (new schema permi
 -   Ensure the app can properly handle documents containing the new format but does not switch documents to the new format.
     There are a few approaches (TODO: we should pick one of these, and document how to actually do it cleanly):
     -   Use new schema as the view schema, and be careful when editing.
-    -   Have the app support both view schemas (new and old) and
+    -   Have the app support both view schema (new and old) and
         have schematize pick which to use based on which is the stored schema.
     -   Make which format is written for new content conditional on a flag (which opts into creating data that needs the new format).
         Initialize this flag based on if the new schema is compatible with the stored schema.
@@ -75,7 +75,7 @@ This migration strategy results in two kinds of changes to schema:
 2. An updated copy of a schema with the same type identifier (and tolerates strictly more trees than the old version).
 
 In both of these cases, keeping the old schema around in the application source code is useful, but in different ways.
-This section covers a pattern for efficiently managing all the old schemas that accumulate over time,
+This section covers a pattern for efficiently managing all the old schema that accumulate over time,
 meaning that we do not place any O(number of old schema) complexity into any code.
 
 Old schema in case #2 only need to be kept until the migration is complete, meaning deployed applications are allowed to write the new more flexible format.
@@ -94,7 +94,7 @@ It would also be possible to express the new one as a declarative upgrade to the
 
 Old schema in case #1 has much longer term implications: they need to live forever to support old documents.
 
-In this case, the schemas have different identifiers, which could either be random (ex: UUID), or a developer friendly name including a version.
+In this case, the schema have different identifiers, which could either be random (ex: UUID), or a developer friendly name including a version.
 The old schema, and handlers which can upgrade the data to the new format, get packed into a library which can be loaded into schematize to provide legacy schema support.
 
 The old schema will not need to be mentioned anywhere else in source code (it may be mentioned in documents though!).
@@ -325,7 +325,7 @@ Schema-supersettting can be also used to determine if a schema is safe for readi
 
 ## Reuse and Polymorphism
 
-This document generally covers where schemas can be stored and how they can be used, and not the specifics of what they actually do.
+This document generally covers where schema can be stored and how they can be used, and not the specifics of what they actually do.
 
 Another way to put that is this is about what the Fluid tree needs from a schema system, and what options that leaves for how such a schema system could work,
 and not about how to use those options to actually build a schema system.

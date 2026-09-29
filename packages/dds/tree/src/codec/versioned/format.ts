@@ -7,7 +7,7 @@ import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
 
 /**
- * A field to use in TypeBox schemas for the version field of a versioned format.
+ * A field to use in TypeBox schema for the version field of a versioned format.
  * @remarks
  * Spread this into the top level object schema for the format.
  * The version field is required for all versioned formats, and is used by the {@link VersionDispatchingCodecBuilder} to determine which codec version to use when decoding.

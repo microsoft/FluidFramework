@@ -30,7 +30,7 @@ import { suitesWithAndWithoutProduction } from "../utils.js";
 import { FormattedTextDefault } from "../../text/index.js";
 import { oneFromIterable } from "../../util/index.js";
 
-// Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
+// Custom formatted-text schema used to exercise `formatRange` edge cases which the default schema cannot express.
 
 // A format with an optional field, used to test formatting of optional fields.
 const optionalFormatFactory = new SchemaFactoryBeta("test.formatted.optional");

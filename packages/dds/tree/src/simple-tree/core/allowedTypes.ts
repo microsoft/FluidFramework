@@ -423,7 +423,7 @@ export interface AllowedTypeMetadata {
 export let createSchemaUpgrade: () => SchemaUpgrade;
 
 /**
- * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
+ * Unique token used to upgrade schema and determine if a particular upgrade has been completed.
  * @remarks
  * Create using {@link SchemaStaticsBeta.staged}.
  * @privateRemarks
@@ -556,8 +556,8 @@ export function normalizeAllowedTypesInternal(
  * Normalizes an {@link ImplicitAllowedTypes} to an {@link AllowedTypesFullInternalEvaluated} by eagerly evaluating any
  * lazy schema declarations and adding empty metadata if it doesn't already exist.
  *
- * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
- * recursive schemas may fail.
+ * @remarks Note: this must only be called after all required schema have been declared, otherwise evaluation of
+ * recursive schema may fail.
  */
 export function normalizeAndEvaluateAnnotatedAllowedTypes(
 	types: ImplicitAllowedTypes,

@@ -128,7 +128,7 @@ export const SimpleLeafNodeSchemaFormat = Type.Object(
 export type SimpleLeafNodeSchemaFormat = Static<typeof SimpleLeafNodeSchemaFormat>;
 
 /**
- * Persisted format for the field schemas of an object node in the simple schema format.
+ * Persisted format for the field schema of an object node in the simple schema format.
  */
 export const SimpleObjectFieldSchemasFormat = Type.Record(
 	Type.String(),
@@ -151,7 +151,7 @@ export const SimpleObjectNodeSchemaFormat = Type.Object(
 export type SimpleObjectNodeSchemaFormat = Static<typeof SimpleObjectNodeSchemaFormat>;
 
 /**
- * Discriminated union of all possible node schemas.
+ * Discriminated union of all possible node schema.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */

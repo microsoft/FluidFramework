@@ -39,7 +39,7 @@ function isStringKey(key: TreeIndexKey): key is string {
  * Creates an {@link IdentifierIndex} for a given {@link TreeView}.
  *
  * @remarks
- * The sole identifier field of each schema reachable from the view's schema is indexed automatically. Schemas with
+ * The sole identifier field of each schema reachable from the view's schema is indexed automatically. Schema with
  * no identifier fields or multiple identifier fields are not indexed. The index remains up to date as nodes are
  * inserted, removed, or changed. Looking up an identifier shared by multiple nodes throws a
  * `UsageError`. Call {@link TreeIndex.dispose} when the index is no longer needed.

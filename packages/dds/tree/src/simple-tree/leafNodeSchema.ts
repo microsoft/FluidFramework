@@ -176,7 +176,7 @@ export function leafToFlexContent(
 	assert(schema.kind === NodeKind.Leaf, 0x921 /* Expected a leaf schema. */);
 	if (!isTreeValue(data)) {
 		// This rule exists to protect against useless `toString` output like `[object Object]`.
-		// In this case, that's actually reasonable behavior, since object input is not compatible with Leaf schemas.
+		// In this case, that's actually reasonable behavior, since object input is not compatible with Leaf schema.
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		throw new UsageError(`Input data is incompatible with leaf schema: ${data}`);
 	}
