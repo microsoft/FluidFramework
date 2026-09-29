@@ -13,7 +13,7 @@ overrides:
   fast-uri: ^4.1.2
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
-  js-yaml: 4.3.0
+  js-yaml: 4.3.2
   qs: ^6.15.2
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
@@ -2279,8 +2279,8 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  js-yaml@4.3.0:
-    resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
+  js-yaml@4.3.2:
+    resolution: {integrity: sha1-jkT7FKJkPFlya7FXh7XxUSyz0/s=}
     hasBin: true
 
   jsdoc-type-pratt-parser@6.10.0:
@@ -3734,7 +3734,7 @@ snapshots:
       globals: 14.0.0
       ignore: 5.3.2
       import-fresh: 3.3.0
-      js-yaml: 4.3.0
+      js-yaml: 4.3.2
       minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
@@ -4060,7 +4060,7 @@ snapshots:
     dependencies:
       fast-glob: 3.3.2
       jju: 1.4.0
-      js-yaml: 4.3.0
+      js-yaml: 4.3.2
 
   '@microsoft/api-extractor-model@7.30.7(@types/node@22.19.17)':
     dependencies:
@@ -6096,7 +6096,7 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  js-yaml@4.3.0:
+  js-yaml@4.3.2:
     dependencies:
       argparse: 2.0.1
 
@@ -6670,7 +6670,7 @@ snapshots:
       find-up: 5.0.0
       glob: 8.1.0
       he: 1.2.0
-      js-yaml: 4.3.0
+      js-yaml: 4.3.2
       log-symbols: 4.1.0
       minimatch: 5.1.9
       ms: 2.1.3
@@ -6692,7 +6692,7 @@ snapshots:
       find-up: 5.0.0
       glob: 10.5.0
       he: 1.2.0
-      js-yaml: 4.3.0
+      js-yaml: 4.3.2
       log-symbols: 4.1.0
       minimatch: 9.0.9
       ms: 2.1.3
