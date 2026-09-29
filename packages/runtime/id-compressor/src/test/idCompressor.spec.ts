@@ -1171,11 +1171,11 @@ describe("IdCompressor", () => {
 		});
 
 		/**
-		 * Helper to test version negotiation during serialization/deserialization.
-		 * @param serializedVersion - The version to set in the serialized data
-		 * @param requestedWriteVersion - The version requested when deserializing
-		 * @param expectedVersion - The version expected after re-serialization
-		 * @param withSession - Whether to serialize with session state
+		 * Verifies that deserialization selects the higher of the serialized and requested write versions for subsequent serialization.
+		 * @param serializedVersion - The version to set in the serialized data.
+		 * @param requestedWriteVersion - The version requested when deserializing.
+		 * @param expectedVersion - The version expected after re-serialization.
+		 * @param withSession - Whether to serialize with session state.
 		 */
 		function testVersionNegotiation(
 			serializedVersion: SerializationVersion,
