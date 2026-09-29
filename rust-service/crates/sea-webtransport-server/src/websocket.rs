@@ -391,7 +391,7 @@ async fn serve_group(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BuiltInSeaHost, SessionSetup, StorageSetup};
+    use crate::{DocumentHost, SeaProtocolHost, SessionSetup, StorageSetup};
     use tokio::time::Duration;
     use tokio_tungstenite::{
         MaybeTlsStream, connect_async, tungstenite::client::IntoClientRequest as _,
@@ -403,7 +403,9 @@ mod tests {
     async fn accepted_sockets_disable_nagle_before_upgrade() {
         let server = WebSocketServer::bind(
             "127.0.0.1:0".parse().unwrap(),
-            Arc::new(BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap()),
+            Arc::new(SeaProtocolHost::new(
+                DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
+            )),
             TransportConfig::default(),
             vec![ORIGIN.to_owned()],
         )
@@ -434,9 +436,9 @@ mod tests {
         for allowed in [false, true] {
             let server = WebSocketServer::bind(
                 "127.0.0.1:0".parse().unwrap(),
-                Arc::new(
-                    BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
-                ),
+                Arc::new(SeaProtocolHost::new(
+                    DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
+                )),
                 TransportConfig::default(),
                 vec![ORIGIN.to_owned()],
             )
@@ -476,7 +478,9 @@ mod tests {
         }
         let server = WebSocketServer::bind(
             "0.0.0.0:0".parse().unwrap(),
-            Arc::new(BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap()),
+            Arc::new(SeaProtocolHost::new(
+                DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
+            )),
             TransportConfig::default(),
             vec![ORIGIN.to_owned()],
         )
@@ -535,7 +539,9 @@ mod tests {
     async fn owner_loss_revokes_children_and_token_and_shutdown_cleans_once() {
         let server = WebSocketServer::bind(
             "127.0.0.1:0".parse().unwrap(),
-            Arc::new(BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap()),
+            Arc::new(SeaProtocolHost::new(
+                DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
+            )),
             TransportConfig::default(),
             vec![ORIGIN.to_owned()],
         )
@@ -590,7 +596,9 @@ mod tests {
         };
         let server = WebSocketServer::bind(
             "127.0.0.1:0".parse().unwrap(),
-            Arc::new(BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap()),
+            Arc::new(SeaProtocolHost::new(
+                DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
+            )),
             config,
             vec![ORIGIN.to_owned()],
         )

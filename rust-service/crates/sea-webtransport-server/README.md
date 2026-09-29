@@ -69,23 +69,24 @@ Session setup without a decorator remains direct.
 
 ### Configured storage and session composition
 
-Embedded servers use one constructor: `BuiltInSeaHost::new(storage, sessions)`.
-Pass the resulting host, or its clones, to the existing WebTransport and WebSocket listeners.
+Typed hosting uses one constructor: `DocumentHost::new(storage, sessions)`.
+Wrap it in `SeaProtocolHost` to serve the Sea protocol, then pass that adapter, or its clones, to the WebTransport and WebSocket listeners.
 The executable's environment flags and default policy are unchanged.
 
 ```rust
 use sea_webtransport_server::{
-    BuiltInSeaHost, PassThrough, ReaderShedding, SessionSetup, StorageSetup,
+    DocumentHost, PassThrough, ReaderShedding, SeaProtocolHost, SessionSetup, StorageSetup,
 };
 
-let memory = BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default())?;
+let memory = DocumentHost::new(StorageSetup::memory(), SessionSetup::default())?;
 
-let durable = BuiltInSeaHost::new(
+let durable = DocumentHost::new(
     StorageSetup::durable("./sea-data/documents".into()),
     SessionSetup::default()
         .decorate(ReaderShedding)
         .decorate(PassThrough),
 )?;
+let protocol = SeaProtocolHost::new(durable);
 # Ok::<(), sea_webtransport_server::LiveCacheRequired>(())
 ```
 
@@ -126,9 +127,47 @@ A permanently stalled reader can deliberately stall writers indefinitely.
 Cache pressure ends at dequeue, not network delivery; durable pressure excludes sequencer handoff retention and OS buffering.
 These signals and admission limits do not bound total process or transport memory.
 
-#### Migration from the constructor family
+#### Typed hosting and the protocol boundary
 
-The previous `new(root, mode)`, `new_with_*`, and `with_storage` constructors are replaced by `new(storage, sessions)`, which returns a configuration result.
+`DocumentHost` owns storage initialization, document recovery, session-factory composition, flush, and shutdown.
+Its public `create_document`, `ensure_document`, and `open_session` operations use core document identities and typed sessions.
+`DocumentHostError` retains storage, sequencer, and decorated-factory errors; direct callers can inspect their variants and classifications without decoding wire responses.
+An in-process client or load generator does not need a protocol adapter:
+
+```rust
+use sea_core::{Event, EventSubmission, SeaAuthorSession};
+use sea_webtransport_server::{DocumentHost, SessionSetup, StorageSetup};
+
+# async fn run() -> Result<(), Box<dyn std::error::Error>> {
+let documents = DocumentHost::new(StorageSetup::memory(), SessionSetup::default())?;
+let id = documents.create_document().await?;
+let author = documents.open_session(&id, None).await?.session;
+author.submit(EventSubmission {
+    reference: None,
+    event: Event { payload: bytes::Bytes::from_static(b"local"), blob_tree: None },
+}).await?;
+author.close().await?;
+documents.shutdown().await?;
+# Ok(())
+# }
+```
+
+Direct callers own session closure; dropping a session does not promise a committed departure.
+They can keep a clone of `DocumentHost` while serving another clone through one shared `SeaProtocolHost`.
+Host shutdown waits for admitted document workers even if their callers cancel, and pending operations cannot create or recover documents after shutdown completes.
+
+The server's [protocol module](src/protocol/mod.rs) owns request dispatch, error conversion, version checks, authority tokens, connection/session binding, and protocol cleanup.
+Concrete storage and session types are erased only at that adapter boundary.
+Signal rooms belong to the protocol adapter; clone one adapter across listeners to share rooms as well as document policies.
+Listeners retain socket/TLS configuration, stream and datagram I/O, and transport deadlines.
+Shared wire definitions remain in `sea-webtransport::protocol` so native and WASM clients use the same format.
+These protocol components could move to a separate crate if another transport needs independent reuse; no crate or wire-format change is required now.
+
+#### Migration from the combined host
+
+The previous `BuiltInSeaHost` is replaced by `DocumentHost::new(storage, sessions)` followed by `SeaProtocolHost::new(documents)` for network serving.
+Document-host construction returns the configuration result; protocol adaptation is infallible and does not initialize storage.
+The older `new(root, mode)`, `new_with_*`, and `with_storage` constructor family remains replaced by composable setup.
 Select storage in the application rather than supplying a path that memory storage ignores.
 To preserve existing on-disk namespaces, pass the previous `root.join("documents")` to the file recipe.
 Replace pass-through and policy constructors with the corresponding decorators.
@@ -219,7 +258,7 @@ This requires a loopback-bound listener and loopback peer, and permits only an a
 The setting accepts only `0` or `1` and defaults to disabled.
 A local forwarding proxy also appears as a loopback peer, so do not enable this exception on a forwarded/public endpoint; it is not authentication.
 The binary keeps its existing QUIC arguments and prints `WEBSOCKET_URL` when the optional listener is enabled.
-Both listeners share one `BuiltInSeaHost`, so they can collaborate on the same documents and coordinate shutdown.
+Both listeners share one `SeaProtocolHost`, so they can collaborate on the same documents and coordinate shutdown.
 Custom hosts can bind `WebSocketServer` directly without starting QUIC or loading a QUIC certificate.
 
 The listener speaks plain HTTP WebSocket upgrades at `/sea/websocket`, using subprotocol `sea-stream-v1`.
@@ -272,7 +311,7 @@ Live replay uses backend monitored streams; the legacy liveness lag setting does
 The registry still serializes first opens across documents.
 File backends isolate subsequent mutations and historical reads on bounded workers; this does not promise bounded storage latency or constant throughput on virtualized devices.
 Listener drains flush their accepted storage prefix within the drain deadline without stopping a host shared by another listener.
-The binary shuts down the shared host after both listeners finish; direct host owners call `BuiltInSeaHost::shutdown` themselves.
+The binary shuts down the shared protocol adapter after both listeners finish; direct typed-host owners call `DocumentHost::shutdown` themselves.
 An expired flush deadline reports cancellation, and a failed flush reports a storage error, not successful persistence.
 
 Snapshot dispatch resolves wire roots and committed event positions through the session before constructing availability handles.

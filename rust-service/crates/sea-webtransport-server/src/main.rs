@@ -7,8 +7,8 @@ use std::{
 };
 
 use sea_webtransport_server::{
-    BuiltInSeaHost, LiveCacheRequired, PassThrough, ReaderShedding, SessionSetup, ShutdownMode,
-    StorageSetup, TransportConfig, TransportMeasurement, WebTransportServer,
+    DocumentHost, LiveCacheRequired, PassThrough, ReaderShedding, SeaProtocolHost, SessionSetup,
+    ShutdownMode, StorageSetup, TransportConfig, TransportMeasurement, WebTransportServer,
 };
 use wtransport::{Identity, tls::Sha256DigestFmt};
 
@@ -163,7 +163,7 @@ fn configured_storage(
     live_cache: bool,
     pass_through: bool,
     resource_policy: bool,
-) -> Result<BuiltInSeaHost, Box<dyn std::error::Error>> {
+) -> Result<SeaProtocolHost, Box<dyn std::error::Error>> {
     Ok(match mode {
         "memory" => configured_host(
             StorageSetup::memory(),
@@ -198,21 +198,21 @@ fn configured_host<S: sea_core::storage::SeaStorage + 'static>(
     live_cache: bool,
     pass_through: bool,
     resource_policy: bool,
-) -> Result<BuiltInSeaHost, LiveCacheRequired> {
+) -> Result<SeaProtocolHost, LiveCacheRequired> {
     let sessions = SessionSetup::default().with_live_cache(live_cache);
     if resource_policy {
-        BuiltInSeaHost::new(storage, sessions.decorate(ReaderShedding))
+        DocumentHost::new(storage, sessions.decorate(ReaderShedding)).map(SeaProtocolHost::new)
     } else if pass_through {
-        BuiltInSeaHost::new(storage, sessions.decorate(PassThrough))
+        DocumentHost::new(storage, sessions.decorate(PassThrough)).map(SeaProtocolHost::new)
     } else {
-        BuiltInSeaHost::new(storage, sessions)
+        DocumentHost::new(storage, sessions).map(SeaProtocolHost::new)
     }
 }
 
 /// Binds the optional fallback only when both feature and runtime settings opt in.
 #[cfg(feature = "websocket-stream")]
 async fn optional_websocket_server(
-    host: Arc<BuiltInSeaHost>,
+    host: Arc<SeaProtocolHost>,
     shutdown_handles: &mut Vec<sea_webtransport_server::ShutdownHandle>,
     transport_config: TransportConfig,
 ) -> Result<Option<sea_webtransport_server::WebSocketServer>, Box<dyn std::error::Error>> {

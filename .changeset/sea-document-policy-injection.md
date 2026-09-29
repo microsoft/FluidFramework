@@ -4,15 +4,16 @@
 
 Compose server storage and document session policies independently
 
-Embedded Rust Sea servers now use `BuiltInSeaHost::new(storage, sessions)` instead of separate constructors for each backend and policy combination.
+Embedded Rust Sea servers now configure `DocumentHost::new(storage, sessions)` instead of separate constructors for each backend and policy combination.
 Memory configuration no longer needs a path, and file configuration owns its exact namespace path.
 Session decorators compose once per document and share the resulting factory across all sessions and listeners.
 
 ```rust
-let host = BuiltInSeaHost::new(
+let documents = DocumentHost::new(
     StorageSetup::durable(root.join("documents")),
     SessionSetup::default().decorate(ReaderShedding),
 )?;
+let protocol = SeaProtocolHost::new(documents);
 ```
 
 Implement `SessionDecorator` for application-defined session wrappers or a `PolicyFactory` that pauses writers instead of shedding readers.

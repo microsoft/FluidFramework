@@ -8,7 +8,7 @@ use std::sync::{
 use async_trait::async_trait;
 use futures_util::{StreamExt as _, poll};
 use sea_core::{
-    ClassifiedError, ErrorKind, EventPosition,
+    ClassifiedError, ErrorKind, EventPosition, SeaAuthorSession as _,
     factory::{PassThroughFactory, SessionFactory},
     policy::{DocumentPolicy, PolicyFactory, WriteRequest},
     storage::DocumentId,
@@ -17,10 +17,54 @@ use sea_file::pressure::DurableWritePressure;
 use sea_sequencer::session::LiveCachePressure;
 use sea_webtransport::protocol;
 use sea_webtransport_server::{
-    BuiltInSeaHost, DocumentContext, LivenessPolicy, PassThrough, SeaConnectionService,
-    SeaResponseStream, SeaServiceHost, SessionDecorator, SessionSetup, StorageSetup,
+    DocumentContext, DocumentHost, LivenessPolicy, PassThrough, SeaConnectionService,
+    SeaProtocolHost, SeaResponseStream, SeaServiceHost, SessionDecorator, SessionSetup,
+    StorageSetup,
 };
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
+
+#[tokio::test]
+async fn direct_and_protocol_sessions_share_document_policy_and_shutdown() {
+    let probe = Arc::new(Probe::default());
+    let documents = DocumentHost::new(
+        StorageSetup::memory(),
+        SessionSetup::default().decorate(PreserveReaders(probe.clone())),
+    )
+    .unwrap();
+    let id = documents.create_document().await.unwrap();
+    let direct = documents.open_session(&id, None).await.unwrap().session;
+    let protocol = SeaProtocolHost::new(documents.clone());
+    let (_, reader, mut events) = open(&protocol, Some(&id)).await;
+    catch_up(&mut events).await;
+    assert_eq!(probe.documents.lock().unwrap().len(), 1);
+    assert_eq!(probe.sessions.load(Ordering::SeqCst), 2);
+
+    let event = |value| sea_core::EventSubmission {
+        reference: None,
+        event: sea_core::Event {
+            payload: bytes::Bytes::from(vec![value]),
+            blob_tree: None,
+        },
+    };
+    direct.submit(event(1)).await.unwrap();
+    let waiting = direct.submit(event(2));
+    tokio::pin!(waiting);
+    assert!(
+        poll!(&mut waiting).is_pending(),
+        "protocol reader retains the direct write"
+    );
+    assert_eq!(catch_up(&mut events).await, vec![vec![1]]);
+    waiting.await.unwrap();
+    direct.close().await.unwrap();
+    assert_eq!(catch_up(&mut events).await, vec![vec![2]]);
+    drop(events);
+    reader.connection_closed(false).await;
+    protocol.shutdown().await.unwrap();
+    assert!(matches!(
+        documents.ensure_document(&id).await,
+        Err(sea_webtransport_server::HostError::Closed)
+    ));
+}
 
 /// Records construction and session admission without retaining a document or policy.
 #[derive(Default)]
@@ -63,7 +107,7 @@ impl<S: SessionFactory<Session: 'static> + 'static, E: ClassifiedError> SessionD
 #[tokio::test]
 async fn decorators_compose_once_in_order_without_cache_and_memory_hosts_are_independent() {
     let calls = Arc::new(Mutex::new(Vec::new()));
-    let host = BuiltInSeaHost::new(
+    let documents = DocumentHost::new(
         StorageSetup::memory(),
         SessionSetup::default()
             .with_live_cache(false)
@@ -77,6 +121,7 @@ async fn decorators_compose_once_in_order_without_cache_and_memory_hosts_are_ind
             }),
     )
     .unwrap();
+    let host = SeaProtocolHost::new(documents);
     assert!(calls.lock().unwrap().is_empty());
     let (id, first, first_events) = open(&host, None).await;
     let (_, second, second_events) = open(&host.clone(), Some(&id)).await;
@@ -95,7 +140,9 @@ async fn decorators_compose_once_in_order_without_cache_and_memory_hosts_are_ind
             ("outer", other_id),
         ]
     );
-    let independent = BuiltInSeaHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap();
+    let independent = SeaProtocolHost::new(
+        DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
+    );
     let connection = independent.connect(LivenessPolicy::default());
     assert!(
         connection
@@ -151,14 +198,18 @@ impl<S: SessionFactory<Session: 'static> + 'static, E: ClassifiedError> SessionD
 }
 
 /// Configures the same application decorator over each runtime-selected storage recipe.
-fn host(root: std::path::PathBuf, mode: &str, probe: Arc<Probe>) -> BuiltInSeaHost {
+fn host(root: std::path::PathBuf, mode: &str, probe: Arc<Probe>) -> SeaProtocolHost {
     let sessions = SessionSetup::default()
         .decorate(PreserveReaders(probe))
         .decorate(PassThrough);
     match mode {
-        "memory" => BuiltInSeaHost::new(StorageSetup::memory(), sessions),
-        "buffered-file" => BuiltInSeaHost::new(StorageSetup::buffered(root), sessions),
-        "durable-file" => BuiltInSeaHost::new(StorageSetup::durable(root), sessions),
+        "memory" => DocumentHost::new(StorageSetup::memory(), sessions).map(SeaProtocolHost::new),
+        "buffered-file" => {
+            DocumentHost::new(StorageSetup::buffered(root), sessions).map(SeaProtocolHost::new)
+        }
+        "durable-file" => {
+            DocumentHost::new(StorageSetup::durable(root), sessions).map(SeaProtocolHost::new)
+        }
         _ => panic!("unknown backend"),
     }
     .unwrap()
@@ -245,7 +296,7 @@ impl<E: ClassifiedError> DocumentPolicy for ReaderPolicy<E> {
 
 /// Opens and binds a session through the same host boundary used by both listeners.
 async fn open(
-    host: &BuiltInSeaHost,
+    host: &SeaProtocolHost,
     document: Option<&DocumentId>,
 ) -> (DocumentId, Arc<dyn SeaConnectionService>, SeaResponseStream) {
     let connection = host.connect(LivenessPolicy::default());

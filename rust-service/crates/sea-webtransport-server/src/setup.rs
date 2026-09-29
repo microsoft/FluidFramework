@@ -119,7 +119,7 @@ pub trait SessionDecorator<Source: SessionFactory, E: ClassifiedError>:
     /// Builds the shared document factory without opening a membership.
     ///
     /// Callers must supply an output observer when [`Self::requires_live_cache`] returns true.
-    /// [`crate::BuiltInSeaHost`] checks this requirement before opening storage.
+    /// [`crate::DocumentHost`] checks this requirement before opening storage.
     fn decorate(&self, source: Source, context: &DocumentContext<'_, E>) -> Self::Factory;
 }
 

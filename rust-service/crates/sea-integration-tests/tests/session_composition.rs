@@ -48,7 +48,7 @@ use sea_webtransport::{
     NativeSeaClient, NativeSessionOpen, SeaClientError, WebTransportSessionFactory, protocol,
 };
 use sea_webtransport_server::{
-    BuiltInSeaHost, LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost,
+    LivenessPolicy, SeaConnectionService, SeaProtocolHost, SeaResponseStream, SeaServiceHost,
     SessionDispatcher, ShutdownHandle, ShutdownMode, ShutdownOutcome, TransportConfig,
     WebTransportError, WebTransportServer,
 };
@@ -371,13 +371,13 @@ async fn network_factory_opens_independent_sessions_and_forwards_facets() {
     let storage = MemoryStorage::new();
     let (document, view) = storage.create_view().await.unwrap();
     drop(view);
-    let host = Arc::new(
-        BuiltInSeaHost::new(
+    let host = Arc::new(SeaProtocolHost::new(
+        sea_webtransport_server::DocumentHost::new(
             sea_webtransport_server::StorageSetup::from_storage(storage),
             sea_webtransport_server::SessionSetup::default().with_live_cache(false),
         )
         .unwrap(),
-    );
+    ));
     let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
     let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
     let server = WebTransportServer::bind(

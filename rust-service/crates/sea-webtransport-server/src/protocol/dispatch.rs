@@ -1,4 +1,4 @@
-//! Typed Sea protocol dispatch over an already-open session.
+//! Sea protocol dispatch over an already-open typed session.
 
 use std::{collections::BTreeMap, sync::Arc};
 
