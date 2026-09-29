@@ -41,7 +41,14 @@ import { applyBranchUpdate, getBranch } from "./synchronizationUtils.js";
  * onto the updated Host head.
  */
 export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
-	/** The Guest's authoring view, rebased over updates applied to {@link host}. */
+	/**
+	 * The Guest's authoring view, rebased over updates applied to {@link host}.
+	 * @remarks
+	 * While this creates the view and keeps it up to date, it does not own the view: it is owned by the {@link Guest}.
+	 * Thus its possible to use the view after syncing has stopped, for example to view or stash unsaved changes.
+	 * The guest currently does not use this ability for anything, but it makes sense to allow it from the perspective of
+	 * GuestSynchronization.
+	 */
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** Guest changes sent to the Host that have not been acknowledged. */
 	private readonly pendingChanges = new Set<GuestChangeId>();
@@ -216,6 +223,9 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 *
 	 * @remarks
 	 * Disposal is terminal and idempotent.
+	 *
+	 * This stops syncing the view with the host,
+	 * but does not dispose the view itself (Which is owned by the {@link Guest}).
 	 */
 	public dispose(): void {
 		if (this.disposed) {

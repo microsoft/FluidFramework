@@ -44,13 +44,26 @@ interface SerializedChange {
 	readonly customMetadata?: EncodedCustomMetadataTree;
 }
 
-interface DecodedSerializedChange {
+/**
+ * A deserialized SharedTree change with its revision and application-defined commit metadata.
+ */
+interface DecodedChange {
 	/** The decoded SharedTree change and its revision. */
 	readonly change: TaggedChange<SharedTreeChange>;
 	/** Application-defined metadata attached to the commit. */
 	readonly customMetadata: CustomMetadataTree | undefined;
 }
 
+/**
+ * Checks whether a value is a serialized change in version 2 format.
+ *
+ * @param value - The value to check.
+ * @returns True if the value is a serialized change in version 2 format, false otherwise.
+ *
+ * @remarks
+ * TODO: This check does not fully validate the serialized change structure. It only performs a basic type check.
+ * We will need to implement a more robust check for untrusted data.
+ */
 function isSerializedChangeV2(value: unknown): value is SerializedChange {
 	if (typeof value !== "object" || value === null) {
 		return false;
@@ -99,7 +112,7 @@ function decodeSerializedChangeV2(
 	idCompressor: IIdCompressor,
 	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, unknown>,
 	serializedChange: JsonCompatibleReadOnly,
-): DecodedSerializedChange {
+): DecodedChange {
 	if (!isSerializedChangeV2(serializedChange)) {
 		throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 	}

@@ -1044,7 +1044,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
-	 * Serializes an existing commit for application to another checkout in the same ID-compressor session.
+	 * Serializes an existing commit so it can be applied to another checkout in the same ID-compressor session.
 	 */
 	public serializeCommit(commit: GraphCommit<SharedTreeChange>): JsonCompatibleReadOnly {
 		return SerializedChange.V2.encode(

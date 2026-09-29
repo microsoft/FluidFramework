@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "@fluidframework/core-utils/internal";
+import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -64,31 +64,28 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			}
 			if (this.synchronization === undefined) {
 				throw new SandboxProtocolError(
-					`The Guest received ${message.type} before initialization.`,
+					`Guest received a message with type ${JSON.stringify(message.type)} before initialization.`,
 				);
 			}
 			switch (message.type) {
 				case "hostUpdate": {
-					this.synchronization.receiveHostUpdate(message);
-					break;
+					return this.synchronization.receiveHostUpdate(message);
 				}
 				case "guestChangeAck": {
-					this.synchronization.receiveChangeAck(message);
-					break;
+					return this.synchronization.receiveChangeAck(message);
 				}
 				case "blobResponse": {
-					this.codec.receiveBlobResponse(message);
-					break;
+					return this.codec.receiveBlobResponse(message);
 				}
-				case "blobRequest": {
-					throw new SandboxProtocolError("The Guest cannot receive blob requests.");
-				}
+				case "blobRequest":
 				case "guestChange":
 				case "hostUpdateAck": {
-					throw new SandboxProtocolError(`The Guest cannot receive ${message.type} messages.`);
+					throw new SandboxProtocolError(
+						`Guest received a message with type ${JSON.stringify(message.type)}.`,
+					);
 				}
 				default: {
-					fail("Unexpected Host and Guest message type");
+					unreachableCase(message);
 				}
 			}
 		});
@@ -132,6 +129,15 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 	/**
 	 * Creates a Guest after receiving its initial Host state through the message port.
+	 *
+	 * @param config - The schema configuration for the Guest's tree view.
+	 * @param options - The forest and codec options used to initialize the Guest's tree view.
+	 * @param idCompressor - The compressor shared with the Host for this session.
+	 * @param port - The Guest endpoint of the Host and Guest message channel.
+	 * @param logger - The Guest-scoped logger for diagnostic telemetry.
+	 * @param handleProtocolError - Reports terminal session failure asynchronously.
+	 * By default, the error is thrown. After a failure, the application must recreate the Host and Guest pair.
+	 * @returns The initialized Guest.
 	 */
 	public static async create<const TSchema extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TSchema>,
@@ -182,7 +188,11 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		const synchronization = this.synchronization;
 		synchronization?.dispose();
+
 		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
+
+		// The synchronization leaves the view alive, making it possible to save/stash/view unsaved changes.
+		// Currently we do no such thing, and just dispose of it, but that could be change in the future.
 		synchronization?.view.dispose();
 	}
 
