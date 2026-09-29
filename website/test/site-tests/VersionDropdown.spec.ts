@@ -53,6 +53,52 @@ test.describe("Version dropdown keyboard navigation", () => {
 		await expect(firstItem).toBeHidden();
 	});
 
+	for (const key of ["Enter", "Space"]) {
+		test(`${key} toggles the link trigger without navigation`, async ({ page }) => {
+			await page.goto("/docs/start/tree-start/?dropdown-link-test=true");
+			await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+			const initialUrl = page.url();
+			const trigger = page.getByRole("button", { name: "Select documentation version" });
+			const firstItem = page.locator(".version-dropdown__item").first();
+
+			await expect(trigger).toHaveAttribute("href", "/docs/start/tree-start");
+			await trigger.focus();
+			await page.keyboard.press(key);
+			await expect(trigger).toHaveAttribute("aria-expanded", "true");
+			await expect(firstItem).toBeVisible();
+			await expect(trigger).toBeFocused();
+			await expect(page).toHaveURL(initialUrl);
+
+			await page.keyboard.press(key);
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await expect(firstItem).toBeHidden();
+			await expect(page).toHaveURL(initialUrl);
+		});
+	}
+
+	test("a pointer click follows the link trigger's destination", async ({ page }) => {
+		await page.goto("/docs/start/tree-start/?dropdown-link-test=true");
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+		const trigger = page.getByRole("button", { name: "Select documentation version" });
+
+		await expect(trigger).toHaveAttribute("href", "/docs/start/tree-start");
+		await trigger.click();
+		await expect(page).toHaveURL("/docs/start/tree-start");
+	});
+
+	test("Enter follows the version link selected with arrow keys", async ({ page }) => {
+		const trigger = page.getByRole("button", { name: "Select documentation version" });
+		const lastItem = page.locator(".version-dropdown__item").last();
+		const destination = await lastItem.evaluate((link: HTMLAnchorElement) => link.href);
+
+		expect(destination).not.toBe(page.url());
+		await trigger.focus();
+		await page.keyboard.press("ArrowUp");
+		await expect(lastItem).toBeFocused();
+		await page.keyboard.press("Enter");
+		await expect(page).toHaveURL(destination);
+	});
+
 	test("Escape dismisses a hovered menu and permits keyboard and hover reopening", async ({
 		page,
 	}) => {

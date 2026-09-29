@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/*
+ * Portions copyright (c) Facebook, Inc. and its affiliates.
+ * Licensed under the MIT License.
+ */
+
 import NavbarItem from "@theme/NavbarItem";
 import type { Props } from "@theme/NavbarItem/DropdownNavbarItem/Desktop";
 import NavbarNavLink from "@theme/NavbarItem/NavbarNavLink";
@@ -10,6 +15,33 @@ import clsx from "clsx";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 
+/**
+ * Adds keyboard navigation and dismissal to desktop navbar dropdowns.
+ *
+ * @remarks
+ * This override ejects the Docusaurus 3.10.2 classic theme's `DropdownNavbarItem/Desktop` component.
+ * See {@link https://docusaurus.io/docs/swizzling | Docusaurus swizzling}.
+ * It applies to all desktop navbar dropdowns, including the documentation version selector.
+ * The mobile component remains unchanged.
+ *
+ * Changes from the upstream component:
+ * - ArrowDown and ArrowUp open the dropdown and focus its first or last link.
+ * - Arrow keys move focus between links and wrap at either end. Home and End focus the first or last link.
+ * - Escape closes the dropdown and restores focus to its trigger.
+ * - React state replaces `dropdown--hoverable` so Escape and outside focus can dismiss a menu under the pointer.
+ * Separate hover state keeps a keyboard-open menu visible after the pointer leaves.
+ * `aria-expanded` reflects both keyboard and hover visibility.
+ *
+ * The override preserves Enter and Space toggles, pointer navigation, and outside click, touch, and focus dismissal.
+ * Tab follows the normal focus order and dismisses the dropdown when focus leaves it.
+ *
+ * Upstream discussed arrow navigation in {@link https://github.com/facebook/docusaurus/issues/11447 | facebook/docusaurus#11447}
+ * and closed the request as not planned. This override adds the behavior required by Fluid Framework.
+ * The separate screen-reader activation issue, {@link https://github.com/facebook/docusaurus/issues/8478 | facebook/docusaurus#8478},
+ * remains outside this override's scope.
+ * After a Docusaurus upgrade, compare the upstream component with these changes.
+ * Remove this override only when upstream provides equivalent behavior and `VersionDropdown.spec.ts` passes without it.
+ */
 export default function DropdownNavbarItemDesktop({
 	items,
 	position,
