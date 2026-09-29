@@ -276,9 +276,15 @@ async fn revocation_drop_close_and_stale_capabilities_reclaim_without_polling() 
     stale.revoke();
     author.submit(submission(b"replacement")).await.unwrap();
     assert_eq!(runtime.live_cache_stats().unwrap().entries, 1);
+    let mut never_polled = observer.read(None, None);
+    assert_eq!(runtime.live_cache_stats().unwrap().subscriptions, 2);
     observer.close().await.unwrap();
     assert_eq!(runtime.live_cache_stats().unwrap().subscriptions, 0);
     assert_eq!(runtime.live_cache_stats().unwrap().payload_bytes, 0);
+    assert!(matches!(
+        never_polled.next().now_or_never(),
+        Some(Some(Err(SessionError::Closed)))
+    ));
     assert!(matches!(
         replacement.next().await.unwrap(),
         Err(SessionError::Closed)
@@ -464,6 +470,53 @@ async fn independent_invalidation_releases_unpolled_claims_and_wakes_active_read
         parked.next().await.unwrap(),
         Err(SessionError::StorageInvalidated(_))
     ));
+}
+
+#[tokio::test]
+async fn failed_reconciliation_terminates_cache_pressure_and_unpolled_retention() {
+    for control in [false, true] {
+        let (storage, runtime) = fixture().await;
+        let author = member(&runtime).await;
+        let observer = member(&runtime).await;
+        let mut reader = observer.read(None, None);
+        caught_up(&mut reader).await;
+        author.submit(submission(b"retained")).await.unwrap();
+        let pressure = runtime.live_cache_pressure().unwrap();
+        assert_eq!(pressure.current().unwrap().entries, 1);
+        let below = pressure.wait_below(0, 0);
+        tokio::pin!(below);
+        assert!(futures_util::poll!(&mut below).is_pending());
+
+        storage.events.arm(Failure::FailHead);
+        let result = if control {
+            author.announce_membership(Bytes::new()).await
+        } else {
+            author.submit(submission(b"uncertain")).await
+        };
+        assert!(matches!(result, Err(SessionError::RecoveryRequired)));
+        assert!(runtime.runtime.lock().await.recovery_required);
+        assert!(matches!(
+            pressure.current(),
+            Err(SessionError::RecoveryRequired)
+        ));
+        assert_eq!(
+            runtime.live_cache_stats().unwrap(),
+            crate::session::LiveCacheStats::default()
+        );
+        assert!(matches!(
+            below.now_or_never(),
+            Some(Err(SessionError::RecoveryRequired))
+        ));
+        assert!(matches!(
+            reader.next().now_or_never(),
+            Some(Some(Err(SessionError::RecoveryRequired)))
+        ));
+        assert!(matches!(
+            author.close().await,
+            Err(SessionError::RecoveryRequired)
+        ));
+        assert_eq!(storage.events.calls.load(Ordering::SeqCst), 2);
+    }
 }
 
 #[tokio::test]

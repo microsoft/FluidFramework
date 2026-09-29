@@ -879,6 +879,52 @@ mod tests {
     }
 
     #[test]
+    fn lagged_shedding_selects_the_oldest_unread_cursor_not_registration_order() {
+        let cache = LiveCache::<std::io::Error>::new(None);
+        let pressure = cache.pressure();
+        let session = SessionId::new(1).unwrap();
+        let newer = cache.subscribe(session.clone());
+        let oldest = cache.subscribe(session.clone());
+        let newest = cache.subscribe(session);
+        for reader in [&newer, &oldest, &newest] {
+            assert!(reader.attach(None).unwrap());
+        }
+        for index in 0..3 {
+            cache.publish(&event(index, 8));
+        }
+        newer.next().unwrap().unwrap();
+        newest.next().unwrap().unwrap();
+        newest.next().unwrap().unwrap();
+
+        assert!(pressure.revoke_lagging(0, 0).unwrap());
+        assert!(matches!(
+            oldest.next(),
+            Err(SessionError::SubscriptionRevoked)
+        ));
+        assert!(newer.terminal().is_none());
+        assert!(newest.terminal().is_none());
+        assert_eq!(pressure.current().unwrap().claims, 2);
+        assert_eq!(pressure.current().unwrap().entries, 2);
+        assert_eq!(pressure.current().unwrap().payload_bytes, 16);
+        check_accounting(&cache);
+
+        assert!(pressure.revoke_lagging(0, 0).unwrap());
+        assert!(matches!(
+            newer.next(),
+            Err(SessionError::SubscriptionRevoked)
+        ));
+        assert!(newest.terminal().is_none());
+        assert_eq!(pressure.current().unwrap().claims, 1);
+        assert_eq!(pressure.current().unwrap().entries, 1);
+        assert_eq!(
+            newest.next().unwrap().unwrap().committed.position,
+            event(2, 8).committed.position
+        );
+        assert!(!pressure.revoke_lagging(0, 0).unwrap());
+        check_accounting(&cache);
+    }
+
+    #[test]
     fn advancing_reader_preserves_order_while_a_sibling_retains_the_prefix() {
         for count in [2048_u64, 16384] {
             let cache = LiveCache::<std::io::Error>::new(None);

@@ -2239,8 +2239,16 @@ mod tests {
                 .members
                 .contains_key(&first.session)
         );
+        let mut finite = first.read(None, Some(position));
+        assert!(matches!(
+            finite.next().await,
+            Some(Ok(MonitoredStreamItem::Progress(_)))
+        ));
+        assert_eq!(finite.progress().previous, None);
         first.close().await.unwrap();
         assert!(live.next().await.is_none());
+        assert!(finite.next().await.is_none());
+        assert_eq!(finite.progress().previous, None);
         assert!(first.submit(submission(b"stale")).await.is_err());
         let mut retained = second.read(Some(position), None);
         assert!(matches!(

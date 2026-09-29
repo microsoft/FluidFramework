@@ -339,6 +339,45 @@ mod tests {
         );
     }
 
+    #[tokio::test]
+    async fn cancelled_gate_waiter_preserves_authority_and_does_not_encrypt() {
+        let runtime = new_runtime().await;
+        let calls = Arc::new(AtomicUsize::new(0));
+        let encrypted = EncryptionSession::with_nonce_source(
+            runtime.open_session(None).await.unwrap(),
+            TestKeys::new(),
+            CountingNonce {
+                calls: calls.clone(),
+            },
+        );
+        let clone = encrypted.clone();
+        let preceding = encrypted.author_terminal.lock().await;
+        let submission = EventSubmission {
+            reference: None,
+            event: Event {
+                payload: Bytes::from_static(b"accepted"),
+                blob_tree: None,
+            },
+        };
+        let mut cancelled = encrypted.submit(submission.clone());
+        assert!(cancelled.as_mut().now_or_never().is_none());
+        let mut successor = clone.submit(submission.clone());
+        assert!(successor.as_mut().now_or_never().is_none());
+        drop(cancelled);
+        assert_eq!(calls.load(Ordering::SeqCst), 0);
+        assert!(!*preceding);
+        drop(preceding);
+
+        let first = successor
+            .now_or_never()
+            .expect("cancelled waiter releases its turn")
+            .unwrap();
+        let second = encrypted.submit(submission).await.unwrap();
+        assert!(first < second);
+        assert_eq!(calls.load(Ordering::SeqCst), 2);
+        assert!(!*encrypted.author_terminal.lock().await);
+    }
+
     /// Reads one data item while leaving progress assertions to each boundary test.
     async fn next_event<E: std::fmt::Debug>(
         events: &mut ArchiveStream<SessionCommittedEvent, EventPosition, E>,
