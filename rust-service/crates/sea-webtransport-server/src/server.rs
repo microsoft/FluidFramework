@@ -249,7 +249,7 @@ impl Default for TransportConfig {
             max_frame_bytes: 4 * 1024 * 1024,
             max_connections: 16,
             max_streams_per_connection: 16,
-            max_pending_author_requests: 128,
+            max_pending_author_requests: 256,
             operation_timeout: Duration::from_secs(5),
             liveness: LivenessPolicy::default(),
         }

@@ -113,6 +113,7 @@ Run the following shape from the repository root with explicit `serverBinary` an
 
 ```bash
 SEA_MAX_CONNECTIONS=128 \
+SEA_AUTHOR_WINDOW=128 \
 SEA_EXPERIMENTAL_RESOURCE_POLICY=true \
 SEA_EXPERIMENTAL_SESSION_FACTORY=false \
 node rust-service/scripts/benchmark-stress.mjs run \
@@ -120,7 +121,7 @@ node rust-service/scripts/benchmark-stress.mjs run \
 	/path/to/new-output
 ```
 
-Leave `SEA_AUTHOR_WINDOW` unset to use the candidate default of 128.
+Set `SEA_AUTHOR_WINDOW=128` to reproduce the measured candidate configuration; the current default is 256.
 For acknowledgement pacing, select `"loadMode":"closed-loop"` and omit `drainTimeoutSeconds`.
 Select `"storage":"memory"` for the memory control.
 Use three fresh output directories per cell.

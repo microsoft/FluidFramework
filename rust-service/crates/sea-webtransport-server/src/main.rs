@@ -408,9 +408,10 @@ mod tests {
             configured_transport(None, None)
                 .unwrap()
                 .max_pending_author_requests,
-            128
+            256
         );
-        for maximum in [1, 64, 4096] {
+        assert_eq!(defaults.max_frame_bytes, 4 * 1024 * 1024);
+        for maximum in [1, 64, 128, 256, 4096] {
             let text = maximum.to_string();
             let config = configured_transport(Some(&text), None).unwrap();
             assert_eq!(config.max_connections, maximum);

@@ -15,7 +15,7 @@ cargo run -p sea-webtransport-server -- \
 | --- | --- | --- |
 | `SEA_STORAGE_MODE` | `memory`, `buffered-file`, `durable-file` | `durable-file` |
 | `SEA_MAX_CONNECTIONS` | Integer from 1 through 4096 | 16 per listener |
-| `SEA_AUTHOR_WINDOW` | Integer from 1 through 4096 | 128 per author stream |
+| `SEA_AUTHOR_WINDOW` | Integer from 1 through 4096 | 256 per author stream |
 | `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `true` |
 | `SEA_EXPERIMENTAL_SESSION_FACTORY` | Exactly `true` or `false` | `false` |
 | `SEA_EXPERIMENTAL_RESOURCE_POLICY` | Exactly `true` or `false` | `false` |

@@ -10,6 +10,6 @@ Session clients reserve their submission turn before a cooperative scheduler yie
 Request admission and responses remain ordered, and successful acknowledgements still require storage completion.
 Membership changes, close, and clean receive EOF drain earlier submissions.
 
-Each author stream defaults to at most 128 pending requests and 4 MiB of encoded input charges, with one additional bounded lookahead request.
+Each author stream defaults to at most 256 pending requests and 4 MiB of encoded input charges, with one additional bounded lookahead request.
 These limits exclude downstream and network buffers and are not total-memory limits.
 Set `SEA_AUTHOR_WINDOW=1` to restore serial dispatch.
