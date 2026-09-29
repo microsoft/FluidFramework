@@ -6,64 +6,92 @@ use std::sync::{
 };
 
 use async_trait::async_trait;
+use bytes::Bytes;
 use futures_util::{StreamExt as _, poll};
 use sea_core::{
-    ClassifiedError, ErrorKind, EventPosition, SeaAuthorSession as _,
+    ClassifiedError, ErrorKind, Event, EventPosition, EventSubmission, MonitoredStreamItem,
+    MonitoredStreamStatus, SeaArchive as _, SeaAuthorSession as _,
+    archive::{SessionCommittedEvent, SessionEventKind},
     factory::{PassThroughFactory, SessionFactory},
     policy::{DocumentPolicy, PolicyFactory, WriteRequest},
-    storage::DocumentId,
+    storage::{ArchiveStream, DocumentId, LoadStart, SeaStorage},
 };
 use sea_file::pressure::DurableWritePressure;
 use sea_sequencer::session::LiveCachePressure;
 use sea_webtransport::protocol;
 use sea_webtransport_server::{
-    DocumentContext, DocumentHost, LivenessPolicy, PassThrough, SeaConnectionService,
+    DocumentContext, DocumentHost, HostError, LivenessPolicy, PassThrough, SeaConnectionService,
     SeaProtocolHost, SeaResponseStream, SeaServiceHost, SessionDecorator, SessionSetup,
     StorageSetup,
 };
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 #[tokio::test]
-async fn direct_and_protocol_sessions_share_document_policy_and_shutdown() {
-    let probe = Arc::new(Probe::default());
-    let documents = DocumentHost::new(
-        StorageSetup::memory(),
-        SessionSetup::default().decorate(PreserveReaders(probe.clone())),
-    )
-    .unwrap();
-    let id = documents.create_document().await.unwrap();
-    let direct = documents.open_session(&id, None).await.unwrap().session;
-    let protocol = SeaProtocolHost::new(documents.clone());
-    let (_, reader, mut events) = open(&protocol, Some(&id)).await;
-    catch_up(&mut events).await;
-    assert_eq!(probe.documents.lock().unwrap().len(), 1);
-    assert_eq!(probe.sessions.load(Ordering::SeqCst), 2);
+async fn direct_and_protocol_sessions_share_policy_and_lifecycle() {
+    let exercise = async {
+        let probe = Arc::new(Probe::default());
+        let documents = DocumentHost::new(
+            StorageSetup::memory(),
+            SessionSetup::default()
+                .decorate(PreserveReaders(probe.clone()))
+                .decorate(PassThrough),
+        )
+        .unwrap();
+        let id = documents.create_document().await.unwrap();
+        let direct = documents.open_session(&id, None).await.unwrap().session;
+        let protocol = SeaProtocolHost::new(documents.clone());
+        let (_, reader, mut events) = open(&protocol, Some(&id)).await;
+        catch_up(&mut events).await;
+        assert_eq!(probe.documents.lock().unwrap().len(), 1);
+        assert_eq!(probe.sessions.load(Ordering::SeqCst), 2);
 
-    let event = |value| sea_core::EventSubmission {
-        reference: None,
-        event: sea_core::Event {
-            payload: bytes::Bytes::from(vec![value]),
-            blob_tree: None,
-        },
+        direct.submit(submission(1)).await.unwrap();
+        let waiting = direct.submit(submission(2));
+        tokio::pin!(waiting);
+        assert!(
+            poll!(&mut waiting).is_pending(),
+            "protocol reader retains the direct write"
+        );
+        assert_eq!(catch_up(&mut events).await, vec![vec![1]]);
+        waiting.await.unwrap();
+        direct.close().await.unwrap();
+        assert_eq!(catch_up(&mut events).await, vec![vec![2]]);
+
+        assert!(matches!(
+            reader.author_request(submit(3)).await,
+            protocol::Response::EventCommitted { .. }
+        ));
+        let waiting = reader.author_request(submit(4));
+        tokio::pin!(waiting);
+        assert!(
+            poll!(&mut waiting).is_pending(),
+            "the protocol reader retains its own write"
+        );
+        assert_eq!(
+            reader.author_request(protocol::Request::Close).await,
+            protocol::Response::Acknowledged
+        );
+        assert!(matches!(
+            waiting.await,
+            protocol::Response::Error {
+                kind: protocol::ErrorKind::Rejected,
+                ..
+            }
+        ));
+        drop(events);
+        let (_, replay, mut events) = open(&protocol, Some(&id)).await;
+        assert_eq!(catch_up(&mut events).await, vec![vec![1], vec![2], vec![3]]);
+        drop(events);
+        replay.connection_closed(false).await;
+        protocol.shutdown().await.unwrap();
+        assert!(matches!(
+            documents.ensure_document(&id).await,
+            Err(sea_webtransport_server::HostError::Closed)
+        ));
     };
-    direct.submit(event(1)).await.unwrap();
-    let waiting = direct.submit(event(2));
-    tokio::pin!(waiting);
-    assert!(
-        poll!(&mut waiting).is_pending(),
-        "protocol reader retains the direct write"
-    );
-    assert_eq!(catch_up(&mut events).await, vec![vec![1]]);
-    waiting.await.unwrap();
-    direct.close().await.unwrap();
-    assert_eq!(catch_up(&mut events).await, vec![vec![2]]);
-    drop(events);
-    reader.connection_closed(false).await;
-    protocol.shutdown().await.unwrap();
-    assert!(matches!(
-        documents.ensure_document(&id).await,
-        Err(sea_webtransport_server::HostError::Closed)
-    ));
+    tokio::time::timeout(std::time::Duration::from_secs(10), exercise)
+        .await
+        .unwrap();
 }
 
 /// Records construction and session admission without retaining a document or policy.
@@ -107,7 +135,7 @@ impl<S: SessionFactory<Session: 'static> + 'static, E: ClassifiedError> SessionD
 #[tokio::test]
 async fn decorators_compose_once_in_order_without_cache_and_memory_hosts_are_independent() {
     let calls = Arc::new(Mutex::new(Vec::new()));
-    let documents = DocumentHost::new(
+    let host = DocumentHost::new(
         StorageSetup::memory(),
         SessionSetup::default()
             .with_live_cache(false)
@@ -121,15 +149,16 @@ async fn decorators_compose_once_in_order_without_cache_and_memory_hosts_are_ind
             }),
     )
     .unwrap();
-    let host = SeaProtocolHost::new(documents);
     assert!(calls.lock().unwrap().is_empty());
-    let (id, first, first_events) = open(&host, None).await;
-    let (_, second, second_events) = open(&host.clone(), Some(&id)).await;
+    let id = host.create_document().await.unwrap();
+    let first = host.open_session(&id, None).await.unwrap().session;
+    let second = host.clone().open_session(&id, None).await.unwrap().session;
     assert_eq!(
         *calls.lock().unwrap(),
         vec![("inner", id.clone()), ("outer", id.clone())]
     );
-    let (other_id, other, other_events) = open(&host, None).await;
+    let other_id = host.create_document().await.unwrap();
+    let other = host.open_session(&other_id, None).await.unwrap().session;
     assert_ne!(id, other_id);
     assert_eq!(
         *calls.lock().unwrap(),
@@ -140,25 +169,14 @@ async fn decorators_compose_once_in_order_without_cache_and_memory_hosts_are_ind
             ("outer", other_id),
         ]
     );
-    let independent = SeaProtocolHost::new(
-        DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
-    );
-    let connection = independent.connect(LivenessPolicy::default());
-    assert!(
-        connection
-            .open_event_stream(protocol::Request::OpenEventStream {
-                version: protocol::PROTOCOL_VERSION,
-                intent: protocol::ArchiveIntent::Open,
-                archive: id.as_bytes().to_vec(),
-                resume_after: None,
-            })
-            .await
-            .is_err()
-    );
-    drop((first_events, second_events, other_events));
-    first.connection_closed(false).await;
-    second.connection_closed(false).await;
-    other.connection_closed(false).await;
+    let independent = DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap();
+    assert!(matches!(
+        independent.ensure_document(&id).await,
+        Err(HostError::NotFound)
+    ));
+    first.close().await.unwrap();
+    second.close().await.unwrap();
+    other.close().await.unwrap();
     host.shutdown().await.unwrap();
     independent.shutdown().await.unwrap();
 }
@@ -195,24 +213,6 @@ impl<S: SessionFactory<Session: 'static> + 'static, E: ClassifiedError> SessionD
             }),
         )
     }
-}
-
-/// Configures the same application decorator over each runtime-selected storage recipe.
-fn host(root: std::path::PathBuf, mode: &str, probe: Arc<Probe>) -> SeaProtocolHost {
-    let sessions = SessionSetup::default()
-        .decorate(PreserveReaders(probe))
-        .decorate(PassThrough);
-    match mode {
-        "memory" => DocumentHost::new(StorageSetup::memory(), sessions).map(SeaProtocolHost::new),
-        "buffered-file" => {
-            DocumentHost::new(StorageSetup::buffered(root), sessions).map(SeaProtocolHost::new)
-        }
-        "durable-file" => {
-            DocumentHost::new(StorageSetup::durable(root), sessions).map(SeaProtocolHost::new)
-        }
-        _ => panic!("unknown backend"),
-    }
-    .unwrap()
 }
 
 /// Keeps small pending writes bounded while waiting for readers to dequeue prior events.
@@ -358,101 +358,147 @@ fn submit(value: u8) -> protocol::Request {
     }
 }
 
-#[tokio::test]
-#[allow(clippy::too_many_lines)]
-async fn injected_policy_preserves_readers_and_close_interrupts_waits() {
-    for mode in ["memory", "buffered-file", "durable-file"] {
-        let root = std::env::temp_dir().join(format!(
-            "sea-injected-policy-{}-{}",
-            std::process::id(),
-            mode,
-        ));
-        assert!(!root.exists());
-        let probe = Arc::new(Probe::default());
-        let host = self::host(root.clone(), mode, probe.clone());
-        let exercise = async {
-            let (id, author, mut echo) = open(&host, None).await;
-            catch_up(&mut echo).await;
-            let (_, observer, mut events) = open(&host.clone(), Some(&id)).await;
-            catch_up(&mut events).await;
-            assert_eq!(
-                probe.documents.lock().unwrap().as_slice(),
-                &[(id.clone(), mode == "durable-file")]
-            );
-            assert_eq!(probe.sessions.load(Ordering::SeqCst), 2);
-            assert!(matches!(
-                author.author_request(submit(1)).await,
-                protocol::Response::EventCommitted { .. }
-            ));
-            let pending = author.author_request(submit(2));
-            tokio::pin!(pending);
-            assert!(poll!(&mut pending).is_pending());
+/// Uses distinct bytes so replay detects a write incorrectly admitted during a policy wait.
+fn submission(value: u8) -> EventSubmission {
+    EventSubmission {
+        reference: None,
+        event: Event {
+            payload: Bytes::from(vec![value]),
+            blob_tree: None,
+        },
+    }
+}
 
-            let (_, other, mut other_events) = open(&host, None).await;
-            catch_up(&mut other_events).await;
-            assert!(matches!(
-                other.author_request(submit(9)).await,
-                protocol::Response::EventCommitted { .. }
-            ));
-            assert_eq!(probe.documents.lock().unwrap().len(), 2);
-            assert_eq!(catch_up(&mut echo).await, vec![vec![1]]);
-            assert!(
-                poll!(&mut pending).is_pending(),
-                "the observer still retains the event"
-            );
-            assert_eq!(catch_up(&mut events).await, vec![vec![1]]);
-            assert!(matches!(
-                pending.await,
-                protocol::Response::EventCommitted { .. }
-            ));
-
-            let pending = author.author_request(submit(3));
-            tokio::pin!(pending);
-            assert!(poll!(&mut pending).is_pending());
-            assert_eq!(catch_up(&mut echo).await, vec![vec![2]]);
-            assert!(poll!(&mut pending).is_pending());
-            drop(events);
-            assert!(matches!(
-                pending.await,
-                protocol::Response::EventCommitted { .. }
-            ));
-
-            let pending = author.author_request(submit(4));
-            tokio::pin!(pending);
-            assert!(poll!(&mut pending).is_pending());
-            assert_eq!(
-                author.author_request(protocol::Request::Close).await,
-                protocol::Response::Acknowledged
-            );
-            assert!(matches!(
-                pending.await,
-                protocol::Response::Error {
-                    kind: protocol::ErrorKind::Rejected,
-                    ..
-                }
-            ));
-            drop((echo, other_events));
-            observer.connection_closed(false).await;
-            other.connection_closed(false).await;
-            host.shutdown().await.unwrap();
-            id
-        };
-        let id = tokio::time::timeout(std::time::Duration::from_secs(10), exercise)
-            .await
-            .unwrap();
-        drop(host);
-        assert_eq!(probe.dropped.load(Ordering::SeqCst), 2);
-        if mode != "memory" {
-            let reopened = self::host(root.clone(), mode, probe.clone());
-            let (_, reader, mut events) = open(&reopened, Some(&id)).await;
-            assert_eq!(catch_up(&mut events).await, vec![vec![1], vec![2], vec![3]]);
-            assert_eq!(probe.documents.lock().unwrap().len(), 3);
-            drop(events);
-            reader.connection_closed(false).await;
-            reopened.shutdown().await.unwrap();
-            drop((reader, reopened));
-            assert_eq!(probe.dropped.load(Ordering::SeqCst), 3);
-            std::fs::remove_dir_all(root).unwrap();
+/// Drains typed history to its live boundary, failing on read errors.
+async fn catch_up_typed<E: ClassifiedError>(
+    events: &mut ArchiveStream<SessionCommittedEvent, EventPosition, E>,
+) -> Vec<Vec<u8>> {
+    let mut payloads = Vec::new();
+    loop {
+        match events.next().await.unwrap().unwrap() {
+            MonitoredStreamItem::Item(event) if event.kind == SessionEventKind::Application => {
+                payloads.push(event.committed.event.payload.to_vec());
+            }
+            MonitoredStreamItem::Progress(progress)
+                if progress.status == MonitoredStreamStatus::AwaitingNewItems =>
+            {
+                return payloads;
+            }
+            MonitoredStreamItem::Item(_) | MonitoredStreamItem::Progress(_) => {}
         }
     }
+}
+
+/// Exercises document-local backpressure and policy lifetimes without protocol adaptation.
+async fn assert_policy<S: SeaStorage + 'static>(
+    storage: StorageSetup<S>,
+    reopen: Option<StorageSetup<S>>,
+    expects_storage_pressure: bool,
+) {
+    let probe = Arc::new(Probe::default());
+    let configure = |storage| {
+        DocumentHost::new(
+            storage,
+            SessionSetup::default()
+                .decorate(PreserveReaders(probe.clone()))
+                .decorate(PassThrough),
+        )
+        .unwrap()
+    };
+    let host = configure(storage);
+    let exercise = async {
+        let id = host.create_document().await.unwrap();
+        let author = host.open_session(&id, None).await.unwrap().session;
+        let mut echo = author.load(LoadStart::LatestSnapshot).await.unwrap().events;
+        catch_up_typed(&mut echo).await;
+        let observer = host.clone().open_session(&id, None).await.unwrap().session;
+        let mut events = observer
+            .load(LoadStart::LatestSnapshot)
+            .await
+            .unwrap()
+            .events;
+        catch_up_typed(&mut events).await;
+        assert_eq!(
+            probe.documents.lock().unwrap().as_slice(),
+            &[(id.clone(), expects_storage_pressure)]
+        );
+        assert_eq!(probe.sessions.load(Ordering::SeqCst), 2);
+        author.submit(submission(1)).await.unwrap();
+        let pending = author.submit(submission(2));
+        tokio::pin!(pending);
+        assert!(poll!(&mut pending).is_pending());
+
+        let other_id = host.create_document().await.unwrap();
+        let other = host.open_session(&other_id, None).await.unwrap().session;
+        let mut other_events = other.load(LoadStart::LatestSnapshot).await.unwrap().events;
+        catch_up_typed(&mut other_events).await;
+        other.submit(submission(9)).await.unwrap();
+        assert_eq!(probe.documents.lock().unwrap().len(), 2);
+        assert_eq!(catch_up_typed(&mut echo).await, vec![vec![1]]);
+        assert!(
+            poll!(&mut pending).is_pending(),
+            "the observer still retains the event"
+        );
+        assert_eq!(catch_up_typed(&mut events).await, vec![vec![1]]);
+        pending.await.unwrap();
+
+        let pending = author.submit(submission(3));
+        tokio::pin!(pending);
+        assert!(poll!(&mut pending).is_pending());
+        assert_eq!(catch_up_typed(&mut echo).await, vec![vec![2]]);
+        assert!(poll!(&mut pending).is_pending());
+        drop(events);
+        pending.await.unwrap();
+
+        let pending = author.submit(submission(4));
+        tokio::pin!(pending);
+        assert!(poll!(&mut pending).is_pending());
+        author.close().await.unwrap();
+        assert_eq!(pending.await.unwrap_err().kind(), ErrorKind::Rejected);
+        drop((echo, other_events));
+        observer.close().await.unwrap();
+        other.close().await.unwrap();
+        host.shutdown().await.unwrap();
+        id
+    };
+    let id = tokio::time::timeout(std::time::Duration::from_secs(10), exercise)
+        .await
+        .unwrap();
+    drop(host);
+    assert_eq!(probe.dropped.load(Ordering::SeqCst), 2);
+    if let Some(storage) = reopen {
+        let reopened = configure(storage);
+        let reader = reopened.open_session(&id, None).await.unwrap().session;
+        let mut events = reader.load(LoadStart::LatestSnapshot).await.unwrap().events;
+        assert_eq!(
+            catch_up_typed(&mut events).await,
+            vec![vec![1], vec![2], vec![3]]
+        );
+        assert_eq!(probe.documents.lock().unwrap().len(), 3);
+        drop(events);
+        reader.close().await.unwrap();
+        reopened.shutdown().await.unwrap();
+        drop((reader, reopened));
+        assert_eq!(probe.dropped.load(Ordering::SeqCst), 3);
+    }
+}
+
+#[tokio::test]
+async fn injected_policy_preserves_readers_and_close_interrupts_waits() {
+    let root = std::env::temp_dir().join(format!("sea-injected-policy-{}", std::process::id()));
+    assert!(!root.exists());
+    assert_policy(StorageSetup::memory(), None, false).await;
+    assert_policy(
+        StorageSetup::buffered(root.join("buffered")),
+        Some(StorageSetup::buffered(root.join("buffered"))),
+        false,
+    )
+    .await;
+    assert_policy(
+        StorageSetup::durable(root.join("durable")),
+        Some(StorageSetup::durable(root.join("durable"))),
+        true,
+    )
+    .await;
+    std::fs::remove_dir_all(root).unwrap();
 }
