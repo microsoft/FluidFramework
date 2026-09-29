@@ -262,6 +262,28 @@ mod tests {
     }
 
     #[test]
+    fn wait_below_checks_each_dimension_and_stage_inclusively() {
+        let pressure = DurableWritePressure::new();
+        for budget in [&pressure.preparation, &pressure.mutations] {
+            let reservation = reserve(budget, 8);
+            assert!(pressure.wait_below(1, 7).now_or_never().is_none());
+            assert!(pressure.wait_below(0, 8).now_or_never().is_none());
+            assert_eq!(
+                pressure.wait_below(1, 8).now_or_never().unwrap().unwrap(),
+                pressure.current().unwrap()
+            );
+            drop(reservation);
+        }
+        let preparation = reserve(&pressure.preparation, 8);
+        let mutation = reserve(&pressure.mutations, 8);
+        let sample = pressure.wait_below(1, 8).now_or_never().unwrap().unwrap();
+        assert_eq!(sample.preparation.requests, 1);
+        assert_eq!(sample.preparation.bytes, 8);
+        assert_eq!(sample.mutations, sample.preparation);
+        drop((preparation, mutation));
+    }
+
+    #[test]
     fn release_wakes_every_registered_waiter_without_requiring_another_poll() {
         let pressure = DurableWritePressure::new();
         let reservation = reserve(&pressure.mutations, 1);
@@ -306,10 +328,15 @@ mod tests {
         for failed in [false, true] {
             let pressure = DurableWritePressure::new();
             let reservation = reserve(&pressure.preparation, 1);
+            let notifications = Arc::new(Wakes::default());
+            let waker = futures_util::task::waker(notifications.clone());
+            let mut context = std::task::Context::from_waker(&waker);
             let waiting = pressure.wait_below(0, 0);
             tokio::pin!(waiting);
-            assert!(futures_util::poll!(&mut waiting).is_pending());
+            assert!(waiting.as_mut().poll(&mut context).is_pending());
+            assert_eq!(notifications.0.load(Ordering::SeqCst), 0);
             pressure.terminate(failed);
+            assert_eq!(notifications.0.load(Ordering::SeqCst), 1);
             let error = waiting.await.unwrap_err();
             assert_eq!(matches!(error, FileStorageError::Ambiguous), failed);
             drop(reservation);

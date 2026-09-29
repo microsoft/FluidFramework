@@ -3010,6 +3010,51 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn empty_checkpoints_reject_before_worker_dispatch_without_replacing_state() {
+        for durable in [false, true] {
+            let (root, storage, created) = create_test_document(durable).await;
+            let components = &created.components;
+            components
+                .checkpoints
+                .publish_checkpoint(Bytes::from_static(b"retained"))
+                .await
+                .unwrap();
+            let path = components.events.0.path.with_extension("checkpoint");
+            let published = fs::read(&path).unwrap();
+            let workers = storage
+                .workers
+                .clone()
+                .acquire_many_owned(if durable { 32 } else { 4 })
+                .await
+                .unwrap();
+            assert!(matches!(
+                components
+                    .checkpoints
+                    .publish_checkpoint(Bytes::new())
+                    .now_or_never()
+                    .expect("empty checkpoint must reject before waiting for a worker"),
+                Err(FileStorageError::Rejected("empty internal checkpoint"))
+            ));
+            assert_eq!(fs::read(&path).unwrap(), published);
+            assert_eq!(components.events.head().await.unwrap(), None);
+            assert_eq!(components.snapshots.head().await.unwrap(), None);
+            drop(workers);
+            assert_eq!(
+                components.checkpoints.checkpoint().await.unwrap(),
+                Some(Bytes::from_static(b"retained"))
+            );
+            drop(created.components);
+            let reopened = storage.open_document(&created.id).await.unwrap().unwrap();
+            assert_eq!(
+                reopened.checkpoints.checkpoint().await.unwrap(),
+                Some(Bytes::from_static(b"retained"))
+            );
+            drop(reopened);
+            fs::remove_dir_all(root).unwrap();
+        }
+    }
+
+    #[tokio::test]
     async fn snapshot_reads_are_linear_and_bounded_lookups_are_logarithmic() {
         let (root, storage, created) = create_test_document(false).await;
         let components = created.components;

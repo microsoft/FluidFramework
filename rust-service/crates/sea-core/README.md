@@ -97,7 +97,8 @@ Direct construction remains an explicit path without factory interception.
 
 The [`policy`](src/policy.rs) module adds `PolicyFactory`, `PolicySession`, and `DocumentPolicy`.
 Construction supplies one `Arc<Policy>` per document; factory and session clones share that policy without requiring the policy itself to be cloneable.
-No production construction path enables it automatically.
+Direct session construction does not enable policy; hosts choose whether to compose `PolicyFactory`.
+The [native server executable](../sea-webtransport-server/README.md) enables its resource policy by default, with an explicit opt-out.
 `PolicyError` preserves concrete source errors and distinguishes policy refusals from terminal wrapper authority.
 All facets preserve the source's concrete blob/event handles.
 

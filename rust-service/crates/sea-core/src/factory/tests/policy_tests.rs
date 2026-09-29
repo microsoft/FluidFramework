@@ -614,25 +614,25 @@ fn all_facets_preserve_source_errors_and_control_bypasses_pressure() {
     assert_eq!(policy.acquisitions.load(Ordering::SeqCst), 2);
 }
 
-/// Source stream yields progress, then a terminal source error, without self-releasing.
-struct FailingStream {
-    /// Current source observation must survive the terminal error.
+/// Source stream yields progress, then an error or completion, without self-releasing.
+struct TerminatingStream {
+    /// Current source observation must survive termination.
     progress: MonitoredStreamProgress<EventPosition>,
-    /// Original classified error payload.
-    error: TestError,
-    /// Number of polls, selecting the progress/error steps.
+    /// Original classified error payload, or graceful completion when absent.
+    error: Option<TestError>,
+    /// Number of polls, selecting the progress/termination steps.
     polls: usize,
-    /// Confirms the wrapper releases the source immediately on observed failure.
+    /// Confirms the wrapper releases the source immediately on observed termination.
     drops: Arc<AtomicUsize>,
 }
 
-impl Drop for FailingStream {
+impl Drop for TerminatingStream {
     fn drop(&mut self) {
         self.drops.fetch_add(1, Ordering::SeqCst);
     }
 }
 
-impl Stream for FailingStream {
+impl Stream for TerminatingStream {
     type Item = Result<MonitoredStreamItem<SessionCommittedEvent, EventPosition>, TestError>;
 
     fn poll_next(mut self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<Option<Self::Item>> {
@@ -641,13 +641,16 @@ impl Stream for FailingStream {
             Poll::Ready(Some(Ok(MonitoredStreamItem::Progress(
                 self.progress.clone(),
             ))))
+        } else if let Some(error) = &self.error {
+            Poll::Ready(Some(Err(error.clone())))
         } else {
-            Poll::Ready(Some(Err(self.error.clone())))
+            self.progress.status = MonitoredStreamStatus::AwaitingNewItems;
+            Poll::Ready(None)
         }
     }
 }
 
-impl MonitoredStream for FailingStream {
+impl MonitoredStream for TerminatingStream {
     type Data = SessionCommittedEvent;
     type Position = EventPosition;
     type Error = TestError;
@@ -666,9 +669,9 @@ fn stream_maps_progress_and_classified_failure_then_immediately_releases_source(
         latest_known: Some(EventPosition::new(11)),
         status: MonitoredStreamStatus::FallenBehind,
     };
-    *source.stream.lock().unwrap() = Some(Box::pin(FailingStream {
+    *source.stream.lock().unwrap() = Some(Box::pin(TerminatingStream {
         progress: progress.clone(),
-        error: source.error.clone(),
+        error: Some(source.error.clone()),
         polls: 0,
         drops: drops.clone(),
     }));
@@ -685,4 +688,36 @@ fn stream_maps_progress_and_classified_failure_then_immediately_releases_source(
     assert_eq!(policy.readers.load(Ordering::SeqCst), 0);
     assert_eq!(stream.progress(), progress);
     assert!(ready(Box::pin(stream.next())).is_none());
+}
+
+#[test]
+fn stream_end_releases_source_and_reader_permit_and_preserves_final_progress() {
+    let source = TestSession::new();
+    let drops = Arc::new(AtomicUsize::new(0));
+    let mut progress = MonitoredStreamProgress {
+        previous: Some(EventPosition::new(7)),
+        latest_known: Some(EventPosition::new(7)),
+        status: MonitoredStreamStatus::StreamingBacklog,
+    };
+    *source.stream.lock().unwrap() = Some(Box::pin(TerminatingStream {
+        progress: progress.clone(),
+        error: None,
+        polls: 0,
+        drops: drops.clone(),
+    }));
+    let policy = TestPolicy::new(1, 7);
+    let session = PolicySession::new(source, policy.clone());
+    let mut stream = session.read(Some(EventPosition::new(7)), None);
+    assert_eq!(policy.readers.load(Ordering::SeqCst), 1);
+    assert!(
+        matches!(ready(Box::pin(stream.next())), Some(Ok(MonitoredStreamItem::Progress(value))) if value == progress)
+    );
+    assert_eq!(drops.load(Ordering::SeqCst), 0);
+    assert!(ready(Box::pin(stream.next())).is_none());
+    assert_eq!(drops.load(Ordering::SeqCst), 1);
+    assert_eq!(policy.readers.load(Ordering::SeqCst), 0);
+    progress.status = MonitoredStreamStatus::AwaitingNewItems;
+    assert_eq!(stream.progress(), progress);
+    assert!(ready(Box::pin(stream.next())).is_none());
+    assert_eq!(drops.load(Ordering::SeqCst), 1);
 }
