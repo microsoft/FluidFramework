@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { useEffect, useReducer, type PropsWithChildren, type ReactElement } from "react";
+import { useEffect, useReducer } from "react";
+import type { PropsWithChildren, ReactElement } from "react";
 
 import {
 	focusDocsSidebarDestination,

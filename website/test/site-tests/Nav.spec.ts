@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { test, expect, type Route } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import type { Route } from "@playwright/test";
 
 test.describe("Nav", () => {
 	test.beforeEach(async ({ page }) => {
