@@ -9,6 +9,17 @@ Keep Host and Guest changes, including changes that mint IDs after initializatio
 This is a design proposal, not a description of supported behavior.
 It does not complete the separate timeline, fault-isolation, and production security work in [sandboxing.md](./sandboxing.md).
 
+## Working practices
+
+- Write focused tests and document the intended behavior before implementing each checklist item.
+  Use failing tests to identify gaps, then verify that the implementation makes them pass without changing unrelated behavior.
+- Update this checklist and the relevant documentation as behavior changes.
+  Mark an item complete only after its implementation and tests are verified.
+- Follow the [Coding Guidelines](../../../../../../../docs/content/Guidelines/Coding-Guidelines.md) and [Documentation Guidelines](../../../../../../../docs/content/Guidelines/Documentation-Guidelines.md), including the linked TypeScript documentation guidance.
+  Use API documentation for contracts and inline comments for reasoning, assumptions, or invariants that might not be clear to a developer reading the code for the first time.
+- Run focused tests, type-checking, formatting, and linting for each implementation slice.
+  Run broader validation when the focused checks do not cover a behavior change.
+
 ## Current state and dependencies
 
 - [PR 27559](https://github.com/microsoft/FluidFramework/pull/27559) added V3 sharding.
