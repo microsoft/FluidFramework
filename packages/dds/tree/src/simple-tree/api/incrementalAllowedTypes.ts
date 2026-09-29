@@ -9,13 +9,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { FieldKey } from "../../core/index.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
-import {
-	AnnotatedAllowedTypesInternal,
-	getTreeNodeSchemaPrivateData,
-	normalizeAllowedTypes,
-	type AllowedTypesFull,
-	type ImplicitAllowedTypes,
-} from "../core/index.js";
+import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
+import type { FieldPropsAlpha } from "../fieldSchema.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeSchema } from "../treeSchema.js";
 
@@ -27,59 +22,18 @@ import type { TreeSchema } from "../treeSchema.js";
  * @remarks
  * See {@link incrementalEncodingPolicyForAllowedTypes} for more details.
  *
- * Use field creation APIs such as {@link SchemaStaticsBeta.required} or
- * {@link SchemaStaticsBeta.optional} to mark an incremental-summary boundary.
+ * Use the field creation APIs on {@link SchemaFactoryAlpha}, such as
+ * {@link SchemaStatics.required} or {@link SchemaStatics.optional}, to mark an incremental-summary boundary.
  * @example
  * ```typescript
- * const sf = new SchemaFactoryBeta("IncrementalSummarization");
- * class Foo extends sf.object("foo", {
- *   bar: sf.required(sf.string, { incrementalSummary: true }),
+ * const sf = new SchemaFactoryAlpha("IncrementalSummarization");
+ * class Foo extends sf.objectAlpha("foo", {
+ *   bar: sf.required(sf.string, { summarizeIncrementally: true }),
  * }) {}
  * ```
  * @alpha
  */
 export const incrementalSummaryHint: unique symbol = Symbol("IncrementalSummaryHint");
-
-function isPlainObject(value: unknown): value is Readonly<Record<PropertyKey, unknown>> {
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
-
-	const prototype = Object.getPrototypeOf(value);
-	return prototype === Object.prototype || prototype === null;
-}
-
-/**
- * Applies the incremental-summary field option to allowed-types metadata.
- *
- * @remarks
- * An omitted option preserves existing metadata, while an explicit value overrides the existing
- * hint.
- */
-export function applyIncrementalSummaryOption(
-	allowedTypes: ImplicitAllowedTypes,
-	incrementalSummary: boolean | undefined,
-): ImplicitAllowedTypes {
-	if (incrementalSummary === undefined) {
-		return allowedTypes;
-	}
-
-	const normalizedAllowedTypes = normalizeAllowedTypes(allowedTypes);
-	const customMetadata = normalizedAllowedTypes.metadata.custom;
-	if (customMetadata !== undefined && !isPlainObject(customMetadata)) {
-		throw new UsageError(
-			"The incrementalSummary field option cannot be combined with allowed-types custom metadata unless that metadata is a plain object.",
-		);
-	}
-
-	return AnnotatedAllowedTypesInternal.createMixed(normalizedAllowedTypes.types, {
-		...normalizedAllowedTypes.metadata,
-		custom: {
-			...customMetadata,
-			[incrementalSummaryHint]: incrementalSummary,
-		},
-	});
-}
 
 /**
  * Returns true if the provided allowed types's custom metadata has {@link incrementalSummaryHint} as true.
@@ -102,7 +56,7 @@ function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull):
  * @param rootSchema - The schema for the root of the tree.
  * @returns A callback function of type {@link IncrementalEncodingPolicy} which determines if fields should
  * be incrementally summarized based on whether they have opted in via
- * {@link FieldOptionsAlpha.incrementalSummary}.
+ * {@link FieldPropsAlpha.summarizeIncrementally}.
  *
  * @remarks
  * This only works for forest type {@link ForestTypeOptimized} and compression strategy
@@ -143,7 +97,10 @@ export function incrementalEncodingPolicyForAllowedTypes(
 			if (targetPropertyKey !== undefined) {
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
-					return isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull);
+					return (
+						(fieldSchema.props as FieldPropsAlpha | undefined)?.summarizeIncrementally ??
+						isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull)
+					);
 				}
 			}
 			return false;

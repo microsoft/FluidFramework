@@ -17,7 +17,6 @@ import {
 /* eslint-disable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
 import {
 	type FieldProps,
-	type FieldOptionsAlpha,
 	type FieldSchemaAlpha,
 	type FieldPropsAlpha,
 	FieldKind,
@@ -54,7 +53,6 @@ import {
 } from "./schemaFactory.js";
 import { SchemaFactoryBeta } from "./schemaFactoryBeta.js";
 import { schemaStatics } from "./schemaStatics.js";
-import { applyIncrementalSummaryOption } from "./incrementalAllowedTypes.js";
 import { cloneTree } from "./cloneTree.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
@@ -66,8 +64,6 @@ import type {
 	Unenforced,
 } from "./typesUnsafe.js";
 /* eslint-enable unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars, import-x/no-duplicates */
-
-export type { FieldOptionsAlpha } from "../fieldSchema.js";
 
 /**
  * A provider for values in tree nodes.
@@ -201,8 +197,7 @@ export interface SchemaStaticsAlpha {
 	 * Analogous to {@link SchemaStaticsBeta.staged} for allowed types, but for field optionality.
 	 *
 	 * @param t - The types allowed under the field.
-	 * @param options - Optional properties to associate with the field.
-	 * This includes {@link FieldOptionsAlpha.incrementalSummary}.
+	 * @param props - Optional properties to associate with the field.
 	 *
 	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
 	 * See {@link FieldSchemaMetadata.custom}.
@@ -212,11 +207,10 @@ export interface SchemaStaticsAlpha {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		options?: Omit<
+		props?: Omit<
 			FieldPropsAlpha<TCustomMetadata>,
 			"defaultProvider" | "stagedOptionalUpgrade"
-		> &
-			FieldOptionsAlpha<TCustomMetadata>,
+		>,
 	) => FieldSchemaAlpha<
 		FieldKind.Optional,
 		T,
@@ -235,11 +229,10 @@ export interface SchemaStaticsAlpha {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		options?: Omit<
+		props?: Omit<
 			FieldPropsAlpha<TCustomMetadata>,
 			"defaultProvider" | "stagedOptionalUpgrade"
-		> &
-			FieldOptionsAlpha<TCustomMetadata>,
+		>,
 	) => FieldSchemaAlphaUnsafe<
 		FieldKind.Optional,
 		T,
@@ -334,32 +327,18 @@ const withDefault = <
 
 const stagedOptional = <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
-	options?: Omit<
-		FieldPropsAlpha<TCustomMetadata>,
-		"defaultProvider" | "stagedOptionalUpgrade"
-	> &
-		FieldOptionsAlpha<TCustomMetadata>,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider" | "stagedOptionalUpgrade">,
 ): FieldSchemaAlpha<
 	FieldKind.Optional,
 	T,
 	TCustomMetadata,
 	FieldPropsAlpha<TCustomMetadata>
 > => {
-	const { incrementalSummary, ...props } = options ?? {};
-	return createFieldSchema(
-		FieldKind.Optional,
-		applyIncrementalSummaryOption(t, incrementalSummary),
-		{
-			defaultProvider: getDefaultProvider(() => []),
-			...props,
-			stagedOptionalUpgrade: createSchemaUpgrade(),
-		},
-	) as FieldSchemaAlpha<
-		FieldKind.Optional,
-		T,
-		TCustomMetadata,
-		FieldPropsAlpha<TCustomMetadata>
-	>;
+	return createFieldSchema(FieldKind.Optional, t, {
+		defaultProvider: getDefaultProvider(() => []),
+		...props,
+		stagedOptionalUpgrade: createSchemaUpgrade(),
+	});
 };
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
@@ -536,8 +515,7 @@ export class SchemaFactoryAlpha<
 	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
-	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided
-	 * {@link FieldProps}.
+	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
 	 */
 	public static readonly identifier = schemaStatics.identifier;
 

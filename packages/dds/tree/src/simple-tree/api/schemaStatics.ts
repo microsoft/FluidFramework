@@ -12,7 +12,6 @@ import {
 	createFieldSchema,
 	type FieldProps,
 	type DefaultProvider,
-	type FieldOptionsAlpha,
 	type FieldPropsAlpha,
 	type FieldSchema,
 	type FieldSchemaAlpha,
@@ -28,7 +27,6 @@ import {
 
 import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
-import { applyIncrementalSummaryOption } from "./incrementalAllowedTypes.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
@@ -184,54 +182,29 @@ export const schemaStaticsStable = {
 
 	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> &
-			FieldOptionsAlpha<TCustomMetadata>,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<
 		FieldKind.Optional,
 		T,
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata>
 	> => {
-		const { incrementalSummary, ...fieldProps } = props ?? {};
-		return createFieldSchema(
-			FieldKind.Optional,
-			applyIncrementalSummaryOption(t, incrementalSummary),
-			{
-				defaultProvider: defaultOptionalProvider,
-				...fieldProps,
-			},
-		) as FieldSchemaAlpha<
-			FieldKind.Optional,
-			T,
-			TCustomMetadata,
-			FieldPropsAlpha<TCustomMetadata>
-		>;
+		return createFieldSchema(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
 	},
 
 	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 		t: T,
-		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> &
-			FieldOptionsAlpha<TCustomMetadata>,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlpha<
 		FieldKind.Required,
 		T,
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata>
 	> => {
-		const { incrementalSummary, ...fieldProps } = props ?? {};
-		return createFieldSchema(
-			FieldKind.Required,
-			applyIncrementalSummaryOption(t, incrementalSummary),
-			{
-				defaultProvider: undefined,
-				...fieldProps,
-			},
-		) as FieldSchemaAlpha<
-			FieldKind.Required,
-			T,
-			TCustomMetadata,
-			FieldPropsAlpha<TCustomMetadata>
-		>;
+		return createFieldSchema(FieldKind.Required, t, { defaultProvider: undefined, ...props });
 	},
 
 	optionalRecursive: <
@@ -239,31 +212,17 @@ export const schemaStaticsStable = {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> &
-			FieldOptionsAlpha<TCustomMetadata>,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlphaUnsafe<
 		FieldKind.Optional,
 		T,
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata>
 	> => {
-		const { incrementalSummary, ...fieldProps } = props ?? {};
-		return createFieldSchemaUnsafe(
-			FieldKind.Optional,
-			applyIncrementalSummaryOption(
-				t as ImplicitAllowedTypes,
-				incrementalSummary,
-			) as System_Unsafe.ImplicitAllowedTypesUnsafe,
-			{
-				defaultProvider: defaultOptionalProvider,
-				...fieldProps,
-			},
-		) as FieldSchemaAlphaUnsafe<
-			FieldKind.Optional,
-			T,
-			TCustomMetadata,
-			FieldPropsAlpha<TCustomMetadata>
-		>;
+		return createFieldSchemaUnsafe(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
 	},
 
 	requiredRecursive: <
@@ -271,31 +230,17 @@ export const schemaStaticsStable = {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider"> &
-			FieldOptionsAlpha<TCustomMetadata>,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlphaUnsafe<
 		FieldKind.Required,
 		T,
 		TCustomMetadata,
 		FieldPropsAlpha<TCustomMetadata>
 	> => {
-		const { incrementalSummary, ...fieldProps } = props ?? {};
-		return createFieldSchemaUnsafe(
-			FieldKind.Required,
-			applyIncrementalSummaryOption(
-				t as ImplicitAllowedTypes,
-				incrementalSummary,
-			) as System_Unsafe.ImplicitAllowedTypesUnsafe,
-			{
-				defaultProvider: undefined,
-				...fieldProps,
-			},
-		) as FieldSchemaAlphaUnsafe<
-			FieldKind.Required,
-			T,
-			TCustomMetadata,
-			FieldPropsAlpha<TCustomMetadata>
-		>;
+		return createFieldSchemaUnsafe(FieldKind.Required, t, {
+			defaultProvider: undefined,
+			...props,
+		});
 	},
 } as const satisfies SchemaStatics;
 

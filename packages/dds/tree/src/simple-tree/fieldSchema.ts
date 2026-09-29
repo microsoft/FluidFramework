@@ -168,27 +168,15 @@ export interface FieldProps<TCustomMetadata = unknown> {
 }
 
 /**
- * Options for fields created by {@link SchemaStaticsBeta.required},
- * {@link SchemaStaticsBeta.optional}, and their recursive variants.
+ * {@link FieldProps} extended with additional `alpha` options.
  *
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
- * See {@link FieldProps.metadata}.
- *
- * @sealed @beta @input
- */
-export interface FieldOptions<TCustomMetadata = unknown>
-	extends Omit<FieldProps<TCustomMetadata>, "defaultProvider"> {}
-
-/**
- * {@link FieldOptions} extended with options for alpha features.
- *
- * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
- * See {@link FieldProps.metadata}.
+ * See {@link FieldSchemaMetadata.custom}.
  *
  * @alpha @input
  */
-export interface FieldOptionsAlpha<TCustomMetadata = unknown>
-	extends FieldOptions<TCustomMetadata> {
+export interface FieldPropsAlpha<TCustomMetadata = unknown>
+	extends FieldProps<TCustomMetadata> {
 	/**
 	 * Whether this field is an incremental-summary boundary.
 	 *
@@ -199,25 +187,11 @@ export interface FieldOptionsAlpha<TCustomMetadata = unknown>
 	 * If this option conflicts with incremental-summary configuration in the allowed types'
 	 * custom metadata, this option takes precedence.
 	 *
-	 * Allowed-types custom metadata is preserved when it is a plain object. Other custom metadata
-	 * shapes cannot be combined with this option.
-	 *
 	 * @defaultValue When omitted, preserves the incremental-summary hint from the allowed types'
 	 * custom metadata.
 	 */
-	readonly incrementalSummary?: boolean;
-}
+	readonly summarizeIncrementally?: boolean;
 
-/**
- * {@link FieldProps} extended with additional `alpha` options.
- *
- * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
- * See {@link FieldSchemaMetadata.custom}.
- *
- * @alpha @input
- */
-export interface FieldPropsAlpha<TCustomMetadata = unknown>
-	extends FieldProps<TCustomMetadata> {
 	/**
 	 * The persisted metadata for a field schema.
 	 * @remarks

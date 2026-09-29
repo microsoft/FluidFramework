@@ -781,7 +781,7 @@ describe("chunkTree", () => {
 		it("incremental", () => {
 			const sf = new SchemaFactoryAlpha("chunkTree");
 			const structValueIncremental = sf.object("structValue", {
-				foo: sf.required(sf.number, { incrementalSummary: true }),
+				foo: sf.required(sf.number, { summarizeIncrementally: true }),
 			});
 			const params: ShapeFromSchemaParameters = {
 				schema: toInitialSchema([structValueIncremental]),
@@ -857,7 +857,7 @@ describe("chunkTree", () => {
 		it("incrementalField", () => {
 			const sf = new SchemaFactoryAlpha("chunkTree");
 			const structValueIncremental = sf.object("structValue", {
-				foo: sf.required(sf.number, { incrementalSummary: true }),
+				foo: sf.required(sf.number, { summarizeIncrementally: true }),
 			});
 			const structValueFieldIncremental = sf.required(structValueIncremental);
 			const params: ShapeFromSchemaParameters = {

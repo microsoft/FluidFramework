@@ -257,10 +257,6 @@ export enum FieldKind {
     Required = 1
 }
 
-// @beta @sealed @input
-export interface FieldOptions<TCustomMetadata = unknown> extends Omit<FieldProps<TCustomMetadata>, "defaultProvider"> {
-}
-
 // @public
 export interface FieldProps<TCustomMetadata = unknown> {
     readonly defaultProvider?: DefaultProvider;
@@ -1394,17 +1390,9 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
     // (undocumented)
     objectRecursive<const Name extends TName, const T extends RestrictiveStringRecord<System_Unsafe.ImplicitFieldSchemaUnsafe>, const TCustomMetadata = unknown>(name: Name, t: T, options?: ObjectSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, System_Unsafe.TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & System_Unsafe.InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
-    static optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
-    optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
-    static optionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
-    optionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
     record<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, `Record<${string}>`>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined>;
     record<const Name extends TName, const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, RecordNodeInsertableData<T>, true, T, undefined, TCustomMetadata>;
     recordRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Record, TreeRecordNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>, { readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>; }, false, T, undefined, TCustomMetadata>;
-    static required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
-    required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
-    static requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
-    requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryBeta<ScopedSchemaName<TScope, T>, TNameInner>;
     static staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
@@ -1441,10 +1429,6 @@ export interface SchemaStatics {
 
 // @beta @sealed @system
 export interface SchemaStaticsBeta {
-    readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
-    readonly optionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Optional, T, TCustomMetadata>;
-    readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
-    readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(allowedTypes: T, options?: FieldOptions<TCustomMetadata>) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly staged: <const T extends LazyItem<TreeNodeSchema>>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
     stagedRecursive: <const T extends Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>>(t: T) => AnnotatedAllowedTypeUnsafe<UnannotateAllowedTypeUnsafe<T>>;
     readonly types: <const T extends readonly (AnnotatedAllowedType | LazyItem<TreeNodeSchema>)[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixed<T>;
