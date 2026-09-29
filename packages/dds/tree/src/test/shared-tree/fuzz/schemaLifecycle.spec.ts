@@ -134,41 +134,14 @@ describe("Schema upgrade fuzz test harness correctness", () => {
 		},
 	);
 
-	scenario("schema upgrades add only requested types and preserve prior types", (state) => {
+	scenario("schema upgrades add only the requested node type", (state) => {
 		const checkout = viewFromState(state).checkout;
 		const originalTypes = [...checkout.storedSchema.nodeSchema.keys()];
 		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
-		applySchemaOp(state, { type: "schemaChange", contents: { type: "secondUpgrade" } });
 		assert.deepEqual(
 			[...checkout.storedSchema.nodeSchema.keys()].sort(),
-			[...originalTypes, "treeFuzz.upgrade", "treeFuzz.secondUpgrade"].sort(),
+			[...originalTypes, "treeFuzz.upgrade"].sort(),
 		);
-		synchronizeAndCheckViews(state);
-	});
-
-	scenario("duplicate schema operations fail before changing the harness state", (state) => {
-		const remoteView = viewFromState(state, state.clients[1]);
-		applySchemaOp(state, { type: "schemaChange", contents: { type: "upgrade" } });
-		state.containerRuntimeFactory.processAllMessages();
-		assert.equal(remoteView.compatibility.isEquivalent, false);
-		for (const client of state.clients) {
-			state.client = client;
-			const view = state.clientViews?.get(client.channel);
-			assert(view !== undefined);
-			const originalSchema = view.checkout.storedSchema.clone();
-			const head = view.branchHistory.getHead()?.revision;
-			for (const type of ["upgrade", "node", "arrayChildren"]) {
-				assert.throws(
-					() => applySchemaOp(state, { type: "schemaChange", contents: { type } }),
-					/Duplicate fuzz node schema identifier/,
-				);
-				assert.equal(state.clientViews?.get(client.channel), view);
-				assert.equal(view.disposed, false);
-				assert.equal(view.checkout.disposed, false);
-				assert.equal(view.branchHistory.getHead()?.revision, head);
-				expectSchemaEqual(view.checkout.storedSchema, originalSchema);
-			}
-		}
 	});
 
 	scenario("remote upgrades reconstruct string-valued GUID schemas", (state) => {

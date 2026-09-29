@@ -127,18 +127,15 @@ export function applySynchronizationOp(
 }
 
 export function applySchemaOp(state: FuzzTestState, operation: SchemaChange): void {
-	const checkout =
-		state.transactionViews?.get(state.client.channel)?.checkout ??
-		state.client.channel.kernel.checkout;
+	const view = viewFromState(state, state.client);
 	assert(
-		checkout.isSharedBranch && checkout.transaction.size === 0,
+		view.checkout.isSharedBranch && view.checkout.transaction.size === 0,
 		"Schema operations require a root view without a pending transaction",
 	);
 	const newSchema = createFuzzSchema([
-		...checkout.storedSchema.nodeSchema.keys(),
+		...view.checkout.storedSchema.nodeSchema.keys(),
 		`treeFuzz.${operation.contents.type}`,
 	]);
-	const view = viewFromState(state, state.client);
 
 	// Because we need the view for a schema change, and we can only have one view at a time,
 	// we must dispose of the client's view early.
