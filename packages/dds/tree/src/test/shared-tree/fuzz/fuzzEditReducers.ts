@@ -86,6 +86,10 @@ const syncFuzzReducer = combineReducers<
 		assert(isRevertibleSharedTreeView(view));
 		applyUndoRedoEdit(view.undoStack, view.redoStack, operation);
 	},
+	revertTo: (state, { revision }) => {
+		const view = viewFromState(state).checkout;
+		view.revertTo(revision);
+	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
 	},

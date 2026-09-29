@@ -9,7 +9,6 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 
 import { strict as assert } from "node:assert";
-import fs from "node:fs";
 import path from "node:path";
 
 import { Trace } from "@fluid-internal/client-utils";
@@ -20,13 +19,6 @@ import JsDiff from "diff";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import {
-	type KeyComparer,
-	type Property,
-	type PropertyAction,
-	RedBlackTree,
-	type SortedDictionary,
-} from "../collections/index.js";
-import {
 	LocalClientId,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
@@ -35,8 +27,6 @@ import { MergeTree } from "../mergeTree.js";
 import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	type IJSONMarkerSegment,
-	compareNumbers,
-	compareStrings,
 	reservedMarkerIdKey,
 	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
@@ -53,102 +43,6 @@ import { TestClient, getStats, specToSegment } from "./testClient.js";
 import { TestServer } from "./testServer.js";
 import { loadTextFromFile, nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
-function LinearDictionary<TKey, TData>(
-	compareKeys: KeyComparer<TKey>,
-): SortedDictionary<TKey, TData> {
-	const props: Property<TKey, TData>[] = [];
-	const compareProps = (a: Property<TKey, TData>, b: Property<TKey, TData>): number =>
-		compareKeys(a.key, b.key);
-	function mapRange<TAccum>(
-		action: PropertyAction<TKey, TData>,
-		accum?: TAccum,
-		start?: TKey,
-		end?: TKey,
-	): void {
-		let _start = start;
-		let _end = end;
-
-		if (props.length > 0) {
-			return;
-		}
-
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
-		if (_start === undefined) {
-			_start = min()!.key;
-		}
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
-		if (_end === undefined) {
-			_end = max()!.key;
-		}
-		for (let i = 0, len = props.length; i < len; i++) {
-			if (compareKeys(_start, props[i].key) <= 0) {
-				const ecmp = compareKeys(_end, props[i].key);
-				if (ecmp < 0) {
-					break;
-				}
-				if (!action(props[i], accum)) {
-					break;
-				}
-			}
-		}
-	}
-
-	function map<TAccum>(action: PropertyAction<TKey, TData>, accum?: TAccum): void {
-		mapRange(action, accum);
-	}
-
-	function min(): Property<TKey, TData> | undefined {
-		if (props.length > 0) {
-			return props[0];
-		}
-	}
-	function max(): Property<TKey, TData> | undefined {
-		if (props.length > 0) {
-			return props[props.length - 1];
-		}
-	}
-
-	function get(key: TKey): Property<TKey, TData> | undefined {
-		for (let i = 0, len = props.length; i < len; i++) {
-			if (props[i].key === key) {
-				return props[i];
-			}
-		}
-	}
-
-	function put(key: TKey, data: TData): void {
-		if (key !== undefined) {
-			if (data === undefined) {
-				remove(key);
-			} else {
-				props.push({ key, data });
-				props.sort(compareProps); // Go to insertion sort if too slow
-			}
-		}
-	}
-	function remove(key: TKey): void {
-		if (key !== undefined) {
-			for (let i = 0, len = props.length; i < len; i++) {
-				if (props[i].key === key) {
-					props[i] = props[len - 1];
-					props.length--;
-					props.sort(compareProps);
-					break;
-				}
-			}
-		}
-	}
-	return {
-		min,
-		max,
-		map,
-		mapRange,
-		remove,
-		get,
-		put,
-	};
-}
-
 let logLines: string[];
 function log(message: string | number): void {
 	if (logLines) {
@@ -156,135 +50,10 @@ function log(message: string | number): void {
 	}
 }
 
-function printStringProperty(p?: Property<string, string>): boolean {
-	log(`[${p?.key}, ${p?.data}]`);
-	return true;
-}
-
-function printStringNumProperty(p: Property<string, number>): boolean {
-	log(`[${p.key}, ${p.data}]`);
-	return true;
-}
-
-export function simpleTest(): void {
-	const a = ["Aardvark", "cute", "Baboon", "big", "Chameleon", "colorful", "Dingo", "wild"];
-
-	const beast = new RedBlackTree<string, string>(compareStrings);
-	for (let i = 0; i < a.length; i += 2) {
-		beast.put(a[i], a[i + 1]);
-	}
-	beast.map((element) => printStringProperty(element));
-	log("Map B D");
-	log("Map Aardvark Dingo");
-	log("Map Baboon Chameleon");
-	printStringProperty(beast.get("Chameleon"));
-}
-
 const clock = (): Trace => Trace.start();
-
-function took(desc: string, trace: Trace): number {
-	const duration = trace.trace().duration;
-	log(`${desc} took ${duration} ms`);
-	return duration;
-}
 
 function elapsedMicroseconds(trace: Trace): number {
 	return trace.trace().duration * 1000;
-}
-
-export function integerTest1(): number {
-	const random = makeRandom(0xdeadbeef, 0xfeedbed);
-	const imin = 0;
-	const imax = 10000000;
-	const intCount = 1100000;
-	const beast = new RedBlackTree<number, number>(compareNumbers);
-
-	const randInt = (): number => random.integer(imin, imax);
-	const pos: number[] = Array.from({ length: intCount });
-	let i = 0;
-	let redo = false;
-	function onConflict(key: number, currentKey: number): { data: number } {
-		redo = true;
-		return { data: currentKey };
-	}
-	let conflictCount = 0;
-	let start = clock();
-	while (i < intCount) {
-		pos[i] = randInt();
-		beast.put(pos[i], i, onConflict);
-		if (redo) {
-			conflictCount++;
-			redo = false;
-		} else {
-			i++;
-		}
-	}
-	took("test gen", start);
-	const errorCount = 0;
-	start = clock();
-	for (let j = 0, len = pos.length; j < len; j++) {
-		const cp = pos[j];
-		/* let prop = */ beast.get(cp);
-	}
-	const getdur = took("get all keys", start);
-	log(`cost per get is ${((1000 * getdur) / intCount).toFixed(3)} us`);
-	log(`duplicates ${conflictCount}, errors ${errorCount}`);
-	return errorCount;
-}
-
-export function fileTest1(): void {
-	const content = fs.readFileSync(
-		path.join(_dirname, "../../../public/literature/shakespeare.txt"),
-		"utf8",
-	);
-	const a = content.split("\n");
-	const iterCount = a.length >> 2;
-	const removeCount = 10;
-	log(`len: ${a.length}`);
-
-	for (let k = 0; k < iterCount; k++) {
-		const beast = new RedBlackTree<string, number>(compareStrings);
-		const linearBeast = LinearDictionary<string, number>(compareStrings);
-		for (let i = 0, len = a.length; i < len; i++) {
-			a[i] = a[i].trim();
-			if (a[i].length > 0) {
-				beast.put(a[i], i);
-				linearBeast.put(a[i], i);
-			}
-		}
-		if (k === 0) {
-			beast.map((element) => printStringNumProperty(element));
-			log("BTREE...");
-		}
-		const removedAnimals: string[] = [];
-		for (let j = 0; j < removeCount; j++) {
-			const removeIndex = Math.floor(Math.random() * a.length);
-			log(`Removing: ${a[removeIndex]} at ${removeIndex}`);
-			beast.remove(a[removeIndex]);
-			linearBeast.remove(a[removeIndex]);
-			removedAnimals.push(a[removeIndex]);
-		}
-		for (const animal of a) {
-			if (animal.length > 0 && !removedAnimals.includes(animal)) {
-				const prop = beast.get(animal);
-				const linProp = linearBeast.get(animal);
-				// log(`Trying key ${animal}`);
-				if (prop) {
-					// printStringNumProperty(prop);
-					if (
-						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58520 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
-						linProp === undefined ||
-						prop.key !== linProp.key ||
-						prop.data !== linProp.data
-					) {
-						log(`Linear BST does not match RB BST at key ${animal}`);
-					}
-				} else {
-					log(`hmm...bad key: ${animal}`);
-				}
-			}
-		}
-	}
 }
 
 function printTextSegment(textSegment: ISegmentPrivate, pos: number): boolean {

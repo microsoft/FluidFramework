@@ -42,7 +42,7 @@ import {
 	type ForestOptions,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { isLazy } from "../simple-tree/core/index.js";
+import { isLazy, type SchemaUpgrade } from "../simple-tree/core/index.js";
 import {
 	numberSchema,
 	SchemaFactoryAlpha,
@@ -60,6 +60,10 @@ import {
 	toInitialSchema,
 	StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
+	type FieldSchemaAlpha,
+	normalizeFieldSchema,
+	walkFieldSchema,
+	ObjectNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, Breakable } from "../util/index.js";
 
@@ -67,18 +71,42 @@ import { brand, Breakable } from "../util/index.js";
 import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
 
-interface TestSimpleTree {
+interface NamedCase {
+	/**
+	 * A descriptive name for what is special about this configuration, used in test names.
+	 */
 	readonly name: string;
+}
+
+/**
+ * A schema paired with an in-schema tree that can be expressed using the user-facing (aka "simple-tree") API surface.
+ */
+interface TestSimpleTreeSchema extends NamedCase {
+	/** The view schema for the test case. */
 	readonly schema: ImplicitFieldSchema;
+	/** Whether the schema permits ambiguous content. */
+	readonly ambiguous: boolean;
+}
+
+/**
+ * A schema paired with an in-schema tree that can be expressed using the user-facing (aka "simple-tree") API surface.
+ */
+interface TestSimpleTree extends TestSimpleTreeSchema {
 	/**
 	 * InsertableTreeFieldFromImplicitField<TSchema>
 	 */
 	root(): InsertableField<UnsafeUnknownSchema>;
-	readonly ambiguous: boolean;
 }
 
-interface TestTree {
-	readonly name: string;
+/**
+ * A more flexible generalization of {@link TestSimpleTree}, which operates at a lower abstraction level (matching flex-tree).
+ *
+ * This can customize field kinds used in the tree and use any expressible, persistable stored schema and tree content,
+ * regardless of whether it can currently be produced using the user-facing APIs.
+ * This is valuable for testing cases that cannot be easily represented using the user-facing APIs,
+ * as well as for directly testing specific aspects of the lower-level implementation (glass-box testing).
+ */
+interface TestTree extends NamedCase {
 	readonly schemaData: TreeStoredSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
@@ -86,6 +114,11 @@ interface TestTree {
 
 /**
  * Content for a test document, which can have a different stored schema than just toStoredSchema(schema).
+ *
+ * This gets its "root" from {@link TestTree.treeFactory}, not {@link TestSimpleTree.root},
+ * so it is possible to express documents that have content unknown to the view schema (for now, just unknown optional fields).
+ *
+ * This additional flexibility over {@link TestSimpleTree} is required for testing forward-compatibility scenarios.
  */
 export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
 	/**
@@ -99,16 +132,54 @@ export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
 	readonly hasUnknownOptionalFieldSchema?: true;
 
 	/**
-	 * True if and only if the document had staged schema features.
-	 */
-	readonly hasStagedSchema?: true;
-
-	/**
 	 * True if and only if the document content requires staged schema features.
 	 *
 	 * For this to be the case, the stored schema must also have had staged schema features included.
 	 */
 	readonly requiresStagedSchema?: true;
+}
+
+/**
+ * Returns the set of staged schema upgrades found within the provided schema (deeply).
+ *
+ * @param schema - The field schema to deeply inspect for staged schema upgrades.
+ */
+export function getStagedSchemaUpgrades(schema: ImplicitFieldSchema): Set<SchemaUpgrade> {
+	const stagedSchemaUpgrades = new Set<SchemaUpgrade>();
+	function processFieldSchema(field: FieldSchemaAlpha): void {
+		if (field.isStagedOptional !== false) {
+			stagedSchemaUpgrades.add(field.isStagedOptional);
+		}
+	}
+	visitFieldSchema(schema, processFieldSchema);
+	walkFieldSchema(schema, {
+		allowedTypes: ({ types }) => {
+			for (const type of types) {
+				if (type.metadata.stagedSchemaUpgrade) {
+					stagedSchemaUpgrades.add(type.metadata.stagedSchemaUpgrade);
+				}
+			}
+		},
+	});
+	return stagedSchemaUpgrades;
+}
+
+export function visitFieldSchema(
+	schema: ImplicitFieldSchema,
+	callback: (field: FieldSchemaAlpha) => void,
+): void {
+	const root = normalizeFieldSchema(schema);
+	callback(root);
+
+	walkFieldSchema(root, {
+		node: (nodeSchema) => {
+			if (nodeSchema instanceof ObjectNodeSchema) {
+				for (const field of nodeSchema.fields.values()) {
+					callback(field);
+				}
+			}
+		},
+	});
 }
 
 function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
@@ -146,6 +217,7 @@ function test(name: string, schemaData: TreeStoredSchema, data: JsonableTree[]):
 }
 
 const factory = new SchemaFactoryAlpha("test");
+const emptySchema = factory.optional([]);
 export class Minimal extends factory.objectAlpha("minimal", {}) {}
 export class Minimal2 extends factory.object("minimal2", {}) {}
 export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
@@ -155,6 +227,7 @@ export class HasRenamedField extends factory.object("hasRenamedField", {
 	field: factory.required(Minimal, { key: "stored-name" }),
 }) {}
 
+/** Exercises persisted descriptions on an object and one of its fields. */
 export class HasDescriptions extends factory.object(
 	"hasDescriptions",
 	{
@@ -163,6 +236,13 @@ export class HasDescriptions extends factory.object(
 	{ metadata: { description: "root object" } },
 ) {}
 
+/**
+ * A node schema configured with all metadata options.
+ *
+ * @remarks
+ * Used to validate metadata handling in schema-focused tests.
+ * Use {@link hasAllMetadataRootSchema} when testing a root field schema.
+ */
 export class HasAllMetadata extends factory.object(
 	"hasDescriptions",
 	{
@@ -177,9 +257,22 @@ export class HasAllMetadata extends factory.object(
 	},
 ) {}
 
+/**
+ * A root field schema configured with all metadata options.
+ * @remarks
+ * Root fields receive special handling in several code paths,
+ * so this is used to validate that their metadata is preserved correctly.
+ */
+export const hasAllMetadataRootSchema = SchemaFactoryAlpha.optional(HasAllMetadata, {
+	key: "unused root key",
+	metadata: { description: "root field", custom: "root field custom" },
+});
+
+/** Exercises ambiguity between two structurally identical object types. */
 export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
 	field: [Minimal, Minimal2],
 }) {}
+
 export class HasNumericValueField extends factory.object("hasNumericValueField", {
 	field: factory.number,
 }) {}
@@ -194,6 +287,7 @@ export class HasIdentifierField extends factory.object("hasIdentifierField", {
 }) {}
 
 const numberSet: TreeTypeSet = new Set([brand(numberSchema.identifier)]);
+/** A lower-level stored schema used to test all supported field kinds. */
 export const allTheFields = new ObjectNodeStoredSchema(
 	new Map([
 		[
@@ -233,6 +327,90 @@ export class RecursiveType extends factory.objectRecursive("recursiveType", {
 	type _check = ValidateRecursiveSchema<typeof RecursiveType>;
 }
 
+export class HasStagedAllowedTypes extends factory.objectAlpha("hasStagedAllowedTypes", {
+	x: SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
+}) {}
+
+export class HasStagedOptionalField extends factory.objectAlpha("hasStagedOptionalField", {
+	x: SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number),
+}) {}
+
+class MapWithStaged extends factory.mapAlpha(
+	"MapWithStaged",
+	SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
+) {}
+
+/** Allows unknown optional fields so older views can tolerate fields added by newer views. */
+export class AllowsUnknownOptionalFields extends factory.objectAlpha(
+	"hasUnknownOptionalFields",
+	{},
+	{
+		allowUnknownOptionalFields: true,
+	},
+) {}
+
+/** Adds representative fields that can be unknown to {@link AllowsUnknownOptionalFields}. */
+export class AllowsUnknownOptionalFieldsV2 extends factory.objectRecursive(
+	"hasUnknownOptionalFields",
+	{
+		recursive: factory.optionalRecursive([() => AllowsUnknownOptionalFieldsV2]),
+		minimal: factory.optional(Minimal),
+		hasMinimalValueField: factory.optional(HasMinimalValueField),
+		leaf: factory.optional(SchemaFactoryAlpha.string),
+	},
+	{
+		allowUnknownOptionalFields: true,
+	},
+) {}
+
+class ArrayWithStaged extends factory.arrayAlpha(
+	"ArrayWithStaged",
+	SchemaFactoryAlpha.types([
+		SchemaFactoryAlpha.number,
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+	]),
+) {}
+
+const stagedAllowedTypesRoot = SchemaFactoryAlpha.types([
+	SchemaFactoryAlpha.number,
+	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+]);
+const stagedOptionalRoot = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+const optionalRoot = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number);
+const stagedOptionalA = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+const stagedOptionalB = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.string);
+
+class NestedStagedOptional extends factory.object("NestedStagedOptional", {
+	a: stagedOptionalA,
+	b: stagedOptionalB,
+}) {}
+
+const multiStageCUpgrade = SchemaFactoryAlpha.staged(ArrayWithStaged);
+
+class NestedMultiStage extends factory.object("NestedMultiStage", {
+	a: SchemaFactoryAlpha.optional(
+		SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)]),
+	),
+	b: SchemaFactoryAlpha.required(
+		SchemaFactoryAlpha.types([
+			SchemaFactoryAlpha.staged({
+				type: () => MapWithStaged,
+				metadata: {},
+			}),
+			SchemaFactoryAlpha.null,
+		]),
+	),
+	c: SchemaFactoryAlpha.required(
+		SchemaFactoryAlpha.types([multiStageCUpgrade, SchemaFactoryAlpha.null]),
+	),
+}) {}
+
 const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
@@ -243,8 +421,54 @@ const library = {
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
+/**
+ * Named simple-tree schemas used by schema-focused test suites.
+ *
+ * Each schema must have at least one matching entry in {@link testSimpleTrees}.
+ */
+export const testSchema: readonly TestSimpleTreeSchema[] = [
+	{ name: "empty", schema: emptySchema, ambiguous: false },
+	{ name: "null", schema: factory.null, ambiguous: false },
+	{ name: "minimal", schema: Minimal, ambiguous: false },
+	{ name: "number", schema: schemaStatics.number, ambiguous: false },
+	{ name: "handle", schema: factory.handle, ambiguous: false },
+	{ name: "boolean", schema: factory.boolean, ambiguous: false },
+	{ name: "hasMinimalValueField", schema: HasMinimalValueField, ambiguous: false },
+	{ name: "hasRenamedField", schema: HasRenamedField, ambiguous: false },
+	{ name: "hasAmbiguousField", schema: HasAmbiguousField, ambiguous: true },
+	{ name: "hasDescriptions", schema: HasDescriptions, ambiguous: false },
+	{ name: "hasAllMetadata", schema: HasAllMetadata, ambiguous: false },
+	{ name: "hasAllMetadataRootField", schema: hasAllMetadataRootSchema, ambiguous: false },
+	{ name: "hasNumericValueField", schema: HasNumericValueField, ambiguous: false },
+	{ name: "hasPolymorphicValueField", schema: HasPolymorphicValueField, ambiguous: false },
+	{ name: "hasOptionalField", schema: HasOptionalField, ambiguous: false },
+	{ name: "numericMap", schema: NumericMap, ambiguous: false },
+	{ name: "numericRecord", schema: NumericRecord, ambiguous: false },
+	{ name: "recursiveType", schema: RecursiveType, ambiguous: false },
+	{
+		name: "allowsUnknownOptionalFields",
+		schema: AllowsUnknownOptionalFields,
+		ambiguous: false,
+	},
+	{ name: "hasStagedAllowedTypes", schema: HasStagedAllowedTypes, ambiguous: false },
+	{ name: "mapWithStaged", schema: MapWithStaged, ambiguous: false },
+	{ name: "stagedAllowedTypesRoot", schema: stagedAllowedTypesRoot, ambiguous: false },
+	{ name: "hasStagedOptionalField", schema: HasStagedOptionalField, ambiguous: false },
+	{ name: "stagedOptionalRoot", schema: stagedOptionalRoot, ambiguous: false },
+	{ name: "nestedStagedOptional", schema: NestedStagedOptional, ambiguous: false },
+	{ name: "nestedMultiStage", schema: NestedMultiStage, ambiguous: false },
+];
+
+/**
+ * Simple-tree-compatible trees.
+ *
+ * Can be used to exercise APIs which accept insertable content,
+ * or which process the trees constructed from that content.
+ *
+ * Add at least one representative here whenever adding a schema to {@link testSchema}.
+ */
 export const testSimpleTrees: readonly TestSimpleTree[] = [
-	testSimpleTree("empty", factory.optional([]), undefined),
+	testSimpleTree("empty", emptySchema, undefined),
 	testSimpleTree("null", factory.null, null),
 	testSimpleTree("minimal", Minimal, {}),
 	testSimpleTree("numeric", factory.number, 5),
@@ -261,14 +485,7 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 	),
 	testSimpleTree("hasDescriptions", HasDescriptions, { field: {} }),
 	testSimpleTree("hasAllMetadata", HasAllMetadata, { field: {} }),
-	testSimpleTree(
-		"hasAllMetadataRootField",
-		SchemaFactoryAlpha.optional(HasAllMetadata, {
-			key: "unused root key",
-			metadata: { description: "root field", custom: "root field custom" },
-		}),
-		{ field: {} },
-	),
+	testSimpleTree("hasAllMetadataRootField", hasAllMetadataRootSchema, { field: {} }),
 	testSimpleTree("hasNumericValueField", HasNumericValueField, { field: 5 }),
 	testSimpleTree("hasPolymorphicValueField", HasPolymorphicValueField, { field: 5 }),
 	testSimpleTree("hasOptionalField-empty", HasOptionalField, {}),
@@ -289,8 +506,35 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 			field: new RecursiveType({ field: new RecursiveType({ field: new RecursiveType({}) }) }),
 		}),
 	),
+	testSimpleTree("allowsUnknownOptionalFields", AllowsUnknownOptionalFields, {}),
+	testSimpleTree("HasStagedAllowedTypesBeforeUpdate", HasStagedAllowedTypes, { x: 5 }, false),
+	testSimpleTree("mapWithStaged", MapWithStaged, {}),
+	testSimpleTree("Staged in root", stagedAllowedTypesRoot, 5, false),
+	testSimpleTree(
+		"HasStagedOptionalFieldBeforeUpdate",
+		HasStagedOptionalField,
+		{ x: 5 },
+		false,
+	),
+	testSimpleTree("Staged optional in root", stagedOptionalRoot, 5, false),
+	testSimpleTree(
+		"NestedStagedOptional with no upgrades",
+		NestedStagedOptional,
+		{ a: 5, b: "text" },
+		false,
+	),
+	testSimpleTree(
+		"NestedMultiStage with no upgrades",
+		NestedMultiStage,
+		{ b: null, c: null },
+		false,
+	),
 ];
 
+/**
+ * Stored-schema trees used by lower-level tree tests.
+ * Prefer adding cases to {@link testSimpleTrees}; add custom cases here only when simple-tree cannot express them.
+ */
 export const testTrees: readonly TestTree[] = [
 	...testSimpleTrees.map(convertSimpleTreeTest),
 	test(
@@ -327,7 +571,6 @@ export const testTrees: readonly TestTree[] = [
 		},
 		policy: defaultSchemaPolicy,
 	},
-
 	test(
 		"allTheFields-minimal",
 		{
@@ -368,44 +611,12 @@ export const testTrees: readonly TestTree[] = [
 	),
 ];
 
-export class HasUnknownOptionalFields extends factory.objectAlpha(
-	"hasUnknownOptionalFields",
-	{},
-	{
-		allowUnknownOptionalFields: true,
-	},
-) {}
-
-export class HasUnknownOptionalFieldsV2 extends factory.objectRecursive(
-	"hasUnknownOptionalFields",
-	{
-		recursive: factory.optionalRecursive([() => HasUnknownOptionalFieldsV2]),
-		minimal: factory.optional(Minimal),
-		hasMinimalValueField: factory.optional(HasMinimalValueField),
-		leaf: factory.optional(SchemaFactoryAlpha.string),
-	},
-	{
-		allowUnknownOptionalFields: true,
-	},
-) {}
-
-export class HasStagedAllowedTypes extends factory.objectAlpha("hasStagedAllowedTypes", {
-	x: SchemaFactoryAlpha.types([
-		SchemaFactoryAlpha.number,
-		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-	]),
-}) {}
-
 export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
 	"hasStagedAllowedTypes",
 	{
 		x: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
 	},
 ) {}
-
-export class HasStagedOptionalField extends factory.objectAlpha("hasStagedOptionalField", {
-	x: SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number),
-}) {}
 
 export class HasStagedOptionalFieldAfterUpdate extends factory.objectAlpha(
 	"hasStagedOptionalField",
@@ -414,63 +625,21 @@ export class HasStagedOptionalFieldAfterUpdate extends factory.objectAlpha(
 	},
 ) {}
 
-class MapWithStaged extends factory.mapAlpha(
-	"MapWithStaged",
-	SchemaFactoryAlpha.types([
-		SchemaFactoryAlpha.number,
-		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-	]),
-) {}
-
-class ArrayWithStaged extends factory.arrayAlpha(
-	"ArrayWithStaged",
-	SchemaFactoryAlpha.types([
-		SchemaFactoryAlpha.number,
-		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-	]),
-) {}
-
-const stagedOptionalRoot = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
-const optionalRoot = SchemaFactoryAlpha.optional(SchemaFactoryAlpha.number);
-const stagedOptionalA = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
-const stagedOptionalB = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.string);
-
-class NestedStagedOptional extends factory.object("NestedStagedOptional", {
-	a: stagedOptionalA,
-	b: stagedOptionalB,
-}) {}
-
-const multiStageCUpgrade = SchemaFactoryAlpha.staged(ArrayWithStaged);
-
-class NestedMultiStage extends factory.object("NestedMultiStage", {
-	a: SchemaFactoryAlpha.optional(
-		SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)]),
-	),
-	b: SchemaFactoryAlpha.required(
-		SchemaFactoryAlpha.types([
-			SchemaFactoryAlpha.staged({
-				type: () => MapWithStaged,
-				metadata: {},
-			}),
-			SchemaFactoryAlpha.null,
-		]),
-	),
-	c: SchemaFactoryAlpha.required(
-		SchemaFactoryAlpha.types([multiStageCUpgrade, SchemaFactoryAlpha.null]),
-	),
-}) {}
-
 // TODO: AB#45711: add recursive staged schema tests documents
 
 /**
  * Collection of {@link TestDocument|TestDocuments}.
- *
+ * @remarks
  * Use these test documents to test import and export APIs.
  *
  * Can be used to test schema evolution related features where view and stored schema can diverge.
  * Includes for example documents with unknown optional fields;
  *
  * Includes documents with staged schema features both before and after the stored schema update.
+ *
+ * @privateRemarks
+ * When possible, add test cases to {@link testSimpleTrees} instead of this collection:
+ * such cases are automatically included here as well.
  */
 export const testDocuments: readonly TestDocument[] = [
 	...testSimpleTrees.map(
@@ -489,28 +658,28 @@ export const testDocuments: readonly TestDocument[] = [
 	{
 		ambiguous: false,
 		name: "AllowsUnknownOptionalFields",
-		schema: HasUnknownOptionalFields,
+		schema: AllowsUnknownOptionalFields,
 		hasUnknownOptionalFieldSchema: true,
 		// Unknown optional fields are allowed but empty in this document.
 		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
+		schemaData: toInitialSchema(AllowsUnknownOptionalFieldsV2),
 		treeFactory: () =>
-			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasUnknownOptionalFields, {})),
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(AllowsUnknownOptionalFields, {})),
 	},
 	{
 		ambiguous: false,
 		name: "HasUnknownOptionalFields",
-		schema: HasUnknownOptionalFields,
+		schema: AllowsUnknownOptionalFields,
 		hasUnknownOptionalFields: true,
 		hasUnknownOptionalFieldSchema: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
+		schemaData: toInitialSchema(AllowsUnknownOptionalFieldsV2),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(
-					HasUnknownOptionalFieldsV2,
-					new HasUnknownOptionalFieldsV2({
-						recursive: new HasUnknownOptionalFieldsV2({ leaf: "nested leaf" }),
+					AllowsUnknownOptionalFieldsV2,
+					new AllowsUnknownOptionalFieldsV2({
+						recursive: new AllowsUnknownOptionalFieldsV2({ leaf: "nested leaf" }),
 						minimal: {},
 						hasMinimalValueField: { field: {} },
 						leaf: "leaf",
@@ -520,19 +689,8 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 	{
 		ambiguous: false,
-		name: "HasStagedAllowedTypesBeforeUpdate",
-		schema: HasStagedAllowedTypes,
-		hasStagedSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(HasStagedAllowedTypes),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasStagedAllowedTypes, { x: 5 })),
-	},
-	{
-		ambiguous: false,
 		name: "HasStagedAllowedTypesAfterUpdate",
 		schema: HasStagedAllowedTypes,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasStagedAllowedTypesAfterUpdate),
@@ -543,25 +701,8 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 	{
 		ambiguous: false,
-		name: "Staged in root",
-		schema: SchemaFactoryAlpha.types([
-			SchemaFactoryAlpha.number,
-			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-		]),
-		hasStagedSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(SchemaFactoryAlpha.number),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(SchemaFactoryAlpha.number, 5)),
-	},
-	{
-		ambiguous: false,
 		name: "Staged node in root",
-		schema: SchemaFactoryAlpha.types([
-			SchemaFactoryAlpha.number,
-			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-		]),
-		hasStagedSchema: true,
+		schema: stagedAllowedTypesRoot,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(
@@ -576,7 +717,6 @@ export const testDocuments: readonly TestDocument[] = [
 		ambiguous: false,
 		name: "Staged in map",
 		schema: MapWithStaged,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toStoredSchema(MapWithStaged, StagedSchemaUpgradePolicy.permissive),
@@ -585,19 +725,8 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 	{
 		ambiguous: false,
-		name: "HasStagedOptionalFieldBeforeUpdate",
-		schema: HasStagedOptionalField,
-		hasStagedSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(HasStagedOptionalField),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasStagedOptionalField, { x: 5 })),
-	},
-	{
-		ambiguous: false,
 		name: "HasStagedOptionalFieldAfterUpdate",
 		schema: HasStagedOptionalField,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasStagedOptionalFieldAfterUpdate),
@@ -606,19 +735,8 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 	{
 		ambiguous: false,
-		name: "Staged optional in root",
-		schema: stagedOptionalRoot,
-		hasStagedSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(stagedOptionalRoot),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(stagedOptionalRoot, 5)),
-	},
-	{
-		ambiguous: false,
 		name: "Staged optional empty root",
 		schema: stagedOptionalRoot,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(optionalRoot),
@@ -627,21 +745,8 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 	{
 		ambiguous: false,
-		name: "NestedStagedOptional with no upgrades",
-		schema: NestedStagedOptional,
-		hasStagedSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(NestedStagedOptional, StagedSchemaUpgradePolicy.restrictive),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(
-				fieldCursorFromInsertable(NestedStagedOptional, { a: 5, b: "text" }),
-			),
-	},
-	{
-		ambiguous: false,
 		name: "NestedStagedOptional with one upgrade",
 		schema: NestedStagedOptional,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toStoredSchema(NestedStagedOptional, {
@@ -657,7 +762,6 @@ export const testDocuments: readonly TestDocument[] = [
 		ambiguous: false,
 		name: "NestedStagedOptional with all upgrades",
 		schema: NestedStagedOptional,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toStoredSchema(NestedStagedOptional, StagedSchemaUpgradePolicy.permissive),
@@ -666,21 +770,8 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 	{
 		ambiguous: false,
-		name: "NestedMultiStage with no upgrades",
-		schema: NestedMultiStage,
-		hasStagedSchema: true,
-		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(NestedMultiStage, StagedSchemaUpgradePolicy.restrictive),
-		treeFactory: () =>
-			jsonableTreeFromFieldCursor(
-				fieldCursorFromInsertable(NestedMultiStage, { b: null, c: null }),
-			),
-	},
-	{
-		ambiguous: false,
 		name: "NestedMultiStage with one upgrade",
 		schema: NestedMultiStage,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toStoredSchema(NestedMultiStage, {
@@ -696,7 +787,6 @@ export const testDocuments: readonly TestDocument[] = [
 		ambiguous: false,
 		name: "NestedMultiStage with all upgrades",
 		schema: NestedMultiStage,
-		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toStoredSchema(NestedMultiStage, StagedSchemaUpgradePolicy.permissive),
@@ -707,6 +797,7 @@ export const testDocuments: readonly TestDocument[] = [
 	},
 ];
 
+/** Creates an independent view initialized with a {@link TestDocument}'s stored schema and content. */
 export function testDocumentIndependentView(
 	document: Pick<TestDocument, "schema" | "treeFactory" | "schemaData" | "ambiguous">,
 ): SchematizingSimpleTreeView<UnsafeUnknownSchema> {

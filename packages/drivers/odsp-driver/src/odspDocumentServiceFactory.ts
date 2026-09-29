@@ -90,6 +90,7 @@ export function createOdspDocumentServiceFactory(
 							clientIsSummarizer,
 							persistedCache,
 							getStorageToken: options.getStorageToken,
+							requestHeaders: this.requestHeaders,
 							createDocumentService: async (url, odspLogger, cacheAndTracker, isSummarizer) =>
 								this.createDocumentServiceCore(url, odspLogger, cacheAndTracker, isSummarizer),
 						});

@@ -113,6 +113,9 @@ export async function prefetchLatestSnapshot(
 			odspLogger,
 			undefined,
 			controller,
+			undefined,
+			undefined,
+			odspDocumentServiceFactory?.requestHeaders,
 		);
 	};
 	const snapshotKey = createCacheSnapshotKey(odspResolvedUrl, useGroupIdsForSnapshotFetch);
@@ -150,6 +153,7 @@ export async function prefetchLatestSnapshot(
 				removeEntries,
 				loadingGroupIds,
 				enableRedeemFallback,
+				odspDocumentServiceFactory?.requestHeaders,
 			)
 				.then(async (value) => {
 					assert(!!snapshotEpoch, 0x585 /* prefetched snapshot should have a valid epoch */);

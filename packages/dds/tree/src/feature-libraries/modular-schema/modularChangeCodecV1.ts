@@ -71,6 +71,7 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import { nodeChangeFromId } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -112,14 +113,14 @@ export function encodeFieldChangesForJson(
 	change: FieldChangeMap,
 	context: ChangeEncodingContext,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedFieldChangeMap {
 	const fieldContext: FieldChangeEncodingContext = {
 		baseContext: context,
 
 		encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
-			const node = nodeChanges.get([nodeId.revision, nodeId.localId]);
-			assert(node !== undefined, 0x92e /* Unknown node ID */);
+			const node = nodeChangeFromId(nodeChanges, nodeId, nodeAliases);
 			return encodeNodeChangesForJson(node, fieldContext, fieldChangesetCodecs);
 		},
 	};
@@ -490,6 +491,7 @@ export function encodeChange(
 			change.fieldChanges,
 			context,
 			change.nodeChanges,
+			change.nodeAliases,
 			fieldChangesetCodecs,
 		),
 		builds: encodeDetachedNodes(

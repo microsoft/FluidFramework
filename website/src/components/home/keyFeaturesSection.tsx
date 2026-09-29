@@ -52,7 +52,7 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				imageAltText="Industry-leading speed and performance"
 				bodyLabel="Industry-leading speed & performance"
 				bodyText={performanceText}
-				learnMoreLinkHref="/docs/build/dds#performance-characteristics"
+				learnMoreLinkHref="/docs/concepts/architecture"
 				learnMoreLinkAltText="Industry-leading speed & performance, Learn More"
 			/>
 		</div>

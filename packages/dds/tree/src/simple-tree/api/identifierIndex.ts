@@ -5,17 +5,27 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { TreeIndex } from "../../feature-libraries/index.js";
+import {
+	KeyFinderDependencyScope,
+	type TreeIndex,
+	type TreeIndexNodes,
+} from "../../feature-libraries/index.js";
 import type { TreeNode } from "../core/index.js";
-import { FieldKind, type ImplicitFieldSchema } from "../fieldSchema.js";
-import { ObjectNodeSchema } from "../node-kinds/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 
-import { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
+import { createTreeIndexWithDependencyScope, type TreeIndexKey } from "./simpleTreeIndex.js";
 import type { TreeView } from "./tree.js";
+import { getPropertyKeyFromStoredKey } from "./treeNodeApi.js";
+import { oneFromIterable } from "../../util/index.js";
 
 /**
  * An index that returns tree nodes given their associated identifiers.
+ *
+ * @remarks
+ * Create an identifier index with {@link createIdentifierIndex} to index fields defined using
+ * {@link SchemaFactory.identifier}.
  *
  * @beta
  */
@@ -28,31 +38,43 @@ function isStringKey(key: TreeIndexKey): key is string {
 /**
  * Creates an {@link IdentifierIndex} for a given {@link TreeView}.
  *
+ * @remarks
+ * The sole identifier field of each schema reachable from the view's schema is indexed automatically. Schemas with
+ * no identifier fields or multiple identifier fields are not indexed. The index remains up to date as nodes are
+ * inserted, removed, or changed. Looking up an identifier shared by multiple nodes throws a
+ * `UsageError`. Call {@link TreeIndex.dispose} when the index is no longer needed.
+ * @privateRemarks
+ * TODO: Performance:
+ * This currently uses full identifiers strings, and does not leverage any form of identifier compression or optimization.
+ * In the future, we may want to optimize it to use shortIds where practical internally, and/or provide an alternative which works in terms of ShortIds.
+ *
+ * TODO:
+ * In the future we may want to make it possible for an index to store the same node multiple times under different keys (allow key finder to return 0 or more keys).
+ * If done, we should reevaluate the policy to skip nodes with multiple identifiers: maybe provide an option to opt out of that (and/or an option to error if they are encountered).
+ *
  * @beta
  */
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 	view: TreeView<TSchema>,
 ): IdentifierIndex {
-	// For each node schema, find which field key the identifier field is under.
-	// This can be done easily because identifiers are their own field kinds.
+	// For each node schema, include it if it has exactly one identifier field.
 	const identifierFields = new Map<string, string>();
 	walkFieldSchema(view.schema, {
-		node: (schemus) => {
-			if (schemus instanceof ObjectNodeSchema) {
-				for (const [fieldKey, fieldSchema] of schemus.fields.entries()) {
-					if (fieldSchema.kind === FieldKind.Identifier) {
-						identifierFields.set(schemus.identifier, fieldKey);
-						break;
-					}
+		node: (schema) => {
+			if (isObjectNodeSchema(schema)) {
+				const storedKey = oneFromIterable(schema.identifierFieldKeys);
+				if (storedKey !== undefined) {
+					const propertyKey = getPropertyKeyFromStoredKey(schema, storedKey);
+					identifierFields.set(schema.identifier, propertyKey.toString());
 				}
 			}
 		},
 	});
 
-	return createTreeIndex(
+	return createTreeIndexWithDependencyScope(
 		view,
-		(schemus) => identifierFields.get(schemus.identifier),
-		(nodes) => {
+		(schema) => identifierFields.get(schema.identifier),
+		(nodes: TreeIndexNodes<TreeNode>) => {
 			if (nodes.length > 1) {
 				throw new UsageError(
 					"cannot retrieve node from index: there are multiple nodes with the same identifier",
@@ -62,5 +84,6 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(
 			return nodes[0];
 		},
 		isStringKey,
+		KeyFinderDependencyScope.Immutable,
 	);
 }

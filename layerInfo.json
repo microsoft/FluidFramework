@@ -99,6 +99,7 @@
 			"Examples": {
 				"dot": false,
 				"dev": true,
+				"packages": ["@fluid-private/devtools-test-app"],
 				"dirs": [
 					"examples/",
 					"experimental/examples/",
@@ -140,6 +141,7 @@
 				]
 			},
 			"ServiceClients": {
+				"packages": ["@fluidframework/tinylicious-driver"],
 				"dirs": ["packages/service-clients/"],
 				"deps": [
 					"Container-Definitions",
@@ -224,8 +226,7 @@
 			"Routerlicious-Driver": {
 				"packages": [
 					"@fluidframework/routerlicious-driver",
-					"@fluidframework/routerlicious-urlresolver",
-					"@fluidframework/tinylicious-driver"
+					"@fluidframework/routerlicious-urlresolver"
 				],
 				"deps": ["Driver", "Server-Shared-Utils"]
 			},

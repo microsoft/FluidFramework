@@ -84,6 +84,20 @@ describe("Schema Evolution Examples", () => {
 				canView: false,
 				canUpgrade: false,
 				isEquivalent: false,
+				discrepancies: [
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: ["test.Canvas"],
+						stored: [],
+					},
+					{
+						mismatch: "fieldKind",
+						location: "root",
+						view: "Value",
+						stored: "Forbidden",
+					},
+				],
 				enabledUpgrades: new Map(),
 			});
 
@@ -151,6 +165,7 @@ describe("Schema Evolution Examples", () => {
 				canView: true,
 				canUpgrade: true,
 				isEquivalent: true,
+				discrepancies: undefined,
 				enabledUpgrades: new Map(),
 			});
 
@@ -177,6 +192,17 @@ describe("Schema Evolution Examples", () => {
 				canView: false,
 				canUpgrade: true,
 				isEquivalent: false,
+				discrepancies: [
+					{
+						mismatch: "allowedTypes",
+						location: {
+							nodeType: "test.PositionedCanvasItem",
+							fieldKey: "content",
+						},
+						view: ["test.Counter"],
+						stored: [],
+					},
+				],
 				enabledUpgrades: new Map(),
 			});
 
@@ -190,6 +216,7 @@ describe("Schema Evolution Examples", () => {
 				canView: true,
 				canUpgrade: true,
 				isEquivalent: true,
+				discrepancies: undefined,
 				enabledUpgrades: new Map(),
 			});
 		}

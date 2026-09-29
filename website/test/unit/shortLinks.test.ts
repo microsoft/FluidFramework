@@ -5,7 +5,7 @@
 
 import type { GlobalVersion } from "@docusaurus/plugin-content-docs/client";
 import { ApiItemKind } from "@fluid-tools/api-markdown-documenter";
-import type { ReactElement, ReactNode } from "react";
+import { createElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 const { useActivePluginAndVersion, usePluginData } = vi.hoisted(() => ({
@@ -106,6 +106,8 @@ function renderApiLink(props: ApiLinkProps): { href: string; children: ReactNode
 describe("PackageLink", () => {
 	afterEach(() => {
 		useActivePluginAndVersion.mockReset();
+		usePluginData.mockReset();
+		vi.restoreAllMocks();
 	});
 
 	it("uses the configured path for the active documentation version", () => {
@@ -121,12 +123,116 @@ describe("PackageLink", () => {
 			children: "example",
 		});
 	});
+
+	it("renders inline code when a new package is not documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+		const link = PackageLink({ package: "new-package", newApi: true });
+
+		expect({ type: link.type, children: link.props.children }).toEqual({
+			type: "code",
+			children: "new-package",
+		});
+		expect(debug).toHaveBeenCalledWith(
+			'[PackageLink] New package "new-package" does not exist in API documentation version "current". Rendering inline code placeholder.',
+		);
+	});
+
+	it("preserves rich children when a new package is not documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const children = createElement("strong", undefined, "New package");
+
+		const link = PackageLink({ package: "new-package", newApi: true, children });
+
+		expect(link.type).toBe("code");
+		expect(link.props.children).toBe(children);
+	});
+
+	it("links and warns when a new package is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+		const link = PackageLink({ package: "example", newApi: true });
+		PackageLink({ package: "example", newApi: true });
+
+		expect({ type: link.type, href: link.props.href, children: link.props.children }).toEqual({
+			type: "a",
+			href: "/docs/api/example",
+			children: "example",
+		});
+		expect(warn).toHaveBeenCalledWith(
+			'[PackageLink] Package "example" exists in API documentation version "current". Remove the newApi prop.',
+		);
+		expect(warn).toHaveBeenCalledTimes(1);
+	});
+
+	it("falls back to the original package until its replacement is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+		const link = PackageLink({
+			package: { previous: "example", new: "replacement" },
+		});
+
+		expect({ href: link.props.href, children: link.props.children }).toEqual({
+			href: "/docs/api/example",
+			children: "replacement",
+		});
+		expect(warn).not.toHaveBeenCalled();
+		expect(debug).toHaveBeenCalledWith(
+			'[PackageLink] New package name "replacement" does not exist in API documentation version "current". Linking to previous package "example".',
+		);
+	});
+
+	it("uses and warns about a documented replacement package", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+		const link = PackageLink({
+			package: { previous: "old-package", new: "example" },
+		});
+
+		expect({ href: link.props.href, children: link.props.children }).toEqual({
+			href: "/docs/api/example",
+			children: "example",
+		});
+		expect(warn).toHaveBeenCalledWith(
+			'[PackageLink] New package name "example" exists in API documentation version "current". Set package="example".',
+		);
+	});
+
+	it("renders inline code when neither package rename target is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+		const link = PackageLink({
+			package: { previous: "old-package", new: "renamed-package" },
+			newApi: true,
+		});
+
+		expect({ type: link.type, children: link.props.children }).toEqual({
+			type: "code",
+			children: "renamed-package",
+		});
+		expect(debug).toHaveBeenCalledWith(
+			'[PackageLink] New package "renamed-package" does not exist in API documentation version "current". Rendering inline code placeholder.',
+		);
+	});
 });
 
 describe("ApiLink", () => {
 	afterEach(() => {
 		useActivePluginAndVersion.mockReset();
 		usePluginData.mockReset();
+		vi.restoreAllMocks();
 	});
 
 	it("uses the active version manifest and versioned path", () => {
@@ -174,20 +280,142 @@ describe("ApiLink", () => {
 		});
 	});
 
-	it("allows a compatibility heading to override the manifest heading", () => {
+	it("renders inline code with rich children when a new API is not documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const children = createElement("strong", undefined, "New API");
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+		const link = ApiLink({ package: "example", api: "Missing", newApi: true, children });
+
+		expect(link.type).toBe("code");
+		expect(link.props.children).toBe(children);
+		expect(debug).toHaveBeenCalledWith(
+			'[ApiLink] New API "example/Missing" does not exist in API documentation version "current". Rendering inline code placeholder.',
+		);
+	});
+
+	it("links and warns when a new API is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+		const link = renderApiLink({ package: "example", api: "(Widget:class)", newApi: true });
+
+		expect(link).toEqual({
+			href: "/docs/api/example/widget-class",
+			children: "Widget",
+		});
+		expect(warn).toHaveBeenCalledWith(
+			'[ApiLink] API "example/(Widget:class)" exists in API documentation version "current". Remove the newApi prop.',
+		);
+	});
+
+	it("falls back to the original API until its replacement is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+		const link = renderApiLink({
+			package: "example",
+			api: { previous: "(Widget:class)", new: "Replacement" },
+		});
+
+		expect(link).toEqual({
+			href: "/docs/api/example/widget-class",
+			children: "Widget",
+		});
+		expect(warn).not.toHaveBeenCalled();
+		expect(debug).toHaveBeenCalledWith(
+			'[ApiLink] New API name "example/Replacement" does not exist in API documentation version "current". Linking to previous API "example/(Widget:class)".',
+		);
+	});
+
+	it("preserves rich children while an API rename is staged", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const children = createElement("strong", undefined, "Renamed API");
+
+		const link = ApiLink({
+			package: "example",
+			api: { previous: "(Widget:class)", new: "Replacement" },
+			children,
+		});
+
+		expect(link.type).toBe("a");
+		expect(link.props.children).toBe(children);
+	});
+
+	it("renders inline code when neither API rename target is documented", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const debug = vi.spyOn(console, "debug").mockImplementation(() => {});
+
+		const link = ApiLink({
+			package: "example",
+			api: { previous: "OldMissing", new: "NewMissing" },
+			newApi: true,
+		});
+
+		expect({ type: link.type, children: link.props.children }).toEqual({
+			type: "code",
+			children: "NewMissing",
+		});
+		expect(debug).toHaveBeenCalledWith(
+			'[ApiLink] New API "example/NewMissing" does not exist in API documentation version "current". Rendering inline code placeholder.',
+		);
+	});
+
+	it("uses and warns about a documented replacement API", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+		const link = renderApiLink({
+			package: "example",
+			api: { previous: "Missing", new: "(Widget:class)" },
+		});
+
+		expect(link).toEqual({
+			href: "/docs/api/example/widget-class",
+			children: "Widget",
+		});
+		expect(warn).toHaveBeenCalledWith(
+			'[ApiLink] New API name "example/(Widget:class)" exists in API documentation version "current". Set api="(Widget:class)".',
+		);
+	});
+
+	it("does not let newApi hide an invalid replacement reference", () => {
 		useVersion("current", "/docs");
 		useMockApiLinkManifests();
 
-		expect(
-			renderApiLink({
+		expect(() =>
+			ApiLink({
 				package: "example",
-				api: "(Widget:class).run",
-				headingId: "legacy-heading",
+				api: { previous: "Missing", new: "(Widget:static)" as string },
+				newApi: true,
 			}),
-		).toEqual({
-			href: "/docs/api/example/widget-class#legacy-heading",
-			children: "Widget.run",
-		});
+		).toThrowError(
+			'Unsupported selector "static" in API declaration reference "(Widget:static)".',
+		);
+	});
+
+	it("does not let a replacement hide an invalid original reference", () => {
+		useVersion("current", "/docs");
+		useMockApiLinkManifests();
+
+		expect(() =>
+			ApiLink({
+				package: "example",
+				api: {
+					previous: "(Widget:static)" as string,
+					new: "(Widget:class)",
+				},
+			}),
+		).toThrowError(
+			'Unsupported selector "static" in API declaration reference "(Widget:static)".',
+		);
 	});
 
 	it("throws when rendered outside a versioned Docusaurus document", () => {
@@ -278,5 +506,12 @@ describe("ApiDeclarationReference", () => {
 		expectTypeOf<ApiDeclarationReference<"Widget.(run:0)">>().toEqualTypeOf<never>();
 		expectTypeOf<ApiDeclarationReference<"(Widget:static).run">>().toEqualTypeOf<never>();
 		expectTypeOf<ApiDeclarationReference<"Widget.(run:2).result">>().toEqualTypeOf<never>();
+		expectTypeOf<ApiLinkProps<"Widget", "(Replacement:class)">["api"]>().toEqualTypeOf<
+			| "Widget"
+			| {
+					previous: "Widget";
+					new: "(Replacement:class)";
+			  }
+		>();
 	});
 });
