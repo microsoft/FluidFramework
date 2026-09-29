@@ -6,7 +6,7 @@ settings:
 
 overrides:
   js-yaml@>=3 <4: 3.15.0
-  js-yaml@>=4 <5: 4.3.0
+  js-yaml@>=4 <5: 4.3.2
 
 importers:
 
@@ -185,8 +185,8 @@ packages:
     resolution: {integrity: sha512-lJJV/5dYS+RcL8uQdBDW9c9uWFLLBNRyFhnAKXw5tVqLlKZ4RMGZKv+YQ/IA3OhD+RpbJa1LLFM1FQPGyIXvOA==}
     engines: {node: '>=12'}
 
-  js-yaml@4.3.0:
-    resolution: {integrity: sha512-1td788aAnnZ5qs7V2QIRl1owjtYpbKt749Y3xauqQgwIIGF/xXWz1wMTEBx5O3LK3lXLVuqXPdPxj2BoFHaW9Q==}
+  js-yaml@4.3.2:
+    resolution: {integrity: sha1-jkT7FKJkPFlya7FXh7XxUSyz0/s=, tarball: https://ms-feed-25.pkgs.visualstudio.com/1es-public/_packaging/npm-public/npm/registry/js-yaml/-/js-yaml-4.3.2.tgz}
     hasBin: true
 
   jsonc-parser@3.3.1:
@@ -553,7 +553,7 @@ snapshots:
 
   is-path-inside@4.0.0: {}
 
-  js-yaml@4.3.0:
+  js-yaml@4.3.2:
     dependencies:
       argparse: 2.0.1
 
@@ -594,7 +594,7 @@ snapshots:
   markdownlint-cli2@0.22.1(supports-color@10.2.2):
     dependencies:
       globby: 16.2.0
-      js-yaml: 4.3.0
+      js-yaml: 4.3.2
       jsonc-parser: 3.3.1
       jsonpointer: 5.0.1
       markdown-it: 14.1.1
