@@ -12,15 +12,15 @@ describe("Host and Guest Demo", () => {
 		disposeActiveSessions(this.currentTest?.state === "failed");
 	});
 
-	it("the initial state is consistent across the Host and Guest", () => {
-		const { host, guest } = setup(["A"]);
+	it("the initial state is consistent across the Host and Guest", async () => {
+		const { host, guest } = await setup(["A"]);
 		assert.deepEqual([...guest.view.root], ["A"]);
 		assert.deepEqual([...host.local.root], ["A"]);
 		assert.deepEqual([...host.main.root], ["A"]);
 	});
 
 	it("one Guest edit", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Edit in the Guest.
 		guest.view.root.push("B(g)");
@@ -48,7 +48,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("new Guest edits during Guest edit push", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Edit in the Guest.
 		guest.view.root.push("B(g)");
@@ -77,7 +77,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("concurrent Guest, Host, and peer edits converge", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Each participant edits independently before any synchronization completes.
 		guest.view.root.push("Guest");
@@ -114,7 +114,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("one peer edit", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Edit on the peer.
 		peer.root.push("B(p)");
@@ -143,7 +143,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("new peer edits during Guest update", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Edit on the peer.
 		peer.root.push("B(p)");

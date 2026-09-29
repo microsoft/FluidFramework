@@ -4,26 +4,45 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { fail } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import { FluidClientVersion } from "../../../codec/index.js";
+import {
+	castCursorToSynchronous,
+	findAncestor,
+	moveToDetachedField,
+	schemaDataIsEmpty,
+} from "../../../core/index.js";
+import {
+	defaultSchemaPolicy,
+	fieldBatchCodecBuilder,
+	schemaCodecBuilder,
+	TreeCompressionStrategy,
+} from "../../../feature-libraries/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
 	type BlobRequestMessage,
 	type BlobResponseMessage,
 	type HostGuestMessage,
+	type HostInitializationMessage,
 	normalizeProtocolError,
 	parseHostGuestMessage,
 	SandboxProtocolError,
 	throwProtocolError,
+	validateTreePayloadVocabulary,
 } from "./common.js";
 import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
+import { getBranch, getCheckout } from "./synchronizationUtils.js";
 
 /**
  * The SharedTree that connects to Fluid services on behalf of a Guest.
@@ -61,6 +80,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					throw new SandboxProtocolError("The Host cannot receive blob responses.");
 				}
 				case "hostUpdate":
+				case "hostInitialization":
 				case "guestChangeAck": {
 					throw new SandboxProtocolError(`The Host cannot receive ${message.type} messages.`);
 				}
@@ -89,6 +109,8 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		private readonly port: MessagePort,
 		/** The SharedTree handle to which restored handles are bound. */
 		bindingHandle: IFluidHandle,
+		/** The compressor shared with the Guest for this session. */
+		idCompressor: IIdCompressor,
 		/** The Host-scoped logger for diagnostic telemetry. */
 		logger: TelemetryLoggerExt,
 		// TODO: Replace this callback with `Listenable` event API for session errors and closure.
@@ -116,6 +138,12 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
+		try {
+			this.postMessage(this.createInitializationMessage(idCompressor));
+		} catch (error) {
+			this.dispose();
+			throw error;
+		}
 	}
 
 	public dispose(): void {
@@ -157,6 +185,59 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		const normalized = normalizeTransportData(message);
 		parseHostGuestMessage(normalized);
 		this.port.postMessage(this.codec.encode(normalized));
+	}
+
+	private createInitializationMessage(idCompressor: IIdCompressor): HostInitializationMessage {
+		const initialization = this.synchronization.guestInitialization;
+		const snapshot = this.main.fork();
+		try {
+			const branch = getBranch(snapshot);
+			const base = findAncestor(
+				branch.getHead(),
+				(commit) => commit.revision === initialization.baseRevision,
+			);
+			assert(base !== undefined, "Expected the Guest initialization base in Host history");
+			const checkout = getCheckout(snapshot);
+			checkout.switchBranch(branch.fork(base));
+			branch.dispose();
+			if (schemaDataIsEmpty(checkout.storedSchema)) {
+				throw new UsageError(
+					"The Host must have a sequenced initialized state before creating a Guest.",
+				);
+			}
+			const cursor = checkout.forest.allocateCursor();
+			try {
+				moveToDetachedField(checkout.forest, cursor);
+				const options = {
+					jsonValidator: FormatValidatorBasic,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				};
+				const tree = fieldBatchCodecBuilder
+					.build(options)
+					.encode([castCursorToSynchronous(cursor)], {
+						encodeType: TreeCompressionStrategy.Compressed,
+						idCompressor,
+						schema: { schema: checkout.storedSchema, policy: defaultSchemaPolicy },
+						isSummary: true,
+					});
+				const normalizedTree = normalizeTransportData(tree);
+				const normalizedSchema = normalizeTransportData(
+					schemaCodecBuilder.build(options).encode(checkout.storedSchema),
+				);
+				validateTreePayloadVocabulary(normalizedTree);
+				validateTreePayloadVocabulary(normalizedSchema);
+				return {
+					type: "hostInitialization",
+					...initialization,
+					tree: normalizedTree as JsonCompatibleReadOnly,
+					schema: normalizedSchema as JsonCompatibleReadOnly,
+				};
+			} finally {
+				cursor.free();
+			}
+		} finally {
+			snapshot.dispose();
+		}
 	}
 
 	/**

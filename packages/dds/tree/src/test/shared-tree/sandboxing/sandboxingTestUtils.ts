@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import {
 	createChildLogger,
@@ -12,20 +11,7 @@ import {
 
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
-import {
-	castCursorToSynchronous,
-	findAncestor,
-	moveToDetachedField,
-	schemaDataIsEmpty,
-} from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import {
-	defaultSchemaPolicy,
-	fieldBatchCodecBuilder,
-	schemaCodecBuilder,
-	TreeCompressionStrategy,
-} from "../../../feature-libraries/index.js";
-import type { ViewContent } from "../../../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -33,18 +19,11 @@ import {
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
-import {
-	normalizeProtocolError,
-	throwProtocolError,
-	validateTreePayloadVocabulary,
-} from "./common.js";
+import { normalizeProtocolError, throwProtocolError } from "./common.js";
 import { Guest } from "./guest.js";
-import { normalizeTransportData } from "./transport.js";
 import { Host } from "./host.js";
-import { getBranch, getCheckout } from "./synchronizationUtils.js";
 
 /**
  * The ports and test controls for one Host and Guest session.
@@ -58,6 +37,8 @@ export interface SessionPorts<TInterop> {
 	readonly guestPort: MessagePort;
 	/** The controls that the test uses to manage message delivery. */
 	readonly interop: TInterop;
+	/** Delivers the Host's first message when the transport does not relay messages automatically. */
+	readonly deliverInitialization: () => Promise<void>;
 	/** Releases transport resources that the Host and the Guest do not own. */
 	dispose(): void;
 }
@@ -78,6 +59,7 @@ export function buildDirectSessionPorts(): SessionPorts<undefined> {
 		hostPort: channel.port1,
 		guestPort: channel.port2,
 		interop: undefined,
+		deliverInitialization: async () => {},
 		dispose: () => {},
 	};
 }
@@ -105,6 +87,18 @@ export function buildIsolatedSessionPorts(): SessionPorts<IsolatedPortControls> 
 			sendToHost: hostChannel.port2,
 			sendToGuest: guestChannel.port2,
 		},
+		deliverInitialization: async () =>
+			new Promise<void>((resolve) => {
+				hostChannel.port2.addEventListener(
+					"message",
+					(event: MessageEvent<unknown>) => {
+						guestChannel.port2.postMessage(event.data);
+						resolve();
+					},
+					{ once: true },
+				);
+				hostChannel.port2.start();
+			}),
 		dispose: () => {
 			hostChannel.port2.close();
 			guestChannel.port2.close();
@@ -157,84 +151,25 @@ export function disposeActiveSessions(ignoreErrors: boolean): void {
  * @param initialState - The initial state of the shared tree.
  * @returns The session components and teardown function.
  */
-export function setup(initialState: string[]) {
+export async function setup(initialState: string[]) {
 	return setupCustom(initialState, stringArrayConfig, buildDirectSessionPorts);
 }
 
 /**
- * Initializes a new Guest from an existing Host, including application-managed replacement sessions.
- * Exports the baseline before retained commits, then transfers those commits for replay on the Guest.
+ * Creates a Guest from the initialization message sent by the Host on the supplied port.
  * The caller owns the supplied port and must dispose the returned Guest.
  */
-export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
-	host: Host<TSchema>,
+export async function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	port: MessagePort,
 	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
 	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
-): Guest<TSchema> {
-	const initialization = host.guestInitialization;
-	const snapshot = host.local.fork();
-	const branch = getBranch(snapshot);
-	const base = findAncestor(
-		branch.getHead(),
-		(commit) => commit.revision === initialization.baseRevision,
-	);
-	assert(base !== undefined, "Expected the Guest initialization base in Host history");
-	const options = {
-		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_80,
-	};
-	let content: ViewContent | Pick<ViewContent, "idCompressor">;
-	try {
-		const checkout = getCheckout(snapshot);
-		checkout.switchBranch(branch.fork(base));
-		branch.dispose();
-		if (schemaDataIsEmpty(checkout.storedSchema)) {
-			assert(checkout.forest.isEmpty, "An uninitialized snapshot must have an empty forest");
-			content = { idCompressor: hostCompressor };
-		} else {
-			const cursor = checkout.forest.allocateCursor();
-			try {
-				moveToDetachedField(checkout.forest, cursor);
-				const tree = fieldBatchCodecBuilder
-					.build(options)
-					.encode([castCursorToSynchronous(cursor)], {
-						encodeType: TreeCompressionStrategy.Compressed,
-						idCompressor: hostCompressor,
-						schema: { schema: checkout.storedSchema, policy: defaultSchemaPolicy },
-						isSummary: true,
-					});
-				const normalized = normalizeTransportData(tree);
-				validateTreePayloadVocabulary(normalized);
-				content = {
-					tree: structuredClone(host.codec.encode(normalized)) as ViewContent["tree"],
-					schema: structuredClone(
-						schemaCodecBuilder.build(options).encode(checkout.storedSchema),
-					) as ViewContent["schema"],
-					idCompressor: hostCompressor,
-				};
-			} finally {
-				cursor.free();
-			}
-		}
-	} finally {
-		snapshot.dispose();
-	}
-	return new Guest(
+): Promise<Guest<TSchema>> {
+	return Guest.create(
 		config,
 		{ jsonValidator: FormatValidatorBasic },
-		content,
-		{
-			...initialization,
-			commits: initialization.commits.map(
-				(commit) =>
-					structuredClone(
-						host.codec.encode(normalizeTransportData(commit)),
-					) as JsonCompatibleReadOnly,
-			),
-		},
+		hostCompressor,
 		port,
 		logger,
 		handleProtocolError,
@@ -253,7 +188,7 @@ export function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
  * @typeParam TInterop - The test controls for the session's transport.
  * @typeParam TSchema - The schema of the shared tree.
  */
-export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>(
+export async function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>(
 	initialState: InsertableTreeFieldFromImplicitField<TSchema>,
 	config: TreeViewConfiguration<TSchema>,
 	sessionPortsBuilder: SessionPortsBuilder<TInterop>,
@@ -286,18 +221,28 @@ export function setupCustom<TInterop, const TSchema extends ImplicitFieldSchema>
 		main,
 		sessionPorts.hostPort,
 		provider.trees[1].handle,
+		provider.getCompressor(provider.trees[1]),
 		createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
 	);
 
-	const guest = createGuestForHost(
-		host,
-		config,
-		sessionPorts.guestPort,
-		provider.getCompressor(provider.trees[1]),
-		createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
-		handleProtocolError,
-	);
+	let guest: Guest<TSchema>;
+	try {
+		const guestPromise = createGuestForHost(
+			config,
+			sessionPorts.guestPort,
+			provider.getCompressor(provider.trees[1]),
+			createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
+			handleProtocolError,
+		);
+		await sessionPorts.deliverInitialization();
+		guest = await guestPromise;
+	} catch (error) {
+		host.dispose();
+		sessionPorts.dispose();
+		main.dispose();
+		throw error;
+	}
 
 	const teardown = () => {
 		if (!activeTeardowns.delete(teardown)) {

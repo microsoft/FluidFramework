@@ -5,11 +5,10 @@
 
 import { fail } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ICodecOptions } from "../../../codec/index.js";
-import { asAlpha } from "../../../api.js";
 import {
-	createIndependentTreeAlpha,
 	independentInitializedView,
 	type ForestOptions,
 	type ViewContent,
@@ -20,18 +19,17 @@ import type {
 	ImplicitFieldSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
 	type HostGuestMessage,
+	type HostInitializationMessage,
+	makePromiseWithResolvers,
 	parseHostGuestMessage,
 	SandboxProtocolError,
 	throwProtocolError,
-	validateTreePayloadVocabulary,
 } from "./common.js";
 import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
-import type { GuestBranchInitialization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 
@@ -43,15 +41,32 @@ import { normalizeTransportData } from "./transport.js";
 export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
-	private readonly synchronization: GuestSynchronization<TSchema>;
+	private synchronization: GuestSynchronization<TSchema> | undefined;
+	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
-	/** The independent view on the Guest. */
-	public readonly view: TreeViewAlpha<TSchema>;
+
+	/** The independent view on the Guest. Available after {@link Guest.create} resolves. */
+	public get view(): TreeViewAlpha<TSchema> {
+		return this.synchronization?.view ?? fail("Guest accessed before initialization");
+	}
 
 	/** Receives and routes protocol messages from the Host. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
+			if (message.type === "hostInitialization") {
+				this.initialize(message);
+				return;
+			}
+			if (message.type === "sessionFailure") {
+				this.session.fail(new Error(message.error), false);
+				return;
+			}
+			if (this.synchronization === undefined) {
+				throw new SandboxProtocolError(
+					`The Guest received ${message.type} before initialization.`,
+				);
+			}
 			switch (message.type) {
 				case "hostUpdate": {
 					this.synchronization.receiveHostUpdate(message);
@@ -72,10 +87,6 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				case "hostUpdateAck": {
 					throw new SandboxProtocolError(`The Guest cannot receive ${message.type} messages.`);
 				}
-				case "sessionFailure": {
-					this.session.fail(new Error(message.error), false);
-					break;
-				}
 				default: {
 					fail("Unexpected Host and Guest message type");
 				}
@@ -90,16 +101,14 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		);
 	};
 
-	public constructor(
-		config: TreeViewConfiguration<TSchema>,
-		options: ForestOptions & ICodecOptions,
-		content: ViewContent | Pick<ViewContent, "idCompressor">,
-		/** The revisions and retained commits used to reconstruct the Host branch. */
-		initialization: GuestBranchInitialization,
+	private constructor(
+		private readonly config: TreeViewConfiguration<TSchema>,
+		private readonly options: ForestOptions & ICodecOptions,
+		private readonly idCompressor: IIdCompressor,
 		/** The Guest endpoint of the Host and Guest message channel. */
 		private readonly port: MessagePort,
 		/** The Guest-scoped logger for diagnostic telemetry. */
-		logger: TelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		// TODO: Replace this callback `Listenable` event API for session errors and closure.
 		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
 		handleProtocolError: (error: Error) => void = throwProtocolError,
@@ -107,51 +116,60 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
-				this.synchronization.stop(error);
+				this.synchronization?.stop(error);
 				this.codec.dispose(error);
+				this.initialized.rejecter(error);
 			},
 			handleProtocolError,
 		);
 		this.codec = new GuestTransportCodec((message) =>
 			this.session.run(() => this.postMessage(message)),
 		);
-		let hostView: TreeViewAlpha<TSchema>;
-		// A retained base can be either a populated snapshot or the original uninitialized commit.
-		// Construct the matching checkout state before replaying the retained Host commits.
-		if ("tree" in content) {
-			const tree = this.codec.decode(content.tree);
-			validateTreePayloadVocabulary(tree);
-			hostView = independentInitializedView(config, options, {
-				...content,
-				tree: tree as ViewContent["tree"],
-			});
-		} else {
-			hostView = asAlpha(
-				createIndependentTreeAlpha({
-					...options,
-					idCompressor: content.idCompressor,
-				}).viewWith(config),
-			);
-		}
-		this.synchronization = new GuestSynchronization(
-			hostView,
-			{
-				...initialization,
-				commits: initialization.commits.map((commit) => {
-					const decoded = this.codec.decode(commit);
-					validateTreePayloadVocabulary(decoded);
-					return decoded as JsonCompatibleReadOnly;
-				}),
-			},
-			(message) => this.postMessage(message),
-			(action) => this.session.run(action),
-			(error) => this.session.fail(error),
-			logger,
-		);
-		this.view = this.synchronization.view;
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
+	}
+
+	/**
+	 * Creates a Guest after receiving its initial Host state through the message port.
+	 */
+	public static async create<const TSchema extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TSchema>,
+		options: ForestOptions & ICodecOptions,
+		idCompressor: IIdCompressor,
+		port: MessagePort,
+		logger: TelemetryLoggerExt,
+		handleProtocolError: (error: Error) => void = throwProtocolError,
+	): Promise<Guest<TSchema>> {
+		const guest = new Guest(config, options, idCompressor, port, logger, handleProtocolError);
+		await guest.initialized.promise;
+		return guest;
+	}
+
+	private initialize(message: HostInitializationMessage): void {
+		if (this.synchronization !== undefined) {
+			throw new SandboxProtocolError("The Guest received duplicate initialization.");
+		}
+		const content: ViewContent = {
+			tree: message.tree as ViewContent["tree"],
+			schema: message.schema as ViewContent["schema"],
+			idCompressor: this.idCompressor,
+		};
+		const hostView = independentInitializedView(this.config, this.options, content);
+		this.synchronization = new GuestSynchronization(
+			hostView,
+			{
+				baseRevision: message.baseRevision,
+				mainRevision: message.mainRevision,
+				trunkRevision: message.trunkRevision,
+				commits: message.commits,
+			},
+			(protocolMessage) => this.postMessage(protocolMessage),
+			(action) => this.session.run(action),
+			(error) => this.session.fail(error),
+			this.logger,
+		);
+		this.initialized.resolver();
 	}
 
 	public dispose(): void {
@@ -162,9 +180,10 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.synchronization.dispose();
+		const synchronization = this.synchronization;
+		synchronization?.dispose();
 		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
-		this.view.dispose();
+		synchronization?.view.dispose();
 	}
 
 	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
@@ -189,6 +208,6 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
-		return this.synchronization.updateHostPromise;
+		return this.synchronization?.updateHostPromise;
 	}
 }

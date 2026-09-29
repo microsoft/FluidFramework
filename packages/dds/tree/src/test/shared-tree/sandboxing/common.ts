@@ -259,12 +259,36 @@ const SessionRevisionTag = Type.Unsafe<RevisionTag>(
 	Type.Union([Type.Literal("root"), Type.Number({ multipleOf: 1 })]),
 );
 
-/** A serialized SharedTree change validated against the sandbox payload vocabulary. */
-const SerializedTreeChange = Type.Unsafe<JsonCompatibleReadOnly>(TreePayloadVocabulary);
+/** A serialized SharedTree payload validated against the sandbox transport vocabulary. */
+const SerializedTreePayload = Type.Unsafe<JsonCompatibleReadOnly>(TreePayloadVocabulary);
 
 /** Serialized SharedTree commits in application order. */
 const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
 	Type.Array(TreePayloadVocabulary),
+);
+
+/**
+ * Initializes the Guest's copy of the Host main branch.
+ */
+export type HostInitializationMessage = Static<typeof HostInitializationMessage>;
+const HostInitializationMessage = Type.Object(
+	{
+		/** Identifies this message as the initial Host branch state. */
+		type: Type.Readonly(Type.Literal("hostInitialization")),
+		/** Identifies the commit represented by the snapshot. */
+		baseRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the Host main-branch head produced by replaying `commits`. */
+		mainRevision: Type.Readonly(SessionRevisionTag),
+		/** Identifies the newest sequenced commit in the reconstructed Host branch. */
+		trunkRevision: Type.Readonly(SessionRevisionTag),
+		/** The compressed tree at `baseRevision`. */
+		tree: Type.Readonly(SerializedTreePayload),
+		/** The persisted schema at `baseRevision`. */
+		schema: Type.Readonly(SerializedTreePayload),
+		/** Serialized commits after `baseRevision`, in application order. */
+		commits: Type.Readonly(SerializedTreeCommits),
+	},
+	{ additionalProperties: false },
 );
 
 /**
@@ -318,7 +342,7 @@ const GuestChangeMessage = Type.Object(
 		/** Identifies the newest sequenced Host commit that the Guest had acknowledged. */
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The serialized Guest-authored SharedTree change. */
-		change: Type.Readonly(SerializedTreeChange),
+		change: Type.Readonly(SerializedTreePayload),
 	},
 	{ additionalProperties: false },
 );
@@ -341,6 +365,7 @@ const GuestChangeAckMessage = Type.Object(
  * A message that the Host and the Guest can send through their shared protocol.
  */
 export type HostGuestMessage =
+	| HostInitializationMessage
 	| HostUpdateMessage
 	| HostUpdateAckMessage
 	| GuestChangeMessage
@@ -411,6 +436,7 @@ const blobRequestValidator = validator.compile(BlobRequestMessage);
 const blobResponseValidator = validator.compile(
 	Type.Union([BlobSuccessMessage, BlobErrorMessage]),
 );
+const hostInitializationValidator = validator.compile(HostInitializationMessage);
 const hostUpdateValidator = validator.compile(HostUpdateMessage);
 const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
 const guestChangeValidator = validator.compile(GuestChangeMessage);
@@ -451,6 +477,10 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	}
 
 	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
+		return data;
+	}
+
+	if (data.type === "hostInitialization" && hostInitializationValidator.check(data)) {
 		return data;
 	}
 

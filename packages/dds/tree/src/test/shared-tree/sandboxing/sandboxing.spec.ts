@@ -50,8 +50,17 @@ import {
 } from "./sandboxingTestUtils.js";
 
 describe("Host and Guest message protocol", () => {
-	it("accepts branch updates, Guest changes, and their acknowledgments", () => {
+	it("accepts initialization, branch updates, Guest changes, and acknowledgments", () => {
 		const messages = [
+			{
+				type: "hostInitialization",
+				baseRevision: 1,
+				mainRevision: 2,
+				trunkRevision: 1,
+				tree: [],
+				schema: {},
+				commits: [{ value: 1 }],
+			},
 			{
 				type: "hostUpdate",
 				updateId: 0,
@@ -83,6 +92,7 @@ describe("Host and Guest message protocol", () => {
 			"guestChange",
 			{},
 			{ type: "unknown" },
+			{ type: "hostInitialization" },
 			{ type: "guestChange" },
 			{ type: "hostUpdateAck" },
 			{ type: "guestChangeAck" },
@@ -204,7 +214,7 @@ describe("Host and Guest correctness", () => {
 			{ ["__proto__"]: "data", constructor: "data", prototype: "data" },
 		];
 		const config = new TreeViewConfiguration({ schema: Records });
-		const { host, guest, provider, peer } = setupCustom(
+		const { host, guest, provider, peer } = await setupCustom(
 			values,
 			config,
 			buildDirectSessionPorts,
@@ -223,7 +233,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("passes blob handles from the Host to the Guest", async () => {
-		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
 		const value = new Uint8Array([1, 2, 3]).buffer;
 
 		host.main.root.push(new MockHandle(value));
@@ -238,7 +248,7 @@ describe("Host and Guest correctness", () => {
 	it("passes existing handles from the Guest back to the Host and peers", async () => {
 		const value = new Uint8Array([4, 5]).buffer;
 		const handle = new MockHandle(value);
-		const { host, guest, peer, provider } = setupCustom(
+		const { host, guest, peer, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -257,7 +267,7 @@ describe("Host and Guest correctness", () => {
 
 	it("preserves proxy identity across initialization and updates", async () => {
 		const handle = new MockHandle(new ArrayBuffer(2));
-		const { host, guest } = setupCustom(
+		const { host, guest } = await setupCustom(
 			[handle, handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -272,7 +282,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("clearly rejects resolution of handles to Fluid objects", async () => {
-		const { host, guest, provider } = setupCustom(
+		const { host, guest, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -289,7 +299,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("propagates Host resolution failures through the port", async () => {
-		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
 		const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
 			get: async () => {
 				throw new Error("Blob retrieval failed");
@@ -319,7 +329,7 @@ describe("Host and Guest correctness", () => {
 					return new ArrayBuffer(1);
 				},
 			});
-			const { host, guest, provider, peer } = setupCustom(
+			const { host, guest, provider, peer } = await setupCustom(
 				[handle],
 				handleArrayConfig,
 				buildDirectSessionPorts,
@@ -376,10 +386,10 @@ describe("Host and Guest correctness", () => {
 				host.main,
 				ports.hostPort,
 				provider.trees[1].handle,
+				provider.getCompressor(provider.trees[1]),
 				createChildLogger({ namespace: "Host" }),
 			);
-			const replacementGuest = createGuestForHost(
-				replacementHost,
+			const replacementGuest = await createGuestForHost(
 				handleArrayConfig,
 				ports.guestPort,
 				provider.getCompressor(provider.trees[1]),
@@ -424,7 +434,7 @@ describe("Host and Guest correctness", () => {
 		it(`fails the ${receiver} and rejects pending work for ${JSON.stringify(message)}`, async () => {
 			const reported = makePromiseWithResolvers();
 			const handle = new MockHandle(new ArrayBuffer(1));
-			const { host, guest, interop, provider, peer } = setupCustom(
+			const { host, guest, interop, provider, peer } = await setupCustom(
 				[handle],
 				handleArrayConfig,
 				buildIsolatedSessionPorts,
@@ -461,7 +471,7 @@ describe("Host and Guest correctness", () => {
 		const reported = makePromiseWithResolvers();
 		let reports = 0;
 		const handle = new MockHandle(Object.assign(new ArrayBuffer(1), { extra: true }));
-		const { host, guest } = setupCustom(
+		const { host, guest } = await setupCustom(
 			[handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -486,13 +496,23 @@ describe("Host and Guest correctness", () => {
 	it("contains send failures in main-tree callbacks even when peer notification also fails", async () => {
 		const reported = makePromiseWithResolvers();
 		const transportError = new Error("Transport unavailable");
-		const { host, guest } = setupCustom(
+		const { host, guest } = await setupCustom(
 			[],
 			stringArrayConfig,
 			() => {
 				const ports = buildDirectSessionPorts();
-				ports.hostPort.postMessage = () => {
-					throw transportError;
+				const postMessage = ports.hostPort.postMessage.bind(ports.hostPort);
+				let initialized = false;
+				ports.hostPort.postMessage = (message, transferOrOptions) => {
+					if (initialized) {
+						throw transportError;
+					}
+					initialized = true;
+					if (Array.isArray(transferOrOptions)) {
+						postMessage(message, transferOrOptions);
+					} else {
+						postMessage(message, transferOrOptions);
+					}
 				};
 				return ports;
 			},
@@ -510,7 +530,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("continues synchronizing edits while a blob request is pending", async () => {
-		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
 		const requested = makePromiseWithResolvers();
 		const release = makePromiseWithResolvers();
 		const blob = new Uint8Array([7]).buffer;
@@ -541,7 +561,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("retains a handle for Guest deletion, undo, and redo", async () => {
-		const { host, guest } = setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
 		const blob = new Uint8Array([8]).buffer;
 		const handle = new MockHandle(blob);
 		host.main.root.push(handle);
@@ -566,7 +586,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("notifies the peer that an unauthorized blob token terminates the session", async () => {
-		const { interop, host } = setupCustom(
+		const { interop, host } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildIsolatedSessionPorts,
@@ -599,7 +619,7 @@ describe("Host and Guest correctness", () => {
 			const error = new Promise<Error>((resolve) => {
 				reportError = resolve;
 			});
-			const { interop } = setupCustom(
+			const { interop } = await setupCustom(
 				[],
 				handleArrayConfig,
 				buildIsolatedSessionPorts,
@@ -624,7 +644,7 @@ describe("Host and Guest correctness", () => {
 	for (const receiver of ["Host", "Guest"] as const) {
 		it(`classifies an unsolicited acknowledgment to the ${receiver} as a protocol error`, async () => {
 			const reported = makePromiseWithResolvers();
-			const { host, guest, interop, provider, peer } = setupCustom(
+			const { host, guest, interop, provider, peer } = await setupCustom(
 				[],
 				stringArrayConfig,
 				buildIsolatedSessionPorts,
@@ -648,7 +668,7 @@ describe("Host and Guest correctness", () => {
 
 		it(`rejects out-of-order changes sent to the ${receiver}`, async () => {
 			const reported = makePromiseWithResolvers();
-			const { host, guest, interop } = setupCustom(
+			const { host, guest, interop } = await setupCustom(
 				[],
 				stringArrayConfig,
 				buildIsolatedSessionPorts,
@@ -683,7 +703,7 @@ describe("Host and Guest correctness", () => {
 		it(`classifies message deserialization failure on the ${receiver} as a protocol error`, async () => {
 			const reported = makePromiseWithResolvers();
 			const ports = buildDirectSessionPorts();
-			const { host, guest } = setupCustom(
+			const { host, guest } = await setupCustom(
 				[],
 				stringArrayConfig,
 				() => ports,
@@ -705,7 +725,7 @@ describe("Host and Guest correctness", () => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const { interop } = setupCustom(
+		const { interop } = await setupCustom(
 			[],
 			stringArrayConfig,
 			buildIsolatedSessionPorts,
@@ -726,7 +746,7 @@ describe("Host and Guest correctness", () => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const { host, interop } = setupCustom(
+		const { host, interop } = await setupCustom(
 			[],
 			stringArrayConfig,
 			buildIsolatedSessionPorts,
@@ -757,7 +777,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("applies consecutive Guest changes to their authoring state despite concurrent insertions", async () => {
-		const { peer, host, guest, provider } = setup(["a", "b"]);
+		const { peer, host, guest, provider } = await setup(["a", "b"]);
 		guest.view.root.push("g1");
 		guest.view.root.removeAt(0);
 		peer.root.insertAtStart("p");
@@ -777,7 +797,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves nested Host commit metadata in Guest updates", async () => {
-		const { host, guest } = setup([]);
+		const { host, guest } = await setup([]);
 		host.main.runTransaction(
 			() => {
 				host.main.runTransaction(() => host.main.root.push("a"), {
@@ -799,8 +819,8 @@ describe("Host and Guest correctness", () => {
 		assert.deepEqual(customTree.children[0]?.children, []);
 	});
 
-	it("preserves Host commit metadata during Guest initialization", () => {
-		const { host, guest, provider } = setup([]);
+	it("preserves Host commit metadata during Guest initialization", async () => {
+		const { host, guest, provider } = await setup([]);
 		guest.dispose();
 		host.dispose();
 		host.main.runTransaction(() => host.main.root.push("a"), {
@@ -812,10 +832,10 @@ describe("Host and Guest correctness", () => {
 			host.main,
 			ports.hostPort,
 			provider.trees[1].handle,
+			provider.getCompressor(provider.trees[1]),
 			createChildLogger({ namespace: "Host" }),
 		);
-		const replacementGuest = createGuestForHost(
-			replacementHost,
+		const replacementGuest = await createGuestForHost(
 			stringArrayConfig,
 			ports.guestPort,
 			provider.getCompressor(provider.trees[1]),
@@ -831,8 +851,8 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("initializes the Guest with the current sequenced trunk revision", () => {
-		const { host, guest } = setup(["a"]);
+	it("initializes the Guest with the current sequenced trunk revision", async () => {
+		const { host, guest } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
 		const synchronization = new HostSynchronization(
@@ -848,7 +868,7 @@ describe("Host and Guest correctness", () => {
 				synchronization.guestInitialization.trunkRevision,
 				synchronization.guestInitialization.mainRevision,
 			);
-			assert.notEqual(
+			assert.equal(
 				synchronization.guestInitialization.trunkRevision,
 				synchronization.guestInitialization.baseRevision,
 			);
@@ -857,8 +877,8 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("advances the Guest trunk revision for remote peer commits", () => {
-		const { peer, host, guest, provider } = setup(["a"]);
+	it("advances the Guest trunk revision for remote peer commits", async () => {
+		const { peer, host, guest, provider } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
 		const sent: HostUpdateMessage[] = [];
@@ -888,8 +908,8 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("accepts an empty update at an aliased initialization revision", () => {
-		const { host } = setup(["a"]);
+	it("accepts an empty update at an aliased initialization revision", async () => {
+		const { host } = await setup(["a"]);
 		const revision = mintRevisionTag();
 		const sent: HostGuestMessage[] = [];
 		const synchronization = new GuestSynchronization(
@@ -930,7 +950,7 @@ describe("Host and Guest correctness", () => {
 		[true, true],
 	]) {
 		it(`initializes with pending Host edits (trimmed history: ${trimHistory}, concurrent peer: ${concurrentPeerEdit})`, async () => {
-			const { peer, host, guest, provider } = setup(["a", "b"]);
+			const { peer, host, guest, provider } = await setup(["a", "b"]);
 			guest.dispose();
 			host.dispose();
 			if (trimHistory) {
@@ -953,13 +973,13 @@ describe("Host and Guest correctness", () => {
 				host.main,
 				ports.hostPort,
 				provider.trees[1].handle,
+				provider.getCompressor(provider.trees[1]),
 				createChildLogger({ namespace: "Host" }),
 			);
 			if (trimHistory) {
 				assert.notEqual(replacementHost.guestInitialization.baseRevision, "root");
 			}
-			const replacementGuest = createGuestForHost(
-				replacementHost,
+			const replacementGuest = await createGuestForHost(
 				stringArrayConfig,
 				ports.guestPort,
 				provider.getCompressor(provider.trees[1]),
@@ -1000,7 +1020,7 @@ describe("Host and Guest correctness", () => {
 	}
 
 	it("attempts by the Host and Guest to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Make edits in the Guest
 		guest.view.root.push("B(g)");
@@ -1031,7 +1051,8 @@ describe("Host and Guest correctness", () => {
 		await pushPromise;
 
 		// The Guest edits are now reflected in the Host
-		assert.deepEqual([...host.local.root], ["B(g)", "C(g)"]);
+		// The concurrent Host update acknowledgment may also have advanced this branch already.
+		assert.deepEqual([...host.local.root].slice(0, 2), ["B(g)", "C(g)"]);
 		assert.deepEqual([...host.main.root], ["B(g)", "C(g)", "B(p)"]);
 		// The Guest edits are not reflected in the peer yet
 		assert.deepEqual([...peer.root], ["B(p)"]);
@@ -1050,7 +1071,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("Host edits sequenced before peer edits", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Make an edit on the Host
 		host.main.root.push("H");
@@ -1083,7 +1104,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("peer edits sequenced before Host edits", async () => {
-		const { peer, host, guest, provider } = setup([]);
+		const { peer, host, guest, provider } = await setup([]);
 
 		// Make an edit on the peer
 		peer.root.push("P");
@@ -1112,7 +1133,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("Guest edits can be reverted", async () => {
-		const { host, guest } = setup([]);
+		const { host, guest } = await setup([]);
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
 
 		// Make undoable edits in the Guest
@@ -1403,6 +1424,12 @@ describe("Host and Guest correctness", () => {
 					hostPort: trackedHostPort as unknown as MessagePort,
 					guestPort: trackedGuestPort as unknown as MessagePort,
 					interop: relay,
+					deliverInitialization: async () => {
+						await relay.waitForMessages();
+						assert.equal(relay.hostToGuest[0]?.type, "hostInitialization");
+						relay.dispatchToGuest();
+						await relay.waitForMessages();
+					},
 					dispose: () => {
 						relayPortConnectedToHost.close();
 						relayPortConnectedToGuest.close();
@@ -1413,7 +1440,7 @@ describe("Host and Guest correctness", () => {
 			for (const seed of generateTestSeeds(testCount, stressMode)) {
 				it(`seed ${seed}`, async () => {
 					const random = makeRandom(seed);
-					const { teardown, peer, host, guest, provider, interop, logger } = setupCustom(
+					const { teardown, peer, host, guest, provider, interop, logger } = await setupCustom(
 						["a", "b"],
 						stringArrayConfig,
 						buildMessageRelay,

@@ -23,6 +23,7 @@ import { brand } from "../../../util/index.js";
 import {
 	type GuestChangeAckMessage,
 	type GuestChangeMessage,
+	type HostInitializationMessage,
 	type HostUpdateAckMessage,
 	type HostUpdateId,
 	type HostUpdateMessage,
@@ -33,19 +34,13 @@ import {
 import { getBranch, getTrunkHead, serializeCommit } from "./synchronizationUtils.js";
 
 /**
- * A baseline snapshot and the retained commits needed to reconstruct the Host branch.
+ * A sequenced trunk snapshot and the pending commits needed to reconstruct the Host branch.
  * Pending commits must be replayed so that the Guest can rebase them after sequencing.
  */
-export interface GuestBranchInitialization {
-	/** Identifies the commit represented by the initialization snapshot. */
-	readonly baseRevision: RevisionTag;
-	/** Identifies the Host main-branch head produced by replaying {@link commits}. */
-	readonly mainRevision: RevisionTag;
-	/** Identifies the newest sequenced commit in the reconstructed Host branch. */
-	readonly trunkRevision: RevisionTag;
-	/** Serialized commits after {@link baseRevision}, in application order. */
-	readonly commits: readonly JsonCompatibleReadOnly[];
-}
+export type GuestBranchInitialization = Omit<
+	HostInitializationMessage,
+	"type" | "tree" | "schema"
+>;
 
 /** A Host update awaiting the Guest's acknowledgment. */
 interface PendingHostUpdate {
@@ -124,13 +119,13 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.local = main.fork();
 		const branch = getBranch(main);
 		this.sentHead = branch.getHead();
+		const trunkRevision = getTrunkHead(main).revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findAncestor(
 			[this.sentHead, commits],
-			(commit) => commit.parent === undefined,
+			(commit) => commit.revision === trunkRevision,
 		);
-		assert(base !== undefined, "Host branch must have an initialization base");
-		const trunkRevision = getTrunkHead(main).revision;
+		assert(base !== undefined, "Host branch must contain its trunk head");
 		this.sentTrunkRevision = trunkRevision;
 		this.guestMainRevision = this.sentHead.revision;
 		this.guestTrunkRevision = trunkRevision;
