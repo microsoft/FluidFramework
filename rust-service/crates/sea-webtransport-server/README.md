@@ -18,7 +18,7 @@ cargo run -p sea-webtransport-server -- \
 | `SEA_AUTHOR_WINDOW` | Integer from 1 through 4096 | 256 per author stream |
 | `SEA_EXPERIMENTAL_LIVE_CACHE` | Exactly `true` or `false` | `true` |
 | `SEA_EXPERIMENTAL_SESSION_FACTORY` | Exactly `true` or `false` | `false` |
-| `SEA_EXPERIMENTAL_RESOURCE_POLICY` | Exactly `true` or `false` | `false` |
+| `SEA_EXPERIMENTAL_RESOURCE_POLICY` | Exactly `true` or `false` | `true` |
 
 Invalid connection or author-window limits fail startup; `MAX_CONNECTIONS` and `AUTHOR_WINDOW` report the effective values.
 Limits apply independently to QUIC and WebSocket and do not bound total memory or guarantee throughput.
@@ -26,21 +26,26 @@ An optional fifth argument is a shutdown-marker path used by process harnesses.
 Enabled live caching, including the default, prints `EXPERIMENTAL_LIVE_CACHE=true`.
 It configures document recovery for all backend modes and both transports without changing clients.
 `SessionSetup::default()` also enables the cache.
-Set `SEA_EXPERIMENTAL_LIVE_CACHE=false`, or use `SessionSetup::default().with_live_cache(false)`, to restore storage-backed delivery.
+To restore storage-backed delivery in the executable, set both `SEA_EXPERIMENTAL_LIVE_CACHE=false` and `SEA_EXPERIMENTAL_RESOURCE_POLICY=false`.
+Embedded hosts can use `SessionSetup::default().with_live_cache(false)`.
 Direct Rust/WASM sequencer construction remains storage-backed unless separately opted in.
-This experiment has unbounded stalled-reader retention and is not a production resource policy.
-Default-on is a controlled-use rollout accepting that risk, not merely a fixed memory overhead.
+Without the resource policy, this experiment has unbounded stalled-reader retention.
+The default resource policy can shed lagging readers, but does not impose a hard total-memory bound.
+Default-on remains a controlled-use rollout, not a production resource guarantee.
 Transport timeouts do not establish a cache-retention bound for every reader path.
 Invalid activation values fail startup rather than silently selecting a default.
 
 `SEA_EXPERIMENTAL_SESSION_FACTORY=true` selects pass-through session factories and decoration for both listeners.
+Also set `SEA_EXPERIMENTAL_RESOURCE_POLICY=false` to select this mode.
 The process reports the effective choice as `EXPERIMENTAL_SESSION_FACTORY`.
 `SessionSetup::default().decorate(PassThrough)` selects the same experimental path for embedded hosts.
 This boundary adds no admission policy, automatic closure, delivery tracking, or resource guarantee.
 It retains the existing connection-incarnation cleanup and error semantics.
 Live-cache activation remains independent, so comparisons must explicitly enable caching on both direct and pass-through paths.
 
-`SEA_EXPERIMENTAL_RESOURCE_POLICY=true`, or `SessionSetup::default().decorate(ReaderShedding)`, selects the bounded policy-decorator path instead.
+The executable defaults to `SEA_EXPERIMENTAL_RESOURCE_POLICY=true`, selecting the bounded policy-decorator path.
+Set it to `false` to opt out.
+Embedded hosts continue to select this policy explicitly with `SessionSetup::default().decorate(ReaderShedding)`; `SessionSetup::default()` alone remains undecorated.
 Resource-policy and pass-through modes are mutually exclusive in the executable.
 The process reports `EXPERIMENTAL_RESOURCE_POLICY` for activation provenance.
 One policy per document permits at most 128 pending writes with 16 MiB of logical input charges and 128 live-reader reservations.
@@ -48,7 +53,8 @@ Write permits cover policy/FIFO waiting, then release before source invocation; 
 Live-reader permits cover pending loads and returned unbounded streams and release on observed termination or drop.
 Finite reads and snapshot/control operations remain outside these limits.
 Larger shared payload backing allocations, never-polled caller futures, and transport buffers are excluded.
-The policy requires live caching; disabling it is rejected rather than silently dropping output-pressure management.
+The policy requires live caching; disabling the cache also requires explicitly disabling the policy.
+Incompatible settings are rejected rather than silently dropping output-pressure management.
 Durable-file writes wait, before source invocation, until both preparation and mutation budgets are at most 127 requests and 8 MiB each.
 Memory and buffered-file backends do not wait for a disk-pressure signal.
 Readiness is advisory; racing writers and larger operations may still receive source admission rejection.

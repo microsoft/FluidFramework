@@ -43,7 +43,8 @@ The active [protocol simplification plan](NETWORK_PROTOCOL_PLAN.md) tracks initi
 It describes planned work, not current protocol guarantees.
 
 The completed [session resource policy plan](SESSION_RESOURCE_POLICY_PLAN.md) places optional admission, pressure response, and reader shedding in service-owned session decorators rather than the sequencer.
-The policy remains opt-in; the [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md) records its staged validation.
+The server executable enables this policy by default, with an explicit opt-out; embedded hosts select decorators explicitly.
+The [server guide](crates/sea-webtransport-server/README.md) describes current defaults and limits; the [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md) records its staged validation.
 The [September 28 throughput update](historical/PROJECT_OVERVIEW.md#unpaced-throughput-and-reader-fanout-september-28) adds acknowledgment-paced and streamed measurements with separate write/read rates and explicit shedding outcomes.
 
 Past plans, learnings, iteration reports, decisions, and retained measurement evidence are collected in [Historical records](historical/README.md).

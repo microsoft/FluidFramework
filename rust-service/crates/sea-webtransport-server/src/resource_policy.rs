@@ -1,4 +1,4 @@
-//! Bounded document admission for the opt-in policy decorator.
+//! Bounded document admission for the configurable policy decorator.
 
 use std::sync::Arc;
 

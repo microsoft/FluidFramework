@@ -209,6 +209,84 @@ Failed samples retain diagnostics but are not accepted throughput results.
 The parent result deadline includes a reporting margin beyond that drain deadline.
 See the [worker metrics and limitations](../crates/sea-benchmarks/README.md#streamed-throughput).
 
+#### Tinylicious Pipelined Throughput
+
+For bounded, unpaced Tinylicious traffic, set `loadMode` to `pipelined`.
+Omit `rate`, `generator`, and `transport`; this mode uses the production Node Routerlicious driver and its Socket.IO transport.
+`R11sDocumentDeltaConnection.submit()` returns `void`.
+The inherited driver implementation calls `socket.emit("submitOp", ...)` without an acknowledgment callback and does not expose transport-writable or drain feedback.
+The benchmark therefore uses an explicit application-level workaround, **not transport backpressure**.
+It submits a window of operations without waiting for each operation separately.
+Validated, sequenced writer echoes replenish that window.
+Observer delivery is independent and never releases write credits.
+A writer echo establishes observed sequencing, not a durability guarantee for either Tinylicious database mode.
+
+```bash
+node rust-service/scripts/benchmark-stress.mjs run \
+	'{"backend":"tinylicious","loadMode":"pipelined","storage":"memory","payloadBytes":64,"documents":32,"cores":8,"generatorProcesses":4,"seconds":10,"warmupSeconds":3,"maxOutstandingOperations":256,"maxOutstandingBytes":2097152}' \
+	/path/to/benchmark-artifacts/tinylicious-pipelined
+```
+
+Use `"storage":"leveldb"` for the file-backed database.
+Both modes still use the existing owned service-data directory and storage-selection checks.
+Prepare the built Tinylicious and driver packages as for paced runs.
+
+The two admission limits are positive safe integers and apply **per generator process**, across all its documents:
+
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `maxOutstandingOperations` | 256 | Submitted operations not yet echoed to the writer |
+| `maxOutstandingBytes` | 2,097,152 | Sum of the ASCII payload bytes of those operations |
+| `drainTimeoutSeconds` | 30 | Time after submission stops to receive every writer echo and observer delivery |
+
+The byte limit must fit at least one payload.
+Existing configuration bounds still apply: 1 through 32 documents, 1 through 8 evenly partitioned generator processes, and 8 through 8,192 bytes per payload.
+The effective fixed-size window is the smaller of the operation limit and `floor(maxOutstandingBytes / payloadBytes)`.
+Neither bound adapts to latency or to an offered rate.
+Four generators at the defaults can have at most 1,024 uncompleted writes and 8 MiB of logical payload outstanding in total; small payloads reach the operation bound first.
+These bytes exclude driver objects, Socket.IO encoding, framing, retained server history, and observer backlog.
+They are not a process-memory or transport-buffer measurement.
+Each generator yields to Node's event loop after at most 64 submissions, including when echoes arrive synchronously.
+A full window waits for receive/error notification or its deadline, rather than spinning.
+The 64-operation scheduling quantum is recorded as `pipeline.yieldEveryOperations`; it is not a rate or outstanding-operation limit.
+
+The result retains requested configuration and resolved `pipeline` settings.
+Worker counters include `writerEchoes`, `writerEchoesInWindow`, both readers' `receivedInWindow`, simultaneous per-worker `maxInFlight` and `maxOutstandingBytes`, outstanding work at the end of the measured window, drain duration, and window waits.
+`writeOperationsPerSecond` divides validated writer echoes in the measurement window by its duration.
+`readOperationsPerSecond` divides the sum of validated writer-echo and observer deliveries in that window by its duration.
+Warmup submissions completed in the measurement window count; completions during draining do not.
+The writer echo is counted once as a read delivery and once as a write completion, never as a separate acknowledgment.
+`acknowledged` remains `null`, and no acknowledgment throughput alias is reported.
+Legacy `deliveredOperationsPerSecond` and `payloadMiBPerSecond` still count only observer delivery.
+`sustainable` is `null`, since this mode has no offered-rate or latency target.
+Per-operation latency histories are not retained in this mode.
+
+All payloads and per-document sequence numbers are checked at both recipients.
+There is no reader-shedding exception: missing delivery, corruption, duplicate/reordered data, nacks, disconnects, submission failures, or incomplete drain fail the run.
+Failures retain classified worker diagnostics and raw `service.log`, `worker-*.stdout.log`, `worker-*.stderr.log`, and `worker-*.messages.jsonl`, including results from workers that finish before another worker fails.
+The service RSS sampling guard remains 4 GiB.
+The resource sampler still fails on a detected host-clock jump above 2 ms.
+The outer deadline remains 120 seconds, or 180 seconds when an explicit drain timeout exceeds 30 seconds; accepted drain settings are 1 through 120 seconds.
+The paced generator's 8,192-backlog and 1,000,000-total-operation guards do not apply here.
+The eight-digit payload sequence format has an explicit 99,999,999-operation capacity per document; reaching it fails the run instead of wrapping.
+There are no other hidden admission or offered-load limits.
+
+**Comparison caveat:** Sea `streamed` mode suspends on native WebTransport writes and consumes acknowledgments independently.
+Tinylicious `pipelined` mode uses the bounded sequenced-echo workaround because its driver does not provide equivalent transport feedback.
+Report the modes and window settings together with saturation rates; neither a single application window nor a single transport run establishes a global server maximum.
+Changing the Tinylicious window is a separate experiment, not a silent harness adjustment.
+Sea comparison runs retain `servicePolicy.environment` and logged `servicePolicy.reported` markers, including resource policy and author window.
+An unset environment value or absent marker is `null`, not an inferred policy default.
+The harness does not inject resource-policy or author-window overrides; explicit environment settings are inherited.
+An explicit `liveCache` configuration overrides its environment setting; otherwise the inherited setting is used.
+Keep the recorded policy and storage settings consistent within comparisons.
+
+Run the deterministic pipeline, accounting, and drain regressions with:
+
+```bash
+node --test rust-service/scripts/benchmark-pipelined.test.mjs rust-service/scripts/benchmark-gates.test.mjs rust-service/scripts/benchmark-generator-layout.test.mjs
+```
+
 For native Sea generation, run `CARGO_TARGET_DIR=/path/to/source-specific-target bash rust-service/scripts/build-benchmark-artifacts.sh`, then add `"generator":"native"` and `"transport":"websocket"` or `"transport":"webtransport"` to the workload.
 The native worker uses a single-thread Tokio runtime per pinned process.
 Paced and closed-loop modes use the shared session client; streamed mode uses independent WebTransport directions.

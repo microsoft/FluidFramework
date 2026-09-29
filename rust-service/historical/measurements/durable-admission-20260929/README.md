@@ -1,6 +1,6 @@
 # Durable Author Admission, 2026-09-29
 
-This dataset supports the [project overview's admission comparison](../../PROJECT_OVERVIEW.md#durable-author-admission-september-29).
+This dataset retains the durable admission comparison; see the [project overview](../../PROJECT_OVERVIEW.md) for current results.
 The comparison base is `de1a93a99c40924bee6bdbd07b3345384e4743b1`.
 The candidate changes transport admission and the policy wrapper's FIFO handoff, not the sequencer, file backend, persistence format, filesystem worker limit, or QUIC windows.
 

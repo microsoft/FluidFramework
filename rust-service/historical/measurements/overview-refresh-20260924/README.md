@@ -1,6 +1,6 @@
 # Project Overview Refresh, 2026-09-24
 
-This dataset supports the current measurements in the [project overview](../../PROJECT_OVERVIEW.md).
+This dataset retains the September 24 measurements; see the [project overview](../../PROJECT_OVERVIEW.md) for current results.
 The refreshed measurements use commit `dfadc07d6e03afa2bf55795d669fdf3e60901d20`.
 
 ## Retained Evidence

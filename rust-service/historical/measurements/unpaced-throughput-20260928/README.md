@@ -1,6 +1,6 @@
 # Unpaced Throughput and Reader Fanout, 2026-09-28
 
-This dataset supports the [project overview's unpaced measurements](../../PROJECT_OVERVIEW.md#unpaced-throughput-and-reader-fanout-september-28).
+This dataset retains the September 28 unpaced measurements; see the [project overview](../../PROJECT_OVERVIEW.md) for current results.
 The implementation was integrated at `0c518931158769b5897f7db28bdb0e1cd20eb7be`, compared with `ec25dd4c8b5daad2fcd653e17132654bf4432d51`.
 Measurements preceded the commit and used the exact server/generator variants identified by their SHA-256 values, not one common binary for every campaign.
 The final integration includes read counters added after the matched comparison and formatting-only harness changes.

@@ -9,6 +9,7 @@ import { randomUUID } from "node:crypto";
 import { once } from "node:events";
 import {
 	accessSync,
+	appendFileSync,
 	constants,
 	existsSync,
 	mkdirSync,
@@ -26,9 +27,11 @@ import {
 	assertDrainIntegrity,
 	closedLoopSummary,
 	hasPendingDrain,
+	pipelinedSummary,
 	transportEvidence,
 } from "./benchmark-gates.mjs";
 import { generatorLayout } from "./benchmark-generator-layout.mjs";
+import { pipelinedConfiguration, runPipelinedWorker } from "./benchmark-pipelined.mjs";
 import { createTemporaryBenchmarkData } from "./benchmark-temporary-data.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -198,9 +201,11 @@ async function openPair(configuration, received, failure) {
 		};
 		connection.on("op", handle);
 		connection.on("signal", () => {});
-		connection.on("error", failure);
-		connection.on("disconnect", failure);
-		connection.on("nack", (_document, nacks) => failure(new Error(JSON.stringify(nacks))));
+		connection.on("error", (error) => failure(error, "connection"));
+		connection.on("disconnect", (error) => failure(error, "disconnect"));
+		connection.on("nack", (_document, nacks) =>
+			failure(new Error(JSON.stringify(nacks)), "nack"),
+		);
 		handle(document, connection.initialMessages);
 		void connection.initialSignals;
 		clients.push(connection);
@@ -223,8 +228,23 @@ async function openPair(configuration, received, failure) {
 	};
 }
 
-/** Generates a paced workload and verifies exact payload and per-document ordering at both recipients. */
+/** Generates paced or pipelined traffic and verifies payloads and ordering at both recipients. */
 async function worker(configuration) {
+	if (configuration.loadMode === "pipelined") {
+		const result = await runPipelinedWorker(configuration, {
+			openPair,
+			ready: async () => {
+				const started = once(process, "message");
+				process.send({ type: "ready" });
+				await started;
+			},
+		});
+		await new Promise((resolveSent, reject) =>
+			process.send(result, (error) => (error ? reject(error) : resolveSent())),
+		);
+		process.disconnect();
+		process.exit(0);
+	}
 	const errors = [];
 	let closing = false;
 	const failure = (error) => {
@@ -380,6 +400,11 @@ async function worker(configuration) {
 
 /** Runs one isolated service sample and captures resource curves from owned processes. */
 async function run(configuration, output) {
+	const pipelined = configuration.loadMode === "pipelined";
+	const liveCache =
+		configuration.liveCache ??
+		(process.env.SEA_EXPERIMENTAL_LIVE_CACHE === undefined ||
+			process.env.SEA_EXPERIMENTAL_LIVE_CACHE === "true");
 	if (configuration.backend === "sea") {
 		verifyNativeBuild([
 			...(configuration.serverBinary === undefined ? ["sea-webtransport-server"] : []),
@@ -389,6 +414,8 @@ async function run(configuration, output) {
 		]);
 	}
 	mkdirSync(output, { recursive: true });
+	const rawServiceLog = resolve(output, "service.log");
+	if (pipelined) writeFileSync(rawServiceLog, "");
 	const temporaryData = createTemporaryBenchmarkData(`${configuration.backend}-stress-data`);
 	const serverBinary = resolve(
 		configuration.serverBinary ??
@@ -448,8 +475,12 @@ async function run(configuration, output) {
 	const capture = (chunk) => {
 		if (serviceLog.length < 2000000) serviceLog += chunk;
 	};
-	service.stdout.on("data", capture);
-	service.stderr.on("data", capture);
+	const captureService = (chunk) => {
+		capture(chunk);
+		if (pipelined) appendFileSync(rawServiceLog, chunk);
+	};
+	service.stdout.on("data", captureService);
+	service.stderr.on("data", captureService);
 	const workers = [];
 	let sampleTimer;
 	const samples = [];
@@ -491,7 +522,8 @@ async function run(configuration, output) {
 	};
 	const clockTicks = Number(execFileSync("getconf", ["CLK_TCK"], { encoding: "utf8" }));
 	let result;
-	let workerResults;
+	let workerResults = pipelined ? [] : undefined;
+	let phase = "startup";
 	try {
 		captureSample();
 		sampleTimer = setInterval(captureSample, 250);
@@ -517,7 +549,6 @@ async function run(configuration, output) {
 				configuration.storage ?? "memory",
 			);
 		if (configuration.backend === "sea") {
-			const liveCache = configuration.liveCache ?? true;
 			assert.equal(
 				serviceLog.includes("EXPERIMENTAL_LIVE_CACHE=true"),
 				liveCache,
@@ -531,7 +562,7 @@ async function run(configuration, output) {
 				...configuration,
 				generatorProcesses: undefined,
 				documents: configuration.documents / generators.count,
-				rate: ["closed-loop", "streamed"].includes(configuration.loadMode)
+				rate: ["closed-loop", "streamed", "pipelined"].includes(configuration.loadMode)
 					? undefined
 					: configuration.rate / generators.count,
 				endpoint:
@@ -540,7 +571,7 @@ async function run(configuration, output) {
 							? serviceLog.match(/WEBTRANSPORT_URL=(\S+)/)?.[1]
 							: `ws://127.0.0.1:${port}/sea/websocket`
 						: `http://127.0.0.1:${port}`,
-				transport: configuration.transport ?? "websocket",
+				transport: pipelined ? undefined : (configuration.transport ?? "websocket"),
 				certificateHash: serviceLog.match(/CERTIFICATE_SHA256=(\S+)/)?.[1] ?? "",
 			};
 			const native = configuration.generator === "native";
@@ -556,6 +587,22 @@ async function run(configuration, output) {
 					stdio: native ? ["pipe", "pipe", "pipe"] : ["ignore", "pipe", "pipe", "ipc"],
 				},
 			);
+			if (pipelined) {
+				for (const [name, stream] of [
+					["stdout", child.stdout],
+					["stderr", child.stderr],
+				]) {
+					const path = resolve(output, `worker-${index}.${name}.log`);
+					writeFileSync(path, "");
+					stream.on("data", (chunk) => appendFileSync(path, chunk));
+				}
+				const messages = resolve(output, `worker-${index}.messages.jsonl`);
+				writeFileSync(messages, "");
+				child.on("message", (message) => {
+					appendFileSync(messages, `${JSON.stringify(message)}\n`);
+					if (message.type === "result") workerResults[index] = message;
+				});
+			}
 			if (native) {
 				const lines = createInterface({ input: child.stdout });
 				lines.on("line", (line) => {
@@ -572,8 +619,8 @@ async function run(configuration, output) {
 						child.emit("message", { type: "error", error: String(error) });
 					}
 				});
-			} else child.stdout.on("data", capture);
-			child.stderr.on("data", capture);
+			} else if (!pipelined) child.stdout.on("data", capture);
+			if (!pipelined) child.stderr.on("data", capture);
 			workers.push(child);
 			ready.push(messageFrom(child, "ready"));
 		}
@@ -586,6 +633,7 @@ async function run(configuration, output) {
 			);
 		started = performance.now();
 		workloadStarted = true;
+		phase = "workload";
 		captureSample();
 		const promises = workers.map((child) =>
 			messageFrom(
@@ -593,7 +641,7 @@ async function run(configuration, output) {
 				"result",
 				(configuration.seconds +
 					configuration.warmupSeconds +
-					(configuration.loadMode === "streamed"
+					(["streamed", "pipelined"].includes(configuration.loadMode)
 						? (configuration.drainTimeoutSeconds ?? 30) + 15
 						: 30)) *
 					1000,
@@ -608,11 +656,14 @@ async function run(configuration, output) {
 		const results = await Promise.all(promises);
 		workerResults = results;
 		captureSample();
+		phase = "validation";
 		assert.equal(guardFailure, undefined);
 		const closedLoop = ["closed-loop", "streamed"].includes(configuration.loadMode);
 		const closedLoopResult = closedLoop
 			? closedLoopSummary(results, configuration.seconds, configuration.loadMode)
-			: undefined;
+			: pipelined
+				? pipelinedSummary(results, configuration.seconds)
+				: undefined;
 		if (!closedLoop) assertDrainIntegrity(results, configuration.backend);
 		const measured = samples.filter(
 			(sample) =>
@@ -633,7 +684,7 @@ async function run(configuration, output) {
 					: configuration.storage === "leveldb"
 						? "leveldb"
 						: "default-in-memory-database",
-			liveCache: configuration.backend === "sea" ? (configuration.liveCache ?? true) : null,
+			liveCache: configuration.backend === "sea" ? liveCache : null,
 			transport:
 				configuration.backend === "sea"
 					? (configuration.transport ?? "websocket")
@@ -655,6 +706,7 @@ async function run(configuration, output) {
 						)
 					: null,
 			loadMode: configuration.loadMode ?? "paced",
+			pipeline: pipelined ? pipelinedConfiguration(configuration) : undefined,
 			...closedLoopResult,
 			deliveredOperationsPerSecond: delivered / configuration.seconds,
 			payloadMiBPerSecond:
@@ -672,18 +724,19 @@ async function run(configuration, output) {
 				1024,
 			servicePeakRssMiB:
 				Math.max(...samples.map((sample) => sample.service.peakRssKiB)) / 1024,
-			sustainable: closedLoop
-				? null
-				: sent >= configuration.rate * configuration.seconds * 0.98 &&
-					delivered >= configuration.rate * configuration.seconds * 0.98 &&
-					results.every(
-						(entry) =>
-							entry.errors.length === 0 &&
-							entry.missing === 0 &&
-							entry.latencyMilliseconds.p95 !== null &&
-							entry.latencyMilliseconds.p95 <= 100 &&
-							entry.maxScheduleLagMilliseconds <= 100,
-					),
+			sustainable:
+				closedLoop || pipelined
+					? null
+					: sent >= configuration.rate * configuration.seconds * 0.98 &&
+						delivered >= configuration.rate * configuration.seconds * 0.98 &&
+						results.every(
+							(entry) =>
+								entry.errors.length === 0 &&
+								entry.missing === 0 &&
+								entry.latencyMilliseconds.p95 !== null &&
+								entry.latencyMilliseconds.p95 <= 100 &&
+								entry.maxScheduleLagMilliseconds <= 100,
+						),
 			workers: results,
 			resourceSamples: samples,
 			serviceData: temporaryData.provenance,
@@ -694,7 +747,14 @@ async function run(configuration, output) {
 			configuration,
 			error: String(error),
 			guardFailure,
-			liveCache: configuration.backend === "sea" ? (configuration.liveCache ?? true) : null,
+			failureCategory: pipelined
+				? guardFailure
+					? "guard"
+					: (workerResults.find((entry) => entry?.failures?.length)?.failures[0]
+							.category ?? phase)
+				: undefined,
+			pipeline: pipelined ? pipelinedConfiguration(configuration) : undefined,
+			liveCache: configuration.backend === "sea" ? liveCache : null,
 			workers: workerResults,
 			resourceSamples: samples,
 			serviceData: temporaryData.provenance,
@@ -712,6 +772,37 @@ async function run(configuration, output) {
 			}
 		}
 		await stop(service);
+		if (configuration.backend === "sea") {
+			result.servicePolicy = {
+				environment: Object.fromEntries(
+					[
+						"SEA_EXPERIMENTAL_LIVE_CACHE",
+						"SEA_EXPERIMENTAL_SESSION_FACTORY",
+						"SEA_EXPERIMENTAL_RESOURCE_POLICY",
+						"SEA_AUTHOR_WINDOW",
+						"SEA_MAX_CONNECTIONS",
+					].map((key) => [
+						key,
+						key === "SEA_EXPERIMENTAL_LIVE_CACHE" &&
+						configuration.liveCache !== undefined
+							? String(configuration.liveCache)
+							: (process.env[key] ?? null),
+					]),
+				),
+				reported: Object.fromEntries(
+					[
+						"EXPERIMENTAL_LIVE_CACHE",
+						"EXPERIMENTAL_SESSION_FACTORY",
+						"EXPERIMENTAL_RESOURCE_POLICY",
+						"AUTHOR_WINDOW",
+						"MAX_CONNECTIONS",
+					].map((key) => [
+						key,
+						serviceLog.match(new RegExp(`^${key}=(\\S+)`, "m"))?.[1] ?? null,
+					]),
+				),
+			};
+		}
 		try {
 			temporaryData.remove();
 		} catch (error) {
@@ -721,7 +812,7 @@ async function run(configuration, output) {
 				temporaryDataCleanupError: String(error),
 			};
 		}
-		writeFileSync(resolve(output, "service.log"), serviceLog);
+		if (!pipelined) writeFileSync(rawServiceLog, serviceLog);
 		writeFileSync(resolve(output, "result.json"), `${JSON.stringify(result, null, "\t")}\n`);
 	}
 	console.log(
@@ -739,6 +830,9 @@ const [mode, configurationText, outputDirectory] = process.argv.slice(2);
 if (mode === "--help") {
 	console.log(
 		'node benchmark-stress.mjs run \'{"backend":"sea","rate":100,"payloadBytes":64,"documents":1,"cores":1,"seconds":5,"warmupSeconds":1}\' <output>',
+	);
+	console.log(
+		'node benchmark-stress.mjs run \'{"backend":"tinylicious","loadMode":"pipelined","payloadBytes":64,"documents":1,"cores":1,"seconds":5,"warmupSeconds":1,"maxOutstandingOperations":256,"maxOutstandingBytes":2097152}\' <output>',
 	);
 } else {
 	const configuration = JSON.parse(configurationText);
@@ -762,11 +856,14 @@ if (mode === "--help") {
 	);
 	assert.ok(
 		configuration.loadMode === undefined ||
-			["paced", "closed-loop", "streamed"].includes(configuration.loadMode),
+			["paced", "closed-loop", "streamed", "pipelined"].includes(configuration.loadMode),
 		"loadMode",
 	);
 	if (configuration.drainTimeoutSeconds !== undefined) {
-		assert.equal(configuration.loadMode, "streamed", "drain override requires streamed mode");
+		assert.ok(
+			["streamed", "pipelined"].includes(configuration.loadMode),
+			"drain override requires streamed or pipelined mode",
+		);
 		assert.ok(
 			Number.isInteger(configuration.drainTimeoutSeconds) &&
 				configuration.drainTimeoutSeconds >= 1 &&
@@ -785,12 +882,18 @@ if (mode === "--help") {
 				"streamed mode requires WebTransport",
 			);
 		}
+	} else if (configuration.loadMode === "pipelined") {
+		pipelinedConfiguration(configuration);
 	} else {
 		assert.ok(Number.isFinite(configuration.rate) && configuration.rate > 0, "rate");
 		if (mode !== "worker") assert.ok(Number.isInteger(configuration.rate), "total rate");
 	}
 	for (const key of ["payloadBytes", "seconds", "warmupSeconds"])
 		assert.ok(Number.isInteger(configuration[key]) && configuration[key] > 0, key);
+	if (configuration.loadMode !== "pipelined") {
+		for (const key of ["maxOutstandingOperations", "maxOutstandingBytes"])
+			assert.equal(configuration[key], undefined, `${key} requires pipelined mode`);
+	}
 	assert.ok(configuration.payloadBytes >= 8 && configuration.payloadBytes <= 8192);
 	if (mode !== "worker") generatorLayout(configuration);
 	assert.ok(

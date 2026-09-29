@@ -48,6 +48,103 @@ export function assertDrainIntegrity(results, backend) {
 	);
 }
 
+/** Requires bounded Tinylicious writer-echo completion and exact independent reader drain. */
+export function pipelinedSummary(results, seconds) {
+	assert.ok(Number.isFinite(seconds) && seconds > 0);
+	assert.ok(results.length > 0, "missing pipelined workers");
+	let completed = 0;
+	let received = 0;
+	for (const entry of results) {
+		assert.deepEqual(entry.errors, [], "pipelined worker failure");
+		assert.deepEqual(entry.failures, [], "classified pipelined worker failure");
+		assert.ok(Number.isSafeInteger(entry.sent) && entry.sent > 0, "missing submissions");
+		assert.equal(entry.acknowledged, null, "writer echo is not a durability acknowledgment");
+		assert.equal(entry.writerEchoes, entry.sent, "writer echo drain failure");
+		assert.equal(entry.missing, 0, "reader drain failure");
+		assert.equal(entry.outstandingAfterDrain, 0, "outstanding writes after drain");
+		assert.ok(
+			Number.isSafeInteger(entry.writerEchoesInWindow) &&
+				entry.writerEchoesInWindow >= 0 &&
+				entry.writerEchoesInWindow <= entry.writerEchoes,
+			"invalid measured writer echoes",
+		);
+		const limits = entry.pipeline;
+		for (const key of [
+			"maxOutstandingOperations",
+			"maxOutstandingBytes",
+			"chargeBytesPerOperation",
+		]) {
+			assert.ok(Number.isSafeInteger(limits[key]) && limits[key] > 0, key);
+		}
+		assert.equal(limits.completionSignal, "sequenced-writer-echo");
+		assert.equal(limits.transportBackpressure, false);
+		assert.equal(limits.windowScope, "generator");
+		assert.equal(limits.byteAccounting, "logical-ascii-payload");
+		assert.ok(
+			Number.isSafeInteger(entry.maxInFlight) &&
+				entry.maxInFlight > 0 &&
+				entry.maxInFlight <= limits.maxOutstandingOperations,
+			"operation window exceeded",
+		);
+		assert.equal(
+			entry.maxOutstandingBytes,
+			entry.maxInFlight * limits.chargeBytesPerOperation,
+			"inconsistent logical byte charge",
+		);
+		assert.ok(entry.maxOutstandingBytes <= limits.maxOutstandingBytes, "byte window exceeded");
+		assert.ok(
+			Number.isSafeInteger(entry.outstandingAtEnd) &&
+				entry.outstandingAtEnd >= 0 &&
+				entry.outstandingAtEnd <= entry.maxInFlight,
+			"invalid end-of-window outstanding count",
+		);
+		assert.equal(
+			entry.outstandingBytesAtEnd,
+			entry.outstandingAtEnd * limits.chargeBytesPerOperation,
+		);
+		assert.ok(Number.isFinite(entry.drainSeconds) && entry.drainSeconds >= 0);
+		assert.ok(Number.isInteger(entry.documentCount) && entry.documentCount > 0);
+		assert.equal(entry.readerOutcomes.length, 2 * entry.documentCount);
+		const identities = new Set();
+		const delivered = [0, 0];
+		const measured = [0, 0];
+		for (const reader of entry.readerOutcomes) {
+			assert.ok(
+				Number.isInteger(reader.document) &&
+					reader.document >= 0 &&
+					reader.document < entry.documentCount,
+			);
+			assert.ok(reader.recipient === 0 || reader.recipient === 1);
+			const identity = `${reader.document}:${reader.recipient}`;
+			assert.ok(!identities.has(identity), "duplicate reader outcome");
+			identities.add(identity);
+			assert.equal(reader.shed, false, "pipelined mode does not permit reader shedding");
+			assert.equal(reader.undelivered, 0, "reader drain failure");
+			assert.ok(Number.isSafeInteger(reader.delivered) && reader.delivered >= 0);
+			assert.ok(
+				Number.isSafeInteger(reader.receivedInWindow) &&
+					reader.receivedInWindow >= 0 &&
+					reader.receivedInWindow <= reader.delivered,
+				"invalid measured reader deliveries",
+			);
+			delivered[reader.recipient] += reader.delivered;
+			measured[reader.recipient] += reader.receivedInWindow;
+			received += reader.receivedInWindow;
+		}
+		assert.deepEqual(delivered, [entry.sent, entry.sent], "inconsistent reader totals");
+		assert.equal(measured[0], entry.writerEchoesInWindow, "inconsistent writer echo totals");
+		assert.equal(measured[1], entry.deliveredInWindow, "inconsistent observer totals");
+		completed += entry.writerEchoesInWindow;
+	}
+	assert.ok(completed > 0, "no measured writer echoes");
+	return {
+		completionSignal: "sequenced-writer-echo",
+		writeOperationsPerSecond: completed / seconds,
+		readOperationsPerSecond: received / seconds,
+		losslessDelivery: true,
+	};
+}
+
 /** Validates unpaced writes without treating explicitly shed subscriptions as drained readers. */
 export function closedLoopSummary(results, seconds, mode = "closed-loop") {
 	assert.ok(Number.isFinite(seconds) && seconds > 0);

@@ -63,12 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(env::VarError::NotPresent) => configured_resource_policy(None)?,
         Err(error) => return Err(error.into()),
     };
-    if resource_policy && session_factory {
-        return Err("resource policy and pass-through factory modes are mutually exclusive".into());
-    }
-    if resource_policy && !live_cache {
-        return Err("resource policy requires live caching".into());
-    }
+    validate_session_modes(live_cache, session_factory, resource_policy)?;
     let host = Arc::new(configured_storage(
         &storage_mode,
         &data,
@@ -334,13 +329,27 @@ fn configured_session_factory(value: Option<&str>) -> Result<bool, &'static str>
     }
 }
 
-/// Keeps bounded policy decoration separate from ordinary and pass-through hosting.
+/// Enables bounded policy decoration by default with an explicit opt-out.
 fn configured_resource_policy(value: Option<&str>) -> Result<bool, &'static str> {
     match value {
-        None | Some("false") => Ok(false),
-        Some("true") => Ok(true),
+        Some("false") => Ok(false),
+        None | Some("true") => Ok(true),
         Some(_) => Err("invalid SEA_EXPERIMENTAL_RESOURCE_POLICY; expected true or false"),
     }
+}
+
+fn validate_session_modes(
+    live_cache: bool,
+    session_factory: bool,
+    resource_policy: bool,
+) -> Result<(), &'static str> {
+    if resource_policy && session_factory {
+        return Err("resource policy and pass-through factory modes are mutually exclusive");
+    }
+    if resource_policy && !live_cache {
+        return Err("resource policy requires live caching");
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -367,12 +376,33 @@ mod tests {
     }
 
     #[test]
-    fn resource_policy_is_opt_in_with_strict_values() {
-        assert_eq!(super::configured_resource_policy(None), Ok(false));
+    fn resource_policy_is_default_on_with_explicit_off_and_strict_values() {
+        assert_eq!(super::configured_resource_policy(None), Ok(true));
         assert_eq!(super::configured_resource_policy(Some("false")), Ok(false));
         assert_eq!(super::configured_resource_policy(Some("true")), Ok(true));
         for invalid in ["", "1", "TRUE", " true", "yes"] {
             assert!(super::configured_resource_policy(Some(invalid)).is_err());
+        }
+    }
+
+    #[test]
+    fn session_modes_require_explicit_policy_opt_out_for_incompatible_settings() {
+        let cache = super::configured_live_cache(None).unwrap();
+        let pass = super::configured_session_factory(None).unwrap();
+        let policy = super::configured_resource_policy(None).unwrap();
+        assert_eq!(super::validate_session_modes(cache, pass, policy), Ok(()));
+        assert_eq!(
+            super::validate_session_modes(false, pass, policy),
+            Err("resource policy requires live caching")
+        );
+        assert_eq!(
+            super::validate_session_modes(cache, true, policy),
+            Err("resource policy and pass-through factory modes are mutually exclusive")
+        );
+        for cache in [false, true] {
+            for pass in [false, true] {
+                assert_eq!(super::validate_session_modes(cache, pass, false), Ok(()));
+            }
         }
     }
 
