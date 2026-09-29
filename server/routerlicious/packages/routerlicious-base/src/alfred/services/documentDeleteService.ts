@@ -4,11 +4,7 @@
  */
 
 import { NetworkError } from "@fluidframework/server-services-client";
-import type {
-	ICache,
-	IDocumentManager,
-	IDocumentRepository,
-} from "@fluidframework/server-services-core";
+import type { IDocumentManager, IDocumentRepository } from "@fluidframework/server-services-core";
 
 /**
  * @internal
@@ -41,27 +37,14 @@ export class DocumentDeleteServiceWithCacheInvalidation implements IDocumentDele
 		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly documentManager: IDocumentStaticCacheInvalidator,
 		private readonly documentRepository: IDocumentRepository,
-		private readonly documentDeletionMarkerCache: ICache,
 	) {}
 
 	public async deleteDocument(tenantId: string, documentId: string): Promise<void> {
+		if (this.documentDeleteService instanceof DocumentDeleteService) {
+			return this.documentDeleteService.deleteDocument(tenantId, documentId);
+		}
 		const document = await this.documentRepository.readOne({ tenantId, documentId });
 		await this.documentManager.purgeStaticCache(tenantId, documentId, document?.createTime);
-		try {
-			await this.documentDeleteService.deleteDocument(tenantId, documentId);
-		} catch (error) {
-			if (
-				this.documentDeleteService instanceof DocumentDeleteService &&
-				error instanceof NetworkError &&
-				error.code === 501
-			) {
-				await this.documentDeletionMarkerCache.delete?.(
-					`deletedDocument:${encodeURIComponent(tenantId)}:${encodeURIComponent(
-						documentId,
-					)}`,
-				);
-			}
-			throw error;
-		}
+		await this.documentDeleteService.deleteDocument(tenantId, documentId);
 	}
 }

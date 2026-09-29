@@ -16,15 +16,12 @@ export class TestCache implements ICache {
 		this.dictionary.set(key, value);
 		return Promise.resolve();
 	}
-	async setWithoutExpiry<T>(key: string, value: T): Promise<void> {
-		this.dictionary.set(key, value);
-		return Promise.resolve();
-	}
-	async deleteIfValueMatches<T>(key: string, value: T): Promise<boolean> {
-		if (JSON.stringify(this.dictionary.get(key)) !== JSON.stringify(value)) {
-			return false;
+	async setDeletionMarkerIfNewer(key: string, deletedThroughCreateTime: number): Promise<void> {
+		const current = this.dictionary.get(key) as number | undefined;
+		if (current === undefined || deletedThroughCreateTime > current) {
+			this.dictionary.set(key, deletedThroughCreateTime);
 		}
-		return this.dictionary.delete(key);
+		return Promise.resolve();
 	}
 	async delete(key: string): Promise<boolean> {
 		return Promise.resolve(this.dictionary.delete(key));

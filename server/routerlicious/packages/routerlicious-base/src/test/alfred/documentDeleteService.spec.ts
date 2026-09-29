@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import type { ICache, IDocumentRepository } from "@fluidframework/server-services-core";
+import type { IDocumentRepository } from "@fluidframework/server-services-core";
 import * as Sinon from "sinon";
 
 import {
@@ -29,9 +29,6 @@ describe("DocumentDeleteServiceWithCacheInvalidation", () => {
 		const documentRepository = {
 			readOne: Sinon.stub().resolves({ createTime: 100 }),
 		} as unknown as IDocumentRepository;
-		const documentDeletionMarkerCache = {
-			delete: Sinon.stub().resolves(true),
-		} as unknown as ICache;
 		const documentDeleteService: IDocumentDeleteService = {
 			deleteDocument: async (tenantId: string, documentId: string) => {
 				assert.strictEqual(tenantId, "tenant-a");
@@ -43,7 +40,6 @@ describe("DocumentDeleteServiceWithCacheInvalidation", () => {
 			documentDeleteService,
 			documentManager,
 			documentRepository,
-			documentDeletionMarkerCache,
 		);
 
 		await service.deleteDocument("tenant-a", "document-a");
@@ -58,9 +54,6 @@ describe("DocumentDeleteServiceWithCacheInvalidation", () => {
 		const documentRepository = {
 			readOne: Sinon.stub().resolves({ createTime: 100 }),
 		} as unknown as IDocumentRepository;
-		const documentDeletionMarkerCache = {
-			delete: Sinon.stub().resolves(true),
-		} as unknown as ICache;
 		const documentDeleteService: IDocumentDeleteService = {
 			deleteDocument: Sinon.stub().resolves(),
 		};
@@ -68,15 +61,13 @@ describe("DocumentDeleteServiceWithCacheInvalidation", () => {
 			documentDeleteService,
 			documentManager,
 			documentRepository,
-			documentDeletionMarkerCache,
 		);
 
 		await assert.rejects(service.deleteDocument("tenant-a", "document-a"), /redis unavailable/);
 		Sinon.assert.notCalled(documentDeleteService.deleteDocument as Sinon.SinonStub);
 	});
 
-	it("clears the marker when deletion definitely failed before mutation", async () => {
-		const deleteMarker = Sinon.stub().resolves(true);
+	it("does not write a marker when deletion is not implemented", async () => {
 		const documentManager = {
 			purgeStaticCache: Sinon.stub().resolves(),
 		} as unknown as IDocumentStaticCacheInvalidator;
@@ -84,20 +75,18 @@ describe("DocumentDeleteServiceWithCacheInvalidation", () => {
 		const documentRepository = {
 			readOne: Sinon.stub().resolves({ createTime: 100 }),
 		} as unknown as IDocumentRepository;
-		const documentDeletionMarkerCache = { delete: deleteMarker } as unknown as ICache;
 		const service = new DocumentDeleteServiceWithCacheInvalidation(
 			documentDeleteService,
 			documentManager,
 			documentRepository,
-			documentDeletionMarkerCache,
 		);
 
 		await assert.rejects(service.deleteDocument("tenant-a", "document-a"), /not implemented/);
-		Sinon.assert.calledOnceWithExactly(deleteMarker, "deletedDocument:tenant-a:document-a");
+		Sinon.assert.notCalled(documentRepository.readOne as Sinon.SinonStub);
+		Sinon.assert.notCalled(documentManager.purgeStaticCache as Sinon.SinonStub);
 	});
 
 	it("retains the marker when deletion failure may be partial", async () => {
-		const deleteMarker = Sinon.stub().resolves(true);
 		const documentManager = {
 			purgeStaticCache: Sinon.stub().resolves(),
 		} as unknown as IDocumentStaticCacheInvalidator;
@@ -107,15 +96,13 @@ describe("DocumentDeleteServiceWithCacheInvalidation", () => {
 		const documentRepository = {
 			readOne: Sinon.stub().resolves({ createTime: 100 }),
 		} as unknown as IDocumentRepository;
-		const documentDeletionMarkerCache = { delete: deleteMarker } as unknown as ICache;
 		const service = new DocumentDeleteServiceWithCacheInvalidation(
 			documentDeleteService,
 			documentManager,
 			documentRepository,
-			documentDeletionMarkerCache,
 		);
 
 		await assert.rejects(service.deleteDocument("tenant-a", "document-a"), /storage failure/);
-		Sinon.assert.notCalled(deleteMarker);
+		Sinon.assert.calledOnce(documentManager.purgeStaticCache as Sinon.SinonStub);
 	});
 });

@@ -13,18 +13,20 @@ import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-serv
 
 import type { ICache } from "./definitions";
 
-interface IDeletionMarker {
-	createTime?: number;
-}
+type IDeletionMarker = number;
 
 interface IPersistentCache extends ICache {
-	setWithoutExpiry<T>(key: string, value: T): Promise<void>;
-	deleteIfValueMatches<T>(key: string, value: T): Promise<boolean>;
+	setDeletionMarkerIfNewer(key: string, deletedThroughCreateTime: number): Promise<void>;
 }
 
 export interface ISummaryDocumentManager extends IDocumentManager {
 	readonly supportsSummaryStaticProperties: true;
 	readStaticPropertiesForSummary(
+		tenantId: string,
+		documentId: string,
+		options?: IReadDocumentOptions,
+	): Promise<IDocumentStaticProperties | undefined>;
+	readStaticPropertiesForSummaryDelete(
 		tenantId: string,
 		documentId: string,
 		options?: IReadDocumentOptions,
@@ -40,6 +42,8 @@ export function isSummaryDocumentManager(
 			true &&
 		typeof (documentManager as Partial<ISummaryDocumentManager>)
 			.readStaticPropertiesForSummary === "function" &&
+		typeof (documentManager as Partial<ISummaryDocumentManager>)
+			.readStaticPropertiesForSummaryDelete === "function" &&
 		typeof (documentManager as Partial<ISummaryDocumentManager>).purgeStaticCache === "function"
 	);
 }
@@ -50,6 +54,7 @@ export class DocumentManager implements ISummaryDocumentManager {
 	public constructor(
 		private readonly authoritativeDocumentManager: IDocumentManager,
 		private readonly staticDataCache?: ICache,
+		private readonly deletionMarkerCache = staticDataCache,
 	) {}
 
 	public async readDocument(
@@ -74,11 +79,6 @@ export class DocumentManager implements ISummaryDocumentManager {
 	): Promise<IDocumentStaticProperties | undefined> {
 		if (this.staticDataCache === undefined) {
 			return this.loadDocumentStaticProperties(tenantId, documentId, options);
-		}
-
-		const marker = await this.getDeletionMarker(tenantId, documentId);
-		if (marker !== undefined) {
-			return this.resolveDeletionMarker(tenantId, documentId, marker, options);
 		}
 
 		const staticPropsKey = DocumentManager.getStaticKey(tenantId, documentId);
@@ -108,11 +108,27 @@ export class DocumentManager implements ISummaryDocumentManager {
 			return undefined;
 		}
 		const markerAfterRead = await this.getDeletionMarker(tenantId, documentId);
-		if (markerAfterRead !== undefined) {
+		if (DocumentManager.isDeletedGeneration(staticProps.createTime, markerAfterRead)) {
 			await this.staticDataCache.delete(staticPropsKey);
-			return this.resolveDeletionMarker(tenantId, documentId, markerAfterRead, options);
+			return this.loadDocumentStaticProperties(tenantId, documentId, options);
 		}
 		return staticProps;
+	}
+
+	public async readStaticPropertiesForSummaryDelete(
+		tenantId: string,
+		documentId: string,
+		options?: IReadDocumentOptions,
+	): Promise<IDocumentStaticProperties | undefined> {
+		const document = await this.readDocument(tenantId, documentId, options);
+		if (
+			document === null ||
+			document.tenantId !== tenantId ||
+			document.documentId !== documentId
+		) {
+			return undefined;
+		}
+		return DocumentManager.getStaticPropsFromDocument(document);
 	}
 
 	public async purgeStaticCache(
@@ -121,11 +137,11 @@ export class DocumentManager implements ISummaryDocumentManager {
 		createTime?: number,
 	): Promise<void> {
 		const cache = this.getPersistentCache();
-		await cache.setWithoutExpiry(
+		await cache.setDeletionMarkerIfNewer(
 			DocumentManager.getDeletedKey(tenantId, documentId),
-			Number.isFinite(createTime) ? { createTime } : {},
+			Number.isFinite(createTime) ? (createTime as number) : Date.now(),
 		);
-		await cache.delete(DocumentManager.getStaticKey(tenantId, documentId));
+		await this.staticDataCache?.delete(DocumentManager.getStaticKey(tenantId, documentId));
 	}
 
 	private async loadDocumentStaticProperties(
@@ -144,14 +160,8 @@ export class DocumentManager implements ISummaryDocumentManager {
 		}
 
 		const markerBeforeSet = await this.getDeletionMarker(tenantId, documentId);
-		if (markerBeforeSet !== undefined) {
-			return this.resolveDeletionMarker(
-				tenantId,
-				documentId,
-				markerBeforeSet,
-				options,
-				document,
-			);
+		if (DocumentManager.isDeletedGeneration(document.createTime, markerBeforeSet)) {
+			return undefined;
 		}
 
 		const staticProps = DocumentManager.getStaticPropsFromDocument(document);
@@ -162,15 +172,9 @@ export class DocumentManager implements ISummaryDocumentManager {
 			const staticKey = DocumentManager.getStaticKey(tenantId, documentId);
 			await this.staticDataCache.set(staticKey, staticProps);
 			const markerAfterSet = await this.getDeletionMarker(tenantId, documentId);
-			if (markerAfterSet !== undefined) {
+			if (DocumentManager.isDeletedGeneration(document.createTime, markerAfterSet)) {
 				await this.staticDataCache.delete(staticKey);
-				return this.resolveDeletionMarker(
-					tenantId,
-					documentId,
-					markerAfterSet,
-					options,
-					document,
-				);
+				return undefined;
 			}
 		}
 		return staticProps;
@@ -212,63 +216,36 @@ export class DocumentManager implements ISummaryDocumentManager {
 		return staticProps;
 	}
 
-	private async resolveDeletionMarker(
-		tenantId: string,
-		documentId: string,
-		marker: IDeletionMarker,
-		options?: IReadDocumentOptions,
-		knownDocument?: IDocument,
-	): Promise<IDocumentStaticProperties | undefined> {
-		const document = knownDocument ?? (await this.readDocument(tenantId, documentId, options));
-		if (
-			document === null ||
-			document.tenantId !== tenantId ||
-			document.documentId !== documentId ||
-			document.scheduledDeletionTime !== undefined ||
-			!Number.isFinite(marker.createTime) ||
-			document.createTime === marker.createTime
-		) {
-			return undefined;
-		}
-
-		const cache = this.getPersistentCache();
-		const markerCleared = await cache.deleteIfValueMatches(
-			DocumentManager.getDeletedKey(tenantId, documentId),
-			marker,
-		);
-		if (markerCleared) {
-			return this.loadDocumentStaticProperties(tenantId, documentId, options);
-		}
-		const currentMarker = await this.getDeletionMarker(tenantId, documentId);
-		return currentMarker === undefined
-			? this.loadDocumentStaticProperties(tenantId, documentId, options)
-			: this.resolveDeletionMarker(tenantId, documentId, currentMarker, options, document);
-	}
-
 	private async getDeletionMarker(
 		tenantId: string,
 		documentId: string,
 	): Promise<IDeletionMarker | undefined> {
-		if (this.staticDataCache === undefined) {
+		if (this.deletionMarkerCache === undefined) {
 			return undefined;
 		}
-		const marker = await this.staticDataCache.get<IDeletionMarker>(
+		const marker = await this.deletionMarkerCache.get<IDeletionMarker>(
 			DocumentManager.getDeletedKey(tenantId, documentId),
 		);
-		return marker === null || marker === undefined ? undefined : marker;
+		if (marker === null || marker === undefined) {
+			return undefined;
+		}
+		if (!Number.isFinite(marker)) {
+			throw new Error("Document deletion marker is malformed.");
+		}
+		return marker;
 	}
 
 	private getPersistentCache(): IPersistentCache {
 		if (
-			this.staticDataCache === undefined ||
-			typeof (this.staticDataCache as Partial<IPersistentCache>).setWithoutExpiry !==
-				"function"
+			this.deletionMarkerCache === undefined ||
+			typeof (this.deletionMarkerCache as Partial<IPersistentCache>)
+				.setDeletionMarkerIfNewer !== "function"
 		) {
 			throw new Error(
 				"Document deletion requires a cache that supports persistent deletion markers.",
 			);
 		}
-		return this.staticDataCache as IPersistentCache;
+		return this.deletionMarkerCache as IPersistentCache;
 	}
 
 	private static getStaticKey(tenantId: string, documentId: string): string {
@@ -277,6 +254,13 @@ export class DocumentManager implements ISummaryDocumentManager {
 
 	private static getDeletedKey(tenantId: string, documentId: string): string {
 		return `deletedDocument:${encodeURIComponent(tenantId)}:${encodeURIComponent(documentId)}`;
+	}
+
+	private static isDeletedGeneration(
+		createTime: number,
+		marker: IDeletionMarker | undefined,
+	): boolean {
+		return marker !== undefined && createTime <= marker;
 	}
 
 	private static getStaticPropsFromDocument(document: IDocument): IDocumentStaticProperties {

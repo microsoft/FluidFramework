@@ -80,6 +80,41 @@ describe("HistorianResourcesFactory", () => {
 			await resources.dispose();
 		});
 
+		it("keeps deletion marker storage enabled when the positive Git cache is disabled", async () => {
+			const authoritativeManager = new TestDocumentManager();
+			stub(authoritativeManager, "readDocument").resolves({
+				version: "1.0",
+				createTime: 100,
+				documentId: "documentId",
+				tenantId: "tenantId",
+				session: {
+					ordererUrl: "",
+					deltaStreamUrl: "",
+					historianUrl: "",
+					isSessionAlive: false,
+					isSessionActive: false,
+				},
+				scribe: "",
+				deli: "",
+			});
+			const resources = await new HistorianResourcesFactory().create(
+				createConfig(),
+				createCustomizations(authoritativeManager),
+			);
+
+			const summaryDocumentManager = resources.documentManager as DocumentManager;
+			await summaryDocumentManager.purgeStaticCache("tenantId", "documentId", 100);
+			assert.strictEqual(
+				await summaryDocumentManager.readStaticPropertiesForSummary(
+					"tenantId",
+					"documentId",
+				),
+				undefined,
+			);
+
+			await resources.dispose();
+		});
+
 		it("constructs the Alfred-backed document manager by default", async () => {
 			const resources = await new HistorianResourcesFactory().create(
 				createConfig(),

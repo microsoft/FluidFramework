@@ -33,7 +33,10 @@ const documentId = "testDocumentId";
 const tenantKey = "testTenantKey";
 const testUrl = "http://localhost/historian";
 const defaultCache = new TestCache();
-const createTestProvider = (reuseCustomerAccessTokenForSummaryOwnership = false): nconf.Provider =>
+const createTestProvider = (
+	reuseCustomerAccessTokenForSummaryOwnership = false,
+	storagePerDocEnabled = true,
+): nconf.Provider =>
 	new nconf.Provider({}).defaults({
 		auth: {
 			maxTokenLifetimeSec: 1000000,
@@ -44,6 +47,9 @@ const createTestProvider = (reuseCustomerAccessTokenForSummaryOwnership = false)
 		},
 		restGitService: {
 			reuseCustomerAccessTokenForSummaryOwnership,
+		},
+		storage: {
+			perDocEnabled: storagePerDocEnabled,
 		},
 	});
 const defaultProvider = createTestProvider();
@@ -1524,6 +1530,55 @@ describe("summary ownership routes", () => {
 		);
 		assert.ok(purgeStaticCache.firstCall.calledBefore(deleteSummary.firstCall));
 		assert.ok(purgeStaticCache.secondCall.calledBefore(deleteSummary.secondCall));
+	});
+
+	it("allows hard deletion after the same generation was soft-deleted", async () => {
+		const authoritativeManager = new TestDocumentManager();
+		sandbox.stub(authoritativeManager, "readDocument").resolves(activeDocument);
+		cache = new TestCache();
+		documentManager = new SummaryDocumentManager(
+			authoritativeManager,
+			cache,
+		) as unknown as TestDocumentManager;
+		superTest = createSummaryOwnershipSuperTest(defaultProvider);
+		sandbox.stub(defaultTenantService, "deleteFromCache").resolves(true);
+		const deleteSummary = sandbox
+			.stub(RestGitService.prototype, "deleteSummary")
+			.resolves(true);
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "false")
+			.expect(200);
+
+		sinon.assert.calledTwice(deleteSummary);
+		assert.strictEqual(
+			await cache.get(`deletedDocument:${tenantId}:${documentId}`),
+			activeDocument.createTime,
+		);
+	});
+
+	it("does not write a deletion marker when GitRest deletion is unsupported", async () => {
+		const config = createTestProvider(false, false);
+		superTest = createSummaryOwnershipSuperTest(config);
+		const deleteSummary = sandbox
+			.stub(RestGitService.prototype, "deleteSummary")
+			.rejects(new NetworkError(501, "Not Implemented", false));
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "false")
+			.expect(501);
+
+		sinon.assert.calledOnce(deleteSummary);
+		sinon.assert.notCalled(purgeStaticCache);
 	});
 
 	it("keeps GET and non-initial POST denied after direct summary deletion outlives normal cache entries", async () => {

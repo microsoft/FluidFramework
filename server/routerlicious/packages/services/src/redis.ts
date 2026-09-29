@@ -64,8 +64,32 @@ export class RedisCache implements ICache {
 
 	public async set(key: string, value: string, expireAfterSeconds?: number): Promise<void> {
 		try {
-			const expiration = expireAfterSeconds ?? this.expireAfterSeconds;
 			const redisClient = this.redisClientConnectionManager.getRedisClient();
+			if (key.startsWith("deletedDocument:")) {
+				const marker = JSON.parse(value) as number;
+				if (!Number.isFinite(marker)) {
+					throw new Error("Document deletion marker is malformed.");
+				}
+				const result = (await redisClient.eval(
+					`
+local current = redis.call("GET", KEYS[1])
+if current and tonumber(current) >= tonumber(ARGV[1]) then
+	return 0
+end
+redis.call("SET", KEYS[1], ARGV[2])
+return 1
+`,
+					1,
+					this.getKey(key),
+					marker,
+					value,
+				)) as number;
+				if (result !== 0 && result !== 1) {
+					throw new Error(`Unexpected Redis deletion marker result: ${result}`);
+				}
+				return;
+			}
+			const expiration = expireAfterSeconds ?? this.expireAfterSeconds;
 			const result =
 				expiration === undefined
 					? await redisClient.set(this.getKey(key), value)

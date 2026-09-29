@@ -233,7 +233,10 @@ export function create(
 				"Document manager does not support protected summary validation.",
 			);
 		}
-		await documentManager.purgeStaticCache(tenantId, documentId, document.createTime);
+		const storagePerDocEnabled = (config.get("storage:perDocEnabled") as boolean) ?? false;
+		if (storagePerDocEnabled) {
+			await documentManager.purgeStaticCache(tenantId, documentId, document.createTime);
+		}
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);

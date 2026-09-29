@@ -22,9 +22,7 @@ import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 import { getRefreshTokenIfNeededCallback } from "./tenant";
 
-interface IDeletionMarker {
-	createTime?: number;
-}
+type IDeletionMarker = number;
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
@@ -76,10 +74,6 @@ export class DocumentManager implements IDocumentManager {
 			return this.getDocumentStaticProperties(tenantId, documentId, options);
 		}
 
-		if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
-			return undefined;
-		}
-
 		const staticPropsKey = DocumentManager.getDocumentStaticKey(tenantId, documentId);
 		let staticPropsStr: string | undefined;
 		try {
@@ -125,9 +119,10 @@ export class DocumentManager implements IDocumentManager {
 			await this.deleteStaticCacheEntry(tenantId, documentId);
 			return this.getDocumentStaticProperties(tenantId, documentId, options);
 		}
-		if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
+		const markerAfterRead = await this.getDeletionMarker(tenantId, documentId);
+		if (DocumentManager.isDeletedGeneration(staticProps.createTime, markerAfterRead)) {
 			await this.deleteStaticCacheEntry(tenantId, documentId);
-			return undefined;
+			return this.getDocumentStaticProperties(tenantId, documentId, options);
 		}
 		return staticProps;
 	}
@@ -143,7 +138,7 @@ export class DocumentManager implements IDocumentManager {
 		const deletedKey = DocumentManager.getDocumentDeletedKey(tenantId, documentId);
 		await this.documentDeletionMarkerCache.set(
 			deletedKey,
-			JSON.stringify(Number.isFinite(createTime) ? { createTime } : {}),
+			JSON.stringify(Number.isFinite(createTime) ? (createTime as number) : Date.now()),
 		);
 		await this.deleteStaticCacheEntry(tenantId, documentId);
 	}
@@ -175,7 +170,8 @@ export class DocumentManager implements IDocumentManager {
 			);
 			return undefined;
 		}
-		if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
+		const markerBeforeSet = await this.getDeletionMarker(tenantId, documentId);
+		if (DocumentManager.isDeletedGeneration(document.createTime, markerBeforeSet)) {
 			return undefined;
 		}
 
@@ -183,7 +179,8 @@ export class DocumentManager implements IDocumentManager {
 		if (this.documentStaticDataCache && DocumentManager.areStaticPropertiesValid(staticProps)) {
 			const staticPropsKey = DocumentManager.getDocumentStaticKey(tenantId, documentId);
 			await this.documentStaticDataCache.set(staticPropsKey, JSON.stringify(staticProps));
-			if ((await this.getDeletionMarker(tenantId, documentId)) !== undefined) {
+			const markerAfterSet = await this.getDeletionMarker(tenantId, documentId);
+			if (DocumentManager.isDeletedGeneration(document.createTime, markerAfterSet)) {
 				await this.deleteStaticCacheEntry(tenantId, documentId);
 				return undefined;
 			}
@@ -260,7 +257,14 @@ export class DocumentManager implements IDocumentManager {
 		}
 		const deletedKey = DocumentManager.getDocumentDeletedKey(tenantId, documentId);
 		const marker = await this.documentDeletionMarkerCache.get(deletedKey);
-		return marker === null ? undefined : (JSON.parse(marker) as IDeletionMarker);
+		if (marker === null) {
+			return undefined;
+		}
+		const parsedMarker = JSON.parse(marker) as IDeletionMarker;
+		if (!Number.isFinite(parsedMarker)) {
+			throw new Error("Document deletion marker is malformed.");
+		}
+		return parsedMarker;
 	}
 
 	private async deleteStaticCacheEntry(tenantId: string, documentId: string): Promise<void> {
@@ -288,6 +292,13 @@ export class DocumentManager implements IDocumentManager {
 			(staticProps.isEphemeralContainer === undefined ||
 				typeof staticProps.isEphemeralContainer === "boolean")
 		);
+	}
+
+	private static isDeletedGeneration(
+		createTime: number,
+		marker: IDeletionMarker | undefined,
+	): boolean {
+		return marker !== undefined && createTime <= marker;
 	}
 
 	/**

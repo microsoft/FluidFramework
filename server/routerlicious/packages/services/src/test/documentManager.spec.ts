@@ -28,6 +28,14 @@ class RecordingCache implements ICache {
 	}
 
 	public async set(key: string, value: string): Promise<void> {
+		if (key.startsWith("deletedDocument:")) {
+			const proposed = JSON.parse(value) as number;
+			const currentValue = this.values.get(key);
+			const current = currentValue ? (JSON.parse(currentValue) as number) : undefined;
+			if (current !== undefined && current >= proposed) {
+				return;
+			}
+		}
 		this.sets.push(key);
 		this.values.set(key, value);
 	}
@@ -272,7 +280,7 @@ describe("DocumentManager", () => {
 
 		assert.strictEqual(properties?.tenantId, "tenant-a");
 		assert.strictEqual(properties?.documentId, "document-a");
-		sinon.assert.callCount(cacheGet, 4);
+		sinon.assert.callCount(cacheGet, 3);
 		sinon.assert.calledOnce(readDocument);
 		assert.deepStrictEqual(cache.deletes, ["staticData:tenant-a:document-a"]);
 	});
@@ -302,7 +310,7 @@ describe("DocumentManager", () => {
 		await manager.purgeStaticCache("tenant:a", "shared:id");
 
 		assert.deepStrictEqual(cache.deletes, ["staticData:tenant%3Aa:shared%3Aid"]);
-		assert.strictEqual(cache.values.get("deletedDocument:tenant%3Aa:shared%3Aid"), "{}");
+		assert.match(cache.values.get("deletedDocument:tenant%3Aa:shared%3Aid") ?? "", /\d+/);
 		assert.deepStrictEqual(cache.sets, ["deletedDocument:tenant%3Aa:shared%3Aid"]);
 		assert.strictEqual(cache.values.has("staticData:tenant%3Ab:shared%3Aid"), true);
 	});
@@ -315,12 +323,14 @@ describe("DocumentManager", () => {
 		);
 		const tenantManager = sandbox.createStubInstance(TenantManager);
 		const manager = new DocumentManager("http://unused", tenantManager, cache);
-		const readDocument = sandbox.spy(manager, "readDocument");
+		const readDocument = sandbox
+			.stub(manager, "readDocument")
+			.resolves(createDocument("tenant-a", "document-a"));
 
 		await manager.purgeStaticCache("tenant-a", "document-a");
 
 		assert.strictEqual(await manager.readStaticProperties("tenant-a", "document-a"), undefined);
-		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledOnce(readDocument);
 	});
 
 	it("denies and removes a cached positive when deletion is marked during the cache read", async () => {
@@ -330,7 +340,7 @@ describe("DocumentManager", () => {
 			public override async get(key: string): Promise<string | null> {
 				const value = await super.get(key);
 				if (key === staticKey) {
-					this.values.set(deletedKey, "{}");
+					this.values.set(deletedKey, JSON.stringify(100));
 				}
 				return value;
 			}
@@ -339,6 +349,7 @@ describe("DocumentManager", () => {
 		cache.values.set(staticKey, JSON.stringify(createDocument("tenant-a", "document-a")));
 		const tenantManager = sandbox.createStubInstance(TenantManager);
 		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		sandbox.stub(manager, "readDocument").resolves(createDocument("tenant-a", "document-a"));
 
 		assert.strictEqual(await manager.readStaticProperties("tenant-a", "document-a"), undefined);
 		assert.strictEqual(cache.values.has(staticKey), false);
@@ -351,7 +362,7 @@ describe("DocumentManager", () => {
 			public override async set(key: string, value: string): Promise<void> {
 				await super.set(key, value);
 				if (key === staticKey) {
-					this.values.set(deletedKey, "{}");
+					this.values.set(deletedKey, JSON.stringify(100));
 				}
 			}
 		}
@@ -362,5 +373,60 @@ describe("DocumentManager", () => {
 
 		assert.strictEqual(await manager.readStaticProperties("tenant-a", "document-a"), undefined);
 		assert.strictEqual(cache.values.has(staticKey), false);
+	});
+
+	it("allows a newer generation while retaining the deletion fence", async () => {
+		const cache = new RecordingCache();
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		const recreatedDocument = {
+			...createDocument("tenant-a", "document-a"),
+			createTime: 200,
+		};
+		sandbox.stub(manager, "readDocument").resolves(recreatedDocument);
+
+		await manager.purgeStaticCache("tenant-a", "document-a", 100);
+
+		assert.strictEqual(
+			(await manager.readStaticProperties("tenant-a", "document-a"))?.createTime,
+			200,
+		);
+		assert.strictEqual(
+			cache.values.get("deletedDocument:tenant-a:document-a"),
+			JSON.stringify(100),
+		);
+	});
+
+	it("keeps the newest deletion fence when an older deletion completes later", async () => {
+		const cache = new RecordingCache();
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+
+		await manager.purgeStaticCache("tenant-a", "document-a", 200);
+		await manager.purgeStaticCache("tenant-a", "document-a", 100);
+
+		assert.strictEqual(
+			cache.values.get("deletedDocument:tenant-a:document-a"),
+			JSON.stringify(200),
+		);
+	});
+
+	it("allows a document created after an idempotent delete of missing metadata", async () => {
+		const cache = new RecordingCache();
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		sandbox.stub(Date, "now").returns(150);
+		sandbox.stub(manager, "readDocument").resolves({
+			...createDocument("tenant-a", "document-a"),
+			createTime: 200,
+		});
+
+		await manager.purgeStaticCache("tenant-a", "document-a");
+
+		assert.strictEqual(
+			(await manager.readStaticProperties("tenant-a", "document-a"))?.createTime,
+			200,
+		);
+		assert.strictEqual(cache.values.get("deletedDocument:tenant-a:document-a"), "150");
 	});
 });

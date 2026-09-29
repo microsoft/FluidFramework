@@ -131,9 +131,7 @@ describe("Historian DocumentManager", () => {
 			public override async get<T>(key: string): Promise<T> {
 				const value = await super.get<T>(key);
 				if (key === staticKey) {
-					await this.setWithoutExpiry(deletedKey, {
-						createTime: activeDocument.createTime,
-					});
+					await this.set(deletedKey, activeDocument.createTime);
 				}
 				return value;
 			}
@@ -158,9 +156,7 @@ describe("Historian DocumentManager", () => {
 			public override async set<T>(key: string, value: T): Promise<void> {
 				await super.set(key, value);
 				if (key === staticKey) {
-					await this.setWithoutExpiry(deletedKey, {
-						createTime: activeDocument.createTime,
-					});
+					await super.set(deletedKey, activeDocument.createTime);
 				}
 			}
 		}
@@ -194,33 +190,60 @@ describe("Historian DocumentManager", () => {
 			storageName: recreatedDocument.storageName,
 			isEphemeralContainer: recreatedDocument.isEphemeralContainer,
 		});
-		assert.strictEqual(await cache.get("deletedDocument:tenant%2Fa:shared%3Aid"), undefined);
+		assert.strictEqual(
+			await cache.get("deletedDocument:tenant%2Fa:shared%3Aid"),
+			activeDocument.createTime,
+		);
 	});
 
-	it("does not clear a concurrent deletion marker for a recreated document", async () => {
+	it("rejects an older in-flight generation without clearing a newer deletion fence", async () => {
 		const deletedKey = "deletedDocument:tenant%2Fa:shared%3Aid";
-		class InterleavingCache extends TestCache {
-			public override async deleteIfValueMatches<T>(key: string, value: T): Promise<boolean> {
-				if (key === deletedKey) {
-					await this.setWithoutExpiry(key, { createTime: 200 });
-					return false;
-				}
-				return super.deleteIfValueMatches(key, value);
-			}
-		}
 		const authoritativeManager = new TestDocumentManager();
-		const cache = new InterleavingCache();
+		const cache = new TestCache();
 		const manager = new DocumentManager(authoritativeManager, cache);
-		sandbox
-			.stub(authoritativeManager, "readDocument")
-			.resolves({ ...activeDocument, createTime: 200 });
+		sandbox.stub(authoritativeManager, "readDocument").resolves(activeDocument);
 
-		await manager.purgeStaticCache(tenantId, documentId, activeDocument.createTime);
+		await manager.purgeStaticCache(tenantId, documentId, 200);
 
 		assert.strictEqual(
 			await manager.readStaticPropertiesForSummary(tenantId, documentId),
 			undefined,
 		);
-		assert.deepStrictEqual(await cache.get(deletedKey), { createTime: 200 });
+		assert.strictEqual(await cache.get(deletedKey), 200);
+	});
+
+	it("keeps the newest deletion fence when an older deletion completes later", async () => {
+		const deletedKey = "deletedDocument:tenant%2Fa:shared%3Aid";
+		const cache = new TestCache();
+		const manager = new DocumentManager(new TestDocumentManager(), cache);
+
+		await manager.purgeStaticCache(tenantId, documentId, 200);
+		await manager.purgeStaticCache(tenantId, documentId, 100);
+
+		assert.strictEqual(await cache.get(deletedKey), 200);
+	});
+
+	it("allows deletion of an already marked generation without reopening reads", async () => {
+		const authoritativeManager = new TestDocumentManager();
+		const cache = new TestCache();
+		const manager = new DocumentManager(authoritativeManager, cache);
+		sandbox.stub(authoritativeManager, "readDocument").resolves(activeDocument);
+		await manager.purgeStaticCache(tenantId, documentId, activeDocument.createTime);
+
+		assert.deepStrictEqual(
+			await manager.readStaticPropertiesForSummaryDelete(tenantId, documentId),
+			{
+				version: activeDocument.version,
+				createTime: activeDocument.createTime,
+				documentId,
+				tenantId,
+				storageName: activeDocument.storageName,
+				isEphemeralContainer: activeDocument.isEphemeralContainer,
+			},
+		);
+		assert.strictEqual(
+			await manager.readStaticPropertiesForSummary(tenantId, documentId),
+			undefined,
+		);
 	});
 });

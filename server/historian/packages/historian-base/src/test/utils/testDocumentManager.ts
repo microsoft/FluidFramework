@@ -39,6 +39,14 @@ export class TestDocumentManager implements IDocumentManager, ISummaryDocumentMa
 		return this.readStaticProperties(tenantId, documentId, options);
 	}
 
+	public async readStaticPropertiesForSummaryDelete(
+		tenantId: string,
+		documentId: string,
+		options?: { accessToken?: string },
+	): Promise<IDocumentStaticProperties | undefined> {
+		return this.readStaticProperties(tenantId, documentId, options);
+	}
+
 	public async purgeStaticCache(
 		tenantId: string,
 		documentId: string,

@@ -379,12 +379,16 @@ export async function validateSummaryDocument({
 		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
 		throw error;
 	}
+	const readStaticPropertiesForOperation =
+		operation === "delete"
+			? documentManager.readStaticPropertiesForSummaryDelete.bind(documentManager)
+			: documentManager.readStaticPropertiesForSummary.bind(documentManager);
 	const readStaticProperties = reuseCustomerAccessToken
 		? async () =>
-				documentManager.readStaticPropertiesForSummary(tenantId, documentId, {
+				readStaticPropertiesForOperation(tenantId, documentId, {
 					accessToken,
 				})
-		: async () => documentManager.readStaticPropertiesForSummary(tenantId, documentId);
+		: async () => readStaticPropertiesForOperation(tenantId, documentId);
 	let document: IDocumentStaticProperties | undefined;
 	try {
 		document = await runWithRetry(

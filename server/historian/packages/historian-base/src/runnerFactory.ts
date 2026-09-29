@@ -91,6 +91,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const gitCache = disableGitCache
 			? undefined
 			: new historianServices.RedisCache(redisClientConnectionManager, redisParams);
+		const documentDeletionMarkerCache =
+			gitCache ?? new historianServices.RedisCache(redisClientConnectionManager, redisParams);
 		const tenantCache = new historianServices.RedisTenantCache(
 			redisClientConnectionManager,
 			redisParams,
@@ -231,7 +233,11 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const authoritativeDocumentManager =
 			customizations?.documentManager ??
 			new services.DocumentManager(alfredEndpoint, tenantManager);
-		const documentManager = new DocumentManager(authoritativeDocumentManager, gitCache);
+		const documentManager = new DocumentManager(
+			authoritativeDocumentManager,
+			gitCache,
+			documentDeletionMarkerCache,
+		);
 		const simplifiedCustomDataRetriever =
 			customizations?.simplifiedCustomDataRetriever ??
 			new historianServices.SimplifiedCustomDataRetriever();

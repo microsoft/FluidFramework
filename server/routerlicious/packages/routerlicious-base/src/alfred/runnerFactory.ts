@@ -455,7 +455,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			baseDocumentDeleteService,
 			documentManager,
 			documentRepository,
-			documentDeletionMarkerCache,
 		);
 
 		// Service Message setup
