@@ -1321,6 +1321,7 @@ describe("summary ownership routes", () => {
 	let documentManager: TestDocumentManager;
 	let cache: TestCache;
 	let readStaticProperties: sinon.SinonStub;
+	let purgeStaticCache: sinon.SinonStub;
 	let storageNameRetrieverGet: sinon.SinonStub;
 	let superTest: request.SuperTest<request.Test>;
 
@@ -1360,6 +1361,7 @@ describe("summary ownership routes", () => {
 		readStaticProperties = sandbox
 			.stub(documentManager, "readStaticProperties")
 			.resolves(activeDocument);
+		purgeStaticCache = sandbox.stub(documentManager, "purgeStaticCache").resolves();
 		storageNameRetrieverGet = sandbox.stub().resolves("legacy-storage");
 		superTest = createSummaryOwnershipSuperTest(defaultProvider);
 	});
@@ -1367,7 +1369,7 @@ describe("summary ownership routes", () => {
 	afterEach(() => sandbox.restore());
 
 	it("denies attacker tenant latest and SHA before cache or GitRest", async () => {
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+		readStaticProperties.resolves({
 			...activeDocument,
 			tenantId: "victim-tenant",
 		});
@@ -1384,14 +1386,13 @@ describe("summary ownership routes", () => {
 			.set("Authorization", authorization)
 			.expect(404);
 
-		sinon.assert.calledTwice(readDocument);
+		sinon.assert.calledTwice(readStaticProperties);
 		sinon.assert.notCalled(cacheGet);
 		sinon.assert.notCalled(getSummary);
 		sinon.assert.notCalled(getTenant);
 	});
 
 	it("allows same-tenant latest and SHA after fresh validation", async () => {
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		const info = sandbox.spy(Lumberjack, "info");
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
@@ -1412,8 +1413,8 @@ describe("summary ownership routes", () => {
 
 		assert.deepStrictEqual(getSummary.firstCall.args, ["latest", true]);
 		assert.deepStrictEqual(getSummary.secondCall.args, [sha, true]);
-		assert.ok(readDocument.firstCall.calledBefore(getSummary.firstCall));
-		assert.ok(readDocument.secondCall.calledBefore(getSummary.secondCall));
+		assert.ok(readStaticProperties.firstCall.calledBefore(getSummary.firstCall));
+		assert.ok(readStaticProperties.secondCall.calledBefore(getSummary.secondCall));
 		sinon.assert.calledWithMatch(
 			info,
 			"HistorianSummaryDocumentOwnershipValidation",
@@ -1441,7 +1442,6 @@ describe("summary ownership routes", () => {
 	});
 
 	it("preserves legacy storage routing after fresh validation", async () => {
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
 			trees: [],
@@ -1453,10 +1453,8 @@ describe("summary ownership routes", () => {
 			.set("Authorization", authorization)
 			.expect(200);
 
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
-		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId);
-		sinon.assert.calledOnceWithExactly(storageNameRetrieverGet, tenantId, documentId);
-		assert.ok(readDocument.calledBefore(readStaticProperties));
+		sinon.assert.calledTwice(readStaticProperties);
+		sinon.assert.notCalled(storageNameRetrieverGet);
 		assert.ok(readStaticProperties.calledBefore(getSummary));
 	});
 
@@ -1466,10 +1464,7 @@ describe("summary ownership routes", () => {
 			trees: [],
 			blobs: [],
 		});
-		sandbox.stub(documentManager, "readDocument").resolves({
-			...activeDocument,
-			scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
-		});
+		readStaticProperties.resolves(undefined);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
 
 		await superTest
@@ -1481,7 +1476,7 @@ describe("summary ownership routes", () => {
 	});
 
 	it("requires ownership before hard or soft DELETE reaches cache invalidation or GitRest", async () => {
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(null);
+		readStaticProperties.resolves(undefined);
 		const cacheDelete = sandbox.spy(cache, "delete");
 		const deleteSummary = sandbox.stub(RestGitService.prototype, "deleteSummary");
 
@@ -1496,13 +1491,37 @@ describe("summary ownership routes", () => {
 			.set("Soft-Delete", "true")
 			.expect(404);
 
-		sinon.assert.calledTwice(readDocument);
+		sinon.assert.calledTwice(readStaticProperties);
 		sinon.assert.notCalled(cacheDelete);
 		sinon.assert.notCalled(deleteSummary);
 	});
 
+	it("purges static ownership data after soft and hard summary deletion", async () => {
+		sandbox.stub(defaultTenantService, "deleteFromCache").resolves(true);
+		const deleteSummary = sandbox
+			.stub(RestGitService.prototype, "deleteSummary")
+			.resolves(true);
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "false")
+			.expect(200);
+
+		sinon.assert.calledTwice(deleteSummary);
+		sinon.assert.calledTwice(purgeStaticCache);
+		sinon.assert.alwaysCalledWithExactly(purgeStaticCache, tenantId, documentId);
+		assert.ok(purgeStaticCache.firstCall.calledBefore(deleteSummary.firstCall));
+		assert.ok(purgeStaticCache.secondCall.calledBefore(deleteSummary.secondCall));
+	});
+
 	it("requires ownership for non-initial POST and ignores caller routing metadata", async () => {
-		sandbox.stub(documentManager, "readDocument").resolves(null);
+		readStaticProperties.resolves(undefined);
 		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
 
 		await superTest
@@ -1518,7 +1537,7 @@ describe("summary ownership routes", () => {
 	});
 
 	it("requires ownership for POST when initial is omitted", async () => {
-		sandbox.stub(documentManager, "readDocument").resolves(null);
+		readStaticProperties.resolves(undefined);
 		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
 
 		await superTest
@@ -1566,7 +1585,6 @@ describe("summary ownership routes", () => {
 
 	it("forwards the customer access token on protected summary routes when enabled", async () => {
 		superTest = createSummaryOwnershipSuperTest(createTestProvider(true));
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
 			trees: [],
@@ -1598,21 +1616,19 @@ describe("summary ownership routes", () => {
 			.set("Soft-Delete", "true")
 			.expect(200);
 
-		sinon.assert.callCount(readDocument, 4);
-		sinon.assert.alwaysCalledWithExactly(readDocument, tenantId, documentId, {
-			accessToken,
-		});
-		assert.ok(readDocument.getCall(0).calledBefore(getSummary.getCall(0)));
-		assert.ok(readDocument.getCall(1).calledBefore(getSummary.getCall(1)));
-		assert.ok(readDocument.getCall(2).calledBefore(createSummary.getCall(0)));
-		assert.ok(readDocument.getCall(3).calledBefore(deleteSummary.getCall(0)));
+		const ownershipCalls = readStaticProperties
+			.getCalls()
+			.filter((call) => call.args[2]?.accessToken === accessToken);
+		assert.strictEqual(ownershipCalls.length, 4);
+		assert.ok(ownershipCalls[0].calledBefore(getSummary.getCall(0)));
+		assert.ok(ownershipCalls[1].calledBefore(getSummary.getCall(1)));
+		assert.ok(ownershipCalls[2].calledBefore(createSummary.getCall(0)));
+		assert.ok(ownershipCalls[3].calledBefore(deleteSummary.getCall(0)));
 	});
 
 	it("allows a normal summary after initial creation while denying a cross-tenant document", async () => {
-		let document: IDocument | null = null;
-		const readDocument = sandbox
-			.stub(documentManager, "readDocument")
-			.callsFake(async () => document);
+		let document: IDocument | undefined;
+		readStaticProperties.callsFake(async () => document);
 		const createSummary = sandbox
 			.stub(RestGitService.prototype, "createSummary")
 			.resolves({ id: sha });
@@ -1640,14 +1656,14 @@ describe("summary ownership routes", () => {
 			.send({ type: "container", trees: [], blobs: [] })
 			.expect(404);
 
-		sinon.assert.calledTwice(readDocument);
+		sinon.assert.calledTwice(readStaticProperties);
 		sinon.assert.calledTwice(createSummary);
 	});
 
 	it("rejects a non-string storage name from Alfred", async () => {
 		const document = { ...activeDocument };
 		Object.assign(document, { storageName: 123 });
-		sandbox.stub(documentManager, "readDocument").resolves(document);
+		readStaticProperties.resolves(document);
 		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
 		const logError = sandbox.spy(Lumberjack, "error");
 
@@ -1667,7 +1683,7 @@ describe("summary ownership routes", () => {
 	});
 
 	it("creates no positive attacker mappings after ownership denial", async () => {
-		sandbox.stub(documentManager, "readDocument").resolves({
+		readStaticProperties.resolves({
 			...activeDocument,
 			tenantId: "victim-tenant",
 		});
@@ -1683,12 +1699,12 @@ describe("summary ownership routes", () => {
 
 	it("fails closed when Alfred is unavailable", async () => {
 		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
-		const readDocument = sandbox
-			.stub(documentManager, "readDocument")
-			.rejects(new NetworkError(503, "Alfred unavailable", true, false));
+		const readStaticPropertiesFailure = readStaticProperties.rejects(
+			new NetworkError(503, "Alfred unavailable", true, false),
+		);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
 		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
-			while (readDocument.callCount < expectedCallCount) {
+			while (readStaticPropertiesFailure.callCount < expectedCallCount) {
 				await new Promise<void>((resolve) => {
 					setImmediate(resolve);
 				});
@@ -1715,8 +1731,8 @@ describe("summary ownership routes", () => {
 
 	it("bypasses ownership only for initial POST while protecting existing-document routes", async () => {
 		const events: string[] = [];
-		sandbox.stub(documentManager, "readDocument").callsFake(async () => {
-			events.push("readDocument");
+		readStaticProperties.callsFake(async () => {
+			events.push("readStaticProperties");
 			return activeDocument;
 		});
 		sandbox.stub(RestGitService.prototype, "getSummary").callsFake(async () => {
@@ -1755,11 +1771,11 @@ describe("summary ownership routes", () => {
 
 		assert.deepStrictEqual(events, [
 			"createSummary",
-			"readDocument",
+			"readStaticProperties",
 			"getSummary",
-			"readDocument",
+			"readStaticProperties",
 			"createSummary",
-			"readDocument",
+			"readStaticProperties",
 			"deleteSummary",
 		]);
 	});

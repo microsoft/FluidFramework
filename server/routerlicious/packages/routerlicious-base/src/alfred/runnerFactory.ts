@@ -28,6 +28,7 @@ import {
 	type IDocumentDeleteService,
 	DocumentDeleteService,
 } from "./services";
+import { DocumentDeleteServiceWithCacheInvalidation } from "./services/documentDeleteService";
 import { configureThrottler } from "@fluidframework/server-services";
 
 /**
@@ -422,8 +423,33 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
 		const deltaService = new DeltaService(opsCollection, tenantManager);
-		const documentDeleteService =
+		const baseDocumentDeleteService =
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
+		const redisClientConnectionManagerForDocumentStaticCache = new RedisClientConnectionManager(
+			undefined,
+			redisConfig,
+			redisConfig.enableClustering,
+			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
+		);
+		redisClientConnectionManagers.push(redisClientConnectionManagerForDocumentStaticCache);
+		const documentStaticCache = new services.RedisCache(
+			redisClientConnectionManagerForDocumentStaticCache,
+			{
+				expireAfterSeconds: redisConfig.keyExpireAfterSeconds,
+				prefix: "git",
+			},
+		);
+		const documentManager = new services.DocumentManager(
+			"http://invalid-api-use",
+			tenantManager,
+			documentStaticCache,
+		);
+		const documentDeleteService = new DocumentDeleteServiceWithCacheInvalidation(
+			baseDocumentDeleteService,
+			documentManager,
+		);
 
 		// Service Message setup
 		const serviceMessageResourceManager = customizations?.serviceMessageResourceManager;

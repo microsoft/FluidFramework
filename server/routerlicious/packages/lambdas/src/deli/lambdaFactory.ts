@@ -15,6 +15,7 @@ import {
 	type IClusterDrainingChecker,
 	type IDeliState,
 	type IDocument,
+	type IDocumentManager,
 	type IDocumentRepository,
 	type ILogger,
 	type IPartitionLambda,
@@ -72,6 +73,7 @@ export class DeliLambdaFactory
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker | undefined,
 		private readonly ephemeralDocumentTTLSec?: number,
+		private readonly documentManager?: IDocumentManager,
 	) {
 		super();
 	}
@@ -259,6 +261,7 @@ export class DeliLambdaFactory
 							documentId,
 							tenantId,
 						};
+						await this.documentManager?.purgeStaticCache(tenantId, documentId);
 						if (
 							this.serviceConfiguration.deli.ephemeralContainerSoftDeleteTimeInMs >= 0
 						) {

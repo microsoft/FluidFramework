@@ -112,7 +112,7 @@ export function create(
 		allowDisabledTenant = false,
 		query?: Query,
 	): Promise<RestGitService> {
-		await utils.validateSummaryDocument({
+		const document = await utils.validateSummaryDocument({
 			tenantId,
 			authorization,
 			documentManager,
@@ -130,6 +130,7 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
+			documentStorageName: document.storageName,
 			allowDisabledTenant,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
@@ -221,6 +222,8 @@ export function create(
 			"notApplicable",
 			true,
 		);
+		const documentId = utils.getDocumentIdFromAuthorization(tenantId, authorization);
+		await documentManager.purgeStaticCache(tenantId, documentId);
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);

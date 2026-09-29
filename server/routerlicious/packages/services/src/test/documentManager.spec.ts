@@ -215,7 +215,69 @@ describe("DocumentManager", () => {
 		assert.deepStrictEqual(cache.sets, []);
 	});
 
-	it("never stores scheduledDeletionTime in static properties", async () => {
+	it("forwards a provided access token when a static cache miss falls back to Alfred", async () => {
+		const cache = new RecordingCache();
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		const readDocument = sandbox
+			.stub(manager, "readDocument")
+			.resolves(createDocument("tenant-a", "document-a"));
+
+		await manager.readStaticProperties("tenant-a", "document-a", {
+			accessToken: "customer.jwt",
+		});
+
+		sinon.assert.calledOnceWithExactly(readDocument, "tenant-a", "document-a", {
+			accessToken: "customer.jwt",
+		});
+	});
+
+	it("falls back to Alfred and replaces malformed cached static properties", async () => {
+		const cache = new RecordingCache();
+		cache.values.set("staticData:tenant-a:document-a", "{invalid");
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		const document = createDocument("tenant-a", "document-a");
+		const readDocument = sandbox.stub(manager, "readDocument").resolves(document);
+		const { version, createTime, documentId, tenantId, storageName, isEphemeralContainer } =
+			document;
+
+		assert.deepStrictEqual(await manager.readStaticProperties("tenant-a", "document-a"), {
+			version,
+			createTime,
+			documentId,
+			tenantId,
+			storageName,
+			isEphemeralContainer,
+		});
+		sinon.assert.calledOnceWithExactly(readDocument, "tenant-a", "document-a", undefined);
+		assert.deepStrictEqual(cache.deletes, ["staticData:tenant-a:document-a"]);
+		assert.deepStrictEqual(cache.sets, ["staticData:tenant-a:document-a"]);
+	});
+
+	it("falls back to Alfred when cached static properties cannot be decoded", async () => {
+		const cache = new RecordingCache();
+		const cacheGet = sandbox.stub(cache, "get").callsFake(async (key: string) => {
+			if (key.startsWith("staticData:")) {
+				throw new SyntaxError("invalid JSON");
+			}
+			return null;
+		});
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		const document = createDocument("tenant-a", "document-a");
+		const readDocument = sandbox.stub(manager, "readDocument").resolves(document);
+
+		const properties = await manager.readStaticProperties("tenant-a", "document-a");
+
+		assert.strictEqual(properties?.tenantId, "tenant-a");
+		assert.strictEqual(properties?.documentId, "document-a");
+		sinon.assert.callCount(cacheGet, 3);
+		sinon.assert.calledOnce(readDocument);
+		assert.deepStrictEqual(cache.deletes, ["staticData:tenant-a:document-a"]);
+	});
+
+	it("does not return or cache static properties for a soft-deleted document", async () => {
 		const cache = new RecordingCache();
 		const tenantManager = sandbox.createStubInstance(TenantManager);
 		const manager = new DocumentManager("http://unused", tenantManager, cache);
@@ -226,10 +288,8 @@ describe("DocumentManager", () => {
 
 		const properties = await manager.readStaticProperties("tenant-a", "document-a");
 
-		assert.strictEqual(
-			Object.prototype.hasOwnProperty.call(properties, "scheduledDeletionTime"),
-			false,
-		);
+		assert.strictEqual(properties, undefined);
+		assert.deepStrictEqual(cache.sets, []);
 	});
 
 	it("purges only the requested tenant-qualified key", async () => {
@@ -242,6 +302,23 @@ describe("DocumentManager", () => {
 		await manager.purgeStaticCache("tenant:a", "shared:id");
 
 		assert.deepStrictEqual(cache.deletes, ["staticData:tenant%3Aa:shared%3Aid"]);
+		assert.strictEqual(cache.values.get("deletedDocument:tenant%3Aa:shared%3Aid"), "true");
 		assert.strictEqual(cache.values.has("staticData:tenant%3Ab:shared%3Aid"), true);
+	});
+
+	it("denies cached static properties after deletion is marked", async () => {
+		const cache = new RecordingCache();
+		cache.values.set(
+			"staticData:tenant-a:document-a",
+			JSON.stringify(createDocument("tenant-a", "document-a")),
+		);
+		const tenantManager = sandbox.createStubInstance(TenantManager);
+		const manager = new DocumentManager("http://unused", tenantManager, cache);
+		const readDocument = sandbox.spy(manager, "readDocument");
+
+		await manager.purgeStaticCache("tenant-a", "document-a");
+
+		assert.strictEqual(await manager.readStaticProperties("tenant-a", "document-a"), undefined);
+		sinon.assert.notCalled(readDocument);
 	});
 });

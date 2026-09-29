@@ -8,6 +8,7 @@ import { defaultHash, getNextHash } from "@fluidframework/server-services-client
 import {
 	CheckpointService,
 	DefaultServiceConfiguration,
+	IDocumentManager,
 	IPartitionLambda,
 	IProducer,
 	ISequencedOperationMessage,
@@ -232,6 +233,89 @@ describe("Routerlicious", () => {
 			});
 
 			describe(".handler", () => {
+				it("purges static ownership data before soft-deleting an ephemeral document", async () => {
+					const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
+					const mongoManager = new MongoManager(dbFactory);
+					const documentRepository = new TestNotImplementedDocumentRepository();
+					const checkpointRepository = new TestNotImplementedCheckpointRepository();
+					const checkpointService = new CheckpointService(
+						checkpointRepository,
+						documentRepository,
+						false,
+					);
+					Sinon.replace(
+						documentRepository,
+						"readOne",
+						Sinon.fake.resolves({
+							...testData[0],
+							createTime: Date.now(),
+							isEphemeralContainer: true,
+						}),
+					);
+					const updateOne = Sinon.fake.resolves(undefined);
+					Sinon.replace(documentRepository, "updateOne", updateOne);
+					Sinon.replace(
+						checkpointRepository,
+						"getCheckpoint",
+						Sinon.fake.resolves(_.cloneDeep(testData[0])),
+					);
+					Sinon.replace(
+						checkpointRepository,
+						"writeCheckpoint",
+						Sinon.fake.resolves(undefined),
+					);
+					Sinon.replace(
+						checkpointService,
+						"writeCheckpoint",
+						Sinon.fake.resolves(undefined),
+					);
+					const purgeStaticCache = Sinon.fake.resolves(undefined);
+					const documentManager = {
+						purgeStaticCache,
+					} as unknown as IDocumentManager;
+					const ephemeralFactory = new DeliLambdaFactory(
+						mongoManager,
+						documentRepository,
+						checkpointService,
+						testTenantManager,
+						undefined,
+						testForwardProducer,
+						undefined,
+						testReverseProducer,
+						{
+							...DefaultServiceConfiguration,
+							deli: {
+								...DefaultServiceConfiguration.deli,
+								enableEphemeralContainerSummaryCleanup: false,
+								ephemeralContainerSoftDeleteTimeInMs: 0,
+							},
+						},
+						undefined,
+						undefined,
+						documentManager,
+					);
+					const ephemeralLambda = await ephemeralFactory.create(
+						{ documentId: testId, tenantId: testTenantId },
+						testContext,
+					);
+
+					ephemeralLambda.close(LambdaCloseType.ActivityTimeout);
+					while (!purgeStaticCache.called) {
+						await new Promise<void>((resolve) => {
+							setImmediate(resolve);
+						});
+					}
+					while (!purgeStaticCache.firstCall.calledBefore(updateOne.lastCall)) {
+						await new Promise<void>((resolve) => {
+							setImmediate(resolve);
+						});
+					}
+
+					Sinon.assert.calledOnceWithExactly(purgeStaticCache, testTenantId, testId);
+					assert.ok(purgeStaticCache.firstCall.calledBefore(updateOne.lastCall));
+					await ephemeralFactory.dispose();
+				});
+
 				it("Should nack a client that has not sent a join", async () => {
 					await lambda.handler(
 						kafkaMessageFactory.sequenceMessage(

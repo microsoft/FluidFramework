@@ -10,8 +10,9 @@ import {
 	shouldRetryNetworkError,
 	type IStorageNameRetriever,
 	type IRevokedTokenChecker,
-	type IDocument,
+	type IDocumentStaticProperties,
 	type IDocumentManager,
+	type IReadDocumentOptions,
 	type IThrottler,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
@@ -78,6 +79,14 @@ export interface IValidateSummaryDocumentArgs {
 	ignoreEphemeralFlag?: boolean;
 	reuseCustomerAccessToken?: boolean;
 }
+
+type DocumentManagerWithStaticReadOptions = IDocumentManager & {
+	readStaticProperties(
+		tenantId: string,
+		documentId: string,
+		options?: IReadDocumentOptions,
+	): Promise<IDocumentStaticProperties | undefined>;
+};
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
 	return `isEphemeralContainer:${encodeURIComponent(tenantId)}:${encodeURIComponent(documentId)}`;
@@ -288,6 +297,13 @@ function getTokenDocumentId(tenantId: string, authorization: string | undefined)
 	return getTokenDocumentIdentity(tenantId, authorization).documentId;
 }
 
+export function getDocumentIdFromAuthorization(
+	tenantId: string,
+	authorization: string | undefined,
+): string {
+	return getTokenDocumentId(tenantId, authorization);
+}
+
 function logOwnershipOutcome(
 	tenantId: string,
 	documentId: string,
@@ -330,7 +346,7 @@ function denyDocumentAccess(
 }
 
 function validateAlfredDocumentResponse(
-	document: IDocument | null | undefined,
+	document: IDocumentStaticProperties | null | undefined,
 	tenantId: string,
 	documentId: string,
 	operation: SummaryOperation,
@@ -342,8 +358,6 @@ function validateAlfredDocumentResponse(
 		typeof document.tenantId !== "string" ||
 		typeof document.documentId !== "string" ||
 		!Number.isFinite(document.createTime) ||
-		(document.scheduledDeletionTime !== undefined &&
-			typeof document.scheduledDeletionTime !== "string") ||
 		(document.isEphemeralContainer !== undefined &&
 			typeof document.isEphemeralContainer !== "boolean") ||
 		(document.storageName != null && typeof document.storageName !== "string")
@@ -363,19 +377,20 @@ export async function validateSummaryDocument({
 	ephemeralDocumentTTLSec,
 	ignoreEphemeralFlag = false,
 	reuseCustomerAccessToken = false,
-}: IValidateSummaryDocumentArgs): Promise<IDocument> {
+}: IValidateSummaryDocumentArgs): Promise<IDocumentStaticProperties> {
 	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
-	const readDocument = reuseCustomerAccessToken
+	const staticDocumentManager = documentManager as DocumentManagerWithStaticReadOptions;
+	const readStaticProperties = reuseCustomerAccessToken
 		? async () =>
-				documentManager.readDocument(tenantId, documentId, {
+				staticDocumentManager.readStaticProperties(tenantId, documentId, {
 					accessToken,
 				})
-		: async () => documentManager.readDocument(tenantId, documentId);
-	let document: IDocument | null;
+		: async () => documentManager.readStaticProperties(tenantId, documentId);
+	let document: IDocumentStaticProperties | undefined;
 	try {
 		document = await runWithRetry(
-			readDocument,
-			"utils.validateSummaryDocument.readDocument",
+			readStaticProperties,
+			"utils.validateSummaryDocument.readStaticProperties",
 			3,
 			1000,
 			getLumberBaseProperties(documentId, tenantId),
@@ -390,15 +405,12 @@ export async function validateSummaryDocument({
 		throw error;
 	}
 
-	if (document === null) {
+	if (document === undefined) {
 		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
 	}
 	validateAlfredDocumentResponse(document, tenantId, documentId, operation, routeType);
 	if (document.tenantId !== tenantId || document.documentId !== documentId) {
 		return denyDocumentAccess(tenantId, documentId, operation, routeType, "identityMismatch");
-	}
-	if (document.scheduledDeletionTime !== undefined) {
-		return denyDocumentAccess(tenantId, documentId, operation, routeType, "scheduledDeletion");
 	}
 	if (
 		!ignoreEphemeralFlag &&
@@ -423,6 +435,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		cache,
 		initialUpload,
 		storageName,
+		documentStorageName,
 		allowDisabledTenant,
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
@@ -469,9 +482,9 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	}
 
 	const calculatedStorageName =
-		initialUpload && storageName
-			? storageName
-			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
+		(initialUpload && storageName ? storageName : documentStorageName) ??
+		(await storageNameRetriever?.get(tenantId, documentId)) ??
+		customData?.storageName;
 	return new RestGitService(
 		details.storage,
 		writeToExternalStorage,

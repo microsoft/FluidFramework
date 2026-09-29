@@ -17,6 +17,7 @@ import type { Provider } from "nconf";
 
 import type { IHistorianResourcesCustomizations } from "./customizations";
 import { HistorianRunner } from "./runner";
+import { DocumentManager } from "./services/documentManager";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { configureThrottler } from "@fluidframework/server-services";
@@ -229,7 +230,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 		const documentManager: core.IDocumentManager =
 			customizations?.documentManager ??
-			new services.DocumentManager(alfredEndpoint, tenantManager, gitCache);
+			new DocumentManager(alfredEndpoint, tenantManager, gitCache);
 		const simplifiedCustomDataRetriever =
 			customizations?.simplifiedCustomDataRetriever ??
 			new historianServices.SimplifiedCustomDataRetriever();

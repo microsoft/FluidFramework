@@ -24,6 +24,7 @@ export class TestDocumentManager implements IDocumentManager {
 	public async readStaticProperties(
 		tenantId: string,
 		documentId: string,
+		options?: { accessToken?: string },
 	): Promise<IDocumentStaticProperties | undefined> {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}
