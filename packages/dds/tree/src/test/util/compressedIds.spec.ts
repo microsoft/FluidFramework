@@ -6,7 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import type { OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { createMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -33,7 +37,7 @@ function makeUnresolvableOpSpaceId(): {
 	originatorId: SessionId;
 } {
 	const foreignSession = createSessionId();
-	const foreignCompressor = createIdCompressor(foreignSession);
+	const foreignCompressor = createIdCompressor(foreignSession, SerializationVersion.V3);
 	const sessionSpaceId = foreignCompressor.generateCompressedId();
 	const opSpaceId = foreignCompressor.normalizeToOpSpace(sessionSpaceId);
 	return { opSpaceId, originatorId: foreignSession };
@@ -55,7 +59,7 @@ describe("compressedIds", () => {
 			});
 
 			it("returns the original stable UUID when the compressed id is non-final", () => {
-				const compressor = createIdCompressor(createSessionId());
+				const compressor = createIdCompressor(createSessionId(), SerializationVersion.V3);
 				const localId = compressor.generateCompressedId();
 				const stableId = compressor.decompress(localId);
 				const result = encodePossiblyCompressedId(
@@ -70,7 +74,7 @@ describe("compressedIds", () => {
 
 		describe("OriginatorDependent", () => {
 			it("returns an op-space id even when the compressed id is non-final", () => {
-				const compressor = createIdCompressor(createSessionId());
+				const compressor = createIdCompressor(createSessionId(), SerializationVersion.V3);
 				const localId = compressor.generateCompressedId();
 				const stableId = compressor.decompress(localId);
 				const result = encodePossiblyCompressedId(
@@ -84,7 +88,7 @@ describe("compressedIds", () => {
 		});
 
 		it("returns the original stable UUID when unknown to the compressor", () => {
-			const otherCompressor = createIdCompressor(createSessionId());
+			const otherCompressor = createIdCompressor(createSessionId(), SerializationVersion.V3);
 			const stableId = otherCompressor.decompress(otherCompressor.generateCompressedId());
 			const result = encodePossiblyCompressedId(
 				stableId,
@@ -134,7 +138,7 @@ describe("compressedIds", () => {
 	describe("decodeEncodedIdWithOriginator", () => {
 		it("normalizes a local op-space id back to its session-space form using the originator", () => {
 			const remoteSession = createSessionId();
-			const remoteCompressor = createIdCompressor(remoteSession);
+			const remoteCompressor = createIdCompressor(remoteSession, SerializationVersion.V3);
 			const remoteSessionSpaceId = remoteCompressor.generateCompressedId();
 			const remoteOpSpaceId = remoteCompressor.normalizeToOpSpace(remoteSessionSpaceId);
 
@@ -230,7 +234,7 @@ describe("compressedIds", () => {
 
 		it("produces different UUIDs for different op-space ids", () => {
 			const foreignSession = createSessionId();
-			const foreignCompressor = createIdCompressor(foreignSession);
+			const foreignCompressor = createIdCompressor(foreignSession, SerializationVersion.V3);
 			const opSpaceA = foreignCompressor.normalizeToOpSpace(
 				foreignCompressor.generateCompressedId(),
 			);
@@ -310,7 +314,7 @@ describe("compressedIds", () => {
 		describe("with an originator", () => {
 			it("resolves a non-final op-space id using the originator session", () => {
 				const remoteSession = createSessionId();
-				const remoteCompressor = createIdCompressor(remoteSession);
+				const remoteCompressor = createIdCompressor(remoteSession, SerializationVersion.V3);
 				const sessionSpaceId = remoteCompressor.generateCompressedId();
 				const opSpaceId = remoteCompressor.normalizeToOpSpace(sessionSpaceId);
 				const context = new IdDecodingContext({

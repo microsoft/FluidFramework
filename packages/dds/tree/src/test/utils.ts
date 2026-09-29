@@ -31,6 +31,7 @@ import {
 	assertIsStableId,
 	createIdCompressor,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
@@ -493,7 +494,7 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
-			const idCompressor = createIdCompressor(sessionId);
+			const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 			this.compressorMap.set(`tree-${i}`, idCompressor);
 			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
