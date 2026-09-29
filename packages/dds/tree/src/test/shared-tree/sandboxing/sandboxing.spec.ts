@@ -27,12 +27,14 @@ import { createTestUndoRedoStacks, mintRevisionTag } from "../../utils.js";
 import {
 	type GuestChangeMessage,
 	type HostGuestMessage,
+	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	parseHostGuestMessage,
 	SandboxProtocolError,
 } from "./common.js";
 import { Host } from "./host.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
+import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 import {
@@ -826,6 +828,63 @@ describe("Host and Guest correctness", () => {
 			replacementGuest.dispose();
 			replacementHost.dispose();
 			ports.dispose();
+		}
+	});
+
+	it("initializes the Guest with the current sequenced trunk revision", () => {
+		const { host, guest } = setup(["a"]);
+		guest.dispose();
+		host.dispose();
+		const synchronization = new HostSynchronization(
+			host.main,
+			() => {},
+			() => {},
+			(action) => action(),
+			(error) => assert.fail(String(error)),
+			createChildLogger({ namespace: "Host" }),
+		);
+		try {
+			assert.equal(
+				synchronization.guestInitialization.trunkRevision,
+				synchronization.guestInitialization.mainRevision,
+			);
+			assert.notEqual(
+				synchronization.guestInitialization.trunkRevision,
+				synchronization.guestInitialization.baseRevision,
+			);
+		} finally {
+			synchronization.dispose();
+		}
+	});
+
+	it("advances the Guest trunk revision for remote peer commits", () => {
+		const { peer, host, guest, provider } = setup(["a"]);
+		guest.dispose();
+		host.dispose();
+		const sent: HostUpdateMessage[] = [];
+		const synchronization = new HostSynchronization(
+			host.main,
+			(message) => {
+				if (message.type === "hostUpdate") {
+					sent.push(message);
+				}
+			},
+			() => {},
+			(action) => action(),
+			(error) => assert.fail(String(error)),
+			createChildLogger({ namespace: "Host" }),
+		);
+		try {
+			const initialTrunkRevision = synchronization.guestInitialization.trunkRevision;
+			peer.root.push("peer");
+			provider.synchronizeMessages();
+
+			assert.equal(sent.length, 1);
+			const update = sent[0] ?? assert.fail("Expected an update for the remote commit");
+			assert.notEqual(update.trunkRevision, initialTrunkRevision);
+			assert.equal(update.trunkRevision, update.mainRevision);
+		} finally {
+			synchronization.dispose();
 		}
 	});
 

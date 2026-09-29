@@ -385,6 +385,7 @@ export function createTreeCheckout(
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		codecOptions?: Partial<CodecWriteOptions>;
+		getTrunkHead?: () => GraphCommit<SharedTreeChange>;
 	},
 ): TreeCheckout {
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
@@ -429,6 +430,8 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		args?.removedRoots,
+		true,
+		args?.getTrunkHead,
 	);
 }
 
@@ -645,6 +648,7 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly idCompressor: IIdCompressor,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
+		private readonly getTrunkHeadFromEditManager?: () => GraphCommit<SharedTreeChange>,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -654,6 +658,15 @@ export class TreeCheckout implements ITreeCheckout {
 	public get branchHistory(): DefaultTreeBranchHistory {
 		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
 		return this._branchHistory;
+	}
+
+	/** Gets the authoritative sequenced trunk head for this collaborative checkout. */
+	public getTrunkHead(): GraphCommit<SharedTreeChange> {
+		assert(
+			this.getTrunkHeadFromEditManager !== undefined,
+			"Sequenced trunk state is only available on a collaborative checkout",
+		);
+		return this.getTrunkHeadFromEditManager();
 	}
 
 	/**

@@ -30,7 +30,7 @@ import {
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
-import { getBranch, serializeCommit } from "./synchronizationUtils.js";
+import { getBranch, getTrunkHead, serializeCommit } from "./synchronizationUtils.js";
 
 /**
  * A baseline snapshot and the retained commits needed to reconstruct the Host branch.
@@ -66,7 +66,6 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private guestTrunkRevision: RevisionTag;
 	private updateInProgress?: PromiseWithResolvers;
 	private sentHead: GraphCommit<SharedTreeChange>;
-	private trunkRevision: RevisionTag;
 	private sentTrunkRevision: RevisionTag;
 	private nextUpdateId = 0;
 	private nextGuestChangeId = 0;
@@ -112,10 +111,10 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			(commit) => commit.parent === undefined,
 		);
 		assert(base !== undefined, "Host branch must have an initialization base");
-		this.trunkRevision = base.revision;
-		this.sentTrunkRevision = this.trunkRevision;
+		const trunkRevision = getTrunkHead(main).revision;
+		this.sentTrunkRevision = trunkRevision;
 		this.guestMainRevision = this.sentHead.revision;
-		this.guestTrunkRevision = this.trunkRevision;
+		this.guestTrunkRevision = trunkRevision;
 		this.guestInitialization = {
 			baseRevision: base.revision,
 			mainRevision: this.guestMainRevision,
@@ -125,11 +124,8 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.offAfterChange = branch.events.on("afterChange", () => {
 			this.run(() => this.sendMainUpdate());
 		});
-		this.offCommitSequenced = branch.events.on("commitSequenced", (commit) => {
-			this.run(() => {
-				this.trunkRevision = commit.revision;
-				this.sendMainUpdate();
-			});
+		this.offCommitSequenced = branch.events.on("commitSequenced", () => {
+			this.run(() => this.sendMainUpdate());
 		});
 	}
 
@@ -232,10 +228,11 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	private sendMainUpdate(): void {
 		const head = getBranch(this.main).getHead();
+		const trunkRevision = getTrunkHead(this.main).revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findCommonAncestor(this.sentHead, [head, commits]);
 		assert(base !== undefined, "Host branch updates must share ancestry");
-		if (head === this.sentHead && this.trunkRevision === this.sentTrunkRevision) {
+		if (head === this.sentHead && trunkRevision === this.sentTrunkRevision) {
 			return;
 		}
 		if (this.nextUpdateId > Number.MAX_SAFE_INTEGER) {
@@ -248,17 +245,17 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		}
 		this.pendingUpdates.set(updateId, {
 			branch: getBranch(this.main).fork(),
-			trunkRevision: this.trunkRevision,
+			trunkRevision,
 		});
 		this.sentHead = head;
-		this.sentTrunkRevision = this.trunkRevision;
+		this.sentTrunkRevision = trunkRevision;
 		this.log(`Sending update ${updateId} from ${base.revision} to ${head.revision}`);
 		this.send({
 			type: "hostUpdate",
 			updateId,
 			baseRevision: base.revision,
 			mainRevision: head.revision,
-			trunkRevision: this.trunkRevision,
+			trunkRevision,
 			commits: commits.map((commit) => serializeCommit(this.main, commit)),
 		});
 	}

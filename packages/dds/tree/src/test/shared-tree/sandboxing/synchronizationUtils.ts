@@ -38,6 +38,15 @@ export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSch
 }
 
 /**
+ * Gets the sequenced trunk head for a collaborative sandbox view.
+ */
+export function getTrunkHead<TSchema extends ImplicitFieldSchema>(
+	view: TreeViewAlpha<TSchema>,
+): GraphCommit<SharedTreeChange> {
+	return getCheckout(view).getTrunkHead();
+}
+
+/**
  * Serializes an existing commit with its revision.
  */
 export function serializeCommit<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
