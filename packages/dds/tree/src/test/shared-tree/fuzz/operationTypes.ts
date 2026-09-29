@@ -181,6 +181,9 @@ export interface CrossFieldMove extends Move {
 }
 
 export interface SchemaOp {
+	/**
+	 * Unqualified name of the new node type in the treeFuzz scope.
+	 */
 	type: string;
 }
 

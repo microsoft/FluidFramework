@@ -764,6 +764,9 @@ export function expectSchemaEqual(
 	);
 }
 
+/**
+ * Compares the visible content, stored schema, and retained detached content of two checkouts.
+ */
 export function validateViewConsistency(
 	treeA: ITreeCheckout,
 	treeB: ITreeCheckout,
@@ -778,7 +781,7 @@ export function validateViewConsistency(
 		{
 			tree: toJsonableTree(treeB),
 			schema: treeB.storedSchema,
-			removed: treeA.getRemovedRoots(),
+			removed: treeB.getRemovedRoots(),
 		},
 		idDifferentiator,
 	);
