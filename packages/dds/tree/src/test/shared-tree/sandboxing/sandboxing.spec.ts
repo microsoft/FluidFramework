@@ -12,6 +12,12 @@ import {
 	StressMode,
 } from "@fluid-private/stochastic-test-utils";
 import { fail } from "@fluidframework/core-utils/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+	serializeIdCompressor,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -20,12 +26,15 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
 import { brand, hasSome } from "../../../util/index.js";
 import {
 	checkoutWithContent,
@@ -45,12 +54,13 @@ import {
 	parseHostGuestMessage,
 	SandboxProtocolError,
 } from "./common.js";
+import { Guest } from "./guest.js";
 import { Host } from "./host.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
-import { getFinalizedCommit } from "./synchronizationUtils.js";
+import { getCheckout, getFinalizedCommit } from "./synchronizationUtils.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -74,6 +84,7 @@ describe("Host and Guest message protocol", () => {
 				tree: [],
 				schema: {},
 				commits: [{ value: 1 }],
+				idCompressor: "serialized child",
 			},
 			{
 				type: "hostUpdate",
@@ -107,6 +118,27 @@ describe("Host and Guest message protocol", () => {
 			{},
 			{ type: "unknown" },
 			{ type: "hostInitialization" },
+			// Initialization requires the serialized child compressor, even when all other fields are present.
+			{
+				type: "hostInitialization",
+				baseRevision: "root",
+				mainRevision: "root",
+				trunkRevision: "root",
+				tree: [],
+				schema: {},
+				commits: [],
+			},
+			// A number cannot represent the serialized compressor state.
+			{
+				type: "hostInitialization",
+				baseRevision: "root",
+				mainRevision: "root",
+				trunkRevision: "root",
+				tree: [],
+				schema: {},
+				commits: [],
+				idCompressor: 1,
+			},
 			{ type: "guestChange" },
 			{ type: "hostUpdateAck" },
 			{ type: "guestChangeAck" },
@@ -178,6 +210,138 @@ describe("Host and Guest message protocol", () => {
 describe("Host and Guest correctness", () => {
 	afterEach(function () {
 		disposeActiveSessions(this.currentTest?.state === "failed");
+	});
+
+	it("initializes through the port with a distinct child compressor", async () => {
+		const { guest, provider } = await setup(["initial"]);
+		const root = provider.getCompressor(provider.trees[1]);
+		// eslint-disable-next-line @typescript-eslint/dot-notation -- Verify identity without exposing the checkout's private compressor.
+		const child = getCheckout(guest.view)["idCompressor"];
+
+		assert.notEqual(child, root);
+		assert.equal(child.localSessionId, root.localSessionId);
+		assert.equal(
+			toIdCompressorWithCore(child).getShardSyncToken()?.disposed,
+			false,
+			"Expected an active child shard, not a copy of the root",
+		);
+		assert.deepEqual([...guest.view.root], ["initial"]);
+	});
+
+	it("rejects an invalid serialized child before constructing the Guest view", async () => {
+		const channel = new MessageChannel();
+		const errors: Error[] = [];
+		const guestPromise = Guest.create({
+			config: stringArrayConfig,
+			treeOptions: { jsonValidator: FormatValidatorBasic },
+			port: channel.port2,
+			logger: createChildLogger({ namespace: "Guest" }),
+			handleProtocolError: (error) => errors.push(error),
+		});
+		const rejected = assert.rejects(guestPromise, /Invalid serialized sandbox ID compressor/);
+		channel.port1.postMessage({
+			type: "hostInitialization",
+			baseRevision: "root",
+			mainRevision: "root",
+			trunkRevision: "root",
+			tree: [],
+			schema: {},
+			commits: [],
+			idCompressor: "not a serialized compressor",
+		});
+		try {
+			await rejected;
+			assert(errors[0]?.cause instanceof SandboxProtocolError);
+		} finally {
+			channel.port1.close();
+		}
+	});
+
+	it("rejects a serialized root compressor in place of a child shard", async () => {
+		const channel = new MessageChannel();
+		const guestPromise = Guest.create({
+			config: stringArrayConfig,
+			treeOptions: { jsonValidator: FormatValidatorBasic },
+			port: channel.port2,
+			logger: createChildLogger({ namespace: "Guest" }),
+			handleProtocolError: () => {},
+		});
+		const rejected = assert.rejects(guestPromise, /Invalid serialized sandbox ID compressor/);
+		channel.port1.postMessage({
+			type: "hostInitialization",
+			baseRevision: "root",
+			mainRevision: "root",
+			trunkRevision: "root",
+			tree: [],
+			schema: {},
+			commits: [],
+			idCompressor: serializeIdCompressor(createIdCompressor(SerializationVersion.V3), true),
+		});
+		try {
+			await rejected;
+		} finally {
+			channel.port1.close();
+		}
+	});
+
+	it("rejects a Host compressor that cannot create a child shard", async () => {
+		const { guest, host, provider } = await setup(["initial"]);
+		guest.dispose();
+		host.dispose();
+		const channel = new MessageChannel();
+		try {
+			assert.throws(
+				() =>
+					new Host({
+						main: host.main,
+						port: channel.port1,
+						bindingHandle: provider.trees[1].handle,
+						idCompressor: createIdCompressor(SerializationVersion.V2),
+						logger: createChildLogger({ namespace: "Host" }),
+					}),
+				/Sharding requires document version 3/,
+			);
+			host.main.root.push("still usable");
+			assert.deepEqual([...host.main.root], ["initial", "still usable"]);
+		} finally {
+			channel.port2.close();
+		}
+	});
+
+	it("reclaims an unsent shard when Host initialization cannot be delivered", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: FluidClientVersion.v2_80,
+			}).getFactory(),
+		);
+		const main = asAlpha(provider.trees[1].viewWith(stringArrayConfig));
+		main.initialize(["initial"]);
+		provider.synchronizeMessages();
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const channel = new MessageChannel();
+		channel.port1.postMessage = () => {
+			throw new Error("Transport unavailable");
+		};
+		try {
+			assert.throws(
+				() =>
+					new Host({
+						main,
+						port: channel.port1,
+						bindingHandle: provider.trees[1].handle,
+						idCompressor: root,
+						logger: createChildLogger({ namespace: "Host" }),
+					}),
+				/Transport unavailable/,
+			);
+			assert.equal(root.getShardSyncToken(), undefined);
+			main.root.push("still usable");
+		} finally {
+			channel.port2.close();
+			main.dispose();
+		}
 	});
 
 	// The Host and Guest are intended to support being run in separate JavaScript realms.
@@ -403,11 +567,7 @@ describe("Host and Guest correctness", () => {
 				idCompressor: provider.getCompressor(provider.trees[1]),
 				logger: createChildLogger({ namespace: "Host" }),
 			});
-			const replacementGuest = await createGuestForHost(
-				handleArrayConfig,
-				ports.guestPort,
-				provider.getCompressor(provider.trees[1]),
-			);
+			const replacementGuest = await createGuestForHost(handleArrayConfig, ports.guestPort);
 			try {
 				assert.equal(replacementGuest.view.root.length, 3);
 				replacementGuest.view.root.push(replacementGuest.view.root[0]);
@@ -883,6 +1043,14 @@ describe("Host and Guest correctness", () => {
 		});
 
 		const ports = buildDirectSessionPorts();
+		const initialization = new Promise<unknown>((resolve) => {
+			ports.guestPort.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => resolve(event.data),
+				{ once: true },
+			);
+			ports.guestPort.start();
+		});
 		const replacementHost = new Host({
 			main: host.main,
 			port: ports.hostPort,
@@ -890,12 +1058,17 @@ describe("Host and Guest correctness", () => {
 			idCompressor: provider.getCompressor(provider.trees[1]),
 			logger: createChildLogger({ namespace: "Host" }),
 		});
-		const replacementGuest = await createGuestForHost(
-			stringArrayConfig,
-			ports.guestPort,
-			provider.getCompressor(provider.trees[1]),
-		);
+		const replacementGuest = await createGuestForHost(stringArrayConfig, ports.guestPort);
 		try {
+			const wireMessage = parseHostGuestMessage(normalizeTransportData(await initialization));
+			assert(wireMessage.type === "hostInitialization", "Expected Host initialization");
+			// The port carries serialized child state, not the live root compressor supplied to the Host.
+			assert.equal(typeof wireMessage.idCompressor, "string");
+			assert.equal(wireMessage.commits.length, 1);
+			// The replacement Guest must use its own child instance while the Host retains the runtime root.
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- Verify identity without exposing the checkout's private compressor.
+			const replacementCompressor = getCheckout(replacementGuest.view)["idCompressor"];
+			assert.notEqual(replacementCompressor, provider.getCompressor(provider.trees[1]));
 			assert.deepEqual(replacementGuest.view.branchHistory.getHead()?.custom, {
 				tag: "initialization",
 			});
@@ -930,11 +1103,7 @@ describe("Host and Guest correctness", () => {
 			assert.equal(independentHost.guestInitialization.baseRevision, base.revision);
 			assert.equal(independentHost.guestInitialization.trunkRevision, base.revision);
 			assert.notEqual(independentHost.guestInitialization.mainRevision, base.revision);
-			const independentGuest = await createGuestForHost(
-				stringArrayConfig,
-				ports.guestPort,
-				testIdCompressor,
-			);
+			const independentGuest = await createGuestForHost(stringArrayConfig, ports.guestPort);
 			try {
 				assert.deepEqual([...independentGuest.view.root], ["a", "before"]);
 				main.root.push("host");
@@ -1086,11 +1255,7 @@ describe("Host and Guest correctness", () => {
 			if (trimHistory) {
 				assert.notEqual(replacementHost.guestInitialization.baseRevision, "root");
 			}
-			const replacementGuest = await createGuestForHost(
-				stringArrayConfig,
-				ports.guestPort,
-				provider.getCompressor(provider.trees[1]),
-			);
+			const replacementGuest = await createGuestForHost(stringArrayConfig, ports.guestPort);
 			try {
 				assert.deepEqual([...replacementGuest.view.root], ["b", "first", "second"]);
 				replacementGuest.view.root.push("guest");

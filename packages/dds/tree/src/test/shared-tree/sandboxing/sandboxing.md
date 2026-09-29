@@ -87,8 +87,6 @@ These terms are similar to the terms for virtual machines.
     Thus, this protocol does not require version stabilization.
 4. Each message is compatible with [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort).
     This requirement includes initialization messages.
-    The example does not currently meet this requirement.
-    For more information, see "ID Sharding."
 5. The Guest is valid only during its owning Host session.
     Behavior after that session ends is unsupported.
 
@@ -98,9 +96,10 @@ These terms are similar to the terms for virtual machines.
 
 The `Host` constructor and `Guest.create` each accept a named options object.
 Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions` in [common.ts](./common.ts).
-The shared type defines the endpoint's port, logger, session compressor, and optional protocol-error callback.
-Supply a separate port and scoped logger for each endpoint, but share the compressor.
-The Host also requires the application view and binding handle; the Guest requires its schema configuration and tree options.
+The shared type defines the endpoint's port, logger, and optional protocol-error callback.
+Supply a separate port and scoped logger for each endpoint.
+The Host also requires the application view, binding handle, and runtime compressor; the Guest requires its schema configuration and tree options.
+The Guest receives its own serialized compressor shard through initialization.
 If you omit the protocol-error callback, terminal errors are thrown asynchronously.
 
 ### Participants and Message Directions
@@ -143,7 +142,11 @@ This preserves pending Host edits as commits that can be rebased, including inse
 The baseline revision aliases the independent checkout's initial head.
 Branch validation recognizes this alias even when an update contains no commits.
 Initialization commits use the same handle encoding and decoding as subsequent changes.
-The ID compressor is still shared; see [ID Sharding](#id-sharding).
+After serializing the snapshot and retained commits, the Host creates a child shard of its runtime ID compressor.
+The Host sends that shard as part of `hostInitialization` through `MessagePort`.
+The Guest deserializes the shard before initializing its view or replaying commits.
+This removes the need to share a live compressor object across the boundary.
+ID progress after initialization is not synchronized yet; see [ID Sharding](#id-sharding).
 
 ### Message Conversion and Validation
 
@@ -192,8 +195,7 @@ Restoration alone neither binds nor resolves handles.
 For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, binds its handles, merges into the main branch, and then acknowledges it.
 Incoming validation or processing failures and outgoing normalization, validation, or encoding failures terminate the session.
 
-Initialization is a separate entry point: the compressed initial tree follows normalization, payload validation, transport encoding, structured clone, transport decoding, payload validation, and tree-codec initialization.
-The complete initialization payload does not yet pass through `MessagePort`; see [ID Sharding](#id-sharding).
+Initialization is a separate entry point: the complete message, including the compressed tree, schema, retained commits, and serialized child compressor, follows normalization, validation, transport encoding, `MessagePort` structured clone, transport decoding, validation, and tree-codec initialization.
 
 These diagrams show the implemented layers, not a complete security guarantee.
 See [Protocol Validation and Security Hardening](#protocol-validation-and-security-hardening) for the validation still required before production use.
@@ -261,6 +263,7 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 
 [Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
+The existing edit and recovery cases need ID progress synchronization to work with separate compressors; they are not all expected to pass during this staged implementation.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
 Initialization tests also sequence concurrent Peer edits before the pending Host edits.
@@ -308,9 +311,10 @@ These failures do not prevent you from writing the tests.
 
 ### ID Sharding
 
-The Host and the Guest currently use the same id-compressor instance.
-This design is not practical because the Host and the Guest can run in different processes.
-Update the code to serialize a sharded id-compressor.
+The Guest now receives a serialized child compressor, while the Host keeps its runtime compressor.
+Complete synchronization of newly generated Guest IDs to the Host before decoding Guest changes.
+Complete synchronization of Host-generated IDs and newly finalized ranges to the Guest before decoding Host updates.
+Coordinate shard disposal and reclamation with session teardown.
 
 Sharding support was added in https://github.com/microsoft/FluidFramework/pull/27559.
 
@@ -347,10 +351,6 @@ Guest trunk trimming is not a requirement for V1 because timeline support disabl
 In other configurations, make sure that the Guest does not keep an unlimited history.
 
 ### `MessagePort` and IFrame Testing
-
-Initialization data does not yet pass through the port.
-The compressed initial tree follows the separate path described in [Architecture](#message-conversion-and-validation).
-Complete [ID sharding](#id-sharding) before the entire initialization payload uses the message protocol.
 
 Add an integration test that uses an isolated iframe.
 This test makes sure that the implementation does not depend on shared global values.

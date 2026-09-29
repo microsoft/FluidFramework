@@ -5,7 +5,7 @@
 
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { SerializedIdCompressorWithOngoingSession } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
@@ -27,8 +27,6 @@ import {
 export interface SandboxEndpointOptions {
 	/** This endpoint's port in the Host and Guest message channel. */
 	readonly port: MessagePort;
-	/** The compressor shared by the Host and Guest for this session. */
-	readonly idCompressor: IIdCompressor;
 	/** The endpoint-scoped logger for diagnostic telemetry. */
 	readonly logger: TelemetryLoggerExt;
 	// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
@@ -307,6 +305,10 @@ const HostInitializationMessage = Type.Object(
 		schema: Type.Readonly(SerializedTreePayload),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
+		/** A serialized child shard with the local session state needed to initialize the Guest. */
+		idCompressor: Type.Readonly(
+			Type.Unsafe<SerializedIdCompressorWithOngoingSession>(Type.String()),
+		),
 	},
 	{ additionalProperties: false },
 );

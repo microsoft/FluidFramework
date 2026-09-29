@@ -52,6 +52,8 @@ A Guest-authored change is rejected by the Host checkout until it applies a chil
 A Host commit minted beyond the child's known ID range, or a peer commit finalized after sharding, is rejected by the Guest checkout with an unknown ID.
 The expected-failure cases use the checkout's `applyChange` method, which exercises the same change decoder without breaking the public view when decoding fails.
 These tests do not replace end-to-end validation of the full-duplex protocol.
+Serialized Guest initialization now uses a distinct child through `MessagePort`.
+Until ID progress synchronization is added, existing Guest and peer edit tests can fail with an unknown ID.
 
 Two gaps make a serialized shard alone insufficient:
 
@@ -77,12 +79,12 @@ The completed compatibility tests characterize today's behavior; they do not imp
 
 ### Serialized Guest initialization
 
-- [ ] Reject a Host compressor that cannot shard, including a write version below V3.
-- [ ] After preparing the baseline snapshot and retained commits, create a serialized ongoing-session child shard without replacing the Host runtime compressor.
-- [ ] Add and validate the serialized child state in `hostInitialization`; preserve the existing transport encoding and handle rules.
-- [ ] Remove the shared compressor from `SandboxEndpointOptions` and `GuestOptions`, keep the root on `HostOptions`, and stop passing the root to the Guest in [sandboxingTestUtils.ts](./sandboxingTestUtils.ts).
-- [ ] Deserialize the child before constructing the Guest's Host-branch view or replaying retained commits; terminate the session on invalid initialization.
-- [ ] Test the full initialization envelope through `MessagePort`, including retained history, metadata, and a separate Guest compressor.
+- [x] Reject a Host compressor that cannot shard, including a write version below V3.
+- [x] After preparing the baseline snapshot and retained commits, create a serialized ongoing-session child shard without replacing the Host runtime compressor.
+- [x] Add and validate the serialized child state in `hostInitialization`; preserve the existing transport encoding and handle rules.
+- [x] Remove the shared compressor from `SandboxEndpointOptions` and `GuestOptions`, keep the root on `HostOptions`, and stop passing the root to the Guest in [sandboxingTestUtils.ts](./sandboxingTestUtils.ts).
+- [x] Deserialize the child before constructing the Guest's Host-branch view or replaying retained commits; terminate the session on invalid initialization.
+- [x] Test the full initialization envelope through `MessagePort`, including retained history, metadata, and a separate Guest compressor.
 
 ### Guest-to-Host ID progress
 
@@ -103,7 +105,7 @@ The completed compatibility tests characterize today's behavior; they do not imp
 - [ ] Define an orderly close path that stops Guest ID generation, disposes its hidden Host branch and authoring view, and sends a disposal token after outstanding changes.
 - [ ] Synchronize the disposal token on the Host only after those changes are processed; acknowledge reclamation if the application needs confirmation.
 - [ ] On transport loss, do not reclaim ID space until the Guest is known to be stopped; document or bound the cost of unreclaimed replacement sessions.
-- [ ] Test normal disposal, failure, and application-managed Guest replacement with messages in flight.
+- [ ] Test normal disposal, failure, and application-managed Guest replacement with messages in flight
 
 ### End-to-end verification and documentation
 
@@ -114,25 +116,28 @@ The completed compatibility tests characterize today's behavior; they do not imp
 - [ ] Update [sandboxing.md](./sandboxing.md) to describe the implemented ID-sharding path and narrow its remaining work.
 - [ ] Run the relevant type-check, formatting, lint, and test commands for the completed implementation.
 
-## Proposed protocol and lifecycle
 
-### 1. Extend the full-duplex initialization message
+### Potential `id-compressor` API follow-up
 
-Extend the existing `hostInitialization` message, which contains the snapshot tree, persisted schema, baseline revision, main and trunk revisions, and retained commits.
-After [HostSynchronization](./hostSynchronization.ts) serializes the retained commits and [Host](./host.ts) prepares the baseline snapshot, shard the Host's runtime compressor so the child includes the state needed to decode all of them.
-Use `toIdCompressorWithCore(hostCompressor).shard(1)` and retain the root compressor for the runtime and Host tree; do not replace it with the child.
-Fail explicitly if the root cannot shard, including when its write version is below V3.
+- Evaluate whether sharding should provide a way to reclaim a child that was created but never sent, without deserializing it.
+  `shard(1)` returns serialized child state, not a live child or a disposal token.
+  If sending `hostInitialization` throws synchronously, [Host](./host.ts) currently deserializes that state only to call `disposeShard()` and synchronize the resulting token back into the root.
+  Consider an API for this unsent-child case after reviewing usage and lifecycle guarantees; do not reclaim a child that might already be running in the Guest.
 
-Add the **ongoing-session** serialized child compressor string to `hostInitialization`, with validation in [common.ts](./common.ts).
-Do not send a compressor object or a summary-only serialization.
-Keep the existing normalization, validation, transport encoding, and `MessagePort` path for the entire envelope.
-The Guest validates and deserializes the child before constructing its independent Host-branch view and replaying any commits.
-Verify that the serialized shard covers every retained commit; apply any additional compressor updates before decoding commits that depend on them.
+## Protocol and lifecycle
 
-Keep the asynchronous `Guest.create` readiness path and its message-order checks.
-Move the compressor parameter out of `GuestOptions` and the shared `SandboxEndpointOptions`; retain the root compressor on `HostOptions`.
-Update [sandboxingTestUtils.ts](./sandboxingTestUtils.ts) so no test setup passes the root compressor directly to the Guest.
-Initialization and deserialization failures must terminate the session through [SandboxSessionEndpoint](./session.ts).
+### 1. Serialized Guest initialization
+
+The `hostInitialization` message contains the snapshot tree, persisted schema, baseline revision, main and trunk revisions, retained commits, and a serialized ongoing-session child compressor.
+After [HostSynchronization](./hostSynchronization.ts) serializes the retained commits and [Host](./host.ts) prepares the baseline snapshot, the Host calls `shard(1)` on its runtime compressor and sends the child through the existing transport pipeline.
+The Host rejects compressors that cannot shard and reclaims a child if sending initialization fails synchronously.
+The runtime keeps the root compressor.
+
+[Guest.create](./guest.ts) receives and validates the message through `MessagePort`.
+The Guest rejects invalid serialized state and root compressors, then deserializes the child before constructing its Host-branch view and replaying commits.
+`GuestOptions` and [sandboxingTestUtils.ts](./sandboxingTestUtils.ts) no longer pass the Host's compressor into the Guest.
+Initialization failures terminate the session through [SandboxSessionEndpoint](./session.ts).
+Future compressor updates must arrive before any retained or new commit that depends on them.
 
 ### 2. Send Guest ID progress with changes
 

@@ -5,7 +5,10 @@
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	deserializeIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 
 import type { ICodecOptions } from "../../../codec/index.js";
 import {
@@ -56,7 +59,6 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly session: SandboxSessionEndpoint;
 	private readonly config: TreeViewConfiguration<TSchema>;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
-	private readonly idCompressor: IIdCompressor;
 	private readonly port: MessagePort;
 	private readonly logger: TelemetryLoggerExt;
 	private synchronization: GuestSynchronization<TSchema> | undefined;
@@ -119,14 +121,12 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private constructor({
 		config,
 		treeOptions,
-		idCompressor,
 		port,
 		logger,
 		handleProtocolError = throwProtocolError,
 	}: GuestOptions<TSchema>) {
 		this.config = config;
 		this.treeOptions = treeOptions;
-		this.idCompressor = idCompressor;
 		this.port = port;
 		this.logger = logger;
 		this.session = new SandboxSessionEndpoint(
@@ -164,10 +164,22 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		if (this.synchronization !== undefined) {
 			throw new SandboxProtocolError("The Guest received duplicate initialization.");
 		}
+		let idCompressor: ReturnType<typeof deserializeIdCompressor>;
+		try {
+			idCompressor = deserializeIdCompressor(message.idCompressor, SerializationVersion.V3);
+			// A second root with the same session ID would allocate colliding IDs.
+			if (idCompressor.getShardSyncToken() === undefined) {
+				throw new SandboxProtocolError("Guest initialization requires a child shard.");
+			}
+		} catch (error) {
+			throw new SandboxProtocolError("Invalid serialized sandbox ID compressor.", {
+				cause: error,
+			});
+		}
 		const content: ViewContent = {
 			tree: message.tree as ViewContent["tree"],
 			schema: message.schema as ViewContent["schema"],
-			idCompressor: this.idCompressor,
+			idCompressor,
 		};
 		const hostView = independentInitializedView(this.config, this.treeOptions, content);
 		this.synchronization = new GuestSynchronization(

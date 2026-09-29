@@ -6,6 +6,11 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	deserializeIdCompressor,
+	SerializationVersion,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion } from "../../../codec/index.js";
@@ -56,6 +61,8 @@ export interface HostOptions<TSchema extends ImplicitFieldSchema>
 	readonly main: TreeViewAlpha<TSchema>;
 	/** The SharedTree handle to which restored handles are bound. */
 	readonly bindingHandle: IFluidHandle;
+	/** The runtime's root compressor, which remains on the Host when a Guest shard is created. */
+	readonly idCompressor: IIdCompressor;
 }
 
 /**
@@ -147,10 +154,27 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
+		let initialization: HostInitializationMessage | undefined;
 		try {
-			this.postMessage(this.createInitializationMessage(idCompressor));
+			initialization = this.createInitializationMessage(idCompressor);
+			this.postMessage(initialization);
 		} catch (error) {
-			this.dispose();
+			try {
+				if (initialization !== undefined) {
+					// A synchronous send failure means the Guest never received the shard.
+					// Note: we need to deserialize the ID compressor shard in order to notify the parent of its disposal.
+					// TODO: consider `id-compressor` API change to make this more ergonomic.
+					const child = deserializeIdCompressor(
+						initialization.idCompressor,
+						SerializationVersion.V3,
+					);
+					const token = child.disposeShard();
+					assert(token !== undefined, "Expected a disposal token for the unsent Guest shard");
+					toIdCompressorWithCore(idCompressor).synchronizeWithShard(token);
+				}
+			} finally {
+				this.dispose();
+			}
 			throw error;
 		}
 	}
@@ -235,11 +259,17 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				);
 				validateTreePayloadVocabulary(normalizedTree);
 				validateTreePayloadVocabulary(normalizedSchema);
+				// Shard only after serializing both the baseline and retained commits,
+				// so that the child snapshot includes every ID the Guest needs during
+				// initialization.
+				const [serializedChild] = toIdCompressorWithCore(idCompressor).shard(1);
+				assert(serializedChild !== undefined, "Expected one serialized Guest shard");
 				return {
 					type: "hostInitialization",
 					...initialization,
 					tree: normalizedTree as JsonCompatibleReadOnly,
 					schema: normalizedSchema as JsonCompatibleReadOnly,
+					idCompressor: serializedChild,
 				};
 			} finally {
 				cursor.free();

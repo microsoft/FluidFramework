@@ -39,7 +39,7 @@ import { getBranch, getFinalizedCommit, serializeCommit } from "./synchronizatio
  */
 export type GuestBranchInitialization = Omit<
 	HostInitializationMessage,
-	"type" | "tree" | "schema"
+	"type" | "tree" | "schema" | "idCompressor"
 >;
 
 /** A Host update awaiting the Guest's acknowledgment. */

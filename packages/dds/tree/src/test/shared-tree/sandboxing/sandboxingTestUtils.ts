@@ -162,14 +162,12 @@ export async function setup(initialState: string[]) {
 export async function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	port: MessagePort,
-	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
 	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
 ): Promise<Guest<TSchema>> {
 	return Guest.create({
 		config,
 		treeOptions: { jsonValidator: FormatValidatorBasic },
-		idCompressor: hostCompressor,
 		port,
 		logger,
 		handleProtocolError,
@@ -231,7 +229,6 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		const guestPromise = createGuestForHost(
 			config,
 			sessionPorts.guestPort,
-			provider.getCompressor(provider.trees[1]),
 			createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
 			handleProtocolError,
 		);
