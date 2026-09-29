@@ -385,8 +385,12 @@ export function createTreeCheckout(
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		codecOptions?: Partial<CodecWriteOptions>;
-		/** Gets the authoritative sequenced trunk head for a collaborative checkout. */
-		getTrunkHead?: () => GraphCommit<SharedTreeChange>;
+		/**
+		 * Supplies the finalized-history boundary returned by {@link TreeCheckout.getFinalizedCommit}.
+		 * Defaults to the current root of the checkout's commit graph.
+		 * Providing a newer finalized ancestor can enable optimizations that depend on finalized history.
+		 */
+		getFinalizedCommit?: () => GraphCommit<SharedTreeChange>;
 	},
 ): TreeCheckout {
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
@@ -432,7 +436,7 @@ export function createTreeCheckout(
 		idCompressor,
 		args?.removedRoots,
 		true,
-		args?.getTrunkHead,
+		args?.getFinalizedCommit,
 	);
 }
 
@@ -649,8 +653,8 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly idCompressor: IIdCompressor,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
-		/** Gets the authoritative sequenced trunk head, if this is a collaborative checkout. */
-		private readonly getTrunkHeadFromEditManager?: () => GraphCommit<SharedTreeChange>,
+		/** Supplies the boundary for {@link TreeCheckout.getFinalizedCommit}, instead of the current graph root. */
+		private readonly getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -662,13 +666,22 @@ export class TreeCheckout implements ITreeCheckout {
 		return this._branchHistory;
 	}
 
-	/** Gets the authoritative sequenced trunk head for this collaborative checkout. */
-	public getTrunkHead(): GraphCommit<SharedTreeChange> {
-		assert(
-			this.getTrunkHeadFromEditManager !== undefined,
-			"Sequenced trunk state is only available on a collaborative checkout",
-		);
-		return this.getTrunkHeadFromEditManager();
+	/**
+	 * Gets a commit in this checkout's ancestry marking a finalized prefix of history.
+	 * @remarks
+	 * History through this commit will not be rebased or replaced by future edits or synchronization.
+	 * Subsequent edits, including undo, can still change the document.
+	 * The boundary may precede the newest finalized commit, which can prevent optimizations based on finalized history.
+	 *
+	 * Without a supplied boundary, returns the current root of the commit graph.
+	 * Before any commits are made, this is the initial base sentinel.
+	 * After history is loaded or trimmed, it represents the baseline before the retained commits.
+	 * Finalization does not prevent trimming or guarantee that the returned commit remains accessible.
+	 */
+	public getFinalizedCommit(): GraphCommit<SharedTreeChange> {
+		return this.getFinalizedCommitOverride === undefined
+			? findAncestor(this.branch.getHead())
+			: this.getFinalizedCommitOverride();
 	}
 
 	/**
@@ -951,6 +964,8 @@ export class TreeCheckout implements ITreeCheckout {
 							this.changeFamily,
 							change,
 							revision,
+							undefined,
+							commit.customMetadata,
 						);
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),

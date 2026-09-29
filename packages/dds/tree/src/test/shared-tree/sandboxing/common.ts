@@ -5,6 +5,8 @@
 
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
@@ -18,6 +20,24 @@ import {
 	brandedNumberType,
 	type JsonCompatibleReadOnly,
 } from "../../../util/index.js";
+
+/**
+ * Session options shared by the Host and Guest endpoints.
+ */
+export interface SandboxEndpointOptions {
+	/** This endpoint's port in the Host and Guest message channel. */
+	readonly port: MessagePort;
+	/** The compressor shared by the Host and Guest for this session. */
+	readonly idCompressor: IIdCompressor;
+	/** The endpoint-scoped logger for diagnostic telemetry. */
+	readonly logger: TelemetryLoggerExt;
+	// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
+	/**
+	 * Reports terminal session failure asynchronously.
+	 * By default, the error is thrown. After a failure, the application must recreate the Host and Guest pair.
+	 */
+	readonly handleProtocolError?: (error: Error) => void;
+}
 
 /**
  * A violation of the sandbox protocol's data or state requirements.
@@ -279,7 +299,7 @@ const HostInitializationMessage = Type.Object(
 		baseRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies the Host main-branch head produced by replaying `commits`. */
 		mainRevision: Type.Readonly(SessionRevisionTag),
-		/** Identifies the newest sequenced commit in the reconstructed Host branch. */
+		/** Identifies a finalized-history boundary in the reconstructed Host branch, which may precede the newest finalized commit. */
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The compressed tree at `baseRevision`. */
 		tree: Type.Readonly(SerializedTreePayload),
@@ -305,7 +325,7 @@ const HostUpdateMessage = Type.Object(
 		baseRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies the Host main-branch head produced by applying `commits`. */
 		mainRevision: Type.Readonly(SessionRevisionTag),
-		/** Identifies the newest sequenced commit in the resulting Host branch. */
+		/** Identifies a finalized-history boundary in the resulting Host branch, which may precede the newest finalized commit. */
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
@@ -339,7 +359,7 @@ const GuestChangeMessage = Type.Object(
 		changeId: Type.Readonly(GuestChangeId),
 		/** Identifies the Host main-branch head that the Guest had acknowledged when it authored the change. */
 		mainRevision: Type.Readonly(SessionRevisionTag),
-		/** Identifies the newest sequenced Host commit that the Guest had acknowledged. */
+		/** Identifies the Host finalized-history boundary that the Guest had acknowledged. */
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The serialized Guest-authored SharedTree change. */
 		change: Type.Readonly(SerializedTreePayload),

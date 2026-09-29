@@ -27,6 +27,11 @@ These terms are similar to the terms for virtual machines.
   A `sessionFailure` message notifies the peer when the transport still works.
 - **Sequenced edits**: Edits ordered by Fluid services.
   The **trunk** is the branch containing sequenced history.
+- **Finalized-history boundary**: A commit through which history will not be rebased or replaced.
+  The protocol's `trunkRevision` identifies this boundary, which may conservatively precede the newest finalized commit.
+  SharedTree supplies its sequenced trunk head; checkouts without a supplied boundary use their current commit-graph root.
+  An older boundary can require more history to be replayed and prevent optimizations based on finalized history.
+  Guest initialization requires an initialized tree and schema at this boundary.
 - **Host-local edits**: Edits on the Host that are not sequenced.
 - **Guest-local edits**: Edits on the Guest that the Host has not acknowledged.
 - **Host-originated edits**: Edits that the Host makes directly, not edits received from a Guest.
@@ -88,6 +93,15 @@ These terms are similar to the terms for virtual machines.
     Behavior after that session ends is unsupported.
 
 ## Architecture
+
+### Endpoint Options
+
+The `Host` constructor and `Guest.create` each accept a named options object.
+Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions` in [common.ts](./common.ts).
+The shared type defines the endpoint's port, logger, session compressor, and optional protocol-error callback.
+Supply a separate port and scoped logger for each endpoint, but share the compressor.
+The Host also requires the application view and binding handle; the Guest requires its schema configuration and tree options.
+If you omit the protocol-error callback, terminal errors are thrown asynchronously.
 
 ### Participants and Message Directions
 

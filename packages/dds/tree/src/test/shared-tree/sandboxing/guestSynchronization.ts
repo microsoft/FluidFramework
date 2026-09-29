@@ -56,7 +56,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private pushInProgress?: PromiseWithResolvers;
 	/** The Host main revision on which the next Guest change will be based. */
 	private mainRevision: RevisionTag;
-	/** The sequenced Host revision on which the next Guest change will be based. */
+	/** The Host finalized-history boundary on which the next Guest change will be based. */
 	private trunkRevision: RevisionTag;
 	/** Host commits indexed by revision for validating and applying branch updates. */
 	private readonly hostCommits = new Map<RevisionTag, GraphCommit<SharedTreeChange>>();

@@ -38,12 +38,12 @@ export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSch
 }
 
 /**
- * Gets the sequenced trunk head for a collaborative sandbox view.
+ * Gets a finalized-history boundary for a sandbox view.
  */
-export function getTrunkHead<TSchema extends ImplicitFieldSchema>(
+export function getFinalizedCommit<TSchema extends ImplicitFieldSchema>(
 	view: TreeViewAlpha<TSchema>,
 ): GraphCommit<SharedTreeChange> {
-	return getCheckout(view).getTrunkHead();
+	return getCheckout(view).getFinalizedCommit();
 }
 
 /**

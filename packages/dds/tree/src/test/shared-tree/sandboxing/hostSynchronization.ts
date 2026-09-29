@@ -31,11 +31,11 @@ import {
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
-import { getBranch, getTrunkHead, serializeCommit } from "./synchronizationUtils.js";
+import { getBranch, getFinalizedCommit, serializeCommit } from "./synchronizationUtils.js";
 
 /**
- * A sequenced trunk snapshot and the pending commits needed to reconstruct the Host branch.
- * Pending commits must be replayed so that the Guest can rebase them after sequencing.
+ * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
+ * Subsequent commits must be replayed so that the Guest can rebase them if the Host history changes.
  */
 export type GuestBranchInitialization = Omit<
 	HostInitializationMessage,
@@ -46,7 +46,7 @@ export type GuestBranchInitialization = Omit<
 interface PendingHostUpdate {
 	/** The exact Host main-branch state sent in the update. */
 	readonly branch: ReturnType<typeof getBranch>;
-	/** The sequenced trunk revision sent in the update. */
+	/** The finalized-history boundary sent in the update. */
 	readonly trunkRevision: RevisionTag;
 }
 
@@ -69,13 +69,13 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	public readonly guestInitialization: GuestBranchInitialization;
 	/** Host main revision included in the latest update acknowledged by the Guest. */
 	private guestMainRevision: RevisionTag;
-	/** Host trunk revision included in the latest update acknowledged by the Guest. */
+	/** Host finalized-history boundary included in the latest update acknowledged by the Guest. */
 	private guestTrunkRevision: RevisionTag;
 	/** The promise and resolver for acknowledgment of all pending Host updates. */
 	private updateInProgress?: PromiseWithResolvers;
 	/** Host main-branch head included in the latest update sent to the Guest. */
 	private sentHead: GraphCommit<SharedTreeChange>;
-	/** Host trunk revision included in the latest update sent to the Guest. */
+	/** Host finalized-history boundary included in the latest update sent to the Guest. */
 	private sentTrunkRevision: RevisionTag;
 	/** The identifier to assign to the next Host update. */
 	private nextUpdateId = 0;
@@ -119,13 +119,13 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.local = main.fork();
 		const branch = getBranch(main);
 		this.sentHead = branch.getHead();
-		const trunkRevision = getTrunkHead(main).revision;
+		const trunkRevision = getFinalizedCommit(main).revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findAncestor(
 			[this.sentHead, commits],
 			(commit) => commit.revision === trunkRevision,
 		);
-		assert(base !== undefined, "Host branch must contain its trunk head");
+		assert(base !== undefined, "Host branch must contain its finalized-history boundary");
 		this.sentTrunkRevision = trunkRevision;
 		this.guestMainRevision = this.sentHead.revision;
 		this.guestTrunkRevision = trunkRevision;
@@ -244,7 +244,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	private sendMainUpdate(): void {
 		const head = getBranch(this.main).getHead();
-		const trunkRevision = getTrunkHead(this.main).revision;
+		const trunkRevision = getFinalizedCommit(this.main).revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findCommonAncestor(this.sentHead, [head, commits]);
 		assert(base !== undefined, "Host branch updates must share ancestry");

@@ -6,7 +6,7 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion } from "../../../codec/index.js";
 import {
@@ -34,6 +34,7 @@ import {
 	type HostInitializationMessage,
 	normalizeProtocolError,
 	parseHostGuestMessage,
+	type SandboxEndpointOptions,
 	SandboxProtocolError,
 	throwProtocolError,
 	validateTreePayloadVocabulary,
@@ -45,6 +46,19 @@ import { normalizeTransportData } from "./transport.js";
 import { getBranch, getCheckout } from "./synchronizationUtils.js";
 
 /**
+ * Options for creating a Host.
+ * @typeParam TSchema - The schema of the synchronized tree.
+ */
+export interface HostOptions<TSchema extends ImplicitFieldSchema>
+	extends SandboxEndpointOptions {
+	// TODO: Use a branch with a forest once it can be supplied without a full view.
+	/** The application-owned view to synchronize with the Guest. */
+	readonly main: TreeViewAlpha<TSchema>;
+	/** The SharedTree handle to which restored handles are bound. */
+	readonly bindingHandle: IFluidHandle;
+}
+
+/**
  * The SharedTree that connects to Fluid services on behalf of a Guest.
  *
  * @typeParam TSchema - The schema of the synchronized tree.
@@ -53,6 +67,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly synchronization: HostSynchronization<TSchema>;
+	private readonly port: MessagePort;
 	private disposed = false;
 	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
 	public readonly main: TreeViewAlpha<TSchema>;
@@ -102,21 +117,15 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		);
 	};
 
-	public constructor(
-		// TODO: once we have a proper API for branches with a forest without requiring a full view, that should be used here.
-		main: TreeViewAlpha<TSchema>,
-		/** The Host endpoint of the Host and Guest message channel. */
-		private readonly port: MessagePort,
-		/** The SharedTree handle to which restored handles are bound. */
-		bindingHandle: IFluidHandle,
-		/** The compressor shared with the Guest for this session. */
-		idCompressor: IIdCompressor,
-		/** The Host-scoped logger for diagnostic telemetry. */
-		logger: TelemetryLoggerExt,
-		// TODO: Replace this callback with `Listenable` event API for session errors and closure.
-		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
-		handleProtocolError: (error: Error) => void = throwProtocolError,
-	) {
+	public constructor({
+		main,
+		port,
+		bindingHandle,
+		idCompressor,
+		logger,
+		handleProtocolError = throwProtocolError,
+	}: HostOptions<TSchema>) {
+		this.port = port;
 		this.codec = new HostTransportCodec(bindingHandle);
 		this.main = main;
 		this.session = new SandboxSessionEndpoint(
@@ -202,7 +211,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			branch.dispose();
 			if (schemaDataIsEmpty(checkout.storedSchema)) {
 				throw new UsageError(
-					"The Host must have a sequenced initialized state before creating a Guest.",
+					"The Host must have an initialized state at its finalized-history boundary before creating a Guest.",
 				);
 			}
 			const cursor = checkout.forest.allocateCursor();

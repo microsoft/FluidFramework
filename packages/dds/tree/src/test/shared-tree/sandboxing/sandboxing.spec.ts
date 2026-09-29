@@ -20,9 +20,22 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SchemaFactoryAlpha, TreeViewConfiguration } from "../../../simple-tree/index.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+import {
+	SchemaFactoryAlpha,
+	toInitialSchema,
+	TreeViewConfiguration,
+} from "../../../simple-tree/index.js";
 import { brand, hasSome } from "../../../util/index.js";
-import { createTestUndoRedoStacks, mintRevisionTag } from "../../utils.js";
+import {
+	checkoutWithContent,
+	createTestUndoRedoStacks,
+	fieldCursorFromInsertable,
+	mintRevisionTag,
+	testIdCompressor,
+	TestTreeProviderLite,
+	viewCheckout,
+} from "../../utils.js";
 
 import {
 	type GuestChangeMessage,
@@ -37,6 +50,7 @@ import { GuestSynchronization } from "./guestSynchronization.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
+import { getFinalizedCommit } from "./synchronizationUtils.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -382,13 +396,13 @@ describe("Host and Guest correctness", () => {
 			assert.equal(peer.root.length, 3);
 
 			const ports = buildDirectSessionPorts();
-			const replacementHost = new Host(
-				host.main,
-				ports.hostPort,
-				provider.trees[1].handle,
-				provider.getCompressor(provider.trees[1]),
-				createChildLogger({ namespace: "Host" }),
-			);
+			const replacementHost = new Host({
+				main: host.main,
+				port: ports.hostPort,
+				bindingHandle: provider.trees[1].handle,
+				idCompressor: provider.getCompressor(provider.trees[1]),
+				logger: createChildLogger({ namespace: "Host" }),
+			});
 			const replacementGuest = await createGuestForHost(
 				handleArrayConfig,
 				ports.guestPort,
@@ -796,6 +810,47 @@ describe("Host and Guest correctness", () => {
 		assert.equal(guest.error, undefined);
 	});
 
+	it("preserves nested Guest commit metadata through Host synchronization", async () => {
+		const { host, guest, peer, provider } = await setup([]);
+		guest.view.runTransaction(
+			() => {
+				guest.view.runTransaction(() => guest.view.root.push("a"), {
+					customMetadata: { tag: "inner" },
+				});
+			},
+			{ customMetadata: { tag: "outer" } },
+		);
+		const expected = normalizeTransportData({
+			metadata: { tag: "outer" },
+			children: [{ metadata: { tag: "inner" }, children: [] }],
+		});
+		await guest.updateHostPromise;
+		await host.updateGuestPromise;
+
+		for (const view of [host.main, host.local, guest.view]) {
+			assert.deepEqual(
+				normalizeTransportData(view.branchHistory.getHead()?.customTree),
+				expected,
+			);
+		}
+
+		provider.synchronizeMessages();
+		await host.updateGuestPromise;
+		assert.deepEqual([...peer.root], ["a"]);
+		for (const [name, view] of [
+			["Host main", host.main],
+			["Host local", host.local],
+			["Guest", guest.view],
+		] as const) {
+			assert.deepEqual([...view.root], ["a"]);
+			assert.deepEqual(
+				normalizeTransportData(view.branchHistory.getHead()?.customTree),
+				expected,
+				name,
+			);
+		}
+	});
+
 	it("preserves nested Host commit metadata in Guest updates", async () => {
 		const { host, guest } = await setup([]);
 		host.main.runTransaction(
@@ -828,13 +883,13 @@ describe("Host and Guest correctness", () => {
 		});
 
 		const ports = buildDirectSessionPorts();
-		const replacementHost = new Host(
-			host.main,
-			ports.hostPort,
-			provider.trees[1].handle,
-			provider.getCompressor(provider.trees[1]),
-			createChildLogger({ namespace: "Host" }),
-		);
+		const replacementHost = new Host({
+			main: host.main,
+			port: ports.hostPort,
+			bindingHandle: provider.trees[1].handle,
+			idCompressor: provider.getCompressor(provider.trees[1]),
+			logger: createChildLogger({ namespace: "Host" }),
+		});
 		const replacementGuest = await createGuestForHost(
 			stringArrayConfig,
 			ports.guestPort,
@@ -848,6 +903,58 @@ describe("Host and Guest correctness", () => {
 			replacementGuest.dispose();
 			replacementHost.dispose();
 			ports.dispose();
+		}
+	});
+
+	it("synchronizes an independent Host using its base as the finalized boundary", async () => {
+		const checkout = checkoutWithContent(
+			{
+				schema: toInitialSchema(stringArrayConfig.schema),
+				initialTree: fieldCursorFromInsertable(stringArrayConfig.schema, ["a"]),
+			},
+			{ codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
+		);
+		const main = viewCheckout(checkout, stringArrayConfig);
+		const base = getFinalizedCommit(main);
+		main.root.push("before");
+
+		const ports = buildDirectSessionPorts();
+		const independentHost = new Host({
+			main,
+			port: ports.hostPort,
+			bindingHandle: new TestTreeProviderLite(1).trees[0].handle,
+			idCompressor: testIdCompressor,
+			logger: createChildLogger({ namespace: "Host" }),
+		});
+		try {
+			assert.equal(independentHost.guestInitialization.baseRevision, base.revision);
+			assert.equal(independentHost.guestInitialization.trunkRevision, base.revision);
+			assert.notEqual(independentHost.guestInitialization.mainRevision, base.revision);
+			const independentGuest = await createGuestForHost(
+				stringArrayConfig,
+				ports.guestPort,
+				testIdCompressor,
+			);
+			try {
+				assert.deepEqual([...independentGuest.view.root], ["a", "before"]);
+				main.root.push("host");
+				await independentHost.updateGuestPromise;
+				independentGuest.view.root.push("guest");
+				await independentGuest.updateHostPromise;
+				await independentHost.updateGuestPromise;
+
+				assert.deepEqual([...main.root], ["a", "before", "host", "guest"]);
+				assert.deepEqual([...independentGuest.view.root], [...main.root]);
+				assert.equal(getFinalizedCommit(main), base);
+				assert.equal(independentHost.error, undefined);
+				assert.equal(independentGuest.error, undefined);
+			} finally {
+				independentGuest.dispose();
+			}
+		} finally {
+			independentHost.dispose();
+			ports.dispose();
+			main.dispose();
 		}
 	});
 
@@ -969,13 +1076,13 @@ describe("Host and Guest correctness", () => {
 			host.main.root.removeAt(0);
 
 			const ports = buildDirectSessionPorts();
-			const replacementHost = new Host(
-				host.main,
-				ports.hostPort,
-				provider.trees[1].handle,
-				provider.getCompressor(provider.trees[1]),
-				createChildLogger({ namespace: "Host" }),
-			);
+			const replacementHost = new Host({
+				main: host.main,
+				port: ports.hostPort,
+				bindingHandle: provider.trees[1].handle,
+				idCompressor: provider.getCompressor(provider.trees[1]),
+				logger: createChildLogger({ namespace: "Host" }),
+			});
 			if (trimHistory) {
 				assert.notEqual(replacementHost.guestInitialization.baseRevision, "root");
 			}

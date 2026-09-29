@@ -166,14 +166,14 @@ export async function createGuestForHost<const TSchema extends ImplicitFieldSche
 	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
 ): Promise<Guest<TSchema>> {
-	return Guest.create(
+	return Guest.create({
 		config,
-		{ jsonValidator: FormatValidatorBasic },
-		hostCompressor,
+		treeOptions: { jsonValidator: FormatValidatorBasic },
+		idCompressor: hostCompressor,
 		port,
 		logger,
 		handleProtocolError,
-	);
+	});
 }
 
 /**
@@ -217,14 +217,14 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 
 	const peer = asAlpha(provider.trees[0].viewWith(config));
 	const sessionPorts = sessionPortsBuilder();
-	const host = new Host(
+	const host = new Host({
 		main,
-		sessionPorts.hostPort,
-		provider.trees[1].handle,
-		provider.getCompressor(provider.trees[1]),
-		createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
+		port: sessionPorts.hostPort,
+		bindingHandle: provider.trees[1].handle,
+		idCompressor: provider.getCompressor(provider.trees[1]),
+		logger: createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
-	);
+	});
 
 	let guest: Guest<TSchema>;
 	try {

@@ -25,6 +25,7 @@ import {
 	type HostInitializationMessage,
 	makePromiseWithResolvers,
 	parseHostGuestMessage,
+	type SandboxEndpointOptions,
 	SandboxProtocolError,
 	throwProtocolError,
 } from "./common.js";
@@ -34,6 +35,18 @@ import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 
 /**
+ * Options for creating a Guest.
+ * @typeParam TSchema - The schema of the synchronized tree.
+ */
+export interface GuestOptions<TSchema extends ImplicitFieldSchema>
+	extends SandboxEndpointOptions {
+	/** The schema configuration for the Guest's tree view. */
+	readonly config: TreeViewConfiguration<TSchema>;
+	/** The forest and codec options used to initialize the Guest's tree view. */
+	readonly treeOptions: ForestOptions & ICodecOptions;
+}
+
+/**
  * An independent TreeView synchronized with a Host through a message protocol.
  *
  * @typeParam TSchema - The schema of the synchronized tree.
@@ -41,6 +54,11 @@ import { normalizeTransportData } from "./transport.js";
 export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
+	private readonly config: TreeViewConfiguration<TSchema>;
+	private readonly treeOptions: ForestOptions & ICodecOptions;
+	private readonly idCompressor: IIdCompressor;
+	private readonly port: MessagePort;
+	private readonly logger: TelemetryLoggerExt;
 	private synchronization: GuestSynchronization<TSchema> | undefined;
 	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
@@ -98,18 +116,19 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		);
 	};
 
-	private constructor(
-		private readonly config: TreeViewConfiguration<TSchema>,
-		private readonly options: ForestOptions & ICodecOptions,
-		private readonly idCompressor: IIdCompressor,
-		/** The Guest endpoint of the Host and Guest message channel. */
-		private readonly port: MessagePort,
-		/** The Guest-scoped logger for diagnostic telemetry. */
-		private readonly logger: TelemetryLoggerExt,
-		// TODO: Replace this callback `Listenable` event API for session errors and closure.
-		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
-		handleProtocolError: (error: Error) => void = throwProtocolError,
-	) {
+	private constructor({
+		config,
+		treeOptions,
+		idCompressor,
+		port,
+		logger,
+		handleProtocolError = throwProtocolError,
+	}: GuestOptions<TSchema>) {
+		this.config = config;
+		this.treeOptions = treeOptions;
+		this.idCompressor = idCompressor;
+		this.port = port;
+		this.logger = logger;
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
@@ -130,24 +149,13 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Creates a Guest after receiving its initial Host state through the message port.
 	 *
-	 * @param config - The schema configuration for the Guest's tree view.
-	 * @param options - The forest and codec options used to initialize the Guest's tree view.
-	 * @param idCompressor - The compressor shared with the Host for this session.
-	 * @param port - The Guest endpoint of the Host and Guest message channel.
-	 * @param logger - The Guest-scoped logger for diagnostic telemetry.
-	 * @param handleProtocolError - Reports terminal session failure asynchronously.
-	 * By default, the error is thrown. After a failure, the application must recreate the Host and Guest pair.
+	 * @param options - The tree configuration and session options for the Guest.
 	 * @returns The initialized Guest.
 	 */
 	public static async create<const TSchema extends ImplicitFieldSchema>(
-		config: TreeViewConfiguration<TSchema>,
-		options: ForestOptions & ICodecOptions,
-		idCompressor: IIdCompressor,
-		port: MessagePort,
-		logger: TelemetryLoggerExt,
-		handleProtocolError: (error: Error) => void = throwProtocolError,
+		options: GuestOptions<TSchema>,
 	): Promise<Guest<TSchema>> {
-		const guest = new Guest(config, options, idCompressor, port, logger, handleProtocolError);
+		const guest = new Guest(options);
 		await guest.initialized.promise;
 		return guest;
 	}
@@ -161,7 +169,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			schema: message.schema as ViewContent["schema"],
 			idCompressor: this.idCompressor,
 		};
-		const hostView = independentInitializedView(this.config, this.options, content);
+		const hostView = independentInitializedView(this.config, this.treeOptions, content);
 		this.synchronization = new GuestSynchronization(
 			hostView,
 			{
