@@ -123,7 +123,7 @@ These steps require human action and should be clearly reported in CI workflow l
 - Release branch naming: `release/client/<major>.<minor>` (e.g., `release/client/2.90`)
 - The release branch is created from the commit **before** the version bump on `main`
 - There is no `lerna.json` in this repo
-- **Git remote preference**: When pushing branches, prefer pushing to `upstream` if one is configured for the repo. Check with `git remote -v` if unsure. Only fall back to `origin` if no `upstream` remote exists. **Exception:** In CI (`CI=true`), always use `origin` — there is no `upstream`.
+- **Git remote preference**: When pushing branches, prefer pushing to `origin`. For release engineers (not CI) that should typically be their fork, and for CI (CI=true) it'll be the main microsoft remote.
 - **Working branch naming**: Do NOT use the `release/` prefix for working branches because `release/` is protected on upstream. Use the standard naming convention below — these branches double as progress markers.
 
 ### CI-safe Command Alternatives
