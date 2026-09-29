@@ -299,7 +299,7 @@ USAGE
     --quiet] [-g client|server|azure|build-tools|gitrest|historian]
 
 FLAGS
-  -g, --releaseGroup=<option>       Filters the release report to only include packages from this release group.
+  -g, --releaseGroup=<option>       Selects the release group to update and filters the output to that group.
                                     <options: client|server|azure|build-tools|gitrest|historian>
       --branchName=<value>          (required) Branch name. For release branches, the manifest file is uploaded by build
                                     number and not by current date.
@@ -318,6 +318,14 @@ DESCRIPTION
 
   This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily
   consume them.
+
+  Updates package versions only within the target release group, which defaults to "client".
+  Packages are selected using the input report's releaseGroup metadata.
+
+  When --releaseGroup is supplied, the output also excludes packages outside that group.
+  Otherwise, those packages remain in the report with their original versions.
+
+  The command fails if the input report has no entries with the target release group.
 ```
 
 _See code: [src/commands/release/report-unreleased.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/report-unreleased.ts)_
