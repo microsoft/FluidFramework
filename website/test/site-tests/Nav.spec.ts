@@ -141,11 +141,20 @@ test.describe("Nav", () => {
 		await page.keyboard.press("Enter");
 
 		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-		await expect(page.locator("main")).toBeFocused();
 		await expect(page.locator("main h1")).toHaveText("Quick Start");
+		await expect(page.locator("main")).toBeFocused();
+
+		await page
+			.locator(".navbar")
+			.getByRole("link", { name: /Community/ })
+			.click();
+		await expect(page).toHaveURL(/\/community\/?$/);
+		await expect(page.locator("main h1")).toHaveText("Community");
+		await page.waitForTimeout(100);
+		await expect(page.locator("main")).not.toBeFocused();
 	});
 
-	// These widths cover the desktop sidebar and the narrow-screen menu, which use different containers and close behavior.
+	// Docusaurus uses <aside> above 996px and a closable .navbar-sidebar menu at narrower widths.
 	for (const width of [1280, 768]) {
 		test(`Slow keyboard navigation waits for the new content at ${width}px`, async ({
 			page,
@@ -257,15 +266,6 @@ test.describe("Nav", () => {
 			await expect(page.locator("main")).toBeFocused();
 		});
 
-		test("Pointer navigation does not move focus to the page content", async ({ page }) => {
-			await page.locator('.navbar-sidebar a[href="/docs/start/quick-start"]').click();
-
-			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-			await expect(page.locator("main h1")).toHaveText("Quick Start");
-			await page.waitForTimeout(100);
-			await expect(page.locator("main")).not.toBeFocused();
-		});
-
 		test("Keyboard category expansion does not move focus after a pointer click", async ({
 			page,
 		}) => {
@@ -282,65 +282,51 @@ test.describe("Nav", () => {
 			await expect(buildOverviewLink).toBeVisible();
 			await expect(buildCategory).toBeFocused();
 
-			await buildOverviewLink.click();
-			await expect(page).toHaveURL(/\/docs\/build\/overview\/?$/);
+			await sidebar.locator('a[href="/docs/start/quick-start"]').click();
+			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+			await expect(page.locator("main h1")).toHaveText("Quick Start");
 			await page.waitForTimeout(100);
 			await expect(page.locator("main")).not.toBeFocused();
 		});
 	});
 
-	test("Keyboard sidebar navigation does not focus an unrelated pointer navigation page", async ({
+	test("Sidebar category expansion cancels focus while a keyboard destination is pending", async ({
 		page,
 	}) => {
+		await page.addInitScript(() => {
+			Object.defineProperty(navigator, "connection", {
+				value: { effectiveType: "4g", saveData: true },
+			});
+		});
 		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
 		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
 
-		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
-		const communityLink = page.locator(".navbar").getByRole("link", { name: /Community/ });
-		await quickStartLink.focus();
-		await page.keyboard.press("Enter");
-		await page.keyboard.press("Enter");
+		const pendingScripts: Route[] = [];
+		await page.route("**/*.js", (route) => {
+			pendingScripts.push(route);
+		});
 
-		const overlay = page.locator("#webpack-dev-server-client-overlay");
-		if (await overlay.count()) {
-			await overlay.evaluate((element) => element.remove());
+		try {
+			await page.locator('aside a[href="/docs/start/quick-start"]').focus();
+			await page.keyboard.press("Enter");
+			await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
+			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+			await expect(page.locator("main h1")).toHaveText("Tutorial: DiceRoller application");
+
+			const buildCategory = page
+				.locator("aside")
+				.getByRole("button", { name: "Build With Fluid", exact: true });
+			await buildCategory.focus();
+			await page.keyboard.press("Enter");
+			await expect(buildCategory).toHaveAttribute("aria-expanded", "true");
+			await expect(buildCategory).toBeFocused();
+			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+		} finally {
+			await page.unroute("**/*.js");
+			await Promise.all(pendingScripts.map(async (route) => route.continue()));
 		}
 
-		await communityLink.click();
-		await expect(page).toHaveURL(/\/community\/?$/);
-		await page.waitForTimeout(100);
-		await expect(page.locator("main")).not.toBeFocused();
-	});
-
-	test("Keyboard-expanding a sidebar category does not leak pending navigation to later pointer clicks", async ({
-		page,
-	}) => {
-		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
-
-		const buildCategory = page
-			.locator("aside .menu__link")
-			.filter({
-				hasText: "Build With Fluid",
-			})
-			.first();
-		const buildOverviewLink = page.locator('aside a[href="/docs/build/overview"]');
-
-		await buildCategory.focus();
-		await page.keyboard.press("Enter");
-		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
-		await page.waitForTimeout(100);
-		await expect(page.locator("main")).not.toBeFocused();
-		await expect(buildOverviewLink).toBeVisible();
-
-		const overlay = page.locator("#webpack-dev-server-client-overlay");
-		if (await overlay.count()) {
-			await overlay.evaluate((element) => element.remove());
-		}
-
-		await buildOverviewLink.click();
-
-		await expect(page).toHaveURL(/\/docs\/build\/overview\/?$/);
+		await expect(page.locator("main h1")).toHaveText("Quick Start");
 		await page.waitForTimeout(100);
 		await expect(page.locator("main")).not.toBeFocused();
 	});
@@ -352,47 +338,42 @@ test.describe("Nav", () => {
 		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
 
 		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
-		const communityLink = page.locator(".navbar").getByRole("link", { name: /Community/ });
 
 		await quickStartLink.focus();
 		await page.keyboard.press("Shift+Enter");
 		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
 
-		const overlay = page.locator("#webpack-dev-server-client-overlay");
-		if (await overlay.count()) {
-			await overlay.evaluate((element) => element.remove());
-		}
-
-		await communityLink.click();
-		await expect(page).toHaveURL(/\/community\/?$/);
+		await quickStartLink.click();
+		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+		await expect(page.locator("main h1")).toHaveText("Quick Start");
 		await page.waitForTimeout(100);
 		await expect(page.locator("main")).not.toBeFocused();
 	});
 
-	test("Repeated Enter on a sidebar link does not leak pending navigation into later pointer navigation", async ({
+	test("Repeated Enter on a sidebar link does not affect later pointer navigation", async ({
 		page,
 	}) => {
 		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
 		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
 
 		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
-		const communityLink = page.locator(".navbar").getByRole("link", { name: /Community/ });
+		const buildCategory = page
+			.locator("aside")
+			.getByRole("button", { name: "Build With Fluid", exact: true });
 
-		await quickStartLink.focus();
-		await quickStartLink.dispatchEvent("keydown", {
-			key: "Enter",
-			repeat: true,
-			bubbles: true,
-			cancelable: true,
-		});
-
-		const overlay = page.locator("#webpack-dev-server-client-overlay");
-		if (await overlay.count()) {
-			await overlay.evaluate((element) => element.remove());
+		await buildCategory.focus();
+		try {
+			await page.keyboard.down("Enter");
+			await quickStartLink.focus();
+			await page.keyboard.down("Enter");
+		} finally {
+			await page.keyboard.up("Enter");
 		}
 
-		await communityLink.click();
-		await expect(page).toHaveURL(/\/community\/?$/);
+		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
+		await quickStartLink.click();
+		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+		await expect(page.locator("main h1")).toHaveText("Quick Start");
 		await page.waitForTimeout(100);
 		await expect(page.locator("main")).not.toBeFocused();
 	});

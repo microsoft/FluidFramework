@@ -21,6 +21,7 @@ let requestFocus: (() => void) | undefined;
 
 /**
  * Normalizes trailing slashes so sidebar links match router locations.
+ * Treats /docs/page and /docs/page/ as the same page while retaining the query.
  */
 function getNavigationPath(location: { pathname: string; search: string }): string {
 	const path = location.pathname;
@@ -28,7 +29,8 @@ function getNavigationPath(location: { pathname: string; search: string }): stri
 }
 
 /**
- * Cancels pending focus when the theme handles a sidebar link as category expansion.
+ * Cancels an earlier navigation's focus request when the user expands a sidebar category.
+ * Category expansion has no route change, so route callbacks cannot cancel the earlier request.
  */
 function onClick(event: MouseEvent): void {
 	const target = event.target;
@@ -50,6 +52,8 @@ function onClick(event: MouseEvent): void {
  * Records unmodified Enter navigation to another same-origin page without a fragment.
  */
 function onKeyDown(event: KeyboardEvent): void {
+	// Only plain Enter requests focus in the current tab.
+	// Leave modified shortcuts and repeated key presses to the browser.
 	if (
 		event.key !== "Enter" ||
 		event.defaultPrevented ||
