@@ -622,12 +622,8 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boo
  * @throws An `Error` with `errorMessage` if a duplicate item is found.
  */
 export function assertUnique<T>(items: readonly T[], errorMessage: string): void {
-	const seen = new Set<T>();
-	for (const item of items) {
-		if (seen.has(item)) {
-			throw new Error(errorMessage);
-		}
-		seen.add(item);
+	if (new Set(items).size !== items.length) {
+		throw new Error(errorMessage);
 	}
 }
 
