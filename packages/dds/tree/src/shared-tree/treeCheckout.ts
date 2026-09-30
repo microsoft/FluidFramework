@@ -1387,25 +1387,24 @@ export class TreeCheckout implements ITreeCheckout {
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 
-	@throwIfBroken
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {
-		return this.createSchematizingView(config, !this.isSharedBranch);
+		return this.viewWithInternal(config);
 	}
 
 	/**
-	 * Creates a schematized view without transferring ownership of this checkout to the view.
+	 * Creates a schematized view of this checkout.
+	 * @param config - The schema and behavior configuration for the view.
+	 * @param disposeCheckoutOnViewDispose - Whether disposing the view also disposes this checkout.
+	 * Defaults to true for checkouts that are not shared branches.
+	 * @remarks
+	 * Extends {@link ViewTree.viewWith} to include `disposeCheckoutOnViewDispose` parameter.
 	 */
-	public viewWithRetainedCheckout<TRoot extends ImplicitFieldSchema>(
-		config: TreeViewConfiguration<TRoot>,
-	): TreeView<TRoot> {
-		return this.createSchematizingView(config, false) as unknown as TreeView<TRoot>;
-	}
-
-	private createSchematizingView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	@throwIfBroken
+	public viewWithInternal<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
-		disposeCheckoutOnViewDispose: boolean,
+		disposeCheckoutOnViewDispose?: boolean,
 	): SchematizingSimpleTreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this,

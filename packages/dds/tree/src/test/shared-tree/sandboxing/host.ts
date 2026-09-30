@@ -23,9 +23,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type { TreeCheckout } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
+import type { UntypedTreeView } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
@@ -50,17 +48,16 @@ import { getCheckout } from "./synchronizationUtils.js";
  * Options for creating a Host.
  * @typeParam TSchema - The schema of the synchronized tree.
  */
-export interface HostOptions<TSchema extends ImplicitFieldSchema>
-	extends SandboxEndpointOptions {
+export interface HostOptions extends SandboxEndpointOptions {
 	// TODO: Use a branch with a forest once it can be supplied without a full view.
 	/** The application-owned view to synchronize with the Guest. */
-	readonly main: TreeViewAlpha<TSchema>;
+	readonly main: UntypedTreeView;
 	/** The SharedTree handle to which restored handles are bound. */
 	readonly bindingHandle: IFluidHandle;
 }
 
 /**
- * The SharedTree that connects to Fluid services on behalf of a Guest.
+ * The SharedTree that connects to Fluid services on behalf of a {@link Guest}.
  * @sealed
  */
 export interface Host {
@@ -73,10 +70,19 @@ export interface Host {
 }
 
 /**
+ * Creates and connects a {@link Host} which can support a {@link Guest}.
+ * @param options - The options for creating the Host, including the main view and binding handle.
+ * @returns The created Host instance.
+ */
+export function createHost(options: HostOptions): Host {
+	return new HostImplementation(options);
+}
+
+/**
  * Implementation of {@link Host}.
  * @typeParam TSchema - The schema of the synchronized tree supplied during construction.
  */
-export class HostImplementation<const TSchema extends ImplicitFieldSchema> implements Host {
+export class HostImplementation implements Host {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	/** Internal synchronization state exposed for testing. */
@@ -138,7 +144,7 @@ export class HostImplementation<const TSchema extends ImplicitFieldSchema> imple
 		idCompressor,
 		logger,
 		handleProtocolError = throwProtocolError,
-	}: HostOptions<TSchema>) {
+	}: HostOptions) {
 		this.port = port;
 		this.codec = new HostTransportCodec(bindingHandle);
 		this.mainCheckout = getCheckout(main);

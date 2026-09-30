@@ -6,21 +6,124 @@
 import { strict as assert } from "node:assert";
 
 import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
+import {
+	cleanupEphemeralService,
+	startEphemeralService,
+} from "@fluidframework/local-driver/internal";
+import {
+	sharedObjectRegistryFromIterable,
+	defineDataStore,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type ITree,
+	type ViewableTree,
+} from "../../../simple-tree/index.js";
+import { createHost } from "./host.js";
+import { SharedTreeAlpha } from "../../../treeFactory.js";
+import type {
+	SharedObject,
+	SharedObjectCreator,
+} from "@fluidframework/shared-object-base/internal";
+import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { asBeta } from "../../../api.js";
+import { getCheckout } from "./synchronizationUtils.js";
+import { createGuest } from "./guest.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 
-describe("Host and Guest Demo", () => {
-	afterEach(function () {
+describe("End to End Host and Guest integrations", () => {
+	afterEach(async function () {
 		disposeActiveSessions(this.currentTest?.state === "failed");
+		await cleanupEphemeralService();
+	});
+
+	// Demos which look more like real end user use.
+	// Currently shows limitations which need fixing.
+	describe("User Facing APIs", () => {
+		// TODO: would be nice to make this use case possible with the simpler defineTreeDataStore.
+		// defineTreeDataStore should get an overload or alternative which omits the config and does not crate the view for you.
+		const TestDataStore = defineDataStore<ViewableTree, ITree>({
+			type: "testTree",
+			registry: sharedObjectRegistryFromIterable([SharedTreeAlpha]),
+			async instantiateFirstTime(rootCreator: SharedObjectCreator): Promise<ITree> {
+				return rootCreator.createSharedObject(SharedTreeAlpha);
+			},
+			async view(tree): Promise<ITree> {
+				return tree;
+			},
+		});
+
+		const config = new TreeViewConfiguration({ schema: SchemaFactory.string });
+
+		it("user facing APIs", async () => {
+			const client = startEphemeralService().defaultClient;
+			const container = await client.createAttachedContainer(TestDataStore);
+			const tree = container.data;
+			// TODO: ideally we wouldn't require the host to create a view.
+			// See existing TODO on `HostOptions.main` for details.
+			const viewHost = asBeta(tree.viewWith(config));
+
+			const log: string[] = [];
+			const logger = createChildLogger({
+				logger: {
+					send(event: ITelemetryBaseEvent, logLevel: LogLevel) {
+						log.push(JSON.stringify(event));
+					},
+				},
+			});
+
+			const channel = new MessageChannel();
+
+			// TODO: we need to expose a better way to do this.
+			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
+			const idCompressor = getCheckout(viewHost)["idCompressor"];
+
+			// TODO: we should not have to initialize first:
+			viewHost.initialize("A");
+			// TODO: This should not be required.
+			await client.service.synchronize();
+
+			const host = createHost({
+				// TODO: we need to expose a better way to do this.
+				bindingHandle: (tree as unknown as SharedObject).handle,
+				logger,
+				idCompressor,
+				main: viewHost,
+				port: channel.port1,
+			});
+			const guest = await createGuest({
+				logger,
+				port: channel.port2,
+				idCompressor,
+				treeOptions: { jsonValidator: FormatValidatorBasic },
+			});
+			const viewGuest = guest.tree.viewWith(config);
+
+			// TODO: we should be able to initialize here
+			// viewGuest.initialize("B");
+			viewGuest.root = "B";
+
+			// TODO: how do we synchronize?
+			// This happens to work, but its really just a complex wait to yield,
+			// not actually waiting on the message port.
+			await client.service.synchronize();
+
+			assert.equal(viewHost.root, "B");
+			assert.equal(host.error, undefined);
+		});
 	});
 
 	it("the initial state is consistent across the Host and Guest", async () => {
-		const { host, main, local, guest, guestView } = await setup(["A"]);
+		const { main, local, guestView } = await setup(["A"]);
 		assert.deepEqual([...guestView.root], ["A"]);
 		assert.deepEqual([...local.root], ["A"]);
 		assert.deepEqual([...main.root], ["A"]);
 	});
 
 	it("one Guest edit", async () => {
-		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
+		const { peer, main, local, guest, guestView, provider } = await setup([]);
 
 		// Edit in the Guest.
 		guestView.root.push("B(g)");
@@ -48,7 +151,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("new Guest edits during Guest edit push", async () => {
-		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
+		const { peer, main, local, guest, guestView, provider } = await setup([]);
 
 		// Edit in the Guest.
 		guestView.root.push("B(g)");
@@ -114,7 +217,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("one peer edit", async () => {
-		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Edit on the peer.
 		peer.root.push("B(p)");
@@ -143,7 +246,7 @@ describe("Host and Guest Demo", () => {
 	});
 
 	it("new peer edits during Guest update", async () => {
-		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Edit on the peer.
 		peer.root.push("B(p)");

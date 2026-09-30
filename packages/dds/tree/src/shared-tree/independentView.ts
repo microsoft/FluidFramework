@@ -33,7 +33,6 @@ import type {
 	ITreeAlpha,
 	ViewableTree,
 	TreeView,
-	ReadSchema,
 	VerboseTree,
 	SimpleTreeSchema,
 } from "../simple-tree/index.js";
@@ -186,6 +185,8 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 /**
  * Create a {@link ViewableTree} that is not tied to any Fluid runtimes or services.
  *
+ * @typeParam Unused - This type parameter is deprecated and will be removed in future versions.
+ *
  * @remarks
  * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
  *
@@ -229,13 +230,14 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  * ```
  * @privateRemarks
  * Before stabilizing this as public, consider if we can instead just expose a better way to create regular Fluid service based SharedTrees for tests.
- * Something like https://github.com/microsoft/FluidFramework/pull/25422 might be a better long term stable/public solution.
+ * An easy way to create a detached service independent `FluidContainer` with a root tree might be a better approach.
  * @beta
  */
-export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Retained for API compatibility.
+export function createIndependentTreeBeta<const Unused = unknown>(
 	options?: ForestOptions,
 ): ViewableTree {
-	return createIndependentTreeAlpha<TSchema>(options);
+	return createIndependentTreeAlpha(options);
 }
 
 /**
@@ -254,8 +256,7 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
  * If keeping the option here, maybe a separate function of overload would be better? Or maybe flatten ViewContent inline to deduplicate the idCompressor options?
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Retained for API compatibility.
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
+export function createIndependentTreeAlpha(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
 	const checkout = createIndependentTreeCheckout(options);
@@ -264,10 +265,8 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		viewWith<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,
 		): TreeView<TRoot> {
-			const out: TreeViewAlpha<TRoot> = checkout.viewWith(
-				config as TreeViewConfiguration as TreeViewConfiguration<ReadSchema<TRoot>>,
-			);
-			return out as unknown as TreeView<TRoot>;
+			const out: TreeViewAlpha<TRoot> = checkout.viewWith(config);
+			return out as TreeView<TRoot>;
 		},
 
 		exportVerbose(): VerboseTree | undefined {
@@ -282,8 +281,6 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 
 /**
  * Creates the checkout that backs an independent tree.
- *
- * @internal
  */
 export function createIndependentTreeCheckout(
 	options?: CreateIndependentTreeAlphaOptions,

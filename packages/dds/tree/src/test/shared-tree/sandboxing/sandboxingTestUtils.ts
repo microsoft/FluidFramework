@@ -225,7 +225,10 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		logger: createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
 	});
-	const local = asAlpha(host.synchronization.localCheckout.viewWithRetainedCheckout(config));
+	const local: TreeViewAlpha<TSchema> = host.synchronization.localCheckout.viewWithInternal(
+		config,
+		false,
+	);
 
 	let guest: GuestImplementation;
 	let guestView: TreeViewAlpha<TSchema>;

@@ -216,7 +216,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("continues synchronizing after replacing the Guest view", async () => {
-		const { host, main, local, guest, guestView } = await setup(["initial"]);
+		const { host, main, guest, guestView } = await setup(["initial"]);
 		guestView.dispose();
 
 		const replacementView = asAlpha(guest.tree.viewWith(stringArrayConfig));
@@ -249,7 +249,7 @@ describe("Host and Guest correctness", () => {
 			{ ["__proto__"]: "data", constructor: "data", prototype: "data" },
 		];
 		const config = new TreeViewConfiguration({ schema: Records });
-		const { host, main, local, guest, guestView, provider, peer } = await setupCustom(
+		const { host, main, guest, guestView, provider, peer } = await setupCustom(
 			values,
 			config,
 			buildDirectSessionPorts,
@@ -268,7 +268,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("passes blob handles from the Host to the Guest", async () => {
-		const { host, main, local, guest, guestView } = await setupCustom(
+		const { host, main, guestView } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -287,7 +287,7 @@ describe("Host and Guest correctness", () => {
 	it("passes existing handles from the Guest back to the Host and peers", async () => {
 		const value = new Uint8Array([4, 5]).buffer;
 		const handle = new MockHandle(value);
-		const { host, main, local, guest, guestView, peer, provider } = await setupCustom(
+		const { host, main, guest, guestView, peer, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -306,7 +306,7 @@ describe("Host and Guest correctness", () => {
 
 	it("preserves proxy identity across initialization and updates", async () => {
 		const handle = new MockHandle(new ArrayBuffer(2));
-		const { host, main, local, guest, guestView } = await setupCustom(
+		const { host, main, guestView } = await setupCustom(
 			[handle, handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -321,7 +321,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("clearly rejects resolution of handles to Fluid objects", async () => {
-		const { host, main, local, guest, guestView, provider } = await setupCustom(
+		const { host, main, guest, guestView, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -338,7 +338,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("propagates Host resolution failures through the port", async () => {
-		const { host, main, local, guest, guestView } = await setupCustom(
+		const { host, main, guest, guestView } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -372,7 +372,7 @@ describe("Host and Guest correctness", () => {
 					return new ArrayBuffer(1);
 				},
 			});
-			const { host, main, local, guest, guestView, provider, peer } = await setupCustom(
+			const { host, main, guest, guestView, provider, peer } = await setupCustom(
 				[handle],
 				handleArrayConfig,
 				buildDirectSessionPorts,
@@ -477,10 +477,13 @@ describe("Host and Guest correctness", () => {
 		it(`fails the ${receiver} and rejects pending work for ${JSON.stringify(message)}`, async () => {
 			const reported = makePromiseWithResolvers();
 			const handle = new MockHandle(new ArrayBuffer(1));
-			const { host, main, local, guest, guestView, interop, provider, peer } =
-				await setupCustom([handle], handleArrayConfig, buildIsolatedSessionPorts, false, () =>
-					reported.resolver(),
-				);
+			const { host, main, guest, guestView, interop, provider, peer } = await setupCustom(
+				[handle],
+				handleArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
 			let synchronization: Promise<void> | undefined;
 			let blobRejected: Promise<void> | undefined;
 			if (receiver === "Host") {
@@ -511,7 +514,7 @@ describe("Host and Guest correctness", () => {
 		const reported = makePromiseWithResolvers();
 		let reports = 0;
 		const handle = new MockHandle(Object.assign(new ArrayBuffer(1), { extra: true }));
-		const { host, main, local, guest, guestView } = await setupCustom(
+		const { host, main, guest, guestView } = await setupCustom(
 			[handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -536,7 +539,7 @@ describe("Host and Guest correctness", () => {
 	it("contains send failures in main-tree callbacks even when peer notification also fails", async () => {
 		const reported = makePromiseWithResolvers();
 		const transportError = new Error("Transport unavailable");
-		const { host, main, local, guest, guestView } = await setupCustom(
+		const { host, main, guest } = await setupCustom(
 			[],
 			stringArrayConfig,
 			() => {
@@ -570,7 +573,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("continues synchronizing edits while a blob request is pending", async () => {
-		const { host, main, local, guest, guestView } = await setupCustom(
+		const { host, main, guest, guestView } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -605,7 +608,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("retains a handle for Guest deletion, undo, and redo", async () => {
-		const { host, main, local, guest, guestView } = await setupCustom(
+		const { host, main, guest, guestView } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -634,7 +637,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("notifies the peer that an unauthorized blob token terminates the session", async () => {
-		const { interop, host, main, local } = await setupCustom(
+		const { interop, host } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildIsolatedSessionPorts,
@@ -692,10 +695,13 @@ describe("Host and Guest correctness", () => {
 	for (const receiver of ["Host", "Guest"] as const) {
 		it(`classifies an unsolicited acknowledgment to the ${receiver} as a protocol error`, async () => {
 			const reported = makePromiseWithResolvers();
-			const { host, main, local, guest, guestView, interop, provider, peer } =
-				await setupCustom([], stringArrayConfig, buildIsolatedSessionPorts, false, () =>
-					reported.resolver(),
-				);
+			const { host, main, guest, interop, provider, peer } = await setupCustom(
+				[],
+				stringArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
 			const port = receiver === "Host" ? interop.sendToHost : interop.sendToGuest;
 			port.postMessage(
 				receiver === "Host"
@@ -713,7 +719,7 @@ describe("Host and Guest correctness", () => {
 
 		it(`rejects out-of-order changes sent to the ${receiver}`, async () => {
 			const reported = makePromiseWithResolvers();
-			const { host, main, local, guest, guestView, interop } = await setupCustom(
+			const { host, guest, interop } = await setupCustom(
 				[],
 				stringArrayConfig,
 				buildIsolatedSessionPorts,
@@ -748,7 +754,7 @@ describe("Host and Guest correctness", () => {
 		it(`classifies message deserialization failure on the ${receiver} as a protocol error`, async () => {
 			const reported = makePromiseWithResolvers();
 			const ports = buildDirectSessionPorts();
-			const { host, main, local, guest, guestView } = await setupCustom(
+			const { host, guest } = await setupCustom(
 				[],
 				stringArrayConfig,
 				() => ports,
@@ -791,7 +797,7 @@ describe("Host and Guest correctness", () => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const { host, main, local, interop } = await setupCustom(
+		const { host, main, interop } = await setupCustom(
 			[],
 			stringArrayConfig,
 			buildIsolatedSessionPorts,
@@ -883,7 +889,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves nested Host commit metadata in Guest updates", async () => {
-		const { host, main, local, guest, guestView } = await setup([]);
+		const { host, main, guestView } = await setup([]);
 		main.runTransaction(
 			() => {
 				main.runTransaction(() => main.root.push("a"), {
@@ -906,7 +912,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves Host commit metadata during Guest initialization", async () => {
-		const { host, main, local, guest, guestView, provider } = await setup([]);
+		const { host, main, guest, provider } = await setup([]);
 		guest.dispose();
 		host.dispose();
 		main.runTransaction(() => main.root.push("a"), {
@@ -996,7 +1002,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("initializes the Guest with the current sequenced trunk revision", async () => {
-		const { host, main, local, guest, guestView } = await setup(["a"]);
+		const { host, main, guest } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
 		const mainCheckout = getCheckout(main);
@@ -1023,7 +1029,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("advances the Guest trunk revision for remote peer commits", async () => {
-		const { peer, host, main, local, guest, guestView, provider } = await setup(["a"]);
+		const { peer, host, main, guest, provider } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
 		const sent: HostUpdateMessage[] = [];
@@ -1055,7 +1061,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("accepts an empty update at an aliased initialization revision", async () => {
-		const { host, main, local } = await setup(["a"]);
+		const { main } = await setup(["a"]);
 		const revision = mintRevisionTag();
 		const sent: HostGuestMessage[] = [];
 		const synchronization = new GuestSynchronization(
@@ -1097,7 +1103,7 @@ describe("Host and Guest correctness", () => {
 		[true, true],
 	]) {
 		it(`initializes with pending Host edits (trimmed history: ${trimHistory}, concurrent peer: ${concurrentPeerEdit})`, async () => {
-			const { peer, host, main, local, guest, guestView, provider } = await setup(["a", "b"]);
+			const { peer, host, main, guest, provider } = await setup(["a", "b"]);
 			guest.dispose();
 			host.dispose();
 			if (trimHistory) {
@@ -1134,10 +1140,9 @@ describe("Host and Guest correctness", () => {
 				provider.getCompressor(provider.trees[1]),
 			);
 			const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
-			const replacementLocal = asAlpha(
-				replacementHost.synchronization.localCheckout.viewWithRetainedCheckout(
-					stringArrayConfig,
-				),
+			const replacementLocal = replacementHost.synchronization.localCheckout.viewWithInternal(
+				stringArrayConfig,
+				false,
 			);
 			try {
 				assert.deepEqual([...replacementGuestView.root], ["b", "first", "second"]);
@@ -1221,7 +1226,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("Host edits sequenced before peer edits", async () => {
-		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Make an edit on the Host
 		main.root.push("H");
@@ -1254,7 +1259,7 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("peer edits sequenced before Host edits", async () => {
-		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Make an edit on the peer
 		peer.root.push("P");

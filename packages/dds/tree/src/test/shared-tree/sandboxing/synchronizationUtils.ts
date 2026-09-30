@@ -7,15 +7,12 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { SchematizingSimpleTreeView, type TreeCheckout } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Sandbox synchronization requires internal branch APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema, UnsafeUnknownSchema } from "../../../simple-tree/index.js";
+import type { UntypedTreeView } from "../../../simple-tree/api/index.js";
 
 /**
  * Gets the internal checkout for a sandbox view.
  */
-export function getCheckout<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	view: TreeViewAlpha<TSchema>,
-): TreeCheckout {
+export function getCheckout(view: UntypedTreeView): TreeCheckout {
 	assert(
 		view instanceof SchematizingSimpleTreeView,
 		"Expected view to be a SchematizingSimpleTreeView",
