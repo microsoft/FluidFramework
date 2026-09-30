@@ -15,11 +15,3 @@ Install workspace dependencies from the repository root, then run these commands
 | `pnpm lint` | Run lint checks. |
 | `pnpm format` | Format files. |
 | `pnpm run clean` | Remove output, caches, and reports. |
-
-## Adding compatibility suites
-
-Add `.spec.ts` files under `src/test` and remove `scaffold.spec.ts` with the first real suite.
-Tests compile to `lib/test`; the standard client CI discovers them through `test:mocha`.
-
-Add only the DDS, fuzz, and version-management packages the suites use, as `devDependencies`.
-Imports of generated test-only exports also require the corresponding build-task dependencies.
