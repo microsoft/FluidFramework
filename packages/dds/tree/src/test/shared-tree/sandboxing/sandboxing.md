@@ -1,6 +1,6 @@
 # Sandbox Demo
 
-The test file in this folder contains an example architecture for a SharedTree view in a sandbox.
+The tests in this folder exercise an example architecture for a SharedTree view in a sandbox.
 
 The example contains these items:
 
@@ -122,15 +122,15 @@ The Guest keeps a copy of the Host main branch and a separate branch for Guest e
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
 [GuestSynchronization](./guestSynchronization.ts) owns the hidden Host branch and the child ID space shard.
-It applies parent ID progress and finalized ranges before dependent Host branch changes.
 The [Guest](./guest.ts) owns the port, message routing, and close handshake.
 GuestSynchronization creates and updates the authoring view and disposes it during orderly close.
-After a failure, the view remains available for inspection until the application disposes the Guest.
+After a failure before orderly close, the Guest does not dispose the authoring view.
+The application can inspect it if it is still usable, but must not make further edits.
+Application-managed cleanup disposes the view.
 
 The Host preserves the Guest's authoring state in its local branch.
 It applies Guest changes there and merges them into main without rebasing the local branch itself.
-Each Guest change carries a non-disposing child ID space shard progress token.
-The Host checks that the token belongs to this session and advances beyond the last accepted token, then synchronizes its runtime compressor before decoding the change.
+Each change depends on the receiver knowing its IDs; see [ID Space Sharding](#id-space-sharding).
 Only a Guest acknowledgment advances that branch over a Host update.
 Each outstanding update retains the exact Host branch snapshot that was sent, because a revision can be rebased while a message is in flight.
 The Host disposes each snapshot after acknowledgment, or when the session stops.
@@ -149,18 +149,37 @@ This preserves pending Host edits as commits that can be rebased, including inse
 The baseline revision aliases the independent checkout's initial head.
 Branch validation recognizes this alias even when an update contains no commits.
 Initialization commits use the same handle encoding and decoding as subsequent changes.
+The serialized commit format preserves custom metadata in retained commits and later updates.
 After serializing the snapshot and retained commits, the Host creates a child ID space shard of its runtime ID compressor.
 The Host sends that ID space shard as part of `hostInitialization` through `MessagePort`.
 The Guest deserializes the ID space shard before initializing its view or replaying commits.
 This removes the need to share a live compressor object across the boundary.
-Guest-to-Host ID progress is synchronized with each Guest change.
-Host updates include parent ID progress, which the Guest applies before decoding their commits.
-The Host also sends each newly finalized creation range in a `hostIdRange` message.
-That message includes parent progress and reaches the Guest before any later Host update that needs the range.
-The Guest applies the progress first, then finalizes the range.
-The Host sends these messages even when finalization does not change the tree.
-The Guest rejects out-of-order or repeated ranges and parent progress that moves backward.
 See [ID Space Sharding](#id-space-sharding).
+
+### ID Space Sharding
+
+The Host keeps its runtime ID compressor and gives the Guest a separately deserialized child ID space shard.
+The two compressors share a session ID, not an object reference.
+The initial child state includes the IDs needed to load the compressed snapshot and replay retained commits.
+After initialization, sharing a session ID alone does not give either compressor knowledge of new IDs.
+
+For each Guest edit, `getChange()` serializes the change before the Guest captures a non-disposing child progress token.
+The Host verifies that the token belongs to this session and advances beyond the last accepted token.
+It synchronizes its compressor with the child before decoding the Guest change.
+
+Host updates carry parent ID progress captured after their commits are encoded.
+The Guest applies that progress before decoding the commits.
+The Host also forwards finalized creation ranges in runtime order as `hostIdRange` messages, even when no tree update occurs.
+Each range message includes parent progress, which the Guest applies before finalizing the range.
+Ordered delivery ensures a range arrives before a later Host update that depends on it.
+The Guest rejects out-of-order or repeated range IDs, progress for another shard, and progress that moves backward.
+The sandbox does not call `takeNextCreationRange()` to manufacture these messages; range submission and finalization belong to the runtime.
+
+Orderly close reclaims the child ID space shard after Guest changes are acknowledged.
+Failure or abort does not send a new reclamation request.
+The Host keeps the shard reserved unless it already received a valid close token.
+See [Session Failure and Application-Managed Recreation](#session-failure-and-application-managed-recreation) for the close handshake and lost-connection behavior.
+ID space sharding support was added in [PR 27559](https://github.com/microsoft/FluidFramework/pull/27559).
 
 ### Message Conversion and Validation
 
@@ -294,6 +313,7 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 [Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
 The Host, peer, and Guest edit cases run with separate compressors; integration with an isolated iframe is still pending.
+Nested commit metadata, retained Host history, Guest revertibles, and branch rebases are covered by targeted tests.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
 ID-progress tests cover a delayed peer range and Host update while a Guest edit is pending, a repeated finalized range, and invalid parent progress.
@@ -339,17 +359,6 @@ Complete these items in any order.
 
 Some tests will fail if you write them before you complete the implementation.
 These failures do not prevent you from writing the tests.
-
-### ID Space Sharding
-
-The Guest now receives a serialized child ID space shard, while the Host keeps its runtime compressor.
-Guest changes include a token that synchronizes their newly generated IDs to the Host before the tree codec decodes them.
-Host updates carry progress that lets the Guest interpret new Host IDs before decoding commits.
-The Host forwards finalized creation ranges to the Guest before dependent updates.
-The orderly close protocol reclaims a stopped Guest's ID space shard.
-Complete cross-realm tests and failure coordination when the port cannot notify the peer before relying on this for production use.
-
-ID space sharding support was added in https://github.com/microsoft/FluidFramework/pull/27559.
 
 ### Protocol Validation and Security Hardening
 
