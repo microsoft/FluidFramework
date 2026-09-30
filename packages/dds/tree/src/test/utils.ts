@@ -36,7 +36,7 @@ import {
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	FlushMode,
-	OldestSupportedClientVersion,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -1493,10 +1493,10 @@ export function makeTestFieldBatchContexts(opts: {
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & {
-		idCompressor?: IIdCompressor | undefined;
-		minVersionForCollab?: OldestSupportedClientVersion;
-	} = {},
+	options: ForestOptions &
+		Partial<CodecWriteOptions> & {
+			idCompressor?: IIdCompressor | undefined;
+		} = {},
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations
 	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;

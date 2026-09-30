@@ -21,7 +21,6 @@ import {
 	schemaCodecBuilder,
 	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type { TreeCheckout } from "../../../shared-tree/index.js";
 import type { UntypedTreeView } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
@@ -34,6 +33,7 @@ import {
 	normalizeProtocolError,
 	parseHostGuestMessage,
 	type SandboxEndpointOptions,
+	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
 	validateTreePayloadVocabulary,
@@ -237,7 +237,7 @@ export class HostImplementation implements Host {
 			try {
 				moveToDetachedField(checkout.forest, cursor);
 				const options = {
-					jsonValidator: FormatValidatorBasic,
+					jsonValidator: sandboxFormatValidator,
 					minVersionForCollab: FluidClientVersion.v2_80,
 				};
 				const tree = fieldBatchCodecBuilder

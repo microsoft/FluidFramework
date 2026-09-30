@@ -13,7 +13,12 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 } from "../../../core/index.js";
-import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
+import {
+	makeSerializedChangeCodec,
+	type SerializedChangeCodec,
+	type SharedTreeChange,
+	type TreeCheckout,
+} from "../../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -26,8 +31,19 @@ import {
 	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	type PromiseWithResolvers,
+	sandboxFormatValidator,
 	SandboxProtocolError,
 } from "./common.js";
+
+/**
+ * Schema-validation error policy for codecs that decode untrusted Guest data on the Host.
+ * @remarks
+ * Guest codecs intentionally omit this policy so unexpected Host data continues to trigger the
+ * default validation assertions.
+ */
+const throwInvalidGuestChange = (): never => {
+	throw new SandboxProtocolError("Invalid encoded data from Guest.");
+};
 
 /**
  * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
@@ -83,6 +99,8 @@ export class HostSynchronization {
 	private stopped = false;
 	/** Whether the branches owned by this synchronization state have been disposed. */
 	private disposed = false;
+	/** Decodes untrusted Guest changes using Host protocol error semantics. */
+	private readonly guestChangeCodec: SerializedChangeCodec;
 
 	public constructor(
 		/** The Host's main checkout to synchronize with the Guest. */
@@ -109,6 +127,10 @@ export class HostSynchronization {
 		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.localCheckout = this.mainCheckout.fork();
+		this.guestChangeCodec = makeSerializedChangeCodec(
+			this.localCheckout.mainBranch.changeFamily,
+			sandboxFormatValidator,
+		);
 		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
 		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
@@ -159,7 +181,11 @@ export class HostSynchronization {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
-		this.localCheckout.applyChange(message.change);
+		this.localCheckout.applySerializedChange(
+			message.change,
+			this.guestChangeCodec,
+			throwInvalidGuestChange,
+		);
 		this.bindHandles(message.change);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
 		this.mainCheckout.merge(this.localCheckout, false);

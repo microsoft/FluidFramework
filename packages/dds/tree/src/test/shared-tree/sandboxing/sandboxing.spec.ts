@@ -12,6 +12,7 @@ import {
 	StressMode,
 } from "@fluid-private/stochastic-test-utils";
 import { fail } from "@fluidframework/core-utils/internal";
+import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -27,7 +28,7 @@ import {
 	toInitialSchema,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
-import { brand, hasSome } from "../../../util/index.js";
+import { brand, hasSome, type JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -1025,6 +1026,63 @@ describe("Host and Guest correctness", () => {
 			);
 		} finally {
 			synchronization.dispose();
+		}
+	});
+
+	it("reports malformed Guest changes as protocol errors", async () => {
+		const { host, main, guest } = await setup(["a"]);
+		const source = main.fork();
+		let validChange: JsonCompatibleReadOnly | undefined;
+		const offChanged = source.events.on("changed", (metadata) => {
+			if (metadata.isLocal) {
+				validChange = metadata.getChange();
+			}
+		});
+		source.root.push("b");
+		offChanged();
+		source.dispose();
+		assert(
+			typeof validChange === "object" && validChange !== null && !Array.isArray(validChange),
+			"Expected a serialized change object",
+		);
+
+		guest.dispose();
+		host.dispose();
+		const malformedChanges: readonly JsonCompatibleReadOnly[] = [
+			{ invalid: "change" },
+			{ ...validChange, originatorId: "invalid" },
+			{ ...validChange, originatorId: createSessionId() },
+		];
+
+		for (const change of malformedChanges) {
+			const synchronization = new HostSynchronization(
+				getCheckout(main),
+				() => {},
+				() => {},
+				(action) => action(),
+				(error) => assert.fail(String(error)),
+				createChildLogger({ namespace: "Host" }),
+			);
+			try {
+				const { mainRevision, trunkRevision } = synchronization.guestInitialization;
+				assert.throws(
+					() =>
+						synchronization.receiveChangeFromGuest({
+							type: "guestChange",
+							changeId: brand(0),
+							mainRevision,
+							trunkRevision,
+							change,
+						}),
+					(error: unknown) => {
+						assert(error instanceof SandboxProtocolError);
+						assert.match(error.message, /Invalid encoded data from Guest/);
+						return true;
+					},
+				);
+			} finally {
+				synchronization.dispose();
+			}
 		}
 	});
 

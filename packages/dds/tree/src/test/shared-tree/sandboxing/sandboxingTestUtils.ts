@@ -11,7 +11,6 @@ import {
 
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Sandbox test helpers use alpha view APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import {
@@ -23,7 +22,11 @@ import {
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
-import { normalizeProtocolError, throwProtocolError } from "./common.js";
+import {
+	normalizeProtocolError,
+	sandboxFormatValidator,
+	throwProtocolError,
+} from "./common.js";
 import { GuestImplementation } from "./guest.js";
 import { HostImplementation } from "./host.js";
 
@@ -168,7 +171,7 @@ export async function createGuestForHost(
 	handleProtocolError: (error: Error) => void = throwProtocolError,
 ): Promise<GuestImplementation> {
 	return GuestImplementation.create({
-		treeOptions: { jsonValidator: FormatValidatorBasic },
+		treeOptions: { jsonValidator: sandboxFormatValidator },
 		idCompressor: hostCompressor,
 		port,
 		logger,
@@ -206,7 +209,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 	const provider = new TestTreeProviderLite(
 		2,
 		configuredSharedTree({
-			jsonValidator: FormatValidatorBasic,
+			jsonValidator: sandboxFormatValidator,
 			minVersionForCollab: FluidClientVersion.v2_80,
 		}).getFactory(),
 	);
