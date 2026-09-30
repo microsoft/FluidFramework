@@ -11,46 +11,55 @@ test.describe("Version dropdown keyboard navigation", () => {
 		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
 	});
 
-	test("supports disclosure and list navigation keys", async ({ page }) => {
+	for (const openingKey of ["Enter", "Space"]) {
+		test(`supports arrow and boundary keys after ${openingKey} opens the menu`, async ({
+			page,
+		}) => {
+			const trigger = page.getByRole("button", { name: "Select documentation version" });
+			const versionItems = page.locator(".version-dropdown__item");
+			const firstItem = versionItems.first();
+			const lastItem = versionItems.last();
+
+			expect(await versionItems.count()).toBeGreaterThan(1);
+			await trigger.focus();
+			await page.keyboard.press(openingKey);
+			await expect(trigger).toHaveAttribute("aria-expanded", "true");
+			await expect(firstItem).toBeVisible();
+
+			await page.keyboard.press("ArrowDown");
+			await expect(firstItem).toBeFocused();
+
+			await page.keyboard.press("ArrowDown");
+			await expect(versionItems.nth(1)).toBeFocused();
+
+			await page.keyboard.press("ArrowUp");
+			await expect(firstItem).toBeFocused();
+
+			await page.keyboard.press("End");
+			await expect(lastItem).toBeFocused();
+
+			await page.keyboard.press("ArrowDown");
+			await expect(firstItem).toBeFocused();
+
+			await page.keyboard.press("ArrowUp");
+			await expect(lastItem).toBeFocused();
+
+			await page.keyboard.press("Home");
+			await expect(firstItem).toBeFocused();
+		});
+	}
+
+	test("navigation keys do not open a closed menu", async ({ page }) => {
 		const trigger = page.getByRole("button", { name: "Select documentation version" });
-		const versionItems = page.locator(".version-dropdown__item");
-		const firstItem = versionItems.first();
-		const lastItem = versionItems.last();
+		const firstItem = page.locator(".version-dropdown__item").first();
 
-		expect(await versionItems.count()).toBeGreaterThan(1);
 		await trigger.focus();
-
-		await page.keyboard.press("ArrowDown");
-		await expect(trigger).toHaveAttribute("aria-expanded", "true");
-		await expect(firstItem).toBeFocused();
-
-		await page.keyboard.press("End");
-		await expect(lastItem).toBeFocused();
-
-		await page.keyboard.press("ArrowDown");
-		await expect(firstItem).toBeFocused();
-
-		await page.keyboard.press("ArrowUp");
-		await expect(lastItem).toBeFocused();
-
-		await page.keyboard.press("Home");
-		await expect(firstItem).toBeFocused();
-
-		await page.keyboard.press("Escape");
-		await expect(trigger).toBeFocused();
-		await expect(trigger).toHaveAttribute("aria-expanded", "false");
-		await expect(firstItem).toBeHidden();
-
-		await page.keyboard.press("ArrowUp");
-		await expect(lastItem).toBeFocused();
-
-		await page.keyboard.press("Escape");
-		await page.keyboard.press("Enter");
-		await expect(trigger).toHaveAttribute("aria-expanded", "true");
-
-		await page.keyboard.press("Enter");
-		await expect(trigger).toHaveAttribute("aria-expanded", "false");
-		await expect(firstItem).toBeHidden();
+		for (const key of ["ArrowDown", "ArrowUp", "Home", "End"]) {
+			await page.keyboard.press(key);
+			await expect(trigger).toBeFocused();
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await expect(firstItem).toBeHidden();
+		}
 	});
 
 	for (const key of ["Enter", "Space"]) {
@@ -93,65 +102,74 @@ test.describe("Version dropdown keyboard navigation", () => {
 
 		expect(destination).not.toBe(page.url());
 		await trigger.focus();
+		await page.keyboard.press("Enter");
+		await expect(lastItem).toBeVisible();
 		await page.keyboard.press("ArrowUp");
 		await expect(lastItem).toBeFocused();
 		await page.keyboard.press("Enter");
 		await expect(page).toHaveURL(destination);
 	});
 
-	test("Escape dismisses a hovered menu and permits keyboard and hover reopening", async ({
-		page,
-	}) => {
+	test("hover behavior remains under Docusaurus control", async ({ page }) => {
 		const trigger = page.getByRole("button", { name: "Select documentation version" });
 		const firstItem = page.locator(".version-dropdown__item").first();
 
 		await trigger.hover();
+		await expect(firstItem).toBeVisible();
 		await trigger.focus();
 		await page.keyboard.press("ArrowDown");
 		await expect(firstItem).toBeFocused();
-
-		await page.keyboard.press("Escape");
-		await expect(trigger).toBeFocused();
-		await expect(trigger).toHaveAttribute("aria-expanded", "false");
-		await expect(firstItem).toBeHidden();
-
-		await page.keyboard.press("ArrowDown");
-		await expect(firstItem).toBeFocused();
-		await expect(firstItem).toBeVisible();
 		await page.mouse.move(0, 0);
-		await expect(firstItem).toBeVisible();
-		await page.keyboard.press("Escape");
 		await expect(firstItem).toBeHidden();
 
+		await trigger.focus();
+		await page.keyboard.press("Enter");
 		await trigger.hover();
 		await expect(trigger).toHaveAttribute("aria-expanded", "true");
 		await expect(firstItem).toBeVisible();
 		await page.mouse.move(0, 0);
-		await expect(trigger).toHaveAttribute("aria-expanded", "false");
-		await expect(firstItem).toBeHidden();
+		await expect(firstItem).toBeVisible();
 	});
 
-	for (const key of ["Escape", "Enter", "Space"]) {
-		test(`${key} dismisses a hover-open menu from the trigger`, async ({ page }) => {
-			const trigger = page.getByRole("button", { name: "Select documentation version" });
-			const firstItem = page.locator(".version-dropdown__item").first();
+	test("Tab immediately after ArrowUp leaves the menu without delayed focus", async ({
+		page,
+	}) => {
+		const trigger = page.getByRole("button", { name: "Select documentation version" });
+		const firstItem = page.locator(".version-dropdown__item").first();
+		const docsLink = page.locator(".navbar").getByRole("link", { name: "Docs", exact: true });
 
-			await trigger.hover();
-			await trigger.focus();
-			await expect(trigger).toHaveAttribute("aria-expanded", "true");
-			await expect(firstItem).toBeVisible();
-			await page.keyboard.press(key);
-			await expect(trigger).toBeFocused();
-			await expect(trigger).toHaveAttribute("aria-expanded", "false");
-			await expect(firstItem).toBeHidden();
-		});
-	}
+		await trigger.focus();
+		await page.keyboard.press("Enter");
+		await expect(firstItem).toBeVisible();
+		await page.keyboard.press("ArrowUp");
+		await page.keyboard.press("Tab");
+		await expect(trigger).toHaveAttribute("aria-expanded", "false");
+		await expect(firstItem).toBeHidden();
+		await expect(docsLink).toBeFocused();
+	});
+
+	test("Shift+Tab returns to the trigger without delayed focus", async ({ page }) => {
+		const trigger = page.getByRole("button", { name: "Select documentation version" });
+		const firstItem = page.locator(".version-dropdown__item").first();
+
+		await trigger.focus();
+		await page.keyboard.press("Enter");
+		await expect(firstItem).toBeVisible();
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("Shift+Tab");
+		await page.keyboard.press("Enter");
+		await expect(trigger).toHaveAttribute("aria-expanded", "false");
+		await expect(firstItem).toBeHidden();
+		await expect(trigger).toBeFocused();
+	});
 
 	test("a click outside the dropdown dismisses a keyboard-open menu", async ({ page }) => {
 		const trigger = page.getByRole("button", { name: "Select documentation version" });
 		const firstItem = page.locator(".version-dropdown__item").first();
 
 		await trigger.focus();
+		await page.keyboard.press("Enter");
+		await expect(firstItem).toBeVisible();
 		await page.keyboard.press("ArrowDown");
 		await expect(firstItem).toBeFocused();
 		await expect(firstItem).toBeVisible();
@@ -162,14 +180,46 @@ test.describe("Version dropdown keyboard navigation", () => {
 		await expect(firstItem).toBeHidden();
 	});
 
-	test("focus outside the dropdown dismisses a hover-open menu", async ({ page }) => {
+	test("Tab follows the normal order through the open menu", async ({ page }) => {
 		const trigger = page.getByRole("button", { name: "Select documentation version" });
-		const firstItem = page.locator(".version-dropdown__item").first();
+		const versionItems = page.locator(".version-dropdown__item");
 
-		await trigger.hover();
-		await expect(firstItem).toBeVisible();
-		await page.locator(".navbar").getByRole("link", { name: "Docs", exact: true }).focus();
+		await trigger.focus();
+		await page.keyboard.press("Enter");
+		await expect(versionItems.first()).toBeVisible();
+		for (const item of await versionItems.all()) {
+			await page.keyboard.press("Tab");
+			await expect(item).toBeFocused();
+		}
+		await page.keyboard.press("Tab");
 		await expect(trigger).toHaveAttribute("aria-expanded", "false");
+		await expect(
+			page.locator(".navbar").getByRole("link", { name: "Docs", exact: true }),
+		).toBeFocused();
+	});
+
+	test("mobile navigation keeps its existing keyboard behavior", async ({ page }) => {
+		await page.setViewportSize({ width: 390, height: 844 });
+		await page.getByRole("button", { name: "Toggle navigation bar" }).click();
+		await page.getByRole("button", { name: "Back to main menu" }).click();
+
+		const dropdown = page.locator(".navbar-sidebar .version-dropdown-wrapper");
+		const firstItem = dropdown.locator(".version-dropdown__item").first();
+		const collapseButton = dropdown.getByRole("button", { name: "Collapse the dropdown" });
+
+		await expect(firstItem).toBeVisible();
+		await firstItem.focus();
+		for (const key of ["ArrowDown", "ArrowUp", "Home", "End"]) {
+			await page.keyboard.press(key);
+			await expect(firstItem).toBeFocused();
+		}
+
+		await collapseButton.focus();
+		await page.keyboard.press("Enter");
 		await expect(firstItem).toBeHidden();
+		const expandButton = dropdown.getByRole("button", { name: "Expand the dropdown" });
+		await expect(expandButton).toBeFocused();
+		await page.keyboard.press("Enter");
+		await expect(firstItem).toBeVisible();
 	});
 });
