@@ -773,10 +773,9 @@ export class ConnectionStateHandler implements IConnectionStateHandler {
 		// This check is required for scenario of loading container from pending state, and ensuring there is no way
 		// old clientId is still in the quorum (very unlikely, but you never know)
 		// if we have a clientId from a previous container we need to wait for its leave message
-		// This mimicks check in setConnectionState()
-		// Note that we are not consulting this.handler.hasPendingOps() here.
-		// It could produce wrong results for stashed ops were never sent to Loader yet, and if this check
-		// makes determination only on that (and not uses "dirty" events), then it can produce wrong result.
+		// This mimics check in setConnectionState(), except that we do not gate it on
+		// this.handler.hasPendingOps(): we deliberately wait whenever the previous clientId is still in the
+		// quorum, rather than relying on pending-op state to prove that nothing can still be sequenced under it.
 		// In most cases it does not matter, as this client already left quorum. But in really unfortunate case,
 		// we might wait even if we could avoid such wait.
 		if (
