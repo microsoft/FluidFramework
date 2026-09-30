@@ -9,11 +9,17 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type ChangeFamily,
+	type CustomMetadataTree,
 	type RevisionTag,
 	tagChange,
 	type ChangeEncodingContext,
 	type TaggedChange,
 } from "../core/index.js";
+import {
+	decodeCustomMetadataTree,
+	type EncodedCustomMetadataTree,
+	encodeCustomMetadataTree,
+} from "../shared-tree-core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -26,19 +32,45 @@ import { SharedTreeChangeFormatVersion } from "./sharedTreeChangeCodecs.js";
  * Data in this format is not expected to be durable beyond the scope of a single session.
  */
 interface SerializedChange {
-	readonly version: 1;
+	/** Identifies the serialized change format. */
+	readonly version: 2;
+	/** Identifies the commit containing the change. */
 	readonly revision: RevisionTag;
+	/** The encoded SharedTree change. */
 	readonly change: JsonCompatibleReadOnly;
+	/** Identifies the ID-compressor session required to decode the change. */
 	readonly originatorId: SessionId;
+	/** Application-defined metadata attached to the commit. */
+	readonly customMetadata?: EncodedCustomMetadataTree;
 }
 
-function isSerializedChangeV1(value: unknown): value is SerializedChange {
+/**
+ * A deserialized SharedTree change with its revision and application-defined commit metadata.
+ */
+interface DecodedChange {
+	/** The decoded SharedTree change and its revision. */
+	readonly change: TaggedChange<SharedTreeChange>;
+	/** Application-defined metadata attached to the commit. */
+	readonly customMetadata: CustomMetadataTree | undefined;
+}
+
+/**
+ * Checks whether a value is a serialized change in version 2 format.
+ *
+ * @param value - The value to check.
+ * @returns True if the value is a serialized change in version 2 format, false otherwise.
+ *
+ * @remarks
+ * TODO: This check does not fully validate the serialized change structure. It only performs a basic type check.
+ * We will need to implement a more robust check for untrusted data.
+ */
+function isSerializedChangeV2(value: unknown): value is SerializedChange {
 	if (typeof value !== "object" || value === null) {
 		return false;
 	}
 	const change = value as Partial<SerializedChange>;
 	return (
-		change.version === 1 &&
+		change.version === 2 &&
 		(change.revision === "root" || typeof change.revision === "number") &&
 		typeof change.originatorId === "string" &&
 		isStableId(change.originatorId) &&
@@ -46,12 +78,13 @@ function isSerializedChangeV1(value: unknown): value is SerializedChange {
 	);
 }
 
-function encodeSerializedChangeV1(
+function encodeSerializedChangeV2(
 	idCompressor: IIdCompressor,
 	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, unknown>,
 	change: SharedTreeChange,
 	changeRevision: RevisionTag,
 	contextRevision?: RevisionTag,
+	customMetadata?: CustomMetadataTree,
 ): JsonCompatibleReadOnly {
 	const context: ChangeEncodingContext = {
 		idCompressor,
@@ -63,23 +96,27 @@ function encodeSerializedChangeV1(
 		.resolve(SharedTreeChangeFormatVersion.v4)
 		.encode(change, context);
 
-	return {
-		version: 1,
+	const serializedChange = {
+		version: 2,
 		revision: changeRevision,
 		originatorId: idCompressor.localSessionId,
 		change: encodedChange,
+		...(customMetadata === undefined
+			? {}
+			: { customMetadata: encodeCustomMetadataTree(customMetadata) }),
 	} satisfies SerializedChange;
+	return serializedChange;
 }
 
-function decodeSerializedChangeV1(
+function decodeSerializedChangeV2(
 	idCompressor: IIdCompressor,
 	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, unknown>,
 	serializedChange: JsonCompatibleReadOnly,
-): TaggedChange<SharedTreeChange> {
-	if (!isSerializedChangeV1(serializedChange)) {
+): DecodedChange {
+	if (!isSerializedChangeV2(serializedChange)) {
 		throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 	}
-	const { revision, originatorId, change } = serializedChange;
+	const { revision, originatorId, change, customMetadata } = serializedChange;
 	if (originatorId !== idCompressor.localSessionId) {
 		throw new UsageError(
 			`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
@@ -94,34 +131,43 @@ function decodeSerializedChangeV1(
 	const treeChange = changeFamily.codecs
 		.resolve(SharedTreeChangeFormatVersion.v4)
 		.decode(change, context);
-	return tagChange(treeChange, revision);
+	return {
+		change: tagChange(treeChange, revision),
+		customMetadata: decodeCustomMetadataTree(customMetadata),
+	};
 }
 
 /**
  * Provides utilities for serializing and deserializing SharedTree changes.
  *
- * @remarks Such changes are not expected to be durable beyond the scope of a single session.
+ * @remarks
+ * This format is **not** used in persisted Fluid containers or Ops.
+ *
+ * These changes are not expected to be durable beyond the scope of a single session.
+ * Due to this limitation, there is no need to support older formats,
+ * and thus no need for using the {@link VersionDispatchingCodecBuilder}.
  */
 export const SerializedChange = {
-	/** Utilities for version 1 of the serialized change format. */
-	V1: {
+	/** Utilities for version 2 of the serialized change format. */
+	V2: {
 		/**
-		 * Encodes a SharedTree change into the version 1 serialized change format.
+		 * Encodes a SharedTree change into the version 2 serialized change format.
 		 * @param idCompressor - The ID compressor to use for encoding.
 		 * @param changeFamily - The change family to use for encoding.
 		 * @param change - The change to encode.
 		 * @param changeRevision - The revision tag for the change.
 		 * @param contextRevision - The optional context revision tag.
-		 * @returns The encoded change in the version 1 serialized change format.
+		 * @param customMetadata - The metadata attached to the commit.
+		 * @returns The encoded change in the version 2 serialized change format.
 		 */
-		encode: encodeSerializedChangeV1,
+		encode: encodeSerializedChangeV2,
 		/**
-		 * Decodes a version 1 serialized change into a SharedTree change.
+		 * Decodes a version 2 serialized change into a SharedTree change.
 		 * @param idCompressor - The ID compressor to use for decoding.
 		 * @param changeFamily - The change family to use for decoding.
 		 * @param serializedChange - The serialized change to decode.
 		 * @returns The decoded SharedTree change.
 		 */
-		decode: decodeSerializedChangeV1,
+		decode: decodeSerializedChangeV2,
 	},
 } as const;

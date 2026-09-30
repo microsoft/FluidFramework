@@ -618,6 +618,16 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boo
 }
 
 /**
+ * Asserts that the array contains no duplicate items, using `Set` equality.
+ * @throws An `Error` with `errorMessage` if a duplicate item is found.
+ */
+export function assertUnique<T>(items: readonly T[], errorMessage: string): void {
+	if (new Set(items).size !== items.length) {
+		throw new Error(errorMessage);
+	}
+}
+
+/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
@@ -764,6 +774,9 @@ export function expectSchemaEqual(
 	);
 }
 
+/**
+ * Compares the visible content, stored schema, and retained detached content of two checkouts.
+ */
 export function validateViewConsistency(
 	treeA: ITreeCheckout,
 	treeB: ITreeCheckout,
@@ -778,7 +791,7 @@ export function validateViewConsistency(
 		{
 			tree: toJsonableTree(treeB),
 			schema: treeB.storedSchema,
-			removed: treeA.getRemovedRoots(),
+			removed: treeB.getRemovedRoots(),
 		},
 		idDifferentiator,
 	);
