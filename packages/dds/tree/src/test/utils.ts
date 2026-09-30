@@ -31,6 +31,7 @@ import {
 	assertIsStableId,
 	createIdCompressor,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
@@ -493,7 +494,7 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
-			const idCompressor = createIdCompressor(sessionId);
+			const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 			this.compressorMap.set(`tree-${i}`, idCompressor);
 			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
@@ -763,6 +764,9 @@ export function expectSchemaEqual(
 	);
 }
 
+/**
+ * Compares the visible content, stored schema, and retained detached content of two checkouts.
+ */
 export function validateViewConsistency(
 	treeA: ITreeCheckout,
 	treeB: ITreeCheckout,
@@ -777,7 +781,7 @@ export function validateViewConsistency(
 		{
 			tree: toJsonableTree(treeB),
 			schema: treeB.storedSchema,
-			removed: treeA.getRemovedRoots(),
+			removed: treeB.getRemovedRoots(),
 		},
 		idDifferentiator,
 	);
@@ -976,13 +980,20 @@ export const IdentifierSchema = sf.object("identifier-object", {
  * @param json - The JSON-compatible object to initialize the tree with.
  * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
-export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
-	return checkoutWithContent({
-		schema: toInitialSchema(
-			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
-		),
-		initialTree: singleJsonCursor(json),
-	});
+export function makeTreeFromJson(
+	json: JsonCompatible,
+	optionalRoot = false,
+	minVersionForCollab: OldestSupportedClientVersion = FluidClientVersion.v2_0,
+): ITreeCheckout {
+	return checkoutWithContent(
+		{
+			schema: toInitialSchema(
+				optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
+			),
+			initialTree: singleJsonCursor(json),
+		},
+		{ codecOptions: { minVersionForCollab } },
+	);
 }
 
 export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {

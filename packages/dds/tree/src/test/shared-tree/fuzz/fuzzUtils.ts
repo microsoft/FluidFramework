@@ -15,6 +15,7 @@ import {
 	deserializeIdCompressor,
 	toIdCompressorWithCore,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
 import {
@@ -148,6 +149,42 @@ export function createTreeViewSchema(allowedTypes: TreeNodeSchema[]): typeof fuz
 	return node as unknown as typeof fuzzFieldSchema;
 }
 
+/**
+ * Creates schemas for the dynamically added node types allowed by the fuzz schema.
+ * Each generated object schema has one required string field named `value`.
+ *
+ * @param nodeTypes - Fully qualified node-type identifiers.
+ * Duplicate identifiers produce a single schema.
+ * Built-in leaf types, `treeFuzz.node`, and `treeFuzz.arrayChildren` are omitted.
+ */
+export function generateGuidNodeSchemas(nodeTypes: Iterable<string>): TreeNodeSchema[] {
+	const schemaFactory = new SchemaFactory("treeFuzz");
+	const guidNodeSchemas = [];
+	const fuzzNodeTypePrefix = "treeFuzz.";
+	const fluidLeafTypePrefix = "com.fluidframework.leaf.";
+	const shortIdentifierOf = (fullIdentifier: string) =>
+		fullIdentifier.slice(fuzzNodeTypePrefix.length);
+	// Schemas that are present in all fuzz tests and don't require dynamic creation.
+	const commonNodes = new Set(["node", "arrayChildren"]);
+	for (const nodeType of new Set(nodeTypes)) {
+		assert(
+			nodeType.startsWith(fuzzNodeTypePrefix) || nodeType.startsWith(fluidLeafTypePrefix),
+			"Expected a treeFuzz or built-in leaf schema identifier",
+		);
+		if (nodeType.startsWith(fluidLeafTypePrefix)) {
+			continue;
+		}
+		const nodeIdentifier = shortIdentifierOf(nodeType);
+		if (!commonNodes.has(nodeIdentifier)) {
+			class GuidNode extends schemaFactory.object(nodeIdentifier, {
+				value: schemaFactory.required(schemaFactory.string),
+			}) {}
+			guidNodeSchemas.push(GuidNode);
+		}
+	}
+	return guidNodeSchemas;
+}
+
 export function nodeSchemaFromTreeSchema(
 	treeSchema: typeof fuzzFieldSchema,
 ): typeof FuzzNode | undefined {
@@ -258,10 +295,14 @@ export const createOrDeserializeCompressor = (
 ): IIdCompressor & IIdCompressorCore => {
 	return toIdCompressorWithCore(
 		summary === undefined
-			? createIdCompressor(sessionId)
+			? createIdCompressor(sessionId, SerializationVersion.V3)
 			: summary.withSession
-				? deserializeIdCompressor(summary.serializedCompressor)
-				: deserializeIdCompressor(summary.serializedCompressor, sessionId),
+				? deserializeIdCompressor(summary.serializedCompressor, SerializationVersion.V3)
+				: deserializeIdCompressor(
+						summary.serializedCompressor,
+						sessionId,
+						SerializationVersion.V3,
+					),
 	);
 };
 
