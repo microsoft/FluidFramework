@@ -618,6 +618,20 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boo
 }
 
 /**
+ * Asserts that the array contains no duplicate items, using `Set` equality.
+ * @throws An `Error` with `errorMessage` if a duplicate item is found.
+ */
+export function assertUnique<T>(items: readonly T[], errorMessage: string): void {
+	const seen = new Set<T>();
+	for (const item of items) {
+		if (seen.has(item)) {
+			throw new Error(errorMessage);
+		}
+		seen.add(item);
+	}
+}
+
+/**
  * Assert two MarkList are equal, handling cursors.
  */
 export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
