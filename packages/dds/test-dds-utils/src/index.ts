@@ -7,14 +7,18 @@ export type { IGCTestProvider } from "./gcTestRunner.js";
 export { runGCTests } from "./gcTestRunner.js";
 export type {
 	AddClient,
+	Attach,
 	ChangeConnectionState,
+	ClientInitialization,
 	ClientSpec,
+	DDSFuzzClientConfiguration,
 	DDSFuzzModel,
 	DDSFuzzHarnessModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	DDSFuzzHarnessEvents,
 	DDSRandom,
+	Initialize,
 	Synchronize,
 } from "./ddsFuzzHarness.js";
 export {

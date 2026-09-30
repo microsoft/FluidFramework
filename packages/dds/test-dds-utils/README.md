@@ -55,6 +55,53 @@ See documentation on `createDDSFuzzSuite` and `DDSFuzzModel` for more details.
 The harness currently supports testing eventual consistency of op application using Fluid's set of [mocks](../../runtime/test-runtime-utils/README.md)
 including the reconnect flow.
 
+### Per-client configuration
+
+Set `DDSFuzzModel.clientConfiguration` to construct clients with different DDS options or package versions.
+You define the configuration values and supply a callback that resolves each value to an `IChannelFactory`.
+The factories must expose a common channel API that your model can use.
+
+Use `generate(random, client)` to select a configuration with seeded randomness.
+The client context includes `clientId` and `isSummarizer`, so you can give the summarizer a specific configuration.
+Use `factory(clientConfiguration)` to resolve the recorded value without making new random choices.
+The configuration must round-trip through JSON without changes.
+Objects, arrays, strings, numbers, booleans, and `null` are supported; handles, functions, `undefined`, and non-finite numbers are not.
+Do not mutate configurations after they are generated.
+
+For example, a model with an existing workload can select between two compatible factories:
+
+```typescript
+type ClientConfiguration = { version: "current" | "previous" };
+type Factory = typeof currentFactory | typeof previousFactory;
+type State = DDSFuzzTestState<Factory, ClientConfiguration>;
+
+const model: DDSFuzzModel<Factory, Operation, State> = {
+	...existingModel,
+	clientConfiguration: {
+		generate: (random, { isSummarizer }) => ({
+			version: isSummarizer ? "current" : random.pick(["current", "previous"]),
+		}),
+		factory: ({ version }) =>
+			version === "current" ? currentFactory : previousFactory,
+	},
+};
+```
+
+Your resolver can also construct a factory from options stored in the configuration.
+When client configuration is enabled, this resolver replaces `model.factory` for all client construction.
+The existing `factory` property is still required, but is not used in configured runs.
+
+The harness records the initial clients in an `initialize` operation.
+It records subsequent choices in `attach.clients` and `addClient.clientConfiguration`.
+Each created client exposes its value as `client.clientConfiguration`, including in `clientCreate` listeners.
+The `testStart` event occurs after initialization and before the workload generator is created.
+Rehydration and stash restoration retain the original client's configuration, even if the client gets a new name.
+
+Replay and minimization use the recorded choices without calling `generate`.
+Configured replays must include their initialization and client configurations; old logs without these values must be replayed with the original, unconfigured model.
+If you omit `clientConfiguration`, the harness keeps its existing initialization, operation format, and random-number consumption.
+The same configuration mechanism is available in `SquashFuzzModel`.
+
 ### Future Improvements
 
 The generic aspects of this model could be improved to fuzz test correctness a few other general concerns DDS authors have:
