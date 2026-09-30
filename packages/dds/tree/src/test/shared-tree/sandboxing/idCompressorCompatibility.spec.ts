@@ -77,9 +77,9 @@ function createCompatibilityFixture() {
 }
 
 // These tests isolate compressor compatibility from the sandbox message protocol.
+// sandboxing.spec.ts covers the corresponding successful protocol paths.
 describe("Sandbox ID-compressor compatibility", () => {
 	it("loads a compressed baseline with an independent child ID space shard", () => {
-		// TODO: Load the ID space shard from hostInitialization over MessagePort instead of injecting it here.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
 		const { idSpaceShard, guest } = createGuest();
 		try {
@@ -96,7 +96,6 @@ describe("Sandbox ID-compressor compatibility", () => {
 	});
 
 	it("replays a retained Host commit encoded before ID space sharding", () => {
-		// TODO: Replay retained history through hostInitialization with a separately deserialized ID space shard.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
 		main.root.push("before ID space sharding");
 		const commit = serializeCommit(main, getBranch(main).getHead());
@@ -116,7 +115,6 @@ describe("Sandbox ID-compressor compatibility", () => {
 	});
 
 	it("applies a Guest change after synchronizing its ID space shard with the Host", () => {
-		// TODO: Carry the sync token on guestChange and validate it before applying the change.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
 		const { idSpaceShard, guest } = createGuest();
 		try {
@@ -156,7 +154,6 @@ describe("Sandbox ID-compressor compatibility", () => {
 	});
 
 	it("cannot apply a later Host commit without updating the child ID space shard", () => {
-		// TODO: Supply Host ID progress to the child before applying this commit; expect success instead.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
 		const { idSpaceShard, guest } = createGuest();
 		try {
@@ -183,7 +180,6 @@ describe("Sandbox ID-compressor compatibility", () => {
 	});
 
 	it("cannot apply a peer commit finalized after ID space sharding without updating the child ID space shard", () => {
-		// TODO: Deliver finalized peer ranges to the child ID space shard before applying this commit; expect success instead.
 		const { provider, main, peer, parent, createGuest } = createCompatibilityFixture();
 		const { idSpaceShard, guest } = createGuest();
 		try {

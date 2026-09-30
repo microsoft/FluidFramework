@@ -110,12 +110,17 @@ The completed compatibility tests characterize today's behavior; they do not imp
 
 ### End-to-end verification and documentation
 
-- [ ] Re-run the full-duplex synchronization schedules with separate compressors and post-initialization ID generation in both directions.
-- [ ] Verify that handles, commit metadata, retained history, revertibles, undo/redo, and branch rebases still work.
+- [x] Re-run the full-duplex synchronization schedules with separate compressors and post-initialization ID generation in both directions.
+- [x] Verify that handles, commit metadata, retained history, revertibles, undo/redo, and branch rebases still work.
 - [ ] Add an isolated worker or iframe test that does not share JavaScript globals.
 - [ ] Update the `UntypedTreeViewAlpha.applyChange` contract after cross-instance behavior is supported.
 - [ ] Update [sandboxing.md](./sandboxing.md) to describe the implemented ID-sharding path and narrow its remaining work.
 - [ ] Run the relevant type-check, formatting, lint, and test commands for the completed implementation.
+
+The sandbox compatibility, correctness, demo, and 50 default synchronization schedules passed together (132 tests).
+[sandboxing.spec.ts](./sandboxing.spec.ts) verifies distinct Host and Guest compressors, later Host and peer IDs, Guest-authored changes, handles, metadata, retained history, Guest revertibles, undo/redo, and rebases.
+The compatibility tests retain expected failures when ID progress is deliberately omitted.
+The isolated iframe or worker test is deferred to a separate PR.
 
 
 ### Potential `id-compressor` API follow-up
