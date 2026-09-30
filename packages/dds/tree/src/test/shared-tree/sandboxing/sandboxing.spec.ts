@@ -720,7 +720,7 @@ describe("Host and Guest correctness", () => {
 				false,
 				() => reported.resolver(),
 			);
-			const { mainRevision, trunkRevision } = host.guestInitialization;
+			const { mainRevision, trunkRevision } = host.synchronization.guestInitialization;
 			if (receiver === "Host") {
 				interop.sendToHost.postMessage({
 					type: "guestChange",
@@ -958,9 +958,18 @@ describe("Host and Guest correctness", () => {
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		try {
-			assert.equal(independentHost.guestInitialization.baseRevision, base.revision);
-			assert.equal(independentHost.guestInitialization.trunkRevision, base.revision);
-			assert.notEqual(independentHost.guestInitialization.mainRevision, base.revision);
+			assert.equal(
+				independentHost.synchronization.guestInitialization.baseRevision,
+				base.revision,
+			);
+			assert.equal(
+				independentHost.synchronization.guestInitialization.trunkRevision,
+				base.revision,
+			);
+			assert.notEqual(
+				independentHost.synchronization.guestInitialization.mainRevision,
+				base.revision,
+			);
 			const independentGuest = await createGuestForHost(ports.guestPort, testIdCompressor);
 			const independentGuestView = asAlpha(independentGuest.tree.viewWith(stringArrayConfig));
 			try {
@@ -1115,7 +1124,10 @@ describe("Host and Guest correctness", () => {
 				logger: createChildLogger({ namespace: "Host" }),
 			});
 			if (trimHistory) {
-				assert.notEqual(replacementHost.guestInitialization.baseRevision, "root");
+				assert.notEqual(
+					replacementHost.synchronization.guestInitialization.baseRevision,
+					"root",
+				);
 			}
 			const replacementGuest = await createGuestForHost(
 				ports.guestPort,

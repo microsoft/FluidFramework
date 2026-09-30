@@ -82,7 +82,7 @@ export class HostImplementation<const TSchema extends ImplicitFieldSchema> imple
 	/** Internal synchronization state exposed for testing. */
 	public readonly synchronization: HostSynchronization;
 	/** The checkout extracted from the application-provided view. */
-	public readonly mainCheckout: TreeCheckout;
+	private readonly mainCheckout: TreeCheckout;
 	private readonly port: MessagePort;
 	private disposed = false;
 
@@ -274,12 +274,5 @@ export class HostImplementation<const TSchema extends ImplicitFieldSchema> imple
 	public get updateGuestPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
 		return this.synchronization.updateGuestPromise;
-	}
-
-	/**
-	 * The baseline revision and retained history needed to initialize a new Guest.
-	 */
-	public get guestInitialization() {
-		return this.synchronization.guestInitialization;
 	}
 }
