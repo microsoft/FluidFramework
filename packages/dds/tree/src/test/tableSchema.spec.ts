@@ -13,14 +13,13 @@ import {
 	FluidClientVersion,
 	FormatValidatorBasic,
 } from "../index.js";
-import { Tree, TreeAlpha } from "../shared-tree/index.js";
+import { Tree, TreeAlpha, TreeBeta } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	getJsonSchema,
 	KeyEncodingOptions,
 	SchemaFactoryAlpha,
 	SchemaFactoryBeta,
-	TreeBeta,
 	TreeViewConfiguration,
 	type ConciseTree,
 	type TreeNode,
@@ -2263,29 +2262,6 @@ describe("TableFactory unit tests", () => {
 			});
 
 			describe("removeCell", () => {
-				it("Remove cell using string ID key", () => {
-					const table = create2x2Table();
-					const cellKey = { row: "row-0", column: "column-0" };
-					table.setCell(cellKey.row, cellKey.column, { value: "Hello world!" });
-
-					const removedCell = table.removeCell(cellKey);
-
-					assert(removedCell !== undefined);
-					assertEqualTrees(removedCell, { value: "Hello world!" });
-					assertEqualTrees(table, {
-						table: {
-							columns: [
-								{ id: "column-0", props: {} },
-								{ id: "column-1", props: {} },
-							],
-							rows: [
-								{ id: "row-0", cells: {}, props: {} },
-								{ id: "row-1", cells: {}, props: {} },
-							],
-						},
-					});
-				});
-
 				it("Remove cell using index key", () => {
 					const table = create2x2Table();
 					// row: 1 → "row-1", column: 1 → "column-1"

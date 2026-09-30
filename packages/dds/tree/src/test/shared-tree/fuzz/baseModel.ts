@@ -7,8 +7,7 @@ import { takeAsync, type AsyncGenerator } from "@fluid-private/stochastic-test-u
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
-import { pkgVersion } from "../../../packageVersion.js";
-import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
+import { ForestTypeExpensiveDebug, ForestTypeReference } from "../../../shared-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
@@ -16,10 +15,11 @@ import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerato
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import { SharedTreeFuzzTestFactory, createOnCreate } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import { currentVersion } from "../../../codec/index.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
-// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
+// The generator excludes schema operations while the selected checkout has an active transaction.
 const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	set: 3,
 	clear: 1,
@@ -31,7 +31,7 @@ const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	commit: 1,
 	abort: 1,
 	fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
-	schema: 0,
+	schema: 1,
 	nodeConstraint: 3,
 	fork: 1,
 	merge: 1,
@@ -48,7 +48,7 @@ export const baseTreeModel: DDSFuzzModel<
 > = {
 	workloadName: "SharedTree (Reference Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		minVersionForCollab: pkgVersion,
+		minVersionForCollab: currentVersion,
 		forest: ForestTypeReference,
 	}),
 	generatorFactory,
@@ -56,15 +56,21 @@ export const baseTreeModel: DDSFuzzModel<
 	validateConsistency: validateFuzzTreeConsistency,
 };
 
-export const optimizedForestTreeModel: DDSFuzzModel<
+/**
+ * Fuzz model that uses {@link ForestTypeExpensiveDebug}, which is backed by a `ComparisonForest`.
+ * @remarks
+ * This exercises the optimized `ChunkedForest` while asserting, after every delta, that its contents match a
+ * reference `ObjectForest`. It provides cross-implementation validation of the optimized forest against randomized edits.
+ */
+export const comparisonForestTreeModel: DDSFuzzModel<
 	SharedTreeFuzzTestFactory,
 	Operation,
 	DDSFuzzTestState<SharedTreeFuzzTestFactory>
 > = {
-	workloadName: "SharedTree (Optimized Forest)",
+	workloadName: "SharedTree (Comparison Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
-		minVersionForCollab: pkgVersion,
-		forest: ForestTypeOptimized,
+		minVersionForCollab: currentVersion,
+		forest: ForestTypeExpensiveDebug,
 	}),
 	generatorFactory,
 	reducer: fuzzReducer,

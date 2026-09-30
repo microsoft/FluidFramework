@@ -6,7 +6,10 @@
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import {
 	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
@@ -15,6 +18,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion } from "../../codec/index.js";
+import { asAlpha } from "../../api.js";
 import { SchemaFactory, TreeViewConfiguration, type ITree } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
@@ -56,7 +60,7 @@ describe("SharedTree op format snapshots", () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const sessionId = "00000000-0000-4000-b000-000000000000" as SessionId;
 				const runtime = new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(sessionId),
+					idCompressor: createIdCompressor(sessionId, SerializationVersion.V3),
 					attachState: AttachState.Attached,
 				});
 				containerRuntime = containerRuntimeFactory.createContainerRuntime(runtime);
@@ -81,6 +85,27 @@ describe("SharedTree op format snapshots", () => {
 
 				const messages = spyOnFutureMessages(containerRuntime);
 				view.root.x = 1;
+				takeJsonSnapshot(messages);
+			});
+
+			it("custom metadata", () => {
+				// Locks the persisted representation of custom commit metadata, including its absence
+				// before the version that introduced it.
+				const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: Point })));
+				view.initialize(new Point({ x: 0, y: 2 }));
+
+				const messages = spyOnFutureMessages(containerRuntime);
+				view.runTransaction(
+					() => {
+						view.runTransaction(
+							() => {
+								view.root.x = 1;
+							},
+							{ customMetadata: { step: "inner" } },
+						);
+					},
+					{ customMetadata: { intent: "annotated-edit" } },
+				);
 				takeJsonSnapshot(messages);
 			});
 		});

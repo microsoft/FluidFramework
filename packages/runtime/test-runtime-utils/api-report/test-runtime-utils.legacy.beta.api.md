@@ -70,8 +70,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
-    // (undocumented)
-    finalizeIdRange(range: IdCreationRange): void;
     flush(): void;
     flushSomeMessages(numMessages: number): void;
     // (undocumented)
@@ -348,7 +346,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     isLocalDataStore: boolean;
     // (undocumented)
     makeLocallyVisible(): void;
-    minVersionForCollab: MinimumVersionForCollab;
+    minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -385,7 +383,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         idCompressor?: IIdCompressor;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
-        minVersionForCollab?: MinimumVersionForCollab;
+        minVersionForCollab?: OldestSupportedClientVersion;
         inStagingMode?: boolean;
         isDirty?: boolean;
     });
@@ -473,7 +471,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)

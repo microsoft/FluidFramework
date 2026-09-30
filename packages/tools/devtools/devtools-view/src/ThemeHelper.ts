@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type Theme,
-	teamsHighContrastTheme,
-	webDarkTheme,
-	webLightTheme,
-} from "@fluentui/react-components";
+import type { Theme } from "@fluentui/react-components";
 import { createContext, type Dispatch, type SetStateAction, useContext } from "react";
+
+import { FluentReactComponents } from "./FluentUi.cjs";
+
+const { teamsHighContrastTheme, webDarkTheme, webLightTheme } = FluentReactComponents;
 
 teamsHighContrastTheme.colorSubtleBackgroundHover = "#1aebff";
 teamsHighContrastTheme.colorBrandBackground2 = "#1aebff";

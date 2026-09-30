@@ -11,10 +11,17 @@ import { Worker } from "node:worker_threads";
 
 import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
+// Resolve the worker entry point relative to this module so it loads as ESM
+// (the nearest package.json declares "type": "module").
+const workerUrl = new URL("./worker.js", import.meta.url);
+
 export interface WorkerExecResultWithOutput extends WorkerExecResult {
 	stdout: string;
 	stderr: string;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Matches Node's EventEmitter listener type.
+type EventListener = (...args: any[]) => void;
 
 export class WorkerPool {
 	private readonly threadWorkerPool: Worker[] = [];
@@ -27,7 +34,7 @@ export class WorkerPool {
 	private getThreadWorker(): Worker {
 		let worker: Worker | undefined = this.threadWorkerPool.pop();
 		if (!worker) {
-			worker = new Worker(`${__dirname}/worker.js`, { stdout: true, stderr: true });
+			worker = new Worker(workerUrl, { stdout: true, stderr: true });
 		}
 		return worker;
 	}
@@ -36,7 +43,7 @@ export class WorkerPool {
 		let worker: ChildProcess | undefined = this.processWorkerPool.pop();
 		if (!worker) {
 			worker = fork(
-				`${__dirname}/worker.js`,
+				workerUrl,
 				this.memoryUsageLimit !== Number.POSITIVE_INFINITY ? ["--memoryUsage"] : undefined,
 				{ silent: true },
 			);
@@ -54,7 +61,7 @@ export class WorkerPool {
 		const installTemporaryListener = (
 			object: EventEmitter | Readable,
 			event: string,
-			handler: any,
+			handler: EventListener,
 		): void => {
 			object.on(event, handler);
 			cleanup.push(() => object.off(event, handler));
@@ -67,12 +74,12 @@ export class WorkerPool {
 			let stderr = "";
 
 			if (worker.stdout) {
-				installTemporaryListener(worker.stdout, "data", (chunk: any) => {
+				installTemporaryListener(worker.stdout, "data", (chunk: string | Buffer) => {
 					stdout += chunk;
 				});
 			}
 			if (worker.stderr) {
-				installTemporaryListener(worker.stderr, "data", (chunk: any) => {
+				installTemporaryListener(worker.stderr, "data", (chunk: string | Buffer) => {
 					stderr += chunk;
 				});
 			}

@@ -13,6 +13,7 @@ export {
 	// eslint-disable-next-line unicorn/prefer-export-from
 	EventEmitter,
 };
+export { exampleOldestSupportedClient } from "./exampleCompatibility.js";
 
 export {
 	ContainerViewRuntimeFactory,
@@ -20,6 +21,16 @@ export {
 	getDataStoreEntryPoint,
 	type IFluidMountableViewEntryPoint,
 } from "./containerViewRuntimeFactory.js";
+export {
+	defaultServiceOptions,
+	ExampleErrorView,
+	ExampleLoadingView,
+	type ExampleServiceOptions,
+	getExampleServiceClient,
+	createOrLoadExampleContainer,
+	loadExampleDataStore,
+	renderRoot,
+} from "./exampleApp.js";
 export type {
 	DataTransformationCallback,
 	IImportExportModel,

@@ -75,8 +75,8 @@
                             }
                           ],
                           "revision": 1,
-                          "sequenceNumber": 4,
-                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
+                          "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06",
+                          "sequenceNumber": 4
                         },
                         {
                           "change": [
@@ -120,8 +120,8 @@
                             }
                           ],
                           "revision": 513,
-                          "sequenceNumber": 6,
-                          "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2"
+                          "sessionId": "a0693eac-892a-4396-86f7-ad20dc1cade2",
+                          "sequenceNumber": 6
                         },
                         {
                           "change": [
@@ -165,8 +165,8 @@
                             }
                           ],
                           "revision": 1026,
-                          "sequenceNumber": 8,
-                          "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae"
+                          "sessionId": "5a126183-91e7-488a-b7e9-3342a05c25ae",
+                          "sequenceNumber": 8
                         }
                       ],
                       "branches": [

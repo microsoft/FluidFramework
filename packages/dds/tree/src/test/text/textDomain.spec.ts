@@ -5,40 +5,133 @@
 
 import { strict as assert } from "node:assert";
 
-import { TreeAlpha } from "../../shared-tree/index.js";
+import type { FieldKey, IForestSubscription, TreeChunk } from "../../core/index.js";
+import { ComparisonForest } from "../../feature-libraries/index.js";
+import {
+	UniformChunk,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	ForestTypeExpensiveDebug,
+	TreeAlpha,
+	createIndependentTreeAlpha,
+} from "../../shared-tree/index.js";
 import {
 	allowUnused,
 	TreeViewConfiguration,
 	type NodeFromSchema,
 } from "../../simple-tree/index.js";
-// Allow importing file being tested
-// eslint-disable-next-line import-x/no-internal-modules
-import { TextAsTree } from "../../text/textDomain.js";
+import {
+	expensiveInternalValidationAssert,
+	setEnableExpensiveDebugAsserts,
+	PlainText,
+	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
+} from "../../text/textDomain.js";
 import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
+import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
+
+/** Minimal structural view of a chunk that may have child fields, for walking the chunk tree. */
+type ChunkWithFields = TreeChunk & { readonly fields?: Map<FieldKey, TreeChunk[]> };
+
+/**
+ * Walks every chunk reachable from a chunked forest's roots and tallies the {@link UniformChunk}s.
+ * @returns the number of `UniformChunk`s and the total number of nodes they hold.
+ */
+function tallyUniformChunks(forest: IForestSubscription): {
+	uniformChunkCount: number;
+	uniformNodeCount: number;
+} {
+	const roots = (forest as unknown as { readonly roots: ChunkWithFields }).roots;
+	let uniformChunkCount = 0;
+	let uniformNodeCount = 0;
+	function walk(chunk: TreeChunk): void {
+		if (chunk instanceof UniformChunk) {
+			uniformChunkCount++;
+			uniformNodeCount += chunk.topLevelLength;
+		}
+		const fields = (chunk as ChunkWithFields).fields;
+		if (fields !== undefined) {
+			for (const chunks of fields.values()) {
+				for (const child of chunks) {
+					walk(child);
+				}
+			}
+		}
+	}
+	walk(roots);
+	return { uniformChunkCount, uniformNodeCount };
+}
+
+/**
+ * Reaches the internal forest backing a view. The view is a `SchematizingSimpleTreeView` whose
+ * `checkout` exposes the `IForestSubscription`. This is an intentional internal coupling — the public
+ * API hides the forest — but this test needs it to inspect chunk storage.
+ */
+function forestFromView(view: object): ComparisonForest {
+	return (view as { readonly checkout: { readonly forest: ComparisonForest } }).checkout
+		.forest;
+}
+
+/**
+ * Builds an empty text document backed by a comparison forest and exposes its main chunked forest.
+ * Every edit is checked against the reference object forest before the chunk storage is inspected.
+ */
+function buildChunkedTextDocument(): {
+	readonly root: PlainText.Tree;
+	readonly forest: IForestSubscription;
+} {
+	const view = createIndependentTreeAlpha({ forest: ForestTypeExpensiveDebug }).viewWith(
+		new TreeViewConfiguration({ schema: PlainText.Tree }),
+	);
+	view.initialize(PlainText.Tree.fromString(""));
+	const forest = forestFromView(view);
+	return { root: view.root, forest: forest.main };
+}
 
 describe("textDomain", () => {
+	beforeEach(() => {
+		setEnableExpensiveDebugAsserts(true);
+	});
+	afterEach(() => {
+		setEnableExpensiveDebugAsserts(false);
+	});
+
 	it("compatibility", () => {
-		const currentViewSchema = new TreeViewConfiguration({ schema: TextAsTree.Tree });
+		const currentViewSchema = new TreeViewConfiguration({ schema: PlainText.Tree });
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "text");
 	});
 
 	it("validate node type", () => {
 		allowUnused<
-			requireTrue<areSafelyAssignable<NodeFromSchema<typeof TextAsTree.Tree>, TextAsTree.Tree>>
+			requireTrue<areSafelyAssignable<NodeFromSchema<typeof PlainText.Tree>, PlainText.Tree>>
 		>();
 	});
 
-	it("basic use", () => {
-		const text = TextAsTree.Tree.fromString("hello");
-		assert.equal(text.fullString(), "hello");
-		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
-		text.insertAt(5, " world");
-		assert.equal(text.fullString(), "hello world");
-		text.removeRange(0, 6);
-		assert.equal(text.fullString(), "world");
+	for (const expensiveAsserts of [false, true]) {
+		it(`@Smoke basic use with${expensiveAsserts ? "" : "out"} expensive asserts`, () => {
+			setEnableExpensiveDebugAsserts(expensiveAsserts);
+			const text = PlainText.Tree.fromString("hello");
+			assert.equal(text.fullString(), "hello");
+			assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
+			text.insertAt(5, " world");
+			assert.equal(text.fullString(), "hello world");
+			text.removeRange(0, 6);
+			assert.equal(text.fullString(), "world");
+		});
+	}
+
+	it("@Smoke expensiveInternalValidationAssert", () => {
+		if (nonProductionConditionalsIncluded()) {
+			assert.throws(() => expensiveInternalValidationAssert(() => "fail"), /fail/);
+		} else {
+			expensiveInternalValidationAssert(() => "fail");
+		}
+		setEnableExpensiveDebugAsserts(false);
+		// Disabled, so should not throw.
+		expensiveInternalValidationAssert(() => "error");
 	});
 
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
@@ -47,7 +140,7 @@ describe("textDomain", () => {
 		// Text has debug asserts which can add observations, so ensure tracking works with and without production build emulation.
 		suitesWithAndWithoutProduction((emulateProduction) => {
 			it("content observation", () => {
-				const text = TextAsTree.Tree.fromString("hello");
+				const text = PlainText.Tree.fromString("hello");
 				if (hydrated) {
 					hydrateNode(text);
 				}
@@ -80,13 +173,51 @@ describe("textDomain", () => {
 		});
 	});
 
+	describe("createInsertionAnchor", () => {
+		describeHydration("hydrated and unhydrated", (_init, hydrated) => {
+			it("creates an insertion anchor that tracks edits", () => {
+				const text = PlainText.Tree.fromString("abc");
+				if (hydrated) {
+					hydrateNode(text);
+				}
+				const anchor = text.createInsertionAnchor(1);
+				try {
+					text.insertAt(0, "x");
+					assert.equal(anchor.index, 2);
+					text.insertAt(3, "y");
+					assert.equal(anchor.index, 2);
+					text.removeRange(0, 1);
+					assert.equal(anchor.index, 1);
+				} finally {
+					anchor.dispose();
+				}
+			});
+		});
+		it("across hydration", () => {
+			const text = PlainText.Tree.fromString("abc");
+			const anchor = text.createInsertionAnchor(1);
+			try {
+				text.insertAt(0, "x");
+				assert.equal(anchor.index, 2);
+				hydrateNode(text);
+				text.insertAt(3, "y");
+				assert.equal(anchor.index, 2);
+
+				text.removeRange(0, 1);
+				assert.equal(anchor.index, 1);
+			} finally {
+				anchor.dispose();
+			}
+		});
+	});
+
 	describeHydration("onCharactersChanged", (_init, hydrated) => {
 		it("fires with insert ops when characters are added", () => {
-			const text = TextAsTree.Tree.fromString("ab");
+			const text = PlainText.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -96,15 +227,16 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "insert", text: "xy" },
+				{ type: "retain", count: 1 },
 			]);
 		});
 
 		it("fires with remove ops when characters are deleted", () => {
-			const text = TextAsTree.Tree.fromString("abcde");
+			const text = PlainText.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -114,15 +246,16 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2 },
 			]);
 		});
 
 		it("fires with insert and remove ops for a replace", () => {
-			const text = TextAsTree.Tree.fromString("abcde");
+			const text = PlainText.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -134,34 +267,39 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2 },
 			]);
 			assert.deepEqual(received[1], [
 				{ type: "retain", count: 1 },
 				{ type: "insert", text: "XY" },
+				{ type: "retain", count: 2 },
 			]);
 		});
 
 		it("fires for insert at start", () => {
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
 			});
 			text.insertAt(0, "X");
 			assert.equal(received.length, 1);
-			assert.deepEqual(received[0], [{ type: "insert", text: "X" }]);
+			assert.deepEqual(received[0], [
+				{ type: "insert", text: "X" },
+				{ type: "retain", count: 3 },
+			]);
 		});
 
 		it("fires for insert at end", () => {
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -175,11 +313,11 @@ describe("textDomain", () => {
 		});
 
 		it("fires for remove all", () => {
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -194,7 +332,7 @@ describe("textDomain", () => {
 		// the unhydrated event path), so we only assert the hydrated behavior here.
 		it("does not fire for an empty insert (hydrated)", () => {
 			if (!hydrated) return;
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onCharactersChanged(() => {
@@ -206,7 +344,7 @@ describe("textDomain", () => {
 
 		it("does not fire for an empty remove (hydrated)", () => {
 			if (!hydrated) return;
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onCharactersChanged(() => {
@@ -217,7 +355,7 @@ describe("textDomain", () => {
 		});
 
 		it("cleanup function unsubscribes the callback", () => {
-			const text = TextAsTree.Tree.fromString("ab");
+			const text = PlainText.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -230,6 +368,30 @@ describe("textDomain", () => {
 			cleanup();
 			text.insertAt(1, "y");
 			assert.equal(callCount, 1, "callback should not fire after cleanup");
+		});
+	});
+
+	// Regression test for the attach/detach coalescing in the chunked forest. The comparison forest
+	// validates every edit against the reference object forest, then the chunked main forest is
+	// inspected to ensure same-shape neighbors were batched instead of remaining one chunk per character.
+	describe("chunked forest storage", () => {
+		it("batches typed characters into multi-node chunks", () => {
+			const size = 1000;
+			const { root, forest } = buildChunkedTextDocument();
+
+			for (let i = 0; i < size; i++) {
+				const middle = Math.floor(root.characterCount() / 2);
+				root.insertAt(middle, i % 2 === 0 ? "a" : "b");
+			}
+
+			// All the typed content is present and stored in UniformChunks (nothing shattered away).
+			assert.equal(root.characterCount(), size);
+			const { uniformChunkCount, uniformNodeCount } = tallyUniformChunks(forest);
+			assert.equal(uniformNodeCount, size);
+			assert(
+				uniformChunkCount < uniformNodeCount,
+				`expected coalescing to batch content into multi-node chunks, but found ${uniformChunkCount} UniformChunks for ${uniformNodeCount} nodes (no batching)`,
+			);
 		});
 	});
 

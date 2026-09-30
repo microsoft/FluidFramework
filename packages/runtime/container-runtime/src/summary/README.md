@@ -80,5 +80,5 @@ The summarization process is designed to be resilient - A document will eventual
 
 The format of summaries (and snapshots) is described in [summary and snapshot formats](./summaryFormats.md).
 
-[container-runtime]: ../../src/containerRuntime.ts
-[summary-protocol]: /common/lib/protocol-definitions/src/summary.ts
+[container-runtime]: https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/src/containerRuntime.ts
+[summary-protocol]: https://github.com/microsoft/FluidFramework/blob/main/common/lib/protocol-definitions/src/summary.ts

@@ -7,17 +7,14 @@
  * @fileoverview Definition of the Int*Property classes
  */
 
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const {
-	ConsoleUtils,
-	constants: { MSG },
-	Uint64,
-	Int64,
-} = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { ConsoleUtils, constants, Uint64, Int64 } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { _castFunctors } = require("./primitiveTypeCasts");
-const { ValueProperty } = require("./valueProperty");
+import { _castFunctors } from "./primitiveTypeCasts.js";
+import { ValueProperty } from "./valueProperty.js";
+
+const { MSG } = constants;
 
 const BIT32 = 4294967296;
 

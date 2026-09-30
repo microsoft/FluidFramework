@@ -191,6 +191,17 @@ export class TreeShape {
 	}
 
 	public equals(other: TreeShape): boolean {
+		// Shapes are commonly shared (e.g. all chunks from one chunker reference the same instance), so
+		// short-circuit on reference identity to avoid the full structural walk in the common case.
+		if (this === other) {
+			return true;
+		}
+
+		// A given type usually only has one shape, so check it next to speed up the false case.
+		if (this.type !== other.type) {
+			return false;
+		}
+
 		// TODO: either dedupe instances and/or store a collision resistant hash for fast compare.
 
 		if (
@@ -203,7 +214,6 @@ export class TreeShape {
 			return false;
 		}
 		return (
-			this.type === other.type &&
 			this.hasValue === other.hasValue &&
 			this.mayContainCompressedIds === other.mayContainCompressedIds
 		);

@@ -667,7 +667,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myList: factory.array(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural list schema are not typed as classes.
+				// @ts-expect-error structural list schemas are not typed as classes.
 				class NotAClass extends factory.array(factory.number) {}
 			}
 
@@ -740,7 +740,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myMap: factory.map(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural map schema are not typed as classes.
+				// @ts-expect-error structural map schemas are not typed as classes.
 				class NotAClass extends factory.map(factory.number) {}
 			}
 		});
@@ -811,7 +811,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myMap: factory.record(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural map schema are not typed as classes.
+				// @ts-expect-error structural map schemas are not typed as classes.
 				class NotAClass extends factory.record(factory.number) {}
 			}
 		});
@@ -842,9 +842,17 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
-			const x: number = namedInstance.x;
-			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
-			const y: number = namedInstance.y;
+			const x = namedInstance.x;
+			type _checkX = requireTrue<areSafelyAssignable<typeof x, number | undefined>>;
+			assert.equal(x, 5);
+
+			const y = namedInstance.y;
+			type _checkY = requireTrue<areSafelyAssignable<typeof y, number | undefined>>;
+			assert.equal(y, undefined);
+
+			// @ts-expect-error Record reads may be undefined.
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- Intentionally testing an unchecked record read.
+			const invalid: number = namedInstance.x;
 			delete namedInstance.x;
 		});
 
@@ -1439,8 +1447,6 @@ describe("schemaFactory", () => {
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 
-	// TODO: AB#44317: The error messages for rejecting insertions which would put a document out of schema due to staged types are poor, and should be improved.
-	// Many tests here include coverage for these errors.
 	describe("staged", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
@@ -1507,9 +1513,14 @@ describe("schemaFactory", () => {
 				});
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
-				assert.throws(() => {
-					view.root = testObject;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root = testObject;
+					},
+					validateUsageError(
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
+					),
+				);
 			});
 
 			it("can't be set", () => {
@@ -1521,9 +1532,14 @@ describe("schemaFactory", () => {
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.foo = "test";
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root.foo = "test";
+					},
+					validateUsageError(
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
+					),
+				);
 			});
 		});
 
@@ -1624,9 +1640,14 @@ describe("schemaFactory", () => {
 				});
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
-				assert.throws(() => {
-					view.root = testMap;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root = testMap;
+					},
+					validateUsageError(
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
+					),
+				);
 			});
 
 			it("can't be set", () => {
@@ -1638,9 +1659,14 @@ describe("schemaFactory", () => {
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({});
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.set("foo", "test");
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root.set("foo", "test");
+					},
+					validateUsageError(
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
+					),
+				);
 			});
 		});
 
@@ -1671,9 +1697,14 @@ describe("schemaFactory", () => {
 				});
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
-				assert.throws(() => {
-					view.root = testRecord;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root = testRecord;
+					},
+					validateUsageError(
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
+					),
+				);
 			});
 
 			it("can't be set", () => {
@@ -1685,9 +1716,14 @@ describe("schemaFactory", () => {
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({});
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.foo = "test";
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root.foo = "test";
+					},
+					validateUsageError(
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
+					),
+				);
 			});
 		});
 

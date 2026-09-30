@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	AnyUint8ArrayToArrayBuffer,
+	Uint8ArrayToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type ISummaryBlob,
@@ -87,7 +91,7 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 				const contentBuffer =
 					typeof summaryObject.content === "string"
 						? stringToBuffer(summaryObject.content, "utf8")
-						: summaryObject.content;
+						: AnyUint8ArrayToArrayBuffer(summaryObject.content);
 				const blobId = uuid();
 				treeNode.blobs[key] = blobId;
 				blobs.set(blobId, contentBuffer);

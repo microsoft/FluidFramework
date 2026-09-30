@@ -72,6 +72,11 @@ export {
 	notifiesReadOnlyState,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
+	IVersionMarkResolver,
+	ResolveResult,
+	VersionMarkCapture,
+} from "./versionMarks.js";
+export type {
 	CreateChildSummarizerNodeParam,
 	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
@@ -94,7 +99,11 @@ export {
 	currentSummarizeStepPropertyName,
 	totalBlobSizePropertyName,
 } from "./summary.js";
-export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+export type {
+	OldestSupportedClientVersion,
+	// eslint-disable-next-line import-x/no-deprecated -- re-exported for compatibility until 4.0. See #27851
+	MinimumVersionForCollab,
+} from "./compatibilityDefinitions.js";
 
 export {
 	type ContainerRuntimeBaseAlpha,

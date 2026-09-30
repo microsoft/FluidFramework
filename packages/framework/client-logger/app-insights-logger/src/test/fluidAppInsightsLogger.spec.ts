@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type Sinon from "sinon";
 import { assert as sinonAssert, spy } from "sinon";
 
@@ -49,7 +50,7 @@ describe("FluidAppInsightsLogger", () => {
 			category: "mockEvent",
 			eventName: "mockEventName",
 		};
-		logger.send(mockTelemetryEvent);
+		logger.send(mockTelemetryEvent, LogLevel.essential);
 		sinonAssert.calledOnce(trackEventSpy);
 
 		const expectedAppInsightsEvent = {
@@ -134,7 +135,7 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perfCategoryEventName",
 				};
 
-				logger.send(perfCategoryEvent);
+				logger.send(perfCategoryEvent, LogLevel.essential);
 
 				// Expect all events to be sent in exclusive mode
 				sinonAssert.callCount(trackEventSpy, 1);
@@ -152,7 +153,7 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perfCategoryEventName",
 				};
 
-				logger.send(perfCategoryEvent);
+				logger.send(perfCategoryEvent, LogLevel.essential);
 
 				// Expect no events to be sent
 				sinonAssert.callCount(trackEventSpy, 0);
@@ -200,8 +201,8 @@ describe("FluidAppInsightsLogger", () => {
 					category: "generic",
 					eventName: "perf:runtime:container",
 				};
-				logger.send(event);
-				logger.send(event2);
+				logger.send(event, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 0);
 			});
 
@@ -217,8 +218,8 @@ describe("FluidAppInsightsLogger", () => {
 					category: "generic",
 					eventName: "perf:memory:container",
 				};
-				logger.send(event1);
-				logger.send(event2);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 0);
 			});
 
@@ -230,7 +231,7 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perf:runtime:container",
 				};
 
-				logger.send(event);
+				logger.send(event, LogLevel.essential);
 
 				const expectedAppInsightsSentEvent: IEventTelemetry = {
 					name: event.eventName,
@@ -268,8 +269,8 @@ describe("FluidAppInsightsLogger", () => {
 					category: "generic",
 					eventName: "perf:runtime:container",
 				};
-				logger.send(event);
-				logger.send(event2);
+				logger.send(event, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 2);
 			});
 
@@ -285,8 +286,8 @@ describe("FluidAppInsightsLogger", () => {
 					category: "generic",
 					eventName: "perf:memory:container",
 				};
-				logger.send(event1);
-				logger.send(event2);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 2);
 			});
 
@@ -298,7 +299,7 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perf:runtime:container",
 				};
 
-				logger.send(event);
+				logger.send(event, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 0);
 			});
 		});
@@ -353,10 +354,10 @@ describe("FluidAppInsightsLogger", () => {
 					category: "performance",
 					eventName: namespaceFilterPattern2,
 				};
-				logger.send(event1);
-				logger.send(event2);
-				logger.send(event3);
-				logger.send(event4);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
+				logger.send(event3, LogLevel.essential);
+				logger.send(event4, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 0);
 			});
 
@@ -368,7 +369,7 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perf:runtime:container",
 				};
 
-				logger.send(event);
+				logger.send(event, LogLevel.essential);
 
 				const expectedAppInsightsSentEvent: IEventTelemetry = {
 					name: event.eventName,
@@ -404,10 +405,10 @@ describe("FluidAppInsightsLogger", () => {
 					category: "performance",
 					eventName: namespaceFilterPattern2Exception,
 				};
-				logger.send(event1);
-				logger.send(event2);
-				logger.send(event3);
-				logger.send(event4);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
+				logger.send(event3, LogLevel.essential);
+				logger.send(event4, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 4);
 			});
 
@@ -435,10 +436,10 @@ describe("FluidAppInsightsLogger", () => {
 					category: "performance",
 					eventName: namespaceFilterPattern2,
 				};
-				logger.send(event1);
-				logger.send(event2);
-				logger.send(event3);
-				logger.send(event4);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
+				logger.send(event3, LogLevel.essential);
+				logger.send(event4, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 4);
 			});
 
@@ -450,7 +451,7 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perf:runtime:container",
 				};
 
-				logger.send(event);
+				logger.send(event, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 0);
 			});
 
@@ -476,10 +477,10 @@ describe("FluidAppInsightsLogger", () => {
 					category: "performance",
 					eventName: namespaceFilterPattern2Exception,
 				};
-				logger.send(event1);
-				logger.send(event2);
-				logger.send(event3);
-				logger.send(event4);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
+				logger.send(event3, LogLevel.essential);
+				logger.send(event4, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 0);
 			});
 
@@ -513,8 +514,8 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "A:B:C",
 				};
 
-				logger.send(event1);
-				logger.send(event2);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
 				sinonAssert.callCount(trackEventSpy, 1);
 				for (const call of trackEventSpy.getCalls()) {
 					sinonAssert.calledWithExactly(call, {
@@ -581,11 +582,11 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perf:latency:container:syncTime",
 				};
 
-				logger.send(event1);
-				logger.send(event2);
-				logger.send(event3);
-				logger.send(event4);
-				logger.send(event5);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
+				logger.send(event3, LogLevel.essential);
+				logger.send(event4, LogLevel.essential);
+				logger.send(event5, LogLevel.essential);
 
 				const actualSentEvent1 = trackEventSpy.getCalls().filter((call) =>
 					call.calledWithExactly({
@@ -651,11 +652,11 @@ describe("FluidAppInsightsLogger", () => {
 					eventName: "perf:latency:container:syncTime",
 				};
 
-				logger.send(event1);
-				logger.send(event2);
-				logger.send(event3);
-				logger.send(event4);
-				logger.send(event5);
+				logger.send(event1, LogLevel.essential);
+				logger.send(event2, LogLevel.essential);
+				logger.send(event3, LogLevel.essential);
+				logger.send(event4, LogLevel.essential);
+				logger.send(event5, LogLevel.essential);
 
 				const actualSentEvent4 = trackEventSpy.getCalls().filter((call) =>
 					call.calledWithExactly({

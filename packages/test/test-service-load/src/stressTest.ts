@@ -6,6 +6,7 @@
 import child_process from "child_process";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import {
 	TelemetryLoggerExt,
 	TelemetryDataTag,
@@ -76,7 +77,7 @@ export async function stressTest(
 	const runnerArgs: string[][] = [];
 	for (let i = 0; i < profile.numClients; i++) {
 		const childArgs: string[] = [
-			"./dist/runner.js",
+			"./lib/runner.js",
 			"--driver",
 			testDriver.type,
 			"--profile",
@@ -118,12 +119,15 @@ export async function stressTest(
 				},
 				(_, results) => {
 					if (results !== undefined) {
-						logger.send({
-							category: "metric",
-							eventName: "Runner Processes",
-							testHarnessEvent: true,
-							value: results.length,
-						});
+						logger.send(
+							{
+								category: "metric",
+								eventName: "Runner Processes",
+								testHarnessEvent: true,
+								value: results.length,
+							},
+							LogLevel.essential,
+						);
 					}
 				},
 			);
@@ -171,24 +175,30 @@ function setupTelemetry(
 	runId: number,
 	username: string | undefined,
 ): void {
-	logger.send({
-		category: "metric",
-		eventName: "Runner Started",
-		testHarnessEvent: true,
-		value: 1,
-		username,
-		runId,
-	});
-
-	process.once("error", (e) => {
-		logger.send({
+	logger.send(
+		{
 			category: "metric",
-			eventName: "Runner Start Error",
+			eventName: "Runner Started",
 			testHarnessEvent: true,
 			value: 1,
 			username,
 			runId,
-		});
+		},
+		LogLevel.essential,
+	);
+
+	process.once("error", (e) => {
+		logger.send(
+			{
+				category: "metric",
+				eventName: "Runner Start Error",
+				testHarnessEvent: true,
+				value: 1,
+				username,
+				runId,
+			},
+			LogLevel.essential,
+		);
 		logger.sendErrorEvent(
 			{
 				eventName: "Runner Start Error",
@@ -201,15 +211,18 @@ function setupTelemetry(
 	});
 
 	process.once("exit", (code) => {
-		logger.send({
-			category: "metric",
-			eventName: "Runner Exited",
-			testHarnessEvent: true,
-			value: 1,
-			username,
-			runId,
-			exitCode: code ?? 0,
-		});
+		logger.send(
+			{
+				category: "metric",
+				eventName: "Runner Exited",
+				testHarnessEvent: true,
+				value: 1,
+				username,
+				runId,
+				exitCode: code ?? 0,
+			},
+			LogLevel.essential,
+		);
 		console.log(`RunId: ${runId} exited with code ${code}`);
 	});
 }
@@ -225,15 +238,18 @@ function setupDataTelemetry(
 		const data = String(chunk);
 		console.log(data);
 		if (data.replace(/\./g, "").length > 0) {
-			logger.send({
-				eventName: "Runner Console",
-				testHarnessEvent: true,
-				category: "generic",
-				lineNo: stdOutLine,
-				runId,
-				username,
-				data,
-			});
+			logger.send(
+				{
+					eventName: "Runner Console",
+					testHarnessEvent: true,
+					category: "generic",
+					lineNo: stdOutLine,
+					runId,
+					username,
+					data,
+				},
+				LogLevel.essential,
+			);
 			stdOutLine++;
 		}
 	});
@@ -242,16 +258,19 @@ function setupDataTelemetry(
 	process.stderr?.on("data", (chunk) => {
 		const data = String(chunk);
 		console.log(data);
-		logger.send({
-			eventName: "Runner Error",
-			testHarnessEvent: true,
-			category: "error",
-			lineNo: stdErrLine,
-			runId,
-			username,
-			data,
-			error: data.split("\n")[0],
-		});
+		logger.send(
+			{
+				eventName: "Runner Error",
+				testHarnessEvent: true,
+				category: "error",
+				lineNo: stdErrLine,
+				runId,
+				username,
+				data,
+				error: data.split("\n")[0],
+			},
+			LogLevel.essential,
+		);
 		stdErrLine++;
 	});
 }

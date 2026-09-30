@@ -12,6 +12,7 @@ import { Mutex } from "async-mutex";
 import { debug } from "./debug.js";
 import type { IAsyncCache, IResources } from "./fluidToolRc.js";
 import { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
+import { redactTokens } from "./redactTokens.js";
 
 // TODO: Add documentation
 // eslint-disable-next-line jsdoc/require-description
@@ -208,8 +209,7 @@ export class OdspTokenManager {
 
 		if (!isValidAndNotExpiredToken(tokens)) {
 			throw new Error(
-				`Acquired invalid tokens for ${cacheKeyToString(cacheKey)}. ` +
-					`Acquired token JSON: ${JSON.stringify(tokens)}`,
+				`Acquired invalid tokens for ${cacheKeyToString(cacheKey)}. ${redactTokens(tokens)}`,
 			);
 		}
 

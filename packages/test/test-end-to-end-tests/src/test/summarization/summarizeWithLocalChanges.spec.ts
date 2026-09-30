@@ -34,6 +34,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestObjectProvider,
 	createSummarizer,
 	createSummarizerFromFactory,
@@ -230,6 +231,7 @@ describeCompat(
 			};
 			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 				defaultFactory: rootDataObjectFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: registryStoreEntries,
 				runtimeOptions,
 			});

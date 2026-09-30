@@ -348,6 +348,9 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
+		buildProcessor: (): never => {
+			assert.fail("Unexpected buildProcessor call");
+		},
 	};
 	return family;
 }

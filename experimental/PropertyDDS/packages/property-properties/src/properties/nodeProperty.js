@@ -6,7 +6,7 @@
 /**
  * @fileoverview This file contains the implementation of the NodeProperty class
  */
-const { ContainerProperty } = require("./containerProperty");
+import { ContainerProperty } from "./containerProperty.js";
 
 /**
  * A property object that allows to add child properties dynamically.

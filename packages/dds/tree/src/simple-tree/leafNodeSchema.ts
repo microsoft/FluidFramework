@@ -37,7 +37,7 @@ import type { FactoryContent } from "./unhydratedFlexTreeFromInsertable.js";
 /**
  * Instances of this class are schema for leaf nodes.
  * @remarks
- * Unlike other schema, leaf schema are class instances instead of classes themselves.
+ * Unlike other schemas, leaf schemas are class instances instead of classes themselves.
  * This is because the instance type (the tree node type) for leaves are not objects,
  * so those instances can't be instances of a schema based class.
  * @privateRemarks
@@ -125,7 +125,12 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue>
 	> {}
 
 // Leaf schema shared between all SchemaFactory instances.
-export const stringSchema = makeLeaf("string", ValueSchema.String);
+/**
+ * A {@link LeafSchema} for a `string`.
+ * @system @sealed @alpha
+ */
+export type StringSchema = LeafSchema<"string", string> & SimpleLeafNodeSchema;
+export const stringSchema: StringSchema = makeLeaf("string", ValueSchema.String);
 export const numberSchema = makeLeaf("number", ValueSchema.Number);
 export const booleanSchema = makeLeaf("boolean", ValueSchema.Boolean);
 export const nullSchema = makeLeaf("null", ValueSchema.Null);

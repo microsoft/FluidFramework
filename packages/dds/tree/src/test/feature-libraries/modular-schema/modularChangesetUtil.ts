@@ -28,7 +28,7 @@ import {
 	getParentFieldId,
 	normalizeFieldId,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+} from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import {
 	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,

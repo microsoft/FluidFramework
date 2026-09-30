@@ -32,4 +32,7 @@ https://www.iso.org/iso-8601-date-and-time-format.html
 https://foo-my.sharepoint.com*
 
 # Docusaurus infra
-http://localhost:3000/assets/css/styles.*.css
+http://127.0.0.1:3000/assets/css/styles.*.css
+
+# Generated Pagefind assets are verified separately in the deployment pipeline.
+http://127.0.0.1:3000/pagefind/*

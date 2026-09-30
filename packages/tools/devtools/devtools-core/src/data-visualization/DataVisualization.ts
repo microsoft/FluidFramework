@@ -136,6 +136,11 @@ export interface DataVisualizerEvents extends IEvent {
  * Consumers can begin tree visualization by calling {@link DataVisualizerGraph.renderRootHandles}.
  * The returned handle nodes provide the IDs required to make subsequent calls to {@link DataVisualizerGraph.render}
  * to visualize subtrees as needed.
+ *
+ * Visualizer nodes only begin broadcasting automatic update events once a consumer has expressed interest in them
+ * via {@link DataVisualizerGraph.subscribe}. Interest is released via {@link DataVisualizerGraph.unsubscribe}.
+ * This ensures we do not pay the cost of monitoring (and broadcasting updates for) shared objects that no consumer
+ * is currently displaying.
  */
 export class DataVisualizerGraph
 	extends TypedEventEmitter<DataVisualizerEvents>
@@ -232,6 +237,41 @@ export class DataVisualizerGraph
 		// This could indicate a stale data request from an external consumer, or could indicate a bug,
 		// but this library isn't capable of telling the difference.
 		return this.visualizerNodes.get(fluidObjectId)?.render() ?? undefined;
+	}
+
+	/**
+	 * Registers a consumer's interest in the specified Fluid object and returns a visual description of its
+	 * current state.
+	 *
+	 * @remarks
+	 *
+	 * While at least one consumer is subscribed, the associated {@link VisualizerNode} will listen for changes to its
+	 * shared object and broadcast updated visual trees via the graph's "update" event.
+	 * Consumers must release their interest via {@link DataVisualizerGraph.unsubscribe} when they are no longer
+	 * displaying the object (see the leak note on {@link VisualizerNode.unsubscribe}).
+	 *
+	 * If no object is registered for the provided ID, returns `undefined`.
+	 */
+	public async subscribe(fluidObjectId: FluidObjectId): Promise<FluidObjectNode | undefined> {
+		const visualizerNode = this.visualizerNodes.get(fluidObjectId);
+		if (visualizerNode === undefined) {
+			return undefined;
+		}
+		visualizerNode.subscribe();
+		return visualizerNode.render();
+	}
+
+	/**
+	 * Releases a consumer's interest in the specified Fluid object, previously registered via
+	 * {@link DataVisualizerGraph.subscribe}.
+	 *
+	 * @remarks Once the final subscriber releases its interest, the associated {@link VisualizerNode} will stop
+	 * listening for changes and broadcasting updates.
+	 *
+	 * No-ops if no object is registered for the provided ID.
+	 */
+	public unsubscribe(fluidObjectId: FluidObjectId): void {
+		this.visualizerNodes.get(fluidObjectId)?.unsubscribe();
 	}
 
 	/**
@@ -341,8 +381,11 @@ export class DataVisualizerGraph
  *
  * A visual representation can be requested via {@link VisualizerNode.render}.
  *
- * Additionally, whenever the associated `ISharedObject` is updated (i.e. whenever its "op" event is emitted),
- * an updated visual tree will be emitted via this object's {@link SharedObjectListenerEvents | "update" event}.
+ * Additionally, while at least one consumer is {@link VisualizerNode.subscribe | subscribed}, whenever the associated
+ * `ISharedObject` is updated (i.e. whenever its "op" event is emitted), an updated visual tree will be emitted via this
+ * object's {@link DataVisualizerEvents | "update" event}.
+ * When the final subscriber {@link VisualizerNode.unsubscribe | releases its interest}, the node stops listening for
+ * updates and broadcasting them.
  */
 export class VisualizerNode
 	extends TypedEventEmitter<DataVisualizerEvents>
@@ -351,7 +394,7 @@ export class VisualizerNode
 	/**
 	 * Handler for {@link VisualizerNode.sharedObject}'s "op" event.
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
-	 * {@link SharedObjectListenerEvents | "update"} event.
+	 * {@link DataVisualizerEvents | "update"} event.
 	 */
 	private readonly onOpHandler = async (): Promise<boolean> => {
 		try {
@@ -367,6 +410,15 @@ export class VisualizerNode
 	 * Private {@link VisualizerNode.disposed} tracking.
 	 */
 	private _disposed: boolean;
+
+	/**
+	 * Number of consumers currently subscribed to this node's updates (via {@link VisualizerNode.subscribe}).
+	 *
+	 * @remarks
+	 * While this is greater than 0, the node listens to its shared object's "op" event and broadcasts updates.
+	 * The "op" listener is attached when this transitions from 0 to 1, and detached when it transitions from 1 to 0.
+	 */
+	private subscriberCount: number = 0;
 
 	/**
 	 * Handles the returned promise for {@link onOpHandler}.
@@ -402,8 +454,6 @@ export class VisualizerNode
 	) {
 		super();
 
-		this.sharedObject.on?.("op", this.syncOpHandler);
-
 		this._disposed = false;
 	}
 
@@ -412,6 +462,47 @@ export class VisualizerNode
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
+	}
+
+	/**
+	 * Registers a consumer's interest in this node's updates.
+	 *
+	 * @remarks
+	 * On the first subscription, attaches a listener to {@link VisualizerNode.sharedObject}'s "op" event so that
+	 * subsequent changes are broadcast via the {@link DataVisualizerEvents | "update"} event.
+	 * Each call must be balanced by a corresponding call to {@link VisualizerNode.unsubscribe}.
+	 */
+	public subscribe(): void {
+		if (this.subscriberCount === 0) {
+			this.sharedObject.on?.("op", this.syncOpHandler);
+		}
+		this.subscriberCount++;
+	}
+
+	/**
+	 * Releases a consumer's interest in this node's updates, previously registered via {@link VisualizerNode.subscribe}.
+	 *
+	 * @remarks
+	 * When the final subscriber releases its interest, the "op" listener is detached and the node stops broadcasting
+	 * updates.
+	 *
+	 * Note: this relies on consumers correctly signalling when they are no longer displaying this
+	 * object. If a consumer fails to do so (e.g. the view crashes or is torn down without sending its "close" message),
+	 * the "op" listener will leak and the node will continue broadcasting updates until the devtools instance is
+	 * disposed.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider implementing a more robust solution to handle the case where a consumer fails to signal its
+	 * disconnection.
+	 */
+	public unsubscribe(): void {
+		if (this.subscriberCount === 0) {
+			return;
+		}
+		this.subscriberCount--;
+		if (this.subscriberCount === 0) {
+			this.sharedObject.off("op", this.syncOpHandler);
+		}
 	}
 
 	/**
@@ -445,19 +536,15 @@ export class VisualizerNode
 		);
 	}
 
-	/**
-	 * {@inheritDoc VisualizeChildData}
-	 */
 	private async renderChildData(data: unknown): Promise<VisualChildNode> {
 		return visualizeChildData(data, this.registerHandle);
 	}
 
-	/**
-	 * {@inheritDoc IDisposable.dispose}
-	 */
 	public dispose(): void {
 		if (!this._disposed) {
+			// Detach the "op" listener if any subscribers are still registered, and reset the count.
 			this.sharedObject.off("op", this.syncOpHandler);
+			this.subscriberCount = 0;
 			this._disposed = true;
 		}
 	}
@@ -494,7 +581,7 @@ export async function visualizeChildData(
 		};
 	}
 
-	// eslint-disable-next-line import-x/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated -- TODO
 	if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;

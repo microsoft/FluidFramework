@@ -77,6 +77,13 @@ export interface IFluidModuleWithDetails {
 }
 
 // @beta @legacy
+export interface ILoadContainerToSequenceNumberProps extends IContainerHostProps, IContainerDriverServices {
+    readonly loadToSequenceNumber: number;
+    readonly request: IRequest;
+    readonly signal?: AbortSignal | undefined;
+}
+
+// @beta @legacy
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader;
     readonly configProvider?: IConfigProviderBase;
@@ -149,6 +156,9 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
+
+// @beta @legacy
+export function loadContainerToSequenceNumber(props: ILoadContainerToSequenceNumberProps): Promise<IContainer>;
 
 // @beta @legacy
 export class Loader implements IHostLoader {

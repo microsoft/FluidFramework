@@ -23,7 +23,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	IChannelServices,
 	IChannelStorageService,
@@ -49,6 +49,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	SerializationVersion,
 	createIdCompressor,
 	toIdCompressorWithCore,
 	type IdCreationRange,
@@ -62,7 +63,7 @@ import {
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
@@ -253,7 +254,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: IdCreationRange): void {
+	private finalizeIdRange(range: IdCreationRange): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
@@ -876,7 +877,7 @@ export class MockFluidDataStoreRuntime
 		idCompressor?: IIdCompressor;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
-		minVersionForCollab?: MinimumVersionForCollab;
+		minVersionForCollab?: OldestSupportedClientVersion;
 		inStagingMode?: boolean;
 		isDirty?: boolean;
 	}) {
@@ -894,7 +895,7 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor(SerializationVersion.V3);
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
@@ -915,7 +916,7 @@ export class MockFluidDataStoreRuntime
 	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -1244,7 +1245,7 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
 	public attach(handler): void {}
 
 	public submit(messageContent: any): number {
-		assert(false, "Throw submit error on mock empty delta connection");
+		fail("Throw submit error on mock empty delta connection");
 	}
 
 	public dirty(): void {}
@@ -1327,7 +1328,7 @@ function setContentsFromSummaryTree(
 				setContentsFromSummaryTree(value, `${path}${key}/`, contents);
 				break;
 			default:
-				assert(false, "Unexpected summary type on mock createFromSummary");
+				fail("Unexpected summary type on mock createFromSummary");
 		}
 	}
 }

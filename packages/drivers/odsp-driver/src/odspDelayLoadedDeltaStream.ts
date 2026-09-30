@@ -214,7 +214,7 @@ export class OdspDelayLoadedDeltaStream {
 					websocketEndpoint.deltaStreamSocketUrl,
 					connectionId,
 				);
-				connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
+				connection.on("op", (_documentId, ops: ISequencedDocumentMessage[]) => {
 					this.opsReceived(ops);
 				});
 				connection.on("signal", this.signalHandler);
@@ -559,6 +559,7 @@ export class OdspDelayLoadedDeltaStream {
 			this.epochTracker,
 			this.socketReferenceKeyPrefix,
 			connectionId,
+			this.hostPolicy.hostProvidedRequestHeaders,
 		);
 		const duration = performanceNow() - startTime;
 		// This event happens rather often, so it adds up to cost of telemetry.
@@ -573,7 +574,7 @@ export class OdspDelayLoadedDeltaStream {
 		return connection;
 	}
 
-	public dispose(error?: unknown): void {
+	public dispose(): void {
 		this.clearJoinSessionTimer();
 		this.currentConnection?.dispose();
 		delete this.currentConnection;

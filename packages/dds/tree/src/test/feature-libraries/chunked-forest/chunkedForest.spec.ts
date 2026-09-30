@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	type FieldKey,
 	type TreeChunk,
@@ -15,6 +17,7 @@ import {
 } from "../../../core/index.js";
 import {
 	Chunker,
+	type ChunkCompressor,
 	type IChunker,
 	type ShapeInfo,
 	defaultChunkPolicy,
@@ -23,9 +26,17 @@ import {
 	tryShapeFromNodeSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
-// Allow importing from this specific file which is being tested:
 // eslint-disable-next-line import-x/no-internal-modules
-import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
+/* eslint-disable import-x/no-internal-modules -- Import implementation helpers for direct tests. */
+import {
+	buildChunkedForest,
+	ensureExclusiveBasicChunk,
+	locateNodeInChunks,
+} from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+/* eslint-enable import-x/no-internal-modules -- End direct implementation imports. */
+// eslint-disable-next-line import-x/no-internal-modules
+import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	TreeShape,
 	UniformChunk,
@@ -36,7 +47,7 @@ import {
 	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import { SchemaFactory, numberSchema, toInitialSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, makeArray } from "../../../util/index.js";
 import { testForest } from "../../forestTestSuite.js";
 
 const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
@@ -140,14 +151,171 @@ describe("ChunkedForest", () => {
 		});
 	}
 
-	describe("mutation of chunks array inside a multi-node chunkShape", () => {
-		/** Shape used to construct the uniform chunks in these tests. */
-		const numberShape = new TreeShape(
-			brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
-			true,
-			[],
-		);
+	/** Shape used to construct the uniform chunks in these tests. */
+	const numberShape = new TreeShape(
+		brand<TreeNodeSchemaIdentifier>(numberSchema.identifier),
+		true,
+		[],
+	);
 
+	describe("locateNodeInChunks", () => {
+		it("locates nodes by chunk index and offset", () => {
+			const first = new BasicChunk(numberShape.type, new Map(), 0);
+			const middle = new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]);
+			const last = new BasicChunk(numberShape.type, new Map(), 4);
+			const chunks = [first, middle, last];
+
+			assert.deepEqual(locateNodeInChunks(chunks, 0), {
+				chunk: first,
+				indexOfChunk: 0,
+				indexWithinChunk: 0,
+			});
+			assert.deepEqual(locateNodeInChunks(chunks, 1), {
+				chunk: middle,
+				indexOfChunk: 1,
+				indexWithinChunk: 0,
+			});
+			assert.deepEqual(locateNodeInChunks(chunks, 3), {
+				chunk: middle,
+				indexOfChunk: 1,
+				indexWithinChunk: 2,
+			});
+			assert.deepEqual(locateNodeInChunks(chunks, 4), {
+				chunk: last,
+				indexOfChunk: 2,
+				indexWithinChunk: 0,
+			});
+		});
+
+		it("rejects invalid node indices", () => {
+			const chunks = [new BasicChunk(numberShape.type, new Map(), 0)];
+
+			assert.throws(
+				() => locateNodeInChunks(chunks, -1),
+				validateAssertionError("index must be non-negative"),
+			);
+			for (const index of [0.5, Number.MAX_SAFE_INTEGER + 1]) {
+				assert.throws(
+					() => locateNodeInChunks(chunks, index),
+					validateAssertionError("index must be an integer"),
+				);
+			}
+			assert.throws(
+				() => locateNodeInChunks(chunks, 1),
+				validateAssertionError("missing edited node"),
+			);
+			assert.throws(
+				() => locateNodeInChunks([], 0),
+				validateAssertionError("Array index is out of bounds"),
+			);
+		});
+	});
+
+	describe("ensureExclusiveBasicChunk", () => {
+		function makeCompressor(): ChunkCompressor {
+			const schema = new TreeStoredSchemaRepository(toInitialSchema(SchemaFactory.number));
+			return {
+				policy: makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+				idCompressor: undefined,
+			};
+		}
+
+		function valuesFromChunks(chunks: readonly TreeChunk[]): unknown[] {
+			const values: unknown[] = [];
+			for (const chunk of chunks) {
+				const cursor = chunk.cursor();
+				for (let hasNode = cursor.firstNode(); hasNode; hasNode = cursor.nextNode()) {
+					values.push(cursor.value);
+				}
+			}
+			return values;
+		}
+
+		it("returns an exclusively owned BasicChunk unchanged", () => {
+			const basic = new BasicChunk(numberShape.type, new Map(), 0);
+			const chunks: TreeChunk[] = [basic];
+
+			const result = ensureExclusiveBasicChunk(chunks, 0, makeCompressor());
+
+			assert.equal(result, basic);
+			assert.equal(chunks[0], basic);
+			assert.equal(result.isShared(), false);
+		});
+
+		it("rejects an invalid index without modifying the chunks", () => {
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(2), [0, 1]);
+			const chunks: TreeChunk[] = [uniform];
+
+			assert.throws(
+				() => ensureExclusiveBasicChunk(chunks, 2, makeCompressor()),
+				validateAssertionError("missing edited node"),
+			);
+
+			assert.deepEqual(chunks, [uniform]);
+			assert.equal(uniform.isUnreferenced(), false);
+		});
+
+		it("clones a shared BasicChunk and releases the array's old reference", () => {
+			const basic = new BasicChunk(numberShape.type, new Map(), 0);
+			basic.referenceAdded();
+			const chunks: TreeChunk[] = [basic];
+
+			const result = ensureExclusiveBasicChunk(chunks, 0, makeCompressor());
+
+			assert.notEqual(result, basic);
+			assert.equal(chunks[0], result);
+			assert.equal(result.isShared(), false);
+			assert.equal(basic.isShared(), false);
+		});
+
+		it("normalizes a UniformChunk and selects the requested node", () => {
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(3), [0, 1, 2]);
+			const chunks: TreeChunk[] = [uniform];
+
+			const result = ensureExclusiveBasicChunk(chunks, 2, makeCompressor());
+
+			assert.equal(result, chunks[2]);
+			assert.equal(result.value, 2);
+			assert.equal(result.isShared(), false);
+			assert.equal(uniform.isUnreferenced(), true);
+			assert.deepEqual(valuesFromChunks(chunks), [0, 1, 2]);
+		});
+
+		it("selects the requested node when the containing chunk and node offsets are nonzero", () => {
+			const leading = new BasicChunk(numberShape.type, new Map(), -1);
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(3), [0, 1, 2]);
+			const trailing = new BasicChunk(numberShape.type, new Map(), 3);
+			const chunks: TreeChunk[] = [leading, uniform, trailing];
+
+			const result = ensureExclusiveBasicChunk(chunks, 3, makeCompressor());
+
+			assert.equal(result, chunks[3]);
+			assert.equal(result.value, 2);
+			assert.equal(chunks[0], leading);
+			assert.equal(chunks[4], trailing);
+			assert.equal(uniform.isUnreferenced(), true);
+			assert.deepEqual(valuesFromChunks(chunks), [-1, 0, 1, 2, 3]);
+		});
+
+		it("normalizes a shared SequenceChunk without replacing a sibling", () => {
+			const sequence = new SequenceChunk([
+				new BasicChunk(numberShape.type, new Map(), 0),
+				new BasicChunk(numberShape.type, new Map(), 1),
+				new BasicChunk(numberShape.type, new Map(), 2),
+			]);
+			sequence.referenceAdded();
+			const chunks: TreeChunk[] = [sequence];
+
+			const result = ensureExclusiveBasicChunk(chunks, 2, makeCompressor());
+
+			assert.equal(result, chunks[2]);
+			assert.equal(result.value, 2);
+			assert.equal(result.isShared(), false);
+			assert.deepEqual(valuesFromChunks(chunks), [0, 1, 2]);
+		});
+	});
+
+	describe("mutation of chunks array inside a multi-node chunkShape", () => {
 		/** Field key for the detached field used as the source/destination of attach/detach ops. */
 		const detachedKey: FieldKey = brand("detached");
 
@@ -242,6 +410,42 @@ describe("ChunkedForest", () => {
 			assert.equal(result[6].topLevelLength, 3);
 		});
 
+		it("enterNode preserves siblings when expanding a shared SequenceChunk", () => {
+			const forestSchema = new TreeStoredSchemaRepository(
+				toInitialSchema(SchemaFactory.number),
+			);
+			const forest = buildChunkedForest(
+				makeTreeChunker(forestSchema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+			);
+			forest.roots.fields.set(rootFieldKey, [
+				new SequenceChunk([
+					new BasicChunk(numberShape.type, new Map(), 0),
+					new BasicChunk(numberShape.type, new Map(), 1),
+					new BasicChunk(numberShape.type, new Map(), 2),
+				]),
+			]);
+			// Cloning shares the root and its descendants, forcing enterNode's copy-on-write path.
+			const clone = forest.clone(forestSchema);
+
+			const visitor = clone.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.enterNode(2);
+			visitor.exitNode(2);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const result = clone.roots.fields.get(rootFieldKey);
+			assert(result !== undefined);
+			assert.deepEqual(
+				result.map((chunk) => {
+					const cursor = chunk.cursor();
+					assert(cursor.firstNode());
+					return cursor.value;
+				}),
+				[0, 1, 2],
+			);
+		});
+
 		it("attaches a single node into the middle of a uniform chunk", () => {
 			const forest = setupForest();
 
@@ -271,6 +475,127 @@ describe("ChunkedForest", () => {
 				}
 			}
 			assert.deepEqual(values, [0, 1, 99, 2, 3, 4]);
+		});
+
+		/**
+		 * Seeds the forest's root field with a sequence of single-shape UniformChunks of the given sizes.
+		 *
+		 * @remarks
+		 * Lets tests position attach/detach boundaries on existing chunk seams and exercise
+		 * `coalesceUniformChunks` without `splitFieldAtIndex` having to bisect first.
+		 */
+		function setupForestWithChunks(
+			chunkSizes: readonly number[],
+		): ReturnType<typeof setupForest> {
+			const forestSchema = new TreeStoredSchemaRepository(
+				toInitialSchema(SchemaFactory.number),
+			);
+			const chunker = makeTreeChunker(
+				forestSchema,
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			const forest = buildChunkedForest(chunker);
+			let nextValue = 0;
+			const chunks: TreeChunk[] = chunkSizes.map(
+				(size) =>
+					new UniformChunk(
+						numberShape.withTopLevelLength(size),
+						makeArray(size, () => nextValue++),
+					),
+			);
+			forest.roots.fields.set(rootFieldKey, chunks);
+			return forest;
+		}
+
+		it("coalesces same-shape neighbors left adjacent by an aligned detach", () => {
+			// Field pre-arranged as three same-shape UniformChunks of sizes 2, 1, 2 so the
+			// detach lands on existing chunk boundaries — splitFieldAtIndex is a no-op and
+			// only coalesceUniformChunks is exercised. After removing the middle single-node
+			// chunk, the two 2-node chunks merge into a single 4-node chunk.
+			const forest = setupForestWithChunks([2, 1, 2]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.detach({ start: 2, end: 3 }, detachedKey, detachedId, false);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const remaining = forest.roots.fields.get(rootFieldKey);
+			assert(remaining !== undefined);
+			assert.equal(remaining.length, 1);
+			assert(remaining[0] instanceof UniformChunk);
+			assert.equal(remaining[0].topLevelLength, 4);
+		});
+
+		it("enterNode resolves the correct chunk in a field with multiple multi-node chunks", () => {
+			// Regression test for a chunk-walk bug in enterNode. Previously, the loop that
+			// walks chunks to find the target index read its `chunk` variable at the top of
+			// the loop body — before `indexOfChunk++` — so the next iteration's condition
+			// check used the prior iteration's chunk. With fields containing multiple
+			// multi-node UniformChunks (as produced by coalesceUniformChunks in steady state),
+			// this caused the loop to overshoot the target chunk.
+			//
+			// Setup: three same-shape UniformChunks of sizes 2, 5, 3 — 10 total nodes.
+			// enterNode(6) targets the 5-node chunk at local position 4 (global indices 2..6
+			// land in that chunk). Pre-fix, the loop steps past the 5-node chunk and lands on
+			// the 3-node chunk with indexWithinChunk = -1, throwing "Array index is out of
+			// bounds" when dereferencing newChunks[-1].
+			const forest = setupForestWithChunks([2, 5, 3]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.enterNode(6);
+			visitor.exitNode(6);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			// enterNode shatters the targeted 5-node UniformChunk into 5 BasicChunks; the
+			// field's chunk count grows from 3 to 7, with the two flanking UniformChunks
+			// left untouched.
+			const result = forest.roots.fields.get(rootFieldKey);
+			assert(result !== undefined);
+			assert.equal(result.length, 7);
+			assert(result[0] instanceof UniformChunk);
+			assert.equal(result[0].topLevelLength, 2);
+			assert(result[6] instanceof UniformChunk);
+			assert.equal(result[6].topLevelLength, 3);
+		});
+
+		it("coalesces an inserted same-shape chunk with its neighbors", () => {
+			// Field pre-arranged as two same-shape 2-node UniformChunks so the attach lands
+			// on the existing seam — splitFieldAtIndex is a no-op. After inserting a
+			// single-node UniformChunk with value 99 at index 2, coalesce merges both seams
+			// into a single 5-node UniformChunk.
+			const forest = setupForestWithChunks([2, 2]);
+			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			forest.roots.fields.set(detachedKey, [source]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.attach(detachedKey, 1, 2);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const updated = forest.roots.fields.get(rootFieldKey);
+			assert(updated !== undefined);
+			assert.equal(updated.length, 1);
+			assert(updated[0] instanceof UniformChunk);
+			assert.equal(updated[0].topLevelLength, 5);
+		});
+
+		it("releases chunks when destroying a detached field", () => {
+			const forest = setupForest();
+			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			forest.roots.fields.set(detachedKey, [source]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.destroy(detachedKey, 1);
+			visitor.free();
+
+			assert.equal(forest.roots.fields.has(detachedKey), false);
+			// The removed field owned the chunk's only reference.
+			assert.equal(source.isUnreferenced(), true);
 		});
 	});
 });

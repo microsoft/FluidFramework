@@ -26,6 +26,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -105,6 +106,7 @@ describeCompat(
 			apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 				runtimeOptions,
 			},

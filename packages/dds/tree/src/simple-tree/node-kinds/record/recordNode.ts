@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -17,8 +18,7 @@ import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
 import {
 	type TreeNodeSchema,
 	NodeKind,
-	// eslint-disable-next-line import-x/no-deprecated
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	typeSchemaSymbol,
 	type UnhydratedFlexTreeNode,
 	getInnerNode,
@@ -78,8 +78,7 @@ function createRecordNodeProxy(
 					case typeSchemaSymbol: {
 						return schema;
 					}
-					// eslint-disable-next-line import-x/no-deprecated
-					case typeNameSymbol: {
+					case schemaIdentifierBrand: {
 						return schema.identifier;
 					}
 					case Symbol.iterator: {
@@ -270,7 +269,11 @@ export function recordSchema<
 		/**
 		 * Record-like index signature for the node.
 		 */
-		[key: string]: TreeNodeFromImplicitAllowedTypes<TAllowedTypes>;
+		// TODO: Once TypeScript supports separate getter/setter index signatures, define them here
+		// and update TreeRecordNode and TreeRecordNodeUnsafe accordingly.
+		// https://github.com/microsoft/TypeScript/issues/43826
+		// Until then, Object.entries/Object.values also include undefined in their value types.
+		[key: string]: TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -370,15 +373,14 @@ export function recordSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
-		public [Symbol.iterator](): IterableIterator<
+		public [Symbol.iterator](): FluidIterableIterator<
 			[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
 		> {
 			return recordIterator(this);
@@ -412,9 +414,18 @@ export function recordSchema<
 
 function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	record: TreeRecordNode<TAllowedTypes>,
-): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
-	for (const [key, value] of Object.entries(record)) {
-		yield [key, value];
+): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
+	// Entries are read from the inner node rather than through the record's index signature.
+	// Reads through the index signature are typed as possibly undefined (since an arbitrary key may have no entry),
+	// but every key reported by the inner node has associated content, so the values yielded here are always defined.
+	const innerNode = getInnerNode(record);
+	for (const key of innerNode.keys()) {
+		const field = innerNode.tryGetField(brand(key));
+		assert(field !== undefined, "Expected a field for each key of the inner node.");
+		yield [
+			key,
+			tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+		];
 	}
 }
 

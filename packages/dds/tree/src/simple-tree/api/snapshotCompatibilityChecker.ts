@@ -13,7 +13,7 @@ import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
-import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
 	decodeSchemaCompatibilitySnapshot,
@@ -22,18 +22,22 @@ import {
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
- * Compute the compatibility of using `view` to {@link ViewableTree.viewWith | view a tree} who's {@link ITreeAlpha.exportSimpleSchema | stored schema} could be derived from `viewWhichCreatedStoredSchema` via either {@link TreeView.initialize} or {@link TreeView.upgradeSchema}.
+ * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
+ * (described by `documentViewConfiguration.schema`).
  *
- * @remarks See {@link SchemaCompatibilityStatus} for details on the compatibility results.
+ * @remarks
+ * Schema metadata does not affect compatibility.
  *
- * @example This example demonstrates checking the compatibility of a historical schema against a current schema.
+ * This function does not inspect document content.
+ *
+ * @example Checking the ability of the client's view schema to view or upgrade a document's stored schema.
  * In this case, the historical schema is a Point2D object with x and y fields, while the current schema is a Point3D object
  * that adds an optional z field.
  *
  * ```ts
  * // This snapshot is assumed to be the same as Point3D, except missing `z`.
- * const encodedSchema = JSON.parse(fs.readFileSync("PointSchema.json", "utf8"));
- * const oldViewSchema = importCompatibilitySchemaSnapshot(encodedSchema);
+ * const encodedDocumentSchema = JSON.parse(fs.readFileSync("PointSchema.json", "utf8"));
+ * const documentViewConfiguration = importCompatibilitySchemaSnapshot(encodedDocumentSchema);
  *
  * // Build the current view schema
  * class Point3D extends factory.object("Point", {
@@ -43,10 +47,10 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * 	// The current schema has a new optional field that was not present on Point2D
  * 	z: factory.optional(factory.number),
  * }) {}
- * const currentViewSchema = new TreeViewConfiguration({ schema: Point3D });
+ * const clientViewConfiguration = new TreeViewConfiguration({ schema: Point3D });
  *
  * // Check to see if the document created by the historical view schema can be opened with the current view schema
- * const backwardsCompatibilityStatus = checkCompatibility(oldViewSchema, currentViewSchema);
+ * const backwardsCompatibilityStatus = checkCompatibility(documentViewConfiguration, clientViewConfiguration);
  *
  * // z is not present in Point2D, so the schema must be upgraded
  * assert.equal(backwardsCompatibilityStatus.canView, false);
@@ -55,17 +59,23 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * assert.equal(backwardsCompatibilityStatus.canUpgrade, true);
  *
  * // Test what the old version of the application would do with a tree using the new schema:
- * const forwardsCompatibilityStatus = checkCompatibility(currentViewSchema, oldViewSchema);
+ * const forwardsCompatibilityStatus = checkCompatibility(clientViewConfiguration, documentViewConfiguration);
  *
- * // If the old schema set allowUnknownOptionalFields, this would be true, but since it did not,
+ * // If the old schema set `allowUnknownOptionalFields`, this would be true, but since it did not,
  * // this assert will fail, detecting the forwards compatibility break:
  * // this means these two versions of the application cannot collaborate on content using these schema.
  * assert.equal(forwardsCompatibilityStatus.canView, true);
  * ```
  *
- * @param viewWhichCreatedStoredSchema - From which to derive the stored schema, as if it initialized or upgraded a tree via {@link TreeView}.
- * @param view - The view being tested to see if it could view tree created or initialized using `viewWhichCreatedStoredSchema`.
- * @returns The compatibility status.
+ * @param documentViewConfiguration - Configuration whose `schema` was used to generate the stored schema persisted in the document.
+ * This function assumes the stored schema was generated with the default restrictive staged upgrade policy.
+ * @param clientViewConfiguration - Configuration with the view schema being used by the current client.
+ * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ *
+ * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
+ *
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas,
+ * without `canInitialize`.
  *
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
@@ -73,18 +83,20 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function checkCompatibility(
-	viewWhichCreatedStoredSchema: TreeViewConfiguration,
-	view: TreeViewConfiguration,
+	documentViewConfiguration: TreeViewConfiguration,
+	clientViewConfiguration: TreeViewConfiguration,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
-	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
-	const tester = new SchemaCompatibilityTester(viewAsAlpha);
-	return tester.checkCompatibility(stored);
+	const viewAsAlpha = new TreeViewConfigurationAlpha({
+		schema: clientViewConfiguration.schema,
+	});
+	const stored = toInitialSchema(documentViewConfiguration.schema);
+	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
 /**
- * Returns a JSON compatible representation of the tree schema for snapshot compatibility checking.
+ * Returns a JSON-compatible representation of the tree schema for snapshot compatibility checking.
  *
+ * @remarks
  * Snapshots can be loaded by the same or newer package versions, but not necessarily older versions.
  *
  * @see {@link importCompatibilitySchemaSnapshot} which loads these snapshots.
@@ -92,7 +104,7 @@ export function checkCompatibility(
  * @param config - The schema to snapshot. Only the schema field of the `TreeViewConfiguration` is used.
  * @returns The JSON representation of the schema.
  *
- * @example This example creates and persists a snapshot of a Point2D schema.
+ * @example Create and persist a snapshot of a Point2D schema.
  *
  * ```ts
  * const schemaFactory = new SchemaFactory("test");
@@ -128,13 +140,14 @@ export function exportCompatibilitySchemaSnapshot(
  * @returns The schema. Only the schema field of the {@link TreeViewConfiguration} is populated.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
- * @example This example loads and parses a snapshot of a Point2D schema.
+ * @example Load and parse a snapshot of a Point2D schema.
  *
  * ```ts;
  * const oldViewSchema = importCompatibilitySchemaSnapshot(fs.readFileSync("PointSchema.json", "utf8"));
  * ```
  * @privateRemarks
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
+ *
  * @alpha
  */
 export function importCompatibilitySchemaSnapshot(
@@ -229,13 +242,13 @@ export interface CombinedSchemaCompatibilityStatus {
 	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 	/**
-	 * True if and only if the schema have identical compatibility.
+	 * True if and only if the schemas have identical compatibility.
 	 * @remarks
 	 * This includes producing the equivalent stored schema (which currentViewOfSnapshotDocument and snapshotViewOfCurrentDocument also measure)
-	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schema.
+	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schemas.
 	 *
 	 * This includes compatibility with all potential future schema changes.
-	 * For example two schema different only in compatibility with future optional fields via allow unknown optional fields or staged schema
+	 * For example two schemas different only in compatibility with future optional fields via allow unknown optional fields or staged schema
 	 * would be considered non-equivalent, even though they are forwards and backwards compatible with each other, and both status above report them as equivalent
 	 * since they would produce the same stored schema upon schema upgrade.
 	 */
@@ -257,12 +270,39 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * and not erased when regenerating snapshots.
 	 *
 	 * This directory will be created if it does not already exist.
-	 * All ".json" files in this directory will be treated as schema snapshots.
+	 * By default, all ".json" files in this directory will be treated as schema snapshots.
+	 * When {@link SnapshotSchemaCompatibilityOptions.snapshotFileNameFormat} is provided,
+	 * only JSON files matching that format will be treated as schema snapshots.
 	 * It is recommended to use a dedicated directory for each {@link snapshotSchemaCompatibility} powered test.
 	 *
 	 * This can use any path syntax supported by the provided {@link SnapshotSchemaCompatibilityOptions.fileSystem}.
 	 */
 	readonly snapshotDirectory: string;
+
+	/**
+	 * Customizes the names of schema snapshot files.
+	 * @remarks
+	 * Snapshot files are named by surrounding the version with the provided strings, followed by the ".json" extension.
+	 * For example, `{ prefix: "schema-", suffix: "-snapshot" }` produces `schema-1.0.0-snapshot.json` for version `1.0.0`.
+	 *
+	 * Only JSON files matching this format are treated as schema snapshots.
+	 * The prefix and suffix must not contain ASCII control characters or characters that are invalid in cross-platform file names.
+	 */
+	readonly snapshotFileNameFormat?: {
+		/**
+		 * Text to include before the version.
+		 *
+		 * @defaultValue `""`
+		 */
+		readonly prefix?: string;
+
+		/**
+		 * Text to include after the version and before the ".json" extension.
+		 *
+		 * @defaultValue `""`
+		 */
+		readonly suffix?: string;
+	};
 
 	/**
 	 * How the `snapshotDirectory` is accessed.
@@ -314,7 +354,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * Such applications can set this to the oldest version currently deployed,
 	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
 	 *
-	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * This is the same approach used by {@link @fluidframework/runtime-definitions#OldestSupportedClientVersion}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
 	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.version}.
 	 */
@@ -493,6 +533,7 @@ export function snapshotSchemaCompatibility(
 	const checker = new SnapshotCompatibilityChecker(
 		options.snapshotDirectory,
 		options.fileSystem,
+		options.snapshotFileNameFormat,
 	);
 	const {
 		version: currentVersion,
@@ -615,7 +656,7 @@ export function snapshotSchemaCompatibility(
 					JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1])) !==
 					JSON.stringify(currentEncodedForSnapshotting)
 				) {
-					// Schema are compatibility wise equivalent, but differ in some way (excluding json formatting).
+					// Schemas are compatibility wise equivalent, but differ in some way (excluding json formatting).
 					// TODO: add a "normalize" mode, which do an update only in this case (or maybe even normalize json formatting as well and just always rewrite when !schemaChange)
 					// This would be useful to minimize diffs from future schema changes.
 					// This would be particularly useful if adding a second version of the format used in the snapshots.
@@ -744,12 +785,33 @@ export class SnapshotCompatibilityChecker {
 		 * How the `snapshotDirectory` is accessed.
 		 */
 		private readonly fileSystemMethods: SnapshotFileSystem,
-	) {}
+		/**
+		 * Text surrounding the version in snapshot file names.
+		 */
+		private readonly snapshotFileNameFormat: {
+			readonly prefix?: string;
+			readonly suffix?: string;
+		} = {},
+	) {
+		const { prefix = "", suffix = "" } = snapshotFileNameFormat;
+		// eslint-disable-next-line no-control-regex -- The control character range is intentionally invalid for cross-platform file names.
+		const invalidFileNameCharacters = /[\u0000-\u001F<>:"/\\|?*]/u;
+		for (const [property, value] of [
+			["prefix", prefix],
+			["suffix", suffix],
+		] as const) {
+			if (invalidFileNameCharacters.test(value)) {
+				throw new UsageError(
+					`Invalid snapshotFileNameFormat.${property}: ${JSON.stringify(value)}. Must not contain ASCII control characters or any of <>:"/\\|?*.`,
+				);
+			}
+		}
+	}
 
 	public writeSchemaSnapshot(snapshotName: string, snapshot: JsonCompatibleReadOnly): void {
 		const fullPath = this.fileSystemMethods.join(
 			this.snapshotDirectory,
-			`${snapshotName}.json`,
+			this.getSnapshotFileName(snapshotName),
 		);
 		this.ensureSnapshotDirectoryExists();
 		this.fileSystemMethods.writeFileSync(fullPath, JSON.stringify(snapshot, undefined, "\t"), {
@@ -765,7 +827,7 @@ export class SnapshotCompatibilityChecker {
 	public readSchemaSnapshotRaw(snapshotName: string): JsonCompatibleReadOnly {
 		const fullPath = this.fileSystemMethods.join(
 			this.snapshotDirectory,
-			`${snapshotName}.json`,
+			this.getSnapshotFileName(snapshotName),
 		);
 		const snapshot = JSON.parse(
 			this.fileSystemMethods.readFileSync(fullPath, "utf8"),
@@ -783,8 +845,8 @@ export class SnapshotCompatibilityChecker {
 		const files = this.fileSystemMethods.readdirSync(this.snapshotDirectory);
 		const versions: string[] = [];
 		for (const file of files) {
-			if (file.endsWith(".json")) {
-				const snapshotName = file.slice(0, ".json".length * -1);
+			const snapshotName = this.getSnapshotName(file);
+			if (snapshotName !== undefined) {
 				versions.push(snapshotName);
 			}
 		}
@@ -800,6 +862,38 @@ export class SnapshotCompatibilityChecker {
 
 	public ensureSnapshotDirectoryExists(): void {
 		this.fileSystemMethods.mkdirSync(this.snapshotDirectory, { recursive: true });
+	}
+
+	/**
+	 * Builds the file name used to read or write a snapshot with a known snapshot name.
+	 */
+	private getSnapshotFileName(snapshotName: string): string {
+		const { prefix = "", suffix = "" } = this.snapshotFileNameFormat;
+		return `${prefix}${snapshotName}${suffix}.json`;
+	}
+
+	/**
+	 * Extracts the snapshot name from a matching file found while scanning the snapshot directory.
+	 */
+	private getSnapshotName(fileName: string): string | undefined {
+		const extension = ".json";
+		if (!fileName.endsWith(extension)) {
+			return undefined;
+		}
+
+		const { prefix = "", suffix = "" } = this.snapshotFileNameFormat;
+		const fileNameWithoutExtension = fileName.slice(0, -extension.length);
+		if (
+			!fileNameWithoutExtension.startsWith(prefix) ||
+			!fileNameWithoutExtension.endsWith(suffix)
+		) {
+			return undefined;
+		}
+
+		return fileNameWithoutExtension.slice(
+			prefix.length,
+			fileNameWithoutExtension.length - suffix.length,
+		);
 	}
 }
 

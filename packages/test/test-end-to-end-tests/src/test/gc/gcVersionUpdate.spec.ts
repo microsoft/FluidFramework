@@ -24,6 +24,7 @@ import {
 	TestFluidObjectFactory,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
+	defaultTestOldestSupportedClient,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -57,6 +58,7 @@ describeCompat("GC version update", "NoCompat", (getTestObjectProvider, apis) =>
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 			runtimeOptions,
 		},

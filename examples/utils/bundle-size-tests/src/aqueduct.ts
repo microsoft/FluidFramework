@@ -8,6 +8,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
+import { exampleOldestSupportedClient } from "@fluid-example/example-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { DirectoryFactory } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
@@ -22,6 +23,7 @@ export function apisToBundle(): void {
 
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
+		oldestSupportedClient: exampleOldestSupportedClient,
 		registryEntries: [["BundleTestDo", Promise.resolve(defaultFactory)]],
 		provideEntryPoint: async (runtime: IContainerRuntime) => {
 			const dataStoreHandle = await runtime.getAliasedDataStoreEntryPoint("default");

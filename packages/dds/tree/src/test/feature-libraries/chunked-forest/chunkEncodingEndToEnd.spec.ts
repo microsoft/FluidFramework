@@ -8,7 +8,10 @@ import { strict as assert } from "node:assert";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -36,8 +39,6 @@ import {
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FieldBatchDecodingContext } from "../../../feature-libraries/chunked-forest/codec/codecs.js";
 import type {
 	EncodedFieldBatchV1OrV2,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -80,7 +81,7 @@ import {
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
-import { brand } from "../../../util/index.js";
+import { IdDecodingContext, brand } from "../../../util/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	MockTreeCheckout,
@@ -99,7 +100,7 @@ const options: CodecWriteOptions = {
 
 const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-const idCompressor = createIdCompressor(sessionId);
+const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 const { encode: context, decode: decodeContext } = makeTestFieldBatchContexts({
@@ -170,7 +171,7 @@ describe("End to end chunked encoding", () => {
 			{ jsonValidator: FormatValidatorBasic },
 		);
 		const dummyEditor = new DefaultEditBuilder(
-			new DefaultChangeFamily(codec, options),
+			new DefaultChangeFamily(codec, options).rebaser,
 			mintRevisionTag,
 			changeReceiver,
 			options,
@@ -202,7 +203,6 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
-			revisionTagCodec,
 			context,
 			decodeContext,
 			options,
@@ -214,7 +214,7 @@ describe("End to end chunked encoding", () => {
 		function stringify(content: unknown) {
 			const insertedChunk = decode(
 				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
-				FieldBatchDecodingContext.forOp({
+				new IdDecodingContext({
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
 				}),
@@ -239,7 +239,6 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			revisionTagCodec,
 			context,
 			decodeContext,
 			options,
@@ -251,7 +250,7 @@ describe("End to end chunked encoding", () => {
 		function stringify(content: unknown) {
 			const insertedChunk = decode(
 				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
-				FieldBatchDecodingContext.forOp({
+				new IdDecodingContext({
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
 				}),
@@ -276,7 +275,6 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
 				decoderContext,
 				options,
@@ -304,7 +302,6 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
 				decoderContext,
 				options,
@@ -327,7 +324,6 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
 				decoderContext,
 				options,

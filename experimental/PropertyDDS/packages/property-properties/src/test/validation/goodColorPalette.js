@@ -21,4 +21,4 @@ var templateSchema = {
 	],
 };
 
-module.exports = templateSchema;
+export default templateSchema;

@@ -7,6 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	createIdCompressor,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -64,12 +65,12 @@ import {
 	incrementalSummaryHint,
 	numberSchema,
 	SchemaFactoryAlpha,
+	StagedSchemaUpgradePolicy,
 	stringSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../../simple-tree/index.js";
 import {
 	toStoredSchema,
-	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
@@ -226,7 +227,7 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(
 				SchemaFactoryAlpha.identifier(),
-				restrictiveStoredSchemaGenerationOptions,
+				StagedSchemaUpgradePolicy.restrictive,
 			);
 
 			const fieldEncoder = getFieldEncoder(
@@ -465,6 +466,7 @@ describe("schemaBasedEncoding", () => {
 				it(name, () => {
 					const idCompressor = createIdCompressor(
 						assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+						SerializationVersion.V3,
 					);
 					const storedSchema = schemaData;
 					const tree = treeFactory(idCompressor);

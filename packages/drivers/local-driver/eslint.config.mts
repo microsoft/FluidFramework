@@ -25,17 +25,6 @@ const config: Linter.Config[] = [
 			"unicorn/text-encoding-identifier-case": "off",
 		},
 	},
-	{
-		files: ["*.spec.ts", "src/test/**"],
-		rules: {
-			"import-x/no-nodejs-modules": [
-				"error",
-				{
-					"allow": ["assert"],
-				},
-			],
-		},
-	},
 ];
 
 export default config;

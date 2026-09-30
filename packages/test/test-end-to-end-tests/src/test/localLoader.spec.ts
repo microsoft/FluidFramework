@@ -15,6 +15,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestFluidObject,
 	ITestObjectProvider,
 	LoaderContainerTracker,
@@ -115,6 +116,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loader = createLoader(
@@ -139,6 +141,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	): Promise<IContainer> {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		});
 		const loader = createLoader(

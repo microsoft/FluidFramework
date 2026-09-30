@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
+	defaultTestOldestSupportedClient,
 	createDataStoreFactory,
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -243,6 +244,7 @@ describeCompat(
 			(defaultFactory as any).IRuntimeFactory =
 				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 					runtimeOptions: {},
 				});

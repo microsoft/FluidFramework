@@ -47,7 +47,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 	const driveId = "driveId";
 	const itemId = "itemId";
 	let epochTracker: EpochTracker;
-	let localCache: LocalPersistentCache;
+	const localCache = undefined as unknown as LocalPersistentCache;
 	let hashedDocumentId: string;
 	let service: OdspDocumentService;
 	let socket: ClientSocketMock | undefined;

@@ -7,16 +7,17 @@
  * @fileoverview Definition of the valuemap property class
  */
 
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { Int64, Uint64 } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { constants, Int64, Uint64 } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { validationsEnabled } = require("../enableValidations");
-const { Int64Property, Uint64Property } = require("../properties/intProperties");
+import { validationsEnabled } from "../enableValidations.js";
+import { Int64Property, Uint64Property } from "../properties/intProperties.js";
 
-const { BaseProperty } = require("./baseProperty");
-const { MapProperty } = require("./mapProperty");
-const { _castFunctors } = require("./primitiveTypeCasts");
+import { BaseProperty } from "./baseProperty.js";
+import { MapProperty } from "./mapProperty.js";
+import { _castFunctors } from "./primitiveTypeCasts.js";
+
+const { MSG } = constants;
 
 /**
  * A ValueMapProperty is a collection class that can contain an dictionary that maps from strings to primitive types.

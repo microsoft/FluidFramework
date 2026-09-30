@@ -7,5 +7,6 @@
 !/src/lib
 !/test/lib
 /tmp
+/src/test/data/testRepo-*
 node_modules
 oclif.manifest.json

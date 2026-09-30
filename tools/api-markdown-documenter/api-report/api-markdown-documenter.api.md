@@ -58,6 +58,12 @@ export { ApiItem }
 
 export { ApiItemKind }
 
+// @public @sealed
+interface ApiItemLinkTarget {
+    readonly documentPath: string;
+    readonly headingId?: string;
+}
+
 // @public
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
     readonly defaultSectionLayout: (apiItem: ApiItem, childSections: Section[] | undefined, config: ApiItemTransformationConfiguration) => Section[];
@@ -119,10 +125,12 @@ export interface ApiItemTransformations {
 
 declare namespace ApiItemUtilities {
     export {
+        ApiItemLinkTarget,
         createQualifiedDocumentNameForApiItem,
         filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
+        getLinkTargetForApiItem,
         shouldItemBeIncluded,
         ancestryHasModifierTag,
         getCustomBlockComments,
@@ -311,6 +319,9 @@ function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 function getLinkForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, textOverride?: string): Link;
+
+// @public
+function getLinkTargetForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ApiItemLinkTarget;
 
 // @public
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];

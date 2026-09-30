@@ -124,7 +124,7 @@ describe("setDependencyRange", () => {
 	const mainWorkspacePackages = new Set(mainWorkspace.packages);
 
 	afterEach(async () => {
-		await git.checkout(["HEAD", "--", testRepoRoot]);
+		await git.checkout(["HEAD", "--", "."]);
 		repo.reload();
 	});
 

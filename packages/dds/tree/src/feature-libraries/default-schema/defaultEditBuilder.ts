@@ -10,6 +10,7 @@ import type { CodecWriteOptions, ICodecFamily } from "../../codec/index.js";
 import {
 	type ChangeAtomId,
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
@@ -24,6 +25,7 @@ import {
 	type UpPath,
 	compareFieldUpPaths,
 	topDownPath,
+	type ProcessChangeFn,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -43,18 +45,20 @@ import { fieldKinds } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
+export type DefaultChangeProcessingContext = ModularChangeFamily;
+
 /**
  * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
  *
  * @sealed
  */
 export class DefaultChangeFamily
-	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset>
+	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext>
 {
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(
-		codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext, ChangeDecodingContext>,
 		codecOptions: CodecWriteOptions,
 	) {
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs, codecOptions);
@@ -64,7 +68,11 @@ export class DefaultChangeFamily
 		return this.modularFamily.rebaser;
 	}
 
-	public get codecs(): ICodecFamily<DefaultChangeset, ChangeEncodingContext> {
+	public get codecs(): ICodecFamily<
+		DefaultChangeset,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	> {
 		return this.modularFamily.codecs;
 	}
 
@@ -73,11 +81,17 @@ export class DefaultChangeFamily
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 	): DefaultEditBuilder {
 		return new DefaultEditBuilder(
-			this,
+			this.modularFamily.rebaser,
 			mintRevisionTag,
 			changeReceiver,
 			this.modularFamily.codecOptions,
 		);
+	}
+
+	public buildProcessor(
+		processFn: ProcessChangeFn<DefaultChangeset, DefaultChangeProcessingContext>,
+	): (change: DefaultChangeset) => DefaultChangeset {
+		return this.modularFamily.buildProcessor(processFn);
 	}
 }
 
@@ -194,13 +208,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	private readonly modularBuilder: ModularEditBuilder;
 
 	public constructor(
-		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
+		rebaser: ChangeRebaser<DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 		codecOptions: CodecWriteOptions,
 	) {
 		this.modularBuilder = new ModularEditBuilder(
-			family,
+			rebaser,
 			fieldKinds,
 			changeReceiver,
 			codecOptions,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IsoBufferEncoding } from "@fluid-internal/client-utils";
 import {
 	Uint8ArrayToString,
 	performanceNow,
@@ -222,7 +223,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 			undefined, // workers
 			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
-		const bufferValue = stringToBuffer(blob.content, blob.encoding);
+		// stringToBuffer has only ever reliably supported limited encodings.
+		// Despite server `IBlob.encoding` type being string, cast as one of
+		// the supported types and expect throw under browser if not.
+		// TODO: AB:#81373: Consider formalizing `IBlob.encoding` literals allowed.
+		// Note: the origin of this type is repo local but a synchronized
+		// clone of the @fluidframework/gitresources interface.
+		const bufferValue = stringToBuffer(blob.content, blob.encoding as IsoBufferEncoding);
 
 		await this.blobCache.put(this.getCacheKey(blob.sha), bufferValue);
 

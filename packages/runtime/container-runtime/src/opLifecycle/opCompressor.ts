@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from "@fluid-internal/client-utils";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -46,7 +46,7 @@ export class OpCompressor {
 		const compressionStart = Date.now();
 		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatchContents(batch));
 		const compressedContents = compress(contentsAsBuffer);
-		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+		const compressedContent = Uint8ArrayToString(compressedContents, "base64");
 		const duration = Date.now() - compressionStart;
 
 		const messages: [OutboundBatchMessage] = [

@@ -21,6 +21,7 @@ import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/interna
 import { type OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getFileLink } from "./getFileLink.js";
+import { copyRequestHeaders } from "./requestHeaders.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
 import {
 	getLocatorFromOdspUrl,
@@ -48,6 +49,11 @@ export interface ShareLinkFetcherProps {
 	 * Identity type determining the shape of share link as it differs for Enterprise and Consumer users.
 	 */
 	identityType: IdentityType;
+	/**
+	 * Host-owned attribution metadata for ODSP requests made while resolving share links.
+	 * Driver-owned headers take precedence on case-insensitive collisions.
+	 */
+	requestHeaders?: Readonly<Record<string, string>>;
 }
 
 /**
@@ -90,6 +96,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			this.shareLinkFetcherProps = {
 				...shareLinkFetcherProps,
 				tokenFetcher: shareLinkFetcherProps.tokenFetcher,
+				requestHeaders: copyRequestHeaders(shareLinkFetcherProps.requestHeaders),
 			};
 		}
 	}
@@ -209,6 +216,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			this.shareLinkFetcherProps.tokenFetcher,
 			resolvedUrl,
 			this.logger,
+			this.shareLinkFetcherProps.requestHeaders,
 		).catch((error) => {
 			// This should imply that error is a non-retriable error.
 			this.logger.sendErrorEvent({ eventName: "FluidFileUrlError" }, error);

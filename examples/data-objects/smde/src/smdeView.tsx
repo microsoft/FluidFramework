@@ -44,7 +44,9 @@ class SmdeView {
 	}
 
 	private setupEditor(): void {
-		const smde = new SimpleMDE({ element: this.textArea });
+		// SimpleMDE's spell checker (codemirror-spell-checker) downloads its dictionaries from a
+		// public CDN at runtime, so it is disabled here.
+		const smde = new SimpleMDE({ element: this.textArea, spellChecker: false });
 		this.smde = smde;
 
 		const { parallelText } = getTextAndMarkers(this.smdeDataObject.text, "pg");

@@ -13,12 +13,14 @@ import { newGenericChangeset } from "../../../feature-libraries/modular-schema/g
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	genericChangeHandler,
+	DefaultAtomIdAliasAllocator,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
+import { fakeIdAllocator, brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -171,7 +173,7 @@ describe("GenericField", () => {
 		const actual = genericChangeHandler.rebaser.invert(
 			forward,
 			true,
-			idAllocatorFromMaxId(),
+			new DefaultAtomIdAliasAllocator(),
 			mintRevisionTag(),
 			crossFieldManager,
 			defaultRevisionMetadataFromChanges([]),
@@ -212,7 +214,7 @@ describe("GenericField", () => {
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,
 			unknown,
-			FieldChangeEncodingContext
+			FieldChangeEncodingContext & FieldChangeDecodingContext
 		> = {
 			successes: [
 				[

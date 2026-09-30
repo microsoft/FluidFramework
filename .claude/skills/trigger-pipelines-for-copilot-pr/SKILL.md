@@ -4,7 +4,7 @@ description: Trigger ADO pipelines for a Copilot-created PR by posting /azp run 
 allowed-tools: Bash(gh pr comment *)
 context: fork
 model: claude-haiku-4-5-20251001
-argument-hint: [pr-number-or-url]
+argument-hint: pr-number-or-url
 ---
 
 Post the following two comments to the PR specified by the user ($ARGUMENTS), in the `microsoft/FluidFramework` repository on GitHub.
@@ -20,7 +20,7 @@ First comment:
 Second comment:
 
 ```
-/azp run Build - api-markdown-documenter,Build - benchmark-tool,Build - build-common,Build - build-tools,Build - common-utils,Build - eslint-config-fluid,Build - eslint-plugin-fluid
+/azp run Build - api-markdown-documenter,Build - benchmark-tool,Build - build-common,Build - build-tools,Build - common-utils,Build - eslint-config-fluid
 ```
 
 Posting those comments will trigger all our pipelines, which is necessary for PRs that are created by Copilot.

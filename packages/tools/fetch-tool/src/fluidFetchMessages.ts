@@ -315,9 +315,8 @@ export async function fluidFetchMessages(
 	if (messageStats) {
 		return printMessageStats(generator, dumpMessageStats, dumpMessages, messageTypeFilter);
 	} else {
-		let item;
-		// eslint-disable-next-line no-empty -- TODO: Investigate / document what is going on here.
-		for await (item of generator) {
+		for await (const _item of generator) {
+			// Iteration drains the generator so its side effects complete.
 		}
 	}
 }

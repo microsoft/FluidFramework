@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type { TreeChunk } from "../../../core/index.js";
-import type { BrandedType } from "../../../util/index.js";
+import type { BrandedType, IdDecodingContext } from "../../../util/index.js";
 
 import {
 	type ChunkDecoder,
@@ -15,7 +15,6 @@ import {
 	getChecked,
 	readStream,
 } from "./chunkCodecUtilities.js";
-import type { IdDecodingContext } from "./chunkDecoding.js";
 import type { IncrementalDecoder } from "./codecs.js";
 import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./format/index.js";
 

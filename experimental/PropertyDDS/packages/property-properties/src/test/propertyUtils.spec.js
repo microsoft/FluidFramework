@@ -7,10 +7,10 @@
  * @fileoverview In this file, we will test the utils described in /src/utils.js
  */
 
-const _ = require("lodash");
+import _ from "lodash";
 
-const { PropertyFactory } = require("..");
-const { PropertyUtils } = require("..");
+import { PropertyFactory } from "../index.js";
+import { PropertyUtils } from "../index.js";
 
 describe("PropertyUtils", function () {
 	describe("PropertyUtils.gatherProperties", function () {

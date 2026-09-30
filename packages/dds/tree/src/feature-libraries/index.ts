@@ -27,6 +27,7 @@ export {
 	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
+export { ComparisonForest } from "./comparison-forest/index.js";
 export {
 	SchemaSummarizer,
 	schemaCodecBuilder,
@@ -45,6 +46,8 @@ export {
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
+	forestsEqual,
+	assertForestsEqual,
 } from "./treeTextCursor.js";
 export {
 	buildNodeComparator,
@@ -88,11 +91,14 @@ export {
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultAtomIdAliasAllocator,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
+	minimizeModularChangeset,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -132,6 +138,7 @@ export {
 
 export {
 	FieldKinds,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -149,6 +156,7 @@ export {
 
 export {
 	SchemaValidationError,
+	type SchemaValidationErrorDetails,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
@@ -206,6 +214,7 @@ export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 export {
 	type KeyFinder,
 	AnchorTreeIndex,
+	KeyFinderDependencyScope,
 	hasElement,
 	type TreeIndex,
 	type TreeIndexNodes,

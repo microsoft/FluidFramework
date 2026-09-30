@@ -277,10 +277,17 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
 				assert(this.catchUpMonitor === undefined, 0x3eb /* catchUpMonitor should be gone */);
+				// Assign the field BEFORE starting the monitor. `start()` may synchronously fire
+				// transitionToConnectedState (when already caught up), which can re-enter this handler
+				// (e.g. an app "connected" listener forcing readonly, triggering a disconnect). The
+				// Disconnected case clears this.catchUpMonitor, so the field must already reference the
+				// monitor for that cleanup to take effect; otherwise a stale monitor survives and the
+				// next Connected transition trips assert 0x3eb.
 				this.catchUpMonitor = new CatchUpMonitor(
 					this.deltaManager,
 					this.transitionToConnectedState,
 				);
+				this.catchUpMonitor.start();
 				return;
 			}
 			case ConnectionState.Disconnected: {

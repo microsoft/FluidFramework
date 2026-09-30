@@ -1,0 +1,95 @@
+{
+	"version": 1,
+	"root": {
+		"kind": 1,
+		"simpleAllowedTypes": {
+			"com.fluidframework.text.formatted<minimal>.Text": {
+				"isStaged": false
+			}
+		}
+	},
+	"definitions": {
+		"com.fluidframework.leaf.string": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 1
+			}
+		},
+		"com.fluidframework.text.formatted.StringTextAtom": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.string": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.leaf.null": {
+			"leaf": {
+				"kind": 3,
+				"leafKind": 4
+			}
+		},
+		"com.fluidframework.text.formatted<minimal>.StringAtom": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.text.formatted.StringTextAtom": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					},
+					"format": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.leaf.null": {
+								"isStaged": false
+							}
+						},
+						"storedKey": "format"
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		},
+		"com.fluidframework.text.formatted<minimal>.StringArray": {
+			"array": {
+				"kind": 1,
+				"simpleAllowedTypes": {
+					"com.fluidframework.text.formatted<minimal>.StringAtom": {
+						"isStaged": false
+					}
+				}
+			}
+		},
+		"com.fluidframework.text.formatted<minimal>.Text": {
+			"object": {
+				"kind": 2,
+				"fields": {
+					"content": {
+						"kind": 1,
+						"simpleAllowedTypes": {
+							"com.fluidframework.text.formatted<minimal>.StringArray": {
+								"isStaged": false
+							}
+						},
+						"storedKey": ""
+					}
+				},
+				"allowUnknownOptionalFields": false
+			}
+		}
+	}
+}

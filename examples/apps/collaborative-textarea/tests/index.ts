@@ -10,8 +10,8 @@ import ReactDOM from "react-dom";
 import {
 	CollaborativeTextContainerRuntimeFactory,
 	ICollaborativeTextAppModel,
-} from "../src/container";
-import { CollaborativeTextView } from "../src/view";
+} from "../src/container.js";
+import { CollaborativeTextView } from "../src/view.js";
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container

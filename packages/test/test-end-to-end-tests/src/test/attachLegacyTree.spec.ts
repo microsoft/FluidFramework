@@ -16,7 +16,10 @@ import { ITestDataObject, describeCompat } from "@fluid-private/test-version-uti
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import {
+	defaultTestOldestSupportedClient,
+	ITestObjectProvider,
+} from "@fluidframework/test-utils/internal";
 
 describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
@@ -41,6 +44,7 @@ describeCompat("Can attach Legacy Shared Tree", "NoCompat", (getTestObjectProvid
 	});
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [["test", Promise.resolve(dataObjectFactory)]],
 	});
 

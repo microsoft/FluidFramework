@@ -8,6 +8,7 @@ import {
 	REPO_ROOT_TOKEN,
 	replaceRepoRootToken,
 	replaceRepoRootTokens,
+	validateDeclarativeTaskPathSeparators,
 } from "../fluidBuild/fluidBuildConfig.js";
 
 describe("Repo Root Token", () => {
@@ -53,6 +54,28 @@ describe("Repo Root Token", () => {
 				"/home/user/repo/.eslintrc.cjs",
 				"/home/user/repo/common/config.json",
 			]);
+		});
+
+		describe("validateDeclarativeTaskPathSeparators", () => {
+			it("rejects backslashes in declarative task paths", () => {
+				assert.throws(
+					() =>
+						validateDeclarativeTaskPathSeparators({
+							inputGlobs: ["${repoRoot}\\src\\**\\*.ts"],
+							outputGlobs: [],
+						}),
+					/inputGlob .* contains backslashes; use '\/' in fluidBuild configuration\./,
+				);
+				assert.throws(
+					() =>
+						validateDeclarativeTaskPathSeparators({
+							inputGlobs: [],
+							outputGlobs: [],
+							additionalConfigFiles: ["${repoRoot}\\common\\config.json"],
+						}),
+					/additionalConfigFile .* contains backslashes; use '\/' in fluidBuild configuration\./,
+				);
+			});
 		});
 
 		it("handles mixed array with and without tokens", () => {

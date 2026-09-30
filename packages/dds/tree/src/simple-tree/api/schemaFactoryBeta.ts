@@ -94,9 +94,6 @@ export interface SchemaStaticsBeta {
 	 * A full code example of the schema migration process can be found in our {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
 	 *
 	 * @privateRemarks
-	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
-	 * user friendly and should be improved, particularly in the case of staged allowed types
-	 *
 	 * TODO: AB#45711: Update the docs above when recursive type support is added.
 	 */
 	readonly staged: <const T extends LazyItem<TreeNodeSchema>>(
@@ -226,7 +223,7 @@ export class SchemaFactoryBeta<
 	/**
 	 * Create a {@link SchemaFactory} with a {@link SchemaFactory.scope|scope} which is a combination of this factory's scope and the provided name.
 	 * @remarks
-	 * The main use-case for this is when creating a collection of related schema (for example using a function that creates multiple schema).
+	 * The main use-case for this is when creating a collection of related schemas (for example using a function that creates multiple schemas).
 	 * Creating such related schema using a sub-scope helps ensure they won't collide with other schema in the parent scope.
 	 */
 	public scopedFactory<const T extends TName, TNameInner extends number | string = string>(

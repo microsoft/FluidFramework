@@ -4,17 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { FormattedTextAsTree } from "@fluidframework/tree/internal";
-import DeltaPackage from "quill-delta";
+import { FormattedTextDefault } from "@fluidframework/tree/internal";
+import DeltaPackage, { type AttributeMap } from "@quill-next/delta-es";
 
-// Workaround for quill-delta's export style not working well with node16 module resolution.
-/** Re-alias of {@link DeltaPackage.default} for use as a type. */
-type Delta = DeltaPackage.default;
-/** Re-alias of {@link DeltaPackage.AttributeMap} (Quill's attributes record on delta ops). */
-type QuillAttributeMap = DeltaPackage.AttributeMap;
-const Delta = DeltaPackage.default;
+/** Re-alias of {@link AttributeMap} (Quill's attributes record on delta ops). */
+type QuillAttributeMap = AttributeMap;
 
-export type { Delta, QuillAttributeMap };
+export type { QuillAttributeMap };
+
+// Workaround for @quill-next/delta-es under node16 module resolution.
+// Its type declarations are CommonJS, so TypeScript types the default import as the module object.
+// At runtime, the default import is the `Delta` class itself.
+/** The Quill `Delta` class. */
+export type Delta = DeltaPackage.default;
+/** The Quill `Delta` class. */
+export const Delta = DeltaPackage as unknown as typeof DeltaPackage.default;
 
 /** Quill size names mapped to pixel values for tree storage. */
 const sizeMap = { small: 10, large: 18, huge: 24 } as const;
@@ -30,7 +34,7 @@ export const defaultFont = "Arial";
 const defaultHeading = "h5";
 
 /** The string literal values accepted by LineTag. */
-type LineTagValue = Parameters<typeof FormattedTextAsTree.LineTag>[0];
+type LineTagValue = Parameters<typeof FormattedTextDefault.LineTag>[0];
 
 /** Quill header numbers → LineTag values. */
 const headerToLineTag = {
@@ -170,7 +174,7 @@ export function parseSize(size: unknown): number {
  */
 export function parseLineTag(
 	attributes?: Record<string, unknown>,
-): FormattedTextAsTree.LineTag | undefined {
+): FormattedTextDefault.LineTag | undefined {
 	if (!attributes) return undefined;
 	// Quill should never send both header and list attributes simultaneously.
 	assert(
@@ -188,19 +192,19 @@ export function parseLineTag(
 	if (typeof attributes.header === "number") {
 		const tag: LineTagValue =
 			headerToLineTag[attributes.header as keyof typeof headerToLineTag] ?? defaultHeading;
-		return FormattedTextAsTree.LineTag(tag);
+		return FormattedTextDefault.LineTag(tag);
 	}
 	if (typeof attributes.list === "string") {
 		const tag = listToLineTag[attributes.list as keyof typeof listToLineTag];
 		if (tag !== undefined) {
-			return FormattedTextAsTree.LineTag(tag);
+			return FormattedTextDefault.LineTag(tag);
 		}
 	}
 	if (attributes.blockquote === true) {
-		return FormattedTextAsTree.LineTag("blockquote");
+		return FormattedTextDefault.LineTag("blockquote");
 	}
 	if (typeof attributes["code-block"] === "string") {
-		return FormattedTextAsTree.LineTag("codeBlock");
+		return FormattedTextDefault.LineTag("codeBlock");
 	}
 	return undefined;
 }
@@ -236,9 +240,9 @@ export function quillAttributesToFormat(attributes?: Record<string, unknown>): {
  */
 export function quillAttributesToPartial(
 	attributes?: Record<string, unknown>,
-): Partial<FormattedTextAsTree.CharacterFormat> {
+): Partial<FormattedTextDefault.CharacterFormat> {
 	if (!attributes) return {};
-	const format: Partial<FormattedTextAsTree.CharacterFormat> = {};
+	const format: Partial<FormattedTextDefault.CharacterFormat> = {};
 	// Only include attributes that are explicitly present in the Quill delta
 	if ("bold" in attributes) format.bold = attributes.bold === true;
 	if ("italic" in attributes) format.italic = attributes.italic === true;
@@ -265,7 +269,7 @@ export function sizeToQuillAttribute(size: number): string {
  * Only includes non-default values to keep deltas minimal.
  */
 export function formatToQuillAttributes(
-	format: FormattedTextAsTree.CharacterFormat,
+	format: FormattedTextDefault.CharacterFormat,
 ): QuillAttributeMap {
 	const attributes: QuillAttributeMap = {};
 	// Only include non-default formatting to keep Quill deltas minimal
@@ -287,7 +291,7 @@ export function formatToQuillAttributes(
  * to retained (already-present) content via `updateContents`.
  */
 export function formatToFullQuillAttributes(
-	format: FormattedTextAsTree.CharacterFormat,
+	format: FormattedTextDefault.CharacterFormat,
 ): QuillAttributeMap {
 	// Quill uses `null` (not `undefined`) to clear attributes, so we must use null
 	// for default-valued properties rather than omitting them.

@@ -11,7 +11,7 @@
 
 import { expect } from "chai";
 
-import { GuidUtils } from "../guidUtils";
+import { GuidUtils } from "../guidUtils.js";
 
 const {
 	initializeGUIDGenerator,
@@ -24,7 +24,7 @@ const {
 	isGUID,
 } = GuidUtils;
 
-const testGuid = function (re, base64) {
+const testGuid = function (re: RegExp, base64: boolean) {
 	describe("generateGuid", function () {
 		it("should return a GUID", function (done) {
 			expect(re.test(generateGUID(base64))).to.equal(true);
@@ -33,11 +33,11 @@ const testGuid = function (re, base64) {
 	});
 };
 
-const testInitialization = function (firstGuid, base64) {
+const testInitialization = function (firstGuid: string, base64: boolean) {
 	describe("initializeGUIDGenerator", function () {
 		// WARNING: All the tests below depend on the first it() results.
-		let guid1;
-		let guid2;
+		let guid1: string;
+		let guid2: string;
 
 		describe("using seed 0", function () {
 			describe("and enforcing it", function () {
@@ -93,7 +93,7 @@ const testInitialization = function (firstGuid, base64) {
 	});
 };
 
-const testCorrectness = function (goodGuid, badGuid) {
+const testCorrectness = function (goodGuid: string, badGuid: string) {
 	describe("isGUID", function () {
 		it("should check if a GUID is valid", function (done) {
 			expect(isGUID(goodGuid)).to.equal(true);
@@ -103,7 +103,7 @@ const testCorrectness = function (goodGuid, badGuid) {
 	});
 };
 
-const testConversion = function (guid, guidArray, base64) {
+const testConversion = function (guid: string, guidArray: number[], base64: boolean) {
 	describe("guidToUint32x4", function () {
 		it("should check that converting a guid to Uint32x4 is correct", function (done) {
 			let myGuidArray: any = guidToUint32x4(guid);
@@ -140,7 +140,12 @@ const testConversion = function (guid, guidArray, base64) {
 	});
 };
 
-const testCombine = function (guid1, guid2, expectedGuid, base64) {
+const testCombine = function (
+	guid1: string,
+	guid2: string,
+	expectedGuid: string,
+	base64: boolean,
+) {
 	describe("combineGuids", function () {
 		it("should check that combining two guids will result in an expected guid", function () {
 			expect(combineGuids(guid1, guid2, base64)).to.equal(expectedGuid);
@@ -152,7 +157,7 @@ const testCombine = function (guid1, guid2, expectedGuid, base64) {
 	});
 };
 
-const test16fromAndTo64 = function (base64, base16) {
+const test16fromAndTo64 = function (base64: string, base16: string) {
 	describe("base64Tobase16 and base16ToBase64", function () {
 		it("should check that converting a base64 to a GUID is correct", function (done) {
 			expect(base16ToBase64(base64Tobase16(base64))).to.equal(base64);

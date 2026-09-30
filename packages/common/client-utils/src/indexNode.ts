@@ -6,7 +6,12 @@
 // Entrypoint for Node.js-specific code in the package.
 // (See 'Isomorphic Code' section in the package README.md.)
 
-export { type Buffer } from "./bufferNode.js";
+export type { IsoBuffer as IsoBufferInterface } from "./buffer.js";
+export type {
+	Buffer,
+	IsoBufferConstructor,
+	IsoBufferEncoding,
+} from "./bufferNode.js";
 export {
 	bufferToString,
 	IsoBuffer,
@@ -16,7 +21,11 @@ export {
 export { gitHashFile, hashFile } from "./hashFileNode.js";
 
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingNode.js";
-export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
+export {
+	AnyUint8ArrayToArrayBuffer,
+	ArrayBufferLikeToArrayBuffer,
+	Uint8ArrayToArrayBufferLike,
+} from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
 export { performanceNow } from "./performanceIsomorphic.js";
 export { type ITraceEvent, Trace } from "./trace.js";
@@ -35,6 +44,8 @@ export {
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
 	type ILayerCompatSupportRequirements,
+	type IProvideLayerCompatSupportRequirements,
+	defaultLayerCompatDetails,
 	LayerCompatibilityPolicyWindowMonths,
 } from "./layerCompat.js";
 export { generation } from "./layerGenerationState.js";

@@ -4,6 +4,7 @@
 
 ```ts
 
-export { ICriticalContainerError }
+// @public
+export type ICriticalContainerError = IErrorBase;
 
 ```

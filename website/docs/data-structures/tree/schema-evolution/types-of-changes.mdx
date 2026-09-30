@@ -3,10 +3,12 @@ title: Types of Schema Changes
 sidebar_position: 2
 ---
 
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
+
 # Types of Schema Changes
 
 Understanding which types of schema changes are safe versus breaking is crucial for evolving your [SharedTree](../index.mdx) schemas without disrupting existing applications.
-Writing a test using [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) is highly recommended to ensure any schema changes maintain your compatibility requirements.
+Writing a test using <ApiLink package="fluid-framework" api="snapshotSchemaCompatibility">`snapshotSchemaCompatibility`</ApiLink> is highly recommended to ensure any schema changes maintain your compatibility requirements.
 Knowledge of the details below will still be needed to design schemas such that the required future changes can be compatible, and to understand any errors detected by the test.
 
 All the examples below are modifying this schema:
@@ -38,9 +40,10 @@ class Note extends factory.object("Note", {
 }) {}
 ```
 
-To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use [`allowUnknownOptionalFields`](../../../api/fluid-framework/objectschemaoptions-interface.md#allowunknownoptionalfields-propertysignature) to handle new optional fields added by newer clients.
+To ensure [forwards compatibility](./index.mdx#understanding-compatibility), use <ApiLink package="fluid-framework" api="ObjectSchemaOptions.allowUnknownOptionalFields">`allowUnknownOptionalFields`</ApiLink> to handle new optional fields added by newer clients.
 Note that this needs to already be set on the old clients before the field is added.
-If it's not already set, then this degenerates into an un-forwards compatible change and requires a [staged rollout](./index.mdx#staged-rollouts) - because the app has to stage the enabling of allowUnknownOptionalFields.
+If it's not already set, then adding a new optional field at the same time as enabling `allowUnknownOptionalFields` is not forwards compatible, since old clients without `allowUnknownOptionalFields` will reject the unknown field.
+In that case, a [staged rollout](./index.mdx#staged-rollouts) is needed: first release a version that enables `allowUnknownOptionalFields`, then add the new field in a subsequent release.
 
 ```typescript
 class Note extends factory.object("Note", {
@@ -160,5 +163,8 @@ because those documents will only use the `string` type for the `id` field, whic
 ## See Also
 
 - [Schema Evolution](./index.mdx) - Overview and upgrade process
+- [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) - Staged allowed type rollout
+- [Enabling Schema Upgrades with Feature Flags](./feature-flag-schema-upgrades.mdx) - Feature-flag-driven staged rollouts
+- [Testing Schema Upgrades](./testing-schema-upgrades.mdx) - Testing with future schema states
 - [Schema Definition](../schema-definition/index.mdx) - How to define schemas
 - [Node Types](../node-types.mdx) - Understanding different node types

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail as coreFail } from "@fluidframework/core-utils/internal";
 
 import type { IdCompressor } from "../idCompressor.js";
 import type { OpSpaceCompressedId, SessionSpaceCompressedId, StableId } from "../index.js";
@@ -141,5 +141,5 @@ export function assertNotUndefined<T>(
  * @param message - Message to be printed if assertion fails.
  */
 export function fail(message: string): never {
-	assert(false, message);
+	coreFail(message);
 }

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Spinner } from "@fluentui/react-components";
 import {
+	CloseDataVisualization,
 	DataVisualization,
 	type FluidObjectNode,
 	GetDataVisualization,
@@ -16,12 +16,15 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useEffect, useState } from "react";
 
+import { FluentReactComponents } from "../../FluentUi.cjs";
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
 import { TreeHeader } from "./TreeHeader.js";
 import { TreeItem } from "./TreeItem.js";
+
+const { Spinner } = FluentReactComponents;
 
 const loggingContext = "EXTENSION(HandleView)";
 
@@ -70,6 +73,8 @@ export function FluidHandleView(props: FluidHandleViewProps): ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// POST Request for FluidObjectNode.
+		// This also registers our interest in the object, so the devtools will broadcast automatic updates for it
+		// until we send the corresponding CloseDataVisualization message below.
 		messageRelay.postMessage(
 			GetDataVisualization.createMessage({
 				containerKey,
@@ -80,6 +85,15 @@ export function FluidHandleView(props: FluidHandleViewProps): ReactElement {
 		// Callback to clean up our message handlers.
 		return (): void => {
 			messageRelay.off("message", messageHandler);
+
+			// Signal that we are no longer displaying this object, so the devtools can stop broadcasting updates for
+			// it once no other consumers remain interested.
+			messageRelay.postMessage(
+				CloseDataVisualization.createMessage({
+					containerKey,
+					fluidObjectId,
+				}),
+			);
 		};
 	}, [containerKey, fluidObjectId, messageRelay]);
 

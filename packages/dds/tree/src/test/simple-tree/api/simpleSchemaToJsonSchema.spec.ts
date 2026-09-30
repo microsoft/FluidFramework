@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { ValueSchema } from "../../../core/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
+import { TreeAlpha, TreeBeta } from "../../../shared-tree/index.js";
 import {
 	convertObjectNodeSchema,
 	toJsonSchema,
@@ -22,7 +22,6 @@ import {
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
-	TreeBeta,
 	type JsonObjectNodeSchema,
 	type JsonTreeSchema,
 	type UnsafeUnknownSchema,
@@ -435,7 +434,7 @@ describe("simpleSchemaToJsonSchema", () => {
 							description: "Unique identifier for the test object.",
 						},
 					},
-					required: ["bar", "id"],
+					required: ["bar"],
 					additionalProperties: false,
 				},
 				[numberSchema.identifier]: {
@@ -468,7 +467,7 @@ describe("simpleSchemaToJsonSchema", () => {
 			{
 				bar: "Hello World",
 			},
-			false,
+			true,
 		);
 		validator(
 			{
@@ -542,9 +541,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					properties: {
 						id: { $ref: "#/$defs/com.fluidframework.leaf.string" },
 					},
-					// The identifier field is technically required, it just has a default provider.
-					// TODO: Support for generating schema for insertable content (concise tree with fields that have default providers as optional) is now implemented: refactor tests so it can be validated.
-					required: ["id"],
+					required: [],
 					additionalProperties: false,
 				},
 				"com.fluidframework.leaf.string": {

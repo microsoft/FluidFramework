@@ -86,7 +86,7 @@ describe("CatchUpMonitor", () => {
 		assert(caughtUp, "Should be considered caught up now");
 	});
 
-	it("Emits caught up immediately if last known/processed sequence numbers match", () => {
+	it("Emits caught up immediately when started if last known/processed sequence numbers match", () => {
 		const mockDeltaManager = MockDeltaManagerForCatchingUp.create({
 			lastSequenceNumber: 10,
 			lastKnownSeqNumber: 10,
@@ -97,7 +97,9 @@ describe("CatchUpMonitor", () => {
 			caughtUp = true;
 		});
 
-		assert(caughtUp, "caughtUp should have fired immediately");
+		assert(!caughtUp, "caughtUp should not fire from the constructor");
+		monitor.start();
+		assert(caughtUp, "caughtUp should have fired immediately once started");
 	});
 
 	it("Only emits caughtUp once", () => {

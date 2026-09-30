@@ -139,7 +139,7 @@ export const InventoryViewWithHook: FC<{ root: PropTreeNode<Inventory> }> = ({ r
 			const nodes = [...partsList];
 
 			// React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
-			// eslint-disable-next-line react-hooks/rules-of-hooks
+			// eslint-disable-next-line react-hooks/rules-of-hooks, @eslint-react/rules-of-hooks
 			const removeChild = useCallback(
 				(part: Part) => partsList.removeAt(Tree.key(part) as number),
 				[partsList],

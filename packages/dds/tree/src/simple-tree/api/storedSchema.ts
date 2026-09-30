@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 
 import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
 import { schemaCodecBuilder } from "../../feature-libraries/index.js";
@@ -13,7 +13,7 @@ import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.j
 import { toStoredSchema } from "../toStoredSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
-import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -30,7 +30,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * This only includes the "persisted" subset of schema information, which means the portion which gets included in documents.
  * It thus uses "persisted" keys, see {@link FieldProps.key}.
  *
- * If two schema have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
+ * If two schemas have identical "persisted" schema, then they are considered {@link SchemaCompatibilityStatus.isEquivalent|equivalent}.
  *
  * See also {@link comparePersistedSchema}.
  *
@@ -50,7 +50,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  */
 export function extractPersistedSchema(
 	schema: ImplicitFieldSchema,
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: OldestSupportedClientVersion,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, {
@@ -65,30 +65,38 @@ export function extractPersistedSchema(
 }
 
 /**
- * Compares two schema extracted using {@link extractPersistedSchema}.
- * Reports the same compatibility that {@link TreeView.compatibility} would report if
- * opening a document that used the `persisted` schema and provided `view` to {@link ViewableTree.viewWith}.
- *
- * @param persisted - Schema persisted for a document. Typically persisted alongside the data and assumed to describe that data.
- * @param view - Schema which would be used to view persisted content.
- * @param options - {@link ICodecOptions} used when parsing the provided schema.
- * @param canInitialize - Passed through to the return value unchanged and otherwise unused.
- * @returns The {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema.
+ * Reports the ability of the provided view schema (`view`) to view and/or upgrade a persisted stored schema.
  *
  * @remarks
- * This uses the persisted formats for schema, meaning it only includes data which impacts compatibility.
+ * Uses the same schema compatibility checks as {@link TreeView.compatibility} for a document using `persisted` and a view configured with `view` and the default restrictive staged upgrade policy.
+ *
+ * Schema metadata does not affect compatibility.
+ *
+ * This function does not accept a staged upgrade policy, nor does it inspect document content.
+ *
+ * This compares schema constraints available in the persisted format.
+ *
+ * Staging annotations are available from the view, but are not reconstructed from persisted input.
  * It also uses the persisted format so that this API can be used in tests to compare against saved schema from previous versions of the application.
+ *
+ * @param persisted - The persisted stored schema of a document.
+ * Typically persisted alongside the data and assumed to describe that data.
+ * @param view - The view schema being evaluated.
+ * This function assumes the a stored schema derived from this view would be generated with the default restrictive staged upgrade policy.
+ * @param options - {@link ICodecOptions} used when parsing the provided schema.
+ *
+ * @returns The ability of `view` to view and/or upgrade the persisted stored schema.
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas, without `canInitialize`.
  *
  * @example
  * An application could use {@link extractPersistedSchema} to generate a `schema.json` file for various versions of the app,
- * then test that documents using those schema can be upgraded to work with the current schema using a test like:
+ * then test that documents using those schemas can be upgraded to work with the current schema using a test like:
  * ```typescript
  * assert(
  * 	comparePersistedSchema(
  * 		require("./schema.json"),
  * 		MySchema,
  * 		{ jsonValidator: typeboxValidator },
- * 		false,
  * 	).canUpgrade,
  * );
  * ```
@@ -104,6 +112,5 @@ export function comparePersistedSchema(
 	const config = new TreeViewConfigurationAlpha({
 		schema: normalizeFieldSchema(view),
 	});
-	const viewSchema = new SchemaCompatibilityTester(config);
-	return viewSchema.checkCompatibility(stored);
+	return checkSchemaCompatibility(config, stored);
 }

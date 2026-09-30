@@ -11,17 +11,12 @@ import type { ISharedObject } from "@fluidframework/shared-object-base/internal"
  *
  * @internal
  */
-export type ClaimConfirmation<T = unknown> =
+export type ClaimConfirmation =
 	| {
 			/**
 			 * The claim was successfully reserved by this client.
 			 */
 			readonly status: "Accepted";
-
-			/**
-			 * The value that was claimed.
-			 */
-			readonly currentValue: T;
 	  }
 	| {
 			/**
@@ -30,12 +25,6 @@ export type ClaimConfirmation<T = unknown> =
 			 * advanced since this client last observed it).
 			 */
 			readonly status: "AlreadyClaimed";
-
-			/**
-			 * The current committed value for the key, or `undefined` if the key
-			 * has not been claimed.
-			 */
-			readonly currentValue: T | undefined;
 	  }
 	| {
 			/**
@@ -49,18 +38,13 @@ export type ClaimConfirmation<T = unknown> =
  *
  * @internal
  */
-export type ClaimResult<T = unknown> =
+export type ClaimResult =
 	| {
 			/**
 			 * The claim was accepted synchronously (e.g., in detached mode where no
 			 * other clients exist and the value can be applied immediately).
 			 */
 			readonly status: "Accepted";
-
-			/**
-			 * The accepted value.
-			 */
-			readonly currentValue: T;
 	  }
 	| {
 			/**
@@ -69,12 +53,6 @@ export type ClaimResult<T = unknown> =
 			 * concurrent write has occurred.
 			 */
 			readonly status: "AlreadyClaimed";
-
-			/**
-			 * The current committed value for the key, or `undefined` if the key
-			 * has not been claimed.
-			 */
-			readonly currentValue: T | undefined;
 	  }
 	| {
 			/**
@@ -85,7 +63,7 @@ export type ClaimResult<T = unknown> =
 			/**
 			 * A promise that resolves with the final outcome once the op roundtrips.
 			 */
-			readonly promise: Promise<ClaimConfirmation<T>>;
+			readonly promise: Promise<ClaimConfirmation>;
 	  };
 
 /**
@@ -130,7 +108,7 @@ export interface IClaims<T = unknown> extends ISharedObject {
 	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if a claim
 	 * for this key is already pending locally.
 	 */
-	trySetClaim(key: string, value: T): ClaimResult<T>;
+	trySetClaim(key: string, value: T): ClaimResult;
 
 	/**
 	 * Attempts to update an existing claim using compare-and-swap (CAS) semantics.
@@ -145,7 +123,7 @@ export interface IClaims<T = unknown> extends ISharedObject {
 	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if a claim
 	 * for this key is already pending locally.
 	 */
-	compareAndSetClaim(key: string, value: T): ClaimResult<T>;
+	compareAndSetClaim(key: string, value: T): ClaimResult;
 
 	/**
 	 * Gets the current claimed value for a key, or `undefined` if the key has not been claimed.

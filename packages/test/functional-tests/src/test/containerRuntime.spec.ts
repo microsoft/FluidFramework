@@ -30,6 +30,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { defaultMinVersionForCollab as defaultTestOldestSupportedClient } from "@fluidframework/runtime-utils/internal";
 import {
 	createChildLogger,
 	mixinMonitoringContext,
@@ -160,6 +161,7 @@ describe("Container Runtime", () => {
 				context: getMockContext(deltaManager) as IContainerContext,
 				registryEntries: [],
 				existing: true,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				runtimeOptions: {},
 				provideEntryPoint: mockProvideEntryPoint,
 			});

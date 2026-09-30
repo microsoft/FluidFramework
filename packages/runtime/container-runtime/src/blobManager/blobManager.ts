@@ -66,6 +66,7 @@ export class BlobHandle
 		IFluidHandleInternalPayloadPending<ArrayBufferLike>
 {
 	private attached: boolean = false;
+	private payloadSharingStarted: boolean = false;
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
@@ -100,7 +101,8 @@ export class BlobHandle
 		// TODO: just take the blob rather than a get function?
 		public get: () => Promise<ArrayBufferLike>,
 		public readonly payloadPending: boolean,
-		private readonly onAttachGraph?: () => void,
+		private readonly sharePayloadCallback?: () => void,
+		private readonly attachGraphCallback?: () => void,
 	) {
 		super();
 		this._payloadState = payloadPending ? "pending" : "shared";
@@ -117,10 +119,19 @@ export class BlobHandle
 		this._events?.emit("payloadShareFailed", error);
 	};
 
+	public sharePayload(): void {
+		if (this.payloadState === "shared" || this.payloadSharingStarted) {
+			return;
+		}
+		this.payloadSharingStarted = true;
+		this.sharePayloadCallback?.();
+	}
+
 	public attachGraph(): void {
 		if (!this.attached) {
 			this.attached = true;
-			this.onAttachGraph?.();
+			this.attachGraphCallback?.();
+			this.sharePayload();
 		}
 	}
 }
@@ -254,7 +265,7 @@ export class BlobManager {
 	private readonly localBlobCache: Map<string, LocalBlobRecord> = new Map();
 	/**
 	 * Blobs with an attached handle that have not finished blob-attaching are the set we need to provide from
-	 * getPendingState().  This stores their local IDs, and then we can look them up against the localBlobCache.
+	 * getPendingState(). This stores their local IDs, and then we can look them up against the localBlobCache.
 	 */
 	private readonly pendingBlobsWithAttachedHandles: Set<string> = new Set();
 	/**
@@ -515,13 +526,18 @@ export class BlobManager {
 			async () => blob,
 			true, // payloadPending
 			() => {
-				this.pendingBlobsWithAttachedHandles.add(localId);
 				const uploadAndAttachP = this.uploadAndAttach(localId, signal);
 				uploadAndAttachP.then(blobHandle.notifyShared).catch((error) => {
 					// TODO: notifyShared won't fail directly, but it emits an event to the customer.
 					// Consider what to do if the customer's code throws. reportError is nice.
 				});
 				uploadAndAttachP.catch(blobHandle.notifyFailed);
+			},
+			() => {
+				const localBlobRecord = this.localBlobCache.get(localId);
+				if (localBlobRecord !== undefined && localBlobRecord.state !== "attached") {
+					this.pendingBlobsWithAttachedHandles.add(localId);
+				}
 			},
 		);
 

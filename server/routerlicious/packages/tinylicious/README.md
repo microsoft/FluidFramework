@@ -13,7 +13,7 @@ If you're looking for a reference implementation of the Fluid service, don't loo
 You can build this service by running the following in the /server/routerlicious directory (NOT in this directory):
 
 ```sh
-npm i -g pnpm
+npm i -g pnpm@11.27.0
 pnpm i
 pnpm build
 ```
@@ -29,10 +29,16 @@ pnpm stop
 
 ### Port
 
-Tinylicious uses port 7070 by default. You can change the port number by setting an environment
-variable named PORT to the desired number. For example:
+Tinylicious uses port 7070 by default.
+You can change the port number by passing a `--port` command line argument, or by setting an environment variable named PORT to the desired number.
+If both are provided, the `--port` argument takes precedence.
+For example:
 
 ```sh
+# Using the command line argument:
+pnpm start -- --port 6502
+
+# Using the environment variable:
 $env:PORT=6502
 pnpm start
 ```
