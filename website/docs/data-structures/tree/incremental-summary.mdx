@@ -27,6 +27,8 @@ Enabling incremental summary requires two steps: marking fields in your schema a
 Passing allowed types directly in an object schema is syntactic sugar for `sf.required(allowedTypes)`.
 Use the explicit form with `{ summarizeIncrementally: true }` to opt a field in to incremental summarization.
 Use `sf.optional(allowedTypes, options)` for an optional field.
+For recursive allowed types, use `sf.requiredRecursive(...)` or `sf.optionalRecursive(...)` with
+the same option.
 The `SchemaFactoryAlpha.stagedOptional` and `stagedOptionalRecursive` constructors accept the same
 option.
 
