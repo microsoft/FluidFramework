@@ -7,6 +7,8 @@ import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-inter
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	isStableId,
+	type IdCreationRange,
+	type ParentIdProgressForShard,
 	type SessionId,
 	type SerializedIdCompressorWithOngoingSession,
 	type ShardSynchronizationToken,
@@ -81,6 +83,14 @@ const BlobRequestId = brandedNumberType<BlobRequestId>({
  */
 export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
 const HostUpdateId = brandedNumberType<HostUpdateId>({
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
+/** Identifies a finalized ID creation range sent from the Host to the Guest. */
+export type HostIdRangeId = Brand<number, "sandbox.HostIdRangeId">;
+const HostIdRangeId = brandedNumberType<HostIdRangeId>({
 	minimum: 0,
 	maximum: Number.MAX_SAFE_INTEGER,
 	multipleOf: 1,
@@ -327,6 +337,56 @@ const GuestIdSpaceShardToken = Type.Unsafe<ShardSynchronizationToken>(
 	),
 );
 
+/** Validates a parent's progress for the Guest ID space shard. */
+const ParentIdProgress = Type.Unsafe<ParentIdProgressForShard>(
+	Type.Object(
+		{
+			type: Type.Literal("parentIdProgressForShard"),
+			shardId: IdSpaceShardSessionId,
+			localGenCount: Type.Number({
+				minimum: 0,
+				maximum: Number.MAX_SAFE_INTEGER,
+				multipleOf: 1,
+			}),
+		},
+		{ additionalProperties: false },
+	),
+);
+
+/**
+ * Validates numeric fields in a finalized ID creation range.
+ * @remarks
+ * It accepts positive integers that JavaScript can represent exactly.
+ * This check does not establish that the range is in sequence or that its fields agree.
+ * The Guest checks those conditions when it applies the range.
+ */
+const PositiveSafeInteger = Type.Number({
+	minimum: 1,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
+/**
+ * A range already finalized by the Host runtime, not a request to submit a new range.
+ */
+const FinalizedIdRange = Type.Unsafe<IdCreationRange>(
+	Type.Object(
+		{
+			sessionId: IdSpaceShardSessionId,
+			ids: Type.Object(
+				{
+					firstGenCount: PositiveSafeInteger,
+					count: PositiveSafeInteger,
+					requestedClusterSize: PositiveSafeInteger,
+					localIdRanges: Type.Array(Type.Tuple([PositiveSafeInteger, PositiveSafeInteger])),
+				},
+				{ additionalProperties: false },
+			),
+		},
+		{ additionalProperties: false },
+	),
+);
+
 /**
  * Initializes the Guest's copy of the Host main branch.
  */
@@ -373,6 +433,20 @@ const HostUpdateMessage = Type.Object(
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
+		/** Parent ID progress needed before the Guest decodes any commits or revisions. */
+		parentIdProgress: Type.Readonly(ParentIdProgress),
+	},
+	{ additionalProperties: false },
+);
+
+/** Delivers one newly finalized creation range ahead of dependent Host updates. */
+export type HostIdRangeMessage = Static<typeof HostIdRangeMessage>;
+const HostIdRangeMessage = Type.Object(
+	{
+		type: Type.Literal("hostIdRange"),
+		rangeId: Type.Readonly(HostIdRangeId),
+		parentIdProgress: Type.Readonly(ParentIdProgress),
+		range: Type.Readonly(FinalizedIdRange),
 	},
 	{ additionalProperties: false },
 );
@@ -433,6 +507,7 @@ const GuestChangeAckMessage = Type.Object(
 export type HostGuestMessage =
 	| HostInitializationMessage
 	| HostUpdateMessage
+	| HostIdRangeMessage
 	| HostUpdateAckMessage
 	| GuestChangeMessage
 	| GuestChangeAckMessage
@@ -504,6 +579,7 @@ const blobResponseValidator = validator.compile(
 );
 const hostInitializationValidator = validator.compile(HostInitializationMessage);
 const hostUpdateValidator = validator.compile(HostUpdateMessage);
+const hostIdRangeValidator = validator.compile(HostIdRangeMessage);
 const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
 const guestChangeValidator = validator.compile(GuestChangeMessage);
 const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
@@ -543,6 +619,9 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	}
 
 	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
+		return data;
+	}
+	if (data.type === "hostIdRange" && hostIdRangeValidator.check(data)) {
 		return data;
 	}
 

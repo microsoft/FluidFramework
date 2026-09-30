@@ -91,6 +91,9 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				case "hostUpdate": {
 					return this.synchronization.receiveHostUpdate(message);
 				}
+				case "hostIdRange": {
+					return this.synchronization.receiveHostIdRange(message);
+				}
 				case "guestChangeAck": {
 					return this.synchronization.receiveChangeAck(message);
 				}

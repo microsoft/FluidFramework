@@ -5,7 +5,10 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
+import type {
+	ParentIdProgressForShard,
+	ShardSynchronizationToken,
+} from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -118,6 +121,8 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		private readonly logger: TelemetryLoggerExt,
 		/** Authorizes and imports Guest IDs before a serialized change is decoded. */
 		private readonly synchronizeGuestIdSpaceShard: (token: ShardSynchronizationToken) => void,
+		/** Captures parent progress after commits have been encoded. */
+		private readonly getParentIdProgress: () => ParentIdProgressForShard,
 	) {
 		this.local = main.fork();
 		const branch = getBranch(main);
@@ -270,13 +275,16 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.sentHead = head;
 		this.sentTrunkRevision = trunkRevision;
 		this.log(`Sending update ${updateId} from ${base.revision} to ${head.revision}`);
+		const serializedCommits = commits.map((commit) => serializeCommit(this.main, commit));
+		const parentIdProgress = this.getParentIdProgress();
 		this.send({
 			type: "hostUpdate",
 			updateId,
 			baseRevision: base.revision,
 			mainRevision: head.revision,
 			trunkRevision,
-			commits: commits.map((commit) => serializeCommit(this.main, commit)),
+			commits: serializedCommits,
+			parentIdProgress,
 		});
 	}
 

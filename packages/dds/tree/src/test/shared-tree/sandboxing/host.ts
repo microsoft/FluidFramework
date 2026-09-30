@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	deserializeIdCompressor,
 	SerializationVersion,
+	type IdCreationRange,
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
@@ -32,11 +33,13 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 import {
 	type BlobRequestMessage,
 	type BlobResponseMessage,
 	type HostGuestMessage,
+	type HostIdRangeId,
 	type HostInitializationMessage,
 	normalizeProtocolError,
 	parseHostGuestMessage,
@@ -78,6 +81,14 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	private readonly port: MessagePort;
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
 	private guestIdSpaceShardToken: ShardSynchronizationToken | undefined;
+	/** ID for the next finalized creation range sent to the Guest, starting at zero for each session. */
+	private nextIdRangeId = 0;
+	/**
+	 * Removes the listener that forwards finalized ID ranges to the Guest.
+	 * @remarks
+	 * This is `undefined` if Host initialization fails before the listener is registered.
+	 */
+	private readonly offRangeFinalized: (() => void) | undefined;
 	private disposed = false;
 	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
 	public readonly main: TreeViewAlpha<TSchema>;
@@ -102,6 +113,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					break;
 				}
 				case "blobResponse":
+				case "hostIdRange":
 				case "hostUpdate":
 				case "hostInitialization":
 				case "guestChangeAck": {
@@ -155,6 +167,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			(error) => this.session.fail(error),
 			logger,
 			(token) => this.synchronizeGuestIdSpaceShard(token),
+			() => this.getParentIdProgress(),
 		);
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
@@ -185,6 +198,9 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			}
 			throw error;
 		}
+		this.offRangeFinalized = this.idCompressor.events.on("rangeFinalized", (range) =>
+			this.session.run(() => this.sendFinalizedRange(range)),
+		);
 	}
 
 	public dispose(): void {
@@ -192,6 +208,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			return;
 		}
 		this.disposed = true;
+		this.offRangeFinalized?.();
 		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
@@ -258,6 +275,50 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		// Only the child created for this Host session may advance its root compressor.
 		this.idCompressor.synchronizeWithShard(token);
 		this.guestIdSpaceShardToken = token;
+	}
+
+	/**
+	 * Gets the Host compressor's current ID progress for this Guest's ID space shard.
+	 *
+	 * @remarks
+	 * The Host captures this progress after it encodes a tree update or receives a finalized
+	 * creation range. The Guest applies it before it decodes a dependent update or finalizes
+	 * the range.
+	 *
+	 * This method does not create or submit a new creation range.
+	 *
+	 * @returns Parent progress for the ID space shard created during this session's initialization.
+	 */
+	private getParentIdProgress() {
+		const child = this.guestIdSpaceShardToken;
+		assert(child !== undefined, "Expected an initialized Guest ID space shard");
+		return this.idCompressor.getChildShardProgress(child);
+	}
+
+	/**
+	 * Sends an ID range after the Host runtime has finalized it.
+	 *
+	 * @remarks
+	 * The compressor reports finalized ranges in order. This method gives each message a
+	 * session-local ID and includes the current parent progress. It sends the range even if
+	 * finalization does not change the tree. Messages in this direction arrive in send order,
+	 * so the Guest receives the range before a later tree update that uses its IDs.
+	 *
+	 * This method forwards the finalized range; it does not submit one for finalization.
+	 *
+	 * @param range - The creation range finalized by the Host runtime.
+	 * @throws {@link SandboxProtocolError} if the range IDs are exhausted.
+	 */
+	private sendFinalizedRange(range: IdCreationRange): void {
+		if (this.nextIdRangeId > Number.MAX_SAFE_INTEGER) {
+			throw new SandboxProtocolError("Host ID range identifiers are exhausted.");
+		}
+		this.postMessage({
+			type: "hostIdRange",
+			rangeId: brand<HostIdRangeId>(this.nextIdRangeId++),
+			parentIdProgress: this.getParentIdProgress(),
+			range,
+		});
 	}
 
 	private createInitializationMessage(idCompressor: IIdCompressor): HostInitializationMessage {

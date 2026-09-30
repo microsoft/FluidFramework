@@ -97,8 +97,8 @@ The completed compatibility tests characterize today's behavior; they do not imp
 
 - [x] Add an internal parent-progress API that updates a live child ID space shard without changing its stride; use existing `finalizeCreationRange` for ordered finalized ranges.
 - [x] Expose finalized-range notifications on the runtime's ID compressor so the Host can observe them without test-only provider state or a sandbox call to `takeNextCreationRange()`.
-- [ ] Deliver compressor updates before dependent initialization commits, Host updates, and revision checks, without replacing the Guest compressor or changing its ID space shard stride.
-- [ ] Verify Host edits beyond the child ID space shard's backfilled range, newly finalized peer edits, and updates that only advance `trunkRevision`.
+- [x] Deliver parent progress with Host updates and finalized ranges ahead of dependent commits and revision checks, without replacing the Guest compressor or changing its ID space shard stride. The initialization snapshot already includes the Host's prior compressor state.
+- [x] Verify Host edits beyond the child ID space shard's backfilled range, newly finalized peer edits, finalized ranges without tree edits, and updates that only advance `trunkRevision`.
 - [ ] Verify ordering with concurrent Guest edits, interleaved or delayed messages, and invalid or stale compressor updates.
 
 ### Session lifecycle
@@ -151,16 +151,18 @@ Resource limits for very large progress jumps remain part of [sandboxing.md](./s
 
 ### 3. Send Host ID progress to the live Guest
 
-The ID-compressor library now provides `getChildIdSpaceShardProgress` on a parent and `synchronizeWithParent` on a live child.
+The ID-compressor library provides `getChildShardProgress` on a parent and `synchronizeWithParent` on a live child.
 This updates the child's knowledge of Host-generated IDs without replacing the child compressor or changing its allocation stride.
 The parent's `rangeFinalized` event reports each creation range after finalization succeeds.
 The Guest can apply these ranges in order through the existing `finalizeCreationRange` method.
 Unit tests cover parent and child edits, local and remote finalized ranges, token ownership, and invalid progress.
-The sandbox does **not yet** subscribe to this event or send either form of progress through `MessagePort`.
-
-Carry the required compressor updates over the Host-to-Guest channel ahead of each `hostUpdate` that depends on them, including updates that only advance the finalized-history boundary.
-Apply them before the Guest replays any serialized commit or interprets a revision that depends on them.
-Specify ordering and replay behavior for delayed updates, concurrent edits, remote-client ranges, retained initialization commits, and session replacement.
+The Host subscribes to finalized-range events and sends each range as `hostIdRange` immediately in runtime order.
+Each range message includes parent progress, which the Guest applies before finalizing the range.
+Host branch updates include parent progress captured after encoding their commits.
+The Guest applies this progress before it decodes the commits or checks branch revisions.
+The serialized child already includes the compressor state needed for retained initialization commits.
+The Guest rejects unexpected range IDs, invalid finalized ranges, progress for another ID space shard, and progress that moves backward.
+Further tests for delayed and interleaved range delivery remain on the checklist.
 Preserve the Host-branch copy and Guest-side rebase; do not generate corrective net changes as a workaround.
 Do not call `takeNextCreationRange()` merely to construct a sandbox update: range submission and finalization belong to the runtime.
 

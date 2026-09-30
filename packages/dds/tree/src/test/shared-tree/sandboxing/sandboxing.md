@@ -148,7 +148,12 @@ After serializing the snapshot and retained commits, the Host creates a child ID
 The Host sends that ID space shard as part of `hostInitialization` through `MessagePort`.
 The Guest deserializes the ID space shard before initializing its view or replaying commits.
 This removes the need to share a live compressor object across the boundary.
-Guest-to-Host ID progress is synchronized with each Guest change; Host-to-Guest ID progress is not yet synchronized.
+Guest-to-Host ID progress is synchronized with each Guest change.
+Host updates include parent ID progress, which the Guest applies before decoding their commits.
+The Host also sends each newly finalized creation range in a `hostIdRange` message.
+That message includes parent progress and reaches the Guest before any later Host update that needs the range.
+The Guest applies the progress first, then finalizes the range.
+The Host sends these messages even when finalization does not change the tree.
 See [ID Space Sharding](#id-space-sharding).
 
 ### Message Conversion and Validation
@@ -266,7 +271,7 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 
 [Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
-The existing Host, peer, and recovery cases still need Host-to-Guest ID progress synchronization to work with separate compressors; they are not all expected to pass during this staged implementation.
+The Host, peer, and Guest edit cases run with separate compressors; integration with an isolated iframe is still pending.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
 Initialization tests also sequence concurrent Peer edits before the pending Host edits.
@@ -316,7 +321,9 @@ These failures do not prevent you from writing the tests.
 
 The Guest now receives a serialized child ID space shard, while the Host keeps its runtime compressor.
 Guest changes include a token that synchronizes their newly generated IDs to the Host before the tree codec decodes them.
-Complete synchronization of Host-generated IDs and newly finalized ranges to the Guest before decoding Host updates.
+Host updates carry progress that lets the Guest interpret new Host IDs before decoding commits.
+The Host forwards finalized creation ranges to the Guest before dependent updates.
+Complete cross-realm tests and lifecycle coordination before relying on this for production use.
 Coordinate ID space shard disposal and reclamation with session teardown.
 
 ID space sharding support was added in https://github.com/microsoft/FluidFramework/pull/27559.

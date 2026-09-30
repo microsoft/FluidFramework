@@ -14,6 +14,7 @@ import {
 import { fail } from "@fluidframework/core-utils/internal";
 import {
 	createIdCompressor,
+	createSessionId,
 	deserializeIdCompressor,
 	type IIdCompressor,
 	SerializationVersion,
@@ -43,7 +44,6 @@ import {
 	createTestUndoRedoStacks,
 	fieldCursorFromInsertable,
 	mintRevisionTag,
-	testIdCompressor,
 	TestTreeProviderLite,
 	viewCheckout,
 } from "../../utils.js";
@@ -92,6 +92,28 @@ function createTestIdSpaceShardToken() {
 }
 
 /**
+ * Creates parent ID progress for protocol-message tests.
+ *
+ * @remarks
+ * This helper creates a root compressor, creates a child ID space shard, and asks the
+ * root for progress addressed to that child. The result has the same data shape as
+ * progress sent by a Host, without putting either compressor object in a message.
+ * No sandbox Host owns this child, so the progress is not authorized for a real Guest.
+ * Use progress from the test Host when a test must apply it to a Guest.
+ *
+ * @returns Parent progress for the new test child ID space shard.
+ */
+function createTestParentIdProgress() {
+	const root = createIdCompressor(SerializationVersion.V3);
+	const [serializedChild] = root.shard(1);
+	assert(serializedChild !== undefined, "Expected a child ID space shard");
+	const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
+	const token = child.getShardSyncToken();
+	assert(token !== undefined, "Expected a child ID space shard token");
+	return root.getChildShardProgress(token);
+}
+
+/**
  * Gets a checkout's compressor for sandbox tests that verify ID space shard identity and progress.
  */
 function getCheckoutIdCompressor(checkout: ReturnType<typeof getCheckout>): IIdCompressor {
@@ -119,6 +141,21 @@ describe("Host and Guest message protocol", () => {
 				mainRevision: 1,
 				trunkRevision: "root",
 				commits: [{ value: 1 }],
+				parentIdProgress: createTestParentIdProgress(),
+			},
+			{
+				type: "hostIdRange",
+				rangeId: 0,
+				parentIdProgress: createTestParentIdProgress(),
+				range: {
+					sessionId: createSessionId(),
+					ids: {
+						firstGenCount: 1,
+						count: 1,
+						requestedClusterSize: 512,
+						localIdRanges: [[1, 1]],
+					},
+				},
 			},
 			{
 				type: "guestChange",
@@ -175,6 +212,25 @@ describe("Host and Guest message protocol", () => {
 				idCompressor: 1,
 			},
 			{ type: "guestChange" },
+			// Every Host update needs parent progress so the Guest can decode its commits.
+			{
+				type: "hostUpdate",
+				updateId: 0,
+				baseRevision: "root",
+				mainRevision: "root",
+				trunkRevision: "root",
+				commits: [],
+			},
+			// A negative generation count is not valid parent ID progress.
+			{
+				type: "hostUpdate",
+				updateId: 0,
+				baseRevision: "root",
+				mainRevision: "root",
+				trunkRevision: "root",
+				commits: [],
+				parentIdProgress: { ...createTestParentIdProgress(), localGenCount: -1 },
+			},
 			// A Guest change cannot be decoded safely without the child ID space shard progress token.
 			validChange,
 			{ ...validChange, idSpaceShardToken: null },
@@ -192,6 +248,15 @@ describe("Host and Guest message protocol", () => {
 			{ ...validChange, idSpaceShardToken: { ...token, unexpected: true } },
 			{ ...validChange, idSpaceShardToken: token, extra: true },
 			{ type: "hostUpdateAck" },
+			// The Guest needs both parent progress and the finalized range.
+			{ type: "hostIdRange", rangeId: 0 },
+			// Generation counts start at one, and the range also needs its count, cluster size, and local ID ranges.
+			{
+				type: "hostIdRange",
+				rangeId: 0,
+				parentIdProgress: createTestParentIdProgress(),
+				range: { sessionId: createSessionId(), ids: { firstGenCount: 0 } },
+			},
 			{ type: "guestChangeAck" },
 			{ type: "sessionFailure" },
 			{ type: "sessionFailure", error: 0 },
@@ -277,6 +342,228 @@ describe("Host and Guest correctness", () => {
 			"Expected an active child ID space shard, not a copy of the root",
 		);
 		assert.deepEqual([...guest.view.root], ["initial"]);
+	});
+
+	it("updates the live Guest ID space shard before applying later Host commits", async () => {
+		const { guest, host, provider } = await setup(["initial"]);
+		const parent = provider.getCompressor(provider.trees[1]);
+		const child = getCheckoutIdCompressor(getCheckout(guest.view));
+		for (let index = 0; index < 32; index++) {
+			parent.generateCompressedId();
+		}
+		host.main.root.push("host");
+		const revision = getBranch(host.main).getHead().revision;
+		assert(revision !== "root");
+		await host.updateGuestPromise;
+		assert.equal(child.decompress(revision), parent.decompress(revision));
+		assert.deepEqual([...guest.view.root], ["initial", "host"]);
+	});
+
+	it("delivers peer finalized ranges before the dependent Host update", async () => {
+		const { guest, host, peer, provider } = await setup(["initial"]);
+		const child = getCheckoutIdCompressor(getCheckout(guest.view));
+		peer.root.push("peer");
+		provider.synchronizeMessages();
+		await host.updateGuestPromise;
+		const head = getBranch(host.main).getHead().revision;
+		assert(head !== "root");
+		assert.equal(
+			child.decompress(head),
+			provider.getCompressor(provider.trees[1]).decompress(head),
+		);
+		assert.deepEqual([...guest.view.root], ["initial", "peer"]);
+	});
+
+	it("delivers a finalized ID range even without a tree update", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, guest, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const peerCompressor = toIdCompressorWithCore(provider.getCompressor(provider.trees[0]));
+		const peerId = peerCompressor.generateCompressedId();
+		const encoded = peerCompressor.normalizeToOpSpace(peerId);
+		const range = peerCompressor.takeNextCreationRange();
+		assert(range.ids !== undefined, "Expected a peer creation range");
+		const child = getCheckoutIdCompressor(getCheckout(guest.view));
+		assert.throws(
+			() => child.normalizeToSessionSpace(encoded, peerCompressor.localSessionId),
+			/No IDs have ever been finalized/,
+		);
+		const delivered = new Promise<void>((resolve) => {
+			ports.guestPort.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) => {
+					const message = parseHostGuestMessage(normalizeTransportData(event.data));
+					assert.equal(message.type, "hostIdRange");
+					resolve();
+				},
+				{ once: true },
+			);
+		});
+		toIdCompressorWithCore(provider.getCompressor(provider.trees[1])).finalizeCreationRange(
+			range,
+		);
+		await delivered;
+		const local = child.normalizeToSessionSpace(encoded, peerCompressor.localSessionId);
+		assert.equal(child.decompress(local), peerCompressor.decompress(peerId));
+		assert.deepEqual([...host.main.root], [...guest.view.root]);
+	});
+
+	it("rejects an out-of-order finalized Host ID range", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, guest, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		interop.sendToGuest.postMessage({
+			type: "hostIdRange",
+			rangeId: 1,
+			parentIdProgress: createTestParentIdProgress(),
+			range: {
+				sessionId: createSessionId(),
+				ids: {
+					firstGenCount: 1,
+					count: 1,
+					requestedClusterSize: 512,
+					localIdRanges: [[1, 1]],
+				},
+			},
+		});
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Host ID range identifier order/);
+		assert.equal(host.error, undefined);
+	});
+
+	it("rejects a finalized range whose generation counts start out of order", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, guest, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guest.view)));
+		const token = child.getShardSyncToken();
+		assert(token !== undefined, "Expected a child ID space shard token");
+		const parent = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		interop.sendToGuest.postMessage({
+			type: "hostIdRange",
+			rangeId: 0,
+			parentIdProgress: parent.getChildShardProgress(token),
+			range: {
+				sessionId: createSessionId(),
+				ids: {
+					firstGenCount: 2,
+					count: 1,
+					requestedClusterSize: 512,
+					localIdRanges: [[2, 1]],
+				},
+			},
+		});
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Invalid finalized Host ID range/);
+		assert.equal(host.error, undefined);
+	});
+
+	it("rejects Host progress for another ID space shard before applying an update", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, guest, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		interop.sendToGuest.postMessage({
+			type: "hostUpdate",
+			updateId: 0,
+			baseRevision: host.guestInitialization.mainRevision,
+			mainRevision: host.guestInitialization.mainRevision,
+			trunkRevision: host.guestInitialization.trunkRevision,
+			commits: [],
+			parentIdProgress: createTestParentIdProgress(),
+		});
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /targets another ID space shard/);
+		assert.deepEqual([...host.main.root], ["initial"]);
+		assert.equal(host.error, undefined);
+	});
+
+	it("rejects Host ID progress that moves backward across ordered updates", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, guest, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guest.view)));
+		const token = child.getShardSyncToken();
+		assert(token !== undefined, "Expected an ID space shard token");
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const previous = root.getChildShardProgress(token);
+		root.generateCompressedId();
+		const current = root.getChildShardProgress(token);
+		const revision = host.guestInitialization.mainRevision;
+		for (const [updateId, progress] of [
+			[0, current],
+			[1, previous],
+		] as const) {
+			interop.sendToGuest.postMessage({
+				type: "hostUpdate",
+				updateId,
+				baseRevision: revision,
+				mainRevision: revision,
+				trunkRevision: host.guestInitialization.trunkRevision,
+				commits: [],
+				parentIdProgress: progress,
+			});
+		}
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Host ID progress moved backward/);
+		assert.deepEqual([...host.main.root], ["initial"]);
+	});
+
+	it("applies a trunk-only Host update after its creation range is finalized", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, guest, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const updates: HostUpdateMessage[] = [];
+		ports.guestPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = parseHostGuestMessage(normalizeTransportData(event.data));
+			if (message.type === "hostUpdate") {
+				updates.push(message);
+			}
+		});
+
+		host.main.root.push("host");
+		await host.updateGuestPromise;
+		const initialTrunkRevision = updates.at(-1)?.trunkRevision;
+		assert(initialTrunkRevision !== undefined, "Expected the original Host update");
+		provider.synchronizeMessages();
+		await host.updateGuestPromise;
+		assert(
+			updates.some(
+				(update) =>
+					update.commits.length === 0 && update.trunkRevision !== initialTrunkRevision,
+			),
+			"Expected an update of the finalized-history boundary without new commits",
+		);
+		assert.deepEqual([...guest.view.root], ["initial", "host"]);
 	});
 
 	it("rejects an invalid serialized child before constructing the Guest view", async () => {
@@ -926,6 +1213,7 @@ describe("Host and Guest correctness", () => {
 					mainRevision,
 					trunkRevision,
 					commits: [],
+					parentIdProgress: createTestParentIdProgress(),
 				});
 			}
 			await reported.promise;
@@ -1246,12 +1534,13 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("synchronizes an independent Host using its base as the finalized boundary", async () => {
+		const idCompressor = createIdCompressor(SerializationVersion.V3);
 		const checkout = checkoutWithContent(
 			{
 				schema: toInitialSchema(stringArrayConfig.schema),
 				initialTree: fieldCursorFromInsertable(stringArrayConfig.schema, ["a"]),
 			},
-			{ codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
+			{ idCompressor, codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
 		);
 		const main = viewCheckout(checkout, stringArrayConfig);
 		const base = getFinalizedCommit(main);
@@ -1262,7 +1551,7 @@ describe("Host and Guest correctness", () => {
 			main,
 			port: ports.hostPort,
 			bindingHandle: new TestTreeProviderLite(1).trees[0].handle,
-			idCompressor: testIdCompressor,
+			idCompressor,
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		try {
@@ -1305,6 +1594,7 @@ describe("Host and Guest correctness", () => {
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
 			() => assert.fail("No Guest changes expected"),
+			() => assert.fail("No Host updates expected"),
 		);
 		try {
 			assert.equal(
@@ -1337,6 +1627,11 @@ describe("Host and Guest correctness", () => {
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
 			() => assert.fail("No Guest changes expected"),
+			() => ({
+				type: "parentIdProgressForShard",
+				shardId: createTestIdSpaceShardToken().shardId,
+				localGenCount: 0,
+			}),
 		);
 		try {
 			const initialTrunkRevision = synchronization.guestInitialization.trunkRevision;
@@ -1356,6 +1651,12 @@ describe("Host and Guest correctness", () => {
 		const { host } = await setup(["a"]);
 		const revision = mintRevisionTag();
 		const sent: HostGuestMessage[] = [];
+		const root = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(host.main)));
+		const [serializedChild] = root.shard(1);
+		assert(serializedChild !== undefined, "Expected a serialized child ID space shard");
+		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
+		const childToken = child.getShardSyncToken();
+		assert(childToken !== undefined, "Expected a child ID space shard token");
 		const synchronization = new GuestSynchronization(
 			host.main.fork(),
 			{
@@ -1364,7 +1665,7 @@ describe("Host and Guest correctness", () => {
 				trunkRevision: revision,
 				commits: [],
 			},
-			toIdCompressorWithCore(testIdCompressor),
+			child,
 			(message) => sent.push(message),
 			(action) => action(),
 			(error) => assert.fail(String(error)),
@@ -1378,6 +1679,7 @@ describe("Host and Guest correctness", () => {
 				mainRevision: revision,
 				trunkRevision: revision,
 				commits: [],
+				parentIdProgress: root.getChildShardProgress(childToken),
 			});
 			assert.deepEqual(sent, [{ type: "hostUpdateAck", updateId: 0 }]);
 			assert.deepEqual([...synchronization.view.root], ["a"]);
@@ -1385,6 +1687,9 @@ describe("Host and Guest correctness", () => {
 			synchronization.stop(new Error("Test complete"));
 			synchronization.view.dispose();
 			synchronization.dispose();
+			root.synchronizeWithShard(
+				child.disposeShard() ?? assert.fail("Expected a child disposal token"),
+			);
 		}
 	});
 
