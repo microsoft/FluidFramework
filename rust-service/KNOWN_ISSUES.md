@@ -48,6 +48,13 @@ Historical findings and resolved investigations are retained in [Historical reco
   These successful runs do not establish compilation as a cause or explain the earlier failure.
   An initial broader filesystem trace stopped on a connection-close failure in `server_survives_malformed_and_abandoned_response_streams`, whose configured operation timeout is 50 ms; the target round-trip test passed.
   That failure was preserved separately and is not evidence of the durable-initialization timeout or proof that tracing caused it.
+- **Workspace continuation (2026-09-30):** On `88bda6b825e`, one bounded `cargo build --workspace --all-targets` followed by the scoped `./test.sh` gate passed.
+  The build recompiled the server; native workspace tests ran alongside the scoped package build.
+  Only the native test branch used low-overhead filesystem tracing, extended to directory creation, opens, metadata reads, and path resolution.
+  The fixture remained on the workspace ext4 filesystem, with external deadlines of 300 seconds for the build and 600 seconds for validation.
+  The native initializer's 32 observed calls spanned 9.936 ms from the first namespace-directory creation attempt through the last ancestor synchronization; its seven synchronizations totaled 6.409 ms.
+  No connection timeout or tracer fallback warning occurred.
+  This successful trace does not explain the earlier failure; stop repeated passing batches and retain diagnostics for a future normal-validation recurrence.
 - **Impact:** Native test runs can fail without an established product or test-harness cause.
   The transport timeout must not be classified as harmless host variability or resolved by a passing retry.
 - **Storage findings (2026-09-22):** A durable-file connection failed after 74.44 seconds despite a five-second client operation timeout.
