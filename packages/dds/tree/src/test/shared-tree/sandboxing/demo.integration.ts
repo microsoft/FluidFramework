@@ -22,10 +22,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { createHost } from "./host.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
-import type {
-	SharedObject,
-	SharedObjectCreator,
-} from "@fluidframework/shared-object-base/internal";
+import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { asBeta } from "../../../api.js";
@@ -86,10 +83,6 @@ describe("End to End Host and Guest integrations", () => {
 			await client.service.synchronize();
 
 			const host = createHost({
-				// TODO: we need to expose a better way to do this.
-				bindingHandle: (tree as unknown as SharedObject).handle,
-				logger,
-				idCompressor,
 				main: viewHost,
 				port: channel.port1,
 			});

@@ -35,7 +35,6 @@ import {
 	fieldCursorFromInsertable,
 	mintRevisionTag,
 	testIdCompressor,
-	TestTreeProviderLite,
 	viewCheckout,
 } from "../../utils.js";
 
@@ -429,9 +428,6 @@ describe("Host and Guest correctness", () => {
 			const replacementHost = new HostImplementation({
 				main,
 				port: ports.hostPort,
-				bindingHandle: provider.trees[1].handle,
-				idCompressor: provider.getCompressor(provider.trees[1]),
-				logger: createChildLogger({ namespace: "Host" }),
 			});
 			const replacementGuest = await createGuestForHost(
 				ports.guestPort,
@@ -924,9 +920,6 @@ describe("Host and Guest correctness", () => {
 		const replacementHost = new HostImplementation({
 			main,
 			port: ports.hostPort,
-			bindingHandle: provider.trees[1].handle,
-			idCompressor: provider.getCompressor(provider.trees[1]),
-			logger: createChildLogger({ namespace: "Host" }),
 		});
 		const replacementGuest = await createGuestForHost(
 			ports.guestPort,
@@ -960,9 +953,6 @@ describe("Host and Guest correctness", () => {
 		const independentHost = new HostImplementation({
 			main,
 			port: ports.hostPort,
-			bindingHandle: new TestTreeProviderLite(1).trees[0].handle,
-			idCompressor: testIdCompressor,
-			logger: createChildLogger({ namespace: "Host" }),
 		});
 		try {
 			assert.equal(
@@ -1009,7 +999,6 @@ describe("Host and Guest correctness", () => {
 		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
 			mainCheckout,
-			() => {},
 			() => {},
 			(action) => action(),
 			(error) => assert.fail(String(error)),
@@ -1058,7 +1047,6 @@ describe("Host and Guest correctness", () => {
 			const synchronization = new HostSynchronization(
 				getCheckout(main),
 				() => {},
-				() => {},
 				(action) => action(),
 				(error) => assert.fail(String(error)),
 				createChildLogger({ namespace: "Host" }),
@@ -1099,7 +1087,6 @@ describe("Host and Guest correctness", () => {
 					sent.push(message);
 				}
 			},
-			() => {},
 			(action) => action(),
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
@@ -1183,9 +1170,6 @@ describe("Host and Guest correctness", () => {
 			const replacementHost = new HostImplementation({
 				main,
 				port: ports.hostPort,
-				bindingHandle: provider.trees[1].handle,
-				idCompressor: provider.getCompressor(provider.trees[1]),
-				logger: createChildLogger({ namespace: "Host" }),
 			});
 			if (trimHistory) {
 				assert.notEqual(
