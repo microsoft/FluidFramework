@@ -169,7 +169,9 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			idCompressor = deserializeIdCompressor(message.idCompressor, SerializationVersion.V3);
 			// A second root with the same session ID would allocate colliding IDs.
 			if (idCompressor.getShardSyncToken() === undefined) {
-				throw new SandboxProtocolError("Guest initialization requires a child shard.");
+				throw new SandboxProtocolError(
+					"Guest initialization requires a child ID space shard.",
+				);
 			}
 		} catch (error) {
 			throw new SandboxProtocolError("Invalid serialized sandbox ID compressor.", {
@@ -190,6 +192,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				trunkRevision: message.trunkRevision,
 				commits: message.commits,
 			},
+			idCompressor,
 			(protocolMessage) => this.postMessage(protocolMessage),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),

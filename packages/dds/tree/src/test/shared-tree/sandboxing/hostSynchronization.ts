@@ -5,6 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -115,6 +116,8 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		 * The scoped logger for synchronization diagnostics.
 		 */
 		private readonly logger: TelemetryLoggerExt,
+		/** Authorizes and imports Guest IDs before a serialized change is decoded. */
+		private readonly synchronizeGuestIdSpaceShard: (token: ShardSynchronizationToken) => void,
 	) {
 		this.local = main.fork();
 		const branch = getBranch(main);
@@ -167,6 +170,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
+		this.synchronizeGuestIdSpaceShard(message.idSpaceShardToken);
 		this.local.applyChange(message.change);
 		this.bindHandles(message.change);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.

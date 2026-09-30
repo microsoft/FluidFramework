@@ -5,7 +5,12 @@
 
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SerializedIdCompressorWithOngoingSession } from "@fluidframework/id-compressor/internal";
+import {
+	isStableId,
+	type SessionId,
+	type SerializedIdCompressorWithOngoingSession,
+	type ShardSynchronizationToken,
+} from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
@@ -286,6 +291,43 @@ const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
 );
 
 /**
+ * Checks the ID format of an ID space shard token received through the port.
+ *
+ * @remarks
+ * This check does not show that the ID space shard belongs to this Host session.
+ * The Host checks that separately before it uses the token.
+ */
+const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
+	"Sandbox.IdSpaceShardSessionId",
+	(_schema, value) => typeof value === "string" && isStableId(value),
+)();
+
+/**
+ * Validates the ID space shard token that the Guest sends with each change.
+ *
+ * @remarks
+ * The Host uses this token to learn about new Guest IDs before it decodes the change.
+ * A change does not close the Guest session. The Guest can create more IDs after it sends the change.
+ * Therefore, this schema requires `disposed: false`.
+ * A disposal token would let the Host reclaim the Guest's ID space shard.
+ * The Guest must first stop creating IDs. A separate close protocol is still needed for this step.
+ */
+const GuestIdSpaceShardToken = Type.Unsafe<ShardSynchronizationToken>(
+	Type.Object(
+		{
+			shardId: IdSpaceShardSessionId,
+			localGenCount: Type.Number({
+				minimum: 0,
+				maximum: Number.MAX_SAFE_INTEGER,
+				multipleOf: 1,
+			}),
+			disposed: Type.Literal(false),
+		},
+		{ additionalProperties: false },
+	),
+);
+
+/**
  * Initializes the Guest's copy of the Host main branch.
  */
 export type HostInitializationMessage = Static<typeof HostInitializationMessage>;
@@ -305,7 +347,7 @@ const HostInitializationMessage = Type.Object(
 		schema: Type.Readonly(SerializedTreePayload),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
-		/** A serialized child shard with the local session state needed to initialize the Guest. */
+		/** A serialized child ID space shard with the local session state needed to initialize the Guest. */
 		idCompressor: Type.Readonly(
 			Type.Unsafe<SerializedIdCompressorWithOngoingSession>(Type.String()),
 		),
@@ -365,6 +407,8 @@ const GuestChangeMessage = Type.Object(
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The serialized Guest-authored SharedTree change. */
 		change: Type.Readonly(SerializedTreePayload),
+		/** Child ID space shard progress needed by the Host before it can decode the change. */
+		idSpaceShardToken: Type.Readonly(GuestIdSpaceShardToken),
 	},
 	{ additionalProperties: false },
 );

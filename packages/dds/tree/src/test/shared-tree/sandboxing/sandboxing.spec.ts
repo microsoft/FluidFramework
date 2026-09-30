@@ -14,6 +14,8 @@ import {
 import { fail } from "@fluidframework/core-utils/internal";
 import {
 	createIdCompressor,
+	deserializeIdCompressor,
+	type IIdCompressor,
 	SerializationVersion,
 	serializeIdCompressor,
 	toIdCompressorWithCore,
@@ -60,7 +62,7 @@ import { GuestSynchronization } from "./guestSynchronization.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
-import { getCheckout, getFinalizedCommit } from "./synchronizationUtils.js";
+import { getBranch, getCheckout, getFinalizedCommit } from "./synchronizationUtils.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -72,6 +74,30 @@ import {
 	setupCustom,
 	stringArrayConfig,
 } from "./sandboxingTestUtils.js";
+
+/**
+ * Creates a real child ID space shard token for envelope wire-shape tests.
+ */
+function createTestIdSpaceShardToken() {
+	const [serializedIdSpaceShard] = createIdCompressor(SerializationVersion.V3).shard(1);
+	assert(serializedIdSpaceShard !== undefined, "Expected a serialized test ID space shard");
+	const idSpaceShard = deserializeIdCompressor(
+		serializedIdSpaceShard,
+		SerializationVersion.V3,
+	);
+	return (
+		idSpaceShard.getShardSyncToken() ??
+		assert.fail("Expected a child ID space shard synchronization token")
+	);
+}
+
+/**
+ * Gets a checkout's compressor for sandbox tests that verify ID space shard identity and progress.
+ */
+function getCheckoutIdCompressor(checkout: ReturnType<typeof getCheckout>): IIdCompressor {
+	// eslint-disable-next-line @typescript-eslint/dot-notation -- The checkout's compressor is private.
+	return checkout["idCompressor"];
+}
 
 describe("Host and Guest message protocol", () => {
 	it("accepts initialization, branch updates, Guest changes, and acknowledgments", () => {
@@ -100,6 +126,7 @@ describe("Host and Guest message protocol", () => {
 				mainRevision: 1,
 				trunkRevision: "root",
 				change: { value: 2 },
+				idSpaceShardToken: createTestIdSpaceShardToken(),
 			},
 			{ type: "hostUpdateAck", updateId: 0 },
 			{ type: "guestChangeAck", changeId: 0 },
@@ -112,6 +139,14 @@ describe("Host and Guest message protocol", () => {
 	});
 
 	it("rejects invalid message envelopes", () => {
+		const validChange = {
+			type: "guestChange",
+			changeId: 0,
+			mainRevision: "root",
+			trunkRevision: "root",
+			change: {},
+		};
+		const token = createTestIdSpaceShardToken();
 		const invalidMessages: unknown[] = [
 			null,
 			"guestChange",
@@ -140,6 +175,22 @@ describe("Host and Guest message protocol", () => {
 				idCompressor: 1,
 			},
 			{ type: "guestChange" },
+			// A Guest change cannot be decoded safely without the child ID space shard progress token.
+			validChange,
+			{ ...validChange, idSpaceShardToken: null },
+			// Disposal would let a change message reclaim the ID space while the Guest is still active.
+			{ ...validChange, idSpaceShardToken: { ...token, disposed: true } },
+			// Progress must be a nonnegative safe integer, and the child ID must be a valid session ID.
+			{ ...validChange, idSpaceShardToken: { ...token, localGenCount: -1 } },
+			{ ...validChange, idSpaceShardToken: { ...token, localGenCount: 1.5 } },
+			{
+				...validChange,
+				idSpaceShardToken: { ...token, localGenCount: Number.MAX_SAFE_INTEGER + 1 },
+			},
+			{ ...validChange, idSpaceShardToken: { ...token, shardId: "not a session ID" } },
+			// Unexpected fields must not bypass the token or message envelope validation.
+			{ ...validChange, idSpaceShardToken: { ...token, unexpected: true } },
+			{ ...validChange, idSpaceShardToken: token, extra: true },
 			{ type: "hostUpdateAck" },
 			{ type: "guestChangeAck" },
 			{ type: "sessionFailure" },
@@ -215,15 +266,15 @@ describe("Host and Guest correctness", () => {
 	it("initializes through the port with a distinct child compressor", async () => {
 		const { guest, provider } = await setup(["initial"]);
 		const root = provider.getCompressor(provider.trees[1]);
-		// eslint-disable-next-line @typescript-eslint/dot-notation -- Verify identity without exposing the checkout's private compressor.
-		const child = getCheckout(guest.view)["idCompressor"];
+		const idSpaceShard = getCheckoutIdCompressor(getCheckout(guest.view));
 
-		assert.notEqual(child, root);
-		assert.equal(child.localSessionId, root.localSessionId);
+		// The Guest has a distinct compressor with the Host's session ID, but it is a child, not another root.
+		assert.notEqual(idSpaceShard, root);
+		assert.equal(idSpaceShard.localSessionId, root.localSessionId);
 		assert.equal(
-			toIdCompressorWithCore(child).getShardSyncToken()?.disposed,
+			toIdCompressorWithCore(idSpaceShard).getShardSyncToken()?.disposed,
 			false,
-			"Expected an active child shard, not a copy of the root",
+			"Expected an active child ID space shard, not a copy of the root",
 		);
 		assert.deepEqual([...guest.view.root], ["initial"]);
 	});
@@ -238,7 +289,9 @@ describe("Host and Guest correctness", () => {
 			logger: createChildLogger({ namespace: "Guest" }),
 			handleProtocolError: (error) => errors.push(error),
 		});
+		// Attach the rejection check before delivery so the asynchronous failure is observed.
 		const rejected = assert.rejects(guestPromise, /Invalid serialized sandbox ID compressor/);
+		// The envelope passes message validation; only the serialized compressor is invalid.
 		channel.port1.postMessage({
 			type: "hostInitialization",
 			baseRevision: "root",
@@ -257,7 +310,7 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("rejects a serialized root compressor in place of a child shard", async () => {
+	it("rejects a serialized root compressor in place of a child ID space shard", async () => {
 		const channel = new MessageChannel();
 		const guestPromise = Guest.create({
 			config: stringArrayConfig,
@@ -267,6 +320,7 @@ describe("Host and Guest correctness", () => {
 			handleProtocolError: () => {},
 		});
 		const rejected = assert.rejects(guestPromise, /Invalid serialized sandbox ID compressor/);
+		// A serialized root is well formed, but it has no child allocation to prevent collisions within a shared session.
 		channel.port1.postMessage({
 			type: "hostInitialization",
 			baseRevision: "root",
@@ -284,8 +338,9 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("rejects a Host compressor that cannot create a child shard", async () => {
+	it("rejects a Host compressor that cannot create a child ID space shard", async () => {
 		const { guest, host, provider } = await setup(["initial"]);
+		// Reuse the application-owned main view so a failed replacement Host must leave it usable.
 		guest.dispose();
 		host.dispose();
 		const channel = new MessageChannel();
@@ -308,7 +363,7 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("reclaims an unsent shard when Host initialization cannot be delivered", () => {
+	it("reclaims an unsent ID space shard when Host initialization cannot be delivered", () => {
 		const provider = new TestTreeProviderLite(
 			2,
 			configuredSharedTree({
@@ -321,6 +376,7 @@ describe("Host and Guest correctness", () => {
 		provider.synchronizeMessages();
 		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
 		const channel = new MessageChannel();
+		// Fail after the Host has created its child, but before the Guest receives initialization.
 		channel.port1.postMessage = () => {
 			throw new Error("Transport unavailable");
 		};
@@ -336,6 +392,7 @@ describe("Host and Guest correctness", () => {
 					}),
 				/Transport unavailable/,
 			);
+			// The root exits sharding mode when the unsent child's ID space is reclaimed.
 			assert.equal(root.getShardSyncToken(), undefined);
 			main.root.push("still usable");
 		} finally {
@@ -355,6 +412,7 @@ describe("Host and Guest correctness", () => {
 			mainRevision: "root",
 			trunkRevision: "root",
 			change,
+			idSpaceShardToken: createTestIdSpaceShardToken(),
 		};
 		const received = new Promise<HostGuestMessage>((resolve) => {
 			channel.port2.addEventListener(
@@ -594,6 +652,7 @@ describe("Host and Guest correctness", () => {
 				mainRevision: "root",
 				trunkRevision: "root",
 				change: { type: "__sandbox_handle__", token: 99 },
+				idSpaceShardToken: createTestIdSpaceShardToken(),
 			},
 			/Unknown sandbox handle token/,
 		],
@@ -857,6 +916,7 @@ describe("Host and Guest correctness", () => {
 					mainRevision,
 					trunkRevision,
 					change: {},
+					idSpaceShardToken: createTestIdSpaceShardToken(),
 				});
 			} else {
 				interop.sendToGuest.postMessage({
@@ -914,13 +974,113 @@ describe("Host and Guest correctness", () => {
 		assert(error.cause instanceof SandboxProtocolError);
 	});
 
+	for (const reason of ["a foreign ID space shard", "an old progress count"] as const) {
+		it(`rejects ${reason} before applying a Guest change`, async () => {
+			const reported = makePromiseWithResolvers();
+			const { host, guest, provider, interop } = await setupCustom(
+				[],
+				stringArrayConfig,
+				buildIsolatedSessionPorts,
+				false,
+				() => reported.resolver(),
+			);
+			const root = provider.getCompressor(provider.trees[1]);
+			const idSpaceShard = toIdCompressorWithCore(
+				getCheckoutIdCompressor(getCheckout(guest.view)),
+			);
+			const token =
+				idSpaceShard.getShardSyncToken() ?? assert.fail("Expected Guest ID space shard token");
+			const sibling =
+				reason === "a foreign ID space shard"
+					? (() => {
+							const [serializedIdSpaceShard] = toIdCompressorWithCore(root).shard(1);
+							assert(
+								serializedIdSpaceShard !== undefined,
+								"Expected a second active ID space shard",
+							);
+							return deserializeIdCompressor(serializedIdSpaceShard, SerializationVersion.V3);
+						})()
+					: undefined;
+			// The stale case uses a count below the Guest's initial ID space shard progress.
+			const idSpaceShardToken =
+				reason === "a foreign ID space shard"
+					? (sibling?.getShardSyncToken() ??
+						assert.fail("Expected a sibling ID space shard token"))
+					: { ...token, localGenCount: 0 };
+			const before = serializeIdCompressor(root, true);
+			// Even another ID space shard registered with the same root cannot act as this Guest.
+			interop.sendToHost.postMessage({
+				type: "guestChange",
+				changeId: 0,
+				mainRevision: host.guestInitialization.mainRevision,
+				trunkRevision: host.guestInitialization.trunkRevision,
+				change: {},
+				idSpaceShardToken,
+			});
+			await reported.promise;
+			assert(host.error?.cause instanceof SandboxProtocolError, String(host.error?.cause));
+			assert.match(host.error.cause.message, /Guest ID space shard/);
+			assert.deepEqual([...host.main.root], []);
+			// Neither a foreign token nor a stale count may mutate the Host's compressor.
+			assert.equal(serializeIdCompressor(root, true), before);
+			assert.equal(guest.error, undefined);
+			if (sibling !== undefined) {
+				toIdCompressorWithCore(root).synchronizeWithShard(
+					sibling.disposeShard() ??
+						assert.fail("Expected sibling ID space shard disposal token"),
+				);
+			}
+		});
+	}
+
+	it("rejects an earlier ID space shard token after acknowledging a Guest change", async () => {
+		const reported = makePromiseWithResolvers();
+		const ports = buildDirectSessionPorts();
+		const { host, guest, provider } = await setupCustom(
+			[],
+			stringArrayConfig,
+			() => ports,
+			false,
+			() => reported.resolver(),
+		);
+		let firstChange: GuestChangeMessage | undefined;
+		// Capture the genuine token sent with the first edit so the second message can replay it.
+		ports.hostPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = parseHostGuestMessage(normalizeTransportData(event.data));
+			if (message.type === "guestChange") {
+				firstChange ??= message;
+			}
+		});
+		guest.view.root.push("first");
+		await guest.updateHostPromise;
+		await host.updateGuestPromise;
+		const token = firstChange?.idSpaceShardToken ?? assert.fail("Expected a Guest change");
+		const root = provider.getCompressor(provider.trees[1]);
+		const before = serializeIdCompressor(root, true);
+
+		// Use the next change ID and current Host revisions so stale progress is rejected before decoding the dummy change.
+		ports.guestPort.postMessage({
+			type: "guestChange",
+			changeId: 1,
+			mainRevision: getBranch(host.main).getHead().revision,
+			trunkRevision: host.guestInitialization.trunkRevision,
+			change: {},
+			idSpaceShardToken: token,
+		});
+		await reported.promise;
+		assert(host.error?.cause instanceof SandboxProtocolError);
+		assert.match(host.error.cause.message, /Guest ID space shard progress did not advance/);
+		assert.deepEqual([...host.main.root], ["first"]);
+		assert.equal(serializeIdCompressor(root, true), before);
+	});
+
 	it("does not acknowledge a Guest change with an unknown base", async () => {
 		let reportProtocolError: ((error: Error) => void) | undefined;
 		const protocolError = new Promise<Error>((resolve) => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const { host, interop } = await setupCustom(
+		const { host, guest, interop } = await setupCustom(
 			[],
 			stringArrayConfig,
 			buildIsolatedSessionPorts,
@@ -934,6 +1094,10 @@ describe("Host and Guest correctness", () => {
 		});
 		interop.sendToHost.start();
 
+		const compressor = getCheckoutIdCompressor(getCheckout(guest.view));
+		const idSpaceShardToken = toIdCompressorWithCore(compressor).getShardSyncToken();
+		assert(idSpaceShardToken !== undefined, "Expected Guest ID space shard token");
+		// Supply a valid token so the Host reports the unknown branch base, not an invalid envelope.
 		interop.sendToHost.postMessage(
 			host.codec.encode({
 				type: "guestChange",
@@ -941,6 +1105,7 @@ describe("Host and Guest correctness", () => {
 				mainRevision: mintRevisionTag(),
 				trunkRevision: mintRevisionTag(),
 				change: { handle: new MockHandle(new ArrayBuffer(0)) },
+				idSpaceShardToken,
 			}),
 		);
 		await protocolError;
@@ -1066,8 +1231,9 @@ describe("Host and Guest correctness", () => {
 			assert.equal(typeof wireMessage.idCompressor, "string");
 			assert.equal(wireMessage.commits.length, 1);
 			// The replacement Guest must use its own child instance while the Host retains the runtime root.
-			// eslint-disable-next-line @typescript-eslint/dot-notation -- Verify identity without exposing the checkout's private compressor.
-			const replacementCompressor = getCheckout(replacementGuest.view)["idCompressor"];
+			const replacementCompressor = getCheckoutIdCompressor(
+				getCheckout(replacementGuest.view),
+			);
 			assert.notEqual(replacementCompressor, provider.getCompressor(provider.trees[1]));
 			assert.deepEqual(replacementGuest.view.branchHistory.getHead()?.custom, {
 				tag: "initialization",
@@ -1138,6 +1304,7 @@ describe("Host and Guest correctness", () => {
 			(action) => action(),
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
+			() => assert.fail("No Guest changes expected"),
 		);
 		try {
 			assert.equal(
@@ -1169,6 +1336,7 @@ describe("Host and Guest correctness", () => {
 			(action) => action(),
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
+			() => assert.fail("No Guest changes expected"),
 		);
 		try {
 			const initialTrunkRevision = synchronization.guestInitialization.trunkRevision;
@@ -1196,6 +1364,7 @@ describe("Host and Guest correctness", () => {
 				trunkRevision: revision,
 				commits: [],
 			},
+			toIdCompressorWithCore(testIdCompressor),
 			(message) => sent.push(message),
 			(action) => action(),
 			(error) => assert.fail(String(error)),

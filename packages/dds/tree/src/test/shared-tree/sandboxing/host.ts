@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	deserializeIdCompressor,
 	SerializationVersion,
+	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -61,7 +62,7 @@ export interface HostOptions<TSchema extends ImplicitFieldSchema>
 	readonly main: TreeViewAlpha<TSchema>;
 	/** The SharedTree handle to which restored handles are bound. */
 	readonly bindingHandle: IFluidHandle;
-	/** The runtime's root compressor, which remains on the Host when a Guest shard is created. */
+	/** The runtime's root compressor, which remains on the Host when a Guest ID space shard is created. */
 	readonly idCompressor: IIdCompressor;
 }
 
@@ -75,6 +76,8 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	private readonly session: SandboxSessionEndpoint;
 	private readonly synchronization: HostSynchronization<TSchema>;
 	private readonly port: MessagePort;
+	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
+	private guestIdSpaceShardToken: ShardSynchronizationToken | undefined;
 	private disposed = false;
 	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
 	public readonly main: TreeViewAlpha<TSchema>;
@@ -133,6 +136,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		handleProtocolError = throwProtocolError,
 	}: HostOptions<TSchema>) {
 		this.port = port;
+		this.idCompressor = toIdCompressorWithCore(idCompressor);
 		this.codec = new HostTransportCodec(bindingHandle);
 		this.main = main;
 		this.session = new SandboxSessionEndpoint(
@@ -150,6 +154,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
 			logger,
+			(token) => this.synchronizeGuestIdSpaceShard(token),
 		);
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
@@ -161,15 +166,18 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		} catch (error) {
 			try {
 				if (initialization !== undefined) {
-					// A synchronous send failure means the Guest never received the shard.
-					// Note: we need to deserialize the ID compressor shard in order to notify the parent of its disposal.
+					// A synchronous send failure means the Guest never received its ID space shard.
+					// Deserialize the unsent ID space shard to get the token needed to reclaim its space.
 					// TODO: consider `id-compressor` API change to make this more ergonomic.
-					const child = deserializeIdCompressor(
+					const idSpaceShard = deserializeIdCompressor(
 						initialization.idCompressor,
 						SerializationVersion.V3,
 					);
-					const token = child.disposeShard();
-					assert(token !== undefined, "Expected a disposal token for the unsent Guest shard");
+					const token = idSpaceShard.disposeShard();
+					assert(
+						token !== undefined,
+						"Expected a disposal token for the unsent Guest ID space shard",
+					);
 					toIdCompressorWithCore(idCompressor).synchronizeWithShard(token);
 				}
 			} finally {
@@ -220,6 +228,38 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 
+	/**
+	 * Adds the Guest's new IDs to the Host compressor before the Host decodes a Guest change.
+	 *
+	 * @remarks
+	 * The message schema requires a non-disposing token and checks its wire format.
+	 * This method accepts only the ID space shard created for this session.
+	 * It also requires progress beyond the last accepted token.
+	 * The Host saves the new token only after compressor synchronization succeeds.
+	 *
+	 * @param token - The Guest ID space shard's progress after it encoded the change.
+	 * @throws {@link SandboxProtocolError} if initialization is incomplete, the token belongs to another ID space shard, or progress does not advance.
+	 */
+	private synchronizeGuestIdSpaceShard(token: ShardSynchronizationToken): void {
+		const previous = this.guestIdSpaceShardToken;
+		if (previous === undefined) {
+			throw new SandboxProtocolError(
+				"Guest ID space shard token received before initialization.",
+			);
+		}
+		if (token.shardId !== previous.shardId) {
+			throw new SandboxProtocolError(
+				"Guest ID space shard token does not belong to this session.",
+			);
+		}
+		if (token.localGenCount <= previous.localGenCount) {
+			throw new SandboxProtocolError("Guest ID space shard progress did not advance.");
+		}
+		// Only the child created for this Host session may advance its root compressor.
+		this.idCompressor.synchronizeWithShard(token);
+		this.guestIdSpaceShardToken = token;
+	}
+
 	private createInitializationMessage(idCompressor: IIdCompressor): HostInitializationMessage {
 		const initialization = this.synchronization.guestInitialization;
 		const snapshot = this.main.fork();
@@ -259,17 +299,31 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				);
 				validateTreePayloadVocabulary(normalizedTree);
 				validateTreePayloadVocabulary(normalizedSchema);
-				// Shard only after serializing both the baseline and retained commits,
+
+				// Create the ID space shard only after serializing the baseline and retained commits,
 				// so that the child snapshot includes every ID the Guest needs during
 				// initialization.
-				const [serializedChild] = toIdCompressorWithCore(idCompressor).shard(1);
-				assert(serializedChild !== undefined, "Expected one serialized Guest shard");
+				const [serializedIdSpaceShard] = this.idCompressor.shard(1);
+				assert(
+					serializedIdSpaceShard !== undefined,
+					"Expected one serialized Guest ID space shard",
+				);
+				const idSpaceShard = deserializeIdCompressor(
+					serializedIdSpaceShard,
+					SerializationVersion.V3,
+				);
+				this.guestIdSpaceShardToken = idSpaceShard.getShardSyncToken();
+				assert(
+					this.guestIdSpaceShardToken !== undefined,
+					"Expected a Guest ID space shard token",
+				);
+
 				return {
 					type: "hostInitialization",
 					...initialization,
 					tree: normalizedTree as JsonCompatibleReadOnly,
 					schema: normalizedSchema as JsonCompatibleReadOnly,
-					idCompressor: serializedChild,
+					idCompressor: serializedIdSpaceShard,
 				};
 			} finally {
 				cursor.free();

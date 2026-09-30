@@ -23,7 +23,7 @@ import { stringArrayConfig } from "./sandboxingTestUtils.js";
 import { getBranch, getCheckout, serializeCommit } from "./synchronizationUtils.js";
 
 /**
- * Creates a Host, peer, and compressed baseline before the Guest shard exists.
+ * Creates a Host, peer, and compressed baseline before the Guest ID space shard exists.
  * Tests can add Host commits before creating the Guest to check initialization replay.
  */
 function createCompatibilityFixture() {
@@ -51,23 +51,26 @@ function createCompatibilityFixture() {
 		),
 	};
 
-	/** Loads the earlier baseline with a new child shard of the Host's current compressor state. */
+	/** Loads the earlier baseline with a new child ID space shard of the Host's current compressor state. */
 	const createGuest = () => {
-		const [serialized] = parent.shard(1);
-		assert(serialized !== undefined, "Expected a serialized child shard");
-		const child = deserializeIdCompressor(serialized, SerializationVersion.V3);
+		const [serializedIdSpaceShard] = parent.shard(1);
+		assert(serializedIdSpaceShard !== undefined, "Expected a serialized child ID space shard");
+		const idSpaceShard = deserializeIdCompressor(
+			serializedIdSpaceShard,
+			SerializationVersion.V3,
+		);
 		const guest = independentInitializedView(
 			stringArrayConfig,
 			{ jsonValidator: FormatValidatorBasic },
 			{
 				...content,
 				tree: structuredClone(content.tree),
-				idCompressor: child,
+				idCompressor: idSpaceShard,
 			},
 		);
-		assert.notEqual(child, parent);
-		assert.equal(child.localSessionId, parent.localSessionId);
-		return { child: toIdCompressorWithCore(child), guest };
+		assert.notEqual(idSpaceShard, parent);
+		assert.equal(idSpaceShard.localSessionId, parent.localSessionId);
+		return { idSpaceShard: toIdCompressorWithCore(idSpaceShard), guest };
 	};
 
 	return { provider, main, peer, parent, createGuest };
@@ -75,41 +78,47 @@ function createCompatibilityFixture() {
 
 // These tests isolate compressor compatibility from the sandbox message protocol.
 describe("Sandbox ID-compressor compatibility", () => {
-	it("loads a compressed baseline with an independent child shard", () => {
-		// TODO: Load the shard from hostInitialization over MessagePort instead of injecting it here.
+	it("loads a compressed baseline with an independent child ID space shard", () => {
+		// TODO: Load the ID space shard from hostInitialization over MessagePort instead of injecting it here.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
-		const { child, guest } = createGuest();
+		const { idSpaceShard, guest } = createGuest();
 		try {
 			assert.deepEqual([...guest.root], ["initial"]);
 		} finally {
 			guest.dispose();
-			parent.synchronizeWithShard(child.disposeShard() ?? assert.fail("Expected child token"));
+			parent.synchronizeWithShard(
+				idSpaceShard.disposeShard() ??
+					assert.fail("Expected child ID space shard disposal token"),
+			);
 			peer.dispose();
 			main.dispose();
 		}
 	});
 
-	it("replays a retained Host commit encoded before sharding", () => {
-		// TODO: Replay retained history through hostInitialization with a separately deserialized shard.
+	it("replays a retained Host commit encoded before ID space sharding", () => {
+		// TODO: Replay retained history through hostInitialization with a separately deserialized ID space shard.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
-		main.root.push("before shard");
+		main.root.push("before ID space sharding");
 		const commit = serializeCommit(main, getBranch(main).getHead());
-		const { child, guest } = createGuest();
+		const { idSpaceShard, guest } = createGuest();
 		try {
 			guest.applyChange(commit);
 			assert.deepEqual([...guest.root], [...main.root]);
 		} finally {
 			guest.dispose();
-			parent.synchronizeWithShard(child.disposeShard() ?? assert.fail("Expected child token"));
+			parent.synchronizeWithShard(
+				idSpaceShard.disposeShard() ??
+					assert.fail("Expected child ID space shard disposal token"),
+			);
 			peer.dispose();
 			main.dispose();
 		}
 	});
 
-	it("applies a Guest change after synchronizing its shard with the Host", () => {
+	it("applies a Guest change after synchronizing its ID space shard with the Host", () => {
 		// TODO: Carry the sync token on guestChange and validate it before applying the change.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
-		const { child, guest } = createGuest();
+		const { idSpaceShard, guest } = createGuest();
 		try {
 			let change: ReturnType<typeof serializeCommit> | undefined;
 			const unsubscribe = guest.events.on("changed", (metadata) => {
@@ -130,46 +139,53 @@ describe("Sandbox ID-compressor compatibility", () => {
 			);
 			assert.deepEqual([...main.root], ["initial"]);
 			parent.synchronizeWithShard(
-				child.getShardSyncToken() ?? assert.fail("Expected child synchronization token"),
+				idSpaceShard.getShardSyncToken() ??
+					assert.fail("Expected child ID space shard synchronization token"),
 			);
 			main.applyChange(serializedChange);
 			assert.deepEqual([...main.root], [...guest.root]);
 		} finally {
 			guest.dispose();
-			parent.synchronizeWithShard(child.disposeShard() ?? assert.fail("Expected child token"));
+			parent.synchronizeWithShard(
+				idSpaceShard.disposeShard() ??
+					assert.fail("Expected child ID space shard disposal token"),
+			);
 			peer.dispose();
 			main.dispose();
 		}
 	});
 
-	it("cannot apply a later Host commit without updating the child shard", () => {
+	it("cannot apply a later Host commit without updating the child ID space shard", () => {
 		// TODO: Supply Host ID progress to the child before applying this commit; expect success instead.
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
-		const { child, guest } = createGuest();
+		const { idSpaceShard, guest } = createGuest();
 		try {
-			// Guest initialization can backfill early Host IDs, so move beyond that incidental coverage.
+			// Guest ID space shard initialization can backfill early Host IDs, so move beyond that incidental coverage.
 			for (let i = 0; i < 32; i++) {
 				parent.generateCompressedId();
 			}
 			main.root.push("host");
 			const revision = getBranch(main).getHead().revision;
 			assert(revision !== "root");
-			assert.throws(() => child.decompress(revision), /Unknown ID/);
+			assert.throws(() => idSpaceShard.decompress(revision), /Unknown ID/);
 			const commit = serializeCommit(main, getBranch(main).getHead());
 			assert.throws(() => getCheckout(guest).applyChange(commit), /Unknown op space ID/);
 			assert.deepEqual([...guest.root], ["initial"]);
 		} finally {
 			guest.dispose();
-			parent.synchronizeWithShard(child.disposeShard() ?? assert.fail("Expected child token"));
+			parent.synchronizeWithShard(
+				idSpaceShard.disposeShard() ??
+					assert.fail("Expected child ID space shard disposal token"),
+			);
 			peer.dispose();
 			main.dispose();
 		}
 	});
 
-	it("cannot apply a peer commit finalized after sharding without updating the child", () => {
-		// TODO: Deliver finalized peer ranges to the child before applying this commit; expect success instead.
+	it("cannot apply a peer commit finalized after ID space sharding without updating the child ID space shard", () => {
+		// TODO: Deliver finalized peer ranges to the child ID space shard before applying this commit; expect success instead.
 		const { provider, main, peer, parent, createGuest } = createCompatibilityFixture();
-		const { child, guest } = createGuest();
+		const { idSpaceShard, guest } = createGuest();
 		try {
 			peer.root.push("peer");
 			provider.synchronizeMessages();
@@ -178,7 +194,10 @@ describe("Sandbox ID-compressor compatibility", () => {
 			assert.deepEqual([...guest.root], ["initial"]);
 		} finally {
 			guest.dispose();
-			parent.synchronizeWithShard(child.disposeShard() ?? assert.fail("Expected child token"));
+			parent.synchronizeWithShard(
+				idSpaceShard.disposeShard() ??
+					assert.fail("Expected child ID space shard disposal token"),
+			);
 			peer.dispose();
 			main.dispose();
 		}

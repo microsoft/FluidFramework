@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { createSessionId, type ShardToken } from "@fluidframework/id-compressor/internal";
 import {
 	compareFluidHandles,
 	isFluidHandle,
@@ -30,6 +31,16 @@ import {
 import { GuestTransportCodec } from "./guestTransport.js";
 import { HostTransportCodec } from "./hostTransport.js";
 import { normalizeTransportData } from "./transport.js";
+
+/**
+ * Valid token data for transport-shape tests; no Host has authorized this ID space shard.
+ * These tests validate the wire representation, not child-to-parent synchronization.
+ */
+const exampleIdSpaceShardToken = {
+	shardId: createSessionId(),
+	localGenCount: 1,
+	disposed: false,
+} as const satisfies ShardToken;
 
 /**
  * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.
@@ -241,6 +252,7 @@ describe("Transport and endpoint unit tests", () => {
 										mainRevision: "root",
 										trunkRevision: "root",
 										change: payload,
+										idSpaceShardToken: exampleIdSpaceShardToken,
 									}),
 								),
 							),
@@ -631,6 +643,7 @@ describe("Host and Guest round-trip integration tests", () => {
 					mainRevision: "root",
 					trunkRevision: "root",
 					change: decoded,
+					idSpaceShardToken: exampleIdSpaceShardToken,
 				}),
 			),
 		);

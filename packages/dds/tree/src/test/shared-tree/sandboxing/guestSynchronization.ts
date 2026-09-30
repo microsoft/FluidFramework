@@ -5,6 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ChangeMetadata, GraphCommit, RevisionTag } from "../../../core/index.js";
@@ -82,6 +83,8 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		public readonly host: TreeViewAlpha<TSchema>,
 		/** The revisions and commits needed to initialize the Host branch. */
 		initialization: GuestBranchInitialization,
+		/** The independent child compressor used by both Guest views. */
+		private readonly idCompressor: IIdCompressorCore,
 		/** Sends a synchronization protocol message to the Host. */
 		private readonly send: (message: GuestChangeMessage | HostUpdateAckMessage) => void,
 		/** Runs an action within the Guest session's error-handling boundary. */
@@ -106,6 +109,11 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 					throw new SandboxProtocolError("Guest change identifiers are exhausted.");
 				}
 				const change = metadata.getChange();
+
+				// Encode first: the change codec may mint IDs that the Host must learn before decoding.
+				const idSpaceShardToken = this.idCompressor.getShardSyncToken();
+				assert(idSpaceShardToken !== undefined, "Guest edits require a child ID space shard");
+
 				const changeId = brand<GuestChangeId>(this.nextChangeId++);
 				if (this.pushInProgress === undefined) {
 					this.pushInProgress = makePromiseWithResolvers();
@@ -121,6 +129,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 					mainRevision: this.mainRevision,
 					trunkRevision: this.trunkRevision,
 					change,
+					idSpaceShardToken,
 				});
 			});
 		});

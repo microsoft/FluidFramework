@@ -99,7 +99,7 @@ Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions
 The shared type defines the endpoint's port, logger, and optional protocol-error callback.
 Supply a separate port and scoped logger for each endpoint.
 The Host also requires the application view, binding handle, and runtime compressor; the Guest requires its schema configuration and tree options.
-The Guest receives its own serialized compressor shard through initialization.
+The Guest receives its own serialized ID space shard through initialization.
 If you omit the protocol-error callback, terminal errors are thrown asynchronously.
 
 ### Participants and Message Directions
@@ -124,6 +124,8 @@ The Guest applies each transition to its Host branch copy, rebases its local edi
 
 The Host preserves the Guest's authoring state in its local branch.
 It applies Guest changes there and merges them into main without rebasing the local branch itself.
+Each Guest change carries a non-disposing child ID space shard progress token.
+The Host checks that the token belongs to this session and advances beyond the last accepted token, then synchronizes its runtime compressor before decoding the change.
 Only a Guest acknowledgment advances that branch over a Host update.
 Each outstanding update retains the exact Host branch snapshot that was sent, because a revision can be rebased while a message is in flight.
 The Host disposes each snapshot after acknowledgment, or when the session stops.
@@ -142,11 +144,12 @@ This preserves pending Host edits as commits that can be rebased, including inse
 The baseline revision aliases the independent checkout's initial head.
 Branch validation recognizes this alias even when an update contains no commits.
 Initialization commits use the same handle encoding and decoding as subsequent changes.
-After serializing the snapshot and retained commits, the Host creates a child shard of its runtime ID compressor.
-The Host sends that shard as part of `hostInitialization` through `MessagePort`.
-The Guest deserializes the shard before initializing its view or replaying commits.
+After serializing the snapshot and retained commits, the Host creates a child ID space shard of its runtime ID compressor.
+The Host sends that ID space shard as part of `hostInitialization` through `MessagePort`.
+The Guest deserializes the ID space shard before initializing its view or replaying commits.
 This removes the need to share a live compressor object across the boundary.
-ID progress after initialization is not synchronized yet; see [ID Sharding](#id-sharding).
+Guest-to-Host ID progress is synchronized with each Guest change; Host-to-Guest ID progress is not yet synchronized.
+See [ID Space Sharding](#id-space-sharding).
 
 ### Message Conversion and Validation
 
@@ -263,7 +266,7 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 
 [Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
-The existing edit and recovery cases need ID progress synchronization to work with separate compressors; they are not all expected to pass during this staged implementation.
+The existing Host, peer, and recovery cases still need Host-to-Guest ID progress synchronization to work with separate compressors; they are not all expected to pass during this staged implementation.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
 Initialization tests also sequence concurrent Peer edits before the pending Host edits.
@@ -309,14 +312,14 @@ Complete these items in any order.
 Some tests will fail if you write them before you complete the implementation.
 These failures do not prevent you from writing the tests.
 
-### ID Sharding
+### ID Space Sharding
 
-The Guest now receives a serialized child compressor, while the Host keeps its runtime compressor.
-Complete synchronization of newly generated Guest IDs to the Host before decoding Guest changes.
+The Guest now receives a serialized child ID space shard, while the Host keeps its runtime compressor.
+Guest changes include a token that synchronizes their newly generated IDs to the Host before the tree codec decodes them.
 Complete synchronization of Host-generated IDs and newly finalized ranges to the Guest before decoding Host updates.
-Coordinate shard disposal and reclamation with session teardown.
+Coordinate ID space shard disposal and reclamation with session teardown.
 
-Sharding support was added in https://github.com/microsoft/FluidFramework/pull/27559.
+ID space sharding support was added in https://github.com/microsoft/FluidFramework/pull/27559.
 
 ### Protocol Validation and Security Hardening
 
