@@ -21,6 +21,14 @@
   The operation leaves the document unchanged, preserving transaction atomicity for commits that contain both schema and data changes.
   You can still revert data changes made after a schema upgrade by targeting the revision of that upgrade or a later revision.
 
+- createIndependentTreeAlpha no longer has the unused TSchema type parameter ([#28349](https://github.com/microsoft/FluidFramework/pull/28349)) [071fa2a9008](https://github.com/microsoft/FluidFramework/commit/071fa2a90080b9e8996a6dbe86c183dea6815aeb)
+
+  The unused `TSchema` type parameter has been removed from `createIndependentTreeAlpha`.
+  Calls that explicitly supply a type argument to `createIndependentTreeAlpha` must remove it.
+
+  `createIndependentTreeBeta` keeps its deprecated type parameter temporarily for compatibility, but the type parameter continues to have no effect.
+  Callers should omit it.
+
 - Record node property read types now include undefined ([#28163](https://github.com/microsoft/FluidFramework/pull/28163)) [2de794b4a74](https://github.com/microsoft/FluidFramework/commit/2de794b4a74774f3686c65e64b8fee7d7e14e481)
 
   Reading a property from a record node is now typed as `T | undefined` instead of `T`, matching the existing runtime behavior when the key is absent.
