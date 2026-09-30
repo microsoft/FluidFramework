@@ -20,6 +20,7 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import {
 	SchemaFactoryAlpha,
@@ -45,12 +46,12 @@ import {
 	parseHostGuestMessage,
 	SandboxProtocolError,
 } from "./common.js";
-import { Host } from "./host.js";
+import { HostImplementation } from "./host.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
-import { getFinalizedCommit } from "./synchronizationUtils.js";
+import { getCheckout } from "./synchronizationUtils.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -214,6 +215,26 @@ describe("Host and Guest correctness", () => {
 		channel.port2.close();
 	});
 
+	it("continues synchronizing after replacing the Guest view", async () => {
+		const { host, main, guest, guestView } = await setup(["initial"]);
+		guestView.dispose();
+
+		const replacementView = asAlpha(guest.tree.viewWith(stringArrayConfig));
+		try {
+			assert.deepEqual([...replacementView.root], ["initial"]);
+
+			main.root.push("host");
+			await host.updateGuestPromise;
+			assert.deepEqual([...replacementView.root], ["initial", "host"]);
+
+			replacementView.root.push("guest");
+			await guest.updateHostPromise;
+			assert.deepEqual([...main.root], ["initial", "host", "guest"]);
+		} finally {
+			replacementView.dispose();
+		}
+	});
+
 	it("preserves marker-shaped tree data during initialization and edits in both directions", async () => {
 		const factory = new SchemaFactoryAlpha("sandbox.marker-data");
 		/** Allows transport discriminators and prototype-related names as ordinary tree keys. */
@@ -228,32 +249,36 @@ describe("Host and Guest correctness", () => {
 			{ ["__proto__"]: "data", constructor: "data", prototype: "data" },
 		];
 		const config = new TreeViewConfiguration({ schema: Records });
-		const { host, guest, provider, peer } = await setupCustom(
+		const { host, main, guest, guestView, provider, peer } = await setupCustom(
 			values,
 			config,
 			buildDirectSessionPorts,
 		);
 		const read = (nodes: Iterable<RecordNode>) =>
 			Array.from(nodes, (node) => Object.fromEntries(Object.entries(node)));
-		assert.deepEqual(read(guest.view.root), values);
-		host.main.root.insertAtEnd(...values);
+		assert.deepEqual(read(guestView.root), values);
+		main.root.insertAtEnd(...values);
 		await host.updateGuestPromise;
-		assert.deepEqual(read(guest.view.root), [...values, ...values]);
-		guest.view.root.insertAtEnd(...values);
+		assert.deepEqual(read(guestView.root), [...values, ...values]);
+		guestView.root.insertAtEnd(...values);
 		await guest.updateHostPromise;
-		assert.deepEqual(read(host.main.root), [...values, ...values, ...values]);
+		assert.deepEqual(read(main.root), [...values, ...values, ...values]);
 		provider.synchronizeMessages();
 		assert.deepEqual(read(peer.root), [...values, ...values, ...values]);
 	});
 
 	it("passes blob handles from the Host to the Guest", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, main, guestView } = await setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
 		const value = new Uint8Array([1, 2, 3]).buffer;
 
-		host.main.root.push(new MockHandle(value));
+		main.root.push(new MockHandle(value));
 		await (host.updateGuestPromise ?? assert.fail("Expected update to be in progress"));
 
-		const resolved = await guest.view.root[0].get();
+		const resolved = await guestView.root[0].get();
 		assert.deepEqual(resolved, value);
 		assert.notEqual(resolved, value);
 		assert.equal(value.byteLength, 3);
@@ -262,48 +287,48 @@ describe("Host and Guest correctness", () => {
 	it("passes existing handles from the Guest back to the Host and peers", async () => {
 		const value = new Uint8Array([4, 5]).buffer;
 		const handle = new MockHandle(value);
-		const { host, guest, peer, provider } = await setupCustom(
+		const { host, main, guest, guestView, peer, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
 		);
-		host.main.root.push(handle);
+		main.root.push(handle);
 		await host.updateGuestPromise;
 
-		guest.view.root.push(guest.view.root[0]);
+		guestView.root.push(guestView.root[0]);
 		await (guest.updateHostPromise ?? assert.fail("Expected push to be in progress"));
 
-		assert.equal(host.main.root[1], host.main.root[0]);
-		assert.deepEqual(await host.main.root[1].get(), value);
+		assert.equal(main.root[1], main.root[0]);
+		assert.deepEqual(await main.root[1].get(), value);
 		provider.synchronizeMessages();
 		assert(compareFluidHandles(peer.root[1], handle));
 	});
 
 	it("preserves proxy identity across initialization and updates", async () => {
 		const handle = new MockHandle(new ArrayBuffer(2));
-		const { host, guest } = await setupCustom(
+		const { host, main, guestView } = await setupCustom(
 			[handle, handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
 		);
-		const proxy = guest.view.root[0];
-		assert.equal(proxy, guest.view.root[1]);
-		assert.notEqual(proxy, host.main.root[0]);
-		host.main.root.push(host.main.root[0]);
+		const proxy = guestView.root[0];
+		assert.equal(proxy, guestView.root[1]);
+		assert.notEqual(proxy, main.root[0]);
+		main.root.push(main.root[0]);
 		await host.updateGuestPromise;
-		assert.equal(proxy, guest.view.root[2]);
+		assert.equal(proxy, guestView.root[2]);
 		assert.deepEqual(await proxy.get(), new ArrayBuffer(2));
 	});
 
 	it("clearly rejects resolution of handles to Fluid objects", async () => {
-		const { host, guest, provider } = await setupCustom(
+		const { host, main, guest, guestView, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
 			buildDirectSessionPorts,
 		);
-		host.main.root.push(provider.trees[1].handle);
+		main.root.push(provider.trees[1].handle);
 		await host.updateGuestPromise;
-		await assert.rejects(guest.view.root[0].get(), {
+		await assert.rejects(guestView.root[0].get(), {
 			name: "Error",
 			message:
 				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
@@ -313,21 +338,25 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("propagates Host resolution failures through the port", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, main, guest, guestView } = await setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
 		const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
 			get: async () => {
 				throw new Error("Blob retrieval failed");
 			},
 		});
-		host.main.root.push(handle);
+		main.root.push(handle);
 		await host.updateGuestPromise;
-		await assert.rejects(guest.view.root[0].get(), {
+		await assert.rejects(guestView.root[0].get(), {
 			name: "Error",
 			message: "Blob retrieval failed",
 		});
-		guest.view.root.push(guest.view.root[0]);
+		guestView.root.push(guestView.root[0]);
 		await guest.updateHostPromise;
-		assert.equal(host.main.root.length, 2);
+		assert.equal(main.root.length, 2);
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
 	});
@@ -343,7 +372,7 @@ describe("Host and Guest correctness", () => {
 					return new ArrayBuffer(1);
 				},
 			});
-			const { host, guest, provider, peer } = await setupCustom(
+			const { host, main, guest, guestView, provider, peer } = await setupCustom(
 				[handle],
 				handleArrayConfig,
 				buildDirectSessionPorts,
@@ -355,16 +384,16 @@ describe("Host and Guest correctness", () => {
 					}
 				},
 			);
-			const proxy = guest.view.root[0];
+			const proxy = guestView.root[0];
 			const blobRejected = assert.rejects(proxy.get(), /recreate the Host and Guest/);
-			guest.view.root.push(proxy);
+			guestView.root.push(proxy);
 			const push = guest.updateHostPromise ?? assert.fail("Expected pending Guest change");
 			const pushRejected = assert.rejects(push, /recreate the Host and Guest/);
 			const insertForeignHandle = () => {
-				guest.view.root.push(new MockHandle(new ArrayBuffer(2)));
+				guestView.root.push(new MockHandle(new ArrayBuffer(2)));
 			};
 			if (transaction) {
-				guest.view.runTransaction(insertForeignHandle);
+				guestView.runTransaction(insertForeignHandle);
 			} else {
 				insertForeignHandle();
 			}
@@ -390,32 +419,32 @@ describe("Host and Guest correctness", () => {
 			guest.dispose();
 			host.dispose();
 			// The valid edit sent before the failure remains on main; the foreign handle never reaches it.
-			assert.equal(host.main.root.length, 2);
-			host.main.root.push(handle);
+			assert.equal(main.root.length, 2);
+			main.root.push(handle);
 			provider.synchronizeMessages();
 			assert.equal(peer.root.length, 3);
 
 			const ports = buildDirectSessionPorts();
-			const replacementHost = new Host({
-				main: host.main,
+			const replacementHost = new HostImplementation({
+				main,
 				port: ports.hostPort,
 				bindingHandle: provider.trees[1].handle,
 				idCompressor: provider.getCompressor(provider.trees[1]),
 				logger: createChildLogger({ namespace: "Host" }),
 			});
 			const replacementGuest = await createGuestForHost(
-				handleArrayConfig,
 				ports.guestPort,
 				provider.getCompressor(provider.trees[1]),
 			);
+			const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(handleArrayConfig));
 			try {
-				assert.equal(replacementGuest.view.root.length, 3);
-				replacementGuest.view.root.push(replacementGuest.view.root[0]);
+				assert.equal(replacementGuestView.root.length, 3);
+				replacementGuestView.root.push(replacementGuestView.root[0]);
 				await replacementGuest.updateHostPromise;
-				replacementHost.main.root.push(handle);
+				main.root.push(handle);
 				await replacementHost.updateGuestPromise;
-				assert.equal(replacementGuest.view.root.length, 5);
-				assert.equal(replacementHost.main.root.length, 5);
+				assert.equal(replacementGuestView.root.length, 5);
+				assert.equal(main.root.length, 5);
 				assert.equal(errors.length, 2);
 			} finally {
 				replacementGuest.dispose();
@@ -448,7 +477,7 @@ describe("Host and Guest correctness", () => {
 		it(`fails the ${receiver} and rejects pending work for ${JSON.stringify(message)}`, async () => {
 			const reported = makePromiseWithResolvers();
 			const handle = new MockHandle(new ArrayBuffer(1));
-			const { host, guest, interop, provider, peer } = await setupCustom(
+			const { host, main, guest, guestView, interop, provider, peer } = await setupCustom(
 				[handle],
 				handleArrayConfig,
 				buildIsolatedSessionPorts,
@@ -458,12 +487,12 @@ describe("Host and Guest correctness", () => {
 			let synchronization: Promise<void> | undefined;
 			let blobRejected: Promise<void> | undefined;
 			if (receiver === "Host") {
-				host.main.root.push(handle);
+				main.root.push(handle);
 				synchronization = host.updateGuestPromise;
 			} else {
-				guest.view.root.push(guest.view.root[0]);
+				guestView.root.push(guestView.root[0]);
 				synchronization = guest.updateHostPromise;
-				blobRejected = assert.rejects(guest.view.root[0].get(), expected);
+				blobRejected = assert.rejects(guestView.root[0].get(), expected);
 			}
 			assert(synchronization !== undefined);
 			const synchronizationRejected = assert.rejects(synchronization, expected);
@@ -475,9 +504,9 @@ describe("Host and Guest correctness", () => {
 				(receiver === "Host" ? host.error : guest.error)?.cause instanceof
 					SandboxProtocolError,
 			);
-			host.main.root.push(handle);
+			main.root.push(handle);
 			provider.synchronizeMessages();
-			assert.equal(peer.root.length, host.main.root.length);
+			assert.equal(peer.root.length, main.root.length);
 		});
 	}
 
@@ -485,7 +514,7 @@ describe("Host and Guest correctness", () => {
 		const reported = makePromiseWithResolvers();
 		let reports = 0;
 		const handle = new MockHandle(Object.assign(new ArrayBuffer(1), { extra: true }));
-		const { host, guest } = await setupCustom(
+		const { host, main, guest, guestView } = await setupCustom(
 			[handle],
 			handleArrayConfig,
 			buildDirectSessionPorts,
@@ -496,21 +525,21 @@ describe("Host and Guest correctness", () => {
 				}
 			},
 		);
-		await assert.rejects(guest.view.root[0].get(), /buffers cannot have custom properties/);
+		await assert.rejects(guestView.root[0].get(), /buffers cannot have custom properties/);
 		await reported.promise;
 		assert(host.error !== undefined);
 		assert(guest.error !== undefined);
 		assert(host.error.cause instanceof SandboxProtocolError);
 		assert(guest.error.cause instanceof Error);
 		assert.equal(guest.error.cause.constructor, Error);
-		host.main.root.push(handle);
-		assert.equal(host.main.root.length, 2);
+		main.root.push(handle);
+		assert.equal(main.root.length, 2);
 	});
 
 	it("contains send failures in main-tree callbacks even when peer notification also fails", async () => {
 		const reported = makePromiseWithResolvers();
 		const transportError = new Error("Transport unavailable");
-		const { host, guest } = await setupCustom(
+		const { host, main, guest } = await setupCustom(
 			[],
 			stringArrayConfig,
 			() => {
@@ -533,18 +562,22 @@ describe("Host and Guest correctness", () => {
 			false,
 			() => reported.resolver(),
 		);
-		assert.doesNotThrow(() => host.main.root.push("retained edit"));
+		assert.doesNotThrow(() => main.root.push("retained edit"));
 		await reported.promise;
 		assert.match(host.error?.message ?? "", /Peer notification failed: Transport unavailable/);
 		assert.equal(host.error?.cause, transportError);
 		assert.equal(guest.error, undefined);
 		host.dispose();
-		host.main.root.push("still usable");
-		assert.deepEqual([...host.main.root], ["retained edit", "still usable"]);
+		main.root.push("still usable");
+		assert.deepEqual([...main.root], ["retained edit", "still usable"]);
 	});
 
 	it("continues synchronizing edits while a blob request is pending", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, main, guest, guestView } = await setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
 		const requested = makePromiseWithResolvers();
 		const release = makePromiseWithResolvers();
 		const blob = new Uint8Array([7]).buffer;
@@ -557,43 +590,47 @@ describe("Host and Guest correctness", () => {
 				return blob;
 			},
 		});
-		host.main.root.push(handle);
+		main.root.push(handle);
 		await host.updateGuestPromise;
-		const proxy = guest.view.root[0];
+		const proxy = guestView.root[0];
 		const first = proxy.get();
 		assert.equal(proxy.get(), first);
 		await requested.promise;
-		guest.view.root.push(proxy);
+		guestView.root.push(proxy);
 		await guest.updateHostPromise;
-		assert.equal(host.main.root.length, 2);
-		host.main.root.push(handle);
+		assert.equal(main.root.length, 2);
+		main.root.push(handle);
 		await host.updateGuestPromise;
-		assert.equal(guest.view.root.length, 3);
+		assert.equal(guestView.root.length, 3);
 		release.resolver();
 		assert.deepEqual(await first, blob);
 		assert.equal(requests, 1);
 	});
 
 	it("retains a handle for Guest deletion, undo, and redo", async () => {
-		const { host, guest } = await setupCustom([], handleArrayConfig, buildDirectSessionPorts);
+		const { host, main, guest, guestView } = await setupCustom(
+			[],
+			handleArrayConfig,
+			buildDirectSessionPorts,
+		);
 		const blob = new Uint8Array([8]).buffer;
 		const handle = new MockHandle(blob);
-		host.main.root.push(handle);
+		main.root.push(handle);
 		await host.updateGuestPromise;
-		const proxy = guest.view.root[0];
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
+		const proxy = guestView.root[0];
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guestView.events);
 		try {
-			guest.view.root.removeAt(0);
+			guestView.root.removeAt(0);
 			await guest.updateHostPromise;
-			assert.equal(host.main.root.length, 0);
+			assert.equal(main.root.length, 0);
 			assert.deepEqual(await proxy.get(), blob);
 			undoStack.pop()?.revert();
 			await guest.updateHostPromise;
-			assert.equal(guest.view.root[0], proxy);
-			assert.equal(host.main.root[0], handle);
+			assert.equal(guestView.root[0], proxy);
+			assert.equal(main.root[0], handle);
 			redoStack.pop()?.revert();
 			await guest.updateHostPromise;
-			assert.equal(host.main.root.length, 0);
+			assert.equal(main.root.length, 0);
 		} finally {
 			unsubscribe();
 		}
@@ -658,7 +695,7 @@ describe("Host and Guest correctness", () => {
 	for (const receiver of ["Host", "Guest"] as const) {
 		it(`classifies an unsolicited acknowledgment to the ${receiver} as a protocol error`, async () => {
 			const reported = makePromiseWithResolvers();
-			const { host, guest, interop, provider, peer } = await setupCustom(
+			const { host, main, guest, interop, provider, peer } = await setupCustom(
 				[],
 				stringArrayConfig,
 				buildIsolatedSessionPorts,
@@ -675,7 +712,7 @@ describe("Host and Guest correctness", () => {
 			const error = receiver === "Host" ? host.error : guest.error;
 			assert(error?.cause instanceof SandboxProtocolError);
 			assert.match(error.cause.message, /Unexpected .* acknowledgment/);
-			host.main.root.push("still usable");
+			main.root.push("still usable");
 			provider.synchronizeMessages();
 			assert.deepEqual([...peer.root], ["still usable"]);
 		});
@@ -689,7 +726,7 @@ describe("Host and Guest correctness", () => {
 				false,
 				() => reported.resolver(),
 			);
-			const { mainRevision, trunkRevision } = host.guestInitialization;
+			const { mainRevision, trunkRevision } = host.synchronization.guestInitialization;
 			if (receiver === "Host") {
 				interop.sendToHost.postMessage({
 					type: "guestChange",
@@ -760,7 +797,7 @@ describe("Host and Guest correctness", () => {
 			reportProtocolError = resolve;
 		});
 		assert(reportProtocolError !== undefined, "Protocol error reporter should be assigned");
-		const { host, interop } = await setupCustom(
+		const { host, main, interop } = await setupCustom(
 			[],
 			stringArrayConfig,
 			buildIsolatedSessionPorts,
@@ -787,13 +824,13 @@ describe("Host and Guest correctness", () => {
 		await new Promise((resolve) => setTimeout(resolve, 0));
 
 		assert.equal(acknowledgmentReceived, false);
-		assert.equal(host.main.root.length, 0);
+		assert.equal(main.root.length, 0);
 	});
 
 	it("applies consecutive Guest changes to their authoring state despite concurrent insertions", async () => {
-		const { peer, host, guest, provider } = await setup(["a", "b"]);
-		guest.view.root.push("g1");
-		guest.view.root.removeAt(0);
+		const { peer, host, main, local, guest, guestView, provider } = await setup(["a", "b"]);
+		guestView.root.push("g1");
+		guestView.root.removeAt(0);
 		peer.root.insertAtStart("p");
 		provider.synchronizeMessages();
 
@@ -803,7 +840,7 @@ describe("Host and Guest correctness", () => {
 		await host.updateGuestPromise;
 
 		const expected = ["p", "b", "g1"];
-		for (const view of [host.main, host.local, guest.view, peer]) {
+		for (const view of [main, local, guestView, peer]) {
 			assert.deepEqual([...view.root], expected);
 		}
 		assert.equal(host.error, undefined);
@@ -811,10 +848,10 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves nested Guest commit metadata through Host synchronization", async () => {
-		const { host, guest, peer, provider } = await setup([]);
-		guest.view.runTransaction(
+		const { host, main, local, guest, guestView, peer, provider } = await setup([]);
+		guestView.runTransaction(
 			() => {
-				guest.view.runTransaction(() => guest.view.root.push("a"), {
+				guestView.runTransaction(() => guestView.root.push("a"), {
 					customMetadata: { tag: "inner" },
 				});
 			},
@@ -827,7 +864,7 @@ describe("Host and Guest correctness", () => {
 		await guest.updateHostPromise;
 		await host.updateGuestPromise;
 
-		for (const view of [host.main, host.local, guest.view]) {
+		for (const view of [main, local, guestView]) {
 			assert.deepEqual(
 				normalizeTransportData(view.branchHistory.getHead()?.customTree),
 				expected,
@@ -838,9 +875,9 @@ describe("Host and Guest correctness", () => {
 		await host.updateGuestPromise;
 		assert.deepEqual([...peer.root], ["a"]);
 		for (const [name, view] of [
-			["Host main", host.main],
-			["Host local", host.local],
-			["Guest", guest.view],
+			["Host main", main],
+			["Host local", local],
+			["Guest", guestView],
 		] as const) {
 			assert.deepEqual([...view.root], ["a"]);
 			assert.deepEqual(
@@ -852,10 +889,10 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves nested Host commit metadata in Guest updates", async () => {
-		const { host, guest } = await setup([]);
-		host.main.runTransaction(
+		const { host, main, guestView } = await setup([]);
+		main.runTransaction(
 			() => {
-				host.main.runTransaction(() => host.main.root.push("a"), {
+				main.runTransaction(() => main.root.push("a"), {
 					customMetadata: { tag: "inner" },
 				});
 			},
@@ -863,7 +900,7 @@ describe("Host and Guest correctness", () => {
 		);
 		await host.updateGuestPromise;
 
-		const customTree = guest.view.branchHistory.getHead()?.customTree;
+		const customTree = guestView.branchHistory.getHead()?.customTree;
 		assert(customTree !== undefined, "Expected custom metadata on the Guest commit");
 		assert.deepEqual(customTree.metadata, normalizeTransportData({ tag: "outer" }));
 		assert.equal(customTree.children.length, 1);
@@ -875,28 +912,28 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("preserves Host commit metadata during Guest initialization", async () => {
-		const { host, guest, provider } = await setup([]);
+		const { host, main, guest, provider } = await setup([]);
 		guest.dispose();
 		host.dispose();
-		host.main.runTransaction(() => host.main.root.push("a"), {
+		main.runTransaction(() => main.root.push("a"), {
 			customMetadata: { tag: "initialization" },
 		});
 
 		const ports = buildDirectSessionPorts();
-		const replacementHost = new Host({
-			main: host.main,
+		const replacementHost = new HostImplementation({
+			main,
 			port: ports.hostPort,
 			bindingHandle: provider.trees[1].handle,
 			idCompressor: provider.getCompressor(provider.trees[1]),
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		const replacementGuest = await createGuestForHost(
-			stringArrayConfig,
 			ports.guestPort,
 			provider.getCompressor(provider.trees[1]),
 		);
+		const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
 		try {
-			assert.deepEqual(replacementGuest.view.branchHistory.getHead()?.custom, {
+			assert.deepEqual(replacementGuestView.branchHistory.getHead()?.custom, {
 				tag: "initialization",
 			});
 		} finally {
@@ -915,11 +952,11 @@ describe("Host and Guest correctness", () => {
 			{ codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
 		);
 		const main = viewCheckout(checkout, stringArrayConfig);
-		const base = getFinalizedCommit(main);
+		const base = getCheckout(main).getFinalizedCommit();
 		main.root.push("before");
 
 		const ports = buildDirectSessionPorts();
-		const independentHost = new Host({
+		const independentHost = new HostImplementation({
 			main,
 			port: ports.hostPort,
 			bindingHandle: new TestTreeProviderLite(1).trees[0].handle,
@@ -927,25 +964,31 @@ describe("Host and Guest correctness", () => {
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		try {
-			assert.equal(independentHost.guestInitialization.baseRevision, base.revision);
-			assert.equal(independentHost.guestInitialization.trunkRevision, base.revision);
-			assert.notEqual(independentHost.guestInitialization.mainRevision, base.revision);
-			const independentGuest = await createGuestForHost(
-				stringArrayConfig,
-				ports.guestPort,
-				testIdCompressor,
+			assert.equal(
+				independentHost.synchronization.guestInitialization.baseRevision,
+				base.revision,
 			);
+			assert.equal(
+				independentHost.synchronization.guestInitialization.trunkRevision,
+				base.revision,
+			);
+			assert.notEqual(
+				independentHost.synchronization.guestInitialization.mainRevision,
+				base.revision,
+			);
+			const independentGuest = await createGuestForHost(ports.guestPort, testIdCompressor);
+			const independentGuestView = asAlpha(independentGuest.tree.viewWith(stringArrayConfig));
 			try {
-				assert.deepEqual([...independentGuest.view.root], ["a", "before"]);
+				assert.deepEqual([...independentGuestView.root], ["a", "before"]);
 				main.root.push("host");
 				await independentHost.updateGuestPromise;
-				independentGuest.view.root.push("guest");
+				independentGuestView.root.push("guest");
 				await independentGuest.updateHostPromise;
 				await independentHost.updateGuestPromise;
 
 				assert.deepEqual([...main.root], ["a", "before", "host", "guest"]);
-				assert.deepEqual([...independentGuest.view.root], [...main.root]);
-				assert.equal(getFinalizedCommit(main), base);
+				assert.deepEqual([...independentGuestView.root], [...main.root]);
+				assert.equal(getCheckout(main).getFinalizedCommit(), base);
 				assert.equal(independentHost.error, undefined);
 				assert.equal(independentGuest.error, undefined);
 			} finally {
@@ -959,11 +1002,12 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("initializes the Guest with the current sequenced trunk revision", async () => {
-		const { host, guest } = await setup(["a"]);
+		const { host, main, guest } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
+		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
-			host.main,
+			mainCheckout,
 			() => {},
 			() => {},
 			(action) => action(),
@@ -985,12 +1029,13 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("advances the Guest trunk revision for remote peer commits", async () => {
-		const { peer, host, guest, provider } = await setup(["a"]);
+		const { peer, host, main, guest, provider } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
 		const sent: HostUpdateMessage[] = [];
+		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
-			host.main,
+			mainCheckout,
 			(message) => {
 				if (message.type === "hostUpdate") {
 					sent.push(message);
@@ -1016,11 +1061,11 @@ describe("Host and Guest correctness", () => {
 	});
 
 	it("accepts an empty update at an aliased initialization revision", async () => {
-		const { host } = await setup(["a"]);
+		const { main } = await setup(["a"]);
 		const revision = mintRevisionTag();
 		const sent: HostGuestMessage[] = [];
 		const synchronization = new GuestSynchronization(
-			host.main.fork(),
+			getCheckout(main.fork()),
 			{
 				baseRevision: revision,
 				mainRevision: revision,
@@ -1032,6 +1077,7 @@ describe("Host and Guest correctness", () => {
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Guest" }),
 		);
+		const view = synchronization.checkout.viewWith(stringArrayConfig);
 		try {
 			synchronization.receiveHostUpdate({
 				type: "hostUpdate",
@@ -1042,10 +1088,10 @@ describe("Host and Guest correctness", () => {
 				commits: [],
 			});
 			assert.deepEqual(sent, [{ type: "hostUpdateAck", updateId: 0 }]);
-			assert.deepEqual([...synchronization.view.root], ["a"]);
+			assert.deepEqual([...view.root], ["a"]);
 		} finally {
 			synchronization.stop(new Error("Test complete"));
-			synchronization.view.dispose();
+			synchronization.checkout.dispose();
 			synchronization.dispose();
 		}
 	});
@@ -1057,43 +1103,50 @@ describe("Host and Guest correctness", () => {
 		[true, true],
 	]) {
 		it(`initializes with pending Host edits (trimmed history: ${trimHistory}, concurrent peer: ${concurrentPeerEdit})`, async () => {
-			const { peer, host, guest, provider } = await setup(["a", "b"]);
+			const { peer, host, main, guest, provider } = await setup(["a", "b"]);
 			guest.dispose();
 			host.dispose();
 			if (trimHistory) {
 				for (let i = 0; i < 5; i++) {
 					peer.root.push("temporary");
 					provider.synchronizeMessages();
-					host.main.root.removeAt(2);
+					main.root.removeAt(2);
 					provider.synchronizeMessages();
 				}
 			}
 			if (concurrentPeerEdit) {
 				peer.root.insertAtStart("p");
 			}
-			host.main.root.push("first");
-			host.main.root.push("second");
-			host.main.root.removeAt(0);
+			main.root.push("first");
+			main.root.push("second");
+			main.root.removeAt(0);
 
 			const ports = buildDirectSessionPorts();
-			const replacementHost = new Host({
-				main: host.main,
+			const replacementHost = new HostImplementation({
+				main,
 				port: ports.hostPort,
 				bindingHandle: provider.trees[1].handle,
 				idCompressor: provider.getCompressor(provider.trees[1]),
 				logger: createChildLogger({ namespace: "Host" }),
 			});
 			if (trimHistory) {
-				assert.notEqual(replacementHost.guestInitialization.baseRevision, "root");
+				assert.notEqual(
+					replacementHost.synchronization.guestInitialization.baseRevision,
+					"root",
+				);
 			}
 			const replacementGuest = await createGuestForHost(
-				stringArrayConfig,
 				ports.guestPort,
 				provider.getCompressor(provider.trees[1]),
 			);
+			const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
+			const replacementLocal = replacementHost.synchronization.localCheckout.viewWithInternal(
+				stringArrayConfig,
+				false,
+			);
 			try {
-				assert.deepEqual([...replacementGuest.view.root], ["b", "first", "second"]);
-				replacementGuest.view.root.push("guest");
+				assert.deepEqual([...replacementGuestView.root], ["b", "first", "second"]);
+				replacementGuestView.root.push("guest");
 				const push = replacementGuest.updateHostPromise;
 				provider.synchronizeMessages();
 				await push;
@@ -1108,12 +1161,7 @@ describe("Host and Guest correctness", () => {
 					"second",
 					"guest",
 				];
-				for (const view of [
-					replacementHost.main,
-					replacementHost.local,
-					replacementGuest.view,
-					peer,
-				]) {
+				for (const view of [main, replacementLocal, replacementGuestView, peer]) {
 					assert.deepEqual([...view.root], expected);
 				}
 				assert.equal(replacementHost.error, undefined);
@@ -1127,16 +1175,16 @@ describe("Host and Guest correctness", () => {
 	}
 
 	it("attempts by the Host and Guest to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guest, guestView, provider } = await setup([]);
 
 		// Make edits in the Guest
-		guest.view.root.push("B(g)");
-		guest.view.root.push("C(g)");
+		guestView.root.push("B(g)");
+		guestView.root.push("C(g)");
 		// The Guest edits are synchronously reflected in the Guest
-		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)"]);
+		assert.deepEqual([...guestView.root], ["B(g)", "C(g)"]);
 		// The Guest edits are not reflected in the Host yet
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...host.main.root], []);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...main.root], []);
 
 		// The Guest should have started the process of pushing the edit to the Host
 		const pushPromise =
@@ -1147,8 +1195,8 @@ describe("Host and Guest correctness", () => {
 		assert.deepEqual([...peer.root], ["B(p)"]);
 		provider.synchronizeMessages();
 		// The Host forwards the peer edit without waiting for the Guest edits.
-		assert.deepEqual([...host.main.root], ["B(p)"]);
-		assert.deepEqual([...host.local.root], []);
+		assert.deepEqual([...main.root], ["B(p)"]);
+		assert.deepEqual([...local.root], []);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
@@ -1159,8 +1207,8 @@ describe("Host and Guest correctness", () => {
 
 		// The Guest edits are now reflected in the Host
 		// The concurrent Host update acknowledgment may also have advanced this branch already.
-		assert.deepEqual([...host.local.root].slice(0, 2), ["B(g)", "C(g)"]);
-		assert.deepEqual([...host.main.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...local.root].slice(0, 2), ["B(g)", "C(g)"]);
+		assert.deepEqual([...main.root], ["B(g)", "C(g)", "B(p)"]);
 		// The Guest edits are not reflected in the peer yet
 		assert.deepEqual([...peer.root], ["B(p)"]);
 
@@ -1173,20 +1221,20 @@ describe("Host and Guest correctness", () => {
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		assert.deepEqual([...host.local.root], ["B(g)", "C(g)", "B(p)"]);
-		assert.deepEqual([...guest.view.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...local.root], ["B(g)", "C(g)", "B(p)"]);
+		assert.deepEqual([...guestView.root], ["B(g)", "C(g)", "B(p)"]);
 	});
 
 	it("Host edits sequenced before peer edits", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Make an edit on the Host
-		host.main.root.push("H");
-		assert.deepEqual([...host.main.root], ["H"]);
+		main.root.push("H");
+		assert.deepEqual([...main.root], ["H"]);
 
 		// The Guest edits are not reflected in the Guest or peer yet
-		assert.deepEqual([...host.local.root], []);
-		assert.deepEqual([...guest.view.root], []);
+		assert.deepEqual([...local.root], []);
+		assert.deepEqual([...guestView.root], []);
 		assert.deepEqual([...peer.root], []);
 
 		// The Host should have started the process of updating the Guest with the peer change
@@ -1199,27 +1247,27 @@ describe("Host and Guest correctness", () => {
 
 		provider.synchronizeMessages();
 		// The peer and Host edits are sequenced
-		assert.deepEqual([...host.main.root], ["P", "H"]);
+		assert.deepEqual([...main.root], ["P", "H"]);
 		assert.deepEqual([...peer.root], ["P", "H"]);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		assert.deepEqual([...host.local.root], ["P", "H"]);
-		assert.deepEqual([...guest.view.root], ["P", "H"]);
+		assert.deepEqual([...local.root], ["P", "H"]);
+		assert.deepEqual([...guestView.root], ["P", "H"]);
 	});
 
 	it("peer edits sequenced before Host edits", async () => {
-		const { peer, host, guest, provider } = await setup([]);
+		const { peer, host, main, local, guestView, provider } = await setup([]);
 
 		// Make an edit on the peer
 		peer.root.push("P");
 		assert.deepEqual([...peer.root], ["P"]);
 
 		// Make an edit on the Host
-		host.main.root.push("H");
-		assert.deepEqual([...host.main.root], ["H"]);
+		main.root.push("H");
+		assert.deepEqual([...main.root], ["H"]);
 
 		// The Host should have started the process of updating the Guest with the peer change
 		const updatePromise =
@@ -1228,26 +1276,26 @@ describe("Host and Guest correctness", () => {
 		provider.synchronizeMessages();
 
 		// The peer and Host edits are sequenced
-		assert.deepEqual([...host.main.root], ["H", "P"]);
+		assert.deepEqual([...main.root], ["H", "P"]);
 		assert.deepEqual([...peer.root], ["H", "P"]);
 
 		// Wait for the update to be applied to the Guest
 		await updatePromise;
 
 		// The peer edit is now reflected in the local and Guest
-		assert.deepEqual([...host.local.root], ["H", "P"]);
-		assert.deepEqual([...guest.view.root], ["H", "P"]);
+		assert.deepEqual([...local.root], ["H", "P"]);
+		assert.deepEqual([...guestView.root], ["H", "P"]);
 	});
 
 	it("Guest edits can be reverted", async () => {
-		const { host, guest } = await setup([]);
-		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guest.view.events);
+		const { host, main, local, guest, guestView } = await setup([]);
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(guestView.events);
 
 		// Make undoable edits in the Guest
-		guest.view.root.push("Ga");
-		guest.view.root.push("Gb");
-		guest.view.root.push("Gc");
-		assert.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
+		guestView.root.push("Ga");
+		guestView.root.push("Gb");
+		guestView.root.push("Gc");
+		assert.deepEqual([...guestView.root], ["Ga", "Gb", "Gc"]);
 		assert.deepEqual(undoStack.length, 3, "Expected undo stack to have 3 entries");
 
 		// The Guest should have started the process of pushing the edit to the Host
@@ -1255,21 +1303,21 @@ describe("Host and Guest correctness", () => {
 			guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		assert.deepEqual([...guest.view.root], ["Ga", "Gb", "Gc"]);
-		assert.deepEqual([...host.local.root], ["Ga", "Gb", "Gc"]);
-		assert.deepEqual([...host.main.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guestView.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...local.root], ["Ga", "Gb", "Gc"]);
+		assert.deepEqual([...main.root], ["Ga", "Gb", "Gc"]);
 
 		// Make an edit on the Host
-		host.main.root.insertAtStart("H");
-		assert.deepEqual([...host.main.root], ["H", "Ga", "Gb", "Gc"]);
+		main.root.insertAtStart("H");
+		assert.deepEqual([...main.root], ["H", "Ga", "Gb", "Gc"]);
 
 		// Wait for the update to be applied to the Guest
 		const updatePromise =
 			host.updateGuestPromise ?? assert.fail("Expected update to be in progress");
 		await updatePromise;
 
-		assert.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
-		assert.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...local.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guestView.root], ["H", "Ga", "Gb", "Gc"]);
 
 		assert.deepEqual(
 			undoStack.length,
@@ -1286,9 +1334,9 @@ describe("Host and Guest correctness", () => {
 		pushPromise = guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		assert.deepEqual([...guest.view.root], ["H"]);
-		assert.deepEqual([...host.local.root], ["H"]);
-		assert.deepEqual([...host.main.root], ["H"]);
+		assert.deepEqual([...guestView.root], ["H"]);
+		assert.deepEqual([...local.root], ["H"]);
+		assert.deepEqual([...main.root], ["H"]);
 		assert(redoStack.length === 3, "Expected redo stack to have 3 entries");
 
 		// Undo the Guest edits
@@ -1300,8 +1348,8 @@ describe("Host and Guest correctness", () => {
 		pushPromise = guest.updateHostPromise ?? assert.fail("Expected push to be in progress");
 		await pushPromise;
 
-		assert.deepEqual([...host.local.root], ["H", "Ga", "Gb", "Gc"]);
-		assert.deepEqual([...guest.view.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...local.root], ["H", "Ga", "Gb", "Gc"]);
+		assert.deepEqual([...guestView.root], ["H", "Ga", "Gb", "Gc"]);
 		unsubscribe();
 	});
 
@@ -1547,12 +1595,18 @@ describe("Host and Guest correctness", () => {
 			for (const seed of generateTestSeeds(testCount, stressMode)) {
 				it(`seed ${seed}`, async () => {
 					const random = makeRandom(seed);
-					const { teardown, peer, host, guest, provider, interop, logger } = await setupCustom(
-						["a", "b"],
-						stringArrayConfig,
-						buildMessageRelay,
-						false,
-					);
+					const {
+						teardown,
+						peer,
+						host,
+						main,
+						local,
+						guest,
+						guestView,
+						provider,
+						interop,
+						logger,
+					} = await setupCustom(["a", "b"], stringArrayConfig, buildMessageRelay, false);
 					let peerEditCounter = 0;
 					let hostEditCounter = 0;
 					let guestEditCounter = 0;
@@ -1562,7 +1616,7 @@ describe("Host and Guest correctness", () => {
 							serviceQueue.push(Step.SequenceEdit);
 						}
 					});
-					const offHostChange = host.main.events.on("changed", ({ isLocal }) => {
+					const offHostChange = main.events.on("changed", ({ isLocal }) => {
 						if (isLocal) {
 							serviceQueue.push(Step.SequenceAck);
 						}
@@ -1571,7 +1625,7 @@ describe("Host and Guest correctness", () => {
 					try {
 						while (actual.length < maxSteps) {
 							const potentialNext: Step[] = [Step.GuestEdit, Step.HostEdit, Step.PeerEdit];
-							if (guest.view.root.length > 0) {
+							if (guestView.root.length > 0) {
 								potentialNext.push(Step.GuestDelete);
 							}
 							if (hasSome(serviceQueue)) {
@@ -1597,12 +1651,12 @@ describe("Host and Guest correctness", () => {
 							switch (step) {
 								case Step.GuestEdit: {
 									guestEditCounter += 1;
-									guest.view.root.push(`G${guestEditCounter}`);
+									guestView.root.push(`G${guestEditCounter}`);
 									break;
 								}
 								case Step.HostEdit: {
 									hostEditCounter += 1;
-									host.main.root.insertAtStart(`H${hostEditCounter}`);
+									main.root.insertAtStart(`H${hostEditCounter}`);
 									break;
 								}
 								case Step.PeerEdit: {
@@ -1611,7 +1665,7 @@ describe("Host and Guest correctness", () => {
 									break;
 								}
 								case Step.GuestDelete: {
-									guest.view.root.removeAt(0);
+									guestView.root.removeAt(0);
 									break;
 								}
 								case Step.SequenceEdit:
@@ -1645,20 +1699,12 @@ describe("Host and Guest correctness", () => {
 							}
 							await interop.waitForMessages();
 							if (interop.hostToGuest.length === 0 && interop.guestToHost.length === 0) {
-								assert.deepEqual([...host.main.root], [...guest.view.root], actual.join(", "));
-								assert.deepEqual(
-									[...host.local.root],
-									[...guest.view.root],
-									actual.join(", "),
-								);
+								assert.deepEqual([...main.root], [...guestView.root], actual.join(", "));
+								assert.deepEqual([...local.root], [...guestView.root], actual.join(", "));
 							}
 
 							if (host.updateGuestPromise === undefined) {
-								assert.equal(
-									host.local.isMissingEditsFrom(host.main),
-									false,
-									actual.join(", "),
-								);
+								assert.equal(local.isMissingEditsFrom(main), false, actual.join(", "));
 							}
 						}
 						// Complete every schedule so that undelivered changes cannot hide divergence.
@@ -1682,8 +1728,8 @@ describe("Host and Guest correctness", () => {
 							hasSome(interop.hostToGuest) ||
 							hasSome(interop.guestToHost)
 						);
-						for (const view of [host.local, guest.view, peer]) {
-							assert.deepEqual([...view.root], [...host.main.root], actual.join(", "));
+						for (const view of [local, guestView, peer]) {
+							assert.deepEqual([...view.root], [...main.root], actual.join(", "));
 						}
 						assert.equal(host.updateGuestPromise, undefined);
 						assert.equal(guest.updateHostPromise, undefined);
