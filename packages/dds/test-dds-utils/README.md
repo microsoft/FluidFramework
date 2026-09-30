@@ -57,13 +57,13 @@ including the reconnect flow.
 
 ### Per-client configuration
 
-Set `DDSFuzzModel.clientConfiguration` to construct clients with different DDS options or package versions.
+Set `DDSFuzzModel.factory` to a `DDSFuzzClientFactory` provider to construct clients with different DDS options or package versions.
 You define the configuration values and supply a callback that resolves each value to an `IChannelFactory`.
 The factories must expose a common channel API that your model can use.
 
-Use `generate(random, client)` to select a configuration with seeded randomness.
+Use `generateClientConfiguration(random, client)` to select a configuration with seeded randomness.
 The client context includes `clientId` and `isSummarizer`, so you can give the summarizer a specific configuration.
-Use `factory(clientConfiguration)` to resolve the recorded value without making new random choices.
+Use `getFactory(clientConfiguration)` to resolve the recorded value without making new random choices.
 The configuration must round-trip through JSON without changes.
 Objects, arrays, strings, numbers, booleans, and `null` are supported; handles, functions, `undefined`, and non-finite numbers are not.
 Do not mutate configurations after they are generated.
@@ -77,19 +77,19 @@ type State = DDSFuzzTestState<Factory, ClientConfiguration>;
 
 const model: DDSFuzzModel<Factory, Operation, State> = {
 	...existingModel,
-	clientConfiguration: {
-		generate: (random, { isSummarizer }) => ({
+	factory: {
+		generateClientConfiguration: (random, { isSummarizer }) => ({
 			version: isSummarizer ? "current" : random.pick(["current", "previous"]),
 		}),
-		factory: ({ version }) =>
+		getFactory: ({ version }) =>
 			version === "current" ? currentFactory : previousFactory,
 	},
 };
 ```
 
 Your resolver can also construct a factory from options stored in the configuration.
-When client configuration is enabled, this resolver replaces `model.factory` for all client construction.
-The existing `factory` property is still required, but is not used in configured runs.
+The provider is the model's factory; no separate default factory is needed.
+For a single configuration, continue to pass an `IChannelFactory` directly as `model.factory`.
 
 The harness records the initial clients in an `initialize` operation.
 It records subsequent choices in `attach.clients` and `addClient.clientConfiguration`.
@@ -97,9 +97,9 @@ Each created client exposes its value as `client.clientConfiguration`, including
 The `testStart` event occurs after initialization and before the workload generator is created.
 Rehydration and stash restoration retain the original client's configuration, even if the client gets a new name.
 
-Replay and minimization use the recorded choices without calling `generate`.
+Replay and minimization use the recorded choices without calling `generateClientConfiguration`.
 Configured replays must include their initialization and client configurations; old logs without these values must be replayed with the original, unconfigured model.
-If you omit `clientConfiguration`, the harness keeps its existing initialization, operation format, and random-number consumption.
+If you pass an `IChannelFactory` directly, the harness keeps its existing initialization, operation format, and random-number consumption.
 The same configuration mechanism is available in `SquashFuzzModel`.
 
 ### Future Improvements

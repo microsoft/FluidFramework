@@ -11,7 +11,7 @@ export type {
 	ChangeConnectionState,
 	ClientInitialization,
 	ClientSpec,
-	DDSFuzzClientConfiguration,
+	DDSFuzzClientFactory,
 	DDSFuzzModel,
 	DDSFuzzHarnessModel,
 	DDSFuzzSuiteOptions,

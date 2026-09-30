@@ -119,7 +119,7 @@ export interface ClientSpec {
  * @typeParam TClientConfiguration - Consumer-defined JSON-serializable configuration.
  * @internal
  */
-export interface DDSFuzzClientConfiguration<
+export interface DDSFuzzClientFactory<
 	TChannelFactory extends IChannelFactory,
 	TClientConfiguration,
 > {
@@ -128,7 +128,7 @@ export interface DDSFuzzClientConfiguration<
 	 * This callback is not called during replay or when restoring an existing client.
 	 * The result must round-trip through JSON without changing its value.
 	 */
-	generate: (
+	generateClientConfiguration: (
 		random: IRandom,
 		client: ClientSpec & { isSummarizer: boolean },
 	) => TClientConfiguration & JsonSerializable<TClientConfiguration>;
@@ -137,7 +137,7 @@ export interface DDSFuzzClientConfiguration<
 	 * Resolves a recorded configuration to a factory.
 	 * Do not mutate the configuration or make random choices in this callback.
 	 */
-	factory: (clientConfiguration: TClientConfiguration) => TChannelFactory;
+	getFactory: (clientConfiguration: TClientConfiguration) => TChannelFactory;
 }
 
 /**
@@ -316,16 +316,12 @@ export interface DDSFuzzModel<
 	workloadName: string;
 
 	/**
-	 * ChannelFactory to instantiate the DDS.
-	 */
-	factory: TChannelFactory;
-
-	/**
-	 * Opts into per-client configuration and records each choice in the operation log.
-	 * When specified, its factory callback is used instead of {@link DDSFuzzModel.factory}.
+	 * Channel factory to instantiate the DDS, or a provider that generates and resolves
+	 * per-client configurations.
+	 * Providing a {@link DDSFuzzClientFactory} records each configuration in the operation log.
 	 * Rehydration and stash restoration reuse the original client's configuration.
 	 */
-	clientConfiguration?: DDSFuzzClientConfiguration<TChannelFactory, TClientConfiguration>;
+	factory: TChannelFactory | DDSFuzzClientFactory<TChannelFactory, TClientConfiguration>;
 
 	/**
 	 * Factory which creates a generator for this model.
@@ -709,9 +705,9 @@ export function mixinNewClient<
 						? random.bool(options.clientJoinOptions.stashableClientProbability)
 						: false,
 				};
-				if (model.clientConfiguration !== undefined) {
+				if (isConfiguredFactory(model.factory)) {
 					operation.clientConfiguration = generateClientConfiguration(
-						model.clientConfiguration,
+						model.factory,
 						random,
 						operation.addedClientId,
 					);
@@ -737,7 +733,7 @@ export function mixinNewClient<
 			const newClient = await loadClient(
 				state.containerRuntimeFactory,
 				state.summarizerClient,
-				resolveClientFactory(model, op.clientConfiguration),
+				resolveClientFactory(model.factory, op.clientConfiguration),
 				op.addedClientId,
 				options,
 				op.canBeStashed,
@@ -857,20 +853,20 @@ export function mixinAttach<
 		>;
 	}
 	const attachOp = async (state: TState): Promise<AttachOperation> => {
-		const configuration = model.clientConfiguration;
-		return configuration === undefined
-			? { type: "attach" }
-			: {
+		const factory = model.factory;
+		return isConfiguredFactory(factory)
+			? {
 					type: "attach",
 					clients: Array.from({ length: options.numberOfClients }, (_, index) =>
 						generateClientInitialization(
-							configuration,
+							factory,
 							state.random,
 							index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 							options,
 						),
 					),
-				};
+				}
+			: { type: "attach" };
 	};
 	const rehydrateOp = async (): Promise<
 		TOperation | AttachOperation | Attaching | Rehydrate
@@ -923,7 +919,7 @@ export function mixinAttach<
 		TState
 	> = async (state, operation) => {
 		if (isOperationType<AttachOperation>("attach", operation)) {
-			requireClientInitializations(model.clientConfiguration, operation.clients);
+			requireClientInitializations(isConfiguredFactory(model.factory), operation.clients);
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<TChannelFactory, TClientConfiguration> =
@@ -943,7 +939,7 @@ export function mixinAttach<
 							loadClient<TChannelFactory, TClientConfiguration>(
 								state.containerRuntimeFactory,
 								clientA,
-								model.factory,
+								resolveClientFactory(model.factory, undefined),
 								index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 								options,
 								index !== 0 && options.clientJoinOptions?.stashableClientProbability
@@ -955,7 +951,7 @@ export function mixinAttach<
 							loadClient(
 								state.containerRuntimeFactory,
 								clientA,
-								resolveClientFactory(model, client.clientConfiguration),
+								resolveClientFactory(model.factory, client.clientConfiguration),
 								client.clientId,
 								options,
 								client.canBeStashed,
@@ -994,7 +990,7 @@ export function mixinAttach<
 			const summarizerClient = await loadDetached(
 				state.containerRuntimeFactory,
 				clientA,
-				resolveClientFactory(model, clientA.clientConfiguration),
+				resolveClientFactory(model.factory, clientA.clientConfiguration),
 				makeFriendlyClientId(state.random, 0),
 				options,
 				clientA.clientConfiguration,
@@ -1416,7 +1412,7 @@ export function mixinStashedClient<
 			const newClient = await loadClientFromSummaries(
 				containerRuntimeFactory,
 				loadData,
-				resolveClientFactory(model, client.clientConfiguration),
+				resolveClientFactory(model.factory, client.clientConfiguration),
 				operation.newClientId,
 				options,
 				false,
@@ -1501,7 +1497,7 @@ function createDetachedClient<TChannelFactory extends IChannelFactory, TClientCo
 		// only track remote ops(which enables initialize from stashed ops), if rehydrate is enabled
 		trackRemoteOps: options.detachedStartOptions.rehydrateDisabled !== true,
 	});
-	// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
+	// TS resolves the return type of factory.create too early and isn't able to retain a more specific type
 	// than IChannel here.
 	const newClient: Client<TChannelFactory, TClientConfiguration> = {
 		containerRuntime,
@@ -1687,37 +1683,40 @@ function makeFriendlyClientId(random: IRandom, index: number): string {
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
 
+function isConfiguredFactory<TChannelFactory extends IChannelFactory, TClientConfiguration>(
+	factory: TChannelFactory | DDSFuzzClientFactory<TChannelFactory, TClientConfiguration>,
+): factory is DDSFuzzClientFactory<TChannelFactory, TClientConfiguration> {
+	return "generateClientConfiguration" in factory;
+}
+
 /**
  * Resolves only recorded configurations; reducers must not generate new choices.
  */
 function resolveClientFactory<TChannelFactory extends IChannelFactory, TClientConfiguration>(
-	model: {
-		factory: TChannelFactory;
-		clientConfiguration?: DDSFuzzClientConfiguration<TChannelFactory, TClientConfiguration>;
-	},
+	factory: TChannelFactory | DDSFuzzClientFactory<TChannelFactory, TClientConfiguration>,
 	clientConfiguration: TClientConfiguration | undefined,
 ): TChannelFactory {
-	if (model.clientConfiguration === undefined) {
+	if (!isConfiguredFactory(factory)) {
 		if (clientConfiguration !== undefined) {
 			throw new ReducerPreconditionError("Recorded clientConfiguration requires a resolver.");
 		}
-		return model.factory;
+		return factory;
 	}
 	if (clientConfiguration === undefined) {
 		throw new ReducerPreconditionError("Missing recorded clientConfiguration.");
 	}
-	return model.clientConfiguration.factory(clientConfiguration);
+	return factory.getFactory(clientConfiguration);
 }
 
 function generateClientConfiguration<
 	TChannelFactory extends IChannelFactory,
 	TClientConfiguration,
 >(
-	configuration: DDSFuzzClientConfiguration<TChannelFactory, TClientConfiguration>,
+	factory: DDSFuzzClientFactory<TChannelFactory, TClientConfiguration>,
 	random: IRandom,
 	clientId: string,
 ): TClientConfiguration {
-	const value = configuration.generate(random, {
+	const value = factory.generateClientConfiguration(random, {
 		clientId,
 		isSummarizer: clientId === "summarizer",
 	});
@@ -1732,7 +1731,7 @@ function generateClientInitialization<
 	TChannelFactory extends IChannelFactory,
 	TClientConfiguration,
 >(
-	configuration: DDSFuzzClientConfiguration<TChannelFactory, TClientConfiguration>,
+	factory: DDSFuzzClientFactory<TChannelFactory, TClientConfiguration>,
 	random: IRandom,
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
@@ -1740,7 +1739,7 @@ function generateClientInitialization<
 ): ClientInitialization<TClientConfiguration> {
 	return {
 		clientId,
-		clientConfiguration: generateClientConfiguration(configuration, random, clientId),
+		clientConfiguration: generateClientConfiguration(factory, random, clientId),
 		canBeStashed:
 			supportStashing &&
 			clientId !== "summarizer" &&
@@ -1751,10 +1750,10 @@ function generateClientInitialization<
 }
 
 function requireClientInitializations(
-	configuration: unknown,
+	configured: boolean,
 	clients: readonly ClientInitialization[] | undefined,
 ): void {
-	if ((configuration === undefined) !== (clients === undefined)) {
+	if (configured !== (clients !== undefined)) {
 		throw new ReducerPreconditionError(
 			"Recorded client initializations must match whether client configuration is enabled.",
 		);
@@ -1783,7 +1782,7 @@ async function initializeTestState<
 	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
 	const initialClient = createDetachedClient(
 		containerRuntimeFactory,
-		resolveClientFactory(model, initialization?.initialClient.clientConfiguration),
+		resolveClientFactory(model.factory, initialization?.initialClient.clientConfiguration),
 		initialization?.initialClient.clientId ??
 			(startDetached ? makeFriendlyClientId(random, 0) : "summarizer"),
 		options,
@@ -1807,7 +1806,7 @@ async function initializeTestState<
 							loadClient<TChannelFactory, TClientConfiguration>(
 								containerRuntimeFactory,
 								initialClient,
-								model.factory,
+								resolveClientFactory(model.factory, undefined),
 								makeFriendlyClientId(random, i),
 								options,
 								options.clientJoinOptions?.stashableClientProbability
@@ -1819,7 +1818,7 @@ async function initializeTestState<
 							loadClient(
 								containerRuntimeFactory,
 								initialClient,
-								resolveClientFactory(model, client.clientConfiguration),
+								resolveClientFactory(model.factory, client.clientConfiguration),
 								client.clientId,
 								options,
 								client.canBeStashed,
@@ -1890,7 +1889,9 @@ export async function runTestForSeed<
 	replayGenerator?: AsyncGenerator<TOperation | Initialize<TClientConfiguration>, unknown>,
 ): Promise<DDSFuzzTestState<TChannelFactory, TClientConfiguration>> {
 	const random = makeRandom(seed);
-	let needsInitialization = model.clientConfiguration !== undefined;
+	const factory = model.factory;
+	const configured = isConfiguredFactory(factory);
+	let needsInitialization = configured;
 	// Configured tests construct clients in a reducer so that setup choices (and failures) are recorded.
 	const initialState: DDSFuzzTestState<TChannelFactory, TClientConfiguration> =
 		needsInitialization
@@ -1921,12 +1922,11 @@ export async function runTestForSeed<
 		// to encode here and decode in the reducer.
 		async (state) => {
 			if (needsInitialization && replayGenerator === undefined) {
-				const configuration = model.clientConfiguration;
-				assert(configuration !== undefined, "Expected client configuration.");
+				assert(isConfiguredFactory(factory), "Expected a configured factory.");
 				return {
 					type: "initialize",
 					initialClient: generateClientInitialization(
-						configuration,
+						factory,
 						state.random,
 						state.isDetached ? makeFriendlyClientId(state.random, 0) : "summarizer",
 						options,
@@ -1936,7 +1936,7 @@ export async function runTestForSeed<
 						? []
 						: Array.from({ length: options.numberOfClients }, (_, index) =>
 								generateClientInitialization(
-									configuration,
+									factory,
 									state.random,
 									makeFriendlyClientId(state.random, index),
 									options,
@@ -1947,9 +1947,7 @@ export async function runTestForSeed<
 			assert(generator !== undefined, "Expected initialized workload generator.");
 			const operation = await generator(state);
 			return serializationContext === undefined ||
-				(model.clientConfiguration !== undefined &&
-					operation !== done &&
-					isClientConfigurationOperation(operation))
+				(configured && operation !== done && isClientConfigurationOperation(operation))
 				? operation
 				: (serializationContext.serializer.encode(
 						operation,
@@ -1973,13 +1971,13 @@ export async function runTestForSeed<
 				generator ??= model.generatorFactory();
 				return initializedState;
 			}
-			if (model.clientConfiguration !== undefined && operation.type === "initialize") {
+			if (configured && operation.type === "initialize") {
 				throw new ReducerPreconditionError("Unexpected initialize operation.");
 			}
 			assert(serializationContext !== undefined, "Expected initialized serialization.");
 			// Configuration is plain JSON owned by the consumer, not Fluid-serialized data.
 			const decodedHandles =
-				model.clientConfiguration !== undefined && isClientConfigurationOperation(operation)
+				configured && isClientConfigurationOperation(operation)
 					? (operation as TOperation)
 					: (serializationContext.serializer.decode(operation) as TOperation);
 			options.emitter.emit("operation", decodedHandles);
@@ -2065,7 +2063,7 @@ function runTest<
 			const transforms = model.minimizationTransforms?.map(
 				(transform) => (operation: TOperation | Initialize<TClientConfiguration>) => {
 					if (
-						model.clientConfiguration === undefined ||
+						!isConfiguredFactory(model.factory) ||
 						!isOperationType<Initialize<TClientConfiguration>>("initialize", operation)
 					) {
 						transform(operation as TOperation);

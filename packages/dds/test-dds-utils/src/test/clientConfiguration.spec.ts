@@ -68,14 +68,14 @@ class ConfiguredFactory extends SharedNothingFactory {
 
 function createModel(): Model {
 	return {
-		...baseModel,
+		workloadName: baseModel.workloadName,
 		minimizationTransforms: [],
-		clientConfiguration: {
-			generate: (random, { clientId, isSummarizer }) => ({
+		factory: {
+			generateClientConfiguration: (random, { clientId, isSummarizer }) => ({
 				version: isSummarizer || clientId === "B" ? "previous" : "current",
 				options: { enabled: random.bool() },
 			}),
-			factory: (configuration) => new ConfiguredFactory(configuration),
+			getFactory: (configuration) => new ConfiguredFactory(configuration),
 		},
 		generatorFactory: () => takeAsync(3, async () => ({ type: "noop" })),
 		reducer: () => {},
@@ -220,7 +220,7 @@ describe("DDS fuzz client configuration", () => {
 			clientAddProbability: 1,
 		};
 		const model = mixinNewClient(createModel(), options);
-		assert(model.clientConfiguration !== undefined);
+		assert("generateClientConfiguration" in model.factory);
 		const original = await runTestForSeed(model, options, 0, saveInfo);
 		const operations = readOperations();
 		let replayed: DDSFuzzTestState<SharedNothingFactory> | undefined;
@@ -230,9 +230,10 @@ describe("DDS fuzz client configuration", () => {
 		await replayTest(
 			{
 				...model,
-				clientConfiguration: {
-					...model.clientConfiguration,
-					generate: () => assert.fail("Replay must not generate client configurations."),
+				factory: {
+					...model.factory,
+					generateClientConfiguration: () =>
+						assert.fail("Replay must not generate client configurations."),
 				},
 			},
 			999,
@@ -299,8 +300,8 @@ describe("DDS fuzz client configuration", () => {
 
 	it("records configuration before a factory fails during initialization", async () => {
 		const model = createModel();
-		assert(model.clientConfiguration !== undefined);
-		model.clientConfiguration.factory = () => {
+		assert("generateClientConfiguration" in model.factory);
+		model.factory.getFactory = () => {
 			throw new Error("Configured factory failed.");
 		};
 		await assert.rejects(
@@ -325,16 +326,16 @@ describe("DDS fuzz client configuration", () => {
 		const generated: string[] = [];
 		options.emitter.on("clientCreate", (client) => created.push(client));
 		const base = createModel();
-		assert(base.clientConfiguration !== undefined);
-		const configuration = base.clientConfiguration;
+		assert("generateClientConfiguration" in base.factory);
+		const factory = base.factory;
 		const model = mixinAttach(
 			{
 				...base,
-				clientConfiguration: {
-					...configuration,
-					generate: (random, context) => {
+				factory: {
+					...factory,
+					generateClientConfiguration: (random, context) => {
 						generated.push(context.clientId);
-						return configuration.generate(random, context);
+						return factory.generateClientConfiguration(random, context);
 					},
 				},
 			},
@@ -477,8 +478,8 @@ describe("DDS fuzz client configuration", () => {
 
 	it("rejects configuration that changes when serialized", async () => {
 		const model = createModel();
-		assert(model.clientConfiguration !== undefined);
-		model.clientConfiguration.generate = () => ({
+		assert("generateClientConfiguration" in model.factory);
+		model.factory.generateClientConfiguration = () => ({
 			version: "current",
 			options: { enabled: true },
 			invalid: Number.NaN,
@@ -512,11 +513,11 @@ describe("DDS fuzz client configuration", () => {
 			> = {
 				...baseModel,
 				minimizationTransforms: [],
-				clientConfiguration: {
-					generate: () => clientConfiguration,
-					factory: (recorded) => {
+				factory: {
+					generateClientConfiguration: () => clientConfiguration,
+					getFactory: (recorded) => {
 						assert.deepEqual(recorded, clientConfiguration);
-						return baseModel.factory;
+						return new SharedNothingFactory();
 					},
 				},
 				reducer: () => {},

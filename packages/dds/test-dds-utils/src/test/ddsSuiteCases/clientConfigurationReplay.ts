@@ -45,9 +45,10 @@ emitter.on("testEnd", (state) => {
 const model: DDSFuzzModel<SharedNothingFactory, Operation, State> = {
 	...baseModel,
 	workloadName: "client configuration replay",
-	clientConfiguration: {
-		generate: () => assert.fail("Replay must use recorded client configurations."),
-		factory: (clientConfiguration) => {
+	factory: {
+		generateClientConfiguration: () =>
+			assert.fail("Replay must use recorded client configurations."),
+		getFactory: (clientConfiguration) => {
 			resolved.push(clientConfiguration);
 			return new SharedNothingFactory();
 		},
