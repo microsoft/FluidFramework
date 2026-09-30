@@ -86,7 +86,7 @@ export class HostSynchronization {
 		/** The Host's main checkout to synchronize with the Guest. */
 		private readonly mainCheckout: TreeCheckout,
 		/** The checkout for the Guest's authoring branch, advanced by Guest changes and acknowledged Host updates. */
-		private readonly localCheckout: TreeCheckout,
+		public readonly localCheckout: TreeCheckout,
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */

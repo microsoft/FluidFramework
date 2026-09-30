@@ -42,20 +42,40 @@ export interface GuestOptions extends SandboxEndpointOptions {
 
 /**
  * An independent tree synchronized with a Host through a message protocol.
+ * @sealed
  */
-export class Guest {
+export interface Guest {
+	/** The independent tree synchronized with the Host. */
+	readonly tree: ViewableTree;
+	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+	readonly error: Error | undefined;
+	/** A promise for Host acknowledgment of pending Guest changes, if changes are pending. */
+	readonly updateHostPromise: Promise<void> | undefined;
+	/** Ends the session and releases its resources. */
+	dispose(): void;
+}
+
+/**
+ * Implementation of {@link Guest}.
+ */
+export class GuestImplementation implements Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
 	private readonly idCompressor: IIdCompressor;
 	private readonly port: MessagePort;
 	private readonly logger: TelemetryLoggerExt;
-	private synchronization: GuestSynchronization | undefined;
+	private _synchronization: GuestSynchronization | undefined;
 	private viewableTree: ViewableTree | undefined;
 	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
 
-	/** The independent tree on the Guest. Available after {@link Guest.create} resolves. */
+	/** Internal synchronization state exposed for testing. */
+	public get synchronization(): GuestSynchronization {
+		return this._synchronization ?? fail("Guest accessed before initialization");
+	}
+
+	/** The independent tree on the Guest. Available after {@link GuestImplementation.create} resolves. */
 	public get tree(): ViewableTree {
 		return this.viewableTree ?? fail("Guest accessed before initialization");
 	}
@@ -72,17 +92,17 @@ export class Guest {
 				this.session.fail(new Error(message.error), false);
 				return;
 			}
-			if (this.synchronization === undefined) {
+			if (this._synchronization === undefined) {
 				throw new SandboxProtocolError(
 					`Guest received a message with type ${JSON.stringify(message.type)} before initialization.`,
 				);
 			}
 			switch (message.type) {
 				case "hostUpdate": {
-					return this.synchronization.receiveHostUpdate(message);
+					return this._synchronization.receiveHostUpdate(message);
 				}
 				case "guestChangeAck": {
-					return this.synchronization.receiveChangeAck(message);
+					return this._synchronization.receiveChangeAck(message);
 				}
 				case "blobResponse": {
 					return this.codec.receiveBlobResponse(message);
@@ -122,7 +142,7 @@ export class Guest {
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
-				this.synchronization?.stop(error);
+				this._synchronization?.stop(error);
 				this.codec.dispose(error);
 				this.initialized.rejecter(error);
 			},
@@ -142,14 +162,14 @@ export class Guest {
 	 * @param options - The tree and session options for the Guest.
 	 * @returns The initialized Guest.
 	 */
-	public static async create(options: GuestOptions): Promise<Guest> {
-		const guest = new Guest(options);
+	public static async create(options: GuestOptions): Promise<GuestImplementation> {
+		const guest = new GuestImplementation(options);
 		await guest.initialized.promise;
 		return guest;
 	}
 
 	private initialize(message: HostInitializationMessage): void {
-		if (this.synchronization !== undefined) {
+		if (this._synchronization !== undefined) {
 			throw new SandboxProtocolError("The Guest received duplicate initialization.");
 		}
 		const content: ViewContent = {
@@ -174,7 +194,7 @@ export class Guest {
 			(error) => this.session.fail(error),
 			this.logger,
 		);
-		this.synchronization = synchronization;
+		this._synchronization = synchronization;
 		this.viewableTree = {
 			viewWith<TRoot extends ImplicitFieldSchema>(
 				config: TreeViewConfiguration<TRoot>,
@@ -193,7 +213,7 @@ export class Guest {
 		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		const synchronization = this.synchronization;
+		const synchronization = this._synchronization;
 		synchronization?.dispose();
 
 		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
@@ -225,6 +245,6 @@ export class Guest {
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
-		return this.synchronization?.updateHostPromise;
+		return this._synchronization?.updateHostPromise;
 	}
 }

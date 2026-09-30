@@ -24,8 +24,8 @@ import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
 import { normalizeProtocolError, throwProtocolError } from "./common.js";
-import { Guest } from "./guest.js";
-import { Host } from "./host.js";
+import { GuestImplementation } from "./guest.js";
+import { HostImplementation } from "./host.js";
 
 /**
  * The ports and test controls for one Host and Guest session.
@@ -166,8 +166,8 @@ export async function createGuestForHost(
 	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
 	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
-): Promise<Guest> {
-	return Guest.create({
+): Promise<GuestImplementation> {
+	return GuestImplementation.create({
 		treeOptions: { jsonValidator: FormatValidatorBasic },
 		idCompressor: hostCompressor,
 		port,
@@ -217,7 +217,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 
 	const peer = asAlpha(provider.trees[0].viewWith(config));
 	const sessionPorts = sessionPortsBuilder();
-	const host = new Host({
+	const host = new HostImplementation({
 		main,
 		port: sessionPorts.hostPort,
 		bindingHandle: provider.trees[1].handle,
@@ -225,8 +225,9 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		logger: createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
 	});
+	const local = asAlpha(host.synchronization.localCheckout.viewWithRetainedCheckout(config));
 
-	let guest: Guest;
+	let guest: GuestImplementation;
 	let guestView: TreeViewAlpha<TSchema>;
 	try {
 		const guestPromise = createGuestForHost(
@@ -272,6 +273,8 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		teardown,
 		peer,
 		host,
+		main,
+		local,
 		guest,
 		guestView,
 		provider,
