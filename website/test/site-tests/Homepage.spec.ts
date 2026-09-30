@@ -43,11 +43,9 @@ test.describe("Homepage", () => {
 		test("Preview has one keyboard stop in both directions", async ({ page }) => {
 			const before = page.getByRole("button", { name: "Before video" });
 			const after = page.getByRole("button", { name: "After video" });
-			const playButton = page.getByRole("button", {
-				name: "Play video",
-			});
+			const playButton = page.getByRole("button", { name: "Play video" });
 			const video = page.locator(".youtube-video");
-			const videoPlayer = page.locator(".youtube-video > iframe");
+			const videoPlayer = video.locator("iframe");
 
 			await expect(videoPlayer).toHaveAttribute("tabindex", "-1");
 			await expect(videoPlayer).toHaveAttribute("aria-hidden", "true");
@@ -66,21 +64,21 @@ test.describe("Homepage", () => {
 			await expect(before).toBeFocused();
 		});
 
-		for (const key of ["Enter", "Space"]) {
-			test(`${key} transfers focus to the player and permits Tab navigation`, async ({
-				page,
-			}) => {
-				const playButton = page.getByRole("button", {
-					name: "Play video",
-				});
+		for (const action of ["Enter", "Space", "click"]) {
+			test(`${action} activates the player and permits Tab navigation`, async ({ page }) => {
+				const playButton = page.getByRole("button", { name: "Play video" });
 				const video = page.locator(".youtube-video");
 				const videoPlayer = video.locator("iframe");
 				const player = page.frameLocator(".youtube-video > iframe");
 
-				await page.getByRole("button", { name: "Before video" }).focus();
-				await page.keyboard.press("Tab");
-				await expect(playButton).toBeFocused();
-				await page.keyboard.press(key);
+				if (action === "click") {
+					await playButton.click();
+				} else {
+					await page.getByRole("button", { name: "Before video" }).focus();
+					await page.keyboard.press("Tab");
+					await expect(playButton).toBeFocused();
+					await page.keyboard.press(action);
+				}
 
 				await expect(playButton).toHaveCount(0);
 				await expect(videoPlayer).toHaveAttribute("src", /[&?]autoplay=1/);
@@ -91,28 +89,15 @@ test.describe("Homepage", () => {
 				await expect(video).toHaveCSS("outline-style", "solid");
 				await expect(video).toHaveCSS("outline-width", "3px");
 
-				await page.keyboard.press("Tab");
-				await expect(player.getByRole("button", { name: "Play or pause" })).toBeFocused();
-				await page.keyboard.press("Tab");
-				await expect(player.getByRole("link", { name: "Video title" })).toBeFocused();
-				await page.keyboard.press("Tab");
-				await expect(player.getByRole("button", { name: "Copy link" })).toBeFocused();
+				for (const name of ["Play or pause", "Video title", "Copy link"]) {
+					await page.keyboard.press("Tab");
+					await expect(player.getByText(name, { exact: true })).toBeFocused();
+				}
 				await expect(video).toHaveCSS("outline-style", "solid");
 				await page.keyboard.press("Tab");
 				await expect(page.getByRole("button", { name: "After video" })).toBeFocused();
 				await expect(video).toHaveCSS("outline-style", "none");
 			});
 		}
-
-		test("Preview remains pointer-activatable", async ({ page }) => {
-			await page.getByRole("button", { name: "Play video" }).click();
-
-			const videoPlayer = page.locator(".youtube-video > iframe");
-			await expect(videoPlayer).toHaveAttribute("src", /[&?]autoplay=1/);
-			await expect(videoPlayer).toHaveAttribute("tabindex", "0");
-			await expect(videoPlayer).toHaveAttribute("aria-hidden", "false");
-			await expect(videoPlayer).toHaveJSProperty("inert", false);
-			await expect(videoPlayer).toBeFocused();
-		});
 	});
 });
