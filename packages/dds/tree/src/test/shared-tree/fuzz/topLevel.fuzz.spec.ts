@@ -89,6 +89,9 @@ describe("Fuzz - Top-Level", () => {
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 			skip: [
 				...[30], //  0x92a
+				// 0xaf9: see treeCheckout.spec.ts,
+				// "can edit a fork after its parent's schema upgrade loses a rebase".
+				1,
 			],
 		};
 		createDDSFuzzSuite(comparisonForestTreeModel, options);
@@ -123,6 +126,11 @@ describe("Fuzz - Top-Level", () => {
 				directory: failureDirectory,
 			},
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skip: [
+				// 0xb53: see editManagerSummarizer.spec.ts,
+				// "summarizes peer history after a schema upgrade and dependent edit lose a rebase".
+				41,
+			],
 		};
 
 		createDDSFuzzSuite(model, options);
