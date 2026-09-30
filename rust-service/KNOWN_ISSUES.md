@@ -39,6 +39,15 @@ Historical findings and resolved investigations are retained in [Historical reco
   It records server connection setup, event and author opening, backend lock/worker/init progress, document creation/recovery, and membership opening.
   A controlled blocked-initializer test verifies that the trace distinguishes a started worker from completed initialization and survives caller cancellation.
   The diagnostics are compiled only in server unit tests; public APIs, production logging, synchronization guarantees, and the five-second client timeout are unchanged.
+- **Committed-baseline continuation:** On diagnostic commit `81699b94228`, six concurrent server-library runs immediately after recompilation and six warm runs passed with `fsync`/`fdatasync` tracing.
+  The final nine runs used Linux `strace --seccomp-bpf` to avoid stops for untraced syscalls.
+  Recompilation invalidated only the diagnostic source timestamp, not its contents; no shared Cargo target was cleaned.
+  Each run used the same workspace-filesystem fixture location and a 90-second external deadline.
+  Correlating the native initializer thread's seven namespace synchronizations showed total syscall time between 5.456 ms and 318.363 ms.
+  A 2.398-second synchronization belonged to a different checkpoint-storage test, not the native initializer.
+  These successful runs do not establish compilation as a cause or explain the earlier failure.
+  An initial broader filesystem trace stopped on a connection-close failure in `server_survives_malformed_and_abandoned_response_streams`, whose configured operation timeout is 50 ms; the target round-trip test passed.
+  That failure was preserved separately and is not evidence of the durable-initialization timeout or proof that tracing caused it.
 - **Impact:** Native test runs can fail without an established product or test-harness cause.
   The transport timeout must not be classified as harmless host variability or resolved by a passing retry.
 - **Storage findings (2026-09-22):** A durable-file connection failed after 74.44 seconds despite a five-second client operation timeout.
@@ -57,6 +66,8 @@ Historical findings and resolved investigations are retained in [Historical reco
   This closes those known executor-blocking paths, not the unattributed timeout investigation or filesystem latency variability.
 - **Follow-up:** Capture filesystem syscall timings during a failing run of the instrumented test to distinguish directory creation, canonicalization, namespace synchronization, and other constructor work.
   Retain storage mode, fixture filesystem, elapsed time, server measurements, and the opening timeline alongside that trace.
+  Start with low-overhead synchronization tracing (`strace -f --seccomp-bpf -ttt -T -yy -e trace=fsync,fdatasync` on supported Linux hosts), and check for tracer fallback warnings.
+  Correlate the failing connection's initializer thread rather than attributing another test's slow syscall to it.
   A timely timeout during genuinely slow required synchronization is distinct from executor starvation that prevents the deadline from being observed.
   Preserve the original failure when retrying; do not increase deadlines or suppress the test without causal evidence.
 - **Trigger:** Close the remaining unattributed issue only with causal evidence for the remaining failure, not successful retries or the existence of the initialization fix.
