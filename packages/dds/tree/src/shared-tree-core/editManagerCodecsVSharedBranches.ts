@@ -39,21 +39,23 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
-	hasSchemaChange: (change: TChangeset) => boolean,
 ): CodecAndSchema<
 	SummaryData<TChangeset>,
-	EditManagerEncodingContext,
+	EditManagerEncodingContext<TChangeset>,
 	EditManagerDecodingContext
 > {
 	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 
 	const codec: CodecAndSchema<
 		SummaryData<TChangeset>,
-		EditManagerEncodingContext,
+		EditManagerEncodingContext<TChangeset>,
 		EditManagerDecodingContext
 	> = {
 		schema,
-		encode: (data: SummaryData<TChangeset>, context: EditManagerEncodingContext) => {
+		encode: (
+			data: SummaryData<TChangeset>,
+			context: EditManagerEncodingContext<TChangeset>,
+		) => {
 			const mainBranch = encodeSharedBranch(
 				changeCodec,
 				revisionTagCodec,
@@ -61,7 +63,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				context,
 				data.originator,
 				true,
-				hasSchemaChange,
 			);
 			assert(
 				data.originator !== undefined,
@@ -83,7 +84,6 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							context,
 							data.originator,
 							true,
-							hasSchemaChange,
 						),
 					);
 				}

@@ -33,9 +33,13 @@ import type {
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
 
-export interface EditManagerEncodingContext {
+export interface EditManagerEncodingContext<TChangeset> {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * Returns whether a changeset contains a schema change.
+	 */
+	readonly hasSchemaChange: (change: TChangeset) => boolean;
 	/**
 	 * See {@link ChangeEncodingContext.isSummary}. EditManager codec callers
 	 * always set this to `true` (the codec is only invoked for summaries),
@@ -48,7 +52,7 @@ export interface EditManagerEncodingContext {
  * Context required for decoding the {@link EditManager}'s {@link SummaryData}.
  * @remarks
  * Unlike {@link EditManagerEncodingContext}, this carries {@link IdentifierHealingConfig} (used only
- * on decode) and omits `schema` (only consulted when encoding).
+ * on decode) and omits `schema` and `hasSchemaChange` (only consulted when encoding).
  */
 export interface EditManagerDecodingContext {
 	readonly idCompressor: IIdCompressor;
@@ -136,10 +140,9 @@ export function encodeSharedBranch<TChangeset>(
 		ChangeEncodingContext
 	>,
 	data: SharedBranchSummaryData<TChangeset>,
-	context: EditManagerEncodingContext,
+	context: EditManagerEncodingContext<TChangeset>,
 	originatorId: SessionId | undefined,
 	includeCustomMetadata: boolean,
-	hasSchemaChange: (change: TChangeset) => boolean,
 ): EncodedSharedBranch<JsonCompatibleReadOnly> {
 	const json: Mutable<EncodedSharedBranch<JsonCompatibleReadOnly>> = {
 		trunk: data.trunk.map((commit) => {
@@ -164,7 +167,7 @@ export function encodeSharedBranch<TChangeset>(
 			// A peer's schema change may be rejected on the trunk while its original commits remain here.
 			// Without schema changes, peer data remains compatible with the trunk's schema upgrades.
 			// Otherwise, omit the inherited schema; the change codec can still use schemas within a commit.
-			const schema = branch.commits.some((commit) => hasSchemaChange(commit.change))
+			const schema = branch.commits.some((commit) => context.hasSchemaChange(commit.change))
 				? undefined
 				: context.schema;
 			return [

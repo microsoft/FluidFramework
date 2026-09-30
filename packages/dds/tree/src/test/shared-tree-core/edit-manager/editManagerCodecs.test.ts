@@ -17,6 +17,8 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecBuilder } from "../../../shared-tree-core/editManagerCodecs.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { EditManagerEncodingContext } from "../../../shared-tree-core/editManagerCodecsCommons.js";
 import {
 	EditManagerFormatVersion,
 	supportedEditManagerFormatVersions,
@@ -69,8 +71,13 @@ const dummyContext = {
 	isSummary: false,
 	revision: undefined,
 	idCompressor: testIdCompressor,
+	hasSchemaChange: () => false,
 };
-const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodingContext> = {
+const testCases: EncodingTestData<
+	SummaryData<TestChange>,
+	unknown,
+	EditManagerEncodingContext<TestChange>
+> = {
 	successes: [
 		[
 			"empty",
@@ -221,7 +228,6 @@ export function testCodec(): void {
 		const builder = makeEditManagerCodecBuilder<TestChange>();
 		const built = builder.applyOptions({
 			changeCodecs: TestChange.codecs,
-			hasSchemaChange: () => false,
 			dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
 			revisionTagCodec: testRevisionTagCodec,
 			jsonValidator: FormatValidatorBasic,
@@ -299,7 +305,6 @@ export function testCodec(): void {
 			]);
 			const codecs = builder.applyOptions({
 				changeCodecs,
-				hasSchemaChange: (change) => change === schemaChange,
 				dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
 				revisionTagCodec: testRevisionTagCodec,
 				jsonValidator: FormatValidatorBasic,
@@ -308,7 +313,12 @@ export function testCodec(): void {
 				const codec = codecs.find((entry) => entry.formatVersion === version)?.codec;
 				assert(codec !== undefined);
 				schemas.length = 0;
-				const context = { ...dummyContext, schema, isSummary: true };
+				const context: EditManagerEncodingContext<TestChange> = {
+					...dummyContext,
+					schema,
+					isSummary: true,
+					hasSchemaChange: (change) => change === schemaChange,
+				};
 				const encoded = codec.encode(data, context);
 				assert.deepEqual(
 					schemas,
@@ -316,6 +326,14 @@ export function testCodec(): void {
 					`Unexpected encoding schemas for format ${version}`,
 				);
 				assertEquivalentSummaryDataIgnoreOriginator(codec.decode(encoded, context), data);
+
+				schemas.length = 0;
+				codec.encode(data, { ...context, hasSchemaChange: () => false });
+				assert.deepEqual(
+					schemas,
+					[schema, schema, schema, schema, schema, schema, schema],
+					`Encoding should use the predicate from each call's context for format ${version}`,
+				);
 			}
 		});
 

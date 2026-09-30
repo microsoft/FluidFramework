@@ -75,7 +75,6 @@ function createEditManagerSummarizer(options?: {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab,
 		changeCodecs: family.codecs,
-		hasSchemaChange: (change) => family.hasSchemaChange(change),
 		dependentChangeFormatVersion: changeFormatVersion,
 		revisionTagCodec,
 	});
