@@ -9,7 +9,7 @@ Recover a document from independently published internal state and a bounded rec
 Application snapshots must not govern checkpoint frequency or be required for recovery.
 Then introduce document-scoped, sequencer-allocated `u64` session identities with persisted reservations and no reuse.
 Pruning is not a deliverable or validation requirement; avoid unnecessary dependencies that would obstruct it later.
-Session reuse and further wire compression remain in the [network protocol plan](NETWORK_PROTOCOL_PLAN.md).
+Session reuse and further wire compression remain measurement-gated [performance opportunities](PERFORMANCE_OPPORTUNITIES_REPORT.md#evidence-gated-wire-size-opportunities).
 
 ## Recovery Contract
 

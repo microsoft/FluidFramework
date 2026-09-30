@@ -1,9 +1,12 @@
 # Shared Live Event Buffer Plan
 
-Status: Proposed implementation plan; no implementation is included.
+Status: Superseded on 2026-09-30; this proposal was not implemented as written.
 Written on 2026-09-22 against `rust-service` at `eb7a806ade5`.
 Revised after source, contract, and broadcast-policy review on 2026-09-22.
-Reconcile the source locations and contracts below with intervening changes before implementation.
+The shared live cache removed per-event storage reads after live handoff.
+The accepted design uses soft output targets and independent subscription shedding instead of coupling writer progress, the minimum-reference floor, and protected fan-out credit.
+See the current [architecture](../SEA_ARCHITECTURE.md), [server resource-policy contract](../crates/sea-webtransport-server/README.md), and [soft-budget decision](decisions/0029-document-soft-budget-policy.md).
+The content below preserves the rejected design and its original evidence; it is not current implementation guidance.
 
 ## Objective
 
@@ -57,24 +60,24 @@ Do not add a floor timer, dedicated announcement queue, or new event kind for th
 
 ## Evidence And Starting Point
 
-The [file execution measurements](historical/measurements/file-execution-e2e-20260922/README.md) identify per-poll file-read offloading as a material CPU cost in the 32-document writer-and-observer workload.
+The [file execution measurements](measurements/file-execution-e2e-20260922/README.md) identify per-poll file-read offloading as a material CPU cost in the 32-document writer-and-observer workload.
 The diagnostic inline-read variant reduced CPU use but violated filesystem isolation from async executors.
 It is evidence for removing file reads from live delivery, not a deployable optimization or a predicted speedup for this design.
 
-- [The admission pipeline](crates/sea-sequencer/src/pipeline.rs) bounds queued and in-flight application submissions at 256 entries and 4 MiB.
+- [The admission pipeline](../crates/sea-sequencer/src/pipeline.rs) bounds queued and in-flight application submissions at 256 entries and 4 MiB.
   It releases charges after completion and does not retain published events for readers.
   Its idle fast path can bypass queue insertion.
-- [The session implementation](crates/sea-sequencer/src/session.rs) prepares references against committed runtime state, publishes application and membership events, and opens archive-backed readers.
+- [The session implementation](../crates/sea-sequencer/src/session.rs) prepares references against committed runtime state, publishes application and membership events, and opens archive-backed readers.
   Its current floor proposal uses a 1024-entry lag window, a 64-entry advance condition, and a cap at the submitting reference.
   Those conditions must be revisited for an independently advancing enforcement floor.
-- [File storage](crates/sea-file/src/storage.rs) provides journal-backed event streams.
-  [The blocking adapter](crates/sea-file/src/common.rs) moves their polls off async executor threads.
+- [File storage](../crates/sea-file/src/storage.rs) provides journal-backed event streams.
+  [The blocking adapter](../crates/sea-file/src/common.rs) moves their polls off async executor threads.
   Keep that mechanism for historical reads; do not replace it with inline filesystem access.
-- [Server liveness configuration](crates/sea-webtransport-server/src/server.rs) exposes `max_event_lag`.
+- [Server liveness configuration](../crates/sea-webtransport-server/src/server.rs) exposes `max_event_lag`.
    At review, its only production uses are its declaration, default, validation, and startup logging; it does not enforce eviction.
    Replace this misleading transport setting with sequencer-owned policy and explicit host configuration, handling any public API removal through the normal compatibility process.
-- [The Fluid session client](packages/sea-driver/src/sessionClient.ts) has a reconnect hook that waits for disposal before a subsequent open obtains a fresh session.
-   Its subscription converts normal completion into an error, and [delta delivery](packages/sea-driver/src/delta.ts) emits a disconnect on subscription failure.
+- [The Fluid session client](../packages/sea-driver/src/sessionClient.ts) has a reconnect hook that waits for disposal before a subsequent open obtains a fresh session.
+   Its subscription converts normal completion into an error, and [delta delivery](../packages/sea-driver/src/delta.ts) emits a disconnect on subscription failure.
    This supports reuse, but does not prove recovery of pending operations after lag eviction.
 - File opening failures currently wake archive readers and terminate their observations.
    Removing live archive reads must preserve that notification, including buffered write-behind failure after successful acknowledgment.
@@ -753,7 +756,7 @@ Record any later change with its reason and rerun both sides; do not relax a thr
 
 ### Evidence And Matched Workload
 
-The [retained production confirmation](historical/measurements/file-execution-e2e-20260922/README.md#production-confirmation) sustained approximately 999 delivered operations/s at 1,000 offered operations/s, with 123.53-123.94% service CPU and 12.98-13.65 ms worst-worker p95 latency.
+The [retained production confirmation](measurements/file-execution-e2e-20260922/README.md#production-confirmation) sustained approximately 999 delivered operations/s at 1,000 offered operations/s, with 123.53-123.94% service CPU and 12.98-13.65 ms worst-worker p95 latency.
 The later read-offload diagnostic reduced median CPU from 125.62% to 90.70%, approximately 28%, but used unsafe inline filesystem reads and shorter samples.
 It also retained an offloaded-control latency outlier of 610.84 ms.
 Use these observations to justify a material CPU-improvement target and noise handling, not as interchangeable baseline samples or a promise of a 28% production gain.
@@ -868,12 +871,12 @@ Place deterministic tests in the owning sequencer modules first.
 Use storage conformance tests only for guarantees shared by backend implementations and integration/browser tests for distinct transport and client responsibilities.
 Prefer existing fixtures and test files over a new test harness.
 
-Before completing implementation, run the canonical format, strict Clippy, rustdoc, build, test, and documentation commands in [Development](DEVELOPMENT.md), plus its complete `./test.sh --extended` suite for generated-client and browser coverage.
+Before completing implementation, run the canonical format, strict Clippy, rustdoc, build, test, and documentation commands in [Development](../DEVELOPMENT.md), plus its complete `./test.sh --extended` suite for generated-client and browser coverage.
 Run `pnpm policy-check --path rust-service` and `pnpm build:fast` from the repository root when implementation changes affect Rust/WASM or registered package inputs.
 Regenerate affected bindings and API reports through their build tasks rather than editing generated artifacts.
 
 Update the sequencer, storage, transport, and driver documentation only where their relied-upon contracts change.
-Record the accepted shared semantic decision under [historical decisions](historical/decisions/README.md) and add an appropriate changeset when implementing the behavior change.
+Record the accepted shared semantic decision under [historical decisions](decisions/README.md) and add an appropriate changeset when implementing the behavior change.
 This plan alone does not change runtime behavior or require a changeset.
 
 ## Completion Criteria

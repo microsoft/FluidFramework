@@ -32,6 +32,23 @@ The largest potential throughput opportunity remains explicit durable submission
 The current end-to-end durable path reaches 5,000 small and 4,000 large operations/s at eight cores, while the earlier isolated storage pipeline reached approximately 50,000 and 20,000 operations/s with a 128-operation window.
 Realizing that gap requires a batch or bounded outstanding-submission contract and therefore needs a product decision before implementation.
 
+## Evidence-Gated Wire-Size Opportunities
+
+The completed [protocol simplification plan](historical/NETWORK_PROTOCOL_PLAN.md) records the implemented framing and metadata reductions, byte accounting, and contract evidence.
+Its remaining ideas are not accepted work.
+Reconsider them only when representative traces satisfy these triggers:
+
+| Candidate | Revisit trigger |
+| --- | --- |
+| Reuse durable session numbers | Connection churn or repeated reservation skips make session identifier width a material part of measured traffic, and an incarnation-anchor design satisfies replay, authorization, and recovery contracts. |
+| Encode session references only when changed | A representative trace measures reference-change frequency and includes initialization, reset, and control bytes. |
+| Encode minimum-reference values only when changed | A representative trace measures floor-change frequency and defines initialization and mid-history replay behavior. |
+| Select one session for an event run | Measured run lengths show net savings after framed switch, initialization, and reset costs. |
+| Delta-encode delivered positions | A representative trace shows material position-varint cost and specifies gap, reset, and non-contiguous-position handling. |
+
+Do not treat these candidates as correctness gaps.
+The current protocol remains the baseline until measurements justify the permanent state and recovery complexity.
+
 ## Current Measurements
 
 The refreshed [project overview](historical/PROJECT_OVERVIEW.md) and [retained dataset](historical/measurements/overview-refresh-20260923/README.md) are the source of truth for current numbers.

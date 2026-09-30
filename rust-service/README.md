@@ -39,8 +39,8 @@ Those are dated project records; the guides below describe the current code.
 [Sea at scale](SEA_AT_SCALE.md) proposes a multi-hop gateway and document-worker deployment, with Azure as one infrastructure example and a distinction between existing capabilities and new work.
 It is an architectural proposal, not a current deployment guarantee.
 
-The active [protocol simplification plan](NETWORK_PROTOCOL_PLAN.md) tracks initial metadata and framing changes and the required review of follow-up size optimizations.
-It describes planned work, not current protocol guarantees.
+The completed [protocol simplification plan](historical/NETWORK_PROTOCOL_PLAN.md) records the implemented metadata and framing changes.
+The [performance opportunities report](PERFORMANCE_OPPORTUNITIES_REPORT.md#evidence-gated-wire-size-opportunities) retains measurement triggers for possible follow-up size optimizations.
 
 The completed [session resource policy plan](SESSION_RESOURCE_POLICY_PLAN.md) places optional admission, pressure response, and reader shedding in service-owned session decorators rather than the sequencer.
 The server executable enables this policy by default, with an explicit opt-out; embedded hosts select decorators explicitly.

@@ -1,12 +1,13 @@
 # Sea Protocol Simplification Plan
 
 Created: 2026-09-22.
-Status: initial implementation, validation, and follow-up review complete.
+Archived: 2026-09-30.
+Status: initial implementation, validation, and follow-up review complete; no accepted implementation work remains.
 The former I6 formatting blocker is resolved; subsequent canonical checks and the required repository build passed for the state committed as `dba3ce11f58`.
-Numeric session identities are implemented in protocol 11; session-number reuse and stateful metadata reductions remain deferred below.
+Numeric session identities were implemented in protocol 11, and the current implementation uses protocol 12.
+Session-number reuse and stateful metadata reductions remain measurement-gated ideas, summarized in the current [performance opportunities report](../PERFORMANCE_OPPORTUNITIES_REPORT.md#evidence-gated-wire-size-opportunities).
 
-This is an active work tracker, not a description of supported behavior.
-Completing the initial changes does not complete this plan: return to the follow-up review before closing it.
+This is a historical implementation tracker, not a description of supported behavior or an active roadmap.
 
 ## Goals and Constraints
 
@@ -25,7 +26,7 @@ Previously admitted work may have committed; connection failure must not imply r
 ## Initial Changes
 
 Complete these as focused changes with local tests, then run the integration gates.
-Use the [coordination workflow](../.github/skills/rust-service-coordination/SKILL.md) when starting implementation to choose direct work or an explicitly approved iteration.
+Use the [coordination workflow](../../.github/skills/rust-service-coordination/SKILL.md) when starting implementation to choose direct work or an explicitly approved iteration.
 This plan does not itself create an iteration or authorize parallel workstreams.
 
 - [x] **I1: Remove Sea author identity.** Remove author fields and types from core abstractions, sequencer storage metadata, protocol, native and browser bindings, and package interfaces.
@@ -63,7 +64,7 @@ Keep them visible until each has an explicit disposition.
 
 ### Compact Session Identity
 
-[Independent checkpoint recovery](CHECKPOINT_PLAN.md) implemented sequencer-allocated `u64` identities with persisted reservations and no reuse.
+[Independent checkpoint recovery](../CHECKPOINT_PLAN.md) implemented sequencer-allocated `u64` identities with persisted reservations and no reuse.
 Protocol version 11 uses those numbers directly: IDs 1 through 127 occupy one postcard byte, 128 through 16383 occupy two, and larger IDs require up to ten.
 Restart skips the unused suffix of a reserved range, so encoded width depends on allocations and reservations, not just concurrent sessions.
 This completes compact numeric identity, but not F1's proposed reuse and incarnation-anchor design.
@@ -111,7 +112,7 @@ Reopen them only with evidence that the simpler design has a material remaining 
 ## Measurement and Validation
 
 Start with existing tests in the owning crates and extend them only for distinct behavioral risks.
-Use the [development requirements](DEVELOPMENT.md) as the authority for workspace checks, repository policy, generated-client builds, and regression coverage.
+Use the [development requirements](../DEVELOPMENT.md) as the authority for workspace checks, repository policy, generated-client builds, and regression coverage.
 Protocol changes require both native and browser transport coverage; preserve the WebSocket fallback and signal delivery contracts as well as event traffic.
 
 - [x] Record baseline and resulting encoded sizes for submit, receipt, delivery, and control messages using the actual encoder.
