@@ -185,8 +185,9 @@ stages:
           fetchTags: false
 
         - bash: |
-            git fetch --depth=1 origin $FF_SOURCE_VERSION
-            git checkout $FF_SOURCE_VERSION
+            set -eu -o pipefail
+            git fetch --depth=1 --no-tags origin "$FF_SOURCE_VERSION"
+            git checkout --detach FETCH_HEAD
           workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
           displayName: Switch FluidFramework checkout to artifact source version
           env:

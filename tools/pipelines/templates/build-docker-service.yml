@@ -231,8 +231,9 @@ extends:
           clean: true
           lfs: false
           submodules: false
-          fetchDepth: 1
-          fetchTags: false
+          # Build versions and publish metadata still depend on release tags.
+          fetchDepth: 0
+          fetchTags: true
 
         - task: Bash@3
           displayName: Parameters

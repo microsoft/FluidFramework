@@ -218,8 +218,13 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
-                fetchDepth: 1
-                fetchTags: false
+                # Only the bundle-size build skips tag-based version generation.
+                ${{ if eq(parameters.isBundleSizeArtifactsPipeline, true) }}:
+                  fetchDepth: 1
+                  fetchTags: false
+                ${{ else }}:
+                  fetchDepth: 0
+                  fetchTags: true
 
               - task: Bash@3
                 displayName: Parameters

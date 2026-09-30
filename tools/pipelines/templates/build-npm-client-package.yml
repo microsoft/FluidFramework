@@ -242,8 +242,13 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
-                fetchDepth: 1
-                fetchTags: false
+                # Version generation still needs tags even when publishing runs in a separate pipeline.
+                ${{ if eq(parameters.isBundleSizeArtifactsPipeline, true) }}:
+                  fetchDepth: 1
+                  fetchTags: false
+                ${{ else }}:
+                  fetchDepth: 0
+                  fetchTags: true
 
               - script: |
                   echo "commit sha: $(Build.SourceVersion)"
@@ -624,12 +629,14 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
-                fetchDepth: 1
-                fetchTags: false
+                # Keep coverage comparison on a complete checkout.
+                fetchDepth: 0
+                fetchTags: true
 
               - script: |
+                  set -eu -o pipefail
                   echo "commit: $(COMMIT_SHA)"
-                  git fetch origin $(COMMIT_SHA)
+                  git fetch --depth=1 --no-tags origin $(COMMIT_SHA)
                   git checkout $(COMMIT_SHA)
                 displayName: "Checkout build commit"
 

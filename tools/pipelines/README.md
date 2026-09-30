@@ -3,6 +3,25 @@
 Azure Pipelines definitions and shared [`templates/`](./templates) for building, testing, and
 releasing the Fluid Framework.
 
+## Checkout history and tags
+
+Use `fetchDepth: 1` and `fetchTags: false` only for jobs that need the checked-out files, not repository history or release tags.
+Disabling tag fetching is important: fetching tags can download history even with a shallow checkout.
+
+- Artifact-based client test jobs, real-service test jobs, telemetry uploads, policy checks, and performance tests can use shallow checkouts.
+  Any subsequent fetch of a test build's commit must also use `--depth=1 --no-tags`.
+- Stress-test change detection needs `fetchDepth: 2` because it runs `git diff HEAD~1`.
+  A failed diff must fail the job rather than silently skip tests.
+- The bundle-size artifact build skips version generation, so it can use a shallow checkout.
+- Other npm and Docker build jobs retain `fetchDepth: 0` and `fetchTags: true`.
+  Moving publishing to a separate pipeline does not remove the build's dependency on tags:
+  `flub generate buildVersion` checks for existing release tags and computes `isLatest`, which is passed to the publish pipeline in `publish-metadata.json`.
+- API-model deployment eligibility also requires release tags for `flub check latestVersions`.
+  Coverage comparison jobs retain a complete checkout as a conservative exception.
+
+Do not apply shallow-checkout settings globally or to publishing and website deployment jobs without checking their history and tag requirements.
+Full-history settings are explicit in version-generating jobs so pipeline UI defaults cannot silently make their checkouts shallow.
+
 ## Mirroring base container images for the server pipelines
 
 The `server-*` pipelines run on a 1ES build pool whose network isolation blocks egress to Docker

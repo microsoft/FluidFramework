@@ -113,8 +113,9 @@ stages:
           path: ${{ variables.FluidFrameworkDirectory }}
           submodules: false
           clean: true
-          fetchDepth: 1
-          fetchTags: false
+          # Deployment eligibility depends on the complete set of release tags.
+          fetchDepth: 0
+          fetchTags: true
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
@@ -259,8 +260,6 @@ stages:
         - checkout: self
           submodules: false
           clean: true
-          fetchDepth: 1
-          fetchTags: false
         - task: TriggerBuild@4
           condition: eq(variables['shouldDeploy'], 'true')
           inputs:
