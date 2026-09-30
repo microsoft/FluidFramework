@@ -380,6 +380,28 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("Views", () => {
+		for (const shared of [false, true]) {
+			for (const disposeCheckoutOnViewDispose of [undefined, false, true]) {
+				it(`disposes checkout according to view option ${disposeCheckoutOnViewDispose} (shared: ${shared})`, () => {
+					const provider = new TestTreeProviderLite(1);
+					const main = provider.trees[0].kernel.checkout;
+					const checkout = shared ? main : main.fork();
+					const config = new TreeViewConfiguration({ schema: StringArray });
+					const view = checkout.viewWithInternal(config, disposeCheckoutOnViewDispose);
+					view.initialize(["content"]);
+					view.dispose();
+
+					assert.equal(checkout.disposed, disposeCheckoutOnViewDispose ?? !shared);
+					if (!checkout.disposed) {
+						const replacement = checkout.viewWithInternal(config, false);
+						assert.deepEqual([...replacement.root], ["content"]);
+						replacement.dispose();
+						checkout.dispose();
+					}
+				});
+			}
+		}
+
 		itView(
 			"can fork and apply edits without affecting the parent",
 			({ view: parentView, tree: parentTree }) => {

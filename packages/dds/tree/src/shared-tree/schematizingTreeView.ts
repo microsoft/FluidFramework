@@ -167,10 +167,27 @@ export class SchematizingSimpleTreeView<
 	public readonly breaker: Breakable;
 
 	public constructor(
+		/**
+		 * The checkout that supplies the tree content and branch operations for the view.
+		 */
 		public readonly checkout: TreeCheckout,
+		/**
+		 * The schema and behavior configuration for the view.
+		 */
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
+		/**
+		 * The manager that generates and stabilizes node identifiers.
+		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
+		/**
+		 * An optional callback to invoke when the view is disposed.
+		 */
 		private readonly onDispose?: () => void,
+		/**
+		 * Whether disposing the view also disposes its checkout.
+		 * Defaults to true for checkouts that are not shared branches.
+		 */
+		private readonly disposeCheckoutOnDispose: boolean = !checkout.isSharedBranch,
 	) {
 		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
@@ -564,8 +581,8 @@ export class SchematizingSimpleTreeView<
 		this.currentCompatibility = undefined;
 		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
-		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
-			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
+			// Branch views normally own their checkout, unlike views created for a retained checkout.
 			this.checkout.dispose();
 		}
 	}
