@@ -121,6 +121,11 @@ flowchart LR
 The Guest keeps a copy of the Host main branch and a separate branch for Guest edits.
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
+[GuestSynchronization](./guestSynchronization.ts) owns the hidden Host branch and the child ID space shard.
+It applies parent ID progress and finalized ranges before dependent Host branch changes.
+The [Guest](./guest.ts) owns the port, message routing, and close handshake.
+GuestSynchronization creates and updates the authoring view and disposes it during orderly close.
+After a failure, the view remains available for inspection until the application disposes the Guest.
 
 The Host preserves the Guest's authoring state in its local branch.
 It applies Guest changes there and merges them into main without rebasing the local branch itself.
@@ -266,6 +271,22 @@ The application owns teardown and recreation of the Host/Guest pair and sandbox.
 Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
 Recovery uses fresh session objects, not reset breakers.
 
+For an orderly close, call `Guest.close()`.
+GuestSynchronization stops new Guest edits, then disposes the authoring view to prevent further ID creation.
+GuestSynchronization waits for earlier Guest changes to be acknowledged, then disposes its child ID space shard and gives the disposal token to the Guest, which sends `guestClose`.
+The Host has processed those changes before it receives this message because Guest-to-Host delivery is ordered.
+The Host verifies the token, reclaims the shard, sends `guestCloseAck`, and disposes its session branches.
+The Guest then releases GuestSynchronization's hidden Host branch and resolves the close promise.
+An outstanding Host update can be discarded during close; the application-owned main view remains available.
+
+Synchronous `Guest.dispose()` aborts the session without requesting ID space reclamation.
+If the port fails, the application can call it to reject a pending close promise.
+After a failure before orderly close, Guest leaves the authoring view available for inspection until the application calls `Guest.dispose()`.
+Guest currently disposes the view during cleanup, but a future implementation could save or stash unsaved changes first.
+The Host does not reclaim an ID space shard without a valid close token, because the Guest might still create IDs.
+Each unreclaimed shard increases the root compressor's allocation stride; after enough replacement sessions, the compressor cannot create another shard.
+The application must stop and fence an old Guest before it can safely reclaim that shard.
+
 The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
 
 ### Test Coverage
@@ -325,8 +346,8 @@ The Guest now receives a serialized child ID space shard, while the Host keeps i
 Guest changes include a token that synchronizes their newly generated IDs to the Host before the tree codec decodes them.
 Host updates carry progress that lets the Guest interpret new Host IDs before decoding commits.
 The Host forwards finalized creation ranges to the Guest before dependent updates.
-Complete cross-realm tests and lifecycle coordination before relying on this for production use.
-Coordinate ID space shard disposal and reclamation with session teardown.
+The orderly close protocol reclaims a stopped Guest's ID space shard.
+Complete cross-realm tests and failure coordination when the port cannot notify the peer before relying on this for production use.
 
 ID space sharding support was added in https://github.com/microsoft/FluidFramework/pull/27559.
 

@@ -38,6 +38,7 @@ import { brand } from "../../../util/index.js";
 import {
 	type BlobRequestMessage,
 	type BlobResponseMessage,
+	type GuestCloseMessage,
 	type HostGuestMessage,
 	type HostIdRangeId,
 	type HostInitializationMessage,
@@ -106,6 +107,10 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					this.synchronization.receiveUpdateAck(message);
 					break;
 				}
+				case "guestClose": {
+					this.receiveGuestClose(message);
+					break;
+				}
 				case "blobRequest": {
 					this.receiveBlobRequest(message).catch((error: unknown) => {
 						this.session.fail(error);
@@ -116,7 +121,8 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				case "hostIdRange":
 				case "hostUpdate":
 				case "hostInitialization":
-				case "guestChangeAck": {
+				case "guestChangeAck":
+				case "guestCloseAck": {
 					throw new SandboxProtocolError(
 						`Host received a message with type ${JSON.stringify(message.type)}.`,
 					);
@@ -275,6 +281,34 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		// Only the child created for this Host session may advance its root compressor.
 		this.idCompressor.synchronizeWithShard(token);
 		this.guestIdSpaceShardToken = token;
+	}
+
+	/**
+	 * Reclaims an ID space shard after the Guest stops creating IDs.
+	 *
+	 * @remarks
+	 * The Guest sends this message after its earlier changes have been acknowledged.
+	 * Delivery order ensures that the Host has processed those changes before this token.
+	 * The Host checks that the token belongs to this session and has no less progress
+	 * than the last accepted Guest change. Only then does it reclaim the shard, confirm
+	 * the close, and dispose its session resources. The application's main view remains.
+	 *
+	 * @param message - The stopped Guest's disposal token.
+	 * @throws {@link SandboxProtocolError} if the token does not belong to this session or is stale.
+	 */
+	private receiveGuestClose(message: GuestCloseMessage): void {
+		const previous = this.guestIdSpaceShardToken;
+		const token = message.idSpaceShardToken;
+		if (token.shardId !== previous?.shardId) {
+			throw new SandboxProtocolError("Guest close token does not belong to this session.");
+		}
+		if (token.localGenCount < previous.localGenCount) {
+			throw new SandboxProtocolError("Guest close token has stale ID progress.");
+		}
+		// Guest messages arrive in order, so every earlier change has been processed.
+		this.idCompressor.synchronizeWithShard(token);
+		this.postMessage({ type: "guestCloseAck" });
+		this.dispose();
 	}
 
 	/**

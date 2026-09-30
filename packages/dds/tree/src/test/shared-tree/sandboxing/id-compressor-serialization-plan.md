@@ -103,10 +103,10 @@ The completed compatibility tests characterize today's behavior; they do not imp
 
 ### Session lifecycle
 
-- [ ] Define an orderly close path that stops Guest ID generation, disposes its hidden Host branch and authoring view, and sends an ID space shard disposal token after outstanding changes.
-- [ ] Synchronize the disposal token on the Host only after those changes are processed; acknowledge reclamation if the application needs confirmation.
-- [ ] On transport loss, do not reclaim an ID space shard until the Guest is known to be stopped; document or bound the cost of unreclaimed replacement sessions.
-- [ ] Test normal disposal, failure, and application-managed Guest replacement with messages in flight
+- [x] Define an orderly close path that stops Guest ID generation, disposes its authoring view, and sends an ID space shard disposal token after outstanding changes; release its hidden Host branch after close acknowledgment.
+- [x] Synchronize the disposal token on the Host only after earlier Guest changes are processed, then acknowledge reclamation.
+- [x] On transport loss, leave the ID space shard reserved; document the cost of repeated unreclaimed replacement sessions.
+- [x] Test orderly close, abortive disposal, lost connections, and application-managed Guest replacement with messages in flight.
 
 ### End-to-end verification and documentation
 
@@ -175,16 +175,21 @@ Use the failures to specify the smallest safe parent-to-child compressor API.
 
 ### 4. Close and recreate sessions safely
 
-On orderly Guest shutdown, stop sending edits, dispose both its hidden Host branch and its authoring view, and call `disposeShard()` on the ID space shard only when no retained Guest reference can generate more IDs.
-Send the disposal token after outstanding Guest changes.
-Once the Host has processed those changes, it synchronizes the disposal token and can reclaim the ID space shard's allocation space.
-An orderly close may need an asynchronous handshake: the current synchronous `Guest.dispose()` closes the port, so it cannot by itself send and confirm a final token.
-Define a close acknowledgment if the application needs confirmation that reclamation completed.
+`Guest.close()` asks GuestSynchronization to stop listening for new edits and dispose the authoring view immediately.
+GuestSynchronization waits for previously sent Guest changes to be acknowledged, then disposes its child ID space shard and returns a disposal token.
+The Guest sends that token in `guestClose`.
+The Host checks shard ownership and progress; same-direction message order ensures earlier Guest changes were processed.
+It reclaims the shard, sends `guestCloseAck`, and disposes its session resources without disposing the application's main view.
+The Guest resolves the close promise and disposes its hidden Host branch after it receives the acknowledgment.
+Host updates received while the Guest is closing are ignored because its authoring view is disposed; the Host releases outstanding updates when it closes.
+On failure before orderly close, GuestSynchronization leaves the view available for inspection.
+Guest disposes it during application-managed cleanup; a future cleanup path could save or stash unsaved changes first.
 
-On transport loss or uncertain Guest termination, do **not** reclaim its ID space shard while it might still generate IDs.
-Report the failure and use application-level termination or fencing before reclamation.
-Document and bound the cost of unreclaimed sessions: repeated ID space sharding increases the allocation stride and has a limit.
-Keep the existing rule that disposing the Host does not dispose the application's main view.
+Synchronous `Guest.dispose()` remains an abort: it closes the port without sending a disposal token.
+On transport loss or uncertain Guest termination, the Host leaves the ID space shard reserved rather than risk duplicate IDs.
+The application can reject a pending close by disposing the Guest.
+Repeated unreclaimed sessions increase the root compressor's allocation stride; eventually `shard(1)` reaches the library's stride limit and cannot create another Guest.
+The application must stop and fence an old Guest before it can safely reclaim that ID space.
 
 ## Completion criterion
 

@@ -5,7 +5,10 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
+import type {
+	IIdCompressorCore,
+	ShardSynchronizationToken,
+} from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ChangeMetadata, GraphCommit, RevisionTag } from "../../../core/index.js";
@@ -32,24 +35,83 @@ import type { GuestBranchInitialization } from "./hostSynchronization.js";
 import { applyBranchUpdate, getBranch } from "./synchronizationUtils.js";
 
 /**
+ * The Guest synchronization lifecycle.
+ *
+ * @remarks
+ * For an orderly close, the owning Guest moves synchronization from active to closing.
+ * After the Host acknowledges the disposal token, the Guest moves it to closed
+ * and then disposed.
+ *
+ * On protocol failure, the session moves synchronization from active or closing
+ * to closed. The application must dispose the Guest to release both views.
+ *
+ * An application abort calls `Guest.dispose()`, which moves synchronization to
+ * closed and then disposed without waiting for a close acknowledgment.
+ */
+enum GuestSynchronizationState {
+	/**
+	 * Accepts new Guest edits and processes synchronization messages.
+	 */
+	Active = "active",
+	/**
+	 * The edit listener is removed, but earlier Guest changes can still be acknowledged.
+	 * @remarks
+	 * Orderly close disposes the authoring view before the child ID space shard.
+	 */
+	Closing = "closing",
+	/**
+	 * Synchronization is terminal. The owner no longer routes messages, and any pending changes have been rejected.
+	 * The hidden Host branch remains until disposal.
+	 * If a failure occurs before orderly close, the authoring view remains available
+	 * for inspection if it is still usable.
+	 */
+	Closed = "closed",
+	/**
+	 * The hidden Host branch has been released.
+	 * @remarks
+	 * The Guest releases the authoring view during cleanup if orderly close did not release it.
+	 */
+	Disposed = "disposed",
+}
+
+/**
  * Synchronizes the Guest's view with the Host.
  * @remarks
- * This class owns branch synchronization only.
+ * This class owns the hidden Host branch, the child ID space shard, and synchronization.
  * The `Guest` owns initialization, transport encoding, message routing, and session lifetime.
  *
  * The hidden {@link host} branch reconstructs the Host's main branch from ordered updates.
  * The public {@link view} branch contains Guest-authored commits on top of the last received Host state.
  * Each Host update replaces a suffix of {@link host}, after which {@link view} rebases its local commits
  * onto the updated Host head.
+ *
+ * The owning {@link Guest} calls {@link close} for an orderly close.
+ * This class stops new edits and disposes the authoring view before it can dispose
+ * the child ID space shard. It waits for earlier Guest changes to be acknowledged
+ * before it disposes the shard and returns its disposal token.
+ * When the Host confirms reclamation, the Guest disposes its session, which calls
+ * {@link closeForError} and then {@link dispose}.
+ *
+ * On protocol failure, the session calls {@link closeForError} from active or closing.
+ * This does not dispose the authoring view, so the application can inspect it if
+ * orderly close has not already disposed it and the view is still usable.
+ * The edit listener is removed, but retained references can still edit the view.
+ * The application must not make further edits after a failure.
+ * The application must then dispose the Guest to release both views.
+ * This failure path does not request shard reclamation.
+ *
+ * On application abort, `Guest.dispose()` calls both methods without an orderly close.
+ *
+ * @typeParam TSchema - The schema of the synchronized tree.
  */
 export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	/**
 	 * The Guest's authoring view, rebased over updates applied to {@link host}.
+	 *
 	 * @remarks
-	 * While this creates the view and keeps it up to date, it does not own the view: it is owned by the {@link Guest}.
-	 * Thus its possible to use the view after syncing has stopped, for example to view or stash unsaved changes.
-	 * The guest currently does not use this ability for anything, but it makes sense to allow it from the perspective of
-	 * GuestSynchronization.
+	 * This class creates and updates the view and disposes it during orderly close.
+	 * On failure before orderly close, this class leaves the view available
+	 * for inspection until the Guest disposes it during cleanup.
 	 */
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** Guest changes sent to the Host that have not been acknowledged. */
@@ -77,23 +139,19 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private lastParentGenerationCount = -1;
 	/** The callback that unsubscribes from authoring-view changes. */
 	private readonly offViewChanged: () => void;
+
 	/**
-	 * Whether synchronization has stopped.
-	 *
-	 * @remarks
-	 * Stopping is terminal and removes the view-change listener.
-	 * An idle session with no pending changes is not stopped.
+	 * The current synchronization state.
+	 * An idle session stays active until close or failure begins.
 	 */
-	private stopped = false;
-	/** Whether the hidden Host branch has been disposed. */
-	private disposed = false;
+	private state = GuestSynchronizationState.Active;
 
 	public constructor(
-		/** The Guest's initial copy of the Host main branch. */
+		/** The Guest's initial copy of the Host main branch. This class owns and disposes it. */
 		public readonly host: TreeViewAlpha<TSchema>,
 		/** The revisions and commits needed to initialize the Host branch. */
 		initialization: GuestBranchInitialization,
-		/** The independent child compressor used by both Guest views. */
+		/** The independent child compressor owned by this class and used by both Guest views. */
 		private readonly idCompressor: IIdCompressorCore,
 		/** Sends a synchronization protocol message to the Host. */
 		private readonly send: (message: GuestChangeMessage | HostUpdateAckMessage) => void,
@@ -120,7 +178,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 				}
 				const change = metadata.getChange();
 
-				// Encode first: the change codec may mint IDs that the Host must learn before decoding.
+				// getChange() serializes the change and can mint IDs; read progress afterward.
 				const idSpaceShardToken = this.idCompressor.getShardSyncToken();
 				assert(idSpaceShardToken !== undefined, "Guest edits require a child ID space shard");
 
@@ -147,6 +205,12 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	/**
 	 * Applies a Host branch transition and rebases Guest-local commits over it.
+	 *
+	 * @remarks
+	 * Parent ID progress is applied before the Guest reads IDs in the Host update.
+	 * The Guest routes these updates only while synchronization is active.
+	 *
+	 * @param message - The Host update and its parent ID progress.
 	 */
 	public receiveHostUpdate(message: HostUpdateMessage): void {
 		if (message.updateId !== this.nextHostUpdateId) {
@@ -260,7 +324,13 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		}
 	}
 
-	/** Processes the Host's acknowledgment of a Guest change. */
+	/**
+	 * Processes an acknowledgment for a Guest change.
+	 * Acknowledgments remain necessary while closing so the Guest can finish sending
+	 * earlier changes before it sends its disposal token.
+	 *
+	 * @param message - The Guest change acknowledgment.
+	 */
 	public receiveChangeAck(message: GuestChangeAckMessage): void {
 		if (!this.pendingChanges.delete(message.changeId)) {
 			throw new SandboxProtocolError("Unexpected Guest change acknowledgment.");
@@ -275,19 +345,77 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	/**
-	 * Returns a promise that resolves when the Host acknowledges all Guest changes.
+	 * Returns a promise that resolves when the Host acknowledges all pending Guest changes,
+	 * or undefined if there are no pending changes.
+	 * Pending promises reject if the session stops before acknowledgment.
 	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		return this.pushInProgress?.promise;
 	}
 
-	/** Stops synchronization and rejects pending work. */
-	public stop(error: Error): void {
-		if (this.stopped) {
+	/**
+	 * Stops new Guest edits and returns a disposal token after earlier changes are acknowledged.
+	 *
+	 * @remarks
+	 * This moves synchronization from active to closing, not to closed.
+	 * It removes the edit listener, then disposes the authoring view so retained
+	 * authoring references cannot create IDs after the child ID space shard is disposed.
+	 * Acknowledgments for changes already sent can still arrive. After they arrive,
+	 * this class disposes the child ID space shard and returns its disposal token.
+	 * A repeated call fails without disposing the view or child ID space shard again.
+	 *
+	 * @returns A promise for the final ID space shard disposal token.
+	 */
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- The view must be disposed synchronously before returning the token promise.
+	public close(): Promise<ShardSynchronizationToken> {
+		assert(
+			this.state === GuestSynchronizationState.Active,
+			"Cannot close Guest synchronization after closing has begun",
+		);
+		this.state = GuestSynchronizationState.Closing;
+		this.offViewChanged();
+
+		const pending = this.pushInProgress?.promise;
+		this.view.dispose();
+		return Promise.resolve(pending).then(() => {
+			if (this.state !== GuestSynchronizationState.Closing) {
+				throw new Error(
+					"Guest synchronization closed before its ID space shard could be disposed.",
+				);
+			}
+			const token = this.idCompressor.disposeShard();
+			assert(token !== undefined, "Expected an ID space shard disposal token");
+			return token;
+		});
+	}
+
+	/**
+	 * Moves synchronization from active or closing to closed.
+	 *
+	 * @remarks
+	 * The owning session calls this on failure, abort, or final Guest disposal after
+	 * an orderly close. It removes the edit listener if necessary and rejects any
+	 * pending Guest changes. It does not release the hidden Host branch, dispose the
+	 * authoring view, or reclaim the ID space shard.
+	 * After a failure, the application can inspect the view if it
+	 * is still usable and orderly close has not already disposed it.
+	 * After an orderly close, no changes remain to reject.
+	 * Repeated calls have no effect.
+	 *
+	 * @param error - The reason pending Guest changes cannot complete.
+	 */
+	public closeForError(error: Error): void {
+		if (
+			this.state === GuestSynchronizationState.Closed ||
+			this.state === GuestSynchronizationState.Disposed
+		) {
 			return;
 		}
-		this.stopped = true;
-		this.offViewChanged();
+		if (this.state === GuestSynchronizationState.Active) {
+			this.state = GuestSynchronizationState.Closing;
+			this.offViewChanged();
+		}
+		this.state = GuestSynchronizationState.Closed;
 		this.pendingChanges.clear();
 		this.pushInProgress?.rejecter(error);
 		this.pushInProgress = undefined;
@@ -297,17 +425,23 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * Stops synchronization and releases the hidden Host branch.
 	 *
 	 * @remarks
-	 * Disposal is terminal and idempotent.
-	 *
-	 * This stops syncing the view with the host,
-	 * but does not dispose the view itself (Which is owned by the {@link Guest}).
+	 * The Guest calls this when it disposes its session, after a successful close,
+	 * an abort, or application-managed failure cleanup.
+	 * It calls {@link closeForError} to stop active or closing synchronization,
+	 * then releases the hidden {@link host} branch. It does not dispose the authoring
+	 * {@link view}; the Guest does that during failure or abort cleanup.
+	 * On abort or failure, it does not dispose the ID space shard.
+	 * Only orderly close produces a token that lets the Host safely reclaim it.
+	 * Repeated calls have no effect.
 	 */
 	public dispose(): void {
-		if (this.disposed) {
+		if (this.state === GuestSynchronizationState.Disposed) {
 			return;
 		}
-		this.stop(new Error("Guest synchronization disposed before synchronization completed."));
-		this.disposed = true;
+		this.closeForError(
+			new Error("Guest synchronization disposed before synchronization completed."),
+		);
+		this.state = GuestSynchronizationState.Disposed;
 		this.host.dispose();
 	}
 

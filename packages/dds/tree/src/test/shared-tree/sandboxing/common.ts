@@ -320,7 +320,7 @@ const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
  * A change does not close the Guest session. The Guest can create more IDs after it sends the change.
  * Therefore, this schema requires `disposed: false`.
  * A disposal token would let the Host reclaim the Guest's ID space shard.
- * The Guest must first stop creating IDs. A separate close protocol is still needed for this step.
+ * The Guest must first stop creating IDs. The separate `guestClose` message carries that token.
  */
 const GuestIdSpaceShardToken = Type.Unsafe<ShardSynchronizationToken>(
 	Type.Object(
@@ -332,6 +332,22 @@ const GuestIdSpaceShardToken = Type.Unsafe<ShardSynchronizationToken>(
 				multipleOf: 1,
 			}),
 			disposed: Type.Literal(false),
+		},
+		{ additionalProperties: false },
+	),
+);
+
+/** A final child token sent only after the Guest stops creating IDs. */
+const DisposedGuestIdSpaceShardToken = Type.Unsafe<ShardSynchronizationToken>(
+	Type.Object(
+		{
+			shardId: IdSpaceShardSessionId,
+			localGenCount: Type.Number({
+				minimum: 0,
+				maximum: Number.MAX_SAFE_INTEGER,
+				multipleOf: 1,
+			}),
+			disposed: Type.Literal(true),
 		},
 		{ additionalProperties: false },
 	),
@@ -502,6 +518,26 @@ const GuestChangeAckMessage = Type.Object(
 );
 
 /**
+ * Requests orderly session close after all earlier Guest changes have been sent.
+ * The token lets the Host reclaim the stopped Guest's ID space shard.
+ */
+export type GuestCloseMessage = Static<typeof GuestCloseMessage>;
+const GuestCloseMessage = Type.Object(
+	{
+		type: Type.Literal("guestClose"),
+		idSpaceShardToken: DisposedGuestIdSpaceShardToken,
+	},
+	{ additionalProperties: false },
+);
+
+/** Confirms that the Host reclaimed the Guest's ID space shard. */
+export type GuestCloseAckMessage = Static<typeof GuestCloseAckMessage>;
+const GuestCloseAckMessage = Type.Object(
+	{ type: Type.Literal("guestCloseAck") },
+	{ additionalProperties: false },
+);
+
+/**
  * A message that the Host and the Guest can send through their shared protocol.
  */
 export type HostGuestMessage =
@@ -511,6 +547,8 @@ export type HostGuestMessage =
 	| HostUpdateAckMessage
 	| GuestChangeMessage
 	| GuestChangeAckMessage
+	| GuestCloseMessage
+	| GuestCloseAckMessage
 	| BlobRequestMessage
 	| BlobResponseMessage
 	| SessionFailureMessage;
@@ -583,6 +621,8 @@ const hostIdRangeValidator = validator.compile(HostIdRangeMessage);
 const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
 const guestChangeValidator = validator.compile(GuestChangeMessage);
 const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
+const guestCloseValidator = validator.compile(GuestCloseMessage);
+const guestCloseAckValidator = validator.compile(GuestCloseAckMessage);
 
 /**
  * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
@@ -638,6 +678,12 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	}
 
 	if (data.type === "guestChangeAck" && guestChangeAckValidator.check(data)) {
+		return data;
+	}
+	if (data.type === "guestClose" && guestCloseValidator.check(data)) {
+		return data;
+	}
+	if (data.type === "guestCloseAck" && guestCloseAckValidator.check(data)) {
 		return data;
 	}
 

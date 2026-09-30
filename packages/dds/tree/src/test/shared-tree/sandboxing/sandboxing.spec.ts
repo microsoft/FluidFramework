@@ -121,6 +121,27 @@ function getCheckoutIdCompressor(checkout: ReturnType<typeof getCheckout>): IIdC
 	return checkout["idCompressor"];
 }
 
+/**
+ * Waits for a particular protocol message on an isolated test port.
+ * Unrelated messages remain available to other listeners.
+ */
+async function nextProtocolMessage(
+	port: MessagePort,
+	type: HostGuestMessage["type"],
+): Promise<HostGuestMessage> {
+	return new Promise((resolve) => {
+		const onMessage = (event: MessageEvent<unknown>): void => {
+			const message = parseHostGuestMessage(normalizeTransportData(event.data));
+			if (message.type === type) {
+				port.removeEventListener("message", onMessage);
+				resolve(message);
+			}
+		};
+		port.addEventListener("message", onMessage);
+		port.start();
+	});
+}
+
 describe("Host and Guest message protocol", () => {
 	it("accepts initialization, branch updates, Guest changes, and acknowledgments", () => {
 		const messages = [
@@ -167,6 +188,11 @@ describe("Host and Guest message protocol", () => {
 			},
 			{ type: "hostUpdateAck", updateId: 0 },
 			{ type: "guestChangeAck", changeId: 0 },
+			{
+				type: "guestClose",
+				idSpaceShardToken: { ...createTestIdSpaceShardToken(), disposed: true },
+			},
+			{ type: "guestCloseAck" },
 		];
 
 		for (const message of messages) {
@@ -258,6 +284,12 @@ describe("Host and Guest message protocol", () => {
 				range: { sessionId: createSessionId(), ids: { firstGenCount: 0 } },
 			},
 			{ type: "guestChangeAck" },
+			// The Host needs a disposal token to reclaim the Guest's ID space shard.
+			{ type: "guestClose" },
+			// A change token does not authorize reclaiming an active child ID space shard.
+			{ type: "guestClose", idSpaceShardToken: createTestIdSpaceShardToken() },
+			// The close acknowledgment has no fields beyond its message type.
+			{ type: "guestCloseAck", extra: true },
 			{ type: "sessionFailure" },
 			{ type: "sessionFailure", error: 0 },
 			{ type: "sessionFailure", error: "failure", extra: true },
@@ -810,6 +842,217 @@ describe("Host and Guest correctness", () => {
 			channel.port2.close();
 			main.dispose();
 		}
+	});
+
+	it("reclaims an ID space shard on orderly close and permits a replacement session", async () => {
+		const { host, guest, provider, peer } = await setup(["initial"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const retainedRoot = guest.view.root;
+		guest.view.root.push("guest");
+		const closing = guest.close();
+		assert.equal(guest.close(), closing);
+		await closing;
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+		assert.equal(root.getShardSyncToken(), undefined);
+		assert.throws(() => guest.view.root.push("after close"), /disposed|invalid state/i);
+		assert.throws(
+			() => retainedRoot.push("after close"),
+			/deleted node|disposed|invalid state/i,
+		);
+		host.main.root.push("host");
+		provider.synchronizeMessages();
+		assert.deepEqual([...peer.root], ["initial", "guest", "host"]);
+
+		const ports = buildDirectSessionPorts();
+		const replacementHost = new Host({
+			main: host.main,
+			port: ports.hostPort,
+			bindingHandle: provider.trees[1].handle,
+			idCompressor: root,
+			logger: createChildLogger({ namespace: "Host" }),
+		});
+		const replacementGuest = await createGuestForHost(stringArrayConfig, ports.guestPort);
+		try {
+			replacementGuest.view.root.push("replacement");
+			await replacementGuest.updateHostPromise;
+			assert.deepEqual(
+				[...replacementHost.main.root],
+				["initial", "guest", "host", "replacement"],
+			);
+			await replacementGuest.close();
+			assert.equal(root.getShardSyncToken(), undefined);
+		} finally {
+			replacementGuest.dispose();
+			replacementHost.dispose();
+			ports.dispose();
+		}
+	});
+
+	it("keeps the Host ID space shard reserved if the Guest disposes without closing", async () => {
+		const { host, guest, provider } = await setup(["initial"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guest.view)));
+		const token = child.getShardSyncToken();
+		assert(token !== undefined, "Expected a child ID space shard token");
+		guest.dispose();
+		host.dispose();
+		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		host.main.root.push("retained");
+		assert.deepEqual([...host.main.root], ["initial", "retained"]);
+	});
+
+	it("waits for an in-flight Guest change before sending the disposal token", async () => {
+		const { host, guest, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guest.view)));
+		const token =
+			child.getShardSyncToken() ?? assert.fail("Expected a Guest ID space shard token");
+		const sentChange = nextProtocolMessage(interop.sendToGuest, "guestChange");
+		guest.view.root.push("pending");
+		const change = await sentChange;
+		const sentClose = nextProtocolMessage(interop.sendToGuest, "guestClose");
+		const closing = guest.close();
+		assert.throws(() => guest.view.root.push("after close"), /disposed|invalid state/i);
+		assert.doesNotThrow(() => root.getChildShardProgress(token));
+
+		const changeAck = nextProtocolMessage(interop.sendToHost, "guestChangeAck");
+		interop.sendToHost.postMessage(change);
+		interop.sendToGuest.postMessage(await changeAck);
+		const close = await sentClose;
+		assert.equal(close.type, "guestClose");
+		const closeAck = nextProtocolMessage(interop.sendToHost, "guestCloseAck");
+		interop.sendToHost.postMessage(close);
+		interop.sendToGuest.postMessage(await closeAck);
+		await closing;
+		assert.deepEqual([...host.main.root], ["initial", "pending"]);
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("closes while a Host update is in flight without losing the main-tree edit", async () => {
+		const { host, guest, peer, provider } = await setup(["initial"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		host.main.root.push("host");
+		const update = host.updateGuestPromise ?? assert.fail("Expected a pending Host update");
+		const updateRejected = assert.rejects(update, /disposed before synchronization completed/);
+		await guest.close();
+		await updateRejected;
+		assert.deepEqual([...host.main.root], ["initial", "host"]);
+		provider.synchronizeMessages();
+		assert.deepEqual([...peer.root], ["initial", "host"]);
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("does not reclaim an ID space shard when the connection is lost", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, guest, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guest.view)));
+		const token = child.getShardSyncToken() ?? assert.fail("Expected an ID space shard token");
+		const closing = assert.rejects(guest.close(), /disposed before synchronization completed/);
+		ports.guestPort.close();
+		guest.dispose();
+		await closing;
+		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		host.dispose();
+		host.main.root.push("still usable");
+		assert.deepEqual([...host.main.root], ["initial", "still usable"]);
+
+		const replacementPorts = buildDirectSessionPorts();
+		const replacementHost = new Host({
+			main: host.main,
+			port: replacementPorts.hostPort,
+			bindingHandle: provider.trees[1].handle,
+			idCompressor: root,
+			logger: createChildLogger({ namespace: "Host" }),
+		});
+		const replacementGuest = await createGuestForHost(
+			stringArrayConfig,
+			replacementPorts.guestPort,
+		);
+		try {
+			replacementGuest.view.root.push("replacement");
+			await replacementGuest.updateHostPromise;
+			assert.deepEqual([...host.main.root], ["initial", "still usable", "replacement"]);
+			await replacementGuest.close();
+			// The new shard was reclaimed, but the lost Guest's shard remains reserved.
+			assert.doesNotThrow(() => root.getChildShardProgress(token));
+		} finally {
+			replacementGuest.dispose();
+			replacementHost.dispose();
+			replacementPorts.dispose();
+		}
+	});
+
+	it("rejects a close token for another ID space shard without reclaiming this one", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, guest, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guest.view)));
+		const token = child.getShardSyncToken() ?? assert.fail("Expected an ID space shard token");
+		interop.sendToHost.postMessage({
+			type: "guestClose",
+			idSpaceShardToken: { ...createTestIdSpaceShardToken(), disposed: true },
+		});
+		await reported.promise;
+		assert(host.error?.cause instanceof SandboxProtocolError);
+		assert.match(host.error.cause.message, /close token does not belong/);
+		assert.doesNotThrow(() => root.getChildShardProgress(token));
+	});
+
+	it("rejects a close acknowledgment when the Guest is not closing", async () => {
+		const reported = makePromiseWithResolvers();
+		const { guest, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		interop.sendToGuest.postMessage({ type: "guestCloseAck" });
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Unexpected Guest close acknowledgment/);
+		assert.deepEqual([...guest.view.root], ["initial"]);
+		guest.dispose();
+		assert.throws(() => guest.view.root, /disposed|invalid state/i);
+	});
+
+	it("rejects a close acknowledgment before the disposal token is sent", async () => {
+		const reported = makePromiseWithResolvers();
+		const { guest, host, provider, interop } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guest.view)));
+		const token = child.getShardSyncToken() ?? assert.fail("Expected an ID space shard token");
+		guest.view.root.push("pending");
+		const closing = assert.rejects(guest.close(), /recreate the Host and Guest/);
+		interop.sendToGuest.postMessage({ type: "guestCloseAck" });
+		await reported.promise;
+		await closing;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Unexpected Guest close acknowledgment/);
+		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		assert.equal(host.error, undefined);
 	});
 
 	// The Host and Guest are intended to support being run in separate JavaScript realms.
@@ -1808,13 +2051,52 @@ describe("Host and Guest correctness", () => {
 			assert.deepEqual(sent, [{ type: "hostUpdateAck", updateId: 0 }]);
 			assert.deepEqual([...synchronization.view.root], ["a"]);
 		} finally {
-			synchronization.stop(new Error("Test complete"));
-			synchronization.view.dispose();
+			synchronization.closeForError(new Error("Test complete"));
 			synchronization.dispose();
+			assert.deepEqual([...synchronization.view.root], ["a"]);
+			synchronization.view.dispose();
+			assert.throws(() => synchronization.view.root, /disposed|invalid state/i);
 			root.synchronizeWithShard(
 				child.disposeShard() ?? assert.fail("Expected a child disposal token"),
 			);
 		}
+	});
+
+	it("disposes the authoring view once on orderly close", async () => {
+		const { host, provider } = await setup(["a"]);
+		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
+		const [serializedChild] = root.shard(1);
+		assert(serializedChild !== undefined, "Expected a child ID space shard");
+		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
+		const revision = getBranch(host.main).getHead().revision;
+		const synchronization = new GuestSynchronization(
+			host.main.fork(),
+			{
+				baseRevision: revision,
+				mainRevision: revision,
+				trunkRevision: revision,
+				commits: [],
+			},
+			child,
+			() => assert.fail("No branch messages expected"),
+			(action) => action(),
+			(error) => assert.fail(String(error)),
+			createChildLogger({ namespace: "Guest" }),
+		);
+		const closing = synchronization.close();
+		assert.throws(() => {
+			synchronization.close();
+		}, /Cannot close Guest synchronization after closing has begun/);
+		assert.throws(() => synchronization.view.root, /disposed|invalid state/i);
+		const token = await closing;
+		assert.equal(token.disposed, true);
+		assert.throws(() => {
+			synchronization.close();
+		}, /Cannot close Guest synchronization after closing has begun/);
+		assert.deepEqual([...synchronization.host.root], ["a"]);
+		synchronization.dispose();
+		assert.throws(() => synchronization.host.root, /disposed|invalid state/i);
+		root.synchronizeWithShard(token);
 	});
 
 	for (const [trimHistory, concurrentPeerEdit] of [

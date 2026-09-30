@@ -9,6 +9,7 @@ import {
 	deserializeIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecOptions } from "../../../codec/index.js";
 import {
@@ -52,6 +53,14 @@ export interface GuestOptions<TSchema extends ImplicitFieldSchema>
 /**
  * An independent TreeView synchronized with a Host through a message protocol.
  *
+ * @remarks
+ * The Guest owns the port, protocol routing, and session lifetime.
+ * During initialization it passes the child ID space shard to {@link GuestSynchronization},
+ * which owns the shard, hidden Host branch, and synchronization.
+ * GuestSynchronization disposes the authoring view during orderly close.
+ * On failure before orderly close, the view remains available for inspection
+ * if it is still usable, until application-managed cleanup.
+ *
  * @typeParam TSchema - The schema of the synchronized tree.
  */
 export class Guest<const TSchema extends ImplicitFieldSchema> {
@@ -63,9 +72,22 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly logger: TelemetryLoggerExt;
 	private synchronization: GuestSynchronization<TSchema> | undefined;
 	private readonly initialized = makePromiseWithResolvers();
+	/** The one close operation shared by repeated calls to {@link Guest.close}. */
+	private closeInProgress: ReturnType<typeof makePromiseWithResolvers> | undefined;
+	/** Whether the Guest has sent its disposal token and can accept the Host's close acknowledgment. */
+	private closeSent = false;
+	/** Prevents disposal from releasing a view already released by orderly close. */
+	private viewDisposed = false;
 	private disposed = false;
 
-	/** The independent view on the Guest. Available after {@link Guest.create} resolves. */
+	/**
+	 * The Guest's authoring view, available after {@link Guest.create} resolves.
+	 *
+	 * @remarks
+	 * A failure does not dispose the view, so it can be inspected before application-managed cleanup
+	 * if it is still usable. Do not edit it after a failure.
+	 * Orderly close and {@link Guest.dispose} dispose the view.
+	 */
 	public get view(): TreeViewAlpha<TSchema> {
 		return this.synchronization?.view ?? fail("Guest accessed before initialization");
 	}
@@ -82,6 +104,16 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				this.session.fail(new Error(message.error), false);
 				return;
 			}
+			if (message.type === "guestCloseAck") {
+				if (this.closeInProgress === undefined || !this.closeSent) {
+					throw new SandboxProtocolError("Unexpected Guest close acknowledgment.");
+				}
+				// The Host has reclaimed the ID space shard. Final disposal can now release
+				// the hidden Host branch.
+				this.closeInProgress.resolver();
+				this.dispose();
+				return;
+			}
 			if (this.synchronization === undefined) {
 				throw new SandboxProtocolError(
 					`Guest received a message with type ${JSON.stringify(message.type)} before initialization.`,
@@ -89,9 +121,17 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			}
 			switch (message.type) {
 				case "hostUpdate": {
+					// The authoring view is disposed during close. The Host will discard its
+					// outstanding updates when it processes the Guest's close message.
+					if (this.closeInProgress !== undefined) {
+						return;
+					}
 					return this.synchronization.receiveHostUpdate(message);
 				}
 				case "hostIdRange": {
+					if (this.closeInProgress !== undefined) {
+						return;
+					}
 					return this.synchronization.receiveHostIdRange(message);
 				}
 				case "guestChangeAck": {
@@ -102,6 +142,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 				}
 				case "blobRequest":
 				case "guestChange":
+				case "guestClose":
 				case "hostUpdateAck": {
 					throw new SandboxProtocolError(
 						`Guest received a message with type ${JSON.stringify(message.type)}.`,
@@ -135,9 +176,12 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
-				this.synchronization?.stop(error);
+				// A failure can occur during a tree event. Do not dispose the views in this callback.
+				// Guest.dispose() releases them when the application cleans up.
+				this.synchronization?.closeForError(error);
 				this.codec.dispose(error);
 				this.initialized.rejecter(error);
+				this.closeInProgress?.rejecter(error);
 			},
 			handleProtocolError,
 		);
@@ -204,6 +248,60 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.initialized.resolver();
 	}
 
+	/**
+	 * Stops the Guest, then waits for the Host to reclaim its ID space shard.
+	 *
+	 * @remarks
+	 * New edits stop immediately, and the tree view is disposed.
+	 * Changes already sent to the Host must be acknowledged before the Guest sends
+	 * its disposal token. The Guest disposes its session after the Host acknowledges
+	 * shard reclamation. Repeated calls return the same promise.
+	 * Use {@link Guest.dispose} to abort locally if the channel fails or a close
+	 * acknowledgment never arrives. Without a valid disposal token, the Host keeps
+	 * the shard reserved.
+	 *
+	 * @returns A promise that resolves when the Host confirms the shard was reclaimed.
+	 */
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Repeated close calls return the same promise.
+	public close(): Promise<void> {
+		if (this.closeInProgress !== undefined) {
+			return this.closeInProgress.promise;
+		}
+		if (this.disposed) {
+			throw new UsageError("Cannot close a disposed Guest.");
+		}
+		this.session.breaker.use();
+		const synchronization = this.synchronization ?? fail("Guest closed before initialization");
+		const completion = makePromiseWithResolvers();
+		this.closeInProgress = completion;
+		this.session.run(() => {
+			const token = synchronization.close();
+			this.viewDisposed = true;
+			token.then(
+				(idSpaceShardToken) =>
+					this.session.run(() => {
+						// The Host reclaims the shard only after it receives this token.
+						this.postMessage({ type: "guestClose", idSpaceShardToken });
+						this.closeSent = true;
+					}),
+				(error: unknown) => this.session.fail(error),
+			);
+		});
+		return completion.promise;
+	}
+
+	/**
+	 * Disposes the Guest's session resources without reclaiming its child ID space shard.
+	 *
+	 * @remarks
+	 * An orderly {@link Guest.close} disposes the Guest after the Host acknowledges
+	 * shard reclamation. Calling this method earlier aborts the local session and
+	 * rejects pending work. It does not send a disposal token: the Host keeps the
+	 * shard reserved unless it already received a valid token from a close attempt.
+	 * After a failure, the application can inspect the authoring view, if it is still
+	 * usable, before calling this method to dispose it and the hidden Host branch.
+	 * Repeated calls have no effect.
+	 */
 	public dispose(): void {
 		if (this.disposed) {
 			return;
@@ -217,9 +315,12 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
 
-		// The synchronization leaves the view alive, making it possible to save/stash/view unsaved changes.
-		// Currently we do no such thing, and just dispose of it, but that could be change in the future.
-		synchronization?.view.dispose();
+		// On failure or abort, synchronization leaves the view available.
+		// Future cleanup could save or inspect unsaved changes before disposing it.
+		if (!this.viewDisposed) {
+			synchronization?.view.dispose();
+			this.viewDisposed = true;
+		}
 	}
 
 	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
