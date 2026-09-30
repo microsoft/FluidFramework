@@ -221,7 +221,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  * To apply schema defined with this factory to a tree, see {@link TreeViewConfiguration} and {@link ViewableTree.viewWith}.
  * See the {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution | documentation on schema evolution} for how to handle changes to schema over time.
  *
- * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
+ * All schemas produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
  * Therefore two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
@@ -323,7 +323,7 @@ export class SchemaFactory<
 > extends SchemaFactory_base {
 	/**
 	 * TODO:
-	 * If users of this generate the same name because two different schema with the same identifier were used,
+	 * If users of this generate the same name because two different schemas with the same identifier were used,
 	 * the second use can get a cache hit, and reference the wrong schema.
 	 * Such usage should probably return a distinct type or error but currently does not.
 	 * The use of markSchemaMostDerived in structuralName at least ensure an error in the case where the collision is from two types extending the same schema factor class.

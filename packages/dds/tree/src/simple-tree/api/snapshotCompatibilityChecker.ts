@@ -74,7 +74,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  *
  * @returns The ability of `clientViewConfiguration.schema` to view and/or upgrade a document's stored schema.
  *
- * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schema,
+ * This is the same {@link SchemaCompatibilityStatus} a {@link TreeView} would report for this combination of schemas,
  * without `canInitialize`.
  *
  * @privateRemarks
@@ -242,13 +242,13 @@ export interface CombinedSchemaCompatibilityStatus {
 	readonly snapshotViewOfCurrentDocument: Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 	/**
-	 * True if and only if the schema have identical compatibility.
+	 * True if and only if the schemas have identical compatibility.
 	 * @remarks
 	 * This includes producing the equivalent stored schema (which currentViewOfSnapshotDocument and snapshotViewOfCurrentDocument also measure)
-	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schema.
+	 * as well as equivalent compatibility with potential future schema changes beyond just those in these two schemas.
 	 *
 	 * This includes compatibility with all potential future schema changes.
-	 * For example two schema different only in compatibility with future optional fields via allow unknown optional fields or staged schema
+	 * For example two schemas different only in compatibility with future optional fields via allow unknown optional fields or staged schema
 	 * would be considered non-equivalent, even though they are forwards and backwards compatible with each other, and both status above report them as equivalent
 	 * since they would produce the same stored schema upon schema upgrade.
 	 */
@@ -656,7 +656,7 @@ export function snapshotSchemaCompatibility(
 					JSON.stringify(exportCompatibilitySchemaSnapshot(latestSnapshot[1])) !==
 					JSON.stringify(currentEncodedForSnapshotting)
 				) {
-					// Schema are compatibility wise equivalent, but differ in some way (excluding json formatting).
+					// Schemas are compatibility wise equivalent, but differ in some way (excluding json formatting).
 					// TODO: add a "normalize" mode, which do an update only in this case (or maybe even normalize json formatting as well and just always rewrite when !schemaChange)
 					// This would be useful to minimize diffs from future schema changes.
 					// This would be particularly useful if adding a second version of the format used in the snapshots.

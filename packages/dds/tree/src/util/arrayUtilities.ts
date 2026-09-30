@@ -98,6 +98,94 @@ export interface IndexRange {
 }
 
 /**
+ * Replaces a range of an array without exceeding runtime function-argument limits.
+ *
+ * @param array - The array to modify.
+ * @param startIndex - The index at which to start replacing, inclusive.
+ * @param endIndex - The index at which to stop replacing, exclusive.
+ * @param replacement - The items with which to replace the range.
+ *
+ * @remarks
+ * Equivalent to `array.splice(startIndex, endIndex - startIndex, ...replacement)`.
+ * Native `splice` is used for small replacements. Large replacements use `copyWithin` and indexed
+ * assignment because spreading a large array into a function call can exceed the runtime's argument
+ * limit.
+ */
+export function replaceArrayRange<T>(
+	array: T[],
+	startIndex: number,
+	endIndex: number,
+	replacement: readonly T[],
+): void {
+	validateIndexRange(startIndex, endIndex, array, "replaceArrayRange");
+
+	// Benchmarks (see arrayUtilities.bench.ts) show native splice is faster up to ~250 replacement
+	// items, while the argument-safe implementation is faster at 500 and above. Native splice must also
+	// be avoided for very large replacements, where spreading `replacement` into arguments would exceed
+	// the engine's argument limit.
+	if (replacement.length < 500) {
+		array.splice(startIndex, endIndex - startIndex, ...replacement);
+		return;
+	}
+
+	replaceArrayRangeWithoutSpread(array, startIndex, endIndex, replacement);
+}
+
+/**
+ * Argument-safe fallback for {@link replaceArrayRange} used for large replacements.
+ *
+ * @param array - The array to modify.
+ * @param startIndex - The index at which to start replacing, inclusive.
+ * @param endIndex - The index at which to stop replacing, exclusive.
+ * @param replacement - The items with which to replace the range.
+ *
+ * @remarks
+ * Equivalent to `array.splice(startIndex, endIndex - startIndex, ...replacement)`, but uses
+ * `copyWithin` and indexed assignment instead of spreading `replacement` into a function call, which
+ * can exceed the runtime's argument limit for large arrays.
+ *
+ * Assumes `[startIndex, endIndex)` is a valid range of `array`; callers are responsible for validating
+ * (see {@link replaceArrayRange}). Exported separately so this path can be tested and benchmarked
+ * directly (e.g. to re-evaluate the size cutoff in {@link replaceArrayRange}) rather than only through
+ * the public function, which dispatches small replacements to native `splice`.
+ */
+export function replaceArrayRangeWithoutSpread<T>(
+	array: T[],
+	startIndex: number,
+	endIndex: number,
+	replacement: readonly T[],
+): void {
+	// Preserve splice semantics when the replacement aliases the array being modified.
+	const replacementItems = replacement === array ? [...replacement] : replacement;
+	const originalLength = array.length;
+	const replacedLength = endIndex - startIndex;
+	const newLength = originalLength + replacementItems.length - replacedLength;
+
+	// Extend before moving the suffix when growing; truncate after moving it when shrinking.
+	if (newLength > originalLength) {
+		array.length = newLength;
+	}
+
+	// copy the items after the replaced range to their new location
+	array.copyWithin(startIndex + replacementItems.length, endIndex, originalLength);
+	array.length = newLength;
+
+	// overwrite the old copies (from above) with the inserted content, completing the splice
+	for (
+		let replacementIndex = 0;
+		replacementIndex < replacementItems.length;
+		replacementIndex++
+	) {
+		// replacementIndex is within bounds by construction, so this cast to drop `T | undefined` is safe.
+		// `?? oob()` must not be used here: it would mishandle array values that are legitimately `null` or
+		// `undefined`. `for ... of replacementItems.entries()` reads cleaner but is measurably slower due
+		// to per-element iterator-protocol overhead (see arrayUtilities.bench.ts; roughly 1.2x-4x slower
+		// across the benchmarked sizes, growing with size), so an indexed loop is used instead.
+		array[startIndex + replacementIndex] = replacementItems[replacementIndex] as T;
+	}
+}
+
+/**
  * Walks `array` in order and collects the indices of every element for which `predicate` returns
  * `true` into contiguous `[start, end)` ranges.
  * @param array - The array (or array-like) to scan.
