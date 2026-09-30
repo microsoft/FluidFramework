@@ -27,7 +27,9 @@ const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
-	hasSchemaChange: () => false,
+	hasSchemaChange: () => {
+		throw new Error("hasSchemaChange");
+	},
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
