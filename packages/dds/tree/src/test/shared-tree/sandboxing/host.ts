@@ -150,10 +150,8 @@ export class HostImplementation<const TSchema extends ImplicitFieldSchema> imple
 			},
 			handleProtocolError,
 		);
-		const localCheckout = this.mainCheckout.fork();
 		this.synchronization = new HostSynchronization(
 			this.mainCheckout,
-			localCheckout,
 			(message) => this.postMessage(message),
 			(change) => this.codec.bindHandles(change),
 			(action) => this.session.run(action),

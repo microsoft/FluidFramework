@@ -53,6 +53,8 @@ interface PendingHostUpdate {
  * The `Host` owns transport encoding, message routing, and session lifetime.
  */
 export class HostSynchronization {
+	/** The checkout for the Guest's authoring branch, advanced by Guest changes and acknowledged Host updates. */
+	public readonly localCheckout: TreeCheckout;
 	/** Host updates awaiting ordered acknowledgments, with the exact branch state sent for each update. */
 	private readonly pendingUpdates = new Map<HostUpdateId, PendingHostUpdate>();
 	/**
@@ -85,8 +87,6 @@ export class HostSynchronization {
 	public constructor(
 		/** The Host's main checkout to synchronize with the Guest. */
 		private readonly mainCheckout: TreeCheckout,
-		/** The checkout for the Guest's authoring branch, advanced by Guest changes and acknowledged Host updates. */
-		public readonly localCheckout: TreeCheckout,
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
@@ -108,6 +108,7 @@ export class HostSynchronization {
 		 */
 		private readonly logger: TelemetryLoggerExt,
 	) {
+		this.localCheckout = this.mainCheckout.fork();
 		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
 		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;

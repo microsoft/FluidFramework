@@ -993,7 +993,6 @@ describe("Host and Guest correctness", () => {
 		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
 			mainCheckout,
-			mainCheckout.fork(),
 			() => {},
 			() => {},
 			(action) => action(),
@@ -1022,7 +1021,6 @@ describe("Host and Guest correctness", () => {
 		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
 			mainCheckout,
-			mainCheckout.fork(),
 			(message) => {
 				if (message.type === "hostUpdate") {
 					sent.push(message);
