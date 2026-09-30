@@ -4,7 +4,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import type { Route } from "@playwright/test";
+import type { Locator, Page, Route } from "@playwright/test";
 
 test.describe("Nav", () => {
 	test.beforeEach(async ({ page }) => {
@@ -128,77 +128,82 @@ test.describe("Nav", () => {
 
 		await expect(page.getByRole("searchbox")).toBeVisible();
 	});
+});
 
-	test("Keyboard-activated docs sidebar links move focus to the new page content", async ({
-		page,
-	}) => {
-		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+async function openSidebar(page: Page, width: number, path: string): Promise<Locator> {
+	await page.setViewportSize({ width, height: 720 });
+	await page.goto(path, { waitUntil: "domcontentloaded" });
+	await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+	// Docusaurus uses a closable navbar menu below 996px.
+	if (width < 996) {
+		await page.getByRole("button", { name: "Toggle navigation bar" }).press("Enter");
+	}
+	const sidebar = page.locator(width < 996 ? ".navbar-sidebar" : "aside");
+	await expect(sidebar).toBeVisible();
+	return sidebar;
+}
 
-		const sidebarLink = page.locator('aside a[href="/docs/start/quick-start"]');
-
-		await sidebarLink.focus();
-		await page.keyboard.press("Enter");
-
-		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-		await expect(page.locator("main h1")).toHaveText("Quick Start");
-		await expect(page.locator("main")).toBeFocused();
-
-		await page
-			.locator(".navbar")
-			.getByRole("link", { name: /Community/ })
-			.click();
-		await expect(page).toHaveURL(/\/community\/?$/);
-		await expect(page.locator("main h1")).toHaveText("Community");
-		await page.waitForTimeout(100);
-		await expect(page.locator("main")).not.toBeFocused();
+/**
+ * Runs assertions while keyboard navigation to Quick Start waits for its scripts.
+ * Releases the scripts even if an assertion fails.
+ */
+async function withPendingQuickStart(
+	page: Page,
+	width: number,
+	assertPending: (sidebar: Locator) => Promise<void>,
+): Promise<void> {
+	await page.addInitScript(() => {
+		Object.defineProperty(navigator, "connection", {
+			value: { effectiveType: "4g", saveData: true },
+		});
 	});
+	const sidebar = await openSidebar(page, width, "/docs/start/tutorial/");
+	const pendingScripts: Route[] = [];
+	const holdScript = (route: Route): void => {
+		pendingScripts.push(route);
+	};
+	await page.route("**/*.js", holdScript);
+	try {
+		await sidebar.locator('a[href="/docs/start/quick-start"]').press("Enter");
+		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+		await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
+		// Exceed the previous 50 ms focus delay before scripts can complete.
+		await page.waitForTimeout(150);
+		await expect(page.locator("main h1")).toHaveText("Tutorial: DiceRoller application");
+		await assertPending(sidebar);
+	} finally {
+		await page.unroute("**/*.js", holdScript);
+		await Promise.all(pendingScripts.map(async (route) => route.continue()));
+	}
+}
 
-	// Docusaurus uses <aside> above 996px and a closable .navbar-sidebar menu at narrower widths.
+test.describe("Docs sidebar focus", () => {
 	for (const width of [1280, 768]) {
-		test(`Slow keyboard navigation waits for the new content at ${width}px`, async ({
-			page,
-		}) => {
-			await page.setViewportSize({ width, height: 720 });
-			await page.addInitScript(() => {
-				Object.defineProperty(navigator, "connection", {
-					value: { effectiveType: "4g", saveData: true },
-				});
-			});
-			await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-			await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+		test(`Enter focuses Containers content at ${width}px`, async ({ page }) => {
+			const sidebar = await openSidebar(page, width, "/docs/build/overview/");
+			await sidebar.locator('a[href="/docs/build/containers"]').press("Enter");
+			await expect(page).toHaveURL(/\/docs\/build\/containers\/?$/);
+			await expect(page.locator("main h1")).toHaveText("Containers");
+			await expect(page.locator("main")).toBeFocused();
+			await page.keyboard.press("Tab");
+			await expect(page.locator("main :focus")).toHaveCount(1);
 
-			const isNarrow = width === 768;
-			if (isNarrow) {
-				await page.getByRole("button", { name: "Toggle navigation bar" }).focus();
-				await page.keyboard.press("Enter");
-			}
-			const sidebar = page.locator(isNarrow ? ".navbar-sidebar" : "aside");
-			const sidebarLink = sidebar.locator('a[href="/docs/start/quick-start"]');
-			await expect(sidebarLink).toBeVisible();
-			const pendingScripts: Route[] = [];
-			await page.route("**/*.js", (route) => {
-				pendingScripts.push(route);
-			});
-
-			try {
-				await sidebarLink.focus();
-				await expect(sidebarLink).toBeFocused();
-				await page.keyboard.press("Enter");
-
-				await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-				await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
-				// Keep the destination pending beyond the previous 50 ms focus delay.
-				await page.waitForTimeout(150);
-				await expect(page.locator("main h1")).toHaveText(
-					"Tutorial: DiceRoller application",
-				);
+			if (width === 1280) {
+				await page
+					.locator(".navbar")
+					.getByRole("link", { name: /Community/ })
+					.click();
+				await expect(page).toHaveURL(/\/community\/?$/);
+				await expect(page.locator("main h1")).toHaveText("Community");
+				await page.waitForTimeout(100);
 				await expect(page.locator("main")).not.toBeFocused();
-			} finally {
-				await page.unroute("**/*.js");
-				await Promise.all(pendingScripts.map(async (route) => route.continue()));
 			}
+		});
 
+		test(`Slow navigation waits for content at ${width}px`, async ({ page }) => {
+			await withPendingQuickStart(page, width, async () => {
+				await expect(page.locator("main")).not.toBeFocused();
+			});
 			await expect(page.locator("main h1")).toHaveText("Quick Start");
 			await expect(page.locator("main")).toBeFocused();
 			await page.keyboard.press("Tab");
@@ -206,175 +211,72 @@ test.describe("Nav", () => {
 		});
 	}
 
-	test("Pointer navigation cancels focus while a keyboard destination is pending", async ({
-		page,
-	}) => {
-		await page.addInitScript(() => {
-			Object.defineProperty(navigator, "connection", {
-				value: { effectiveType: "4g", saveData: true },
+	for (const cancellation of ["pointer navigation", "category expansion"]) {
+		test(`${cancellation} cancels pending focus`, async ({ page }) => {
+			await withPendingQuickStart(page, 1280, async (sidebar) => {
+				if (cancellation === "pointer navigation") {
+					await page
+						.locator(".navbar")
+						.getByRole("link", { name: /Community/ })
+						.click();
+					await expect(page).toHaveURL(/\/community\/?$/);
+				} else {
+					const category = sidebar.getByRole("button", {
+						name: "Build With Fluid",
+						exact: true,
+					});
+					await category.press("Enter");
+					await expect(category).toHaveAttribute("aria-expanded", "true");
+					await expect(category).toBeFocused();
+					await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+				}
 			});
+			await expect(page.locator("main h1")).toHaveText(
+				cancellation === "pointer navigation" ? "Community" : "Quick Start",
+			);
+			await page.waitForTimeout(100);
+			await expect(page.locator("main")).not.toBeFocused();
 		});
-		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+	}
 
-		const pendingScripts: Route[] = [];
-		await page.route("**/*.js", (route) => {
-			pendingScripts.push(route);
-		});
-
-		try {
-			await page.locator('aside a[href="/docs/start/quick-start"]').focus();
-			await page.keyboard.press("Enter");
-			await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
-			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-
-			await page
-				.locator(".navbar")
-				.getByRole("link", { name: /Community/ })
-				.click();
-			await expect(page).toHaveURL(/\/community\/?$/);
-		} finally {
-			await page.unroute("**/*.js");
-			await Promise.all(pendingScripts.map(async (route) => route.continue()));
-		}
-
-		await expect(page.locator("main h1")).toHaveText("Community");
+	test("Narrow category expansion does not affect later pointer navigation", async ({ page }) => {
+		const sidebar = await openSidebar(page, 768, "/docs/start/tutorial/");
+		const category = sidebar.getByRole("button", { name: "Build With Fluid", exact: true });
+		await category.press("Enter");
+		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
+		await expect(sidebar.locator('a[href="/docs/build/overview"]')).toBeVisible();
+		await expect(category).toBeFocused();
+		await sidebar.locator('a[href="/docs/start/quick-start"]').click();
+		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+		await expect(page.locator("main h1")).toHaveText("Quick Start");
 		await page.waitForTimeout(100);
 		await expect(page.locator("main")).not.toBeFocused();
 	});
 
-	test.describe("Narrow docs sidebar", () => {
-		test.use({ viewport: { width: 768, height: 720 } });
-
-		test.beforeEach(async ({ page }) => {
-			await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-			await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
-
-			await page.getByRole("button", { name: "Toggle navigation bar" }).focus();
-			await page.keyboard.press("Enter");
-			await expect(
-				page.locator('.navbar-sidebar a[href="/docs/start/quick-start"]'),
-			).toBeVisible();
-		});
-
-		test("Keyboard navigation moves focus to the new page content", async ({ page }) => {
-			await page.locator('.navbar-sidebar a[href="/docs/start/quick-start"]').focus();
-			await page.keyboard.press("Enter");
-
-			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-			await expect(page.locator("main h1")).toHaveText("Quick Start");
-			await expect(page.locator("main")).toBeFocused();
-		});
-
-		test("Keyboard category expansion does not move focus after a pointer click", async ({
-			page,
-		}) => {
-			const sidebar = page.locator(".navbar-sidebar");
-			const buildCategory = sidebar.getByRole("button", {
-				name: "Build With Fluid",
-				exact: true,
-			});
-			const buildOverviewLink = sidebar.locator('a[href="/docs/build/overview"]');
-
-			await buildCategory.focus();
-			await page.keyboard.press("Enter");
+	for (const keyPress of ["Modified", "Repeated"]) {
+		test(`${keyPress} Enter does not affect later pointer navigation`, async ({ page }) => {
+			const sidebar = await openSidebar(page, 1280, "/docs/start/tutorial/");
+			const link = sidebar.locator('a[href="/docs/start/quick-start"]');
+			if (keyPress === "Modified") {
+				await link.press("Shift+Enter");
+			} else {
+				await sidebar
+					.getByRole("button", { name: "Build With Fluid", exact: true })
+					.focus();
+				try {
+					await page.keyboard.down("Enter");
+					await link.focus();
+					await page.keyboard.down("Enter");
+				} finally {
+					await page.keyboard.up("Enter");
+				}
+			}
 			await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
-			await expect(buildOverviewLink).toBeVisible();
-			await expect(buildCategory).toBeFocused();
-
-			await sidebar.locator('a[href="/docs/start/quick-start"]').click();
+			await link.click();
 			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
 			await expect(page.locator("main h1")).toHaveText("Quick Start");
 			await page.waitForTimeout(100);
 			await expect(page.locator("main")).not.toBeFocused();
 		});
-	});
-
-	test("Sidebar category expansion cancels focus while a keyboard destination is pending", async ({
-		page,
-	}) => {
-		await page.addInitScript(() => {
-			Object.defineProperty(navigator, "connection", {
-				value: { effectiveType: "4g", saveData: true },
-			});
-		});
-		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
-
-		const pendingScripts: Route[] = [];
-		await page.route("**/*.js", (route) => {
-			pendingScripts.push(route);
-		});
-
-		try {
-			await page.locator('aside a[href="/docs/start/quick-start"]').focus();
-			await page.keyboard.press("Enter");
-			await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
-			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-			await expect(page.locator("main h1")).toHaveText("Tutorial: DiceRoller application");
-
-			const buildCategory = page
-				.locator("aside")
-				.getByRole("button", { name: "Build With Fluid", exact: true });
-			await buildCategory.focus();
-			await page.keyboard.press("Enter");
-			await expect(buildCategory).toHaveAttribute("aria-expanded", "true");
-			await expect(buildCategory).toBeFocused();
-			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-		} finally {
-			await page.unroute("**/*.js");
-			await Promise.all(pendingScripts.map(async (route) => route.continue()));
-		}
-
-		await expect(page.locator("main h1")).toHaveText("Quick Start");
-		await page.waitForTimeout(100);
-		await expect(page.locator("main")).not.toBeFocused();
-	});
-
-	test("Modified Enter on a sidebar link does not leak pending navigation into later pointer navigation", async ({
-		page,
-	}) => {
-		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
-
-		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
-
-		await quickStartLink.focus();
-		await page.keyboard.press("Shift+Enter");
-		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
-
-		await quickStartLink.click();
-		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-		await expect(page.locator("main h1")).toHaveText("Quick Start");
-		await page.waitForTimeout(100);
-		await expect(page.locator("main")).not.toBeFocused();
-	});
-
-	test("Repeated Enter on a sidebar link does not affect later pointer navigation", async ({
-		page,
-	}) => {
-		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
-		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
-
-		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
-		const buildCategory = page
-			.locator("aside")
-			.getByRole("button", { name: "Build With Fluid", exact: true });
-
-		await buildCategory.focus();
-		try {
-			await page.keyboard.down("Enter");
-			await quickStartLink.focus();
-			await page.keyboard.down("Enter");
-		} finally {
-			await page.keyboard.up("Enter");
-		}
-
-		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
-		await quickStartLink.click();
-		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
-		await expect(page.locator("main h1")).toHaveText("Quick Start");
-		await page.waitForTimeout(100);
-		await expect(page.locator("main")).not.toBeFocused();
-	});
+	}
 });

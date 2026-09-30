@@ -95,8 +95,6 @@ const config: Config = {
 	// For GitHub pages deployment, it is often '/<projectName>/'
 	baseUrl: "/",
 
-	clientModules: ["./src/clientModules/docsSidebarFocus.ts"],
-
 	onBrokenAnchors: "throw",
 	onBrokenLinks: "throw",
 	onDuplicateRoutes: "throw",
