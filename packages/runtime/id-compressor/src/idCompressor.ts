@@ -299,7 +299,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		if (newStride > MAX_STRIDE_LENGTH) {
 			throw new Error("Sharding limit reached.");
 		}
-		assert(Number.isSafeInteger(newStride), "Shard stride must be a safe integer");
+		assert(Number.isSafeInteger(newStride), 0xd52 /* Shard stride must be a safe integer */);
 
 		if (this.shardingState === undefined) {
 			// First time sharding - initialize state
@@ -334,7 +334,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			const genCountJump = childLocalGenCount - parentGenCount;
 			assert(
 				child.localGenCount === parentGenCount && genCountJump > 0,
-				"Child offsets incorrectly calculated.",
+				0xd53 /* Child offsets incorrectly calculated. */,
 			);
 
 			child.normalizer.addLocalRange(child.localGenCount + 1, genCountJump);
@@ -359,7 +359,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// A disposal token additionally reclaims the child's ID space. If reclaiming the last child
 		// returns this compressor to a leaf and it is the root (originalStride === 1), exit sharding mode.
 		if (syncToken.disposed) {
-			assert(this.shardingState !== undefined, "Must be sharded");
+			assert(this.shardingState !== undefined, 0xd54 /* Must be sharded */);
 			if (isNowLeaf && this.shardingState.originalStride === 1) {
 				this.shardingState = undefined;
 			}
@@ -454,7 +454,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * @param disposed - Whether the token also signals disposal (reclamation of this shard's ID space).
 	 */
 	private makeShardToken(disposed: boolean): ShardSynchronizationToken {
-		assert(this.shardingState !== undefined, "Compressor is not sharded.");
+		assert(this.shardingState !== undefined, 0xd55 /* Compressor is not sharded. */);
 
 		// Root cannot produce a token (shardId is undefined for root)
 		if (this.shardingState.shardId === undefined) {
