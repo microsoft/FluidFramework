@@ -51,7 +51,7 @@ export class Guest {
 
 	/** The independent tree on the Guest. Available after {@link Guest.create} resolves. */
 	public get tree(): ViewableTree {
-		return this.synchronization?.tree ?? fail("Guest accessed before initialization");
+		return this.synchronization?.checkout ?? fail("Guest accessed before initialization");
 	}
 
 	/** Receives and routes protocol messages from the Host. */
@@ -186,7 +186,7 @@ export class Guest {
 
 		// The synchronization leaves the tree alive, making it possible to save or stash unsaved changes.
 		// Currently we do no such thing and just dispose of it, but that could change in the future.
-		synchronization?.tree.dispose();
+		synchronization?.checkout.dispose();
 	}
 
 	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */

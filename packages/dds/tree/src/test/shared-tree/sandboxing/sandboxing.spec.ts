@@ -51,7 +51,7 @@ import { GuestSynchronization } from "./guestSynchronization.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
-import { getCheckout, getFinalizedCommit } from "./synchronizationUtils.js";
+import { getCheckout } from "./synchronizationUtils.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -932,7 +932,7 @@ describe("Host and Guest correctness", () => {
 			{ codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 } },
 		);
 		const main = viewCheckout(checkout, stringArrayConfig);
-		const base = getFinalizedCommit(getCheckout(main));
+		const base = getCheckout(main).getFinalizedCommit();
 		main.root.push("before");
 
 		const ports = buildDirectSessionPorts();
@@ -959,7 +959,7 @@ describe("Host and Guest correctness", () => {
 
 				assert.deepEqual([...main.root], ["a", "before", "host", "guest"]);
 				assert.deepEqual([...independentGuestView.root], [...main.root]);
-				assert.equal(getFinalizedCommit(getCheckout(main)), base);
+				assert.equal(getCheckout(main).getFinalizedCommit(), base);
 				assert.equal(independentHost.error, undefined);
 				assert.equal(independentGuest.error, undefined);
 			} finally {
@@ -1046,7 +1046,7 @@ describe("Host and Guest correctness", () => {
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Guest" }),
 		);
-		const view = synchronization.tree.viewWith(stringArrayConfig);
+		const view = synchronization.checkout.viewWith(stringArrayConfig);
 		try {
 			synchronization.receiveHostUpdate({
 				type: "hostUpdate",
@@ -1060,7 +1060,7 @@ describe("Host and Guest correctness", () => {
 			assert.deepEqual([...view.root], ["a"]);
 		} finally {
 			synchronization.stop(new Error("Test complete"));
-			synchronization.tree.dispose();
+			synchronization.checkout.dispose();
 			synchronization.dispose();
 		}
 	});

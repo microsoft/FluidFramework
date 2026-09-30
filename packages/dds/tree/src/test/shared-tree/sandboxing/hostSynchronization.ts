@@ -31,7 +31,7 @@ import {
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
-import { getCheckout, getFinalizedCommit, serializeCommit } from "./synchronizationUtils.js";
+import { getCheckout } from "./synchronizationUtils.js";
 
 /**
  * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
@@ -98,7 +98,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		/**
 		 * The Host's main view to synchronize with the Guest.
 		 */
-		private readonly main: TreeViewAlpha<TSchema>,
+		main: TreeViewAlpha<TSchema>,
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
@@ -125,7 +125,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.localCheckout = getCheckout(this.local);
 		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
-		const trunkRevision = getFinalizedCommit(this.mainCheckout).revision;
+		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findAncestor(
 			[this.sentHead, commits],
@@ -139,7 +139,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			baseRevision: base.revision,
 			mainRevision: this.guestMainRevision,
 			trunkRevision: this.guestTrunkRevision,
-			commits: commits.map((commit) => serializeCommit(this.mainCheckout, commit)),
+			commits: commits.map((commit) => this.mainCheckout.serializeCommit(commit)),
 		};
 		this.offAfterChange = branch.events.on("afterChange", () => {
 			this.run(() => this.sendMainUpdate());
@@ -173,10 +173,10 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
-		this.local.applyChange(message.change);
+		this.localCheckout.applyChange(message.change);
 		this.bindHandles(message.change);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
-		this.main.merge(this.local, false);
+		this.mainCheckout.merge(this.localCheckout, false);
 		this.send({ type: "guestChangeAck", changeId: message.changeId });
 	}
 
@@ -250,7 +250,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	private sendMainUpdate(): void {
 		const head = this.mainCheckout.mainBranch.getHead();
-		const trunkRevision = getFinalizedCommit(this.mainCheckout).revision;
+		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findCommonAncestor(this.sentHead, [head, commits]);
 		assert(base !== undefined, "Host branch updates must share ancestry");
@@ -278,7 +278,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			baseRevision: base.revision,
 			mainRevision: head.revision,
 			trunkRevision,
-			commits: commits.map((commit) => serializeCommit(this.mainCheckout, commit)),
+			commits: commits.map((commit) => this.mainCheckout.serializeCommit(commit)),
 		});
 	}
 
