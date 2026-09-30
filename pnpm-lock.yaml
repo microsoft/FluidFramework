@@ -22731,8 +22731,8 @@ packages:
   jju@1.4.0:
     resolution: {integrity: sha512-8wb9Yw966OSxApiCt0K3yNJL8pnNeIv+OEq2YMidz4FKP6nonSRoOXc80iXY4JaN2FC11B9qsNmDsm+ZOfMROA==}
 
-  joi@17.13.3:
-    resolution: {integrity: sha512-otDA4ldcIx+ZXsKHWmp0YizCweVRZG96J10b0FevjfuncLO1oX59THoAmHkNubYJ+9gWsYsp5k8v4ib6oDv1fA==}
+  joi@17.13.8:
+    resolution: {integrity: sha512-iPKOGmiRw1jxf/JOPwxmCcUQAOdF359mdzYiP2DJ+TMX0YK2zjK3D+zYOaGjpumWxOFF/l2xVWjRVK5bGSLdEw==}
 
   js-base64@3.7.7:
     resolution: {integrity: sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==}
@@ -22751,7 +22751,7 @@ packages:
     hasBin: true
 
   js-yaml@4.3.2:
-    resolution: {integrity: sha1-jkT7FKJkPFlya7FXh7XxUSyz0/s=}
+    resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
   jsdoc-type-pratt-parser@6.10.0:
@@ -36991,7 +36991,7 @@ snapshots:
 
   jju@1.4.0: {}
 
-  joi@17.13.3:
+  joi@17.13.8:
     dependencies:
       '@hapi/hoek': 9.3.0
       '@hapi/topo': 5.1.0
@@ -41169,7 +41169,7 @@ snapshots:
   wait-on@8.0.1(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
       axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
-      joi: 17.13.3
+      joi: 17.13.8
       lodash: 4.18.1
       minimist: 1.2.8
       rxjs: 7.8.2
