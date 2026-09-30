@@ -40,7 +40,7 @@ async fn direct_and_protocol_sessions_share_policy_and_lifecycle() {
         let id = documents.create_document().await.unwrap();
         let direct = documents.open_session(&id, None).await.unwrap().session;
         let protocol = SeaProtocolHost::new(documents.clone());
-        let (_, reader, mut events) = open(&protocol, Some(&id)).await;
+        let (reader, mut events) = open(&protocol, &id).await;
         catch_up(&mut events).await;
         assert_eq!(probe.documents.lock().unwrap().len(), 1);
         assert_eq!(probe.sessions.load(Ordering::SeqCst), 2);
@@ -79,7 +79,7 @@ async fn direct_and_protocol_sessions_share_policy_and_lifecycle() {
             }
         ));
         drop(events);
-        let (_, replay, mut events) = open(&protocol, Some(&id)).await;
+        let (replay, mut events) = open(&protocol, &id).await;
         assert_eq!(catch_up(&mut events).await, vec![vec![1], vec![2], vec![3]]);
         drop(events);
         replay.connection_closed(false).await;
@@ -294,35 +294,27 @@ impl<E: ClassifiedError> DocumentPolicy for ReaderPolicy<E> {
     }
 }
 
-/// Opens and binds a session through the same host boundary used by both listeners.
+/// Opens and binds an existing document through the host boundary used by both listeners.
 async fn open(
     host: &SeaProtocolHost,
-    document: Option<&DocumentId>,
-) -> (DocumentId, Arc<dyn SeaConnectionService>, SeaResponseStream) {
+    document: &DocumentId,
+) -> (Arc<dyn SeaConnectionService>, SeaResponseStream) {
     let connection = host.connect(LivenessPolicy::default());
     let mut events = connection
         .open_event_stream(protocol::Request::OpenEventStream {
             version: protocol::PROTOCOL_VERSION,
-            intent: if document.is_some() {
-                protocol::ArchiveIntent::Open
-            } else {
-                protocol::ArchiveIntent::Create
-            },
-            archive: document.map_or_else(Vec::new, |id| id.as_bytes().to_vec()),
+            intent: protocol::ArchiveIntent::Open,
+            archive: document.as_bytes().to_vec(),
             resume_after: None,
         })
         .await
         .unwrap();
-    let protocol::Response::EventStreamOpened {
-        document,
-        authority,
-        ..
-    } = events.next().await.unwrap()
+    let protocol::Response::EventStreamOpened { authority, .. } = events.next().await.unwrap()
     else {
         panic!("missing opening authority");
     };
     let bound = connection.bind_session(&authority).await.unwrap();
-    (DocumentId::from_bytes(document.into()), bound, events)
+    (bound, events)
 }
 
 /// Drains to the live boundary, rejecting errors rather than silently treating shedding as success.

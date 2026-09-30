@@ -187,6 +187,17 @@ mod tests {
     use sea_memory::MemoryStorage;
     use sea_sequencer::session::LocalSequencer;
 
+    /// Recovers a fresh in-memory document for each test.
+    async fn new_runtime() -> std::sync::Arc<LocalSequencer<MemoryStorage>> {
+        let (_, view) = MemoryStorage::new()
+            .create_view()
+            .await
+            .expect("create an isolated in-memory document");
+        LocalSequencer::recover(view)
+            .await
+            .expect("recover the empty in-memory document")
+    }
+
     /// Returns the next event without treating source progress as data.
     async fn next_event<E: std::fmt::Debug>(
         events: &mut ArchiveStream<SessionCommittedEvent, EventPosition, E>,
@@ -201,11 +212,7 @@ mod tests {
 
     #[tokio::test]
     async fn payload_transforms_preserve_control_metadata_and_stored_tree_identities() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let raw = runtime.open_session(None).await.unwrap();
         let wrapped = CompressionSession::new(raw.clone());
         let payload = Bytes::from_static(b"application payload");
@@ -269,11 +276,7 @@ mod tests {
 
     #[tokio::test]
     async fn load_and_coordination_forward_handles_fences_and_registration_lifetime() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let raw = runtime.open_session(None).await.unwrap();
         let wrapped = CompressionSession::new(raw.clone());
         let root = wrapped
@@ -349,11 +352,7 @@ mod tests {
 
     #[tokio::test]
     async fn session_conformance() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let first = CompressionSession::new(runtime.open_session(None).await.unwrap());
         let second = CompressionSession::new(runtime.open_session(None).await.unwrap());
         sea_conformance::run_session_conformance(&first, &second).await;
@@ -361,11 +360,7 @@ mod tests {
 
     #[tokio::test]
     async fn malformed_stored_frames_are_corrupt_and_advance_delivery_progress() {
-        let storage = MemoryStorage::new();
-        let (_, view) = storage.create_view().await.unwrap();
-        let runtime = LocalSequencer::<MemoryStorage>::recover(view)
-            .await
-            .unwrap();
+        let runtime = new_runtime().await;
         let raw = runtime.open_session(None).await.unwrap();
         let malformed_blob = raw
             .put_blob(Bytes::from_static(b"not a zlib frame"))

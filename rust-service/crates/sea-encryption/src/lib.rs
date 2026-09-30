@@ -408,24 +408,24 @@ mod tests {
         }
     }
 
+    /// Encodes a record with a fixed nonce for envelope tests.
+    #[track_caller]
+    fn record_envelope(keys: &TestKeys, nonce: u8, payload: &'static [u8]) -> Bytes {
+        encrypt_payload::<MemoryStorageError, _, _>(
+            keys,
+            &FixedNonce([nonce; NONCE_LENGTH]),
+            &Bytes::from_static(payload),
+            PayloadContext::Record,
+        )
+        .expect("encode test record")
+    }
+
     #[test]
     fn envelope_round_trips_across_key_rotation() {
         let keys = TestKeys::new();
-        let old = encrypt_payload::<MemoryStorageError, _, _>(
-            &keys,
-            &FixedNonce([6; 12]),
-            &Bytes::from_static(b"old"),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let old = record_envelope(&keys, 6, b"old");
         keys.rotate();
-        let new = encrypt_payload::<MemoryStorageError, _, _>(
-            &keys,
-            &FixedNonce([7; 12]),
-            &Bytes::from_static(b"new"),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let new = record_envelope(&keys, 7, b"new");
         assert_eq!(
             decrypt_payload::<MemoryStorageError, _>(&keys, &old, PayloadContext::Record).unwrap(),
             Bytes::from_static(b"old")
@@ -439,13 +439,7 @@ mod tests {
     #[test]
     fn empty_payload_round_trips() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
-            &keys,
-            &FixedNonce([8; NONCE_LENGTH]),
-            &Bytes::new(),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let encoded = record_envelope(&keys, 8, b"");
 
         assert_eq!(encoded.len(), ENVELOPE_OVERHEAD);
         assert_eq!(
@@ -469,13 +463,7 @@ mod tests {
             EncryptionError::KeyUnavailable { key_id: None }
         ));
 
-        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
-            &TestKeys::new(),
-            &FixedNonce([8; NONCE_LENGTH]),
-            &Bytes::from_static(b"plaintext"),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let encoded = record_envelope(&TestKeys::new(), 8, b"plaintext");
         let missing_historical = decrypt_payload::<MemoryStorageError, _>(
             &TestKeys::empty(),
             &encoded,
@@ -493,13 +481,7 @@ mod tests {
     #[test]
     fn wrong_key_tampering_and_context_share_corruption_errors() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
-            &keys,
-            &FixedNonce([9; 12]),
-            &Bytes::from_static(b"authenticated"),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let encoded = record_envelope(&keys, 9, b"authenticated");
         let wrong_keys = TestKeys::wrong();
         let mut tampered = encoded.to_vec();
         tampered[HEADER_LENGTH] ^= 1;
@@ -525,13 +507,7 @@ mod tests {
         let keys = TestKeys::new();
         // Equal key bytes isolate authentication of the identifier from a wrong-key failure.
         keys.state.lock().unwrap().1.push((SECOND_ID, [7; 32]));
-        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
-            &keys,
-            &FixedNonce([9; NONCE_LENGTH]),
-            &Bytes::from_static(b"authenticated"),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let encoded = record_envelope(&keys, 9, b"authenticated");
         let mut changed = encoded.to_vec();
         let key_id_start = MAGIC.len() + 3;
         changed[key_id_start..key_id_start + KEY_ID_LENGTH].copy_from_slice(SECOND_ID.as_bytes());
@@ -556,13 +532,7 @@ mod tests {
     #[test]
     fn invalid_fixed_header_fields_are_corrupt() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
-            &keys,
-            &FixedNonce([10; NONCE_LENGTH]),
-            &Bytes::from_static(b"authenticated"),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let encoded = record_envelope(&keys, 10, b"authenticated");
 
         for offset in [0, MAGIC.len(), MAGIC.len() + 1] {
             let mut malformed = encoded.to_vec();
@@ -580,13 +550,7 @@ mod tests {
     #[test]
     fn every_truncated_envelope_is_corrupt() {
         let keys = TestKeys::new();
-        let encoded = encrypt_payload::<MemoryStorageError, _, _>(
-            &keys,
-            &FixedNonce([12; NONCE_LENGTH]),
-            &Bytes::from_static(b"complete payload"),
-            PayloadContext::Record,
-        )
-        .unwrap();
+        let encoded = record_envelope(&keys, 12, b"complete payload");
 
         for end in 0..encoded.len() {
             let error = decrypt_payload::<MemoryStorageError, _>(

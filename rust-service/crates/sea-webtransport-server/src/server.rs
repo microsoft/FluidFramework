@@ -1213,6 +1213,7 @@ mod tests {
     use wtransport::ClientConfig;
 
     /// Records lifecycle callbacks for connections that never open Sea streams.
+    #[derive(Default)]
     struct AdmissionService {
         /// Reconnect-grace arguments in callback order.
         closures: Arc<Mutex<Vec<bool>>>,
@@ -2106,10 +2107,7 @@ mod tests {
     fn admission_fixture() -> (WebTransportServer, ClientConfig, Arc<AdmissionService>) {
         let identity = Identity::self_signed(["localhost", "127.0.0.1"]).unwrap();
         let certificate_hash = identity.certificate_chain().as_slice()[0].hash();
-        let service = Arc::new(AdmissionService {
-            closures: Arc::default(),
-            tasks: Arc::default(),
-        });
+        let service = Arc::new(AdmissionService::default());
         let server = WebTransportServer::bind(
             "127.0.0.1:0".parse().unwrap(),
             identity,
@@ -2258,7 +2256,7 @@ mod tests {
 
     #[tokio::test]
     async fn cancellation_joins_tasks_and_does_not_repeat_completed_cleanup() {
-        let (_, _, service) = admission_fixture();
+        let service = Arc::new(AdmissionService::default());
         let metrics = Arc::new(Metrics::default());
         let mut connections = JoinSet::new();
         let mut services = BTreeMap::new();
@@ -2286,7 +2284,7 @@ mod tests {
 
     #[tokio::test]
     async fn cancellation_reports_panics_and_releases_their_services() {
-        let (_, _, service) = admission_fixture();
+        let service = Arc::new(AdmissionService::default());
         let metrics = Metrics::default();
         let mut connections = JoinSet::new();
         let (started, start) = tokio::sync::oneshot::channel();

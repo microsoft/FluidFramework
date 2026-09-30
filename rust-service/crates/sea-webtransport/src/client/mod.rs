@@ -1108,6 +1108,8 @@ mod tests {
     struct ScriptedStream {
         chunks: VecDeque<Vec<u8>>,
         cancelled: Option<Arc<AtomicBool>>,
+        /// Suspends receipt delivery so dropping an admitted request is deterministic.
+        suspend: bool,
     }
 
     #[derive(Debug)]
@@ -1179,6 +1181,7 @@ mod tests {
             Ok(ScriptedStream {
                 chunks: self.chunks.clone().into(),
                 cancelled: self.cancelled.clone(),
+                suspend: false,
             })
         }
 
@@ -1202,6 +1205,7 @@ mod tests {
                     .expect("another scripted stream")
                     .into(),
                 cancelled: None,
+                suspend: false,
             })
         }
 
@@ -1223,6 +1227,9 @@ mod tests {
         }
 
         async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
+            if self.suspend {
+                std::future::pending::<()>().await;
+            }
             Ok(self.chunks.pop_front())
         }
 
@@ -1490,6 +1497,7 @@ mod tests {
                     ScriptedStream {
                         chunks: chunks.into(),
                         cancelled: None,
+                        suspend: false,
                     },
                     limits,
                 ),
@@ -1528,11 +1536,9 @@ mod tests {
             let mut author = super::AuthorStream {
                 terminal: false,
                 stream: super::FramedStream::untimed(
-                    SuspendedStream {
-                        inner: ScriptedStream {
-                            chunks: vec![error].into(),
-                            cancelled: Some(cancelled.clone()),
-                        },
+                    ScriptedStream {
+                        chunks: vec![error].into(),
+                        cancelled: Some(cancelled.clone()),
                         suspend: cancel_receipt,
                     },
                     limits,
@@ -1571,11 +1577,9 @@ mod tests {
         use futures_util::FutureExt;
         let limits = protocol::Limits::default();
         let cancelled = Arc::new(AtomicBool::new(false));
-        let suspended = || SuspendedStream {
-            inner: ScriptedStream {
-                chunks: VecDeque::new(),
-                cancelled: Some(cancelled.clone()),
-            },
+        let suspended = || ScriptedStream {
+            chunks: VecDeque::new(),
+            cancelled: Some(cancelled.clone()),
             suspend: true,
         };
         let mut content = super::ContentStream {
@@ -1675,6 +1679,7 @@ mod tests {
                         ]
                         .into(),
                         cancelled: Some(cancelled.clone()),
+                        suspend: false,
                     },
                     limits,
                 ),
@@ -1715,6 +1720,7 @@ mod tests {
                 ScriptedStream {
                     chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
                     cancelled: None,
+                    suspend: false,
                 },
                 limits,
             ),
@@ -1765,6 +1771,7 @@ mod tests {
                 ScriptedStream {
                     chunks: chunks.chunks(2).map(<[u8]>::to_vec).collect(),
                     cancelled: None,
+                    suspend: false,
                 },
                 limits,
             ),
@@ -1792,32 +1799,6 @@ mod tests {
         assert_eq!(snapshot.latest(), Some(3));
         assert_eq!(snapshot.fence(), Some(7));
         assert!(!snapshot.terminal);
-    }
-
-    /// Suspends receipt delivery so dropping an admitted request is deterministic.
-    struct SuspendedStream {
-        inner: ScriptedStream,
-        suspend: bool,
-    }
-
-    #[async_trait]
-    impl BidirectionalStream for SuspendedStream {
-        type Error = Infallible;
-        async fn send(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
-            self.inner.send(bytes).await
-        }
-        async fn finish(&mut self) -> Result<(), Self::Error> {
-            self.inner.finish().await
-        }
-        async fn receive(&mut self) -> Result<Option<Vec<u8>>, Self::Error> {
-            if self.suspend {
-                std::future::pending::<()>().await;
-            }
-            self.inner.receive().await
-        }
-        async fn cancel(&mut self) -> Result<(), Self::Error> {
-            self.inner.cancel().await
-        }
     }
 
     #[tokio::test]

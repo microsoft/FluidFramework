@@ -399,18 +399,23 @@ mod tests {
 
     const ORIGIN: &str = "http://localhost:12345";
 
-    #[tokio::test]
-    async fn accepted_sockets_disable_nagle_before_upgrade() {
-        let server = WebSocketServer::bind(
-            "127.0.0.1:0".parse().unwrap(),
+    /// Binds an isolated memory host with the test origin and caller-selected admission limits.
+    async fn bind(address: &str, config: TransportConfig) -> WebSocketServer {
+        WebSocketServer::bind(
+            address.parse().unwrap(),
             Arc::new(SeaProtocolHost::new(
                 DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
             )),
-            TransportConfig::default(),
+            config,
             vec![ORIGIN.to_owned()],
         )
         .await
-        .unwrap();
+        .unwrap()
+    }
+
+    #[tokio::test]
+    async fn accepted_sockets_disable_nagle_before_upgrade() {
+        let server = bind("127.0.0.1:0", TransportConfig::default()).await;
         let _peer = TcpStream::connect(server.local_addr().unwrap())
             .await
             .unwrap();
@@ -434,16 +439,7 @@ mod tests {
     #[tokio::test]
     async fn originless_clients_require_explicit_loopback_opt_in() {
         for allowed in [false, true] {
-            let server = WebSocketServer::bind(
-                "127.0.0.1:0".parse().unwrap(),
-                Arc::new(SeaProtocolHost::new(
-                    DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
-                )),
-                TransportConfig::default(),
-                vec![ORIGIN.to_owned()],
-            )
-            .await
-            .unwrap();
+            let server = bind("127.0.0.1:0", TransportConfig::default()).await;
             let server = if allowed {
                 server.with_originless_loopback_clients().unwrap()
             } else {
@@ -476,16 +472,7 @@ mod tests {
                 .unwrap()
                 .unwrap();
         }
-        let server = WebSocketServer::bind(
-            "0.0.0.0:0".parse().unwrap(),
-            Arc::new(SeaProtocolHost::new(
-                DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
-            )),
-            TransportConfig::default(),
-            vec![ORIGIN.to_owned()],
-        )
-        .await
-        .unwrap();
+        let server = bind("0.0.0.0:0", TransportConfig::default()).await;
         assert!(server.with_originless_loopback_clients().is_err());
     }
     type ClientSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
@@ -537,16 +524,7 @@ mod tests {
 
     #[tokio::test]
     async fn owner_loss_revokes_children_and_token_and_shutdown_cleans_once() {
-        let server = WebSocketServer::bind(
-            "127.0.0.1:0".parse().unwrap(),
-            Arc::new(SeaProtocolHost::new(
-                DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
-            )),
-            TransportConfig::default(),
-            vec![ORIGIN.to_owned()],
-        )
-        .await
-        .unwrap();
+        let server = bind("127.0.0.1:0", TransportConfig::default()).await;
         let address = server.local_addr().unwrap();
         let state = Arc::clone(&server.state);
         let shutdown = server.shutdown_handle();
@@ -594,16 +572,7 @@ mod tests {
             max_streams_per_connection: 1,
             ..TransportConfig::default()
         };
-        let server = WebSocketServer::bind(
-            "127.0.0.1:0".parse().unwrap(),
-            Arc::new(SeaProtocolHost::new(
-                DocumentHost::new(StorageSetup::memory(), SessionSetup::default()).unwrap(),
-            )),
-            config,
-            vec![ORIGIN.to_owned()],
-        )
-        .await
-        .unwrap();
+        let server = bind("127.0.0.1:0", config).await;
         let address = server.local_addr().unwrap();
         let shutdown = server.shutdown_handle();
         let measurements = server.measurement_handle();

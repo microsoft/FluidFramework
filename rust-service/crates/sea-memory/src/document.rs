@@ -814,12 +814,22 @@ mod tests {
         mut stream: ArchiveStream<Item, EventPosition, MemoryStorageError>,
     ) -> Result<Vec<Item>, MemoryStorageError> {
         let mut items = Vec::new();
-        while let Some(item) = stream.next().await {
-            if let MonitoredStreamItem::Item(item) = item? {
-                items.push(item);
-            }
+        while let Some(item) = next_data(&mut stream).await? {
+            items.push(item);
         }
         Ok(items)
+    }
+
+    /// Skips progress without hiding read errors or the end of a stream.
+    async fn next_data<Item>(
+        stream: &mut ArchiveStream<Item, EventPosition, MemoryStorageError>,
+    ) -> Result<Option<Item>, MemoryStorageError> {
+        while let Some(item) = stream.next().await {
+            if let MonitoredStreamItem::Item(item) = item? {
+                return Ok(Some(item));
+            }
+        }
+        Ok(None)
     }
 
     /// Counts actual executor notifications without relying on sleeps or scheduling races.
@@ -1007,13 +1017,11 @@ mod tests {
         assert!(invalid.next().await.is_none());
         let mut lazy = view.read(None, Some(future));
         view.append(Bytes::new(), None).await.unwrap();
-        let mut delivered = 0;
-        while let Some(item) = lazy.next().await {
-            if let MonitoredStreamItem::Item(_) = item.unwrap() {
-                delivered += 1;
-            }
-        }
-        assert_eq!(delivered, 1);
+        assert_eq!(
+            next_data(&mut lazy).await.unwrap().unwrap().position,
+            future
+        );
+        assert!(next_data(&mut lazy).await.unwrap().is_none());
         let beyond = EventPosition::new(50);
         assert!(
             collect_items(view.read(Some(beyond), Some(future)))
@@ -1070,11 +1078,9 @@ mod tests {
         assert!(document.upgrade().is_none());
         assert!(archive.upgrade().is_some());
         let mut delivered = 0;
-        while let Some(item) = stream.next().await {
-            if let MonitoredStreamItem::Item(event) = item.unwrap() {
-                assert_eq!(event.event.payload, Bytes::from_static(b"retained"));
-                delivered += 1;
-            }
+        while let Some(event) = next_data(&mut stream).await.unwrap() {
+            assert_eq!(event.event.payload, Bytes::from_static(b"retained"));
+            delivered += 1;
         }
         assert_eq!(delivered, 1);
         assert!(archive.upgrade().is_some());
@@ -1598,12 +1604,14 @@ mod tests {
             if view.head().await.unwrap() == Some(second.id()) {
                 view.append(Bytes::new(), None).await.unwrap();
             }
-            loop {
-                if let Some(Ok(MonitoredStreamItem::Item(event))) = loaded.events.next().await {
-                    assert_eq!(event.position, replay);
-                    break;
-                }
-            }
+            assert_eq!(
+                next_data(&mut loaded.events)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .position,
+                replay
+            );
         }
     }
 
@@ -1670,12 +1678,10 @@ mod tests {
         let mut load = view.load(LoadStart::LatestSnapshot).await.unwrap();
         assert_eq!(load.snapshot.as_ref().unwrap().at_event.id(), first.id());
         let second = view.append(Bytes::from_static(b"two"), None).await.unwrap();
-        while let Some(item) = load.events.next().await {
-            if let MonitoredStreamItem::Item(event) = item.unwrap() {
-                assert_eq!(event.position, second.id());
-                break;
-            }
-        }
+        assert_eq!(
+            next_data(&mut load.events).await.unwrap().unwrap().position,
+            second.id()
+        );
         drop(view);
         let reopened = storage.open_view(&id).await.unwrap().unwrap();
         reopened.blobs().ensure_available(&root).await.unwrap();
@@ -1693,12 +1699,10 @@ mod tests {
             .append(Bytes::from_static(b"three"), None)
             .await
             .unwrap();
-        loop {
-            if let Some(Ok(MonitoredStreamItem::Item(event))) = load.events.next().await {
-                assert_eq!(event.position, third.id());
-                break;
-            }
-        }
+        assert_eq!(
+            next_data(&mut load.events).await.unwrap().unwrap().position,
+            third.id()
+        );
     }
 
     #[test]

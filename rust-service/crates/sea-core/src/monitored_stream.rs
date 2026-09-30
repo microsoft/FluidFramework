@@ -338,40 +338,13 @@ mod tests {
     use std::{
         convert::Infallible,
         marker::PhantomPinned,
-        pin::Pin,
         task::{Context, Poll},
     };
 
-    use futures_core::Stream;
-
     use super::{
-        BoxMonitoredStream, MonitoredStream, MonitoredStreamItem, MonitoredStreamProgress,
-        MonitoredStreamStatus, boxed_monitored_stream, map_monitored_stream,
+        BoxMonitoredStream, MonitoredStreamItem, MonitoredStreamProgress, MonitoredStreamStatus,
+        boxed_monitored_stream, map_monitored_stream,
     };
-
-    /// Object-safety fixture with observable progress but no stream items.
-    struct EmptyStream {
-        /// Fixed observation exposed through the monitored-stream trait object.
-        progress: MonitoredStreamProgress<u64>,
-    }
-
-    impl Stream for EmptyStream {
-        type Item = Result<MonitoredStreamItem<(), u64>, Infallible>;
-
-        fn poll_next(self: Pin<&mut Self>, _context: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-            Poll::Ready(None)
-        }
-    }
-
-    impl MonitoredStream for EmptyStream {
-        type Data = ();
-        type Position = u64;
-        type Error = Infallible;
-
-        fn progress(&self) -> MonitoredStreamProgress<Self::Position> {
-            self.progress.clone()
-        }
-    }
 
     #[test]
     fn adapters_accept_pinned_sources_positions_and_callback_captures() {
@@ -428,9 +401,8 @@ mod tests {
             latest_known: Some(3),
             status: MonitoredStreamStatus::AwaitingNewItems,
         };
-        let stream: BoxMonitoredStream<(), u64, Infallible> = Box::pin(EmptyStream {
-            progress: expected.clone(),
-        });
+        let stream: BoxMonitoredStream<(), u64, Infallible> =
+            boxed_monitored_stream(futures_util::stream::empty(), expected.clone(), |()| None);
 
         assert_eq!(stream.progress(), expected);
     }
