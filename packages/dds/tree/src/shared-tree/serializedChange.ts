@@ -48,7 +48,9 @@ const serializedChangeFormatVersion = 2;
  * TypeBox schema for the encoded representation of a {@link SerializableChange}.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function serializedChangeSchema<TChangeSchema extends TSchema>(changeSchema: TChangeSchema) {
+function createSerializedChangeSchema<TChangeSchema extends TSchema>(
+	changeSchema: TChangeSchema,
+) {
 	return Type.Object(
 		{
 			/** Identifies the serialized change format. */
@@ -72,7 +74,7 @@ function serializedChangeSchema<TChangeSchema extends TSchema>(changeSchema: TCh
  * Wire representation of a {@link SerializableChange}, derived from its TypeBox schema.
  */
 type EncodedSerializedChange = Static<
-	ReturnType<typeof serializedChangeSchema<typeof JsonCompatibleReadOnlySchema>>
+	ReturnType<typeof createSerializedChangeSchema<typeof JsonCompatibleReadOnlySchema>>
 >;
 
 /**
@@ -173,9 +175,7 @@ function isSerializedChangeV2(value: unknown): value is EncodedSerializedChange 
 /**
  * Creates a {@link SerializedChangeCodec}.
  *
- * @remarks
- * See {@link SerializableChange} for the format's lifetime and application requirements.
- *
+ * @see {@link SerializableChange} for the format's lifetime and application requirements.
  */
 export function makeSerializedChangeCodec(
 	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, unknown>,
@@ -184,7 +184,7 @@ export function makeSerializedChangeCodec(
 	const changeCodec = changeFamily.codecs.resolve(
 		getLatestSharedTreeChangeFormatVersion(changeFamily.codecs.getSupportedFormats()),
 	);
-	const schema = serializedChangeSchema(
+	const schema = createSerializedChangeSchema(
 		changeCodec.encodedSchema ?? fail("Serialized change codec requires an encoded schema"),
 	);
 

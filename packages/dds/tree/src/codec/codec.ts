@@ -30,6 +30,8 @@ export interface IDecoder<TDecoded, TEncoded, TContext> {
 	/**
 	 * Decodes `obj` from some encoded format.
 	 *
+	 * @param obj - The encoded data to decode.
+	 * @param context - The context required to decode the data.
 	 * @param onError - A callback that receives a description of the invalid data and throws a custom error.
 	 */
 	decode(obj: TEncoded, context: TContext, onError?: DecodeErrorHandler): TDecoded;
@@ -49,6 +51,9 @@ export type DecodeErrorHandler = (message?: string) => never;
 
 /**
  * Throws an error when encoded data cannot be decoded because it is invalid.
+ *
+ * @remarks
+ * When `onError` is not specified, the default behavior is to assert.
  *
  * @param onError - A callback that receives a description of the invalid data and throws a custom error.
  * @param message - A description of the invalid data.

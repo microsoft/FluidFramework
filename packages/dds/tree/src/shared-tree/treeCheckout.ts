@@ -1054,6 +1054,10 @@ export class TreeCheckout implements ITreeCheckout {
 
 	/**
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
+	 *
+	 * @param serializedChange - The serialized change to apply.
+	 * @param codec - The codec used to decode the change.
+	 * @param onError - A callback that receives a description of invalid serialized data and throws a custom error.
 	 */
 	@throwIfBroken
 	public applySerializedChange(

@@ -370,11 +370,17 @@ describe("simple-tree tree", () => {
 			);
 			const serialized = valid as JsonCompatibleReadOnlyObject;
 			const malformed: JsonCompatibleReadOnly[] = [
+				// The value does not use the serialized change envelope.
 				{ invalid: "bogus" },
+				// The version is not supported.
 				{ ...serialized, version: 3 },
+				// The revision is neither a local revision number nor the root revision.
 				{ ...serialized, revision: "invalid" },
+				// The encoded change does not match the change-family schema.
 				{ ...serialized, change: "invalid" },
+				// Custom metadata must be an encoded metadata tree.
 				{ ...serialized, customMetadata: [] },
+				// The envelope does not permit additional properties.
 				{ ...serialized, extra: true },
 			];
 
@@ -387,6 +393,7 @@ describe("simple-tree tree", () => {
 			}
 
 			const semanticTarget = viewA.fork();
+			// The originator ID is not a stable ID.
 			assert.throws(
 				() => semanticTarget.applyChange({ ...serialized, originatorId: "invalid" }),
 				validateUsageError(/Invalid serialized change format/),
