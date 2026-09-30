@@ -1995,5 +1995,6 @@ export const shortCodeMap = {
 	"0xd4b": "the key field does not contain exactly one leaf value",
 	"0xd4c": "Root data store kind must be provided for new containers",
 	"0xd4d": "Should be able to set alias on new data store",
-	"0xd4e": "id should be defined when loading a container"
+	"0xd4e": "id should be defined when loading a container",
+	"0xd4f": "Unexpected schema change in root commit"
 };

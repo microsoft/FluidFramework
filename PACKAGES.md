@@ -51,7 +51,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluid-internal/client-utils](/packages/common/client-utils)</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Core-Utils](#Core-Utils) |
+| - [@fluid-internal/client-utils](/packages/common/client-utils) | - [Core-Interfaces](#Core-Interfaces) |
 
 ### Protocol-Utils
 
@@ -75,13 +75,13 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/odsp-doclib-utils](/packages/utils/odsp-doclib-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils) |
+| - [@fluidframework/odsp-doclib-utils](/packages/utils/odsp-doclib-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils) |
 
 ### Tool-Utils
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/tool-utils](/packages/utils/tool-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Driver-Definitions](#Driver-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils) |
+| - [@fluidframework/tool-utils](/packages/utils/tool-utils)</br>&nbsp;</br>&nbsp; | - [Driver-Definitions](#Driver-Definitions)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils) |
 
 ### Driver
 
@@ -147,7 +147,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [tinylicious](/server/routerlicious/packages/tinylicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
+| - [tinylicious](/server/routerlicious/packages/tinylicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
 
 ### Azure-Service
 
@@ -213,5 +213,5 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/server-routerlicious](/server/routerlicious/packages/routerlicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
+| - [@fluidframework/server-routerlicious](/server/routerlicious/packages/routerlicious) | - [Server-Libs](#Server-Libs) |
 
