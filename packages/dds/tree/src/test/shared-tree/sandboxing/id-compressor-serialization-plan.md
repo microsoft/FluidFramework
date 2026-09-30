@@ -99,7 +99,7 @@ The completed compatibility tests characterize today's behavior; they do not imp
 - [x] Expose finalized-range notifications on the runtime's ID compressor so the Host can observe them without test-only provider state or a sandbox call to `takeNextCreationRange()`.
 - [x] Deliver parent progress with Host updates and finalized ranges ahead of dependent commits and revision checks, without replacing the Guest compressor or changing its ID space shard stride. The initialization snapshot already includes the Host's prior compressor state.
 - [x] Verify Host edits beyond the child ID space shard's backfilled range, newly finalized peer edits, finalized ranges without tree edits, and updates that only advance `trunkRevision`.
-- [ ] Verify ordering with concurrent Guest edits, interleaved or delayed messages, and invalid or stale compressor updates.
+- [x] Verify ordered delivery when a finalized range and Host update are delayed behind an in-flight Guest edit, and reject invalid, backward, out-of-order, and repeated compressor updates.
 
 ### Session lifecycle
 
@@ -161,8 +161,9 @@ Each range message includes parent progress, which the Guest applies before fina
 Host branch updates include parent progress captured after encoding their commits.
 The Guest applies this progress before it decodes the commits or checks branch revisions.
 The serialized child already includes the compressor state needed for retained initialization commits.
-The Guest rejects unexpected range IDs, invalid finalized ranges, progress for another ID space shard, and progress that moves backward.
-Further tests for delayed and interleaved range delivery remain on the checklist.
+The Guest rejects unexpected or repeated range IDs, invalid finalized ranges, progress for another ID space shard, and progress that moves backward.
+Focused relay tests delay a peer range and its dependent Host update while a Guest edit is in flight.
+The deterministic synchronization schedules also exercise interleaved delivery.
 Preserve the Host-branch copy and Guest-side rebase; do not generate corrective net changes as a workaround.
 Do not call `takeNextCreationRange()` merely to construct a sandbox update: range submission and finalization belong to the runtime.
 

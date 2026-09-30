@@ -154,6 +154,7 @@ The Host also sends each newly finalized creation range in a `hostIdRange` messa
 That message includes parent progress and reaches the Guest before any later Host update that needs the range.
 The Guest applies the progress first, then finalizes the range.
 The Host sends these messages even when finalization does not change the tree.
+The Guest rejects out-of-order or repeated ranges and parent progress that moves backward.
 See [ID Space Sharding](#id-space-sharding).
 
 ### Message Conversion and Validation
@@ -274,6 +275,7 @@ End-to-end tests also cover initialization, bidirectional handle edits, deletion
 The Host, peer, and Guest edit cases run with separate compressors; integration with an isolated iframe is still pending.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
+ID-progress tests cover a delayed peer range and Host update while a Guest edit is pending, a repeated finalized range, and invalid parent progress.
 Initialization tests also sequence concurrent Peer edits before the pending Host edits.
 The schedule tests use `createFuzzDescribe`, `generateTestSeeds`, and `makeRandom` from `@fluid-private/stochastic-test-utils`.
 Each step samples from the actions that are currently legal, including Guest deletions and Host/Peer insertions at the start.

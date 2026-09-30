@@ -374,6 +374,98 @@ describe("Host and Guest correctness", () => {
 		assert.deepEqual([...guest.view.root], ["initial", "peer"]);
 	});
 
+	it("delivers a delayed peer range and update while Guest edits are in flight", async () => {
+		const { host, guest, peer, provider, interop } = await setupCustom(
+			["a", "b"],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+		);
+		const guestChange = new Promise<HostGuestMessage>((resolve) => {
+			interop.sendToGuest.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) =>
+					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+				{ once: true },
+			);
+			interop.sendToGuest.start();
+		});
+		guest.view.root.push("guest");
+		const change = await guestChange;
+		assert.equal(change.type, "guestChange");
+
+		const hostMessages: HostGuestMessage[] = [];
+		const ready = new Promise<void>((resolve) => {
+			interop.sendToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
+				const message = parseHostGuestMessage(normalizeTransportData(event.data));
+				hostMessages.push(message);
+				if (hostMessages.length === 2) {
+					resolve();
+				}
+			});
+			interop.sendToHost.start();
+		});
+		peer.root.insertAtStart("peer");
+		provider.synchronizeMessages();
+		await ready;
+		assert.equal(hostMessages[0]?.type, "hostIdRange");
+		assert.equal(hostMessages[1]?.type, "hostUpdate");
+		assert.deepEqual([...guest.view.root], ["a", "b", "guest"]);
+
+		const updateAck = new Promise<HostGuestMessage>((resolve) => {
+			interop.sendToGuest.addEventListener(
+				"message",
+				(event: MessageEvent<unknown>) =>
+					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+				{ once: true },
+			);
+		});
+		// Relay the delayed range before its dependent update, while the Guest edit is still pending.
+		interop.sendToGuest.postMessage(hostMessages[0]);
+		interop.sendToGuest.postMessage(hostMessages[1]);
+		const hostAcknowledgment = await updateAck;
+		assert.equal(hostAcknowledgment.type, "hostUpdateAck");
+		assert.deepEqual([...guest.view.root], ["peer", "a", "b", "guest"]);
+
+		// The Guest change was authored against the earlier Host state. Deliver it before the
+		// Host update acknowledgment, as required by message order in this direction.
+		const changeAck = new Promise<HostGuestMessage>((resolve) => {
+			const onMessage = (event: MessageEvent<unknown>): void => {
+				const message = parseHostGuestMessage(normalizeTransportData(event.data));
+				if (message.type === "guestChangeAck") {
+					interop.sendToHost.removeEventListener("message", onMessage);
+					resolve(message);
+				}
+			};
+			interop.sendToHost.addEventListener("message", onMessage);
+		});
+		interop.sendToHost.postMessage(change);
+		const guestAcknowledgment = await changeAck;
+		assert.equal(guestAcknowledgment.type, "guestChangeAck");
+		assert.deepEqual([...host.main.root], [...guest.view.root]);
+		const nextUpdate = hostMessages.find(
+			(message) => message.type === "hostUpdate" && message.updateId === 1,
+		);
+		assert(nextUpdate !== undefined, "Expected an update for the merged Guest change");
+		const nextUpdateAck = new Promise<HostGuestMessage>((resolve) => {
+			const onMessage = (event: MessageEvent<unknown>): void => {
+				const message = parseHostGuestMessage(normalizeTransportData(event.data));
+				if (message.type === "hostUpdateAck" && message.updateId === 1) {
+					interop.sendToGuest.removeEventListener("message", onMessage);
+					resolve(message);
+				}
+			};
+			interop.sendToGuest.addEventListener("message", onMessage);
+		});
+		interop.sendToHost.postMessage(hostAcknowledgment);
+		interop.sendToGuest.postMessage(nextUpdate);
+		interop.sendToGuest.postMessage(guestAcknowledgment);
+		interop.sendToHost.postMessage(await nextUpdateAck);
+		await Promise.all([host.updateGuestPromise, guest.updateHostPromise]);
+		assert.deepEqual([...host.local.root], [...guest.view.root]);
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+	});
+
 	it("delivers a finalized ID range even without a tree update", async () => {
 		const ports = buildDirectSessionPorts();
 		const { host, guest, provider } = await setupCustom(
@@ -438,6 +530,38 @@ describe("Host and Guest correctness", () => {
 		assert(guest.error?.cause instanceof SandboxProtocolError);
 		assert.match(guest.error.cause.message, /Host ID range identifier order/);
 		assert.equal(host.error, undefined);
+	});
+
+	it("rejects a finalized Host ID range repeated after successful delivery", async () => {
+		const reported = makePromiseWithResolvers();
+		const ports = buildDirectSessionPorts();
+		const { host, guest, peer, provider } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+			false,
+			() => reported.resolver(),
+		);
+		const deliveredRange = new Promise<HostGuestMessage>((resolve) => {
+			const onMessage = (event: MessageEvent<unknown>): void => {
+				const message = parseHostGuestMessage(normalizeTransportData(event.data));
+				if (message.type === "hostIdRange") {
+					ports.guestPort.removeEventListener("message", onMessage);
+					resolve(message);
+				}
+			};
+			ports.guestPort.addEventListener("message", onMessage);
+		});
+		peer.root.push("peer");
+		provider.synchronizeMessages();
+		const range = await deliveredRange;
+		assert.equal(range.type, "hostIdRange");
+		await host.updateGuestPromise;
+		ports.hostPort.postMessage(range);
+		await reported.promise;
+		assert(guest.error?.cause instanceof SandboxProtocolError);
+		assert.match(guest.error.cause.message, /Host ID range identifier order mismatch/);
+		assert.deepEqual([...host.main.root], ["initial", "peer"]);
 	});
 
 	it("rejects a finalized range whose generation counts start out of order", async () => {
