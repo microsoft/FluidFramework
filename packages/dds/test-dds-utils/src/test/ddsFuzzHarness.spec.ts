@@ -671,7 +671,13 @@ describe("DDS Fuzz Harness", () => {
 				);
 				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
 				assert.deepEqual(generatedOperations[6], { type: "rehydrate" });
-				assert.deepEqual(generatedOperations[12], { type: "attach" });
+				assert.deepEqual(generatedOperations[12], {
+					type: "attach",
+					clients: ["summarizer", "B", "C"].map((clientId) => ({
+						clientId,
+						canBeStashed: false,
+					})),
+				});
 				verifyClientsSendOpsToEachOther(finalState);
 			});
 		});
@@ -1046,6 +1052,11 @@ describe("DDS Fuzz Harness", () => {
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
 					assert.deepEqual(contents, [
+						{
+							type: "initialize",
+							initialClient: { clientId: "A", canBeStashed: false },
+							clients: [],
+						},
 						{ clientId: "A", seed: 1325690281034360, type: "noop" },
 					]);
 				});

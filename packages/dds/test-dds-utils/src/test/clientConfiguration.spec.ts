@@ -252,18 +252,57 @@ describe("DDS fuzz client configuration", () => {
 		);
 	});
 
-	it("creates the workload generator after testStart", async () => {
-		let started = false;
-		options.emitter.on("testStart", () => {
-			started = true;
+	for (const configured of [false, true]) {
+		it(`raises testStart after client creation and before the workload, configured ${configured}`, async () => {
+			const events: string[] = [];
+			options.emitter.on("clientCreate", (client) => {
+				events.push(client.channel.id);
+			});
+			options.emitter.on("testStart", (state) => {
+				assert.equal(state.clients.length, 3);
+				events.push("testStart");
+			});
+			const model = createModel();
+			if (!configured) {
+				model.factory = new SharedNothingFactory();
+			}
+			const generatorFactory = model.generatorFactory;
+			model.generatorFactory = () => {
+				assert.deepEqual(events, ["summarizer", "A", "B", "C", "testStart"]);
+				events.push("generatorFactory");
+				return generatorFactory();
+			};
+			await runTestForSeed(model, options, 0, saveInfo);
+			assert.equal(readOperations()[0].type, "initialize");
+		});
+	}
+
+	it("restores testStart randomness on replay without generating configurations", async () => {
+		options.numberOfClients = 28;
+		options.clientJoinOptions = {
+			maxNumberOfClients: 28,
+			clientAddProbability: 0,
+			stashableClientProbability: 0.5,
+		};
+		const observed: number[] = [];
+		options.emitter.on("testStart", (state) => {
+			observed.push(state.random.integer(0, Number.MAX_SAFE_INTEGER));
 		});
 		const model = createModel();
-		const generatorFactory = model.generatorFactory;
-		model.generatorFactory = () => {
-			assert(started);
-			return generatorFactory();
+		assert("generateClientConfiguration" in model.factory);
+		const originalGenerate = model.factory.generateClientConfiguration;
+		model.factory.generateClientConfiguration = (random, context) => {
+			for (let i = 0; i < 10; i++) {
+				random.integer(0, 100);
+			}
+			return originalGenerate(random, context);
 		};
-		await runTestForSeed(model, options, 0);
+		await runTestForSeed(model, options, 42, saveInfo);
+		model.factory.generateClientConfiguration = () =>
+			assert.fail("Do not regenerate configurations.");
+		await replayTest(model, 42, asyncGeneratorFromArray(readOperations()), undefined, options);
+		assert.equal(observed.length, 2);
+		assert.equal(observed[0], observed[1]);
 	});
 
 	it("records stable UUID client names and configurations in both seed modes", async () => {
@@ -440,11 +479,11 @@ describe("DDS fuzz client configuration", () => {
 				undefined,
 				options,
 			),
-			/Configured tests must start with initialize/,
+			/Missing recorded clientConfiguration/,
 		);
 		await assert.rejects(
 			replayTest(createModel(), 0, asyncGeneratorFromArray([]), undefined, options),
-			/Configured tests must start with initialize/,
+			/Missing recorded clientConfiguration/,
 		);
 	});
 
@@ -472,7 +511,7 @@ describe("DDS fuzz client configuration", () => {
 		delete attach.clients;
 		await assert.rejects(
 			replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options),
-			/Recorded client initializations must match/,
+			/Missing recorded clientConfiguration/,
 		);
 	});
 
@@ -534,7 +573,7 @@ describe("DDS fuzz client configuration", () => {
 		});
 	}
 
-	it("leaves unconfigured clients and operation logs unchanged", async () => {
+	it("records unconfigured initialization without changing workload seeds", async () => {
 		const model = {
 			...baseModel,
 			generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
@@ -544,7 +583,15 @@ describe("DDS fuzz client configuration", () => {
 			assert(!("clientConfiguration" in client));
 		}
 		const operations = readOperations();
-		assert.deepEqual(operations, [{ type: "noop", seed: 1325690281034360 }]);
+		assert.deepEqual(operations, [
+			{
+				type: "initialize",
+				initialClient: { clientId: "summarizer", canBeStashed: false },
+				clients: ["A", "B", "C"].map((clientId) => ({ clientId, canBeStashed: false })),
+			},
+			{ type: "noop", seed: 1325690281034360 },
+		] satisfies (TestOperation & { seed?: number })[]);
+		await replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options);
 		await replayTest(
 			model,
 			0,

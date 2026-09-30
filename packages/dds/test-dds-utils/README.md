@@ -94,10 +94,12 @@ For a single configuration, continue to pass an `IChannelFactory` directly as `m
 The harness records the initial clients in an `initialize` operation.
 It records subsequent choices in `attach.clients` and `addClient.clientConfiguration`.
 Each created client exposes its configuration as `client.clientConfiguration`, including in `clientCreate` listeners.
-The `testStart` event occurs after initialization and before the workload generator is created.
+The `testStart` event occurs once, after the starting clients are created and before the workload generator is created.
+This lifecycle is the same for both factory forms and for replay.
 Rehydration and stash restoration retain the original client's configuration, even if the client gets a new name.
 
 If you pass an `IChannelFactory` directly, the harness omits details about configuration for each client in its operations.
+Initialization is recorded without allocating a workload seed, preserving existing unconfigured workloads for a given seed.
 The same configuration mechanism is available in `SquashFuzzModel`.
 
 ### Future Improvements

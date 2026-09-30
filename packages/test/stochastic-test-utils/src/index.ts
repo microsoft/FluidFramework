@@ -49,6 +49,7 @@ export {
 } from "./markovChain.js";
 export { FuzzTestMinimizer, MinimizationTransform } from "./minification.js";
 export {
+	AsyncFuzzTestInitializer,
 	performFuzzActions,
 	performFuzzActionsAsync,
 	saveOpsToFile,
