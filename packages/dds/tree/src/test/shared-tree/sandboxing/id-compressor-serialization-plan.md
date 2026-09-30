@@ -115,13 +115,13 @@ The compatibility tests characterize compressor behavior; the end-to-end tests v
 - [ ] Add an isolated worker or iframe test that does not share JavaScript globals.
 - [x] Update the `UntypedTreeViewAlpha.applyChange` contract for separate compressor instances with synchronized ID knowledge.
 - [x] Update [sandboxing.md](./sandboxing.md) to describe the implemented ID-sharding path and narrow its remaining work.
-- [ ] Run the relevant type-check, formatting, lint, and test commands for the completed implementation.
+- [x] Run the relevant type-check, formatting, lint, and test commands for the completed implementation.
 
-The sandbox compatibility, correctness, demo, and 50 default synchronization schedules passed together (132 tests).
+The sandbox compatibility, correctness, demo, and 50 default synchronization schedules passed together (132 of 164 sandbox-focused tests).
 [sandboxing.spec.ts](./sandboxing.spec.ts) verifies distinct Host and Guest compressors, later Host and peer IDs, Guest-authored changes, handles, metadata, retained history, Guest revertibles, undo/redo, and rebases.
 The compatibility tests retain expected failures when ID progress is deliberately omitted.
 The isolated iframe or worker test is deferred to a separate PR.
-
+Final checks passed: Tree and ID-compressor source and test TypeScript builds, Biome on 26 relevant files, focused ESLint checks, 164 sandbox-focused tests, and 65 ID-compressor sharding tests.
 
 ### Potential `id-compressor` API follow-up
 
