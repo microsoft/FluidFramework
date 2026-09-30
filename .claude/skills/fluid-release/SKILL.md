@@ -12,7 +12,7 @@ Release workflow for the client release group. Supports two modes: **interactive
 Check the `CI` environment variable at the start of every session:
 
 - **`CI=true`**: Running in a GitHub Actions workflow. Use only `origin` (no `upstream`). Use CI-safe commands (see [CI-safe alternatives](#ci-safe-command-alternatives)). Never prompt for input. Log blockers and phase completions to workflow output for human review.
-- **`CI` unset or false**: Running locally. Use `upstream`/`origin` detection as described in Key Context.
+- **`CI` unset or false**: Running locally. Require `origin` to point to the engineer's fork and `upstream` to Microsoft.
 
 ## Mode Selection
 
@@ -56,14 +56,16 @@ Compare today's date against the schedule. The next release is the earliest sche
 
 ```bash
 # Check for release-prep branches for the next version
-git ls-remote --heads upstream 'release-prep/<NEXT_VERSION>/*'
+git ls-remote --heads origin 'release-prep/<NEXT_VERSION>/*'
 # Check for the release branch
-git ls-remote --heads upstream 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
+git ls-remote --heads <CANONICAL_REMOTE> 'release/client/<NEXT_MAJOR>.<NEXT_MINOR>'
 # Check for a release tag
 git tag -l 'client_v<NEXT_VERSION>'
 # Check for open PRs
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<NEXT_VERSION>" --state all
 ```
+
+Verify each PR's head repository, base, changes, and state before treating a step as done. Stop if the required remotes are not configured as expected.
 
 For a release branch with no completed release, also inspect ADO pipeline state:
 
@@ -123,8 +125,9 @@ These steps require human action and should be clearly reported in CI workflow l
 - Release branch naming: `release/client/<major>.<minor>` (e.g., `release/client/2.90`)
 - The release branch is created from the commit **before** the version bump on `main`
 - There is no `lerna.json` in this repo
-- **Git remote preference**: When pushing branches, prefer pushing to `origin`. For release engineers (not CI) that should typically be their fork, and for CI (CI=true) it'll be the main microsoft remote.
-- **Working branch naming**: Do NOT use the `release/` prefix for working branches because `release/` is protected on upstream. Use the standard naming convention below — these branches double as progress markers.
+- **Git remotes (local)**: Require `origin` to fetch from and push to a writable fork, and `upstream` to fetch from Microsoft. Set `<CANONICAL_REMOTE>` to `upstream`; push working branches to `origin`. Check remote URLs before use. Do not change remotes automatically.
+- **Git remotes (CI)**: Set `<CANONICAL_REMOTE>` to `origin` (the Microsoft remote). CI uses only `origin`; there is no `upstream`.
+- **Working branch naming**: Do NOT use the `release/` prefix for working branches because `release/` is protected on Microsoft. Use the standard naming convention below — these branches double as progress markers.
 
 ### CI-safe Command Alternatives
 
@@ -159,13 +162,13 @@ Example for releasing 2.90.0 with next version 2.91.0:
 Before starting any phase, check for existing progress by looking at branches and PRs:
 
 ```bash
-# Check for existing release-prep branches on upstream
-git ls-remote --heads upstream 'release-prep/<VERSION>/*'
-# Check for open release-prep PRs
+# Check for existing release-prep branches on the working repository
+git ls-remote --heads origin 'release-prep/<VERSION>/*'
+# Check for release-prep PRs
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<VERSION>" --state all
 ```
 
-If branches or PRs already exist, skip completed steps and resume from where the process left off.
+If branches or PRs already exist, verify their head repository, base and state before skipping completed steps.
 
 ## Before Starting
 
@@ -191,6 +194,7 @@ For version bumps, use `flub bump` locally or CI-safe alternatives in CI (see [C
 ### PR Conventions
 
 Use the `build:` conventional commit prefix for all release PR titles (e.g., `build: tag untagged asserts for 2.90.0 release`).
+Use fluid-pr for all release PRs.
 
 ### Checkpoints
 
