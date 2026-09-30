@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import type { ITelemetryBaseLogger, Listenable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -54,6 +54,8 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 	ShardSynchronizationToken,
+	ParentIdProgressForShard,
+	IdCompressorEvents,
 } from "./types/index.js";
 import { SerializationVersion } from "./types/index.js";
 import {
@@ -79,6 +81,10 @@ const MAX_STRIDE_LENGTH = 1000000;
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
  */
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
+	private readonly eventEmitter = createEmitter<IdCompressorEvents>();
+
+	public readonly events: Listenable<IdCompressorEvents> = this.eventEmitter;
+
 	/**
 	 * Max allowed initial cluster size.
 	 */
@@ -366,6 +372,48 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
+	public getChildShardProgress(
+		childToken: ShardSynchronizationToken,
+	): ParentIdProgressForShard {
+		if (!this.shardingState?.activeChildIds.has(childToken.shardId)) {
+			throw new Error("Cannot get parent progress for an inactive child ID space shard.");
+		}
+		const progress: ParentIdProgressForShard = {
+			type: "parentIdProgressForShard",
+			shardId: childToken.shardId,
+			localGenCount: this.localGenCount,
+		};
+		return progress;
+	}
+
+	public synchronizeWithParent(progress: ParentIdProgressForShard): void {
+		const state = this.shardingState;
+		if (
+			progress.type !== "parentIdProgressForShard" ||
+			state?.shardId === undefined ||
+			state.shardId !== progress.shardId
+		) {
+			throw new Error("Invalid parent progress for this child ID space shard.");
+		}
+		if (!Number.isSafeInteger(progress.localGenCount) || progress.localGenCount < 0) {
+			throw new TypeError("Invalid parent progress generation count.");
+		}
+		if (progress.localGenCount <= this.localGenCount) {
+			return;
+		}
+		// Backfill parent IDs through the child's next stride position. Its next generated ID
+		// remains in its assigned part of the ID space.
+		const steps =
+			Math.floor((progress.localGenCount - this.localGenCount) / state.currentStride) + 1;
+		const count = steps * state.currentStride;
+		const nextGenCount = this.localGenCount + count;
+		if (!Number.isSafeInteger(nextGenCount)) {
+			throw new TypeError("Parent progress exceeds the supported ID space.");
+		}
+		this.normalizer.addLocalRange(this.localGenCount + 1, count);
+		this.localGenCount = nextGenCount;
+	}
+
 	private synchronizeChild(syncToken: ShardToken): boolean {
 		const childDisposed = syncToken.disposed;
 		if (this.writeVersion < SerializationVersion.V3) {
@@ -639,6 +687,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		assert(!session.isEmpty(), 0x757 /* Empty sessions should not be created. */);
+		this.eventEmitter.emit("rangeFinalized", range);
 	}
 
 	private addEmptyCluster(session: Session, capacity: number): IdCluster {

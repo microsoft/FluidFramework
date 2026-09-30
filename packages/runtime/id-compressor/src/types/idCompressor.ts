@@ -9,6 +9,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "./identifiers.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -101,6 +102,11 @@ export type SerializationVersion =
  * @internal
  */
 export interface IIdCompressorCore {
+	/**
+	 * Events emitted by the ID compressor.
+	 */
+	readonly events: Listenable<IdCompressorEvents>;
+
 	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
 	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time a
@@ -196,6 +202,30 @@ export interface IIdCompressorCore {
 	synchronizeWithShard(syncToken: ShardSynchronizationToken): void;
 
 	/**
+	 * Gets the parent's ID progress for an active child ID space shard.
+	 *
+	 * @remarks
+	 * The child can apply the returned token without replacing its compressor.
+	 *
+	 * @param childToken - A token from the child ID space shard that will receive this progress.
+	 * @returns The parent's progress for that child.
+	 * @throws If the child ID space shard is not active on this compressor.
+	 */
+	getChildShardProgress(childToken: ShardSynchronizationToken): ParentIdProgressForShard;
+
+	/**
+	 * Adds a parent's new IDs to this child ID space shard.
+	 *
+	 * @remarks
+	 * This method keeps the child's allocation stride and does not finalize ID creation ranges.
+	 * Apply creation ranges from {@link IIdCompressorCore.events} separately, in order.
+	 *
+	 * @param progress - Progress obtained from this child's parent.
+	 * @throws If the token names another child or has an invalid generation count.
+	 */
+	synchronizeWithParent(progress: ParentIdProgressForShard): void;
+
+	/**
 	 * Returns undefined if this compressor is not part of a shard group, and otherwise returns a synchronization token for this shard
 	 * that can be used when calling {@link IIdCompressorCore.synchronizeWithShard}. This does NOT dispose the shard.
 	 *
@@ -272,6 +302,25 @@ export type ShardSynchronizationToken = ShardToken & {
 	readonly ShardSynchronizationToken: "c79724e1-9103-4415-95b5-bebb932be404";
 };
 
+/**
+ * A parent's ID progress for one child ID space shard.
+ * @remarks This token does not finalize ID creation ranges.
+ * @internal
+ */
+export interface ParentIdProgressForShard
+	extends Readonly<Pick<ShardToken, "shardId" | "localGenCount">> {
+	/** Identifies this token when it crosses a message boundary. */
+	readonly type: "parentIdProgressForShard";
+}
+
+/**
+ * Events for finalized ID creation ranges.
+ * @internal
+ */
+export interface IdCompressorEvents {
+	/** Reports a range after finalization succeeds. */
+	rangeFinalized: (range: IdCreationRange) => void;
+}
 /**
  * A distributed UUID generator and compressor.
  * `IdCompressor` offers the ability to generate arbitrary non-colliding v4 UUIDs, called stable IDs, while compressing them into small integers

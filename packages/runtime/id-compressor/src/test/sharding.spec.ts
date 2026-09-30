@@ -8,6 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { createIdCompressor, IdCompressor } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
 import type {
+	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 	SessionSpaceCompressedId,
 } from "../index.js";
@@ -1325,6 +1326,115 @@ describe("IdCompressor Sharding", () => {
 			// The disposal token flows into synchronizeWithShard, which both syncs and reclaims.
 			root.synchronizeWithShard(disposalToken);
 			assert.equal(root.decompress(child1Id), expectedStable);
+		});
+
+		it("lets a live child learn parent IDs without changing its allocation stride", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+
+			const childId = child.generateCompressedId();
+			parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+			const parentId = parent.generateCompressedId();
+			assert.throws(() => child.decompress(parentId), /Unknown ID/);
+
+			child.synchronizeWithParent(
+				parent.getChildShardProgress(child.getShardSyncToken() ?? fail()),
+			);
+			assert.equal(child.decompress(parentId), parent.decompress(parentId));
+			assert.equal(child.decompress(childId), parent.decompress(childId));
+
+			const nextChildId = child.generateCompressedId();
+			const nextParentId = parent.generateCompressedId();
+			assert.notEqual(nextChildId, nextParentId);
+			parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+			assert.equal(parent.decompress(nextChildId), child.decompress(nextChildId));
+		});
+
+		it("applies local finalized ranges after parent and child generate IDs", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childId = child.generateCompressedId();
+			parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+			const parentId = parent.generateCompressedId();
+			const range = parent.takeNextCreationRange();
+			const finalized: IdCreationRange[] = [];
+			const off = parent.events.on("rangeFinalized", (value) => finalized.push(value));
+			try {
+				parent.finalizeCreationRange(range);
+				assert.deepEqual(finalized, [range]);
+
+				child.synchronizeWithParent(
+					parent.getChildShardProgress(child.getShardSyncToken() ?? fail()),
+				);
+				child.finalizeCreationRange(range);
+				for (const id of [parentId, childId]) {
+					assert.equal(child.decompress(id), parent.decompress(id));
+					assert.equal(child.normalizeToOpSpace(id), parent.normalizeToOpSpace(id));
+				}
+				const next = child.generateCompressedId();
+				parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+				assert.equal(parent.decompress(next), child.decompress(next));
+			} finally {
+				off();
+			}
+		});
+
+		it("rejects progress for another child or an invalid generation count without changing state", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [firstSerialized, secondSerialized] = parent.shard(2);
+			const first = deserialize(firstSerialized);
+			const second = deserialize(secondSerialized);
+			const parentProgress = parent.getChildShardProgress(first.getShardSyncToken() ?? fail());
+			const before = first.serialize(true);
+
+			assert.throws(
+				() => second.synchronizeWithParent(parentProgress),
+				/parent progress.*child ID space shard/,
+			);
+			assert.throws(
+				() => first.synchronizeWithParent({ ...parentProgress, localGenCount: 1.5 }),
+				/parent progress.*generation count/,
+			);
+			assert.equal(first.serialize(true), before);
+			assert.equal(second.generateCompressedId(), -5);
+		});
+
+		it("reports finalized ranges so a child can apply them in order", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const remote = createIdCompressor(SerializationVersion.V3);
+			const remoteId = remote.generateCompressedId();
+			const encodedRemoteId = remote.normalizeToOpSpace(remoteId);
+			const range = remote.takeNextCreationRange();
+			const finalized: IdCreationRange[] = [];
+			const off = parent.events.on("rangeFinalized", (value) => finalized.push(value));
+			try {
+				parent.finalizeCreationRange(range);
+				assert.deepEqual(finalized, [range]);
+				assert.throws(
+					() => child.normalizeToSessionSpace(encodedRemoteId, remote.localSessionId),
+					/No IDs have ever been finalized/,
+				);
+
+				for (const update of finalized) {
+					child.finalizeCreationRange(update);
+				}
+				const normalized = child.normalizeToSessionSpace(
+					encodedRemoteId,
+					remote.localSessionId,
+				);
+				assert.equal(child.decompress(normalized), remote.decompress(remoteId));
+				assert.throws(
+					() => parent.finalizeCreationRange(range),
+					/Ranges finalized out of order/,
+				);
+				assert.deepEqual(finalized, [range]);
+			} finally {
+				off();
+			}
 		});
 	});
 });

@@ -95,8 +95,8 @@ The completed compatibility tests characterize today's behavior; they do not imp
 
 ### Host-to-Guest ID progress
 
-- [ ] Determine the smallest supported way to update a live child ID space shard with Host-generated IDs and ordered finalized ranges; use existing ID-compressor APIs where sufficient and add an internal API only where necessary.
-- [ ] Identify a runtime source for finalized-range updates that does not depend on test-only provider state or call `takeNextCreationRange()` for sandbox messages.
+- [x] Add an internal parent-progress API that updates a live child ID space shard without changing its stride; use existing `finalizeCreationRange` for ordered finalized ranges.
+- [x] Expose finalized-range notifications on the runtime's ID compressor so the Host can observe them without test-only provider state or a sandbox call to `takeNextCreationRange()`.
 - [ ] Deliver compressor updates before dependent initialization commits, Host updates, and revision checks, without replacing the Guest compressor or changing its ID space shard stride.
 - [ ] Verify Host edits beyond the child ID space shard's backfilled range, newly finalized peer edits, and updates that only advance `trunkRevision`.
 - [ ] Verify ordering with concurrent Guest edits, interleaved or delayed messages, and invalid or stale compressor updates.
@@ -151,9 +151,12 @@ Resource limits for very large progress jumps remain part of [sandboxing.md](./s
 
 ### 3. Send Host ID progress to the live Guest
 
-Add an incremental parent-to-child synchronization mechanism to the ID-compressor library, or establish an equivalent supported internal API **before** declaring the sandbox change complete.
-It must make Host-known local IDs and ordered finalized creation ranges available to an existing child ID space shard without replacing its compressor, changing its allocation stride, or permitting collisions.
-Determine how the Host observes finalized ranges from the runtime; access through test-only provider state is not sufficient for a real Host.
+The ID-compressor library now provides `getChildIdSpaceShardProgress` on a parent and `synchronizeWithParent` on a live child.
+This updates the child's knowledge of Host-generated IDs without replacing the child compressor or changing its allocation stride.
+The parent's `rangeFinalized` event reports each creation range after finalization succeeds.
+The Guest can apply these ranges in order through the existing `finalizeCreationRange` method.
+Unit tests cover parent and child edits, local and remote finalized ranges, token ownership, and invalid progress.
+The sandbox does **not yet** subscribe to this event or send either form of progress through `MessagePort`.
 
 Carry the required compressor updates over the Host-to-Guest channel ahead of each `hostUpdate` that depends on them, including updates that only advance the finalized-history boundary.
 Apply them before the Guest replays any serialized commit or interprets a revision that depends on them.
