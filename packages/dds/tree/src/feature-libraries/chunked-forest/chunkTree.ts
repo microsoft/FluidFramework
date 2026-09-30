@@ -746,7 +746,7 @@ export function tryCoalesceUniformChunks(
 		leftCompressor === undefined ||
 			rightCompressor === undefined ||
 			leftCompressor === rightCompressor,
-		"tryCoalesceUniformChunks: left and right carry different idCompressors",
+		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
 	);
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
 	// Don't merge if the result would exceed the per-chunk node cap: this keeps chunks from
