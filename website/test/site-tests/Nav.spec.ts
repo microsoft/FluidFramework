@@ -211,7 +211,11 @@ test.describe("Docs sidebar focus", () => {
 		});
 	}
 
-	for (const cancellation of ["pointer navigation", "category expansion"]) {
+	for (const cancellation of [
+		"pointer navigation",
+		"same-link pointer navigation",
+		"category expansion",
+	]) {
 		test(`${cancellation} cancels pending focus`, async ({ page }) => {
 			await withPendingQuickStart(page, 1280, async (sidebar) => {
 				if (cancellation === "pointer navigation") {
@@ -220,6 +224,11 @@ test.describe("Docs sidebar focus", () => {
 						.getByRole("link", { name: /Community/ })
 						.click();
 					await expect(page).toHaveURL(/\/community\/?$/);
+				} else if (cancellation === "same-link pointer navigation") {
+					const link = sidebar.locator('a[href="/docs/start/quick-start"]');
+					await link.click();
+					await expect(link).toBeFocused();
+					await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
 				} else {
 					const category = sidebar.getByRole("button", {
 						name: "Build With Fluid",

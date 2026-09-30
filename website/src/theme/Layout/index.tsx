@@ -65,8 +65,12 @@ export default function Layout(props: Props): ReactElement {
 			}
 
 			const link = event.target.closest<HTMLAnchorElement>(docsSidebarLinkSelector);
-			// Category expansion has no route change, so cancel its pending focus here.
-			if (event.defaultPrevented && link?.getAttribute("href") === "#") {
+			// Keyboard-generated clicks have detail 0 and must retain the pending focus.
+			// Cancel pointer clicks and category expansion even without a different route.
+			if (
+				link !== null &&
+				(event.detail > 0 || (event.defaultPrevented && link.getAttribute("href") === "#"))
+			) {
 				pendingNavigation.current = undefined;
 			}
 		};
