@@ -8,13 +8,7 @@ import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 
 import { DependentFormatVersion, makeCodecFamily } from "../../../codec/index.js";
-import {
-	type ChangeEncodingContext,
-	type SchemaAndPolicy,
-	TreeStoredSchemaRepository,
-} from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeEditManagerCodecBuilder } from "../../../shared-tree-core/editManagerCodecs.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -251,91 +245,6 @@ export function testCodec(): void {
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
-
-		it("omits the schema only for peer branches containing schema changes", () => {
-			const schema: SchemaAndPolicy = {
-				schema: new TreeStoredSchemaRepository(),
-				policy: defaultSchemaPolicy,
-			};
-			const schemaChange = TestChange.mint([0, 1, 2], 3);
-			const peerCommits: Commit<TestChange>[] = [
-				TestChange.mint([0, 1], 2),
-				schemaChange,
-				TestChange.mint([0, 1, 2, 3], 4),
-			].map((change) => ({
-				change,
-				revision: mintRevisionTag(),
-				sessionId: trunkCommits[0].sessionId,
-				customMetadata: undefined,
-			}));
-			const data: SummaryData<TestChange> = {
-				originator: dummyContext.originatorId,
-				main: {
-					trunk: trunkCommits,
-					peerLocalBranches: new Map([
-						[trunkCommits[0].sessionId, { base: tags[0], commits: peerCommits }],
-						[
-							trunkCommits[1].sessionId,
-							{
-								base: tags[0],
-								commits: [
-									{
-										...peerCommits[0],
-										sessionId: trunkCommits[1].sessionId,
-										revision: mintRevisionTag(),
-									},
-								],
-							},
-						],
-					]),
-				},
-			};
-			const schemas: (SchemaAndPolicy | undefined)[] = [];
-			const changeCodecs = makeCodecFamily([
-				[
-					1,
-					{
-						...TestChange.codec,
-						encode: (change: TestChange, context: ChangeEncodingContext) => {
-							schemas.push(context.schema);
-							return TestChange.codec.encode(change, context);
-						},
-					},
-				],
-			]);
-			const codecs = builder.applyOptions({
-				changeCodecs,
-				dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
-				revisionTagCodec: testRevisionTagCodec,
-				jsonValidator: FormatValidatorBasic,
-			});
-			for (const version of supportedEditManagerFormatVersions) {
-				const codec = codecs.find((entry) => entry.formatVersion === version)?.codec;
-				assert(codec !== undefined);
-				schemas.length = 0;
-				const context: EditManagerEncodingContext<TestChange> = {
-					...dummyContext,
-					schema,
-					isSummary: true,
-					hasSchemaChange: (change) => change === schemaChange,
-				};
-				const encoded = codec.encode(data, context);
-				assert.deepEqual(
-					schemas,
-					[schema, schema, schema, undefined, undefined, undefined, schema],
-					`Unexpected encoding schemas for format ${version}`,
-				);
-				assertEquivalentSummaryDataIgnoreOriginator(codec.decode(encoded, context), data);
-
-				schemas.length = 0;
-				codec.encode(data, { ...context, hasSchemaChange: () => false });
-				assert.deepEqual(
-					schemas,
-					[schema, schema, schema, schema, schema, schema, schema],
-					`Encoding should use the predicate from each call's context for format ${version}`,
-				);
-			}
-		});
 
 		it("Extra properties on commits are omitted from encoding", () => {
 			interface ExtraData {

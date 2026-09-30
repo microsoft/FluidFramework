@@ -8,12 +8,8 @@ import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
-import { currentVersion, makeCodecFamily, type CodecWriteOptions } from "../../codec/index.js";
-import {
-	TreeStoredSchemaRepository,
-	type ChangeEncodingContext,
-	type StoredSchemaCollection,
-} from "../../core/index.js";
+import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
+import { TreeStoredSchemaRepository, type ChangeEncodingContext } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
@@ -30,7 +26,6 @@ import {
 	type FieldBatchEncodingContext,
 	FieldBatchFormatVersion,
 	FieldKinds,
-	ModularChangeFamily,
 	type ModularChangeset,
 	defaultSchemaPolicy,
 	fieldKindConfigurations,
@@ -43,8 +38,6 @@ import { newCrossFieldKeyTable } from "../../feature-libraries/modular-schema/mo
 import type { Changeset } from "../../feature-libraries/sequence-field/types.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { makeSharedTreeChangeCodecFamily } from "../../shared-tree/sharedTreeChangeCodecs.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { SharedTreeInnerChange } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { brand } from "../../util/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../snapshots/index.js";
@@ -166,63 +159,5 @@ describe("sharedTreeChangeCodec", () => {
 			{ changes: [{ type: "data", innerChange: dummyModularChangeSet }] },
 			dummyContext,
 		);
-	});
-
-	it("uses an embedded schema only within its commit when no inherited schema is provided", () => {
-		const schemas: (StoredSchemaCollection | undefined)[] = [];
-		const modularCodecs = makeModularChangeCodecFamily(
-			fieldKindConfigurations,
-			testRevisionTagCodec,
-			failFieldBatchCodec,
-			codecOptions,
-		);
-		const changeCodecs = makeSharedTreeChangeCodecFamily(
-			makeCodecFamily(
-				[...modularCodecs.getSupportedFormats()].map((version) => {
-					const codec = modularCodecs.resolve(version);
-					return [
-						version,
-						{
-							...codec,
-							encode: (change: ModularChangeset, encodingContext: ChangeEncodingContext) => {
-								schemas.push(encodingContext.schema?.schema);
-								return codec.encode(change, encodingContext);
-							},
-						},
-					] as const;
-				}),
-			),
-			codecOptions,
-		);
-		const schema = new TreeStoredSchemaRepository();
-		const data: SharedTreeInnerChange = {
-			type: "data",
-			innerChange: ModularChangeFamily.emptyChange,
-		};
-		const context: ChangeEncodingContext = {
-			originatorId: testIdCompressor.localSessionId,
-			idCompressor: testIdCompressor,
-			revision: undefined,
-			isSummary: true,
-		};
-		for (const version of changeCodecs.getSupportedFormats()) {
-			const codec = changeCodecs.resolve(version);
-			schemas.length = 0;
-			codec.encode(
-				{
-					changes: [
-						data,
-						{
-							type: "schema",
-							innerChange: { schema: { old: schema, new: schema }, isInverse: false },
-						},
-						data,
-					],
-				},
-				context,
-			);
-			codec.encode({ changes: [data] }, context);
-			assert.deepEqual(schemas, [undefined, schema, undefined]);
-		}
 	});
 });

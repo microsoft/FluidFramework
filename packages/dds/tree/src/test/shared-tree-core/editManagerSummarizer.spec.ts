@@ -88,7 +88,8 @@ function createEditManagerSummarizer(options?: {
 }
 
 describe("EditManagerSummarizer", () => {
-	// Peer data commits must not use the current document schema when a preceding peer commit changes schema.
+	// B's data edit uses a type added by an earlier schema commit.
+	// Both commits lose a rebase, but the summary still needs to preserve B's original history.
 	// Minimized from topLevel.fuzz.spec.ts, Batch rebasing seed 41.
 	it("summarizes peer history after a schema upgrade and dependent edit lose a rebase", async () => {
 		const sf = new SchemaFactory("summarySchemaRebase");
@@ -113,8 +114,9 @@ describe("EditManagerSummarizer", () => {
 		assert.equal(aView.root, "concurrent edit");
 		assert.equal(bView.compatibility.isEquivalent, false);
 		expectSchemaEqual(a.kernel.checkout.storedSchema, toInitialSchema(oldConfig.schema));
-		// A retains B's original schema and data commits in peer history, although its current
-		// document schema no longer includes Added. Encoding that history must still succeed.
+		// A retains B's original schema and data commits in peer history to rebase later messages from B.
+		// Its document schema does not include Added, so using that schema to encode B's data would fail.
+		// Encoding that history must still succeed.
 		const { summary } = await a.summarize();
 		const runtime = new MockFluidDataStoreRuntime({
 			idCompressor: provider.getCompressor(a),
