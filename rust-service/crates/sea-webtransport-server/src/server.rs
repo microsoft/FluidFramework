@@ -35,7 +35,7 @@ use crate::protocol::{SeaConnectionService, SeaServiceHost};
 use crate::stream::{ReceiveStream, SendStream};
 use sea_webtransport::protocol;
 
-pub(crate) const CLOSE_CODE: VarInt = VarInt::from_u32(1);
+const CLOSE_CODE: VarInt = VarInt::from_u32(1);
 /// Point-in-time transport activity and high-water measurements.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct TransportMeasurement {

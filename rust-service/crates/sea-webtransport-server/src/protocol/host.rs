@@ -15,7 +15,7 @@ use sea_sequencer::factory::LocalSessionFactory;
 use sea_webtransport::protocol;
 use tokio::{sync::Mutex, time::sleep};
 
-use super::dispatch::error_response;
+use super::error_response;
 use crate::{
     DocumentHost, LivenessPolicy, SeaConnectionService, SeaResponseStream, SeaServiceHost,
     SessionDecorator, SessionDispatcher,

@@ -23,15 +23,6 @@ pub use native::{SessionClient, SessionOpen};
 use std::time::Duration;
 #[cfg(not(target_arch = "wasm32"))]
 use thiserror::Error;
-#[cfg(not(target_arch = "wasm32"))]
-use tokio::time::timeout;
-#[cfg(not(target_arch = "wasm32"))]
-use wtransport::{
-    ClientConfig, Connection, Endpoint, VarInt, endpoint::endpoint_side::Client, tls::Sha256Digest,
-};
-
-#[cfg(not(target_arch = "wasm32"))]
-pub(crate) const CLOSE_CODE: VarInt = VarInt::from_u32(1);
 
 /// Bounded frame and lifecycle configuration.
 #[cfg(not(target_arch = "wasm32"))]
@@ -104,29 +95,4 @@ pub enum WebTransportError {
     /// The server cannot accept another shutdown request.
     #[error("server is no longer available for shutdown")]
     ShutdownUnavailable,
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub(crate) async fn connect_once(
-    url: &str,
-    certificate_hash: Sha256Digest,
-    operation_timeout: Duration,
-) -> Result<(Endpoint<Client>, Connection), WebTransportError> {
-    let endpoint = Endpoint::client(
-        ClientConfig::builder()
-            .with_bind_default()
-            .with_server_certificate_hashes([certificate_hash])
-            .build(),
-    )
-    .map_err(transport_error)?;
-    let connection = timeout(operation_timeout, endpoint.connect(url))
-        .await
-        .map_err(|_| WebTransportError::Timeout)?
-        .map_err(transport_error)?;
-    Ok((endpoint, connection))
-}
-
-#[cfg(not(target_arch = "wasm32"))]
-pub(crate) fn transport_error(error: impl std::fmt::Display) -> WebTransportError {
-    WebTransportError::Transport(error.to_string())
 }

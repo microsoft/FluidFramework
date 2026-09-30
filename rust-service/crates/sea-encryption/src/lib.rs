@@ -303,10 +303,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{
-        Arc, Mutex,
-        atomic::{AtomicUsize, Ordering},
-    };
+    use std::sync::{Arc, Mutex};
 
     use super::*;
     use sea_memory::MemoryStorageError;
@@ -391,20 +388,6 @@ mod tests {
     impl NonceSource for UnavailableNonce {
         fn generate_nonce(&self) -> Result<[u8; NONCE_LENGTH], NonceUnavailable> {
             Err(NonceUnavailable)
-        }
-    }
-
-    /// Deterministic nonce source that records how many payloads request a nonce.
-    #[derive(Clone, Debug)]
-    pub(super) struct CountingNonce {
-        /// Shared request count used to detect skipped or repeated encryption.
-        pub(super) calls: Arc<AtomicUsize>,
-    }
-
-    impl NonceSource for CountingNonce {
-        fn generate_nonce(&self) -> Result<[u8; NONCE_LENGTH], NonceUnavailable> {
-            let call = self.calls.fetch_add(1, Ordering::Relaxed);
-            Ok([u8::try_from(call + 1).unwrap(); NONCE_LENGTH])
         }
     }
 

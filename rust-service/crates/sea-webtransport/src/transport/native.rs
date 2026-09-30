@@ -1,10 +1,39 @@
 //! Native WebTransport connection and bidirectional-stream primitives.
 
 use async_trait::async_trait;
-use wtransport::{Connection, Endpoint, endpoint::endpoint_side::Client};
+use std::time::Duration;
+use tokio::time::timeout;
+use wtransport::{
+    ClientConfig, Connection, Endpoint, VarInt, endpoint::endpoint_side::Client, tls::Sha256Digest,
+};
 
 use super::{BidirectionalStream, ClientTransport};
-use crate::{CLOSE_CODE, WebTransportError, transport_error};
+use crate::WebTransportError;
+
+const CLOSE_CODE: VarInt = VarInt::from_u32(1);
+
+pub(crate) async fn connect_once(
+    url: &str,
+    certificate_hash: Sha256Digest,
+    operation_timeout: Duration,
+) -> Result<(Endpoint<Client>, Connection), WebTransportError> {
+    let endpoint = Endpoint::client(
+        ClientConfig::builder()
+            .with_bind_default()
+            .with_server_certificate_hashes([certificate_hash])
+            .build(),
+    )
+    .map_err(transport_error)?;
+    let connection = timeout(operation_timeout, endpoint.connect(url))
+        .await
+        .map_err(|_| WebTransportError::Timeout)?
+        .map_err(transport_error)?;
+    Ok((endpoint, connection))
+}
+
+fn transport_error(error: impl std::fmt::Display) -> WebTransportError {
+    WebTransportError::Transport(error.to_string())
+}
 
 /// Native connection retained by the typed session client.
 pub struct NativeTransport {
@@ -128,8 +157,6 @@ impl BidirectionalStream for NativeBidirectionalStream {
 mod tests {
     use super::*;
     use futures_util::FutureExt as _;
-    use std::time::Duration;
-    use tokio::time::timeout;
     use wtransport::{Identity, ServerConfig};
 
     /// Reads exactly one peer request for the controlled stalled-server test.
@@ -279,10 +306,9 @@ mod tests {
         .unwrap();
         let url = format!("https://{}/sea", server.local_addr().unwrap());
         let (client, peer) = timeout(Duration::from_secs(5), async {
-            tokio::join!(
-                crate::connect_once(&url, hash, Duration::from_secs(5)),
-                async { server.accept().await.await.unwrap().accept().await.unwrap() }
-            )
+            tokio::join!(connect_once(&url, hash, Duration::from_secs(5)), async {
+                server.accept().await.await.unwrap().accept().await.unwrap()
+            })
         })
         .await
         .unwrap();

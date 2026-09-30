@@ -1,17 +1,12 @@
-//! File-format and publication mechanisms shared by the execution policies.
-
-#[path = "atomic_file.rs"]
-pub(crate) mod atomic_file;
-#[path = "journal.rs"]
-pub(crate) mod journal;
+//! Preparation budgets, factory delegation, and blocking dispatch shared by the execution policies.
 
 use std::sync::Arc;
 use tokio::sync::Semaphore;
 
-use journal::FileStorageError;
+use crate::journal::FileStorageError;
 
 /// Retained preprocessing capacity, shared with a worker if validation outlives its caller.
-pub(crate) type Preparation = Arc<crate::pressure::Reservation>;
+type Preparation = Arc<crate::pressure::Reservation>;
 
 /// Bounds content inputs and encodings before they reach a backend mutation queue.
 pub(crate) struct PreparationBudget {
@@ -22,7 +17,7 @@ pub(crate) struct PreparationBudget {
 impl PreparationBudget {
     /// Creates a separate bounded staging budget without worker ownership.
     #[cfg(test)]
-    pub(crate) fn new() -> Self {
+    fn new() -> Self {
         Self::with_budget(crate::pressure::DurableWritePressure::new().preparation)
     }
 

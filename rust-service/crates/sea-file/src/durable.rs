@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, OwnedMutexGuard, Semaphore};
 
 use crate::journal::FileStorageError;
+use crate::pressure::MAX_BYTES;
 
 crate::common::file_factory!(DurableStorage, true);
 
@@ -20,13 +21,10 @@ pub(crate) struct Executor {
     workers: Arc<Semaphore>,
 }
 
-/// Maximum retained mutation bytes in one document opening.
-pub(crate) const MAX_BYTES: usize = crate::pressure::MAX_BYTES;
-
 impl Executor {
     /// Creates an idle executor without starting a permanent worker.
     #[cfg(test)]
-    pub(crate) fn new(workers: Arc<Semaphore>) -> Self {
+    fn new(workers: Arc<Semaphore>) -> Self {
         Self::with_budget(
             workers,
             crate::pressure::DurableWritePressure::new().mutations,

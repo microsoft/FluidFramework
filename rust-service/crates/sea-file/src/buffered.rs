@@ -10,7 +10,7 @@ use tokio::sync::{Notify, Semaphore};
 crate::common::file_factory!(FileStorage, false);
 
 /// Maximum queued and in-flight encoded bytes per document.
-pub(crate) const MAX_BYTES: usize = 16 * 1024 * 1024;
+const MAX_BYTES: usize = 16 * 1024 * 1024;
 /// Maximum queued and in-flight requests per document.
 const MAX_REQUESTS: usize = 128;
 /// Addressed encoded records shared between admission, reads, and drain workers.

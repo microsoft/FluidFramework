@@ -3,7 +3,8 @@
 `sea-file::buffered::FileStorage` and `sea-file::durable::DurableStorage` implement `sea_core::storage::SeaStorage`.
 Both factories are also re-exported from the crate root.
 `FileStorage::open(root)` or `DurableStorage::open(root)` synchronously creates or opens a namespace; `create_view` allocates a document and `open_view` exclusively recovers one.
-The `common` module shares framing, atomic publication, recovery mechanisms, and bounded blocking dispatch.
+The private `journal` and `atomic_file` modules own framing/recovery and whole-value publication, respectively.
+The `common` module shares preparation budgets, factory delegation, and bounded blocking dispatch.
 The `buffered` and `durable` modules own independent admission and execution policies; shared components retain document identity and published state.
 The former `sea-file-durable` crate and const-generic factory have been retired without changing journal bytes.
 

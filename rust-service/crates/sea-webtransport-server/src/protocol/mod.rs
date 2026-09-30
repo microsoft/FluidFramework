@@ -14,6 +14,7 @@ use std::{pin::Pin, sync::Arc};
 
 use async_trait::async_trait;
 use futures_core::Stream;
+use sea_core::{ClassifiedError, ErrorKind};
 use sea_webtransport::protocol;
 
 use crate::{LivenessPolicy, WebTransportError};
@@ -22,8 +23,25 @@ mod dispatch;
 mod host;
 
 pub use dispatch::SessionDispatcher;
-pub(crate) use dispatch::error_response;
 pub use host::SeaProtocolHost;
+
+pub(crate) fn error_response(error: impl ClassifiedError) -> protocol::Response {
+    let kind = error.kind();
+    let message = error.to_string();
+    drop(error);
+    protocol::Response::Error {
+        kind: match kind {
+            ErrorKind::InvalidPosition => protocol::ErrorKind::Invalid,
+            ErrorKind::StalePosition => protocol::ErrorKind::Stale,
+            ErrorKind::Conflict => protocol::ErrorKind::Conflict,
+            ErrorKind::Rejected => protocol::ErrorKind::Rejected,
+            ErrorKind::Ambiguous => protocol::ErrorKind::Ambiguous,
+            ErrorKind::Unavailable => protocol::ErrorKind::Unavailable,
+            ErrorKind::Corrupt => protocol::ErrorKind::Corrupt,
+        },
+        message,
+    }
+}
 
 /// Response stream returned by a connection-scoped Sea service.
 pub type SeaResponseStream = Pin<Box<dyn Stream<Item = protocol::Response> + Send + 'static>>;

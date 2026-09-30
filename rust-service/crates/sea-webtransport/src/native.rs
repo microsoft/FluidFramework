@@ -33,7 +33,10 @@ use tokio::sync::{Mutex, mpsc, oneshot, watch};
 use wtransport::tls::Sha256Digest;
 
 #[cfg(not(target_arch = "wasm32"))]
-use crate::{TransportConfig, WebTransportError, connect_once, transport::native::NativeTransport};
+use crate::{
+    TransportConfig, WebTransportError,
+    transport::native::{NativeTransport, connect_once},
+};
 use crate::{
     client::{
         AuthorStream, Client, ClientError, ClientErrorReason, ClientStateError, ContentStream,

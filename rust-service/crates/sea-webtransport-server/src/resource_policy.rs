@@ -106,7 +106,7 @@ impl<E: ClassifiedError> Drop for AdmissionPolicy<E> {
 
 impl<E: ClassifiedError> AdmissionPolicy<E> {
     /// Builds independent document-local admission authorities.
-    pub(crate) fn new(storage: Option<DurableWritePressure>, output: LiveCachePressure<E>) -> Self {
+    fn new(storage: Option<DurableWritePressure>, output: LiveCachePressure<E>) -> Self {
         let pressure = output.clone();
         let monitor = tokio::spawn(async move {
             loop {

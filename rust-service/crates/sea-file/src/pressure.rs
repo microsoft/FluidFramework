@@ -9,7 +9,7 @@ use tokio::sync::{Notify, OwnedSemaphorePermit, Semaphore};
 use crate::FileStorageError;
 
 /// Fixed request limit for each independent inbound budget.
-pub(crate) const MAX_REQUESTS: usize = 128;
+const MAX_REQUESTS: usize = 128;
 /// Fixed conservative byte-charge limit for each independent inbound budget.
 pub(crate) const MAX_BYTES: usize = 16 * 1024 * 1024;
 
@@ -118,7 +118,7 @@ impl DurableWritePressure {
 
 /// Sticky opening status and capacity-release notifications, without policy callbacks.
 #[derive(Default)]
-pub(crate) struct Signal {
+struct Signal {
     /// Zero is live, one is closed, two is an ambiguous opening failure.
     terminal: AtomicU8,
     /// Wakes all current waiters when charges are released or the opening terminates.

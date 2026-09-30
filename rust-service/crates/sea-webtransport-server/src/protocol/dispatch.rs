@@ -6,8 +6,8 @@ use async_trait::async_trait;
 use bytes::Bytes;
 use futures_util::{StreamExt as _, stream};
 use sea_core::{
-    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, ClassifiedError, ErrorKind, Event,
-    EventPosition, MonitoredStreamItem, MonitoredStreamStatus,
+    BlobDirectory, BlobDirectoryId, BlobId, BlobTreeId, Event, EventPosition, MonitoredStreamItem,
+    MonitoredStreamStatus,
     archive::{EventSubmission, SnapshotParticipation as ArchiveSnapshotParticipation},
     session::{SeaArchive, SeaAuthorSession, SeaSnapshotCoordinator},
     storage::{LoadStart, Snapshot, StorageHandle},
@@ -15,7 +15,7 @@ use sea_core::{
 
 use sea_webtransport::protocol;
 
-use crate::{SeaConnectionService, SeaResponseStream};
+use super::{SeaConnectionService, SeaResponseStream, error_response};
 
 /// Dispatches requests to one already-open session, never a connection's replacement session.
 /// The connection host validates authority before handing this dispatcher to a logical stream.
@@ -449,24 +449,6 @@ fn invalid(message: &str) -> protocol::Response {
     protocol::Response::Error {
         kind: protocol::ErrorKind::Invalid,
         message: message.to_owned(),
-    }
-}
-
-pub(crate) fn error_response(error: impl ClassifiedError) -> protocol::Response {
-    let kind = error.kind();
-    let message = error.to_string();
-    drop(error);
-    protocol::Response::Error {
-        kind: match kind {
-            ErrorKind::InvalidPosition => protocol::ErrorKind::Invalid,
-            ErrorKind::StalePosition => protocol::ErrorKind::Stale,
-            ErrorKind::Conflict => protocol::ErrorKind::Conflict,
-            ErrorKind::Rejected => protocol::ErrorKind::Rejected,
-            ErrorKind::Ambiguous => protocol::ErrorKind::Ambiguous,
-            ErrorKind::Unavailable => protocol::ErrorKind::Unavailable,
-            ErrorKind::Corrupt => protocol::ErrorKind::Corrupt,
-        },
-        message,
     }
 }
 

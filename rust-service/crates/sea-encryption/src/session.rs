@@ -249,7 +249,7 @@ impl<Session: SeaSnapshotCoordinator, Keys: KeyProvider + Clone + 'static, Nonce
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::{CountingNonce, TestKeys};
+    use crate::{NONCE_LENGTH, NonceUnavailable, tests::TestKeys};
     use futures_util::FutureExt;
     use sea_core::{
         ClassifiedError, ErrorKind, Event, MonitoredStreamItem,
@@ -262,6 +262,20 @@ mod tests {
         Arc,
         atomic::{AtomicUsize, Ordering},
     };
+
+    /// Deterministic nonce source that records how many payloads request a nonce.
+    #[derive(Clone, Debug)]
+    struct CountingNonce {
+        /// Shared request count used to detect skipped or repeated encryption.
+        calls: Arc<AtomicUsize>,
+    }
+
+    impl NonceSource for CountingNonce {
+        fn generate_nonce(&self) -> Result<[u8; NONCE_LENGTH], NonceUnavailable> {
+            let call = self.calls.fetch_add(1, Ordering::Relaxed);
+            Ok([u8::try_from(call + 1).unwrap(); NONCE_LENGTH])
+        }
+    }
 
     /// Recovers a fresh in-memory document for each test or conformance mode.
     async fn new_runtime() -> Arc<LocalSequencer<MemoryStorage>> {

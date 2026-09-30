@@ -90,7 +90,7 @@ pub struct SignalClient {
 
 impl SignalClient {
     /// Starts the shared pump; dropping its final owner cancels remote membership.
-    pub(crate) fn start<Transport>(
+    fn start<Transport>(
         mut stream: SignalStream<Transport::Stream>,
         client: Arc<Client<Transport>>,
         initial: protocol::signals::Event,
