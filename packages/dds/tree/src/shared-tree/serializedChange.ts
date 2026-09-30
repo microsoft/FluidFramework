@@ -6,15 +6,15 @@
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import { fail } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static, TSchema } from "@sinclair/typebox";
 
 import {
+	type DecodeErrorHandler,
 	type FormatVersion,
 	type FormatValidator,
 	type IJsonCodec,
-	type SchemaValidationErrorHandlers,
+	throwDecodeError,
 	withSchemaValidation,
 } from "../codec/index.js";
 import {
@@ -176,13 +176,10 @@ function isSerializedChangeV2(value: unknown): value is EncodedSerializedChange 
  * @remarks
  * See {@link SerializableChange} for the format's lifetime and application requirements.
  *
- * @param errorHandlers - Optional schema-validation error policy.
- * When omitted, schema validation uses its default assertions.
  */
 export function makeSerializedChangeCodec(
 	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, unknown>,
 	validator: FormatValidator,
-	errorHandlers?: SchemaValidationErrorHandlers,
 ): SerializedChangeCodec {
 	const changeCodec = changeFamily.codecs.resolve(
 		getLatestSharedTreeChangeFormatVersion(changeFamily.codecs.getSupportedFormats()),
@@ -219,13 +216,15 @@ export function makeSerializedChangeCodec(
 		decode: (
 			encoded: unknown,
 			context: SerializedChangeDecodingContext,
+			onError?: DecodeErrorHandler,
 		): SerializableChange => {
 			if (!isSerializedChangeV2(encoded)) {
-				throw new UsageError("Cannot apply change. Invalid serialized change format.");
+				throwDecodeError(onError, "Cannot apply change. Invalid serialized change format.");
 			}
 			const { revision, originatorId, change, customMetadata } = encoded;
 			if (originatorId !== context.idCompressor.localSessionId) {
-				throw new UsageError(
+				throwDecodeError(
+					onError,
 					"Cannot apply change. A serialized change must be applied to the same SharedTree as it was created from.",
 				);
 			}
@@ -236,11 +235,11 @@ export function makeSerializedChangeCodec(
 				isSummary: false,
 			};
 			return {
-				change: { change: changeCodec.decode(change, changeContext), revision },
+				change: { change: changeCodec.decode(change, changeContext, onError), revision },
 				customMetadata: decodeCustomMetadataTree(customMetadata),
 			};
 		},
 	};
 
-	return withSchemaValidation(schema, codec, validator, errorHandlers);
+	return withSchemaValidation(schema, codec, validator);
 }

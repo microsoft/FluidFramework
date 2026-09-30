@@ -235,7 +235,7 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.checkout.applySerializedChange(change);
+		this.checkout.applyChange(change);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(

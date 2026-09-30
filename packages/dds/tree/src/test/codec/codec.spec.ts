@@ -37,20 +37,17 @@ describe("Codec APIs", () => {
 				);
 			});
 
-			it("using a custom error handler", () => {
-				const customErrorCodec = withSchemaValidation(
-					Type.Number(),
-					idCodec,
-					FormatValidatorBasic,
-					{
-						onDecodeError: () => {
-							throw new UsageError("Invalid input");
-						},
-					},
+			it("using a per-call custom error handler", () => {
+				assert.throws(
+					() =>
+						codec.decode("bad data" as unknown as number, undefined, (message) => {
+							throw new UsageError(message ?? "Invalid input");
+						}),
+					validateUsageError("Encoded data does not match the expected schema."),
 				);
 				assert.throws(
-					() => customErrorCodec.decode("bad data" as unknown as number),
-					validateUsageError("Invalid input"),
+					() => codec.decode("bad data" as unknown as number),
+					validateAssertionError(/Data being decoded should validate/),
 				);
 			});
 		});

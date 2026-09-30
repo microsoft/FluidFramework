@@ -7,7 +7,6 @@ import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { SchemaValidationErrorHandlers } from "../../../codec/index.js";
 import {
 	findAncestor,
 	findCommonAncestor,
@@ -42,10 +41,8 @@ import {
  * Guest codecs intentionally omit this policy so unexpected Host data continues to trigger the
  * default validation assertions.
  */
-const hostSchemaValidationErrorHandlers: SchemaValidationErrorHandlers = {
-	onDecodeError: () => {
-		throw new SandboxProtocolError("Invalid encoded data from Guest.");
-	},
+const throwInvalidGuestChange = (): never => {
+	throw new SandboxProtocolError("Invalid encoded data from Guest.");
 };
 
 /**
@@ -133,7 +130,6 @@ export class HostSynchronization {
 		this.guestChangeCodec = makeSerializedChangeCodec(
 			this.localCheckout.mainBranch.changeFamily,
 			sandboxFormatValidator,
-			hostSchemaValidationErrorHandlers,
 		);
 		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
@@ -185,7 +181,11 @@ export class HostSynchronization {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
-		this.localCheckout.applySerializedChange(message.change, this.guestChangeCodec);
+		this.localCheckout.applySerializedChange(
+			message.change,
+			this.guestChangeCodec,
+			throwInvalidGuestChange,
+		);
 		this.bindHandles(message.change);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
 		this.mainCheckout.merge(this.localCheckout, false);

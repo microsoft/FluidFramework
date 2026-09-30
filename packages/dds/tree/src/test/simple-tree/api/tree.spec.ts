@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import {
 	MockFluidDataStoreRuntime,
-	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
@@ -383,7 +382,7 @@ describe("simple-tree tree", () => {
 				const target = viewA.fork();
 				assert.throws(
 					() => target.applyChange(invalid),
-					validateAssertionError("Data being decoded should validate"),
+					validateUsageError(/Encoded data does not match the expected schema/),
 				);
 			}
 

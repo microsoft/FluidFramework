@@ -21,6 +21,7 @@ import {
 	FluidClientVersion,
 	FormatValidatorNoOp,
 	type CodecWriteOptions,
+	type DecodeErrorHandler,
 	type FormatValidator,
 } from "../codec/index.js";
 import {
@@ -1058,10 +1059,15 @@ export class TreeCheckout implements ITreeCheckout {
 	public applySerializedChange(
 		serializedChange: JsonCompatibleReadOnly,
 		codec: SerializedChangeCodec = this.serializedChangeCodec,
+		onError?: DecodeErrorHandler,
 	): void {
-		const { change, customMetadata } = codec.decode(serializedChange, {
-			idCompressor: this.idCompressor,
-		});
+		const { change, customMetadata } = codec.decode(
+			serializedChange,
+			{
+				idCompressor: this.idCompressor,
+			},
+			onError,
+		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
 		this.#transaction.branch.apply(change, CommitKind.Default, customMetadata);
 	}
@@ -1083,7 +1089,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	@throwIfBroken
 	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.applySerializedChange(change);
+		this.applySerializedChange(change, this.serializedChangeCodec, (message) => {
+			throw new UsageError(
+				message ?? "Cannot apply change. Invalid serialized change format.",
+			);
+		});
 	}
 
 	public isBranch(): this is UntypedTreeViewAlpha {
