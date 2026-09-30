@@ -57,7 +57,7 @@ describe("End to End Host and Guest integrations", () => {
 
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.string });
 
-		it("user facing APIs", async () => {
+		it("ServiceClient end to end, with guest modification", async () => {
 			const client = startEphemeralService().defaultClient;
 			const container = await client.createAttachedContainer(TestDataStore);
 			const tree = container.data;
