@@ -42,7 +42,7 @@ export interface IDecoder<TDecoded, TEncoded, TContext> {
  * Codecs invoke this callback only for recognized invalid input.
  * Unexpected errors are not passed to this callback.
  *
- * When not specified the default behavior is to assert.
+ * When not specified, the default behavior is to assert.
  * Use with {@link throwDecodeError}.
  */
 export type DecodeErrorHandler = (message?: string) => never;
