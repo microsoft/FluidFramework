@@ -8,7 +8,7 @@ Progress checkpoint: `5e9459eadaf`; completion changes remain uncommitted.
 
 ## Outcome
 
-The [approved plan](../FILE_STORAGE_REFACTOR_PLAN.md) is implemented with one `sea-file` crate, independent buffered and durable execution owners, common file/recovery mechanisms, and shared component glue in `storage.rs`.
+The [approved plan](FILE_STORAGE_REFACTOR_PLAN.md) is implemented with one `sea-file` crate, independent buffered and durable execution owners, common file/recovery mechanisms, and shared component glue in `storage.rs`.
 Buffered publication precedes filesystem writes and drains in bounded turns; durable publication retains its synchronization barriers.
 Both policies retain accepted work through cancellation, bound mutation capacity, isolate filesystem work, and expose orderly flush/shutdown.
 The server uses a generic `SeaStorage` adapter, selecting built-in concrete types only at construction.

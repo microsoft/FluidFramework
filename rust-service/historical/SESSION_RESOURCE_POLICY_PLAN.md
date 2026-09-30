@@ -7,7 +7,7 @@ Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
 Evidence and historical checkpoint results: [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md).
-Current behavior and limits are documented in the [server guide](crates/sea-webtransport-server/README.md) and [architecture overview](SEA_ARCHITECTURE.md).
+Current behavior and limits are documented in the [server guide](../crates/sea-webtransport-server/README.md) and [architecture overview](../SEA_ARCHITECTURE.md).
 
 This is an implementation plan, not a claim of currently supported resource guarantees.
 On 2026-09-26 the user authorized updating this plan, salvaging useful local changes, and committing progress at the next clean stopping point.
@@ -33,8 +33,8 @@ That combination led to a proposed one-publication-obligation protocol and lifec
 The user now explicitly permits an outgoing queue to exceed its budget while live readers still need its entries.
 Its budget is therefore a **soft target and pressure signal**, not a hard memory limit.
 The strict-bound publication protocol is not needed and must not be implemented as a prerequisite.
-Keep its rationale and limitations as historical evidence in [Decision 0028](historical/decisions/0028-session-factory-ownership-probe.md), not as active tests or acceptance requirements.
-The revised direction is recorded in [Decision 0029](historical/decisions/0029-document-soft-budget-policy.md).
+Keep its rationale and limitations as historical evidence in [Decision 0028](decisions/0028-session-factory-ownership-probe.md), not as active tests or acceptance requirements.
+The revised direction is recorded in [Decision 0029](decisions/0029-document-soft-budget-policy.md).
 
 Completed cache checkpoints 0, 1, and 1a remain historical results.
 Their accepted performance/evidence exceptions are not retroactively changed.
@@ -134,7 +134,7 @@ Generated local memory construction can remain explicitly direct; do not adverti
 
 No resource policy, pressure signals, automatic lifecycle owner, storage admission change, or production sequencing/cache rewrite belongs in A.
 Update API documentation and a changeset.
-Run the applicable [Development](DEVELOPMENT.md) gates and focused forwarding/cancellation tests.
+Run the applicable [Development](../DEVELOPMENT.md) gates and focused forwarding/cancellation tests.
 The frozen overhead comparison below has now run and passed independent evidence review.
 Obtain a fresh independent Standard review of the complete fixed-base change.
 Commit only after passing gates or an explicitly accepted, recorded exception.
@@ -268,10 +268,10 @@ Performance acceptance is independent of functional test success.
 
 ## Validation, Review, And Resume Record
 
-Use [Development](DEVELOPMENT.md) as the authority for affected-crate, workspace, generated-consumer, extended/browser, documentation, and policy checks.
+Use [Development](../DEVELOPMENT.md) as the authority for affected-crate, workspace, generated-consumer, extended/browser, documentation, and policy checks.
 Run extended tests where lifecycle, transport, or WASM-facing boundaries are affected.
 Run root `pnpm build:fast` only when that guide requires it; do not reintroduce an unrelated monorepo build as a ceremonial gate.
-Use the [checkpoint review workflow](../.github/skills/checkpoint-review/SKILL.md): fixed base, complete tracked/untracked snapshot, one fresh Standard reviewer, shared criteria, and at most two repair/review cycles.
+Use the [checkpoint review workflow](../../.github/skills/checkpoint-review/SKILL.md): fixed base, complete tracked/untracked snapshot, one fresh Standard reviewer, shared criteria, and at most two repair/review cycles.
 No commit on unresolved blocking findings or missing required evidence without explicit exception.
 
 Before stopping, record here and in the cumulative report:
@@ -305,7 +305,7 @@ Use the latest dated section of the cumulative report for final checks and revie
 The new `sea-benchmarks` `session-factory` binary provides bounded direct/pass-through open/close correctness and timing samples.
 Its allocation count is explicitly unavailable, not zero.
 The no-reader fixture also supports explicit direct/pass-through selection with live caching enabled.
-See the [benchmark instructions](crates/sea-benchmarks/README.md) for exact commands.
+See the [benchmark instructions](../crates/sea-benchmarks/README.md) for exact commands.
 Neither fixture alone supplies the full acceptance campaign.
 Preserve the original direct-host baseline when comparing the extra retained document wrapper.
 Do not reuse the old checkpoint-1 RSS helper unchanged: its 20%/32 MiB tolerance is not the frozen 10%/16 MiB factory tolerance.

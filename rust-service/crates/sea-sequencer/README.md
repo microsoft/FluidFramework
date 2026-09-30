@@ -222,7 +222,7 @@ Recovery appends terminal departures for restored outstanding announcements befo
 Internal metadata publication is independent of application snapshots and publisher nomination.
 File storage maintains fixed-size settled-tail cursors independently of sequencer checkpoints; hash-addressed content and byte-offset events need no reconstructed historical index.
 Memory storage keeps its already resident history and retains its in-process consistency validation on reopening.
-See the [checkpoint design and evidence](../../CHECKPOINT_PLAN.md) for publication ordering, tests, and implementation costs.
+See the [checkpoint design and evidence](../../historical/CHECKPOINT_PLAN.md) for publication ordering, tests, and implementation costs.
 
 ## Submission Identity and Settlement
 

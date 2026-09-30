@@ -42,9 +42,9 @@ It is an architectural proposal, not a current deployment guarantee.
 The completed [protocol simplification plan](historical/NETWORK_PROTOCOL_PLAN.md) records the implemented metadata and framing changes.
 The [performance opportunities report](PERFORMANCE_OPPORTUNITIES_REPORT.md#evidence-gated-wire-size-opportunities) retains measurement triggers for possible follow-up size optimizations.
 
-The completed [session resource policy plan](SESSION_RESOURCE_POLICY_PLAN.md) places optional admission, pressure response, and reader shedding in service-owned session decorators rather than the sequencer.
+The completed [session resource policy plan](historical/SESSION_RESOURCE_POLICY_PLAN.md) places optional admission, pressure response, and reader shedding in service-owned session decorators rather than the sequencer.
 The server executable enables this policy by default, with an explicit opt-out; embedded hosts select decorators explicitly.
-The [server guide](crates/sea-webtransport-server/README.md) describes current defaults and limits; the [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md) records its staged validation.
+The [server guide](crates/sea-webtransport-server/README.md) describes current defaults and limits; the [implementation report](historical/SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md) records its staged validation.
 The [September 29 measurements](historical/PROJECT_OVERVIEW.md#measurement-method) compare acknowledgment-paced and streamed workloads with separate write/read rates and explicit shedding outcomes.
 
 Past plans, learnings, iteration reports, decisions, and retained measurement evidence are collected in [Historical records](historical/README.md).

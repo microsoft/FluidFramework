@@ -83,7 +83,7 @@ Historical findings and resolved investigations are retained in [Historical reco
 
 - **Status:** Open; cause not established
 - **Area:** Browser runner launch/cleanup test harness
-- **Evidence:** The [checkpoint validation](CHECKPOINT_PLAN.md#validation) aggregate run timed out in the Chromium runner launch/cleanup fixture before `f1d4a366267`.
+- **Evidence:** The [checkpoint validation](historical/CHECKPOINT_PLAN.md#validation) aggregate run timed out in the Chromium runner launch/cleanup fixture before `f1d4a366267`.
   All nine fixture tests passed in isolation and the aggregate rerun passed without a targeted fix.
 - **Disposition:** Separate from native durable connection timeouts.
   No evidence connects this fixture failure to filesystem initialization, so the storage fixes do not close it.

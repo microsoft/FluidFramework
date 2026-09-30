@@ -11,7 +11,7 @@ Superseded by: none
 
 The corrected byte-offset journals and independent checkpoints remove history-sized publication work.
 Filesystem mutations and historical reads still need executor isolation, and buffered comparison workloads need explicit bounded write-behind rather than durable scheduling without fsync.
-The user approved these semantics and one crate with distinct execution policies in the [implementation plan](../../FILE_STORAGE_REFACTOR_PLAN.md).
+The user approved these semantics and one crate with distinct execution policies in the [implementation plan](../FILE_STORAGE_REFACTOR_PLAN.md).
 
 ## Decision Drivers
 

@@ -48,6 +48,6 @@ Transport delivery ownership and bounded waiting payloads still require explicit
 
 ## Validation and Follow-Up
 
-The [revised plan](../../SESSION_RESOURCE_POLICY_PLAN.md) replaces old future checkpoints with stages A through E.
+The [revised plan](../SESSION_RESOURCE_POLICY_PLAN.md) replaces old future checkpoints with stages A through E.
 The next stopping point is the validated, reviewed document-factory foundation, not resource-policy implementation.
 The previous cache results and draft reviews remain historical evidence; they do not establish new performance acceptance.

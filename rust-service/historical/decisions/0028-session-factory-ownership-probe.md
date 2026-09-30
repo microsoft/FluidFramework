@@ -13,7 +13,7 @@ The supervisor and lifecycle-intent mechanisms below are historical proposals, n
 ## Context
 
 The user authorized checkpoint 2 from `b89ec852722d3373bd38f9780f5676973a33c117`.
-The [plan](../../SESSION_RESOURCE_POLICY_PLAN.md) requires a native/WebAssembly (WASM) factory probe and a future ownership design before accepting pass-through interception.
+The [plan](../SESSION_RESOURCE_POLICY_PLAN.md) requires a native/WebAssembly (WASM) factory probe and a future ownership design before accepting pass-through interception.
 This record distinguishes the implementation under test from later, unauthorized lifecycle and lag-policy work.
 
 ## Decision Drivers

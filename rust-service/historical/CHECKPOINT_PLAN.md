@@ -3,7 +3,7 @@
 Created: 2026-09-22.
 Status: corrected storage and minimal checkpoint state implemented and validated; no active implementation work remains.
 The root formatting blocker recorded in the validation history was resolved after this plan completed.
-Current contracts are documented in the [sequencer guide](crates/sea-sequencer/README.md) and [architecture overview](SEA_ARCHITECTURE.md).
+Current contracts are documented in the [sequencer guide](../crates/sea-sequencer/README.md) and [architecture overview](../SEA_ARCHITECTURE.md).
 
 ## Scope
 
@@ -11,7 +11,7 @@ Recover a document from independently published internal state and a bounded rec
 Application snapshots must not govern checkpoint frequency or be required for recovery.
 Then introduce document-scoped, sequencer-allocated `u64` session identities with persisted reservations and no reuse.
 Pruning is not a deliverable or validation requirement; avoid unnecessary dependencies that would obstruct it later.
-Session reuse and further wire compression remain measurement-gated [performance opportunities](PERFORMANCE_OPPORTUNITIES_REPORT.md#evidence-gated-wire-size-opportunities).
+Session reuse and further wire compression remain measurement-gated [performance opportunities](../PERFORMANCE_OPPORTUNITIES_REPORT.md#evidence-gated-wire-size-opportunities).
 
 ## Recovery Contract
 
@@ -117,15 +117,15 @@ These remain timing risks, not checkpoint correctness failures established by th
 
 Integration reconciliation (2026-09-22): the incoming storage-initialization fix `9f22810a2f0` removes cross-filesystem ancestor synchronization and moves host initialization/create/recovery off the executor while retaining worker ownership after cancellation.
 That reproduced stall mechanism is fixed, but the native timeout above was not traced and cannot be conclusively attributed to it.
-Track remaining native failures under [unattributed connection timeouts](KNOWN_ISSUES.md#intermittent-native-connection-timeout), not as an outstanding initialization repair.
-The [Chromium runner fixture timeout](KNOWN_ISSUES.md#intermittent-chromium-runner-fixture-timeout) remains a separate unresolved harness issue; neither passing retries nor the storage fix establish its resolution.
+Track remaining native failures under [unattributed connection timeouts](../KNOWN_ISSUES.md#intermittent-native-connection-timeout), not as an outstanding initialization repair.
+The [Chromium runner fixture timeout](../KNOWN_ISSUES.md#intermittent-chromium-runner-fixture-timeout) remains a separate unresolved harness issue; neither passing retries nor the storage fix establish its resolution.
 
 Merged-tree validation passed formatting, strict workspace Clippy/rustdoc, all-target build, and 223 Rust tests with one browser-only Cargo test ignored.
 The generated-client build and aggregate `test:all` passed, including freshly executed Mocha runner fixtures and Chromium WebTransport, WebSocketStream, ordinary WebSocket, and shutdown scenarios.
 Documentation and repository policy checks passed; the root build still failed only on the unchanged historical JSON formatting issue below.
 This validation establishes compatibility of the combined changes, not a causal explanation for the earlier untraced failures.
 
-Root build remains blocked only by formatting in [`historical/measurements/browser-dds-comparison/websocket-summary.json`](historical/measurements/browser-dds-comparison/websocket-summary.json), unchanged by this task.
+Root build remains blocked only by formatting in [`measurements/browser-dds-comparison/websocket-summary.json`](measurements/browser-dds-comparison/websocket-summary.json), unchanged by this task.
 No unrelated historical evidence was reformatted.
 Generated API differences were reviewed against the user-selected pre-task commit `bb0173b0439`; all changed declarations are `@internal`, with no customer-facing API or changeset requirement.
 Compression/encryption and benchmark/example changes only migrate session construction; their existing composition, generated-client, and aggregate workload tests cover those call sites.

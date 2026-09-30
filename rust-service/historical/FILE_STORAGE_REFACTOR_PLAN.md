@@ -1,8 +1,8 @@
 # File Storage Execution Refactor Plan
 
 Status: Implemented and validated on `sea-directory-dedup`; no active implementation work remains.
-See the [completion and measurement report](historical/FILE_STORAGE_EXECUTION_REFACTOR.md) for the accepted outcome and evidence.
-Current storage contracts are documented in the [file-storage guide](crates/sea-file/README.md).
+See the [completion and measurement report](FILE_STORAGE_EXECUTION_REFACTOR.md) for the accepted outcome and evidence.
+Current storage contracts are documented in the [file-storage guide](../crates/sea-file/README.md).
 Written on 2026-09-22 against `sea-directory-dedup` at `9f22810a2f0`, including directory deduplication commit `b272851e8e3`.
 Reconcile this plan with intervening journal, checkpoint, and protocol changes before implementation; do not overwrite concurrent work or treat this checkout as the integration target.
 Reconciled on 2026-09-22 with corrected checkpoint implementation `f59c3ca14a4` on `rust-service`, superseding the index-based integration at `521a8362e42`.
@@ -14,7 +14,7 @@ These pre-implementation instructions and protocol references are historical.
 Implementation starts from `5761a2bc481`, with checkpoint commit `5e9459eadaf` and its uncommitted completion changes.
 Both concrete factories now live in `sea-file`, with independent buffered and durable execution owners and shared journal/recovery mechanisms.
 The supported callers, lifecycle paths, conformance expectations, documentation, and crate dependencies have migrated.
-[Decision 0020](historical/decisions/0020-file-storage-execution.md) records the approved crate and acknowledgment changes.
+[Decision 0020](decisions/0020-file-storage-execution.md) records the approved crate and acknowledgment changes.
 The report retains validation, repeated drain-inclusive comparisons, observed regressions, and the limits of performance evidence.
 No cross-request durable group commit, alternate I/O runtime, journal-format change, or production durability qualification is included.
 The starting-point inventory below describes the pre-refactor implementation, not the current execution model.
@@ -33,18 +33,18 @@ It does not promise constant synchronization latency or production-qualified dur
 
 ## Starting Point
 
-- [File storage](crates/sea-file/src/storage.rs) uses `FileStorage<const DURABLE: bool>` and shared component types, state, and journal ownership.
-- [Durable storage](crates/sea-file-durable/README.md) builds on that implementation, with synchronization and recovery behavior selected by mode.
+- [File storage](../crates/sea-file/src/storage.rs) uses `FileStorage<const DURABLE: bool>` and shared component types, state, and journal ownership.
+- [Durable storage](../crates/sea-file-durable/README.md) builds on that implementation, with synchronization and recovery behavior selected by mode.
 - Event batches already run on blocking workers, retain the opening after cancellation, and release the published-state lock during disk input/output (I/O).
 - Namespace initialization, creation/recovery, blob/directory writes, and snapshot writes remain synchronous storage barriers.
-- The [built-in host](crates/sea-webtransport-server/README.md) isolates initialization and creation/recovery on blocking workers, but direct storage callers do not receive that isolation automatically.
+- The [built-in host](../crates/sea-webtransport-server/README.md) isolates initialization and creation/recovery on blocking workers, but direct storage callers do not receive that isolation automatically.
 - Stored-directory deduplication already avoids the writer lock and repeated child validation; preserve this fast path.
 - [Checkpoint recovery](CHECKPOINT_PLAN.md) restores opaque internal sequencer state and session-ID reservations through an independent `CheckpointStore`, not `SnapshotArchive`.
 - Content uses typed-hash files, events use literal journal byte offsets, and snapshots use a separate fixed-width journal with backward lookup.
 - Each journal has a fixed-size settled-tail cursor; no historical address table is persisted or rebuilt.
 - Historical payload reads, content membership checks, cursor publication, and checkpoint publication can perform synchronous I/O.
 
-The [timeout investigation](KNOWN_ISSUES.md#intermittent-native-connection-timeout) established executor starvation and unnecessary cross-filesystem synchronization as real problems.
+The [timeout investigation](../KNOWN_ISSUES.md#intermittent-native-connection-timeout) established executor starvation and unnecessary cross-filesystem synchronization as real problems.
 It did not attribute every historical timeout or the durable backend's steady-state benchmark variance to those problems.
 
 ## Architecture
@@ -192,7 +192,7 @@ Preserve sparse-position semantics: count committed entries for checkpoint caden
 
 ## Required Contracts
 
-1. Preserve durable acknowledgment guarantees and the existing [power-loss model](crates/sea-file-durable/README.md#power-loss-model).
+1. Preserve durable acknowledgment guarantees and the existing [power-loss model](../crates/sea-file-durable/README.md#power-loss-model).
    Keep durable namespace creation, rename, reopening, and recovery-repair barriers; retain the filesystem-boundary synchronization fix.
    Explicitly revise buffered acknowledgment to bounded in-process admission; audit shared durability labels and consumer contracts so they do not imply completed file I/O for this mode.
 2. Preserve ordered event history with stable sparse byte-offset positions, advancing snapshot positions, transitive directory closure, and handle provenance.
@@ -314,7 +314,7 @@ Required regression cases include:
 - Checkpoint publication size/history independence and no reads or rewrites of content, journals, or cursors by the replacement operation.
 - Minimal checkpoint recovery with no tail, preserved floor, empty live lag window, storage-backed historical reference lookup, and event-count rather than byte-distance cadence/debounce.
 
-Run focused tests after each implementation step, then the canonical commands in [Development](DEVELOPMENT.md#canonical-rust-checks):
+Run focused tests after each implementation step, then the canonical commands in [Development](../DEVELOPMENT.md#canonical-rust-checks):
 
 ```bash
 cargo fmt --all -- --check
@@ -360,4 +360,4 @@ Benchmark variability and production durability qualification remain open unless
 - Confirm the migration and temporary re-export strategy for const-generic callers, associated component types, and consumers of `sea-file-durable`.
 - Choose the scope and defaults of worker and queue budgets, including admission cancellation and oversized requests.
 - Choose the concrete flush/shutdown API and host ownership wiring that implement buffered orderly draining, and record the approved buffered acknowledgment change in shared contracts and the decision record.
-- Start with sequential, reviewable work under the [coordination workflow](../.github/skills/rust-service-coordination/SKILL.md); ask before introducing a numbered iteration or parallel workstreams.
+- Start with sequential, reviewable work under the [coordination workflow](../../.github/skills/rust-service-coordination/SKILL.md); ask before introducing a numbered iteration or parallel workstreams.

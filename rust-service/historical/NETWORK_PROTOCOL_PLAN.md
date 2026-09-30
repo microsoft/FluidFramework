@@ -64,7 +64,7 @@ Keep them visible until each has an explicit disposition.
 
 ### Compact Session Identity
 
-[Independent checkpoint recovery](../CHECKPOINT_PLAN.md) implemented sequencer-allocated `u64` identities with persisted reservations and no reuse.
+[Independent checkpoint recovery](CHECKPOINT_PLAN.md) implemented sequencer-allocated `u64` identities with persisted reservations and no reuse.
 Protocol version 11 uses those numbers directly: IDs 1 through 127 occupy one postcard byte, 128 through 16383 occupy two, and larger IDs require up to ten.
 Restart skips the unused suffix of a reserved range, so encoded width depends on allocations and reservations, not just concurrent sessions.
 This completes compact numeric identity, but not F1's proposed reuse and incarnation-anchor design.

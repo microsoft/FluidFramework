@@ -22,6 +22,9 @@ An issue described as open or a stage described as pending in an old report is n
 - Migration and cleanup plans: [Sea migration](SEA_MIGRATION_PLAN.md), [core migration](CORE_MIGRATION_PLAN.md), [API cleanup](SEA_API_CLEANUP_PLAN.md), [monitored streams](MONITORED_STREAM_PLAN.md), [code quality](RUST_CODE_QUALITY_PLAN.md), and [crate cleanup](crateCleanup.md).
 - [Shared live-event buffer proposal](LIVE_EVENT_BUFFER_PLAN.md): the superseded hard-budget and writer-backpressure design that preceded the accepted soft-budget cache policy.
 - [Protocol simplification plan](NETWORK_PROTOCOL_PLAN.md): completed framing and metadata work, byte accounting, and deferred wire-size hypotheses.
+- [Sequencer checkpoint plan](CHECKPOINT_PLAN.md): implemented bounded recovery, checkpoint publication, and numeric session-identity design with validation history.
+- [File-storage execution refactor plan](FILE_STORAGE_REFACTOR_PLAN.md): completed buffered and durable execution separation; see the linked completion report for measurements.
+- [Session resource policy plan](SESSION_RESOURCE_POLICY_PLAN.md) and [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md): accepted soft-budget admission and reader-shedding design with staged evidence.
 - Research notes: [initial notes](notes.md), [service description](notes2.md), and [WebTransport flows](notes4.md).
 - [Codespaces transport investigation](CODESPACES_WEBTRANSPORT_PLAN.md): forwarding constraints, streaming and ordinary WebSocket implementation, external browser evidence, and compatibility limitations.
 - [Execution isolation investigation](EXECUTION_ISOLATION_INVESTIGATION.md): repeated workstream interference, terminal ownership mechanisms, mocked checks, and remaining upstream validation.

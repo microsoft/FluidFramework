@@ -3,7 +3,7 @@
 Status: Complete; all authorized stages were accepted and committed, and no active implementation work remains.
 This is the cumulative implementation and evidence record for the [staged plan](SESSION_RESOURCE_POLICY_PLAN.md).
 It records an experimental design, not supported production behavior.
-Current behavior and limits are documented in the [server guide](crates/sea-webtransport-server/README.md) and [architecture overview](SEA_ARCHITECTURE.md).
+Current behavior and limits are documented in the [server guide](../crates/sea-webtransport-server/README.md) and [architecture overview](../SEA_ARCHITECTURE.md).
 
 ## Checkpoint 0: Freeze The Cache Experiment
 
@@ -63,7 +63,7 @@ Whole-session closure remains the separate ordered close operation.
 
 ### Publication And Handoff Contract
 
-The controlling baseline paths are [runtime application and membership settlement](crates/sea-sequencer/src/session.rs), [idle and batched application settlement](crates/sea-sequencer/src/pipeline.rs), and [storage publication guarantees](crates/sea-core/src/storage/mod.rs).
+The controlling baseline paths are [runtime application and membership settlement](../crates/sea-sequencer/src/session.rs), [idle and batched application settlement](../crates/sea-sequencer/src/pipeline.rs), and [storage publication guarantees](../crates/sea-core/src/storage/mod.rs).
 Checkpoint 1 must cover each successful settled publication path, rather than attaching only to normal application submit completion.
 
 - Publish each application, join, and leave once, only after the backend's existing acknowledgment boundary and successful runtime application.
@@ -83,7 +83,7 @@ Checkpoint 1 must cover each successful settled publication path, rather than at
   A reader that cannot catch up may stay storage-backed; no finite catch-up time is promised.
   Storage failure or invalidation terminates explicitly rather than retrying indefinitely across an invalid opening.
 - Do not treat a progress notification alone as proof that all data through its head was delivered.
-  [Monitored progress](crates/sea-core/src/monitored_stream.rs) can precede buffered data.
+  [Monitored progress](../crates/sea-core/src/monitored_stream.rs) can precede buffered data.
   Preserve progress monotonicity and finite range semantics without subtracting backend positions.
 - Drop/termination removes a claim immediately.
   With no claims, release all settled cache payloads; no retained handoff allowance is selected.
@@ -178,7 +178,7 @@ Do not discard a failed attempt or pick the fastest baseline.
 Run the existing `sea-sequencer` library tests as one bounded test invocation.
 The smallest controlling regression witnesses are:
 
-| Existing test in [fault tests](crates/sea-sequencer/src/fault_tests.rs) unless noted | Boundary protected |
+| Existing test in [fault tests](../crates/sea-sequencer/src/fault_tests.rs) unless noted | Boundary protected |
 | --- | --- |
 | `idle_ready_submissions_apply_before_receipts_and_rejection_ends_authority` | Inline completion applies metadata before acknowledgment and rejection ends authority |
 | `delayed_persistence_admits_a_bounded_ring_and_publishes_only_after_commit` | No reader visibility before gated persistence, bounded admission, queued-batch delivery |
@@ -186,7 +186,7 @@ The smallest controlling regression witnesses are:
 | `cancelled_dispatched_same_session_batch_settles_before_leave_without_queued_suffix` | Cancellation and ordered departure follow the accepted prefix |
 | `floor_advances_only_with_the_committed_event` and `batch_floor_does_not_invalidate_a_prepared_lower_reference` | Committed reference-floor rules are not delivery policy |
 | `snapshot_cancellation_and_ambiguity_preserve_publication_order` | Snapshot settlement and ambiguous outcomes |
-| `direct_reads_close_with_membership_and_load_policies_preserve_replay` in [session tests](crates/sea-sequencer/src/session.rs) | Direct/load replay and membership closure |
+| `direct_reads_close_with_membership_and_load_policies_preserve_replay` in [session tests](../crates/sea-sequencer/src/session.rs) | Direct/load replay and membership closure |
 | `shutdown_and_session_close_work_when_backend_streams_retain_writer_ownership` | Stream ownership can outlive session closure |
 
 These tests do not prove a cache that has not been implemented.
@@ -208,7 +208,7 @@ Its reported encoding/maximum-size probes remain candidates for remeasurement ag
 
 ### Validation And Evidence
 
-The [compressed checkpoint-0 evidence](historical/measurements/session-resource-policy-checkpoint0-20260923.json.gz) retains all eight samples, full worker/resource records and service logs, build/test/policy/documentation logs and exit statuses, frozen pre-measurement protocol, source and binary hashes, and the host intervention.
+The [compressed checkpoint-0 evidence](measurements/session-resource-policy-checkpoint0-20260923.json.gz) retains all eight samples, full worker/resource records and service logs, build/test/policy/documentation logs and exit statuses, frozen pre-measurement protocol, source and binary hashes, and the host intervention.
 It is generated JSON compressed with gzip, not a source or executable change.
 The collection script verified lossless decompression and parsed every sample before retention.
 Original command logs and a decompressed copy also remain in `/home/node/.copilot/session-state/2673ffd5-f5f4-4771-bcd5-35aab7f3c5b0/files/`.
@@ -279,7 +279,7 @@ Do not point it at another worktree's binaries.
 Documentation-only scope requires the documentation checker, repository policy check, whitespace/link validation, the baseline measurements, and the selected existing regression tests.
 Rust format/Clippy/rustdoc/workspace-wide build/tests, WASM/browser/Fluid suites, and repository `build:fast` are not claimed for this documentation-only checkpoint.
 No generated build input, API, or user-facing behavior changes, so no changeset is required.
-Checkpoint 1 must run the applicable canonical implementation gates in [Development](DEVELOPMENT.md).
+Checkpoint 1 must run the applicable canonical implementation gates in [Development](../DEVELOPMENT.md).
 
 ### Independent Review And Completion
 
@@ -569,7 +569,7 @@ The source-level optimization analysis records removal of 8,206-8,222 requested 
 These observations do not establish aggregate RSS bounds, a universal maximum-item bound, or transform/transport peak-memory guarantees.
 No lag policy is active.
 
-The dated [checkpoint-1 evidence archive](historical/measurements/session-resource-policy-checkpoint1-20260923.json.gz) retains the surviving initial evidence, failed repeat summaries, optimized-source and binary hashes, allocation diagnostics, focused/canonical validation logs, and complete final two-control raw results.
+The dated [checkpoint-1 evidence archive](measurements/session-resource-policy-checkpoint1-20260923.json.gz) retains the surviving initial evidence, failed repeat summaries, optimized-source and binary hashes, allocation diagnostics, focused/canonical validation logs, and complete final two-control raw results.
 Its initial-review SHA-256 was `92a90c2ec0d2e0cc3060dea2723c14d0c587e28436581b9ed76e93613e233f9c`.
 After adding the first review-repair evidence, its SHA-256 was `3a955b08f7e05d28dc4d7e9d3ffc661f70faf135c68d86ceba9171c66ababa3f`.
 With the second repair and renewed validation evidence, its SHA-256 was `351d9d80fe5b444e8e637f9e07ca80af899149c910673c21cf254011f21989d4`.
@@ -855,7 +855,7 @@ No measured binary, timing instrumentation, denominator, workload, or numerical 
 
 ### Probe And Design Status
 
-The [proposed decision](historical/decisions/0028-session-factory-ownership-probe.md) records the factory boundary, provisional and constructed ownership, clone responsibility, native/WASM abandoned-close polling owners, failure/shutdown outcomes, and publication investigation.
+The [proposed decision](decisions/0028-session-factory-ownership-probe.md) records the factory boundary, provisional and constructed ownership, clone responsibility, native/WASM abandoned-close polling owners, failure/shutdown outcomes, and publication investigation.
 The user declined synchronous threshold enforcement inside cache/sequencer locks and requested investigation of publication restructuring.
 The current publication path cannot justify a finite outside-lock scheduling-based overshoot.
 A candidate one-obligation helping protocol is recorded, but its ordering and cancellation premises remain unproved.
@@ -961,7 +961,7 @@ There is no checkpoint commit, merge, or push.
 This section supersedes the previous draft's active prerequisites, not its historical evidence.
 The user authorized replacing the strict-bound plan with storage-owned inbound pressure, a soft outgoing queue/cache budget, and document-wide policy applied through session decorators.
 The user requested a clean committed stopping point before starting the next policy layer.
-[The revised plan](SESSION_RESOURCE_POLICY_PLAN.md) and [Decision 0029](historical/decisions/0029-document-soft-budget-policy.md) now control the work.
+[The revised plan](SESSION_RESOURCE_POLICY_PLAN.md) and [Decision 0029](decisions/0029-document-soft-budget-policy.md) now control the work.
 
 The original draft is recoverable from `files/soft-budget-reset/original-draft.diff` and `original-additions.tar.gz` in session `/home/node/.copilot/session-state/34f82e87-71c9-4d27-9572-80785c3995a8`.
 The standalone publication model was removed, and Decision 0028 was marked historical.
