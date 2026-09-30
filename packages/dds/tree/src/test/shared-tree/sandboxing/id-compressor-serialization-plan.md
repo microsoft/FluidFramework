@@ -113,7 +113,7 @@ The completed compatibility tests characterize today's behavior; they do not imp
 - [x] Re-run the full-duplex synchronization schedules with separate compressors and post-initialization ID generation in both directions.
 - [x] Verify that handles, commit metadata, retained history, revertibles, undo/redo, and branch rebases still work.
 - [ ] Add an isolated worker or iframe test that does not share JavaScript globals.
-- [ ] Update the `UntypedTreeViewAlpha.applyChange` contract after cross-instance behavior is supported.
+- [x] Update the `UntypedTreeViewAlpha.applyChange` contract for separate compressor instances with synchronized ID knowledge.
 - [ ] Update [sandboxing.md](./sandboxing.md) to describe the implemented ID-sharding path and narrow its remaining work.
 - [ ] Run the relevant type-check, formatting, lint, and test commands for the completed implementation.
 

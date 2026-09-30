@@ -305,6 +305,8 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for local changes.
 	 * This change object can be {@link UntypedTreeViewAlpha.applyChange | applied to another view} in the same state as the one which generated it.
 	 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
+	 * If the receiving SharedTree uses a separate compressor instance, that compressor
+	 * must know all IDs referenced by the change before the change is applied.
 	 * @privateRemarks
 	 * This is a `SerializedChange` from treeCheckout.ts.
 	 */

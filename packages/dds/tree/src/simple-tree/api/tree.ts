@@ -630,12 +630,14 @@ export interface UntypedTreeViewAlpha
 	 * Apply a serialized change to this branch.
 	 * @param change - the change to apply.
 	 * Changes are acquired via `getChange` in a branch's {@link TreeBranchEvents.changed | "changed"} event.
-	 * @remarks Changes may only be applied to a SharedTree with the same IdCompressor instance and branch state from which they were generated.
-	 * They may be created by one branch and applied to another, but only if both branches share the same history at the time of creation and application.
+	 * @remarks
+	 * The receiving SharedTree must use an ID compressor with the same session ID as the one
+	 * that created the change. The compressors can be separate instances, but the receiver
+	 * must know all IDs referenced by the change before applying it. Sharing a session ID
+	 * does not automatically synchronize IDs generated after the compressors diverge.
 	 *
-	 * @privateRemarks
-	 * TODO: This method will support applying changes from different IdCompressor instances as long as they have the same local session ID.
-	 * Update the tests and docs to match when that is done.
+	 * A change can be created on one branch and applied to another only if both branches
+	 * share the same history at the time of creation and application.
 	 */
 	applyChange(change: JsonCompatibleReadOnly): void;
 
