@@ -238,10 +238,6 @@ where
             protocol::Request::OpenSignalStream(_) | protocol::Request::SendSignal(_) => {
                 Err(invalid("signals require a signal stream"))
             }
-            request @ (protocol::Request::PutBlob { .. }
-            | protocol::Request::GetBlob { .. }
-            | protocol::Request::PutDirectory { .. }
-            | protocol::Request::GetDirectory { .. }) => self.content_value(request).await,
             protocol::Request::AnnounceMembership { metadata } => {
                 let position = self
                     .session
@@ -265,20 +261,15 @@ where
                     position: receipt.get(),
                 })
             }
-            protocol::Request::GetSnapshot { id } => {
+            protocol::Request::GetSnapshot { .. } | protocol::Request::LatestSnapshot => {
+                let start = if let protocol::Request::GetSnapshot { id } = request {
+                    LoadStart::ReplayAtLeastAllAfter(EventPosition::new(id))
+                } else {
+                    LoadStart::LatestSnapshot
+                };
                 let snapshot = self
                     .session
-                    .get_snapshot(LoadStart::ReplayAtLeastAllAfter(EventPosition::new(id)))
-                    .await
-                    .map_err(error_response)?;
-                Ok(protocol::Response::Snapshot(
-                    snapshot.as_ref().map(snapshot_to_wire),
-                ))
-            }
-            protocol::Request::LatestSnapshot => {
-                let snapshot = self
-                    .session
-                    .get_snapshot(LoadStart::LatestSnapshot)
+                    .get_snapshot(start)
                     .await
                     .map_err(error_response)?;
                 Ok(protocol::Response::Snapshot(
@@ -297,14 +288,6 @@ where
             | protocol::Request::Read { .. } => {
                 Err(invalid("request is not valid for this logical stream"))
             }
-        }
-    }
-
-    async fn content_value(
-        &self,
-        request: protocol::Request,
-    ) -> Result<protocol::Response, protocol::Response> {
-        match request {
             protocol::Request::PutBlob { payload } => {
                 let id = self
                     .session
@@ -365,7 +348,6 @@ where
                         .collect(),
                 ))
             }
-            _ => unreachable!("content request was filtered by the caller"),
         }
     }
 }

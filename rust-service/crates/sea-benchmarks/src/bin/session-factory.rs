@@ -262,10 +262,10 @@ async fn verify_replay<Session: SeaSession>(
     position: EventPosition,
 ) -> Result<(), String> {
     let mut stream = session.read(None, Some(position));
-    let mut count = 0;
+    let mut observed = false;
     while let Some(item) = stream.next().await {
         if let MonitoredStreamItem::Item(event) = item.map_err(display)? {
-            if count != 0
+            if observed
                 || event.session_id != *identity
                 || event.committed.position != position
                 || event.kind != SessionEventKind::Application
@@ -273,10 +273,10 @@ async fn verify_replay<Session: SeaSession>(
             {
                 return Err("sibling finite replay mismatch".into());
             }
-            count += 1;
+            observed = true;
         }
     }
-    if count != 1 {
+    if !observed {
         return Err("sibling finite replay was incomplete".into());
     }
     Ok(())

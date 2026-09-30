@@ -198,7 +198,7 @@ impl Executor {
     fn turn(&self) -> Result<bool, FileStorageError> {
         let mut bytes = 0;
         for _ in 0..64 {
-            let (mut job, requests) = {
+            let (job, requests) = {
                 let mut queue = self.queue.lock().unwrap();
                 let Some(mut job) = queue.jobs.pop_front() else {
                     queue.active = false;
@@ -221,7 +221,7 @@ impl Executor {
                 }
                 (job, requests)
             };
-            let result = (job.task.run)(std::mem::take(&mut job.task.records));
+            let result = (job.task.run)(job.task.records);
             bytes += job.bytes;
             let mut queue = self.queue.lock().unwrap();
             queue.bytes -= job.bytes;

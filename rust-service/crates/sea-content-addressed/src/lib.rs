@@ -233,13 +233,9 @@ fn publish_with_sync(
     synchronize: impl FnOnce(&Path) -> Result<(), StoreError>,
 ) -> Result<(), StoreError> {
     let target = directory.join(name);
-    match target.try_exists() {
-        Ok(true) => {
-            verify_existing(&target, bytes)?;
-            return synchronize(directory);
-        }
-        Ok(false) => {}
-        Err(error) => return Err(error.into()),
+    if target.try_exists()? {
+        verify_existing(&target, bytes)?;
+        return synchronize(directory);
     }
     let temporary = directory.join(format!(
         ".{name}.{}.tmp",

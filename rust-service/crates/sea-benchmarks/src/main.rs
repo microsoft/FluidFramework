@@ -120,8 +120,6 @@ struct RunMeasurements {
     snapshot_publish_microseconds: Option<f64>,
     /// Clean reopen and verification time, when supported.
     recovery_microseconds: Option<f64>,
-    /// Explicit reconnect time, when supported.
-    reconnect_microseconds: Option<f64>,
     /// Process CPU consumed by the workload, when observable.
     process_cpu_microseconds: Option<f64>,
     /// Process-wide peak resident memory, when observable.
@@ -130,12 +128,6 @@ struct RunMeasurements {
     logical_payload_bytes: u64,
     /// Recursive persisted file size, when applicable.
     persisted_bytes: Option<u64>,
-    /// Bytes observed at the measured transport boundary.
-    wire_bytes: Option<u64>,
-    /// Peak queued records for bounded local transport.
-    peak_queued_records: Option<usize>,
-    /// Peak active request streams for server transport.
-    peak_active_streams: Option<usize>,
 }
 
 /// Parses the command line and exits unsuccessfully on a harness error.
@@ -266,14 +258,14 @@ async fn measure(config: Config) -> Result<(), String> {
                 finite_read_records: measurements.finite_read_records,
                 snapshot_publish_microseconds: measurements.snapshot_publish_microseconds,
                 recovery_microseconds: measurements.recovery_microseconds,
-                reconnect_microseconds: measurements.reconnect_microseconds,
+                reconnect_microseconds: None,
                 process_cpu_microseconds: measurements.process_cpu_microseconds,
                 peak_resident_memory_bytes: measurements.peak_resident_memory_bytes,
                 logical_payload_bytes: measurements.logical_payload_bytes,
                 persisted_bytes: measurements.persisted_bytes,
-                wire_bytes: measurements.wire_bytes,
-                peak_queued_records: measurements.peak_queued_records,
-                peak_active_streams: measurements.peak_active_streams,
+                wire_bytes: None,
+                peak_queued_records: None,
+                peak_active_streams: None,
             },
         };
         println!("{}", serde_json::to_string(&result).map_err(display_error)?);
@@ -548,16 +540,12 @@ where
         finite_read_records: config.records,
         snapshot_publish_microseconds,
         recovery_microseconds: None,
-        reconnect_microseconds: None,
         process_cpu_microseconds: None,
         peak_resident_memory_bytes: peak_resident_memory_bytes(),
         logical_payload_bytes: config.records
             * u64::try_from(config.fixture.payload_size())
                 .map_err(|_| "fixture size exceeds measurement range")?,
         persisted_bytes: None,
-        wire_bytes: None,
-        peak_queued_records: None,
-        peak_active_streams: None,
     })
 }
 
@@ -728,16 +716,12 @@ where
         finite_read_records: config.records,
         snapshot_publish_microseconds,
         recovery_microseconds: None,
-        reconnect_microseconds: None,
         process_cpu_microseconds: None,
         peak_resident_memory_bytes: peak_resident_memory_bytes(),
         logical_payload_bytes: config.records
             * u64::try_from(config.fixture.payload_size())
                 .map_err(|_| "fixture size exceeds measurement range")?,
         persisted_bytes: None,
-        wire_bytes: None,
-        peak_queued_records: None,
-        peak_active_streams: None,
     })
 }
 
@@ -847,12 +831,12 @@ fn parse_config(arguments: &[String]) -> Result<Config, String> {
         repetitions: 5,
         warmups: 1,
     };
-    let mut index = 0;
-    while index < arguments.len() {
-        let value = arguments
-            .get(index + 1)
-            .ok_or_else(|| format!("missing value for {}", arguments[index]))?;
-        match arguments[index].as_str() {
+    for pair in arguments.chunks(2) {
+        let option = &pair[0];
+        let value = pair
+            .get(1)
+            .ok_or_else(|| format!("missing value for {option}"))?;
+        match option.as_str() {
             "--backend" => config.backend = parse_backend(value)?,
             "--fixture" => config.fixture = parse_fixture(value)?,
             "--seed" => config.seed = value.parse().map_err(display_error)?,
@@ -866,7 +850,6 @@ fn parse_config(arguments: &[String]) -> Result<Config, String> {
             "--warmups" => config.warmups = value.parse().map_err(display_error)?,
             unknown => return Err(format!("unknown option: {unknown}\n{}", usage())),
         }
-        index += 2;
     }
     if config.records == 0 || config.writers == 0 || config.repetitions == 0 {
         return Err("records, writers, and repetitions must be non-zero".to_owned());
