@@ -137,7 +137,7 @@ describe("Transport and endpoint unit tests", () => {
 		nested.child = {};
 		assert.throws(() => validateTreePayloadVocabulary(nested), /Invalid sandbox tree payload/);
 		assert.throws(
-			() => parseHostGuestMessage({ type: "acknowledgment" }),
+			() => parseHostGuestMessage({ type: "hostUpdateAck" }),
 			/Invalid Host and Guest/,
 		);
 	});
@@ -234,10 +234,18 @@ describe("Transport and endpoint unit tests", () => {
 					() =>
 						parseHostGuestMessage(
 							codec.decode(
-								structuredClone(codec.encode({ type: "dataChange", change: payload })),
+								structuredClone(
+									codec.encode({
+										type: "guestChange",
+										changeId: 0,
+										mainRevision: "root",
+										trunkRevision: "root",
+										change: payload,
+									}),
+								),
 							),
 						),
-					/Invalid sandbox tree payload/,
+					/Invalid Host and Guest protocol message/,
 				);
 			}
 			for (const message of [
@@ -616,7 +624,15 @@ describe("Host and Guest round-trip integration tests", () => {
 		assert(fluidHandleSymbol in decoded[0]);
 		validateTreePayloadVocabulary(decoded);
 		assert.doesNotThrow(() =>
-			parseHostGuestMessage(normalizeTransportData({ type: "dataChange", change: decoded })),
+			parseHostGuestMessage(
+				normalizeTransportData({
+					type: "guestChange",
+					changeId: 0,
+					mainRevision: "root",
+					trunkRevision: "root",
+					change: decoded,
+				}),
+			),
 		);
 		assert.throws(
 			() => validateTreePayloadVocabulary(new ArrayBuffer(0)),

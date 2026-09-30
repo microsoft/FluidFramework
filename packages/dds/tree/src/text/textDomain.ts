@@ -322,7 +322,7 @@ export function processCharactersChangedDelta(
  * The main challenges here are related to annotations, but some policies for what to do in the case of corrupt/invalid text should also be included.
  * There are quite a few ways invariants could break, including:
  * - concurrent edits without proper constraints.
- * - collaboration with clients using compatible schema with different constraints.
+ * - collaboration with clients using compatible schemas with different constraints.
  * - opening documents which contain invalid content (e.g. from older versions of the software, manual edits to the persisted format, or simply an existing corrupt case which was saved).
  * - a user inserting/constructing/importing invalid content.
  *
