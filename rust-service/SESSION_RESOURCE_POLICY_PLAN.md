@@ -2,10 +2,12 @@
 
 Revised: 2026-09-26.
 Status: Stages A through E complete, accepted, and committed.
+No active implementation work or unresolved design decision remains.
 Execution worktree: `/workspaces/FluidFramework-session-interception`.
 Branch: `rust-service-session-interception`.
 Starting revision: `b89ec852722d3373bd38f9780f5676973a33c117`.
 Evidence and historical checkpoint results: [implementation report](SESSION_RESOURCE_POLICY_IMPLEMENTATION_REPORT.md).
+Current behavior and limits are documented in the [server guide](crates/sea-webtransport-server/README.md) and [architecture overview](SEA_ARCHITECTURE.md).
 
 This is an implementation plan, not a claim of currently supported resource guarantees.
 On 2026-09-26 the user authorized updating this plan, salvaging useful local changes, and committing progress at the next clean stopping point.

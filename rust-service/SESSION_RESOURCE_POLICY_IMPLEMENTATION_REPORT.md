@@ -1,7 +1,9 @@
 # Session Resource Policy Implementation Report
 
+Status: Complete; all authorized stages were accepted and committed, and no active implementation work remains.
 This is the cumulative implementation and evidence record for the [staged plan](SESSION_RESOURCE_POLICY_PLAN.md).
 It records an experimental design, not supported production behavior.
+Current behavior and limits are documented in the [server guide](crates/sea-webtransport-server/README.md) and [architecture overview](SEA_ARCHITECTURE.md).
 
 ## Checkpoint 0: Freeze The Cache Experiment
 

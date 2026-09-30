@@ -1,7 +1,9 @@
 # Sequencer Checkpoint Plan
 
 Created: 2026-09-22.
-Status: corrected storage and minimal checkpoint state implemented and validated; the unrelated root formatting blocker remains below.
+Status: corrected storage and minimal checkpoint state implemented and validated; no active implementation work remains.
+The root formatting blocker recorded in the validation history was resolved after this plan completed.
+Current contracts are documented in the [sequencer guide](crates/sea-sequencer/README.md) and [architecture overview](SEA_ARCHITECTURE.md).
 
 ## Scope
 
