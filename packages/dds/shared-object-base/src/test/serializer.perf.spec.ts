@@ -5,8 +5,9 @@
 
 import {
 	benchmarkDuration,
+	BenchmarkMode,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 
@@ -21,7 +22,7 @@ const handle = Object.assign(new FluidObjectHandle({}, "/", context), {
 });
 
 const shallowNoHandles = makeJson(/* breadth: */ 2, /* depth: */ 2, () => ({}));
-const size = isInPerformanceTestingMode ? 8 : 3;
+const size = currentBenchmarkMode === BenchmarkMode.Performance ? 8 : 3;
 const deepWithHandles = makeJson(/* breadth: */ size, /* depth: */ size, () => handle);
 
 const shallowNoHandlesString = serializer.stringify(shallowNoHandles, handle);

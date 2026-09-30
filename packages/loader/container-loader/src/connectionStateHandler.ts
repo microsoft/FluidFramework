@@ -10,10 +10,10 @@ import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryEventCategory,
-	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
+	type TelemetryEventCategory,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, type ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -33,7 +33,7 @@ const JoinSignalTimeoutMs = 10000;
  * Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler
  */
 export interface IConnectionStateHandlerInputs {
-	logger: ITelemetryLoggerExt;
+	logger: TelemetryLoggerExt;
 	mc: MonitoringContext;
 	/**
 	 * Log to telemetry any change in state, included to Connecting
@@ -201,7 +201,7 @@ class ConnectionStateHandlerPassThrough
 
 	// #region IConnectionStateHandlerInputs
 
-	public get logger(): ITelemetryLoggerExt {
+	public get logger(): TelemetryLoggerExt {
 		return this.inputs.logger;
 	}
 	public get mc(): MonitoringContext {
@@ -277,10 +277,17 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 				// we might get callback right away, and it will screw up state transition (as code outside of switch
 				// statement will overwrite current state).
 				assert(this.catchUpMonitor === undefined, 0x3eb /* catchUpMonitor should be gone */);
+				// Assign the field BEFORE starting the monitor. `start()` may synchronously fire
+				// transitionToConnectedState (when already caught up), which can re-enter this handler
+				// (e.g. an app "connected" listener forcing readonly, triggering a disconnect). The
+				// Disconnected case clears this.catchUpMonitor, so the field must already reference the
+				// monitor for that cleanup to take effect; otherwise a stale monitor survives and the
+				// next Connected transition trips assert 0x3eb.
 				this.catchUpMonitor = new CatchUpMonitor(
 					this.deltaManager,
 					this.transitionToConnectedState,
 				);
+				this.catchUpMonitor.start();
 				return;
 			}
 			case ConnectionState.Disconnected: {

@@ -21,8 +21,8 @@ import { createGenericNetworkError } from "@fluidframework/driver-utils/internal
 import type { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -32,6 +32,7 @@ import type { EpochTracker } from "./epochTracker.js";
 import { errorObjectFromSocketError } from "./odspError.js";
 import { pkgVersion } from "./packageVersion.js";
 import { SocketIOClientStatic } from "./socketModule.js";
+import { copyRequestHeaders } from "./requestHeaders.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
@@ -67,7 +68,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
 	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-	public static find(key: string, logger: ITelemetryLoggerExt): SocketReference | undefined {
+	public static find(key: string): SocketReference | undefined {
 		const socketReference = SocketReference.socketIoSockets.get(key);
 
 		// Verify the socket is healthy before reusing it
@@ -254,11 +255,12 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		token: string | null,
 		client: IClient,
 		url: string,
-		telemetryLogger: ITelemetryLoggerExt,
+		telemetryLogger: TelemetryLoggerExt,
 		timeoutMs: number,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
 		connectionId: string = uuid(),
+		requestHeaders?: Readonly<Record<string, string>>,
 	): Promise<OdspDocumentDeltaConnection> {
 		const mc = loggerToMonitoringContext(telemetryLogger);
 
@@ -269,6 +271,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		// do not include the specific tenant/doc id in the ref key when multiplexing
 		// this will allow multiple documents to share the same websocket connection
+		const immutableRequestHeaders = copyRequestHeaders(requestHeaders);
 		const key = socketReferenceKeyPrefix ? `${socketReferenceKeyPrefix},${url}` : url;
 		const socketReferenceKey = enableMultiplexing ? key : `${key},${tenantId},${documentId}`;
 
@@ -279,7 +282,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			enableMultiplexing,
 			tenantId,
 			documentId,
-			telemetryLogger,
+			immutableRequestHeaders,
 		);
 
 		const socket = socketReference.socket;
@@ -389,10 +392,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		enableMultiplexing: boolean,
 		tenantId: string,
 		documentId: string,
-		logger: ITelemetryLoggerExt,
+		requestHeaders?: Readonly<Record<string, string>>,
 	): SocketReference {
 		// eslint-disable-next-line unicorn/no-array-method-this-argument
-		const existingSocketReference = SocketReference.find(key, logger);
+		const existingSocketReference = SocketReference.find(key);
 		if (existingSocketReference) {
 			return existingSocketReference;
 		}
@@ -405,6 +408,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			reconnection: false,
 			transports: ["websocket"],
 			timeout: timeoutMs,
+			...(requestHeaders === undefined ? {} : { extraHeaders: requestHeaders }),
 		});
 
 		return new SocketReference(key, socket);
@@ -421,7 +425,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socket: Socket,
 		documentId: string,
 		socketReference: SocketReference,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly enableMultiplexing?: boolean,
 		connectionId?: string,
 	) {

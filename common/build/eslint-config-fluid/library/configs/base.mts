@@ -20,7 +20,6 @@
 
 import eslintJs from "@eslint/js";
 import eslintCommentsPlugin from "@eslint-community/eslint-plugin-eslint-comments";
-import fluidPlugin from "@fluid-internal/eslint-plugin-fluid";
 import rushstackPlugin from "@rushstack/eslint-plugin";
 import tseslint from "typescript-eslint";
 import importXPlugin from "eslint-plugin-import-x";
@@ -33,6 +32,7 @@ import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
 import type { ESLint, Linter } from "eslint";
 
+import fluidPlugin from "../../src/rules/index.cjs";
 import { globalIgnores } from "../constants.mjs";
 import { importXSettings, jsdocSettings } from "../settings.mjs";
 import { baseRules, eslintCommentsRecommendedRules } from "../rules/base.mjs";

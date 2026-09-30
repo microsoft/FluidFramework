@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
 import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import type { ISession } from "@fluidframework/server-services-client";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import type { RouterliciousOrdererRestWrapper } from "./restWrapper.js";
@@ -26,7 +26,7 @@ interface IGetSessionInfoParams {
 	documentId: string;
 	tenantId: string;
 	ordererRestWrapper: RouterliciousOrdererRestWrapper;
-	logger: ITelemetryLoggerExt;
+	logger: TelemetryLoggerExt;
 }
 
 export interface IGetSessionInfoResponse {

@@ -83,7 +83,7 @@ const testContainerConfigDisabled: ITestContainerConfig = {
 };
 
 describeCompat(
-	"No Delta stream loading mode testing",
+	"Frozen Delta stream loading mode testing",
 	"FullCompat",
 	(getTestObjectProvider) => {
 		const scenarioToContainerUrl = new Map<string, string>();

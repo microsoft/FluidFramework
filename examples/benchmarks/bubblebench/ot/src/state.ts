@@ -12,6 +12,7 @@ import {
 	type SimpleClient,
 } from "@fluid-example/bubblebench-common";
 import type { SharedJson1 } from "@fluid-experimental/sharejs-json1";
+import type { FluidIterable } from "@fluidframework/core-interfaces";
 
 import { observe } from "./proxy/index.js";
 
@@ -19,7 +20,7 @@ interface IApp {
 	clients: IArrayish<SimpleClient>;
 }
 
-interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push">, Iterable<T> {}
+interface IArrayish<T> extends ArrayLike<T>, Pick<T[], "push">, FluidIterable<T> {}
 
 export class AppState implements IAppState {
 	private readonly root: IApp;

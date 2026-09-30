@@ -7,7 +7,7 @@ import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import nconf from "nconf";
 
 import { pkgVersion } from "./packageVersion.js";
-import { resolveVersion } from "./versionUtils.js";
+import { resolveRangeViaRegistry } from "./versionUtils.js";
 // This import ensures nconf has been configured to load from correct sources before we compute the right baseVersion.
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./compatOptions.js";
@@ -29,16 +29,15 @@ function getCodeVersion(): string {
 /**
  * @internal
  */
-export const codeVersion = resolveVersion(getCodeVersion(), false);
+export const codeVersion = resolveRangeViaRegistry(getCodeVersion());
 
 /**
  * Usually this is enough, but it can be bad on test branches which would have a value of 0.0.0-xyz-test.
  *
  * @internal
  */
-export const baseVersion = resolveVersion(
+export const baseVersion = resolveRangeViaRegistry(
 	(nconf.get("fluid:test:baseVersion") as string) ?? pkgVersion,
-	false,
 );
 
 /**

@@ -15,6 +15,7 @@ import {
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { ISummaryTestMode } from "./utils";
+import { getFullSummaryDirectory } from "../routes/summaries";
 import {
 	GitWholeSummaryManager,
 	IFileSystemManagerFactory,
@@ -115,6 +116,36 @@ const testModes = permuteFlags({
 	enableOptimizedInitialSummary: false,
 	enableSlimGitInit: false,
 }) as unknown as ISummaryTestMode[];
+
+describe("getFullSummaryDirectory", () => {
+	// `documentId` originates from the Storage-Routing-Id header and is concatenated
+	// directly into a filesystem path, so it must be rejected if it can escape the repo.
+	const repoManager = { path: "/base/repo" } as IRepositoryManager;
+
+	it("builds a path from a valid documentId", () => {
+		assert.strictEqual(getFullSummaryDirectory(repoManager, "doc-123"), "/base/repo/doc-123");
+	});
+	it("rejects a bare upward traversal documentId", () => {
+		assert.throws(() => getFullSummaryDirectory(repoManager, ".."), /Invalid document id/);
+	});
+	it("rejects a current-directory documentId", () => {
+		assert.throws(() => getFullSummaryDirectory(repoManager, "."), /Invalid document id/);
+	});
+	it("rejects a nested traversal documentId", () => {
+		assert.throws(() => getFullSummaryDirectory(repoManager, "a/b"), /Invalid document id/);
+		assert.throws(
+			() => getFullSummaryDirectory(repoManager, "../etc/passwd"),
+			/Invalid document id/,
+		);
+	});
+	it("rejects an absolute documentId", () => {
+		assert.throws(() => getFullSummaryDirectory(repoManager, "/etc"), /Invalid document id/);
+		assert.throws(() => getFullSummaryDirectory(repoManager, "C:\\etc"), /Invalid document id/);
+	});
+	it("rejects an empty documentId", () => {
+		assert.throws(() => getFullSummaryDirectory(repoManager, ""), /Invalid document id/);
+	});
+});
 
 type GitFileSystem = "memfs" | "redisfs" | "hashmap-redisfs";
 

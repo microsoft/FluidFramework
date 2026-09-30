@@ -8,6 +8,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 
+import { exampleOldestSupportedClient } from "./exampleCompatibility.js";
 import { type IFluidMountableView, MountableView } from "./mountableView/index.js";
 
 const dataStoreId = "modelDataStore";
@@ -60,6 +61,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 		// and add our default view request handler.
 		super({
 			registryEntries: new Map([[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]]),
+			oldestSupportedClient: exampleOldestSupportedClient,
 			runtimeOptions: { enableRuntimeIdCompressor: "on" },
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,

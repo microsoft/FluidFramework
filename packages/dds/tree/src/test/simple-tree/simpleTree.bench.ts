@@ -6,10 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import {
+	BenchmarkMode,
 	BenchmarkType,
 	benchmarkDuration,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 
 import { SchemaFactory, SchemaFactoryAlpha, type TreeNode } from "../../simple-tree/index.js";
@@ -28,7 +29,7 @@ import { hydrateNode } from "./utils.js";
 // number of nodes in test for wide trees
 const nodesCountWide = [
 	[2, BenchmarkType.Measurement],
-	...(isInPerformanceTestingMode
+	...(currentBenchmarkMode === BenchmarkMode.Performance
 		? [
 				[100, BenchmarkType.Perspective],
 				[500, BenchmarkType.Measurement],
@@ -38,7 +39,7 @@ const nodesCountWide = [
 // number of nodes in test for deep trees
 const nodesCountDeep = [
 	[1, BenchmarkType.Measurement],
-	...(isInPerformanceTestingMode
+	...(currentBenchmarkMode === BenchmarkMode.Performance
 		? [
 				[10, BenchmarkType.Perspective],
 				[100, BenchmarkType.Measurement],
@@ -440,7 +441,8 @@ describe("SimpleTree benchmarks", () => {
 						});
 						// Even number of iterations cancel out, so this validation only works after odd numbers of iterations.
 						// Correctness mode always does a single iteration, so just validate that case.
-						if (!isInPerformanceTestingMode) assert.equal(tree[0], changedLeafValue);
+						if (currentBenchmarkMode !== BenchmarkMode.Performance)
+							assert.equal(tree[0], changedLeafValue);
 					},
 				}),
 			});
@@ -457,7 +459,7 @@ describe("SimpleTree benchmarks", () => {
 						state.timeAllBatches(() => {
 							tree.moveToIndex(tree.length - 2, tree.length - 1);
 						});
-						if (!isInPerformanceTestingMode)
+						if (currentBenchmarkMode !== BenchmarkMode.Performance)
 							assert.equal(tree[tree.length - 1], changedLeafValue);
 					},
 				}),

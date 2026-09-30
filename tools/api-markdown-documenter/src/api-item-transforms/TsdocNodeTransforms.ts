@@ -487,7 +487,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
 				// If the line starts with a text node, we will check if it matches the list item pattern.
 				// If it does, we will treat this line as the start of a list.
 				// If not, we will treat it as the start of a paragraph.
-				const match = node.value.match(regex);
+				const match = regex.exec(node.value);
 				if (match) {
 					// If we are at the beginning of a line, and the beginning text matches the list item pattern,
 					// we will treat this line as a list item.
@@ -498,7 +498,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
 					// Determine if the list item is ordered or unordered.
 					// Note: Markdown does not preserve explicit numbering, so we
 					// don't need to keep track of the parsed numbers here.
-					const orderedListItemDelimiterMatch = listItemDelimiter.match(/^\d+([).])$/);
+					const orderedListItemDelimiterMatch = /^\d+([).])$/.exec(listItemDelimiter);
 
 					const leadingWhitespaceModified = leadingWhitespace.replace(/\t/g, "  ");
 					const indentationLevel = leadingWhitespaceModified.length / 2; // Assuming 2 spaces per indentation level

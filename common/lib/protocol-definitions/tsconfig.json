@@ -2,6 +2,12 @@
 	"extends": "../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
+		"paths": {
+			// This package compiles its from generated type tests as part of the main build (not a separate test build).
+			// This results in the self-import they contain resolving to output of the build its part of,
+			// unless we fix it with this path:
+			"@fluidframework/protocol-definitions": ["./src/index.ts"],
+		},
 		"rootDir": "./src",
 		"outDir": "./lib",
 	},

@@ -38,7 +38,8 @@ export {
 export {
 	Versioned,
 	makeDiscontinuedCodecAndSchema,
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
+	type VersionDispatchingCodec,
 	type CodecVersion,
 	type CodecAndSchema,
 	versionField,

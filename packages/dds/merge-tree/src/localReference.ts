@@ -590,12 +590,14 @@ export class LocalReferenceCollection {
 		const startList = startNode?.list;
 
 		if (startList !== undefined) {
+			// Discard the buckets (before/at/after) which precede the bucket containing `start`,
+			// so the walk begins at that bucket. `listWalker` then resumes mid-bucket at `startNode`.
 			if (forward) {
-				while (!offsetPositions.empty && offsetPositions.first !== startNode) {
+				while (!offsetPositions.empty && offsetPositions.first?.data !== startList) {
 					offsetPositions.shift();
 				}
 			} else {
-				while (!offsetPositions.empty && offsetPositions.last !== startNode) {
+				while (!offsetPositions.empty && offsetPositions.last?.data !== startList) {
 					offsetPositions.pop();
 				}
 			}

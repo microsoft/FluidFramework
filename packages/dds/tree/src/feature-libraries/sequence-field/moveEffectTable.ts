@@ -15,7 +15,7 @@ import {
 
 import type { MoveMarkEffect } from "./helperTypes.js";
 import type { CellMark, Detach, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
-import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
+import { isAttachAndDetachEffect, splitMarkEffect } from "./utils.js";
 
 export type MoveEffectTable = CrossFieldManager<MoveEffect>;
 
@@ -168,12 +168,7 @@ function adjustMoveEffectBasis(effect: MoveEffectWithBasis, newBasis: MoveId): M
 	return adjusted;
 }
 
-export function splitMarkForMoveEffects(mark: Mark, effects: MoveEffectTable): Mark[] {
-	const length = getFirstMoveEffectLength(mark, mark.count, effects);
-	return length < mark.count ? splitMark(mark, length) : [mark];
-}
-
-function getFirstMoveEffectLength(
+export function getFirstMoveEffectLength(
 	markEffect: MarkEffect,
 	count: number,
 	effects: MoveEffectTable,

@@ -25,7 +25,13 @@ import {
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
+import {
+	assertNonNegativeSafeInteger,
+	getOrCreate,
+	type IndexRange,
+	replaceArrayRange,
+	validateIndexRange,
+} from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -53,6 +59,7 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
+		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 			tryShapeFromNodeSchema(
 				{
@@ -117,6 +124,7 @@ export class Chunker implements IChunker {
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
+		public readonly uniformChunkNodeCountDynamicTargetMax: number,
 		// eslint-disable-next-line @typescript-eslint/no-shadow
 		private readonly tryShapeFromNodeSchema: (
 			type: TreeNodeSchemaIdentifier,
@@ -133,6 +141,7 @@ export class Chunker implements IChunker {
 			this.sequenceChunkSplitThreshold,
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
+			this.uniformChunkNodeCountDynamicTargetMax,
 			this.tryShapeFromNodeSchema,
 		);
 	}
@@ -289,7 +298,7 @@ export interface FieldSchemaWithContext {
  *
  * @remarks
  * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
- * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
+ * encoded schemas are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
  * optimize for patterns of specific values.
  */
 export function tryShapeFromNodeSchema(
@@ -379,6 +388,7 @@ export const defaultChunkPolicy: ChunkPolicy = {
 	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 	// Current UniformChunk handling doesn't scale well to large chunks, so set a modest size limit:
 	uniformChunkNodeCount: 400,
+	uniformChunkNodeCountDynamicTargetMax: 25,
 	// Without knowing what the schema is, all shapes are possible.
 	// Use `makeTreeChunker` to do better.
 	shapeFromSchema: () => polymorphic,
@@ -388,6 +398,7 @@ export const basicOnlyChunkPolicy: ChunkPolicy = {
 	sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
 	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 	uniformChunkNodeCount: 0,
+	uniformChunkNodeCountDynamicTargetMax: 0,
 	shapeFromSchema: () => polymorphic,
 };
 
@@ -412,6 +423,24 @@ export interface ChunkPolicy {
 	 * Maximum total nodes to put in a UniformChunk.
 	 */
 	readonly uniformChunkNodeCount: number;
+
+	/**
+	 * Target maximum top level length for a UniformChunk while a field is being edited.
+	 *
+	 * @remarks
+	 * When {@link splitFieldAtIndex} has to split a chunk to land an attach/detach on a chunk
+	 * boundary, chunks whose {@link TreeChunk.topLevelLength} exceeds this value are bisected
+	 * recursively until each piece is at or below it, and only the piece holding the target index
+	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
+	 * few extra intermediate chunks.
+	 *
+	 * Also caps chunks merged by {@link coalesceUniformChunks}, so dynamic chunk sizes
+	 * settle around this target.
+	 *
+	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
+	 * chunks produced by the initial chunking pass.
+	 */
+	readonly uniformChunkNodeCountDynamicTargetMax: number;
 
 	/**
 	 * Returns information about the shapes trees of type `schema` can take.
@@ -507,8 +536,9 @@ export function chunkRange(
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
-				const maxTopLevelLength = Math.ceil(
-					nodesPerTopLevelNode / chunkCompressor.policy.uniformChunkNodeCount,
+				const maxTopLevelLength = Math.max(
+					1,
+					Math.floor(chunkCompressor.policy.uniformChunkNodeCount / nodesPerTopLevelNode),
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(
@@ -556,6 +586,197 @@ export function chunkRange(
 
 	return output;
 }
+
+/**
+ * Walks the `chunks` array of a field and splits a chunk if needed so that `nodeIndex` sits on
+ * a chunk boundary. After the call, inserting a chunk at the returned index would place its
+ * first top-level node at index `nodeIndex` when treating `chunks` as a field.
+ *
+ * @remarks
+ * When splitting chunks, large chunks are split evenly so that repeated calls to this method (or similar operations)
+ * avoid poor worst-case behavior. See {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} for details.
+ *
+ * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
+ * @param nodeIndex - The index to split at, measured in top-level nodes within the field.
+ * Must be in `[0, totalNodes]`, where `totalNodes` is the sum of {@link TreeChunk.topLevelLength}
+ * across all chunks.
+ * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
+ * of the split via {@link chunkRange}.
+ *
+ * @returns The index in `chunks` (after modifications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
+ */
+export function splitFieldAtIndex(
+	chunks: TreeChunk[],
+	nodeIndex: number,
+	policy: ChunkCompressor,
+): number {
+	assertNonNegativeSafeInteger(nodeIndex);
+	const bisectThreshold = policy.policy.uniformChunkNodeCountDynamicTargetMax;
+	let remaining = nodeIndex;
+	let chunkIndex = 0;
+	while (chunkIndex < chunks.length) {
+		if (remaining === 0) {
+			return chunkIndex;
+		}
+		const chunk = chunks[chunkIndex] ?? oob();
+		const total = chunk.topLevelLength;
+		if (remaining >= total) {
+			// nodeIndex is not in this chunk, so move forward one chunk and continue.
+			remaining -= total;
+			chunkIndex++;
+			continue;
+		}
+
+		// nodeIndex falls within this chunk, so split the chunk.
+		// This does not move the chunkIndex forward: the next iteration might need to split again at the same index.
+		//
+		// For chunks above the bisect threshold, cut at the midpoint and let the loop descend
+		// into whichever half holds nodeIndex. The other half is left untouched.
+		const splitPoint = total > bisectThreshold ? Math.floor(total / 2) : remaining;
+		const cursor = chunk.cursor();
+		cursor.firstNode();
+		const before = chunkRange(cursor, policy, splitPoint, false);
+		const after = chunkRange(cursor, policy, total - splitPoint, true);
+		// TODO: this could fail for really long chunks being split (due to argument count limits).
+		chunks.splice(chunkIndex, 1, ...before, ...after);
+		// The spliced-out slot held a ref to the original chunk. The two new chunks come with
+		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
+		chunk.referenceRemoved();
+	}
+	assert(remaining === 0, 0xcf9 /* nodeIndex exceeds total node count in field */);
+	return chunks.length;
+}
+
+/**
+ * Coalesce adjacent small same-shape {@link UniformChunk}s into larger {@link UniformChunk}s.
+ *
+ * @param chunks - The chunks array, modified in place.
+ * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
+ * @param range - Half-open `[start, end)` sub-range of `chunks` (by chunk index) to consider for
+ * merging. Defaults to the whole array. `end` must not exceed `chunks.length`.
+ *
+ * @remarks
+ * Size capped at {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} top-level nodes per chunk.
+ * @privateRemarks
+ * Walks the range from left to right, attempting to merge each chunk with its left neighbor via
+ * {@link tryCoalesceUniformChunks}. Performs at most one in-place `splice` on `chunks`. Non-mergeable
+ * chunks are passed through unchanged.
+ *
+ * The per-chunk cap ({@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}) intentionally
+ * matches the threshold {@link splitFieldAtIndex} uses when bisecting a chunk: if coalescing
+ * produced chunks larger than that threshold, a subsequent split would immediately re-divide
+ * them, so matching the two keeps repeated split/coalesce cycles from oscillating.
+ */
+export function coalesceUniformChunks(
+	chunks: TreeChunk[],
+	policy: ChunkPolicy,
+	range?: IndexRange,
+): void {
+	const rangeStart = range?.start ?? 0;
+	const rangeEnd = range?.end ?? chunks.length;
+	validateIndexRange(rangeStart, rangeEnd, chunks, "coalesceUniformChunks");
+	if (rangeEnd - rangeStart < 2) {
+		// Zero and 1 chunks are common cases, so as an optimization we return early as there is never anything to do for them.
+		return;
+	}
+
+	// Updating `chunks` as we go could incur a lot of overhead if there are a lot of chunks after the location we are editing,
+	// so we instead build up this separate array which is spliced over the selected range.
+	// As we traverse, ownership of the chunks (tracked via the refcounts) is moved to this array.
+	const result: TreeChunk[] = [chunks[rangeStart] ?? oob()];
+	let mutated = false;
+	for (let chunkIndex = rangeStart + 1; chunkIndex < rangeEnd; chunkIndex++) {
+		const current = chunks[chunkIndex] ?? oob();
+		const previous = result.at(-1) ?? oob();
+		const coalesced = tryCoalesceUniformChunks(previous, current, policy);
+		if (coalesced === undefined) {
+			result.push(current);
+		} else {
+			result[result.length - 1] = coalesced;
+			mutated = true;
+		}
+	}
+
+	if (mutated) {
+		replaceArrayRange(chunks, rangeStart, rangeEnd, result);
+	}
+}
+
+/**
+ * Attempts to combine two adjacent {@link UniformChunk}s into a single {@link UniformChunk}.
+ *
+ * @remarks
+ * Skips if either input is not a {@link UniformChunk}, the {@link TreeShape}s differ, or the
+ * combined `topLevelLength` would exceed
+ * {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ *
+ * Asserts that the two inputs do not carry different non-undefined
+ * {@link UniformChunk.idCompressor}s: that case would silently produce a merged chunk whose
+ * compressed-id values decompress to incorrect strings under the surviving compressor.
+ *
+ * Ref-count contract: on success the caller transfers one ref each on `left` and `right` to this
+ * function and receives one ref on the returned chunk (which may be `left` itself when `left` was
+ * not shared). On failure (`undefined`), the caller's refs on `left` and `right` are unchanged.
+ *
+ * When `left.isShared()` returns false (refcount === 1), the merged chunk reuses `left`: its
+ * values array is extended in place and its shape is updated. This avoids allocating an O(n²)
+ * total of value bytes when merging a run of `n` small chunks together.
+ *
+ * @returns The merged chunk on success, or `undefined` when the pair is not mergeable.
+ */
+export function tryCoalesceUniformChunks(
+	left: TreeChunk,
+	right: TreeChunk,
+	policy: ChunkPolicy,
+): UniformChunk | undefined {
+	if (!(left instanceof UniformChunk) || !(right instanceof UniformChunk)) {
+		return undefined;
+	}
+	const leftTreeShape = left.shape.treeShape;
+	const rightTreeShape = right.shape.treeShape;
+	if (!leftTreeShape.equals(rightTreeShape)) {
+		return undefined;
+	}
+	// Documents the invariant that all chunks in a single ChunkedForest share its idCompressor.
+	// If this assertion ever fires it means a caller mixed chunks from different forests; merging
+	// them would silently decompress one side's compressed-id values to the wrong strings.
+	const leftCompressor = left.idCompressor;
+	const rightCompressor = right.idCompressor;
+	assert(
+		leftCompressor === undefined ||
+			rightCompressor === undefined ||
+			leftCompressor === rightCompressor,
+		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
+	);
+	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
+	// Don't merge if the result would exceed the per-chunk node cap: this keeps chunks from
+	// growing unbounded and matches the threshold {@link splitFieldAtIndex} bisects at, so a
+	// merged chunk won't just be re-split on the next edit.
+	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
+		return undefined;
+	}
+
+	if (!left.isShared()) {
+		// In-place: grow `left` to absorb `right`. `left`'s sole array-slot ref is preserved
+		// and returned; `right`'s slot ref is released.
+		left.values.push(...right.values);
+		left.shape = leftTreeShape.withTopLevelLength(combinedTopLevel);
+		left.idCompressor ??= rightCompressor;
+		right.referenceRemoved();
+		return left;
+	}
+
+	// Left is shared: build a fresh merged chunk and release the two inputs.
+	const merged = new UniformChunk(
+		leftTreeShape.withTopLevelLength(combinedTopLevel),
+		[...left.values, ...right.values],
+		leftCompressor ?? rightCompressor,
+	);
+	left.referenceRemoved();
+	right.referenceRemoved();
+	return merged;
+}
+
 /**
  * Extracts values from the current cursor position according to the provided tree shape.
  *

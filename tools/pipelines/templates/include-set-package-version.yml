@@ -15,6 +15,9 @@ parameters:
 - name: buildToolsVersionToInstall
   type: string
   default: repo
+- name: installPnpmForRepoBuildTools
+  type: boolean
+  default: true
 
 # The path to the pnpm store.
 - name: pnpmStorePath
@@ -53,6 +56,7 @@ steps:
   parameters:
     buildDirectory: ${{ parameters.buildDirectory }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    installPnpmForRepoBuildTools: ${{ parameters.installPnpmForRepoBuildTools }}
     pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
 - task: Bash@3

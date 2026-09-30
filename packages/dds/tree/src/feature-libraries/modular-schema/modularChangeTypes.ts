@@ -17,7 +17,7 @@ import type { TreeChunk } from "../chunked-forest/index.js";
 
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
-export interface ModularChangeset extends HasFieldChanges {
+export interface ModularChangeset extends Readonly<HasFieldChanges> {
 	/**
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
 	 * If undefined then this changeset contains no IDs.
@@ -38,6 +38,7 @@ export interface ModularChangeset extends HasFieldChanges {
 
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
+	 * The `FieldId` values are not guaranteed to be canonical.
 	 */
 	// TODO: Should this be merged with `nodeChanges`?
 	readonly nodeToParent: ChangeAtomIdBTree<FieldId>;
@@ -64,11 +65,6 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly noChangeConstraint?: NoChangeConstraint;
 	/** Constraint that the document must be in the same state before the revert of this change is applied as it was after this change was applied */
 	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
-	/**
-	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
-	 * prevent the changeset from being reverted or undone.
-	 */
-	readonly constraintViolationCountOnRevert?: number;
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;

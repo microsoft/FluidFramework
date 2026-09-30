@@ -6,7 +6,6 @@
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ChannelCollectionFactory,
 	ISummarizer,
@@ -17,6 +16,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ITestObjectProvider,
 	TestContainerRuntimeFactory,
 	TestFluidObject,
@@ -37,6 +37,7 @@ interface IDataStores extends IFluidDataStoreChannel {
 describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 	const { SharedMap } = apis.dds;
+	const { Loader } = apis.loader;
 
 	let provider: ITestObjectProvider;
 	let containers: IContainer[] = [];
@@ -69,6 +70,7 @@ describeCompat("Nested DataStores", "NoCompat", (getTestObjectProvider, apis) =>
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataStoreFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [[dataStoreFactory.type, Promise.resolve(dataStoreFactory)]],
 		runtimeOptions,
 	});

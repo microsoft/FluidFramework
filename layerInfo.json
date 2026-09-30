@@ -99,6 +99,7 @@
 			"Examples": {
 				"dot": false,
 				"dev": true,
+				"packages": ["@fluid-private/devtools-test-app"],
 				"dirs": [
 					"examples/",
 					"experimental/examples/",
@@ -111,7 +112,6 @@
 				"packages": [
 					"@fluidframework/build-common",
 					"@fluidframework/eslint-config-fluid",
-					"@fluid-internal/eslint-plugin-fluid",
 					"@fluid-tools/benchmark"
 				]
 			},
@@ -141,6 +141,7 @@
 				]
 			},
 			"ServiceClients": {
+				"packages": ["@fluidframework/tinylicious-driver"],
 				"dirs": ["packages/service-clients/"],
 				"deps": [
 					"Container-Definitions",
@@ -225,8 +226,7 @@
 			"Routerlicious-Driver": {
 				"packages": [
 					"@fluidframework/routerlicious-driver",
-					"@fluidframework/routerlicious-urlresolver",
-					"@fluidframework/tinylicious-driver"
+					"@fluidframework/routerlicious-urlresolver"
 				],
 				"deps": ["Driver", "Server-Shared-Utils"]
 			},

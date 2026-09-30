@@ -1,6 +1,6 @@
 [How contribute to this repo](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
-[Guidelines for Pull Requests](https://github.com/microsoft/FluidFramework/wiki/PR-Guidelines#guidelines).
+[Guidelines for Pull Requests](../docs/content/Contributing/PR-Guidelines.md#guidelines).
 
 The sections included below are suggestions for what you may want to include.
 Feel free to remove or alter parts of this template that do not offer value for your specific change.
@@ -17,12 +17,12 @@ Feel free to remove or alter parts of this template that do not offer value for 
 ## Breaking Changes
 
 > If this introduces a breaking change, please describe the impact and migration path for existing applications below.
-> See [Breaking-vs-Non-breaking-Changes](https://github.com/microsoft/FluidFramework/wiki/Breaking-vs-Non-breaking-Changes) for details.
+> See [Breaking-vs-Non-breaking-Changes](../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes.md) for details.
 > If there are no breaking changes, delete this section.
 
 ## Reviewer Guidance
 
-The review process is outlined on [this wiki page](https://github.com/microsoft/FluidFramework/wiki/PR-Guidelines#guidelines).
+The review process is outlined in [the pull request guidelines](../docs/content/Contributing/PR-Guidelines.md#guidelines).
 
 > List any specific things you want to get reviewer opinions on, and anything a reviewer would need to know to review this PR effectively.
 > Things you might want to include:

@@ -5,9 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
+import { TreeBeta } from "../../../shared-tree/index.js";
 import {
+	TEST_activeBufferCount,
 	getKernel,
 	isTreeNode,
 	withBufferedTreeEvents,
@@ -18,7 +21,6 @@ import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	TreeBeta,
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { getView } from "../../utils.js";
@@ -93,6 +95,42 @@ describe("simple-tree proxies", () => {
 		assert.equal(anchors.find(path), undefined);
 		assert(anchors.isEmpty());
 	});
+
+	it("can hydrate a node with existing event listeners", () => {
+		// Listeners registered before hydration must continue to fire after the
+		// kernel migrates its event source from the unhydrated inner node to the
+		// hydrated anchor node.
+		const node = new ChildSchema({ content: 1 });
+
+		const log: string[] = [];
+		TreeBeta.on(node, "nodeChanged", ({ changedProperties }) => {
+			log.push(`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`);
+		});
+
+		// Mutating before hydration: listener fires from the unhydrated event source.
+		node.content = 2;
+		assert.deepEqual(log, ['nodeChanged: ["content"]']);
+
+		hydrate(ChildSchema, node);
+
+		// Mutating after hydration: listener must continue firing, now from the anchor-node source.
+		node.content = 3;
+		assert.deepEqual(log, ['nodeChanged: ["content"]', 'nodeChanged: ["content"]']);
+	});
+
+	it("registering event listeners on a disposed kernel throws", () => {
+		// Once a kernel has been disposed (e.g. via afterDestroy on its anchor node),
+		// accessing its events to subscribe must fail loudly rather than silently
+		// allocating a fresh buffer on a defunct kernel.
+		const node = new ChildSchema({ content: 1 });
+		hydrate(ChildSchema, node);
+		getKernel(node).dispose();
+
+		assert.throws(
+			() => TreeBeta.on(node, "nodeChanged", () => {}),
+			validateAssertionError(/Cannot register events on a disposed node/),
+		);
+	});
 });
 
 describe("withBufferedTreeEvents", () => {
@@ -150,6 +188,62 @@ describe("withBufferedTreeEvents", () => {
 		});
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
 	});
+
+	// Regression tests for a leak where KernelEventBuffers were retained indefinitely
+	// by a module-level emitter subscription. After the fix, module-level state should
+	// only reference buffers during an active withBufferedTreeEvents window.
+	describe("does not leak KernelEventBuffers", () => {
+		it("active-buffer count returns to baseline after a buffering window ends", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+			TreeBeta.on(myObject, "treeChanged", () => {});
+
+			withBufferedTreeEvents(() => {
+				myObject.foo = "hello";
+				myObject.baz = 5;
+			});
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Buffers must not be retained after the buffering window ends",
+			);
+		});
+
+		it("editing outside a buffering window never adds the buffer to module-level state", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+			TreeBeta.on(myObject, "treeChanged", () => {});
+
+			myObject.foo = "hello";
+			myObject.baz = 5;
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Unbuffered edits must not register the buffer with module-level state",
+			);
+		});
+
+		it("nested withBufferedTreeEvents windows release the buffer when the outer window ends", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+
+			withBufferedTreeEvents(() => {
+				withBufferedTreeEvents(() => {
+					myObject.foo = "hello";
+				});
+				// Inner window does not flush — buffer must still be tracked.
+				assert.equal(TEST_activeBufferCount(), 1);
+			});
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Buffers must not be retained after the outer buffering window ends",
+			);
+		});
+	});
 });
 
 describe("array node delta in nodeChanged", () => {
@@ -166,7 +260,7 @@ describe("array node delta in nodeChanged", () => {
 			const myArray = init(MyArray, [1, 2, 3]);
 
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+			TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 				deltas.push(delta);
 			});
 
@@ -181,7 +275,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -198,7 +292,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -225,7 +319,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -249,7 +343,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -273,7 +367,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -292,13 +386,10 @@ describe("array node delta in nodeChanged", () => {
 	});
 
 	it("delta contains retain before insert for insert at middle position", () => {
-		// The sequence-field encoder strips trailing no-op marks, so elements after the
-		// insertion point are not included as a trailing retain — consumers should treat
-		// the remainder of the array as implicitly retained.
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -308,16 +399,15 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "insert", count: 1 },
+			{ type: "retain", count: 2 },
 		]);
 	});
 
 	it("delta contains retain and remove for removeAt from middle of array", () => {
-		// The sequence-field encoder strips trailing no-op marks, so the element after the
-		// removed position is not included as a trailing retain.
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -327,37 +417,42 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "remove", count: 1 },
+			{ type: "retain", count: 1 },
 		]);
 	});
 
-	it("insert at position 0 produces no leading retain", () => {
-		// Sparse encoding: no retain is emitted before the insert when operating at the start.
+	it("insert at position 0 retains the unchanged suffix", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
 		myArray.insertAt(0, 99);
 
 		assert.equal(deltas.length, 1);
-		assert.deepEqual(deltas[0], [{ type: "insert", count: 1 }]);
+		assert.deepEqual(deltas[0], [
+			{ type: "insert", count: 1 },
+			{ type: "retain", count: 3 },
+		]);
 	});
 
-	it("remove at position 0 produces no leading retain", () => {
-		// Sparse encoding: no retain is emitted before the remove when operating at the start.
+	it("remove at position 0 retains the unchanged suffix", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
 		myArray.removeAt(0);
 
 		assert.equal(deltas.length, 1);
-		assert.deepEqual(deltas[0], [{ type: "remove", count: 1 }]);
+		assert.deepEqual(deltas[0], [
+			{ type: "remove", count: 1 },
+			{ type: "retain", count: 2 },
+		]);
 	});
 
 	it("object node nodeChanged does not include delta", () => {
@@ -415,7 +510,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, []);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -429,7 +524,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -439,6 +534,7 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "insert", count: 3 },
+			{ type: "retain", count: 1 },
 		]);
 	});
 
@@ -446,7 +542,7 @@ describe("array node delta in nodeChanged", () => {
 		const myArray = hydrate(MyArray, [1, 2, 3, 4, 5]);
 
 		const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(myArray, "nodeChanged", ({ delta }) => {
+		TreeBeta.on(myArray, "nodeChanged", ({ delta }) => {
 			deltas.push(delta);
 		});
 
@@ -456,6 +552,7 @@ describe("array node delta in nodeChanged", () => {
 		assert.deepEqual(deltas[0], [
 			{ type: "retain", count: 1 },
 			{ type: "remove", count: 3 },
+			{ type: "retain", count: 1 },
 		]);
 	});
 
@@ -470,8 +567,8 @@ describe("array node delta in nodeChanged", () => {
 
 		const delta1: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 		const delta2: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-		TreeAlpha.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
-		TreeAlpha.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
+		TreeBeta.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
+		TreeBeta.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
 
 		withBufferedTreeEvents(() => {
 			parent.array1.insertAtEnd(5);
@@ -586,7 +683,7 @@ describe("array move events", () => {
 		it("move within array emits remove + retain + insert delta", () => {
 			const arr = hydrate(MoveArray, [1, 2, 3]);
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
+			TreeBeta.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 			arr.moveToEnd(0);
 
@@ -607,8 +704,8 @@ describe("array move events", () => {
 			const parent = hydrate(MoveParent, { array1: [1, 2, 3], array2: [4, 5] });
 			const delta1: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
 			const delta2: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
-			TreeAlpha.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
+			TreeBeta.on(parent.array1, "nodeChanged", ({ delta }) => delta1.push(delta));
+			TreeBeta.on(parent.array2, "nodeChanged", ({ delta }) => delta2.push(delta));
 
 			// Move element 0 of array2 (value 4) to the end of array1.
 			parent.array1.moveToEnd(0, parent.array2);
@@ -620,14 +717,19 @@ describe("array move events", () => {
 					{ type: "insert", count: 1 },
 				],
 			]);
-			// Source: the moved element is removed from position 0.
-			assert.deepEqual(delta2, [[{ type: "remove", count: 1 }]]);
+			// Source: remove the moved element, then retain the remaining element.
+			assert.deepEqual(delta2, [
+				[
+					{ type: "remove", count: 1 },
+					{ type: "retain", count: 1 },
+				],
+			]);
 		});
 
 		it("moveRangeToEnd emits correct count in remove and insert ops", () => {
 			const arr = hydrate(MoveArray, [1, 2, 3, 4, 5]);
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
-			TreeAlpha.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
+			TreeBeta.on(arr, "nodeChanged", ({ delta }) => deltas.push(delta));
 
 			// Move elements at indices 1 and 2 (values 2, 3) to the end.
 			arr.moveRangeToEnd(1, 3);

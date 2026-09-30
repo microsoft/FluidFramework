@@ -6,7 +6,8 @@
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import { type Static, type TAnySchema, type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 export const EncodedGenericChange = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,

@@ -15,6 +15,7 @@
 		"module": "node16",
 		"moduleResolution": "node16",
 		"types": ["node"],
+		"exactOptionalPropertyTypes": true,
 	},
 	"include": ["src/**/*.ts"],
 	"exclude": ["src/test/**/*", "dist", "node_modules"],

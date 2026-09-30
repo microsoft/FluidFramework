@@ -105,7 +105,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		registry,
 		loaderProps: {
 			configProvider: configProvider({
-				"Fluid.ContainerRuntime.enableBatchIdTracking": true,
+				"Fluid.Container.enableOfflineFull": true,
 			}),
 		},
 	};

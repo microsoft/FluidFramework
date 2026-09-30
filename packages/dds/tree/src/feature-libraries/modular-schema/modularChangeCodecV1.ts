@@ -16,6 +16,7 @@ import {
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangeDecodingContext,
 	ChangesetLocalId,
 	EncodedRevisionTag,
 	FieldKey,
@@ -35,13 +36,18 @@ import {
 import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	type FieldBatchCodec,
+	FieldBatchDecodingContext,
 	type TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
+	FieldChangeHandler,
+} from "./fieldChangeHandler.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -65,19 +71,22 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import { nodeChangeFromId } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
 	EncodedModularChangesetV1,
 	EncodedModularChangesetV1,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 >;
 
 type FieldCodec = IJsonCodec<
 	FieldChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 >;
 
 type FieldChangesetCodecs = Map<
@@ -104,18 +113,16 @@ export function encodeFieldChangesForJson(
 	change: FieldChangeMap,
 	context: ChangeEncodingContext,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+	nodeAliases: ChangeAtomIdBTree<NodeId>,
 	fieldChangesetCodecs: FieldChangesetCodecs,
 ): EncodedFieldChangeMap {
 	const fieldContext: FieldChangeEncodingContext = {
 		baseContext: context,
 
 		encodeNode: (nodeId: NodeId): EncodedNodeChangeset => {
-			const node = nodeChanges.get([nodeId.revision, nodeId.localId]);
-			assert(node !== undefined, 0x92e /* Unknown node ID */);
+			const node = nodeChangeFromId(nodeChanges, nodeId, nodeAliases);
 			return encodeNodeChangesForJson(node, fieldContext, fieldChangesetCodecs);
 		},
-
-		decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 	};
 
 	return encodeFieldChangesForJsonI(change, fieldContext, fieldChangesetCodecs);
@@ -179,7 +186,7 @@ export function decodeFieldChangesFromJson(
 	encodedChange: EncodedFieldChangeMap,
 	parentId: NodeId | undefined,
 	decoded: ModularChangeset,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	idAllocator: IdAllocator,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -199,10 +206,8 @@ export function decodeFieldChangesFromJson(
 			field: field.fieldKey,
 		};
 
-		const fieldContext: FieldChangeEncodingContext = {
+		const fieldContext: FieldChangeDecodingContext = {
 			baseContext: context,
-
-			encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 
 			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 				const nodeId: NodeId = {
@@ -251,7 +256,7 @@ export function decodeNodeChangesetFromJson(
 	encodedChange: EncodedNodeChangeset,
 	id: NodeId,
 	decoded: ModularChangeset,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	idAllocator: IdAllocator,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -328,15 +333,15 @@ export function encodeDetachedNodes(
 				trees: fieldsCodec.encode(treesToEncode, {
 					encodeType: chunkCompressionStrategy,
 					schema: context.schema,
-					originatorId: context.originatorId,
 					idCompressor: context.idCompressor,
+					isSummary: context.isSummary,
 				}),
 			};
 }
 
 export function decodeDetachedNodes(
 	encoded: EncodedBuilds | undefined,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
@@ -349,11 +354,18 @@ export function decodeDetachedNodes(
 		return undefined;
 	}
 
-	const chunks = fieldsCodec.decode(encoded.trees, {
-		encodeType: chunkCompressionStrategy,
-		originatorId: context.originatorId,
-		idCompressor: context.idCompressor,
-	});
+	const chunks = fieldsCodec.decode(
+		encoded.trees,
+		context.isSummary
+			? FieldBatchDecodingContext.forSummary({
+					idCompressor: context.idCompressor,
+					healing: context.healing,
+				})
+			: FieldBatchDecodingContext.forOp({
+					idCompressor: context.idCompressor,
+					originatorId: context.originatorId,
+				}),
+	);
 	const getChunk = (index: number): TreeChunk => {
 		assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
 		return chunkFieldSingle(chunks[index] ?? oob(), {
@@ -422,7 +434,7 @@ export function encodeRevisionInfos(
 
 export function decodeRevisionInfos(
 	revisions: readonly EncodedRevisionInfo[] | undefined,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
@@ -479,6 +491,7 @@ export function encodeChange(
 			change.fieldChanges,
 			context,
 			change.nodeChanges,
+			change.nodeAliases,
 			fieldChangesetCodecs,
 		),
 		builds: encodeDetachedNodes(
@@ -501,7 +514,7 @@ export function encodeChange(
 
 export function decodeChange(
 	encodedChange: EncodedModularChangesetV1,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,

@@ -23,6 +23,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
+	defaultTestOldestSupportedClient,
 	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -121,6 +122,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory1,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [dataObjectFactory1.registryEntry],
 		runtimeOptions,
 	});
@@ -157,6 +159,7 @@ describeCompat("HotSwap", "NoCompat", (getTestObjectProvider, apis) => {
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory2,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [dataObjectFactory2.registryEntry],
 		runtimeOptions,
 	});

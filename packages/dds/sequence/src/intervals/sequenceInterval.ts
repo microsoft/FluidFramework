@@ -6,7 +6,7 @@
 /* eslint-disable no-bitwise */
 
 import type { IDisposable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	Client,
@@ -23,8 +23,6 @@ import {
 	createDetachedLocalReferencePosition,
 	createMap,
 	getSlideToSegoff,
-	maxReferencePosition,
-	minReferencePosition,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
 	Side,
@@ -60,22 +58,6 @@ function compareSides(sideA: Side, sideB: Side): number {
 	}
 
 	return -1;
-}
-
-function minSide(sideA: Side, sideB: Side): Side {
-	if (sideA === Side.After && sideB === Side.After) {
-		return Side.After;
-	}
-
-	return Side.Before;
-}
-
-function maxSide(sideA: Side, sideB: Side): Side {
-	if (sideA === Side.Before && sideB === Side.Before) {
-		return Side.Before;
-	}
-
-	return Side.After;
 }
 
 const reservedIntervalIdKey = "intervalId";
@@ -308,15 +290,11 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 	 * Whether this interval overlaps the provided numerical positions.
 	 */
 	public overlapsPos(_bstart: number, _bend: number): boolean {
-		assert(false, 0xcd7 /* overlapsPos not supported on BaseSequenceInterval */);
+		fail(0xcd7 /* overlapsPos not supported on BaseSequenceInterval */);
 	}
 
 	public clone(): BaseSequenceInterval {
-		assert(false, 0xcd8 /* clone not supported on BaseSequenceInterval */);
-	}
-
-	public union(_b: BaseSequenceInterval): BaseSequenceInterval {
-		assert(false, 0xcd9 /* union not supported on BaseSequenceInterval */);
+		fail(0xcd8 /* clone not supported on BaseSequenceInterval */);
 	}
 
 	protected verifyNotDispose(): void {
@@ -494,44 +472,6 @@ export class SequenceIntervalClass
 			this.properties,
 			this.startSide,
 			this.endSide,
-		);
-	}
-
-	/**
-	 * {@inheritDoc IInterval.union}
-	 */
-	public union(b: SequenceIntervalClass) {
-		this.verifyNotDispose();
-
-		const newStart = minReferencePosition(this.start, b.start);
-		const newEnd = maxReferencePosition(this.end, b.end);
-
-		let startSide: Side;
-
-		if (this.start === b.start) {
-			startSide = minSide(this.startSide, b.startSide);
-		} else {
-			startSide = this.start === newStart ? this.startSide : b.startSide;
-		}
-
-		let endSide: Side;
-
-		if (this.end === b.end) {
-			endSide = maxSide(this.endSide, b.endSide);
-		} else {
-			endSide = this.end === newEnd ? this.endSide : b.endSide;
-		}
-
-		return new SequenceIntervalClass(
-			this.client,
-			uuid(),
-			this.label,
-			newStart,
-			newEnd,
-			this.intervalType,
-			undefined,
-			startSide,
-			endSide,
 		);
 	}
 

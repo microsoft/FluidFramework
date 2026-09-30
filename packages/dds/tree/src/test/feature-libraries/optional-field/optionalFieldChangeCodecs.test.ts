@@ -5,7 +5,10 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { FieldChangeEncodingContext } from "../../../feature-libraries/index.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
+} from "../../../feature-libraries/index.js";
 import {
 	optionalFieldEditor,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -77,10 +80,11 @@ export function testCodecs(): void {
 	describe("Codecs", () => {
 		const baseContext = {
 			originatorId: "session1" as SessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};
-		const context: FieldChangeEncodingContext = {
+		const context: FieldChangeEncodingContext & FieldChangeDecodingContext = {
 			baseContext,
 			encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
 			decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
@@ -89,7 +93,7 @@ export function testCodecs(): void {
 		const encodingTestData: EncodingTestData<
 			OptionalChangeset,
 			unknown,
-			FieldChangeEncodingContext
+			FieldChangeEncodingContext & FieldChangeDecodingContext
 		> = {
 			successes: [
 				["set from empty", change1, context],

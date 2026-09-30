@@ -16,12 +16,14 @@
  */
 
 export type {
+	FluidMapLegacy,
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	ISharedMap,
+	ISharedMapBeta,
 	ISharedMapEvents,
 	IValueChanged,
 } from "./interfaces.js";

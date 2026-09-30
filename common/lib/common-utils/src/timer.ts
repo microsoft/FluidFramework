@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "./assert";
-import { Deferred } from "./promises";
+import { assert } from "./assert.js";
+import { Deferred } from "./promises.js";
 
 /**
  * @deprecated Moved to the `@fluidframework/core-utils` package.
@@ -243,7 +243,7 @@ export interface IPromiseTimerResult {
  * Timer which offers a promise that fulfills when the timer
  * completes.
  *
- * @deprecated Moved to the `@fluid-private/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export interface IPromiseTimer extends ITimer {
@@ -260,7 +260,7 @@ export interface IPromiseTimer extends ITimer {
  * same handlers and timeouts, while also providing a promise that
  * resolves when it times out.
  *
- * @deprecated Moved to the `@fluid-private/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export class PromiseTimer implements IPromiseTimer {

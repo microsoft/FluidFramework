@@ -40,10 +40,15 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 			this.error("failed to get package information");
 		}
 
-		// Check each package location for a bundleAnalysis folder
-		// and copy it to a central location
+		// Check each package location for a bundleAnalysis folder (telemetry-feeding
+		// artifact: report.html, report.json, bundleStats.msp.gz) and a sibling
+		// bundleAnalyzerJson folder (PR-comparison-feeding artifact: analyzer.json),
+		// and copy each to its own central staging location. The two artifacts are
+		// kept separate because the FF-internal telemetry handler walks every .json
+		// under the bundleAnalysis artifact and would mis-parse analyzer.json.
 		let hasSmallAssetError = false;
 		const analysesDestPath = path.join(process.cwd(), "artifacts/bundleAnalysis");
+		const analyzerJsonDestPath = path.join(process.cwd(), "artifacts/bundleAnalyzerJson");
 
 		for (const pkg of pkgList) {
 			if (pkg.path === undefined) {
@@ -81,6 +86,12 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 				/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
 				copySync(packageAnalysisPath, path.join(analysesDestPath, pkg.name));
+			}
+
+			const packageAnalyzerJsonPath = path.join(pkg.path, "bundleAnalyzerJson");
+			if (existsSync(packageAnalyzerJsonPath)) {
+				this.log(`found bundleAnalyzerJson for ${pkg.name}`);
+				copySync(packageAnalyzerJsonPath, path.join(analyzerJsonDestPath, pkg.name));
 			}
 		}
 

@@ -27,12 +27,13 @@ import type { Provider } from "nconf";
 import * as winston from "winston";
 import * as ws from "ws";
 
-import { Constants, configureThrottler } from "../utils";
+import { Constants } from "../utils";
 
 import type { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
+import { configureThrottler } from "@fluidframework/server-services";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;

@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import type { PackageJson } from "../common/npmPackage";
+import type { PackageJson } from "../common/npmPackage.js";
 import {
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 	type TaskDefinitionsOnDisk,
-} from "../fluidBuild/fluidTaskDefinitions";
+} from "../fluidBuild/fluidTaskDefinitions.js";
 
 describe("Task Definitions", () => {
 	describe("File Dependencies Extension", () => {
@@ -443,6 +443,39 @@ describe("Task Definitions", () => {
 				"${repoRoot}/.eslintrc.cjs",
 			]);
 		});
+
+		it("rejects backslashes in global input globs instead of silently normalizing them", () => {
+			assert.throws(
+				() =>
+					normalizeGlobalTaskDefinitions({
+						myTask: {
+							dependsOn: [],
+							files: {
+								inputGlobs: ["${repoRoot}\\src\\**\\*.ts"],
+								outputGlobs: [],
+							},
+						},
+					}),
+				/contains backslashes; use '\/' in fluidBuild configuration\./,
+			);
+		});
+
+		it("rejects backslashes in additional config files", () => {
+			assert.throws(
+				() =>
+					normalizeGlobalTaskDefinitions({
+						myTask: {
+							dependsOn: [],
+							files: {
+								inputGlobs: [],
+								outputGlobs: [],
+								additionalConfigFiles: ["${repoRoot}\\common\\config.json"],
+							},
+						},
+					}),
+				/contains backslashes; use '\/' in fluidBuild configuration\./,
+			);
+		});
 	});
 
 	describe("Task Definition Resolution", () => {
@@ -592,6 +625,37 @@ describe("Task Definitions", () => {
 				"./package-local.json",
 				"${repoRoot}/.eslintrc.cjs",
 			]);
+		});
+
+		it("rejects backslashes in package output globs instead of silently normalizing them", () => {
+			const packageJson: PackageJson = {
+				name: "test-package",
+				version: "1.0.0",
+				scripts: { build: "build" },
+				fluidBuild: {
+					tasks: {
+						build: {
+							dependsOn: [],
+							files: {
+								inputGlobs: [],
+								outputGlobs: ["dist\\**\\*.js"],
+							},
+						},
+					},
+				},
+			};
+
+			assert.throws(
+				() =>
+					getTaskDefinitions(
+						packageJson,
+						{},
+						{
+							isReleaseGroupRoot: false,
+						},
+					),
+				/contains backslashes; use '\/' in fluidBuild configuration\./,
+			);
 		});
 	});
 });

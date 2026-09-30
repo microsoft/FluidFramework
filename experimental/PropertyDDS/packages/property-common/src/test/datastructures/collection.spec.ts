@@ -10,7 +10,7 @@
 import { expect } from "chai";
 import _ from "lodash";
 
-import { Collection } from "../../index";
+import { Collection } from "../../index.js";
 
 describe("collection", function () {
 	const createObject = () => ({
@@ -287,8 +287,8 @@ describe("collection", function () {
 
 		collection.bulkAdd(objectToAdd);
 
-		const result = {};
-		collection.iterate(function (key, item) {
+		const result: Record<string, unknown> = {};
+		collection.iterate(function (key: string, item: unknown) {
 			result[key] = item;
 		});
 
@@ -308,10 +308,10 @@ describe("collection", function () {
 
 		collection.bulkAdd(objectToAdd);
 
-		const result = {};
+		const result: Record<string, unknown> = {};
 		const keys = collection.getKeys();
 		let i = keys.length - 1;
-		collection.iterateFromTail(function (key, item) {
+		collection.iterateFromTail(function (key: string, item: unknown) {
 			result[key] = item;
 			expect(key).to.equal(keys[i]);
 			i--;

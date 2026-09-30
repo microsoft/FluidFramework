@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 interface ITestMetadata {
 	/** Tells whether testSummaries functionality is true. If so, the testSummaries ReplayArg is true. */

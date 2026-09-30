@@ -11,9 +11,9 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	ContainerRuntime,
-	type ISummarizer,
+	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {

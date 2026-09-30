@@ -32,7 +32,7 @@ import type {
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { objectEntries, TimerManager } from "@fluid-internal/presence-runtime/utils";
 import {
@@ -238,7 +238,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	public constructor(
 		private readonly attendeeId: AttendeeId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly events: IEmitter<PresenceEvents>,
 		private readonly presence: Presence,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,

@@ -19,17 +19,14 @@ import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-	CompatibilityMode,
-} from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
 	InsecureTinyliciousTokenProvider,
@@ -60,10 +57,7 @@ export class TinyliciousClient {
 	public constructor(properties?: TinyliciousClientProps) {
 		this.logger = properties?.logger;
 		const tokenProvider = new InsecureTinyliciousTokenProvider();
-		this.urlResolver = new InsecureTinyliciousUrlResolver(
-			properties?.connection?.port,
-			properties?.connection?.domain,
-		);
+		this.urlResolver = new InsecureTinyliciousUrlResolver(properties?.connection);
 		this.documentServiceFactory = new RouterliciousDocumentServiceFactory(
 			properties?.connection?.tokenProvider ?? tokenProvider,
 		);
@@ -72,17 +66,26 @@ export class TinyliciousClient {
 	/**
 	 * Creates a new detached container instance in Tinylicious server.
 	 * @param containerSchema - Container schema for the new container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		oldestSupportedClient: OldestSupportedClientVersion,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
+		services: TinyliciousContainerServices;
+	}>;
+	public async createContainer<TContainerSchema extends ContainerSchema>(
+		containerSchema: TContainerSchema,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, oldestSupportedClient);
 
 		// We're not actually using the code proposal (our code loader always loads the same module
 		// regardless of the proposal), but the Container will only give us a NullRuntime if there's
@@ -123,18 +126,28 @@ export class TinyliciousClient {
 	 * Accesses the existing container given its unique ID in the tinylicious server.
 	 * @param id - Unique ID of the container.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param compatibilityMode - Compatibility mode the container should run in.
+	 * @param oldestSupportedClient - Oldest Fluid Framework client version that must be able to
+	 * open and process documents written by this client. Choosing an older version may limit
+	 * available features and write formats.
 	 * @returns Existing container instance along with associated services.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		oldestSupportedClient: OldestSupportedClientVersion,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
+		services: TinyliciousContainerServices;
+	}>;
+	public async getContainer<TContainerSchema extends ContainerSchema>(
+		id: string,
+		containerSchema: TContainerSchema,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
+		const loaderProps = this.getLoaderProps(containerSchema, oldestSupportedClient);
 		const container = await loadExistingContainer({ ...loaderProps, request: { url: id } });
 		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
@@ -155,11 +168,11 @@ export class TinyliciousClient {
 
 	private getLoaderProps(
 		schema: ContainerSchema,
-		compatibilityMode: CompatibilityMode,
+		oldestSupportedClient: OldestSupportedClientVersion,
 	): ILoaderProps {
 		const containerRuntimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatibilityMode,
+			minVersionForCollaboration: oldestSupportedClient,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {

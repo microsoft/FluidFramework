@@ -4,13 +4,10 @@
  */
 
 import { assert, debugAssert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
@@ -26,7 +23,6 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaBoth,
-	UnhydratedFlexTreeNode,
 	NodeSchemaMetadata,
 	ImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -39,8 +35,6 @@ import {
 	// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 	type FieldProps,
 	createFieldSchema,
-	type DefaultProvider,
-	getDefaultProvider,
 } from "../fieldSchema.js";
 import {
 	booleanSchema,
@@ -62,8 +56,8 @@ import {
 	type TreeMapNode,
 	type TreeObjectNode,
 } from "../node-kinds/index.js";
-import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
 
+import { defaultIdentifierProvider } from "./identifierDefaultProvider.js";
 import { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 import type { System_Unsafe } from "./typesUnsafe.js";
 
@@ -227,7 +221,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  * To apply schema defined with this factory to a tree, see {@link TreeViewConfiguration} and {@link ViewableTree.viewWith}.
  * See the {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution | documentation on schema evolution} for how to handle changes to schema over time.
  *
- * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
+ * All schemas produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
  * Therefore two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
@@ -329,7 +323,7 @@ export class SchemaFactory<
 > extends SchemaFactory_base {
 	/**
 	 * TODO:
-	 * If users of this generate the same name because two different schema with the same identifier were used,
+	 * If users of this generate the same name because two different schemas with the same identifier were used,
 	 * the second use can get a cache hit, and reference the wrong schema.
 	 * Such usage should probably return a distinct type or error but currently does not.
 	 * The use of markSchemaMostDerived in structuralName at least ensure an error in the case where the collision is from two types extending the same schema factor class.
@@ -339,7 +333,7 @@ export class SchemaFactory<
 	/**
 	 * Construct a SchemaFactory with a given {@link SchemaFactory.scope|scope}.
 	 * @remarks
-	 * There are no restrictions on mixing schema from different schema factories.
+	 * There are no restrictions on mixing schemas from different schema factories.
 	 * Typically each library will create one or more SchemaFactories and use them to define its schema.
 	 */
 	public constructor(
@@ -698,7 +692,7 @@ export class SchemaFactory<
 		const same = compareSets({ a: inputTypes, b: outputTypes });
 		if (!same) {
 			throw new UsageError(
-				`Structurally named schema collision: two schema named "${fullName}" were defined with different input schema.`,
+				`Structurally named schema collision: two schemas named "${fullName}" were defined with different input schemas.`,
 			);
 		}
 		return structural;
@@ -767,22 +761,6 @@ export class SchemaFactory<
 	 * A node may have more than one identifier field (though note that this precludes the use of the {@link TreeNodeApi.shortId|Tree.shortId()} API).
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
-		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
-			(
-				context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
-			): UnhydratedFlexTreeNode[] => {
-				const id =
-					context === "UseGlobalContext"
-						? globalIdentifierAllocator.decompress(
-								globalIdentifierAllocator.generateCompressedId(),
-							)
-						: context.nodeKeyManager.stabilizeNodeIdentifier(
-								context.nodeKeyManager.generateLocalNodeIdentifier(),
-							);
-
-				return [unhydratedFlexTreeFromInsertable(id, this.string)];
-			},
-		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {
 			defaultProvider: defaultIdentifierProvider,
 		});
@@ -965,14 +943,6 @@ export function scoped<
 		factory.scope === undefined ? `${name}` : `${factory.scope}.${name}`
 	) as ScopedSchemaName<TScope, Name>;
 }
-
-/**
- * Used to allocate default identifiers for unhydrated nodes when no context is available.
- * @remarks
- * The identifiers allocated by this will never be compressed to Short Ids.
- * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
- */
-const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
 
 /**
  * Additional information to provide to Node Schema creation.

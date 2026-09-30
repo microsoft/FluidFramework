@@ -4,6 +4,15 @@
 
 ```ts
 
+// @beta @legacy
+export function createFluidRunnerContainerAndExecute(localOdspSnapshot: string | Uint8Array, fluidFileConverter: IFluidFileConverter, baseLogger: ITelemetryBaseLogger, options?: string, timeout?: number, disableNetworkFetch?: boolean): Promise<string>;
+
+// @beta @legacy
+export function createFluidRunnerLogger(filePath: string, options?: IFileLoggerTelemetryOptions): {
+    logger: ITelemetryBaseLogger;
+    fileLogger: IFileLogger;
+};
+
 // @beta @legacy (undocumented)
 export type IExportFileResponse = IExportFileResponseSuccess | IExportFileResponseFailure;
 
@@ -23,6 +32,18 @@ export interface IExportFileResponseFailure {
 export interface IExportFileResponseSuccess {
     // (undocumented)
     success: true;
+}
+
+// @beta @legacy
+export interface IFileLogger extends ITelemetryBaseLogger {
+    close(): Promise<void>;
+}
+
+// @beta @legacy
+export interface IFileLoggerTelemetryOptions {
+    defaultProps?: Record<string, string | number>;
+    eventsPerFlush?: number;
+    outputFormat?: OutputFormat;
 }
 
 // @beta @legacy

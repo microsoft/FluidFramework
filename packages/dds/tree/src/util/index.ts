@@ -4,6 +4,9 @@
  */
 
 export {
+	collectContiguousRanges,
+	type IndexRange,
+	replaceArrayRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
@@ -44,7 +47,12 @@ export {
 	nestedMapFromFlatList,
 	getOrCreateInNestedMap,
 } from "./nestedMap.js";
-export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
+export {
+	addToNestedSet,
+	type NestedSet,
+	nestedSetContains,
+	populatedNestedSet,
+} from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
 export type {
 	areSafelyAssignable,
@@ -104,7 +112,6 @@ export {
 	hasSingle,
 	defineLazyCachedProperty,
 	copyPropertyIfDefined as copyProperty,
-	getOrAddInMap,
 	iterableHasSome,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
@@ -163,3 +170,21 @@ export {
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 
 export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";
+
+export {
+	type OriginatorlessEncodedId,
+	type OriginatorDependentEncodedId,
+	type IdentifierHealingConfig,
+	EncodedIdType,
+	encodePossiblyCompressedId,
+	type IdEncodingContext,
+	type EncodedId,
+	decodeOriginatorlessEncodedId,
+	decodeEncodedIdWithOriginator,
+	tryDecodeEncodedIdWithoutSession,
+	forceDecodeEncodedIdWithoutSession,
+	decompressIdentifierIfNeeded,
+	IdDecodingContext,
+	type IdDecoderOptionsOriginatorless,
+	type IdDecoderOptionsWithOriginator,
+} from "./compressedIds.js";

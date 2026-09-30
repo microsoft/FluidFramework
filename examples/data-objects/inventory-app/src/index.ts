@@ -3,16 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import type { IReactTreeDataObject } from "@fluidframework/react/alpha";
+import {
+	ExampleErrorView,
+	ExampleLoadingView,
+	loadExampleDataStore,
+	renderRoot,
+} from "@fluid-example/example-utils";
+import { toPropTreeNode } from "@fluidframework/react/alpha";
 import { createElement } from "react";
 
-import { InventoryListFactory } from "./inventoryList.js";
+import { InventoryDataStore } from "./inventoryList.js";
 import type { Inventory } from "./schema.js";
 import { MainView } from "./view/index.js";
 
-export const fluidExport = new ContainerViewRuntimeFactory(
-	InventoryListFactory,
-	(tree: IReactTreeDataObject<typeof Inventory>) =>
-		createElement(tree.TreeViewComponent, { viewComponent: MainView }),
-);
+renderRoot(createElement(ExampleLoadingView));
+try {
+	const view = await loadExampleDataStore(InventoryDataStore);
+	const root: Inventory = view.root;
+	renderRoot(createElement(MainView, { root: toPropTreeNode(root) }));
+} catch (error) {
+	console.error("Failed to start:", error);
+	renderRoot(createElement(ExampleErrorView, { error }));
+}

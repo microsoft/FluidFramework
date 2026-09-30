@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+/** ADO organization URL hosting Fluid Framework's pipelines. */
+export const fluidframeworkAdoOrgUrl = "https://dev.azure.com/fluidframework";
+
 export interface IAzureDevopsBuildCoverageConstants {
 	/**
 	 * URL for the ADO org.

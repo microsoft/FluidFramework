@@ -274,12 +274,27 @@ describe("RangeMap", () => {
 	});
 
 	describe("union", () => {
+		function checkUnionCommutativity(
+			mapA: RangeMap<number, string>,
+			mapB: RangeMap<number, string>,
+		) {
+			const pickAOnAuB = RangeMap.union(mapA, mapB, (_key, valueA, _valueB) => valueA);
+			const pickAonBuA = RangeMap.union(mapB, mapA, (_key, _valueB, valueA) => valueA);
+			assert.deepEqual(pickAOnAuB.entries(), pickAonBuA.entries());
+
+			const pickBOnAuB = RangeMap.union(mapA, mapB, (_key, _valueA, valueB) => valueB);
+			const pickBonBuA = RangeMap.union(mapB, mapA, (_key, valueB, _valueA) => valueB);
+			assert.deepEqual(pickBOnAuB.entries(), pickBonBuA.entries());
+			return pickAOnAuB;
+		}
+
 		it("two empty maps", () => {
 			const map1 = newRangeMap();
 			const map2 = newRangeMap();
 
 			const result = RangeMap.union(map1, map2);
 			assert.deepEqual(result.entries(), []);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("editing the returned range map does not mutate the inputs", () => {
@@ -293,6 +308,7 @@ describe("RangeMap", () => {
 			assert.deepEqual(result.entries(), [{ start: 1, length: 1, value: "a" }]);
 			assert.deepEqual(map1.entries(), []);
 			assert.deepEqual(map2.entries(), []);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("first map empty", () => {
@@ -302,6 +318,7 @@ describe("RangeMap", () => {
 
 			const result = RangeMap.union(map1, map2);
 			assert.deepEqual(result.entries(), [{ start: 3, length: 4, value: "a" }]);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("second map empty", () => {
@@ -311,6 +328,7 @@ describe("RangeMap", () => {
 
 			const result = RangeMap.union(map1, map2);
 			assert.deepEqual(result.entries(), [{ start: 3, length: 4, value: "a" }]);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("non-overlapping interleaved ranges", () => {
@@ -329,6 +347,7 @@ describe("RangeMap", () => {
 				{ start: 30, length: 3, value: "c" },
 				{ start: 40, length: 4, value: "d" },
 			]);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("isomorphic overlap", () => {
@@ -340,6 +359,7 @@ describe("RangeMap", () => {
 
 			const result = RangeMap.union(map1, map2);
 			assert.deepEqual(result.entries(), [{ start: 1, length: 4, value: "b" }]);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("identical start keys but different lengths", () => {
@@ -354,6 +374,7 @@ describe("RangeMap", () => {
 				{ start: 1, length: 2, value: "b" },
 				{ start: 3, length: 2, value: "a" },
 			]);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("identical ends but different starts", () => {
@@ -368,6 +389,7 @@ describe("RangeMap", () => {
 				{ start: 1, length: 2, value: "a" },
 				{ start: 3, length: 2, value: "b" },
 			]);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("large range merged with smaller overlapping ranges", () => {
@@ -386,6 +408,7 @@ describe("RangeMap", () => {
 				{ start: 6, length: 2, value: "c" },
 				{ start: 8, length: 3, value: "a" },
 			]);
+			checkUnionCommutativity(map1, map2);
 		});
 
 		it("small ranges merged with wider overlapping range", () => {
@@ -404,6 +427,7 @@ describe("RangeMap", () => {
 				{ start: 6, length: 2, value: "c" },
 				{ start: 8, length: 3, value: "c" },
 			]);
+			checkUnionCommutativity(map1, map2);
 		});
 	});
 });

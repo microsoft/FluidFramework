@@ -63,7 +63,7 @@ describe("vnext:check:latestVersions", () => {
 		stdoutLineEquals(
 			stdout,
 			1,
-			"##vso[task.setvariable variable=shouldDeploy;isoutput=true]true",
+			"##vso[task.setvariable variable=shouldDeploy;isOutput=true]true",
 		);
 	});
 
@@ -96,7 +96,7 @@ describe("vnext:check:latestVersions", () => {
 		stdoutLineEquals(
 			stdout,
 			1,
-			"##vso[task.setvariable variable=shouldDeploy;isoutput=true]false",
+			"##vso[task.setvariable variable=shouldDeploy;isOutput=true]false",
 		);
 	});
 
@@ -129,7 +129,7 @@ describe("vnext:check:latestVersions", () => {
 		stdoutLineEquals(
 			stdout,
 			1,
-			"##vso[task.setvariable variable=shouldDeploy;isoutput=true]false",
+			"##vso[task.setvariable variable=shouldDeploy;isOutput=true]false",
 		);
 	});
 });

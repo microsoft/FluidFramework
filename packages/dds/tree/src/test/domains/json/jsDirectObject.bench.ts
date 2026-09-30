@@ -6,9 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import {
+	BenchmarkMode,
 	benchmarkDuration,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 
 import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
@@ -90,12 +91,12 @@ function extractAvgValsFromTwitterDirect(
 
 const canada = generateCanada(
 	// Use the default (large) data set for benchmarking, otherwise use a small dataset.
-	isInPerformanceTestingMode ? undefined : [2, 10],
+	currentBenchmarkMode === BenchmarkMode.Performance ? undefined : [2, 10],
 );
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(
-	isInPerformanceTestingMode ? 2500000 : 466906,
+	currentBenchmarkMode === BenchmarkMode.Performance ? 2500000 : 466906,
 	true,
 );
 

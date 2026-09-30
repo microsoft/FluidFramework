@@ -7,9 +7,10 @@ import {
 	BenchmarkType,
 	type CollectedData,
 	ValueType,
+	BenchmarkMode,
 	benchmarkDuration,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions/legacy";
 import { SharedMatrix } from "@fluidframework/matrix/legacy";
@@ -25,7 +26,7 @@ import { Table, generateTable } from "../index.js";
 
 import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 
-const numRows = isInPerformanceTestingMode ? 10000 : 100;
+const numRows = currentBenchmarkMode === BenchmarkMode.Performance ? 10000 : 100;
 
 describe("Table", () => {
 	const data = generateTable(numRows);

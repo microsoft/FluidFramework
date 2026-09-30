@@ -7,7 +7,8 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 /**
  * Contract for logger that writes telemetry to a file
- * @internal
+ * @legacy
+ * @beta
  */
 export interface IFileLogger extends ITelemetryBaseLogger {
 	/**
@@ -27,9 +28,10 @@ export enum OutputFormat {
 
 /**
  * Options to provide upon creation of IFileLogger
- * @internal
+ * @legacy
+ * @beta
  */
-export interface ITelemetryOptions {
+export interface IFileLoggerTelemetryOptions {
 	/** Desired output format used to create a specific IFileLogger implementation */
 	outputFormat?: OutputFormat;
 
@@ -47,3 +49,10 @@ export interface ITelemetryOptions {
 	/** Number of telemetry events per flush to telemetry file */
 	eventsPerFlush?: number;
 }
+
+/**
+ * Options to provide upon creation of IFileLogger
+ * @deprecated Use {@link IFileLoggerTelemetryOptions}.
+ * @internal
+ */
+export type ITelemetryOptions = IFileLoggerTelemetryOptions;

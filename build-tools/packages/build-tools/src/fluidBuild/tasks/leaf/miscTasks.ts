@@ -7,11 +7,11 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import * as path from "node:path";
 
 import picomatch from "picomatch";
-import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
-import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
-import { globFn, toPosixPath } from "../taskUtils";
-import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
+import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests.js";
+import type { BuildContext } from "../../buildContext.js";
+import type { BuildPackage } from "../../buildGraph.js";
+import { globFn, toPosixPath } from "../taskUtils.js";
+import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask.js";
 
 function unquote(str: string): string {
 	if (str.length >= 2 && str[0] === '"' && str[str.length - 1] === '"') {
@@ -274,9 +274,13 @@ export class TypeValidationTask extends LeafWithFileStatDoneFileTask {
 	protected async getInputFiles(): Promise<string[]> {
 		if (this.inputFiles === undefined) {
 			this.inputFiles = [path.join(this.node.pkg.directory, "package.json")];
-			// Casting as any is a workaround because the typeValidation-related types are in build-cli.
-			// Eventually the common stuff will be split into a shared package; tracked by AB#13197.
-			if (!((this.node.pkg.packageJson as any).typeValidation?.disabled === true)) {
+			// The typeValidation-related types are in build-cli, so only the field read here is
+			// declared. Eventually the common stuff will be split into a shared package; tracked by
+			// AB#13197.
+			const packageJson = this.node.pkg.packageJson as {
+				typeValidation?: { disabled?: boolean };
+			};
+			if (!(packageJson.typeValidation?.disabled === true)) {
 				// TODO: depend on all of input to product tsc, which impacts the API.
 				// This task is effectively a TscDependentTask with additional input,
 				// but some packages build tests including type tests as part of

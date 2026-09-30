@@ -34,7 +34,7 @@ Requirements:
 
 - **Version info upfront:** The user must provide all version numbers before starting (current release version and/or next version, depending on phase). Do not prompt for versions mid-flow. If the user doesn't provide versions, detect them from the schedule and repo state (see below).
 - **No confirmation pauses:** Create PRs, push branches, and run `flub release` without asking. Include clear commit messages and PR descriptions.
-- **Phase-scoped execution:** Each phase runs to completion, then reports what the user needs to do next (e.g., "queue the ADO build" or "wait for npm feeds, then re-invoke for type test updates").
+- **Phase-scoped execution:** Each phase runs to completion, then reports what the user needs to do next (e.g., "queue the ADO release build", "queue the ADO publish pipeline", or "wait for npm feeds, then re-invoke for type test updates").
 - **Fallback to issues:** If any step fails (permission errors, CI-safe command failures, git push rejected, or any other error that prevents progress), **stop and open a GitHub issue** in `microsoft/FluidFramework` describing what was completed, what failed, and what remains. Use the title format `Release <VERSION>: <brief description>` and label it with `release-blocking`. Include the exact commands remaining so a human can finish using the skill in interactive mode.
 
 #### Auto-detecting release state (autonomous mode and CI)
@@ -65,14 +65,22 @@ git tag -l 'client_v<NEXT_VERSION>'
 gh pr list --repo microsoft/FluidFramework --search "release-prep/<NEXT_VERSION>" --state all
 ```
 
+For a release branch with no completed release, also inspect ADO pipeline state:
+
+1. Find the **Build - client packages** (definition 12) run for the release branch tip with `releaseBuildOverride: release`.
+2. If that run succeeded, find the **Publish - client packages** (definition 219) run that selected it as the `candidate` and used `publishToPublicNpm: true`.
+3. If ADO pipeline state cannot be queried, do not infer which action is next. Report that a human must identify whether the release build or publish pipeline has completed.
+
 **Step 4: Determine the phase and act.**
 
 | State | Action |
 |-------|--------|
 | No release-prep branches, no release branch | Start **minor release prep** (Steps 1-5) |
 | Release-prep branches/PRs exist, some not merged | Resume **minor release prep** from where it left off |
-| Release branch exists, no release tag | Start **release execution** (Steps 6-7). In CI: the human must queue the ADO build. |
-| Release tag exists, no patch bump PR | Resume **release execution** — do the patch bump (Step 7) |
+| Release branch exists, no successful release build | Resume **release execution** — queue the ADO release build |
+| Successful release build exists, no successful public publish run | Resume **release execution** — queue the ADO publish pipeline using that build as the candidate |
+| Successful public publish run exists, exact GitHub/npm release not yet available | Wait for publication to propagate; investigate the publish run if it does not appear |
+| Exact GitHub/npm release verified, no patch bump PR | Resume **release execution** — do the patch bump (Step 7) |
 | Release tag exists, patch bump done, no type test PRs | Start **type test updates** (Steps 8-9) |
 | All phases complete | Report that the release is fully done and show the next scheduled release |
 
@@ -92,7 +100,7 @@ Ask the user which phase they need (or auto-detect in autonomous mode — see ab
 | Phase | When to use | CI-automatable? | Reference |
 |-------|-------------|-----------------|-----------|
 | **Minor release prep** | Starting a new minor release from `main` (Steps 1-5) | Yes (Steps 1-4 create PRs; Step 5 is a human step) | [minor-release-prep.md](references/minor-release-prep.md) |
-| **Release execution** | Running the release build + patch bump (Steps 6-7). Also used for **patch releases** on existing branches. | Partially (Step 6 = human queues ADO build; Step 7 = CI-automatable) | [release-execution.md](references/release-execution.md) |
+| **Release execution** | Running and publishing the release build + patch bump (Steps 6-7). Also used for **patch releases** on existing branches. | Partially (Step 6 = human queues ADO build and publish pipelines; Step 7 = CI-automatable) | [release-execution.md](references/release-execution.md) |
 | **Type test updates** | Day after release: update baselines on main and release branch (Steps 8-9) | Yes (must be resilient to failure if npm packages not yet available) | [type-test-updates.md](references/type-test-updates.md) |
 
 For **patch releases**, skip directly to release execution on an existing release branch.
@@ -104,7 +112,8 @@ These steps require human action and should be clearly reported in CI workflow l
 1. **Merge release-prep PRs** in the correct order (version bump last) after CI creates them
 2. **Create the release branch** (Step 5) — requires elevated permissions on the `release/` branch prefix
 3. **Queue the ADO release build** (Step 6) — choose the "release" option in ADO
-4. **Announce the release** in the Fluid Framework "General" Teams channel
+4. **Queue the ADO publish pipeline** (Step 6) — after the release build succeeds, select it as the candidate and enable public npm publication
+5. **Announce the release** in the Fluid Framework "General" Teams channel
 
 ## Key Context
 
@@ -192,7 +201,7 @@ Use the `build:` conventional commit prefix for all release PR titles (e.g., `bu
 | Running `flub release` | Pause and confirm | Run automatically |
 | Version determination | Ask user to confirm | Use version provided upfront or auto-detect |
 | Announcing releases | Remind user | Remind user (never auto-announce) |
-| ADO build queuing | Instruct user | Instruct user (cannot be automated) |
+| ADO release/publish pipeline queuing | Instruct user | Instruct user (cannot be automated) |
 
 ### Autonomous Mode: Phase Completion Reports
 

@@ -8,6 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import { Side } from "@fluidframework/merge-tree/internal";
 import { IntervalType } from "@fluidframework/sequence-previous/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -17,7 +18,7 @@ import {
 
 import type { ISequenceIntervalCollection } from "../intervalCollection.js";
 import type { IMapOperation } from "../intervalCollectionMap.js";
-import { IntervalOpType } from "../intervals/index.js";
+import { IntervalOpType, SequenceIntervalClass } from "../intervals/index.js";
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
@@ -165,6 +166,175 @@ describe("Interval Stashed Ops on client ", () => {
 			sharedString["applyStashedOp"](opArgs);
 			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 			assert.equal(interval.properties.a, 2);
+		});
+	});
+
+	describe("round-trip via applyStashedOp", () => {
+		const label = "test";
+
+		function createSharedString(intervalStickinessEnabled: boolean): SharedString {
+			const runtime = new MockFluidDataStoreRuntime({ clientId: "rt" });
+			runtime.options = { intervalStickinessEnabled };
+			runtime.setAttachState(AttachState.Attached);
+			const factory = new MockContainerRuntimeFactory();
+			factory.createContainerRuntime(runtime);
+			const ss = new SharedStringClass(runtime, "ss", SharedStringFactory.Attributes);
+			ss.initializeLocal();
+			ss.connect({
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			return ss;
+		}
+
+		function assertIntervalMatches(
+			scenario: string,
+			target: SharedString,
+			replayed: SequenceIntervalClass | undefined,
+			source: SharedString,
+			expected: SequenceIntervalClass,
+		): void {
+			assert(replayed !== undefined, `${scenario}: expected replayed interval`);
+			assert.equal(
+				target.localReferencePositionToPosition(replayed.start),
+				source.localReferencePositionToPosition(expected.start),
+				`${scenario}: start position mismatch`,
+			);
+			assert.equal(
+				target.localReferencePositionToPosition(replayed.end),
+				source.localReferencePositionToPosition(expected.end),
+				`${scenario}: end position mismatch`,
+			);
+			assert.equal(replayed.startSide, expected.startSide, `${scenario}: startSide mismatch`);
+			assert.equal(replayed.endSide, expected.endSide, `${scenario}: endSide mismatch`);
+			assert.equal(
+				replayed.stickiness,
+				expected.stickiness,
+				`${scenario}: stickiness mismatch`,
+			);
+		}
+
+		function assertAddRoundTrip(
+			intervalStickinessEnabled: boolean,
+			addArgs: Parameters<ISequenceIntervalCollection["add"]>[0],
+		): void {
+			const source = createSharedString(intervalStickinessEnabled);
+			const target = createSharedString(intervalStickinessEnabled);
+			source.insertText(0, "hello world");
+			target.insertText(0, "hello world");
+
+			const sourceCollection = source.getIntervalCollection(label);
+			const sourceInterval = sourceCollection.add(addArgs) as SequenceIntervalClass;
+
+			const targetCollection = target.getIntervalCollection(label);
+			target["applyStashedOp"]({
+				key: label,
+				type: "act",
+				value: { opName: IntervalOpType.ADD, value: sourceInterval.serialize() },
+			} satisfies IMapOperation);
+
+			const [replayed] = Array.from(targetCollection) as SequenceIntervalClass[];
+			assertIntervalMatches("add", target, replayed, source, sourceInterval);
+		}
+
+		function assertChangeRoundTrip(
+			intervalStickinessEnabled: boolean,
+			addArgs: Parameters<ISequenceIntervalCollection["add"]>[0],
+			changeArgs: Parameters<ISequenceIntervalCollection["change"]>[1],
+		): void {
+			const source = createSharedString(intervalStickinessEnabled);
+			const target = createSharedString(intervalStickinessEnabled);
+			source.insertText(0, "hello world");
+			target.insertText(0, "hello world");
+
+			const sourceCollection = source.getIntervalCollection(label);
+			const initial = sourceCollection.add(addArgs) as SequenceIntervalClass;
+			const id = initial.getIntervalId();
+
+			const targetCollection = target.getIntervalCollection(label);
+			target["applyStashedOp"]({
+				key: label,
+				type: "act",
+				value: { opName: IntervalOpType.ADD, value: initial.serialize() },
+			} satisfies IMapOperation);
+
+			const changed = sourceCollection.change(id, changeArgs) as SequenceIntervalClass;
+			target["applyStashedOp"]({
+				key: label,
+				type: "act",
+				value: {
+					opName: IntervalOpType.CHANGE,
+					value: changed.serializeDelta({ props: undefined, includeEndpoints: true }),
+				},
+			} satisfies IMapOperation);
+
+			const [replayed] = Array.from(targetCollection) as SequenceIntervalClass[];
+			assertIntervalMatches("change", target, replayed, source, changed);
+		}
+
+		describe("add", () => {
+			it("non-sticky interval with intervalStickinessEnabled disabled", () => {
+				assertAddRoundTrip(false, { start: 0, end: 5 });
+			});
+
+			it("non-sticky interval with intervalStickinessEnabled enabled", () => {
+				assertAddRoundTrip(true, { start: 0, end: 5 });
+			});
+
+			it("sticky interval with intervalStickinessEnabled enabled", () => {
+				assertAddRoundTrip(true, {
+					start: "start",
+					end: { pos: 5, side: Side.After },
+				});
+			});
+		});
+
+		describe("change", () => {
+			it("non-sticky endpoints with intervalStickinessEnabled disabled", () => {
+				assertChangeRoundTrip(false, { start: 0, end: 5 }, { start: 2, end: 7 });
+			});
+
+			it("non-sticky endpoints with intervalStickinessEnabled enabled", () => {
+				assertChangeRoundTrip(true, { start: 0, end: 5 }, { start: 2, end: 7 });
+			});
+
+			it("sticky endpoints with intervalStickinessEnabled enabled", () => {
+				assertChangeRoundTrip(
+					true,
+					{ start: "start", end: { pos: 5, side: Side.After } },
+					{ start: "start", end: { pos: 7, side: Side.After } },
+				);
+			});
+		});
+
+		describe("stickiness gate", () => {
+			// Symmetric negative-guard: a genuinely sticky serialized op must
+			// still trip assertStickinessEnabled when the target has the flag off.
+			// Guards against a future "always strip sides on replay" simplification
+			// silently weakening the feature gate.
+			it("sticky serialized op replayed against intervalStickinessEnabled=false throws", () => {
+				const source = createSharedString(true);
+				const target = createSharedString(false);
+				source.insertText(0, "hello world");
+				target.insertText(0, "hello world");
+
+				const sourceCollection = source.getIntervalCollection(label);
+				const sticky = sourceCollection.add({
+					start: "start",
+					end: { pos: 5, side: Side.After },
+				}) as SequenceIntervalClass;
+				target.getIntervalCollection(label);
+
+				assert.throws(
+					() =>
+						target["applyStashedOp"]({
+							key: label,
+							type: "act",
+							value: { opName: IntervalOpType.ADD, value: sticky.serialize() },
+						} satisfies IMapOperation),
+					/intervalStickinessEnabled/,
+				);
+			});
 		});
 	});
 });

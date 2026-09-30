@@ -8,7 +8,7 @@ import type { IChannelStorageService } from "@fluidframework/datastore-definitio
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 export class ChannelStorageService implements IChannelStorageService {
 	private static flattenTree(
@@ -30,7 +30,7 @@ export class ChannelStorageService implements IChannelStorageService {
 	constructor(
 		private readonly tree: ISnapshotTree | undefined,
 		private readonly storage: Pick<IRuntimeStorageService, "readBlob">,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly extraBlobs?: Map<string, ArrayBufferLike>,
 	) {
 		this.flattenedTree = {};

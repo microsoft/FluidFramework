@@ -4,8 +4,8 @@
 
 ```ts
 
-// @beta @legacy
-export function assert(condition: boolean, message: string | number, debugMessageBuilder?: () => string): asserts condition;
+// @beta @deprecated @legacy (undocumented)
+export const assert: (condition: boolean, message: string | number, debugMessageBuilder?: () => string) => asserts condition;
 
 // @beta @legacy
 export const compareArrays: <T>(left: readonly T[], right: readonly T[], comparator?: (leftItem: T, rightItem: T, index: number) => boolean) => boolean;
@@ -31,6 +31,9 @@ export class LazyPromise<T> implements Promise<T> {
     // (undocumented)
     then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | null | undefined, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined): Promise<TResult1 | TResult2>;
 }
+
+// @beta
+export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
 // @beta @legacy
 export class PromiseCache<TKey, TResult> {

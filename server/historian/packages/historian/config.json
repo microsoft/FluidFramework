@@ -118,7 +118,8 @@
 	"restGitService": {
 		"disableGitCache": false,
 		"maxCacheableSummarySize": 100000000,
-		"ephemeralDocumentTTLSec": 86400
+		"ephemeralDocumentTTLSec": 86400,
+		"reuseCustomerAccessTokenForSummaryOwnership": false
 	},
 	"storageUrl": "",
 	"tokenRevocation": {

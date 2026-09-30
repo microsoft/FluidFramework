@@ -5,7 +5,7 @@
 
 import { readFile } from "node:fs/promises";
 import registerDebug from "debug";
-import type { Package } from "../common/npmPackage";
+import type { Package } from "../common/npmPackage.js";
 
 const traceDepCheck = registerDebug("fluid-build:depCheck");
 
@@ -25,11 +25,7 @@ interface DepCheckRecord {
  * @deprecated depcheck-related functionality will be removed in an upcoming release.
  */
 export class NpmDepChecker {
-	private readonly foundTypes: string[] = [
-		"@types/node",
-		"@types/expect-puppeteer",
-		"@types/jest-environment-puppeteer",
-	];
+	private readonly foundTypes: string[] = ["@types/node"];
 	// hjs is implicitly used
 	private readonly ignored = ["hjs", ...this.foundTypes];
 	// list of packages that should always in the devDependencies

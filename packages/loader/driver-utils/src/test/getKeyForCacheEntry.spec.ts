@@ -16,7 +16,7 @@ function createMockCacheEntry(type: string, key: string, fileVersion?: string): 
 		tokens: {},
 		type: "fluid",
 		url: "fluid://resolved-url",
-		fileVersion,
+		...(fileVersion === undefined ? {} : { fileVersion }),
 	} satisfies IResolvedUrl & { fileVersion?: string };
 	return {
 		type,
@@ -24,7 +24,7 @@ function createMockCacheEntry(type: string, key: string, fileVersion?: string): 
 		file: {
 			resolvedUrl,
 			docId: resolvedUrl.id,
-			fileVersion: resolvedUrl.fileVersion,
+			...(fileVersion === undefined ? {} : { fileVersion }),
 		},
 	};
 }

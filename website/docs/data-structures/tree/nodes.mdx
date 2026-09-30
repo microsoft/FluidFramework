@@ -1,0 +1,59 @@
+---
+title: Tree Nodes
+sidebar_position: 1
+---
+
+import { ApiLink, PackageLink } from "@site/src/components/shortLinks";
+
+A [SharedTree](./index.mdx)'s data is organized into a tree of nodes.
+See [node types](./node-types.mdx) for details on the available node types.
+
+## Node Utilities
+
+The <ApiLink package="fluid-framework" api="(Tree:variable)">`Tree`</ApiLink> singleton provides utilities for inspecting and navigating nodes — methods that can't live on <ApiLink package="fluid-framework" api="TreeNode">`TreeNode`</ApiLink> directly due to the risk of name collisions with object-node fields.
+The following covers commonly used ones; see the <ApiLink package="fluid-framework" api="(Tree:variable)">API documentation</ApiLink> for the full list.
+
+
+-   <ApiLink package="fluid-framework" api="TreeNodeApi.parent">`Tree.parent`</ApiLink> —
+    Returns the parent node.
+    Useful when you need to act on a node's container rather than the node itself — for example, to remove it:
+
+    ```typescript
+    const parent = Tree.parent(note);
+
+    if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
+    	const index = parent.indexOf(note);
+    	parent.removeAt(index);
+    }
+    ```
+
+-   <ApiLink package="fluid-framework" api="Tree.contains">`Tree.contains`</ApiLink> —
+    Returns whether a node is a descendant of another — for example, to confirm a node belongs to a particular section, or to guard against creating a cycle when moving a node.
+
+-   <ApiLink package="fluid-framework" api="TreeNodeApi.status">`Tree.status`</ApiLink> —
+    Returns the <ApiLink package="fluid-framework" api="TreeStatus" /> of a node.
+    Many editing operations require a specific status.
+    -   <ApiLink package="fluid-framework" api="TreeStatus.New">`New`</ApiLink> — created but not yet inserted into the tree
+    -   <ApiLink package="fluid-framework" api="TreeStatus.InDocument">`InDocument`</ApiLink> — parented under the root field
+    -   <ApiLink package="fluid-framework" api="TreeStatus.Removed">`Removed`</ApiLink> — not under the root field, but can be added back
+    -   <ApiLink package="fluid-framework" api="TreeStatus.Deleted">`Deleted`</ApiLink> — removed and cannot be added back
+
+-   <ApiLink package="fluid-framework" api="TreeNodeApi.schema">`Tree.schema`</ApiLink> —
+    Returns the <ApiLink package="fluid-framework" api="TreeNodeSchema" /> for a node; useful when the node's type isn't statically known.
+
+-   <ApiLink package="fluid-framework" api="TreeNodeApi.shortId">`Tree.shortId`</ApiLink> —
+    Returns the <ApiLink package="fluid-framework" api="SchemaFactory.identifier">identifier</ApiLink> for a node defined with a `SchemaFactory.identifier` field — useful for cross-referencing nodes by stable ID rather than position.
+
+-   <ApiLink package="fluid-framework" api="TreeNodeApi.on">`Tree.on`</ApiLink> —
+    Subscribes to change events on a node.
+    See [Events](./events.mdx) for details.
+
+-   <ApiLink package="fluid-framework" api="TreeNodeApi.is">`Tree.is`</ApiLink> —
+    Narrows a node's type to a specific <ApiLink package="fluid-framework" api="SchemaFactory" />-derived class.
+    Use when the node's type is unknown:
+
+    ```typescript
+    if (Tree.is(myNode, Note)) {
+    	// myNode is typed as Note here
+    }
+    ```

@@ -2,6 +2,22 @@
 
 > This file is mirrored in `.github/copilot-instructions.md`. Changes here should be duplicated there, and vice versa.
 
+## Coding Guidelines
+
+Follow the [Coding Guidelines](../docs/content/Guidelines/Coding-Guidelines.md) when writing / modifying code.
+
+## Documentation Guidelines
+
+Follow the [Documentation Guidelines](../docs/content/Guidelines/Documentation-Guidelines.md) when writing or modifying code or documentation.
+Read and follow the linked guides relevant to the task, including the language-specific guides for source-code documentation.
+These requirements apply to source-code comments and API documentation as well as standalone documentation.
+Follow the [Fluid Terminology guidelines](../docs/content/Guidelines/Documentation-Guidelines/Fluid-Terminology.md) for project-specific terminology.
+
+## Changesets
+
+Add a changeset for user-facing changes only if the affected release group uses changesets.
+Before writing or modifying a changeset, read and follow the [Changeset Guidelines](../.changeset/README.md).
+
 ## Asserts
 
 When writing asserts (from `@fluidframework/core-utils`), use a string literal for the error message, not a hex assert code. This applies only to newly added asserts, not existing ones.
@@ -10,10 +26,19 @@ When writing asserts (from `@fluidframework/core-utils`), use a string literal f
 
 API report files are **generated artifacts** — never hand-edit them. If they need updating, rebuild and regenerate via `build:api-reports`. If you are working in `@fluidframework/tree` or its aggregator (`fluid-framework`) and encounter unexpected API report diffs, read `.claude/skills/ci-readiness-check/tree-api-checks.md` before attempting to fix them.
 
+## Documentation Style
+
+When writing Markdown and documentation comments, prefer line breaks at semantically significant boundaries, such as the end of a sentence or a meaningful clause.
+Do not wrap prose at an arbitrary fixed column unless syntax, established file style, or readability requires it.
+
 ## Azure DevOps
 
 The ADO project for work items and pipelines is **`internal`** (not `FluidFramework`).
 Use `internal` when calling ADO tools that require a project name.
+
+### Referencing GitHub issues/PRs in ADO text
+
+When writing ADO work-item fields (Description, comments, etc.), never reference a GitHub issue or PR with a bare `#<number>` (or `AB#<number>`) — ADO auto-links those to a work item in the `internal` org, not to GitHub. Always use the full URL `https://github.com/microsoft/FluidFramework/pull/<n>` (or `/issues/<n>`), ideally as a markdown link like `[PR #<n>](url)`. Reserve bare `#<n>` / `AB#<n>` for actual ADO work items.
 
 ### Internal Wiki
 

@@ -8,8 +8,13 @@
  */
 import { expect } from "chai";
 
-import { BoolDataArray, Int8DataArray, Int32DataArray, UniversalDataArray } from "../../index";
-let error;
+import {
+	BoolDataArray,
+	Int8DataArray,
+	Int32DataArray,
+	UniversalDataArray,
+} from "../../index.js";
+let error: unknown;
 
 describe("BaseDataArray", function () {
 	it("should set, insert and remove some values in a (TypedArray) DataArray", function () {

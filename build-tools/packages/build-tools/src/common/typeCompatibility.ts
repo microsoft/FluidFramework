@@ -12,9 +12,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 /**
- * The types defined here cannot be in build-cli because it is an ESM-only package, and these types are imported in
- * packages that are dual-emit or CJS-only. Long term these types should move to a shared library between build-cli and
- * build-tools.
+ * Type compatibility utilities for generated type tests.
+ *
+ * These types must be available in CommonJS use case for consumers to type
+ * test against CommonJS build.
+ * As this package is ESM-only and TypeScript (as of 5.4.5) has not been
+ * configured to permit Node 22+ support of synchronous ESM load under CJS,
+ * a special workaround is needed. package.json exports list a special case
+ * for require+types referencing a simple .d.cts file re-exporting the
+ * ESM exports that are required.
  */
 
 /**
@@ -310,6 +316,7 @@ namespace TestNeverParameter {
 	type AnyNever<T extends never> = T;
 
 	// @ts-expect-error any not assignable to never
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- `any` is the subject of this compile time test
 	type _check1 = FooNever<any>;
 
 	// never is assignable to any

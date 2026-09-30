@@ -12,19 +12,13 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreContext,
-	MinimumVersionForCollab,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
-import type {
-	CompatibilityMode,
-	ContainerSchema,
-	LoadableObjectKind,
-	TreeContainerSchema,
-} from "./types.js";
+import type { ContainerSchema, LoadableObjectKind, TreeContainerSchema } from "./types.js";
 
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
@@ -145,14 +139,6 @@ export function makeFluidObject<
 >(object: Omit<T, K>, providerKey: K): T {
 	return Object.defineProperty(object, providerKey, { value: object }) as T;
 }
-
-/**
- * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
- */
-export const compatibilityModeToMinVersionForCollab = {
-	"1": "1.0.0",
-	"2": "2.0.0",
-} as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
 
 /**
  * Determines if the provided schema is a valid tree-based container schema.

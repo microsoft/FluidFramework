@@ -8,7 +8,10 @@ import { strict as assert } from "node:assert";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -38,7 +41,6 @@ import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunked
 import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 import type {
 	EncodedFieldBatchV1OrV2,
-	FieldBatchEncodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import {
@@ -79,13 +81,14 @@ import {
 	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
-import { brand } from "../../../util/index.js";
+import { IdDecodingContext, brand } from "../../../util/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
 	forestWithContent,
 	getView,
+	makeTestFieldBatchContexts,
 	mintRevisionTag,
 	testIdCompressor,
 } from "../../utils.js";
@@ -97,15 +100,15 @@ const options: CodecWriteOptions = {
 
 const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-const idCompressor = createIdCompressor(sessionId);
+const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
-const context: FieldBatchEncodingContext = {
+const { encode: context, decode: decodeContext } = makeTestFieldBatchContexts({
 	encodeType: TreeCompressionStrategy.Compressed,
+	isSummary: true,
 	idCompressor,
-	originatorId: idCompressor.localSessionId,
 	schema: { schema: jsonSequenceRootSchema, policy: defaultSchemaPolicy },
-};
+});
 
 const schemaFactory = new SchemaFactory("com.example");
 class HasIdentifier extends schemaFactory.object("parent", {
@@ -118,16 +121,16 @@ function getIdentifierEncodingContext(id: string) {
 	const flexSchema = toInitialSchema(HasIdentifier);
 	const checkout = view.checkout;
 
-	const encoderContext: FieldBatchEncodingContext = {
+	const { encode: encoderContext, decode: decoderContext } = makeTestFieldBatchContexts({
 		encodeType: TreeCompressionStrategy.Compressed,
+		isSummary: true,
 		idCompressor: testIdCompressor,
-		originatorId: testIdCompressor.localSessionId,
 		schema: {
 			schema: flexSchema,
 			policy: defaultSchemaPolicy,
 		},
-	};
-	return { encoderContext, checkout };
+	});
+	return { encoderContext, decoderContext, checkout };
 }
 
 describe("End to end chunked encoding", () => {
@@ -139,6 +142,7 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
+			defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
 			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
 				tryShapeFromNodeSchema(
 					{
@@ -167,7 +171,7 @@ describe("End to end chunked encoding", () => {
 			{ jsonValidator: FormatValidatorBasic },
 		);
 		const dummyEditor = new DefaultEditBuilder(
-			new DefaultChangeFamily(codec, options),
+			new DefaultChangeFamily(codec, options).rebaser,
 			mintRevisionTag,
 			changeReceiver,
 			options,
@@ -199,8 +203,8 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
-			revisionTagCodec,
 			context,
+			decodeContext,
 			options,
 			idCompressor,
 			0 /* initialSequenceNumber */,
@@ -210,10 +214,10 @@ describe("End to end chunked encoding", () => {
 		function stringify(content: unknown) {
 			const insertedChunk = decode(
 				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
-				{
+				new IdDecodingContext({
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
-				},
+				}),
 			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
@@ -235,8 +239,8 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			revisionTagCodec,
 			context,
+			decodeContext,
 			options,
 			idCompressor,
 			0 /* initialSequenceNumber */,
@@ -246,10 +250,10 @@ describe("End to end chunked encoding", () => {
 		function stringify(content: unknown) {
 			const insertedChunk = decode(
 				(content as FormatCommon).fields as EncodedFieldBatchV1OrV2,
-				{
+				new IdDecodingContext({
 					idCompressor,
 					originatorId: idCompressor.localSessionId,
-				},
+				}),
 			);
 			assert.equal(insertedChunk, chunk);
 			assert(chunk.isShared());
@@ -267,12 +271,12 @@ describe("End to end chunked encoding", () => {
 		it("is encoded as compressed id when the identifier is a valid stable id.", () => {
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
-			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
+			const { encoderContext, decoderContext, checkout } = getIdentifierEncodingContext(id);
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
+				decoderContext,
 				options,
 				testIdCompressor,
 				0 /* initialSequenceNumber */,
@@ -294,12 +298,12 @@ describe("End to end chunked encoding", () => {
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
 
-			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
+			const { encoderContext, decoderContext, checkout } = getIdentifierEncodingContext(id);
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
+				decoderContext,
 				options,
 				testIdCompressor,
 				0 /* initialSequenceNumber */,
@@ -316,12 +320,12 @@ describe("End to end chunked encoding", () => {
 
 		it("is the uncompressed value when it is not a UUID", () => {
 			const id = "invalidUUID";
-			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
+			const { encoderContext, decoderContext, checkout } = getIdentifierEncodingContext(id);
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
+				decoderContext,
 				options,
 				testIdCompressor,
 				0 /* initialSequenceNumber */,

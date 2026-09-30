@@ -6,10 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import {
+	BenchmarkMode,
 	BenchmarkType,
 	benchmarkDuration,
 	benchmarkIt,
-	isInPerformanceTestingMode,
+	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";
 import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 
@@ -43,7 +44,7 @@ import { toInitialSchema } from "../../../simple-tree/toStoredSchema.js";
 import { brand, type JsonCompatible } from "../../../util/index.js";
 import { initializeForest } from "../../feature-libraries/index.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
-import { buildTestForest, testIdCompressor, testRevisionTagCodec } from "../../utils.js";
+import { buildTestForest } from "../../utils.js";
 
 import { averageValues, sum, sumMap } from "./benchmarks.js";
 import { Canada, generateCanada } from "./canada.js";
@@ -125,12 +126,7 @@ function bench(
 							"object-forest Cursor",
 							() => {
 								const forest = buildTestForest({ additionalAsserts: true });
-								initializeForest(
-									forest,
-									cursorForJsonableTreeField([encodedTree]),
-									testRevisionTagCodec,
-									testIdCompressor,
-								);
+								initializeForest(forest, cursorForJsonableTreeField([encodedTree]));
 								const cursor = forest.allocateCursor();
 								moveToDetachedField(forest, cursor);
 								assert(cursor.firstNode());
@@ -160,12 +156,7 @@ function bench(
 										defaultIncrementalEncodingPolicy,
 									),
 								);
-								initializeForest(
-									forest,
-									cursorForJsonableTreeField([encodedTree]),
-									testRevisionTagCodec,
-									testIdCompressor,
-								);
+								initializeForest(forest, cursorForJsonableTreeField([encodedTree]));
 								const cursor = forest.allocateCursor();
 								moveToDetachedField(forest, cursor);
 								assert(cursor.firstNode());
@@ -221,7 +212,7 @@ function bench(
 
 const canada = generateCanada(
 	// Use the default (large) data set for benchmarking, otherwise use a small dataset.
-	isInPerformanceTestingMode ? undefined : [2, 10],
+	currentBenchmarkMode === BenchmarkMode.Performance ? undefined : [2, 10],
 );
 
 function extractCoordinatesFromCanada(
@@ -336,13 +327,14 @@ function extractAvgValsFromCitm(
 
 // The original benchmark twitter.json is 466906 Bytes according to getSizeInBytes.
 const twitter = generateTwitterJsonByByteSize(
-	isInPerformanceTestingMode ? 2500000 : 466906,
+	currentBenchmarkMode === BenchmarkMode.Performance ? 2500000 : 466906,
 	true,
 );
 // The original benchmark citm_catalog.json 500299 Bytes according to getSizeInBytes.
-const citm = isInPerformanceTestingMode
-	? generateCitmJson(2, 2500000)
-	: generateCitmJson(1, 500299);
+const citm =
+	currentBenchmarkMode === BenchmarkMode.Performance
+		? generateCitmJson(2, 2500000)
+		: generateCitmJson(1, 500299);
 describe("ITreeCursor", () => {
 	bench([
 		{

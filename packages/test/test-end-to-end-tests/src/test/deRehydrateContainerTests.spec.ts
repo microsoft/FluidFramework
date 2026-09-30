@@ -9,7 +9,7 @@ import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
+	defaultTestOldestSupportedClient,
 	createDataStoreFactory,
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -243,6 +244,7 @@ describeCompat(
 			(defaultFactory as any).IRuntimeFactory =
 				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 					runtimeOptions: {},
 				});

@@ -6,7 +6,6 @@
 import type { EventEmitter } from "@fluid-example/example-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
 import { ISharedCounter, SharedCounter } from "@fluidframework/counter/legacy";
 
 /**
@@ -57,7 +56,9 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 			// Get the existing counter if we didn't initialize it.
 			const sharedCounterHandle =
 				this.root.get<IFluidHandle<ISharedCounter>>(sharedCounterKey);
-			assert(sharedCounterHandle !== undefined, "sharedCounterHandle should be defined");
+			if (sharedCounterHandle === undefined) {
+				throw new Error("sharedCounterHandle should be defined");
+			}
 			this._counter = await sharedCounterHandle.get();
 			// Ensure the count is up to date when we load.
 			this.count = this._counter.value;
@@ -70,7 +71,9 @@ export class DiceCounter extends DataObject implements IDiceCounter {
 	}
 
 	public readonly increment = (): void => {
-		assert(this._counter !== undefined, "this._counter should be defined");
+		if (this._counter === undefined) {
+			throw new Error("this._counter should be defined");
+		}
 		this._counter.increment(1);
 	};
 }

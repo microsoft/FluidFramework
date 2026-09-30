@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IIdCompressor,
 	createIdCompressor,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
@@ -17,23 +19,20 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
-	createNodeIdentifierManager,
 	fieldBatchCodecBuilder,
-	type FieldBatchEncodingContext,
-	defaultSchemaPolicy,
-	TreeCompressionStrategy,
+	FieldBatchDecodingContext,
 	defaultIncrementalEncodingPolicy,
 	schemaCodecBuilder,
+	combineChunks,
 } from "../feature-libraries/index.js";
-import { combineChunks } from "../feature-libraries/index.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
 	TreeViewAlpha,
+	TreeViewBeta,
 	ITreeAlpha,
 	ViewableTree,
 	TreeView,
-	ReadSchema,
 	VerboseTree,
 	SimpleTreeSchema,
 } from "../simple-tree/index.js";
@@ -45,20 +44,36 @@ import {
 } from "../util/index.js";
 
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	exportSimpleSchema,
 	type ForestOptions,
 } from "./sharedTree.js";
-import { createTreeCheckout } from "./treeCheckout.js";
+import { createTreeCheckout, type TreeCheckout } from "./treeCheckout.js";
 
 /**
- * {@link independentView} options.
+ * Options for supplying a telemetry logger to an independent tree view.
+ * @remarks
+ * Events emitted by the independent tree are tagged with the `independentView` namespace.
+ * If no logger is provided, telemetry events are dropped.
  * @alpha @input
  */
-export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+export interface IndependentViewTelemetryOptions {
+	/**
+	 * Optional logger for telemetry.
+	 */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+}
+
+/**
+ * {@link createIndependentTreeViewAlpha} options.
+ * @alpha @input
+ */
+export interface IndependentViewOptions
+	extends ForestOptions,
+		Partial<CodecWriteOptions>,
+		IndependentViewTelemetryOptions {
 	/**
 	 * Optional ID compressor for generating and compressing identifiers.
 	 * If not provided, a new one will be created.
@@ -71,6 +86,7 @@ export interface IndependentViewOptions extends ForestOptions, Partial<CodecWrit
  * @alpha
  */
 export type CreateIndependentTreeAlphaOptions = ForestOptions &
+	IndependentViewTelemetryOptions &
 	(
 		| (IndependentViewOptions & {
 				/**
@@ -97,16 +113,52 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions &
  * Create an uninitialized {@link TreeView} that is not tied to any {@link ITree} instance.
  *
  * @remarks
- * Such a view can never experience collaboration or be persisted to to a Fluid Container.
+ * Such a view can never experience collaboration or be persisted to a Fluid Container.
  *
  * This can be useful for testing, as well as use-cases like working on local files instead of documents stored in some Fluid service.
+ *
+ * @param config - The configuration for the tree view.
+ * @param options - Options for the independent tree view.
+ * @returns An uninitialized, non-collaborative tree view.
+ * @alpha
+ */
+export function createIndependentTreeViewAlpha<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options?: IndependentViewOptions,
+): TreeViewAlpha<TSchema> {
+	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
+}
+
+/**
+ * {@inheritDoc createIndependentTreeViewAlpha}
+ * @deprecated Use {@link createIndependentTreeViewAlpha} instead.
  * @alpha
  */
 export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options?: IndependentViewOptions,
 ): TreeViewAlpha<TSchema> {
-	return createIndependentTreeAlpha(options).viewWith(config) as TreeViewAlpha<TSchema>;
+	return createIndependentTreeViewAlpha(config, options);
+}
+
+/**
+ * Creates an uninitialized tree view that is not tied to any {@link ITree} instance.
+ *
+ * @remarks
+ * Such a view can never experience collaboration or be persisted to a Fluid Container.
+ *
+ * This can be useful for testing and for use cases such as working on local files instead of documents stored in a Fluid service.
+ *
+ * @param config - The configuration for the tree view.
+ * @param options - Options for the independent tree's forest.
+ * @returns An uninitialized, non-collaborative tree view.
+ * @beta
+ */
+export function createIndependentTreeView<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+	options?: ForestOptions,
+): TreeViewBeta<TSchema> {
+	return createIndependentTreeBeta(options).viewWith(config) as TreeViewBeta<TSchema>;
 }
 
 /**
@@ -122,7 +174,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions,
+	options: ForestOptions & ICodecOptions & IndependentViewTelemetryOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(
@@ -132,6 +184,8 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 
 /**
  * Create a {@link ViewableTree} that is not tied to any Fluid runtimes or services.
+ *
+ * @typeParam Unused - This type parameter is deprecated and will be removed in future versions.
  *
  * @remarks
  * Such a tree can never experience collaboration or be persisted to to a Fluid Container.
@@ -176,13 +230,14 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  * ```
  * @privateRemarks
  * Before stabilizing this as public, consider if we can instead just expose a better way to create regular Fluid service based SharedTrees for tests.
- * Something like https://github.com/microsoft/FluidFramework/pull/25422 might be a better long term stable/public solution.
+ * An easy way to create a detached service independent `FluidContainer` with a root tree might be a better approach.
  * @beta
  */
-export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Retained for API compatibility.
+export function createIndependentTreeBeta<const Unused = unknown>(
 	options?: ForestOptions,
 ): ViewableTree {
-	return createIndependentTreeAlpha<TSchema>(options);
+	return createIndependentTreeAlpha(options);
 }
 
 /**
@@ -201,12 +256,44 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
  * If keeping the option here, maybe a separate function of overload would be better? Or maybe flatten ViewContent inline to deduplicate the idCompressor options?
  * @alpha
  */
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
+export function createIndependentTreeAlpha(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
-	const breaker = new Breakable("independentView");
+	const checkout = createIndependentTreeCheckout(options);
+
+	return {
+		viewWith<TRoot extends ImplicitFieldSchema>(
+			config: TreeViewConfiguration<TRoot>,
+		): TreeView<TRoot> {
+			const out: TreeViewAlpha<TRoot> = checkout.viewWith(config);
+			return out as TreeView<TRoot>;
+		},
+
+		exportVerbose(): VerboseTree | undefined {
+			return checkout.exportVerbose();
+		},
+
+		exportSimpleSchema(): SimpleTreeSchema {
+			return exportSimpleSchema(checkout.storedSchema);
+		},
+	};
+}
+
+/**
+ * Creates the checkout that backs an independent tree.
+ */
+export function createIndependentTreeCheckout(
+	options?: CreateIndependentTreeAlphaOptions,
+): TreeCheckout {
+	const logger = createChildLogger({
+		logger: options?.logger,
+		namespace: "independentView",
+	});
+	const breaker = new Breakable("independentView", logger);
 	const idCompressor: IIdCompressor =
-		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
+		options?.idCompressor ??
+		options?.content?.idCompressor ??
+		createIdCompressor(SerializationVersion.V3);
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
@@ -224,7 +311,6 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
-		breaker,
 		codecOptions: options,
 	});
 
@@ -233,12 +319,12 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		const fieldBatchCodec = fieldBatchCodecBuilder.buildDecoder(options);
 		const newSchema = schemaCodec.decode(options.content.schema);
 
-		const context: FieldBatchEncodingContext = {
-			encodeType: TreeCompressionStrategy.Compressed,
+		// TreeAlpha.exportCompressed encodes this payload in originatorless-safe form
+		// (finalized compressed ids or strings), so summary-style decode is correct.
+		const context = FieldBatchDecodingContext.forSummary({
 			idCompressor,
-			originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
-			schema: { schema: newSchema, policy: defaultSchemaPolicy },
-		};
+			healing: undefined,
+		});
 		const fieldCursors = fieldBatchCodec.decode(
 			options.content.tree as JsonCompatibleReadOnly,
 			context,
@@ -257,26 +343,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		);
 	}
 
-	return {
-		viewWith<TRoot extends ImplicitFieldSchema>(
-			config: TreeViewConfiguration<TRoot>,
-		): TreeView<TRoot> {
-			const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
-				checkout,
-				config as TreeViewConfiguration as TreeViewConfiguration<ReadSchema<TSchema>>,
-				createNodeIdentifierManager(idCompressor),
-			);
-			return out as unknown as TreeView<TRoot>;
-		},
-
-		exportVerbose(): VerboseTree | undefined {
-			return checkout.exportVerbose();
-		},
-
-		exportSimpleSchema(): SimpleTreeSchema {
-			return exportSimpleSchema(checkout.storedSchema);
-		},
-	};
+	return checkout;
 }
 
 /**

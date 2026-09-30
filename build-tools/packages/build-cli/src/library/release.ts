@@ -19,21 +19,24 @@ import type { ReleaseGroup } from "../releaseGroups.js";
  * A map of package names to full release reports. This is the format of the "full" release report.
  */
 export interface ReleaseReport {
-	[packageName: string]: ReleaseDetails;
+	[packageName: string]: ReleaseDetails | PrereleaseDetails;
 }
 
 /**
  * Full details about a release.
  */
-export interface ReleaseDetails {
+export interface PrereleaseDetails {
 	version: ReleaseVersion;
-	previousVersion?: ReleaseVersion;
 	versionScheme: VersionScheme;
 	date?: Date;
-	releaseType: VersionBumpType;
-	isNewRelease: boolean;
 	releaseGroup?: ReleaseGroup;
 	ranges: ReleaseRanges;
+}
+
+export interface ReleaseDetails extends PrereleaseDetails {
+	previousVersion?: ReleaseVersion;
+	releaseType: VersionBumpType;
+	isNewRelease: boolean;
 }
 
 /**

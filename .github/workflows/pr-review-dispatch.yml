@@ -24,7 +24,7 @@ concurrency:
 jobs:
   dispatch:
     name: "Dispatch fleet"
-    if: github.event.label.name == 'fleet-review'
+    if: github.event.action == 'labeled' && github.event.label.name == 'fleet-review'
     runs-on: ubuntu-latest
     steps:
       - name: Save dispatch params
@@ -39,7 +39,7 @@ jobs:
           cat dispatch/params.json
 
       - name: Upload dispatch params
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: dispatch-params
           path: dispatch/params.json

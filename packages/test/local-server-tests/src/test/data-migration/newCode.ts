@@ -20,6 +20,8 @@ import {
 	type TreeView,
 } from "@fluidframework/tree/internal";
 
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
+
 import { runtimeOptions } from "./utils.js";
 
 /**
@@ -185,6 +187,7 @@ export const RootDO2Factory = new DataObjectFactory({
 
 export const newRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: RootDO2Factory,
+	oldestSupportedClient: defaultTestOldestSupportedClient,
 	registryEntries: [RootDO2Factory.registryEntry],
 	runtimeOptions,
 });

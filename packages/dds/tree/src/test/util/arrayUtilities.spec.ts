@@ -8,11 +8,18 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	collectContiguousRanges,
+	replaceArrayRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
 	validateSafeInteger,
 } from "../../util/index.js";
+import {
+	replaceArrayRangeWithoutSpread,
+	// Allow importing from this specific file which is being tested:
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../util/arrayUtilities.js";
 
 describe("arrayUtilities unit tests", () => {
 	it("validateSafeInteger", () => {
@@ -166,5 +173,152 @@ describe("arrayUtilities unit tests", () => {
 				/Malformed range passed to test. Start index 2 is greater than end index 1./,
 			),
 		);
+	});
+
+	describe("replaceArrayRange", () => {
+		type ReplaceCase = readonly [
+			name: string,
+			input: readonly number[],
+			start: number,
+			end: number,
+			replacement: readonly number[],
+		];
+
+		// The table-driven cases below are all small, so `replaceArrayRange` would dispatch them to native
+		// `splice` — testing `splice` against `splice`. To actually exercise the argument-safe
+		// implementation on these cases, assert `replaceArrayRangeWithoutSpread` (the large-replacement
+		// path) matches `splice` directly. Also assert the public `replaceArrayRange` matches, so its
+		// dispatch (and validation) is covered too.
+		function assertMatchesSplice(
+			input: readonly number[],
+			start: number,
+			end: number,
+			replacement: readonly number[],
+		): void {
+			const expected = [...input];
+			expected.splice(start, end - start, ...replacement);
+
+			const withoutSpread = [...input];
+			replaceArrayRangeWithoutSpread(withoutSpread, start, end, replacement);
+			assert.deepEqual(withoutSpread, expected);
+
+			const viaPublic = [...input];
+			replaceArrayRange(viaPublic, start, end, replacement);
+			assert.deepEqual(viaPublic, expected);
+		}
+
+		const cases: readonly ReplaceCase[] = [
+			["inserts into an empty range", [0, 3], 1, 1, [1, 2]],
+			["deletes a range", [0, 1, 2, 3], 1, 3, []],
+			["grows a middle range", [0, 1, 4], 1, 2, [1, 2, 3]],
+			["shrinks a middle range", [0, 1, 2, 3, 4], 1, 4, [9]],
+			["replaces the whole array", [0, 1, 2], 0, 3, [3, 4]],
+			["is a no-op for two empty ranges", [0, 1, 2], 1, 1, []],
+		];
+
+		for (const [name, input, start, end, replacement] of cases) {
+			it(name, () => {
+				assertMatchesSplice(input, start, end, replacement);
+			});
+		}
+
+		it("supports replacements larger than the function argument limit", () => {
+			const replacement = Array.from({ length: 200_000 }, (_, index) => index);
+			const array = [-1, -2, -3];
+
+			replaceArrayRange(array, 1, 2, replacement);
+
+			assert.equal(array.length, replacement.length + 2);
+			assert.equal(array[0], -1);
+			assert.equal(array[1], 0);
+			assert.equal(array[replacement.length], replacement.length - 1);
+			assert.equal(array.at(-1), -3);
+		});
+
+		it("supports shrinking a range with a large replacement", () => {
+			const input = Array.from({ length: 2000 }, (_, index) => index);
+			const replacement = Array.from({ length: 1000 }, (_, index) => -index);
+
+			assertMatchesSplice(input, 500, 1800, replacement);
+		});
+
+		it("supports using the modified array as the replacement", () => {
+			const array = Array.from({ length: 2000 }, (_, index) => index);
+			const expected = [...array];
+			expected.splice(500, 1000, ...expected);
+
+			replaceArrayRange(array, 500, 1500, array);
+
+			assert.deepEqual(array, expected);
+		});
+
+		it("rejects an invalid range", () => {
+			assert.throws(
+				() => replaceArrayRange([0, 1], 0, 3, []),
+				validateUsageError(/Index value passed to replaceArrayRange is out of bounds/),
+			);
+		});
+	});
+
+	describe("collectContiguousRanges", () => {
+		it("returns no ranges for an empty array", () => {
+			assert.deepEqual(
+				collectContiguousRanges([], () => true),
+				[],
+			);
+		});
+
+		it("returns no ranges when nothing matches", () => {
+			assert.deepEqual(
+				collectContiguousRanges([1, 2, 3, 4], () => false),
+				[],
+			);
+		});
+
+		it("returns a single full-array range when everything matches", () => {
+			assert.deepEqual(
+				collectContiguousRanges([1, 2, 3, 4], () => true),
+				[{ start: 0, end: 4 }],
+			);
+		});
+
+		it("coalesces adjacent matching indices into one range", () => {
+			// matches: 1, 2, 3 -> single range [1, 4)
+			assert.deepEqual(
+				collectContiguousRanges([0, 1, 1, 1, 0], (v) => v === 1),
+				[{ start: 1, end: 4 }],
+			);
+		});
+
+		it("emits separate ranges for non-adjacent matches", () => {
+			// matches: 0, 2, 4 -> three singleton ranges
+			assert.deepEqual(
+				collectContiguousRanges([1, 0, 1, 0, 1], (v) => v === 1),
+				[
+					{ start: 0, end: 1 },
+					{ start: 2, end: 3 },
+					{ start: 4, end: 5 },
+				],
+			);
+		});
+
+		it("mixes singleton and multi-element ranges", () => {
+			// matches at indices: 0, 2, 3, 4, 6, 7 -> [0,1) [2,5) [6,8)
+			assert.deepEqual(
+				collectContiguousRanges([1, 0, 1, 1, 1, 0, 1, 1], (v) => v === 1),
+				[
+					{ start: 0, end: 1 },
+					{ start: 2, end: 5 },
+					{ start: 6, end: 8 },
+				],
+			);
+		});
+
+		it("handles a match at the final index", () => {
+			assert.deepEqual(
+				collectContiguousRanges([0, 0, 1], (v) => v === 1),
+				[{ start: 2, end: 3 }],
+			);
+		});
 	});
 });

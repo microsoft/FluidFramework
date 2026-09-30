@@ -9,16 +9,22 @@ export {
 	type SharedTreeBranchChange,
 	type SharedTreeBranchEvents,
 	type BranchId,
+	type BranchTrimmingEvents,
 } from "./branch.js";
 
+export { BranchCommitCounter } from "./branchCommitCounter.js";
+
 export {
-	TransactionResult,
-	type Transactor,
-	type TransactionEvents,
-	TransactionStack,
-	SquashingTransactionStack,
-	type OnPush,
+	type ChangeProcessor,
 	type OnPop,
+	type OnPush,
+	type SquashingTransactionOptions,
+	type TransactionEvents,
+	type Transactor,
+	ChangeProcessorApplicability,
+	SquashingTransactionStack,
+	TransactionResult,
+	TransactionStack,
 } from "./transaction.js";
 
 export {
@@ -77,3 +83,9 @@ export {
 	MessageFormatVersion,
 	supportedMessageFormatVersions,
 } from "./messageFormat.js";
+
+export {
+	decodeCustomMetadataTree,
+	encodeCustomMetadataTree,
+} from "./customMetadataCodec.js";
+export type { EncodedCustomMetadataTree } from "./customMetadataFormat.js";

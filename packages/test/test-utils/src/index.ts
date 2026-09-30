@@ -74,6 +74,7 @@ export {
 	waitForContainerConnection,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
+	getRequiredPendingLocalState,
 } from "./containerUtils.js";
 // #endregion
 
@@ -82,5 +83,6 @@ export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+export { defaultTestOldestSupportedClient } from "./testCompatibility.js";
 
 export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";

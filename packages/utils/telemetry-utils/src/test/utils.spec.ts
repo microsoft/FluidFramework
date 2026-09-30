@@ -10,40 +10,15 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
-import type { InternalCoreInterfacesUtilityTypes } from "@fluidframework/core-interfaces/internal";
-
-import type { ITelemetryLoggerExt as ITelemetryLoggerExtInternal } from "@fluidframework/telemetry-utils/internal";
-import type { ITelemetryLoggerExt as ITelemetryLoggerExtExternal } from "@fluidframework/telemetry-utils/legacy";
+import { LogLevel } from "@fluidframework/core-interfaces";
 
 import { mixinMonitoringContext } from "../config.js";
-import { TelemetryDataTag, tagCodeArtifacts, tagData } from "../logger.js";
+import { TelemetryDataTag, tagCodeArtifacts, tagData, tagSchemaArtifacts } from "../logger.js";
 import type {
 	ITelemetryGenericEventExt,
 	TelemetryLoggerExt,
 } from "../telemetryTypesUndeprecated.js";
 import { type IEventSampler, createSampledLogger } from "../utils.js";
-
-/**
- * Use to compile-time assert types of two variables are identical.
- */
-function assertIdenticalTypes<T, U>(
-	_actual: T & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
-	_expected: U & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
-): InternalCoreInterfacesUtilityTypes.IfSameType<T, U> {
-	return undefined as InternalCoreInterfacesUtilityTypes.IfSameType<T, U>;
-}
-
-/**
- * This is exported but never called - tests that internal and external ITelemetryLoggerExt types are identical.
- * At this time the only difference allowed is for the external version to have `@deprecated` tags on it methods.
- * To be removed when external type is erased and the types are permitted to diverge.
- */
-export function checkIdenticalLoggers(
-	internal: ITelemetryLoggerExtInternal,
-	external: ITelemetryLoggerExtExternal,
-): void {
-	assertIdenticalTypes(internal, external);
-}
 
 describe("tagData", () => {
 	it("tagData with data", () => {
@@ -149,8 +124,14 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
-			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
+			loggerWithEvery5Sampling.send(
+				{ category: "generic", eventName: "oneEveryFive" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -173,7 +154,10 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -192,7 +176,10 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -219,8 +206,14 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
-			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
+			loggerWithEvery5Sampling.send(
+				{ category: "generic", eventName: "oneEveryFive" },
+				LogLevel.essential,
+			);
 		}
 		assert.equal(
 			events.filter((event) => event.eventName === "noSampling").length,
@@ -255,9 +248,18 @@ describe("Sampling", () => {
 
 		const totalEventCount = 15;
 		for (let i = 0; i < totalEventCount; i++) {
-			loggerWithoutSampling.send({ category: "generic", eventName: "noSampling" });
-			loggerWithEvery3Sampling.send({ category: "generic", eventName: "oneEveryThree" });
-			loggerWithEvery5Sampling.send({ category: "generic", eventName: "oneEveryFive" });
+			loggerWithoutSampling.send(
+				{ category: "generic", eventName: "noSampling" },
+				LogLevel.essential,
+			);
+			loggerWithEvery3Sampling.send(
+				{ category: "generic", eventName: "oneEveryThree" },
+				LogLevel.essential,
+			);
+			loggerWithEvery5Sampling.send(
+				{ category: "generic", eventName: "oneEveryFive" },
+				LogLevel.essential,
+			);
 		}
 
 		assert.equal(
@@ -334,15 +336,18 @@ describe("Sampling", () => {
 				exampleAppDataModeString = "not_ready";
 			}
 
-			loggerWithSampling.send({
-				category: "generic",
-				eventName,
-				eventNumber: i,
-				appNumber1: exampleAppDataNumber1,
-				appNumber2: exampleAppDataNumber2,
-				appBoolean1: exampleAppDataBoolean1,
-				appModeString: exampleAppDataModeString,
-			});
+			loggerWithSampling.send(
+				{
+					category: "generic",
+					eventName,
+					eventNumber: i,
+					appNumber1: exampleAppDataNumber1,
+					appNumber2: exampleAppDataNumber2,
+					appBoolean1: exampleAppDataBoolean1,
+					appModeString: exampleAppDataModeString,
+				},
+				LogLevel.essential,
+			);
 		}
 
 		const emittedEvents = events.filter((event) => event.eventName === eventName);
@@ -359,6 +364,75 @@ describe("Sampling", () => {
 				true,
 			);
 		}
+	});
+
+	describe("logLevel forwarding", () => {
+		function createCapturingLogger(): {
+			logger: TelemetryLoggerExt;
+			captures: { method: string; logLevel: LogLevel | undefined }[];
+		} {
+			const captures: { method: string; logLevel: LogLevel | undefined }[] = [];
+			const logger: TelemetryLoggerExt = {
+				send: (_event, logLevel): void => {
+					captures.push({ method: "send", logLevel });
+				},
+				sendTelemetryEvent: (_event, _error, logLevel): void => {
+					captures.push({ method: "sendTelemetryEvent", logLevel });
+				},
+				sendErrorEvent: (_event, _error): void => {
+					captures.push({ method: "sendErrorEvent", logLevel: undefined });
+				},
+				sendPerformanceEvent: (_event, _error, logLevel): void => {
+					captures.push({ method: "sendPerformanceEvent", logLevel });
+				},
+			};
+			const wrapped = mixinMonitoringContext(logger, {
+				getRawConfig: (): ConfigTypes => undefined,
+			}).logger;
+			return { logger: wrapped, captures };
+		}
+
+		it("Forwards explicit logLevel through `sendTelemetryEvent` to the wrapped logger", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.sendTelemetryEvent({ eventName: "x" }, undefined, LogLevel.verbose);
+
+			assert.deepStrictEqual(captures, [
+				{ method: "sendTelemetryEvent", logLevel: LogLevel.verbose },
+			]);
+		});
+
+		it("Forwards explicit logLevel through `sendPerformanceEvent` to the wrapped logger", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.sendPerformanceEvent({ eventName: "x" }, undefined, LogLevel.info);
+
+			assert.deepStrictEqual(captures, [
+				{ method: "sendPerformanceEvent", logLevel: LogLevel.info },
+			]);
+		});
+
+		it("Forwards explicit logLevel through `send` to the wrapped logger", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.send({ category: "generic", eventName: "x" }, LogLevel.verbose);
+
+			assert.deepStrictEqual(captures, [{ method: "send", logLevel: LogLevel.verbose }]);
+		});
+
+		it("Forwards undefined logLevel when caller omits it", () => {
+			const { logger, captures } = createCapturingLogger();
+			const sampled = createSampledLogger(logger);
+
+			sampled.sendTelemetryEvent({ eventName: "x" });
+
+			assert.deepStrictEqual(captures, [
+				{ method: "sendTelemetryEvent", logLevel: undefined },
+			]);
+		});
 	});
 });
 
@@ -448,6 +522,139 @@ describe("tagCodeArtifacts", () => {
 		};
 
 		const taggedData = tagCodeArtifacts({
+			string: "foo",
+			number: 0,
+			boolean: true,
+			stringGetter: () => "foo",
+			numberGetter: () => 0,
+			booleanGetter: () => true,
+		});
+
+		// Validate basic properties are tagged.
+		assert.deepStrictEqual(
+			taggedData.string,
+			expectedStringValue,
+			"string property not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			taggedData.number,
+			expectedNumberValue,
+			"number property not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			taggedData.boolean,
+			expectedBooleanValue,
+			"boolean property not tagged as expected",
+		);
+
+		// Validate getters are tagged.
+		const stringValue = taggedData.stringGetter();
+		const numberValue = taggedData.numberGetter();
+		const booleanValue = taggedData.booleanGetter();
+		assert.deepStrictEqual(
+			stringValue,
+			expectedStringValue,
+			"string getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			numberValue,
+			expectedNumberValue,
+			"number getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			booleanValue,
+			expectedBooleanValue,
+			"boolean getter not tagged as expected",
+		);
+	});
+});
+
+describe("tagSchemaArtifacts", () => {
+	it("tagSchemaArtifacts with undefined", () => {
+		const taggedData = tagSchemaArtifacts({ node: undefined });
+		const expected: Partial<typeof taggedData> = {};
+		assert.deepStrictEqual(taggedData, expected, "undefined not tagged as expected");
+	});
+
+	it("tagSchemaArtifacts with TelemetryBaseEventPropertyType properties", () => {
+		const taggedData = tagSchemaArtifacts({
+			string: "foo",
+			number: 0,
+			boolean: true,
+			none: undefined,
+		});
+		const expected: Partial<typeof taggedData> = {
+			string: {
+				value: "foo",
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+			number: {
+				value: 0,
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+			boolean: {
+				value: true,
+				tag: TelemetryDataTag.SchemaArtifact,
+			},
+		};
+		assert.deepStrictEqual(
+			taggedData,
+			expected,
+			"TelemetryBaseEventPropertyType not tagged as expected",
+		);
+	});
+
+	it("tagSchemaArtifacts with TelemetryBaseEventPropertyType getters", () => {
+		const taggedData = tagSchemaArtifacts({
+			string: () => "foo",
+			number: () => 0,
+			boolean: () => true,
+		});
+		const stringValue = taggedData.string();
+		const numberValue = taggedData.number();
+		const booleanValue = taggedData.boolean();
+
+		assert.deepStrictEqual(
+			stringValue,
+			{
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: "foo",
+			},
+			"string getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			numberValue,
+			{
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: 0,
+			},
+			"number getter not tagged as expected",
+		);
+		assert.deepStrictEqual(
+			booleanValue,
+			{
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: true,
+			},
+			"boolean getter not tagged as expected",
+		);
+	});
+
+	it("tagSchemaArtifacts with both TelemetryBaseEventPropertyType properties and getters", () => {
+		const expectedStringValue = {
+			tag: TelemetryDataTag.SchemaArtifact,
+			value: "foo",
+		};
+		const expectedNumberValue = {
+			tag: TelemetryDataTag.SchemaArtifact,
+			value: 0,
+		};
+		const expectedBooleanValue = {
+			tag: TelemetryDataTag.SchemaArtifact,
+			value: true,
+		};
+
+		const taggedData = tagSchemaArtifacts({
 			string: "foo",
 			number: 0,
 			boolean: true,

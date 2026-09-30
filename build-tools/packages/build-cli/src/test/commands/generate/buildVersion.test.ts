@@ -158,6 +158,12 @@ describe("generate:buildVersion", () => {
 			},
 		);
 		stdoutLineEquals(stdout, 0, "version=0.4.12345");
+		stdoutLineEquals(stdout, 2, "isLatest=false");
+		stdoutLineEquals(
+			stdout,
+			3,
+			"##vso[task.setvariable variable=isLatest;isOutput=true]false",
+		);
 	});
 
 	it("outputs isLatest=true when release is release", async () => {
@@ -181,6 +187,7 @@ describe("generate:buildVersion", () => {
 		);
 		stdoutLineEquals(stdout, 0, "version=0.5.2002");
 		stdoutLineEquals(stdout, 2, "isLatest=true");
+		stdoutLineEquals(stdout, 3, "##vso[task.setvariable variable=isLatest;isOutput=true]true");
 	});
 
 	it("outputs isLatest=false when release is prerelease", async () => {
@@ -204,6 +211,11 @@ describe("generate:buildVersion", () => {
 		);
 		stdoutLineEquals(stdout, 0, "version=0.5.2002-12345");
 		stdoutLineEquals(stdout, 2, "isLatest=false");
+		stdoutLineEquals(
+			stdout,
+			3,
+			"##vso[task.setvariable variable=isLatest;isOutput=true]false",
+		);
 	});
 
 	it("reads release setting from env variable", async () => {
@@ -658,6 +670,11 @@ describe("generate:buildVersion", () => {
 		);
 		stdoutLineEquals(stdout, 0, "version=2.0.2");
 		stdoutLineEquals(stdout, 2, "isLatest=false");
+		stdoutLineEquals(
+			stdout,
+			3,
+			"##vso[task.setvariable variable=isLatest;isOutput=true]false",
+		);
 	});
 
 	it("next unpublished minor version (2.2.0) returns isLatest true", async () => {

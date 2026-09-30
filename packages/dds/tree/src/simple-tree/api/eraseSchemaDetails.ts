@@ -103,6 +103,21 @@ export function eraseSchemaDetails<TNode, ExtraSchemaProperties = unknown>(): <
  * const square = Square.create(10);
  * assert.equal(square.area, 100);
  * ```
+ * @remarks
+ * Care must be taken to avoid subclass members colliding with internal members of the schema.
+ * This is mainly a problem when using the output from {@link eraseSchemaDetailsSubclassable} to type a class returned to third party code which can subclass it.
+ * This pattern mainly occurs when writing generic schema factory functions which generate a schema from some parameters and return it to third party code which can subclass it.
+ *
+ * For example if the schema has a field or method named `size` (from a field, like in the `Square` example, or otherwise),
+ * then a subclass should not define a member named `size` as it will collide with the internal field.
+ *
+ * In practice, this risk can be mitigated by doing one of:
+ * 1. Using JavaScript private properties
+ * 2. Use non exported symbols for the properties
+ * 3. Use a naming convention for internal properties which you document the subclasses must not use.
+ * 4. Documenting the specific internal properties keys as not to be used by subclasses.
+ * 5. Subclass the returned class and declaring uninitialized readonly private properties to protect them (`private readonly size!: unknown;`).
+ * 6. Include the properties in `TNode` or `ExtraSchemaProperties`. This can use readonly erased types (like unknown) if desired.
  * @privateRemarks
  * See "example" test for an executable version of this example.
  * @alpha

@@ -53,7 +53,7 @@
 /experimental/dds/tree/src                     @microsoft/fluid-cr-tree
 
 # presence source
-/packages/framework/presence/src               @microsoft/fluid-cr-presence
+/packages/framework/presence*/src               @microsoft/fluid-cr-presence
 
 # Fluid Devtools source
 /packages/tools/devtools/**/src                @microsoft/fluid-cr-devtools

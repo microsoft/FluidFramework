@@ -4,7 +4,11 @@
  */
 
 import { take } from "@fluid-private/stochastic-test-utils";
-import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
+import {
+	benchmarkDuration,
+	benchmarkDurationBatchless,
+	benchmarkIt,
+} from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { IdCompressor } from "../idCompressor.js";
@@ -15,6 +19,7 @@ import type {
 	SessionId,
 	SessionSpaceCompressedId,
 } from "../index.js";
+import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
 import {
@@ -137,15 +142,13 @@ describe("IdCompressor Perf", () => {
 		const session2 = "f2ded886-92da-4248-967b-eb96ee04cf51" as SessionId;
 		benchmarkIt({
 			title: `finalize a range of IDs (cluster size = ${clusterSize})`,
-			...benchmarkDuration({
-				// Force batch size of 1
-				minBatchDurationSeconds: 0,
-				benchmarkFnCustom: async (state) => {
+			...benchmarkDurationBatchless({
+				benchmarkFn: (state) => {
 					const { perfCompressor } = setupCompressors(clusterSize, false, true);
 					let session: SessionId = session1;
 					let nextFirstFinalizedGenCount1 = 1;
 					let nextFirstFinalizedGenCount2 = 1;
-					let duration: number;
+					let running: boolean;
 					do {
 						// Create a range with as minimal overhead as possible
 						const isFirstClient = session === session1;
@@ -161,10 +164,9 @@ describe("IdCompressor Perf", () => {
 								localIdRanges: [], // no need to populate, as session is remote and compressor would ignore in production
 							},
 						};
-						const start = state.timer.now();
-						perfCompressor.finalizeCreationRange(range);
-						const end = state.timer.now();
-						duration = state.timer.toSeconds(start, end);
+						running = state.time(() => {
+							perfCompressor.finalizeCreationRange(range);
+						});
 
 						const lastGenCount = firstGenCount + numIds;
 						if (isFirstClient) {
@@ -174,7 +176,7 @@ describe("IdCompressor Perf", () => {
 						}
 						// Alternate clients to sidestep optimization that packs them all into last cluster
 						session = isFirstClient ? session1 : session2;
-					} while (state.recordBatch(duration));
+					} while (running);
 				},
 			}),
 		});
@@ -414,6 +416,7 @@ describe("IdCompressor Perf", () => {
 						IdCompressor.deserialize({
 							serialized,
 							newSessionId: overrideRemoteSessionId,
+							requestedWriteVersion: SerializationVersion.V3,
 						});
 					});
 				},

@@ -1,5 +1,41 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.24.0
+
+### Features
+
+#### `getLinkTargetForApiItem`
+
+Added `ApiItemUtilities.getLinkTargetForApiItem`, which returns the extensionless path of the document containing an API item and the item's heading ID when it is rendered as a section.
+
+The following example constructs a link from a target returned by the new utility:
+
+```typescript
+import {
+  type ApiItem,
+  ApiItemUtilities,
+  type ApiItemTransformationConfiguration,
+} from "@fluid-tools/api-markdown-documenter";
+
+function createDocumentationLink(
+  apiItem: ApiItem,
+  config: ApiItemTransformationConfiguration,
+  docsBase: string,
+): string {
+  const target = ApiItemUtilities.getLinkTargetForApiItem(apiItem, config);
+  const heading = target.headingId === undefined ? "" : `#${target.headingId}`;
+
+  // Omit "index" file name from path generated in links.
+  const documentPath =
+    target.documentPath === "index" || target.documentPath.endsWith("/index")
+      ? target.documentPath.slice(0, target.documentPath.length - "index".length)
+      : target.documentPath;
+
+  return `${docsBase}/${documentPath}${heading}`;
+}
+```
+
+
 ## 0.23.2
 
 ### 🐞 Bug Fixes

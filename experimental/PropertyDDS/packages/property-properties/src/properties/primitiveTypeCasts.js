@@ -6,10 +6,11 @@
 /**
  * @fileoverview Helper functions to cast a JavaScript type to a value that is compatible with a given primitive type
  */
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { Int64, Uint64 } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { constants, Int64, Uint64 } from "@fluid-experimental/property-common";
+// eslint-disable-next-line unused-imports/no-unused-imports -- preserving imports as-is during migration to module format
+import _ from "lodash";
 
+const { MSG } = constants;
 var castArrays = {
 	Uint32: new Uint32Array(1),
 	Uint16: new Uint16Array(1),

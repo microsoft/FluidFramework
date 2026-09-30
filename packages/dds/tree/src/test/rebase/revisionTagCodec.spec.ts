@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	createIdCompressor,
 	createSessionId,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 
@@ -17,13 +18,14 @@ import { testIdCompressor } from "../utils.js";
 describe("RevisionTagCodec", () => {
 	it("handles the root constant revision tag", () => {
 		const rootRevisionTag: RevisionTag = "root";
-		const localCompressor = createIdCompressor(createSessionId());
-		const remoteCompressor = createIdCompressor(createSessionId());
+		const localCompressor = createIdCompressor(SerializationVersion.V3);
+		const remoteCompressor = createIdCompressor(SerializationVersion.V3);
 		const codec = new RevisionTagCodec(localCompressor);
 		const encoded = codec.encode(rootRevisionTag);
 		assert.deepEqual(encoded, rootRevisionTag);
 		const decoded = codec.decode(encoded, {
 			originatorId: localCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -31,6 +33,7 @@ describe("RevisionTagCodec", () => {
 		const remoteEncoded = new RevisionTagCodec(remoteCompressor).encode(rootRevisionTag);
 		const decodedFromRemote = codec.decode(remoteEncoded, {
 			originatorId: remoteCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -40,8 +43,8 @@ describe("RevisionTagCodec", () => {
 	it("normalizes compressed IDs between op and session space", () => {
 		const localSession = createSessionId();
 		const remoteSession = createSessionId();
-		const localCompressor = createIdCompressor(localSession);
-		const remoteCompressor = createIdCompressor(remoteSession);
+		const localCompressor = createIdCompressor(localSession, SerializationVersion.V3);
+		const remoteCompressor = createIdCompressor(remoteSession, SerializationVersion.V3);
 		const localCodec = new RevisionTagCodec(localCompressor);
 		const remoteCodec = new RevisionTagCodec(remoteCompressor);
 		// Generate a compressed ID in the local space
@@ -55,6 +58,7 @@ describe("RevisionTagCodec", () => {
 			localId,
 			localCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -64,6 +68,7 @@ describe("RevisionTagCodec", () => {
 		assert.throws(() =>
 			remoteCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -77,6 +82,7 @@ describe("RevisionTagCodec", () => {
 		localEncoded = localCodec.encode(localId);
 		const remoteDecoded = remoteCodec.decode(localEncoded, {
 			originatorId: localSession,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		});
@@ -89,6 +95,7 @@ describe("RevisionTagCodec", () => {
 			localEncoded,
 			remoteCodec.decode(localEncoded, {
 				originatorId: localSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),
@@ -98,6 +105,7 @@ describe("RevisionTagCodec", () => {
 			localId,
 			localCodec.decode(remoteEncoded, {
 				originatorId: remoteSession,
+				isSummary: false,
 				revision: undefined,
 				idCompressor: testIdCompressor,
 			}),

@@ -35,6 +35,8 @@ stages:
     steps:
     - checkout: self
       path: $(FluidFrameworkDirectory)
+      fetchDepth: 1
+      fetchTags: false
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self

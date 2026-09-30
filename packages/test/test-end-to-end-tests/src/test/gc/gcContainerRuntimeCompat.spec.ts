@@ -25,6 +25,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	waitForContainerConnection,
@@ -63,9 +64,9 @@ describeCompat(
 		};
 
 		const version2Apis: LayerApis = {
-			containerRuntime: compatApis.containerRuntimeForLoading ?? compatApis.containerRuntime,
-			dataRuntime: compatApis.dataRuntimeForLoading ?? compatApis.dataRuntime,
-			loader: compatApis.loaderForLoading ?? compatApis.loader,
+			containerRuntime: compatApis.containerRuntimeForLoading,
+			dataRuntime: compatApis.dataRuntimeForLoading,
+			loader: compatApis.loaderForLoading,
 		};
 
 		let provider: ITestObjectProvider;
@@ -93,6 +94,7 @@ describeCompat(
 				apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: dataObjectFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 					runtimeOptions,
 				},
@@ -113,8 +115,8 @@ describeCompat(
 			// nacks them. So, skip the test for those combinations.
 			if (provider.driver.type === "odsp") {
 				const loaderVersion = compatApis.loader.version;
-				const loaderVersionForLoading = compatApis.loaderForLoading?.version;
-				if (loaderVersion.startsWith("1.") || loaderVersionForLoading?.startsWith("1.")) {
+				const loaderVersionForLoading = compatApis.loaderForLoading.version;
+				if (loaderVersion.startsWith("1.") || loaderVersionForLoading.startsWith("1.")) {
 					this.skip();
 				}
 			}

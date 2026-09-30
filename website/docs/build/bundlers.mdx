@@ -1,0 +1,97 @@
+---
+title: Fluid and Bundlers
+sidebar_position: 10
+---
+
+{/* prettier-ignore-start */}
+
+Fluid Framework 3.0 client packages use ECMAScript modules (ESM). Your bundler must support ESM package exports.
+
+Fluid Framework actively tests and supports webpack 5.
+Fluid Framework does not require a specific bundler.
+Other bundlers that support ESM can work, but Fluid Framework does not support them.
+
+## Configure module resolution
+
+If your project uses TypeScript, set `moduleResolution` to `Node20`, `NodeNext`, or `Bundler`.
+Do not use `Node10` module resolution.
+
+Set the TypeScript `lib` and `target` options to `ES2022` or later.
+
+## Resolve webpack 5 polyfill errors
+
+Webpack 5 does not automatically provide polyfills for Node.js modules or globals.
+A Fluid Framework dependency or another application dependency can cause webpack to report a missing Node.js module or global.
+
+Do not add all Node.js polyfills to your application.
+First, use the webpack error to identify the missing module or global.
+Then, add only the polyfill that your browser bundle requires.
+
+### Provide the `process` global
+
+Some Fluid Framework dependencies use the `util` package.
+This package can access `process.env`.
+If webpack reports that `process` is not defined, complete these steps:
+
+1. Install the `process` package as a development dependency:
+
+    ```bash
+    npm install --save-dev process
+    ```
+
+2. Add `ProvidePlugin` to your webpack configuration:
+
+    ```javascript
+    const webpack = require("webpack");
+
+    module.exports = {
+		plugins: [
+			new webpack.ProvidePlugin({
+				process: "process/browser.js",
+			}),
+		],
+    };
+    ```
+
+### Provide a Node.js module
+
+If webpack reports a missing Node.js module, install a browser-compatible implementation of that module.
+Then, map the module name to the implementation in `resolve.fallback`.
+
+For example, use this configuration only if your browser bundle requires the `assert` module:
+
+```bash
+npm install --save-dev assert
+```
+
+```javascript
+module.exports = {
+	resolve: {
+		fallback: {
+			assert: require.resolve("assert/"),
+		},
+	},
+};
+```
+
+You can set a fallback to `false` if the module is not used in the browser:
+
+```javascript
+module.exports = {
+	resolve: {
+		fallback: {
+			fs: false,
+		},
+	},
+};
+```
+
+Use `false` only when the browser does not run the code that imports the module.
+Otherwise, the bundle can fail at runtime.
+
+## Unsupported bundlers
+
+Other bundlers can require equivalent configuration for Node.js modules or globals.
+Fluid Framework does not test or support these configurations.
+
+{/* prettier-ignore-end */}

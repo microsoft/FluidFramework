@@ -15,7 +15,7 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -869,6 +869,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		ConsensusQueue,
 		SparseMatrix,
 	} = apis.dds;
+	const { Loader } = apis.loader;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],

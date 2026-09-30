@@ -4,7 +4,7 @@
  */
 
 import { Timer } from "@fluidframework/core-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	ISummaryConfigurationHeuristics,
@@ -108,7 +108,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly configuration: ISummaryConfigurationHeuristics,
 		trySummarize: (reason: SummarizeReason) => void,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),
 	) {
 		this.idleTimer = new Timer(this.idleTime, () => this.runSummarize("idle"));

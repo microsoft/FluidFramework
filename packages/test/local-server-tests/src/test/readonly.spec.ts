@@ -21,7 +21,9 @@ import { SharedMap, ISharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { createLoader } from "../utils.js";
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
+
+import { createLoader } from "./utils.js";
 
 const mapFactory = SharedMap.getFactory();
 const sharedObjectRegistry = new Map<string, IChannelFactory>([[mapFactory.type, mapFactory]]);
@@ -93,6 +95,7 @@ const runtimeFactory: IRuntimeFactory = {
 		return loadContainerRuntime({
 			context,
 			existing,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [
 				[
 					DefaultDataStoreFactory.instance.type,

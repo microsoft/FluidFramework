@@ -7,6 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	createIdCompressor,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -21,7 +22,6 @@ import type {
 // eslint-disable-next-line import-x/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
-	type FieldBatchEncodingContext,
 	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,
@@ -65,12 +65,12 @@ import {
 	incrementalSummaryHint,
 	numberSchema,
 	SchemaFactoryAlpha,
+	StagedSchemaUpgradePolicy,
 	stringSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../../simple-tree/index.js";
 import {
 	toStoredSchema,
-	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
@@ -84,7 +84,11 @@ import {
 	RecursiveType,
 	testTrees,
 } from "../../../testTrees.js";
-import { assertIsSessionId, testIdCompressor } from "../../../utils.js";
+import {
+	assertIsSessionId,
+	makeTestFieldBatchContexts,
+	testIdCompressor,
+} from "../../../utils.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
@@ -115,6 +119,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -146,6 +151,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -173,6 +179,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -214,12 +221,13 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: string[] = [];
 
 			const storedSchema = toStoredSchema(
 				SchemaFactoryAlpha.identifier(),
-				restrictiveStoredSchemaGenerationOptions,
+				StagedSchemaUpgradePolicy.restrictive,
 			);
 
 			const fieldEncoder = getFieldEncoder(
@@ -254,6 +262,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const nodeEncoder = getNodeEncoder(
 				{ fieldEncoderFromSchema: () => fail() },
@@ -274,6 +283,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -314,6 +324,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined /* incrementalEncoder */,
 				fieldBatchVersion,
+				false /* isSummary */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -385,6 +396,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				mockIncrementalEncoder,
 				brand(FieldBatchFormatVersion.v2), // Use v2 or higher for incremental encoding support
+				true /* isSummary */,
 			);
 
 			const log: TreeFieldStoredSchema[] = [];
@@ -432,6 +444,7 @@ describe("schemaBasedEncoding", () => {
 			testIdCompressor,
 			undefined /* incrementalEncoder */,
 			fieldBatchVersion,
+			false /* isSummary */,
 		);
 		const nodeEncoder = context.nodeEncoderFromSchema(brand(RecursiveType.identifier));
 		const bufferEmpty = checkNodeEncode(nodeEncoder, context, {
@@ -453,6 +466,7 @@ describe("schemaBasedEncoding", () => {
 				it(name, () => {
 					const idCompressor = createIdCompressor(
 						assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+						SerializationVersion.V3,
 					);
 					const storedSchema = schemaData;
 					const tree = treeFactory(idCompressor);
@@ -463,15 +477,16 @@ describe("schemaBasedEncoding", () => {
 						idCompressor,
 						undefined /* incrementalEncoder */,
 						brand(version),
+						false /* isSummary */,
 					);
 					checkFieldEncode(anyFieldEncoder, context, tree, idCompressor);
 
-					const fieldBatchContext: FieldBatchEncodingContext = {
-						encodeType: TreeCompressionStrategy.Compressed,
-						originatorId: testIdCompressor.localSessionId,
-						schema: { schema: storedSchema, policy: defaultSchemaPolicy },
-						idCompressor,
-					};
+					const { encode: fieldBatchEncodeContext, decode: fieldBatchDecodeContext } =
+						makeTestFieldBatchContexts({
+							encodeType: TreeCompressionStrategy.Compressed,
+							schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+							idCompressor,
+						});
 					const idCompressorCore = toIdCompressorWithCore(idCompressor);
 					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
 					const codec = fieldBatchCodecBuilder.build({
@@ -480,8 +495,11 @@ describe("schemaBasedEncoding", () => {
 					});
 					// End to end test
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
-					const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);
-					const result = codec.decode(encoded, fieldBatchContext);
+					const encoded = codec.encode(
+						[cursorForJsonableTreeField(tree)],
+						fieldBatchEncodeContext,
+					);
+					const result = codec.decode(encoded, fieldBatchDecodeContext);
 					const resultTree = result.map(jsonableTreeFromFieldCursor);
 					assert.deepEqual(resultTree, [tree]);
 

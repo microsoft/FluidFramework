@@ -43,6 +43,7 @@ flowchart
 
     %% Validation relationships
     Loader -.->|validates| Driver
+    Driver -.->|validates| Loader
     Loader -.->|validates| Runtime
     Runtime -.->|validates| Loader
     Runtime -.->|validates| DataStore
@@ -58,9 +59,14 @@ flowchart
 
 ### Loader ↔ Driver Boundary
 
-- **Validator:** Loader validates Driver
+- **Validator:** Both directions
+    - Loader validates Driver during container creation
+    - Driver validates Loader during container creation
 - **When:** During container creation (before connection established)
-> Note: Driver doesn't validate Loader because there are no interacts from Driver to Loader. So, there isn't a need to maintain compatibility in that direction.
+
+> Note: Unlike the other boundaries, both validations are performed by the Loader.
+> The Driver has no reference to the Loader, so it cannot run the validation itself.
+> Instead, the Driver publishes the requirements the Loader must meet (via `ILayerCompatSupportRequirements`, exposed on its `IDocumentServiceFactory`), and the Loader validates itself against them on the Driver's behalf.
 
 ### Loader ↔ Runtime Boundary
 
@@ -80,9 +86,23 @@ flowchart
 
 ### Error Handling
 
-When incompatibility is detected, an error of type `FluidErrorTypes.layerIncompatibilityError` which implements the `ILayerIncompatibilityError` interface is thrown.
-In all layer validations except at the Runtime ↔ DataStore boundary, the error causes the container to close. This prevents any potential data corruption that could occur from incompatible operations.
-In case of the Runtime ↔ DataStore boundary, the data store creation / load will fail to prevent corruption of the data store from incompatible operations. The container may also close, e.g. if the data store is created / loaded during container create / load.
+Layer incompatibility is detected when a layer interacts with another layer for the first time. When that happens, an error of type `FluidErrorTypes.layerIncompatibilityError` is thrown. The error implements the `ILayerIncompatibilityError` interface, whose properties provide detailed information about the incompatibility. Throwing this error prevents potentially incompatible operations that could lead to data corruption.
+
+The incompatibilities between the layers are detected as follows:
+
+- **Loader ↔ Driver** and **Loader ↔ Runtime**: Incompatibility is detected during container create / load. If incompatibility is detected, a `FluidErrorTypes.layerIncompatibilityError` error is thrown, failing the container creation / load.
+- **Runtime ↔ DataStore**: Incompatibility is detected during data store create / load. If incompatibility is detected, a `FluidErrorTypes.layerIncompatibilityError` error is thrown, failing the data store creation / load.
+  If the data store is being created / loaded during container create / load, that will also throw a `FluidErrorTypes.layerIncompatibilityError` error, failing the container creation / load.
+
+> Note: Even with these compatibility policies and windows in place, there may be clients running layers older than the versions in which compatibility validation was introduced.
+> Such a layer does not provide compatibility details, so validation treats it leniently and does not fail it on that basis, preserving backward compatibility.
+> If that old layer is paired with a newer layer in a combination that is in fact incompatible — for example, where a layer compat feature has since been enabled by default and the corresponding back-compat code removed — the interaction may still fail.
+> In that case it does not surface as a `FluidErrorTypes.layerIncompatibilityError`; instead it fails in that feature's own failure mode (whatever error the specific feature surfaces).
+
+#### Telemetry
+
+A telemetry event named `LayerIncompatibilityError` will be logged whenever a layer incompatibility is detected. The event will include key properties defined in the `ILayerIncompatibilityError` interface.
+
 
 ## Layer Compatibility Policy
 
@@ -130,6 +150,7 @@ These support windows are enforced through the compatibility validation system d
 - Stream ops from ordering service
 - Implement service-specific protocols
 
+**Validates:** Loader layer (performed by the Loader on the Driver's behalf)
 **Validated By:** Loader layer
 
 ### 2. Loader Layer
@@ -149,7 +170,7 @@ These support windows are enforced through the compatibility validation system d
 - Coordinate between Driver and Runtime layers
 
 **Validates:** Driver and Runtime layers
-**Validated By:** Runtime layer
+**Validated By:** Runtime and Driver layers
 
 ### 3. Runtime Layer
 

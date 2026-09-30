@@ -16,14 +16,23 @@ import type {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type { AllOrNone } from "@fluidframework/core-interfaces/internal";
+import { validateAllOrNone } from "@fluidframework/core-utils/internal";
+import type { IClient, IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
+	IResolvedUrl,
+	ISequencedDocumentMessage,
+	ISnapshot,
+	ISnapshotTree,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader, FetchSource } from "@fluidframework/driver-definitions/internal";
+import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
 	GenericError,
+	UsageError,
+	createChildLogger,
 	normalizeError,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
@@ -33,16 +42,35 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { DebugLogger } from "./debugLogger.js";
+import {
+	captureReferencedAttachmentBlobs,
+	extractBlobAttachReferences,
+	inlineAttachmentBlobsByReference,
+	parseGcSnapshotData,
+	readReferencedSnapshotBlobs,
+	snapshotHasLoadingGroups,
+	unreferencedAttachmentBlobLocalIds,
+	type IBlobAttachReference,
+	type IGcSnapshotData,
+} from "./captureReferencedContents.js";
+import { CatchUpMonitor } from "./catchUpMonitor.js";
+import { mixinDebugLogger } from "./debugLogger.js";
+import { createDeltaManager } from "./deltaManagerFactory.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 import { Loader } from "./loader.js";
 import { pkgVersion } from "./packageVersion.js";
 import type { ProtocolHandlerBuilder } from "./protocol.js";
+import type { IPendingContainerState } from "./serializedStateManager.js";
 import type {
 	LoadSummarizerSummaryResult,
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
 } from "./summarizerResultTypes.js";
+import {
+	getAttachedContainerStateFromSerializedContainer,
+	getDocumentAttributes,
+	tryParseCompatibleResolvedUrl,
+} from "./utils.js";
 
 interface OnDemandSummarizeResultsPromises {
 	readonly summarySubmitted: Promise<SummarizeOnDemandResults["summarySubmitted"]>;
@@ -61,22 +89,17 @@ interface SummarizerLike {
 }
 
 /**
- * Properties necessary for creating and loading a container.
+ * Host-level container loader properties — the code loader plus all the
+ * optional policy / observability fields that aren't tied to driver wiring.
+ *
+ * @remarks
+ * Extracted as a reusable building block so other props types (create,
+ * rehydrate, load, frozen-load) can compose it without duplicating the
+ * optional-fields surface.
+ *
  * @legacy @beta
  */
-export interface ICreateAndLoadContainerProps {
-	/**
-	 * The url resolver used by the loader for resolving external urls
-	 * into Fluid urls such that the container specified by the
-	 * external url can be loaded.
-	 */
-	readonly urlResolver: IUrlResolver;
-	/**
-	 * The document service factory take the Fluid url provided
-	 * by the resolved url and constructs all the necessary services
-	 * for communication with the container's server.
-	 */
-	readonly documentServiceFactory: IDocumentServiceFactory;
+export interface IContainerHostProps {
 	/**
 	 * The code loader handles loading the necessary code
 	 * for running a container once it is loaded.
@@ -123,10 +146,74 @@ export interface ICreateAndLoadContainerProps {
 }
 
 /**
+ * The driver-services pair — `urlResolver` plus `documentServiceFactory` —
+ * required to wire a container to a real driver at create or load time.
+ *
+ * @remarks
+ * Extracted as a reusable building block so the `request` field can be
+ * added on top for load-time props (see {@link IContainerLoadDriverProps})
+ * while create-time props that don't carry a request can compose just this
+ * pair.
+ *
+ * @legacy @beta
+ */
+export interface IContainerDriverServices {
+	/**
+	 * The url resolver used by the loader for resolving external urls
+	 * into Fluid urls such that the container specified by the
+	 * external url can be loaded.
+	 */
+	readonly urlResolver: IUrlResolver;
+	/**
+	 * The document service factory take the Fluid url provided
+	 * by the resolved url and constructs all the necessary services
+	 * for communication with the container's server.
+	 */
+	readonly documentServiceFactory: IDocumentServiceFactory;
+}
+
+/**
+ * The load-time driver wiring trio — `request`, `urlResolver`, and
+ * `documentServiceFactory` together.
+ *
+ * @remarks
+ * Reused as the all-or-nothing group for entry points (e.g. the frozen-load
+ * entry point) that accept either a full driver wiring (online form) or none
+ * of it (offline form). See `AllOrNone` in `@fluidframework/core-interfaces`.
+ *
+ * @legacy @beta
+ */
+export interface IContainerLoadDriverProps extends IContainerDriverServices {
+	/**
+	 * The request to resolve the container.
+	 */
+	readonly request: IRequest;
+}
+
+/**
+ * Properties necessary for creating and loading a container.
+ *
+ * @deprecated
+ * Use the composable building blocks instead: extend
+ * {@link IContainerHostProps} for the code-loader / policy / observability
+ * surface and {@link IContainerDriverServices} for the
+ * `urlResolver` / `documentServiceFactory` pair, or compose them inline as
+ * `IContainerHostProps & IContainerDriverServices`. This interface is kept
+ * as an alias for back-compat and will be removed in a future release.
+ *
+ * @legacy @beta
+ */
+export interface ICreateAndLoadContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {}
+
+/**
  * Props used to load a container.
  * @legacy @beta
  */
-export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+export interface ILoadExistingContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
 	/**
 	 * The request to resolve the container.
 	 */
@@ -151,7 +238,9 @@ export type ILoadSummarizerContainerProps = Omit<
  * Props used to create a detached container.
  * @legacy @beta
  */
-export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface ICreateDetachedContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
 	/**
 	 * The code details for the container to be created.
 	 */
@@ -162,7 +251,9 @@ export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerPr
  * Props used to rehydrate a detached container.
  * @legacy @beta
  */
-export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IRehydrateDetachedContainerProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
 	/**
 	 * The serialized state returned by calling serialize on another container
 	 */
@@ -221,15 +312,90 @@ export async function loadExistingContainer(
 
 /**
  * Properties required to load a frozen container from pending state.
+ *
+ * @remarks
+ * Two forms are supported and selected by the presence of the driver-wiring
+ * fields. **Online** form supplies `request`, `urlResolver`, and
+ * `documentServiceFactory`; the supplied factory is wrapped in a frozen
+ * factory and the resolver is used to re-resolve the request URL just as with
+ * {@link loadExistingContainer}. **Offline** form omits all three driver
+ * fields; the captured URL stored in `pendingLocalState` is used to
+ * synthesize a resolved URL, no real driver is contacted, and
+ * `IContainer.getAbsoluteUrl` throws on the returned container because the
+ * resolver's external URL format is unknown without a real `IUrlResolver`.
+ *
+ * **Offline form precondition.** With no driver wiring there is no live
+ * storage to read blobs from, so every structural and attachment blob the
+ * runtime dereferences during load must already be inlined into
+ * `pendingLocalState`. The pending state must therefore be produced by
+ * {@link captureFullContainerState} with its default `"inline"` blob capture
+ * mode rather than its `"reference"` mode or
+ * `IContainer.getPendingLocalState` / `getRequiredPendingLocalState`. Missing
+ * blob payloads fail the load with `UsageError`.
+ *
+ * **URL shape requirement.** In the offline form the captured
+ * `pendingLocalState.url` is the only URL available; it is parsed in place of
+ * a real `IUrlResolver.resolve()` call, so it must satisfy
+ * {@link tryParseCompatibleResolvedUrl}'s contract — a resolved URL of shape
+ * `protocol://{host}/.../..?{queryString}`. This is the format that
+ * Fluid-shipped drivers emit; drivers that emit a non-standard resolved-URL
+ * shape will surface as a `UsageError` at load time. The online form has no
+ * such constraint because the supplied resolver controls URL parsing.
+ *
+ * The offline form supports `readOnly: false` for the same capture-and-relay
+ * use case as the online form: local DDS submissions accrue in the runtime's
+ * pending-state manager and can be captured via `getPendingLocalState` for
+ * a later online replay. Nothing is published from an offline container.
+ *
+ * Mixing the two forms (some driver fields supplied, others omitted) is a
+ * compile-time error courtesy of the `AllOrNone` modifier from
+ * `@fluidframework/core-interfaces`.
  * @legacy @alpha
  */
-export interface ILoadFrozenContainerFromPendingStateProps
-	extends ILoadExistingContainerProps {
+export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
 	/**
 	 * Pending local state to be applied to the container.
 	 */
 	readonly pendingLocalState: string;
-}
+
+	/**
+	 * Controls whether the frozen container is surfaced as read-only.
+	 *
+	 * Defaults to `true`. When `true`, the container reports `readOnlyInfo.readonly === true`
+	 * with `storageOnly === true`, matching the historical behavior of frozen loads.
+	 *
+	 * When `false`, the container loads as writable so the runtime will accept DDS submissions.
+	 * The connection itself stays `Connected`: the connection manager recognizes the synthetic
+	 * frozen delta stream and drops outbound messages at the network layer, so no read→write
+	 * reconnect is attempted. Local DDS state continues to update via optimistic apply, and
+	 * submitted ops accumulate in the runtime's pending-state manager. Use this when callers
+	 * want to accrue and capture pending state without publishing it.
+	 *
+	 * @remarks
+	 * The flag uses negative polarity (`readOnly`) rather than a positive opt-in (`writable`)
+	 * to align with `IContainer.readOnlyInfo.readonly`, which is the established surface for
+	 * read/write state on a loaded container. A future positive-polarity option can layer on
+	 * top of this without breaking callers, but flipping the polarity now would split readers
+	 * between two conventions for the same concept.
+	 *
+	 * Subsystem behavior is unchanged from the read-only frozen path regardless of `readOnly`:
+	 * storage operations still throw (only `readBlob` is supported); summarizer / id-compressor
+	 * never fire because no acks arrive; the quorum is whatever was captured in pending state
+	 * and gains no members during the writable-frozen lifetime. The only behavioral delta is
+	 * that the runtime accepts DDS submissions and accumulates them in `pendingStateManager`.
+	 */
+	readonly readOnly?: boolean;
+} & AllOrNone<IContainerLoadDriverProps>;
+
+const driverPropKeys = ["request", "urlResolver", "documentServiceFactory"] as const;
+
+// Recognizable opaque placeholder used as `request.url` for the offline form of
+// `loadFrozenContainerFromPendingState`. The synthesized `IUrlResolver` ignores
+// its argument and returns a `IResolvedUrl` derived from `pendingLocalState.url`,
+// so this string is never interpreted as a real URL by any downstream stage; it
+// only needs to be a fixed sentinel that won't collide with real request URLs.
+const offlineFrozenRequestPlaceholderUrl =
+	"frozen-load-from-pending-state://offline-placeholder";
 
 /**
  * Loads a frozen container from pending local state.
@@ -239,9 +405,358 @@ export interface ILoadFrozenContainerFromPendingStateProps
 export async function loadFrozenContainerFromPendingState(
 	props: ILoadFrozenContainerFromPendingStateProps,
 ): Promise<IContainer> {
+	const fnName = loadFrozenContainerFromPendingState.name;
+	const { readOnly, pendingLocalState } = props;
+
+	const driverWiring = validateAllOrNone<IContainerLoadDriverProps>(props, driverPropKeys);
+
+	if (driverWiring === "mixed") {
+		throw new UsageError(
+			`${fnName}: ${driverPropKeys.join(", ")} must all be provided or all omitted`,
+		);
+	}
+
+	if (driverWiring === "none") {
+		// Offline: synthesize the driver wiring from the URL captured in pending state.
+		// The container's load pipeline is reused unchanged — the synthesized resolver
+		// returns a resolved URL whose `url` equals `pendingLocalState.url`, so the
+		// identity guard in `Loader.resolveCore` is trivially satisfied.
+		const pending = getAttachedContainerStateFromSerializedContainer(pendingLocalState);
+		if (pending.blobContentsMode === "reference") {
+			throw new UsageError(
+				`${fnName}: pending state does not contain inlined snapshot blob contents. Reference-only state captured by ${captureFullContainerState.name} requires online driver wiring.`,
+			);
+		}
+		const parsed = tryParseCompatibleResolvedUrl(pending.url);
+		if (parsed === undefined) {
+			throw new UsageError(
+				`${fnName}: pending state URL is not in a parseable form (${pending.url})`,
+			);
+		}
+		// `tryParseCompatibleResolvedUrl` returns `parsed.id` as the first two
+		// path segments joined by `/` (i.e. `tenantId/docId`). Production
+		// resolvers populate `IResolvedUrl.id` with the single doc-id segment
+		// (see `localResolver.ts`, `insecureUrlResolver.ts`,
+		// `routerlicious-urlResolver/urlResolver.ts`, `odspDriverUrlResolver.ts`),
+		// so downstream consumers reading `IContainer.resolvedUrl.id` for
+		// telemetry / cache keys expect the single-segment shape. Take the
+		// trailing segment so offline-loaded containers match that contract.
+		const parsedIdSegments = parsed.id.split("/");
+		const synthesizedId = parsedIdSegments[parsedIdSegments.length - 1] ?? parsed.id;
+		const synthesizedResolvedUrl: IResolvedUrl = {
+			type: "fluid",
+			id: synthesizedId,
+			url: pending.url,
+			// `tokens` and `endpoints` are empty because no real driver is contacted; the
+			// frozen factory never reads them. A future offline mode that needs them would
+			// require carrying them in the pending-state format.
+			tokens: {},
+			endpoints: {},
+		};
+		const synthesizedUrlResolver: IUrlResolver = {
+			// The argument is ignored: in offline mode the only URL in the system is the
+			// one captured in pending state. Any request is mapped to the same resolved URL.
+			resolve: async () => synthesizedResolvedUrl,
+			// External (request-form) URLs cannot be reconstructed from the captured
+			// resolved URL alone, so we cannot honor `getAbsoluteUrl`. Surface the misuse
+			// loudly rather than fabricate a string in the wrong format.
+			getAbsoluteUrl: async () => {
+				throw new UsageError(`${fnName}: getAbsoluteUrl requires ${driverPropKeys.join("/")}`);
+			},
+		};
+		return loadExistingContainer({
+			...props,
+			// `request.url` is unused: `synthesizedUrlResolver.resolve()` returns
+			// `synthesizedResolvedUrl` regardless of input, and the identity
+			// guard in `Loader.resolveCore` compares the resolver's output URL
+			// against `pendingLocalState.url` — both equal `pending.url` here.
+			// Using a recognizable opaque placeholder instead of the resolved-form
+			// URL avoids implying that any downstream stage interprets it as a
+			// request-form URL.
+			request: { url: offlineFrozenRequestPlaceholderUrl, headers: {} },
+			urlResolver: synthesizedUrlResolver,
+			documentServiceFactory: createFrozenDocumentServiceFactory(undefined, readOnly),
+		});
+	}
+
+	// Online: wrap the caller-supplied factory so the live driver only serves blob reads.
+	// `driverWiring === "all"` narrows `props` to the form that carries the driver fields.
+	const onlineProps = props as ILoadFrozenContainerFromPendingStateProps &
+		IContainerLoadDriverProps;
 	return loadExistingContainer({
-		...props,
-		documentServiceFactory: createFrozenDocumentServiceFactory(props.documentServiceFactory),
+		...onlineProps,
+		documentServiceFactory: createFrozenDocumentServiceFactory(
+			onlineProps.documentServiceFactory,
+			readOnly,
+		),
+	});
+}
+
+/**
+ * Properties for {@link captureFullContainerState}.
+ * @legacy @alpha
+ */
+export interface ICaptureFullContainerStateProps {
+	/**
+	 * The url resolver used to resolve the request into a Fluid resolved url.
+	 */
+	readonly urlResolver: IUrlResolver;
+	/**
+	 * The document service factory used to construct the driver services
+	 * against which the state is captured.
+	 */
+	readonly documentServiceFactory: IDocumentServiceFactory;
+	/**
+	 * The request identifying the container whose state is to be captured.
+	 */
+	readonly request: IRequest;
+	/**
+	 * Optional logger for driver-side telemetry.
+	 */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+	/**
+	 * Controls whether blob payloads are included in the captured state.
+	 *
+	 * `"inline"` (the default) includes blob contents, producing self-contained
+	 * state that supports fully offline loading with {@link loadFrozenContainerFromPendingState}.
+	 *
+	 * `"reference"` preserves blob IDs in the snapshot tree but omits their
+	 * payloads. This reduces the captured state size, but loading requires live
+	 * storage through {@link loadExistingContainer} or the online form of
+	 * {@link loadFrozenContainerFromPendingState}.
+	 */
+	readonly blobCaptureMode?: "inline" | "reference" | undefined;
+}
+
+/**
+ * Captures the current state of an attached container using only driver-level
+ * services, without instantiating a runtime or loading a full container. The
+ * returned string is a serialized pending container state in the same wire
+ * format produced by a live container's pending-state serialization, and can
+ * be handed to {@link loadExistingContainer} as `pendingLocalState`.
+ *
+ * By default, the output is a self-contained view of the container's referenced
+ * graph: the latest snapshot, inlined contents of every blob reachable through
+ * referenced subtrees, inlined contents of every referenced attachment blob
+ * keyed by storage id, and all ops with sequence numbers after the base
+ * snapshot's sequence number through the point observed when the delta stream
+ * connects. The same DeltaManager catch-up path used by container loading
+ * combines delta-storage and delta-stream ops, so recently sequenced ops do
+ * not need to have reached durable delta storage before capture.
+ *
+ * When `blobCaptureMode` is `"reference"`, the snapshot tree retains the blob
+ * IDs needed to load the container, but structural and attachment payloads are
+ * omitted. Reference-only state requires live storage during load and cannot be
+ * used with the fully offline form of {@link loadFrozenContainerFromPendingState}.
+ *
+ * Reachability respects GC. Snapshot subtrees flagged `unreferenced: true`
+ * are skipped (their contents are not inlined). Attachment blobs that GC has
+ * marked unreferenced, tombstoned, or deleted are skipped. When the snapshot
+ * has no GC tree (GC disabled or pre-GC document), no filtering is applied.
+ *
+ * Blob reads on load hit the `ContainerStorageAdapter` cache populated from
+ * the captured `snapshotBlobs` map, so a frozen loader can serve the full
+ * referenced graph without a live storage service.
+ *
+ * `pendingRuntimeState` is `undefined` — no runtime is instantiated — so the
+ * output cannot carry DDS-level in-flight changes. It is intended for state
+ * relay, inspection, and durable-state snapshot use cases.
+ *
+ * Containers that declare loading groups are not yet supported: the function
+ * throws `UsageError` if any referenced subtree carries a `groupId`. Group
+ * snapshots would need a separate prefetch + serialization path; until there
+ * is a known consumer and end-to-end coverage, the capture refuses rather
+ * than silently producing pending state that omits group data.
+ *
+ * @privateRemarks
+ * Note: if a new snapshot lands between the snapshot fetch and delta catch-up,
+ * the returned state may not reflect the very latest snapshot, but remains
+ * internally consistent: ops are anchored to the snapshot that was captured.
+ *
+ * No `mixinMonitoringContext` / `configProvider` is wired here, deliberately
+ * diverging from the sibling entry points in this file. The function reads
+ * no feature flags and instantiates no runtime, so there is nothing for a
+ * monitoring context to gate or attribute. If a future change introduces
+ * config-gated behavior or runtime-attributed telemetry, add the wiring
+ * back together with that change.
+ * @legacy @alpha
+ */
+export async function captureFullContainerState({
+	urlResolver,
+	documentServiceFactory,
+	request,
+	logger,
+	blobCaptureMode = "inline",
+}: ICaptureFullContainerStateProps): Promise<string> {
+	const resolvedUrl = await urlResolver.resolve(request);
+	if (resolvedUrl === undefined) {
+		throw new UsageError("Failed to resolve request to a Fluid URL");
+	}
+
+	// Inline state supports the offline form of `loadFrozenContainerFromPendingState`,
+	// which requires `tryParseCompatibleResolvedUrl` to succeed on `pendingLocalState.url`.
+	// Reference-only state always uses the caller's live resolver, so it has no such constraint.
+	if (
+		blobCaptureMode === "inline" &&
+		tryParseCompatibleResolvedUrl(resolvedUrl.url) === undefined
+	) {
+		throw new UsageError(
+			`${captureFullContainerState.name}: resolved URL is not in the shape required by tryParseCompatibleResolvedUrl (protocol://<string>/<tenantId>/<docId>?<querystring>); captured state would not rehydrate offline (${resolvedUrl.url})`,
+		);
+	}
+
+	const documentService = await documentServiceFactory.createDocumentService(
+		resolvedUrl,
+		logger,
+	);
+	const captureLogger = createChildLogger({ logger, namespace: "captureFullContainerState" });
+	const client: IClient = {
+		details: { capabilities: { interactive: true } },
+		mode: "read",
+		permission: [],
+		scopes: [],
+		user: { id: "" },
+	};
+	const deltaManager = createDeltaManager({
+		serviceProvider: () => documentService,
+		logger: captureLogger,
+		active: () => false,
+		containerDirty: () => false,
+		client,
+		reconnectAllowed: true,
+	});
+	const connectedP = new Promise<void>((resolve) => {
+		deltaManager.once("connect", () => resolve());
+	});
+	const closedP = new Promise<never>((_resolve, reject) => {
+		deltaManager.once("closed", (error) => {
+			reject(
+				error === undefined
+					? new GenericError("DeltaManager closed while capturing container state")
+					: normalizeError(error),
+			);
+		});
+	});
+	deltaManager.connect({
+		reason: { text: "captureFullContainerState" },
+		mode: "read",
+		// Ops will be fetched from storage using the later "attachOpHandler" call. Attempting to fetch here is a no-op anyway as
+		// no op handler is yet attached.
+		// Fetching the snapshot first such that an op handler could be attached using its sequence number information may simplify
+		// the code, but doing it this way allows parallelization of snapshot fetch and establishing a connection.
+		fetchOpsFromStorage: false,
+	});
+	try {
+		const storage = await documentService.connectToStorage();
+
+		const versions = await storage.getVersions(
+			// `null` signals "latest"
+			// eslint-disable-next-line unicorn/no-null
+			null,
+			1,
+			"captureFullContainerState",
+			FetchSource.noCache,
+		);
+		const version = versions[0];
+		const snapshot: ISnapshot | ISnapshotTree | undefined =
+			storage.getSnapshot === undefined
+				? ((await storage.getSnapshotTree(version, "captureFullContainerState")) ?? undefined)
+				: await storage.getSnapshot({
+						cacheSnapshot: false,
+						versionId: version?.id,
+						scenarioName: "captureFullContainerState",
+					});
+		if (snapshot === undefined) {
+			throw new GenericError("Failed to fetch snapshot for captureFullContainerState");
+		}
+
+		const baseSnapshot = getSnapshotTree(snapshot);
+		if (snapshotHasLoadingGroups(baseSnapshot)) {
+			throw new UsageError(
+				"captureFullContainerState does not yet support containers with loading groups",
+			);
+		}
+		const attributes = await getDocumentAttributes(storage, baseSnapshot);
+		let gcData: IGcSnapshotData | undefined;
+		let snapshotBlobs = {};
+		let attachmentBlobContents = {};
+		// Structural snapshot blobs (JSON/text the runtime authored) are
+		// UTF-8-encoded; attachment blobs may carry arbitrary binary bytes
+		// and are base64-encoded. Keep them on separate fields of the
+		// pending state so the load side can apply the matching decoder
+		// without ambiguity. See IPendingContainerState.attachmentBlobContents.
+		if (blobCaptureMode === "inline") {
+			gcData = await parseGcSnapshotData(baseSnapshot, storage);
+			[snapshotBlobs, attachmentBlobContents] = await Promise.all([
+				readReferencedSnapshotBlobs(snapshot, storage), // utf8 encoded
+				captureReferencedAttachmentBlobs(baseSnapshot, storage, gcData), // base64 encoded
+			]);
+		}
+
+		const savedOps: ISequencedDocumentMessage[] = [];
+		const attachP = deltaManager.attachOpHandler(
+			attributes.minimumSequenceNumber,
+			attributes.sequenceNumber,
+			{
+				process: (message) => savedOps.push(message),
+				processSignal: () => {},
+			},
+			"all",
+		);
+		await Promise.race([Promise.all([connectedP, attachP]), closedP]);
+		await Promise.race([waitForCatchUp(deltaManager), closedP]);
+		deltaManager.dispose();
+
+		const postSnapshotBlobReferences: IBlobAttachReference[] = [];
+		if (blobCaptureMode === "inline") {
+			for (const op of savedOps) {
+				// Blobs uploaded after the base snapshot are not in its
+				// `.blobs` redirect table, so `captureReferencedAttachmentBlobs`
+				// did not see them. The wire-format BlobAttach op carries
+				// `(localId, storageId)` in its metadata; collect those here so
+				// we can backfill the bytes before sealing the artifact.
+				postSnapshotBlobReferences.push(...extractBlobAttachReferences(op));
+			}
+		}
+
+		if (postSnapshotBlobReferences.length > 0) {
+			const added = await inlineAttachmentBlobsByReference(
+				postSnapshotBlobReferences,
+				storage,
+				unreferencedAttachmentBlobLocalIds(gcData),
+				attachmentBlobContents,
+			);
+			Object.assign(attachmentBlobContents, added);
+		}
+
+		const pendingState: IPendingContainerState = {
+			attached: true,
+			baseSnapshot,
+			snapshotBlobs,
+			blobContentsMode: blobCaptureMode === "reference" ? "reference" : undefined,
+			attachmentBlobContents:
+				Object.keys(attachmentBlobContents).length === 0 ? undefined : attachmentBlobContents,
+			loadedGroupIdSnapshots: undefined,
+			pendingRuntimeState: undefined,
+			savedOps,
+			url: resolvedUrl.url,
+		};
+		return JSON.stringify(pendingState);
+	} finally {
+		deltaManager.dispose();
+		documentService.dispose();
+	}
+}
+
+async function waitForCatchUp(
+	deltaManager: ReturnType<typeof createDeltaManager>,
+): Promise<void> {
+	await new Promise<void>((resolve) => {
+		const monitor = new CatchUpMonitor(deltaManager, () => {
+			monitor.dispose();
+			resolve();
+		});
+		monitor.start();
 	});
 }
 
@@ -278,7 +793,7 @@ async function loadSummarizerContainerAndMakeSummaryInternal(
 	};
 
 	const subMc = mixinMonitoringContext(
-		DebugLogger.mixinDebugLogger("fluid:telemetry", logger, {
+		mixinDebugLogger("fluid:telemetry", logger, {
 			all: telemetryProps,
 		}),
 		sessionStorageConfigProvider.value,

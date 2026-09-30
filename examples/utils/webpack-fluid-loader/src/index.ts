@@ -3,4 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { devServerConfig } from "./routes.js";
+export {
+	createBaseDevServerConfig,
+	createBaseExampleConfig,
+	type BaseExampleConfigOptions,
+	type ExampleWebpackEnvironment,
+} from "./baseConfig.js";
+export { exampleAppConfig } from "./appConfig.js";
+export { commonExampleConfig, devServerConfig } from "./routes.js";

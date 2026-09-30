@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
+	type ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -26,6 +26,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -105,6 +106,7 @@ describeCompat(
 			apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 				runtimeOptions,
 			},

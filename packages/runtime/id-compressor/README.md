@@ -2,22 +2,21 @@
 
 A library which generates small number representations of arbitrary non-colliding Version 4 UUIDs ("stable IDs") across multiple sessions in a network. This scheme enables a distributed application to utilize the global uniqueness guarantees of UUIDs while maintaining the performance advantages of small integers.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
-
+<!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Using Fluid Framework libraries
 
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
+For a dependency on a Fluid Framework library's public APIs, we recommend a `^` (caret) version range.
+For example, use `^1.3.4`.
 
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+For a dependency on an unstable API, such as a `beta` API, we recommend a more restrictive version range.
+For example, use a `~` version range.
 
 ## Installation
 
-To get started, install the package by running the following command:
+Run this command to install the package:
 
 ```bash
 npm i @fluidframework/id-compressor
@@ -25,20 +24,19 @@ npm i @fluidframework/id-compressor
 
 ## Importing from this package
 
-This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
-For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
+For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
-To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/id-compressor` like normal.
+Import the `public` APIs from `@fluidframework/id-compressor`.
 
-To access the `legacy` APIs, import via `@fluidframework/id-compressor/legacy`.
+Import the `legacy` APIs from `@fluidframework/id-compressor/legacy`.
 
 ## API Documentation
 
-API documentation for **@fluidframework/id-compressor** is available at <https://fluidframework.com/docs/apis/id-compressor>.
+Read the **@fluidframework/id-compressor** API documentation at <https://fluidframework.com/docs/apis/id-compressor>.
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
 ## Introduction
 

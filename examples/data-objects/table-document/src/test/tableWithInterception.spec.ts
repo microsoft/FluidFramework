@@ -5,19 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/legacy";
 import { PropertySet } from "@fluidframework/sequence/legacy";
-import {
-	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
-} from "@fluidframework/test-utils/internal";
 
 import { TableDocument } from "../document.js";
 import { createTableWithInterception } from "../interception/index.js";
 import { ITable } from "../table.js";
+import { createLocalTableDocument } from "./localServerTestUtils.js";
 
-describeCompat("Table Document with Interception", "LoaderCompat", (getTestObjectProvider) => {
+describe("Table Document with Interception", () => {
 	describe("Simple User Attribution", () => {
 		const userAttributes = { userId: "Fake User" };
 		let tableDocument: TableDocument;
@@ -63,17 +59,16 @@ describeCompat("Table Document with Interception", "LoaderCompat", (getTestObjec
 			}
 		}
 
-		let provider: ITestObjectProvider;
+		let disposeContainerAndLocalService: () => Promise<void>;
 		beforeEach(async () => {
-			provider = getTestObjectProvider();
-			const container = await provider.createContainer(TableDocument.getFactory());
-			tableDocument = await getContainerEntryPointBackCompat<TableDocument>(container);
+			({ tableDocument, disposeContainerAndLocalService } = await createLocalTableDocument());
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			componentContext = {
 				containerRuntime: { orderSequentially },
 			} as IFluidDataStoreContext;
 		});
+		afterEach(async () => disposeContainerAndLocalService());
 
 		it("should be able to intercept TableDocument methods by the interception", async () => {
 			const tableDocumentWithInterception = createTableWithInterception(

@@ -32,7 +32,7 @@ const config: Linter.Config[] = [
 		languageOptions: {
 			parserOptions: {
 				projectService: false,
-				project: ["./src/tsconfig.json"],
+				project: ["./src/test/tsconfig.json"],
 			},
 		},
 	},

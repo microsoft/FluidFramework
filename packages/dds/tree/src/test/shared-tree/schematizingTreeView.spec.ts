@@ -5,10 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { TransactionLabels } from "../../core/index.js";
+import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -30,8 +30,8 @@ import {
 	type InsertableField,
 	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
-	type TransactionResult,
-	type TransactionResultExt,
+	type TransactionVoidResult,
+	type TransactionValueResult,
 	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
@@ -236,7 +236,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 
 		// Put into broken state by trying incompatible upgrade
-		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
 
 		assert.throws(
 			() => view.initialize(5),
@@ -405,6 +405,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		assert.equal(Object.keys(viewSpecific.root).length, 2);
@@ -423,6 +424,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 		assert.equal(Object.keys(viewGeneralized.root).length, 3);
 		assert.equal(Object.entries(viewGeneralized.root).length, 3);
@@ -469,6 +471,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: false,
 			isEquivalent: false,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		viewSpecific.root.moveRangeToEnd(0, 1);
@@ -490,6 +493,7 @@ describe("SchematizingSimpleTreeView", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 			canInitialize: false,
+			discrepancies: undefined,
 		});
 
 		// ...however, despite that client making an edit to Alice, the field is preserved via the move APIs.
@@ -554,12 +558,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			// Case which doesn't update due to root being required
 			assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
-
-			const reference = checkoutWithContent({
-				schema: emptySchema,
-				initialTree: fieldJsonCursor([]),
-			});
-			validateViewConsistency(reference, view.checkout);
+			assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 		});
 
 		it("update non-empty", () => {
@@ -598,9 +597,35 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: ["com.fluidframework.leaf.string"],
+				stored: [],
+			},
+		]);
 		assert.throws(
 			() => view.root,
-			(e) => e instanceof UsageError,
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.equal(
+					error.message,
+					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The stored schema can be upgraded; call TreeView.upgradeSchema() before reading or writing TreeView.root.",
+				);
+				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify([
+						{
+							mismatch: "allowedTypes",
+							location: "root",
+							view: ["com.fluidframework.leaf.string"],
+							stored: [],
+						},
+					]),
+				});
+				return true;
+			},
 		);
 
 		view.upgradeSchema();
@@ -608,6 +633,7 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 5]]);
 
 		assert.equal(view.compatibility.isEquivalent, true);
+		assert.equal(view.compatibility.discrepancies, undefined);
 		assert.equal(view.root, 5);
 	});
 
@@ -622,9 +648,35 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
+		assert.deepEqual(view.compatibility.discrepancies, [
+			{
+				mismatch: "allowedTypes",
+				location: "root",
+				view: [],
+				stored: ["com.fluidframework.leaf.string"],
+			},
+		]);
 		assert.throws(
 			() => view.root,
-			(e) => e instanceof UsageError,
+			(error) => {
+				assert(error instanceof UsageError);
+				assert.equal(
+					error.message,
+					"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
+				);
+				assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+					tag: TelemetryDataTag.SchemaArtifact,
+					value: JSON.stringify([
+						{
+							mismatch: "allowedTypes",
+							location: "root",
+							view: [],
+							stored: ["com.fluidframework.leaf.string"],
+						},
+					]),
+				});
+				return true;
+			},
 		);
 
 		assert.throws(
@@ -644,10 +696,29 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(view.compatibility.canView, false);
 		assert.equal(view.compatibility.canUpgrade, false);
 		assert.equal(view.compatibility.isEquivalent, false);
-		assert.throws(
-			() => view.root,
-			(e) => e instanceof UsageError,
-		);
+		const validateIncompatibleSchemaError = (error: unknown): boolean => {
+			assert(error instanceof UsageError);
+			assert.equal(
+				error.message,
+				"TreeView.root is unavailable because the view schema is incompatible with the stored schema. The schemas cannot be upgraded automatically. Use a compatible view schema or explicitly migrate the document schema and data.",
+			);
+			assert.deepEqual(error.getTelemetryProperties().schemaIncompatibilityDetails, {
+				tag: TelemetryDataTag.SchemaArtifact,
+				value: JSON.stringify([
+					{
+						mismatch: "allowedTypes",
+						location: "root",
+						view: ["com.fluidframework.leaf.boolean"],
+						stored: ["com.fluidframework.leaf.string"],
+					},
+				]),
+			});
+			return true;
+		};
+		assert.throws(() => view.root, validateIncompatibleSchemaError);
+		assert.throws(() => {
+			view.root = 7;
+		}, validateIncompatibleSchemaError);
 
 		assert.throws(
 			() => view.upgradeSchema(),
@@ -783,7 +854,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -798,7 +869,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: false };
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -813,7 +884,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResult = { success: false };
+				const expectedResult: TransactionVoidResult = { success: false };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -828,7 +899,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { value: view.root.content };
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResultExt<number, undefined> = {
+				const expectedResult: TransactionValueResult<number, undefined> = {
 					success: true,
 					value: 43,
 				};
@@ -847,7 +918,7 @@ describe("SchematizingSimpleTreeView", () => {
 				});
 				// The transaction is rolled back. So, the content is reverted to the original value.
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResultExt<undefined, number> = {
+				const expectedResult: TransactionValueResult<undefined, number> = {
 					success: false,
 					// Note that this is the value that was returned before the transaction was rolled back.
 					value: 43,
@@ -868,7 +939,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: true,
 				};
 				assert.deepStrictEqual(
@@ -888,7 +959,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: false,
 				};
 				assert.deepStrictEqual(
@@ -906,7 +977,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43);
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -921,7 +992,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42);
-				const expectedResult: TransactionResult = { success: false };
+				const expectedResult: TransactionVoidResult = { success: false };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -953,7 +1024,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 					view.root.content = 44;
 				});
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -1023,7 +1094,7 @@ describe("SchematizingSimpleTreeView", () => {
 						preconditions: [{ type: "nodeInDocument", node: childB }],
 					},
 				);
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -1094,7 +1165,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 43, "The transaction did not succeed");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: true,
 				};
 				assert.deepStrictEqual(
@@ -1341,6 +1412,21 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
 		});
 
+		it("direct (non-transaction) edit from a changed listener throws", () => {
+			// Exercises the internal `changed` event. The equivalent guarantee through the public
+			// `nodeChanged`/`treeChanged` API is covered in the treeNodeApi tests.
+			const view = getTestObjectView();
+
+			view.checkout.events.on("changed", () => {
+				view.root.content = view.root.content + 1;
+			});
+
+			assert.throws(
+				() => (view.root.content = 1),
+				validateUsageError("Editing the tree is forbidden during a change event callback"),
+			);
+		});
+
 		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
 			const view = getTestObjectView();
 
@@ -1452,6 +1538,211 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
 			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
 			assert.equal(receivedLabels.tree.sublabels[1]?.label, "after");
+		});
+
+		it("revert commit inherits the original commit's label", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			const testLabel = "testLabel";
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			assert.equal(events[1]?.label, testLabel);
+			assert.deepEqual(events[1]?.labels.tree, { label: testLabel, sublabels: [] });
+		});
+
+		it("revert of revert reuses the original label tree", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; labels: TransactionLabels }[] = [];
+			const revertibles: RevertibleAlpha[] = [];
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, labels: meta.labels });
+					const r = getRevertible?.();
+					if (r !== undefined) {
+						revertibles.push(r);
+					}
+				}
+			});
+
+			const testLabel = "testLabel";
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			revertibles[0]?.revert(); // undo
+			revertibles[1]?.revert(); // redo
+
+			assert.deepEqual(
+				events.map((e) => e.kind),
+				[CommitKind.Default, CommitKind.Undo, CommitKind.Redo],
+			);
+
+			// All three commits share the same label tree — revert-of-revert does not introduce new nesting.
+			const expectedTree = { label: testLabel, sublabels: [] };
+			assert.deepEqual(events[0]?.labels.tree, expectedTree);
+			assert.deepEqual(events[1]?.labels.tree, expectedTree);
+			assert.deepEqual(events[2]?.labels.tree, expectedTree);
+		});
+
+		it("revert of an unlabeled edit produces empty labels", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			assert.equal(events[1]?.label, undefined);
+			assert.equal(events[1]?.labels.size, 0);
+		});
+
+		it("labelTreeNode is restored if revert apply throws", () => {
+			// Verify the finally in `revertRevertible` runs even when `apply` throws.
+			// If `labelTreeNode` weren't restored, the next labeled transaction would
+			// nest under the leftover state.
+			const view = getTestObjectView();
+
+			let revertible: RevertibleAlpha | undefined;
+			let lastLabel: unknown;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (!meta.isLocal) return;
+				if (meta.kind === CommitKind.Default) {
+					revertible ??= getRevertible?.();
+					lastLabel = meta.label;
+				}
+				if (meta.kind === CommitKind.Undo) {
+					throw new Error("simulated revert failure");
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: "first" },
+			);
+			assert(revertible !== undefined);
+			assert.throws(() => revertible?.revert());
+
+			view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: "second" },
+			);
+			assert.equal(lastLabel, "second");
+		});
+
+		it("cloned revertible inherits the original commit's labels", () => {
+			const sourceView = getTestObjectView();
+
+			let sourceRevertible: RevertibleAlpha | undefined;
+			sourceView.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal && meta.kind === CommitKind.Default) {
+					sourceRevertible = getRevertible?.();
+				}
+			});
+
+			const testLabel = "testLabel";
+			sourceView.runTransaction(
+				() => {
+					sourceView.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			// Fork after the labeled commit so the cloned revertible's source commit is reachable on the target.
+			const targetView = sourceView.fork();
+			let undoLabels: TransactionLabels | undefined;
+			targetView.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal && meta.kind === CommitKind.Undo) {
+					undoLabels = meta.labels;
+				}
+			});
+
+			assert(sourceRevertible !== undefined);
+			sourceRevertible.clone(targetView).revert();
+
+			assert.deepEqual(undoLabels?.tree, { label: testLabel, sublabels: [] });
+		});
+
+		it("revert of a nested transaction preserves the nested label structure", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.root.content = 1;
+						},
+						{ label: "inner" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			// metadata.label is the outermost label; labels.tree captures the full nesting.
+			assert.equal(events[1]?.label, "outer");
+			assert.deepEqual(events[1]?.labels.tree, {
+				label: "outer",
+				sublabels: [{ label: "inner", sublabels: [] }],
+			});
 		});
 
 		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {

@@ -46,7 +46,6 @@ export function testSnapshots(): void {
 						const encoded = codec.encode(change, {
 							baseContext,
 							encodeNode: (nodeId) => TestNodeId.encode(nodeId, baseContext),
-							decodeNode: (nodeId) => TestNodeId.decode(nodeId, baseContext),
 						});
 						takeJsonSnapshot(encoded);
 					});
@@ -58,6 +57,7 @@ export function testSnapshots(): void {
 
 const baseContext = {
 	originatorId: snapshotSessionId,
+	isSummary: false,
 	revision: undefined,
 	idCompressor: testIdCompressor,
 };

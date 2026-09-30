@@ -10,16 +10,25 @@ import type { Logger } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { formatISO } from "date-fns";
 
-import { semverFlag } from "../../flags.js";
+import { releaseGroupFlag, semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import { type ReleaseReport, toReportKind } from "../../library/release.js";
+import type { ReleaseGroup } from "../../releaseGroups.js";
 
 export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReportCommand> {
 	static readonly summary =
 		`Creates a release report for an unreleased build (one that is not published to npm), using an existing report in the "full" format as input.`;
 
 	static readonly description =
-		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.`;
+		`This command is primarily used to upload reports for non-PR main branch builds so that downstream pipelines can easily consume them.
+
+Updates package versions only within the target release group, which defaults to "client".
+Packages are selected using the input report's releaseGroup metadata.
+
+When --releaseGroup is supplied, the output also excludes packages outside that group.
+Otherwise, those packages remain in the report with their original versions.
+
+The command fails if the input report has no entries with the target release group.`;
 
 	static readonly flags = {
 		version: semverFlag({
@@ -38,8 +47,12 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 		}),
 		branchName: Flags.string({
 			description:
-				"Branch name. For release branches, the manifest file is uplaoded by build number and not by current date.",
+				"Branch name. For release branches, the manifest file is uploaded by build number and not by current date.",
 			required: true,
+		}),
+		releaseGroup: releaseGroupFlag({
+			description: "Selects the release group to update and filters the output to that group.",
+			required: false,
 		}),
 		...BaseCommand.flags,
 	};
@@ -47,17 +60,30 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	public async run(): Promise<void> {
 		const { flags } = this;
 
+		let packageNamesForReleaseGroup: Set<string> | undefined;
+		if (flags.releaseGroup) {
+			const context = await this.getContext();
+			packageNamesForReleaseGroup = new Set(
+				context.packagesInReleaseGroup(flags.releaseGroup).map((pkg) => pkg.name),
+			);
+		}
+
 		const reportData = await fs.readFile(flags.fullReportFilePath, "utf8");
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const fullReleaseReport: ReleaseReport = JSON.parse(reportData);
 
+		const releaseReport: ReleaseReport = flags.releaseGroup
+			? filterReleaseReport(fullReleaseReport, flags.releaseGroup, packageNamesForReleaseGroup)
+			: fullReleaseReport;
+
 		try {
 			await generateReleaseReport(
-				fullReleaseReport,
+				releaseReport,
 				flags.version.version,
 				flags.outDir,
 				flags.branchName,
+				flags.releaseGroup,
 				this.logger,
 			);
 		} catch (error: unknown) {
@@ -66,27 +92,44 @@ export class UnreleasedReportCommand extends BaseCommand<typeof UnreleasedReport
 	}
 }
 
+function filterReleaseReport(
+	report: ReleaseReport,
+	releaseGroup: ReleaseGroup | undefined,
+	packageNamesForReleaseGroup: Set<string> | undefined,
+): ReleaseReport {
+	if (releaseGroup === undefined) {
+		return report;
+	}
+
+	return Object.fromEntries(
+		Object.entries(report).filter(([packageName]) =>
+			packageNamesForReleaseGroup?.has(packageName),
+		),
+	) as ReleaseReport;
+}
+
 /**
  * Generate release reports for unreleased versions.
- * @param fullReleaseReport - The format of the "full" release report.
+ * @param releaseReport - The report in the "full" format.
  * @param version - The version string for the reports.
  * @param outDir - The output directory for the reports.
  * @param branchName - The branch name for the reports.
+ * @param releaseGroup - The release group to filter packages by.
  * @param log - The logger object for logging messages.
  */
 async function generateReleaseReport(
-	fullReleaseReport: ReleaseReport,
+	releaseReport: ReleaseReport,
 	version: string,
 	outDir: string,
 	branchName: string,
+	releaseGroup: ReleaseGroup | undefined,
 	log: Logger,
 ): Promise<void> {
-	const ignorePackageList = new Set(["@types/jest-environment-puppeteer"]);
+	updateReportVersions(releaseReport, version, releaseGroup);
+	log.log(`Release report updated pointing to version: ${version}`);
 
-	await updateReportVersions(fullReleaseReport, ignorePackageList, version, log);
-
-	const caretReportOutput = toReportKind(fullReleaseReport, "caret");
-	const simpleReportOutput = toReportKind(fullReleaseReport, "simple");
+	const caretReportOutput = toReportKind(releaseReport, "caret");
+	const simpleReportOutput = toReportKind(releaseReport, "simple");
 
 	await Promise.all([
 		writeReport(
@@ -132,7 +175,9 @@ async function writeReport(
 
 	log.log(`Build Number: ${buildNumber}`);
 
-	const outDirByBuildNumber = path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
+	const outDirByBuildNumber = isInternalTestVersion(version)
+		? path.join(outDir, `${revisedFileName}-${buildNumber}-test.json`)
+		: path.join(outDir, `${revisedFileName}-${buildNumber}.json`);
 
 	// Generate the build-number manifest unconditionally
 	const promises = [fs.writeFile(outDirByBuildNumber, JSON.stringify(report, undefined, 2))];
@@ -147,56 +192,32 @@ async function writeReport(
 }
 
 /**
- * Updates versions in a release report based on specified conditions.
+ * Updates the simple and caret versions of packages in the target release group in place.
  * @param report - A map of package names to full release reports. This is the format of the "full" release report.
- * @param ignorePackageList - The set of package names to ignore during version updating. These packages are not published to internal ADO feed.
  * @param version - The version string to update packages to.
+ * @param releaseGroup - The release group to update. Defaults to client when undefined.
+ * @throws If the report has no entries with the target release group.
  */
-async function updateReportVersions(
+export function updateReportVersions(
 	report: ReleaseReport,
-	ignorePackageList: Set<string>,
 	version: string,
-	log: Logger,
-): Promise<void> {
-	const clientPackageName = "fluid-framework";
+	releaseGroup: ReleaseGroup | undefined,
+): void {
+	const targetReleaseGroup = releaseGroup ?? "client";
+	const packages = Object.values(report).filter(
+		(packageInfo) => packageInfo.releaseGroup === targetReleaseGroup,
+	);
 
-	const packageReleaseDetails = report[clientPackageName];
-
-	if (packageReleaseDetails === undefined) {
-		throw new Error(`Client package ${clientPackageName} is not defined in the report.`);
+	if (packages.length === 0) {
+		throw new Error(
+			`No packages with releaseGroup "${targetReleaseGroup}" are defined in the report.`,
+		);
 	}
 
-	if (packageReleaseDetails.ranges?.caret === undefined) {
-		throw new Error(`Caret version for ${clientPackageName} is not defined in the report.`);
+	for (const packageInfo of packages) {
+		packageInfo.ranges.caret = version;
+		packageInfo.version = version;
 	}
-
-	if (packageReleaseDetails.version === undefined) {
-		throw new Error(`Simple version for ${clientPackageName} is not defined in the report.`);
-	}
-
-	const clientVersionCaret = report[clientPackageName].ranges.caret;
-	const clientVersionSimple = report[clientPackageName].version;
-
-	log.log(`Caret version: ${clientVersionCaret}`);
-	log.log(`Simple version: ${clientVersionSimple}`);
-
-	for (const packageName of Object.keys(report)) {
-		if (ignorePackageList.has(packageName)) {
-			continue;
-		}
-
-		const packageInfo = report[packageName];
-
-		// todo: add better checks
-		if (packageInfo.ranges.caret && packageInfo.ranges.caret === clientVersionCaret) {
-			report[packageName].ranges.caret = version;
-		}
-
-		if (packageInfo.version && packageInfo.version === clientVersionSimple) {
-			report[packageName].version = version;
-		}
-	}
-	log.log(`Release report updated pointing to version: ${version}`);
 }
 
 /**

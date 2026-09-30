@@ -87,7 +87,7 @@ describe("loadBuildProject", () => {
 			const buildTools = repo.workspaces.get("build-tools" as WorkspaceName);
 			expect(buildTools).to.not.be.undefined;
 			expect(buildTools?.packages.length).to.equal(
-				6,
+				5,
 				"build-tools workspace has the wrong number of packages",
 			);
 			expect(buildTools?.releaseGroups.size).to.equal(
@@ -124,7 +124,7 @@ describe("setDependencyRange", () => {
 	const mainWorkspacePackages = new Set(mainWorkspace.packages);
 
 	afterEach(async () => {
-		await git.checkout(["HEAD", "--", testRepoRoot]);
+		await git.checkout(["HEAD", "--", "."]);
 		repo.reload();
 	});
 

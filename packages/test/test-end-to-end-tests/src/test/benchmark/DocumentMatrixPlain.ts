@@ -32,8 +32,9 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
 	createSummarizerFromFactory,
@@ -123,7 +124,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		return this._mainContainer;
 	}
 
-	public get logger(): ITelemetryLoggerExt | undefined {
+	public get logger(): TelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 
@@ -172,6 +173,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [
 				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
 			],

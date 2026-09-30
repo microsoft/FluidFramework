@@ -19,6 +19,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../mocking.js";
@@ -62,6 +63,7 @@ describeCompat("Cache CreateNewSummary", "NoCompat", (getTestObjectProvider, api
 		ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
 		},

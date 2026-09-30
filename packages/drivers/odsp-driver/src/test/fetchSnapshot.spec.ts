@@ -84,6 +84,7 @@ describe("Tests1 for snapshot fetch", () => {
 		summarizerClient: true,
 		fetchBinarySnapshotFormat: false,
 		concurrentSnapshotFetch: true,
+		hostProvidedRequestHeaders: { "X-Agent-Id": "snapshot-agent" },
 	};
 
 	const resolver = new OdspDriverUrlResolver();
@@ -120,7 +121,6 @@ describe("Tests1 for snapshot fetch", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
-				fileVersion: undefined,
 			},
 			logger,
 		);
@@ -562,7 +562,10 @@ describe("Tests1 for snapshot fetch", () => {
 					async () => service.getSnapshot({}),
 					[
 						notFound,
-						async (): Promise<MockResponse> => okResponse({}, {}),
+						async (headers): Promise<MockResponse> => {
+							assert.strictEqual(headers?.["x-agent-id"], "snapshot-agent");
+							return okResponse({}, {});
+						},
 						async (): Promise<Response> => {
 							return response;
 						},
@@ -684,7 +687,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("Location redirection error without shareLink skips redeem", async () => {
 		// No shareLinkInfo set on resolved URL
-		resolved.shareLinkInfo = undefined;
+		delete resolved.shareLinkInfo;
 
 		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
 

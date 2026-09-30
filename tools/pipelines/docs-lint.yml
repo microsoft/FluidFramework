@@ -1,0 +1,133 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# docs-lint pipeline
+# Validates formatting (Prettier) and linting (markdownlint) for the `docs` directory, which is a
+# standalone pnpm workspace. Scoped to changes under `docs/` via path filters.
+
+trigger:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - docs
+    # The pipeline should also re-run when the pipeline definition or any template it uses changes.
+    - tools/pipelines/docs-lint.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+    # The "docs" workspace depends on this file via file path, so we need to run the docs-lint pipeline if it changes.
+    - common/build/build-common/prettier.config.cjs
+
+pr:
+  branches:
+    include:
+    - main
+  paths:
+    include:
+    - docs
+    # The pipeline should also re-run when the pipeline definition or any template it uses changes.
+    - tools/pipelines/docs-lint.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+    # The "docs" workspace depends on this file via file path, so we need to run the docs-lint pipeline if it changes.
+    - common/build/build-common/prettier.config.cjs
+
+variables:
+- name: pnpmStorePath
+  value: $(Pipeline.Workspace)/.pnpm-store
+- group: ado-feeds
+# ADO changes the value of Build.SourcesDirectory depending on whether 1 vs. many repositories are checked out.
+# Using 's' is consistent with the behavior when multiple repositories are checked out and allows for more
+# consistent build scripts. See this documentation for more details:
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/multi-repo-checkout?view=azure-devops#checkout-path
+# A relative path is required in some places (like "checkout" steps). To get the absolute path, concatenate it
+# with the predefined variable "Pipeline.Workspace", e.g.: '$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}'
+- name: consistentSourcesDirectory
+  value: 's'
+- name: FluidFrameworkDirectory
+  value: '${{ variables.consistentSourcesDirectory }}/FluidFramework'
+# The `docs` directory is a standalone (one-package) pnpm workspace.
+- name: docsDirectory
+  value: '${{ variables.FluidFrameworkDirectory }}/docs'
+
+# The `resources` specify the location and version of the 1ES PT.
+resources:
+  repositories:
+  - repository: m365Pipelines
+    type: git
+    name: 1ESPipelineTemplates/M365GPT
+    ref: refs/tags/release
+extends:
+  # The pipeline extends the 1ES pipeline template which will inject different SDL and compliance tasks.
+  # Read more: https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/1es-pipeline-templates/onboarding/overview
+  ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+    template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  ${{ else }}:
+    # For non-production pipelines, we use "Unofficial" 1ES pipeline template
+    # The unofficial template skips some of the jobs that are irrelevant for the pipelines that do not have the potential to produce a production release candidate.(For example ARROW).
+    template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
+  parameters:
+    pool:
+      name: Small-eastus2
+      os: linux
+    sdl:
+      ${{ if eq(variables['System.TeamProject'], 'internal') }}:
+        arrow:
+          # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
+          serviceConnection: ff-internal-arrow-sc
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
+      # Tentative workaround for the occasional Credscan failures
+      credscan:
+        batchSize: 4
+    # Skip tagging if Github PR coming from a fork
+    settings:
+      skipBuildTagsForGitHubPullRequests: true
+    customBuildTags:
+      - ES365AIMigrationTooling
+    stages:
+    - stage: run_docs_lint
+      jobs:
+      - job: run_docs_lint
+        steps:
+        - task: Bash@3
+          displayName: Variables
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)
+            script: |
+              set -eu -o pipefail
+              echo "
+                Variables:
+                  consistentSourcesDirectory=${{ variables.consistentSourcesDirectory }}
+                  FluidFrameworkDirectory=${{ variables.FluidFrameworkDirectory }}
+                  docsDirectory=${{ variables.docsDirectory }}
+              "
+
+        - checkout: self
+          path: ${{ variables.FluidFrameworkDirectory }}
+          fetchDepth: 1
+          fetchTags: false
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+          parameters:
+            buildDirectory: ${{ variables.docsDirectory }}
+
+        - task: Bash@3
+          displayName: Install dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/${{ variables.docsDirectory }}
+            script: |
+              set -eu -o pipefail
+              pnpm install --frozen-lockfile
+
+        - task: Npm@1
+          displayName: Lint (Prettier + markdownlint)
+          inputs:
+            command: 'custom'
+            workingDir: $(Pipeline.Workspace)/${{ variables.docsDirectory }}
+            customCommand: 'run lint'

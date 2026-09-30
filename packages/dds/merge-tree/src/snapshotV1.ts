@@ -14,8 +14,8 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
 	createChildLogger,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IAttributionCollection } from "./attributionCollection.js";
@@ -52,12 +52,12 @@ export class SnapshotV1 {
 	private readonly segments: JsonSegmentSpecs[];
 	private readonly segmentLengths: number[];
 	private readonly attributionCollections: IAttributionCollection<AttributionKey>[];
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly getLongClientId: (id: number) => string,
 		public filename?: string,
 		public onCompletion?: () => void,
@@ -367,7 +367,7 @@ export class SnapshotV1 {
 	public static async loadChunk(
 		storage: IChannelStorageService,
 		path: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): Promise<MergeTreeChunkV1> {
@@ -379,7 +379,7 @@ export class SnapshotV1 {
 	public static processChunk(
 		path: string,
 		chunk: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		options: PropertySet | undefined,
 		serializer?: IFluidSerializer,
 	): MergeTreeChunkV1 {

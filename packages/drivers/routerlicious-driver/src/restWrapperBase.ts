@@ -36,8 +36,8 @@ export abstract class RestWrapper {
 	): Promise<IR11sResponse<T>> {
 		const options: RequestConfig = {
 			...additionalOptions,
-			baseURL: this.baseurl,
-			headers,
+			...(this.baseurl === undefined ? {} : { baseURL: this.baseurl }),
+			...(headers === undefined ? {} : { headers }),
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "GET",
@@ -70,9 +70,9 @@ export abstract class RestWrapper {
 	): Promise<IR11sResponse<T>> {
 		const options: RequestConfig = {
 			...additionalOptions,
-			baseURL: this.baseurl,
+			...(this.baseurl === undefined ? {} : { baseURL: this.baseurl }),
 			data: requestBody,
-			headers,
+			...(headers === undefined ? {} : { headers }),
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "POST",
@@ -103,8 +103,8 @@ export abstract class RestWrapper {
 	): Promise<IR11sResponse<T>> {
 		const options: RequestConfig = {
 			...additionalOptions,
-			baseURL: this.baseurl,
-			headers,
+			...(this.baseurl === undefined ? {} : { baseURL: this.baseurl }),
+			...(headers === undefined ? {} : { headers }),
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "DELETE",
@@ -137,9 +137,9 @@ export abstract class RestWrapper {
 	): Promise<IR11sResponse<T>> {
 		const options: RequestConfig = {
 			...additionalOptions,
-			baseURL: this.baseurl,
+			...(this.baseurl === undefined ? {} : { baseURL: this.baseurl }),
 			data: requestBody,
-			headers,
+			...(headers === undefined ? {} : { headers }),
 			maxBodyLength: this.maxBodyLength,
 			maxContentLength: this.maxContentLength,
 			method: "PATCH",

@@ -38,9 +38,12 @@ export interface IResources {
 
 const getRCFileName = (): string => path.join(os.homedir(), ".fluidtoolrc");
 
-// TODO: Add documentation
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Loads the Fluid tool resource cache from `.fluidtoolrc` in the current user's home directory.
+ *
+ * @returns The parsed resources, or an empty object if the file does not exist or contains invalid
+ * JSON.
+ * @throws If the file exists but cannot be read.
  * @internal
  */
 export async function loadRC(): Promise<IResources> {
@@ -59,20 +62,44 @@ export async function loadRC(): Promise<IResources> {
 	return {};
 }
 
-// TODO: Add documentation
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Saves the Fluid tool resources to `.fluidtoolrc` in the current user's home directory.
+ *
+ * On POSIX filesystems, successful completion ensures the file has owner-only read/write
+ * permissions. Windows continues to rely on the access controls inherited from the user's home
+ * directory.
+ *
+ * @param rc - The resources to serialize and save.
+ * @throws If serialization, writing, or updating the file permissions fails. A permission-update
+ * failure occurs after the new contents have already been written.
  * @internal
  */
 export async function saveRC(rc: IResources): Promise<void> {
 	const writeFile = util.promisify(fs.writeFile);
+	const chmod = util.promisify(fs.chmod);
 	const content = JSON.stringify(rc, undefined, 2);
-	return writeFile(getRCFileName(), Buffer.from(content, "utf8"));
+	const fileName = getRCFileName();
+	// This per-user file holds ODSP access tokens and may also hold development secrets.
+	// On POSIX filesystems, `mode` creates a new file as owner-readable/writable only (0600).
+	// Because `mode` does not change an existing file, chmod also repairs caches that were
+	// previously created with broader permissions. On Windows, these calls normally succeed,
+	// but Node only uses the write bit: 0600 keeps the file writable without restricting who can
+	// read it. Confidentiality therefore depends on ACLs inherited from the user's home directory.
+	// If the filesystem rejects chmod, saveRC rejects after the file has already been written.
+	await writeFile(fileName, Buffer.from(content, "utf8"), { mode: 0o600 });
+	await chmod(fileName, 0o600);
 }
 
-// TODO: Add documentation
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Acquires the inter-process lock for `.fluidtoolrc` in the current user's home directory.
+ *
+ * The lock may be acquired before the resource file exists. While another process holds the lock,
+ * acquisition retries indefinitely. Locks whose modification time has not been updated for 60
+ * seconds are considered stale.
+ *
+ * @returns An asynchronous callback that releases the lock. The caller must invoke it after
+ * completing the protected operation, including when that operation fails.
+ * @throws If a filesystem error prevents the lock from being acquired.
  * @internal
  */
 export async function lockRC(): Promise<() => Promise<void>> {

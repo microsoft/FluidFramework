@@ -45,7 +45,9 @@ import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
-import { createLoader } from "../utils.js";
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
+
+import { createLoader } from "./utils.js";
 
 /**
  * A DataObject implementation that is used to test Staging Mode.
@@ -143,6 +145,7 @@ const runtimeFactory: IRuntimeFactory = {
 		return loadContainerRuntime({
 			context,
 			existing,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
 			runtimeOptions,
 			provideEntryPoint: async (rt) => {

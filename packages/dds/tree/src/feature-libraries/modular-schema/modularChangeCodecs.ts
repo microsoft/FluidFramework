@@ -13,6 +13,7 @@ import {
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangeDecodingContext,
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
@@ -35,7 +36,7 @@ export function makeModularChangeCodecFamily(
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,
 	chunkCompressionStrategy: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
-): ICodecFamily<ModularChangeset, ChangeEncodingContext> {
+): ICodecFamily<ModularChangeset, ChangeEncodingContext, ChangeDecodingContext> {
 	return makeCodecFamily(
 		Array.from(fieldKindConfigurations.entries(), ([version, fieldKinds]) => {
 			switch (version) {

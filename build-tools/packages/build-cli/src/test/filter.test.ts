@@ -57,7 +57,6 @@ describe("filterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -90,7 +89,6 @@ describe("filterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -135,10 +133,7 @@ describe("filterPackages", () => {
 		};
 		const actual = await filterPackages(packages, filters);
 		const names = actual.map((p) => p.name);
-		expect(names).to.be.equalTo([
-			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
-		]);
+		expect(names).to.be.equalTo(["@fluidframework/build-tools"]);
 	});
 });
 
@@ -159,7 +154,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -185,7 +179,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluidframework/build-common",
 			// TODO: Re-enable once eslint-config-fluid is no longer in the client release group
 			// "@fluidframework/eslint-config-fluid",
-			"@fluid-internal/eslint-plugin-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
@@ -216,7 +209,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -317,7 +309,6 @@ describe("selectAndFilterPackages", () => {
 			"@fluid-tools/build-cli",
 			"@fluid-tools/build-infrastructure",
 			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
 			"@fluid-tools/version-tools",
 		]);
 	});
@@ -365,10 +356,7 @@ describe("selectAndFilterPackages", () => {
 		const { filtered } = await selectAndFilterPackages(context, selectionOptions, filters);
 		const names = filtered.map((p) => p.name);
 
-		expect(names).to.be.equalTo([
-			"@fluidframework/build-tools",
-			"@fluidframework/bundle-size-tools",
-		]);
+		expect(names).to.be.equalTo(["@fluidframework/build-tools"]);
 	});
 
 	it("multiple selection flags", async () => {

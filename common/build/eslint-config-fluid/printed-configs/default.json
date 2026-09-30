@@ -2,7 +2,7 @@
 	"language": "@/js",
 	"languageOptions": {
 		"ecmaVersion": 2026,
-		"parser": "typescript-eslint/parser@8.54.0",
+		"parser": "typescript-eslint/parser@8.67.0",
 		"parserOptions": {
 			"project": null,
 			"projectService": true
@@ -14,8 +14,8 @@
 	},
 	"plugins": [
 		"@",
-		"@typescript-eslint:@typescript-eslint/eslint-plugin@8.54.0",
-		"import-x:eslint-plugin-import-x@4.16.1",
+		"@typescript-eslint:@typescript-eslint/eslint-plugin@8.67.0",
+		"import-x:eslint-plugin-import-x@4.17.1",
 		"@eslint-community/eslint-comments",
 		"@fluid-internal/fluid",
 		"@rushstack",
@@ -24,7 +24,7 @@
 		"tsdoc",
 		"unicorn:eslint-plugin-unicorn@54.0.0",
 		"unused-imports:unused-imports",
-		"depend:eslint-plugin-depend@1.4.0"
+		"depend:eslint-plugin-depend@1.5.0"
 	],
 	"rules": {
 		"@babel/object-curly-spacing": [
@@ -806,7 +806,17 @@
 			}
 		],
 		"@typescript-eslint/no-magic-numbers": [
-			"off"
+			"off",
+			{
+				"detectObjects": false,
+				"enforceConst": false,
+				"ignore": [],
+				"ignoreArrayIndexes": false,
+				"ignoreEnums": false,
+				"ignoreNumericLiteralTypes": false,
+				"ignoreReadonlyClassProperties": false,
+				"ignoreTypeIndexes": false
+			}
 		],
 		"@typescript-eslint/no-misused-new": [
 			"error"
@@ -1251,29 +1261,6 @@
 		"import-x/no-unused-modules": [
 			"error"
 		],
-		"import-x/order": [
-			"error",
-			{
-				"groups": [
-					"builtin",
-					"external",
-					"internal",
-					"parent",
-					"sibling",
-					"index"
-				],
-				"newlines-between": "always",
-				"alphabetize": {
-					"order": "asc",
-					"caseInsensitive": false,
-					"orderImportKind": "ignore"
-				},
-				"distinctGroup": true,
-				"sortTypesGroup": false,
-				"named": false,
-				"warnOnUnassignedImports": false
-			}
-		],
 		"indent": [
 			"off"
 		],
@@ -1623,7 +1610,11 @@
 				"selector": "ExportAllDeclaration",
 				"message": "Exporting * is not permitted. You should export only named items you intend to export."
 			},
-			"ForInStatement"
+			"ForInStatement",
+			{
+				"selector": "ImportDeclaration[source.value=\"@sinclair/typebox\"] > ImportSpecifier[imported.name=\"Type\"]",
+				"message": "Import the TypeBox `Type` namespace via `import * as Type from \"@sinclair/typebox\"` instead of the named `Type` value export, which pulls in the entire builder and defeats tree-shaking."
+			}
 		],
 		"no-self-assign": [
 			"error",

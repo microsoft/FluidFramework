@@ -10,4 +10,6 @@ _Details coming soon..._
 
 [pipelines](./pipelines/README.md)
 
+[selfhost](./selfhost/README.md)
+
 [test-tools](./test-tools/README.md)

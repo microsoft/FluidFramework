@@ -4,7 +4,8 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, TSchema } from "@sinclair/typebox";
 
 import { SessionIdSchema } from "../core/index.js";
 
@@ -27,8 +28,8 @@ export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: Change
 		{
 			version: Type.Literal(EditManagerFormatVersion.vSharedBranches),
 			originator: SessionIdSchema,
-			main: EncodedSharedBranch(tChange),
-			branches: Type.Optional(Type.Array(EncodedSharedBranch(tChange))),
+			main: EncodedSharedBranch(tChange, true),
+			branches: Type.Optional(Type.Array(EncodedSharedBranch(tChange, true))),
 		},
 		noAdditionalProps,
 	);

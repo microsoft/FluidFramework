@@ -10,14 +10,14 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Implementation of IDocumentDeltaStorageService that will return snapshot ops when fetching messages
  */
 export class LocalOdspDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private snapshotOps: ISequencedDocumentMessage[],
 	) {}
 

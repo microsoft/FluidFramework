@@ -8,11 +8,12 @@ import { strict as assert } from "assert";
 import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
@@ -103,6 +104,7 @@ describeCompat(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: outerDataObjectFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
@@ -128,6 +130,7 @@ describeCompat(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: innerDataObjectFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],

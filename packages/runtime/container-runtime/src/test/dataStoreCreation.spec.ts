@@ -44,8 +44,8 @@ describe("Data Store Creation Tests", () => {
 		 * ```
 		 */
 
-		let storage: IRuntimeStorageService;
-		let scope: FluidObject;
+		const storage = undefined as unknown as IRuntimeStorageService;
+		const scope = undefined as unknown as FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContextPrivate;
 		const defaultName = "default";

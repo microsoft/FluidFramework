@@ -43,33 +43,39 @@ stages:
   - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml@self
     parameters:
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       packages:
         - name: "@fluidframework/sequence"
           affectedPaths:
           - packages/dds/sequence
           - packages/dds/merge-tree
-          testFileTarName: sequence
+          id: sequence
+          testPackageDirectory: packages/dds/sequence
           testCommand: test:stress
         - name: "@fluid-experimental/tree"
           affectedPaths:
           - experimental/dds/tree
-          testFileTarName: experimental-tree
+          id: experimental-tree
+          testPackageDirectory: experimental/dds/tree
           testCommand: test:stress
         - name: "@fluidframework/tree"
           affectedPaths:
           - packages/dds/tree
-          testFileTarName: tree
+          id: tree
+          testPackageDirectory: packages/dds/tree
           testCommand: test:stress
         - name: "@fluidframework/map"
           affectedPaths:
           - packages/dds/map
           - packages/dds/merge-tree
-          testFileTarName: map
+          id: map
+          testPackageDirectory: packages/dds/map
           testCommand: test:stress
         - name: "@fluidframework/matrix"
           affectedPaths:
           - packages/dds/matrix
           - packages/dds/merge-tree
-          testFileTarName: matrix
+          id: matrix
+          testPackageDirectory: packages/dds/matrix
           testCommand: test:stress
       stressMode: ${{ parameters.stressMode }}

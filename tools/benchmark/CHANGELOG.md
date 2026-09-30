@@ -1,5 +1,7 @@
 # @fluid-tools/benchmark
 
+## 0.60.0
+
 ## 0.59.0
 
 -   Added `BenchmarkMode` enum with `Correctness` and `Performance` values to represent the mode in which benchmarks are run.

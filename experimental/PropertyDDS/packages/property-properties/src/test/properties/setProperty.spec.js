@@ -6,12 +6,13 @@
 /**
  * @fileoverview In this file, we will test the set property object described in /src/properties/setProperty.js
  */
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { generateGUID } = require("@fluid-experimental/property-common").GuidUtils;
-const _ = require("lodash");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { GuidUtils } from "@fluid-experimental/property-common";
+const { generateGUID } = GuidUtils;
+import _ from "lodash";
 
-const { PropertyFactory } = require("../..");
-const { BaseProperty } = require("../..");
+import { PropertyFactory } from "../../index.js";
+import { BaseProperty } from "../../index.js";
 
 describe("SetProperty", function () {
 	var PATH_TOKENS;

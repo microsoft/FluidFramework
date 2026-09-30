@@ -67,7 +67,7 @@ import type {
 	IFluidDataStoreFactory,
 	PackagePath,
 	IRuntimeStorageService,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
@@ -75,6 +75,7 @@ import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
+	dataStoreLoadTelemetryProps,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	DataProcessingError,
@@ -354,7 +355,7 @@ export abstract class FluidDataStoreContext
 	/**
 	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	private baseSnapshotSequenceNumber: number | undefined;
 
@@ -588,10 +589,7 @@ export abstract class FluidDataStoreContext
 					"realizeFluidDataStoreContext",
 				);
 				errorWrapped.addTelemetryProperties(
-					tagCodeArtifacts({
-						fullPackageName: this.pkg?.join("/"),
-						fluidDataStoreId: this.id,
-					}),
+					dataStoreLoadTelemetryProps({ id: this.id, packagePath: this.pkg ?? [] }),
 				);
 				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 				throw errorWrapped;

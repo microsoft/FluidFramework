@@ -38,11 +38,15 @@ export async function initFluid(): Promise<{ view: TreeView<typeof Table> }> {
 	let view: TreeView<typeof Table>;
 
 	if (location.hash) {
-		({ container } = await client.getContainer(location.hash.slice(1), containerSchema, "2"));
+		({ container } = await client.getContainer(
+			location.hash.slice(1),
+			containerSchema,
+			"2.0.0",
+		));
 		const { tree } = container.initialObjects;
 		view = tree.viewWith(config);
 	} else {
-		({ container } = await client.createContainer(containerSchema, "2"));
+		({ container } = await client.createContainer(containerSchema, "2.0.0"));
 		const { tree } = container.initialObjects;
 		view = tree.viewWith(config);
 		view.initialize(generateTable(10000));

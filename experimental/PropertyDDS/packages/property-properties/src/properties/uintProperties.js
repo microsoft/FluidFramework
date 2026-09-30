@@ -7,8 +7,8 @@
  * @fileoverview Definition of the Uint32Property class
  */
 
-const { _castFunctors } = require("./primitiveTypeCasts");
-const { ValueProperty } = require("./valueProperty");
+import { _castFunctors } from "./primitiveTypeCasts.js";
+import { ValueProperty } from "./valueProperty.js";
 
 /**
  * A primitive property for an unsigned 8 bit integer value.

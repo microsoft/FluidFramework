@@ -25,7 +25,7 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	type IRuntimeStorageService,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -40,7 +40,7 @@ import { MockDeltaManager } from "./mockDeltas.js";
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
-	public packagePath: readonly string[] = undefined as any;
+	public packagePath: readonly string[] = []; // unused besides logging
 
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
@@ -83,7 +83,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	/**
 	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
+	public minVersionForCollab: OldestSupportedClientVersion = defaultMinVersionForCollab;
 
 	constructor(
 		public readonly id: string = uuid(),

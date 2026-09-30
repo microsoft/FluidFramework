@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FlaggedError } from "./flaggedError";
-import { HTTPError } from "./httpError";
+import { FlaggedError } from "./flaggedError.js";
+import { HTTPError } from "./httpError.js";
 
 /**
  * Class extending HTTPError without storing the stack

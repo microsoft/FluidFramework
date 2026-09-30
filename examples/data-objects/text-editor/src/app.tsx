@@ -3,265 +3,306 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
+import {
+	createOrLoadExampleContainer,
+	defaultServiceOptions,
+	ExampleErrorView,
+	ExampleLoadingView,
+	getExampleServiceClient,
+	renderRoot,
+} from "@fluid-example/example-utils";
+import {
+	createDevtoolsLogger,
+	initializeDevtoolsAlpha,
+	type FluidContainerDevtoolsProps,
+	type IDevtoolsLogger,
+} from "@fluidframework/devtools-core/alpha";
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
 	// TODO: These imports use /internal entrypoints because the underlying APIs
 	// haven't been promoted to public yet. Update to public entrypoints as the
-	// APIs are stabalized.
+	// APIs are stabilized.
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/quill-react/internal";
 import {
 	toPropTreeNode,
-	UndoRedoStacks,
+	createUndoRedo,
 	type UndoRedo,
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
-/**
- * InsecureTokenProvider is used here for local development and demo purposes only.
- * Do not use in production - implement proper authentication for production scenarios.
- */
-// eslint-disable-next-line import-x/no-internal-modules
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration, type TreeView } from "@fluidframework/tree";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/legacy";
-import type { IFluidContainer } from "fluid-framework";
+// eslint-disable-next-line import-x/no-internal-modules -- FormattedTextDefault has no public export. TODO: remove or alpha stabilize FormattedTextDefault.
+import { FormattedTextDefault } from "@fluidframework/tree/internal";
+import { TreeViewConfiguration, type ITree } from "fluid-framework";
+import {
+	asAlpha,
+	defineDataStore,
+	FluidClientVersion,
+	ForestTypeOptimized,
+	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+	instantiateTreeFirstTime,
+	SchemaFactoryAlpha,
+	sharedObjectRegistryFromIterable,
+	PlainText,
+	TreeCompressionStrategy,
+	type FluidContainer,
+	type TreeViewAlpha,
+	TreeViewConfigurationAlpha,
+	configuredSharedTree,
+} from "fluid-framework/alpha";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
-import "quill/dist/quill.snow.css";
-import { type FC, useEffect, useMemo, useState } from "react";
-// eslint-disable-next-line import-x/no-internal-modules
-import { createRoot } from "react-dom/client";
+import "quill-next/dist/quill.snow.css";
+import { type CSSProperties, type FC, useCallback, useEffect, useMemo, useState } from "react";
 
-/**
- * Get the Tinylicious endpoint URL, handling Codespaces port forwarding. Tinylicious only works for localhost,
- * so in Codespaces we need to use the forwarded URL.
- */
-function getTinyliciousEndpoint(): string {
-	const hostname = window.location.hostname;
-	const tinyliciousPort = 7070;
+const sf = new SchemaFactoryAlpha("com.fluidframework.example.text-editor");
 
-	// Detect GitHub Codespaces: hostname like "ideal-giggle-xxx-8080.app.github.dev"
-	if (hostname.endsWith(".app.github.dev")) {
-		const match = /^(.+)-\d+\.app\.github\.dev$/.exec(hostname);
-		if (match) {
-			const codespaceName = match[1];
-			return `https://${codespaceName}-${tinyliciousPort}.app.github.dev`;
-		}
-	}
-
-	return `http://localhost:${tinyliciousPort}`;
-}
-
-const containerSchema = {
-	initialObjects: {
-		tree: SharedTree,
-	},
-};
-
-const sf = new SchemaFactory("com.fluidframework.example.text-editor");
-
-export class TextEditorRoot extends sf.object("TextEditorRoot", {
-	plainText: TextAsTree.Tree,
-	formattedText: FormattedTextAsTree.Tree,
+export class TextEditorRoot extends sf.objectAlpha("TextEditorRoot", {
+	// Opt both the plain and formatted text into incremental summarization by marking the
+	// fields above their text nodes with incrementalSummaryHint.
+	plainText: sf.types([PlainText.Tree], { custom: { [incrementalSummaryHint]: true } }),
+	formattedText: sf.types([FormattedTextDefault.Tree], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
 }) {}
 
 export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
 
-function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
-	return {
-		type: "local",
-		tokenProvider: new InsecureTokenProvider("VALUE_NOT_USED", {
-			id: userId,
-			name: `User-${userId}`,
+/**
+ * SharedTree configured to use the optimized "chunked" forest along with incremental
+ * summarization. {@link incrementalEncodingPolicyForAllowedTypes} reads the
+ * {@link incrementalSummaryHint} from the {@link TextEditorRoot}, so both the
+ * plain and formatted text are encoded incrementally.
+ */
+const SharedTree = configuredSharedTree({
+	forest: ForestTypeOptimized,
+	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+		new TreeViewConfigurationAlpha({ schema: TextEditorRoot }),
+	),
+	minVersionForCollab: FluidClientVersion.v2_74,
+});
+
+/**
+ * Creates or loads the document's SharedTree and exposes a typed view to each user.
+ */
+const TextEditorDataStore = defineDataStore<TextEditorData, ITree>({
+	type: "text-editor",
+	registry: sharedObjectRegistryFromIterable([SharedTree]),
+	instantiateFirstTime: async (rootCreator, creator) =>
+		instantiateTreeFirstTime(rootCreator, creator, SharedTree, {
+			config: treeConfig,
+			initializer: () => createInitialRoot(),
 		}),
-		endpoint: getTinyliciousEndpoint(),
-	};
+	view: async (tree) => ({ tree, treeView: asAlpha(tree.viewWith(treeConfig)) }),
+});
+
+/**
+ * Data exposed by the text editor's root data store.
+ */
+interface TextEditorData {
+	/** The shared object registered with Devtools for inspection. */
+	tree: ITree;
+	/** This client's typed view used to read and edit the document. */
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
 
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
-interface DualUserViews {
-	user1: TreeView<typeof TextEditorRoot>;
-	user2: TreeView<typeof TextEditorRoot>;
-	containerId: string;
+/**
+ * Colors are derived arithmetically from the index and are identical across browsers without a
+ * stored palette.
+ *
+ * @param index - The index of the user panel
+ * @returns The hex color string for the given index
+ */
+function colorForIndex(index: number): string {
+	return `#${((0x4a90d9 + index * 0x2a1f3c) % 0x1000000).toString(16).padStart(6, "0")}`;
 }
 
-async function createAndAttachNewContainer(client: AzureClient): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	containerId: string;
-	treeView: TreeView<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.createContainer(containerSchema, "2");
+const initialUserCount = 2;
 
-	const treeView = container.initialObjects.tree.viewWith(treeConfig);
+/**
+ * Identifies one user in this app.
+ *
+ * Serves as the React key for the user's panel and the key for its Devtools registration.
+ * IDs are randomly generated
+ * and never reused within a page, so a removed user's ID is not given to a later-added
+ * one.
+ */
+type UserId = string;
 
-	// Initialize tree with root containing both plain and formatted text
-	treeView.initialize(
-		new TextEditorRoot({
-			plainText: TextAsTree.Tree.fromString(""),
-			formattedText: FormattedTextAsTree.Tree.fromString(""),
-		}),
-	);
-
-	const containerId = await container.attach();
-
-	return {
-		container,
-		containerId,
-		treeView,
-	};
+/**
+ * Generates a fresh {@link UserId}.
+ *
+ * @remarks
+ * This is random so simulated users stay unique across page
+ * reloads and multiple tabs open on the same document.
+ */
+function makeUserId(): UserId {
+	return Math.random().toString(36).slice(2, 10);
 }
 
-async function loadExistingContainer(
-	client: AzureClient,
-	containerId: string,
-): Promise<{
-	container: IFluidContainer<typeof containerSchema>;
-	treeView: TreeView<typeof TextEditorRoot>;
-}> {
-	const { container } = await client.getContainer(containerId, containerSchema, "2");
-	const treeView = container.initialObjects.tree.viewWith(treeConfig);
-	return {
-		container,
-		treeView,
-	};
+/** One user's connection to the document, as shown in a single panel. */
+export interface UserView {
+	/** Identifies this user using {@link UserId}. */
+	readonly id: UserId;
+	/**
+	 * This user's own container. Held so the app can register it with Devtools and
+	 * close it when the panel is removed. Everything the panel renders comes from
+	 * {@link UserView.treeView}.
+	 */
+	readonly container: FluidContainer<TextEditorData>;
+	/** This user's view of the shared text, rendered and edited by the panel. */
+	readonly treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }
 
-async function initFluid(): Promise<DualUserViews> {
-	const endpoint = getTinyliciousEndpoint();
-	console.log(`Connecting to Tinylicious at: ${endpoint}`);
+/**
+ * Devtools registration props for one user's container. Keyed by user id, which is
+ * never reused, so keys stay unique across add/remove cycles.
+ */
+const devtoolsContainerProps = (user: UserView): FluidContainerDevtoolsProps => ({
+	container: user.container,
+	containerData: { tree: user.container.data.tree },
+	containerKey: `User ${user.id} Container`,
+});
 
-	const user1Id = `user1-${Math.random().toString(36).slice(2, 6)}`;
-	const user2Id = `user2-${Math.random().toString(36).slice(2, 6)}`;
-
-	// Initialize telemetry logger for use with Devtools
-	const devtoolsLogger = createDevtoolsLogger();
-
-	const client1 = new AzureClient({
-		connection: getConnectionConfig(user1Id),
-		logger: devtoolsLogger,
+/**
+ * Creates a document root holding the given text as both plain and formatted text.
+ * @param text - Initial content for both text fields. Defaults to an empty string.
+ * @returns A root ready to initialize a new tree view.
+ * @remarks
+ * Used to initialize new documents; exported so tests can initialize in-memory views
+ * with the same shape.
+ */
+export function createInitialRoot(text = ""): TextEditorRoot {
+	return new TextEditorRoot({
+		plainText: PlainText.Tree.fromString(text),
+		formattedText: FormattedTextDefault.Tree.fromString(text),
 	});
+}
 
-	let containerId: string;
-	let user1Container: IFluidContainer;
-	let user1View: TreeView<typeof TextEditorRoot>;
-	if (location.hash) {
-		// Load existing document for both users
-		const rawContainerId = location.hash.slice(1);
-		// Basic validation for container ID from URL hash before making network requests
-		const isValidContainerId =
-			rawContainerId.length > 0 && /^[\dA-Za-z-]{3,64}$/.test(rawContainerId);
-		if (!isValidContainerId) {
-			console.error(`Invalid container ID in URL hash: "${rawContainerId}"`);
-			throw new Error(
-				"Invalid container ID in URL hash. Expected 3-64 alphanumeric or '-' characters.",
-			);
-		}
-		containerId = rawContainerId;
-		console.log(`Loading document for both users: ${containerId}`);
+/**
+ * Connects another simulated user to an existing document.
+ * @param containerId - Identifies the document to load.
+ * @returns The user's container and typed view, with a fresh user ID.
+ */
+type ConnectUser = (containerId: string) => Promise<UserView>;
 
-		// User 1 connects to existing document
-		({ container: user1Container, treeView: user1View } = await loadExistingContainer(
-			client1,
-			containerId,
-		));
+/**
+ * Creates or loads the document and connects the initial simulated users.
+ * @returns The document ID, shared telemetry logger, initial users, and callback for adding users.
+ */
+async function initializeFluid(): Promise<{
+	/** Identifies the document shared by all users. */
+	containerId: string;
+	/** Routes telemetry from all users' containers to Devtools. */
+	devtoolsLogger: IDevtoolsLogger;
+	/** Users connected during startup, each with a separate container and tree view. */
+	initialUsers: UserView[];
+	/** Connects an additional user when a panel is added. */
+	connectUser: ConnectUser;
+}> {
+	const devtoolsLogger = createDevtoolsLogger();
+	const client = getExampleServiceClient({ ...defaultServiceOptions, logger: devtoolsLogger });
+	const connectUser: ConnectUser = async (documentId) => {
+		const loaded = await client.loadContainer(documentId, TextEditorDataStore);
+		return { id: makeUserId(), container: loaded, treeView: loaded.data.treeView };
+	};
+	const container = await createOrLoadExampleContainer(client, TextEditorDataStore);
+	const containerId = container.id;
+	if (containerId === undefined) {
+		throw new Error("The example container is not attached.");
+	}
+	const initialUsers: UserView[] = [
+		{ id: makeUserId(), container, treeView: container.data.treeView },
+	];
 
-		console.log(`User 1 connected to document: ${containerId}`);
-	} else {
-		// User 1 creates the document
-		({
-			container: user1Container,
-			treeView: user1View,
-			containerId,
-		} = await createAndAttachNewContainer(client1));
-
-		// eslint-disable-next-line require-atomic-updates
-		location.hash = containerId;
-
-		console.log(`User 1 created document: ${containerId}`);
+	// Connect the remaining initial users (the first was connected/created above).
+	for (let userIndex = initialUsers.length; userIndex < initialUserCount; userIndex++) {
+		initialUsers.push(await connectUser(containerId));
 	}
 
-	// User 2 connects to the loaded document
-	const client2 = new AzureClient({
-		connection: getConnectionConfig(user2Id),
-		logger: devtoolsLogger,
-	});
-	const { container: user2Container, treeView: user2View } = await loadExistingContainer(
-		client2,
-		containerId,
-	);
-
-	console.log(`User 2 connected to document: ${containerId}`);
-
-	// Initialize Devtools
-	initializeDevtools({
-		logger: devtoolsLogger,
-		initialContainers: [
-			{
-				container: user1Container,
-				containerKey: "User 1 Container",
-			},
-			{
-				container: user2Container,
-				containerKey: "User 2 Container",
-			},
-		],
-	});
-
-	return {
-		user1: user1View,
-		user2: user2View,
-		containerId,
-	};
+	return { containerId, devtoolsLogger, initialUsers, connectUser };
 }
 
 const viewLabels = {
 	plainTextarea: {
 		description: "Plain Textarea",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			_undoRedo?: UndoRedo,
-		) => <PlainTextMainView root={toPropTreeNode(root.plainText)} />,
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
+			<PlainTextMainView root={toPropTreeNode(root.plainText)} undoRedo={manager} />
+		),
 	},
 	plainQuill: {
 		description: "Plain Quill Editor",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			_undoRedo?: UndoRedo,
-		) => <PlainQuillView root={toPropTreeNode(root.plainText)} />,
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
+			<PlainQuillView root={toPropTreeNode(root.plainText)} undoRedo={manager} />
+		),
 	},
 	formatted: {
 		description: "Formatted Quill Editor",
-		component: (
-			root: TextEditorRoot,
-			_treeView: TreeView<typeof TextEditorRoot>,
-			undoRedo?: UndoRedo,
-		) => <FormattedMainView root={toPropTreeNode(root.formattedText)} undoRedo={undoRedo} />,
+		component: (root: TextEditorRoot, manager: UndoRedo) => (
+			<FormattedMainView root={toPropTreeNode(root.formattedText)} undoRedo={manager} />
+		),
 	},
 } as const;
+
+/**
+ * Base style properties for undo/redo buttons in {@link UserPanel}.
+ */
+const userPanelUndoRedoButtonStyleBase = {
+	width: "28px",
+	height: "28px",
+	padding: 0,
+	background: "none",
+	border: "1px solid #ccc",
+	borderRadius: "4px",
+	fontSize: "18px",
+	display: "flex",
+	alignItems: "center",
+	justifyContent: "center",
+} as const satisfies CSSProperties;
 
 const UserPanel: FC<{
 	label: string;
 	color: string;
-	treeView: TreeView<typeof TextEditorRoot>;
-}> = ({ label, color, treeView }) => {
-	// Create undo/redo stack for this user's tree view
-	const undoRedo: UndoRedo = useMemo(
-		() => new UndoRedoStacks(treeView.events),
-		[treeView.events],
-	);
+	container: UserView["container"];
+	treeView: TreeViewAlpha<typeof TextEditorRoot>;
+	/**
+	 * Removes this user from the side-by-side view. Omitted when removal is not
+	 * allowed (e.g. the last remaining user).
+	 */
+	onRemove?: () => void;
+}> = ({ label, color, container, treeView, onRemove }) => {
+	// A single manager per user subscribes to the branch's changed events and handles
+	// all labeled undo/redo. Each editor component reads from context and scopes
+	// operations to its own label.
+	const manager = useMemo(() => createUndoRedo(treeView), [treeView]);
 
-	// Cleanup on unmount
+	// Cleanup a single view (user) resources on unmount
 	useEffect(() => {
-		return () => undoRedo.dispose();
-	}, [undoRedo]);
+		return () => {
+			manager.dispose();
+			treeView.dispose();
+			// Note: closing drops any local edits not yet acknowledged
+			// by the service. Acceptable for this demo, and it avoids waiting on an ack
+			// that may never arrive (e.g. if the service is unreachable).
+			container.close();
+		};
+	}, [manager, treeView, container]);
+
+	// Re-render when undo/redo availability changes. Only local commits affect the stacks,
+	// so filtering to isLocal avoids re-renders on every remote keystroke.
+	const [, setVersion] = useState(0);
+	useEffect(() => {
+		const off = treeView.events.on("changed", (data) => {
+			if (data.isLocal) {
+				setVersion((v) => v + 1);
+			}
+		});
+		return () => off();
+	}, [treeView]);
 
 	const [collapsed, setCollapsed] = useState<Record<ViewType, boolean>>({
 		plainTextarea: false,
@@ -279,17 +320,63 @@ const UserPanel: FC<{
 	return (
 		<div
 			style={{
-				width: "calc(50% - 10px)",
-				minWidth: 0,
+				flex: "1 1 0",
+				minWidth: "360px",
 				border: `2px solid ${color}`,
 				borderRadius: "8px",
 				padding: "10px",
 				display: "flex",
 				flexDirection: "column",
-				overflowY: "auto",
 			}}
 		>
-			<div style={{ marginBottom: "10px", fontWeight: "bold", color }}>{label}</div>
+			<div
+				style={{
+					marginBottom: "10px",
+					display: "flex",
+					justifyContent: "space-between",
+					alignItems: "center",
+				}}
+			>
+				<span style={{ fontWeight: "bold", color }}>{label}</span>
+				<div style={{ display: "flex", gap: "4px" }}>
+					<button
+						type="button"
+						disabled={!manager.canUndo()}
+						onClick={() => manager.undo()}
+						title="Undo"
+						style={{
+							...userPanelUndoRedoButtonStyleBase,
+							cursor: manager.canUndo() ? "pointer" : "not-allowed",
+							opacity: manager.canUndo() ? 1 : 0.3,
+						}}
+					>
+						↶
+					</button>
+					<button
+						type="button"
+						disabled={!manager.canRedo()}
+						onClick={() => manager.redo()}
+						title="Redo"
+						style={{
+							...userPanelUndoRedoButtonStyleBase,
+							cursor: manager.canRedo() ? "pointer" : "not-allowed",
+							opacity: manager.canRedo() ? 1 : 0.3,
+						}}
+					>
+						↷
+					</button>
+					{onRemove !== undefined && (
+						<button
+							type="button"
+							onClick={onRemove}
+							title={`Remove ${label}`}
+							aria-label={`Remove ${label}`}
+						>
+							✕
+						</button>
+					)}
+				</div>
+			</div>
 			{(Object.keys(viewLabels) as ViewType[]).map((viewType) => {
 				const isExpanded = !collapsed[viewType];
 				return (
@@ -301,6 +388,7 @@ const UserPanel: FC<{
 							marginBottom: "12px",
 							boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
 							overflow: "hidden",
+							flexShrink: 0,
 						}}
 					>
 						<button
@@ -335,7 +423,7 @@ const UserPanel: FC<{
 						 */}
 						{isExpanded && (
 							<div id={`${viewType}-panel`} style={{ padding: "12px" }}>
-								{viewLabels[viewType].component(root, treeView, undoRedo)}
+								{viewLabels[viewType].component(root, manager)}
 							</div>
 						)}
 					</div>
@@ -345,12 +433,93 @@ const UserPanel: FC<{
 	);
 };
 
-export const App: FC<{ views: DualUserViews }> = ({ views }) => {
+/**
+ * Button that enables/disables Fluid Devtools at runtime.
+ * The Devtools instance itself is managed by the app, which keeps its set of
+ * registered containers in sync as users are added and removed.
+ */
+const DevtoolsToggle: FC<{
+	enabled: boolean;
+	onToggle: () => void;
+}> = ({ enabled, onToggle }) => {
+	return (
+		<button
+			type="button"
+			onClick={onToggle}
+			title={
+				enabled
+					? "Disable Fluid Devtools (recommended before capturing a performance trace.)"
+					: "Enable Fluid Devtools (Devtools visualizes every node on every edit)"
+			}
+		>
+			{`Devtools: ${enabled ? "On" : "Off"}`}
+		</button>
+	);
+};
+
+export const App: FC<{
+	containerId: string;
+	devtoolsLogger: IDevtoolsLogger;
+	initialUsers: UserView[];
+	/**
+	 * Connects a new user to the document. Tests inject a fake to avoid a service connection.
+	 */
+	connectUser: ConnectUser;
+}> = ({ containerId, devtoolsLogger, initialUsers, connectUser: connect }) => {
+	const [users, setUsers] = useState<UserView[]>(initialUsers);
+
+	// Devtools defaults to off and is toggled at runtime (see DevtoolsToggle).
+	const [devtoolsEnabled, setDevtoolsEnabled] = useState(false);
+
+	// (Re)initializes Devtools with the current users' containers whenever it's enabled
+	// or the user set changes. Recreating the instance on add/remove keeps registration
+	// fully declarative, and add/remove is rare enough that the re-init cost is fine.
+	// Devtools can also dispose itself (its `beforeunload` handler fires even for
+	// navigations that end up canceled), hence the guard before dispose.
+	useEffect(() => {
+		if (!devtoolsEnabled) {
+			return;
+		}
+		const devtools = initializeDevtoolsAlpha({
+			logger: devtoolsLogger,
+		});
+		for (const user of users) {
+			devtools.registerContainerDevtools(devtoolsContainerProps(user));
+		}
+		return () => {
+			if (!devtools.disposed) {
+				devtools.dispose();
+			}
+		};
+	}, [devtoolsEnabled, devtoolsLogger, users]);
+
+	const addUser = useCallback(() => {
+		connect(containerId)
+			.then((user) => setUsers((prev) => [...prev, user]))
+			.catch((error: unknown) => console.error("Failed to add user:", error));
+	}, [connect, containerId]);
+
+	// Drop the user from the list; the Devtools effect above re-initializes without it
+	// and its UserPanel disposes the view and container as it unmounts (see the teardown
+	// effect in UserPanel).
+	// The length check makes the "keep at least one user" invariant authoritative here:
+	// `canRemove` below only gates the buttons, which isn't enough if two removals land
+	// in the same render batch (both handlers would see a stale `canRemove === true`).
+	const removeUser = useCallback((user: UserView) => {
+		setUsers((prev) =>
+			prev.length > 1 ? prev.filter((candidate) => candidate !== user) : prev,
+		);
+	}, []);
+
+	// Keep at least one user so the app always shows a view to work with.
+	const canRemove = users.length > 1;
+
 	return (
 		<div
 			style={{
 				padding: "20px",
-				height: "100vh",
+				fontFamily: "sans-serif",
+				minHeight: "100vh",
 				boxSizing: "border-box",
 				display: "flex",
 				flexDirection: "column",
@@ -358,14 +527,39 @@ export const App: FC<{ views: DualUserViews }> = ({ views }) => {
 		>
 			<div
 				style={{
+					marginBottom: "12px",
+					display: "flex",
+					gap: "12px",
+					alignItems: "center",
+				}}
+			>
+				<button type="button" onClick={addUser}>
+					+ Add user
+				</button>
+				<DevtoolsToggle
+					enabled={devtoolsEnabled}
+					onToggle={() => setDevtoolsEnabled((value) => !value)}
+				/>
+			</div>
+			<div
+				style={{
 					flex: 1,
 					display: "flex",
 					gap: "20px",
 					alignItems: "stretch",
+					overflowX: "auto",
 				}}
 			>
-				<UserPanel label="User 1" color="#4a90d9" treeView={views.user1} />
-				<UserPanel label="User 2" color="#28a745" treeView={views.user2} />
+				{users.map((user, index) => (
+					<UserPanel
+						key={user.id}
+						label={`User ${index + 1}`}
+						color={colorForIndex(index)}
+						container={user.container}
+						treeView={user.treeView}
+						onRemove={canRemove ? () => removeUser(user) : undefined}
+					/>
+				))}
 			</div>
 		</div>
 	);
@@ -376,21 +570,19 @@ async function start(): Promise<void> {
 	if (!rootElement) return;
 
 	try {
-		const views = await initFluid();
-		const root = createRoot(rootElement);
-		root.render(<App views={views} />);
+		renderRoot(<ExampleLoadingView />);
+		const { containerId, devtoolsLogger, initialUsers, connectUser } = await initializeFluid();
+		renderRoot(
+			<App
+				containerId={containerId}
+				devtoolsLogger={devtoolsLogger}
+				initialUsers={initialUsers}
+				connectUser={connectUser}
+			/>,
+		);
 	} catch (error) {
 		console.error("Failed to start:", error);
-		rootElement.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 20px; border-radius: 4px; border: 1px solid #f5c6cb;">
-			<h2>Failed to connect to Tinylicious</h2>
-			<p><strong>Error:</strong> ${error instanceof Error ? error.message : error}</p>
-			<p><strong>Tinylicious endpoint:</strong> ${getTinyliciousEndpoint()}</p>
-			<h3>Troubleshooting:</h3>
-			<ol>
-				<li>Make sure Tinylicious is running: <code>pnpm tinylicious</code></li>
-				<li>In Codespaces: Forward port 7070 and set visibility to <strong>Public</strong></li>
-			</ol>
-		</div>`;
+		renderRoot(<ExampleErrorView error={error} />);
 	}
 }
 

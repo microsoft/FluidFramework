@@ -5,10 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	extractTelemetryLoggerExt,
+	isFluidError,
+	MockLogger,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
@@ -81,6 +88,62 @@ describe("LocalChannelContext Tests", () => {
 			codeBlock,
 			validateAssertionError("Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
+		);
+	});
+
+	it("RehydratedLocalChannelContext first await on getChannel() logs ChannelLoadFailure with tagged props when load fails", async () => {
+		const channelId = "ddsId";
+		const mockLogger = new MockLogger();
+		const contextWithMockLogger = new MockFluidDataStoreContext(
+			"testDataStoreId",
+			false,
+			mockLogger.toTelemetryLogger(),
+		);
+		contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
+		const dataStoreRuntime = loadRuntime(contextWithMockLogger, sharedObjectRegistry);
+
+		// Registry returns undefined so loadChannelFactoryAndAttributes throws
+		// inside the LazyPromise body. With an empty snapshot tree and no
+		// attachMessageType, this throws `channelTypeNotAvailable`.
+		const failingRegistry: ISharedObjectRegistry = {
+			get: () => undefined,
+		};
+
+		const rehydratedChannelContext = new RehydratedLocalChannelContext(
+			channelId,
+			failingRegistry,
+			dataStoreRuntime,
+			contextWithMockLogger,
+			contextWithMockLogger.storage,
+			extractTelemetryLoggerExt(contextWithMockLogger.baseLogger),
+			() => {},
+			() => {},
+			{ trees: {}, blobs: {} } as unknown as ISnapshotTree,
+		);
+
+		await assert.rejects(
+			async () => rehydratedChannelContext.getChannel(),
+			(error: IErrorBase) => {
+				assert.strictEqual(
+					error.errorType,
+					ContainerErrorTypes.dataCorruptionError,
+					"thrown error should be a DataCorruptionError",
+				);
+				assert(isFluidError(error), "thrown error should be a Fluid error");
+				return true;
+			},
+		);
+
+		mockLogger.assertMatchAny(
+			[
+				{
+					eventName: "RehydratedLocalChannelContext:RealizeError",
+					dataStoreId: { value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+					dataStorePackagePath: { value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+					channelId: { value: channelId, tag: TelemetryDataTag.CodeArtifact },
+				},
+			],
+			"Expected one RealizeError event with tagged data-store and channel props",
 		);
 	});
 });

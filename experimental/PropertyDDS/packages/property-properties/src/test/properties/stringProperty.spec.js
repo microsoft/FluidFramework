@@ -7,12 +7,13 @@
  * @fileoverview In this file, we will test the string property object described in /src/properties/stringProperty.js
  */
 
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+const { MSG } = constants;
+import _ from "lodash";
 
-const { PropertyFactory } = require("../..");
-const { BaseProperty } = require("../..");
+import { PropertyFactory } from "../../index.js";
+import { BaseProperty } from "../../index.js";
 const deepCopy = _.cloneDeep;
 
 describe("StringProperty", function () {
@@ -173,7 +174,7 @@ describe("StringProperty", function () {
 		});
 
 		it("Should report dirtiness correctly when introducing a modification in certain order", function () {
-			testString = PropertyFactory.create("String");
+			var testString = PropertyFactory.create("String");
 			let newValue = "test";
 			const node = PropertyFactory.create("NodeProperty");
 			node.insert("stringProp", testString);
@@ -716,10 +717,11 @@ describe("StringProperty", function () {
 				if (in_isCollection && changeSet2.modify) {
 					changeSet2 = changeSet2.modify;
 				}
-				combinedChangeSet = combinedChangeSet.getSerializedChangeSet();
-				if (in_isCollection && combinedChangeSet.insert) {
-					combinedChangeSet = combinedChangeSet.insert;
-				}
+				var combinedSerialized = combinedChangeSet.getSerializedChangeSet();
+				combinedChangeSet =
+					in_isCollection && combinedSerialized.insert
+						? combinedSerialized.insert
+						: combinedSerialized;
 				in_options.checkResult(conflicts, changeSet2, combinedChangeSet);
 			}
 		};

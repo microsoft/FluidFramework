@@ -1,0 +1,120 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fluid-alfred-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fluid-alfred
+  minReplicas: <ALFRED_HPA_MIN>
+  maxReplicas: <ALFRED_HPA_MAX>
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fluid-nexus-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fluid-nexus
+  minReplicas: <NEXUS_HPA_MIN>
+  maxReplicas: <NEXUS_HPA_MAX>
+  # Limits how fast the HPA removes nexus pods -- at most 1 pod, or 5% of current replicas
+  # (whichever is larger), per 120s -- so long-lived WebSocket connections drain gradually
+  # instead of many pods being killed at once on scale-down.
+  behavior:
+    scaleDown:
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+        - type: Percent
+          value: 5
+          periodSeconds: 120
+      selectPolicy: Max
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+# deli/scriptorium/scribe intentionally have no HPA here -- they run as fixed replicas
+# (routerlicious-values.yaml) instead. All three are Kafka consumer-group members reading
+# rawdeltas/deltas (both verified live at 32 partitions via `az eventhubs eventhub show`); autoscaling
+# a Kafka consumer-group deployment forces a full group rebalance -- briefly pausing every
+# pod's partitions, not just the ones being added/removed -- on every scale event, so a fixed
+# replica count is deliberately more stable here than HPA. Currently 8 (4 partitions/pod) --
+# a staged first step up from an idle-traffic baseline of 4, short of the 32-partition ceiling
+# (1 partition/pod); raise further as real traffic/load testing justifies it.
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fluid-riddler-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fluid-riddler
+  minReplicas: <RIDDLER_HPA_MIN>
+  maxReplicas: <RIDDLER_HPA_MAX>
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: historian-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: historian
+  minReplicas: <HISTORIAN_HPA_MIN>
+  maxReplicas: <HISTORIAN_HPA_MAX>
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70

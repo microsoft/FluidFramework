@@ -8,8 +8,9 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { SharedString, Side } from "@fluidframework/sequence/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
+	defaultTestOldestSupportedClient,
 	TestFluidObjectFactory,
 	createTestConfigProvider,
 	type ITestFluidObject,
@@ -20,6 +21,8 @@ const configProvider = createTestConfigProvider();
 // configProvider.set("Fluid.ContainerRuntime.DeltaManagerOpsProxy", false);
 describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+	const { SharedString } = apis.dds;
+	const { Side } = apis.dataRuntime.packages.sequence;
 	configProvider.set("Fluid.Sequence.intervalStickinessEnabled", true);
 	const loaderProps: Partial<ILoaderProps> = {
 		configProvider,
@@ -33,6 +36,7 @@ describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
 		runtimeOptions,
 	});

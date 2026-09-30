@@ -28,6 +28,17 @@ import {
 import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
 
 /**
+ * The subset of the props Recharts injects into a custom axis tick renderer that we consume.
+ */
+interface AxisTickProps {
+	x: number;
+	y: number;
+	payload: {
+		value: string | number;
+	};
+}
+
+/**
  * Data To be rendered with Op Latency Graph
  */
 export interface GraphDataSet<XKey extends string = string, YKey extends string = string> {
@@ -238,8 +249,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 	 * Renders a custom view for the X Axis displayed on the Rechart chart
 	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	const CustomizedXAxisTick = (xAxisProps: any): ReactElement => {
-		const { x, y, payload } = xAxisProps;
+	// eslint-disable-next-line @eslint-react/no-nested-component-definitions -- Kept as an in-scope closure so it can read graphColorPalette; Recharts injects the x/y/payload props.
+	const CustomizedXAxisTick = ({ x, y, payload }: AxisTickProps): ReactElement => {
 		return (
 			<g transform={`translate(${x},${y})`}>
 				<text
@@ -261,9 +272,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 	 * Renders a custom view for the Y Axis displayed on the Rechart chart
 	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	const CustomizedYAxisTick = (yAxisProps: any): ReactElement => {
-		const { x, y, payload } = yAxisProps;
-
+	// eslint-disable-next-line @eslint-react/no-nested-component-definitions -- Kept as an in-scope closure so it can read graphColorPalette; Recharts injects the x/y/payload props.
+	const CustomizedYAxisTick = ({ x, y, payload }: AxisTickProps): ReactElement => {
 		return (
 			<g>
 				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
@@ -403,16 +413,12 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 
 	return (
 		<ResponsiveContainer width="100%" height="100%">
-			<ComposedChart
-				data={mergeDataSets(props.dataSets)}
-				margin={props.margin}
-				data-testId="test-dynamic-composed-chart"
-			>
+			<ComposedChart data={mergeDataSets(props.dataSets)} margin={props.margin}>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
+				<XAxis dataKey={"x"} tick={CustomizedXAxisTick}>
 					<Label value="Timestamp" offset={12} position="bottom" />
 				</XAxis>
-				<YAxis tick={<CustomizedYAxisTick />} />
+				<YAxis tick={CustomizedYAxisTick} />
 				<Tooltip
 					contentStyle={{
 						fontSize: "14px",

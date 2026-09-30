@@ -4,12 +4,14 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
+import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 import { MessageFormatVersion } from "./messageFormat.js";
 
 /**
@@ -29,7 +31,22 @@ export interface Message {
 	 */
 	readonly changeset?: JsonCompatibleReadOnly;
 
+	/**
+	 * Unique ID associated with the branch.
+	 */
 	readonly branchId?: EncodedBranchId;
+
+	/**
+	 * Application-defined name of the branch, if any.
+	 * Not guaranteed to be unique.
+	 */
+	readonly branchName?: string;
+
+	/**
+	 * Arbitrary, application-defined metadata to persist alongside the commit in this message.
+	 * @remarks See {@link GraphCommit.customMetadata}.
+	 */
+	readonly customMetadata?: EncodedCustomMetadataTree;
 
 	/**
 	 * The version of the message format.
@@ -45,5 +62,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		originatorId: SessionIdSchema,
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
+		branchName: Type.Optional(Type.String()),
+		customMetadata: Type.Optional(EncodedCustomMetadataTree),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

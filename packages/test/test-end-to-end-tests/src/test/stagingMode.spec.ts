@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
@@ -17,6 +16,7 @@ import type {
 	IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
@@ -26,6 +26,7 @@ describeCompat(
 	"StagingMode: readonlyInStagingMode",
 	"FullCompat",
 	function (getTestObjectProvider, apis) {
+		const { DataObjectFactory } = apis.dataRuntime;
 		const createContainer = async ({
 			test,
 			readonlyInStagingMode,
@@ -74,6 +75,7 @@ describeCompat(
 			const container = await provider.createContainer(
 				new apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore({
 					defaultFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: new Map([[defaultFactory.type, defaultFactory]]),
 				}),
 			);

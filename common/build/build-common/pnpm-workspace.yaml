@@ -9,7 +9,7 @@ packages:
   - "."
 
 # Supply chain security settings - see /DEV.md for documentation
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
@@ -18,3 +18,8 @@ trustPolicy: no-downgrade
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
 trustPolicyExclude: []
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+strictPeerDependencies: true
+updateNotifier: false

@@ -77,7 +77,7 @@ export const TableHeaderView: FC<TableHeaderViewProps> = ({
 				<InsertColumnDialogue
 					columnCount={table.columns.length}
 					handleAppendColumn={(newColumn) => {
-						table.insertColumns({ columns: [newColumn] });
+						table.insertColumns([newColumn]);
 						setShowAddColumnInput(false);
 					}}
 				/>

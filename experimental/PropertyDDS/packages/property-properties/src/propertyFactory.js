@@ -11,74 +11,69 @@
  * Responsible for creating property sets and registering property templates
  */
 
-const _ = require("lodash");
+import _ from "lodash";
 const { cloneDeep: deepCopy } = _;
 
-const {
+import {
 	Collection,
 	ConsoleUtils,
 	EventEmitter,
 	SortedCollection,
 	constants,
 	GuidUtils,
-} = require("@fluid-experimental/property-common");
+} from "@fluid-experimental/property-common";
 const { MSG } = constants;
 
-const {
+import {
 	TypeIdHelper,
 	TemplateValidator,
+	// eslint-disable-next-line unused-imports/no-unused-imports -- preserving imports as-is during migration to module format
 	PathHelper,
+	// eslint-disable-next-line unused-imports/no-unused-imports -- preserving imports as-is during migration to module format
 	ChangeSet,
-} = require("@fluid-experimental/property-changeset");
+} from "@fluid-experimental/property-changeset";
 
-const semver = require("semver");
-const async = require("async");
-const { PropertyTemplate } = require("./propertyTemplate");
-const { PropertyTemplateWrapper } = require("./propertyTemplateWrapper");
+import semver from "semver";
+import async from "async";
+import { PropertyTemplate } from "./propertyTemplate.js";
+import { PropertyTemplateWrapper } from "./propertyTemplateWrapper.js";
 
 // Include the property classes
-const { BaseProperty } = require("./properties/baseProperty");
-const { NamedProperty } = require("./properties/namedProperty");
-const { NodeProperty } = require("./properties/nodeProperty");
-const { NamedNodeProperty } = require("./properties/namedNodeProperty");
-const { ContainerProperty } = require("./properties/containerProperty");
-const { ValueProperty } = require("./properties/valueProperty");
+import { BaseProperty } from "./properties/baseProperty.js";
+import { NamedProperty } from "./properties/namedProperty.js";
+import { NodeProperty } from "./properties/nodeProperty.js";
+// eslint-disable-next-line unused-imports/no-unused-imports -- preserving imports as-is during migration to module format
+import { NamedNodeProperty } from "./properties/namedNodeProperty.js";
+import { ContainerProperty } from "./properties/containerProperty.js";
+import { ValueProperty } from "./properties/valueProperty.js";
 
 // Include all primitive properties –- will register at the end.
-const {
-	Uint8Property,
-	Uint16Property,
-	Uint32Property,
-} = require("./properties/uintProperties");
+import { Uint8Property, Uint16Property, Uint32Property } from "./properties/uintProperties.js";
 
-const { Float32Property, Float64Property } = require("./properties/floatProperties");
+import { Float32Property, Float64Property } from "./properties/floatProperties.js";
 
-const {
+import {
 	Int8Property,
 	Int16Property,
 	Int32Property,
 	Int64Property,
 	Uint64Property,
-} = require("./properties/intProperties");
+} from "./properties/intProperties.js";
 
-const { StringProperty } = require("./properties/stringProperty");
-const { BoolProperty } = require("./properties/boolProperty");
-const { ReferenceProperty } = require("./properties/referenceProperty");
-const { EnumProperty } = require("./properties/enumProperty");
+import { StringProperty } from "./properties/stringProperty.js";
+import { BoolProperty } from "./properties/boolProperty.js";
+import { ReferenceProperty } from "./properties/referenceProperty.js";
+import { EnumProperty } from "./properties/enumProperty.js";
 
 // Include collection properties
-const { ArrayProperty } = require("./properties/arrayProperty");
-const { SetProperty } = require("./properties/setProperty");
-const { MapProperty } = require("./properties/mapProperty");
-const { ValueMapProperty } = require("./properties/valueMapProperty");
-const {
-	IndexedCollectionBaseProperty,
-} = require("./properties/indexedCollectionBaseProperty");
-const {
-	AbstractStaticCollectionProperty,
-} = require("./properties/abstractStaticCollectionProperty");
+import { ArrayProperty } from "./properties/arrayProperty.js";
+import { SetProperty } from "./properties/setProperty.js";
+import { MapProperty } from "./properties/mapProperty.js";
+import { ValueMapProperty } from "./properties/valueMapProperty.js";
+import { IndexedCollectionBaseProperty } from "./properties/indexedCollectionBaseProperty.js";
+import { AbstractStaticCollectionProperty } from "./properties/abstractStaticCollectionProperty.js";
 
-const {
+import {
 	Float32ArrayProperty,
 	Float64ArrayProperty,
 	Uint32ArrayProperty,
@@ -91,13 +86,13 @@ const {
 	Int8ArrayProperty,
 	StringArrayProperty,
 	BoolArrayProperty,
-} = require("./properties/valueArrayProperty");
+} from "./properties/valueArrayProperty.js";
 
-const { ReferenceMapProperty } = require("./properties/referenceMapProperty");
-const { ReferenceArrayProperty } = require("./properties/referenceArrayProperty");
-const { EnumArrayProperty } = require("./properties/enumArrayProperty");
+import { ReferenceMapProperty } from "./properties/referenceMapProperty.js";
+import { ReferenceArrayProperty } from "./properties/referenceArrayProperty.js";
+import { EnumArrayProperty } from "./properties/enumArrayProperty.js";
 
-const {
+import {
 	Float64MapProperty,
 	Float32MapProperty,
 	Uint32MapProperty,
@@ -110,9 +105,9 @@ const {
 	Int8MapProperty,
 	StringMapProperty,
 	BoolMapProperty,
-} = require("./properties/valueMapProperty");
+} from "./properties/valueMapProperty.js";
 
-const { LazyLoadedProperties } = require("./properties/lazyLoadedProperties");
+import { LazyLoadedProperties } from "./properties/lazyLoadedProperties.js";
 
 /* eslint-enable import-x/order */
 

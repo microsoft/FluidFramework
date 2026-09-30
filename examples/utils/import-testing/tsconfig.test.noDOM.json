@@ -1,0 +1,11 @@
+{
+	"extends": "./tsconfig.test.json",
+	"exclude": [
+		"src/crossPackage/**/*",
+		"src/test/crossPackage/**/*",
+		"src/test/apiExamples.spec.ts",
+	],
+	"compilerOptions": {
+		"lib": ["ES2022"],
+	},
+}

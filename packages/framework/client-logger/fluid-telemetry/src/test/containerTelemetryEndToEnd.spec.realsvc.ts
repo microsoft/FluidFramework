@@ -21,6 +21,8 @@ import {
 	type ITelemetryConsumer,
 } from "../index.js";
 
+import { tinyliciousPort } from "./TestConstants.js";
+
 // This test suite creates an actual IFluidContainer and confirms events are fired with the expected names during the expected events
 
 describe("container telemetry E2E", () => {
@@ -37,7 +39,7 @@ describe("container telemetry E2E", () => {
 	}
 
 	before(() => {
-		tinyliciousClient = new TinyliciousClient({ connection: { port: 7070 } });
+		tinyliciousClient = new TinyliciousClient({ connection: { port: tinyliciousPort } });
 		schema = {
 			initialObjects: {
 				sharedTree1: SharedTree,
@@ -55,7 +57,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'connected' system event produces expected ContainerConnectedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema, "2");
+		const { container } = await tinyliciousClient.createContainer(schema, "2.0.0");
 
 		const containerId = await container.attach();
 		startTelemetry({
@@ -100,7 +102,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'disconnected' system event produces expected ContainerDisconnectedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema, "2");
+		const { container } = await tinyliciousClient.createContainer(schema, "2.0.0");
 
 		const containerId = await container.attach();
 		startTelemetry({
@@ -154,7 +156,7 @@ describe("container telemetry E2E", () => {
 	});
 
 	it("IFluid container's 'disposed' system event produces expected ContainerDisposedTelemetry using ITelemetryConsumer", async () => {
-		const { container } = await tinyliciousClient.createContainer(schema, "2");
+		const { container } = await tinyliciousClient.createContainer(schema, "2.0.0");
 
 		const containerId = await container.attach();
 		startTelemetry({

@@ -23,32 +23,19 @@ _ensure_agency() {
 
 # Agent launcher functions. Extra args (e.g. --mcp 'kusto ...') are inserted
 # before the -- separator so they reach agency, not Claude/Copilot directly.
-claude() {
-	_ensure_agency || return 1
-	{ repoverlay remove --all 2>/dev/null; true; }
-	agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
-}
-
 dev() {
 	_ensure_agency || return 1
-	repoverlay switch --copy nori
-	agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
+	agency copilot --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- -i "/yolo auto"
 }
 
 copilot() {
 	_ensure_agency || return 1
-	{ repoverlay remove --all 2>/dev/null; true; }
 	agency copilot "$@"
 }
 
 oce() {
 	_ensure_agency || return 1
-	repoverlay switch --copy ff-oce
-	agency copilot "$@" -- --agent ff-oce
-}
-
-ai-reset() {
-	repoverlay remove --all
+	agency copilot --profile ff-oce "$@" -- --agent ff-oce:ff-oce -i "/yolo auto"
 }
 
 start() {
@@ -69,7 +56,7 @@ flub-ai() {
 		echo "Failed to create a temporary launch file." >&2
 		return 1
 	}
-	pnpm exec flub ai --launchFile "$launch_file" "$@"
+	flub ai --launchFile "$launch_file" "$@"
 	local rc=$?
 	if [ "$rc" -eq 0 ] && [ -s "$launch_file" ]; then
 		local cmd

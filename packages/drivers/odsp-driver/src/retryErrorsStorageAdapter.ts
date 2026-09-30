@@ -17,8 +17,8 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	LoggingError,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -28,7 +28,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 	private _disposed = false;
 	constructor(
 		private readonly internalStorageService: IDocumentStorageService,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {}
 
 	public get policies(): IDocumentStorageServicePolicies | undefined {

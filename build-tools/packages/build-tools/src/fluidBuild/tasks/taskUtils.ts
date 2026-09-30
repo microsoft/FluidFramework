@@ -5,13 +5,16 @@
 
 import { existsSync } from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import * as glob from "glob";
 import globby from "globby";
 import * as path from "path";
 
-import type { PackageJson } from "../../common/npmPackage";
-import { lookUpDirSync } from "../../common/utils";
+import type { PackageJson } from "../../common/npmPackage.js";
+import { lookUpDirSync } from "../../common/utils.js";
+
+const require = createRequire(import.meta.url);
 
 export function getEsLintConfigFilePath(dir: string): string | undefined {
 	// ESLint 9 flat config files (checked first as they take precedence)
@@ -51,9 +54,9 @@ export async function getInstalledPackageVersion(
 	if (packageJsonPath === undefined) {
 		throw new Error(`Unable to find package ${packageName} from ${cwd}`);
 	}
-	const packageJson: PackageJson = JSON.parse(
+	const packageJson = JSON.parse(
 		await readFile(path.join(packageJsonPath, "package.json"), "utf8"),
-	);
+	) as PackageJson;
 	return packageJson.version;
 }
 
@@ -128,6 +131,13 @@ export async function globFn(pattern: string, options: glob.IOptions = {}): Prom
 	});
 }
 
+/**
+ * Loads a module using its module format.
+ *
+ * @param modulePath - The path of the module to load.
+ * @param moduleType - The package module type. A `.js` file is treated as ESM when this is `"module"`.
+ * @returns The module namespace for an ESM module, or the `module.exports` value for a CommonJS module.
+ */
 export async function loadModule(modulePath: string, moduleType?: string): Promise<unknown> {
 	const ext = path.extname(modulePath);
 	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");

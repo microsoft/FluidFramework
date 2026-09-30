@@ -6,7 +6,7 @@
 import {
 	bufferToString,
 	stringToBuffer,
-	Uint8ArrayToArrayBuffer,
+	AnyUint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -75,13 +75,24 @@ export interface IParsedUrl {
  * Utility api to parse the IResolvedUrl.url into specific parts like querystring, path to get
  * deep link info etc.
  * Warning - This function may not be compatible with any Url Resolver's resolved url. It works
- * with urls of type: protocol://<string>/.../..?<querystring>
+ * with urls of type: `protocol://{host}/.../..?{queryString}`
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
  * @legacy @beta
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
-	const parsed = new URL(url);
+	// `new URL(...)` throws `TypeError` for any string that isn't a well-formed
+	// absolute URL. The `try*` name in this function's identifier implies a
+	// non-throwing contract on bad input, and callers all gate on `=== undefined`
+	// to surface their own errors — letting the built-in throw escape here would
+	// bypass those caller-supplied error messages for the broadest class of bad
+	// URLs ("not absolute", "invalid characters", etc.).
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
+	} catch {
+		return undefined;
+	}
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
 	}
@@ -161,7 +172,7 @@ function convertSummaryToISnapshot(
 				blobContents.set(
 					blobId,
 					summaryObject.content instanceof Uint8Array
-						? Uint8ArrayToArrayBuffer(summaryObject.content)
+						? AnyUint8ArrayToArrayBuffer(summaryObject.content)
 						: stringToBuffer(summaryObject.content, "utf8"),
 				);
 
