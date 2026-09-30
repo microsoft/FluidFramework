@@ -151,7 +151,7 @@ export class UnhydratedFlexTreeNode
 		/**
 		 * The {@link Context} for this node.
 		 * @remarks
-		 * Provides access to all schema reachable from this node.
+		 * Provides access to all schemas reachable from this node.
 		 * See {@link getUnhydratedContext}.
 		 */
 		public readonly simpleContext: Context,

@@ -11,10 +11,11 @@ Follow the [Coding Guidelines](../docs/content/Guidelines/Coding-Guidelines.md) 
 Follow the [Documentation Guidelines](../docs/content/Guidelines/Documentation-Guidelines.md) when writing or modifying code or documentation.
 Read and follow the linked guides relevant to the task, including the language-specific guides for source-code documentation.
 These requirements apply to source-code comments and API documentation as well as standalone documentation.
+Follow the [Fluid Terminology guidelines](../docs/content/Guidelines/Documentation-Guidelines/Fluid-Terminology.md) for project-specific terminology.
 
 ## Changesets
 
-Add a changeset for changes to user-facing behavior or APIs.
+Add a changeset for user-facing changes only if the affected release group uses changesets.
 Before writing or modifying a changeset, read and follow the [Changeset Guidelines](../.changeset/README.md).
 
 ## Asserts

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/markdown-magic",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"private": true,
 	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
 	"homepage": "https://fluidframework.com",
@@ -42,7 +42,7 @@
 		"@types/mdast": "^4.0.4",
 		"@types/node": "catalog:types",
 		"@types/yargs": "^17.0.32",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
 		"disabled": true

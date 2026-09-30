@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-telemetry",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	"description": "Customer facing Fluid telemetry types and classes for both producing and consuming said telemetry",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -117,7 +117,7 @@
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^7.0.1",
 		"tslib": "^2.8.1",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"fluidBuild": {
 		"tasks": {

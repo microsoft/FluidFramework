@@ -18,7 +18,7 @@ And then mount it for development by running.
 When mounted for development you'll want to run the following commands. These also work if you would like to
 develop outside of the container.
 
-`npm install -g pnpm`
+`npm install -g pnpm@11.27.0`
 `pnpm i`
 `npm run build`
 
