@@ -231,7 +231,8 @@ extends:
           clean: true
           lfs: false
           submodules: false
-          # Build versions and publish metadata still depend on release tags.
+          # Release-tag checks still run here before producing artifacts for publishing.
+          # See ../README.md#release-tag-checks-in-build-jobs for constraints and follow-up optimizations.
           fetchDepth: 0
           fetchTags: true
 

@@ -113,7 +113,9 @@ stages:
           path: ${{ variables.FluidFrameworkDirectory }}
           submodules: false
           clean: true
-          # Deployment eligibility depends on the complete set of release tags.
+          # flub check latestVersions uses release tags to decide whether this version should deploy.
+          # Full history is conservative; validate fetchDepth: 1 with tags retained.
+          # Removing the tag dependency requires another source of published-version information.
           fetchDepth: 0
           fetchTags: true
 

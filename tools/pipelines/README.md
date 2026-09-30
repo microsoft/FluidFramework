@@ -3,24 +3,18 @@
 Azure Pipelines definitions and shared [`templates/`](./templates) for building, testing, and
 releasing the Fluid Framework.
 
-## Checkout history and tags
+## Reducing CI checkout duration
 
-Use `fetchDepth: 1` and `fetchTags: false` only for jobs that need the checked-out files, not repository history or release tags.
-Disabling tag fetching is important: fetching tags can download history even with a shallow checkout.
+Prefer explicit `fetchDepth: 1` and `fetchTags: false` to reduce CI duration and network usage, including equivalent options on scripted fetches.
+Fetch additional history or tags only where needed; tags do not require full ancestry, but can still increase download size.
+Document exceptions and possible follow-up optimizations beside the checkout, linking here for shared constraints.
 
-- Artifact-based client test jobs, real-service test jobs, telemetry uploads, policy checks, and performance tests can use shallow checkouts.
-  Any subsequent fetch of a test build's commit must also use `--depth=1 --no-tags`.
-- Stress-test change detection needs `fetchDepth: 2` because it runs `git diff HEAD~1`.
-  A failed diff must fail the job rather than silently skip tests.
-- The bundle-size artifact build skips version generation, so it can use a shallow checkout.
-- Other npm and Docker build jobs retain `fetchDepth: 0` and `fetchTags: true`.
-  Moving publishing to a separate pipeline does not remove the build's dependency on tags:
-  `flub generate buildVersion` checks for existing release tags and computes `isLatest`, which is passed to the publish pipeline in `publish-metadata.json`.
-- API-model deployment eligibility also requires release tags for `flub check latestVersions`.
-  Coverage comparison jobs retain a complete checkout as a conservative exception.
+### Release-tag checks in build jobs
 
-Do not apply shallow-checkout settings globally or to publishing and website deployment jobs without checking their history and tag requirements.
-Full-history settings are explicit in version-generating jobs so pipeline UI defaults cannot silently make their checkouts shallow.
+Npm and Docker builds still run `flub generate buildVersion` to detect duplicate releases and compute `isLatest` for publishing metadata.
+Those checks need tags, not ancestry; compilation and version-number calculation need neither.
+Use `fetchDepth: 1` with `fetchTags: true` unless other steps need history.
+To remove the tag dependency, move these checks into publishing or explicitly skip tag-dependent work for non-release builds.
 
 ## Mirroring base container images for the server pipelines
 
