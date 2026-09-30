@@ -996,8 +996,10 @@ describe("Host and Guest correctness", () => {
 		const { host, guest, guestView } = await setup(["a"]);
 		guest.dispose();
 		host.dispose();
+		const mainCheckout = getCheckout(host.main);
 		const synchronization = new HostSynchronization(
-			host.main,
+			mainCheckout,
+			mainCheckout.fork(),
 			() => {},
 			() => {},
 			(action) => action(),
@@ -1023,8 +1025,10 @@ describe("Host and Guest correctness", () => {
 		guest.dispose();
 		host.dispose();
 		const sent: HostUpdateMessage[] = [];
+		const mainCheckout = getCheckout(host.main);
 		const synchronization = new HostSynchronization(
-			host.main,
+			mainCheckout,
+			mainCheckout.fork(),
 			(message) => {
 				if (message.type === "hostUpdate") {
 					sent.push(message);

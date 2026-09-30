@@ -14,9 +14,6 @@ import {
 	type RevisionTag,
 } from "../../../core/index.js";
 import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -31,7 +28,6 @@ import {
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
-import { getCheckout } from "./synchronizationUtils.js";
 
 /**
  * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
@@ -56,15 +52,7 @@ interface PendingHostUpdate {
  * This class owns branch synchronization only.
  * The `Host` owns transport encoding, message routing, and session lifetime.
  */
-export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
-	/**
-	 * The Guest's authoring branch, advanced only by Guest changes and acknowledged Host updates.
-	 */
-	public readonly local: TreeViewAlpha<TSchema>;
-	/** The checkout that backs the Host's main view. */
-	private readonly mainCheckout: TreeCheckout;
-	/** The checkout that backs the Guest's authoring view. */
-	private readonly localCheckout: TreeCheckout;
+export class HostSynchronization {
 	/** Host updates awaiting ordered acknowledgments, with the exact branch state sent for each update. */
 	private readonly pendingUpdates = new Map<HostUpdateId, PendingHostUpdate>();
 	/**
@@ -95,10 +83,10 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private disposed = false;
 
 	public constructor(
-		/**
-		 * The Host's main view to synchronize with the Guest.
-		 */
-		main: TreeViewAlpha<TSchema>,
+		/** The Host's main checkout to synchronize with the Guest. */
+		private readonly mainCheckout: TreeCheckout,
+		/** The checkout for the Guest's authoring branch, advanced by Guest changes and acknowledged Host updates. */
+		private readonly localCheckout: TreeCheckout,
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
@@ -120,9 +108,6 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		 */
 		private readonly logger: TelemetryLoggerExt,
 	) {
-		this.local = main.fork();
-		this.mainCheckout = getCheckout(main);
-		this.localCheckout = getCheckout(this.local);
 		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
 		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
@@ -245,7 +230,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		}
 		this.stop(new Error("Host synchronization disposed before synchronization completed."));
 		this.disposed = true;
-		this.local.dispose();
+		this.localCheckout.dispose();
 	}
 
 	private sendMainUpdate(): void {

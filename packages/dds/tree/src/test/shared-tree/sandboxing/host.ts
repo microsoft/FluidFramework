@@ -66,11 +66,13 @@ export interface HostOptions<TSchema extends ImplicitFieldSchema>
 export class Host<const TSchema extends ImplicitFieldSchema> {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
-	private readonly synchronization: HostSynchronization<TSchema>;
+	private readonly synchronization: HostSynchronization;
 	private readonly port: MessagePort;
 	private disposed = false;
 	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
 	public readonly main: TreeViewAlpha<TSchema>;
+	/** The Host branch that reflects the Guest's acknowledged state. */
+	public readonly local: TreeViewAlpha<TSchema>;
 
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
@@ -136,8 +138,11 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			},
 			handleProtocolError,
 		);
+		const mainCheckout = getCheckout(main);
+		this.local = main.fork();
 		this.synchronization = new HostSynchronization(
-			main,
+			mainCheckout,
+			getCheckout(this.local),
 			(message) => this.postMessage(message),
 			(change) => this.codec.bindHandles(change),
 			(action) => this.session.run(action),
@@ -261,13 +266,6 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	public get updateGuestPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
 		return this.synchronization.updateGuestPromise;
-	}
-
-	/**
-	 * The Host branch that reflects the Guest's acknowledged state.
-	 */
-	public get local(): TreeViewAlpha<TSchema> {
-		return this.synchronization.local;
 	}
 
 	/**
