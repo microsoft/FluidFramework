@@ -11,6 +11,10 @@ cargo run -p sea-webtransport-server -- \
 	127.0.0.1:4433 cert.pem key.pem ./sea-data
 ```
 
+On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
+Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.
+It also prints heartbeat, inactivity, reconnect-grace, and legacy live-lag settings.
+
 | Setting | Values | Default |
 | --- | --- | --- |
 | `SEA_STORAGE_MODE` | `memory`, `buffered-file`, `durable-file` | `durable-file` |
@@ -97,7 +101,6 @@ Shutdown `TRANSPORT_EVIDENCE` reports the maximum pending request count and enco
 
 Typed hosting uses one constructor: `DocumentHost::new(storage, sessions)`.
 Wrap it in `SeaProtocolHost` to serve the Sea protocol, then pass that adapter, or its clones, to the WebTransport and WebSocket listeners.
-The executable's environment flags and default policy are unchanged.
 
 ```rust
 use sea_webtransport_server::{
@@ -199,10 +202,6 @@ To preserve existing on-disk namespaces, pass the previous `root.join("documents
 Replace pass-through and policy constructors with the corresponding decorators.
 When migrating `with_storage`, explicitly use `.with_live_cache(false)` to preserve its former storage-backed delivery.
 Applications using the earlier `DocumentPolicyBuilder` injection should instead implement `SessionDecorator` and return a `PolicyFactory`.
-
-On startup the process prints `WEBTRANSPORT_URL`, `CERTIFICATE_SHA256`, `STORAGE_MODE`, and `PROTOCOL=sea`.
-Clients connect to the printed `/sea` URL and pin the printed SHA-256 certificate digest.
-It also prints heartbeat, inactivity, reconnect-grace, and legacy live-lag settings.
 
 ## Connection Lifecycle
 
@@ -318,10 +317,8 @@ cargo test -p sea-webtransport-server --features websocket-stream websocket
 
 ## Document Ownership
 
-The host uses `SeaStorage` factories and `LocalSequencer`.
-`StorageSetup::from_storage(storage)` accepts any `SeaStorage` implementation.
-The generic document registry provides session opening, document existence checks, flush, and shutdown through one backend-independent interface.
-Storage selection belongs to the application or executable; neither the host nor transport operations dispatch on backend kinds.
+The host uses `SeaStorage` factories and `LocalSequencer` through a backend-independent document registry.
+Storage selection belongs to the [application or executable](#configured-storage-and-session-composition); neither the host nor transport operations dispatch on backend kinds.
 Creation allocates an opaque backend document ID and returns it with session authority; callers retain that ID for reopening.
 No caller-name mapping is maintained.
 The executable keeps file namespaces below its data directory's `documents` subdirectory; embedded callers supply exact namespace paths.

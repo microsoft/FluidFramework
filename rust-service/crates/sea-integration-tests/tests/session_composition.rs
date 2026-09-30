@@ -11,11 +11,6 @@
 //! network path on a disposable document, then runs every workflow in `SCENARIOS` on fresh documents.
 //! The transport-path probe is separate so its successful submissions cannot seed a scenario's history.
 //!
-//! `Fixture` and `TestHost` own the setup, not the expected behavior.
-//! The single-author workflows use `write_trace` and `after_reconnect`.
-//! The two-author workflows use `collaborate`, with one round for collaboration and four for stress.
-//! Its helpers separate content checks, concurrent submissions, snapshot authority, and reconnect loading.
-//!
 //! Expectations retain original plaintext submissions, not copies of received events.
 //! Concurrent receipt positions determine the expected order because either author may win a race.
 //! Progress notifications are not events; `next_event` skips them, while bounded history checks
@@ -1307,7 +1302,6 @@ async fn verify_transport_path<Session: SeaSession>(
 /// caller -> compression -> network -> encryption -> network -> local session.
 /// Recursion constructs the rightmost (innermost) layer first; every `transport` starts
 /// a separate server owning the remaining inner stack and returns a client for that server.
-/// Keeping the stack's concrete type lets the same generic scenarios exercise every combination.
 macro_rules! stack {
     ($fixture:ident, $session:expr;) => { $session };
     ($fixture:ident, $session:expr; compression $(, $rest:ident)*) => {

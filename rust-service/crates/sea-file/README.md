@@ -34,7 +34,7 @@ Durable mode appends to the journal and synchronizes it before acknowledgment, o
 Durable creation synchronizes a temporary file, renames it, and synchronizes the namespace and newly created ancestors.
 On Unix, namespace synchronization stops when the parent belongs to a different filesystem; synchronizing an unrelated parent filesystem cannot persist the namespace's entries.
 Mount configuration must already be stable and is outside this guarantee.
-The [power-loss model](#power-loss-model) requires durable-prefix integrity, crash-atomic rename, and truthful synchronization; filesystem/device qualification remains outstanding.
+See the [power-loss model](#power-loss-model) for filesystem assumptions and outstanding qualification.
 
 Each journal has a checksummed 48-byte `.cursor` containing its validated byte boundary and last record offset.
 Opening validates the named tail records and recovers only the suffix after that boundary.
@@ -183,7 +183,6 @@ Checkpoints participate in mutation order.
 Shutdown timeout can stop waiting, but cannot cancel a syscall or report successful flushing.
 Successful shutdown waits for accepted workers to settle; separately retained components and streams still own their document locks until dropped.
 Mutation encoding memory is proportional to batch size.
-See [Power-Loss Model](#power-loss-model) for filesystem requirements, corruption limits, and repairable tails.
 
 See [`src/storage.rs`](src/storage.rs) for components and localized tests, and [`src/journal.rs`](src/journal.rs) for framing and fault boundaries.
 Shared view and sparse-archive laws come from [`sea-conformance`](../sea-conformance/README.md).
@@ -200,9 +199,7 @@ Durable mode preserves acknowledged records across power loss under these assump
 
 Ordinary append plus fsync does not establish durable-prefix integrity by itself.
 Event and snapshot mutations append to their existing journal inodes; immutable content uses same-directory atomic publication.
-Readers observe a durable event batch only after both journal synchronization and fixed-cursor publication complete.
-Power loss before acknowledgment can retain any ordered prefix of the unacknowledged batch, including the entire batch.
-Never automatically retry an uncertain entry.
+Batch visibility and uncertain outcomes follow the [persistence model](#persistence-model).
 
 Reopening holds a stable sidecar, truncates structurally incomplete suffix frames, synchronizes the selected journals and directories, and discards unpublished creation files.
 This makes a complete recovered but unacknowledged publication durable before another caller can depend on it.

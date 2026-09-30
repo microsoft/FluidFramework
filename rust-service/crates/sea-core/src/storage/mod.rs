@@ -440,10 +440,8 @@ where
 
     /// Selects a snapshot using `start`, with handles compatible with this view's stores.
     ///
-    /// [`LoadStart::Beginning`] returns `None` without a snapshot lookup.
-    /// [`LoadStart::ReplayAtLeastAllAfter`] selects the newest snapshot at or before the supplied position,
-    /// including an exact match when available; [`LoadStart::LatestSnapshot`] selects the newest snapshot.
-    /// Both return `None` when no qualifying snapshot exists, even if the archive contains events.
+    /// Selection follows [`LoadStart`], returning `None` when no snapshot qualifies, even if the archive contains events.
+    /// [`LoadStart::Beginning`] skips lookup.
     ///
     /// To reconstruct state through a target position, select with `ReplayAtLeastAllAfter(target)` and use
     /// [`Self::read`] from the returned snapshot's event position (or `None`) through `Some(target)`.

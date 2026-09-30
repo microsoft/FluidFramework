@@ -629,8 +629,7 @@ mod tests {
         assert_eq!(next_event(&mut history).await.kind, SessionEventKind::Left);
     }
 
-    /// Applies the shared session contract to encryption alone and to compression of plaintext
-    /// before encryption, without introducing a separate wrapper-specific contract.
+    /// Applies the shared session contract to encryption alone and to compression before encryption.
     #[tokio::test]
     async fn compression_encryption_conformance() {
         for compress in [false, true] {
@@ -715,7 +714,6 @@ mod tests {
             EncryptionSession::new(runtime.open_session(None).await.unwrap(), TestKeys::new());
         session.announce_membership(Bytes::new()).await.unwrap();
         let clone = session.clone();
-        // Stop after wrapper admission so only the wrapper can remember the cancelled request.
         let preparation = async {
             let _terminal = session.begin_append().await.unwrap();
             std::future::pending::<()>().await;

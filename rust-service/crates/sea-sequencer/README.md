@@ -7,7 +7,7 @@ The `sea_core::session` traits define content/history, author, and snapshot-coor
 
 Move a view into `session::LocalSequencer::<Storage>::recover`, then call `open_session` for each author connection.
 Recovery restores internal checkpoint state and replays only the bounded suffix after its applied position.
-It rejects malformed envelopes and invalid references; equal submissions remain distinct events.
+It rejects malformed envelopes and invalid references.
 Active authority and publisher selection are runtime-local.
 `announce_membership` optionally publishes immutable public member metadata in the same archive order as application events.
 Announced memberships receive a service-authored departure on close, shutdown, or recovery; unannounced memberships produce no control records.
@@ -168,8 +168,7 @@ To recover non-idempotent application events:
 
 The reader needs the relevant session history, or equivalent prefix accounting in a snapshot.
 Lost acknowledgments do not change the committed prefix.
-There is no operation-ID lookup or submission deduplication API.
-Each submit call is new, even when its payload and reference equal an earlier submission.
+See [Submission Identity and Settlement](#submission-identity-and-settlement) for identity and ambiguity handling.
 Announcement failures also revoke authority; transport dispatch terminates malformed author requests before they reach the sequencer.
 Clients and decorators enforce the same failed-prefix rule.
 The Fluid driver's explicit recovery helper verifies the old terminal prefix and requires an application-owned suffix transformation under a fresh session.
@@ -226,7 +225,8 @@ See the [checkpoint design and evidence](../../historical/CHECKPOINT_PLAN.md) fo
 
 ## Submission Identity and Settlement
 
-The sequencer assigns no operation IDs and retains no historical submission-deduplication index.
+Each submit call is new, even when its payload and reference equal an earlier submission.
+The sequencer assigns no operation IDs, exposes no operation-ID lookup or submission deduplication API, and retains no historical submission-deduplication index.
 A client recognizes its own accepted submissions by session and application-event ordinal; other events have immutable archive positions.
 Applications may carry their own identifiers in opaque payloads without Sea interpreting them.
 Blob identities in submissions are resolved through the current view before publication; wire identities never fabricate availability handles.
