@@ -11,7 +11,10 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -868,7 +871,7 @@ describe("custom commit metadata", () => {
 				flushMode: FlushMode.TurnBased,
 			});
 			const runtime = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
+				idCompressor: createIdCompressor(SerializationVersion.V3),
 			});
 			const containerRuntime = runtimeFactory.createContainerRuntime(runtime);
 			const tree = makeFactory().create(runtime, "tree");

@@ -32,7 +32,7 @@ import { Component } from "../componentApi.js";
  * Closed polymorphism in TypeScript can be expressed with {@link https://en.wikipedia.org/wiki/Union_type|union types}.
  * In tree schema, closed polymorphism is expressed with {@link AllowedTypes}.
  *
- * Tree's stored schema do not support open polymorphism: all possible implementations must be explicitly listed.
+ * Tree's stored schemas do not support open polymorphism: all possible implementations must be explicitly listed.
  * View schema however can emulate it by carefully controlling evaluation order:
  * the source code can be structured in an open polymorphism style which at runtime evaluate into closed polymorphism by having each implementation register itself into a central {@link AllowedTypes}.
  * There are a few ways to do this, some of which are demonstrated below.
@@ -326,7 +326,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		/**
 		 * Example configuration type for an application.
 		 *
-		 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+		 * Contains a collection of schemas to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
 		 */
 		interface MyAppConfig extends MyAppConfigPartial {
 			/**
@@ -417,7 +417,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			/**
 			 * Example configuration type for an application.
 			 *
-			 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+			 * Contains a collection of schemas to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
 			 */
 			interface MyAppConfig extends MyAppConfigPartial {
 				/**
@@ -522,7 +522,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			});
 		});
 
-		// An open polymorphic collection of schema with implementations provided by components.
+		// An open polymorphic collection of schemas with implementations provided by components.
 		// Unlike the above examples, this one doesn't require the schema to implement any specific interfaces, making it simpler and more self contained, but less realistic.
 		it("minimal open polymorphism", () => {
 			/** Example application component content type. */
@@ -758,7 +758,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			/**
 			 * Example configuration type for an application.
 			 *
-			 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+			 * Contains a collection of schemas to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
 			 */
 			interface MyAppConfig extends MyAppConfigPartial {
 				/**

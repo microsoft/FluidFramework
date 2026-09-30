@@ -91,7 +91,10 @@ const urlResolver: IUrlResolver = {
 };
 
 function makeCapableFactory(
-	createPointInTimeDocumentService: () => Promise<IDocumentService>,
+	createPointInTimeDocumentService: (
+		resolvedUrl: IResolvedUrl,
+		targetSequenceNumber: number,
+	) => Promise<IDocumentService>,
 ): IDocumentServiceFactory {
 	return {
 		createDocumentService: async () => assert.fail("the adapter should use the capability"),
@@ -175,6 +178,12 @@ function makeSnapshotService(snapshot: ISnapshot): IDocumentService {
 			return this;
 		},
 	} as unknown as IDocumentService;
+}
+
+function getTerminalEvents(logger: MockLogger): Record<string, unknown>[] {
+	return logger.events.filter(
+		(event) => event.eventName === "fluid:telemetry:VersionMarkPointInTimeLoad",
+	);
 }
 
 describe("loadContainerToSequenceNumber", () => {
@@ -430,6 +439,74 @@ describe("loadContainerToSequenceNumber", () => {
 			]);
 		});
 
+		it("propagates a leading replay-gap classification across the point-in-time service boundary", async () => {
+			const snapshot = await createSnapshot(10);
+			const logger = new MockLogger(LogLevel.essential);
+			const missingOpsError = new NonRetryableError(
+				"Missing required operation 11 before available operation 12.",
+				"cannotCatchUp",
+				{
+					driverVersion: "test-driver",
+					versionMarkAvailabilityOutcome: "missingOps",
+				},
+			);
+			const fetchCalls: { from: number; to: number | undefined }[] = [];
+			const snapshotService = makeSnapshotService(snapshot);
+			const service = {
+				...snapshotService,
+				connectToDeltaStorage: async () => ({
+					fetchMessages: (from: number, to: number | undefined) => {
+						fetchCalls.push({ from, to });
+						return {
+							read: async () => {
+								throw missingOpsError;
+							},
+						};
+					},
+				}),
+				connectToDeltaStream: async () =>
+					assert.fail("a storage-only point-in-time service must not open a live stream"),
+			} as unknown as IDocumentService;
+
+			await assert.rejects(
+				loadContainerToSequenceNumber({
+					codeLoader: createTestCodeLoaderProxy({
+						runtimeWithout_setConnectionStatus: true,
+					}),
+					urlResolver,
+					documentServiceFactory: makeCapableFactory(
+						async (_resolvedUrl, targetSequenceNumber) => {
+							assert.equal(
+								targetSequenceNumber,
+								12,
+								"the point-in-time target should reach the capable factory",
+							);
+							return service;
+						},
+					),
+					request: { url: resolvedUrl.url },
+					loadToSequenceNumber: 12,
+					logger,
+				}),
+				(error: unknown) => error === missingOpsError,
+			);
+
+			assert.deepEqual(fetchCalls, [{ from: 11, to: undefined }]);
+			const terminalEvents = getTerminalEvents(logger);
+			assert.equal(terminalEvents.length, 1, "the failed load should emit one terminal event");
+			assert.partialDeepStrictEqual(terminalEvents[0], {
+				eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+				category: "error",
+				outcome: "failed",
+				targetSequenceNumber: 12,
+				availabilityOutcome: "missingOps",
+				baseSnapshotSequenceNumber: 10,
+				errorType: "cannotCatchUp",
+			});
+			assert.equal(terminalEvents[0].versionMarkAvailabilityOutcome, undefined);
+			assert.equal(terminalEvents[0].versionMarkBaseSnapshotSequenceNumber, undefined);
+		});
+
 		it("does not classify an unrelated failure as cancellation when the signal is aborted", async () => {
 			const logger = new MockLogger(LogLevel.essential);
 			const abortController = new AbortController();
@@ -530,6 +607,7 @@ describe("loadContainerToSequenceNumber", () => {
 
 	it("preserves the close error when the container closes during replay", async () => {
 		const service = makeSnapshotService(await createSnapshot(0));
+		const logger = new MockLogger(LogLevel.essential);
 		const expectedError = new GenericError(
 			"simulated close during replay",
 		) as ICriticalContainerError;
@@ -584,6 +662,7 @@ describe("loadContainerToSequenceNumber", () => {
 					documentServiceFactory: makeCapableFactory(async () => service),
 					request: { url: resolvedUrl.url },
 					loadToSequenceNumber: 1,
+					logger,
 				}),
 				(error: unknown) => error === expectedError,
 			);
@@ -593,6 +672,20 @@ describe("loadContainerToSequenceNumber", () => {
 				"the point-in-time container should be instrumented",
 			);
 			assertContainerInteractions();
+
+			const terminalEvents = getTerminalEvents(logger);
+			assert.equal(terminalEvents.length, 1, "cleanup must not emit a second terminal event");
+			assert.partialDeepStrictEqual(terminalEvents[0], {
+				eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+				category: "error",
+				outcome: "failed",
+				targetSequenceNumber: 1,
+				baseSnapshotSequenceNumber: 0,
+				errorType: FluidErrorTypes.genericError,
+			});
+			assert.equal(terminalEvents[0].availabilityOutcome, undefined);
+			assert.equal(terminalEvents[0].versionMarkAvailabilityOutcome, undefined);
+			assert.equal(terminalEvents[0].versionMarkBaseSnapshotSequenceNumber, undefined);
 		} finally {
 			sandbox.restore();
 		}
@@ -927,6 +1020,138 @@ describe("loadContainerToSequenceNumber", () => {
 				removeAbortListenerSpy.calledOnceWithExactly("abort", abortListener),
 				"the abort listener should be removed after cancellation",
 			);
+		} finally {
+			sandbox.restore();
+		}
+	});
+
+	it("preserves cancellation after replay starts and removes all wait listeners", async () => {
+		const snapshotService = makeSnapshotService(await createSnapshot(0));
+		const logger = new MockLogger(LogLevel.essential);
+		const abortController = new AbortController();
+		const sandbox = createSandbox();
+		const loadContainer = Container.load.bind(Container);
+		let markReplayStarted: (() => void) | undefined;
+		const replayStarted = new Promise<void>((resolve) => {
+			markReplayStarted = resolve;
+		});
+		let markDeltaStorageReadSettled: (() => void) | undefined;
+		const deltaStorageReadSettled = new Promise<void>((resolve) => {
+			markDeltaStorageReadSettled = resolve;
+		});
+		const fetchCalls: { from: number; to: number | undefined }[] = [];
+		const service = {
+			...snapshotService,
+			connectToDeltaStorage: async () => ({
+				fetchMessages: (from: number, to: number | undefined, signal?: AbortSignal) => {
+					fetchCalls.push({ from, to });
+					return {
+						read: async () => {
+							assert(signal !== undefined, "delta storage replay should be cancellable");
+							markReplayStarted?.();
+							await new Promise<void>((resolve) => {
+								signal.addEventListener("abort", () => resolve(), { once: true });
+							});
+							markDeltaStorageReadSettled?.();
+							return { done: true, value: undefined };
+						},
+					};
+				},
+			}),
+			connectToDeltaStream: async () =>
+				assert.fail("a storage-only point-in-time service must not open a live stream"),
+		} as unknown as IDocumentService;
+		let assertContainerInteractions: ((expectedError: IErrorBase) => void) | undefined;
+		sandbox.stub(Container, "load").callsFake(async (loadProps, createProps) => {
+			const container = await loadContainer(loadProps, createProps);
+			const disposeSpy = sandbox.spy(container, "dispose");
+			const onSpy = sandbox.spy(container, "on");
+			const offSpy = sandbox.spy(container, "off");
+			const connectSpy = sandbox.spy(container, "connect");
+			assertContainerInteractions = (expectedError: IErrorBase): void => {
+				assert.equal(connectSpy.callCount, 1, "replay should connect before cancellation");
+				assert(disposeSpy.calledOnceWithExactly(expectedError));
+				for (const eventName of ["op", "closed", "disposed"] as const) {
+					const registered = onSpy
+						.getCalls()
+						.filter((call) => call.args[0] === eventName)
+						.map((call) => call.args[1]);
+					const removed = offSpy
+						.getCalls()
+						.filter((call) => call.args[0] === eventName)
+						.map((call) => call.args[1]);
+					assert.deepEqual(
+						removed,
+						registered,
+						`all ${eventName} listeners should be removed after cancellation`,
+					);
+				}
+			};
+			return container;
+		});
+		const addAbortListenerSpy = sandbox.spy(abortController.signal, "addEventListener");
+		const removeAbortListenerSpy = sandbox.spy(abortController.signal, "removeEventListener");
+
+		try {
+			let rejectedError: IErrorBase | undefined;
+			const loadPromise = loadContainerToSequenceNumber({
+				codeLoader: createTestCodeLoaderProxy({
+					runtimeWithout_setConnectionStatus: true,
+				}),
+				urlResolver,
+				documentServiceFactory: makeCapableFactory(async () => service),
+				request: { url: resolvedUrl.url },
+				loadToSequenceNumber: 1,
+				signal: abortController.signal,
+				logger,
+			});
+			await replayStarted;
+			abortController.abort();
+			await assert.rejects(loadPromise, (error: unknown) => {
+				if (!isFluidError(error)) {
+					return false;
+				}
+				rejectedError = error;
+				return /cancel/i.test(error.message);
+			});
+			await deltaStorageReadSettled;
+
+			assert(
+				assertContainerInteractions !== undefined,
+				"the point-in-time container should be instrumented",
+			);
+			assert(rejectedError !== undefined, "the cancellation error should be captured");
+			assertContainerInteractions(rejectedError);
+			assert.deepEqual(
+				fetchCalls,
+				[{ from: 1, to: undefined }],
+				"cancellation should occur after delta storage replay begins",
+			);
+
+			assert.equal(addAbortListenerSpy.callCount, 1);
+			const abortListener = addAbortListenerSpy.firstCall.args[1];
+			assert(
+				removeAbortListenerSpy.calledOnceWithExactly("abort", abortListener),
+				"the abort listener should be removed after cancellation",
+			);
+
+			const terminalEvents = getTerminalEvents(logger);
+			assert.equal(
+				terminalEvents.length,
+				1,
+				"cancellation should emit exactly one terminal event",
+			);
+			assert.partialDeepStrictEqual(terminalEvents[0], {
+				eventName: "fluid:telemetry:VersionMarkPointInTimeLoad",
+				category: "error",
+				outcome: "failed",
+				targetSequenceNumber: 1,
+				availabilityOutcome: "cancelled",
+				baseSnapshotSequenceNumber: 0,
+				errorType: FluidErrorTypes.genericError,
+			});
+			assert.equal(terminalEvents[0].versionMarkAvailabilityOutcome, undefined);
+			assert.equal(terminalEvents[0].versionMarkBaseSnapshotSequenceNumber, undefined);
 		} finally {
 			sandbox.restore();
 		}
