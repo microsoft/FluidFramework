@@ -1,48 +1,5 @@
 # @fluidframework/tree
 
-## 3.3.0
-
-### Minor Changes
-
-- Bug fix: revert preconditions no longer cause document corruption and other errors ([#28317](https://github.com/microsoft/FluidFramework/pull/28317)) [b4384d78657](https://github.com/microsoft/FluidFramework/commit/b4384d786575a2588b43df420d935ab749008a95)
-
-  Before this release, when a SharedTree client specified a [constraint](https://fluidframework.com/docs/data-structures/tree/transactions#constraints) as a [precondition for a revert](https://fluidframework.com/docs/api/fluid-framework/transactioncallbackstatusalpha-typealias) and (whether or not a revert was performed) such a constraint was violated,
-  that client could later error during the rebasing of its shared branches (when processing peer changes) or local branches
-  and was liable to generate invalid edits that would cause document corruption in the meantime.
-
-- Preserve custom commit metadata when applying serialized changes ([#28330](https://github.com/microsoft/FluidFramework/pull/28330)) [89dc7355be6](https://github.com/microsoft/FluidFramework/commit/89dc7355be6e83d18d1a02a061e9aa0987844b7a)
-
-  Changes returned by `LocalChangeMetadata.getChange()` now include the commit's custom metadata, including metadata from nested transactions.
-  Applying these changes to another view preserves that metadata in its branch history.
-
-- Reject reverts across schema changes ([#28320](https://github.com/microsoft/FluidFramework/pull/28320)) [ca6f67c1218](https://github.com/microsoft/FluidFramework/commit/ca6f67c12187c5ee423cbc2387b18e142869f015)
-
-  [`UntypedTreeViewAlpha.revertTo()`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface#revertto-methodsignature) now throws a usage error if any commit being reverted contains a schema change.
-  The operation leaves the document unchanged, preserving transaction atomicity for commits that contain both schema and data changes.
-  You can still revert data changes made after a schema upgrade by targeting the revision of that upgrade or a later revision.
-
-- Record node property read types now include undefined ([#28163](https://github.com/microsoft/FluidFramework/pull/28163)) [2de794b4a74](https://github.com/microsoft/FluidFramework/commit/2de794b4a74774f3686c65e64b8fee7d7e14e481)
-
-  Reading a property from a record node is now typed as `T | undefined` instead of `T`, matching the existing runtime behavior when the key is absent.
-  Consumers must narrow the result before using it as `T`.
-
-  ```typescript
-  const value = record.foo;
-  if (value !== undefined) {
-    // Use value as T.
-  }
-  ```
-
-  This is a bug fix to the `@beta` record node APIs: the previous typing incorrectly claimed that reading any key would produce a value, which could result in unexpected `undefined` values at runtime.
-
-  Note that this does not change what a record node can store; entries are still always defined.
-  Assigning `undefined` to a key continues to remove that entry, as before.
-
-- Optimize memory use of arrays when using ForestTypeOptimized ([#27386](https://github.com/microsoft/FluidFramework/pull/27386)) [0735ff53d5c](https://github.com/microsoft/FluidFramework/commit/0735ff53d5cf384ce61aef039ab3c9414871fd73)
-
-  [`ForestTypeOptimized`](https://fluidframework.com/docs/api/fluid-framework#foresttypeoptimized-variable) now more efficiently deduplicates structural information for adjacent children in [array nodes](https://fluidframework.com/docs/api/tree/treearraynode-interface) after edits.
-  For arrays of small, uniformly shaped subtrees, such as [`PlainText`](https://fluidframework.com/docs/api/fluid-framework/plaintext-namespace), this reduces fragmentation and can reduce memory use by approximately 60%.
-
 ## 3.2.0
 
 ### Minor Changes

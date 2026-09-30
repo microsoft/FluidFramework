@@ -1,15 +1,5 @@
 # @fluidframework/test-runtime-utils
 
-## 3.3.0
-
-### Minor Changes
-
-- Remove direct ID range finalization from mock runtime APIs ([#27559](https://github.com/microsoft/FluidFramework/pull/27559)) [bee7b1ad621](https://github.com/microsoft/FluidFramework/commit/bee7b1ad621413db8ce9bcb7424dec1ebbfb199f)
-
-  `MockContainerRuntime.finalizeIdRange` is now private.
-  Mock runtimes continue to finalize ID ranges automatically when processing allocation messages.
-  Derived mock runtimes that customize message processing can use the protected `maybeProcessIdAllocationMessage` method to process allocation messages without depending on internal ID compressor types.
-
 ## 3.2.0
 
 Dependency updates only.
