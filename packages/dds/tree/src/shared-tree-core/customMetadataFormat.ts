@@ -20,18 +20,22 @@ import {
 // `JsonCompatibleReadOnlyObject`, which the encoded message and summary types are constrained to.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type EncodedCustomMetadataTree = {
+	/** The metadata supplied by the transaction represented by this entry. */
 	readonly m?: JsonCompatibleReadOnlyObject;
+	/** The metadata trees of transactions nested within the transaction represented by this entry. */
 	readonly c?: readonly EncodedCustomMetadataTree[];
 };
 
 export const EncodedCustomMetadataTree = Type.Recursive((Self) =>
 	Type.Object(
 		{
+			/** The metadata supplied by the transaction represented by this entry. */
 			m: Type.Optional(
 				Type.Unsafe<JsonCompatibleReadOnlyObject>(
 					Type.Record(Type.String(), JsonCompatibleReadOnlySchema),
 				),
 			),
+			/** The metadata trees of transactions nested within the transaction represented by this entry. */
 			c: Type.Optional(Type.Array(Self)),
 		},
 		{ additionalProperties: false },

@@ -7,13 +7,18 @@ import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import type { SchemaValidationErrorHandlers } from "../../../codec/index.js";
 import {
 	findAncestor,
 	findCommonAncestor,
 	type GraphCommit,
 	type RevisionTag,
 } from "../../../core/index.js";
-import type { SharedTreeChange } from "../../../shared-tree/index.js";
+import {
+	makeSerializedChangeCodec,
+	type SerializedChangeCodec,
+	type SharedTreeChange,
+} from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
@@ -31,7 +36,25 @@ import {
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
-import { getBranch, getFinalizedCommit, serializeCommit } from "./synchronizationUtils.js";
+import {
+	getBranch,
+	getCheckout,
+	getFinalizedCommit,
+	serializeCommit,
+} from "./synchronizationUtils.js";
+import { sandboxFormatValidator } from "./common.js";
+
+/**
+ * Schema-validation error policy for codecs that decode untrusted Guest data on the Host.
+ * @remarks
+ * Guest codecs intentionally omit this policy so unexpected Host data continues to trigger the
+ * default validation assertions.
+ */
+const hostSchemaValidationErrorHandlers: SchemaValidationErrorHandlers = {
+	onDecodeError: () => {
+		throw new SandboxProtocolError("Invalid encoded data from Guest.");
+	},
+};
 
 /**
  * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
@@ -89,6 +112,8 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private stopped = false;
 	/** Whether the branches owned by this synchronization state have been disposed. */
 	private disposed = false;
+	/** Decodes untrusted Guest changes using Host protocol error semantics. */
+	private readonly guestChangeCodec: SerializedChangeCodec;
 
 	public constructor(
 		/**
@@ -117,6 +142,11 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.local = main.fork();
+		this.guestChangeCodec = makeSerializedChangeCodec(
+			getBranch(this.local).changeFamily,
+			sandboxFormatValidator,
+			hostSchemaValidationErrorHandlers,
+		);
 		const branch = getBranch(main);
 		this.sentHead = branch.getHead();
 		const trunkRevision = getFinalizedCommit(main).revision;
@@ -167,7 +197,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
-		this.local.applyChange(message.change);
+		getCheckout(this.local).applySerializedChange(message.change, this.guestChangeCodec);
 		this.bindHandles(message.change);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
 		this.main.merge(this.local, false);

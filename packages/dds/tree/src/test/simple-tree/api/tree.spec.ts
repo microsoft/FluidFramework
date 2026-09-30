@@ -7,10 +7,12 @@ import { strict as assert } from "node:assert";
 
 import {
 	MockFluidDataStoreRuntime,
+	validateAssertionError,
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type { Revertible } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
@@ -31,7 +33,11 @@ import {
 	type TreeViewBeta,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
+import type {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+	requireAssignableTo,
+} from "../../../util/index.js";
 import { expectSchemaEqual, getView, StringArray, TestTreeProviderLite } from "../../utils.js";
 import { getViewForForkedBranch } from "../utils.js";
 
@@ -349,11 +355,43 @@ describe("simple-tree tree", () => {
 
 		it("error if malformed", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
-			const viewA = getView(config);
+			const viewA = getView(config, { jsonValidator: FormatValidatorBasic });
 			viewA.initialize(3);
-			assert.throws(() => {
-				viewA.applyChange({ invalid: "bogus" });
-			}, /cannot apply change.*invalid.*format/i);
+			let change: JsonCompatibleReadOnly | undefined;
+			viewA.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+			viewA.root = 4;
+
+			const valid = change ?? assert.fail("change not captured");
+			assert(
+				typeof valid === "object" && valid !== null && !Array.isArray(valid),
+				"Expected serialized change to be an object",
+			);
+			const serialized = valid as JsonCompatibleReadOnlyObject;
+			const malformed: JsonCompatibleReadOnly[] = [
+				{ invalid: "bogus" },
+				{ ...serialized, version: 3 },
+				{ ...serialized, revision: "invalid" },
+				{ ...serialized, change: "invalid" },
+				{ ...serialized, customMetadata: [] },
+				{ ...serialized, extra: true },
+			];
+
+			for (const invalid of malformed) {
+				const target = viewA.fork();
+				assert.throws(
+					() => target.applyChange(invalid),
+					validateAssertionError("Data being decoded should validate"),
+				);
+			}
+
+			const semanticTarget = viewA.fork();
+			assert.throws(
+				() => semanticTarget.applyChange({ ...serialized, originatorId: "invalid" }),
+				validateUsageError(/Invalid serialized change format/),
+			);
 		});
 
 		it("can be undone", () => {

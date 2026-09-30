@@ -16,6 +16,7 @@ export {
 	type JsonValidator,
 	makeCodecFamily,
 	type SchemaValidationFunction,
+	type SchemaValidationErrorHandlers,
 	unitCodec,
 	withSchemaValidation,
 	FluidClientVersion,

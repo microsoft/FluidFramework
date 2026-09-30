@@ -205,6 +205,31 @@ export interface IJsonCodec<
 }
 
 /**
+ * Customizes errors reported when schema validation fails.
+ *
+ * @remarks
+ * By default, {@link withSchemaValidation} reports validation failures as assertions.
+ * Invalid encoded output indicates a codec bug, and invalid persisted input generally indicates data corruption,
+ * so assertions are appropriate for most codec validation.
+ *
+ * Some codecs also decode untrusted data supplied through public APIs.
+ * For those codecs, malformed input is a user error rather than a framework bug.
+ * These handlers allow such API boundaries to throw an appropriate user-facing error without duplicating schema validation.
+ *
+ * Each supplied handler must throw an error and must not return.
+ */
+export interface SchemaValidationErrorHandlers {
+	/**
+	 * Throws an error when encoded output does not match the schema.
+	 */
+	readonly onEncodeError?: () => never;
+	/**
+	 * Throws an error when input being decoded does not match the schema.
+	 */
+	readonly onDecodeError?: () => never;
+}
+
+/**
  * Part of a codec.
  * @remarks
  * Encode and decode logic and schema for some chunk of data.
@@ -427,6 +452,8 @@ export const unitCodec: IJsonCodec<
 
 /**
  * Wraps a codec with JSON schema validation for its encoded type.
+ * @param errorHandlers - Optional handlers that customize the errors thrown for validation failures.
+ * See {@link SchemaValidationErrorHandlers} for scenarios that require custom errors.
  * @returns An {@link IJsonCodec} which validates the data it encodes and decodes matches the provided schema.
  * @remarks
  * Eventually all codecs should use the same pattern implemented by VersionDispatchingCodecBuilder, resulting in that having the only use of this API.
@@ -448,6 +475,7 @@ export function withSchemaValidation<
 		TDecodeContext
 	>,
 	validator?: JsonValidator | FormatValidator,
+	errorHandlers?: SchemaValidationErrorHandlers,
 ): IJsonCodec<TInMemoryFormat, TEncodedFormat, TValidate, TEncodeContext, TDecodeContext> {
 	if (!validator) {
 		return codec;
@@ -457,12 +485,14 @@ export function withSchemaValidation<
 		encode: (obj: TInMemoryFormat, context: TEncodeContext): TEncodedFormat => {
 			const encoded = codec.encode(obj, context);
 			if (!compiledFormat.check(encoded)) {
+				errorHandlers?.onEncodeError?.();
 				fail(0xac0 /* Encoded data should validate */);
 			}
 			return encoded;
 		},
 		decode: (encoded: TValidate, context: TDecodeContext): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
+				errorHandlers?.onDecodeError?.();
 				fail(0xac1 /* Data being decoded should validate */);
 			}
 			return codec.decode(encoded, context);

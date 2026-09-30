@@ -21,7 +21,6 @@ import {
 	schemaCodecBuilder,
 	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
@@ -44,6 +43,7 @@ import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 import { getBranch, getCheckout } from "./synchronizationUtils.js";
+import { sandboxFormatValidator } from "./common.js";
 
 /**
  * Options for creating a Host.
@@ -218,7 +218,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			try {
 				moveToDetachedField(checkout.forest, cursor);
 				const options = {
-					jsonValidator: FormatValidatorBasic,
+					jsonValidator: sandboxFormatValidator,
 					minVersionForCollab: FluidClientVersion.v2_80,
 				};
 				const tree = fieldBatchCodecBuilder

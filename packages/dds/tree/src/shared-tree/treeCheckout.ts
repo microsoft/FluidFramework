@@ -21,6 +21,7 @@ import {
 	FluidClientVersion,
 	FormatValidatorNoOp,
 	type CodecWriteOptions,
+	type FormatValidator,
 } from "../codec/index.js";
 import {
 	type Anchor,
@@ -140,7 +141,7 @@ import {
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
-import { SerializedChange } from "./serializedChange.js";
+import { makeSerializedChangeCodec, type SerializedChangeCodec } from "./serializedChange.js";
 
 /**
  * Returns a defensive copy of the given metadata, validating that it can be persisted.
@@ -434,6 +435,7 @@ export function createTreeCheckout(
 		mintRevisionTag,
 		revisionTagCodec,
 		idCompressor,
+		codecOptions.jsonValidator,
 		args?.removedRoots,
 		true,
 		args?.getFinalizedCommit,
@@ -590,6 +592,7 @@ export class TreeCheckout implements ITreeCheckout {
 	private mostRecentlyClosedLabelNode: LabelTree | undefined;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
+	private readonly serializedChangeCodec: SerializedChangeCodec;
 
 	/**
 	 * Event emitters for local commits.
@@ -651,11 +654,16 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
+		private readonly jsonValidator: FormatValidator,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
 		/** Supplies the boundary for {@link TreeCheckout.getFinalizedCommit}, instead of the current graph root. */
 		private readonly getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
 	) {
+		this.serializedChangeCodec = makeSerializedChangeCodec(
+			this.changeFamily,
+			this.jsonValidator,
+		);
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
@@ -959,13 +967,12 @@ export class TreeCheckout implements ITreeCheckout {
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
 						);
-						return SerializedChange.V2.encode(
-							this.idCompressor,
-							this.changeFamily,
-							change,
-							revision,
-							undefined,
-							commit.customMetadata,
+						return this.serializedChangeCodec.encode(
+							{
+								change: { change, revision },
+								customMetadata: commit.customMetadata,
+							},
+							{ idCompressor: this.idCompressor },
 						);
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
@@ -1048,12 +1055,13 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
 	@throwIfBroken
-	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
-		const { change, customMetadata } = SerializedChange.V2.decode(
-			this.idCompressor,
-			this.changeFamily,
-			serializedChange,
-		);
+	public applySerializedChange(
+		serializedChange: JsonCompatibleReadOnly,
+		codec: SerializedChangeCodec = this.serializedChangeCodec,
+	): void {
+		const { change, customMetadata } = codec.decode(serializedChange, {
+			idCompressor: this.idCompressor,
+		});
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
 		this.#transaction.branch.apply(change, CommitKind.Default, customMetadata);
 	}
@@ -1062,13 +1070,12 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Serializes an existing commit so it can be applied to another checkout in the same ID-compressor session.
 	 */
 	public serializeCommit(commit: GraphCommit<SharedTreeChange>): JsonCompatibleReadOnly {
-		return SerializedChange.V2.encode(
-			this.idCompressor,
-			this.changeFamily,
-			commit.change,
-			commit.revision,
-			undefined,
-			commit.customMetadata,
+		return this.serializedChangeCodec.encode(
+			{
+				change: { change: commit.change, revision: commit.revision },
+				customMetadata: commit.customMetadata,
+			},
+			{ idCompressor: this.idCompressor },
 		);
 	}
 
@@ -1459,6 +1466,7 @@ export class TreeCheckout implements ITreeCheckout {
 			this.mintRevisionTag,
 			this.revisionTagCodec,
 			this.idCompressor,
+			this.jsonValidator,
 			this._removedRoots.clone(),
 		);
 		this.#events.emit("fork", checkout);
@@ -1635,12 +1643,9 @@ export class TreeCheckout implements ITreeCheckout {
 			return undefined;
 		}
 		const revision = this.mintRevisionTag();
-		return SerializedChange.V2.encode(
-			this.idCompressor,
-			this.changeFamily,
-			rebased.sourceChange,
-			revision,
-			undefined,
+		return this.serializedChangeCodec.encode(
+			{ change: { change: rebased.sourceChange, revision } },
+			{ idCompressor: this.idCompressor },
 		);
 	}
 

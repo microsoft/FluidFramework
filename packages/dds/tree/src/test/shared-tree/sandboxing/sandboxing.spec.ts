@@ -984,6 +984,40 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
+	it("reports malformed Guest changes as protocol errors", async () => {
+		const { host, guest } = await setup(["a"]);
+		guest.dispose();
+		host.dispose();
+		const synchronization = new HostSynchronization(
+			host.main,
+			() => {},
+			() => {},
+			(action) => action(),
+			(error) => assert.fail(String(error)),
+			createChildLogger({ namespace: "Host" }),
+		);
+		try {
+			const { mainRevision, trunkRevision } = synchronization.guestInitialization;
+			assert.throws(
+				() =>
+					synchronization.receiveChangeFromGuest({
+						type: "guestChange",
+						changeId: brand(0),
+						mainRevision,
+						trunkRevision,
+						change: { invalid: "change" },
+					}),
+				(error: unknown) => {
+					assert(error instanceof SandboxProtocolError);
+					assert.match(error.message, /Invalid encoded data from Guest/);
+					return true;
+				},
+			);
+		} finally {
+			synchronization.dispose();
+		}
+	});
+
 	it("advances the Guest trunk revision for remote peer commits", async () => {
 		const { peer, host, guest, provider } = await setup(["a"]);
 		guest.dispose();
