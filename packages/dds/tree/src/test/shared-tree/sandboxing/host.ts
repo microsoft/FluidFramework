@@ -43,7 +43,7 @@ import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
-import { getBranch, getCheckout } from "./synchronizationUtils.js";
+import { getCheckout } from "./synchronizationUtils.js";
 
 /**
  * Options for creating a Host.
@@ -200,13 +200,13 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		const initialization = this.synchronization.guestInitialization;
 		const snapshot = this.main.fork();
 		try {
-			const branch = getBranch(snapshot);
+			const checkout = getCheckout(snapshot);
+			const branch = checkout.mainBranch;
 			const base = findAncestor(
 				branch.getHead(),
 				(commit) => commit.revision === initialization.baseRevision,
 			);
 			assert(base !== undefined, "Expected the Guest initialization base in Host history");
-			const checkout = getCheckout(snapshot);
 			checkout.switchBranch(branch.fork(base));
 			branch.dispose();
 			if (schemaDataIsEmpty(checkout.storedSchema)) {

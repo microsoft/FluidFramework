@@ -19,7 +19,6 @@ import {
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
-	createNodeIdentifierManager,
 	fieldBatchCodecBuilder,
 	FieldBatchDecodingContext,
 	defaultIncrementalEncodingPolicy,
@@ -46,14 +45,13 @@ import {
 } from "../util/index.js";
 
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	exportSimpleSchema,
 	type ForestOptions,
 } from "./sharedTree.js";
-import { createTreeCheckout } from "./treeCheckout.js";
+import { createTreeCheckout, type TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Options for supplying a telemetry logger to an independent tree view.
@@ -256,9 +254,40 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
  * If keeping the option here, maybe a separate function of overload would be better? Or maybe flatten ViewContent inline to deduplicate the idCompressor options?
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Retained for API compatibility.
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
+	const checkout = createIndependentTreeCheckout(options);
+
+	return {
+		viewWith<TRoot extends ImplicitFieldSchema>(
+			config: TreeViewConfiguration<TRoot>,
+		): TreeView<TRoot> {
+			const out: TreeViewAlpha<TRoot> = checkout.viewWith(
+				config as TreeViewConfiguration as TreeViewConfiguration<ReadSchema<TRoot>>,
+			);
+			return out as unknown as TreeView<TRoot>;
+		},
+
+		exportVerbose(): VerboseTree | undefined {
+			return checkout.exportVerbose();
+		},
+
+		exportSimpleSchema(): SimpleTreeSchema {
+			return exportSimpleSchema(checkout.storedSchema);
+		},
+	};
+}
+
+/**
+ * Creates the checkout that backs an independent tree.
+ *
+ * @internal
+ */
+export function createIndependentTreeCheckout(
+	options?: CreateIndependentTreeAlphaOptions,
+): TreeCheckout {
 	const logger = createChildLogger({
 		logger: options?.logger,
 		namespace: "independentView",
@@ -317,26 +346,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		);
 	}
 
-	return {
-		viewWith<TRoot extends ImplicitFieldSchema>(
-			config: TreeViewConfiguration<TRoot>,
-		): TreeView<TRoot> {
-			const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
-				checkout,
-				config as TreeViewConfiguration as TreeViewConfiguration<ReadSchema<TSchema>>,
-				createNodeIdentifierManager(idCompressor),
-			);
-			return out as unknown as TreeView<TRoot>;
-		},
-
-		exportVerbose(): VerboseTree | undefined {
-			return checkout.exportVerbose();
-		},
-
-		exportSimpleSchema(): SimpleTreeSchema {
-			return exportSimpleSchema(checkout.storedSchema);
-		},
-	};
+	return checkout;
 }
 
 /**

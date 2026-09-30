@@ -8,17 +8,10 @@ import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/interna
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { ICodecOptions } from "../../../codec/index.js";
-import {
-	independentInitializedView,
-	type ForestOptions,
-	type ViewContent,
-} from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type {
-	ImplicitFieldSchema,
-	TreeViewConfiguration,
-} from "../../../simple-tree/index.js";
+import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
+import { createIndependentTreeCheckout } from "../../../shared-tree/independentView.js";
+import type { ViewableTree } from "../../../simple-tree/index.js";
 
 import {
 	type HostGuestMessage,
@@ -36,36 +29,29 @@ import { normalizeTransportData } from "./transport.js";
 
 /**
  * Options for creating a Guest.
- * @typeParam TSchema - The schema of the synchronized tree.
  */
-export interface GuestOptions<TSchema extends ImplicitFieldSchema>
-	extends SandboxEndpointOptions {
-	/** The schema configuration for the Guest's tree view. */
-	readonly config: TreeViewConfiguration<TSchema>;
-	/** The forest and codec options used to initialize the Guest's tree view. */
+export interface GuestOptions extends SandboxEndpointOptions {
+	/** The forest and codec options used to initialize the Guest's tree. */
 	readonly treeOptions: ForestOptions & ICodecOptions;
 }
 
 /**
- * An independent TreeView synchronized with a Host through a message protocol.
- *
- * @typeParam TSchema - The schema of the synchronized tree.
+ * An independent tree synchronized with a Host through a message protocol.
  */
-export class Guest<const TSchema extends ImplicitFieldSchema> {
+export class Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
-	private readonly config: TreeViewConfiguration<TSchema>;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
 	private readonly idCompressor: IIdCompressor;
 	private readonly port: MessagePort;
 	private readonly logger: TelemetryLoggerExt;
-	private synchronization: GuestSynchronization<TSchema> | undefined;
+	private synchronization: GuestSynchronization | undefined;
 	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
 
-	/** The independent view on the Guest. Available after {@link Guest.create} resolves. */
-	public get view(): TreeViewAlpha<TSchema> {
-		return this.synchronization?.view ?? fail("Guest accessed before initialization");
+	/** The independent tree on the Guest. Available after {@link Guest.create} resolves. */
+	public get tree(): ViewableTree {
+		return this.synchronization?.tree ?? fail("Guest accessed before initialization");
 	}
 
 	/** Receives and routes protocol messages from the Host. */
@@ -117,14 +103,12 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	};
 
 	private constructor({
-		config,
 		treeOptions,
 		idCompressor,
 		port,
 		logger,
 		handleProtocolError = throwProtocolError,
-	}: GuestOptions<TSchema>) {
-		this.config = config;
+	}: GuestOptions) {
 		this.treeOptions = treeOptions;
 		this.idCompressor = idCompressor;
 		this.port = port;
@@ -149,12 +133,10 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	/**
 	 * Creates a Guest after receiving its initial Host state through the message port.
 	 *
-	 * @param options - The tree configuration and session options for the Guest.
+	 * @param options - The tree and session options for the Guest.
 	 * @returns The initialized Guest.
 	 */
-	public static async create<const TSchema extends ImplicitFieldSchema>(
-		options: GuestOptions<TSchema>,
-	): Promise<Guest<TSchema>> {
+	public static async create(options: GuestOptions): Promise<Guest> {
 		const guest = new Guest(options);
 		await guest.initialized.promise;
 		return guest;
@@ -169,9 +151,12 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 			schema: message.schema as ViewContent["schema"],
 			idCompressor: this.idCompressor,
 		};
-		const hostView = independentInitializedView(this.config, this.treeOptions, content);
+		const hostTree = createIndependentTreeCheckout({
+			...this.treeOptions,
+			content,
+		});
 		this.synchronization = new GuestSynchronization(
-			hostView,
+			hostTree,
 			{
 				baseRevision: message.baseRevision,
 				mainRevision: message.mainRevision,
@@ -199,9 +184,9 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
 
-		// The synchronization leaves the view alive, making it possible to save/stash/view unsaved changes.
-		// Currently we do no such thing, and just dispose of it, but that could be change in the future.
-		synchronization?.view.dispose();
+		// The synchronization leaves the tree alive, making it possible to save or stash unsaved changes.
+		// Currently we do no such thing and just dispose of it, but that could change in the future.
+		synchronization?.tree.dispose();
 	}
 
 	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */

@@ -12,6 +12,8 @@ import {
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Sandbox test helpers use alpha view APIs.
+import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import {
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -159,15 +161,13 @@ export async function setup(initialState: string[]) {
  * Creates a Guest from the initialization message sent by the Host on the supplied port.
  * The caller owns the supplied port and must dispose the returned Guest.
  */
-export async function createGuestForHost<const TSchema extends ImplicitFieldSchema>(
-	config: TreeViewConfiguration<TSchema>,
+export async function createGuestForHost(
 	port: MessagePort,
 	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
 	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
 	handleProtocolError: (error: Error) => void = throwProtocolError,
-): Promise<Guest<TSchema>> {
+): Promise<Guest> {
 	return Guest.create({
-		config,
 		treeOptions: { jsonValidator: FormatValidatorBasic },
 		idCompressor: hostCompressor,
 		port,
@@ -226,10 +226,10 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		handleProtocolError,
 	});
 
-	let guest: Guest<TSchema>;
+	let guest: Guest;
+	let guestView: TreeViewAlpha<TSchema>;
 	try {
 		const guestPromise = createGuestForHost(
-			config,
 			sessionPorts.guestPort,
 			provider.getCompressor(provider.trees[1]),
 			createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
@@ -237,6 +237,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		);
 		await sessionPorts.deliverInitialization();
 		guest = await guestPromise;
+		guestView = asAlpha(guest.tree.viewWith(config));
 	} catch (error) {
 		host.dispose();
 		sessionPorts.dispose();
@@ -272,6 +273,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 		peer,
 		host,
 		guest,
+		guestView,
 		provider,
 		interop: sessionPorts.interop,
 		logger,

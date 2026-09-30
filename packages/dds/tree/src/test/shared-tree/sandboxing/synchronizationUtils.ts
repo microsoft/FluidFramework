@@ -9,6 +9,7 @@ import type { GraphCommit } from "../../../core/index.js";
 import {
 	SchematizingSimpleTreeView,
 	type SharedTreeChange,
+	type TreeCheckout,
 } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Sandbox synchronization requires internal branch APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
@@ -20,7 +21,7 @@ import type { JsonCompatibleReadOnly } from "../../../util/index.js";
  */
 export function getCheckout<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	view: TreeViewAlpha<TSchema>,
-) {
+): TreeCheckout {
 	assert(
 		view instanceof SchematizingSimpleTreeView,
 		"Expected view to be a SchematizingSimpleTreeView",
@@ -29,44 +30,33 @@ export function getCheckout<TSchema extends ImplicitFieldSchema | UnsafeUnknownS
 }
 
 /**
- * Gets the internal branch for a sandbox view.
+ * Gets a finalized-history boundary for a sandbox checkout.
  */
-export function getBranch<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	view: TreeViewAlpha<TSchema>,
-) {
-	return getCheckout(view).mainBranch;
-}
-
-/**
- * Gets a finalized-history boundary for a sandbox view.
- */
-export function getFinalizedCommit<TSchema extends ImplicitFieldSchema>(
-	view: TreeViewAlpha<TSchema>,
-): GraphCommit<SharedTreeChange> {
-	return getCheckout(view).getFinalizedCommit();
+export function getFinalizedCommit(checkout: TreeCheckout): GraphCommit<SharedTreeChange> {
+	return checkout.getFinalizedCommit();
 }
 
 /**
  * Serializes an existing commit with its revision.
  */
-export function serializeCommit<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	view: TreeViewAlpha<TSchema>,
+export function serializeCommit(
+	checkout: TreeCheckout,
 	commit: GraphCommit<SharedTreeChange>,
 ): JsonCompatibleReadOnly {
-	return getCheckout(view).serializeCommit(commit);
+	return checkout.serializeCommit(commit);
 }
 
 /**
  * Replaces the commits after `base` with the supplied serialized commits.
  */
-export function applyBranchUpdate<TSchema extends ImplicitFieldSchema>(
-	view: TreeViewAlpha<TSchema>,
+export function applyBranchUpdate(
+	checkout: TreeCheckout,
 	base: GraphCommit<SharedTreeChange>,
 	commits: readonly JsonCompatibleReadOnly[],
 ): void {
-	const branch = getBranch(view);
+	const branch = checkout.mainBranch;
 	branch.removeAfter(base);
 	for (const commit of commits) {
-		view.applyChange(commit);
+		checkout.applyChange(commit);
 	}
 }

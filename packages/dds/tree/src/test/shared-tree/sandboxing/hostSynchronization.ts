@@ -13,7 +13,7 @@ import {
 	type GraphCommit,
 	type RevisionTag,
 } from "../../../core/index.js";
-import type { SharedTreeChange } from "../../../shared-tree/index.js";
+import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
@@ -31,7 +31,7 @@ import {
 	type PromiseWithResolvers,
 	SandboxProtocolError,
 } from "./common.js";
-import { getBranch, getFinalizedCommit, serializeCommit } from "./synchronizationUtils.js";
+import { getCheckout, getFinalizedCommit, serializeCommit } from "./synchronizationUtils.js";
 
 /**
  * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
@@ -45,7 +45,7 @@ export type GuestBranchInitialization = Omit<
 /** A Host update awaiting the Guest's acknowledgment. */
 interface PendingHostUpdate {
 	/** The exact Host main-branch state sent in the update. */
-	readonly branch: ReturnType<typeof getBranch>;
+	readonly branch: TreeCheckout["mainBranch"];
 	/** The finalized-history boundary sent in the update. */
 	readonly trunkRevision: RevisionTag;
 }
@@ -61,6 +61,10 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * The Guest's authoring branch, advanced only by Guest changes and acknowledged Host updates.
 	 */
 	public readonly local: TreeViewAlpha<TSchema>;
+	/** The checkout that backs the Host's main view. */
+	private readonly mainCheckout: TreeCheckout;
+	/** The checkout that backs the Guest's authoring view. */
+	private readonly localCheckout: TreeCheckout;
 	/** Host updates awaiting ordered acknowledgments, with the exact branch state sent for each update. */
 	private readonly pendingUpdates = new Map<HostUpdateId, PendingHostUpdate>();
 	/**
@@ -117,9 +121,11 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.local = main.fork();
-		const branch = getBranch(main);
+		this.mainCheckout = getCheckout(main);
+		this.localCheckout = getCheckout(this.local);
+		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
-		const trunkRevision = getFinalizedCommit(main).revision;
+		const trunkRevision = getFinalizedCommit(this.mainCheckout).revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findAncestor(
 			[this.sentHead, commits],
@@ -133,7 +139,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			baseRevision: base.revision,
 			mainRevision: this.guestMainRevision,
 			trunkRevision: this.guestTrunkRevision,
-			commits: commits.map((commit) => serializeCommit(main, commit)),
+			commits: commits.map((commit) => serializeCommit(this.mainCheckout, commit)),
 		};
 		this.offAfterChange = branch.events.on("afterChange", () => {
 			this.run(() => this.sendMainUpdate());
@@ -183,7 +189,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			throw new SandboxProtocolError("Unexpected Host update acknowledgment.");
 		}
 		// A revision can be rebased while its update is in flight. Use the exact state sent.
-		getBranch(this.local).rebaseOnto(update.branch);
+		this.localCheckout.mainBranch.rebaseOnto(update.branch);
 		this.guestMainRevision = update.branch.getHead().revision;
 		this.guestTrunkRevision = update.trunkRevision;
 		this.pendingUpdates.delete(message.updateId);
@@ -243,8 +249,8 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	private sendMainUpdate(): void {
-		const head = getBranch(this.main).getHead();
-		const trunkRevision = getFinalizedCommit(this.main).revision;
+		const head = this.mainCheckout.mainBranch.getHead();
+		const trunkRevision = getFinalizedCommit(this.mainCheckout).revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findCommonAncestor(this.sentHead, [head, commits]);
 		assert(base !== undefined, "Host branch updates must share ancestry");
@@ -260,7 +266,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			this.updateInProgress.promise.catch((error: unknown) => this.fail(error));
 		}
 		this.pendingUpdates.set(updateId, {
-			branch: getBranch(this.main).fork(),
+			branch: this.mainCheckout.mainBranch.fork(),
 			trunkRevision,
 		});
 		this.sentHead = head;
@@ -272,7 +278,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			baseRevision: base.revision,
 			mainRevision: head.revision,
 			trunkRevision,
-			commits: commits.map((commit) => serializeCommit(this.main, commit)),
+			commits: commits.map((commit) => serializeCommit(this.mainCheckout, commit)),
 		});
 	}
 
