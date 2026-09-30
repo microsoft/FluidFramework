@@ -11,7 +11,12 @@ import type { ICodecOptions } from "../../../codec/index.js";
 import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
 import { createIndependentTreeCheckout } from "../../../shared-tree/independentView.js";
-import type { ViewableTree } from "../../../simple-tree/index.js";
+import type {
+	ImplicitFieldSchema,
+	TreeView,
+	TreeViewConfiguration,
+	ViewableTree,
+} from "../../../simple-tree/index.js";
 
 import {
 	type HostGuestMessage,
@@ -46,12 +51,13 @@ export class Guest {
 	private readonly port: MessagePort;
 	private readonly logger: TelemetryLoggerExt;
 	private synchronization: GuestSynchronization | undefined;
+	private viewableTree: ViewableTree | undefined;
 	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
 
 	/** The independent tree on the Guest. Available after {@link Guest.create} resolves. */
 	public get tree(): ViewableTree {
-		return this.synchronization?.checkout ?? fail("Guest accessed before initialization");
+		return this.viewableTree ?? fail("Guest accessed before initialization");
 	}
 
 	/** Receives and routes protocol messages from the Host. */
@@ -155,7 +161,7 @@ export class Guest {
 			...this.treeOptions,
 			content,
 		});
-		this.synchronization = new GuestSynchronization(
+		const synchronization = new GuestSynchronization(
 			hostTree,
 			{
 				baseRevision: message.baseRevision,
@@ -168,6 +174,14 @@ export class Guest {
 			(error) => this.session.fail(error),
 			this.logger,
 		);
+		this.synchronization = synchronization;
+		this.viewableTree = {
+			viewWith<TRoot extends ImplicitFieldSchema>(
+				config: TreeViewConfiguration<TRoot>,
+			): TreeView<TRoot> {
+				return synchronization.checkout.viewWithRetainedCheckout(config);
+			},
+		};
 		this.initialized.resolver();
 	}
 

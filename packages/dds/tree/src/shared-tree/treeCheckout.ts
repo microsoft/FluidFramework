@@ -1391,6 +1391,22 @@ export class TreeCheckout implements ITreeCheckout {
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 	): SchematizingSimpleTreeView<TRoot> {
+		return this.createSchematizingView(config, !this.isSharedBranch);
+	}
+
+	/**
+	 * Creates a schematized view without transferring ownership of this checkout to the view.
+	 */
+	public viewWithRetainedCheckout<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): TreeView<TRoot> {
+		return this.createSchematizingView(config, false) as unknown as TreeView<TRoot>;
+	}
+
+	private createSchematizingView<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+		disposeCheckoutOnViewDispose: boolean,
+	): SchematizingSimpleTreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this,
 			config,
@@ -1398,6 +1414,7 @@ export class TreeCheckout implements ITreeCheckout {
 			() => {
 				this.views.delete(view);
 			},
+			disposeCheckoutOnViewDispose,
 		);
 		this.views.add(view);
 		return view;

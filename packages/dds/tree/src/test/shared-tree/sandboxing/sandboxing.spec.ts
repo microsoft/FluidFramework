@@ -215,6 +215,26 @@ describe("Host and Guest correctness", () => {
 		channel.port2.close();
 	});
 
+	it("continues synchronizing after replacing the Guest view", async () => {
+		const { host, guest, guestView } = await setup(["initial"]);
+		guestView.dispose();
+
+		const replacementView = asAlpha(guest.tree.viewWith(stringArrayConfig));
+		try {
+			assert.deepEqual([...replacementView.root], ["initial"]);
+
+			host.main.root.push("host");
+			await host.updateGuestPromise;
+			assert.deepEqual([...replacementView.root], ["initial", "host"]);
+
+			replacementView.root.push("guest");
+			await guest.updateHostPromise;
+			assert.deepEqual([...host.main.root], ["initial", "host", "guest"]);
+		} finally {
+			replacementView.dispose();
+		}
+	});
+
 	it("preserves marker-shaped tree data during initialization and edits in both directions", async () => {
 		const factory = new SchemaFactoryAlpha("sandbox.marker-data");
 		/** Allows transport discriminators and prototype-related names as ordinary tree keys. */
