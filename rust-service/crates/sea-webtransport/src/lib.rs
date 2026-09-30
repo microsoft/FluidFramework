@@ -33,9 +33,6 @@ use wtransport::{
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) const CLOSE_CODE: VarInt = VarInt::from_u32(1);
 
-#[cfg(not(target_arch = "wasm32"))]
-use crate::protocol as sea_v1;
-
 /// Bounded frame and lifecycle configuration.
 #[cfg(not(target_arch = "wasm32"))]
 #[derive(Clone, Debug)]
@@ -72,7 +69,7 @@ impl Default for TransportConfig {
 #[cfg(not(target_arch = "wasm32"))]
 impl TransportConfig {
     pub(crate) fn validate(&self) -> Result<(), WebTransportError> {
-        if self.max_frame_bytes < sea_v1::MIN_FRAME_BYTES
+        if self.max_frame_bytes < protocol::MIN_FRAME_BYTES
             || self.max_connections == 0
             || self.max_streams_per_connection == 0
         {
@@ -103,7 +100,7 @@ pub enum WebTransportError {
     Transport(String),
     /// A Sea frame failed bounded encoding or decoding.
     #[error("Sea protocol frame failed validation: {0}")]
-    SeaProtocol(#[from] sea_v1::ProtocolError),
+    SeaProtocol(#[from] protocol::ProtocolError),
     /// The server cannot accept another shutdown request.
     #[error("server is no longer available for shutdown")]
     ShutdownUnavailable,

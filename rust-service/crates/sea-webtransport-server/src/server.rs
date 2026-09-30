@@ -33,7 +33,7 @@ use wtransport::{
 use crate::protocol::SeaResponseStream;
 use crate::protocol::{SeaConnectionService, SeaServiceHost};
 use crate::stream::{ReceiveStream, SendStream};
-use sea_webtransport::protocol as sea_v1;
+use sea_webtransport::protocol;
 
 pub(crate) const CLOSE_CODE: VarInt = VarInt::from_u32(1);
 /// Point-in-time transport activity and high-water measurements.
@@ -258,7 +258,7 @@ impl Default for TransportConfig {
 
 impl TransportConfig {
     pub(crate) fn validate(&self) -> Result<(), WebTransportError> {
-        if self.max_frame_bytes < sea_v1::MIN_FRAME_BYTES
+        if self.max_frame_bytes < protocol::MIN_FRAME_BYTES
             || self.max_connections == 0
             || self.max_streams_per_connection == 0
             || self.max_pending_author_requests == 0
@@ -293,7 +293,7 @@ pub enum WebTransportError {
     Transport(String),
     /// A Sea frame failed bounded encoding or decoding.
     #[error("Sea protocol frame failed validation: {0}")]
-    SeaProtocol(#[from] sea_v1::ProtocolError),
+    SeaProtocol(#[from] protocol::ProtocolError),
     /// The server cannot accept another shutdown request.
     #[error("server is no longer available for shutdown")]
     ShutdownUnavailable,
@@ -611,11 +611,11 @@ async fn serve_connection_streams(
             }
             datagram = connection.receive_datagram() => {
                 let Ok(datagram) = datagram else { return Ok(()); };
-                let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits { max_frame_bytes: config.max_frame_bytes });
+                let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits { max_frame_bytes: config.max_frame_bytes });
                 decoder.push(&datagram.payload());
                 if let Ok(Some(frame)) = decoder.next_frame()
                     && decoder.finish().is_ok()
-                    && let Ok(sea_v1::Request::SendSignal(submission)) = sea_v1::decode_request_frame(sea_v1::StreamRole::Signal, &frame)
+                    && let Ok(protocol::Request::SendSignal(submission)) = protocol::decode_request_frame(protocol::StreamRole::Signal, &frame)
                     && submission.best_effort {
                     service.signal_datagram(submission).await;
                 }
@@ -675,7 +675,7 @@ async fn serve_network_stream(
     metrics: &Metrics,
     datagrams: Option<Connection>,
 ) -> Result<(), WebTransportError> {
-    let limits = sea_v1::Limits {
+    let limits = protocol::Limits {
         max_frame_bytes: config.max_frame_bytes,
     };
     let frame = timeout(
@@ -688,20 +688,20 @@ async fn serve_network_stream(
         frame
             .kind
             .request_role()
-            .ok_or(sea_v1::ProtocolError::UnexpectedMessageDirection(
+            .ok_or(protocol::ProtocolError::UnexpectedMessageDirection(
                 frame.kind,
             ))?;
 
-    let request = sea_v1::decode_request_frame(role, &frame)?;
+    let request = protocol::decode_request_frame(role, &frame)?;
     metrics.add_wire_bytes(frame.encoded_len()?);
-    if let sea_v1::Request::OpenSignalStream(opening) = request {
+    if let protocol::Request::OpenSignalStream(opening) = request {
         return serve_signal_stream(send, receive, service, config, metrics, opening, datagrams)
             .await;
     }
     let service = match &request {
-        sea_v1::Request::OpenAuthorStream { authority }
-        | sea_v1::Request::OpenSnapshotStream { authority, .. }
-        | sea_v1::Request::OpenContentStream { authority } => {
+        protocol::Request::OpenAuthorStream { authority }
+        | protocol::Request::OpenSnapshotStream { authority, .. }
+        | protocol::Request::OpenContentStream { authority } => {
             match service.bind_session(authority).await {
                 Ok(session) => session,
                 Err(response) => {
@@ -720,16 +720,16 @@ async fn serve_network_stream(
         }
         _ => service,
     };
-    if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
+    if matches!(request, protocol::Request::OpenAuthorStream { .. }) {
         return serve_author_stream(send, receive, service, config, metrics, role, request).await;
     }
-    if matches!(request, sea_v1::Request::OpenSnapshotStream { .. }) {
+    if matches!(request, protocol::Request::OpenSnapshotStream { .. }) {
         return serve_snapshot_stream(send, receive, service, config, metrics, role, request).await;
     }
-    if matches!(request, sea_v1::Request::OpenContentStream { .. }) {
+    if matches!(request, protocol::Request::OpenContentStream { .. }) {
         return serve_content_stream(send, receive, service, config, metrics, role, request).await;
     }
-    if matches!(request, sea_v1::Request::OpenEventStream { .. }) {
+    if matches!(request, protocol::Request::OpenEventStream { .. }) {
         let mut responses = match service.open_event_stream(request).await {
             Ok(responses) => responses,
             Err(response) => {
@@ -769,8 +769,8 @@ async fn serve_network_stream(
             .await?;
         }
     }
-    let response = sea_v1::Response::Error {
-        kind: sea_v1::ErrorKind::Rejected,
+    let response = protocol::Response::Error {
+        kind: protocol::ErrorKind::Rejected,
         message: "request requires an open logical stream".to_owned(),
     };
     write_network_response(
@@ -792,12 +792,12 @@ async fn serve_author_stream(
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
-    role: sea_v1::StreamRole,
+    role: protocol::StreamRole,
 
-    opening: sea_v1::Request,
+    opening: protocol::Request,
 ) -> Result<(), WebTransportError> {
     let result = async {
-        let limits = sea_v1::Limits {
+        let limits = protocol::Limits {
             max_frame_bytes: config.max_frame_bytes,
         };
         let response = service.author_request(opening).await;
@@ -811,11 +811,11 @@ async fn serve_author_stream(
             false,
         )
         .await?;
-        if matches!(response, sea_v1::Response::Error { .. }) {
+        if matches!(response, protocol::Response::Error { .. }) {
             return send.finish().await.map_err(transport_error);
         }
         let mut incoming = Box::pin(stream::try_unfold(
-            (receive, sea_v1::NetworkFrameDecoder::new(limits)),
+            (receive, protocol::NetworkFrameDecoder::new(limits)),
             |(mut receive, mut decoder)| async move {
                 let frame = read_next_network_frame(
                     &mut receive, &mut decoder, config.operation_timeout,
@@ -830,17 +830,17 @@ async fn serve_author_stream(
         let mut barrier = false;
         loop {
             if eof && pending.is_empty() {
-                let _ = service.author_request(sea_v1::Request::Close).await;
+                let _ = service.author_request(protocol::Request::Close).await;
                 return send.finish().await.map_err(transport_error);
             }
             if let Some((request, bytes)) = lookahead.as_ref()
                 && pending.len() < config.max_pending_author_requests
                 && *bytes <= config.max_frame_bytes - pending_bytes
-                && (pending.is_empty() || matches!(request, sea_v1::Request::Submit { .. }))
+                && (pending.is_empty() || matches!(request, protocol::Request::Submit { .. }))
             {
                 let (request, bytes) = lookahead.take().expect("admissible lookahead");
-                barrier = !matches!(request, sea_v1::Request::Submit { .. });
-                let close = matches!(request, sea_v1::Request::Close);
+                barrier = !matches!(request, protocol::Request::Submit { .. });
+                let close = matches!(request, protocol::Request::Close);
                 let mut response = service.author_request(request);
                 // Establish call order independently of the completion queue's polling order.
                 let first = poll_fn(|context| Poll::Ready(response.as_mut().poll(context))).await;
@@ -864,7 +864,7 @@ async fn serve_author_stream(
                     ).await?;
                     pending_bytes -= bytes;
                     barrier = false;
-                    if close || matches!(response, sea_v1::Response::Error { .. }) {
+                    if close || matches!(response, protocol::Response::Error { .. }) {
                         return send.finish().await.map_err(transport_error);
                     }
                 }
@@ -877,9 +877,9 @@ async fn serve_author_stream(
                     };
                     let frame = frame?;
                     let bytes = frame.encoded_len()?;
-                    let request = sea_v1::decode_request_frame(role, &frame)?;
-                    if matches!(request, sea_v1::Request::OpenAuthorStream { .. }) {
-                        return Err(sea_v1::ProtocolError::WrongStream { kind: request.kind(), role }.into());
+                    let request = protocol::decode_request_frame(role, &frame)?;
+                    if matches!(request, protocol::Request::OpenAuthorStream { .. }) {
+                        return Err(protocol::ProtocolError::WrongStream { kind: request.kind(), role }.into());
                     }
                     metrics.add_wire_bytes(bytes);
                     lookahead = Some((request, bytes));
@@ -888,7 +888,7 @@ async fn serve_author_stream(
         }
     }
     .await;
-    let _ = service.author_request(sea_v1::Request::Close).await;
+    let _ = service.author_request(protocol::Request::Close).await;
     result
 }
 
@@ -901,12 +901,12 @@ async fn serve_signal_stream(
     config: &TransportConfig,
     metrics: &Metrics,
 
-    opening: sea_v1::signals::OpenSignals,
+    opening: protocol::signals::OpenSignals,
     datagrams: Option<Connection>,
 ) -> Result<(), WebTransportError> {
     use sea_core::signals::SeaSignals as _;
-    let role = sea_v1::StreamRole::Signal;
-    let limits = sea_v1::Limits {
+    let role = protocol::StreamRole::Signal;
+    let limits = protocol::Limits {
         max_frame_bytes: config.max_frame_bytes,
     };
     let datagrams = datagrams.filter(|_| opening.datagrams);
@@ -926,37 +926,37 @@ async fn serve_signal_stream(
         }
     };
     let result = async {
-        write_network_response(&mut send, role, &sea_v1::Response::Acknowledged, limits, config.operation_timeout, metrics, false).await?;
-        let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+        write_network_response(&mut send, role, &protocol::Response::Acknowledged, limits, config.operation_timeout, metrics, false).await?;
+        let mut decoder = protocol::NetworkFrameDecoder::new(limits);
         loop {
             tokio::select! {
                 frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
                     let Some(frame) = frame? else { break; };
                     metrics.add_wire_bytes(frame.encoded_len()?);
-                    let request = sea_v1::decode_request_frame(role, &frame)?;
-                    let close = matches!(request, sea_v1::Request::Close);
+                    let request = protocol::decode_request_frame(role, &frame)?;
+                    let close = matches!(request, protocol::Request::Close);
                     let response = match request {
-                        sea_v1::Request::SendSignal(submission) => match connection.send_signal(submission.into()).await {
-                            Ok(()) => sea_v1::Response::Acknowledged,
+                        protocol::Request::SendSignal(submission) => match connection.send_signal(submission.into()).await {
+                            Ok(()) => protocol::Response::Acknowledged,
                             Err(error) => crate::protocol::error_response(error),
                         },
-                        sea_v1::Request::Close => sea_v1::Response::Acknowledged,
-                        _ => sea_v1::Response::Error { kind: sea_v1::ErrorKind::Rejected, message: "invalid signal request".to_owned() },
+                        protocol::Request::Close => protocol::Response::Acknowledged,
+                        _ => protocol::Response::Error { kind: protocol::ErrorKind::Rejected, message: "invalid signal request".to_owned() },
                     };
-                    let failed = matches!(response, sea_v1::Response::Error { .. });
+                    let failed = matches!(response, protocol::Response::Error { .. });
                     write_network_response(&mut send, role, &response, limits, config.operation_timeout, metrics, false).await?;
                     if close || failed { break; }
                 }
                 event = connection.next_signal() => {
                     let response = match event {
-                        Ok(Some(event)) => sea_v1::Response::SignalEvent(event.into()),
+                        Ok(Some(event)) => protocol::Response::SignalEvent(event.into()),
                         Ok(None) => break,
                         Err(error) => crate::protocol::error_response(error),
                     };
-                    let failed = matches!(response, sea_v1::Response::Error { .. });
-                    if let (Some(connection), sea_v1::Response::SignalEvent(sea_v1::signals::Event::Message { submission, .. })) = (&datagrams, &response)
+                    let failed = matches!(response, protocol::Response::Error { .. });
+                    if let (Some(connection), protocol::Response::SignalEvent(protocol::signals::Event::Message { submission, .. })) = (&datagrams, &response)
                         && submission.best_effort {
-                            let bytes = sea_v1::encode_response_frame(role, &response, limits)?;
+                            let bytes = protocol::encode_response_frame(role, &response, limits)?;
                             if connection.max_datagram_size().is_some_and(|limit| bytes.len() <= limit) {
                                 connection.send_datagram(&bytes).map_err(transport_error)?;
                                 metrics.add_wire_bytes(bytes.len());
@@ -981,11 +981,11 @@ async fn serve_snapshot_stream(
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
-    role: sea_v1::StreamRole,
+    role: protocol::StreamRole,
 
-    opening: sea_v1::Request,
+    opening: protocol::Request,
 ) -> Result<(), WebTransportError> {
-    let limits = sea_v1::Limits {
+    let limits = protocol::Limits {
         max_frame_bytes: config.max_frame_bytes,
     };
     let mut notifications = match service.snapshot_stream(opening).await {
@@ -1008,21 +1008,21 @@ async fn serve_snapshot_stream(
             &mut send,
             role,
 
-            &sea_v1::Response::Acknowledged,
+            &protocol::Response::Acknowledged,
             limits,
             config.operation_timeout,
             metrics,
             false,
         )
         .await?;
-        let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+        let mut decoder = protocol::NetworkFrameDecoder::new(limits);
         loop {
             tokio::select! {
                 frame = read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout) => {
                     let Some(frame) = frame? else { break };
-                    let request = sea_v1::decode_request_frame(role, &frame)?;
+                    let request = protocol::decode_request_frame(role, &frame)?;
                     metrics.add_wire_bytes(frame.encoded_len()?);
-                    let close = matches!(request, sea_v1::Request::Close);
+                    let close = matches!(request, protocol::Request::Close);
                     let response = service.snapshot_request(request).await;
                     write_network_response(
                         &mut send,
@@ -1064,11 +1064,11 @@ async fn serve_content_stream(
     service: Arc<dyn SeaConnectionService>,
     config: &TransportConfig,
     metrics: &Metrics,
-    role: sea_v1::StreamRole,
+    role: protocol::StreamRole,
 
-    opening: sea_v1::Request,
+    opening: protocol::Request,
 ) -> Result<(), WebTransportError> {
-    let limits = sea_v1::Limits {
+    let limits = protocol::Limits {
         max_frame_bytes: config.max_frame_bytes,
     };
     let response = service.open_content_stream(opening).await;
@@ -1082,14 +1082,14 @@ async fn serve_content_stream(
         false,
     )
     .await?;
-    if matches!(response, sea_v1::Response::Error { .. }) {
+    if matches!(response, protocol::Response::Error { .. }) {
         return send.finish().await.map_err(transport_error);
     }
-    let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+    let mut decoder = protocol::NetworkFrameDecoder::new(limits);
     while let Some(frame) =
         read_next_network_frame(&mut receive, &mut decoder, config.operation_timeout).await?
     {
-        let request = sea_v1::decode_request_frame(role, &frame)?;
+        let request = protocol::decode_request_frame(role, &frame)?;
         metrics.add_wire_bytes(frame.encoded_len()?);
         let mut responses = match service.content_request(request).await {
             Ok(responses) => responses,
@@ -1118,7 +1118,7 @@ async fn serve_content_stream(
         write_network_response(
             &mut send,
             role,
-            &sea_v1::Response::ResponseComplete,
+            &protocol::Response::ResponseComplete,
             limits,
             config.operation_timeout,
             metrics,
@@ -1131,9 +1131,9 @@ async fn serve_content_stream(
 
 async fn read_next_network_frame(
     receive: &mut impl ReceiveStream,
-    decoder: &mut sea_v1::NetworkFrameDecoder,
+    decoder: &mut protocol::NetworkFrameDecoder,
     operation_timeout: Duration,
-) -> Result<Option<sea_v1::NetworkFrame>, WebTransportError> {
+) -> Result<Option<protocol::NetworkFrame>, WebTransportError> {
     let mut buffer = [0_u8; 8192];
     loop {
         if let Some(frame) = decoder.next_frame()? {
@@ -1158,9 +1158,9 @@ async fn read_next_network_frame(
 async fn read_one_network_frame(
     receive: &mut impl ReceiveStream,
     prefix: [u8; 4],
-    limits: sea_v1::Limits,
-) -> Result<sea_v1::NetworkFrame, WebTransportError> {
-    let mut decoder = sea_v1::NetworkFrameDecoder::new(limits);
+    limits: protocol::Limits,
+) -> Result<protocol::NetworkFrame, WebTransportError> {
+    let mut decoder = protocol::NetworkFrameDecoder::new(limits);
     decoder.push(&prefix);
     loop {
         if let Some(frame) = decoder.next_frame()? {
@@ -1178,17 +1178,17 @@ async fn read_one_network_frame(
 #[allow(clippy::too_many_arguments)]
 async fn write_network_response(
     send: &mut impl SendStream,
-    role: sea_v1::StreamRole,
+    role: protocol::StreamRole,
 
-    response: &sea_v1::Response,
-    limits: sea_v1::Limits,
+    response: &protocol::Response,
+    limits: protocol::Limits,
     operation_timeout: Duration,
     metrics: &Metrics,
     finish: bool,
 ) -> Result<(), WebTransportError> {
     // QUIC writes and cached streams can both stay ready without spending Tokio's task budget.
     tokio::task::consume_budget().await;
-    let encoded = sea_v1::encode_response_frame(role, response, limits)?;
+    let encoded = protocol::encode_response_frame(role, response, limits)?;
     timeout(operation_timeout, async {
         send.write_all(&encoded).await.map_err(transport_error)?;
         if finish {
@@ -1234,7 +1234,7 @@ mod tests {
         async fn bind_session(
             self: Arc<Self>,
             _authority: &[u8],
-        ) -> Result<Arc<dyn SeaConnectionService>, sea_v1::Response> {
+        ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
 
@@ -1245,43 +1245,43 @@ mod tests {
 
         async fn open_event_stream(
             &self,
-            _request: sea_v1::Request,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            _request: protocol::Request,
+        ) -> Result<SeaResponseStream, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
 
         async fn event_stream(
             &self,
             _resume_after: Option<u64>,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+        ) -> Result<SeaResponseStream, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
 
-        async fn author_request(&self, _request: sea_v1::Request) -> sea_v1::Response {
+        async fn author_request(&self, _request: protocol::Request) -> protocol::Response {
             unreachable!("admission tests do not open Sea streams")
         }
 
         async fn snapshot_stream(
             &self,
-            _request: sea_v1::Request,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            _request: protocol::Request,
+        ) -> Result<SeaResponseStream, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
 
-        async fn snapshot_request(&self, _request: sea_v1::Request) -> sea_v1::Response {
+        async fn snapshot_request(&self, _request: protocol::Request) -> protocol::Response {
             unreachable!("admission tests do not open Sea streams")
         }
 
         async fn revoke_snapshot_publisher(&self) {}
 
-        async fn open_content_stream(&self, _request: sea_v1::Request) -> sea_v1::Response {
+        async fn open_content_stream(&self, _request: protocol::Request) -> protocol::Response {
             unreachable!("admission tests do not open Sea streams")
         }
 
         async fn content_request(
             &self,
-            _request: sea_v1::Request,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            _request: protocol::Request,
+        ) -> Result<SeaResponseStream, protocol::Response> {
             unreachable!("admission tests do not open Sea streams")
         }
     }
@@ -1352,9 +1352,9 @@ mod tests {
                 for _ in 0..1024 {
                     write_network_response(
                         &mut send,
-                        sea_v1::StreamRole::Author,
-                        &sea_v1::Response::Acknowledged,
-                        sea_v1::Limits::default(),
+                        protocol::StreamRole::Author,
+                        &protocol::Response::Acknowledged,
+                        protocol::Limits::default(),
                         Duration::from_secs(5),
                         &metrics,
                         false,
@@ -1375,18 +1375,18 @@ mod tests {
         /// Replacement session selected by the connection.
         current: Arc<AtomicU64>,
         /// Session, request, and send-completion state observed at each dispatch.
-        calls: Arc<Mutex<Vec<(u64, sea_v1::Request, bool)>>>,
+        calls: Arc<Mutex<Vec<(u64, protocol::Request, bool)>>>,
         /// Independent transport observation used to check cleanup ordering.
         finished: Arc<AtomicBool>,
         /// Lets tests settle individual submissions independently of their first poll.
         submissions: Option<
-            tokio::sync::mpsc::UnboundedSender<tokio::sync::oneshot::Sender<sea_v1::Response>>,
+            tokio::sync::mpsc::UnboundedSender<tokio::sync::oneshot::Sender<protocol::Response>>,
         >,
     }
 
     impl StreamBindingProbe {
         /// Records the receiver's identity, not an identity supplied by the request.
-        fn record(&self, request: sea_v1::Request) {
+        fn record(&self, request: protocol::Request) {
             let session = self
                 .admitted
                 .unwrap_or_else(|| self.current.load(Ordering::Relaxed));
@@ -1403,10 +1403,10 @@ mod tests {
         async fn bind_session(
             self: Arc<Self>,
             authority: &[u8],
-        ) -> Result<Arc<dyn SeaConnectionService>, sea_v1::Response> {
+        ) -> Result<Arc<dyn SeaConnectionService>, protocol::Response> {
             if authority != b"probe" {
-                return Err(sea_v1::Response::Error {
-                    kind: sea_v1::ErrorKind::Rejected,
+                return Err(protocol::Response::Error {
+                    kind: protocol::ErrorKind::Rejected,
                     message: "invalid probe authority".to_owned(),
                 });
             }
@@ -1425,58 +1425,58 @@ mod tests {
 
         async fn open_event_stream(
             &self,
-            _request: sea_v1::Request,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            _request: protocol::Request,
+        ) -> Result<SeaResponseStream, protocol::Response> {
             unreachable!("the probe supplies session identity without an event stream")
         }
 
         async fn event_stream(
             &self,
             _resume_after: Option<u64>,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+        ) -> Result<SeaResponseStream, protocol::Response> {
             unreachable!("the probe supplies session identity without an event stream")
         }
 
-        async fn author_request(&self, request: sea_v1::Request) -> sea_v1::Response {
-            let submit = matches!(request, sea_v1::Request::Submit { .. });
+        async fn author_request(&self, request: protocol::Request) -> protocol::Response {
+            let submit = matches!(request, protocol::Request::Submit { .. });
             self.record(request);
             if submit && let Some(submissions) = &self.submissions {
                 let (complete, receipt) = tokio::sync::oneshot::channel();
                 submissions.send(complete).unwrap();
                 return receipt.await.unwrap();
             }
-            sea_v1::Response::Acknowledged
+            protocol::Response::Acknowledged
         }
 
         async fn snapshot_stream(
             &self,
-            request: sea_v1::Request,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            request: protocol::Request,
+        ) -> Result<SeaResponseStream, protocol::Response> {
             self.record(request);
             Ok(Box::pin(stream::pending()))
         }
 
-        async fn snapshot_request(&self, request: sea_v1::Request) -> sea_v1::Response {
+        async fn snapshot_request(&self, request: protocol::Request) -> protocol::Response {
             self.record(request);
-            sea_v1::Response::Acknowledged
+            protocol::Response::Acknowledged
         }
 
         async fn revoke_snapshot_publisher(&self) {
             unreachable!("logical-stream cleanup drops its lease, not connection participation")
         }
 
-        async fn open_content_stream(&self, request: sea_v1::Request) -> sea_v1::Response {
+        async fn open_content_stream(&self, request: protocol::Request) -> protocol::Response {
             self.record(request);
-            sea_v1::Response::Acknowledged
+            protocol::Response::Acknowledged
         }
 
         async fn content_request(
             &self,
-            request: sea_v1::Request,
-        ) -> Result<SeaResponseStream, sea_v1::Response> {
+            request: protocol::Request,
+        ) -> Result<SeaResponseStream, protocol::Response> {
             self.record(request);
             Ok(Box::pin(stream::once(async {
-                sea_v1::Response::Acknowledged
+                protocol::Response::Acknowledged
             })))
         }
     }
@@ -1489,9 +1489,9 @@ mod tests {
         responses: tokio::sync::mpsc::UnboundedReceiver<Vec<u8>>,
         /// A receipt controller for each first-polled submission.
         submissions:
-            tokio::sync::mpsc::UnboundedReceiver<tokio::sync::oneshot::Sender<sea_v1::Response>>,
+            tokio::sync::mpsc::UnboundedReceiver<tokio::sync::oneshot::Sender<protocol::Response>>,
         /// Dispatch identity, request, and send-finish observations.
-        calls: Arc<Mutex<Vec<(u64, sea_v1::Request, bool)>>>,
+        calls: Arc<Mutex<Vec<(u64, protocol::Request, bool)>>>,
         /// High-water evidence from the production loop.
         metrics: Arc<Metrics>,
         /// Response-write failure injection.
@@ -1532,8 +1532,8 @@ mod tests {
                     service,
                     &config,
                     &observations,
-                    sea_v1::StreamRole::Author,
-                    sea_v1::Request::OpenAuthorStream {
+                    protocol::StreamRole::Author,
+                    protocol::Request::OpenAuthorStream {
                         authority: b"probe".to_vec(),
                     },
                 )
@@ -1548,20 +1548,20 @@ mod tests {
                 fail,
                 serving,
             };
-            assert_eq!(harness.response().await, sea_v1::Response::Acknowledged);
+            assert_eq!(harness.response().await, protocol::Response::Acknowledged);
             harness
         }
 
         /// Queues a complete request without awaiting a service receipt.
-        fn request(&self, request: &sea_v1::Request) {
+        fn request(&self, request: &protocol::Request) {
             self.requests
                 .as_ref()
                 .unwrap()
                 .send(
-                    sea_v1::encode_request_frame(
-                        sea_v1::StreamRole::Author,
+                    protocol::encode_request_frame(
+                        protocol::StreamRole::Author,
                         request,
-                        sea_v1::Limits::default(),
+                        protocol::Limits::default(),
                     )
                     .unwrap(),
                 )
@@ -1569,7 +1569,7 @@ mod tests {
         }
 
         /// Awaits a first-polled submission, with a deadline that detects serial dispatch.
-        async fn submission(&mut self) -> tokio::sync::oneshot::Sender<sea_v1::Response> {
+        async fn submission(&mut self) -> tokio::sync::oneshot::Sender<protocol::Response> {
             timeout(Duration::from_secs(1), self.submissions.recv())
                 .await
                 .unwrap()
@@ -1577,24 +1577,24 @@ mod tests {
         }
 
         /// Decodes the actual response bytes instead of trusting the fixture's intended value.
-        async fn response(&mut self) -> sea_v1::Response {
+        async fn response(&mut self) -> protocol::Response {
             let bytes = timeout(Duration::from_secs(1), self.responses.recv())
                 .await
                 .unwrap()
                 .unwrap();
-            let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits::default());
+            let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
             decoder.push(&bytes);
             let frame = decoder.next_frame().unwrap().unwrap();
             decoder.finish().unwrap();
-            sea_v1::decode_response_network_frame(sea_v1::StreamRole::Author, &frame).unwrap()
+            protocol::decode_response_network_frame(protocol::StreamRole::Author, &frame).unwrap()
         }
     }
 
     /// Supplies distinguishable, equally sized application submissions.
-    fn author_submission(value: u8) -> sea_v1::Request {
-        sea_v1::Request::Submit {
+    fn author_submission(value: u8) -> protocol::Request {
+        protocol::Request::Submit {
             reference: None,
-            event: sea_v1::Event {
+            event: protocol::Event {
                 payload: vec![value; 8],
                 blob_tree: None,
             },
@@ -1603,10 +1603,10 @@ mod tests {
 
     #[tokio::test(start_paused = true)]
     async fn author_pipeline_bounds_admission_and_preserves_both_orders() {
-        let bytes = sea_v1::encode_request_frame(
-            sea_v1::StreamRole::Author,
+        let bytes = protocol::encode_request_frame(
+            protocol::StreamRole::Author,
             &author_submission(0),
-            sea_v1::Limits::default(),
+            protocol::Limits::default(),
         )
         .unwrap()
         .len();
@@ -1623,7 +1623,7 @@ mod tests {
             let first = harness.submission().await;
             let second = harness.submission().await;
             second
-                .send(sea_v1::Response::EventCommitted { position: 11 })
+                .send(protocol::Response::EventCommitted { position: 11 })
                 .unwrap();
             tokio::task::yield_now().await;
             assert!(
@@ -1635,23 +1635,23 @@ mod tests {
                 "completed suffix still consumes capacity"
             );
             first
-                .send(sea_v1::Response::EventCommitted { position: 10 })
+                .send(protocol::Response::EventCommitted { position: 10 })
                 .unwrap();
             assert_eq!(
                 harness.response().await,
-                sea_v1::Response::EventCommitted { position: 10 }
+                protocol::Response::EventCommitted { position: 10 }
             );
             assert_eq!(
                 harness.response().await,
-                sea_v1::Response::EventCommitted { position: 11 }
+                protocol::Response::EventCommitted { position: 11 }
             );
             let third = harness.submission().await;
             third
-                .send(sea_v1::Response::EventCommitted { position: 12 })
+                .send(protocol::Response::EventCommitted { position: 12 })
                 .unwrap();
             assert_eq!(
                 harness.response().await,
-                sea_v1::Response::EventCommitted { position: 12 }
+                protocol::Response::EventCommitted { position: 12 }
             );
             drop(harness.requests.take());
             harness.serving.await.unwrap().unwrap();
@@ -1659,7 +1659,7 @@ mod tests {
             let submissions: Vec<_> = calls
                 .iter()
                 .filter_map(|(_, request, _)| match request {
-                    sea_v1::Request::Submit { event, .. } => Some(event.payload[0]),
+                    protocol::Request::Submit { event, .. } => Some(event.payload[0]),
                     _ => None,
                 })
                 .collect();
@@ -1679,22 +1679,22 @@ mod tests {
             harness.request(&author_submission(0));
             harness.request(&author_submission(1));
             if ending == "membership" {
-                harness.request(&sea_v1::Request::AnnounceMembership { metadata: vec![42] });
+                harness.request(&protocol::Request::AnnounceMembership { metadata: vec![42] });
                 harness.request(&author_submission(2));
             }
             if ending != "eof" {
-                harness.request(&sea_v1::Request::Close);
+                harness.request(&protocol::Request::Close);
                 harness.request(&author_submission(3));
             }
             drop(harness.requests.take());
             let first = harness.submission().await;
             let second = harness.submission().await;
             first
-                .send(sea_v1::Response::EventCommitted { position: 10 })
+                .send(protocol::Response::EventCommitted { position: 10 })
                 .unwrap();
             assert_eq!(
                 harness.response().await,
-                sea_v1::Response::EventCommitted { position: 10 }
+                protocol::Response::EventCommitted { position: 10 }
             );
             tokio::task::yield_now().await;
             assert_eq!(
@@ -1703,29 +1703,29 @@ mod tests {
                 "control or EOF overtook pending writes"
             );
             second
-                .send(sea_v1::Response::EventCommitted { position: 11 })
+                .send(protocol::Response::EventCommitted { position: 11 })
                 .unwrap();
             assert_eq!(
                 harness.response().await,
-                sea_v1::Response::EventCommitted { position: 11 }
+                protocol::Response::EventCommitted { position: 11 }
             );
             if ending == "membership" {
-                assert_eq!(harness.response().await, sea_v1::Response::Acknowledged);
+                assert_eq!(harness.response().await, protocol::Response::Acknowledged);
                 let third = harness.submission().await;
                 {
                     let calls = harness.calls.lock().unwrap();
                     assert!(matches!(
                         calls[3].1,
-                        sea_v1::Request::AnnounceMembership { .. }
+                        protocol::Request::AnnounceMembership { .. }
                     ));
                     assert_eq!(calls[4].1, author_submission(2));
                 }
                 third
-                    .send(sea_v1::Response::EventCommitted { position: 12 })
+                    .send(protocol::Response::EventCommitted { position: 12 })
                     .unwrap();
                 assert_eq!(
                     harness.response().await,
-                    sea_v1::Response::EventCommitted { position: 12 }
+                    protocol::Response::EventCommitted { position: 12 }
                 );
             }
             harness.serving.await.unwrap().unwrap();
@@ -1740,7 +1740,7 @@ mod tests {
                     .unwrap()
                     .iter()
                     .any(|(_, request, finished)| {
-                        matches!(request, sea_v1::Request::Close) && !finished
+                        matches!(request, protocol::Request::Close) && !finished
                     })
             );
         }
@@ -1756,14 +1756,14 @@ mod tests {
             let second = harness.submission().await;
             match failure {
                 "service" => first
-                    .send(sea_v1::Response::Error {
-                        kind: sea_v1::ErrorKind::Rejected,
+                    .send(protocol::Response::Error {
+                        kind: protocol::ErrorKind::Rejected,
                         message: "injected failure".to_owned(),
                     })
                     .unwrap(),
                 "write" => {
                     harness.fail.store(true, Ordering::Relaxed);
-                    first.send(sea_v1::Response::Acknowledged).unwrap();
+                    first.send(protocol::Response::Acknowledged).unwrap();
                 }
                 "decode" => {
                     harness
@@ -1771,10 +1771,10 @@ mod tests {
                         .as_ref()
                         .unwrap()
                         .send(
-                            sea_v1::encode_request_frame(
-                                sea_v1::StreamRole::Snapshot,
-                                &sea_v1::Request::LatestSnapshot,
-                                sea_v1::Limits::default(),
+                            protocol::encode_request_frame(
+                                protocol::StreamRole::Snapshot,
+                                &protocol::Request::LatestSnapshot,
+                                protocol::Limits::default(),
                             )
                             .unwrap(),
                         )
@@ -1794,7 +1794,7 @@ mod tests {
                 assert_eq!(result.unwrap().is_ok(), failure == "service");
                 assert!(matches!(
                     harness.calls.lock().unwrap().last().unwrap().1,
-                    sea_v1::Request::Close
+                    protocol::Request::Close
                 ));
             }
             assert!(
@@ -1813,7 +1813,7 @@ mod tests {
         tokio::task::yield_now().await;
         tokio::time::advance(Duration::from_secs(3)).await;
         first
-            .send(sea_v1::Response::EventCommitted { position: 10 })
+            .send(protocol::Response::EventCommitted { position: 10 })
             .unwrap();
         harness.response().await;
         tokio::time::advance(Duration::from_secs(2)).await;
@@ -1827,9 +1827,9 @@ mod tests {
     #[allow(clippy::too_many_lines)]
     async fn logical_stream_dispatch_and_cleanup_keep_the_admitted_session() {
         for role in [
-            sea_v1::StreamRole::Author,
-            sea_v1::StreamRole::Content,
-            sea_v1::StreamRole::Snapshot,
+            protocol::StreamRole::Author,
+            protocol::StreamRole::Content,
+            protocol::StreamRole::Snapshot,
         ] {
             for ending in [
                 "eof",
@@ -1840,7 +1840,7 @@ mod tests {
                 "opening-write-error",
                 "invalid-authority",
             ] {
-                if role != sea_v1::StreamRole::Author
+                if role != protocol::StreamRole::Author
                     && ending != "eof"
                     && ending != "invalid-authority"
                 {
@@ -1852,28 +1852,28 @@ mod tests {
                     b"probe".to_vec()
                 };
                 let (opening, request) = match role {
-                    sea_v1::StreamRole::Author => (
-                        sea_v1::Request::OpenAuthorStream { authority },
-                        sea_v1::Request::Submit {
+                    protocol::StreamRole::Author => (
+                        protocol::Request::OpenAuthorStream { authority },
+                        protocol::Request::Submit {
                             reference: None,
-                            event: sea_v1::Event {
+                            event: protocol::Event {
                                 payload: b"payload".to_vec(),
                                 blob_tree: None,
                             },
                         },
                     ),
-                    sea_v1::StreamRole::Content => (
-                        sea_v1::Request::OpenContentStream { authority },
-                        sea_v1::Request::PutBlob {
+                    protocol::StreamRole::Content => (
+                        protocol::Request::OpenContentStream { authority },
+                        protocol::Request::PutBlob {
                             payload: b"payload".to_vec(),
                         },
                     ),
-                    sea_v1::StreamRole::Snapshot => (
-                        sea_v1::Request::OpenSnapshotStream {
+                    protocol::StreamRole::Snapshot => (
+                        protocol::Request::OpenSnapshotStream {
                             authority,
-                            participation: sea_v1::SnapshotParticipation::ClientSelected,
+                            participation: protocol::SnapshotParticipation::ClientSelected,
                         },
-                        sea_v1::Request::LatestSnapshot,
+                        protocol::Request::LatestSnapshot,
                     ),
                     _ => unreachable!(),
                 };
@@ -1887,8 +1887,8 @@ mod tests {
                     finished: finished.clone(),
                     submissions: None,
                 });
-                let limits = sea_v1::Limits::default();
-                let opening = sea_v1::encode_request_frame(role, &opening, limits).unwrap();
+                let limits = protocol::Limits::default();
+                let opening = protocol::encode_request_frame(role, &opening, limits).unwrap();
                 let prefix = opening[..4].try_into().unwrap();
                 let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
                 for byte in &opening[4..] {
@@ -1927,7 +1927,7 @@ mod tests {
                     assert!(serving.await.is_err());
                     let calls = calls.lock().unwrap();
                     assert_eq!(calls.len(), 2, "failed opening must dispatch cleanup");
-                    assert_eq!(calls.last(), Some(&(1, sea_v1::Request::Close, false)));
+                    assert_eq!(calls.last(), Some(&(1, protocol::Request::Close, false)));
                     assert!(!finished.load(Ordering::Relaxed));
                     continue;
                 }
@@ -1938,11 +1938,11 @@ mod tests {
                 );
                 current.store(2, Ordering::Relaxed);
                 let request = if ending == "close" {
-                    sea_v1::Request::Close
+                    protocol::Request::Close
                 } else {
                     request
                 };
-                let mut encoded = sea_v1::encode_request_frame(role, &request, limits).unwrap();
+                let mut encoded = protocol::encode_request_frame(role, &request, limits).unwrap();
                 if ending == "truncated-frame" {
                     encoded.pop();
                 } else if ending == "decode-error" {
@@ -1968,10 +1968,10 @@ mod tests {
                     calls.iter().all(|(session, _, _)| *session == 1),
                     "{role:?}/{ending}: {calls:?}"
                 );
-                if role == sea_v1::StreamRole::Author {
+                if role == protocol::StreamRole::Author {
                     assert!(
                         calls.iter().any(|(_, request, after_finish)| {
-                            matches!(request, sea_v1::Request::Close) && !*after_finish
+                            matches!(request, protocol::Request::Close) && !*after_finish
                         }),
                         "{ending}: author cleanup must precede send completion"
                     );
@@ -1981,7 +1981,7 @@ mod tests {
                             calls
                                 .iter()
                                 .filter(|(_, request, _)| {
-                                    matches!(request, sea_v1::Request::Close)
+                                    matches!(request, protocol::Request::Close)
                                 })
                                 .count(),
                             1,
@@ -2008,13 +2008,13 @@ mod tests {
         let (requests, receive) = tokio::sync::mpsc::unbounded_channel();
         requests
             .send(
-                sea_v1::encode_request_frame(
-                    sea_v1::StreamRole::Content,
-                    &sea_v1::Request::Read {
+                protocol::encode_request_frame(
+                    protocol::StreamRole::Content,
+                    &protocol::Request::Read {
                         after: None,
                         stop_after: None,
                     },
-                    sea_v1::Limits::default(),
+                    protocol::Limits::default(),
                 )
                 .unwrap(),
             )
@@ -2035,8 +2035,8 @@ mod tests {
             service,
             &config,
             &metrics,
-            sea_v1::StreamRole::Content,
-            sea_v1::Request::OpenContentStream {
+            protocol::StreamRole::Content,
+            protocol::Request::OpenContentStream {
                 authority: Vec::new(),
             },
         );
@@ -2054,7 +2054,7 @@ mod tests {
     async fn idle_stream_outlives_operation_deadline() {
         let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
         let mut receive = TestReceive(receiver);
-        let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits::default());
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         let reading = read_next_network_frame(&mut receive, &mut decoder, Duration::from_secs(5));
         tokio::pin!(reading);
         assert!(futures_util::poll!(&mut reading).is_pending());
@@ -2062,17 +2062,17 @@ mod tests {
         assert!(futures_util::poll!(&mut reading).is_pending());
         sender
             .send(
-                sea_v1::encode_request_frame(
-                    sea_v1::StreamRole::Author,
-                    &sea_v1::Request::Close,
-                    sea_v1::Limits::default(),
+                protocol::encode_request_frame(
+                    protocol::StreamRole::Author,
+                    &protocol::Request::Close,
+                    protocol::Limits::default(),
                 )
                 .unwrap(),
             )
             .unwrap();
         assert_eq!(
             reading.await.unwrap().unwrap().kind,
-            sea_v1::MessageKind::Close
+            protocol::MessageKind::Close
         );
     }
 
@@ -2080,7 +2080,7 @@ mod tests {
     async fn invalid_first_length_fails_without_waiting_for_more_bytes() {
         let (_sender, receiver) = tokio::sync::mpsc::unbounded_channel();
         let mut receive = TestReceive(receiver);
-        let reading = read_one_network_frame(&mut receive, [0; 4], sea_v1::Limits::default());
+        let reading = read_one_network_frame(&mut receive, [0; 4], protocol::Limits::default());
         tokio::pin!(reading);
         assert!(matches!(
             futures_util::poll!(&mut reading),
@@ -2092,9 +2092,9 @@ mod tests {
     async fn partial_frame_expires_after_operation_deadline() {
         let (sender, receiver) = tokio::sync::mpsc::unbounded_channel();
         let mut receive = TestReceive(receiver);
-        let mut decoder = sea_v1::NetworkFrameDecoder::new(sea_v1::Limits::default());
+        let mut decoder = protocol::NetworkFrameDecoder::new(protocol::Limits::default());
         sender
-            .send(vec![u8::from(sea_v1::MessageKind::Close)])
+            .send(vec![u8::from(protocol::MessageKind::Close)])
             .unwrap();
         let reading = read_next_network_frame(&mut receive, &mut decoder, Duration::from_secs(5));
         tokio::pin!(reading);

@@ -402,8 +402,8 @@ struct PolicyStream<S, P, G> {
     progress: MonitoredStreamProgress<EventPosition>,
     /// One pre-source refusal for a read whose synchronous API cannot return an error.
     refusal: Option<P>,
-    /// Live-reader admission retained independently of the source's cache retention.
-    reader: Option<G>,
+    /// Live-reader admission permit retained independently of the source's cache retention.
+    reader_permit: Option<G>,
 }
 
 impl<S, P, G> Unpin for PolicyStream<S, P, G> {}
@@ -425,12 +425,12 @@ impl<S, P, G> Stream for PolicyStream<S, P, G> {
         match result {
             Poll::Ready(Some(Err(error))) => {
                 this.source = None;
-                this.reader = None;
+                this.reader_permit = None;
                 Poll::Ready(Some(Err(PolicyError::Source(error))))
             }
             Poll::Ready(None) => {
                 this.source = None;
-                this.reader = None;
+                this.reader_permit = None;
                 Poll::Ready(None)
             }
             Poll::Ready(Some(Ok(item))) => Poll::Ready(Some(Ok(item))),
@@ -454,13 +454,13 @@ impl<S, P, G> MonitoredStream for PolicyStream<S, P, G> {
 /// Wraps an admitted stream without changing its current progress or availability handles.
 fn map_stream<S: ClassifiedError, P: ClassifiedError, G: SessionBounds + 'static>(
     source: ArchiveStream<SessionCommittedEvent, EventPosition, S>,
-    reader: Option<G>,
+    reader_permit: Option<G>,
 ) -> ArchiveStream<SessionCommittedEvent, EventPosition, PolicyError<S, P>> {
     Box::pin(PolicyStream {
         progress: source.progress(),
         source: Some(source),
         refusal: None,
-        reader,
+        reader_permit,
     })
 }
 
@@ -475,7 +475,7 @@ impl<S: SeaSession, P: DocumentPolicy> SeaArchive for PolicySession<S, P> {
         after: Option<EventPosition>,
         stop_after: Option<EventPosition>,
     ) -> ArchiveStream<SessionCommittedEvent, EventPosition, Self::Error> {
-        let reader = if stop_after.is_none() {
+        let reader_permit = if stop_after.is_none() {
             match self.policy.admit_live_reader() {
                 Ok(permit) => Some(permit),
                 Err(error) => {
@@ -487,28 +487,28 @@ impl<S: SeaSession, P: DocumentPolicy> SeaArchive for PolicySession<S, P> {
                             status: MonitoredStreamStatus::StreamingBacklog,
                         },
                         refusal: Some(error),
-                        reader: None,
+                        reader_permit: None,
                     });
                 }
             }
         } else {
             None
         };
-        map_stream(self.source.read(after, stop_after), reader)
+        map_stream(self.source.read(after, stop_after), reader_permit)
     }
 
     async fn load(
         &self,
         start: LoadStart,
     ) -> Result<SessionLoad<Self::BlobHandle, Self::EventHandle, Self::Error>, Self::Error> {
-        let reader = self
+        let reader_permit = self
             .policy
             .admit_live_reader()
             .map_err(PolicyError::Policy)?;
         let loaded = self.source.load(start).await.map_err(PolicyError::Source)?;
         Ok(SessionLoad {
             snapshot: loaded.snapshot,
-            events: map_stream(loaded.events, Some(reader)),
+            events: map_stream(loaded.events, Some(reader_permit)),
         })
     }
 

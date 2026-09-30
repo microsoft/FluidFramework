@@ -166,16 +166,16 @@ impl SignalRoom {
         target: Option<&Bytes>,
         best_effort: bool,
     ) {
-        let mut removed = Vec::new();
+        let mut pending_removals = Vec::new();
         for (id, participant) in members.iter() {
             if target.is_some_and(|target| target != id) {
                 continue;
             }
             if participant.sender.try_send(event.clone()).is_err() && !best_effort {
-                removed.push(id.clone());
+                pending_removals.push(id.clone());
             }
         }
-        while let Some(id) = removed.pop() {
+        while let Some(id) = pending_removals.pop() {
             if let Some(participant) = members.remove(&id) {
                 participant.terminal.send_replace(Some(SignalError::Lagged));
                 for (other_id, other) in members.iter() {
@@ -184,7 +184,7 @@ impl SignalRoom {
                         .try_send(SignalEvent::Left(id.clone()))
                         .is_err()
                     {
-                        removed.push(other_id.clone());
+                        pending_removals.push(other_id.clone());
                     }
                 }
             }

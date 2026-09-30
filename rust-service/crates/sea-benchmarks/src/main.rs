@@ -975,16 +975,16 @@ fn cpu_model() -> String {
 
 /// Reads total host memory from Linux procfs when available.
 fn memory_bytes() -> Option<u64> {
-    proc_status_value("/proc/meminfo", "MemTotal:").map(|kilobytes| kilobytes * 1_024)
+    proc_kilobytes("/proc/meminfo", "MemTotal:").map(|kilobytes| kilobytes * 1_024)
 }
 
 /// Reads process-wide peak resident memory from Linux procfs when available.
 fn peak_resident_memory_bytes() -> Option<u64> {
-    proc_status_value("/proc/self/status", "VmHWM:").map(|kilobytes| kilobytes * 1_024)
+    proc_kilobytes("/proc/self/status", "VmHWM:").map(|kilobytes| kilobytes * 1_024)
 }
 
 /// Reads a numeric kilobyte value with the supplied procfs line prefix.
-fn proc_status_value(path: &str, prefix: &str) -> Option<u64> {
+fn proc_kilobytes(path: &str, prefix: &str) -> Option<u64> {
     fs::read_to_string(path).ok()?.lines().find_map(|line| {
         line.strip_prefix(prefix)?
             .split_whitespace()
