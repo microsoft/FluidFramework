@@ -57,17 +57,45 @@ export interface GuestOptions extends SandboxEndpointOptions {
  * @sealed
  */
 export interface Guest {
-	/** The independent tree synchronized with the Host. */
+	/**
+	 * The independent tree synchronized with the Host.
+	 * @remarks Available after {@link createGuest} resolves.
+	 */
 	readonly tree: ViewableTree;
-	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+
+	/**
+	 * The terminal failure that requires application-managed Host and Guest recreation,
+	 * if this session failed.
+	 */
 	readonly error: Error | undefined;
-	/** A promise for Host acknowledgment of pending Guest changes, if changes are pending. */
+
+	/**
+	 * A promise for Host acknowledgment of all pending Guest changes, or `undefined`
+	 * if there are no pending changes.
+	 *
+	 * @remarks
+	 * If the Guest makes more changes while the promise is pending, the same promise
+	 * waits for those changes too. The promise rejects on failure or disposal.
+	 * Access after failure throws.
+	 */
 	readonly updateHostPromise: Promise<void> | undefined;
+
 	/**
 	 * Stops Guest edits and waits for the Host to reclaim the child ID space shard.
-	 * Use this method for normal teardown.
+	 *
+	 * @remarks
+	 * Use this method for normal teardown. It stops new edits and disposes the authoring
+	 * checkout immediately. After the Host acknowledges earlier Guest changes, the Guest
+	 * sends a disposal token. The Guest releases its remaining resources when the Host
+	 * confirms shard reclamation. A second call throws, even while close is in progress.
+	 * If the connection fails or the acknowledgment never arrives, call {@link Guest.dispose}
+	 * to abort locally.
+	 *
+	 * @returns A promise that resolves when the Host confirms shard reclamation.
+	 * @throws {@link UsageError} if close has already started or the Guest is disposed.
 	 */
 	close(): Promise<void>;
+
 	/**
 	 * Aborts the Guest session and releases its local resources.
 	 *
@@ -75,6 +103,12 @@ export interface Guest {
 	 * This method does not send a shard disposal token.
 	 * The Host keeps the child ID space shard reserved unless it already received
 	 * a valid close token. Use {@link Guest.close} for normal teardown.
+	 *
+	 * Calling this method before close completes rejects pending work.
+	 * After a failure, the application can inspect the authoring view, if it is usable,
+	 * before calling this method to release both checkouts.
+	 *
+	 * Repeated calls have no effect.
 	 */
 	dispose(): void;
 }
@@ -125,7 +159,6 @@ export class GuestImplementation implements Guest {
 		return this.#synchronization ?? fail("Guest accessed before initialization");
 	}
 
-	/** The independent tree on the Guest. Available after {@link GuestImplementation.create} resolves. */
 	public get tree(): ViewableTree {
 		return this.viewableTree ?? fail("Guest accessed before initialization");
 	}
@@ -301,21 +334,6 @@ export class GuestImplementation implements Guest {
 		this.initialized.resolver();
 	}
 
-	/**
-	 * Stops the Guest, then waits for the Host to reclaim its ID space shard.
-	 *
-	 * @remarks
-	 * New edits stop immediately, and the tree view is disposed.
-	 * Changes already sent to the Host must be acknowledged before the Guest sends
-	 * its disposal token. The Guest disposes its session after the Host acknowledges
-	 * shard reclamation. A subsequent call throws, including while close is in progress.
-	 * Use {@link Guest.dispose} to abort locally if the channel fails or a close
-	 * acknowledgment never arrives. Without a valid disposal token, the Host keeps
-	 * the shard reserved.
-	 *
-	 * @returns A promise that resolves when the Host confirms the shard was reclaimed.
-	 * @throws {@link UsageError} if close has already started or the Guest is disposed.
-	 */
 	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Invalid calls must throw and the view must be disposed synchronously.
 	public close(): Promise<void> {
 		if (this.disposed) {
@@ -348,18 +366,6 @@ export class GuestImplementation implements Guest {
 		return completion.promise;
 	}
 
-	/**
-	 * Disposes the Guest's session resources without reclaiming its child ID space shard.
-	 *
-	 * @remarks
-	 * An orderly {@link GuestImplementation.close} disposes the Guest after the Host acknowledges
-	 * shard reclamation. Calling this method earlier aborts the local session and
-	 * rejects pending work. It does not send a disposal token: the Host keeps the
-	 * shard reserved unless it already received a valid token from a close attempt.
-	 * After a failure, the application can inspect the authoring view, if it is still
-	 * usable, before calling this method to release both checkouts.
-	 * Repeated calls have no effect.
-	 */
 	public dispose(): void {
 		if (this.disposed) {
 			return;
@@ -371,7 +377,6 @@ export class GuestImplementation implements Guest {
 		this.#synchronization?.dispose();
 	}
 
-	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
 	public get error(): Error | undefined {
 		return this.session.error;
 	}
@@ -382,15 +387,6 @@ export class GuestImplementation implements Guest {
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 
-	/**
-	 * Returns a promise that resolves when the Host acknowledges all changes made on the Guest,
-	 * or undefined if no such changes are in flight.
-	 *
-	 * If new local changes are made while a promise is in progress, the existing promise resolves
-	 * only after the Host acknowledges the new changes too.
-	 * A caller does not need to get the promise again after making new changes while it is pending.
-	 * Pending promises reject on failure or disposal. Access after failure throws.
-	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
 		return this.#synchronization?.updateHostPromise;
