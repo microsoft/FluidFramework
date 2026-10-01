@@ -875,6 +875,7 @@ describe("Host and Guest correctness", () => {
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
 		assert.equal(root.getShardSyncToken(), undefined);
+		assert.doesNotThrow(() => guest.dispose());
 		assert.throws(() => guestView.root.push("after close"), /disposed|invalid state/i);
 		assert.throws(
 			() => retainedRoot.push("after close"),

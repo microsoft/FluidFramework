@@ -42,8 +42,8 @@ import type { GuestBranchInitialization } from "./hostSynchronization.js";
  * to closed without disposing the checkouts. The application must dispose the Guest
  * to release them after failure reporting.
  *
- * An application abort calls `Guest.dispose()`, which moves synchronization to
- * closed and then disposed without waiting for a close acknowledgment.
+ * Application disposal before an orderly close calls `Guest.dispose()`, which closes
+ * and disposes synchronization without waiting for a close acknowledgment.
  */
 enum GuestSynchronizationState {
 	/**
@@ -97,7 +97,7 @@ enum GuestSynchronizationState {
  * The application must then dispose the Guest to release both checkouts.
  * This failure path does not request shard reclamation.
  *
- * On application abort, `Guest.dispose()` calls both methods without an orderly close.
+ * On local disposal before an orderly close, `Guest.dispose()` calls both methods.
  *
  */
 export class GuestSynchronization {
