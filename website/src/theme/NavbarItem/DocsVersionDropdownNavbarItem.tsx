@@ -54,13 +54,15 @@ type AccessibleLinkProps = LinkLikeNavbarItemProps & {
 };
 
 /**
- * Moves focus within an open desktop version dropdown.
+ * Moves focus within the open documentation version dropdown in the desktop navbar.
  */
 function handleVersionDropdownKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
 	if (event.defaultPrevented === true || !(event.target instanceof HTMLAnchorElement)) {
 		return;
 	}
 
+	// Docusaurus uses a state class to open the dropdown with the keyboard.
+	// Pointer hover opens it through the hover selector without a change to `aria-expanded`.
 	const dropdown = event.currentTarget.querySelector(
 		".dropdown--show, .dropdown--hoverable:hover",
 	);
@@ -70,6 +72,8 @@ function handleVersionDropdownKeyDown(event: KeyboardEvent<HTMLDivElement>): voi
 
 	const links = [...dropdown.querySelectorAll<HTMLAnchorElement>(".dropdown__menu a[href]")];
 	const currentIndex = links.indexOf(event.target);
+	// The trigger has index -1 because it is not a menu link.
+	// Other elements outside the menu links must not start navigation.
 	if (currentIndex === -1 && event.target !== dropdown.querySelector(".navbar__link")) {
 		return;
 	}
@@ -96,6 +100,7 @@ function handleVersionDropdownKeyDown(event: KeyboardEvent<HTMLDivElement>): voi
 			break;
 		}
 		default: {
+			// Leave link activation and Tab navigation to Docusaurus and the browser.
 			return;
 		}
 	}
@@ -103,24 +108,34 @@ function handleVersionDropdownKeyDown(event: KeyboardEvent<HTMLDivElement>): voi
 	const nextLink = links[nextIndex];
 	if (nextLink !== undefined) {
 		event.preventDefault();
+		// Move focus now. A delayed callback can override later Tab navigation.
 		nextLink.focus();
 	}
 }
 
 /**
- * Adds accessible link labels and desktop keyboard navigation to the documentation version selector.
+ * Adds accessible link labels and keyboard navigation to the documentation version dropdown.
  *
  * @remarks
- * This component customizes the Docusaurus classic theme's `DocsVersionDropdownNavbarItem`.
- * Docusaurus still controls dropdown visibility, hover, and link activation.
- * The desktop wrapper adds ArrowUp, ArrowDown, Home, and End navigation only while the dropdown is open.
- * It leaves closed menus, mobile navigation, and single-version links unchanged.
+ * This component replaces the Docusaurus classic theme's `DocsVersionDropdownNavbarItem`.
+ * Desktop refers to the non-mobile navbar layout.
+ * Docusaurus controls dropdown visibility and hover behavior.
+ * It also controls link activation.
  *
- * The keyboard handler depends on Docusaurus's dropdown state classes and its navbar and menu link markup.
- * After a Docusaurus upgrade, verify these selectors with `VersionDropdown.spec.ts`.
- * Remove the handler if upstream provides equivalent keyboard navigation.
- * Upstream closed {@link https://github.com/facebook/docusaurus/issues/11447 | facebook/docusaurus#11447} as not planned.
- * See {@link https://docusaurus.io/docs/swizzling/ | Docusaurus swizzling} for the customization mechanism.
+ * When the dropdown is open, the desktop wrapper adds these keys for navigation:
+ * - ArrowUp and ArrowDown move focus between links.
+ * - Home moves focus to the first link.
+ * - End moves focus to the last link.
+ *
+ * The handler does not open closed dropdowns.
+ * It does not change mobile navigation or single-version links.
+ *
+ * The handler depends on Docusaurus's dropdown state classes and link markup.
+ * After a Docusaurus upgrade, check these selectors with `VersionDropdown.spec.ts`.
+ * If Docusaurus adds the same keyboard navigation, remove the handler.
+ *
+ * The Docusaurus maintainers closed {@link https://github.com/facebook/docusaurus/issues/11447 | facebook/docusaurus#11447} as "not planned".
+ * See {@link https://docusaurus.io/docs/swizzling/ | Docusaurus swizzling} for details about theme customization.
  */
 export default function DocsVersionDropdownNavbarItem({
 	mobile,
