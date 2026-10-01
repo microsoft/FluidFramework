@@ -1351,6 +1351,57 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(parent.decompress(nextChildId), child.decompress(nextChildId));
 		});
 
+		it("does not backfill when a child is already ahead of its parent", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			child.generateCompressedId();
+			child.generateCompressedId();
+			const childToken = child.getShardSyncToken() ?? fail();
+			const before = child.serialize(true);
+
+			child.synchronizeWithParent(parent.getChildShardProgress(childToken));
+			assert.equal(child.serialize(true), before);
+
+			const parentId = parent.generateCompressedId();
+			child.synchronizeWithParent(parent.getChildShardProgress(childToken));
+			assert.equal(child.serialize(true), before);
+			assert.equal(child.decompress(parentId), parent.decompress(parentId));
+		});
+
+		it("realigns to the original stride when reclaiming the last child", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childId = child.generateCompressedId();
+			const expectedStableId = child.decompress(childId);
+
+			parent.synchronizeWithShard(child.disposeShard() ?? fail());
+			assert.equal(parent.getShardSyncToken(), undefined);
+			assert.equal(parent.decompress(childId), expectedStableId);
+			assert.equal(parent.generateCompressedId(), -5);
+		});
+
+		it("preserves the active child when progress cannot fit in the ID space", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childToken = child.getShardSyncToken() ?? fail();
+			const before = parent.serialize(true);
+
+			assert.throws(
+				() =>
+					parent.synchronizeWithShard({
+						...childToken,
+						localGenCount: Number.MAX_SAFE_INTEGER,
+						disposed: true,
+					}),
+				/supported ID space/,
+			);
+			assert.equal(parent.serialize(true), before);
+			assert.doesNotThrow(() => parent.getChildShardProgress(childToken));
+		});
+
 		it("applies local finalized ranges after parent and child generate IDs", () => {
 			const parent = createIdCompressor(SerializationVersion.V3);
 			const [serializedChild] = parent.shard(1);

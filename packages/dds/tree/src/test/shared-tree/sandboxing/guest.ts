@@ -72,11 +72,11 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly logger: TelemetryLoggerExt;
 	private synchronization: GuestSynchronization<TSchema> | undefined;
 	private readonly initialized = makePromiseWithResolvers();
-	/** The one close operation shared by repeated calls to {@link Guest.close}. */
+	/** Set when close starts, to reject another close and complete the acknowledgment handshake. */
 	private closeInProgress: ReturnType<typeof makePromiseWithResolvers> | undefined;
 	/** Whether the Guest has sent its disposal token and can accept the Host's close acknowledgment. */
 	private closeSent = false;
-	/** Prevents disposal from releasing a view already released by orderly close. */
+	/** Tracks actual view disposal: failure can reach Closed with or without an earlier orderly close. */
 	private viewDisposed = false;
 	private disposed = false;
 
@@ -255,20 +255,21 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	 * New edits stop immediately, and the tree view is disposed.
 	 * Changes already sent to the Host must be acknowledged before the Guest sends
 	 * its disposal token. The Guest disposes its session after the Host acknowledges
-	 * shard reclamation. Repeated calls return the same promise.
+	 * shard reclamation. A subsequent call throws, including while close is in progress.
 	 * Use {@link Guest.dispose} to abort locally if the channel fails or a close
 	 * acknowledgment never arrives. Without a valid disposal token, the Host keeps
 	 * the shard reserved.
 	 *
 	 * @returns A promise that resolves when the Host confirms the shard was reclaimed.
+	 * @throws {@link UsageError} if close has already started or the Guest is disposed.
 	 */
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Repeated close calls return the same promise.
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Invalid calls must throw and the view must be disposed synchronously.
 	public close(): Promise<void> {
-		if (this.closeInProgress !== undefined) {
-			return this.closeInProgress.promise;
-		}
 		if (this.disposed) {
 			throw new UsageError("Cannot close a disposed Guest.");
+		}
+		if (this.closeInProgress !== undefined) {
+			throw new UsageError("Guest is already closing.");
 		}
 		this.session.breaker.use();
 		const synchronization = this.synchronization ?? fail("Guest closed before initialization");

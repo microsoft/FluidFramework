@@ -850,8 +850,19 @@ describe("Host and Guest correctness", () => {
 		const retainedRoot = guest.view.root;
 		guest.view.root.push("guest");
 		const closing = guest.close();
-		assert.equal(guest.close(), closing);
+		assert.throws(
+			() => {
+				assert.equal(guest.close(), undefined, "Expected close to throw synchronously");
+			},
+			validateUsageError(/already closing/),
+		);
 		await closing;
+		assert.throws(
+			() => {
+				assert.equal(guest.close(), undefined, "Expected close to throw synchronously");
+			},
+			validateUsageError(/disposed Guest/),
+		);
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
 		assert.equal(root.getShardSyncToken(), undefined);
@@ -961,6 +972,12 @@ describe("Host and Guest correctness", () => {
 		ports.guestPort.close();
 		guest.dispose();
 		await closing;
+		assert.throws(
+			() => {
+				assert.equal(guest.close(), undefined, "Expected close to throw synchronously");
+			},
+			validateUsageError(/disposed Guest/),
+		);
 		assert.doesNotThrow(() => root.getChildShardProgress(token));
 		host.dispose();
 		host.main.root.push("still usable");
@@ -2085,13 +2102,21 @@ describe("Host and Guest correctness", () => {
 		);
 		const closing = synchronization.close();
 		assert.throws(() => {
-			synchronization.close();
+			assert.equal(
+				synchronization.close(),
+				undefined,
+				"Expected close to throw synchronously",
+			);
 		}, /Cannot close Guest synchronization after closing has begun/);
 		assert.throws(() => synchronization.view.root, /disposed|invalid state/i);
 		const token = await closing;
 		assert.equal(token.disposed, true);
 		assert.throws(() => {
-			synchronization.close();
+			assert.equal(
+				synchronization.close(),
+				undefined,
+				"Expected close to throw synchronously",
+			);
 		}, /Cannot close Guest synchronization after closing has begun/);
 		assert.deepEqual([...synchronization.host.root], ["a"]);
 		synchronization.dispose();

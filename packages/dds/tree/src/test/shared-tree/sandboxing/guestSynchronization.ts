@@ -363,10 +363,12 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * Acknowledgments for changes already sent can still arrive. After they arrive,
 	 * this class disposes the child ID space shard and returns its disposal token.
 	 * A repeated call fails without disposing the view or child ID space shard again.
+	 * View disposal happens synchronously; if it fails, this method throws before
+	 * the Guest records the view as disposed.
 	 *
 	 * @returns A promise for the final ID space shard disposal token.
 	 */
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- The view must be disposed synchronously before returning the token promise.
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- View disposal failures must throw before Guest marks the view as disposed.
 	public close(): Promise<ShardSynchronizationToken> {
 		assert(
 			this.state === GuestSynchronizationState.Active,
