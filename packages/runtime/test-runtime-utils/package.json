@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "3.3.0",
+	"version": "3.4.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -140,7 +140,26 @@
 		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockContainerRuntime": {
+				"backCompat": false
+			},
+			"Class_MockContainerRuntimeForReconnection": {
+				"backCompat": false
+			},
+			"Class_MockFluidDataStoreRuntime": {
+				"backCompat": false
+			},
+			"ClassStatics_MockContainerRuntime": {
+				"backCompat": false
+			},
+			"ClassStatics_MockContainerRuntimeForReconnection": {
+				"backCompat": false
+			},
+			"ClassStatics_MockFluidDataStoreRuntime": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

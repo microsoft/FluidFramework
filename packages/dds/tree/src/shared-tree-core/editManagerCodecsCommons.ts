@@ -33,9 +33,13 @@ import type {
 	SequencedCommit,
 } from "./editManagerFormatCommons.js";
 
-export interface EditManagerEncodingContext {
+export interface EditManagerEncodingContext<TChangeset> {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * Returns whether a changeset contains a schema change.
+	 */
+	readonly hasSchemaChange: (change: TChangeset) => boolean;
 	/**
 	 * See {@link ChangeEncodingContext.isSummary}. EditManager codec callers
 	 * always set this to `true` (the codec is only invoked for summaries),
@@ -48,7 +52,7 @@ export interface EditManagerEncodingContext {
  * Context required for decoding the {@link EditManager}'s {@link SummaryData}.
  * @remarks
  * Unlike {@link EditManagerEncodingContext}, this carries {@link IdentifierHealingConfig} (used only
- * on decode) and omits `schema` (only consulted when encoding).
+ * on decode) and omits `schema` and `hasSchemaChange` (only consulted when encoding).
  */
 export interface EditManagerDecodingContext {
 	readonly idCompressor: IIdCompressor;
@@ -136,7 +140,7 @@ export function encodeSharedBranch<TChangeset>(
 		ChangeEncodingContext
 	>,
 	data: SharedBranchSummaryData<TChangeset>,
-	context: EditManagerEncodingContext,
+	context: EditManagerEncodingContext<TChangeset>,
 	originatorId: SessionId | undefined,
 	includeCustomMetadata: boolean,
 ): EncodedSharedBranch<JsonCompatibleReadOnly> {
@@ -159,32 +163,40 @@ export function encodeSharedBranch<TChangeset>(
 			copyProperty(commit, "indexInBatch", encoded);
 			return encoded;
 		}),
-		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-			sessionId,
-			{
-				base: revisionTagCodec.encode(branch.base, {
-					originatorId: sessionId,
-					idCompressor: context.idCompressor,
-					revision: undefined,
-					isSummary: context.isSummary,
-				}),
-				commits: branch.commits.map((commit) =>
-					encodeCommit(
-						changeCodec,
-						revisionTagCodec,
-						commit,
-						{
-							originatorId: commit.sessionId,
-							idCompressor: context.idCompressor,
-							schema: context.schema,
-							revision: undefined,
-							isSummary: context.isSummary,
-						},
-						includeCustomMetadata,
+		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => {
+			// A peer's schema change may be rejected on the trunk while its original commits remain here.
+			// Without schema changes, peer data remains compatible with the trunk's schema upgrades.
+			// Otherwise, omit the inherited schema; the change codec can still use schemas within a commit.
+			const schema = branch.commits.some((commit) => context.hasSchemaChange(commit.change))
+				? undefined
+				: context.schema;
+			return [
+				sessionId,
+				{
+					base: revisionTagCodec.encode(branch.base, {
+						originatorId: sessionId,
+						idCompressor: context.idCompressor,
+						revision: undefined,
+						isSummary: context.isSummary,
+					}),
+					commits: branch.commits.map((commit) =>
+						encodeCommit(
+							changeCodec,
+							revisionTagCodec,
+							commit,
+							{
+								originatorId: commit.sessionId,
+								idCompressor: context.idCompressor,
+								schema,
+								revision: undefined,
+								isSummary: context.isSummary,
+							},
+							includeCustomMetadata,
+						),
 					),
-				),
-			},
-		]),
+				},
+			];
+		}),
 	};
 	if (data.session !== undefined) {
 		json.session = data.session;

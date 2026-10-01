@@ -1996,5 +1996,11 @@ export const shortCodeMap = {
 	"0xd4c": "Root data store kind must be provided for new containers",
 	"0xd4d": "Should be able to set alias on new data store",
 	"0xd4e": "id should be defined when loading a container",
-	"0xd4f": "Unexpected schema change in root commit"
+	"0xd4f": "Unexpected schema change in root commit",
+	"0xd50": "tryCoalesceUniformChunks: left and right carry different idCompressors",
+	"0xd51": "Expected a field for each key of the inner node.",
+	"0xd52": "Shard stride must be a safe integer",
+	"0xd53": "Child offsets incorrectly calculated.",
+	"0xd54": "Must be sharded",
+	"0xd55": "Compressor is not sharded."
 };

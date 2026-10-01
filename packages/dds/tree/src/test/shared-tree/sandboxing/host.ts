@@ -3,52 +3,103 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { fail } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+import {
+	castCursorToSynchronous,
+	findAncestor,
+	moveToDetachedField,
+	schemaDataIsEmpty,
+} from "../../../core/index.js";
+import {
+	defaultSchemaPolicy,
+	fieldBatchCodecBuilder,
+	schemaCodecBuilder,
+	TreeCompressionStrategy,
+} from "../../../feature-libraries/index.js";
+import type { TreeCheckout } from "../../../shared-tree/index.js";
+import type { UntypedTreeView } from "../../../simple-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
 	type BlobRequestMessage,
 	type BlobResponseMessage,
 	type HostGuestMessage,
+	type HostInitializationMessage,
 	normalizeProtocolError,
 	parseHostGuestMessage,
+	type SandboxEndpointOptions,
+	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
+	validateTreePayloadVocabulary,
 } from "./common.js";
 import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
+import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
- * The SharedTree that connects to Fluid services on behalf of a Guest.
- *
+ * Options for creating a Host.
  * @typeParam TSchema - The schema of the synchronized tree.
  */
-export class Host<const TSchema extends ImplicitFieldSchema> {
+export interface HostOptions extends SandboxEndpointOptions {
+	// TODO: Use a branch with a forest once it can be supplied without a full view.
+	/** The application-owned view to synchronize with the Guest. */
+	readonly main: UntypedTreeView;
+}
+
+/**
+ * The SharedTree that connects to Fluid services on behalf of a {@link Guest}.
+ * @sealed
+ */
+export interface Host {
+	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+	readonly error: Error | undefined;
+	/** A promise for Guest acknowledgment of pending Host changes, if changes are pending. */
+	readonly updateGuestPromise: Promise<void> | undefined;
+	/** Ends the session and releases its resources. */
+	dispose(): void;
+}
+
+/**
+ * Creates and connects a {@link Host} which can support a {@link Guest}.
+ * @param options - The options for creating the Host.
+ * @returns The created Host instance.
+ */
+export function createHost(options: HostOptions): Host {
+	return new HostImplementation(options);
+}
+
+/**
+ * Implementation of {@link Host}.
+ * @typeParam TSchema - The schema of the synchronized tree supplied during construction.
+ */
+export class HostImplementation implements Host {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
-	private readonly synchronization: HostSynchronization<TSchema>;
+	/** Internal synchronization state exposed for testing. */
+	public readonly synchronization: HostSynchronization;
+	/** The checkout extracted from the application-provided view. */
+	private readonly mainCheckout: TreeCheckout;
+	private readonly port: MessagePort;
 	private disposed = false;
-	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
-	public readonly main: TreeViewAlpha<TSchema>;
 
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
-				case "dataChange": {
-					this.synchronization.receiveChangeFromGuest(message.change);
+				case "guestChange": {
+					this.synchronization.receiveChangeFromGuest(message);
 					break;
 				}
-				case "acknowledgment": {
-					this.synchronization.receiveAckFromGuest();
+				case "hostUpdateAck": {
+					this.synchronization.receiveUpdateAck(message);
 					break;
 				}
 				case "blobRequest": {
@@ -57,15 +108,20 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					});
 					break;
 				}
-				case "blobResponse": {
-					throw new SandboxProtocolError("The Host cannot receive blob responses.");
+				case "blobResponse":
+				case "hostUpdate":
+				case "hostInitialization":
+				case "guestChangeAck": {
+					throw new SandboxProtocolError(
+						`Host received a message with type ${JSON.stringify(message.type)}.`,
+					);
 				}
 				case "sessionFailure": {
 					this.session.fail(new Error(message.error), false);
 					break;
 				}
 				default: {
-					fail("Unexpected Host and Guest message type");
+					unreachableCase(message);
 				}
 			}
 		});
@@ -78,21 +134,15 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		);
 	};
 
-	public constructor(
-		// TODO: once we have a proper API for branches with a forest without requiring a full view, that should be used here.
-		main: TreeViewAlpha<TSchema>,
-		/** The Host endpoint of the Host and Guest message channel. */
-		private readonly port: MessagePort,
-		/** The SharedTree handle to which restored handles are bound. */
-		bindingHandle: IFluidHandle,
-		/** The Host-scoped logger for diagnostic telemetry. */
-		logger: TelemetryLoggerExt,
-		// TODO: Replace this callback with `Listenable` event API for session errors and closure.
-		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
-		handleProtocolError: (error: Error) => void = throwProtocolError,
-	) {
-		this.codec = new HostTransportCodec(bindingHandle);
-		this.main = main;
+	public constructor({
+		main,
+		port,
+		logger,
+		handleProtocolError = throwProtocolError,
+	}: HostOptions) {
+		this.port = port;
+		this.codec = new HostTransportCodec();
+		this.mainCheckout = getCheckout(main);
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
@@ -101,17 +151,28 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			},
 			handleProtocolError,
 		);
+		const hostLogger =
+			logger ??
+			createChildLogger({
+				logger: this.mainCheckout.breaker.logger,
+				namespace: "Host",
+			});
 		this.synchronization = new HostSynchronization(
-			main,
+			this.mainCheckout,
 			(message) => this.postMessage(message),
-			(change) => this.codec.bindHandles(change),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
-			logger,
+			hostLogger,
 		);
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
+		try {
+			this.postMessage(this.createInitializationMessage(getIdCompressor(main)));
+		} catch (error) {
+			this.dispose();
+			throw error;
+		}
 	}
 
 	public dispose(): void {
@@ -155,6 +216,58 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 
+	private createInitializationMessage(idCompressor: IIdCompressor): HostInitializationMessage {
+		const initialization = this.synchronization.guestInitialization;
+		const checkout = this.mainCheckout.fork();
+		try {
+			const branch = checkout.mainBranch;
+			const base = findAncestor(
+				branch.getHead(),
+				(commit) => commit.revision === initialization.baseRevision,
+			);
+			assert(base !== undefined, "Expected the Guest initialization base in Host history");
+			checkout.switchBranch(branch.fork(base));
+			branch.dispose();
+			if (schemaDataIsEmpty(checkout.storedSchema)) {
+				throw new UsageError(
+					"The Host must have an initialized state at its finalized-history boundary before creating a Guest.",
+				);
+			}
+			const cursor = checkout.forest.allocateCursor();
+			try {
+				moveToDetachedField(checkout.forest, cursor);
+				const options = {
+					jsonValidator: sandboxFormatValidator,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				};
+				const tree = fieldBatchCodecBuilder
+					.build(options)
+					.encode([castCursorToSynchronous(cursor)], {
+						encodeType: TreeCompressionStrategy.Compressed,
+						idCompressor,
+						schema: { schema: checkout.storedSchema, policy: defaultSchemaPolicy },
+						isSummary: true,
+					});
+				const normalizedTree = normalizeTransportData(tree);
+				const normalizedSchema = normalizeTransportData(
+					schemaCodecBuilder.build(options).encode(checkout.storedSchema),
+				);
+				validateTreePayloadVocabulary(normalizedTree);
+				validateTreePayloadVocabulary(normalizedSchema);
+				return {
+					type: "hostInitialization",
+					...initialization,
+					tree: normalizedTree as JsonCompatibleReadOnly,
+					schema: normalizedSchema as JsonCompatibleReadOnly,
+				};
+			} finally {
+				cursor.free();
+			}
+		} finally {
+			checkout.dispose();
+		}
+	}
+
 	/**
 	 * Returns a promise that resolves when all changes known to the Host are reflected in the Guest,
 	 * or undefined if all such changes are already reflected in the Guest.
@@ -167,12 +280,5 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	public get updateGuestPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
 		return this.synchronization.updateGuestPromise;
-	}
-
-	/**
-	 * The Host branch that reflects the Guest's acknowledged state.
-	 */
-	public get local(): TreeViewAlpha<TSchema> {
-		return this.synchronization.local;
 	}
 }
