@@ -7,6 +7,7 @@ import { assert, fail, unreachableCase } from "@fluidframework/core-utils/intern
 import {
 	deserializeIdCompressor,
 	SerializationVersion,
+	type SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
 import {
 	createChildLogger,
@@ -236,7 +237,11 @@ export class GuestImplementation implements Guest {
 		}
 		let idCompressor: ReturnType<typeof deserializeIdCompressor>;
 		try {
-			idCompressor = deserializeIdCompressor(message.idCompressor, SerializationVersion.V3);
+			// The envelope only checks for a string. Deserialization validates its format.
+			idCompressor = deserializeIdCompressor(
+				message.idCompressor as SerializedIdCompressorWithOngoingSession,
+				SerializationVersion.V3,
+			);
 			// A second root with the same session ID would allocate colliding IDs.
 			if (idCompressor.getShardSyncToken() === undefined) {
 				throw new SandboxProtocolError(

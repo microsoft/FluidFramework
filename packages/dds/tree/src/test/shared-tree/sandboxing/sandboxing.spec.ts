@@ -735,8 +735,8 @@ describe("Host and Guest correctness", () => {
 		});
 		// Attach the rejection check before delivery so the asynchronous failure is observed.
 		const rejected = assert.rejects(guestPromise, /Invalid serialized sandbox ID compressor/);
-		// The envelope passes message validation; only the serialized compressor is invalid.
-		channel.port1.postMessage({
+		// The envelope checks only for a string; the Guest rejects its invalid contents.
+		const initialization = {
 			type: "hostInitialization",
 			baseRevision: "root",
 			mainRevision: "root",
@@ -745,7 +745,12 @@ describe("Host and Guest correctness", () => {
 			schema: {},
 			commits: [],
 			idCompressor: "not a serialized compressor",
-		});
+		};
+		assert.equal(
+			parseHostGuestMessage(normalizeTransportData(initialization)).type,
+			"hostInitialization",
+		);
+		channel.port1.postMessage(initialization);
 		try {
 			await rejected;
 			assert(errors[0]?.cause instanceof SandboxProtocolError);

@@ -9,6 +9,7 @@ import {
 	deserializeIdCompressor,
 	SerializationVersion,
 	type IdCreationRange,
+	type SerializedIdCompressorWithOngoingSession,
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
@@ -203,10 +204,11 @@ export class HostImplementation implements Host {
 			try {
 				if (initialization !== undefined) {
 					// A synchronous send failure means the Guest never received its ID space shard.
-					// Deserialize the unsent ID space shard to get the token needed to reclaim its space.
+					// This Host created the string; it is not untrusted wire data.
+					// Deserialize the unsent shard to get the token needed to reclaim its space.
 					// TODO: consider `id-compressor` API change to make this more ergonomic.
 					const idSpaceShard = deserializeIdCompressor(
-						initialization.idCompressor,
+						initialization.idCompressor as SerializedIdCompressorWithOngoingSession,
 						SerializationVersion.V3,
 					);
 					const token = idSpaceShard.disposeShard();

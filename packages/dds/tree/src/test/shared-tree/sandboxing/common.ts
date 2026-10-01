@@ -5,11 +5,7 @@
 
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	isStableId,
-	type SessionId,
-	type SerializedIdCompressorWithOngoingSession,
-} from "@fluidframework/id-compressor/internal";
+import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
@@ -434,10 +430,12 @@ const HostInitializationMessage = Type.Object(
 		schema: Type.Readonly(SerializedTreePayload),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
-		/** A serialized child ID space shard with the local session state needed to initialize the Guest. */
-		idCompressor: Type.Readonly(
-			Type.Unsafe<SerializedIdCompressorWithOngoingSession>(Type.String()),
-		),
+		/**
+		 * Wire string for a {@link @fluidframework/id-compressor/internal#SerializedIdCompressorWithOngoingSession}.
+		 * Envelope validation checks only the string shape. Guest deserialization validates
+		 * the compressor format and confirms it is a child ID space shard.
+		 */
+		idCompressor: Type.Readonly(Type.String()),
 	},
 	{ additionalProperties: false },
 );
