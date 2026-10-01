@@ -63,9 +63,19 @@ export interface Guest {
 	readonly error: Error | undefined;
 	/** A promise for Host acknowledgment of pending Guest changes, if changes are pending. */
 	readonly updateHostPromise: Promise<void> | undefined;
-	/** Stops Guest edits and waits for the Host to reclaim the child ID space shard. */
+	/**
+	 * Stops Guest edits and waits for the Host to reclaim the child ID space shard.
+	 * Use this method for normal teardown.
+	 */
 	close(): Promise<void>;
-	/** Ends the session and releases its resources. */
+	/**
+	 * Aborts the Guest session and releases its local resources.
+	 *
+	 * @remarks
+	 * This method does not send a shard disposal token.
+	 * The Host keeps the child ID space shard reserved unless it already received
+	 * a valid close token. Use {@link Guest.close} for normal teardown.
+	 */
 	dispose(): void;
 }
 
