@@ -499,16 +499,6 @@ where
             })
             .await?;
         let author_stream = client.open_author_stream().await?;
-        Self::from_streams(client, event_stream, author_stream, open.reference)
-    }
-
-    /// Retains the initially opened event stream and independent session channels.
-    fn from_streams(
-        client: Client<Transport>,
-        event_stream: EventStream<Transport::Stream>,
-        author_stream: AuthorStream<Transport::Stream>,
-        resume_after: Option<EventPosition>,
-    ) -> Result<Self, SeaClientError> {
         Ok(Self {
             session: SessionId::new(event_stream.session)
                 .map_err(|_| SeaClientError::new(SeaClientErrorReason::UnexpectedResponse))?,
@@ -519,7 +509,7 @@ where
             author_stream: Mutex::new(Some(author_stream)),
             snapshot_stream: Mutex::new(None),
             content_stream: Mutex::new(None),
-            resume_after,
+            resume_after: open.reference,
         })
     }
 

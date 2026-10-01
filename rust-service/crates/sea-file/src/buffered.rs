@@ -15,8 +15,6 @@ const MAX_BYTES: usize = 16 * 1024 * 1024;
 const MAX_REQUESTS: usize = 128;
 /// Addressed encoded records shared between admission, reads, and drain workers.
 type Records = Vec<(crate::storage::Key, bytes::Bytes)>;
-/// One ordered filesystem operation over a selected record group.
-type WriteRecords = Box<dyn FnOnce(Records) -> Result<(), FileStorageError> + Send>;
 /// One mutation retained until its write and cursor publication settle.
 pub(crate) struct Task {
     /// Pending records shared with the read overlay.
@@ -24,7 +22,7 @@ pub(crate) struct Task {
     /// Consecutive event groups can share one append and cursor publication.
     pub(crate) events: bool,
     /// Filesystem work for the selected records, or an independent checkpoint control.
-    pub(crate) run: WriteRecords,
+    pub(crate) run: Box<dyn FnOnce(Records) -> Result<(), FileStorageError> + Send>,
 }
 
 /// Accepted operation and its memory charge.

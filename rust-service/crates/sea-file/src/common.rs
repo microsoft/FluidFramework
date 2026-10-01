@@ -5,9 +5,6 @@ use tokio::sync::Semaphore;
 
 use crate::journal::FileStorageError;
 
-/// Retained preprocessing capacity, shared with a worker if validation outlives its caller.
-type Preparation = Arc<crate::pressure::Reservation>;
-
 /// Bounds content inputs and encodings before they reach a backend mutation queue.
 pub(crate) struct PreparationBudget {
     /// Maximum concurrent content preparations per opening.
@@ -27,7 +24,11 @@ impl PreparationBudget {
     }
 
     /// Rejects excess preprocessing before allocating encodings or waiting for metadata reads.
-    pub(crate) fn reserve(&self, bytes: usize) -> Result<Preparation, FileStorageError> {
+    /// The returned capacity can be shared with a worker if validation outlives its caller.
+    pub(crate) fn reserve(
+        &self,
+        bytes: usize,
+    ) -> Result<Arc<crate::pressure::Reservation>, FileStorageError> {
         let bytes = u32::try_from(bytes)
             .map_err(|_| FileStorageError::Rejected("content preparation exceeds byte limit"))?;
         let request = self

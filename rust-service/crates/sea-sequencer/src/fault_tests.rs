@@ -144,17 +144,15 @@ struct FaultStore<Store> {
 }
 
 /// Poll instrumentation preserves the source's exact progress semantics.
-struct CountedRead<Item, Position, Error> {
+struct CountedRead<Item> {
     /// Original backend stream, including its delivered-cursor observation.
-    source: ArchiveStream<Item, Position, Error>,
+    source: ArchiveStream<Item, EventPosition, MemoryStorageError>,
     /// Counter owned by the fixture, not by production cache code.
     faults: Arc<Faults>,
 }
 
-impl<Item, Position: Clone + PartialOrd, Error> futures_util::Stream
-    for CountedRead<Item, Position, Error>
-{
-    type Item = Result<sea_core::MonitoredStreamItem<Item, Position>, Error>;
+impl<Item> futures_util::Stream for CountedRead<Item> {
+    type Item = Result<sea_core::MonitoredStreamItem<Item, EventPosition>, MemoryStorageError>;
 
     fn poll_next(
         self: std::pin::Pin<&mut Self>,
@@ -166,14 +164,12 @@ impl<Item, Position: Clone + PartialOrd, Error> futures_util::Stream
     }
 }
 
-impl<Item, Position: Clone + PartialOrd, Error> sea_core::MonitoredStream
-    for CountedRead<Item, Position, Error>
-{
+impl<Item> sea_core::MonitoredStream for CountedRead<Item> {
     type Data = Item;
-    type Position = Position;
-    type Error = Error;
+    type Position = EventPosition;
+    type Error = MemoryStorageError;
 
-    fn progress(&self) -> sea_core::MonitoredStreamProgress<Position> {
+    fn progress(&self) -> sea_core::MonitoredStreamProgress<EventPosition> {
         self.source.progress()
     }
 }

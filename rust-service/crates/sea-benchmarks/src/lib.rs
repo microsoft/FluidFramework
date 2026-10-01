@@ -243,8 +243,8 @@ pub fn summarize(mut values: Vec<f64>) -> Distribution {
     let sample_count = u32::try_from(samples).expect("sample count must fit in u32");
     let minimum = values[0];
     let maximum = values[samples - 1];
-    let median = percentile(&values, 50, 100);
-    let p95 = percentile(&values, 95, 100);
+    let median = percentile(&values, 50);
+    let p95 = percentile(&values, 95);
     let mean = values.iter().sum::<f64>() / f64::from(sample_count);
     let sample_standard_deviation = if samples > 1 {
         let squared_deviations = values
@@ -272,9 +272,9 @@ pub fn summarize(mut values: Vec<f64>) -> Distribution {
     }
 }
 
-/// Selects the upper order statistic at `ceil((len - 1) * numerator / denominator)`.
-fn percentile(sorted: &[f64], numerator: usize, denominator: usize) -> f64 {
-    let rank = ((sorted.len() - 1) * numerator).div_ceil(denominator);
+/// Selects the upper order statistic at `ceil((len - 1) * percent / 100)`.
+fn percentile(sorted: &[f64], percent: usize) -> f64 {
+    let rank = ((sorted.len() - 1) * percent).div_ceil(100);
     sorted[rank]
 }
 
@@ -381,8 +381,8 @@ mod tests {
     fn percentile_selects_boundary_and_upper_ranks() {
         let values = [1.0, 2.0];
 
-        assert!((percentile(&values, 0, 100) - 1.0).abs() < f64::EPSILON);
-        assert!((percentile(&values, 50, 100) - 2.0).abs() < f64::EPSILON);
-        assert!((percentile(&values, 100, 100) - 2.0).abs() < f64::EPSILON);
+        assert!((percentile(&values, 0) - 1.0).abs() < f64::EPSILON);
+        assert!((percentile(&values, 50) - 2.0).abs() < f64::EPSILON);
+        assert!((percentile(&values, 100) - 2.0).abs() < f64::EPSILON);
     }
 }
