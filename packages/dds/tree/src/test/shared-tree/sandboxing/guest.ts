@@ -107,15 +107,6 @@ export class GuestImplementation implements Guest {
 	 */
 	private closeSent = false;
 
-	/**
-	 * Whether orderly close disposed the authoring view.
-	 *
-	 * @remarks
-	 * A failure before orderly close does not dispose the view.
-	 * This flag is used during disposal to avoid disposing the view twice.
-	 */
-	private authoringViewDisposedOnClose = false;
-
 	private disposed = false;
 
 	/** Internal synchronization state exposed for testing. */
@@ -325,7 +316,6 @@ export class GuestImplementation implements Guest {
 		this.closeInProgress = completion;
 		this.session.run(() => {
 			const token = synchronization.close();
-			this.authoringViewDisposedOnClose = true;
 			token.then(
 				(idSpaceShardToken) =>
 					this.session.run(() => {
@@ -348,7 +338,7 @@ export class GuestImplementation implements Guest {
 	 * rejects pending work. It does not send a disposal token: the Host keeps the
 	 * shard reserved unless it already received a valid token from a close attempt.
 	 * After a failure, the application can inspect the authoring view, if it is still
-	 * usable, before calling this method to dispose it and the hidden Host branch.
+	 * usable, before calling this method to release both checkouts.
 	 * Repeated calls have no effect.
 	 */
 	public dispose(): void {
@@ -359,16 +349,7 @@ export class GuestImplementation implements Guest {
 		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		const synchronization = this.#synchronization;
-		synchronization?.dispose();
-
-		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
-
-		// On failure or abort, synchronization leaves the view available.
-		// Future cleanup could save or inspect unsaved changes before disposing it.
-		if (!this.authoringViewDisposedOnClose) {
-			synchronization?.checkout.dispose();
-		}
+		this.#synchronization?.dispose();
 	}
 
 	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */

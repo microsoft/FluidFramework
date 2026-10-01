@@ -122,13 +122,13 @@ flowchart LR
 The Guest keeps a checkout for the Host main branch and a separate checkout for Guest edits.
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
-[GuestSynchronization](./guestSynchronization.ts) owns the hidden Host branch and the child ID space shard.
+[GuestSynchronization](./guestSynchronization.ts) owns the hidden Host and authoring checkouts and the child ID space shard.
 The [Guest](./guest.ts) owns the port, message routing, and close handshake.
 GuestSynchronization creates and updates the authoring checkout and disposes it during orderly close.
 Disposing the checkout also invalidates its authoring views.
-After a failure before orderly close, the Guest does not dispose the authoring view.
+After a failure before orderly close, GuestSynchronization does not dispose the authoring checkout.
 The application can inspect it if it is still usable, but must not make further edits.
-Application-managed cleanup disposes the view.
+Application-managed cleanup calls `Guest.dispose()`, which releases both checkouts through GuestSynchronization.
 
 The Host preserves the Guest's authoring state in its local branch.
 It applies Guest changes there and merges them into main without rebasing the local branch itself.
@@ -298,7 +298,7 @@ GuestSynchronization stops new Guest edits, then disposes the authoring checkout
 GuestSynchronization waits for earlier Guest changes to be acknowledged, then disposes its child ID space shard and gives the disposal token to the Guest, which sends `guestClose`.
 The Host has processed those changes before it receives this message because Guest-to-Host delivery is ordered.
 The Host verifies the token, reclaims the shard, sends `guestCloseAck`, and disposes its session branches.
-The Guest then releases GuestSynchronization's hidden Host branch and resolves the close promise.
+The Guest then tells GuestSynchronization to release the hidden Host checkout and resolves the close promise.
 An outstanding Host update can be discarded during close; the application-owned main view remains available.
 
 The normal close flow returns the child ID space shard only after the Guest stops creating IDs and the Host acknowledges all earlier Guest changes.
@@ -326,13 +326,14 @@ sequenceDiagram
     Note over Host,Root: Root reclaims the child ID space shard
     Host-->>Guest: guestCloseAck
     Host->>Host: Dispose session branches, keep main view
-    Guest->>Guest: Dispose session and hidden Host branch
+    Guest->>Guest: Dispose session and both checkouts
     Guest-->>Client: close() promise resolves
 ```
 
 The state names below belong to `GuestSynchronization`, not the Host's application-owned main view.
 `Closing` still accepts acknowledgments for earlier Guest changes.
-`Closed` stops synchronization but keeps the hidden Host branch until `Guest.dispose()` reaches `Disposed`.
+`Closed` stops synchronization but keeps both checkouts until `Guest.dispose()` reaches `Disposed`.
+On orderly close, the authoring checkout has already been disposed.
 
 ```mermaid
 stateDiagram-v2
@@ -342,7 +343,7 @@ stateDiagram-v2
     Closing --> Closed: guestCloseAck triggers Guest.dispose()
     Active --> Closed: failure or abort calls closeForError()
     Closing --> Closed: failure or abort calls closeForError()
-    Closed --> Disposed: Guest.dispose() releases hidden Host branch
+    Closed --> Disposed: Guest.dispose() releases remaining checkouts
 ```
 
 The Host tracks the child ID space shard separately from the Guest synchronization state.
@@ -360,8 +361,8 @@ stateDiagram-v2
 
 Synchronous `Guest.dispose()` aborts the session without requesting ID space reclamation.
 If the port fails, the application can call it to reject a pending close promise.
-After a failure before orderly close, Guest leaves the authoring view available for inspection until the application calls `Guest.dispose()`.
-Guest currently disposes the view during cleanup, but a future implementation could save or stash unsaved changes first.
+After a failure before orderly close, GuestSynchronization leaves the authoring checkout available for inspection until the application calls `Guest.dispose()`.
+GuestSynchronization releases both checkouts during cleanup.
 The Host does not reclaim an ID space shard without a valid close token, because the Guest might still create IDs.
 If the Host processed `guestClose` but the acknowledgment was lost, the shard has already been reclaimed.
 Each unreclaimed shard increases the root compressor's allocation stride; after enough replacement sessions, the compressor cannot create another shard.

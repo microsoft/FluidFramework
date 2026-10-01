@@ -39,7 +39,8 @@ import type { GuestBranchInitialization } from "./hostSynchronization.js";
  * and then disposed.
  *
  * On protocol failure, the session moves synchronization from active or closing
- * to closed. The application must dispose the Guest to release both views.
+ * to closed without disposing the checkouts. The application must dispose the Guest
+ * to release them after failure reporting.
  *
  * An application abort calls `Guest.dispose()`, which moves synchronization to
  * closed and then disposed without waiting for a close acknowledgment.
@@ -57,15 +58,15 @@ enum GuestSynchronizationState {
 	Closing = "closing",
 	/**
 	 * Synchronization is terminal. The owner no longer routes messages, and any pending changes have been rejected.
-	 * The hidden Host branch remains until disposal.
-	 * If a failure occurs before orderly close, the authoring view remains available
+	 * Both checkouts remain until disposal unless orderly close already disposed the authoring checkout.
+	 * If a failure occurs before orderly close, the authoring checkout remains available
 	 * for inspection if it is still usable.
 	 */
 	Closed = "closed",
 	/**
-	 * The hidden Host branch has been released.
+	 * Both checkouts have been released.
 	 * @remarks
-	 * The Guest releases the authoring view during cleanup if orderly close did not release it.
+	 * The authoring checkout might already have been released by orderly close.
 	 */
 	Disposed = "disposed",
 }
@@ -73,11 +74,11 @@ enum GuestSynchronizationState {
 /**
  * Synchronizes the Guest's tree with the Host.
  * @remarks
- * This class owns the hidden Host branch, the child ID space shard, and synchronization.
+ * This class owns both checkouts, the child ID space shard, and synchronization.
  * The `Guest` owns initialization, transport encoding, message routing, and session lifetime.
  *
  * The hidden {@link hostCheckout} branch reconstructs the Host's main branch from ordered updates.
- * The public {@link checkout} branch contains Guest-authored commits on top of the last received Host state.
+ * The authoring {@link checkout} branch contains Guest-authored commits on top of the last received Host state.
  * Each Host update replaces a suffix of {@link hostCheckout}, after which {@link checkout} rebases its local commits
  * onto the updated Host head.
  *
@@ -89,11 +90,11 @@ enum GuestSynchronizationState {
  * {@link closeForError} and then {@link dispose}.
  *
  * On protocol failure, the session calls {@link closeForError} from active or closing.
- * This does not dispose the authoring view, so the application can inspect it if
- * orderly close has not already disposed it and the view is still usable.
+ * This does not dispose either checkout, so the application can inspect the authoring checkout if
+ * orderly close has not already disposed it and the checkout is still usable.
  * The edit listener is removed, but retained references can still edit the view.
  * The application must not make further edits after a failure.
- * The application must then dispose the Guest to release both views.
+ * The application must then dispose the Guest to release both checkouts.
  * This failure path does not request shard reclamation.
  *
  * On application abort, `Guest.dispose()` calls both methods without an orderly close.
@@ -104,7 +105,7 @@ export class GuestSynchronization {
 	 * The Guest's authoring checkout, rebased over updates applied to {@link hostCheckout}.
 	 * @remarks
 	 * Orderly close disposes this checkout. After a failure before orderly close,
-	 * the Guest can inspect it until application-managed cleanup.
+	 * the Guest can inspect it until application-managed cleanup calls {@link dispose}.
 	 */
 	public readonly checkout: TreeCheckout;
 	/** Guest changes sent to the Host that have not been acknowledged. */
@@ -401,8 +402,7 @@ export class GuestSynchronization {
 	 * @remarks
 	 * The owning session calls this on failure, abort, or final Guest disposal after
 	 * an orderly close. It removes the edit listener if necessary and rejects any
-	 * pending Guest changes. It does not release the hidden Host branch, dispose the
-	 * authoring view, or reclaim the ID space shard.
+	 * pending Guest changes. It does not release either checkout or reclaim the ID space shard.
 	 * After a failure, the application can inspect the view if it
 	 * is still usable and orderly close has not already disposed it.
 	 * After an orderly close, no changes remain to reject.
@@ -428,14 +428,14 @@ export class GuestSynchronization {
 	}
 
 	/**
-	 * Stops synchronization and releases the hidden Host branch.
+	 * Stops synchronization and releases both checkouts.
 	 *
 	 * @remarks
 	 * The Guest calls this when it disposes its session, after a successful close,
 	 * an abort, or application-managed failure cleanup.
 	 * It calls {@link closeForError} to stop active or closing synchronization,
-	 * then releases the hidden {@link hostCheckout} branch. It does not dispose the authoring
-	 * {@link checkout}; the Guest does that during failure or abort cleanup.
+	 * then releases the hidden {@link hostCheckout} branch and authoring {@link checkout}.
+	 * The authoring checkout may already be disposed after an orderly close.
 	 * On abort or failure, it does not dispose the ID space shard.
 	 * Only orderly close produces a token that lets the Host safely reclaim it.
 	 * Repeated calls have no effect.
@@ -448,7 +448,13 @@ export class GuestSynchronization {
 			new Error("Guest synchronization disposed before synchronization completed."),
 		);
 		this.state = GuestSynchronizationState.Disposed;
+
+		// TODO: Support cleanup of already-broken checkouts and invalidation of retained node references.
+
 		this.hostCheckout.dispose();
+		if (!this.checkout.disposed) {
+			this.checkout.dispose();
+		}
 	}
 
 	private log(message: string): void {

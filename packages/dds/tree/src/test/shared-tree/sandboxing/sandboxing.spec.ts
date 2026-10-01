@@ -2171,9 +2171,10 @@ describe("Host and Guest correctness", () => {
 			assert.deepEqual([...view.root], ["a"]);
 		} finally {
 			synchronization.closeForError(new Error("Test complete"));
-			synchronization.dispose();
 			assert.deepEqual([...view.root], ["a"]);
-			synchronization.checkout.dispose();
+			synchronization.dispose();
+			assert.equal(synchronization.checkout.disposed, true);
+			assert.equal(synchronization.hostCheckout.disposed, true);
 			assert.throws(() => view.root, /disposed|invalid state/i);
 			root.synchronizeWithShard(
 				child.disposeShard() ?? assert.fail("Expected a child disposal token"),
@@ -2224,7 +2225,11 @@ describe("Host and Guest correctness", () => {
 		}, /Cannot close Guest synchronization after closing has begun/);
 		assert.deepEqual([...hostView.root], ["a"]);
 		synchronization.dispose();
+		assert.equal(synchronization.checkout.disposed, true);
+		assert.equal(synchronization.hostCheckout.disposed, true);
 		assert.throws(() => hostView.root, /disposed|invalid state/i);
+		assert.throws(() => view.root, /disposed|invalid state/i);
+		assert.doesNotThrow(() => synchronization.dispose());
 		root.synchronizeWithShard(token);
 	});
 
