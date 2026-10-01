@@ -399,16 +399,24 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			throw new TypeError("Invalid parent progress generation count.");
 		}
 		if (progress.localGenCount <= this.localGenCount) {
+			// A child can already be ahead through its own allocations. Its local range
+			// then includes the parent's IDs through this generation count.
 			return;
 		}
-		// Backfill parent IDs through the child's next stride position. Its next generated ID
-		// remains in its assigned part of the ID space.
-		const steps =
-			Math.floor((progress.localGenCount - this.localGenCount) / state.currentStride) + 1;
-		const count = steps * state.currentStride;
+		this.backfillToNextStridePosition(progress.localGenCount, state.currentStride);
+	}
+
+	/**
+	 * Adds IDs through the next position in this shard's stride after the given generation count.
+	 */
+	private backfillToNextStridePosition(targetGenCount: number, stride: number): void {
+		if (targetGenCount <= this.localGenCount) {
+			return;
+		}
+		const count = Math.ceil((targetGenCount - this.localGenCount + 1) / stride) * stride;
 		const nextGenCount = this.localGenCount + count;
 		if (!Number.isSafeInteger(nextGenCount)) {
-			throw new TypeError("Parent progress exceeds the supported ID space.");
+			throw new TypeError("Shard progress exceeds the supported ID space.");
 		}
 		this.normalizer.addLocalRange(this.localGenCount + 1, count);
 		this.localGenCount = nextGenCount;
@@ -435,30 +443,20 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			);
 		}
 
-		// Only disposal removes the child from the active set. A plain synchronization leaves the
-		// child active so it can continue generating IDs and be synchronized with again later.
+		// A last-child disposal realigns on the original stride. Backfill before changing
+		// membership so invalid progress cannot accidentally reclaim the child.
+		const isLeaf = childDisposed && activeChildIds.size === 1;
+		this.backfillToNextStridePosition(
+			syncToken.localGenCount,
+			isLeaf ? originalStride : this.shardingState.currentStride,
+		);
+
+		// A plain synchronization leaves the child active so it can keep generating IDs.
 		if (childDisposed) {
 			activeChildIds.delete(childShardId);
-		}
-
-		const isLeaf = activeChildIds.size === 0;
-		if (isLeaf && childDisposed) {
-			this.shardingState.currentStride = originalStride;
-		}
-
-		// Read currentStride after the possible stride reset above, so that a leaf-making disposal
-		// realigns the parent on its original (reclaimed) stride rather than the wider sharded stride.
-		const { currentStride } = this.shardingState;
-		const childGenCount = syncToken.localGenCount;
-
-		// Realign parent to next position in its sequence if child is ahead
-		if (childGenCount > this.localGenCount) {
-			// Find next aligned position in parent's sequence after child's genCount
-			const distance = childGenCount - this.localGenCount + 1;
-			const steps = Math.ceil(distance / currentStride);
-			const count = steps * currentStride;
-			this.normalizer.addLocalRange(this.localGenCount + 1, count);
-			this.localGenCount += count;
+			if (isLeaf) {
+				this.shardingState.currentStride = originalStride;
+			}
 		}
 
 		return isLeaf;
