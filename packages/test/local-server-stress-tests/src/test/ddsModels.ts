@@ -7,6 +7,7 @@ import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils"
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { baseClaimsModel } from "@fluid-internal/claims/internal/test";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
@@ -34,7 +35,7 @@ function repeatFactoryAsync<T, TState = void>(
 	};
 }
 
-const generateSubModelMap = (
+export const generateSubModelMap = (
 	...models: Omit<DDSFuzzModel<IChannelFactory, any>, "workloadName">[]
 ): Map<
 	string,
@@ -59,6 +60,10 @@ const generateSubModelMap = (
 	for (const model of models) {
 		const { reducer, generatorFactory, factory, validateConsistency, minimizationTransforms } =
 			model;
+		assert(
+			!("generateClientConfiguration" in factory),
+			"Local server stress tests require DDS models with a fixed channel factory.",
+		);
 		const generator = repeatFactoryAsync(generatorFactory);
 		modelMap.set(factory.attributes.type, {
 			generator,
