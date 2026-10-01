@@ -22,6 +22,7 @@ import {
 	type JsonCompatibleReadOnlyObject,
 } from "../../util/index.js";
 import {
+	type DecodeErrorHandler,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
@@ -64,7 +65,11 @@ function makeVersionedCodec<
 			);
 			return encoded;
 		},
-		decode: (data: TValidate, context: TDecodeContext): TDecoded => {
+		decode: (
+			data: TValidate,
+			context: TDecodeContext,
+			onError?: DecodeErrorHandler,
+		): TDecoded => {
 			const versioned = data as Versioned; // Validated by withSchemaValidation
 			if (!supportedVersions.has(versioned.version)) {
 				throw new UsageError(
@@ -72,7 +77,7 @@ function makeVersionedCodec<
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 				);
 			}
-			const decoded = inner.decode(data, context);
+			const decoded = inner.decode(data, context, onError);
 			return decoded;
 		},
 	};
@@ -590,7 +595,7 @@ export class VersionDispatchingCodecBuilder<
 		return [
 			applied,
 			{
-				decode: (data: JsonCompatibleReadOnly, context: TDecodeContext): TDecoded => {
+				decode: (data: JsonCompatibleReadOnly, context: TDecodeContext, onError): TDecoded => {
 					const versioned = data as Partial<Versioned>;
 					const codec = fromFormatVersion.get(versioned.version);
 					if (codec === undefined) {
@@ -599,7 +604,7 @@ export class VersionDispatchingCodecBuilder<
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 						);
 					}
-					return codec.codec.decode(data, context);
+					return codec.codec.decode(data, context, onError);
 				},
 			},
 		];

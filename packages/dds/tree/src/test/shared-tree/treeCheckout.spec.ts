@@ -15,6 +15,8 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import { asAlpha } from "../../api.js";
 import {
 	createAnnouncedVisitor,
+	findAncestor,
+	type GraphCommit,
 	type Revertible,
 	rootFieldKey,
 	RevertibleStatus,
@@ -37,6 +39,7 @@ import {
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
+	ForestTypeOptimized,
 } from "../../shared-tree/index.js";
 import {
 	createTransactionPostProcessor,
@@ -74,6 +77,7 @@ import {
 	testRevisionTagCodec,
 	validateViewConsistency,
 	viewCheckout,
+	SharedTreeTestFactory,
 } from "../utils.js";
 
 const rootField: NormalizedFieldUpPath = {
@@ -102,6 +106,126 @@ function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
 }
 
 describe("sharedTreeView", () => {
+	describe("finalized history", () => {
+		const config = new TreeViewConfiguration({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
+
+		it("defaults to the initial base before and after independent edits", () => {
+			const view = getView(config);
+			const checkout = view.checkout;
+			const base = checkout.mainBranch.getHead();
+			assert.equal(base.revision, "root");
+			assert.equal(base.parent, undefined);
+			assert.equal(checkout.getFinalizedCommit(), base);
+
+			view.initialize([]);
+			view.root.insertAtEnd("local");
+			assert.notEqual(checkout.mainBranch.getHead(), base);
+			assert.equal(checkout.getFinalizedCommit(), base);
+			view.dispose();
+		});
+
+		it("uses a supplied boundary even when it precedes the head", () => {
+			let boundary: GraphCommit<SharedTreeChange>;
+			const checkout = createTreeCheckout(
+				testIdCompressor,
+				mintRevisionTag,
+				testRevisionTagCodec,
+				{ getFinalizedCommit: () => boundary },
+			);
+			boundary = checkout.mainBranch.getHead();
+			const view = checkout.viewWith(config);
+			view.initialize([]);
+			assert.equal(checkout.getFinalizedCommit(), boundary);
+
+			boundary = checkout.mainBranch.getHead();
+			view.root.insertAtEnd("local");
+			assert.notEqual(checkout.mainBranch.getHead(), boundary);
+			assert.equal(checkout.getFinalizedCommit(), boundary);
+			view.dispose();
+		});
+
+		it("advances a collaborative boundary only when commits are sequenced", () => {
+			const provider = new TestTreeProviderLite(2);
+			const tree = provider.trees[0];
+			const checkout = tree.kernel.checkout;
+			const base = checkout.mainBranch.getHead();
+			assert.equal(checkout.getFinalizedCommit(), base);
+			assert.equal(base.revision, "root");
+
+			const view = tree.viewWith(config);
+			view.initialize([]);
+			assert.equal(checkout.getFinalizedCommit(), base);
+			provider.synchronizeMessages();
+			const initialized = checkout.mainBranch.getHead();
+			assert.equal(checkout.getFinalizedCommit(), initialized);
+
+			view.root.insertAtEnd("local");
+			assert.equal(checkout.getFinalizedCommit(), initialized);
+			provider.synchronizeMessages();
+			assert.equal(checkout.getFinalizedCommit(), checkout.mainBranch.getHead());
+
+			const peer = provider.trees[1].viewWith(config);
+			peer.root.insertAtEnd("remote");
+			provider.synchronizeMessages();
+			assert.equal(checkout.getFinalizedCommit(), checkout.mainBranch.getHead());
+			assert.deepEqual([...view.root], ["local", "remote"]);
+			peer.dispose();
+			view.dispose();
+		});
+
+		it("does not give a fork a boundary beyond its own history", () => {
+			const provider = new TestTreeProviderLite(1);
+			const tree = provider.trees[0];
+			const view = tree.kernel.viewWith(config);
+			view.initialize([]);
+			provider.synchronizeMessages();
+			const fork = view.fork();
+			try {
+				const base = findAncestor(fork.checkout.mainBranch.getHead());
+				assert.equal(fork.checkout.getFinalizedCommit(), base);
+
+				view.root.insertAtEnd("parent");
+				provider.synchronizeMessages();
+				assert.equal(fork.checkout.getFinalizedCommit(), base);
+				assert.notEqual(
+					fork.checkout.getFinalizedCommit(),
+					view.checkout.getFinalizedCommit(),
+				);
+				assert.deepEqual([...fork.root], []);
+			} finally {
+				fork.dispose();
+				view.dispose();
+			}
+		});
+
+		it("uses the current base after history is trimmed", () => {
+			const provider = new TestTreeProviderLite(2);
+			const tree = provider.trees[0];
+			const view = tree.kernel.viewWith(config);
+			view.initialize([]);
+			provider.synchronizeMessages();
+			const fork = view.fork();
+			try {
+				const initialBase = fork.checkout.getFinalizedCommit();
+				for (let i = 0; i < 5; i++) {
+					view.root.insertAtEnd(`${i}`);
+					provider.synchronizeMessages();
+					fork.rebaseOnto(view);
+				}
+				const currentBase = findAncestor(fork.checkout.mainBranch.getHead());
+				assert.notEqual(currentBase, initialBase);
+				assert.equal(currentBase.parent, undefined);
+				assert.equal(fork.checkout.getFinalizedCommit(), currentBase);
+			} finally {
+				fork.dispose();
+				view.dispose();
+			}
+		});
+	});
+
 	describe("Events", () => {
 		const sf = new SchemaFactory("Events test schema");
 		const RootNode = sf.object("RootNode", { x: sf.number });
@@ -256,6 +380,28 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("Views", () => {
+		for (const shared of [false, true]) {
+			for (const disposeCheckoutOnViewDispose of [undefined, false, true]) {
+				it(`disposes checkout according to view option ${disposeCheckoutOnViewDispose} (shared: ${shared})`, () => {
+					const provider = new TestTreeProviderLite(1);
+					const main = provider.trees[0].kernel.checkout;
+					const checkout = shared ? main : main.fork();
+					const config = new TreeViewConfiguration({ schema: StringArray });
+					const view = checkout.viewWithInternal(config, disposeCheckoutOnViewDispose);
+					view.initialize(["content"]);
+					view.dispose();
+
+					assert.equal(checkout.disposed, disposeCheckoutOnViewDispose ?? !shared);
+					if (!checkout.disposed) {
+						const replacement = checkout.viewWithInternal(config, false);
+						assert.deepEqual([...replacement.root], ["content"]);
+						replacement.dispose();
+						checkout.dispose();
+					}
+				});
+			}
+		}
+
 		itView(
 			"can fork and apply edits without affecting the parent",
 			({ view: parentView, tree: parentTree }) => {
@@ -1300,6 +1446,44 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("branches with schema edits can be rebased", () => {
+		// TODO: 0xaf9: the fork's chunker looks up types using its parent's schema.
+		// Minimized from topLevel.fuzz.spec.ts, Everything - Comparison Forest seed 1.
+		it.skip("can edit a fork after its parent's schema upgrade loses a rebase", () => {
+			const sf = new SchemaFactory("forkSchemaRebase");
+			class Added extends sf.object("Added", { value: sf.string }) {}
+			const oldSchema = sf.optional(sf.string);
+			const newSchema = sf.optional([sf.string, Added]);
+			const provider = new TestTreeProviderLite(
+				2,
+				new SharedTreeTestFactory(() => {}, undefined, { forest: ForestTypeOptimized }),
+			);
+			const [a, b] = provider.trees;
+			const aView = a.kernel.viewWith(new TreeViewConfiguration({ schema: oldSchema }));
+			aView.initialize("initial");
+			provider.synchronizeMessages();
+			const bView = b.kernel.viewWith(new TreeViewConfiguration({ schema: newSchema }));
+
+			aView.root = "concurrent edit";
+			bView.upgradeSchema();
+			const fork = bView.fork();
+			provider.synchronizeMessages();
+
+			// Only B's root rebases over A's edit. The independent fork retains its upgraded schema.
+			assert.equal(bView.compatibility.isEquivalent, false);
+			expectSchemaEqual(bView.checkout.storedSchema, toUpgradeSchema(oldSchema));
+			assert.equal(fork.compatibility.isEquivalent, true);
+			expectSchemaEqual(fork.checkout.storedSchema, toUpgradeSchema(newSchema));
+			assert.equal(fork.checkout.transaction.size, 0);
+			fork.root = new Added({ value: "fork data" });
+			assert(Tree.is(fork.root, Added));
+			assert.equal(fork.root.value, "fork data");
+			assert.equal(aView.root, "concurrent edit");
+
+			fork.dispose();
+			bView.dispose();
+			aView.dispose();
+		});
+
 		it("over non-schema changes", () => {
 			const provider = new TestTreeProviderLite(1);
 
@@ -1401,6 +1585,60 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("revertibles", () => {
+		const revertibleSchema = new SchemaFactory("revertibles");
+
+		it("initialization events omit revertibles", () => {
+			const view = getView(new TreeViewConfiguration({ schema: revertibleSchema.number }));
+			const log: string[] = [];
+			view.events.on("changed", (metadata, getRevertible) => {
+				assert(metadata.isLocal);
+				assert.equal(metadata.getRevertible(), undefined);
+				assert.equal(getRevertible, undefined);
+				log.push("changed");
+			});
+			view.events.on("commitApplied", (_metadata, getRevertible) => {
+				assert.equal(getRevertible, undefined);
+				log.push("commitApplied");
+			});
+
+			view.initialize(1);
+
+			assert.deepEqual(log, ["changed", "commitApplied"]);
+		});
+
+		for (const withDataChange of [false, true]) {
+			it(`schema change events omit revertibles (with data: ${withDataChange})`, () => {
+				const view = getView(new TreeViewConfiguration({ schema: revertibleSchema.number }));
+				view.initialize(1);
+
+				const upgradedView = view.checkout.fork().viewWith(
+					new TreeViewConfiguration({
+						schema: [revertibleSchema.number, revertibleSchema.string],
+					}),
+				);
+				const log: string[] = [];
+				upgradedView.events.on("changed", (metadata, getRevertible) => {
+					assert(metadata.isLocal);
+					assert.equal(metadata.getRevertible(), undefined);
+					assert.equal(getRevertible, undefined);
+					log.push("changed");
+				});
+				upgradedView.events.on("commitApplied", (_metadata, getRevertible) => {
+					assert.equal(getRevertible, undefined);
+					log.push("commitApplied");
+				});
+				if (withDataChange) {
+					upgradedView.runTransaction(() => {
+						upgradedView.upgradeSchema();
+						upgradedView.root = "upgraded";
+					});
+				} else {
+					upgradedView.upgradeSchema();
+				}
+				assert.deepEqual(log, ["changed", "commitApplied"]);
+			});
+		}
+
 		itView("can be generated for changes made to the local branch", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
 			const unsubscribe = view.events.on("changed", ({ getRevertible }) => {

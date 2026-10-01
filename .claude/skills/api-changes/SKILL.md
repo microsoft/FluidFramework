@@ -111,25 +111,28 @@ If any API is being deprecated, check that the following are in place and flag a
   ```
 - [ ] GitHub issue filed using the "Deprecated API" template as a sub-issue of the appropriate tracking issue
 - [ ] In-codebase uses removed (test-only uses may remain with an explanatory comment)
-- [ ] Changeset present (see Step 6)
+- [ ] Release documentation present (see Step 6)
 
 Share this link with the user for full deprecation guidance: ../../../docs/content/Contributing/API-Deprecation.md
 
 ---
 
-## Step 6: Changeset
+## Step 6: Release documentation
 
-All customer-facing API changes require a changeset — additions, modifications, deprecations, tag promotions, removals.
+Document customer-facing API changes: additions, modifications, deprecations, release level promotions, and removals.
+Follow the [release-group guidance](../../../.changeset/README.md#when-should-i-use-a-changeset) to choose the documentation format.
 
-Check whether one exists: `git status --porcelain -- .changeset/`
+For groups that use changesets, check the branch diff and working tree for an existing entry in the group's `.changeset` directory.
+If a required changeset is missing, create one from the repo root:
 
-If none exists, create one on behalf of the user from the repo root:
-
-```bash
-pnpm flub changeset add --empty
+```sh
+pnpm flub changeset add --releaseGroup <releaseGroup> --empty
 ```
 
-This drops a randomly-named file in `.changeset/`. Edit it with content based on what changed. YAML front matter lists affected packages (only those meaningful to consumers) with bump type `minor`, plus `"__section"` to route to the right release notes section: `feature` (new APIs), `deprecation`, `breaking` (major / server only; use `legacy` for legacy API breaks), `tree` (changes to SharedTree/`@fluidframework/tree` APIs), `fix`, or `other`.
+This creates a randomly named file in the selected release group's `.changeset` directory.
+Edit it with content based on what changed.
+In the YAML front matter, list only packages from that group where the change matters to consumers.
+Use bump type `minor` and a `__section` value from the [release note sections](../../../.changeset/README.md#release-note-sections).
 
 Summary line rules (from `.changeset/README.md`): succinct, no terminal punctuation, no backtick formatting, present tense. Prefix test: mentally prepend "In this release," to verify it reads naturally. Body may include a code example for features, deprecations, and breaking changes.
 
@@ -145,6 +148,6 @@ Present the user with a clear summary:
 3. Whether API Council review is required
 4. Any breaking change warnings and the process the user needs to follow
 5. Any deprecation issues
-6. Changeset status
+6. Release documentation status
 
 End with a clear go/no-go: "Your changes look good to merge" or "Please resolve these issues before merging: …"

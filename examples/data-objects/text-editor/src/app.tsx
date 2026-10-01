@@ -53,7 +53,7 @@ import {
 	configuredSharedTree,
 } from "fluid-framework/alpha";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
-import "quill/dist/quill.snow.css";
+import "quill-next/dist/quill.snow.css";
 import { type CSSProperties, type FC, useCallback, useEffect, useMemo, useState } from "react";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.example.text-editor");
