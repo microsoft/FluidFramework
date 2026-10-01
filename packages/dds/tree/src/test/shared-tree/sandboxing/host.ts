@@ -28,10 +28,8 @@ import {
 	schemaCodecBuilder,
 	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
+import type { TreeCheckout } from "../../../shared-tree/index.js";
+import type { UntypedTreeView } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -45,6 +43,7 @@ import {
 	normalizeProtocolError,
 	parseHostGuestMessage,
 	type SandboxEndpointOptions,
+	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
 	validateTreePayloadVocabulary,
@@ -53,17 +52,15 @@ import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
-import { getBranch, getCheckout } from "./synchronizationUtils.js";
+import { getCheckout } from "./synchronizationUtils.js";
 
 /**
  * Options for creating a Host.
- * @typeParam TSchema - The schema of the synchronized tree.
  */
-export interface HostOptions<TSchema extends ImplicitFieldSchema>
-	extends SandboxEndpointOptions {
+export interface HostOptions extends SandboxEndpointOptions {
 	// TODO: Use a branch with a forest once it can be supplied without a full view.
 	/** The application-owned view to synchronize with the Guest. */
-	readonly main: TreeViewAlpha<TSchema>;
+	readonly main: UntypedTreeView;
 	/** The SharedTree handle to which restored handles are bound. */
 	readonly bindingHandle: IFluidHandle;
 	/** The runtime's root compressor, which remains on the Host when a Guest ID space shard is created. */
@@ -71,14 +68,37 @@ export interface HostOptions<TSchema extends ImplicitFieldSchema>
 }
 
 /**
- * The SharedTree that connects to Fluid services on behalf of a Guest.
- *
- * @typeParam TSchema - The schema of the synchronized tree.
+ * The SharedTree that connects to Fluid services on behalf of a {@link Guest}.
+ * @sealed
  */
-export class Host<const TSchema extends ImplicitFieldSchema> {
+export interface Host {
+	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+	readonly error: Error | undefined;
+	/** A promise for Guest acknowledgment of pending Host changes, if changes are pending. */
+	readonly updateGuestPromise: Promise<void> | undefined;
+	/** Ends the session and releases its resources. */
+	dispose(): void;
+}
+
+/**
+ * Creates and connects a {@link Host} which can support a {@link Guest}.
+ * @param options - The options for creating the Host, including the main view and binding handle.
+ * @returns The created Host instance.
+ */
+export function createHost(options: HostOptions): Host {
+	return new HostImplementation(options);
+}
+
+/**
+ * Implementation of {@link Host}.
+ */
+export class HostImplementation implements Host {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
-	private readonly synchronization: HostSynchronization<TSchema>;
+	/** Internal synchronization state exposed for testing. */
+	public readonly synchronization: HostSynchronization;
+	/** The checkout extracted from the application-provided view. */
+	private readonly mainCheckout: TreeCheckout;
 	private readonly port: MessagePort;
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
 	private guestIdSpaceShardToken: ShardSynchronizationToken | undefined;
@@ -91,8 +111,6 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	 */
 	private readonly offRangeFinalized: (() => void) | undefined;
 	private disposed = false;
-	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
-	public readonly main: TreeViewAlpha<TSchema>;
 
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
@@ -152,11 +170,11 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		idCompressor,
 		logger,
 		handleProtocolError = throwProtocolError,
-	}: HostOptions<TSchema>) {
+	}: HostOptions) {
 		this.port = port;
 		this.idCompressor = toIdCompressorWithCore(idCompressor);
 		this.codec = new HostTransportCodec(bindingHandle);
-		this.main = main;
+		this.mainCheckout = getCheckout(main);
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
@@ -166,7 +184,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			handleProtocolError,
 		);
 		this.synchronization = new HostSynchronization(
-			main,
+			this.mainCheckout,
 			(message) => this.postMessage(message),
 			(change) => this.codec.bindHandles(change),
 			(action) => this.session.run(action),
@@ -357,15 +375,14 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 
 	private createInitializationMessage(idCompressor: IIdCompressor): HostInitializationMessage {
 		const initialization = this.synchronization.guestInitialization;
-		const snapshot = this.main.fork();
+		const checkout = this.mainCheckout.fork();
 		try {
-			const branch = getBranch(snapshot);
+			const branch = checkout.mainBranch;
 			const base = findAncestor(
 				branch.getHead(),
 				(commit) => commit.revision === initialization.baseRevision,
 			);
 			assert(base !== undefined, "Expected the Guest initialization base in Host history");
-			const checkout = getCheckout(snapshot);
 			checkout.switchBranch(branch.fork(base));
 			branch.dispose();
 			if (schemaDataIsEmpty(checkout.storedSchema)) {
@@ -377,7 +394,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 			try {
 				moveToDetachedField(checkout.forest, cursor);
 				const options = {
-					jsonValidator: FormatValidatorBasic,
+					jsonValidator: sandboxFormatValidator,
 					minVersionForCollab: FluidClientVersion.v2_80,
 				};
 				const tree = fieldBatchCodecBuilder
@@ -424,7 +441,7 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 				cursor.free();
 			}
 		} finally {
-			snapshot.dispose();
+			checkout.dispose();
 		}
 	}
 
@@ -440,19 +457,5 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	public get updateGuestPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
 		return this.synchronization.updateGuestPromise;
-	}
-
-	/**
-	 * The Host branch that reflects the Guest's acknowledged state.
-	 */
-	public get local(): TreeViewAlpha<TSchema> {
-		return this.synchronization.local;
-	}
-
-	/**
-	 * The baseline revision and retained history needed to initialize a new Guest.
-	 */
-	public get guestInitialization() {
-		return this.synchronization.guestInitialization;
 	}
 }

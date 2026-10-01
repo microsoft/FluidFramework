@@ -19,7 +19,7 @@ These terms are similar to the terms for virtual machines.
 ### Participants and Synchronization
 
 - **Host**: The SharedTree that connects to Fluid services.
-- **Guest**: The independent TreeView and its related internal components, separated from the Host by a message protocol.
+- **Guest**: An independent tree checkout and its views, separated from the Host by a message protocol.
 - **Peer**: Another Fluid client that collaborates with the Host through Fluid services, not through the sandbox protocol.
 - **Session**: The lifetime of one Host-to-Guest connection, including its handle tables and pending requests.
   Nothing in the Guest is supported beyond its owning Host session.
@@ -94,12 +94,13 @@ These terms are similar to the terms for virtual machines.
 
 ### Endpoint Options
 
-The `Host` constructor and `Guest.create` each accept a named options object.
+`createHost` and `createGuest` each accept a named options object.
 Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions` in [common.ts](./common.ts).
 The shared type defines the endpoint's port, logger, and optional protocol-error callback.
 Supply a separate port and scoped logger for each endpoint.
-The Host also requires the application view, binding handle, and runtime compressor; the Guest requires its schema configuration and tree options.
+The Host also requires the application view, binding handle, and runtime compressor; the Guest requires forest and codec options.
 The Guest receives its own serialized ID space shard through initialization.
+After initialization, the sandboxed client selects a schema with `guest.tree.viewWith(config)`.
 If you omit the protocol-error callback, terminal errors are thrown asynchronously.
 
 ### Participants and Message Directions
@@ -118,12 +119,13 @@ flowchart LR
 
 ### Full-Duplex Synchronization
 
-The Guest keeps a copy of the Host main branch and a separate branch for Guest edits.
+The Guest keeps a checkout for the Host main branch and a separate checkout for Guest edits.
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
 [GuestSynchronization](./guestSynchronization.ts) owns the hidden Host branch and the child ID space shard.
 The [Guest](./guest.ts) owns the port, message routing, and close handshake.
-GuestSynchronization creates and updates the authoring view and disposes it during orderly close.
+GuestSynchronization creates and updates the authoring checkout and disposes it during orderly close.
+Disposing the checkout also invalidates its authoring views.
 After a failure before orderly close, the Guest does not dispose the authoring view.
 The application can inspect it if it is still usable, but must not make further edits.
 Application-managed cleanup disposes the view.
@@ -152,13 +154,14 @@ Initialization commits use the same handle encoding and decoding as subsequent c
 The serialized commit format preserves custom metadata in retained commits and later updates.
 After serializing the snapshot and retained commits, the Host creates a child ID space shard of its runtime ID compressor.
 The Host sends that ID space shard as part of `hostInitialization` through `MessagePort`.
-The Guest deserializes the ID space shard before initializing its view or replaying commits.
+The Guest deserializes the ID space shard before initializing its checkout or replaying commits.
 This removes the need to share a live compressor object across the boundary.
 See [ID Space Sharding](#id-space-sharding).
 
 ### ID Space Sharding
 
 The Host keeps its runtime ID compressor and gives the Guest a separately deserialized child ID space shard.
+The prototype requires a V3 runtime ID compressor; a V2 compressor cannot create the child shard.
 The two compressors share a session ID, not an object reference.
 The initial child state includes the IDs needed to load the compressed snapshot and replay retained commits.
 After initialization, sharing a session ID alone does not give either compressor knowledge of new IDs.
@@ -291,7 +294,7 @@ Host disposal preserves the application's main view, including successfully merg
 Recovery uses fresh session objects, not reset breakers.
 
 For an orderly close, call `Guest.close()`.
-GuestSynchronization stops new Guest edits, then disposes the authoring view to prevent further ID creation.
+GuestSynchronization stops new Guest edits, then disposes the authoring checkout to prevent further ID creation.
 GuestSynchronization waits for earlier Guest changes to be acknowledged, then disposes its child ID space shard and gives the disposal token to the Guest, which sends `guestClose`.
 The Host has processed those changes before it receives this message because Guest-to-Host delivery is ordered.
 The Host verifies the token, reclaims the shard, sends `guestCloseAck`, and disposes its session branches.
@@ -373,6 +376,7 @@ End-to-end tests also cover initialization, bidirectional handle edits, deletion
 The Host, peer, and Guest edit cases run with separate compressors; integration with an isolated iframe is still pending.
 Nested commit metadata, retained Host history, Guest revertibles, and branch rebases are covered by targeted tests.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
+The ServiceClient integration test verifies that a V2 runtime compressor is rejected because it cannot create a child shard.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
 ID-progress tests cover a delayed peer range and Host update while a Guest edit is pending, a repeated finalized range, and invalid parent progress.
 Initialization tests also sequence concurrent Peer edits before the pending Host edits.
@@ -417,6 +421,12 @@ Complete these items in any order.
 
 Some tests will fail if you write them before you complete the implementation.
 These failures do not prevent you from writing the tests.
+
+### Runtime ID Compressor Version
+
+The sandbox Host requires a V3 runtime ID compressor to create a child ID space shard.
+The current ServiceClient runtime creates a V2 compressor, so it cannot yet host a sandbox Guest.
+Enable V3 in the runtime in separate work before using the ServiceClient example for end-to-end Guest edits.
 
 ### Protocol Validation and Security Hardening
 

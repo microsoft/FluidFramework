@@ -88,4 +88,4 @@ export {
 	decodeCustomMetadataTree,
 	encodeCustomMetadataTree,
 } from "./customMetadataCodec.js";
-export type { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
+export { EncodedCustomMetadataTree } from "./customMetadataFormat.js";

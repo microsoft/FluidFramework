@@ -183,6 +183,7 @@ export interface CrossFieldMove extends Move {
 export interface SchemaOp {
 	/**
 	 * Unqualified name of the new node type in the treeFuzz scope.
+	 * The qualified identifier must not already exist in the selected checkout's schema.
 	 */
 	type: string;
 }

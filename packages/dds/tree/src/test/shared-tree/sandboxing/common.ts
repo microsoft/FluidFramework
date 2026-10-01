@@ -244,6 +244,18 @@ const TreePayloadVocabulary = Type.Recursive((Self) =>
 // including record-node data, without traversing handle internals or invoking getters.
 
 /**
+ * TypeBox-backed format validator used by sandbox protocol codecs and trees.
+ * @remarks
+ * Sandbox validation must not implicitly inherit a SharedTree's configured validator because it may
+ * be a no-op and is not configured to enforce the sandbox protocol boundary.
+ *
+ * This reexporting alias exists to centralize the policy of which format validator is used within the sandbox.
+ * Technically, we probably don't need to use this inside the guest, or for validating output from the host,
+ * but for now we use it for everything in both.
+ */
+export const sandboxFormatValidator = FormatValidatorBasic;
+
+/**
  * The sandbox always enables format validation for handle records and blob messages.
  * @remarks
  * These messages may cross a security boundary,
@@ -258,7 +270,7 @@ const TreePayloadVocabulary = Type.Recursive((Self) =>
  * Do not implicitly inherit the Host SharedTree's validator:
  * it may be a no-op and is not configured to enforce this security boundary.
  */
-const validator = extractJsonValidator(FormatValidatorBasic);
+const validator = extractJsonValidator(sandboxFormatValidator);
 const handleTokenValidator = validator.compile(HandleToken);
 const serializedHandleValidator = validator.compile(SerializedHandle);
 const escapedObjectValidator = validator.compile(EscapedObject);

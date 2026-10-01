@@ -13,10 +13,7 @@ import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/interna
 
 import type { ChangeMetadata, GraphCommit, RevisionTag } from "../../../core/index.js";
 import { findAncestor } from "../../../core/index.js";
-import type { SharedTreeChange } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
+import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
 import { brand } from "../../../util/index.js";
 
 import {
@@ -32,7 +29,6 @@ import {
 	SandboxProtocolError,
 } from "./common.js";
 import type { GuestBranchInitialization } from "./hostSynchronization.js";
-import { applyBranchUpdate, getBranch } from "./synchronizationUtils.js";
 
 /**
  * The Guest synchronization lifecycle.
@@ -75,14 +71,14 @@ enum GuestSynchronizationState {
 }
 
 /**
- * Synchronizes the Guest's view with the Host.
+ * Synchronizes the Guest's tree with the Host.
  * @remarks
  * This class owns the hidden Host branch, the child ID space shard, and synchronization.
  * The `Guest` owns initialization, transport encoding, message routing, and session lifetime.
  *
- * The hidden {@link host} branch reconstructs the Host's main branch from ordered updates.
- * The public {@link view} branch contains Guest-authored commits on top of the last received Host state.
- * Each Host update replaces a suffix of {@link host}, after which {@link view} rebases its local commits
+ * The hidden {@link hostCheckout} branch reconstructs the Host's main branch from ordered updates.
+ * The public {@link checkout} branch contains Guest-authored commits on top of the last received Host state.
+ * Each Host update replaces a suffix of {@link hostCheckout}, after which {@link checkout} rebases its local commits
  * onto the updated Host head.
  *
  * The owning {@link Guest} calls {@link close} for an orderly close.
@@ -102,18 +98,15 @@ enum GuestSynchronizationState {
  *
  * On application abort, `Guest.dispose()` calls both methods without an orderly close.
  *
- * @typeParam TSchema - The schema of the synchronized tree.
  */
-export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
+export class GuestSynchronization {
 	/**
-	 * The Guest's authoring view, rebased over updates applied to {@link host}.
-	 *
+	 * The Guest's authoring checkout, rebased over updates applied to {@link hostCheckout}.
 	 * @remarks
-	 * This class creates and updates the view and disposes it during orderly close.
-	 * On failure before orderly close, this class leaves the view available
-	 * for inspection until the Guest disposes it during cleanup.
+	 * Orderly close disposes this checkout. After a failure before orderly close,
+	 * the Guest can inspect it until application-managed cleanup.
 	 */
-	public readonly view: TreeViewAlpha<TSchema>;
+	public readonly checkout: TreeCheckout;
 	/** Guest changes sent to the Host that have not been acknowledged. */
 	private readonly pendingChanges = new Set<GuestChangeId>();
 	/** The promise and resolver for acknowledgment of all pending Guest changes. */
@@ -137,8 +130,8 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * Valid counts start at zero, so the first update can report zero.
 	 */
 	private lastParentGenerationCount = -1;
-	/** The callback that unsubscribes from authoring-view changes. */
-	private readonly offViewChanged: () => void;
+	/** The callback that unsubscribes from authoring-tree changes. */
+	private readonly offCheckoutChanged: () => void;
 
 	/**
 	 * The current synchronization state.
@@ -148,7 +141,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	public constructor(
 		/** The Guest's initial copy of the Host main branch. This class owns and disposes it. */
-		public readonly host: TreeViewAlpha<TSchema>,
+		public readonly hostCheckout: TreeCheckout,
 		/** The revisions and commits needed to initialize the Host branch. */
 		initialization: GuestBranchInitialization,
 		/** The independent child compressor owned by this class and used by both Guest views. */
@@ -164,43 +157,47 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	) {
 		this.mainRevision = initialization.mainRevision;
 		this.trunkRevision = initialization.trunkRevision;
-		this.hostCommits.set(initialization.baseRevision, getBranch(this.host).getHead());
+		this.hostCommits.set(initialization.baseRevision, this.hostCheckout.mainBranch.getHead());
 		this.applyHostBranchUpdate(initialization);
-		this.view = host.fork();
-		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
-			this.run(() => {
-				// Only Guest-authored changes are sent. Host updates rebase this view non-locally.
-				if (!metadata.isLocal) {
-					return;
-				}
-				if (this.nextChangeId > Number.MAX_SAFE_INTEGER) {
-					throw new SandboxProtocolError("Guest change identifiers are exhausted.");
-				}
-				const change = metadata.getChange();
-
-				// getChange() serializes the change and can mint IDs; read progress afterward.
-				const idSpaceShardToken = this.idCompressor.getShardSyncToken();
-				assert(idSpaceShardToken !== undefined, "Guest edits require a child ID space shard");
-
-				const changeId = brand<GuestChangeId>(this.nextChangeId++);
-				if (this.pushInProgress === undefined) {
-					this.pushInProgress = makePromiseWithResolvers();
-					this.pushInProgress.promise.catch((error: unknown) => this.fail(error));
-				}
-				this.pendingChanges.add(changeId);
-				this.log(
-					`Sending change ${changeId} [${getRevision(change)}] based on main ${this.mainRevision}`,
-				);
-				this.send({
-					type: "guestChange",
-					changeId,
-					mainRevision: this.mainRevision,
-					trunkRevision: this.trunkRevision,
-					change,
-					idSpaceShardToken,
+		this.checkout = hostCheckout.fork();
+		this.offCheckoutChanged = this.checkout.events.on(
+			"changed",
+			(metadata: ChangeMetadata) => {
+				this.run(() => {
+					// Only Guest-authored changes are sent. Host updates rebase this tree non-locally.
+					if (!metadata.isLocal) {
+						return;
+					}
+					if (this.nextChangeId > Number.MAX_SAFE_INTEGER) {
+						throw new SandboxProtocolError("Guest change identifiers are exhausted.");
+					}
+					const change = metadata.getChange();
+					// getChange() serializes the change and can mint IDs; read progress afterward.
+					const idSpaceShardToken = this.idCompressor.getShardSyncToken();
+					assert(
+						idSpaceShardToken !== undefined,
+						"Guest edits require a child ID space shard",
+					);
+					const changeId = brand<GuestChangeId>(this.nextChangeId++);
+					if (this.pushInProgress === undefined) {
+						this.pushInProgress = makePromiseWithResolvers();
+						this.pushInProgress.promise.catch((error: unknown) => this.fail(error));
+					}
+					this.pendingChanges.add(changeId);
+					this.log(
+						`Sending change ${changeId} [${getRevision(change)}] based on main ${this.mainRevision}`,
+					);
+					this.send({
+						type: "guestChange",
+						changeId,
+						mainRevision: this.mainRevision,
+						trunkRevision: this.trunkRevision,
+						change,
+						idSpaceShardToken,
+					});
 				});
-			});
-		});
+			},
+		);
 	}
 
 	/**
@@ -226,7 +223,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.applyHostBranchUpdate(message);
 		this.mainRevision = message.mainRevision;
 		this.trunkRevision = message.trunkRevision;
-		this.view.rebaseOnto(this.host);
+		this.checkout.rebaseOnto(this.hostCheckout);
 		this.send({ type: "hostUpdateAck", updateId: message.updateId });
 	}
 
@@ -287,7 +284,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 
 	private applyHostBranchUpdate(message: GuestBranchInitialization): void {
 		const base = this.hostCommits.get(message.baseRevision);
-		const currentHead = getBranch(this.host).getHead();
+		const currentHead = this.hostCheckout.mainBranch.getHead();
 		const removedCommits: GraphCommit<SharedTreeChange>[] = [];
 		if (
 			base === undefined ||
@@ -298,9 +295,13 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		for (const commit of removedCommits) {
 			this.hostCommits.delete(commit.revision);
 		}
-		applyBranchUpdate(this.host, base, message.commits);
+		this.hostCheckout.mainBranch.removeAfter(base);
+		for (const commit of message.commits) {
+			this.hostCheckout.applyChange(commit);
+		}
 		for (
-			let commit: GraphCommit<SharedTreeChange> | undefined = getBranch(this.host).getHead();
+			let commit: GraphCommit<SharedTreeChange> | undefined =
+				this.hostCheckout.mainBranch.getHead();
 			commit !== base;
 			commit = commit.parent
 		) {
@@ -308,7 +309,9 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 			this.hostCommits.set(commit.revision, commit);
 		}
 		// The snapshot's baseline revision aliases the independent checkout's initial head.
-		if (this.hostCommits.get(message.mainRevision) !== getBranch(this.host).getHead()) {
+		if (
+			this.hostCommits.get(message.mainRevision) !== this.hostCheckout.mainBranch.getHead()
+		) {
 			throw new SandboxProtocolError(
 				"Host update did not produce its declared main revision.",
 			);
@@ -316,7 +319,8 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		const trunk = this.hostCommits.get(message.trunkRevision);
 		if (
 			trunk === undefined ||
-			findAncestor(getBranch(this.host).getHead(), (commit) => commit === trunk) === undefined
+			findAncestor(this.hostCheckout.mainBranch.getHead(), (commit) => commit === trunk) ===
+				undefined
 		) {
 			throw new SandboxProtocolError(
 				"Host trunk revision is not an ancestor of its main revision.",
@@ -375,10 +379,10 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 			"Cannot close Guest synchronization after closing has begun",
 		);
 		this.state = GuestSynchronizationState.Closing;
-		this.offViewChanged();
+		this.offCheckoutChanged();
 
 		const pending = this.pushInProgress?.promise;
-		this.view.dispose();
+		this.checkout.dispose();
 		return Promise.resolve(pending).then(() => {
 			if (this.state !== GuestSynchronizationState.Closing) {
 				throw new Error(
@@ -415,7 +419,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 		}
 		if (this.state === GuestSynchronizationState.Active) {
 			this.state = GuestSynchronizationState.Closing;
-			this.offViewChanged();
+			this.offCheckoutChanged();
 		}
 		this.state = GuestSynchronizationState.Closed;
 		this.pendingChanges.clear();
@@ -430,8 +434,8 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 	 * The Guest calls this when it disposes its session, after a successful close,
 	 * an abort, or application-managed failure cleanup.
 	 * It calls {@link closeForError} to stop active or closing synchronization,
-	 * then releases the hidden {@link host} branch. It does not dispose the authoring
-	 * {@link view}; the Guest does that during failure or abort cleanup.
+	 * then releases the hidden {@link hostCheckout} branch. It does not dispose the authoring
+	 * {@link checkout}; the Guest does that during failure or abort cleanup.
 	 * On abort or failure, it does not dispose the ID space shard.
 	 * Only orderly close produces a token that lets the Host safely reclaim it.
 	 * Repeated calls have no effect.
@@ -444,7 +448,7 @@ export class GuestSynchronization<const TSchema extends ImplicitFieldSchema> {
 			new Error("Guest synchronization disposed before synchronization completed."),
 		);
 		this.state = GuestSynchronizationState.Disposed;
-		this.host.dispose();
+		this.hostCheckout.dispose();
 	}
 
 	private log(message: string): void {

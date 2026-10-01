@@ -191,7 +191,7 @@ export interface ContainerSchema {
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @beta
-export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+export function createIndependentTreeBeta<const Unused = unknown>(options?: ForestOptions): ViewableTree;
 
 // @beta
 export function createIndependentTreeView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions): TreeViewBeta<TSchema>;

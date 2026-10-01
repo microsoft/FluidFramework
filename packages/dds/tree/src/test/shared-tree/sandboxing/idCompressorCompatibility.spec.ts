@@ -17,10 +17,11 @@ import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { independentInitializedView, TreeAlpha } from "../../../shared-tree/index.js";
 import { extractPersistedSchema } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
+import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestTreeProviderLite } from "../../utils.js";
 
 import { stringArrayConfig } from "./sandboxingTestUtils.js";
-import { getBranch, getCheckout, serializeCommit } from "./synchronizationUtils.js";
+import { getCheckout } from "./synchronizationUtils.js";
 
 /**
  * Creates a Host, peer, and compressed baseline before the Guest ID space shard exists.
@@ -98,7 +99,8 @@ describe("Sandbox ID-compressor compatibility", () => {
 	it("replays a retained Host commit encoded before ID space sharding", () => {
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
 		main.root.push("before ID space sharding");
-		const commit = serializeCommit(main, getBranch(main).getHead());
+		const mainCheckout = getCheckout(main);
+		const commit = mainCheckout.serializeCommit(mainCheckout.mainBranch.getHead());
 		const { idSpaceShard, guest } = createGuest();
 		try {
 			guest.applyChange(commit);
@@ -118,7 +120,7 @@ describe("Sandbox ID-compressor compatibility", () => {
 		const { main, peer, parent, createGuest } = createCompatibilityFixture();
 		const { idSpaceShard, guest } = createGuest();
 		try {
-			let change: ReturnType<typeof serializeCommit> | undefined;
+			let change: JsonCompatibleReadOnly | undefined;
 			const unsubscribe = guest.events.on("changed", (metadata) => {
 				if (metadata.isLocal) {
 					change = metadata.getChange();
@@ -127,7 +129,7 @@ describe("Sandbox ID-compressor compatibility", () => {
 			guest.root.push("guest");
 			unsubscribe();
 			const serializedChange = change ?? assert.fail("Expected a serialized Guest change");
-			const revision = getBranch(guest).getHead().revision;
+			const revision = getCheckout(guest).mainBranch.getHead().revision;
 			assert(revision !== "root");
 			assert.throws(() => parent.decompress(revision), /Unknown ID/);
 			// A failed public view.applyChange breaks the view; the checkout uses the same decoder without breaking it.
@@ -162,10 +164,11 @@ describe("Sandbox ID-compressor compatibility", () => {
 				parent.generateCompressedId();
 			}
 			main.root.push("host");
-			const revision = getBranch(main).getHead().revision;
+			const mainCheckout = getCheckout(main);
+			const revision = mainCheckout.mainBranch.getHead().revision;
 			assert(revision !== "root");
 			assert.throws(() => idSpaceShard.decompress(revision), /Unknown ID/);
-			const commit = serializeCommit(main, getBranch(main).getHead());
+			const commit = mainCheckout.serializeCommit(mainCheckout.mainBranch.getHead());
 			assert.throws(() => getCheckout(guest).applyChange(commit), /Unknown op space ID/);
 			assert.deepEqual([...guest.root], ["initial"]);
 		} finally {
@@ -185,7 +188,8 @@ describe("Sandbox ID-compressor compatibility", () => {
 		try {
 			peer.root.push("peer");
 			provider.synchronizeMessages();
-			const commit = serializeCommit(main, getBranch(main).getHead());
+			const mainCheckout = getCheckout(main);
+			const commit = mainCheckout.serializeCommit(mainCheckout.mainBranch.getHead());
 			assert.throws(() => getCheckout(guest).applyChange(commit), /Unknown op space ID/);
 			assert.deepEqual([...guest.root], ["initial"]);
 		} finally {
