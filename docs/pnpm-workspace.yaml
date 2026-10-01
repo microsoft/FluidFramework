@@ -27,7 +27,7 @@ overrides:
   # Resolve known security vulnerabilities in transitive dependencies.
   # js-yaml: CVE-2026-59869 (quadratic CPU DoS via merge-key chains).
   js-yaml@>=3 <4: 3.15.0
-  js-yaml@>=4 <5: 4.3.0
+  js-yaml@>=4 <5: 4.3.2
 # Disable pnpm update notifications since we use corepack to install package managers.
 updateNotifier: false
 # pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every

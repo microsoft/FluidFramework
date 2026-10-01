@@ -544,6 +544,11 @@ export class SharedTreeCore<
 		return this.editManager.getLocalBranch("main");
 	}
 
+	/** Gets the head of the main branch's sequenced trunk. */
+	public getTrunkHead(): GraphCommit<TChange> {
+		return this.editManager.getTrunkHead("main");
+	}
+
 	public getSharedBranchIds(): string[] {
 		return this.editManager
 			.getSharedBranchIds()
