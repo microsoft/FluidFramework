@@ -1047,7 +1047,8 @@ export interface TreeViewAlpha<
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	// Override the base fork method to return a TreeViewAlpha.
-	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
+	// Keep the alpha view first so event listeners infer alpha metadata.
+	fork(): TreeViewAlpha<TSchema> & ReturnType<UntypedTreeView["fork"]>;
 }
 
 /**
@@ -1189,10 +1190,9 @@ export interface TreeBranchEventsBeta {
  * Events for {@link UntypedTreeView}.
  * @sealed @alpha
  */
-export interface TreeBranchEvents {
+export interface TreeBranchEvents extends TreeBranchEventsBeta {
 	/**
-	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
-	 * can use to filter on changes they care about (e.g. local vs. remote changes).
+	 * Fired as described by {@link TreeBranchEventsBeta.changed}, with alpha change metadata and revertible support.
 	 *
 	 * @param data - information about the change
 	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,

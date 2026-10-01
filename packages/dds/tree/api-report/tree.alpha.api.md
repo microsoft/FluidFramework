@@ -910,11 +910,11 @@ export interface LeafSchema<Name extends string, T extends TreeLeafValue> extend
 }
 
 // @alpha @sealed
-export interface LocalChangeMetadata extends CommitMetadata {
-    readonly events: Listenable<LocalCommitEvents>;
+export interface LocalChangeMetadata extends Extract<ChangeMetadataBeta, {
+    readonly isLocal: true;
+}> {
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
-    readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
 }
@@ -1148,10 +1148,11 @@ export const RecordNodeSchema: {
 };
 
 // @alpha @sealed
-export interface RemoteChangeMetadata extends CommitMetadata {
+export interface RemoteChangeMetadata extends Extract<ChangeMetadataBeta, {
+    readonly isLocal: false;
+}> {
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
-    readonly isLocal: false;
     readonly label?: undefined;
     readonly labels: TransactionLabels;
 }
@@ -1958,7 +1959,7 @@ export interface TreeBranchCommitMetadata {
 }
 
 // @alpha @sealed
-export interface TreeBranchEvents {
+export interface TreeBranchEvents extends TreeBranchEventsBeta {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
@@ -2187,7 +2188,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
-    fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
+    fork(): TreeViewAlpha<TSchema> & ReturnType<UntypedTreeView["fork"]>;
     initialize(content: InsertableField<TSchema>): void;
     isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
     // (undocumented)

@@ -295,11 +295,8 @@ export interface CommitMetadata {
  * Information about a change that has been applied by the local client.
  * @sealed @alpha
  */
-export interface LocalChangeMetadata extends CommitMetadata {
-	/**
-	 * Whether the change was made on the local machine/client or received from a remote client.
-	 */
-	readonly isLocal: true;
+export interface LocalChangeMetadata
+	extends Extract<ChangeMetadataBeta, { readonly isLocal: true }> {
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for local changes.
@@ -365,11 +362,6 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * ```
 	 */
 	readonly labels: TransactionLabels;
-
-	/**
-	 * Events related to a local change that has been applied.
-	 */
-	readonly events: Listenable<LocalCommitEvents>;
 }
 
 /**
@@ -521,11 +513,8 @@ export enum CommitOutcome {
  * Information about a change that has been applied by a remote client.
  * @sealed @alpha
  */
-export interface RemoteChangeMetadata extends CommitMetadata {
-	/**
-	 * Whether the change was made on the local machine/client or received from a remote client.
-	 */
-	readonly isLocal: false;
+export interface RemoteChangeMetadata
+	extends Extract<ChangeMetadataBeta, { readonly isLocal: false }> {
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
