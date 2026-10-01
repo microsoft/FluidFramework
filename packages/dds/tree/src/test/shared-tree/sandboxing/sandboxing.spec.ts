@@ -780,11 +780,18 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("rejects a Host compressor that cannot create a child ID space shard", async () => {
-		const { guest, host, main, provider } = await setup(["initial"]);
-		// Reuse the application-owned main view so a failed replacement Host must leave it usable.
-		guest.dispose();
-		host.dispose();
+	it("rejects a Host view whose compressor cannot create a child ID space shard", () => {
+		const checkout = checkoutWithContent(
+			{
+				schema: toInitialSchema(stringArrayConfig.schema),
+				initialTree: fieldCursorFromInsertable(stringArrayConfig.schema, ["initial"]),
+			},
+			{
+				idCompressor: createIdCompressor(SerializationVersion.V2),
+				codecOptions: { minVersionForCollab: FluidClientVersion.v2_80 },
+			},
+		);
+		const main = viewCheckout(checkout, stringArrayConfig);
 		const channel = new MessageChannel();
 		try {
 			assert.throws(
@@ -792,8 +799,6 @@ describe("Host and Guest correctness", () => {
 					new HostImplementation({
 						main,
 						port: channel.port1,
-						bindingHandle: provider.trees[1].handle,
-						idCompressor: createIdCompressor(SerializationVersion.V2),
 						logger: createChildLogger({ namespace: "Host" }),
 					}),
 				/Sharding requires document version 3/,
@@ -802,6 +807,7 @@ describe("Host and Guest correctness", () => {
 			assert.deepEqual([...main.root], ["initial", "still usable"]);
 		} finally {
 			channel.port2.close();
+			main.dispose();
 		}
 	});
 
@@ -828,8 +834,6 @@ describe("Host and Guest correctness", () => {
 					new HostImplementation({
 						main,
 						port: channel.port1,
-						bindingHandle: provider.trees[1].handle,
-						idCompressor: root,
 						logger: createChildLogger({ namespace: "Host" }),
 					}),
 				/Transport unavailable/,
@@ -878,8 +882,6 @@ describe("Host and Guest correctness", () => {
 		const replacementHost = new HostImplementation({
 			main,
 			port: ports.hostPort,
-			bindingHandle: provider.trees[1].handle,
-			idCompressor: root,
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		const replacementGuest = await createGuestForHost(ports.guestPort);
@@ -986,8 +988,6 @@ describe("Host and Guest correctness", () => {
 		const replacementHost = new HostImplementation({
 			main,
 			port: replacementPorts.hostPort,
-			bindingHandle: provider.trees[1].handle,
-			idCompressor: root,
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		const replacementGuest = await createGuestForHost(replacementPorts.guestPort);
@@ -1317,9 +1317,6 @@ describe("Host and Guest correctness", () => {
 			const replacementHost = new HostImplementation({
 				main,
 				port: ports.hostPort,
-				bindingHandle: provider.trees[1].handle,
-				idCompressor: provider.getCompressor(provider.trees[1]),
-				logger: createChildLogger({ namespace: "Host" }),
 			});
 			const replacementGuest = await createGuestForHost(ports.guestPort);
 			const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(handleArrayConfig));
@@ -1925,9 +1922,6 @@ describe("Host and Guest correctness", () => {
 		const replacementHost = new HostImplementation({
 			main,
 			port: ports.hostPort,
-			bindingHandle: provider.trees[1].handle,
-			idCompressor: provider.getCompressor(provider.trees[1]),
-			logger: createChildLogger({ namespace: "Host" }),
 		});
 		const replacementGuest = await createGuestForHost(ports.guestPort);
 		const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
@@ -1969,8 +1963,6 @@ describe("Host and Guest correctness", () => {
 		const independentHost = new HostImplementation({
 			main,
 			port: ports.hostPort,
-			bindingHandle: new TestTreeProviderLite(1).trees[0].handle,
-			idCompressor,
 			logger: createChildLogger({ namespace: "Host" }),
 		});
 		try {
@@ -2018,7 +2010,6 @@ describe("Host and Guest correctness", () => {
 		const mainCheckout = getCheckout(main);
 		const synchronization = new HostSynchronization(
 			mainCheckout,
-			() => {},
 			() => {},
 			(action) => action(),
 			(error) => assert.fail(String(error)),
@@ -2074,7 +2065,6 @@ describe("Host and Guest correctness", () => {
 			const synchronization = new HostSynchronization(
 				getCheckout(main),
 				() => {},
-				() => {},
 				(action) => action(),
 				(error) => assert.fail(String(error)),
 				createChildLogger({ namespace: "Host" }),
@@ -2118,7 +2108,6 @@ describe("Host and Guest correctness", () => {
 					sent.push(message);
 				}
 			},
-			() => {},
 			(action) => action(),
 			(error) => assert.fail(String(error)),
 			createChildLogger({ namespace: "Host" }),
@@ -2268,9 +2257,6 @@ describe("Host and Guest correctness", () => {
 			const replacementHost = new HostImplementation({
 				main,
 				port: ports.hostPort,
-				bindingHandle: provider.trees[1].handle,
-				idCompressor: provider.getCompressor(provider.trees[1]),
-				logger: createChildLogger({ namespace: "Host" }),
 			});
 			if (trimHistory) {
 				assert.notEqual(

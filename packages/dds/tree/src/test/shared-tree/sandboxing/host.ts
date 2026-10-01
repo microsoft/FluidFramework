@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
@@ -13,7 +12,7 @@ import {
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion } from "../../../codec/index.js";
 import {
@@ -52,7 +51,7 @@ import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
-import { getCheckout } from "./synchronizationUtils.js";
+import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
  * Options for creating a Host.
@@ -61,10 +60,6 @@ export interface HostOptions extends SandboxEndpointOptions {
 	// TODO: Use a branch with a forest once it can be supplied without a full view.
 	/** The application-owned view to synchronize with the Guest. */
 	readonly main: UntypedTreeView;
-	/** The SharedTree handle to which restored handles are bound. */
-	readonly bindingHandle: IFluidHandle;
-	/** The runtime's root compressor, which remains on the Host when a Guest ID space shard is created. */
-	readonly idCompressor: IIdCompressor;
 }
 
 /**
@@ -82,7 +77,7 @@ export interface Host {
 
 /**
  * Creates and connects a {@link Host} which can support a {@link Guest}.
- * @param options - The options for creating the Host, including the main view and binding handle.
+ * @param options - The options for creating the Host.
  * @returns The created Host instance.
  */
 export function createHost(options: HostOptions): Host {
@@ -166,14 +161,12 @@ export class HostImplementation implements Host {
 	public constructor({
 		main,
 		port,
-		bindingHandle,
-		idCompressor,
 		logger,
 		handleProtocolError = throwProtocolError,
 	}: HostOptions) {
 		this.port = port;
-		this.idCompressor = toIdCompressorWithCore(idCompressor);
-		this.codec = new HostTransportCodec(bindingHandle);
+		this.idCompressor = toIdCompressorWithCore(getIdCompressor(main));
+		this.codec = new HostTransportCodec();
 		this.mainCheckout = getCheckout(main);
 		this.session = new SandboxSessionEndpoint(
 			port,
@@ -183,13 +176,18 @@ export class HostImplementation implements Host {
 			},
 			handleProtocolError,
 		);
+		const hostLogger =
+			logger ??
+			createChildLogger({
+				logger: this.mainCheckout.breaker.logger,
+				namespace: "Host",
+			});
 		this.synchronization = new HostSynchronization(
 			this.mainCheckout,
 			(message) => this.postMessage(message),
-			(change) => this.codec.bindHandles(change),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
-			logger,
+			hostLogger,
 			(token) => this.synchronizeGuestIdSpaceShard(token),
 			() => this.getParentIdProgress(),
 		);
@@ -198,7 +196,7 @@ export class HostImplementation implements Host {
 		this.port.start();
 		let initialization: HostInitializationMessage | undefined;
 		try {
-			initialization = this.createInitializationMessage(idCompressor);
+			initialization = this.createInitializationMessage(getIdCompressor(main));
 			this.postMessage(initialization);
 		} catch (error) {
 			try {
@@ -215,7 +213,7 @@ export class HostImplementation implements Host {
 						token !== undefined,
 						"Expected a disposal token for the unsent Guest ID space shard",
 					);
-					toIdCompressorWithCore(idCompressor).synchronizeWithShard(token);
+					this.idCompressor.synchronizeWithShard(token);
 				}
 			} finally {
 				this.dispose();

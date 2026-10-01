@@ -35,7 +35,7 @@ export interface SandboxEndpointOptions {
 	/** This endpoint's port in the Host and Guest message channel. */
 	readonly port: MessagePort;
 	/** The endpoint-scoped logger for diagnostic telemetry. */
-	readonly logger: TelemetryLoggerExt;
+	readonly logger?: TelemetryLoggerExt;
 	// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
 	/**
 	 * Reports terminal session failure asynchronously.

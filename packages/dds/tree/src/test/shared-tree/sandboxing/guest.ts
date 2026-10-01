@@ -4,12 +4,15 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	deserializeIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	UsageError,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecOptions } from "../../../codec/index.js";
 import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
@@ -203,7 +206,7 @@ export class GuestImplementation implements Guest {
 	}: GuestOptions) {
 		this.treeOptions = treeOptions;
 		this.port = port;
-		this.logger = logger;
+		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {

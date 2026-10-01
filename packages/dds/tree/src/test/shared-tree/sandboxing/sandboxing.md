@@ -98,7 +98,7 @@ These terms are similar to the terms for virtual machines.
 Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions` in [common.ts](./common.ts).
 The shared type defines the endpoint's port, logger, and optional protocol-error callback.
 Supply a separate port and scoped logger for each endpoint.
-The Host also requires the application view, binding handle, and runtime compressor; the Guest requires forest and codec options.
+The Host requires the application view and uses its checkout's runtime compressor; the Guest requires forest and codec options.
 The Guest receives its own serialized ID space shard through initialization.
 After initialization, the sandboxed client selects a schema with `guest.tree.viewWith(config)`.
 If you omit the protocol-error callback, terminal errors are thrown asynchronously.
@@ -228,7 +228,7 @@ flowchart TB
 
 The entire incoming graph is restricted before marker validation or handle restoration.
 Restoration alone neither binds nor resolves handles.
-For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, binds its handles, merges into the main branch, and then acknowledges it.
+For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, merges into the main branch, and then acknowledges it.
 Incoming validation or processing failures and outgoing normalization, validation, or encoding failures terminate the session.
 
 Initialization is a separate entry point: the complete message, including the compressed tree, schema, retained commits, and serialized child compressor, follows normalization, validation, transport encoding, `MessagePort` structured clone, transport decoding, validation, and tree-codec initialization.
