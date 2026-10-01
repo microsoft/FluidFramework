@@ -4,8 +4,11 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	createChildLogger,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecOptions } from "../../../codec/index.js";
 import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
@@ -39,6 +42,8 @@ import { normalizeTransportData } from "./transport.js";
 export interface GuestOptions extends SandboxEndpointOptions {
 	/** The forest and codec options used to initialize the Guest's tree. */
 	readonly treeOptions: ForestOptions & ICodecOptions;
+	/** The compressor shared by the Host and Guest for this session. */
+	readonly idCompressor: IIdCompressor;
 }
 
 /**
@@ -152,7 +157,7 @@ export class GuestImplementation implements Guest {
 		this.treeOptions = treeOptions;
 		this.idCompressor = idCompressor;
 		this.port = port;
-		this.logger = logger;
+		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {

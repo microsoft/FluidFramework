@@ -5,7 +5,6 @@
 
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
@@ -27,10 +26,8 @@ import {
 export interface SandboxEndpointOptions {
 	/** This endpoint's port in the Host and Guest message channel. */
 	readonly port: MessagePort;
-	/** The compressor shared by the Host and Guest for this session. */
-	readonly idCompressor: IIdCompressor;
 	/** The endpoint-scoped logger for diagnostic telemetry. */
-	readonly logger: TelemetryLoggerExt;
+	readonly logger?: TelemetryLoggerExt;
 	// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
 	/**
 	 * Reports terminal session failure asynchronously.

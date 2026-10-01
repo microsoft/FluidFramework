@@ -19,7 +19,6 @@ import {
 	type SharedTreeChange,
 	type TreeCheckout,
 } from "../../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 
 import {
@@ -110,10 +109,6 @@ export class HostSynchronization {
 		 */
 		private readonly send: (message: HostUpdateMessage | GuestChangeAckMessage) => void,
 		/**
-		 * Binds handles in a change from the Guest to the Host's SharedTree.
-		 */
-		private readonly bindHandles: (change: JsonCompatibleReadOnly) => void,
-		/**
 		 * Runs an action within the Host session's error-handling boundary.
 		 */
 		private readonly run: (action: () => void) => void,
@@ -186,7 +181,6 @@ export class HostSynchronization {
 			this.guestChangeCodec,
 			throwInvalidGuestChange,
 		);
-		this.bindHandles(message.change);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
 		this.mainCheckout.merge(this.localCheckout, false);
 		this.send({ type: "guestChangeAck", changeId: message.changeId });
