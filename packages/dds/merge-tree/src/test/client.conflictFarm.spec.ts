@@ -89,7 +89,20 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 			// 		operations: [...opts.operations, obliterateRange, obliterateRangeSided],
 			// 	},
 			// },
-		])
+		].flatMap(({ name, config }) => [
+			{ name, config: { ...config, newMergeTreeSnapshotFormat: false } },
+			{
+				name: `${name} (flat snapshots)`,
+				config: {
+					...config,
+					newMergeTreeSnapshotFormat: true,
+					resultsFilePostfix:
+						config.resultsFilePostfix === undefined
+							? undefined
+							: `flat-${config.resultsFilePostfix}`,
+				},
+			},
+		]))
 			it(`${name}: ConflictFarm_${minLength}`, async () => {
 				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
 
@@ -98,6 +111,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 						mergeTreeEnableObliterate: true,
 						mergeTreeEnableSidedObliterate: true,
 						mergeTreeEnableAnnotateAdjust: true,
+						newMergeTreeSnapshotFormat: config.newMergeTreeSnapshotFormat,
 					}),
 				];
 				for (const [i, c] of clients.entries()) c.startOrUpdateCollaboration(clientNames[i]);

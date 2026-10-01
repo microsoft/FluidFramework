@@ -242,8 +242,12 @@ export interface IMergeTreeOptions {
 	 * default: false
 	 *
 	 * @remarks
-	 * Despite the "legacy"/"V1" naming, both formats are actively used at the time of writing. SharedString
-	 * uses legacy and Matrix uses V1.
+	 * Despite the "legacy"/"V1" naming, both formats are actively used.
+	 * SharedString uses an explicit setting when provided, otherwise the setting recorded in its DDS attributes,
+	 * and defaults to SnapshotLegacy if neither setting exists.
+	 * Each SharedString summary records the setting used, so subsequent summaries retain that format unless explicitly overridden.
+	 * The `Fluid.Sequence.newMergeTreeSnapshotFormat` configuration flag takes precedence over this runtime option.
+	 * SharedMatrix always uses SnapshotV1.
 	 */
 	newMergeTreeSnapshotFormat?: boolean;
 
