@@ -298,11 +298,69 @@ The Host verifies the token, reclaims the shard, sends `guestCloseAck`, and disp
 The Guest then releases GuestSynchronization's hidden Host branch and resolves the close promise.
 An outstanding Host update can be discarded during close; the application-owned main view remains available.
 
+The normal close flow returns the child ID space shard only after the Guest stops creating IDs and the Host acknowledges all earlier Guest changes.
+The Host keeps the application's main view throughout this flow.
+
+```mermaid
+sequenceDiagram
+    participant Client as Sandboxed Client
+    participant Guest
+    participant Host
+    participant Root as Host root ID compressor
+
+    Note over Host,Root: Root reserves the active child ID space shard
+    Client->>Guest: close()
+    Guest->>Guest: Stop edits and dispose authoring view
+    opt Earlier Guest changes are still pending
+        Note over Guest,Host: guestChange messages were sent before close
+        Host-->>Guest: guestChangeAck for each earlier change
+        Guest->>Guest: Record the acknowledgment
+    end
+    Guest->>Guest: Dispose child shard after all acknowledgments, get final token
+    Guest->>Host: guestClose(disposal token)
+    Note over Guest,Host: Guest-to-Host messages arrive in send order
+    Host->>Root: Validate token and synchronizeWithShard(disposal token)
+    Note over Host,Root: Root reclaims the child ID space shard
+    Host-->>Guest: guestCloseAck
+    Host->>Host: Dispose session branches, keep main view
+    Guest->>Guest: Dispose session and hidden Host branch
+    Guest-->>Client: close() promise resolves
+```
+
+The state names below belong to `GuestSynchronization`, not the Host's application-owned main view.
+`Closing` still accepts acknowledgments for earlier Guest changes.
+`Closed` stops synchronization but keeps the hidden Host branch until `Guest.dispose()` reaches `Disposed`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Active: Guest initialization
+    Active --> Closing: Guest.close() stops edits and disposes authoring view
+    Closing --> Closing: guestChangeAck drains pending changes
+    Closing --> Closed: guestCloseAck triggers Guest.dispose()
+    Active --> Closed: failure or abort calls closeForError()
+    Closing --> Closed: failure or abort calls closeForError()
+    Closed --> Disposed: Guest.dispose() releases hidden Host branch
+```
+
+The Host tracks the child ID space shard separately from the Guest synchronization state.
+A Guest failure or abort cannot release the Host's allocation unless the Host already processed a valid `guestClose` token.
+A synchronous initialization send failure can also reclaim a shard that the Host knows it did not deliver.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Reserved: Host creates child ID space shard
+    Reserved --> Reserved: failure or abort before valid guestClose
+    Reserved --> Reclaimed: valid guestClose and synchronizeWithShard
+    Reserved --> Reclaimed: initialization send fails before delivery
+    Reclaimed --> Reclaimed: guestCloseAck lost
+```
+
 Synchronous `Guest.dispose()` aborts the session without requesting ID space reclamation.
 If the port fails, the application can call it to reject a pending close promise.
 After a failure before orderly close, Guest leaves the authoring view available for inspection until the application calls `Guest.dispose()`.
 Guest currently disposes the view during cleanup, but a future implementation could save or stash unsaved changes first.
 The Host does not reclaim an ID space shard without a valid close token, because the Guest might still create IDs.
+If the Host processed `guestClose` but the acknowledgment was lost, the shard has already been reclaimed.
 Each unreclaimed shard increases the root compressor's allocation stride; after enough replacement sessions, the compressor cannot create another shard.
 The application must stop and fence an old Guest before it can safely reclaim that shard.
 
