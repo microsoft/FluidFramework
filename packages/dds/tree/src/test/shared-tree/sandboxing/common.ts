@@ -415,6 +415,7 @@ const HostInitializationMessage = Type.Object(
 		commits: Type.Readonly(SerializedTreeCommits),
 		/**
 		 * Wire string for a {@link @fluidframework/id-compressor/internal#SerializedIdCompressorWithOngoingSession}.
+		 * @remarks
 		 * Envelope validation checks only the string shape. Guest deserialization validates
 		 * the compressor format and confirms it is a child ID space shard.
 		 */
@@ -515,7 +516,7 @@ const GuestChangeAckMessage = Type.Object(
 
 /**
  * Requests orderly session close after all earlier Guest changes have been sent.
- * The token lets the Host reclaim the stopped Guest's ID space shard.
+ * @remarks The token lets the Host reclaim the stopped Guest's ID space shard.
  */
 export type GuestCloseMessage = Static<typeof GuestCloseMessage>;
 const GuestCloseMessage = Type.Object(
