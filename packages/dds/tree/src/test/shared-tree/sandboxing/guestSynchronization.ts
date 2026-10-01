@@ -179,6 +179,7 @@ export class GuestSynchronization {
 						idSpaceShardToken !== undefined,
 						"Guest edits require a child ID space shard",
 					);
+					assert(!idSpaceShardToken.disposed, "Guest change needs a live ID space shard");
 					const changeId = brand<GuestChangeId>(this.nextChangeId++);
 					if (this.pushInProgress === undefined) {
 						this.pushInProgress = makePromiseWithResolvers();
@@ -194,7 +195,7 @@ export class GuestSynchronization {
 						mainRevision: this.mainRevision,
 						trunkRevision: this.trunkRevision,
 						change,
-						idSpaceShardToken,
+						idSpaceShardToken: { ...idSpaceShardToken, disposed: false },
 					});
 				});
 			},

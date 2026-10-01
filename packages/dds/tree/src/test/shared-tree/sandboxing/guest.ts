@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	deserializeIdCompressor,
 	SerializationVersion,
@@ -319,8 +319,12 @@ export class GuestImplementation implements Guest {
 			token.then(
 				(idSpaceShardToken) =>
 					this.session.run(() => {
+						assert(idSpaceShardToken.disposed, "Guest close requires a disposal token");
 						// The Host reclaims the shard only after it receives this token.
-						this.postMessage({ type: "guestClose", idSpaceShardToken });
+						this.postMessage({
+							type: "guestClose",
+							idSpaceShardToken: { ...idSpaceShardToken, disposed: true },
+						});
 						this.closeSent = true;
 					}),
 				(error: unknown) => this.session.fail(error),

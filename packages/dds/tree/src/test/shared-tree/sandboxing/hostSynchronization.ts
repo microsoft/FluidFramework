@@ -5,10 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	ParentIdProgressForShard,
-	ShardSynchronizationToken,
-} from "@fluidframework/id-compressor/internal";
+import type { ParentIdProgressForShard } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -125,7 +122,9 @@ export class HostSynchronization {
 		 */
 		private readonly logger: TelemetryLoggerExt,
 		/** Authorizes and imports Guest IDs before a serialized change is decoded. */
-		private readonly synchronizeGuestIdSpaceShard: (token: ShardSynchronizationToken) => void,
+		private readonly synchronizeGuestIdSpaceShard: (
+			token: GuestChangeMessage["idSpaceShardToken"],
+		) => void,
 		/** Captures parent progress after commits have been encoded. */
 		private readonly getParentIdProgress: () => ParentIdProgressForShard,
 	) {

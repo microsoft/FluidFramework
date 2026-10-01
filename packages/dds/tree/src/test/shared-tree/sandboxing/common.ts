@@ -7,11 +7,8 @@ import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-inter
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	isStableId,
-	type IdCreationRange,
-	type ParentIdProgressForShard,
 	type SessionId,
 	type SerializedIdCompressorWithOngoingSession,
-	type ShardSynchronizationToken,
 } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
@@ -334,51 +331,45 @@ const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
  * A disposal token would let the Host reclaim the Guest's ID space shard.
  * The Guest must first stop creating IDs. The separate `guestClose` message carries that token.
  */
-const GuestIdSpaceShardToken = Type.Unsafe<ShardSynchronizationToken>(
-	Type.Object(
-		{
-			shardId: IdSpaceShardSessionId,
-			localGenCount: Type.Number({
-				minimum: 0,
-				maximum: Number.MAX_SAFE_INTEGER,
-				multipleOf: 1,
-			}),
-			disposed: Type.Literal(false),
-		},
-		{ additionalProperties: false },
-	),
+const GuestIdSpaceShardToken = Type.Object(
+	{
+		shardId: IdSpaceShardSessionId,
+		localGenCount: Type.Number({
+			minimum: 0,
+			maximum: Number.MAX_SAFE_INTEGER,
+			multipleOf: 1,
+		}),
+		disposed: Type.Literal(false),
+	},
+	{ additionalProperties: false },
 );
 
 /** A final child token sent only after the Guest stops creating IDs. */
-const DisposedGuestIdSpaceShardToken = Type.Unsafe<ShardSynchronizationToken>(
-	Type.Object(
-		{
-			shardId: IdSpaceShardSessionId,
-			localGenCount: Type.Number({
-				minimum: 0,
-				maximum: Number.MAX_SAFE_INTEGER,
-				multipleOf: 1,
-			}),
-			disposed: Type.Literal(true),
-		},
-		{ additionalProperties: false },
-	),
+const DisposedGuestIdSpaceShardToken = Type.Object(
+	{
+		shardId: IdSpaceShardSessionId,
+		localGenCount: Type.Number({
+			minimum: 0,
+			maximum: Number.MAX_SAFE_INTEGER,
+			multipleOf: 1,
+		}),
+		disposed: Type.Literal(true),
+	},
+	{ additionalProperties: false },
 );
 
 /** Validates a parent's progress for the Guest ID space shard. */
-const ParentIdProgress = Type.Unsafe<ParentIdProgressForShard>(
-	Type.Object(
-		{
-			type: Type.Literal("parentIdProgressForShard"),
-			shardId: IdSpaceShardSessionId,
-			localGenCount: Type.Number({
-				minimum: 0,
-				maximum: Number.MAX_SAFE_INTEGER,
-				multipleOf: 1,
-			}),
-		},
-		{ additionalProperties: false },
-	),
+const ParentIdProgress = Type.Object(
+	{
+		type: Type.Literal("parentIdProgressForShard"),
+		shardId: IdSpaceShardSessionId,
+		localGenCount: Type.Number({
+			minimum: 0,
+			maximum: Number.MAX_SAFE_INTEGER,
+			multipleOf: 1,
+		}),
+	},
+	{ additionalProperties: false },
 );
 
 /**
@@ -397,22 +388,20 @@ const PositiveSafeInteger = Type.Number({
 /**
  * A range already finalized by the Host runtime, not a request to submit a new range.
  */
-const FinalizedIdRange = Type.Unsafe<IdCreationRange>(
-	Type.Object(
-		{
-			sessionId: IdSpaceShardSessionId,
-			ids: Type.Object(
-				{
-					firstGenCount: PositiveSafeInteger,
-					count: PositiveSafeInteger,
-					requestedClusterSize: PositiveSafeInteger,
-					localIdRanges: Type.Array(Type.Tuple([PositiveSafeInteger, PositiveSafeInteger])),
-				},
-				{ additionalProperties: false },
-			),
-		},
-		{ additionalProperties: false },
-	),
+const FinalizedIdRange = Type.Object(
+	{
+		sessionId: IdSpaceShardSessionId,
+		ids: Type.Object(
+			{
+				firstGenCount: PositiveSafeInteger,
+				count: PositiveSafeInteger,
+				requestedClusterSize: PositiveSafeInteger,
+				localIdRanges: Type.Array(Type.Tuple([PositiveSafeInteger, PositiveSafeInteger])),
+			},
+			{ additionalProperties: false },
+		),
+	},
+	{ additionalProperties: false },
 );
 
 /**

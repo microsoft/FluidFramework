@@ -6,7 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
-import { createSessionId, type ShardToken } from "@fluidframework/id-compressor/internal";
+import {
+	createSessionId,
+	type IdCreationRange,
+	type ParentIdProgressForShard,
+	type ShardSynchronizationToken,
+	type ShardToken,
+} from "@fluidframework/id-compressor/internal";
 import {
 	compareFluidHandles,
 	isFluidHandle,
@@ -14,12 +20,21 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { brand, type isAssignableTo, type requireFalse } from "../../../util/index.js";
+import {
+	brand,
+	type isAssignableTo,
+	type requireFalse,
+	type requireTrue,
+} from "../../../util/index.js";
 
 import {
 	type BlobRequestId,
 	type BlobRequestMessage,
+	type GuestChangeMessage,
+	type GuestCloseMessage,
 	type HandleToken,
+	type HostIdRangeMessage,
+	type HostUpdateMessage,
 	isHandleToken,
 	isLocalHandle,
 	isSerializedHandle,
@@ -49,6 +64,18 @@ type _DistinctIds =
 	| requireFalse<isAssignableTo<BlobRequestId, HandleToken>>
 	| requireFalse<isAssignableTo<number, HandleToken>>
 	| requireFalse<isAssignableTo<number, BlobRequestId>>;
+
+/** The validated wire shapes match compressor data without claiming the opaque token brand. */
+type _IdWireShapes =
+	| requireTrue<isAssignableTo<GuestChangeMessage["idSpaceShardToken"], ShardToken>>
+	| requireTrue<isAssignableTo<GuestCloseMessage["idSpaceShardToken"], ShardToken>>
+	| requireTrue<
+			isAssignableTo<HostUpdateMessage["parentIdProgress"], ParentIdProgressForShard>
+	  >
+	| requireTrue<isAssignableTo<HostIdRangeMessage["range"], IdCreationRange>>
+	| requireFalse<
+			isAssignableTo<GuestChangeMessage["idSpaceShardToken"], ShardSynchronizationToken>
+	  >;
 
 /**
  * Recursively asserts that records have null prototypes while arrays and buffers retain their

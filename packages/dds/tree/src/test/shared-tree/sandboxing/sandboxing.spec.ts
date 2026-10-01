@@ -86,10 +86,11 @@ function createTestIdSpaceShardToken() {
 		serializedIdSpaceShard,
 		SerializationVersion.V3,
 	);
-	return (
+	const token =
 		idSpaceShard.getShardSyncToken() ??
-		assert.fail("Expected a child ID space shard synchronization token")
-	);
+		assert.fail("Expected a child ID space shard synchronization token");
+	assert(!token.disposed, "Expected an active child ID space shard");
+	return { ...token, disposed: false as const };
 }
 
 /**
@@ -2068,7 +2069,10 @@ describe("Host and Guest correctness", () => {
 				(action) => action(),
 				(error) => assert.fail(String(error)),
 				createChildLogger({ namespace: "Host" }),
-				(token) => root.synchronizeWithShard(token),
+				(token) => {
+					assert.deepEqual(token, { ...idSpaceShardToken, disposed: false });
+					root.synchronizeWithShard(idSpaceShardToken);
+				},
 				() => root.getChildShardProgress(idSpaceShardToken),
 			);
 			try {
@@ -2081,7 +2085,7 @@ describe("Host and Guest correctness", () => {
 							mainRevision,
 							trunkRevision,
 							change,
-							idSpaceShardToken,
+							idSpaceShardToken: { ...idSpaceShardToken, disposed: false },
 						}),
 					(error: unknown) => {
 						assert(error instanceof SandboxProtocolError);

@@ -35,6 +35,7 @@ import { brand } from "../../../util/index.js";
 import {
 	type BlobRequestMessage,
 	type BlobResponseMessage,
+	type GuestChangeMessage,
 	type GuestCloseMessage,
 	type HostGuestMessage,
 	type HostIdRangeId,
@@ -279,7 +280,7 @@ export class HostImplementation implements Host {
 	 * @param token - The Guest ID space shard's progress after it encoded the change.
 	 * @throws {@link SandboxProtocolError} if initialization is incomplete, the token belongs to another ID space shard, or progress does not advance.
 	 */
-	private synchronizeGuestIdSpaceShard(token: ShardSynchronizationToken): void {
+	private synchronizeGuestIdSpaceShard(token: GuestChangeMessage["idSpaceShardToken"]): void {
 		const previous = this.guestIdSpaceShardToken;
 		if (previous === undefined) {
 			throw new SandboxProtocolError(
@@ -295,8 +296,11 @@ export class HostImplementation implements Host {
 			throw new SandboxProtocolError("Guest ID space shard progress did not advance.");
 		}
 		// Only the child created for this Host session may advance its root compressor.
-		this.idCompressor.synchronizeWithShard(token);
-		this.guestIdSpaceShardToken = token;
+		// The wire shape is validated before routing; this check authorizes its shard and progress.
+		// The compressor token brand has no runtime representation.
+		const authorizedToken = token as ShardSynchronizationToken;
+		this.idCompressor.synchronizeWithShard(authorizedToken);
+		this.guestIdSpaceShardToken = authorizedToken;
 	}
 
 	/**
@@ -322,7 +326,8 @@ export class HostImplementation implements Host {
 			throw new SandboxProtocolError("Guest close token has stale ID progress.");
 		}
 		// Guest messages arrive in order, so every earlier change has been processed.
-		this.idCompressor.synchronizeWithShard(token);
+		// The validated disposal token belongs to this session and does not move backward.
+		this.idCompressor.synchronizeWithShard(token as ShardSynchronizationToken);
 		this.postMessage({ type: "guestCloseAck" });
 		this.dispose();
 	}
@@ -363,11 +368,12 @@ export class HostImplementation implements Host {
 		if (this.nextIdRangeId > Number.MAX_SAFE_INTEGER) {
 			throw new SandboxProtocolError("Host ID range identifiers are exhausted.");
 		}
+		assert(range.ids !== undefined, "Finalized ID range must contain IDs");
 		this.postMessage({
 			type: "hostIdRange",
 			rangeId: brand<HostIdRangeId>(this.nextIdRangeId++),
 			parentIdProgress: this.getParentIdProgress(),
-			range,
+			range: { ...range, ids: range.ids },
 		});
 	}
 
