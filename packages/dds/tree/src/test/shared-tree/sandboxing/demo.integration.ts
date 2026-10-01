@@ -106,6 +106,8 @@ describe("End to End Host and Guest integrations", () => {
 					treeOptions: { jsonValidator: sandboxFormatValidator },
 				});
 				const viewGuest = guest.tree.viewWith(config);
+				// TODO: Support initializing the tree in the Guest instead of requiring Host initialization.
+				// viewGuest.initialize("B");
 				viewGuest.root = "B";
 				await (guest.updateHostPromise ?? assert.fail("Expected a pending Guest edit"));
 				await client.service.synchronize();
