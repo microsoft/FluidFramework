@@ -49,55 +49,42 @@ export class SandboxProtocolError extends Error {
 	public override readonly name = "SandboxProtocolError";
 }
 
+/** Shared wire bounds for nonnegative safe integers. */
+const nonNegativeSafeIntegerOptions = {
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+} as const;
+
 /**
  * An index into the Host's table of handles authorized for one Guest.
  * Valid only within the owning session; the brand does not establish runtime authorization.
  */
 export type HandleToken = Brand<number, "sandbox.HandleToken">;
-const HandleToken = brandedNumberType<HandleToken>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const HandleToken = brandedNumberType<HandleToken>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one pending {@link BlobRequestMessage}, independently of its {@link HandleToken}.
  * Allocated by the Guest and echoed by the Host to match a response to its request.
  */
 export type BlobRequestId = Brand<number, "sandbox.BlobRequestId">;
-const BlobRequestId = brandedNumberType<BlobRequestId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const BlobRequestId = brandedNumberType<BlobRequestId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Host branch update and its acknowledgment.
  */
 export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
-const HostUpdateId = brandedNumberType<HostUpdateId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const HostUpdateId = brandedNumberType<HostUpdateId>(nonNegativeSafeIntegerOptions);
 
 /** Identifies a finalized ID creation range sent from the Host to the Guest. */
 export type HostIdRangeId = Brand<number, "sandbox.HostIdRangeId">;
-const HostIdRangeId = brandedNumberType<HostIdRangeId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const HostIdRangeId = brandedNumberType<HostIdRangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Guest change and its acknowledgment.
  */
 export type GuestChangeId = Brand<number, "sandbox.GuestChangeId">;
-const GuestChangeId = brandedNumberType<GuestChangeId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const GuestChangeId = brandedNumberType<GuestChangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Wire discriminator for {@link SerializedHandle}. Ordinary records with this value must be escaped.
@@ -318,11 +305,7 @@ const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
 )();
 
 /** An integer from zero through the largest integer JavaScript can represent exactly. */
-const NonNegativeSafeInteger = Type.Number({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
 
 /**
  * Validates the ID space shard token that the Guest sends with each change.
