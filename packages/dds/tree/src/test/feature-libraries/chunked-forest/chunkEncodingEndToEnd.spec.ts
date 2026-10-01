@@ -25,6 +25,7 @@ import {
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
 	TreeStoredSchemaRepository,
+	type TreeStoredSchemaSubscription,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
@@ -143,10 +144,14 @@ describe("End to end chunked encoding", () => {
 			Number.POSITIVE_INFINITY,
 			defaultChunkPolicy.uniformChunkNodeCount,
 			defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
-			(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+			(
+				type: TreeNodeSchemaIdentifier,
+				shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+				chunkerSchema: TreeStoredSchemaSubscription,
+			) =>
 				tryShapeFromNodeSchema(
 					{
-						schema: treeSchema,
+						schema: chunkerSchema,
 						policy: defaultSchemaPolicy,
 						shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 						shapes,

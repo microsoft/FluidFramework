@@ -1446,9 +1446,9 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("branches with schema edits can be rebased", () => {
-		// TODO: 0xaf9: the fork's chunker looks up types using its parent's schema.
+		// The fork must use its own schema to chunk edits after its parent's schema changes.
 		// Minimized from topLevel.fuzz.spec.ts, Everything - Comparison Forest seed 1.
-		it.skip("can edit a fork after its parent's schema upgrade loses a rebase", () => {
+		it("can edit a fork after its parent's schema upgrade loses a rebase", () => {
 			const sf = new SchemaFactory("forkSchemaRebase");
 			class Added extends sf.object("Added", { value: sf.string }) {}
 			const oldSchema = sf.optional(sf.string);
