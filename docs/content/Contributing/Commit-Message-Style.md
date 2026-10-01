@@ -1,10 +1,8 @@
 # Commit Message Style
 
-_Note: this is currently only enforced for the build-tools release group.
-But you can follow this style elsewhere!_
-
-We use the [conventional commit format](https://conventionalcommits.org/) in the build-tools release group.
-This lets us autogenerate changelogs and more easily write release notes.
+Use the [conventional commit format](https://conventionalcommits.org/) for the build-tools release group.
+This group uses commit messages to generate changelogs; it does not use changesets.
+You can use this style elsewhere, but follow each [release group's process](../../../.changeset/README.md#when-should-i-use-a-changeset) for release documentation.
 
 Because we use the "squash merge" workflow for most of our branches, the PR title and body become the commit title and message, respectively.
 For this reason, we run a required check in CI that verifies PR titles adhere to the standard as configured in the repo.

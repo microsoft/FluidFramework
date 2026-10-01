@@ -1,5 +1,19 @@
 # @fluidframework/container-loader
 
+## 3.3.0
+
+### Minor Changes
+
+- Point-in-time load failures now release container resources reliably ([#28291](https://github.com/microsoft/FluidFramework/pull/28291)) [7a887467c64](https://github.com/microsoft/FluidFramework/commit/7a887467c641e072728a2cb3312037d8227ae837)
+
+  Failed point-in-time loads now dispose their temporary containers, including when the container
+  becomes unavailable during read-only setup or operation replay. Cancellation and lifecycle errors
+  are preserved while the container resources and event listeners are cleaned up.
+
+## 3.2.0
+
+Dependency updates only.
+
 ## 3.1.0
 
 Dependency updates only.

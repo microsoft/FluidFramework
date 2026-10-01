@@ -12,9 +12,17 @@ import {
 	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
-import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	MockStorage,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
-import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
+import {
+	currentVersion,
+	DependentFormatVersion,
+	FluidClientVersion,
+} from "../../codec/index.js";
 import { RevisionTagCodec } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -35,8 +43,18 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	toInitialSchema,
+} from "../../simple-tree/index.js";
 import { testChangeFamilyFactory, type TestChange } from "../testChange.js";
-import { testIdCompressor } from "../utils.js";
+import {
+	expectSchemaEqual,
+	SharedTreeTestFactory,
+	TestTreeProviderLite,
+	testIdCompressor,
+} from "../utils.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { editManagerFactory } from "./edit-manager/editManagerTestUtils.js";
@@ -70,6 +88,53 @@ function createEditManagerSummarizer(options?: {
 }
 
 describe("EditManagerSummarizer", () => {
+	// B's data edit uses a type added by an earlier schema commit.
+	// Both commits lose a rebase, but the summary still needs to preserve B's original history.
+	// Minimized from topLevel.fuzz.spec.ts, Batch rebasing seed 41.
+	it("summarizes peer history after a schema upgrade and dependent edit lose a rebase", async () => {
+		const sf = new SchemaFactory("summarySchemaRebase");
+		class Added extends sf.object("Added", { value: sf.string }) {}
+		const oldConfig = new TreeViewConfiguration({ schema: sf.optional(sf.string) });
+		const newConfig = new TreeViewConfiguration({ schema: sf.optional([sf.string, Added]) });
+		const factory = new SharedTreeTestFactory(() => {}, undefined, {
+			minVersionForCollab: currentVersion,
+		});
+		const provider = new TestTreeProviderLite(2, factory);
+		const [a, b] = provider.trees;
+		const aView = a.viewWith(oldConfig);
+		aView.initialize("initial");
+		provider.synchronizeMessages();
+		const bView = b.viewWith(newConfig);
+
+		aView.root = "concurrent edit";
+		bView.upgradeSchema();
+		bView.root = new Added({ value: "dependent data" });
+		provider.synchronizeMessages();
+
+		assert.equal(aView.root, "concurrent edit");
+		assert.equal(bView.compatibility.isEquivalent, false);
+		expectSchemaEqual(a.kernel.checkout.storedSchema, toInitialSchema(oldConfig.schema));
+		// A retains B's original schema and data commits in peer history to rebase later messages from B.
+		// Its document schema does not include Added, so using that schema to encode B's data would fail.
+		// Encoding that history must still succeed.
+		const { summary } = await a.summarize();
+		const runtime = new MockFluidDataStoreRuntime({
+			idCompressor: provider.getCompressor(a),
+		});
+		const loaded = await factory.load(
+			runtime,
+			"loaded",
+			{
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary),
+			},
+			factory.attributes,
+		);
+		assert.equal(loaded.viewWith(oldConfig).root, "concurrent edit");
+		expectSchemaEqual(loaded.kernel.checkout.storedSchema, toInitialSchema(oldConfig.schema));
+		await loaded.summarize();
+	});
+
 	describe("Summary metadata validation", () => {
 		it("writes metadata blob with version 2", () => {
 			const { summarizer } = createEditManagerSummarizer();

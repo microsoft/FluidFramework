@@ -13,8 +13,8 @@ import type {
 	ServiceOptions,
 } from "@fluidframework/driver-definitions/internal";
 /* eslint-enable import-x/no-internal-modules -- Limit the exception to the ServiceClient type import. */
-import type { ReactNode } from "react";
-import { createRoot } from "react-dom/client";
+import { createElement, type ReactElement, type ReactNode } from "react";
+import { createRoot, type Root } from "react-dom/client";
 
 /**
  * This file has some simple example utilities for loading and rendering Fluid containers and data stores.
@@ -59,9 +59,7 @@ export const defaultServiceOptions: ExampleServiceOptions = {
 export function getExampleServiceClient(
 	options: ExampleServiceOptions = defaultServiceOptions,
 ): ServiceClient {
-	const fluidClient =
-		new URLSearchParams(globalThis.location?.search ?? "").get("fluidClient") ?? "";
-	switch (fluidClient) {
+	switch (getExampleServiceType(true)) {
 		case "session": {
 			return getSessionService().newClient(options);
 		}
@@ -72,18 +70,112 @@ export function getExampleServiceClient(
 			return startEphemeralService().newClient(options);
 		}
 		default: {
-			console.warn(
-				`Unknown fluidClient value: ${JSON.stringify(fluidClient)}, falling back default service.`,
-			);
-		}
-		case "": {
-			const service =
-				globalThis.sessionStorage === undefined
-					? startEphemeralService()
-					: getSessionService();
-			return service.newClient(options);
+			throw new Error("Unsupported example service");
 		}
 	}
+}
+
+function getExampleServiceType(warnUnknown = false): "session" | "tinylicious" | "ephemeral" {
+	const fluidClient =
+		new URLSearchParams(globalThis.location?.search ?? "").get("fluidClient") ?? "";
+	switch (fluidClient) {
+		case "session":
+		case "tinylicious":
+		case "ephemeral": {
+			return fluidClient;
+		}
+		default: {
+			if (warnUnknown) {
+				console.warn(
+					`Unknown fluidClient value: ${JSON.stringify(fluidClient)}, falling back default service.`,
+				);
+			}
+		}
+		case "": {
+			return globalThis.sessionStorage === undefined ? "ephemeral" : "session";
+		}
+	}
+}
+
+/**
+ * Displays a startup error with troubleshooting guidance for the selected example service.
+ *
+ * @param props - The error to display.
+ * @returns An error view suitable for {@link renderRoot} or an existing React root.
+ * @remarks
+ * Uses the same URL-based service selection as {@link getExampleServiceClient}, without creating a client.
+ * Guidance describes possible remedies, not a diagnosis of the error.
+ * The caller must catch startup failures and render this view; it does not handle errors or log them.
+ * Connection retries can delay startup rejection and therefore delay this view.
+ * Render {@link ExampleLoadingView} before starting the connection to show guidance during retries.
+ * @internal
+ */
+export function ExampleErrorView(props: { error: unknown }): ReactElement {
+	return createElement(
+		"div",
+		{ role: "alert" },
+		createElement("h2", undefined, "Failed to load document"),
+		createElement(
+			"p",
+			undefined,
+			props.error instanceof Error ? props.error.message : String(props.error),
+		),
+		createElement(ExampleServiceTroubleshooting),
+	);
+}
+
+/**
+ * Displays a connecting message and troubleshooting guidance for the selected example service.
+ * @returns A loading view suitable for {@link renderRoot} or an existing React root.
+ * @remarks
+ * Render before awaiting startup, then replace with the application or {@link ExampleErrorView}.
+ * This view does not start a connection, track retries, or impose a timeout.
+ * @internal
+ */
+export function ExampleLoadingView(): ReactElement {
+	return createElement(
+		"div",
+		{ role: "status" },
+		createElement("h2", undefined, "Connecting to document..."),
+		createElement(ExampleServiceTroubleshooting),
+	);
+}
+
+function ExampleServiceTroubleshooting(): ReactNode {
+	return (
+		getExampleServiceType() === "tinylicious" &&
+		createElement(
+			"section",
+			undefined,
+			createElement("h3", undefined, "Tinylicious troubleshooting"),
+			createElement(
+				"ul",
+				undefined,
+				createElement(
+					"li",
+					undefined,
+					"Start Tinylicious with ",
+					createElement("code", undefined, "pnpm tinylicious"),
+					" from this example's directory.",
+				),
+				createElement(
+					"li",
+					undefined,
+					"In Codespaces, forward port 7070 and set its visibility to ",
+					createElement("strong", undefined, "Public"),
+					", not Private to Organization. See the ",
+					createElement(
+						"a",
+						{
+							href: "https://docs.github.com/en/codespaces/developing-in-a-codespace/forwarding-ports-in-your-codespace#sharing-a-port",
+						},
+						"port forwarding instructions",
+					),
+					".",
+				),
+			),
+		)
+	);
 }
 
 /**
@@ -137,8 +229,10 @@ export async function loadExampleDataStore<T>(rootStore: DataStoreKind<T>): Prom
 	return container.data;
 }
 
+const roots = new WeakMap<Element, Root>();
+
 /**
- * Replaces the default `#content` placeholder with a React rendering of the provided children.
+ * Renders the provided children in the default `#content` element, reusing its React root on subsequent calls.
  *
  * @param children - The React content to render.
  * @internal
@@ -148,5 +242,10 @@ export function renderRoot(children: ReactNode): void {
 	if (rootElement === null) {
 		throw new Error("No #content element found");
 	}
-	createRoot(rootElement).render(children);
+	let root = roots.get(rootElement);
+	if (root === undefined) {
+		root = createRoot(rootElement);
+		roots.set(rootElement, root);
+	}
+	root.render(children);
 }

@@ -13,8 +13,67 @@ import {
 	type LocalServiceClient,
 	type SessionService,
 } from "@fluidframework/local-driver/alpha";
+import { createElement } from "react";
+// eslint-disable-next-line import-x/no-internal-modules -- React exposes server rendering through this entry point.
+import { renderToStaticMarkup } from "react-dom/server";
 
-import { getExampleServiceClient } from "../exampleApp.js";
+import {
+	ExampleErrorView,
+	ExampleLoadingView,
+	getExampleServiceClient,
+} from "../exampleApp.js";
+
+describe("example startup views", () => {
+	let originalLocation: PropertyDescriptor | undefined;
+
+	beforeEach(() => {
+		originalLocation = Object.getOwnPropertyDescriptor(globalThis, "location");
+	});
+
+	afterEach(() => {
+		if (originalLocation === undefined) {
+			Reflect.deleteProperty(globalThis, "location");
+		} else {
+			Object.defineProperty(globalThis, "location", originalLocation);
+		}
+	});
+
+	for (const service of ["", "session", "ephemeral", "tinylicious", "unknown-service"]) {
+		it(`renders guidance for ${service || "default"} service`, () => {
+			Object.defineProperty(globalThis, "location", {
+				configurable: true,
+				value: new URL(`http://localhost/?fluidClient=${service}`),
+			});
+			const errorHtml = renderToStaticMarkup(
+				createElement(ExampleErrorView, { error: new Error("Startup failed") }),
+			);
+			const loadingHtml = renderToStaticMarkup(createElement(ExampleLoadingView));
+			assert.match(errorHtml, /role="alert"/);
+			assert.match(errorHtml, /Startup failed/);
+			assert.match(loadingHtml, /role="status"/);
+			assert.match(loadingHtml, /Connecting to document/);
+			for (const html of [errorHtml, loadingHtml]) {
+				if (service === "tinylicious") {
+					assert.match(html, /pnpm tinylicious/);
+					assert.match(html, /forward port 7070/);
+					assert.match(html, /<strong>Public<\/strong>/);
+					assert.match(html, /#sharing-a-port/);
+				} else {
+					assert.doesNotMatch(html, /Tinylicious troubleshooting|7070/);
+				}
+			}
+		});
+	}
+
+	it("renders without a browser location and escapes error text", () => {
+		Reflect.deleteProperty(globalThis, "location");
+		for (const error of [new Error("<script>bad</script>"), "<script>bad</script>"]) {
+			const html = renderToStaticMarkup(createElement(ExampleErrorView, { error }));
+			assert.match(html, /&lt;script&gt;bad&lt;\/script&gt;/);
+			assert.doesNotMatch(html, /<script>/);
+		}
+	});
+});
 
 describe("getExampleServiceClient", () => {
 	afterEach(async () => {

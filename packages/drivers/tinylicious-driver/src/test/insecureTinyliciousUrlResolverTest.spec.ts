@@ -51,6 +51,20 @@ describe("Insecure Url Resolver Test", () => {
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
+	it("Should support the legacy positional custom domain and port", async () => {
+		const customResolver = new InsecureTinyliciousUrlResolver(
+			1234,
+			"http://custom-endpoint.io",
+		);
+
+		const resolvedUrl = await customResolver.resolve({ url: documentId });
+
+		assert.strictEqual(
+			resolvedUrl.url,
+			`http://custom-endpoint.io:1234/tinylicious/${documentId}`,
+		);
+	});
+
 	it("Should use the default Tinylicious port with a custom endpoint", async () => {
 		const customResolver = new InsecureTinyliciousUrlResolver({
 			endpoint: "http://custom-endpoint.io",

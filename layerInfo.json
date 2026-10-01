@@ -99,6 +99,7 @@
 			"Examples": {
 				"dot": false,
 				"dev": true,
+				"packages": ["@fluid-private/devtools-test-app"],
 				"dirs": [
 					"examples/",
 					"experimental/examples/",

@@ -302,7 +302,8 @@ export function createTreeIndexWithDependencyScope<
 				);
 			}
 			const fieldKind =
-				convertFieldKind.get(fieldSchema.kind) ?? fail("Unknown Simple Tree field kind");
+				convertFieldKind.get(fieldSchema.kind) ??
+				fail(0xd4a /* Unknown Simple Tree field kind */);
 			// Check multiplicity rather than the specific field kind so this includes required fields, identifier fields, and
 			// any future field kinds that always contain one value.
 			if (fieldKind.multiplicity !== Multiplicity.Single) {
@@ -371,7 +372,7 @@ function makeGenericKeyFinder<TKey extends TreeIndexKey>(
 		cursor.enterField(keyField);
 		assert(
 			cursor.getFieldLength() === 1,
-			"the key field does not contain exactly one leaf value",
+			0xd4b /* the key field does not contain exactly one leaf value */,
 		);
 		cursor.enterNode(0);
 		try {
