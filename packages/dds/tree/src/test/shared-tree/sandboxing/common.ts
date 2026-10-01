@@ -321,6 +321,13 @@ const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
 	(_schema, value) => typeof value === "string" && isStableId(value),
 )();
 
+/** An integer from zero through the largest integer JavaScript can represent exactly. */
+const NonNegativeSafeInteger = Type.Number({
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
 /**
  * Validates the ID space shard token that the Guest sends with each change.
  *
@@ -333,12 +340,11 @@ const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
  */
 const GuestIdSpaceShardToken = Type.Object(
 	{
+		/** Identifies the child shard created for this Host and Guest session. */
 		shardId: IdSpaceShardSessionId,
-		localGenCount: Type.Number({
-			minimum: 0,
-			maximum: Number.MAX_SAFE_INTEGER,
-			multipleOf: 1,
-		}),
+		/** The child's allocation progress after it encodes the Guest change. */
+		localGenCount: NonNegativeSafeInteger,
+		/** A change cannot request reclamation while the Guest can still create IDs. */
 		disposed: Type.Literal(false),
 	},
 	{ additionalProperties: false },
@@ -347,12 +353,11 @@ const GuestIdSpaceShardToken = Type.Object(
 /** A final child token sent only after the Guest stops creating IDs. */
 const DisposedGuestIdSpaceShardToken = Type.Object(
 	{
+		/** Identifies the child shard to reclaim after the Guest stops creating IDs. */
 		shardId: IdSpaceShardSessionId,
-		localGenCount: Type.Number({
-			minimum: 0,
-			maximum: Number.MAX_SAFE_INTEGER,
-			multipleOf: 1,
-		}),
+		/** Final child allocation progress, including all earlier Guest changes. */
+		localGenCount: NonNegativeSafeInteger,
+		/** Allows the Host to reclaim the stopped child's ID space. */
 		disposed: Type.Literal(true),
 	},
 	{ additionalProperties: false },
@@ -361,13 +366,12 @@ const DisposedGuestIdSpaceShardToken = Type.Object(
 /** Validates a parent's progress for the Guest ID space shard. */
 const ParentIdProgress = Type.Object(
 	{
+		/** Distinguishes parent progress from a child synchronization token. */
 		type: Type.Literal("parentIdProgressForShard"),
+		/** Identifies the child that can apply this Host progress. */
 		shardId: IdSpaceShardSessionId,
-		localGenCount: Type.Number({
-			minimum: 0,
-			maximum: Number.MAX_SAFE_INTEGER,
-			multipleOf: 1,
-		}),
+		/** The Host's generation count before a dependent range or change is decoded. */
+		localGenCount: NonNegativeSafeInteger,
 	},
 	{ additionalProperties: false },
 );
@@ -390,12 +394,18 @@ const PositiveSafeInteger = Type.Number({
  */
 const FinalizedIdRange = Type.Object(
 	{
+		/** Identifies the client session that created the range. */
 		sessionId: IdSpaceShardSessionId,
+		/** Creation range already finalized by the Host runtime. */
 		ids: Type.Object(
 			{
+				/** The generation count of the range's first ID. */
 				firstGenCount: PositiveSafeInteger,
+				/** The number of IDs created in the range. */
 				count: PositiveSafeInteger,
+				/** Capacity requested if the range needs a new cluster. */
 				requestedClusterSize: PositiveSafeInteger,
+				/** Pairs of starting generation count and number of local IDs. */
 				localIdRanges: Type.Array(Type.Tuple([PositiveSafeInteger, PositiveSafeInteger])),
 			},
 			{ additionalProperties: false },
@@ -460,9 +470,13 @@ const HostUpdateMessage = Type.Object(
 export type HostIdRangeMessage = Static<typeof HostIdRangeMessage>;
 const HostIdRangeMessage = Type.Object(
 	{
+		/** Identifies this message as a finalized Host ID range. */
 		type: Type.Literal("hostIdRange"),
+		/** Sequence number for ranges sent to this Guest. */
 		rangeId: Type.Readonly(HostIdRangeId),
+		/** Lets the Guest recognize Host IDs before finalizing the range. */
 		parentIdProgress: Type.Readonly(ParentIdProgress),
+		/** The finalized range to apply before dependent Host updates. */
 		range: Type.Readonly(FinalizedIdRange),
 	},
 	{ additionalProperties: false },
@@ -525,7 +539,9 @@ const GuestChangeAckMessage = Type.Object(
 export type GuestCloseMessage = Static<typeof GuestCloseMessage>;
 const GuestCloseMessage = Type.Object(
 	{
+		/** Identifies the orderly close request. */
 		type: Type.Literal("guestClose"),
+		/** Final child progress that lets the Host reclaim its ID space. */
 		idSpaceShardToken: DisposedGuestIdSpaceShardToken,
 	},
 	{ additionalProperties: false },
@@ -534,7 +550,10 @@ const GuestCloseMessage = Type.Object(
 /** Confirms that the Host reclaimed the Guest's ID space shard. */
 export type GuestCloseAckMessage = Static<typeof GuestCloseAckMessage>;
 const GuestCloseAckMessage = Type.Object(
-	{ type: Type.Literal("guestCloseAck") },
+	{
+		/** Confirms the Host reclaimed the child shard. */
+		type: Type.Literal("guestCloseAck"),
+	},
 	{ additionalProperties: false },
 );
 
