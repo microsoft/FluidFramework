@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { test, expect } from "@playwright/test";
+import { test, expect, type Route } from "@playwright/test";
 
 test.describe("Nav", () => {
 	test.beforeEach(async ({ page }) => {
@@ -126,5 +126,272 @@ test.describe("Nav", () => {
 		await page.getByRole("button", { name: "Search" }).click();
 
 		await expect(page.getByRole("searchbox")).toBeVisible();
+	});
+
+	test("Keyboard-activated docs sidebar links move focus to the new page content", async ({
+		page,
+	}) => {
+		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+		const sidebarLink = page.locator('aside a[href="/docs/start/quick-start"]');
+
+		await sidebarLink.focus();
+		await page.keyboard.press("Enter");
+
+		await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+		await expect(page.locator("main")).toBeFocused();
+		await expect(page.locator("main h1")).toHaveText("Quick Start");
+	});
+
+	for (const width of [1280, 768]) {
+		test(`Slow keyboard navigation waits for the new content at ${width}px`, async ({
+			page,
+		}) => {
+			await page.setViewportSize({ width, height: 720 });
+			await page.addInitScript(() => {
+				Object.defineProperty(navigator, "connection", {
+					value: { effectiveType: "4g", saveData: true },
+				});
+			});
+			await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+			await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+			const isNarrow = width === 768;
+			if (isNarrow) {
+				await page.getByRole("button", { name: "Toggle navigation bar" }).focus();
+				await page.keyboard.press("Enter");
+			}
+			const sidebar = page.locator(isNarrow ? ".navbar-sidebar" : "aside");
+			const sidebarLink = sidebar.locator('a[href="/docs/start/quick-start"]');
+			await expect(sidebarLink).toBeVisible();
+			const pendingScripts: Route[] = [];
+			await page.route("**/*.js", (route) => {
+				pendingScripts.push(route);
+			});
+
+			try {
+				await sidebarLink.focus();
+				await expect(sidebarLink).toBeFocused();
+				await page.keyboard.press("Enter");
+
+				await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+				await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
+				// Keep the destination pending beyond the previous 50 ms focus delay.
+				await page.waitForTimeout(150);
+				await expect(page.locator("main h1")).toHaveText(
+					"Tutorial: DiceRoller application",
+				);
+				await expect(page.locator("main")).not.toBeFocused();
+			} finally {
+				await page.unroute("**/*.js");
+				await Promise.all(pendingScripts.map(async (route) => route.continue()));
+			}
+
+			await expect(page.locator("main h1")).toHaveText("Quick Start");
+			await expect(page.locator("main")).toBeFocused();
+			await page.keyboard.press("Tab");
+			await expect(page.locator("main :focus")).toHaveCount(1);
+		});
+	}
+
+	test("Pointer navigation cancels focus while a keyboard destination is pending", async ({
+		page,
+	}) => {
+		await page.addInitScript(() => {
+			Object.defineProperty(navigator, "connection", {
+				value: { effectiveType: "4g", saveData: true },
+			});
+		});
+		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+		const pendingScripts: Route[] = [];
+		await page.route("**/*.js", (route) => {
+			pendingScripts.push(route);
+		});
+
+		try {
+			await page.locator('aside a[href="/docs/start/quick-start"]').focus();
+			await page.keyboard.press("Enter");
+			await expect.poll(() => pendingScripts.length).toBeGreaterThan(0);
+			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+
+			await page
+				.locator(".navbar")
+				.getByRole("link", { name: /Community/ })
+				.click();
+			await expect(page).toHaveURL(/\/community\/?$/);
+		} finally {
+			await page.unroute("**/*.js");
+			await Promise.all(pendingScripts.map(async (route) => route.continue()));
+		}
+
+		await expect(page.locator("main h1")).toHaveText("Community");
+		await page.waitForTimeout(100);
+		await expect(page.locator("main")).not.toBeFocused();
+	});
+
+	test.describe("Narrow docs sidebar", () => {
+		test.use({ viewport: { width: 768, height: 720 } });
+
+		test.beforeEach(async ({ page }) => {
+			await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+			await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+			await page.getByRole("button", { name: "Toggle navigation bar" }).focus();
+			await page.keyboard.press("Enter");
+			await expect(
+				page.locator('.navbar-sidebar a[href="/docs/start/quick-start"]'),
+			).toBeVisible();
+		});
+
+		test("Keyboard navigation moves focus to the new page content", async ({ page }) => {
+			await page.locator('.navbar-sidebar a[href="/docs/start/quick-start"]').focus();
+			await page.keyboard.press("Enter");
+
+			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+			await expect(page.locator("main h1")).toHaveText("Quick Start");
+			await expect(page.locator("main")).toBeFocused();
+		});
+
+		test("Pointer navigation does not move focus to the page content", async ({ page }) => {
+			await page.locator('.navbar-sidebar a[href="/docs/start/quick-start"]').click();
+
+			await expect(page).toHaveURL(/\/docs\/start\/quick-start\/?$/);
+			await expect(page.locator("main h1")).toHaveText("Quick Start");
+			await page.waitForTimeout(100);
+			await expect(page.locator("main")).not.toBeFocused();
+		});
+
+		test("Keyboard category expansion does not move focus after a pointer click", async ({
+			page,
+		}) => {
+			const sidebar = page.locator(".navbar-sidebar");
+			const buildCategory = sidebar.getByRole("button", {
+				name: "Build With Fluid",
+				exact: true,
+			});
+			const buildOverviewLink = sidebar.locator('a[href="/docs/build/overview"]');
+
+			await buildCategory.focus();
+			await page.keyboard.press("Enter");
+			await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
+			await expect(buildOverviewLink).toBeVisible();
+			await expect(buildCategory).toBeFocused();
+
+			await buildOverviewLink.click();
+			await expect(page).toHaveURL(/\/docs\/build\/overview\/?$/);
+			await page.waitForTimeout(100);
+			await expect(page.locator("main")).not.toBeFocused();
+		});
+	});
+
+	test("Keyboard sidebar navigation does not focus an unrelated pointer navigation page", async ({
+		page,
+	}) => {
+		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
+		const communityLink = page.locator(".navbar").getByRole("link", { name: /Community/ });
+		await quickStartLink.focus();
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("Enter");
+
+		const overlay = page.locator("#webpack-dev-server-client-overlay");
+		if (await overlay.count()) {
+			await overlay.evaluate((element) => element.remove());
+		}
+
+		await communityLink.click();
+		await expect(page).toHaveURL(/\/community\/?$/);
+		await page.waitForTimeout(100);
+		await expect(page.locator("main")).not.toBeFocused();
+	});
+
+	test("Keyboard-expanding a sidebar category does not leak pending navigation to later pointer clicks", async ({
+		page,
+	}) => {
+		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+		const buildCategory = page
+			.locator("aside .menu__link")
+			.filter({
+				hasText: "Build With Fluid",
+			})
+			.first();
+		const buildOverviewLink = page.locator('aside a[href="/docs/build/overview"]');
+
+		await buildCategory.focus();
+		await page.keyboard.press("Enter");
+		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
+		await page.waitForTimeout(100);
+		await expect(page.locator("main")).not.toBeFocused();
+		await expect(buildOverviewLink).toBeVisible();
+
+		const overlay = page.locator("#webpack-dev-server-client-overlay");
+		if (await overlay.count()) {
+			await overlay.evaluate((element) => element.remove());
+		}
+
+		await buildOverviewLink.click();
+
+		await expect(page).toHaveURL(/\/docs\/build\/overview\/?$/);
+		await page.waitForTimeout(100);
+		await expect(page.locator("main")).not.toBeFocused();
+	});
+
+	test("Modified Enter on a sidebar link does not leak pending navigation into later pointer navigation", async ({
+		page,
+	}) => {
+		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
+		const communityLink = page.locator(".navbar").getByRole("link", { name: /Community/ });
+
+		await quickStartLink.focus();
+		await page.keyboard.press("Shift+Enter");
+		await expect(page).toHaveURL(/\/docs\/start\/tutorial\/?$/);
+
+		const overlay = page.locator("#webpack-dev-server-client-overlay");
+		if (await overlay.count()) {
+			await overlay.evaluate((element) => element.remove());
+		}
+
+		await communityLink.click();
+		await expect(page).toHaveURL(/\/community\/?$/);
+		await page.waitForTimeout(100);
+		await expect(page.locator("main")).not.toBeFocused();
+	});
+
+	test("Repeated Enter on a sidebar link does not leak pending navigation into later pointer navigation", async ({
+		page,
+	}) => {
+		await page.goto("/docs/start/tutorial/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
+
+		const quickStartLink = page.locator('aside a[href="/docs/start/quick-start"]');
+		const communityLink = page.locator(".navbar").getByRole("link", { name: /Community/ });
+
+		await quickStartLink.focus();
+		await quickStartLink.dispatchEvent("keydown", {
+			key: "Enter",
+			repeat: true,
+			bubbles: true,
+			cancelable: true,
+		});
+
+		const overlay = page.locator("#webpack-dev-server-client-overlay");
+		if (await overlay.count()) {
+			await overlay.evaluate((element) => element.remove());
+		}
+
+		await communityLink.click();
+		await expect(page).toHaveURL(/\/community\/?$/);
+		await page.waitForTimeout(100);
+		await expect(page.locator("main")).not.toBeFocused();
 	});
 });
