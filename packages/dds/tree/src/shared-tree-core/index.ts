@@ -42,6 +42,7 @@ export {
 	summarizablesMetadataKey,
 } from "./summaryTypes.js";
 export { VersionedSummarizer } from "./versionedSummarizer.js";
+export type { TreeHistoryConfiguration } from "./historyRetention.js";
 
 export type { ResubmitMachine } from "./resubmitMachine.js";
 export { DefaultResubmitMachine } from "./defaultResubmitMachine.js";

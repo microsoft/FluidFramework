@@ -51,6 +51,9 @@ Read the **@fluidframework/tree** API documentation at <https://fluidframework.c
 
 ## Status
 
+An internal, opt-in [persisted history configuration prototype](../PersistedConfiguration.md#sharedtree-history-prototype) is available for explicitly configured new instances.
+It does not change the default factory behavior or migrate legacy documents.
+
 Notable considerations that users should be aware of:
 
 -   The persisted format is stable: documents created with released versions 2.0.0 or greater of this package are fully supported long term.

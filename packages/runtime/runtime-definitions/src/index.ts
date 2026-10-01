@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export type { ChannelConfigurationRuntime } from "./channelConfiguration.js";
+
 export type {
 	AttributionInfo,
 	AttributionKey,

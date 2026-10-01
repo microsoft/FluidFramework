@@ -60,12 +60,15 @@ describe("Runtime", () => {
 		disallowedVersions: [],
 	} as const satisfies IDocumentSchemaFeatures;
 
-	function createController(config: IDocumentSchema) {
+	function createController(
+		config: IDocumentSchema,
+		desiredFeatures: IDocumentSchemaFeatures = features,
+	) {
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
 			config, // old schema,
-			features,
+			desiredFeatures,
 			() => {}, // onSchemaChange
 			{ minVersionForCollab: defaultMinVersionForCollab }, // info,
 			logger,
@@ -92,6 +95,303 @@ describe("Runtime", () => {
 	// on something else that they are not modifying.
 	it("valid config", () => {
 		createController(validConfig);
+	});
+
+	describe("channel configuration", () => {
+		const typeA = "test-channel-a";
+		const typeB = "test-channel-b";
+		const typeC = "test-channel-c";
+
+		it("initializes new documents synchronously and keeps the capability sticky", () => {
+			const requested = [typeB, typeA, typeB];
+			const controller = new DocumentsSchemaController(
+				false,
+				0,
+				undefined,
+				{ ...features, channelConfiguration: requested },
+				() => {},
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				false,
+			);
+			requested.push(typeC);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			const schema = controller.summarizeDocumentSchema(0);
+			assert(schema !== undefined);
+			const reader = createController(schema);
+			assert.deepEqual(reader.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
+		});
+
+		it("waits for the actual schema acknowledgement", () => {
+			const controller = createController(validConfig, {
+				...features,
+				channelConfiguration: [typeA],
+			});
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+		});
+
+		it("keeps an active type available while another type waits for acknowledgement", () => {
+			const controller = createController(
+				{
+					...validConfig,
+					runtime: {
+						...validConfig.runtime,
+						explicitSchemaControl: true,
+						channelConfiguration: [typeA],
+					},
+				},
+				{ ...features, channelConfiguration: [typeB] },
+			);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA, typeB]);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
+		});
+
+		it("regenerates an unacknowledged proposal only after the normal reconnect reset", () => {
+			const controller = createController(validConfig, {
+				...features,
+				channelConfiguration: [typeA],
+			});
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			controller.pendingOpNotAcked();
+			assert.deepEqual(controller.maybeGenerateSchemaMessage(), proposal);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			controller.pendingOpNotAcked();
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+		});
+
+		it("does not retry after a competing schema wins, even after a reconnect reset", () => {
+			const controller = createController(validConfig, {
+				...features,
+				channelConfiguration: [typeA],
+				opGroupingEnabled: true,
+			});
+			const original = controller.maybeGenerateSchemaMessage();
+			assert(original !== undefined);
+			controller.processDocumentSchemaMessages(
+				[
+					{
+						...original,
+						runtime: {
+							explicitSchemaControl: true,
+							opGroupingEnabled: true,
+							channelConfiguration: [typeB],
+						},
+					},
+				],
+				false,
+				1,
+			);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeB]);
+			assert.equal(controller.sessionSchema.runtime.opGroupingEnabled, true);
+			assert.equal(controller.processDocumentSchemaMessages([original], true, 2), false);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			controller.pendingOpNotAcked();
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeB]);
+
+			const reloaded = new DocumentsSchemaController(
+				true,
+				2,
+				controller.summarizeDocumentSchema(2),
+				{ ...features, channelConfiguration: [typeA] },
+				() => {},
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				false,
+			);
+			assert.deepEqual(reloaded.sessionSchema.runtime.channelConfiguration, [typeB]);
+			const nextProposal = reloaded.maybeGenerateSchemaMessage();
+			assert(nextProposal !== undefined);
+			assert.deepEqual(nextProposal.runtime.channelConfiguration, [typeA, typeB]);
+			reloaded.processDocumentSchemaMessages([nextProposal], true, 3);
+			assert.deepEqual(reloaded.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
+		});
+
+		it("preserves the persisted capability in the session and unrelated schema proposals", () => {
+			const controller = createController({
+				...validConfig,
+				runtime: { explicitSchemaControl: true, channelConfiguration: [typeA] },
+			});
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.sessionSchema.runtime.compressionLz4, undefined);
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA]);
+			assert.equal(proposal.runtime.compressionLz4, true);
+			assert.equal(proposal.runtime.idCompressorMode, "delayed");
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.sessionSchema.runtime.compressionLz4, true);
+			assert.equal(controller.sessionSchema.runtime.idCompressorMode, "delayed");
+			assert.deepEqual(controller.summarizeDocumentSchema(1)?.runtime.channelConfiguration, [
+				typeA,
+			]);
+			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+		});
+
+		it("does not propose the capability when schema upgrades are disabled", () => {
+			const disabled = new DocumentsSchemaController(
+				true,
+				0,
+				validConfig,
+				{ ...features, channelConfiguration: [typeA] },
+				() => {},
+				{ minVersionForCollab: defaultMinVersionForCollab },
+				logger,
+				true,
+			);
+			assert.equal(disabled.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(disabled.maybeGenerateSchemaMessage(), undefined);
+			disabled.pendingOpNotAcked();
+			assert.equal(disabled.maybeGenerateSchemaMessage(), undefined);
+		});
+
+		it("does not add the capability to unrelated proposals without opting in", () => {
+			const controller = createController({
+				...validConfig,
+				runtime: { explicitSchemaControl: true },
+			});
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.equal(proposal.runtime.channelConfiguration, undefined);
+			assert.equal(proposal.runtime.compressionLz4, true);
+			controller.processDocumentSchemaMessages([proposal], true, 1);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.sessionSchema.runtime.compressionLz4, true);
+		});
+
+		for (const requested of [[typeA, typeB], [typeB, typeA, typeB], [typeA], [], undefined]) {
+			it(`does not propose or normalize persisted members for ${JSON.stringify(requested)}`, () => {
+				const persisted = [typeB, typeA, typeB];
+				const controller = createController(
+					{
+						...validConfig,
+						runtime: {
+							...validConfig.runtime,
+							explicitSchemaControl: true,
+							channelConfiguration: persisted,
+						},
+					},
+					{ ...features, channelConfiguration: requested },
+				);
+				assert.equal(controller.sessionSchema.runtime.channelConfiguration, persisted);
+				assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+				assert.equal(
+					controller.summarizeDocumentSchema(0)?.runtime.channelConfiguration,
+					persisted,
+				);
+			});
+		}
+
+		for (const requested of [[], undefined]) {
+			it(`does not propose a change to an empty persisted set for ${JSON.stringify(requested)}`, () => {
+				const controller = createController(
+					{ ...validConfig, runtime: { ...validConfig.runtime, channelConfiguration: [] } },
+					{ ...features, channelConfiguration: requested },
+				);
+				assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			});
+
+			it(`normalizes an empty desired set to undefined for ${JSON.stringify(requested)}`, () => {
+				const controller = new DocumentsSchemaController(
+					false,
+					0,
+					undefined,
+					{ ...features, channelConfiguration: requested },
+					() => {},
+					{ minVersionForCollab: defaultMinVersionForCollab },
+					logger,
+					false,
+				);
+				assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+				assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
+			});
+		}
+
+		it("unions true additions into a copied, sorted, deduplicated set", () => {
+			const persisted = [typeB, typeA, typeB];
+			const requested = [typeC, typeC, typeA];
+			const controller = createController(
+				{
+					...validConfig,
+					runtime: { ...validConfig.runtime, channelConfiguration: persisted },
+				},
+				{ ...features, channelConfiguration: requested },
+			);
+			requested.push("another-type");
+			const proposal = controller.maybeGenerateSchemaMessage();
+			assert(proposal !== undefined);
+			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA, typeB, typeC]);
+			assert.equal(controller.sessionSchema.runtime.channelConfiguration, persisted);
+			assert.deepEqual(persisted, [typeB, typeA, typeB]);
+		});
+
+		it("preserves exact type IDs without trimming or case normalization", () => {
+			const controller = createController(validConfig, {
+				...features,
+				channelConfiguration: ["type", "Type", " type ", " "],
+			});
+			assert.deepEqual(controller.maybeGenerateSchemaMessage()?.runtime.channelConfiguration, [
+				" ",
+				" type ",
+				"Type",
+				"type",
+			]);
+		});
+
+		it("rejects invalid capability property values and requests", () => {
+			const sparse: string[] = [];
+			sparse.length = 1;
+			for (const channelConfiguration of [
+				true,
+				false,
+				// eslint-disable-next-line unicorn/no-null -- Malformed serialized schema.
+				null,
+				"true",
+				0,
+				{},
+				[typeA, false],
+				[typeA, undefined],
+				// eslint-disable-next-line unicorn/no-null -- Malformed serialized schema.
+				[typeA, null],
+				[""],
+				sparse,
+			]) {
+				testWrongConfig({
+					...validConfig,
+					runtime: { channelConfiguration } as unknown as Record<
+						string,
+						DocumentSchemaValueType
+					>,
+				});
+				assert.throws(() =>
+					createController(validConfig, {
+						...features,
+						channelConfiguration: channelConfiguration as string[],
+					}),
+				);
+			}
+		});
 	});
 
 	// It's hard to say if we will allow additional propeorty trees here like this sample shows.

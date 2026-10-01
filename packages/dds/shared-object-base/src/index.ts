@@ -33,8 +33,20 @@ export {
 	type SharedKernelFactory,
 	type FactoryOut,
 	type SharedObjectOptions,
+	type SharedKernelMessageCollection,
 	mergeAPIs,
 } from "./sharedObjectKernel.js";
+export type {
+	ChannelConfiguration,
+	ChannelConfigurationSnapshot,
+	ChannelConfigurationDefinition,
+	ChannelConfigurationFacet,
+	ChannelConfigurationChange,
+	ChannelConfigurationContext,
+	ChannelConfigurationLocalContext,
+	ChannelConfigurationSequencedContext,
+	ConfigurationChangeResult,
+} from "./channelConfiguration.js";
 export { defineDataStore, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
 export { makeStubDataStoreKind } from "./stubSharedObject.js";
 export type {

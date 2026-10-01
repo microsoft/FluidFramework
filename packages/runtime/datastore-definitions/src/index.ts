@@ -32,3 +32,11 @@ export type {
 } from "./jsonable.js";
 export type { Serializable } from "./serializable.js";
 export type { IChannelAttributes } from "./storage.js";
+export type {
+	ChannelConfiguration,
+	ChannelConfigurationSnapshot,
+	ConfiguredChannelAttributes,
+	ChannelConfigurationFactory,
+	ChannelConfigurationChannel,
+	ChannelConfigurationRuntime,
+} from "./channelConfiguration.js";
