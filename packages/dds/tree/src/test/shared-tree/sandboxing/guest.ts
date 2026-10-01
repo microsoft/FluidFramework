@@ -72,12 +72,31 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private readonly logger: TelemetryLoggerExt;
 	private synchronization: GuestSynchronization<TSchema> | undefined;
 	private readonly initialized = makePromiseWithResolvers();
-	/** Set when close starts, to reject another close and complete the acknowledgment handshake. */
+
+	/**
+	 * The first close operation, if close has started.
+	 *
+	 * @remarks
+	 * This remains set after close ends so later close calls fail.
+	 * The Host's acknowledgment resolves its promise; failure rejects it.
+	 */
 	private closeInProgress: ReturnType<typeof makePromiseWithResolvers> | undefined;
-	/** Whether the Guest has sent its disposal token and can accept the Host's close acknowledgment. */
+
+	/**
+	 * Whether the Guest sent its disposal token to the Host.
+	 * The Guest accepts a close acknowledgment only after it sends the token.
+	 */
 	private closeSent = false;
-	/** Closed can follow failure without disposing the view; only orderly close sets this flag. */
+
+	/**
+	 * Whether orderly close disposed the authoring view.
+	 *
+	 * @remarks
+	 * A failure before orderly close does not dispose the view.
+	 * This flag is used during disposal to avoid disposing the view twice.
+	 */
 	private authoringViewDisposedOnClose = false;
+
 	private disposed = false;
 
 	/**
