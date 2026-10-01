@@ -376,7 +376,7 @@ End-to-end tests also cover initialization, bidirectional handle edits, deletion
 The Host, peer, and Guest edit cases run with separate compressors; integration with an isolated iframe is still pending.
 Nested commit metadata, retained Host history, Guest revertibles, and branch rebases are covered by targeted tests.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
-The ServiceClient integration test verifies that a V2 runtime compressor is rejected because it cannot create a child shard.
+The ServiceClient integration test uses a test-only V3 override to verify a Guest edit through a real container.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
 ID-progress tests cover a delayed peer range and Host update while a Guest edit is pending, a repeated finalized range, and invalid parent progress.
 Initialization tests also sequence concurrent Peer edits before the pending Host edits.
@@ -425,8 +425,9 @@ These failures do not prevent you from writing the tests.
 ### Runtime ID Compressor Version
 
 The sandbox Host requires a V3 runtime ID compressor to create a child ID space shard.
-The current ServiceClient runtime creates a V2 compressor, so it cannot yet host a sandbox Guest.
-Enable V3 in the runtime in separate work before using the ServiceClient example for end-to-end Guest edits.
+The current ServiceClient runtime creates a V2 compressor.
+The integration test overrides its live compressor to V3 only for an isolated test document; it does not establish production format compatibility.
+Enable V3 through the runtime's document compatibility policy before using a ServiceClient Host outside this test.
 
 ### Protocol Validation and Security Hardening
 

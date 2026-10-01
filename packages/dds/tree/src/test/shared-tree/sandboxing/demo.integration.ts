@@ -5,6 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
+import {
+	SerializationVersion,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
+
 import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
 import {
 	cleanupEphemeralService,
@@ -20,7 +25,9 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { createHost } from "./host.js";
+import { createHost, type Host } from "./host.js";
+import { createGuest, type Guest } from "./guest.js";
+import { sandboxFormatValidator } from "./common.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type {
 	SharedObject,
@@ -55,7 +62,7 @@ describe("End to End Host and Guest integrations", () => {
 
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.string });
 
-		it("rejects a ServiceClient Host whose runtime compressor cannot create a shard", async () => {
+		it("synchronizes a Guest edit through ServiceClient", async () => {
 			const client = startEphemeralService().defaultClient;
 			const container = await client.createAttachedContainer(TestDataStore);
 			const tree = container.data;
@@ -77,27 +84,46 @@ describe("End to End Host and Guest integrations", () => {
 			// TODO: we need to expose a better way to do this.
 			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
 			const idCompressor = getCheckout(viewHost)["idCompressor"];
+			const rootCompressor = toIdCompressorWithCore(idCompressor);
+			assert.equal(Reflect.get(rootCompressor, "writeVersion"), SerializationVersion.V2);
+			// TODO: Enable V3 through ContainerRuntime's document compatibility policy.
+			// This override is only for this isolated test document.
+			assert.equal(Reflect.set(rootCompressor, "writeVersion", SerializationVersion.V3), true);
 
 			// TODO: we should not have to initialize first:
 			viewHost.initialize("A");
 			// TODO: This should not be required.
 			await client.service.synchronize();
 
+			let host: Host | undefined;
+			let guest: Guest | undefined;
 			try {
-				assert.throws(
-					() =>
-						createHost({
-							// TODO: we need to expose a better way to do this.
-							bindingHandle: (tree as unknown as SharedObject).handle,
-							logger,
-							idCompressor,
-							main: viewHost,
-							port: channel.port1,
-						}),
-					/Sharding requires document version 3/,
-				);
-				assert.equal(viewHost.root, "A");
+				host = createHost({
+					// TODO: we need to expose a better way to do this.
+					bindingHandle: (tree as unknown as SharedObject).handle,
+					logger,
+					idCompressor,
+					main: viewHost,
+					port: channel.port1,
+				});
+				guest = await createGuest({
+					logger,
+					port: channel.port2,
+					treeOptions: { jsonValidator: sandboxFormatValidator },
+				});
+				const viewGuest = guest.tree.viewWith(config);
+				viewGuest.root = "B";
+				await (guest.updateHostPromise ?? assert.fail("Expected a pending Guest edit"));
+				await client.service.synchronize();
+
+				assert.equal(viewHost.root, "B");
+				assert.equal(host.error, undefined);
+				assert.equal(guest.error, undefined);
+				await guest.close();
+				assert.equal(rootCompressor.getShardSyncToken(), undefined);
 			} finally {
+				guest?.dispose();
+				host?.dispose();
 				channel.port2.close();
 			}
 		});
