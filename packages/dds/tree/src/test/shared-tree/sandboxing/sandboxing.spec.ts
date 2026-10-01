@@ -907,6 +907,8 @@ describe("Host and Guest correctness", () => {
 		const token = child.getShardSyncToken();
 		assert(token !== undefined, "Expected a child ID space shard token");
 		guest.dispose();
+		assert.doesNotThrow(() => guest.dispose());
+		assert.throws(() => guest.view.root, /disposed|invalid state/i);
 		host.dispose();
 		assert.doesNotThrow(() => root.getChildShardProgress(token));
 		host.main.root.push("retained");

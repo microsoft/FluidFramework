@@ -76,8 +76,8 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 	private closeInProgress: ReturnType<typeof makePromiseWithResolvers> | undefined;
 	/** Whether the Guest has sent its disposal token and can accept the Host's close acknowledgment. */
 	private closeSent = false;
-	/** Tracks actual view disposal: failure can reach Closed with or without an earlier orderly close. */
-	private viewDisposed = false;
+	/** Closed can follow failure without disposing the view; only orderly close sets this flag. */
+	private authoringViewDisposedOnClose = false;
 	private disposed = false;
 
 	/**
@@ -277,7 +277,7 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 		this.closeInProgress = completion;
 		this.session.run(() => {
 			const token = synchronization.close();
-			this.viewDisposed = true;
+			this.authoringViewDisposedOnClose = true;
 			token.then(
 				(idSpaceShardToken) =>
 					this.session.run(() => {
@@ -318,9 +318,8 @@ export class Guest<const TSchema extends ImplicitFieldSchema> {
 
 		// On failure or abort, synchronization leaves the view available.
 		// Future cleanup could save or inspect unsaved changes before disposing it.
-		if (!this.viewDisposed) {
+		if (!this.authoringViewDisposedOnClose) {
 			synchronization?.view.dispose();
-			this.viewDisposed = true;
 		}
 	}
 
