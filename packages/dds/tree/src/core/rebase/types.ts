@@ -305,8 +305,10 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * @remarks This is only available for local changes.
 	 * This change object can be {@link UntypedTreeViewAlpha.applyChange | applied to another view} in the same state as the one which generated it.
 	 * The change object must be applied to a SharedTree with the same IdCompressor session ID as it was created from.
-	 * If the receiving SharedTree uses a separate compressor instance, that compressor
-	 * must know all IDs referenced by the change before the change is applied.
+	 * If the receiving SharedTree uses a separate compressor instance, synchronize it before applying the change.
+	 * A parent learns a child shard's new IDs through {@link @fluidframework/id-compressor/internal#IIdCompressorCore.synchronizeWithShard}.
+	 * A child learns its parent's new IDs through {@link @fluidframework/id-compressor/internal#IIdCompressorCore.synchronizeWithParent}.
+	 * Apply any new finalized creation ranges through {@link @fluidframework/id-compressor/internal#IIdCompressorCore.finalizeCreationRange} before decoding changes that reference those IDs.
 	 * @privateRemarks
 	 * This is a `SerializedChange` from treeCheckout.ts.
 	 */

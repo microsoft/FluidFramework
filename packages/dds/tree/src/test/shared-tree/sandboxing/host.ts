@@ -276,11 +276,12 @@ export class HostImplementation implements Host {
 	 * @remarks
 	 * The message schema requires a non-disposing token and checks its wire format.
 	 * This method accepts only the ID space shard created for this session.
-	 * It also requires progress beyond the last accepted token.
+	 * Progress cannot move backward from the last accepted token.
+	 * Consecutive changes can report the same progress if they create no new IDs.
 	 * The Host saves the new token only after compressor synchronization succeeds.
 	 *
 	 * @param token - The Guest ID space shard's progress after it encoded the change.
-	 * @throws {@link SandboxProtocolError} if initialization is incomplete, the token belongs to another ID space shard, or progress does not advance.
+	 * @throws {@link SandboxProtocolError} if initialization is incomplete, the token belongs to another ID space shard, or progress moves backward.
 	 */
 	private synchronizeGuestIdSpaceShard(token: GuestChangeMessage["idSpaceShardToken"]): void {
 		const previous = this.guestIdSpaceShardToken;
@@ -294,8 +295,8 @@ export class HostImplementation implements Host {
 				"Guest ID space shard token does not belong to this session.",
 			);
 		}
-		if (token.localGenCount <= previous.localGenCount) {
-			throw new SandboxProtocolError("Guest ID space shard progress did not advance.");
+		if (token.localGenCount < previous.localGenCount) {
+			throw new SandboxProtocolError("Guest ID space shard progress moved backward.");
 		}
 		// Only the child created for this Host session may advance its root compressor.
 		// The wire shape is validated before routing; this check authorizes its shard and progress.

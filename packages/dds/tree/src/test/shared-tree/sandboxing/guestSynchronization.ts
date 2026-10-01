@@ -398,12 +398,12 @@ export class GuestSynchronization {
 	}
 
 	/**
-	 * Moves synchronization from active or closing to closed.
+	 * Stops Guest synchronization and rejects pending changes without releasing the checkouts.
 	 *
 	 * @remarks
-	 * The owning session calls this on failure, abort, or final Guest disposal after
-	 * an orderly close. It removes the edit listener if necessary and rejects any
-	 * pending Guest changes. It does not release either checkout or reclaim the ID space shard.
+	 * The session calls this on failure. Guest disposal also calls it after an
+	 * orderly close or abort. It removes the edit listener if necessary.
+	 * It does not release either checkout or reclaim the ID space shard.
 	 * After a failure, the application can inspect the view if it
 	 * is still usable and orderly close has not already disposed it.
 	 * After an orderly close, no changes remain to reject.

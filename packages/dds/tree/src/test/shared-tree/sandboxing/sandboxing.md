@@ -167,7 +167,8 @@ The initial child state includes the IDs needed to load the compressed snapshot 
 After initialization, sharing a session ID alone does not give either compressor knowledge of new IDs.
 
 For each Guest edit, `getChange()` serializes the change before the Guest captures a non-disposing child progress token.
-The Host verifies that the token belongs to this session and advances beyond the last accepted token.
+The Host verifies that the token belongs to this session and does not move backward.
+Consecutive Guest changes can report the same progress when they create no new IDs.
 It synchronizes its compressor with the child before decoding the Guest change.
 
 Host updates carry parent ID progress captured after their commits are encoded.

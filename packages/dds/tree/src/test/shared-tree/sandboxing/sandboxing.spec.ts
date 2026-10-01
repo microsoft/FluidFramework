@@ -1742,7 +1742,7 @@ describe("Host and Guest correctness", () => {
 		});
 	}
 
-	it("rejects an earlier ID space shard token after acknowledging a Guest change", async () => {
+	it("rejects backward ID space shard progress after acknowledging a Guest change", async () => {
 		const reported = makePromiseWithResolvers();
 		const ports = buildDirectSessionPorts();
 		const { host, main, guest, guestView, provider } = await setupCustom(
@@ -1764,6 +1764,7 @@ describe("Host and Guest correctness", () => {
 		await guest.updateHostPromise;
 		await host.updateGuestPromise;
 		const token = firstChange?.idSpaceShardToken ?? assert.fail("Expected a Guest change");
+		assert(token.localGenCount > 0, "Expected Guest change to generate IDs");
 		const root = provider.getCompressor(provider.trees[1]);
 		const before = serializeIdCompressor(root, true);
 
@@ -1774,11 +1775,11 @@ describe("Host and Guest correctness", () => {
 			mainRevision: getCheckout(main).mainBranch.getHead().revision,
 			trunkRevision: host.synchronization.guestInitialization.trunkRevision,
 			change: {},
-			idSpaceShardToken: token,
+			idSpaceShardToken: { ...token, localGenCount: token.localGenCount - 1 },
 		});
 		await reported.promise;
 		assert(host.error?.cause instanceof SandboxProtocolError);
-		assert.match(host.error.cause.message, /Guest ID space shard progress did not advance/);
+		assert.match(host.error.cause.message, /Guest ID space shard progress moved backward/);
 		assert.deepEqual([...main.root], ["first"]);
 		assert.equal(serializeIdCompressor(root, true), before);
 	});
@@ -1840,6 +1841,41 @@ describe("Host and Guest correctness", () => {
 		for (const view of [main, local, guestView, peer]) {
 			assert.deepEqual([...view.root], expected);
 		}
+		assert.equal(host.error, undefined);
+		assert.equal(guest.error, undefined);
+	});
+
+	it("accepts equal ID progress for multiple commits merged from a Guest fork", async () => {
+		const ports = buildDirectSessionPorts();
+		const { host, main, guest, guestView } = await setupCustom(
+			["initial"],
+			stringArrayConfig,
+			() => ports,
+			false,
+			() => {},
+		);
+		const changes: GuestChangeMessage[] = [];
+		ports.hostPort.addEventListener("message", (event: MessageEvent<unknown>) => {
+			const message = parseHostGuestMessage(normalizeTransportData(event.data));
+			if (message.type === "guestChange") {
+				changes.push(message);
+			}
+		});
+
+		const fork = guestView.fork();
+		fork.root.push("first");
+		fork.root.push("second");
+		guestView.merge(fork);
+
+		await (guest.updateHostPromise ?? assert.fail("Expected pending Guest changes"));
+		await host.updateGuestPromise;
+		assert.equal(changes.length, 2);
+		assert.equal(
+			changes[0]?.idSpaceShardToken.localGenCount,
+			changes[1]?.idSpaceShardToken.localGenCount,
+		);
+		assert.deepEqual([...main.root], ["initial", "first", "second"]);
+		assert.deepEqual([...guestView.root], [...main.root]);
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
 	});

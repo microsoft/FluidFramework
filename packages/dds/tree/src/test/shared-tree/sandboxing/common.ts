@@ -56,6 +56,9 @@ const nonNegativeSafeIntegerOptions = {
 	multipleOf: 1,
 } as const;
 
+/** An integer from zero through the largest integer JavaScript can represent exactly. */
+const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
+
 /**
  * An index into the Host's table of handles authorized for one Guest.
  * Valid only within the owning session; the brand does not establish runtime authorization.
@@ -303,9 +306,6 @@ const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
 	"Sandbox.IdSpaceShardSessionId",
 	(_schema, value) => typeof value === "string" && isStableId(value),
 )();
-
-/** An integer from zero through the largest integer JavaScript can represent exactly. */
-const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
 
 /**
  * Validates the ID space shard token that the Guest sends with each change.
