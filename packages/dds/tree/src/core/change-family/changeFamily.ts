@@ -32,6 +32,11 @@ export interface ChangeFamily<
 	readonly rebaser: ChangeRebaser<TChange>;
 	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
 
+	/**
+	 * Returns whether the changeset contains a schema change, including in a composed changeset.
+	 */
+	hasSchemaChange(change: TChange): boolean;
+
 	buildProcessor(
 		processFn: ProcessChangeFn<TChange, TChangeProcessingContext>,
 	): (change: TChange) => TChange;
