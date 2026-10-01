@@ -422,6 +422,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
 export interface FieldPropsAlpha<TCustomMetadata = unknown> extends FieldProps<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
     readonly stagedOptionalUpgrade?: SchemaUpgrade;
+    readonly summarizeIncrementally?: boolean;
 }
 
 // @public @sealed
