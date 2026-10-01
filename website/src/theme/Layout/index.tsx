@@ -13,13 +13,17 @@ import type { ReactElement } from "react";
 const docsSidebarLinkSelector = `.${ThemeClassNames.docs.docSidebarMenu} a.menu__link[href]`;
 
 /**
- * Returns a path and query string for destination comparisons.
+ * Normalizes a path and query string for destination comparisons.
  *
  * @remarks
- * Ignores trailing slashes so sidebar links match browser and router locations.
+ * A generated sidebar link can omit a trailing slash while a direct visit includes one in the browser location.
+ * For example, `/docs/build/containers` and `/docs/build/containers/` identify the same destination.
+ * Sidebar definitions do not control URLs from bookmarks or direct visits.
+ *
+ * This function ignores trailing slashes in the path and preserves the query string.
  * This function returns a new string. It does not change link URLs or location objects.
  */
-function getNavigationPath(location: { pathname: string; search: string }): string {
+function normalizeNavigationPath(location: { pathname: string; search: string }): string {
 	const path = location.pathname;
 	return `${path.length > 1 ? path.replace(/\/+$/u, "") : path}${location.search}`;
 }
@@ -68,8 +72,8 @@ export default function Layout(props: Props): ReactElement {
 				return;
 			}
 
-			const targetPath = getNavigationPath(link);
-			if (targetPath !== getNavigationPath(window.location)) {
+			const targetPath = normalizeNavigationPath(link);
+			if (targetPath !== normalizeNavigationPath(window.location)) {
 				pendingNavigation.current = targetPath;
 			}
 		};
@@ -94,7 +98,7 @@ export default function Layout(props: Props): ReactElement {
 		// If another route or fragment replaces the destination, cancel the focus request immediately.
 		const unlisten = history.listen((nextLocation) => {
 			if (
-				getNavigationPath(nextLocation) !== pendingNavigation.current ||
+				normalizeNavigationPath(nextLocation) !== pendingNavigation.current ||
 				nextLocation.hash !== ""
 			) {
 				pendingNavigation.current = undefined;
@@ -118,8 +122,8 @@ export default function Layout(props: Props): ReactElement {
 		pendingNavigation.current = undefined;
 		if (
 			pendingPath === undefined ||
-			getNavigationPath(location) !== pendingPath ||
-			getNavigationPath(window.location) !== pendingPath
+			normalizeNavigationPath(location) !== pendingPath ||
+			normalizeNavigationPath(window.location) !== pendingPath
 		) {
 			return;
 		}
