@@ -35,6 +35,7 @@ import {
 	type DDSFuzzTestState,
 	type HarnessOperation,
 } from "../ddsFuzzHarness.js";
+import { isChannelFactory } from "../index.js";
 import {
 	createSquashFuzzSuite,
 	type SquashFuzzModel,
@@ -92,6 +93,27 @@ function assertConfigurationApplied(client: Client<SharedNothingFactory>): void 
 }
 
 describe("DDS fuzz client configuration", () => {
+	describe("isChannelFactory", () => {
+		it("narrows a direct factory to its original channel factory type", () => {
+			const factory = new SharedNothingFactory();
+			const model: Model = { ...createModel(), factory };
+			assert(isChannelFactory(model.factory));
+			const narrowed: SharedNothingFactory = model.factory;
+			assert.equal(narrowed, factory);
+		});
+
+		it("identifies configuration providers without invoking their callbacks", () => {
+			const model: Model = {
+				...createModel(),
+				factory: {
+					generateClientConfiguration: () => assert.fail("Must not generate configuration."),
+					getFactory: () => assert.fail("Must not resolve a factory."),
+				},
+			};
+			assert.equal(isChannelFactory(model.factory), false);
+		});
+	});
+
 	let directory: string;
 	let operationsFile: string;
 	let saveInfo: SaveInfo;
@@ -220,7 +242,7 @@ describe("DDS fuzz client configuration", () => {
 			clientAddProbability: 1,
 		};
 		const model = mixinNewClient(createModel(), options);
-		assert("generateClientConfiguration" in model.factory);
+		assert(!isChannelFactory(model.factory));
 		const original = await runTestForSeed(model, options, 0, saveInfo);
 		const operations = readOperations();
 		let replayed: DDSFuzzTestState<SharedNothingFactory> | undefined;
@@ -289,7 +311,7 @@ describe("DDS fuzz client configuration", () => {
 			observed.push(state.random.integer(0, Number.MAX_SAFE_INTEGER));
 		});
 		const model = createModel();
-		assert("generateClientConfiguration" in model.factory);
+		assert(!isChannelFactory(model.factory));
 		const originalGenerate = model.factory.generateClientConfiguration;
 		model.factory.generateClientConfiguration = (random, context) => {
 			for (let i = 0; i < 10; i++) {
@@ -339,7 +361,7 @@ describe("DDS fuzz client configuration", () => {
 
 	it("records configuration before a factory fails during initialization", async () => {
 		const model = createModel();
-		assert("generateClientConfiguration" in model.factory);
+		assert(!isChannelFactory(model.factory));
 		model.factory.getFactory = () => {
 			throw new Error("Configured factory failed.");
 		};
@@ -365,7 +387,7 @@ describe("DDS fuzz client configuration", () => {
 		const generated: string[] = [];
 		options.emitter.on("clientCreate", (client) => created.push(client));
 		const base = createModel();
-		assert("generateClientConfiguration" in base.factory);
+		assert(!isChannelFactory(base.factory));
 		const factory = base.factory;
 		const model = mixinAttach(
 			{
@@ -517,7 +539,7 @@ describe("DDS fuzz client configuration", () => {
 
 	it("rejects configuration that changes when serialized", async () => {
 		const model = createModel();
-		assert("generateClientConfiguration" in model.factory);
+		assert(!isChannelFactory(model.factory));
 		model.factory.generateClientConfiguration = () => ({
 			version: "current",
 			options: { enabled: true },

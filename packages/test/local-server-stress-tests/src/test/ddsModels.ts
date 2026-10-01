@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	isChannelFactory,
+} from "@fluid-private/test-dds-utils";
 import { baseClaimsModel } from "@fluid-internal/claims/internal/test";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
-import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
@@ -61,7 +66,7 @@ export const generateSubModelMap = (
 		const { reducer, generatorFactory, factory, validateConsistency, minimizationTransforms } =
 			model;
 		assert(
-			!("generateClientConfiguration" in factory),
+			isChannelFactory(factory),
 			"Local server stress tests require DDS models with a fixed channel factory.",
 		);
 		const generator = repeatFactoryAsync(generatorFactory);

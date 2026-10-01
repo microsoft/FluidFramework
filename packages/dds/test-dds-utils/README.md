@@ -90,6 +90,7 @@ const model: DDSFuzzModel<Factory, Operation, State> = {
 Your resolver can also construct a factory from options stored in the configuration.
 The provider is the model's factory; no separate default factory is needed.
 For a single configuration, continue to pass an `IChannelFactory` directly as `model.factory`.
+Use `isChannelFactory(model.factory)` to narrow the factory type when integrating a model with code that requires a direct `IChannelFactory`.
 
 The harness records the initial clients in an `initialize` operation.
 It records subsequent choices in `attach.clients` and `addClient.clientConfiguration`.

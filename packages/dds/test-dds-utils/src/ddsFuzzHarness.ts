@@ -1693,10 +1693,27 @@ interface NormalizedClientFactory<
 	getFactory: (clientConfiguration: TClientConfiguration | undefined) => TChannelFactory;
 }
 
+/**
+ * Checks whether a DDS fuzz model uses a direct channel factory rather than a configuration provider.
+ * @typeParam TChannelFactory - Channel factory type preserved by the type guard.
+ * @typeParam TClientConfiguration - Consumer-defined client configuration.
+ * @param factory - A factory from a DDS fuzz model.
+ * @returns Whether the factory is an {@link @fluidframework/datastore-definitions#IChannelFactory}.
+ * @internal
+ */
+export function isChannelFactory<
+	TChannelFactory extends IChannelFactory,
+	TClientConfiguration,
+>(
+	factory: TChannelFactory | DDSFuzzClientFactory<TChannelFactory, TClientConfiguration>,
+): factory is TChannelFactory {
+	return !("generateClientConfiguration" in factory);
+}
+
 function normalizeClientFactory<TChannelFactory extends IChannelFactory, TClientConfiguration>(
 	factory: TChannelFactory | DDSFuzzClientFactory<TChannelFactory, TClientConfiguration>,
 ): NormalizedClientFactory<TChannelFactory, TClientConfiguration> {
-	if ("generateClientConfiguration" in factory) {
+	if (!isChannelFactory(factory)) {
 		return {
 			generateClientConfiguration: (random, client) => {
 				const value = factory.generateClientConfiguration(random, client);

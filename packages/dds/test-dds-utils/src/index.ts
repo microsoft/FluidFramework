@@ -24,6 +24,7 @@ export type {
 export {
 	createDDSFuzzSuite,
 	defaultDDSFuzzSuiteOptions,
+	isChannelFactory,
 	replayTest,
 	registerOracle,
 } from "./ddsFuzzHarness.js";

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { isChannelFactory } from "@fluid-private/test-dds-utils";
 import { baseMapModel } from "@fluidframework/map/internal/test";
 
 import { ddsModelMap, generateSubModelMap } from "./ddsModels.js";
@@ -12,7 +13,7 @@ import { ddsModelMap, generateSubModelMap } from "./ddsModels.js";
 describe("Local server DDS model aggregation", () => {
 	it("registers fixed channel factories without changing their identity", () => {
 		const factory = baseMapModel.factory;
-		assert(!("generateClientConfiguration" in factory));
+		assert(isChannelFactory(factory));
 		const models = generateSubModelMap(baseMapModel);
 		assert.equal(models.size, 1);
 		const model = models.get(factory.attributes.type);
@@ -43,7 +44,10 @@ describe("Local server DDS model aggregation", () => {
 							assert.fail("Aggregation must not resolve a client configuration."),
 					},
 				}),
-			/Local server stress tests require DDS models with a fixed channel factory/,
+			{
+				name: "AssertionError",
+				message: /Local server stress tests require DDS models with a fixed channel factory/,
+			},
 		);
 	});
 });
