@@ -1500,7 +1500,7 @@ export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
 
-// @alpha
+// @beta
 export interface NoChangeConstraint {
     // (undocumented)
     readonly type: "noChange";
@@ -1803,12 +1803,12 @@ export interface RunTransaction {
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
     readonly customMetadata?: JsonCompatibleReadOnlyObject;
     readonly postProcessor?: TransactionPostProcessor;
-    readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+    readonly preconditions?: readonly TransactionConstraintBeta[];
 }
 
 // @public @sealed
@@ -2427,22 +2427,25 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
 // @alpha @input
-export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
-    readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
-};
+export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>;
 
 // @beta @input
-export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = ((WithValue<TSuccessValue> & {
     readonly rollback?: false;
 }) | (WithValue<TFailureValue> & {
     readonly rollback: true;
-});
+})) & {
+    readonly preconditionsOnRevert?: readonly TransactionConstraintBeta[];
+};
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @alpha @sealed
-export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
+export type TransactionConstraintAlpha = TransactionConstraintBeta;
+
+// @beta @sealed
+export type TransactionConstraintBeta = TransactionConstraint | NoChangeConstraint;
 
 // @alpha @sealed
 export type TransactionLabels = Set<unknown> & {

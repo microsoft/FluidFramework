@@ -382,8 +382,8 @@ export interface LocalCommitEvents {
 	 * It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
 	 * @example Notifying the user of the outcome and allowing them to retry:
 	 * ```typescript
-	 * // Use `asAlpha` API to access the noChange precondition
-	 * const view = asAlpha(tree.viewWith(config));
+	 * // Use `asBeta` API to access the noChange precondition
+	 * const view = asBeta(tree.viewWith(config));
 	 *
 	 * // Function to clear all contents of the tree, with a precondition that no changes have occurred.
 	 * const clearAllContents = () => {
@@ -491,8 +491,8 @@ export enum CommitOutcome {
 	 * (and no implicit constraints were violated.)
 	 *
 	 * Explicit constraints are those that are explicitly added
-	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
-	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 * through {@link RunTransactionParamsBeta.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusBeta.preconditionsOnRevert | preconditionsOnRevert}.
 	 *
 	 * The new content may be edited (and potentially inserted) by subsequent commits,
 	 * assuming those commits are not themselves subject to constraint violations.

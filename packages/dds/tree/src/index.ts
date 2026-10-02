@@ -268,6 +268,7 @@ export {
 	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
+	type TransactionConstraintBeta,
 	type TransactionPostProcessor,
 	type TransactionResultFailed,
 	type TransactionResultSuccess,
