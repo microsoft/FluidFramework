@@ -114,7 +114,6 @@ export class GuestImplementation implements Guest {
 	#synchronization: GuestSynchronization | undefined;
 	private viewableTree: ViewableTree | undefined;
 	private readonly initialized = makePromiseWithResolvers();
-
 	private disposed = false;
 
 	/** Internal synchronization state exposed for testing. */

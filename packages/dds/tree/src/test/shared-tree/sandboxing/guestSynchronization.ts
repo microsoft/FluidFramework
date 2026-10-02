@@ -346,15 +346,10 @@ export class GuestSynchronization {
 	 * @param error - The reason pending Guest changes cannot complete.
 	 */
 	public stop(error: Error): void {
-		if (
-			this.state === GuestSynchronizationState.Stopped ||
-			this.state === GuestSynchronizationState.Disposed
-		) {
+		if (this.state !== GuestSynchronizationState.Active) {
 			return;
 		}
-		if (this.state === GuestSynchronizationState.Active) {
-			this.offCheckoutChanged();
-		}
+		this.offCheckoutChanged();
 		this.state = GuestSynchronizationState.Stopped;
 		this.pendingChanges.clear();
 		this.pushInProgress?.rejecter(error);

@@ -124,12 +124,10 @@ The Guest keeps a checkout for the Host main branch and a separate checkout for 
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
 [GuestSynchronization](./guestSynchronization.ts) owns the hidden Host and authoring checkouts and the child ID space shard.
-The [Guest](./guest.ts) owns its port, message routing, and local disposal.
-GuestSynchronization creates and updates the authoring checkout and disposes it during Guest disposal.
-Disposing the checkout also invalidates its authoring views.
-After a failure, GuestSynchronization does not dispose the authoring checkout until application-managed cleanup.
-The application can inspect it if it is still usable, but must not make further edits.
-Application-managed cleanup calls `Guest.dispose()`, which releases both checkouts through GuestSynchronization.
+The [Guest](./guest.ts) owns its port and message routing.
+On `Guest.dispose()`, GuestSynchronization disposes both checkouts and the child shard, invalidating authoring views.
+After a failure, it stops syncing but leaves the authoring checkout available for inspection until disposal.
+The application must not edit it after failure.
 
 The Host preserves the Guest's authoring state in its local branch.
 It applies Guest changes there and merges them into main without rebasing the local branch itself.
@@ -302,46 +300,11 @@ Previously sent Guest changes that reach the Host before it stops can still be a
 Pending Guest acknowledgments reject even if the Host subsequently applies an earlier change.
 An outstanding Host update can also be discarded; the application-owned main view remains available.
 
-```mermaid
-sequenceDiagram
-    participant Client as Orchestrator
-    participant Guest
-    participant Host
-    participant Root as Host root ID compressor
-
-    Note over Host,Root: Root reserves the active child ID space shard
-    Client->>Guest: dispose()
-    Guest->>Guest: Stop edits, release checkouts, dispose child shard
-    Guest-->>Client: dispose() returns
-    Client->>Host: dispose() after Guest is stopped or fenced
-    Host->>Host: Stop receiving session messages
-    Host->>Root: synchronizeWithShard(last accepted progress, disposed)
-    Note over Host,Root: Root reclaims the child ID space shard
-    Host->>Host: Dispose session branches, keep main view
-```
-
-The state names below belong to `GuestSynchronization`, not the Host's application-owned main view.
-`Stopped` ends synchronization but keeps both checkouts until `Guest.dispose()` reaches `Disposed`.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Active: Guest initialization
-    Active --> Stopped: failure or Guest.dispose() calls stop()
-    Stopped --> Disposed: Guest.dispose() releases checkouts
-```
-
 The Host tracks the child ID space shard separately from the Guest synchronization state.
 The orchestrator must stop or fence the Guest, ensuring it cannot send new changes or restart from its serialized shard, before disposing its Host session.
 Host disposal stops processing session messages before using its latest accepted child progress to reclaim the allocation.
 The Host has already learned the IDs used by every Guest change it accepted; unreported IDs in the fenced Guest are discarded.
 An initialization send failure also reclaims a shard that the Host knows it did not deliver.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Reserved: Host creates child ID space shard
-    Reserved --> Reclaimed: stopped or fenced Guest followed by Host.dispose()
-    Reserved --> Reclaimed: initialization send fails before delivery
-```
 
 After a failure, GuestSynchronization leaves the authoring checkout available for inspection until the application calls `Guest.dispose()`.
 GuestSynchronization releases both checkouts during cleanup.

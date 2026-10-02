@@ -212,16 +212,21 @@ export class HostImplementation implements Host {
 		}
 		this.disposed = true;
 		this.offRangeFinalized?.();
-		this.session.dispose();
-		this.port.removeEventListener("message", this.onMessage);
-		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.synchronization.dispose();
-
-		// No further changes will be received from the Guest, so we can safely reclaim its ID space shard.
-		const token = this.guestIdSpaceShardToken;
-		if (token !== undefined) {
-			this.idCompressor.synchronizeWithShard({ ...token, disposed: true });
-			this.guestIdSpaceShardToken = undefined;
+		try {
+			this.session.dispose();
+		} finally {
+			this.port.removeEventListener("message", this.onMessage);
+			this.port.removeEventListener("messageerror", this.onMessageError);
+			try {
+				this.synchronization.dispose();
+			} finally {
+				const token = this.guestIdSpaceShardToken;
+				if (token !== undefined) {
+					// The session is fenced; unreported Guest IDs cannot reach this compressor.
+					this.idCompressor.synchronizeWithShard({ ...token, disposed: true });
+					this.guestIdSpaceShardToken = undefined;
+				}
+			}
 		}
 	}
 

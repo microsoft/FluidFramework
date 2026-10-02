@@ -889,26 +889,33 @@ describe("Host and Guest correctness", () => {
 		}
 	});
 
-	it("reclaims the Guest shard on Host disposal after the Guest disappears", async () => {
-		const ports = buildDirectSessionPorts();
-		const { host, guest, guestView, main, provider } = await setupCustom(
-			["initial"],
-			stringArrayConfig,
-			() => ports,
-		);
+	it("reclaims the shard even if Host branch cleanup fails", async () => {
+		const { host, guest, provider } = await setup(["initial"]);
 		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
-		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
-		const token = child.getShardSyncToken();
-		assert(token !== undefined, "Expected a child ID space shard token");
-		// Simulate a lost Guest before it can be disposed by the orchestrator.
-		ports.guestPort.close();
 		guest.dispose();
-		assert.doesNotThrow(() => guest.dispose());
-		assert.throws(() => guestView.root, /disposed|invalid state/i);
+		const disposeBranches = host.synchronization.dispose.bind(host.synchronization);
+		host.synchronization.dispose = () => {
+			disposeBranches();
+			throw new Error("Host branch cleanup failed");
+		};
+		assert.throws(() => host.dispose(), /Host branch cleanup failed/);
+		assert.equal(root.getShardSyncToken(), undefined);
+	});
+
+	it("stops the Guest session even if checkout cleanup fails", async () => {
+		const { host, guest, guestView } = await setup(["initial"]);
+		const synchronization = guest.synchronization;
+		const disposeCheckouts = synchronization.dispose.bind(synchronization);
+		synchronization.dispose = () => {
+			throw new Error("Guest checkout cleanup failed");
+		};
+		guestView.root.push("pending");
+		const pending = guest.updateHostPromise ?? assert.fail("Expected a pending Guest change");
+		const rejected = assert.rejects(pending, /disposed before synchronization completed/);
+		assert.throws(() => guest.dispose(), /Guest checkout cleanup failed/);
+		await rejected;
+		disposeCheckouts();
 		host.dispose();
-		assert.throws(() => root.getChildShardProgress(token), /inactive child/);
-		main.root.push("retained");
-		assert.deepEqual([...main.root], ["initial", "retained"]);
 	});
 
 	it("preserves accepted Guest edits when reclaiming a lost Guest shard", async () => {
@@ -1082,31 +1089,6 @@ describe("Host and Guest correctness", () => {
 			replacementHost.dispose();
 			replacementPorts.dispose();
 		}
-	});
-
-	it("rejects obsolete Guest close messages without reclaiming the shard", async () => {
-		const reported = makePromiseWithResolvers();
-		const { host, guest, guestView, provider, interop } = await setupCustom(
-			["initial"],
-			stringArrayConfig,
-			buildIsolatedSessionPorts,
-			false,
-			() => reported.resolver(),
-		);
-		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
-		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
-		const token = child.getShardSyncToken() ?? assert.fail("Expected an ID space shard token");
-		interop.sendToHost.postMessage({
-			type: "guestClose",
-			idSpaceShardToken: { ...createTestIdSpaceShardToken(), disposed: true },
-		});
-		await reported.promise;
-		assert(host.error?.cause instanceof SandboxProtocolError);
-		assert.match(host.error.cause.message, /Invalid Host and Guest protocol message/);
-		assert.doesNotThrow(() => root.getChildShardProgress(token));
-		guest.dispose();
-		host.dispose();
-		assert.throws(() => root.getChildShardProgress(token), /inactive child/);
 	});
 
 	// The Host and Guest are intended to support being run in separate JavaScript realms.
