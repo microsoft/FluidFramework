@@ -3309,6 +3309,97 @@ describe("Runtime", () => {
 				return entry;
 			}
 
+			async function loadSnapshotRuntime(): Promise<ContainerRuntime> {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: containerContext,
+					registry: new FluidDataStoreRegistry([
+						["@fluid-example/smde", Promise.resolve(entryDefault)],
+					]),
+					existing: true,
+					runtimeOptions: {
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				return runtime;
+			}
+
+			it("returns the containing data store's package path without loading the store", async () => {
+				const readBlob = sandbox.spy(containerContext.storage, "readBlob");
+				const factory = entryDefault.IFluidDataStoreFactory;
+				assert(factory !== undefined);
+				const instantiateDataStore = sandbox.spy(factory, "instantiateDataStore");
+				containerRuntime = await loadSnapshotRuntime();
+				const readsBeforeLookup = readBlob.callCount;
+				const instantiationsBeforeLookup = instantiateDataStore.callCount;
+
+				assert.deepEqual(await containerRuntime.getDataStorePackagePath("/default"), [
+					"@fluid-example/smde",
+				]);
+				assert.equal(readBlob.callCount, readsBeforeLookup + 1);
+				assert.equal(readBlob.lastCall?.args[0], "bARC6dCXlcrPxQHw3PeROtmKc");
+				assert.deepEqual(await containerRuntime.getDataStorePackagePath("/default/root/dds"), [
+					"@fluid-example/smde",
+				]);
+				assert.equal(readBlob.callCount, readsBeforeLookup + 1);
+				assert.equal(instantiateDataStore.callCount, instantiationsBeforeLookup);
+
+				for (const path of ["/", "/_blobs/blob", "/missingDataStore/root"]) {
+					assert.equal(await containerRuntime.getDataStorePackagePath(path), undefined);
+				}
+				assert.equal(readBlob.callCount, readsBeforeLookup + 1);
+			});
+
+			it("fetches omitted loading-group attributes when looking up a data store", async () => {
+				createSnapshot(true);
+				let snapshotFetchCount = 0;
+				containerContext.storage.getSnapshot = async () => {
+					snapshotFetchCount++;
+					snapshotWithContents.blobContents.set(
+						"id",
+						stringToBuffer(
+							JSON.stringify({
+								pkg: '["@fluid-example/smde"]',
+								summaryFormatVersion: 2,
+								isRootDataStore: true,
+							}),
+							"utf8",
+						),
+					);
+					return snapshotWithContents;
+				};
+				const factory = entryDefault.IFluidDataStoreFactory;
+				assert(factory !== undefined);
+				const instantiateDataStore = sandbox.spy(factory, "instantiateDataStore");
+				containerRuntime = await loadSnapshotRuntime();
+				const instantiationsBeforeLookup = instantiateDataStore.callCount;
+
+				assert.equal(snapshotFetchCount, 0);
+				assert.deepEqual(
+					await containerRuntime.getDataStorePackagePath("/missingDataStore/root"),
+					["@fluid-example/smde"],
+				);
+				assert.deepEqual(await containerRuntime.getDataStorePackagePath("/missingDataStore"), [
+					"@fluid-example/smde",
+				]);
+				assert.equal(snapshotFetchCount, 1);
+				assert.equal(instantiateDataStore.callCount, instantiationsBeforeLookup);
+			});
+
+			it("propagates errors from fetching omitted snapshot attributes", async () => {
+				createSnapshot(true);
+				const fetchError = new Error("Snapshot fetch failed");
+				containerContext.storage.getSnapshot = async () => {
+					throw fetchError;
+				};
+				containerRuntime = await loadSnapshotRuntime();
+
+				await assert.rejects(
+					containerRuntime.getDataStorePackagePath("/missingDataStore/root"),
+					(error: unknown) => error === fetchError,
+				);
+			});
+
 			it("Load snapshot with missing snapshot contents for datastores should fail when groupId not specified", async () => {
 				// In this test we will try to load the container runtime with a snapshot which has 2 datastores. However,
 				// snapshot for datastore "missingDataStore" is omitted and we will check that the container runtime loads fine
