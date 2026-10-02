@@ -17,6 +17,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeDiscontinuedCodecAndSchema,
+	makeExperimentalCodecVersion,
 } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
@@ -137,10 +138,9 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 					MessageFormatVersion.v7,
 				),
 		},
-		{
-			minVersionForCollab: undefined,
-			formatVersion: MessageFormatVersion.vSharedBranches,
-			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
+		makeExperimentalCodecVersion(
+			MessageFormatVersion.vSharedBranches,
+			(options: MessageCodecBuilderOptions<TChangeset>) =>
 				makeSharedBranchesCodecWithVersion(
 					options.changeCodecs.resolve(
 						options.dependentChangeFormatVersion.lookup(MessageFormatVersion.vSharedBranches),
@@ -148,7 +148,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 					options.revisionTagCodec,
 					MessageFormatVersion.vSharedBranches,
 				),
-		},
+		),
 	];
 
 	return VersionDispatchingCodecBuilder.build(messageCodecName, versions);

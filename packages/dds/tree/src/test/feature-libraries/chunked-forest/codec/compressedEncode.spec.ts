@@ -106,7 +106,7 @@ function makeFieldBatchCodec(
 	options: ICodecOptions,
 	encoderContext: EncoderContext,
 	format: TSchema,
-	version: FieldBatchFormatVersion,
+	version: FieldBatchFormatVersion & number,
 ): IJsonCodec<
 	FieldBatch,
 	JsonCompatibleReadOnly,

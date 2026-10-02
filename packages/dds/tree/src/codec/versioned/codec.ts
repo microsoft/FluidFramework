@@ -20,9 +20,11 @@ import {
 	JsonCompatibleReadOnlySchema,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
+	type UnionToIntersection,
 } from "../../util/index.js";
 import {
 	type DecodeErrorHandler,
+	type IDecoder,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
@@ -122,35 +124,6 @@ function makeVersionedValidatedCodec<
 }
 
 /**
- * Creates a codec version which always throws a UsageError when encoding or decoding, indicating that the format version is discontinued.
- */
-export function makeDiscontinuedCodecAndSchema<
-	TDecoded,
-	TFormatVersion extends FormatVersion = FormatVersion,
->(
-	discontinuedVersion: TFormatVersion,
-	discontinuedSince: SemanticVersion,
-): CodecVersion<TDecoded, unknown, TFormatVersion, ICodecOptions, unknown> {
-	return {
-		minVersionForCollab: undefined,
-		formatVersion: discontinuedVersion,
-		codec: {
-			schema: JsonCompatibleReadOnlySchema,
-			encode: (_data: TDecoded) => {
-				throw new UsageError(
-					`Cannot encode data to format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
-				);
-			},
-			decode: (data: unknown) => {
-				throw new UsageError(
-					`Cannot decode data in format ${discontinuedVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
-				);
-			},
-		},
-	};
-}
-
-/**
  * A friendly format for codec authors use to define their codec and schema for use in {@link CodecVersion}.
  * @remarks
  * The codec should not perform its own schema validation.
@@ -171,43 +144,261 @@ export type CodecAndSchema<
 >;
 
 /**
- * A codec alongside its format version and schema.
+ * A decoder and schema for a format which must not be used for encoding.
+ *
+ * @typeParam TDecoded - The in-memory data type produced by decoding.
+ * @typeParam TDecodeContext - Context passed to decode operations.
+ * @sealed
  */
-export interface CodecVersionBase<
-	T = unknown,
-	TFormatVersion extends FormatVersion = FormatVersion,
-> {
-	/**
-	 * When `undefined` the codec will never be selected as a write version except via override.
-	 * @remarks
-	 * This format will be used for decode if data in it needs to be decoded, regardless of `minVersionForCollab`.
-	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
-	 * as well as previously stabilized formats that are discontinued (meaning we always prefer to use some other format for encoding).
-	 */
-	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
-	readonly formatVersion: TFormatVersion;
-	readonly codec: T;
+export interface CodecAndSchemaReadonly<TDecoded, TDecodeContext = void>
+	extends IDecoder<TDecoded, JsonCompatibleReadOnly, TDecodeContext> {
+	readonly schema: TSchema;
+	readonly encode?: never;
 }
 
+type CodecSource<
+	TDecoded,
+	TEncodeContext,
+	TBuildOptions extends ICodecOptions,
+	TDecodeContext,
+> =
+	| CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>
+	| ((options: TBuildOptions) => CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>);
+
+type ReadonlyCodecSource<TDecoded, TBuildOptions extends ICodecOptions, TDecodeContext> =
+	| CodecAndSchemaReadonly<TDecoded, TDecodeContext>
+	| ((options: TBuildOptions) => CodecAndSchemaReadonly<TDecoded, TDecodeContext>);
+
 /**
- * A particular version of a codec and when to use it.
- * @privateRemarks
- * This allows lazy building of the codec with options.
- * This option can likely be removed as the codec handling is made simpler and more consistent.
- * Removing support for this laziness would be nice to help prevent unexpected coupling and alteration to codec behavior,
- * helping ensure that tests and production code behave the same.
+ * A stable format which can be selected for encoding based on client compatibility.
+ *
+ * @typeParam TDecoded - The in-memory data type encoded and decoded by the codec.
+ * @typeParam TEncodeContext - Context passed to encode operations.
+ * @typeParam TFormatVersion - The numeric format identifier.
+ * @typeParam TBuildOptions - Options used to build the codec.
+ * @typeParam TDecodeContext - Context passed to decode operations.
+ * @sealed
  */
-export interface CodecVersion<
+export interface CodecVersionStable<
 	TDecoded,
 	TEncodeContext,
 	TFormatVersion extends FormatVersion,
 	TBuildOptions extends ICodecOptions = ICodecOptions,
 	TDecodeContext = TEncodeContext,
-> extends CodecVersionBase<
-		| CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>
-		| ((options: TBuildOptions) => CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>),
-		TFormatVersion
-	> {}
+> {
+	readonly formatVersion: TFormatVersion & number;
+	/**
+	 * The oldest client version which supports this format.
+	 */
+	readonly minVersionForCollab: OldestSupportedClientVersion;
+	/**
+	 * The codec and schema for this format, or a factory which builds them from the codec options.
+	 */
+	readonly codec: CodecSource<TDecoded, TEncodeContext, TBuildOptions, TDecodeContext>;
+}
+
+/**
+ * An experimental format which may be explicitly selected for encoding.
+ *
+ * @remarks
+ * Experimental formats use string identifiers. They are never selected based on
+ * {@link CodecWriteOptionsBeta.minVersionForCollab}.
+ * They may be selected through a write-version override with
+ * {@link CodecWriteOptionsBeta.allowPossiblyIncompatibleWriteVersionOverrides}, or by a
+ * {@link VersionDispatchingCodecBuilderOptions.selectWriteFormatVersion} callback.
+ *
+ * Applications writing an experimental format are responsible for ensuring that every client
+ * which loads or collaborates on the document supports that format.
+ *
+ * @typeParam TDecoded - The in-memory data type encoded and decoded by the codec.
+ * @typeParam TEncodeContext - Context passed to encode operations.
+ * @typeParam TFormatVersion - The string format identifier.
+ * @typeParam TBuildOptions - Options used to build the codec.
+ * @typeParam TDecodeContext - Context passed to decode operations.
+ * @sealed
+ */
+export interface CodecVersionExperimental<
+	TDecoded,
+	TEncodeContext,
+	TFormatVersion extends FormatVersion,
+	TBuildOptions extends ICodecOptions = ICodecOptions,
+	TDecodeContext = TEncodeContext,
+> {
+	readonly formatVersion: TFormatVersion & string;
+	readonly minVersionForCollab: undefined;
+	readonly codec: CodecSource<TDecoded, TEncodeContext, TBuildOptions, TDecodeContext>;
+}
+
+/**
+ * A format which is supported for decoding but must not be used for encoding.
+ *
+ * @typeParam TDecoded - The in-memory data type produced by decoding.
+ * @typeParam TFormatVersion - The format identifier.
+ * @typeParam TBuildOptions - Options used to build the codec.
+ * @typeParam TDecodeContext - Context passed to decode operations.
+ * @sealed
+ */
+export interface CodecVersionReadonly<
+	TDecoded,
+	TFormatVersion extends FormatVersion,
+	TBuildOptions extends ICodecOptions = ICodecOptions,
+	TDecodeContext = void,
+> {
+	readonly formatVersion: TFormatVersion;
+	readonly minVersionForCollab: undefined;
+	readonly codec: ReadonlyCodecSource<TDecoded, TBuildOptions, TDecodeContext>;
+}
+
+/**
+ * A format which can no longer be encoded or decoded.
+ *
+ * @typeParam TFormatVersion - The discontinued format identifier.
+ * @sealed
+ */
+export interface CodecVersionDiscontinued<TFormatVersion extends FormatVersion> {
+	readonly formatVersion: TFormatVersion;
+	readonly minVersionForCollab: undefined;
+	readonly discontinuedSince: SemanticVersion;
+	readonly codec?: never;
+}
+
+/**
+ * A codec alongside its format version and schema.
+ *
+ * @remarks
+ * Use the variant matching the format's behavior:
+ *
+ * - {@link CodecVersionStable} for stable formats selected by client compatibility.
+ * - {@link CodecVersionExperimental} for string-identified experimental formats.
+ * - {@link CodecVersionReadonly} for historical formats which are decoded but never encoded.
+ * - {@link CodecVersionDiscontinued} for formats which can no longer be encoded or decoded.
+ *
+ * @typeParam TDecoded - The in-memory data type encoded or decoded by codec-bearing variants.
+ * @typeParam TEncodeContext - Context passed to encode operations.
+ * @typeParam TFormatVersion - The union of registered format identifiers.
+ * @typeParam TBuildOptions - Options used to build codec-bearing variants.
+ * @typeParam TDecodeContext - Context passed to decode operations.
+ */
+export type CodecVersion<
+	TDecoded,
+	TEncodeContext,
+	TFormatVersion extends FormatVersion,
+	TBuildOptions extends ICodecOptions = ICodecOptions,
+	TDecodeContext = TEncodeContext,
+> =
+	| CodecVersionStable<TDecoded, TEncodeContext, TFormatVersion, TBuildOptions, TDecodeContext>
+	| CodecVersionExperimental<
+			TDecoded,
+			TEncodeContext,
+			TFormatVersion,
+			TBuildOptions,
+			TDecodeContext
+	  >
+	| CodecVersionReadonly<TDecoded, TFormatVersion, TBuildOptions, TDecodeContext>
+	| CodecVersionDiscontinued<TFormatVersion>;
+
+/**
+ * Creates an experimental format declaration for a codec or codec factory.
+ *
+ * @remarks
+ * See {@link CodecVersionExperimental} for compatibility requirements.
+ */
+export function makeExperimentalCodecVersion<
+	TFormatVersion extends string,
+	TDecoded,
+	TEncodeContext = void,
+	TBuildOptions extends ICodecOptions = ICodecOptions,
+	TDecodeContext = TEncodeContext,
+>(
+	formatVersion: TFormatVersion,
+	codec: CodecSource<TDecoded, TEncodeContext, TBuildOptions, TDecodeContext>,
+): CodecVersionExperimental<
+	TDecoded,
+	TEncodeContext,
+	TFormatVersion,
+	TBuildOptions,
+	TDecodeContext
+> {
+	return {
+		minVersionForCollab: undefined,
+		formatVersion,
+		codec,
+	};
+}
+
+/**
+ * Creates a discontinued format declaration.
+ *
+ * @remarks
+ * The builder supplies the codec which rejects encoding and decoding.
+ */
+export function makeDiscontinuedCodecAndSchema<TFormatVersion extends FormatVersion>(
+	formatVersion: TFormatVersion,
+	discontinuedSince: SemanticVersion,
+): CodecVersionDiscontinued<TFormatVersion> {
+	return {
+		minVersionForCollab: undefined,
+		formatVersion,
+		discontinuedSince,
+	};
+}
+
+/**
+ * Extracts codec sources, excluding discontinued entries which have no codec.
+ */
+type CodecSourceFromCodecVersion<T> = T extends { readonly codec: infer TSource }
+	? TSource
+	: never;
+
+/**
+ * Resolves direct codecs and factory return types, distributing over codec-or-factory unions.
+ */
+type CodecFromSource<T> = T extends (options: never) => infer TCodec ? TCodec : T;
+
+type DecodedFromCodec<T> = T extends { decode(...args: never[]): infer TDecoded }
+	? TDecoded
+	: never;
+
+type EncodeContextFromCodec<T> = T extends {
+	encode(data: never, context: infer TContext): unknown;
+}
+	? TContext
+	: never;
+
+type WritableFormatVersionFromCodecVersion<T> = T extends {
+	readonly formatVersion: infer TFormatVersion;
+	readonly codec: infer TSource;
+}
+	? CodecFromSource<TSource> extends { encode(...args: never[]): unknown }
+		? TFormatVersion
+		: never
+	: never;
+
+/**
+ * Extracts factory options, ignoring direct codecs even in codec-or-factory unions.
+ */
+type BuildOptionsFromCodecSource<T> = T extends (
+	options: infer TBuildOptions extends ICodecOptions,
+) => unknown
+	? TBuildOptions
+	: never;
+
+type DecodeContextFromCodec<T> = T extends {
+	decode(data: never, context: infer TContext): unknown;
+}
+	? TContext
+	: never;
+
+/**
+ * A schema-validating codec with its write eligibility.
+ */
+type EvaluatedCodecAndSchema<TDecoded, TEncodeContext, TDecodeContext> = CodecAndSchema<
+	TDecoded,
+	TEncodeContext,
+	TDecodeContext
+> & {
+	readonly canEncode: boolean;
+};
 
 /**
  * {@link CodecVersion} after normalization into a consistent type.
@@ -221,10 +412,14 @@ export interface NormalizedCodecVersion<
 	TFormatVersion extends FormatVersion,
 	TBuildOptions extends ICodecOptions,
 	TDecodeContext = TEncodeContext,
-> extends CodecVersionBase<
-		(options: TBuildOptions) => CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>,
-		TFormatVersion
-	> {}
+> {
+	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
+	readonly formatVersion: TFormatVersion;
+	readonly discontinuedSince?: SemanticVersion;
+	readonly codec: (
+		options: TBuildOptions,
+	) => EvaluatedCodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>;
+}
 
 /**
  * {@link NormalizedCodecVersion} after applying the build options.
@@ -236,15 +431,28 @@ interface EvaluatedCodecVersion<
 	TEncodeContext,
 	TFormatVersion extends FormatVersion,
 	TDecodeContext = TEncodeContext,
-> extends CodecVersionBase<
-		CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>,
-		TFormatVersion
-	> {}
+> {
+	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
+	readonly formatVersion: TFormatVersion;
+	readonly discontinuedSince?: SemanticVersion;
+	readonly canEncode: boolean;
+	readonly codec: CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>;
+}
+
+function getUnwritableFormatKind(codecVersion: {
+	readonly discontinuedSince?: SemanticVersion;
+	readonly canEncode: boolean;
+}): "readonly" | "discontinued" | undefined {
+	if (codecVersion.discontinuedSince !== undefined) {
+		return "discontinued";
+	}
+	return codecVersion.canEncode ? undefined : "readonly";
+}
 
 /**
  * Normalize the codec to a single format.
  * @remarks
- * Bakes in schema validation, so output no longer exposes the schema.
+ * Adds schema validation and throwing encoders for formats which cannot be written.
  */
 function normalizeCodecVersion<
 	TDecoded,
@@ -267,24 +475,56 @@ function normalizeCodecVersion<
 	TBuildOptions,
 	TDecodeContext
 > {
-	const codecBuilder: (
-		options: TBuildOptions,
-	) => CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext> =
-		typeof codecVersion.codec === "function"
-			? codecVersion.codec
-			: () => codecVersion.codec as CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext>;
+	if ("discontinuedSince" in codecVersion) {
+		const { discontinuedSince, formatVersion } = codecVersion;
+		return {
+			minVersionForCollab: undefined,
+			formatVersion,
+			discontinuedSince,
+			codec: () => ({
+				canEncode: false,
+				schema: JsonCompatibleReadOnlySchema,
+				encode: () => {
+					throw new UsageError(
+						`Cannot encode data to format ${formatVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
+					);
+				},
+				decode: () => {
+					throw new UsageError(
+						`Cannot decode data in format ${formatVersion}. The codec was discontinued in Fluid Framework client version ${discontinuedSince}.`,
+					);
+				},
+			}),
+		};
+	}
+
+	const codecSource = codecVersion.codec;
 	const codec = (
 		options: TBuildOptions,
-	): CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext> => {
-		const built = codecBuilder(options);
-		return makeVersionedValidatedCodec(
-			options,
-			new Set([codecVersion.formatVersion]),
-			built.schema,
-			built,
-		);
+	): EvaluatedCodecAndSchema<TDecoded, TEncodeContext, TDecodeContext> => {
+		const built = typeof codecSource === "function" ? codecSource(options) : codecSource;
+		const canEncode = built.encode !== undefined;
+		const codecWithEncoder: CodecAndSchema<TDecoded, TEncodeContext, TDecodeContext> =
+			built.encode === undefined
+				? {
+						...built,
+						encode: () => {
+							throw new UsageError(
+								`Cannot encode data to read-only format ${JSON.stringify(codecVersion.formatVersion)}.`,
+							);
+						},
+					}
+				: built;
+		return {
+			...makeVersionedValidatedCodec(
+				options,
+				new Set([codecVersion.formatVersion]),
+				built.schema,
+				codecWithEncoder,
+			),
+			canEncode,
+		};
 	};
-
 	return {
 		minVersionForCollab: codecVersion.minVersionForCollab,
 		formatVersion: codecVersion.formatVersion,
@@ -318,8 +558,40 @@ export interface VersionDispatchingCodec<
 	 * The format version which this codec writes.
 	 * @remarks
 	 * Selected by {@link VersionDispatchingCodecBuilder.build} based on the provided options.
+	 * If the builder has a {@link VersionDispatchingCodecBuilderOptions.selectWriteFormatVersion}
+	 * callback, individual values may be encoded using a different format.
 	 */
 	readonly writeVersion: TFormatVersion;
+}
+
+/**
+ * Options which customize how a {@link VersionDispatchingCodecBuilder} selects a write format.
+ *
+ * @typeParam TDecoded - The in-memory data type being encoded.
+ * @typeParam TFormatVersion - The format identifiers which are eligible for encoding.
+ */
+export interface VersionDispatchingCodecBuilderOptions<
+	TDecoded,
+	TFormatVersion extends FormatVersion,
+> {
+	/**
+	 * Selects a write format for each value.
+	 *
+	 * @remarks
+	 * This callback may select an experimental format declared as a
+	 * {@link CodecVersionExperimental}.
+	 * The codec author is responsible for ensuring that every client which can access data written
+	 * in that format supports it.
+	 * If the write options explicitly override this codec's format, the selected format must match
+	 * that override.
+	 *
+	 * @param data - The value being encoded.
+	 * @param defaultVersion - The format selected from the codec write options.
+	 */
+	readonly selectWriteFormatVersion?: (
+		data: TDecoded,
+		defaultVersion: TFormatVersion,
+	) => TFormatVersion;
 }
 
 /**
@@ -367,6 +639,10 @@ export class VersionDispatchingCodecBuilder<
 			TBuildOptions,
 			TDecodeContext
 		>[],
+		private readonly builderOptions: VersionDispatchingCodecBuilderOptions<
+			TDecoded,
+			TFormatVersion
+		>,
 	) {
 		type Normalized = NormalizedCodecVersion<
 			TDecoded,
@@ -377,7 +653,7 @@ export class VersionDispatchingCodecBuilder<
 		>;
 		const normalizedRegistry: Normalized[] = [];
 		const formats: Set<FormatVersion> = new Set();
-		const versions: Set<string | undefined> = new Set();
+		const versions: Set<OldestSupportedClientVersion> = new Set();
 
 		for (const codec of inputRegistry) {
 			debugAssert(
@@ -385,22 +661,17 @@ export class VersionDispatchingCodecBuilder<
 					!formats.has(codec.formatVersion) ||
 					`duplicate codec format ${name} ${codec.formatVersion}`,
 			);
-			debugAssert(
-				() =>
-					codec.minVersionForCollab === undefined ||
-					typeof codec.formatVersion !== "string" ||
-					`unstable format ${JSON.stringify(codec.formatVersion)} (string formats) must not have a minVersionForCollab in ${name}`,
-			);
 			formats.add(codec.formatVersion);
 			const normalizedCodec = normalizeCodecVersion(codec);
 			normalizedRegistry.push(normalizedCodec);
-			if (codec.minVersionForCollab !== undefined) {
+			if (normalizedCodec.minVersionForCollab !== undefined) {
+				const minVersionForCollab = normalizedCodec.minVersionForCollab;
 				debugAssert(
 					() =>
-						!versions.has(codec.minVersionForCollab) ||
-						`Codec ${name} has multiple entries for version ${JSON.stringify(codec.minVersionForCollab)}`,
+						!versions.has(minVersionForCollab) ||
+						`Codec ${name} has multiple entries for version ${JSON.stringify(minVersionForCollab)}`,
 				);
-				versions.add(codec.minVersionForCollab);
+				versions.add(minVersionForCollab);
 			}
 		}
 
@@ -422,11 +693,16 @@ export class VersionDispatchingCodecBuilder<
 	public applyOptions(
 		options: TBuildOptions,
 	): EvaluatedCodecVersion<TDecoded, TEncodeContext, TFormatVersion, TDecodeContext>[] {
-		return this.registry.map((codec) => ({
-			minVersionForCollab: codec.minVersionForCollab,
-			formatVersion: codec.formatVersion,
-			codec: codec.codec(options),
-		}));
+		return this.registry.map((codec) => {
+			const evaluated = codec.codec(options);
+			return {
+				minVersionForCollab: codec.minVersionForCollab,
+				formatVersion: codec.formatVersion,
+				discontinuedSince: codec.discontinuedSince,
+				canEncode: evaluated.canEncode,
+				codec: evaluated,
+			};
+		});
 	}
 
 	/**
@@ -438,10 +714,45 @@ export class VersionDispatchingCodecBuilder<
 	): VersionDispatchingCodec<TDecoded, TEncodeContext, TFormatVersion, TDecodeContext> {
 		const [applied, decoder] = this.buildDecoderInternal(options);
 		const writeVersion = getWriteVersion(this.name, options, applied);
+		const fromOverride = options.writeVersionOverrides?.has(this.name) === true;
+		const fromFormatVersion = new Map(
+			applied.map((codec) => [codec.formatVersion, codec] as const),
+		);
 		return {
 			...decoder,
 			encode: (data: TDecoded, context: TEncodeContext): JsonCompatibleReadOnly => {
-				return writeVersion.codec.encode(data, context);
+				const selectedFormatVersion =
+					this.builderOptions.selectWriteFormatVersion === undefined
+						? writeVersion.formatVersion
+						: this.builderOptions.selectWriteFormatVersion(data, writeVersion.formatVersion);
+				const selected = fromFormatVersion.get(selectedFormatVersion);
+				if (selected === undefined) {
+					throw new UsageError(
+						`Codec "${this.name}" selected unsupported format version ${JSON.stringify(selectedFormatVersion)} while encoding. Supported versions are: ${versionList(applied)}.`,
+					);
+				}
+				const unwritableFormatKind = getUnwritableFormatKind(selected);
+				if (unwritableFormatKind !== undefined) {
+					throw new UsageError(
+						`Codec "${this.name}" cannot encode data using ${unwritableFormatKind} format version ${JSON.stringify(selectedFormatVersion)}.`,
+					);
+				}
+				if (selectedFormatVersion !== writeVersion.formatVersion) {
+					if (fromOverride) {
+						throw new UsageError(
+							`Codec "${this.name}" cannot encode this data using explicitly selected format version ${JSON.stringify(writeVersion.formatVersion)}. The data requires format version ${JSON.stringify(selectedFormatVersion)}.`,
+						);
+					}
+					if (
+						selected.minVersionForCollab !== undefined &&
+						gt(selected.minVersionForCollab, options.minVersionForCollab)
+					) {
+						throw new UsageError(
+							`Codec "${this.name}" selected format version ${JSON.stringify(selectedFormatVersion)} for this data, but that format is only compatible back to client version ${selected.minVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}.`,
+						);
+					}
+				}
+				return selected.codec.encode(data, context);
 			},
 			writeVersion: writeVersion.formatVersion,
 		};
@@ -532,21 +843,34 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public static build<
 		Name extends CodecName,
-		Entry extends CodecVersion<unknown, unknown, FormatVersion, never, unknown>,
-	>(name: Name, inputRegistry: readonly Entry[]) {
-		type TDecoded2 =
-			Entry extends CodecVersion<infer D, unknown, FormatVersion, never, unknown> ? D : never;
-		type TEncodeContext2 =
-			Entry extends CodecVersion<unknown, infer C, FormatVersion, never, unknown> ? C : never;
-		type TFormatVersion2 =
-			Entry extends CodecVersion<unknown, unknown, infer F, never, unknown> ? F : never;
-		type TBuildOptions2 =
-			Entry extends CodecVersion<unknown, unknown, FormatVersion, infer B, unknown>
-				? B
-				: never;
-		type TDecodeContext2 =
-			Entry extends CodecVersion<unknown, unknown, FormatVersion, never, infer D> ? D : never;
+		const TRegistry extends readonly CodecVersion<
+			unknown,
+			unknown,
+			FormatVersion,
+			never,
+			unknown
+		>[],
+	>(
+		name: Name,
+		inputRegistry: TRegistry,
+		options: VersionDispatchingCodecBuilderOptions<
+			DecodedFromCodec<CodecFromSource<CodecSourceFromCodecVersion<TRegistry[number]>>>,
+			WritableFormatVersionFromCodecVersion<TRegistry[number]>
+		> = {},
+	) {
+		type Entry = TRegistry[number];
+		type Source = CodecSourceFromCodecVersion<Entry>;
+		type Codec = CodecFromSource<Source>;
+		type TDecoded2 = DecodedFromCodec<Codec>;
+		type TEncodeContext2 = EncodeContextFromCodec<Codec>;
+		type TFormatVersion2 = Entry["formatVersion"];
+		type TBuildOptions2 = BuildOptionsFromCodecSource<Source>;
+		type TDecodeContext2 = DecodeContextFromCodec<Codec>;
 
+		// All registered factories are built, so all their option requirements must be met.
+		type ResolvedBuildOptions = [TBuildOptions2] extends [never]
+			? ICodecOptions
+			: UnionToIntersection<TBuildOptions2> & ICodecOptions;
 		type ResolvedEncodeContext = unknown extends TEncodeContext2 ? void : TEncodeContext2;
 		type ResolvedDecodeContext = unknown extends TDecodeContext2
 			? ResolvedEncodeContext
@@ -557,20 +881,24 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			// If it does not matter what context is provided, undefined is fine, so allow it to be omitted.
 			ResolvedEncodeContext,
 			TFormatVersion2,
-			TBuildOptions2,
+			ResolvedBuildOptions,
 			ResolvedDecodeContext
 		>;
 
 		const input = inputRegistry as readonly unknown[] as readonly CodecFinal[];
+		const builderOptions = options as unknown as VersionDispatchingCodecBuilderOptions<
+			TDecoded2,
+			TFormatVersion2
+		>;
 
 		const builder = new VersionDispatchingCodecBuilder<
-			TBuildOptions2,
+			ResolvedBuildOptions,
 			TDecoded2,
 			ResolvedEncodeContext,
 			TFormatVersion2,
 			Name,
 			ResolvedDecodeContext
-		>(name, input);
+		>(name, input, builderOptions);
 		return builder;
 	}
 }
@@ -580,25 +908,31 @@ The client which encoded this data likely specified an "minVersionForCollab" val
  * @remarks
  * This either uses the override specified in the options, or selects the newest format compatible with the provided minVersionForCollab.
  */
-function getWriteVersion<T extends CodecVersionBase>(
-	name: CodecName,
-	options: CodecWriteOptions,
-	versions: readonly T[],
-): T {
+function getWriteVersion<
+	T extends EvaluatedCodecVersion<unknown, unknown, FormatVersion, unknown>,
+>(name: CodecName, options: CodecWriteOptions, versions: readonly T[]): T {
 	if (options.writeVersionOverrides?.has(name) === true) {
 		const selectedFormatVersion = options.writeVersionOverrides.get(name);
 		const selected = versions.find((codec) => codec.formatVersion === selectedFormatVersion);
 		if (selected === undefined) {
 			throw new UsageError(
-				`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)}. Supported versions are: ${versionList(versions)}.`,
+				`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)}. Supported writable versions are: ${writableVersionList(versions)}.`,
 			);
-		} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
+		}
+		const unwritableFormatKind = getUnwritableFormatKind(selected);
+		if (unwritableFormatKind !== undefined) {
+			throw new UsageError(
+				`Codec "${name}" cannot use requested format version ${JSON.stringify(selectedFormatVersion)} for encoding because it is ${unwritableFormatKind}.`,
+			);
+		}
+		if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
 			const selectedMinVersionForCollab = selected.minVersionForCollab;
 			if (selectedMinVersionForCollab === undefined) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is experimental. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
-			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
+			}
+			if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
 				throw new UsageError(
 					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
@@ -614,10 +948,11 @@ function getWriteVersion<T extends CodecVersionBase>(
 /**
  * Selects which format should be used when writing data, without consider overrides.
  */
-function getWriteVersionNoOverrides<T extends CodecVersionBase>(
-	versions: readonly T[],
-	minVersionForCollab: OldestSupportedClientVersion,
-): T {
+function getWriteVersionNoOverrides<
+	T extends {
+		readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
+	},
+>(versions: readonly T[], minVersionForCollab: OldestSupportedClientVersion): T {
 	const stableVersions: [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T][] = [];
 	for (const version of versions) {
 		if (version.minVersionForCollab !== undefined) {
@@ -635,6 +970,19 @@ function getWriteVersionNoOverrides<T extends CodecVersionBase>(
 /**
  * Formats a list of versions for use in UsageErrors.
  */
-function versionList(versions: readonly CodecVersionBase[]): string {
+function versionList(
+	versions: readonly {
+		readonly formatVersion: FormatVersion;
+	}[],
+): string {
 	return JSON.stringify(Array.from(versions, (codec) => codec.formatVersion));
+}
+
+function writableVersionList(
+	versions: readonly {
+		readonly formatVersion: FormatVersion;
+		readonly canEncode: boolean;
+	}[],
+): string {
+	return versionList(versions.filter((version) => version.canEncode));
 }
