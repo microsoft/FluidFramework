@@ -1446,8 +1446,10 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("branches with schema edits can be rebased", () => {
-		// The fork must use its own schema to chunk edits after its parent's schema changes.
-		// Minimized from topLevel.fuzz.spec.ts, Everything - Comparison Forest seed 1.
+		// This is a regression test for a historical bug with tree chunk encoding exposed by fuzz testing.
+		// The problem at the time was the tree chunker used for b's fork captured the schema from bView,
+		// which incorrectly coupled the schema on that fork to the schema of bView.
+		// The test sets up a scenario where the fork and parent's schema diverge, which would manifest in 0xaf9.
 		it("can edit a fork after its parent's schema upgrade loses a rebase", () => {
 			const sf = new SchemaFactory("forkSchemaRebase");
 			class Added extends sf.object("Added", { value: sf.string }) {}
