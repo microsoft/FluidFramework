@@ -392,6 +392,9 @@ export class HostImplementation implements Host {
 					serializedIdSpaceShard !== undefined,
 					"Expected one serialized Guest ID space shard",
 				);
+
+				// TODO: Have shard() return the child sync token alongside its serialized state
+				// so the Host need not deserialize it before sending updates or disposing the session.
 				const idSpaceShard = deserializeIdCompressor(
 					serializedIdSpaceShard,
 					SerializationVersion.V3,
