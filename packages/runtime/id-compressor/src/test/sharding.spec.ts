@@ -1452,10 +1452,52 @@ describe("IdCompressor Sharding", () => {
 			});
 			assert.throws(
 				() => first.synchronizeWithParent({ ...parentToken, localGenCount: 1.5 }),
-				{ name: "TypeError", message: /parent synchronization token generation count/ },
+				{ name: "TypeError", message: /shard synchronization token generation count/ },
 			);
 			assert.equal(first.serialize(true), before);
 			assert.equal(second.generateCompressedId(), -5);
+		});
+
+		it("rejects invalid generation counts in either sync direction without changing state", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childToken = child.getShardSyncToken() ?? fail();
+			const parentToken = parent.getChildShardSyncToken(childToken);
+			const originalParent = parent.serialize(true);
+			const originalChild = child.serialize(true);
+			for (const invalidCount of [
+				-1,
+				0.5,
+				Number.NaN,
+				Number.POSITIVE_INFINITY,
+				Number.MAX_SAFE_INTEGER + 1,
+			]) {
+				assert.throws(
+					() => child.synchronizeWithParent({ ...parentToken, localGenCount: invalidCount }),
+					{
+						name: "TypeError",
+						message: /Invalid shard synchronization token generation count/,
+					},
+				);
+				for (const disposed of [false, true]) {
+					assert.throws(
+						() =>
+							parent.synchronizeWithShard({
+								...childToken,
+								localGenCount: invalidCount,
+								disposed,
+							}),
+						{
+							name: "TypeError",
+							message: /Invalid shard synchronization token generation count/,
+						},
+					);
+				}
+				assert.equal(child.serialize(true), originalChild);
+				assert.equal(parent.serialize(true), originalParent);
+				assert.doesNotThrow(() => parent.getChildShardSyncToken(childToken));
+			}
 		});
 
 		it("reports finalized ranges so a child can apply them in order", () => {

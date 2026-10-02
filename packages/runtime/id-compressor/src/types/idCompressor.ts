@@ -198,6 +198,7 @@ export interface IIdCompressorCore {
 	 * be disposed from the leaves upwards.
 	 * @param syncToken - The token for the shard, obtained by calling {@link IIdCompressorCore.getShardSyncToken} (non-destructive
 	 * synchronization) or {@link IIdCompressorCore.disposeShard} (synchronization plus reclamation of the disposed shard's ID space).
+	 * @throws {@link TypeError} if the token's generation count is not a nonnegative safe integer.
 	 */
 	synchronizeWithShard(syncToken: ShardSynchronizationToken): void;
 
@@ -224,6 +225,7 @@ export interface IIdCompressorCore {
 	 *
 	 * @param token - Synchronization token obtained from this child's parent.
 	 * @throws If the token names another child or contains invalid state.
+	 * @throws {@link TypeError} if the token's generation count is not a nonnegative safe integer.
 	 */
 	synchronizeWithParent(token: ParentShardSynchronizationToken): void;
 
@@ -277,6 +279,7 @@ export interface ShardToken {
 	/**
 	 * The sending compressor's generation count, which can include backfilled positions
 	 * rather than only IDs it generated.
+	 * @remarks Must be a nonnegative safe integer.
 	 */
 	localGenCount: number;
 

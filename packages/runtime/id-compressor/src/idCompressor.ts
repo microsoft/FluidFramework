@@ -78,6 +78,18 @@ function rangeFinalizationError(expectedStart: number, actualStart: number): Log
 const MAX_STRIDE_LENGTH = 1000000;
 
 /**
+ * Validates the generation count in a shard synchronization token.
+ *
+ * @param localGenCount - The number of positions filled, including backfilled positions.
+ * @throws {@link TypeError} if the count is not a nonnegative safe integer.
+ */
+function validateShardGenerationCount(localGenCount: number): void {
+	if (!Number.isSafeInteger(localGenCount) || localGenCount < 0) {
+		throw new TypeError("Invalid shard synchronization token generation count.");
+	}
+}
+
+/**
  * See {@link IIdCompressor} and {@link IIdCompressorCore}
  */
 export class IdCompressor implements IIdCompressor, IIdCompressorCore {
@@ -395,9 +407,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		) {
 			throw new Error("Invalid parent synchronization token for this child shard.");
 		}
-		if (!Number.isSafeInteger(token.localGenCount) || token.localGenCount < 0) {
-			throw new TypeError("Invalid parent synchronization token generation count.");
-		}
+		validateShardGenerationCount(token.localGenCount);
 		if (token.localGenCount <= this.localGenCount) {
 			// A child can already be ahead through its own allocations. Its local range
 			// then includes the parent's IDs through this generation count.
@@ -442,6 +452,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				`Cannot synchronize with child with ID ${childShardId}: not in active children set`,
 			);
 		}
+		validateShardGenerationCount(syncToken.localGenCount);
 
 		// A last-child disposal realigns on the original stride. Backfill before changing
 		// membership so invalid progress cannot accidentally reclaim the child.
