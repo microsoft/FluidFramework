@@ -1,18 +1,22 @@
-# Fluid Package Format (Proposal)
+# Fluid Package Format and Collaboration Establishment (Proposal)
 
 > **Status:** Draft / exploratory. This document captures an initial proposal and is expected to iterate.
 
-> **Scope:** This is an **interchange/export format**: what ODSP produces when a file is downloaded/exported, and what it consumes when a file is uploaded/imported. It is **not** a description of, or a replacement for, ODSP's internal at-rest storage mechanism — that remains exactly as it is today: opaque, undocumented, and free to evolve independently. This proposal is scoped to ODSP specifically; no claim is made about other services adopting it.
+> **Scope:** This proposal covers the **package format and collaboration establishment**.
+> It defines an interchange format for file creation, download/export, and upload/import, plus the application, Fluid runtime/loader, and service flow that establishes collaborative state from `.projection`-only content.
+> The package format is intended to be service-independent; the service integration described here is scoped to ODSP, with no claim that other services will adopt it.
+> It does not define or replace ODSP's internal at-rest storage mechanism, which remains service-owned and free to evolve independently.
 
 > **Priority / rollout sequencing:** Creating a file in `.projection`-only form and then starting a collaborative session from it is the **must-have** capability this proposal exists to deliver.
 > The primary creation workflow is an agentic harness writing the application's projection format without running Fluid or producing collaborative state.
 > `getLatest` must expose that state, and the application must be able to establish `.collab` from it (§3.8).
 > The same path also supports recovery after external edits invalidate existing `.collab`.
 > Grouped inline summary content is the preferred bootstrap path for imported assets; referencing existing projection blobs through SPO is also required, but much lower priority (§3.8).
+> Enable projection-first creation per application only after grouped `.blobs` support has saturated its clients, including summarizers (§3.8.1).
 > Full round-trip fidelity of `.collab`, the checksum's exact wire format, `.ops` representation, and broader attachment/group unification are lower priority.
 > That does not remove the need for end-to-end confidence in the full design before production rollout; shipping the initial pieces must not lock in a format that fails when the remaining pieces are added.
 
-## 1. Motivation: the need for an interchange format
+## 1. Motivation: portable files and collaboration establishment
 
 ODSP's internal storage representation is service-owned, not a public interchange contract.
 Fluid already has snapshot and pending-state serialization capabilities.
@@ -37,7 +41,8 @@ As Fluid-based documents become first-class files (not just live collaborative s
 - Is independent of any particular driver/service — a generic container format, with service-specific behavior layered on top (e.g. ODSP choosing to natively recognize/promote part of it).
 - Is understandable, at least in part, by tools that are not Fluid-aware.
 
-This is distinct from (and should not be confused with) the live summary/snapshot wire protocol, which remains an internal, incremental, service-specific transport optimized for collaboration — not for portability.
+The package format is distinct from the live summary/snapshot wire protocol, which remains an internal, incremental, service-specific transport optimized for collaboration, not portability.
+The establishment flow in this proposal requires application, loader/runtime, and service integration; it does not replace that live transport with the package format.
 
 ## 2. The need for a "projection" inside the package
 
@@ -284,6 +289,9 @@ That bootstrap path is in scope; removing `ISummaryAttachment` across Fluid is n
   It includes the operation range and its attachment dependencies (§3.2), preserves binary bytes and node metadata, and writes content-addressed blobs.
   Import must preserve runtime-visible identities (§3.5).
   The summary/snapshot conversion and identity mapping need explicit contracts; they are not supplied by a tree walk alone.
+  Importing preserved `.collab` is intended to retain ODSP's existing import/restore semantics for initializing collaboration.
+  This proposal changes the interchange representation, not those service mechanics, whose implementation remains outside scope.
+  Projection-based establishment creates fresh collaborative state and is covered separately in §3.8.
 - **Sensitivity-label compatibility is required, including for projection-only files.**
   Creating a file, importing/exporting it, reading its projection, and establishing `.collab` must respect the applicable label and protection policy.
   Establishing collaboration must not discard that protection or require an unprotected intermediate file.
@@ -443,9 +451,32 @@ The interchange package deliberately duplicates projection assets where needed f
 The primary bootstrap path uploads bytes already available in the projection; the lower-priority SPO reference capability can avoid that transfer.
 The package does not prescribe ODSP's physical storage layout or deduplication implementation, and this repository does not establish that those uploads introduce zero additional stored bytes.
 
+### 3.8.1 Rollout sequencing and first-rollout exit criteria
+
+First, deploy clients that put a `groupId` on the runtime's `.app/.blobs` subtree and support reading and writing its inline asset content and existing attachment references.
+After those versions have saturated an application's participating clients, including summarizers, enable projection-first creation for that application.
+Do not enable the workflow for applications that have not completed this rollout.
+This sequencing addresses compatibility without requiring a separate package-level compatibility gate.
+Per-application enablement is deployment sequencing, not an application-identity restriction on the establishment API.
+
+Before enabling the first rollout for an application, demonstrate these outcomes with the client and service implementation:
+
+| Scenario | Required outcome |
+|---|---|
+| Projection-only creation and reads | An agentic harness creates a valid package with a manifest and `.projection`, without a previous summary or `.collab`. `getLatest` returns the projection and its generation token. Reading alone does not establish collaboration. |
+| Asset import and collaborative use | Import binary assets, such as PNG images, as grouped inline summary content. Establish collaboration, edit with multiple clients, produce a subsequent summary, and reopen from the service with the expected collaborative state and unchanged asset bytes. Referenced assets remain readable. |
+| Protection and authorization | Applicable sensitivity labels and protection remain enforced during creation, projection reads, establishment, and reopening, without an unprotected intermediate file. Establishment requires the file's read/write permissions; projection read access alone does not authorize it. |
+| Competing importers | Two initial-summary submissions based on the same generation result in one establishment. The losing client obtains fresh state and uses the winner's `.collab`. Establishment preserves epoch and the file's last-writer identity/timestamp. |
+| Intervening edit or replacement | A projection edit or file replacement between reading and establishment causes the stale submission to fail without replacing the newer content. Clients invalidated by a replacement cannot resume their old collaborative session after establishment. |
+| Application rollout | Projection-first creation remains disabled until versions with the required grouped `.blobs` read/write support have saturated the application's participating clients, including summarizers. |
+
+These criteria cover the first projection-to-collaboration rollout.
+Full preserved-`.collab` round-trip support, the lower-priority SPO capability to reference existing projection blobs, and broader attachment/group unification remain separate milestones.
+
 ### 3.9 Out of scope: keeping `.projection` fresh for files at rest
 
-This proposal defines the package format itself; it deliberately does **not** describe the mechanism that keeps `.projection` from going stale relative to `.collab` while a document is at rest between collaboration sessions.
+This proposal covers the package format and collaboration establishment.
+It deliberately does **not** describe the mechanism that keeps `.projection` from going stale relative to `.collab` while a document is at rest between collaboration sessions.
 
 Concretely: once a collaboration session ends, `.collab` can have a trailing tail of ops sequenced after the last summary — ops that were applied to live collaborative state but never folded into a new summary (and therefore never reflected in `.projection`, which is only ever regenerated as part of producing a new summary). Until something explicitly closes that gap, `.projection` reflects the state as of the last summary, not the true latest state, even though `.collab` (summary + trailing `.ops`) is fully caught up.
 
