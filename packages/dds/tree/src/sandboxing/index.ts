@@ -3,6 +3,129 @@
  * Licensed under the MIT License.
  */
 
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+
+import type { ICodecOptions } from "../codec/index.js";
+import type { ForestOptions } from "../shared-tree/index.js";
+import type { UntypedTreeView, ViewableTree } from "../simple-tree/index.js";
+
+import { createGuest as createGuestInternal } from "./guest.js";
+import { createHost as createHostInternal } from "./host.js";
+
+/**
+ * APIs for synchronizing a SharedTree view across a sandbox boundary.
+ *
+ * @remarks
+ * The Host remains connected to Fluid services and synchronizes an independent Guest tree through a `MessagePort`.
+ *
+ * Sandboxing requires the ID compressor's V3 serialization format.
+ * Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
+ *
+ * @alpha
+ */
+export namespace Sandboxing {
+	/**
+	 * Session options shared by the Host and Guest endpoints.
+	 *
+	 * @alpha @input
+	 */
+	export interface EndpointOptions {
+		/** This endpoint's port in the Host and Guest message channel. */
+		readonly port: MessagePort;
+		/** The endpoint-scoped logger for diagnostic telemetry. */
+		readonly logger?: ITelemetryBaseLogger;
+		/**
+		 * Reports terminal session failure asynchronously.
+		 * By default, the error is thrown.
+		 */
+		readonly handleProtocolError?: (error: Error) => void;
+	}
+
+	/**
+	 * Options for creating a Host.
+	 *
+	 * @alpha @input
+	 */
+	export interface HostOptions extends EndpointOptions {
+		/** The application-owned view to synchronize with the Guest. */
+		readonly main: UntypedTreeView;
+	}
+
+	/**
+	 * The SharedTree endpoint that connects to Fluid services on behalf of a {@link Sandboxing.Guest}.
+	 *
+	 * @alpha
+	 */
+	export interface Host {
+		/**
+		 * The identifier compressor that the Guest must use for this session.
+		 *
+		 * @remarks
+		 * The current alpha implementation requires the Host and Guest to share this instance.
+		 */
+		readonly idCompressor: IIdCompressor;
+		/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+		readonly error: Error | undefined;
+		/** A promise for Guest acknowledgment of pending Host changes, if changes are pending. */
+		readonly updateGuestPromise: Promise<void> | undefined;
+		/** Ends the session and releases its resources. */
+		dispose(): void;
+	}
+
+	/**
+	 * Creates and connects a Host that can support a {@link Sandboxing.Guest}.
+	 *
+	 * @param options - The options for creating the Host.
+	 * @returns The created Host.
+	 *
+	 * @alpha
+	 */
+	export function createHost(options: HostOptions): Host {
+		return createHostInternal(options);
+	}
+
+	/**
+	 * Options for creating a Guest.
+	 *
+	 * @alpha @input
+	 */
+	export interface GuestOptions extends EndpointOptions {
+		/** The forest and codec options used to initialize the Guest's tree. */
+		readonly treeOptions: ForestOptions & ICodecOptions;
+		/** The compressor shared by the Host and Guest for this session. */
+		readonly idCompressor: IIdCompressor;
+	}
+
+	/**
+	 * An independent tree synchronized with a {@link Sandboxing.Host}.
+	 *
+	 * @alpha
+	 */
+	export interface Guest {
+		/** The independent tree synchronized with the Host. */
+		readonly tree: ViewableTree;
+		/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+		readonly error: Error | undefined;
+		/** A promise for Host acknowledgment of pending Guest changes, if changes are pending. */
+		readonly updateHostPromise: Promise<void> | undefined;
+		/** Ends the session and releases its resources. */
+		dispose(): void;
+	}
+
+	/**
+	 * Creates and connects a Guest to a {@link Sandboxing.Host}.
+	 *
+	 * @param options - The options for creating the Guest.
+	 * @returns A promise that resolves to the created Guest.
+	 *
+	 * @alpha
+	 */
+	export async function createGuest(options: GuestOptions): Promise<Guest> {
+		return createGuestInternal(options);
+	}
+}
+
 export {
 	createGuest,
 	type Guest,

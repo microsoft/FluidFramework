@@ -20,7 +20,7 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { createGuest, createHost } from "../../../index.js";
+import { Sandboxing } from "../../../index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
@@ -76,11 +76,11 @@ describe("End to End Host and Guest integrations", () => {
 			// TODO: This should not be required.
 			await client.service.synchronize();
 
-			const host = createHost({
+			const host = Sandboxing.createHost({
 				main: viewHost,
 				port: channel.port1,
 			});
-			const guest = await createGuest({
+			const guest = await Sandboxing.createGuest({
 				logger,
 				port: channel.port2,
 				idCompressor: host.idCompressor,
