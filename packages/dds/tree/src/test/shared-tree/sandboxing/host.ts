@@ -213,21 +213,24 @@ export class HostImplementation implements Host {
 		this.disposed = true;
 		this.offRangeFinalized?.();
 
-		this.session.dispose();
-
-		this.port.removeEventListener("message", this.onMessage);
-		this.port.removeEventListener("messageerror", this.onMessageError);
-
-		this.synchronization.dispose();
-
-		// No future changes will be processed from the Guest.
-		// Return the Guest's ID space shard to its originator.
-		if (this.guestIdSpaceShardToken !== undefined) {
-			this.idCompressor.synchronizeWithShard({
-				...this.guestIdSpaceShardToken,
-				disposed: true,
-			});
-			this.guestIdSpaceShardToken = undefined;
+		try {
+			this.session.dispose();
+		} finally {
+			// Session shutdown can fail while stopping pending work; still release the
+			// branches and reclaim the shard before propagating that error.
+			this.port.removeEventListener("message", this.onMessage);
+			this.port.removeEventListener("messageerror", this.onMessageError);
+			try {
+				this.synchronization.dispose();
+			} finally {
+				// Branch cleanup can also fail, and must not leave the shard reserved.
+				const token = this.guestIdSpaceShardToken;
+				if (token !== undefined) {
+					// No further Guest changes can reach this session.
+					this.idCompressor.synchronizeWithShard({ ...token, disposed: true });
+					this.guestIdSpaceShardToken = undefined;
+				}
+			}
 		}
 	}
 

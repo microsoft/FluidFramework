@@ -281,10 +281,15 @@ export class GuestImplementation implements Guest {
 			return;
 		}
 		this.disposed = true;
-		this.#synchronization?.dispose();
-		this.session.dispose();
-		this.port.removeEventListener("message", this.onMessage);
-		this.port.removeEventListener("messageerror", this.onMessageError);
+		try {
+			this.session.dispose();
+		} finally {
+			// Even if stopping pending work fails, remove the listeners and release both
+			// checkouts before propagating the error.
+			this.port.removeEventListener("message", this.onMessage);
+			this.port.removeEventListener("messageerror", this.onMessageError);
+			this.#synchronization?.dispose();
+		}
 	}
 
 	public get error(): Error | undefined {
