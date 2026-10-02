@@ -1079,6 +1079,11 @@ export class SharedMatrix<T = any>
 					assert(ackedChange?.localSeq === localSeq, 0xbab /* must match */);
 					if (pendingCell?.local.length === 0) {
 						this.pending.setCell(rowHandle, colHandle, undefined);
+					} else if (pendingCell !== undefined && this.fwwPolicy.state !== "on") {
+						// In LWW mode, update consensus to the acked value so that
+						// rollback of any remaining local changes restores the correct
+						// server state. FWW mode is handled below via shouldSetCellBasedOnFWW.
+						pendingCell.consensus = ackedChange.value;
 					}
 
 					// If policy is switched and cell should be modified too based on policy, then update the tracker.
