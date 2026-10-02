@@ -813,7 +813,7 @@ export interface LoadContainerRuntimeParams {
 	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 *
-	 * Features introduced by version:
+	 * Internal features introduced by version:
 	 *
 	 * - `3.4.0` - Uses the V3 serialization format for the ID compressor.
 	 *
