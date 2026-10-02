@@ -14,7 +14,7 @@ import { toStoredSchema } from "../toStoredSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
-import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
  * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
@@ -106,7 +106,7 @@ export function comparePersistedSchema(
 	persisted: JsonCompatible,
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): SchemaComparisonStatusAlpha {
 	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
 	const stored = schemaCodec.decode(persisted);
 	const config = new TreeViewConfigurationAlpha({

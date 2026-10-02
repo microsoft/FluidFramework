@@ -80,6 +80,7 @@ export {
 	FlexFieldKind,
 	type FullSchemaPolicy,
 	allowsRepoSuperset,
+	getStoredSchemaSupersetFailures,
 	type GenericChangeset,
 	genericFieldKind,
 	type HasFieldChanges,

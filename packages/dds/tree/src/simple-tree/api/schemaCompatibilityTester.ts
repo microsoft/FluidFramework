@@ -13,7 +13,6 @@ import {
 } from "../../core/index.js";
 import type { SchemaUpgrade, StagedSchemaUpgradePolicy } from "../core/index.js";
 import { NodeKind } from "../core/index.js";
-import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import { resolveStoredSchemaGenerationOptions, toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
@@ -22,7 +21,11 @@ import {
 	type Discrepancy,
 	type UpgradeLocationCollector,
 } from "./discrepancies.js";
-import type { SchemaCompatibilityStatusBeta, SchemaDiscrepancy } from "./tree.js";
+import type { SchemaDiscrepancy } from "./tree.js";
+import {
+	collectSchemaDiagnostics,
+	type SchemaComparisonStatusAlpha,
+} from "./schemaDiagnostics.js";
 
 /**
  * Describes the discrepancies that prevent a view schema from viewing a stored schema as a
@@ -135,11 +138,9 @@ export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): Omit<SchemaCompatibilityStatusBeta, "canInitialize"> & {
+): SchemaComparisonStatusAlpha & {
 	enabledUpgrades: ReadonlyMap<SchemaUpgrade, StagedUpgradeStatus>;
 } {
-	// The public API surface assumes defaultSchemaPolicy
-	const policy = defaultSchemaPolicy;
 	const configuredPolicy = resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades);
 	const includeAlreadyEnabledUpgrades =
 		configuredPolicy.includeAlreadyEnabledUpgrades ?? false;
@@ -169,32 +170,45 @@ export function checkSchemaCompatibility(
 	// Complete the full walk even after finding an incompatibility so discrepancy details and
 	// staged-upgrade status contain all available information for debugging.
 	const discrepancies: SchemaDiscrepancy[] = [];
+	const rawDiscrepancies: Discrepancy[] = [];
 	for (const discrepancy of getDiscrepanciesInAllowedContent(
 		viewSchema,
 		stored,
 		upgradeCollector,
 	)) {
 		discrepancies.push(formatSchemaDiscrepancy(discrepancy));
+		rawDiscrepancies.push(discrepancy);
 	}
-	const canView = discrepancies.length === 0;
 
+	// The effective target depends on enablement collected during the viewing analysis.
 	const enabledUpgrades = computeUpgradeStatuses(totalLocations, enabledLocations);
 	const upgradePolicy = includeAlreadyEnabledUpgrades
 		? includeEnabledUpgrades(configuredPolicy, enabledUpgrades)
 		: configuredPolicy;
 	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, upgradePolicy);
 
-	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
-
-	// If true, then upgrading has no effect on what can be stored in the document.
-	// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
-	const isEquivalent =
-		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
+	// Reuse viewing decisions and evaluate both target directions once, with failure details.
+	const diagnostics = collectSchemaDiagnostics(
+		viewSchema,
+		stored,
+		wouldUpgradeTo,
+		rawDiscrepancies,
+	);
+	const canView = diagnostics.view.length === 0;
+	const canUpgrade = diagnostics.upgrade.length === 0;
+	// Equivalence retains document/policy semantics, not structural or metadata equality.
+	const isEquivalent = diagnostics.equivalence.length === 0;
 
 	return {
-		canView,
-		canUpgrade,
-		isEquivalent,
+		...(canView
+			? { canView: true as const }
+			: { canView: false as const, viewDiscrepancies: diagnostics.view }),
+		...(canUpgrade
+			? { canUpgrade: true as const }
+			: { canUpgrade: false as const, upgradeDiscrepancies: diagnostics.upgrade }),
+		...(isEquivalent
+			? { isEquivalent: true as const }
+			: { isEquivalent: false as const, equivalenceDiscrepancies: diagnostics.equivalence }),
 		discrepancies: canView ? undefined : discrepancies,
 		enabledUpgrades,
 	};

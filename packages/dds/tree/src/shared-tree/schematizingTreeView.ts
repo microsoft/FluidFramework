@@ -28,6 +28,7 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatusBeta,
+	type SchemaCompatibilityStatusAlpha,
 	type TreeContextAlpha,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
@@ -120,7 +121,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Undefined if and only if uninitialized or disposed.
 	 */
-	private currentCompatibility: SchemaCompatibilityStatusBeta | undefined;
+	private currentCompatibility: SchemaCompatibilityStatusAlpha | undefined;
 	/**
 	 * Cached map of upgrade statuses, computed alongside compatibility.
 	 * @remarks Undefined if and only if uninitialized or disposed.
@@ -207,14 +208,6 @@ export class SchematizingSimpleTreeView<
 
 		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
 		this.viewSchema = configAlpha;
-		// This must be initialized before `update` can be called.
-		this.currentCompatibility = {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-			canInitialize: true,
-			discrepancies: undefined,
-		};
 		this.currentEnabledUpgrades = new Map();
 		this.update();
 
@@ -519,7 +512,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
 	 */
-	private computeCompatibility(): SchemaCompatibilityStatusBeta {
+	private computeCompatibility(): SchemaCompatibilityStatusAlpha {
 		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
@@ -564,7 +557,7 @@ export class SchematizingSimpleTreeView<
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
-	public get compatibility(): SchemaCompatibilityStatusBeta {
+	public get compatibility(): SchemaCompatibilityStatusAlpha {
 		if (!this.currentCompatibility) {
 			this.failDisposed();
 		}

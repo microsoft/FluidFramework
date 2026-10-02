@@ -40,6 +40,7 @@ import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
+import type { SchemaCompatibilityStatusAlpha } from "./schemaDiagnostics.js";
 import type {
 	RunTransactionParamsAlpha,
 	RunTransactionParamsBeta,
@@ -999,6 +1000,14 @@ export interface TreeViewAlpha<
 			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync" | "isView"
 		>,
 		UntypedTreeViewAlpha {
+	/**
+	 * Reports compatibility for this view's configuration and document, with schema differences and conditional blocker lists.
+	 * @remarks
+	 * See {@link SchemaCompatibilityStatusAlpha} for the viewing, upgrade, and equivalence checks and their conditional diagnostic lists.
+	 * @override
+	 */
+	readonly compatibility: SchemaCompatibilityStatusAlpha;
+
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
@@ -1157,7 +1166,6 @@ export interface SchemaCompatibilityStatus {
 
 	// TODO: Consider extending this status to include:
 	// - application-defined metadata about the stored schema
-	// - details about the differences between the stored and view schema sufficient for implementing "safe mismatch" policies
 }
 
 /**

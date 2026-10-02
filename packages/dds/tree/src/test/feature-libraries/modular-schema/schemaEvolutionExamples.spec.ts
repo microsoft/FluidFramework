@@ -28,6 +28,23 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	}
 }
 
+/**
+ * Checks the compatibility contract of the beta APIs, excluding newer alpha API diagnostics.
+ */
+function assertCompatibility(
+	actual: ReturnType<typeof checkSchemaCompatibility>,
+	expected: Pick<
+		ReturnType<typeof checkSchemaCompatibility>,
+		"canView" | "canUpgrade" | "isEquivalent" | "discrepancies" | "enabledUpgrades"
+	>,
+): void {
+	const { canView, canUpgrade, isEquivalent, discrepancies, enabledUpgrades } = actual;
+	assert.deepEqual(
+		{ canView, canUpgrade, isEquivalent, discrepancies, enabledUpgrades },
+		expected,
+	);
+}
+
 describe("Schema Evolution Examples", () => {
 	const builder = new SchemaFactoryAlpha("test");
 
@@ -80,7 +97,7 @@ describe("Schema Evolution Examples", () => {
 			// nor did we provide an adapter capable of handling empty roots.
 			// This means our application is unable to view this document.
 			// And since the view schema currently excludes empty roots, its also incompatible for upgrading:
-			assert.deepEqual(compat, {
+			assertCompatibility(compat, {
 				canView: false,
 				canUpgrade: false,
 				isEquivalent: false,
@@ -161,7 +178,7 @@ describe("Schema Evolution Examples", () => {
 			];
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
-			assert.deepEqual(compatNew, {
+			assertCompatibility(compatNew, {
 				canView: true,
 				canUpgrade: true,
 				isEquivalent: true,
@@ -188,7 +205,7 @@ describe("Schema Evolution Examples", () => {
 
 			// With this new schema, we can load the document just like before:
 			const compat2 = checkSchemaCompatibility(viewSchema3, stored);
-			assert.deepEqual(compat2, {
+			assertCompatibility(compat2, {
 				canView: false,
 				canUpgrade: true,
 				isEquivalent: false,
@@ -212,7 +229,7 @@ describe("Schema Evolution Examples", () => {
 
 			// And recheck compat:
 			const compat3 = checkSchemaCompatibility(viewSchema3, stored);
-			assert.deepEqual(compat3, {
+			assertCompatibility(compat3, {
 				canView: true,
 				canUpgrade: true,
 				isEquivalent: true,

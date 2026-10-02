@@ -20,6 +20,7 @@ import {
 	encodeSchemaCompatibilitySnapshot,
 } from "./simpleSchemaCodec.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
+import type { SchemaComparisonStatusAlpha } from "./schemaDiagnostics.js";
 
 /**
  * Reports the ability of a client's view configuration to view and/or upgrade a document's stored schema
@@ -85,7 +86,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 export function checkCompatibility(
 	documentViewConfiguration: TreeViewConfiguration,
 	clientViewConfiguration: TreeViewConfiguration,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): SchemaComparisonStatusAlpha {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({
 		schema: clientViewConfiguration.schema,
 	});
