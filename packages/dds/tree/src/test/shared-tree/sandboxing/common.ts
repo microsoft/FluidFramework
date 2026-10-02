@@ -334,7 +334,14 @@ const GuestIdSpaceShardToken = Type.Object(
 	{ additionalProperties: false },
 );
 
-/** Validates a parent's progress for the Guest ID space shard. */
+/**
+ * Wire representation of {@link @fluidframework/id-compressor/internal#ParentIdProgressForShard}.
+ *
+ * @remarks
+ * The Host sends this progress to the Guest in {@link HostUpdateMessage} and
+ * {@link HostIdRangeMessage}. The Guest applies it to its child compressor before
+ * decoding Host branch commits or finalizing an ID creation range.
+ */
 const ParentIdProgress = Type.Object(
 	{
 		/** Distinguishes parent progress from a child synchronization token. */
@@ -348,7 +355,10 @@ const ParentIdProgress = Type.Object(
 );
 
 /**
- * A range already finalized by the Host runtime, not a request to submit a new range.
+ * An {@link @fluidframework/id-compressor/internal#IdCreationRange} already finalized by the Host runtime.
+ *
+ * @remarks
+ * This schema requires a nonempty range; it is not a request to finalize one.
  */
 const FinalizedIdRange = Type.Object(
 	{
@@ -404,7 +414,9 @@ const HostInitializationMessage = Type.Object(
 );
 
 /**
- * Advances the Guest's copy of the Host main branch.
+ * A Host-to-Guest transition of the Host's main branch.
+ *
+ * @remarks This can include Host edits, peer edits, and Guest edits merged by the Host.
  */
 export type HostUpdateMessage = Static<typeof HostUpdateMessage>;
 const HostUpdateMessage = Type.Object(
@@ -427,7 +439,12 @@ const HostUpdateMessage = Type.Object(
 	{ additionalProperties: false },
 );
 
-/** Delivers one newly finalized creation range ahead of dependent Host updates. */
+/**
+ * Sends a newly finalized creation range from the Host to the Guest.
+ *
+ * @remarks The Guest applies it before a dependent {@link HostUpdateMessage}.
+ * The range may have originated with the Host or another client.
+ */
 export type HostIdRangeMessage = Static<typeof HostIdRangeMessage>;
 const HostIdRangeMessage = Type.Object(
 	{
