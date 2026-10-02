@@ -157,13 +157,13 @@ The Host retains its runtime ID compressor and sends a serialized child shard to
 The two compressor instances share a session ID, but neither automatically learns IDs created by the other.
 This requires V3; a V2 runtime compressor cannot create the shard.
 
-Each Guest change carries child progress captured after its change is serialized, since serialization can create IDs.
-The Host validates the shard and nondecreasing progress, then synchronizes before decoding the change.
-Equal progress is valid when consecutive changes create no new IDs.
+Each Guest change carries a child synchronization token captured after its change is serialized, since serialization can create IDs.
+The Host validates the shard and synchronizes before decoding the change.
+Consecutive changes can carry tokens with the same generation count when they create no new IDs.
 
-Host-to-Guest updates carry parent progress captured after their commits are encoded.
+Host-to-Guest updates carry a parent synchronization token captured after their commits are encoded.
 The Host also forwards finalized creation ranges in order, even without a tree update.
-The Guest applies parent progress before decoding Host commits or finalizing a range; ordered delivery places a range before an update that uses its IDs.
+The Guest applies the parent token before decoding Host commits or finalizing a range; ordered delivery places a range before an update that uses its IDs.
 The runtime, not the sandbox, submits ID creation ranges for finalization.
 See [the protocol schemas](./common.ts) and [the compressor API](../../../../../../runtime/id-compressor/src/types/idCompressor.ts) for the message fields and progress operations.
 

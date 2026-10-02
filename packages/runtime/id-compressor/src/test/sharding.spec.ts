@@ -1343,9 +1343,10 @@ describe("IdCompressor Sharding", () => {
 				message: /Unknown ID/,
 			});
 
-			child.synchronizeWithParent(
-				parent.getChildShardProgress(child.getShardSyncToken() ?? fail()),
-			);
+			const parentToken = parent.getChildShardSyncToken(child.getShardSyncToken() ?? fail());
+			assert.equal(parentToken.type, "parentIdSpaceShardSyncToken");
+			assert.equal("disposed" in parentToken, false);
+			child.synchronizeWithParent(parentToken);
 			assert.equal(child.decompress(parentId), parent.decompress(parentId));
 			assert.equal(child.decompress(childId), parent.decompress(childId));
 
@@ -1365,11 +1366,11 @@ describe("IdCompressor Sharding", () => {
 			const childToken = child.getShardSyncToken() ?? fail();
 			const before = child.serialize(true);
 
-			child.synchronizeWithParent(parent.getChildShardProgress(childToken));
+			child.synchronizeWithParent(parent.getChildShardSyncToken(childToken));
 			assert.equal(child.serialize(true), before);
 
 			const parentId = parent.generateCompressedId();
-			child.synchronizeWithParent(parent.getChildShardProgress(childToken));
+			child.synchronizeWithParent(parent.getChildShardSyncToken(childToken));
 			assert.equal(child.serialize(true), before);
 			assert.equal(child.decompress(parentId), parent.decompress(parentId));
 		});
@@ -1404,7 +1405,7 @@ describe("IdCompressor Sharding", () => {
 				{ name: "TypeError", message: /supported ID space/ },
 			);
 			assert.equal(parent.serialize(true), before);
-			assert.doesNotThrow(() => parent.getChildShardProgress(childToken));
+			assert.doesNotThrow(() => parent.getChildShardSyncToken(childToken));
 		});
 
 		it("applies local finalized ranges after parent and child generate IDs", () => {
@@ -1422,7 +1423,7 @@ describe("IdCompressor Sharding", () => {
 				assert.deepEqual(finalized, [range]);
 
 				child.synchronizeWithParent(
-					parent.getChildShardProgress(child.getShardSyncToken() ?? fail()),
+					parent.getChildShardSyncToken(child.getShardSyncToken() ?? fail()),
 				);
 				child.finalizeCreationRange(range);
 				for (const id of [parentId, childId]) {
@@ -1437,21 +1438,21 @@ describe("IdCompressor Sharding", () => {
 			}
 		});
 
-		it("rejects progress for another child or an invalid generation count without changing state", () => {
+		it("rejects a token for another child or an invalid generation count without changing state", () => {
 			const parent = createIdCompressor(SerializationVersion.V3);
 			const [firstSerialized, secondSerialized] = parent.shard(2);
 			const first = deserialize(firstSerialized);
 			const second = deserialize(secondSerialized);
-			const parentProgress = parent.getChildShardProgress(first.getShardSyncToken() ?? fail());
+			const parentToken = parent.getChildShardSyncToken(first.getShardSyncToken() ?? fail());
 			const before = first.serialize(true);
 
-			assert.throws(() => second.synchronizeWithParent(parentProgress), {
+			assert.throws(() => second.synchronizeWithParent(parentToken), {
 				name: "Error",
-				message: /parent progress.*child ID space shard/,
+				message: /parent synchronization token.*child shard/,
 			});
 			assert.throws(
-				() => first.synchronizeWithParent({ ...parentProgress, localGenCount: 1.5 }),
-				{ name: "TypeError", message: /parent progress.*generation count/ },
+				() => first.synchronizeWithParent({ ...parentToken, localGenCount: 1.5 }),
+				{ name: "TypeError", message: /parent synchronization token generation count/ },
 			);
 			assert.equal(first.serialize(true), before);
 			assert.equal(second.generateCompressedId(), -5);

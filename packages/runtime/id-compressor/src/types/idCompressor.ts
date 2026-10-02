@@ -202,28 +202,30 @@ export interface IIdCompressorCore {
 	synchronizeWithShard(syncToken: ShardSynchronizationToken): void;
 
 	/**
-	 * Gets the parent's ID progress for an active child ID space shard.
+	 * Gets a synchronization token from this compressor for an active child shard.
 	 *
 	 * @remarks
-	 * The child can apply the returned token without replacing its compressor.
+	 * The child can apply this token without replacing its compressor.
 	 *
-	 * @param childToken - A token from the child ID space shard that will receive this progress.
-	 * @returns The parent's progress for that child.
-	 * @throws If the child ID space shard is not active on this compressor.
+	 * @param childToken - A token from the child shard that will receive this token.
+	 * @returns This parent's synchronization token for that child.
+	 * @throws If the child shard is not active on this compressor.
 	 */
-	getChildShardProgress(childToken: ShardSynchronizationToken): ParentIdProgressForShard;
+	getChildShardSyncToken(
+		childToken: ShardSynchronizationToken,
+	): ParentShardSynchronizationToken;
 
 	/**
-	 * Adds a parent's new IDs to this child ID space shard.
+	 * Synchronizes this child shard with its parent's token.
 	 *
 	 * @remarks
 	 * This method keeps the child's allocation stride and does not finalize ID creation ranges.
 	 * Apply creation ranges from {@link IIdCompressorCore.events} separately, in order.
 	 *
-	 * @param progress - Progress obtained from this child's parent.
-	 * @throws If the token names another child or has an invalid generation count.
+	 * @param token - Synchronization token obtained from this child's parent.
+	 * @throws If the token names another child or contains invalid state.
 	 */
-	synchronizeWithParent(progress: ParentIdProgressForShard): void;
+	synchronizeWithParent(token: ParentShardSynchronizationToken): void;
 
 	/**
 	 * Returns undefined if this compressor is not part of a shard group, and otherwise returns a synchronization token for this shard
@@ -264,24 +266,22 @@ export interface IIdCompressorCore {
 }
 
 /**
- * The state shared by all shard tokens: enough information to identify a shard and its progress
- * through its stride pattern. This is used to track which shard generated which IDs and to manage
- * reclamation of a disposed shard's ID space. The {@link ShardToken.disposed} flag distinguishes a
- * plain synchronization token from a disposal token. The branded {@link ShardSynchronizationToken}
- * is the concrete type handed to consumers.
+ * State shared by shard synchronization tokens.
+ * @remarks
+ * Treat these tokens as opaque: the compressor owns their interpretation and may add state in the future.
+ * The {@link ShardToken.disposed} flag distinguishes ordinary synchronization from shard reclamation.
+ * The branded {@link ShardSynchronizationToken} is the concrete child-to-parent token.
  * @internal
  */
 export interface ShardToken {
 	/**
-	 * The number of positions filled in this shard's stride pattern.
-	 * This tracks progress through the stride cycle, not the count of IDs actually generated.
-	 * For example, when a shard is created, it backfills entries for positions in its stride,
-	 * so this value may be non-zero even if the shard hasn't generated any IDs yet.
+	 * The sending compressor's generation count, which can include backfilled positions
+	 * rather than only IDs it generated.
 	 */
 	localGenCount: number;
 
 	/**
-	 * Unique identifier for this shard within its parent.
+	 * Identifies the child shard involved in synchronization with its parent.
 	 */
 	shardId: SessionId;
 
@@ -303,14 +303,16 @@ export type ShardSynchronizationToken = ShardToken & {
 };
 
 /**
- * A parent's ID progress for one child ID space shard.
- * @remarks This token does not finalize ID creation ranges.
+ * A synchronization token from a parent to one of its active child shards.
+ * @remarks
+ * Unlike the child-to-parent {@link ShardSynchronizationToken}, this token cannot dispose a shard.
+ * It does not finalize ID creation ranges.
  * @internal
  */
-export interface ParentIdProgressForShard
-	extends Readonly<Pick<ShardToken, "shardId" | "localGenCount">> {
-	/** Identifies this token when it crosses a message boundary. */
-	readonly type: "parentIdProgressForShard";
+export interface ParentShardSynchronizationToken
+	extends Readonly<Omit<ShardToken, "disposed">> {
+	/** Identifies the parent-to-child token across a message boundary. */
+	readonly type: "parentIdSpaceShardSyncToken";
 }
 
 /**

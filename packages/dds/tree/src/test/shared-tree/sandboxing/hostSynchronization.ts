@@ -5,7 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ParentIdProgressForShard } from "@fluidframework/id-compressor/internal";
+import type { ParentShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -125,8 +125,8 @@ export class HostSynchronization {
 		private readonly synchronizeGuestIdSpaceShard: (
 			token: GuestChangeMessage["idSpaceShardToken"],
 		) => void,
-		/** Captures parent progress after commits have been encoded. */
-		private readonly getParentIdProgress: () => ParentIdProgressForShard,
+		/** Captures the parent ID space shard token after commits have been encoded. */
+		private readonly getParentIdSpaceShardSyncToken: () => ParentShardSynchronizationToken,
 	) {
 		this.localCheckout = this.mainCheckout.fork();
 		this.guestChangeCodec = makeSerializedChangeCodec(
@@ -289,7 +289,7 @@ export class HostSynchronization {
 		const serializedCommits = commits.map((commit) =>
 			this.mainCheckout.serializeCommit(commit),
 		);
-		const parentIdProgress = this.getParentIdProgress();
+		const parentIdSpaceShardSyncToken = this.getParentIdSpaceShardSyncToken();
 		this.send({
 			type: "hostUpdate",
 			updateId,
@@ -297,7 +297,7 @@ export class HostSynchronization {
 			mainRevision: head.revision,
 			trunkRevision,
 			commits: serializedCommits,
-			parentIdProgress,
+			parentIdSpaceShardSyncToken,
 		});
 	}
 

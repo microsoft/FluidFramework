@@ -9,7 +9,7 @@ import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import {
 	createSessionId,
 	type IdCreationRange,
-	type ParentIdProgressForShard,
+	type ParentShardSynchronizationToken,
 	type ShardSynchronizationToken,
 	type ShardToken,
 } from "@fluidframework/id-compressor/internal";
@@ -68,7 +68,10 @@ type _DistinctIds =
 type _IdWireShapes =
 	| requireTrue<isAssignableTo<GuestChangeMessage["idSpaceShardToken"], ShardToken>>
 	| requireTrue<
-			isAssignableTo<HostUpdateMessage["parentIdProgress"], ParentIdProgressForShard>
+			isAssignableTo<
+				HostUpdateMessage["parentIdSpaceShardSyncToken"],
+				ParentShardSynchronizationToken
+			>
 	  >
 	| requireTrue<isAssignableTo<HostIdRangeMessage["range"], IdCreationRange>>
 	| requireFalse<

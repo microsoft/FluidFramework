@@ -54,7 +54,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 	ShardSynchronizationToken,
-	ParentIdProgressForShard,
+	ParentShardSynchronizationToken,
 	IdCompressorEvents,
 } from "./types/index.js";
 import { SerializationVersion } from "./types/index.js";
@@ -372,38 +372,38 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	public getChildShardProgress(
+	public getChildShardSyncToken(
 		childToken: ShardSynchronizationToken,
-	): ParentIdProgressForShard {
+	): ParentShardSynchronizationToken {
 		if (!this.shardingState?.activeChildIds.has(childToken.shardId)) {
-			throw new Error("Cannot get parent progress for an inactive child ID space shard.");
+			throw new Error("Cannot get a synchronization token for an inactive child shard.");
 		}
-		const progress: ParentIdProgressForShard = {
-			type: "parentIdProgressForShard",
+		const token: ParentShardSynchronizationToken = {
+			type: "parentIdSpaceShardSyncToken",
 			shardId: childToken.shardId,
 			localGenCount: this.localGenCount,
 		};
-		return progress;
+		return token;
 	}
 
-	public synchronizeWithParent(progress: ParentIdProgressForShard): void {
+	public synchronizeWithParent(token: ParentShardSynchronizationToken): void {
 		const state = this.shardingState;
 		if (
-			progress.type !== "parentIdProgressForShard" ||
+			token.type !== "parentIdSpaceShardSyncToken" ||
 			state?.shardId === undefined ||
-			state.shardId !== progress.shardId
+			state.shardId !== token.shardId
 		) {
-			throw new Error("Invalid parent progress for this child ID space shard.");
+			throw new Error("Invalid parent synchronization token for this child shard.");
 		}
-		if (!Number.isSafeInteger(progress.localGenCount) || progress.localGenCount < 0) {
-			throw new TypeError("Invalid parent progress generation count.");
+		if (!Number.isSafeInteger(token.localGenCount) || token.localGenCount < 0) {
+			throw new TypeError("Invalid parent synchronization token generation count.");
 		}
-		if (progress.localGenCount <= this.localGenCount) {
+		if (token.localGenCount <= this.localGenCount) {
 			// A child can already be ahead through its own allocations. Its local range
 			// then includes the parent's IDs through this generation count.
 			return;
 		}
-		this.backfillToNextStridePosition(progress.localGenCount, state.currentStride);
+		this.backfillToNextStridePosition(token.localGenCount, state.currentStride);
 	}
 
 	/**

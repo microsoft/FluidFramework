@@ -94,25 +94,25 @@ function createTestIdSpaceShardToken() {
 }
 
 /**
- * Creates parent ID progress for protocol-message tests.
+ * Creates a parent-to-child synchronization token for protocol-message tests.
  *
  * @remarks
  * This helper creates a root compressor, creates a child ID space shard, and asks the
- * root for progress addressed to that child. The result has the same data shape as
- * progress sent by a Host, without putting either compressor object in a message.
- * No sandbox Host owns this child, so the progress is not authorized for a real Guest.
- * Use progress from the test Host when a test must apply it to a Guest.
+ * root for a token addressed to that child. The result has the same data shape as
+ * a token sent by a Host, without putting either compressor object in a message.
+ * No sandbox Host owns this child, so the token is not authorized for a real Guest.
+ * Use a token from the test Host when a test must apply it to a Guest.
  *
- * @returns Parent progress for the new test child ID space shard.
+ * @returns The parent synchronization token for the new test child shard.
  */
-function createTestParentIdProgress() {
+function createTestParentIdSpaceShardSyncToken() {
 	const root = createIdCompressor(SerializationVersion.V3);
 	const [serializedChild] = root.shard(1);
 	assert(serializedChild !== undefined, "Expected a child ID space shard");
 	const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
 	const token = child.getShardSyncToken();
 	assert(token !== undefined, "Expected a child ID space shard token");
-	return root.getChildShardProgress(token);
+	return root.getChildShardSyncToken(token);
 }
 
 /**
@@ -164,12 +164,12 @@ describe("Host and Guest message protocol", () => {
 				mainRevision: 1,
 				trunkRevision: "root",
 				commits: [{ value: 1 }],
-				parentIdProgress: createTestParentIdProgress(),
+				parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
 			},
 			{
 				type: "hostIdRange",
 				rangeId: 0,
-				parentIdProgress: createTestParentIdProgress(),
+				parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
 				range: {
 					sessionId: createSessionId(),
 					ids: {
@@ -235,7 +235,7 @@ describe("Host and Guest message protocol", () => {
 				idCompressor: 1,
 			},
 			{ type: "guestChange" },
-			// Every Host update needs parent progress so the Guest can decode its commits.
+			// Every Host update needs a parent token so the Guest can decode its commits.
 			{
 				type: "hostUpdate",
 				updateId: 0,
@@ -244,7 +244,7 @@ describe("Host and Guest message protocol", () => {
 				trunkRevision: "root",
 				commits: [],
 			},
-			// A negative generation count is not valid parent ID progress.
+			// A negative generation count is not valid in a parent synchronization token.
 			{
 				type: "hostUpdate",
 				updateId: 0,
@@ -252,7 +252,10 @@ describe("Host and Guest message protocol", () => {
 				mainRevision: "root",
 				trunkRevision: "root",
 				commits: [],
-				parentIdProgress: { ...createTestParentIdProgress(), localGenCount: -1 },
+				parentIdSpaceShardSyncToken: {
+					...createTestParentIdSpaceShardSyncToken(),
+					localGenCount: -1,
+				},
 			},
 			// A Guest change cannot be decoded safely without the child ID space shard progress token.
 			validChange,
@@ -271,13 +274,13 @@ describe("Host and Guest message protocol", () => {
 			{ ...validChange, idSpaceShardToken: { ...token, unexpected: true } },
 			{ ...validChange, idSpaceShardToken: token, extra: true },
 			{ type: "hostUpdateAck" },
-			// The Guest needs both parent progress and the finalized range.
+			// The Guest needs both a parent token and the finalized range.
 			{ type: "hostIdRange", rangeId: 0 },
 			// Generation counts start at one, and the range also needs its count, cluster size, and local ID ranges.
 			{
 				type: "hostIdRange",
 				rangeId: 0,
-				parentIdProgress: createTestParentIdProgress(),
+				parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
 				range: { sessionId: createSessionId(), ids: { firstGenCount: 0 } },
 			},
 			{ type: "guestChangeAck" },
@@ -539,7 +542,7 @@ describe("Host and Guest correctness", () => {
 		interop.sendToGuest.postMessage({
 			type: "hostIdRange",
 			rangeId: 1,
-			parentIdProgress: createTestParentIdProgress(),
+			parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
 			range: {
 				sessionId: createSessionId(),
 				ids: {
@@ -604,7 +607,7 @@ describe("Host and Guest correctness", () => {
 		interop.sendToGuest.postMessage({
 			type: "hostIdRange",
 			rangeId: 0,
-			parentIdProgress: parent.getChildShardProgress(token),
+			parentIdSpaceShardSyncToken: parent.getChildShardSyncToken(token),
 			range: {
 				sessionId: createSessionId(),
 				ids: {
@@ -621,7 +624,7 @@ describe("Host and Guest correctness", () => {
 		assert.equal(host.error, undefined);
 	});
 
-	it("rejects Host progress for another ID space shard before applying an update", async () => {
+	it("rejects a Host synchronization token for another ID space shard before applying an update", async () => {
 		const reported = makePromiseWithResolvers();
 		const { host, main, guest, interop } = await setupCustom(
 			["initial"],
@@ -637,7 +640,7 @@ describe("Host and Guest correctness", () => {
 			mainRevision: host.synchronization.guestInitialization.mainRevision,
 			trunkRevision: host.synchronization.guestInitialization.trunkRevision,
 			commits: [],
-			parentIdProgress: createTestParentIdProgress(),
+			parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
 		});
 		await reported.promise;
 		assert(guest.error?.cause instanceof SandboxProtocolError);
@@ -646,7 +649,7 @@ describe("Host and Guest correctness", () => {
 		assert.equal(host.error, undefined);
 	});
 
-	it("rejects Host ID progress that moves backward across ordered updates", async () => {
+	it("rejects a Host synchronization token that moves backward across ordered updates", async () => {
 		const reported = makePromiseWithResolvers();
 		const { host, main, guest, guestView, provider, interop } = await setupCustom(
 			["initial"],
@@ -659,9 +662,9 @@ describe("Host and Guest correctness", () => {
 		const token = child.getShardSyncToken();
 		assert(token !== undefined, "Expected an ID space shard token");
 		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
-		const previous = root.getChildShardProgress(token);
+		const previous = root.getChildShardSyncToken(token);
 		root.generateCompressedId();
-		const current = root.getChildShardProgress(token);
+		const current = root.getChildShardSyncToken(token);
 		const revision = host.synchronization.guestInitialization.mainRevision;
 		for (const [updateId, progress] of [
 			[0, current],
@@ -674,12 +677,12 @@ describe("Host and Guest correctness", () => {
 				mainRevision: revision,
 				trunkRevision: host.synchronization.guestInitialization.trunkRevision,
 				commits: [],
-				parentIdProgress: progress,
+				parentIdSpaceShardSyncToken: progress,
 			});
 		}
 		await reported.promise;
 		assert(guest.error?.cause instanceof SandboxProtocolError);
-		assert.match(guest.error.cause.message, /Host ID progress moved backward/);
+		assert.match(guest.error.cause.message, /Host synchronization token moved backward/);
 		assert.deepEqual([...main.root], ["initial"]);
 	});
 
@@ -852,7 +855,7 @@ describe("Host and Guest correctness", () => {
 		guestView.root.push("guest");
 		await guest.updateHostPromise;
 		guest.dispose();
-		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
 		host.dispose();
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
@@ -957,7 +960,7 @@ describe("Host and Guest correctness", () => {
 		await sentChange;
 		await rejected;
 		assert.deepEqual([...main.root], ["initial", "queued"]);
-		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
 		host.dispose();
 		assert.equal(root.getShardSyncToken(), undefined);
 	});
@@ -977,9 +980,9 @@ describe("Host and Guest correctness", () => {
 		};
 		assert.doesNotThrow(() => guest.dispose());
 		assert.throws(() => guestView.root, /disposed|invalid state/i);
-		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
 		host.dispose();
-		assert.throws(() => root.getChildShardProgress(token), /inactive child/);
+		assert.throws(() => root.getChildShardSyncToken(token), /inactive child/);
 	});
 
 	it("reclaims one Guest shard without affecting another active child shard", async () => {
@@ -995,8 +998,8 @@ describe("Host and Guest correctness", () => {
 
 		guest.dispose();
 		host.dispose();
-		assert.throws(() => root.getChildShardProgress(guestToken), /inactive child/);
-		assert.doesNotThrow(() => root.getChildShardProgress(siblingToken));
+		assert.throws(() => root.getChildShardSyncToken(guestToken), /inactive child/);
+		assert.doesNotThrow(() => root.getChildShardSyncToken(siblingToken));
 		sibling.generateCompressedId();
 		root.synchronizeWithShard(
 			sibling.disposeShard() ?? assert.fail("Expected a sibling disposal token"),
@@ -1021,14 +1024,14 @@ describe("Host and Guest correctness", () => {
 		const rejected = assert.rejects(pending, /disposed before synchronization completed/);
 		guest.dispose();
 		assert.throws(() => guestView.root.push("after close"), /disposed|invalid state/i);
-		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
 
 		const changeAck = nextProtocolMessage(interop.sendToHost, "guestChangeAck");
 		interop.sendToHost.postMessage(change);
 		await changeAck;
 		await rejected;
 		assert.deepEqual([...main.root], ["initial", "pending"]);
-		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
 		host.dispose();
 		assert.equal(root.getShardSyncToken(), undefined);
 	});
@@ -1061,9 +1064,9 @@ describe("Host and Guest correctness", () => {
 		ports.guestPort.close();
 		guestView.root.push("unreported");
 		guest.dispose();
-		assert.doesNotThrow(() => root.getChildShardProgress(token));
+		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
 		host.dispose();
-		assert.throws(() => root.getChildShardProgress(token), /inactive child/);
+		assert.throws(() => root.getChildShardSyncToken(token), /inactive child/);
 		assert.deepEqual([...main.root], ["initial"]);
 		main.root.push("still usable");
 		assert.deepEqual([...main.root], ["initial", "still usable"]);
@@ -1650,7 +1653,7 @@ describe("Host and Guest correctness", () => {
 					mainRevision,
 					trunkRevision,
 					commits: [],
-					parentIdProgress: createTestParentIdProgress(),
+					parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
 				});
 			}
 			await reported.promise;
@@ -2130,7 +2133,7 @@ describe("Host and Guest correctness", () => {
 					assert.deepEqual(token, { ...idSpaceShardToken, disposed: false });
 					root.synchronizeWithShard(idSpaceShardToken);
 				},
-				() => root.getChildShardProgress(idSpaceShardToken),
+				() => root.getChildShardSyncToken(idSpaceShardToken),
 			);
 			try {
 				const { mainRevision, trunkRevision } = synchronization.guestInitialization;
@@ -2177,7 +2180,7 @@ describe("Host and Guest correctness", () => {
 			createChildLogger({ namespace: "Host" }),
 			() => assert.fail("No Guest changes expected"),
 			() => ({
-				type: "parentIdProgressForShard",
+				type: "parentIdSpaceShardSyncToken",
 				shardId: createTestIdSpaceShardToken().shardId,
 				localGenCount: 0,
 			}),
@@ -2229,7 +2232,7 @@ describe("Host and Guest correctness", () => {
 				mainRevision: revision,
 				trunkRevision: revision,
 				commits: [],
-				parentIdProgress: root.getChildShardProgress(childToken),
+				parentIdSpaceShardSyncToken: root.getChildShardSyncToken(childToken),
 			});
 			assert.deepEqual(sent, [{ type: "hostUpdateAck", updateId: 0 }]);
 			assert.deepEqual([...view.root], ["a"]);

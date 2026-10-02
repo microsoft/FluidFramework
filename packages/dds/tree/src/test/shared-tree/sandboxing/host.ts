@@ -190,7 +190,7 @@ export class HostImplementation implements Host {
 			(error) => this.session.fail(error),
 			hostLogger,
 			(token) => this.synchronizeGuestIdSpaceShard(token),
-			() => this.getParentIdProgress(),
+			() => this.getParentIdSpaceShardSyncToken(),
 		);
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
@@ -301,21 +301,21 @@ export class HostImplementation implements Host {
 	}
 
 	/**
-	 * Gets the Host compressor's current ID progress for this Guest's ID space shard.
+	 * Gets the Host compressor's synchronization token for this Guest's ID space shard.
 	 *
 	 * @remarks
-	 * The Host captures this progress after it encodes a tree update or receives a finalized
+	 * The Host captures this token after it encodes a tree update or receives a finalized
 	 * creation range. The Guest applies it before it decodes a dependent update or finalizes
 	 * the range.
 	 *
 	 * This method does not create or submit a new creation range.
 	 *
-	 * @returns Parent progress for the ID space shard created during this session's initialization.
+	 * @returns The parent synchronization token addressed to this Guest's ID space shard.
 	 */
-	private getParentIdProgress() {
+	private getParentIdSpaceShardSyncToken() {
 		const child = this.guestIdSpaceShardToken;
 		assert(child !== undefined, "Expected an initialized Guest ID space shard");
-		return this.idCompressor.getChildShardProgress(child);
+		return this.idCompressor.getChildShardSyncToken(child);
 	}
 
 	/**
@@ -323,7 +323,7 @@ export class HostImplementation implements Host {
 	 *
 	 * @remarks
 	 * The compressor reports finalized ranges in order. This method gives each message a
-	 * session-local ID and includes the current parent progress. It sends the range even if
+	 * session-local ID and includes the current parent synchronization token. It sends the range even if
 	 * finalization does not change the tree. Messages in this direction arrive in send order,
 	 * so the Guest receives the range before a later tree update that uses its IDs.
 	 *
@@ -340,7 +340,7 @@ export class HostImplementation implements Host {
 		this.postMessage({
 			type: "hostIdRange",
 			rangeId: brand<HostIdRangeId>(this.nextIdRangeId++),
-			parentIdProgress: this.getParentIdProgress(),
+			parentIdSpaceShardSyncToken: this.getParentIdSpaceShardSyncToken(),
 			range: { ...range, ids: range.ids },
 		});
 	}

@@ -27,7 +27,7 @@ export type {
 	IIdCompressorCore,
 	IdCompressorEvents,
 	OpSpaceCompressedId,
-	ParentIdProgressForShard,
+	ParentShardSynchronizationToken,
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,

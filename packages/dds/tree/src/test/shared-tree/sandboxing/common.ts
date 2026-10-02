@@ -335,20 +335,20 @@ const GuestIdSpaceShardToken = Type.Object(
 );
 
 /**
- * Wire representation of {@link @fluidframework/id-compressor/internal#ParentIdProgressForShard}.
+ * Wire representation of {@link @fluidframework/id-compressor/internal#ParentShardSynchronizationToken}.
  *
  * @remarks
- * The Host sends this progress to the Guest in {@link HostUpdateMessage} and
+ * The Host sends this ID space shard token to the Guest in {@link HostUpdateMessage} and
  * {@link HostIdRangeMessage}. The Guest applies it to its child compressor before
  * decoding Host branch commits or finalizing an ID creation range.
  */
-const ParentIdProgress = Type.Object(
+const ParentIdSpaceShardSyncToken = Type.Object(
 	{
-		/** Distinguishes parent progress from a child synchronization token. */
-		type: Type.Literal("parentIdProgressForShard"),
-		/** Identifies the child that can apply this Host progress. */
+		/** Distinguishes parent-to-child synchronization from child-to-parent synchronization. */
+		type: Type.Literal("parentIdSpaceShardSyncToken"),
+		/** Identifies the child ID space shard that can apply this token. */
 		shardId: IdSpaceShardSessionId,
-		/** The Host's generation count before a dependent range or change is decoded. */
+		/** Current parent generation count before a dependent range or change is decoded. */
 		localGenCount: NonNegativeSafeInteger,
 	},
 	{ additionalProperties: false },
@@ -433,8 +433,8 @@ const HostUpdateMessage = Type.Object(
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
-		/** Parent ID progress needed before the Guest decodes any commits or revisions. */
-		parentIdProgress: Type.Readonly(ParentIdProgress),
+		/** Parent ID space shard token needed before the Guest decodes commits or revisions. */
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
 	},
 	{ additionalProperties: false },
 );
@@ -452,8 +452,8 @@ const HostIdRangeMessage = Type.Object(
 		type: Type.Literal("hostIdRange"),
 		/** Sequence number for ranges sent to this Guest. */
 		rangeId: Type.Readonly(HostIdRangeId),
-		/** Lets the Guest recognize Host IDs before finalizing the range. */
-		parentIdProgress: Type.Readonly(ParentIdProgress),
+		/** Synchronizes the Guest's child ID space shard before it finalizes the range. */
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
 		/** The finalized range to apply before dependent Host updates. */
 		range: Type.Readonly(FinalizedIdRange),
 	},
