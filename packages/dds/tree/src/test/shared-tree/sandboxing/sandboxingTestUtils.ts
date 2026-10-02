@@ -23,12 +23,12 @@ import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
 import {
+	GuestImplementation,
+	HostImplementation,
 	normalizeProtocolError,
 	sandboxFormatValidator,
 	throwProtocolError,
-} from "./common.js";
-import { GuestImplementation } from "./guest.js";
-import { HostImplementation } from "./host.js";
+} from "../../../sandboxing/index.js";
 
 /**
  * The ports and test controls for one Host and Guest session.

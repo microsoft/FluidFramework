@@ -12,14 +12,14 @@ import {
 	findCommonAncestor,
 	type GraphCommit,
 	type RevisionTag,
-} from "../../../core/index.js";
+} from "../core/index.js";
 import {
 	makeSerializedChangeCodec,
 	type SerializedChangeCodec,
 	type SharedTreeChange,
 	type TreeCheckout,
-} from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
+} from "../shared-tree/index.js";
+import { brand } from "../util/index.js";
 
 import {
 	type GuestChangeAckMessage,

@@ -91,16 +91,19 @@ These terms are similar to the terms for virtual machines.
     For more information, see "ID Sharding."
 5. The Guest is valid only during its owning Host session.
     Behavior after that session ends is unsupported.
+6. The ID compressor's V3 serialization format is enabled.
+    Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
 
 ## Architecture
 
 ### Endpoint Options
 
-The `Host` constructor and `Guest.create` each accept a named options object.
+The `createHost` and `createGuest` functions each accept a named options object.
 Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions` in [common.ts](./common.ts).
-The shared type defines the endpoint's port, logger, session compressor, and optional protocol-error callback.
-Supply a separate port and scoped logger for each endpoint, but share the compressor.
-The Host also requires the application view and binding handle; the Guest requires its schema configuration and tree options.
+The shared type defines the endpoint's port, logger, and optional protocol-error callback.
+Supply a separate port and logger for each endpoint.
+The Host also requires the application view.
+The Guest requires its tree options and the Host's `idCompressor`.
 If you omit the protocol-error callback, terminal errors are thrown asynchronously.
 
 ### Participants and Message Directions
@@ -259,7 +262,7 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 
 ### Test Coverage
 
-[Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
+[Transport codec tests](../test/shared-tree/sandboxing/transport.spec.ts) and [end-to-end tests](../test/shared-tree/sandboxing/sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
 The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
 Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.

@@ -10,17 +10,17 @@ import {
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions } from "../../../codec/index.js";
-import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
+import type { ICodecOptions } from "../codec/index.js";
+import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
-import { createIndependentTreeCheckout } from "../../../shared-tree/independentView.js";
+import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
 import type {
 	ImplicitFieldSchema,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewConfiguration,
 	ViewableTree,
-} from "../../../simple-tree/index.js";
+} from "../simple-tree/index.js";
 
 import {
 	type HostGuestMessage,
@@ -38,11 +38,19 @@ import { normalizeTransportData } from "./transport.js";
 
 /**
  * Options for creating a Guest.
+ *
+ * @alpha @input
  */
 export interface GuestOptions extends SandboxEndpointOptions {
 	/** The forest and codec options used to initialize the Guest's tree. */
 	readonly treeOptions: ForestOptions & ICodecOptions;
-	/** The compressor shared by the Host and Guest for this session. */
+	/**
+	 * The compressor shared by the Host and Guest for this session.
+	 *
+	 * @remarks
+	 * Sandboxing requires the ID compressor's V3 serialization format.
+	 * Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
+	 */
 	readonly idCompressor: IIdCompressor;
 }
 
@@ -51,6 +59,7 @@ export interface GuestOptions extends SandboxEndpointOptions {
  * @remarks
  * Create using {@link createGuest}.
  * @sealed
+ * @alpha
  */
 export interface Guest {
 	/** The independent tree synchronized with the Host. */
@@ -69,6 +78,8 @@ export interface Guest {
  * @param options - The options for creating the Guest, including tree and codec options.
  *
  * @returns A promise that resolves to the created Guest instance.
+ *
+ * @alpha
  */
 export async function createGuest(options: GuestOptions): Promise<Guest> {
 	return GuestImplementation.create(options);
@@ -157,7 +168,7 @@ export class GuestImplementation implements Guest {
 		this.treeOptions = treeOptions;
 		this.idCompressor = idCompressor;
 		this.port = port;
-		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
+		this.logger = createChildLogger({ logger, namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {

@@ -40,18 +40,18 @@ import {
 
 import {
 	type GuestChangeMessage,
+	GuestSynchronization,
+	HostImplementation,
 	type HostGuestMessage,
+	HostSynchronization,
 	type HostUpdateMessage,
 	makePromiseWithResolvers,
+	normalizeTransportData,
 	parseHostGuestMessage,
+	SandboxSessionEndpoint,
 	SandboxProtocolError,
-} from "./common.js";
-import { HostImplementation } from "./host.js";
-import { GuestSynchronization } from "./guestSynchronization.js";
-import { HostSynchronization } from "./hostSynchronization.js";
-import { SandboxSessionEndpoint } from "./session.js";
-import { normalizeTransportData } from "./transport.js";
-import { getCheckout } from "./synchronizationUtils.js";
+	getCheckout,
+} from "../../../sandboxing/index.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,

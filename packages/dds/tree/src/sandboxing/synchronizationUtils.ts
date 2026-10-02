@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { SchematizingSimpleTreeView, type TreeCheckout } from "../../../shared-tree/index.js";
+import { SchematizingSimpleTreeView, type TreeCheckout } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Sandbox synchronization requires internal branch APIs.
-import type { UntypedTreeView } from "../../../simple-tree/api/index.js";
+import type { UntypedTreeView } from "../simple-tree/api/index.js";
 
 /**
  * Gets the internal checkout for a sandbox view.

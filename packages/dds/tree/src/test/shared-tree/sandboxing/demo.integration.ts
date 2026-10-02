@@ -20,14 +20,12 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { createHost } from "./host.js";
+import { createGuest, createHost } from "../../../index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { asBeta } from "../../../api.js";
-import { getCheckout } from "./synchronizationUtils.js";
-import { createGuest } from "./guest.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 
 describe("End to End Host and Guest integrations", () => {
@@ -73,10 +71,6 @@ describe("End to End Host and Guest integrations", () => {
 
 			const channel = new MessageChannel();
 
-			// TODO: we need to expose a better way to do this.
-			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
-			const idCompressor = getCheckout(viewHost)["idCompressor"];
-
 			// TODO: we should not have to initialize first:
 			viewHost.initialize("A");
 			// TODO: This should not be required.
@@ -89,7 +83,7 @@ describe("End to End Host and Guest integrations", () => {
 			const guest = await createGuest({
 				logger,
 				port: channel.port2,
-				idCompressor,
+				idCompressor: host.idCompressor,
 				treeOptions: { jsonValidator: FormatValidatorBasic },
 			});
 			const viewGuest = guest.tree.viewWith(config);

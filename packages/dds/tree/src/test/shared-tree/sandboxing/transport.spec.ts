@@ -18,17 +18,17 @@ import { brand, type isAssignableTo, type requireFalse } from "../../../util/ind
 import {
 	type BlobRequestId,
 	type BlobRequestMessage,
+	GuestTransportCodec,
 	type HandleToken,
+	HostTransportCodec,
 	isHandleToken,
 	isLocalHandle,
 	isSerializedHandle,
+	normalizeTransportData,
 	parseHostGuestMessage,
 	SandboxProtocolError,
 	validateTreePayloadVocabulary,
-} from "./common.js";
-import { GuestTransportCodec } from "./guestTransport.js";
-import { HostTransportCodec } from "./hostTransport.js";
-import { normalizeTransportData } from "./transport.js";
+} from "../../../sandboxing/index.js";
 
 /**
  * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.

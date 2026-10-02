@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Breakable } from "../../../util/index.js";
+import { Breakable } from "../util/index.js";
 
 import { normalizeProtocolError, type SessionFailureMessage } from "./common.js";
 
