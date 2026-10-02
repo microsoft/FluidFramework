@@ -97,7 +97,8 @@ export default class UpdateFluidImportsCommand extends BaseCommand<
 			exists: true,
 		}),
 		onlyInternal: Flags.boolean({
-			description: "Use /internal for all non-public APIs instead of /beta or /legacy.",
+			description:
+				"Use /internal for non-public APIs only when the package exposes that entry point; packages without it are unchanged.",
 		}),
 		...BaseCommand.flags,
 	};
@@ -660,95 +661,134 @@ class ApiLevelReader {
 	}
 
 	private loadPackageData(packageName: PackageName): NamedExportToPath | undefined {
-		const internalImport = this.tempSource.addImportDeclaration({
-			moduleSpecifier: `${packageName}/internal`,
-		});
-		const internalSource = internalImport.getModuleSpecifierSourceFile();
-		if (internalSource === undefined) {
-			this.log.warning(`no /internal export from ${packageName}`);
-			return undefined;
-		}
-		this.log.verbose(`Loading ${packageName} API data from ${internalSource.getFilePath()}`);
-
-		const exports = getApiExports(internalSource, "warnForMissing", this.log);
-		for (const name of exports.unknown.keys()) {
-			// Suppress any warning for EventEmitter as this export is currently a special case.
-			// See AB#7377 for replacement status upon which this can be removed.
-			if (name !== "EventEmitter") {
-				this.log.warning(`\t\t${packageName} ${name} API level was not recognized.`);
-			}
-		}
-
 		const memberData = new Map<string, ExportPath>();
-		addUniqueNamedExportsToMap(exports.public, memberData, ExportPath.Public);
-		if (this.onlyInternal) {
-			addUniqueNamedExportsToMap(exports.alpha, memberData, ExportPath.Internal);
-			addUniqueNamedExportsToMap(exports.beta, memberData, ExportPath.Internal);
+		const exportsByPath = new Map<ExportPath, ReturnType<typeof getApiExports>>();
+		const unknownExports = new Set<string>();
+		for (const exportPath of Object.values(ExportPath)) {
+			const sourceFile = this.resolvePackageEntryPoint(packageName, exportPath);
+			if (sourceFile === undefined) {
+				this.log.verbose(`No "${exportPath || "root"}" export from ${packageName}.`);
+				continue;
+			}
 
-			addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ExportPath.Internal);
-			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ExportPath.Internal);
-			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Internal);
-		} else {
-			// #region Handle imports for API levels that have had different historical path mappings (with backwards compatibility)
-
-			const exportSetsWithFallbacks = [
-				// @alpha APIs have been mapped to both "/alpha" and "/legacy" paths.
-				// Later @legacy tag was added explicitly.
-				// Check for a "/alpha" export to map @alpha as "/alpha".
-				// Otherwise, map all @alpha APIs to "/legacy".
-				{
-					apiLevel: ApiLevel.alpha,
-					preferredPath: ExportPath.Alpha,
-					fallbackPath: ExportPath.Legacy,
-				},
-
-				// Historically, all @legacy APIs were mapped to "/legacy".
-				// Now, we support separate paths for all release levels with @legacy APIs.
-				// Check for a "/legacy/alpha" export to map @legacy + @alpha as "legacy/alpha" and map @legacy + @beta to "/legacy".
-				// Otherwise, map all @legacy APIs to /legacy.
-				{
-					apiLevel: ApiLevel.legacyAlpha,
-					preferredPath: ExportPath.LegacyAlpha,
-					fallbackPath: ExportPath.Legacy,
-				},
-				{
-					apiLevel: ApiLevel.legacyBeta,
-					preferredPath: ExportPath.LegacyBeta,
-					fallbackPath: ExportPath.Legacy,
-				},
-			];
-
-			for (const { apiLevel: level, preferredPath, fallbackPath } of exportSetsWithFallbacks) {
-				const levelExports = exports[level];
-				if (levelExports.length > 0) {
-					const usePreferredExportPath =
-						this.tempSource
-							.addImportDeclaration({
-								moduleSpecifier: `${packageName}/${preferredPath}`,
-							})
-							.getModuleSpecifierSourceFile() !== undefined;
-
-					if (!usePreferredExportPath) {
-						this.log.verbose(
-							`Preferred export path "${preferredPath}" for level "${level}" was not found. Will use "${fallbackPath}" instead.`,
-						);
-					}
-
-					addUniqueNamedExportsToMap(
-						levelExports,
-						memberData,
-						usePreferredExportPath ? preferredPath : fallbackPath,
+			this.log.verbose(
+				`Loading ${packageName}${exportPath === "" ? "" : `/${exportPath}`} API data from ${sourceFile.getFilePath()}`,
+			);
+			const exports = getApiExports(sourceFile, "warnForMissing", this.log);
+			exportsByPath.set(exportPath, exports);
+			for (const name of exports.unknown.keys()) {
+				// Suppress any warning for EventEmitter as this export is currently a special case.
+				// See AB#7377 for replacement status upon which this can be removed.
+				if (name !== "EventEmitter" && !unknownExports.has(name)) {
+					unknownExports.add(name);
+					this.log.warning(
+						`\t\t${packageName}${exportPath === "" ? "" : `/${exportPath}`} ${name} API level was not recognized.`,
 					);
 				}
 			}
-
-			// #endregion
-
-			addUniqueNamedExportsToMap(exports.beta, memberData, ExportPath.Beta);
-			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Legacy);
 		}
-		addUniqueNamedExportsToMap(exports.internal, memberData, ExportPath.Internal);
+
+		const internalExports = exportsByPath.get(ExportPath.Internal);
+		if (this.onlyInternal && internalExports === undefined) {
+			this.log.warning(`no /internal export from ${packageName}`);
+			return undefined;
+		}
+		if (exportsByPath.size === 0) {
+			this.log.warning(`no recognized export paths from ${packageName}`);
+			return undefined;
+		}
+
+		addKnownExportsToMapWithPrecedence(
+			exportsByPath.get(ExportPath.Public),
+			memberData,
+			ExportPath.Public,
+		);
+		if (this.onlyInternal) {
+			addKnownExportsToMapWithPrecedence(internalExports, memberData, ExportPath.Internal);
+			return memberData;
+		}
+
+		addKnownExportsToMapWithPrecedence(
+			exportsByPath.get(ExportPath.Beta),
+			memberData,
+			ExportPath.Beta,
+		);
+
+		// Dedicated legacy entry points apply only to their matching release tags.
+		// /legacy remains the fallback when a dedicated entry point does not export a symbol.
+		addNamedExportsToMapWithPrecedence(
+			exportsByPath.get(ExportPath.LegacyBeta)?.legacyBeta,
+			memberData,
+			ExportPath.LegacyBeta,
+		);
+		addNamedExportsToMapWithPrecedence(
+			exportsByPath.get(ExportPath.LegacyAlpha)?.legacyAlpha,
+			memberData,
+			ExportPath.LegacyAlpha,
+		);
+		addKnownExportsToMapWithPrecedence(
+			exportsByPath.get(ExportPath.Legacy),
+			memberData,
+			ExportPath.Legacy,
+		);
+		addKnownExportsToMapWithPrecedence(
+			exportsByPath.get(ExportPath.Alpha),
+			memberData,
+			ExportPath.Alpha,
+		);
+		addKnownExportsToMapWithPrecedence(internalExports, memberData, ExportPath.Internal);
+
 		return memberData;
+	}
+
+	private resolvePackageEntryPoint(
+		packageName: PackageName,
+		exportPath: ExportPath,
+	): SourceFile | undefined {
+		const importDeclaration = this.tempSource.addImportDeclaration({
+			moduleSpecifier: `${packageName}${exportPath === "" ? "" : `/${exportPath}`}`,
+		});
+		try {
+			return importDeclaration.getModuleSpecifierSourceFile();
+		} finally {
+			importDeclaration.remove();
+		}
+	}
+}
+
+function addKnownExportsToMapWithPrecedence(
+	exports: ReturnType<typeof getApiExports> | undefined,
+	nameToExportPathMap: NamedExportToPath,
+	exportPath: ExportPath,
+): void {
+	if (exports === undefined) {
+		return;
+	}
+	for (const exportSet of [
+		exports.public,
+		exports.beta,
+		exports.alpha,
+		exports.internal,
+		exports.legacyPublic,
+		exports.legacyBeta,
+		exports.legacyAlpha,
+	]) {
+		addNamedExportsToMapWithPrecedence(exportSet, nameToExportPathMap, exportPath);
+	}
+}
+
+function addNamedExportsToMapWithPrecedence(
+	exports: { name: string }[] | undefined,
+	nameToExportPathMap: NamedExportToPath,
+	exportPath: ExportPath,
+): void {
+	if (exports === undefined) {
+		return;
+	}
+	for (const { name } of exports) {
+		if (!nameToExportPathMap.has(name)) {
+			nameToExportPathMap.set(name, exportPath);
+		}
 	}
 }
 

@@ -1,0 +1,9 @@
+{
+	"compilerOptions": {
+		"module": "Node16",
+		"moduleResolution": "Node16",
+		"skipLibCheck": true,
+		"target": "ES2022",
+	},
+	"include": ["source.ts"],
+}
