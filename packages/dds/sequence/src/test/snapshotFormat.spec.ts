@@ -7,10 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
-import {
-	SummaryType,
-	type ISummaryTree,
-} from "@fluidframework/driver-definitions/internal";
+import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	mixinMonitoringContext,
@@ -44,7 +41,10 @@ function assertSnapshotFormat(
 	assert(typeof header.content === "string");
 	const chunk: unknown = JSON.parse(header.content);
 	assert(typeof chunk === "object" && chunk !== null);
-	assert.equal("version" in chunk ? chunk.version : undefined, useFlatFormat ? "1" : undefined);
+	assert.equal(
+		"version" in chunk ? chunk.version : undefined,
+		useFlatFormat ? "1" : undefined,
+	);
 	assert.equal("segments" in chunk, useFlatFormat);
 	assert.equal("segmentTexts" in chunk, !useFlatFormat);
 	if (useFlatFormat) {
@@ -143,11 +143,8 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 						assertSnapshotFormat(sharedString, summary.summary, expectedFormat);
 						const loaded = await loadString(summary.summary, sharedString.attributes, {});
 						assert.equal(loaded.getText(), "before after");
-						assertSnapshotFormat(
-							loaded,
-							(await loaded.summarize()).summary,
-							expectedFormat,
-						);
+						const loadedSummary = await loaded.summarize();
+						assertSnapshotFormat(loaded, loadedSummary.summary, expectedFormat);
 					});
 				}
 			}
@@ -166,11 +163,7 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 				assertSnapshotFormat(loaded, nextSummary.summary, useFlatFormat);
 				const reloaded = await loadString(nextSummary.summary, loaded.attributes, {});
 				assert.equal(reloaded.getText(), "before after");
-				assertSnapshotFormat(
-					reloaded,
-					reloaded.getAttachSummary().summary,
-					useFlatFormat,
-				);
+				assertSnapshotFormat(reloaded, reloaded.getAttachSummary().summary, useFlatFormat);
 			});
 
 			it(`records an explicit ${useFlatFormat ? "legacy" : "flat"} override for subsequent loads`, async () => {
@@ -187,22 +180,21 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 				assertSnapshotFormat(sharedString, summary.summary, useFlatFormat);
 				const reloaded = await loadString(nextSummary.summary, loaded.attributes, {});
 				assert.equal(reloaded.getText(), "before override");
-				assertSnapshotFormat(
-					reloaded,
-					(await reloaded.summarize()).summary,
-					!useFlatFormat,
-				);
+				const reloadedSummary = await reloaded.summarize();
+				assertSnapshotFormat(reloaded, reloadedSummary.summary, !useFlatFormat);
 			});
 		}
 
 		it("does not share recorded flags between instances or mutate factory attributes", async () => {
 			const originalAttributes = { ...factory.attributes };
 			const flatString = createString({ runtime: true });
-			assertSnapshotFormat(flatString, (await flatString.summarize()).summary, true);
+			const flatSummary = await flatString.summarize();
+			assertSnapshotFormat(flatString, flatSummary.summary, true);
 			assert.deepEqual(factory.attributes, originalAttributes);
 
 			const legacyString = createString({});
-			assertSnapshotFormat(legacyString, (await legacyString.summarize()).summary, false);
+			const legacySummary = await legacyString.summarize();
+			assertSnapshotFormat(legacyString, legacySummary.summary, false);
 			assert.notEqual(flatString.attributes, legacyString.attributes);
 			assert.deepEqual(factory.attributes, originalAttributes);
 		});
@@ -230,6 +222,7 @@ describe("SharedString snapshot format on attach", () => {
 		containerRuntimeFactory.processAllMessages();
 
 		assert.equal(sharedString.getText(), "before after");
-		assertSnapshotFormat(sharedString, (await sharedString.summarize()).summary, true);
+		const summary = await sharedString.summarize();
+		assertSnapshotFormat(sharedString, summary.summary, true);
 	});
 });

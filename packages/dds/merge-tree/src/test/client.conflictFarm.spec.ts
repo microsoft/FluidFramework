@@ -89,17 +89,20 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 			// 		operations: [...opts.operations, obliterateRange, obliterateRangeSided],
 			// 	},
 			// },
-		].flatMap(({ name, config }) => [
-			{ name, config: { ...config, newMergeTreeSnapshotFormat: false } },
+		].flatMap(({ name: variantName, config: variantConfig }) => [
 			{
-				name: `${name} (flat snapshots)`,
+				name: variantName,
+				config: { ...variantConfig, newMergeTreeSnapshotFormat: false },
+			},
+			{
+				name: `${variantName} (flat snapshots)`,
 				config: {
-					...config,
+					...variantConfig,
 					newMergeTreeSnapshotFormat: true,
 					resultsFilePostfix:
-						config.resultsFilePostfix === undefined
+						variantConfig.resultsFilePostfix === undefined
 							? undefined
-							: `flat-${config.resultsFilePostfix}`,
+							: `flat-${variantConfig.resultsFilePostfix}`,
 				},
 			},
 		]))

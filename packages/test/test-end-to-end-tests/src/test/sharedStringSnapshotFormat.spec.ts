@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	SummaryType,
-	type ISummaryTree,
-} from "@fluidframework/driver-definitions/internal";
+import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	DataObjectFactoryType,
@@ -59,7 +56,10 @@ function assertSummaryFormat(
 	const content = getSummaryTree(channel, ["content"]);
 	const chunk = readSummaryBlob(content, "header");
 	assert(typeof chunk === "object" && chunk !== null);
-	assert.equal("version" in chunk ? chunk.version : undefined, useFlatFormat ? "1" : undefined);
+	assert.equal(
+		"version" in chunk ? chunk.version : undefined,
+		useFlatFormat ? "1" : undefined,
+	);
 	assert.equal("segments" in chunk, useFlatFormat);
 	assert.equal("segmentTexts" in chunk, !useFlatFormat);
 	if (useFlatFormat) {
