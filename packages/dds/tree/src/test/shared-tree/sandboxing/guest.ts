@@ -50,19 +50,32 @@ export interface GuestOptions extends SandboxEndpointOptions {
 
 /**
  * An {@link ViewableTree} synchronized with a Host through a `MessagePort`.
+ *
  * @remarks
  * Create using {@link createGuest}.
- * Initialization gives the Guest a serialized child ID space shard, not the Host's live compressor.
+ * While active, the Guest accepts local edits and applies updates from the Host.
+ *
+ * If the session fails, synchronization stops.
+ * Pending promises from {@link Guest.updateHostPromise} reject, and {@link Guest.error} remains readable.
+ * The application must not edit the Guest after failure.
+ * It can inspect the authoring view before disposal if the view is still usable.
+ *
+ * {@link Guest.dispose} stops both directions of synchronization, invalidates the Guest's tree views,
+ * and releases local resources.
+ *
  * @sealed
  */
 export interface Guest {
 	/**
 	 * The independent tree synchronized with the Host.
-	 * @remarks Available after {@link createGuest} resolves.
 	 */
 	readonly tree: ViewableTree;
 
-	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+	/**
+	 * The terminal failure requiring application-managed Host and Guest recreation, if this session failed.
+	 *
+	 * @remarks This property remains readable after {@link Guest.dispose}.
+	 */
 	readonly error: Error | undefined;
 
 	/**
@@ -71,16 +84,20 @@ export interface Guest {
 	 *
 	 * @remarks
 	 * If the Guest makes more changes while the promise is pending, the same promise
-	 * waits for those changes too. The promise rejects on failure or disposal.
-	 * Access after failure throws.
+	 * waits for those changes too.
+	 * The promise rejects on failure or disposal.
+	 * Reading this property after failure throws, even after reading {@link Guest.error}.
 	 */
 	readonly updateHostPromise: Promise<void> | undefined;
 
 	/**
-	 * Stops Guest edits and releases local resources synchronously.
+	 * Stops synchronization and releases local resources synchronously.
 	 *
 	 * @remarks
-	 * Pending change acknowledgments reject, even if the Host later applies previously sent changes.
+	 * This method stops sending Guest changes and applying Host updates.
+	 * It closes the message port and disposes the Guest's tree views so they cannot be edited again.
+	 *
+	 * Pending promises from {@link Guest.updateHostPromise} reject, even if the Host later applies previously sent changes.
 	 * Changes that were never sent may be lost.
 	 *
 	 * After a failure, the application can inspect the authoring view, if usable,
