@@ -89,6 +89,8 @@ These terms are similar to the terms for virtual machines.
     This requirement includes initialization messages.
 5. The Guest is valid only during its owning Host session.
     Behavior after that session ends is unsupported.
+6. The ID compressor's V3 serialization format is enabled.
+    Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
 
 ## Architecture
 
@@ -297,9 +299,9 @@ The tested failure paths preserve main-tree usability; see [Session Fault Isolat
 
 ### Test Coverage
 
-[Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
+[Transport codec tests](../test/shared-tree/sandboxing/transport.spec.ts) and [end-to-end tests](../test/shared-tree/sandboxing/sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
 End-to-end tests cover initialization, separate compressors, ID progress, branch rebases, undo/redo, and session replacement.
-The [ServiceClient test](./demo.integration.ts) uses a test-only V3 override; an isolated iframe test is still pending.
+The [ServiceClient test](../test/shared-tree/sandboxing/demo.integration.ts) uses a test-only V3 override; an isolated iframe test is still pending.
 The tests use real `MessagePort` channels, with a two-channel relay to control delivery order in schedule tests.
 The schedule tests use `createFuzzDescribe`, `generateTestSeeds`, and `makeRandom` from `@fluid-private/stochastic-test-utils`.
 Each step samples from the actions that are currently legal, including Guest deletions and Host/Peer insertions at the start.

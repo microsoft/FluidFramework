@@ -25,14 +25,13 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { sandboxFormatValidator } from "./common.js";
-import { Sandboxing } from "./index.js";
+import { Sandboxing } from "../../../index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { asBeta } from "../../../api.js";
-import { getCheckout } from "./synchronizationUtils.js";
+import { getCheckout, sandboxFormatValidator } from "../../../sandboxing/index.js";
 
 describe("End to End Host and Guest integrations", () => {
 	afterEach(async function () {

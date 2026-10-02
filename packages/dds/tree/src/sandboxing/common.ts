@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	fluidHandleSymbol,
+	type IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
 import * as Type from "@sinclair/typebox";
@@ -11,14 +14,10 @@ import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
 import { TypeSystem } from "@sinclair/typebox/system";
 
-import { extractJsonValidator } from "../../../codec/index.js";
-import type { RevisionTag } from "../../../core/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import {
-	type Brand,
-	brandedNumberType,
-	type JsonCompatibleReadOnly,
-} from "../../../util/index.js";
+import { extractJsonValidator } from "../codec/index.js";
+import type { RevisionTag } from "../core/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
+import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * A violation of the sandbox protocol's data or state requirements.

@@ -8,10 +8,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import type { ChangeMetadata, GraphCommit, RevisionTag } from "../../../core/index.js";
-import { findAncestor } from "../../../core/index.js";
-import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
-import { brand } from "../../../util/index.js";
+import type { ChangeMetadata, GraphCommit, RevisionTag } from "../core/index.js";
+import { findAncestor } from "../core/index.js";
+import type { SharedTreeChange, TreeCheckout } from "../shared-tree/index.js";
+import { brand } from "../util/index.js";
 
 import {
 	type GuestChangeAckMessage,

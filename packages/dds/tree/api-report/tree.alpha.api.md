@@ -272,6 +272,12 @@ export const contentSchemaSymbol: unique symbol;
 // @alpha
 export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
+// @alpha
+export function createGuest(options: GuestOptions): Promise<Guest>;
+
+// @alpha
+export function createHost(options: HostOptions): Host;
+
 // @beta
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
@@ -604,8 +610,35 @@ export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<Tr
 // @alpha
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
 
+// @alpha @sealed
+export interface Guest {
+    dispose(): void;
+    readonly error: Error | undefined;
+    readonly tree: ViewableTree;
+    readonly updateHostPromise: Promise<void> | undefined;
+}
+
+// @alpha @input
+export interface GuestOptions extends SandboxEndpointOptions {
+    readonly idCompressor: IIdCompressor;
+    readonly treeOptions: ForestOptions & ICodecOptions;
+}
+
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
+
+// @alpha @sealed
+export interface Host {
+    dispose(): void;
+    readonly error: Error | undefined;
+    readonly idCompressor: IIdCompressor;
+    readonly updateGuestPromise: Promise<void> | undefined;
+}
+
+// @alpha @input
+export interface HostOptions extends SandboxEndpointOptions {
+    readonly main: UntypedTreeView;
+}
 
 // @alpha @input
 export interface ICodecOptions {
@@ -1239,6 +1272,13 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+}
+
+// @alpha @input
+export interface SandboxEndpointOptions {
+    readonly handleProtocolError?: (error: Error) => void;
+    readonly logger?: ITelemetryBaseLogger;
+    readonly port: MessagePort;
 }
 
 // @public @sealed

@@ -14,17 +14,17 @@ import {
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions } from "../../../codec/index.js";
-import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
+import type { ICodecOptions } from "../codec/index.js";
+import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
-import { createIndependentTreeCheckout } from "../../../shared-tree/independentView.js";
+import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
 import type {
 	ImplicitFieldSchema,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewConfiguration,
 	ViewableTree,
-} from "../../../simple-tree/index.js";
+} from "../simple-tree/index.js";
 
 import {
 	type HostGuestMessage,
@@ -122,7 +122,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 	}: Sandboxing.GuestOptions) {
 		this.treeOptions = treeOptions;
 		this.port = port;
-		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
+		this.logger = createChildLogger({ logger, namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {

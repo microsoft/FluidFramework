@@ -14,21 +14,21 @@ import {
 } from "@fluidframework/id-compressor/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { FluidClientVersion } from "../../../codec/index.js";
+import { FluidClientVersion } from "../codec/index.js";
 import {
 	castCursorToSynchronous,
 	findAncestor,
 	moveToDetachedField,
-} from "../../../core/index.js";
+} from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
 	schemaCodecBuilder,
 	TreeCompressionStrategy,
-} from "../../../feature-libraries/index.js";
-import type { TreeCheckout } from "../../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { brand } from "../../../util/index.js";
+} from "../feature-libraries/index.js";
+import type { TreeCheckout } from "../shared-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestMessage,
@@ -142,12 +142,10 @@ export class HostImplementation implements Sandboxing.Host {
 			},
 			handleProtocolError,
 		);
-		const hostLogger =
-			logger ??
-			createChildLogger({
-				logger: this.mainCheckout.breaker.logger,
-				namespace: "Host",
-			});
+		const hostLogger = createChildLogger({
+			logger: logger ?? this.mainCheckout.breaker.logger,
+			namespace: "Host",
+		});
 		this.synchronization = new HostSynchronization(
 			this.mainCheckout,
 			(message) => this.postMessage(message),
@@ -161,7 +159,7 @@ export class HostImplementation implements Sandboxing.Host {
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
 		try {
-			this.postMessage(this.createInitializationMessage(getIdCompressor(main)));
+			this.postMessage(this.createInitializationMessage(this.idCompressor));
 		} catch (error) {
 			this.dispose();
 			throw error;
