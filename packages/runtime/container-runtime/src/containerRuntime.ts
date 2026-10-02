@@ -802,14 +802,6 @@ export interface LoadContainerRuntimeParams {
 	 * The inputted version will be used to determine the default configuration for
 	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
 	 *
-	 * When the ID compressor is enabled, setting this value to `3.4.0` or later selects its V3 serialization format.
-	 * Earlier values, including the default when this setting is omitted, select V2.
-	 * This applies to new compressors and to compressors restored from summaries or pending local state.
-	 * A compressor restored from V3 state continues to write V3 even if this setting selects V2.
-	 *
-	 * Before selecting `3.4.0` or later, ensure that all clients that must read the document support V3.
-	 * Changing this setting does not enable the ID compressor or convert existing V3 state back to V2.
-	 *
 	 * @example
 	 * oldestSupportedClient: "2.0.0"
 	 *
@@ -820,6 +812,11 @@ export interface LoadContainerRuntimeParams {
 	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.40.0, then `bar` would be set to
 	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
+	 *
+	 * Features introduced by version:
+	 *
+	 * - `3.4.0` - Uses the V3 serialization format for the ID compressor.
+	 *
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion;
 
