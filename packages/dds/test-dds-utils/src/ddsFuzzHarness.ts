@@ -1750,9 +1750,8 @@ function generateClientInitialization<TClientConfiguration>(
 	clientId: string,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	supportStashing = true,
-	configurationRandom = random,
 ): ClientInitialization<TClientConfiguration> {
-	const clientConfiguration = generateConfiguration(configurationRandom, {
+	const clientConfiguration = generateConfiguration(random, {
 		clientId,
 		isSummarizer: clientId === "summarizer",
 	});
@@ -1772,7 +1771,6 @@ function generateInitialize<TClientConfiguration>(
 	generateConfiguration: ClientConfigurationGenerator<TClientConfiguration>,
 	random: IRandom,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
-	configurationRandom = random,
 ): Initialize<TClientConfiguration> {
 	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
 	return {
@@ -1783,7 +1781,6 @@ function generateInitialize<TClientConfiguration>(
 			startDetached ? makeFriendlyClientId(random, 0) : "summarizer",
 			options,
 			false,
-			configurationRandom,
 		),
 		clients: startDetached
 			? []
@@ -1793,8 +1790,6 @@ function generateInitialize<TClientConfiguration>(
 						random,
 						makeFriendlyClientId(random, index),
 						options,
-						true,
-						configurationRandom,
 					),
 				),
 	};
@@ -1909,6 +1904,15 @@ export async function runTestForSeed<
 ): Promise<DDSFuzzTestState<TChannelFactory, TClientConfiguration>> {
 	const random = makeRandom(seed);
 	const factory = normalizeClientFactory(model.factory);
+	let needsInitialization = true;
+	const initialState: DDSFuzzTestState<TChannelFactory, TClientConfiguration> = {
+		random: { ...random, handle: makeUnreachableCodePathProxy("random.handle") },
+		clients: makeUnreachableCodePathProxy("clients before initialization"),
+		client: makeUnreachableCodePathProxy("client"),
+		summarizerClient: makeUnreachableCodePathProxy("summarizer before initialization"),
+		containerRuntimeFactory: makeUnreachableCodePathProxy("runtime before initialization"),
+		isDetached: options.detachedStartOptions.numOpsBeforeAttach !== 0,
+	};
 	let serializationContext: ReturnType<typeof createSerializationContext>;
 	let operationCount = 0;
 	let generator:
@@ -1930,6 +1934,30 @@ export async function runTestForSeed<
 		// To make this work with handles that the DDS model may have generated, we use the FluidSerializer above
 		// to encode here and decode in the reducer.
 		async (state) => {
+			if (needsInitialization) {
+				if (replayGenerator === undefined) {
+					return generateInitialize(
+						factory.generateClientConfiguration,
+						state.random,
+						options,
+					);
+				}
+				const first = await replayGenerator(undefined);
+				if (
+					first !== done &&
+					isOperationType<Initialize<TClientConfiguration>>("initialize", first)
+				) {
+					return first;
+				}
+				// Legacy recordings omit initialization. Restore their unconfigured clients
+				// without invoking the consumer's configuration generator.
+				firstReplayOperation = first;
+				return generateInitialize<TClientConfiguration>(
+					() => undefined,
+					state.random,
+					options,
+				);
+			}
 			assert(generator !== undefined, "Expected initialized workload generator.");
 			const bufferedOperation = firstReplayOperation;
 			firstReplayOperation = undefined;
@@ -1942,6 +1970,23 @@ export async function runTestForSeed<
 					) as TOperation);
 		},
 		async (state, operation) => {
+			if (needsInitialization) {
+				if (!isOperationType<Initialize<TClientConfiguration>>("initialize", operation)) {
+					throw new ReducerPreconditionError("Fuzz tests must start with initialize.");
+				}
+				needsInitialization = false;
+				options.emitter.emit("operation", operation);
+				const initializedState = await initializeTestState(
+					factory,
+					options,
+					random,
+					operation,
+				);
+				options.emitter.emit("testStart", initializedState);
+				serializationContext = createSerializationContext(initializedState);
+				generator ??= model.generatorFactory();
+				return initializedState;
+			}
 			if (operation.type === "initialize") {
 				throw new ReducerPreconditionError("Unexpected initialize operation.");
 			}
@@ -1953,44 +1998,7 @@ export async function runTestForSeed<
 			operationCount++;
 			return model.reducer(state, decodedHandles);
 		},
-		async (recordOperation) => {
-			let initialization: Initialize<TClientConfiguration>;
-			if (replayGenerator === undefined) {
-				// Configuration selection must not advance the random source used by testStart
-				// and by the subsequent workload seed allocator.
-				initialization = generateInitialize(
-					factory.generateClientConfiguration,
-					random,
-					options,
-					makeRandom(seed, 1),
-				);
-			} else {
-				const first = await replayGenerator(undefined);
-				// Reproduce the harness-owned setup draws without invoking the consumer's
-				// configuration generator. Legacy recordings also use these descriptors.
-				const legacyInitialization = generateInitialize<TClientConfiguration>(
-					() => undefined,
-					random,
-					options,
-				);
-				if (
-					first !== done &&
-					isOperationType<Initialize<TClientConfiguration>>("initialize", first)
-				) {
-					initialization = first;
-				} else {
-					initialization = legacyInitialization;
-					firstReplayOperation = first;
-				}
-			}
-			recordOperation(initialization);
-			options.emitter.emit("operation", initialization);
-			const initialState = await initializeTestState(factory, options, random, initialization);
-			options.emitter.emit("testStart", initialState);
-			serializationContext = createSerializationContext(initialState);
-			generator ??= model.generatorFactory();
-			return initialState;
-		},
+		initialState,
 		saveInfo,
 		options.forceGlobalSeed,
 	);

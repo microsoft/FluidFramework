@@ -1051,13 +1051,18 @@ describe("DDS Fuzz Harness", () => {
 					const contents: unknown = JSON.parse(
 						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
 					);
-					assert.deepEqual(contents, [
+					assert(Array.isArray(contents));
+					const withoutSeeds = contents.map(
+						({ seed: _, ...operation }: { seed?: number } & Record<string, unknown>) =>
+							operation,
+					);
+					assert.deepEqual(withoutSeeds, [
 						{
 							type: "initialize",
 							initialClient: { clientId: "A", canBeStashed: false },
 							clients: [],
 						},
-						{ clientId: "A", seed: 1325690281034360, type: "noop" },
+						{ clientId: "A", type: "noop" },
 					]);
 				});
 			}

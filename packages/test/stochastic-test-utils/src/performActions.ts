@@ -22,18 +22,6 @@ import {
 	done,
 } from "./types.js";
 
-/**
- * Constructs the initial state inside the action runner's recording boundary.
- * Call `recordOperation` before applying each bootstrap operation so failures retain it.
- * Bootstrap operations do not allocate workload seeds.
- * @typeParam TOperation - Recorded operation type.
- * @typeParam TState - State supplied to the workload.
- * @internal
- */
-export type AsyncFuzzTestInitializer<TOperation, TState> = (
-	recordOperation: (operation: TOperation) => void,
-) => Promise<TState>;
-
 type RealOperation<T extends BaseOperation> = T & {
 	/**
 	 * An optional flag that can be manually added to an operation during replay to trigger
@@ -58,7 +46,7 @@ type RealOperation<T extends BaseOperation> = T & {
  * @param generator - finite generator for a sequence of Operations to test. The test will run until this generator
  * is exhausted.
  * @param reducer - reducer function which is able to apply Operations to the current state and return the new state
- * @param initialState - Initial state for the test, or a callback that records bootstrap operations and constructs it.
+ * @param initialState - Initial state for the test
  * @param saveInfo - optionally provide information about when a history of all operations will be saved to disk at
  * a given filepath.
  * This can be useful for debugging why a fuzz test may have failed.
@@ -72,7 +60,7 @@ export async function performFuzzActionsAsync<
 >(
 	generator: AsyncGenerator<TOperation, TState>,
 	reducer: AsyncReducer<TOperation, TState>,
-	initialState: TState | AsyncFuzzTestInitializer<TOperation, TState>,
+	initialState: TState,
 	saveInfo?: SaveInfo,
 	forceGlobalSeed?: boolean,
 ): Promise<TState>;
@@ -98,7 +86,7 @@ export async function performFuzzActionsAsync<
  *   delete: (state, index) => { myList.delete(index); return state; }
  * }
  * ```
- * @param initialState - Initial state for the test, or a callback that records bootstrap operations and constructs it.
+ * @param initialState - Initial state for the test
  * @param saveInfo - optionally provide information about when a history of all operations will be saved to disk at
  * a given filepath.
  * This can be useful for debugging why a fuzz test may have failed.
@@ -114,7 +102,7 @@ export async function performFuzzActionsAsync<
 	reducerMap: {
 		[K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState>;
 	},
-	initialState: TState | AsyncFuzzTestInitializer<TOperation, TState>,
+	initialState: TState,
 	saveInfo?: SaveInfo,
 	forceGlobalSeed?: boolean,
 ): Promise<TState>;
@@ -131,19 +119,12 @@ export async function performFuzzActionsAsync<
 	reducerOrMap:
 		| AsyncReducer<TOperation, TState>
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
-	initialState: TState | AsyncFuzzTestInitializer<TOperation, TState>,
+	initialState: TState,
 	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false, saveFluidOps: false },
 	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
-	let state: TState;
-	let seedState: TState;
-	const recordOperation = (operation: RealOperation<TOperation>): void => {
-		operations.push(operation);
-		if (operation.debug === true) {
-			debugger;
-		}
-	};
+	let state: TState = initialState;
 
 	const reducer =
 		typeof reducerOrMap === "function"
@@ -156,7 +137,7 @@ export async function performFuzzActionsAsync<
 		const seed: number | undefined =
 			forceGlobalSeed === true
 				? undefined
-				: seedState.random.integer(0, Number.MAX_SAFE_INTEGER);
+				: initialState.random.integer(0, Number.MAX_SAFE_INTEGER);
 
 		if (seed !== undefined) {
 			state = {
@@ -182,15 +163,15 @@ export async function performFuzzActionsAsync<
 	};
 
 	try {
-		seedState =
-			typeof initialState === "function" ? await initialState(recordOperation) : initialState;
-		state = seedState;
 		for (
 			let operation = await runGenerator();
 			operation !== done;
 			operation = await runGenerator()
 		) {
-			recordOperation(operation);
+			operations.push(operation);
+			if (operation.debug === true) {
+				debugger;
+			}
 			state = (await applyOperation(operation)) ?? state;
 		}
 	} catch (err) {

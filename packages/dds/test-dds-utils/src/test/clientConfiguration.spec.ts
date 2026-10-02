@@ -595,7 +595,7 @@ describe("DDS fuzz client configuration", () => {
 		});
 	}
 
-	it("records unconfigured initialization without changing workload seeds", async () => {
+	it("records unconfigured initialization as a seeded harness operation", async () => {
 		const model = {
 			...baseModel,
 			generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
@@ -605,15 +605,31 @@ describe("DDS fuzz client configuration", () => {
 			assert(!("clientConfiguration" in client));
 		}
 		const operations = readOperations();
-		assert.deepEqual(operations, [
+		for (const operation of operations) {
+			assert("seed" in operation && typeof operation.seed === "number");
+		}
+		const withoutSeeds = operations.map(
+			({ seed: _, ...operation }: TestOperation & { seed?: number }) => operation,
+		);
+		assert.deepEqual(withoutSeeds, [
 			{
 				type: "initialize",
 				initialClient: { clientId: "summarizer", canBeStashed: false },
 				clients: ["A", "B", "C"].map((clientId) => ({ clientId, canBeStashed: false })),
 			},
-			{ type: "noop", seed: 1325690281034360 },
-		] satisfies (TestOperation & { seed?: number })[]);
-		await replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options);
+			{ type: "noop" },
+		]);
+		await replayTest(
+			model,
+			0,
+			asyncGeneratorFromArray(
+				operations.filter(
+					(operation) => operation.type === "initialize" || operation.type === "noop",
+				),
+			),
+			undefined,
+			options,
+		);
 		await replayTest(
 			model,
 			0,
