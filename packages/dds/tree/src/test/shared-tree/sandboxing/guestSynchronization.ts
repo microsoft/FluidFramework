@@ -73,10 +73,6 @@ enum GuestSynchronizationState {
  * On protocol failure, the session calls {@link stop} from active.
  * This does not dispose either checkout, so the application can inspect the authoring checkout if
  * the checkout is still usable.
- * The edit listener is removed, but retained references can still edit the view.
- * The application must not make further edits after a failure.
- * The application must then dispose the Guest to release both checkouts.
- * The orchestrator must fence the Guest and dispose the Host to reclaim its shard.
  *
  */
 export class GuestSynchronization {
@@ -115,7 +111,7 @@ export class GuestSynchronization {
 
 	/**
 	 * The current synchronization state.
-	 * An idle session stays active until failure or disposal.
+	 * @remarks An idle session stays active until failure or disposal.
 	 */
 	private state = GuestSynchronizationState.Active;
 
@@ -332,19 +328,7 @@ export class GuestSynchronization {
 		return this.pushInProgress?.promise;
 	}
 
-	/**
-	 * Stops Guest synchronization and rejects pending changes without releasing the checkouts.
-	 *
-	 * @remarks
-	 * The session calls this on failure. Guest disposal also calls it after an
-	 * application teardown. It removes the edit listener if necessary.
-	 * It does not release either checkout or reclaim the ID space shard.
-	 * After a failure, the application can inspect the view if it
-	 * is still usable.
-	 * Repeated calls have no effect.
-	 *
-	 * @param error - The reason pending Guest changes cannot complete.
-	 */
+	/** Stops synchronization and rejects pending work. */
 	public stop(error: Error): void {
 		if (this.state !== GuestSynchronizationState.Active) {
 			return;
@@ -357,14 +341,10 @@ export class GuestSynchronization {
 	}
 
 	/**
-	 * Stops synchronization, releases both checkouts, and disposes the child shard.
+	 * Stops synchronization, releases both checkouts, and disposes the ID space shard.
 	 *
 	 * @remarks
-	 * The Guest calls this during application-managed teardown or failure cleanup.
-	 * It calls {@link stop} to stop active synchronization,
-	 * then releases the hidden {@link hostCheckout} branch and authoring {@link checkout}.
-	 * The authoring checkout must be disposed before the compressor to prevent new IDs.
-	 * Repeated calls have no effect.
+	 * Disposal is terminal and idempotent.
 	 */
 	public dispose(): void {
 		if (this.state === GuestSynchronizationState.Disposed) {

@@ -19,7 +19,7 @@ These terms are similar to the terms for virtual machines.
 ### Participants and Synchronization
 
 - **Host**: The SharedTree that connects to Fluid services.
-- **Guest**: An independent tree checkout and its views, separated from the Host by a message protocol.
+- **Guest**: The independent TreeView and its related internal components, separated from the Host by a message protocol.
 - **Peer**: Another Fluid client that collaborates with the Host through Fluid services, not through the sandbox protocol.
 - **Session**: The lifetime of one Host-to-Guest connection, including its handle tables and pending requests.
   Nothing in the Guest is supported beyond its owning Host session.
@@ -79,8 +79,7 @@ These terms are similar to the terms for virtual machines.
 
 ## Key Assumptions
 
-1. While both endpoints and their ports remain active, each message between the Host and the Guest eventually arrives.
-    A failed or torn-down endpoint may not deliver its final message.
+1. Each message between the Host and the Guest eventually arrives.
 2. Messages that move in the same direction arrive in the order that they were sent.
     This requirement applies in each direction.
     Messages that move in opposite directions can arrive in any relative order.
@@ -227,7 +226,7 @@ flowchart TB
 
 The entire incoming graph is restricted before marker validation or handle restoration.
 Restoration alone neither binds nor resolves handles.
-For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, merges into the main branch, and then acknowledges it.
+For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, binds its handles, merges into the main branch, and then acknowledges it.
 Incoming validation or processing failures and outgoing normalization, validation, or encoding failures terminate the session.
 
 Initialization is a separate entry point: the complete message, including the compressed tree, schema, retained commits, and serialized child compressor, follows normalization, validation, transport encoding, `MessagePort` structured clone, transport decoding, validation, and tree-codec initialization.
