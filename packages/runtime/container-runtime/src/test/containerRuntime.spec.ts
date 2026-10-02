@@ -405,6 +405,7 @@ describe("Runtime", () => {
 				const pendingState = runtime.getPendingLocalState() as IPendingRuntimeState;
 				assert(pendingState.pendingIdCompressorState !== undefined);
 				// The base64 payload stores the format version in its first 64-bit floating-point slot.
+				// stringToBuffer returns an ArrayBuffer, so Float64Array views the decoded bytes, matching the compressor's reader.
 				assert.equal(
 					new Float64Array(stringToBuffer(pendingState.pendingIdCompressorState, "base64"))[0],
 					expectedVersion,
