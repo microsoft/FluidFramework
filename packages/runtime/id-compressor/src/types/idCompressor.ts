@@ -351,8 +351,7 @@ export interface IIdCompressor {
 	 * this approach will often be superior to generating a UUID.
 	 *
 	 * If small numbers are a requirement, {@link IIdCompressor.generateCompressedId} and normalization should be used instead.
-	 * See {@link IIdCompressor} for more details.
-	 *
+	 * @see {@link IIdCompressor} for more details.
 	 * @returns A new local ID in session space.
 	 */
 	generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
