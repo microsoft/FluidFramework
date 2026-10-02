@@ -59,6 +59,13 @@ const nonNegativeSafeIntegerOptions = {
 /** An integer from zero through the largest integer JavaScript can represent exactly. */
 const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
 
+/** Shared wire bounds for positive safe integers. */
+const PositiveSafeInteger = Type.Number({
+	minimum: 1,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
 /**
  * An index into the Host's table of handles authorized for one Guest.
  * Valid only within the owning session; the brand does not establish runtime authorization.
@@ -339,19 +346,6 @@ const ParentIdProgress = Type.Object(
 	},
 	{ additionalProperties: false },
 );
-
-/**
- * Validates numeric fields in a finalized ID creation range.
- * @remarks
- * It accepts positive integers that JavaScript can represent exactly.
- * This check does not establish that the range is in sequence or that its fields agree.
- * The Guest checks those conditions when it applies the range.
- */
-const PositiveSafeInteger = Type.Number({
-	minimum: 1,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
 
 /**
  * A range already finalized by the Host runtime, not a request to submit a new range.
