@@ -175,7 +175,7 @@ import {
 	normalizeError,
 	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { gt } from "semver-ts";
+import { gt, gte as greaterThanOrEqual } from "semver-ts";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -802,6 +802,14 @@ export interface LoadContainerRuntimeParams {
 	 * The inputted version will be used to determine the default configuration for
 	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
 	 *
+	 * When the ID compressor is enabled, setting this value to `3.4.0` or later selects its V3 serialization format.
+	 * Earlier values, including the default when this setting is omitted, select V2.
+	 * This applies to new compressors and to compressors restored from summaries or pending local state.
+	 * A compressor restored from V3 state continues to write V3 even if this setting selects V2.
+	 *
+	 * Before selecting `3.4.0` or later, ensure that all clients that must read the document support V3.
+	 * Changing this setting does not enable the ID compressor or convert existing V3 state back to V2.
+	 *
 	 * @example
 	 * oldestSupportedClient: "2.0.0"
 	 *
@@ -1217,6 +1225,10 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
+		const idCompressorSerializationVersion = greaterThanOrEqual(minVersionForCollab, "3.4.0")
+			? SerializationVersion.V3
+			: SerializationVersion.V2;
+
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1238,20 +1250,20 @@ export class ContainerRuntime
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						pendingLocalState.pendingIdCompressorState,
-						SerializationVersion.V2,
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
 			} else if (serializedIdCompressor === undefined) {
 				return toIdCompressorWithCore(
-					createIdCompressor(SerializationVersion.V2, compressorLogger),
+					createIdCompressor(idCompressorSerializationVersion, compressorLogger),
 				);
 			} else {
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						serializedIdCompressor,
 						createSessionId(),
-						SerializationVersion.V2,
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
