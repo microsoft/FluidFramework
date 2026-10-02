@@ -87,9 +87,9 @@ const contentPath = "content";
 
 interface SequenceAttributes extends IChannelAttributes {
 	/**
-	 * The snapshot format selected for the most recent summary.
+	 * True when the most recent summary uses the flat format. Legacy summaries omit this flag.
 	 */
-	newMergeTreeSnapshotFormat?: boolean;
+	newMergeTreeSnapshotFormat?: boolean | undefined;
 }
 
 /**
@@ -744,7 +744,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		const summary = builder.getSummaryTree();
 		this.sequenceAttributes.newMergeTreeSnapshotFormat =
-			this.sequenceOptions.newMergeTreeSnapshotFormat === true;
+			this.sequenceOptions.newMergeTreeSnapshotFormat === true ? true : undefined;
 		return summary;
 	}
 

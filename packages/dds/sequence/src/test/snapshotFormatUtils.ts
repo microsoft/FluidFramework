@@ -31,8 +31,15 @@ export function assertSnapshotFormat(
 	if (useFlatFormat) {
 		assert.equal(content.tree.catchupOps, undefined);
 	}
-	assert("newMergeTreeSnapshotFormat" in sharedString.attributes);
-	assert.equal(sharedString.attributes.newMergeTreeSnapshotFormat, useFlatFormat);
+	assert.equal(
+		"newMergeTreeSnapshotFormat" in sharedString.attributes
+			? sharedString.attributes.newMergeTreeSnapshotFormat
+			: undefined,
+		useFlatFormat ? true : undefined,
+	);
+	const attributes: unknown = JSON.parse(JSON.stringify(sharedString.attributes));
+	assert(typeof attributes === "object" && attributes !== null);
+	assert.equal("newMergeTreeSnapshotFormat" in attributes, useFlatFormat);
 	assert.equal(
 		sharedString.attributes.snapshotFormatVersion,
 		SharedStringFactory.Attributes.snapshotFormatVersion,

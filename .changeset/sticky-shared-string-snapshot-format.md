@@ -21,4 +21,6 @@ const configProvider = {
 Return `false` for this flag to explicitly select legacy snapshots.
 When the flag is unset, the existing `newMergeTreeSnapshotFormat` runtime option takes precedence over the recorded setting.
 If neither explicit setting is provided, SharedString reuses its recorded setting.
-Each produced summary records the setting actually used, including an explicit `false`.
+Flat summaries record the setting as `true`, and legacy summaries omit it.
+An explicit `false` clears the remembered flat setting when the DDS is next summarized.
+Changes to the setting do not force an otherwise unchanged DDS to produce a new summary.

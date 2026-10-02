@@ -245,7 +245,8 @@ export interface IMergeTreeOptions {
 	 * Despite the "legacy"/"V1" naming, both formats are actively used.
 	 * SharedString uses an explicit setting when provided, otherwise the setting recorded in its DDS attributes,
 	 * and defaults to SnapshotLegacy if neither setting exists.
-	 * Each SharedString summary records the setting used, so subsequent summaries retain that format unless explicitly overridden.
+	 * SharedString records `true` for SnapshotV1 and omits the flag for SnapshotLegacy.
+	 * Format overrides apply when the DDS is summarized; they do not force a new summary.
 	 * The `Fluid.Sequence.newMergeTreeSnapshotFormat` configuration flag takes precedence over this runtime option.
 	 * SharedMatrix always uses SnapshotV1.
 	 */

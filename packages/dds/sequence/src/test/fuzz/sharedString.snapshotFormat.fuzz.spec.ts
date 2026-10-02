@@ -66,7 +66,10 @@ class SnapshotFormatFuzzFactory extends SharedStringFuzzFactory {
 		attributes: IChannelAttributes,
 	): Promise<SharedStringClass> {
 		const recordedFormat = getRecordedFormat(attributes);
-		assert(recordedFormat !== undefined, "Expected the flag recorded by the source summary");
+		assert(recordedFormat !== false, "Legacy summaries must omit the recorded flag");
+		if (this.loadedFormat === undefined) {
+			assert.equal(recordedFormat, this.initialFormat ? true : undefined);
+		}
 		runtime.options.newMergeTreeSnapshotFormat = this.loadedFormat;
 		const channel = await super.load(runtime, id, services, attributes);
 		assert.equal(getRecordedFormat(channel.attributes), recordedFormat);

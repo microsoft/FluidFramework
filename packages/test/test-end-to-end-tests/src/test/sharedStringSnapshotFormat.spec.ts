@@ -50,8 +50,13 @@ function assertSummaryFormat(
 	const channel = getSummaryTree(summary, [".channels", dataStoreId, ".channels", channelId]);
 	const attributes = readSummaryBlob(channel, ".attributes");
 	assert(typeof attributes === "object" && attributes !== null);
-	assert("newMergeTreeSnapshotFormat" in attributes);
-	assert.equal(attributes.newMergeTreeSnapshotFormat, useFlatFormat);
+	assert.equal("newMergeTreeSnapshotFormat" in attributes, useFlatFormat);
+	assert.equal(
+		"newMergeTreeSnapshotFormat" in attributes
+			? attributes.newMergeTreeSnapshotFormat
+			: undefined,
+		useFlatFormat ? true : undefined,
+	);
 
 	const content = getSummaryTree(channel, ["content"]);
 	const chunk = readSummaryBlob(content, "header");
@@ -134,8 +139,12 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 				const loadedObject = await getContainerEntryPointBackCompat<ITestFluidObject>(loaded);
 				const loadedString = await loadedObject.getSharedObject<SharedString>(stringId);
 				assert.equal(loadedString.getText(), expectedText);
-				assert("newMergeTreeSnapshotFormat" in loadedString.attributes);
-				assert.equal(loadedString.attributes.newMergeTreeSnapshotFormat, expectedFlag);
+				assert.equal(
+					"newMergeTreeSnapshotFormat" in loadedString.attributes
+						? loadedString.attributes.newMergeTreeSnapshotFormat
+						: undefined,
+					expectedFlag ? true : undefined,
+				);
 
 				container.close();
 				container = loaded;

@@ -269,26 +269,6 @@ function normalizeEntry(
 	switch (entry.type) {
 		case TreeEntry.Blob: {
 			let contents = entry.value.contents;
-			if (entry.path === ".attributes") {
-				const attributes: unknown = JSON.parse(contents);
-				if (
-					typeof attributes === "object" &&
-					attributes !== null &&
-					"type" in attributes &&
-					attributes.type === "https://graph.microsoft.com/types/mergeTree" &&
-					"newMergeTreeSnapshotFormat" in attributes &&
-					attributes.newMergeTreeSnapshotFormat === false
-				) {
-					// An absent flag and false both select legacy snapshots.
-					contents = JSON.stringify(
-						Object.fromEntries(
-							Object.entries(attributes).filter(
-								([key]) => key !== "newMergeTreeSnapshotFormat",
-							),
-						),
-					);
-				}
-			}
 			// If this blob has to be normalized, it's a GC or legacy catchup blob, parse and sort the blob contents first.
 			if (
 				(config?.blobsToNormalize?.includes(entry.path) ?? false) ||
