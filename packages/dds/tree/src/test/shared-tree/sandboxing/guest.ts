@@ -62,10 +62,7 @@ export interface Guest {
 	 */
 	readonly tree: ViewableTree;
 
-	/**
-	 * The terminal failure that requires application-managed Host and Guest recreation,
-	 * if this session failed.
-	 */
+	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
 	readonly error: Error | undefined;
 
 	/**
