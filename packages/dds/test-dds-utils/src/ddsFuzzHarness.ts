@@ -1955,7 +1955,10 @@ export async function runTestForSeed<
 			const bufferedOperation = firstReplayOperation;
 			firstReplayOperation = undefined;
 			const operation = bufferedOperation ?? (await generator(state));
-			return operation !== done && isClientConfigurationOperation(operation)
+			if (operation === done) {
+				return done;
+			}
+			return isClientConfigurationOperation(operation)
 				? operation
 				: (serializationContext.serializer.encode(
 						operation,
