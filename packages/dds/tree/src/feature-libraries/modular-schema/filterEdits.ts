@@ -10,7 +10,7 @@ import {
 	type ChangeAtomId,
 	type FieldKindIdentifier,
 } from "../../core/index.js";
-import { brand, type RangeQueryResult } from "../../util/index.js";
+import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import { EditFilterStatus, type FilterDetachResult } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
@@ -21,6 +21,7 @@ import type {
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	RootNodeTable,
 } from "./modularChangeTypes.js";
 import { addNodeRename, makeChangesetInversions, newRootTable } from "./modularChangeUtils.js";
 import { pruneChangeset } from "./prune.js";
@@ -55,6 +56,14 @@ export function filterEdits(
 		newId: ChangeAtomId,
 		count: number,
 	) => RangeQueryResult<EditFilterStatus>,
+	adjustmentPass:
+		| ((
+				filteredFieldChanges: FieldChangeMap,
+				filteredRoots: RootNodeTable,
+				filteredNodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+				nodeAliases: ChangeAtomIdBTree<NodeId>,
+		  ) => void)
+		| undefined,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
 	const filteredFieldChanges = filterFieldMapEdits(
@@ -113,6 +122,12 @@ export function filterEdits(
 		}
 	}
 
+	adjustmentPass?.(
+		filteredFieldChanges,
+		filteredRoots,
+		filteredNodeChanges,
+		change.nodeAliases,
+	);
 	const { crossFieldKeys: filteredCrossFieldKeys, nodeToParent: filteredNodeToParent } =
 		makeChangesetInversions(
 			filteredFieldChanges,

@@ -338,6 +338,10 @@ export function validateChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
+	for (const nodeIdKey of change.nodeChanges.keys()) {
+		assert(change.nodeToParent.has(nodeIdKey), "Every node should have a location entry");
+	}
+
 	const unreachableNodes: ChangeAtomIdBTree<NodeLocation> = brand(change.nodeToParent.clone());
 
 	const unreachableCFKs = change.crossFieldKeys.clone();

@@ -626,6 +626,15 @@ function filterEdits(
 			filtered.valueReplace = { ...change.valueReplace };
 			delete (filtered.valueReplace as Mutable<Replace>).src;
 		}
+
+		if (
+			!options.preserveOtherEdits &&
+			filtered.valueReplace !== undefined &&
+			filtered.valueReplace.isEmpty &&
+			filtered.valueReplace.src === undefined
+		) {
+			delete filtered.valueReplace;
+		}
 	}
 
 	return filtered;

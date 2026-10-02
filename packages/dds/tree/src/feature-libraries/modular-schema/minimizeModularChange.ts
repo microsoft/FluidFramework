@@ -38,12 +38,14 @@ import { filterEdits } from "./filterEdits.js";
 import { invertModularChange } from "./invert.js";
 import { intoDelta } from "./modularChangeFamily.js";
 import type {
+	CrossFieldKeyTable,
 	FieldChange,
 	FieldChangeMap,
 	FieldId,
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
+	RootNodeTable,
 } from "./modularChangeTypes.js";
 import {
 	assignRootChange,
@@ -53,6 +55,7 @@ import {
 	getDetachFieldForAttach,
 	getFirstAttachField,
 	getFirstDetachField,
+	getNewRootIdFromOldRootId,
 	getOldRootIdFromNewRootId,
 	nodeChangeFromId,
 	normalizeNodeId,
@@ -108,11 +111,12 @@ class ModularChangeMinimizer {
 			this.change,
 			this.filterEditsForResidualChange.bind(this),
 			this.filterRenamesForResidualChange.bind(this),
+			(fieldChanges, roots, nodeChanges, nodeAliases) =>
+				this.updateResidualBuiltNodeLocations(fieldChanges, roots, nodeChanges, nodeAliases),
 			this.fieldKinds,
 		);
 
 		this.squashBuilds(residualChange, forestFactory);
-		this.updateResidualBuiltNodeLocations(residualChange);
 
 		validateChangeset(residualChange, this.fieldKinds);
 		return residualChange;
@@ -123,41 +127,95 @@ class ModularChangeMinimizer {
 	 * The detaches are squashed into the build trees,
 	 * so in the residual change these nodes should be represented under their new root locations.
 	 */
-	private updateResidualBuiltNodeLocations(residualChange: ModularChangeset): void {
+	private updateResidualBuiltNodeLocations(
+		_residualFieldChanges: FieldChangeMap,
+		residualRoots: RootNodeTable,
+		residualNodeChanges: ChangeAtomIdBTree<NodeChangeset>,
+		_nodeAliases: ChangeAtomIdBTree<NodeId>,
+	): void {
 		for (const rootEntry of this.builtRootIds.entries()) {
 			let rootId = rootEntry.start;
 			let countRemaining = rootEntry.length;
 			while (countRemaining > 0) {
+				let countProcessed = countRemaining;
 				const nodeIdEntry = rangeQueryChangeAtomIdMap(
 					this.rootIdToNodeId,
 					rootId,
-					countRemaining,
+					countProcessed,
+				);
+				countProcessed = nodeIdEntry.length;
+
+				// In legacy formats, The built root should be represented at the attach location, if any.
+				const residualDetachLocationEntry = this.getResidualRootDetachLocation(
+					rootId,
+					countProcessed,
+				);
+				countProcessed = residualDetachLocationEntry.length;
+				residualRoots.detachLocations.set(
+					rootId,
+					countProcessed,
+					residualDetachLocationEntry.value,
 				);
 
 				// Even if there was a node changeset for this root, it may have been pruned away.
 				// We check that it still exists before updating its location in the residual change.
 				if (
 					nodeIdEntry.value !== undefined &&
-					getFromChangeAtomIdMap(residualChange.nodeChanges, nodeIdEntry.value) !== undefined
+					getFromChangeAtomIdMap(residualNodeChanges, nodeIdEntry.value) !== undefined
 				) {
-					const detachLocation =
-						this.change.rootNodes.detachLocations.getFirst(rootId, 1).value ??
-						getFirstDetachField(this.change.crossFieldKeys, rootId, 1).value;
-
-					assignRootChange(
-						residualChange.rootNodes,
-						residualChange.nodeToParent,
+					const squashedRootId = getNewRootIdFromOldRootId(
+						this.change.rootNodes,
 						rootId,
+						1,
+					).value;
+
+					residualRoots.nodeChanges.delete([rootId.revision, rootId.localId]);
+					assignRootChange(
+						residualRoots,
+						this.change.nodeToParent,
+						squashedRootId,
 						nodeIdEntry.value,
-						detachLocation,
-						residualChange.rebaseVersion,
+						residualDetachLocationEntry.value,
+						this.change.rebaseVersion,
 					);
 				}
 
-				rootId = offsetChangeAtomId(rootId, nodeIdEntry.length);
-				countRemaining -= nodeIdEntry.length;
+				rootId = offsetChangeAtomId(rootId, countProcessed);
+				countRemaining -= countProcessed;
 			}
 		}
+	}
+
+	private getResidualRootDetachLocation(
+		rootId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<FieldId | undefined> {
+		let countProcessed = count;
+		const detachEntry = getFirstDetachField(
+			this.change.crossFieldKeys,
+			rootId,
+			countProcessed,
+		);
+		countProcessed = detachEntry.length;
+
+		const attachEntry = getAttachFieldForDetach(
+			this.change.crossFieldKeys,
+			this.change.rootNodes,
+			rootId,
+			countProcessed,
+		);
+		countProcessed = attachEntry.length;
+
+		const detachLocationEntry = this.change.rootNodes.detachLocations.getFirst(
+			rootId,
+			countProcessed,
+		);
+		countProcessed = detachLocationEntry.length;
+
+		const residualDetachLocation =
+			attachEntry.value ?? detachEntry.value ?? detachLocationEntry.value;
+
+		return { value: residualDetachLocation, length: countProcessed };
 	}
 
 	private isNodeIdInBuiltTree(nodeId: NodeId | undefined): boolean {
@@ -550,6 +608,7 @@ class ModularChangeMinimizer {
 			this.change,
 			this.filterEditsForBuildChange.bind(this),
 			this.filterRenamesForBuildChange.bind(this),
+			undefined,
 			this.fieldKinds,
 		);
 
@@ -725,6 +784,17 @@ function getNodeInfo(
 	for (const [rootIdKey, nodeId] of change.rootNodes.nodeChanges.entries()) {
 		const rootId = makeChangeAtomId(rootIdKey[1], rootIdKey[0]);
 		setInChangeAtomIdMap(rootIdToNodeId, rootId, normalizeNodeId(nodeId, change.nodeAliases));
+
+		const nodeChangeset = nodeChangeFromId(change.nodeChanges, change.nodeAliases, nodeId);
+		if (nodeChangeset.fieldChanges !== undefined) {
+			addRootIdToNodeIdForFields(
+				nodeChangeset.fieldChanges,
+				change.nodeChanges,
+				change.nodeAliases,
+				fieldKinds,
+				rootIdToNodeId,
+			);
+		}
 
 		if (builtRootIds.getFirst(rootId, 1).value) {
 			addBuiltNodeIdsRecursive(
