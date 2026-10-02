@@ -5,6 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
 import { createIdCompressor, IdCompressor } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
 import type {
@@ -1336,7 +1338,10 @@ describe("IdCompressor Sharding", () => {
 			const childId = child.generateCompressedId();
 			parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
 			const parentId = parent.generateCompressedId();
-			assert.throws(() => child.decompress(parentId), /Unknown ID/);
+			assert.throws(() => child.decompress(parentId), {
+				name: "Error",
+				message: /Unknown ID/,
+			});
 
 			child.synchronizeWithParent(
 				parent.getChildShardProgress(child.getShardSyncToken() ?? fail()),
@@ -1396,7 +1401,7 @@ describe("IdCompressor Sharding", () => {
 						localGenCount: Number.MAX_SAFE_INTEGER,
 						disposed: true,
 					}),
-				/supported ID space/,
+				{ name: "TypeError", message: /supported ID space/ },
 			);
 			assert.equal(parent.serialize(true), before);
 			assert.doesNotThrow(() => parent.getChildShardProgress(childToken));
@@ -1440,13 +1445,13 @@ describe("IdCompressor Sharding", () => {
 			const parentProgress = parent.getChildShardProgress(first.getShardSyncToken() ?? fail());
 			const before = first.serialize(true);
 
-			assert.throws(
-				() => second.synchronizeWithParent(parentProgress),
-				/parent progress.*child ID space shard/,
-			);
+			assert.throws(() => second.synchronizeWithParent(parentProgress), {
+				name: "Error",
+				message: /parent progress.*child ID space shard/,
+			});
 			assert.throws(
 				() => first.synchronizeWithParent({ ...parentProgress, localGenCount: 1.5 }),
-				/parent progress.*generation count/,
+				{ name: "TypeError", message: /parent progress.*generation count/ },
 			);
 			assert.equal(first.serialize(true), before);
 			assert.equal(second.generateCompressedId(), -5);
@@ -1467,7 +1472,7 @@ describe("IdCompressor Sharding", () => {
 				assert.deepEqual(finalized, [range]);
 				assert.throws(
 					() => child.normalizeToSessionSpace(encodedRemoteId, remote.localSessionId),
-					/No IDs have ever been finalized/,
+					{ name: "Error", message: /No IDs have ever been finalized/ },
 				);
 
 				for (const update of finalized) {
@@ -1480,7 +1485,11 @@ describe("IdCompressor Sharding", () => {
 				assert.equal(child.decompress(normalized), remote.decompress(remoteId));
 				assert.throws(
 					() => parent.finalizeCreationRange(range),
-					/Ranges finalized out of order/,
+					(error: unknown) => {
+						assert(error instanceof LoggingError);
+						assert.match(error.message, /Ranges finalized out of order/);
+						return true;
+					},
 				);
 				assert.deepEqual(finalized, [range]);
 			} finally {
