@@ -316,6 +316,8 @@ export class GuestSynchronization {
 
 	/**
 	 * Processes an acknowledgment for a Guest change.
+	 *
+	 * @remarks
 	 * Acknowledgments remain necessary while closing so the Guest can finish sending
 	 * earlier changes before it sends its disposal token.
 	 *
