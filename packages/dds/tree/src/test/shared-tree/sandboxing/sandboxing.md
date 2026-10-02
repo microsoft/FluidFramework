@@ -123,10 +123,8 @@ The Guest keeps a checkout for the Host main branch and a separate checkout for 
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
 [GuestSynchronization](./guestSynchronization.ts) owns the hidden Host and authoring checkouts and the child ID space shard.
-The [Guest](./guest.ts) owns its port and message routing.
-On `Guest.dispose()`, GuestSynchronization disposes both checkouts and the child shard, invalidating authoring views.
-After a failure, it stops syncing but leaves the authoring checkout available for inspection until disposal.
-The application must not edit it after failure.
+[Guest](./guest.ts) owns the port and message routing.
+On failure, synchronization stops but keeps the checkouts until the application disposes the Guest.
 
 The Host preserves the Guest's authoring state in its local branch.
 It applies Guest changes there and merges them into main without rebasing the local branch itself.
@@ -148,34 +146,26 @@ This preserves pending Host edits as commits that can be rebased, including inse
 
 The baseline revision aliases the independent checkout's initial head.
 Branch validation recognizes this alias even when an update contains no commits.
-Initialization commits use the same handle encoding and decoding as subsequent changes.
-The serialized commit format preserves custom metadata in retained commits and later updates.
-After serializing the snapshot and retained commits, the Host creates a child ID space shard of its runtime ID compressor.
-The Host sends that ID space shard as part of `hostInitialization` through `MessagePort`.
-The Guest deserializes the ID space shard before initializing its checkout or replaying commits.
-This removes the need to share a live compressor object across the boundary.
+Initialization commits use the same handle codec as subsequent changes and preserve custom metadata.
+After encoding the snapshot and retained commits, the Host creates a child ID space shard and sends it in `hostInitialization` over `MessagePort`.
+The Guest deserializes the shard before creating its checkouts.
 See [ID Space Sharding](#id-space-sharding).
 
 ### ID Space Sharding
 
-The Host keeps its runtime ID compressor and gives the Guest a separately deserialized child ID space shard.
-The prototype requires a V3 runtime ID compressor; a V2 compressor cannot create the child shard.
-The two compressors share a session ID, not an object reference.
-The initial child state includes the IDs needed to load the compressed snapshot and replay retained commits.
-After initialization, sharing a session ID alone does not give either compressor knowledge of new IDs.
+The Host retains its runtime ID compressor and sends a serialized child shard to the Guest.
+The two compressor instances share a session ID, but neither automatically learns IDs created by the other.
+This requires V3; a V2 runtime compressor cannot create the shard.
 
-For each Guest edit, `getChange()` serializes the change before the Guest captures a non-disposing child progress token.
-The Host verifies that the token belongs to this session and does not move backward.
-Consecutive Guest changes can report the same progress when they create no new IDs.
-It synchronizes its compressor with the child before decoding the Guest change.
+Each Guest change carries child progress captured after its change is serialized, since serialization can create IDs.
+The Host validates the shard and nondecreasing progress, then synchronizes before decoding the change.
+Equal progress is valid when consecutive changes create no new IDs.
 
-Host updates carry parent ID progress captured after their commits are encoded.
-The Guest applies that progress before decoding the commits.
-The Host also forwards finalized creation ranges in runtime order as `hostIdRange` messages, even when no tree update occurs.
-Each range message includes parent progress, which the Guest applies before finalizing the range.
-Ordered delivery ensures a range arrives before a later Host update that depends on it.
-The Guest rejects out-of-order or repeated range IDs, progress for another shard, and progress that moves backward.
-The sandbox does not call `takeNextCreationRange()` to manufacture these messages; range submission and finalization belong to the runtime.
+Host-to-Guest updates carry parent progress captured after their commits are encoded.
+The Host also forwards finalized creation ranges in order, even without a tree update.
+The Guest applies parent progress before decoding Host commits or finalizing a range; ordered delivery places a range before an update that uses its IDs.
+The runtime, not the sandbox, submits ID creation ranges for finalization.
+See [the protocol schemas](./common.ts) and [the compressor API](../../../../../../runtime/id-compressor/src/types/idCompressor.ts) for the message fields and progress operations.
 
 Guest disposal is local and does not notify the Host.
 After stopping or fencing the Guest, the orchestrator disposes the Host session to reclaim the shard from its last accepted progress.
@@ -292,38 +282,25 @@ Host disposal preserves the application's main view, including successfully merg
 Recovery uses fresh session objects, not reset breakers.
 
 Call `Guest.dispose()` to synchronously stop Guest edits, release both Guest checkouts, and dispose its ID space shard.
-Guest disposal does not notify the Host or reclaim its reserved child ID space.
-The orchestrator must dispose the corresponding Host session after stopping the Guest, or after fencing a crashed iframe so its serialized shard cannot be reused.
-Host disposal stops processing messages, reclaims the shard from the last accepted Guest progress, and releases its session branches.
-Previously sent Guest changes that reach the Host before it stops can still be applied; other pending edits may be lost.
-Pending Guest acknowledgments reject even if the Host subsequently applies an earlier change.
-An outstanding Host update can also be discarded; the application-owned main view remains available.
+Guest disposal does not notify the Host.
+The orchestrator must stop or fence the Guest before disposing the Host session, so the old iframe cannot send changes or restart from its serialized shard.
+Host disposal stops receiving messages, reclaims the shard using the last accepted Guest progress, and preserves the application's main view.
+Guest changes already accepted by the Host remain; pending edits and Host updates can be lost.
+An initialization send failure also reclaims a shard that the Guest never received.
 
-The Host tracks the child ID space shard separately from the Guest synchronization state.
-The orchestrator must stop or fence the Guest, ensuring it cannot send new changes or restart from its serialized shard, before disposing its Host session.
-Host disposal stops processing session messages before using its latest accepted child progress to reclaim the allocation.
-The Host has already learned the IDs used by every Guest change it accepted; unreported IDs in the fenced Guest are discarded.
-An initialization send failure also reclaims a shard that the Host knows it did not deliver.
-
-After a failure, GuestSynchronization leaves the authoring checkout available for inspection until the application calls `Guest.dispose()`.
-GuestSynchronization releases both checkouts during cleanup.
-Do not treat `sessionFailure` as proof of fencing: retained Guest references may still create IDs until disposal or iframe termination.
-The Host remains active until the orchestrator disposes it, even after Guest disposal.
-If the orchestrator does not dispose the Host, it continues sending updates and retains unacknowledged snapshots.
+After failure, synchronization is stopped: the authoring checkout remains available for inspection if usable, but the application must not edit it.
+Do not treat `sessionFailure` as proof that the Guest has been fenced.
+If no failure reaches the Host, disposing the Guest alone does not stop Host updates or release unacknowledged snapshots.
+See [the Guest lifecycle](./guest.ts) and [GuestSynchronization](./guestSynchronization.ts) for the local cleanup contract.
 
 The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
 
 ### Test Coverage
 
 [Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
-End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
-The Host, peer, and Guest edit cases run with separate compressors; integration with an isolated iframe is still pending.
-Nested commit metadata, retained Host history, Guest revertibles, and branch rebases are covered by targeted tests.
-The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
-The ServiceClient integration test uses a test-only V3 override to verify a Guest edit through a real container.
-Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
-ID-progress tests cover a delayed peer range and Host update while a Guest edit is pending, a repeated finalized range, and invalid parent progress.
-Initialization tests also sequence concurrent Peer edits before the pending Host edits.
+End-to-end tests cover initialization, separate compressors, ID progress, branch rebases, undo/redo, and session replacement.
+The [ServiceClient test](./demo.integration.ts) uses a test-only V3 override; an isolated iframe test is still pending.
+The tests use real `MessagePort` channels, with a two-channel relay to control delivery order in schedule tests.
 The schedule tests use `createFuzzDescribe`, `generateTestSeeds`, and `makeRandom` from `@fluid-private/stochastic-test-utils`.
 Each step samples from the actions that are currently legal, including Guest deletions and Host/Peer insertions at the start.
 This state-dependent sampling fits message schedules better than a fixed pairwise configuration matrix.
