@@ -43,7 +43,13 @@ export {
 	makeExperimentalCodecVersion,
 	VersionDispatchingCodecBuilder,
 	type VersionDispatchingCodec,
+	type VersionDispatchingCodecBuilderOptions,
 	type CodecVersion,
+	type CodecVersionStable,
+	type CodecVersionDiscontinued,
+	type CodecVersionExperimental,
+	type CodecVersionReadonly,
 	type CodecAndSchema,
+	type CodecAndSchemaReadonly,
 	versionField,
 } from "./versioned/index.js";

@@ -12,15 +12,24 @@ import {
 	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion, Versioned } from "../../../codec/index.js";
+import {
+	FluidClientVersion,
+	Versioned,
+	makeDiscontinuedCodecAndSchema,
+	makeExperimentalCodecVersion,
+	throwDecodeError,
+	type DecodeErrorHandler,
+	type ICodecOptions,
+} from "../../../codec/index.js";
 import {
 	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
-	makeExperimentalCodecVersion,
+	type CodecVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../codec/versioned/codec.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { pkgVersion } from "../../../packageVersion.js";
+import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
 
 describe("versioned Codecs", () => {
 	describe("VersionDispatchingCodecBuilder", () => {
@@ -52,7 +61,7 @@ describe("versioned Codecs", () => {
 			schema: Versioned,
 		};
 
-		const builder = VersionDispatchingCodecBuilder.build("Test", [
+		const writableRegistry = [
 			{
 				minVersionForCollab: lowestMinVersionForCollab,
 				formatVersion: 1,
@@ -64,7 +73,41 @@ describe("versioned Codecs", () => {
 				codec: () => codecV2,
 			},
 			makeExperimentalCodecVersion("X", codecVX),
-		]);
+		] as const;
+		const builder = VersionDispatchingCodecBuilder.build("Test", writableRegistry);
+		const experimentalSelectorBuilder = VersionDispatchingCodecBuilder.build(
+			"PerValue",
+			writableRegistry,
+			{
+				selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? "X" : defaultVersion),
+			},
+		);
+		const lifecycleRegistry = [
+			{
+				minVersionForCollab: lowestMinVersionForCollab,
+				formatVersion: 1,
+				codec: codecV1,
+			},
+			{
+				minVersionForCollab: undefined,
+				formatVersion: 0,
+				codec: {
+					schema: Versioned,
+					decode: (
+						data: JsonCompatibleReadOnly,
+						context: void,
+						onError?: DecodeErrorHandler,
+					): number => {
+						const value = (data as unknown as V1).value1;
+						if (typeof value !== "number") {
+							throwDecodeError(onError, "Invalid read-only value.");
+						}
+						return value;
+					},
+				},
+			},
+			makeDiscontinuedCodecAndSchema(undefined, "2.0.0"),
+		] as const;
 
 		it("round trip", () => {
 			const codec1 = builder.build({
@@ -113,22 +156,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		});
 
 		it("selects write versions per value", () => {
-			const perValueBuilder = VersionDispatchingCodecBuilder.build(
-				"PerValue",
-				[
-					{
-						minVersionForCollab: lowestMinVersionForCollab,
-						formatVersion: 1,
-						codec: codecV1,
-					},
-					makeExperimentalCodecVersion("X", codecVX),
-				],
-				{
-					selectWriteFormatVersion: (data, defaultVersion) =>
-						data < 0 ? "X" : defaultVersion,
-				},
-			);
-			const codec = perValueBuilder.build({
+			const codec = experimentalSelectorBuilder.build({
 				minVersionForCollab: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 			});
@@ -137,23 +165,119 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.deepEqual(codec.encode(-1), { version: "X", valueX: -1 });
 		});
 
-		it("rejects per-value formats that conflict with an explicit override", () => {
-			const perValueBuilder = VersionDispatchingCodecBuilder.build(
-				"PerValue",
-				[
-					{
-						minVersionForCollab: lowestMinVersionForCollab,
-						formatVersion: 1,
-						codec: codecV1,
-					},
-					makeExperimentalCodecVersion("X", codecVX),
-				],
+		{
+			type TestVersion = CodecVersion<number, void, 1 | "X">;
+			interface InvalidStable {
+				minVersionForCollab: typeof lowestMinVersionForCollab;
+				formatVersion: "X";
+				codec: typeof codecVX;
+			}
+			// @ts-expect-error Stable formats must use numeric identifiers.
+			type _InvalidStable = requireAssignableTo<InvalidStable, TestVersion>;
+
+			interface InvalidExperimental {
+				minVersionForCollab: undefined;
+				formatVersion: 1;
+				codec: typeof codecV1;
+			}
+			// @ts-expect-error Experimental formats must use string identifiers.
+			type _InvalidExperimental = requireAssignableTo<InvalidExperimental, TestVersion>;
+
+			interface InvalidReadonly {
+				minVersionForCollab: typeof lowestMinVersionForCollab;
+				formatVersion: 1;
+				codec: Pick<typeof codecV1, "schema" | "decode">;
+			}
+			// @ts-expect-error Stable compatibility and a read-only codec cannot be combined.
+			type _InvalidReadonly = requireAssignableTo<InvalidReadonly, TestVersion>;
+
+			interface InvalidDiscontinued {
+				minVersionForCollab: undefined;
+				formatVersion: 1;
+				discontinuedSince: "2.0.0";
+				codec: typeof codecV1;
+			}
+			// @ts-expect-error Discontinued behavior is derived from its declaration.
+			type _InvalidDiscontinued = requireAssignableTo<InvalidDiscontinued, TestVersion>;
+		}
+
+		it("supports read-only and discontinued formats without making them writable", () => {
+			const lifecycleBuilder = VersionDispatchingCodecBuilder.build(
+				"Lifecycle",
+				lifecycleRegistry,
 				{
-					selectWriteFormatVersion: (data, defaultVersion) =>
-						data < 0 ? "X" : defaultVersion,
+					// @ts-expect-error Read-only formats are not eligible for encoding.
+					selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? 0 : defaultVersion),
 				},
 			);
-			const codec = perValueBuilder.build({
+			const decoder = lifecycleBuilder.buildDecoder({
+				jsonValidator: FormatValidatorBasic,
+			});
+			assert.equal(decoder.decode({ version: 0, value1: 42 }), 42);
+			assert.throws(
+				() => decoder.decode({}),
+				validateUsageError(
+					"Cannot decode data in format undefined. The codec was discontinued in Fluid Framework client version 2.0.0.",
+				),
+			);
+			assert.throws(
+				() =>
+					decoder.decode({ version: 0 }, undefined, (message) => {
+						throw new Error(message);
+					}),
+				{ message: "Invalid read-only value." },
+			);
+
+			for (const [version, kind] of [
+				[0, "readonly"],
+				[undefined, "discontinued"],
+			] as const) {
+				assert.throws(
+					() =>
+						lifecycleBuilder.build({
+							minVersionForCollab: "2.0.0",
+							jsonValidator: FormatValidatorBasic,
+							allowPossiblyIncompatibleWriteVersionOverrides: true,
+							writeVersionOverrides: new Map([["Lifecycle", version]]),
+						}),
+					validateUsageError(
+						`Codec "Lifecycle" cannot use requested format version ${version} for encoding because it is ${kind}.`,
+					),
+				);
+			}
+
+			const codec = lifecycleBuilder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+			});
+			assert.throws(
+				() => codec.encode(-1),
+				validateUsageError(
+					'Codec "Lifecycle" cannot encode data using readonly format version 0.',
+				),
+			);
+		});
+
+		it("preserves an explicitly selected undefined format", () => {
+			const legacyBuilder = VersionDispatchingCodecBuilder.build("Legacy", lifecycleRegistry, {
+				// @ts-expect-error Discontinued formats are not eligible for encoding.
+				selectWriteFormatVersion: () => undefined,
+			});
+			const codec = legacyBuilder.build({
+				minVersionForCollab: "2.0.0",
+				jsonValidator: FormatValidatorBasic,
+			});
+
+			assert.throws(
+				() => codec.encode(42),
+				validateUsageError(
+					'Codec "Legacy" cannot encode data using discontinued format version undefined.',
+				),
+			);
+		});
+
+		it("rejects per-value formats that conflict with an explicit override", () => {
+			const codec = experimentalSelectorBuilder.build({
 				minVersionForCollab: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 				writeVersionOverrides: new Map([["PerValue", 1]]),
@@ -170,15 +294,10 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		it("rejects unsupported per-value formats", () => {
 			const perValueBuilder = VersionDispatchingCodecBuilder.build(
 				"PerValue",
-				[
-					{
-						minVersionForCollab: lowestMinVersionForCollab,
-						formatVersion: 1,
-						codec: codecV1,
-					},
-				],
+				writableRegistry,
 				{
-					selectWriteFormatVersion: () => 2,
+					// @ts-expect-error Unregistered formats are not eligible for encoding.
+					selectWriteFormatVersion: () => 3,
 				},
 			);
 			const codec = perValueBuilder.build({
@@ -189,7 +308,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.throws(
 				() => codec.encode(42),
 				validateUsageError(
-					'Codec "PerValue" selected unsupported format version 2 while encoding. Supported versions are: [1].',
+					'Codec "PerValue" selected unsupported format version 3 while encoding. Supported versions are: [1,2,"X"].',
 				),
 			);
 		});
@@ -197,18 +316,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		it("rejects per-value stable formats incompatible with minVersionForCollab", () => {
 			const perValueBuilder = VersionDispatchingCodecBuilder.build(
 				"PerValue",
-				[
-					{
-						minVersionForCollab: lowestMinVersionForCollab,
-						formatVersion: 1,
-						codec: codecV1,
-					},
-					{
-						minVersionForCollab: FluidClientVersion.v2_43,
-						formatVersion: 2,
-						codec: codecV2,
-					},
-				],
+				writableRegistry,
 				{
 					selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? 2 : defaultVersion),
 				},
@@ -235,7 +343,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 						writeVersionOverrides: new Map([["Test", "X"]]),
 					}),
 				validateUsageError(
-					`Codec "Test" does not support requested format version "X" because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "Test" does not support requested format version "X" because it is experimental. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				),
 			);
 
@@ -248,7 +356,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 						writeVersionOverrides: new Map([["Test", "1"]]),
 					}),
 				validateUsageError(
-					`Codec "Test" does not support requested format version "1". Supported versions are: [1,2,"X"].`,
+					`Codec "Test" does not support requested format version "1". Supported writable versions are: [1,2,"X"].`,
 				),
 			);
 		});
@@ -284,6 +392,123 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			const encoded = codec.encode(5, { encodeOffset: 10 });
 			assert.deepEqual(encoded, { version: 1, value: 15 });
 			assert.equal(codec.decode(encoded, { decodeOffset: -10 }), 5);
+		});
+
+		it("preserves required factory options in a pre-annotated lifecycle registry", () => {
+			interface BuildOptions extends ICodecOptions {
+				offset: number;
+			}
+			const registry: CodecVersion<number, void, 1 | -1, BuildOptions>[] = [
+				{
+					minVersionForCollab: lowestMinVersionForCollab,
+					formatVersion: 1,
+					codec: (options: BuildOptions) => ({
+						schema: Versioned,
+						encode: (data: number) => ({ version: 1, value1: data + options.offset }),
+						decode: (data: JsonCompatibleReadOnly) =>
+							(data as unknown as V1).value1 - options.offset,
+					}),
+				},
+				makeDiscontinuedCodecAndSchema(-1, "2.0.0"),
+			];
+			const lifecycleBuilder = VersionDispatchingCodecBuilder.build(
+				"FactoryOptions",
+				registry,
+			);
+			const buildOptions = {
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: lowestMinVersionForCollab,
+				offset: 10,
+			};
+			const codec = lifecycleBuilder.build(buildOptions);
+			assert.deepEqual(codec.encode(42), { version: 1, value1: 52 });
+			assert.equal(codec.decode({ version: 1, value1: 52 }), 42);
+
+			const missingOptions = {
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: lowestMinVersionForCollab,
+			};
+			type InferredOptions = Parameters<typeof lifecycleBuilder.build>[0];
+			// @ts-expect-error Build options must include the factory's required offset.
+			type _MissingBuildOptions = requireAssignableTo<typeof missingOptions, InferredOptions>;
+		});
+
+		it("infers factory options and contexts alongside direct and discontinued codecs", () => {
+			interface EncodeContext {
+				encodeOffset: number;
+			}
+			interface DecodeContext {
+				decodeOffset: number;
+			}
+			interface BuildOptions extends ICodecOptions {
+				offset: number;
+			}
+			interface ReadonlyBuildOptions extends ICodecOptions {
+				readonlyOffset: number;
+			}
+			const contextualBuilder = VersionDispatchingCodecBuilder.build(
+				"MixedFactoryOptions",
+				[
+					{
+						minVersionForCollab: lowestMinVersionForCollab,
+						formatVersion: 1,
+						codec: codecV1,
+					},
+					{
+						minVersionForCollab: FluidClientVersion.v2_43,
+						formatVersion: 2,
+						codec: (_options: ICodecOptions) => codecV2,
+					},
+					makeExperimentalCodecVersion("X", (options: BuildOptions) => ({
+						schema: Versioned,
+						encode: (data: number, context: EncodeContext) => ({
+							version: "X",
+							valueX: data + options.offset + context.encodeOffset,
+						}),
+						decode: (data: JsonCompatibleReadOnly, context: DecodeContext) =>
+							(data as unknown as VX).valueX - options.offset + context.decodeOffset,
+					})),
+					{
+						minVersionForCollab: undefined,
+						formatVersion: 0,
+						codec: (options: ReadonlyBuildOptions) => ({
+							schema: Versioned,
+							decode: (data: JsonCompatibleReadOnly, context: DecodeContext) =>
+								(data as unknown as V1).value1 + options.readonlyOffset + context.decodeOffset,
+						}),
+					},
+					makeDiscontinuedCodecAndSchema(-1, "2.0.0"),
+				],
+				{
+					selectWriteFormatVersion: (data, defaultVersion) =>
+						data < 0 ? "X" : defaultVersion,
+				},
+			);
+			const codec = contextualBuilder.build({
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: lowestMinVersionForCollab,
+				offset: 10,
+				readonlyOffset: 5,
+			});
+			const encoded = codec.encode(-1, { encodeOffset: 5 });
+			assert.deepEqual(encoded, { version: "X", valueX: 14 });
+			const decoded = codec.decode(encoded, { decodeOffset: -5 });
+			assert.equal(decoded, -1);
+			assert.equal(codec.decode({ version: 0, value1: 42 }, { decodeOffset: -5 }), 42);
+
+			const missingOptions = {
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: lowestMinVersionForCollab,
+			};
+			type InferredOptions = Parameters<typeof contextualBuilder.build>[0];
+			// @ts-expect-error Direct and discontinued entries must not erase required factory options.
+			type _MissingOptions = requireAssignableTo<typeof missingOptions, InferredOptions>;
+			type WritableOptions = typeof missingOptions & BuildOptions;
+			// @ts-expect-error Options must satisfy the read-only factory as well as the writable factory.
+			type _MissingReadonlyOptions = requireAssignableTo<WritableOptions, InferredOptions>;
+			type _Decoded = requireAssignableTo<typeof decoded, number>;
+			// @ts-expect-error The decoded value must retain its number type.
+			type _InvalidDecoded = requireAssignableTo<typeof decoded, string>;
 		});
 
 		it("good builds", () => {
@@ -324,34 +549,6 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
 								minVersionForCollab: lowestMinVersionForCollab,
-								formatVersion: "1",
-								codec: codecV1,
-							},
-						]),
-					validateAssertionError(
-						`Debug assert failed: unstable format "1" (string formats) must not have a minVersionForCollab in Test`,
-					),
-				);
-
-				assert.throws(
-					() =>
-						VersionDispatchingCodecBuilder.build("Test", [
-							{
-								minVersionForCollab: undefined,
-								formatVersion: 1,
-								codec: codecV1,
-							},
-						]),
-					validateAssertionError(
-						"Debug assert failed: codec format 1 in Test must specify why it has no minVersionForCollab",
-					),
-				);
-
-				assert.throws(
-					() =>
-						VersionDispatchingCodecBuilder.build("Test", [
-							{
-								minVersionForCollab: lowestMinVersionForCollab,
 								formatVersion: 1,
 								codec: codecV1,
 							},
@@ -377,7 +574,10 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 							{
 								minVersionForCollab: undefined,
 								formatVersion: 1,
-								codec: codecV1,
+								codec: {
+									schema: Versioned,
+									decode: (data: JsonCompatibleReadOnly) => (data as unknown as V1).value1,
+								},
 							},
 						]),
 					validateAssertionError(`Debug assert failed: duplicate codec format Test 1`),
