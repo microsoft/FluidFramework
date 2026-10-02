@@ -2026,7 +2026,10 @@ function runTest<
 	options: InternalOptions,
 	seed: number,
 	saveInfo: SaveInfo | undefined,
-	replayGenerator?: AsyncGenerator<TOperation | Initialize<TClientConfiguration>, unknown>,
+	replayGeneratorFactory?: () => AsyncGenerator<
+		TOperation | Initialize<TClientConfiguration>,
+		unknown
+	>,
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`workload: ${model.workloadName} seed: ${seed}`, async function () {
@@ -2045,7 +2048,13 @@ function runTest<
 
 		try {
 			// don't write to files in CI
-			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo, replayGenerator);
+			await runTestForSeed(
+				model,
+				options,
+				seed,
+				inCi ? undefined : saveInfo,
+				replayGeneratorFactory?.(),
+			);
 		} catch (error) {
 			if (!shouldMinimize) {
 				throw error;
@@ -2203,11 +2212,14 @@ export function createSuite<
 					);
 
 					// We lose some type safety here because the options interface isn't generic
-					const replayGenerator = asyncGeneratorFromArray<
+					const replayGeneratorFactory: () => AsyncGenerator<
 						TOperation | Initialize<TClientConfiguration>,
 						unknown
-					>(operations as (TOperation | Initialize<TClientConfiguration>)[]);
-					runTest(model, options, seed, undefined, replayGenerator);
+					> = () =>
+						asyncGeneratorFromArray(
+							operations as (TOperation | Initialize<TClientConfiguration>)[],
+						);
+					runTest(model, options, seed, undefined, replayGeneratorFactory);
 				}
 			});
 		}

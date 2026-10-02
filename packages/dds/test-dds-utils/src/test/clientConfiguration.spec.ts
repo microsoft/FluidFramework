@@ -176,7 +176,7 @@ describe("DDS fuzz client configuration", () => {
 		return JSON.parse(readFileSync(operationsFile, "utf8")) as TestOperation[];
 	}
 
-	it("replays configured clients through the suite's replay option", async function () {
+	it("replays configured clients from the beginning on each retry", async function () {
 		this.timeout(15000);
 		const result = await execa(
 			"npm",
@@ -195,9 +195,11 @@ describe("DDS fuzz client configuration", () => {
 		);
 		const report = JSON.parse(result.stdout) as {
 			stats: { passes: number; failures: number };
+			tests: { currentRetry: number }[];
 		};
 		assert.equal(report.stats.passes, 1);
 		assert.equal(report.stats.failures, 0);
+		assert.equal(report.tests[0].currentRetry, 2);
 	});
 
 	it("records and applies configuration for initial clients, the summarizer, and later joins", async () => {

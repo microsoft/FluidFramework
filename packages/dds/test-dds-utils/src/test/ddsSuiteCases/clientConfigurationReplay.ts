@@ -23,6 +23,8 @@ interface Configuration {
 }
 type State = DDSFuzzTestState<SharedNothingFactory, Configuration>;
 const resolved: Configuration[] = [];
+let attempt = 0;
+let completedReplays = 0;
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 emitter.on("testEnd", (state) => {
 	assert.deepEqual(resolved, [
@@ -40,6 +42,10 @@ emitter.on("testEnd", (state) => {
 		],
 	);
 	assert.deepEqual(state.summarizerClient.clientConfiguration, { version: "current" });
+	completedReplays++;
+	if (attempt === 2) {
+		throw new Error("Retry after exhausting the replay generator.");
+	}
 });
 
 const model: DDSFuzzModel<SharedNothingFactory, Operation, State> = {
@@ -56,14 +62,28 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation, State> = {
 	generatorFactory: () => assert.fail("Replay must use recorded operations."),
 	reducer: (state) => {
 		assert.equal(state.client.clientConfiguration?.version, "previous");
+		if (attempt === 1) {
+			throw new Error("Retry after partially consuming the replay generator.");
+		}
 	},
 };
 
-createDDSFuzzSuite(model, {
-	defaultTestCount: 5,
-	numberOfClients: 2,
-	detachedStartOptions: { numOpsBeforeAttach: 1 },
-	replay: 0,
-	emitter,
-	saveFailures: { directory: join(_dirname, "../../../src/test/ddsSuiteCases") },
+describe("replay retries", function () {
+	this.retries(2);
+	beforeEach(() => {
+		attempt++;
+		resolved.length = 0;
+	});
+	after(() => {
+		assert.equal(attempt, 3);
+		assert.equal(completedReplays, 2);
+	});
+	createDDSFuzzSuite(model, {
+		defaultTestCount: 5,
+		numberOfClients: 2,
+		detachedStartOptions: { numOpsBeforeAttach: 1 },
+		replay: 0,
+		emitter,
+		saveFailures: { directory: join(_dirname, "../../../src/test/ddsSuiteCases") },
+	});
 });
