@@ -25,7 +25,7 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { createGuest, createHost, type Guest, type Host } from "../../../index.js";
+import { Sandboxing } from "../../../index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
@@ -43,8 +43,8 @@ describe("End to End Host and Guest integrations", () => {
 	// Currently shows limitations which need fixing.
 	describe("User Facing APIs", () => {
 		let channel: MessageChannel | undefined;
-		let host: Host | undefined;
-		let guest: Guest | undefined;
+		let host: Sandboxing.Host | undefined;
+		let guest: Sandboxing.Guest | undefined;
 
 		afterEach(() => {
 			channel?.port2.close();
@@ -103,12 +103,12 @@ describe("End to End Host and Guest integrations", () => {
 			// TODO: This should not be required.
 			await client.service.synchronize();
 
-			host = createHost({
+			host = Sandboxing.createHost({
 				logger,
 				main: viewHost,
 				port: channel.port1,
 			});
-			guest = await createGuest({
+			guest = await Sandboxing.createGuest({
 				logger,
 				port: channel.port2,
 				treeOptions: { jsonValidator: sandboxFormatValidator },

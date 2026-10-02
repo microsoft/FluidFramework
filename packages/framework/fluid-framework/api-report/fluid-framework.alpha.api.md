@@ -317,12 +317,6 @@ export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: nu
 // @alpha
 export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T>;
 
-// @alpha
-export function createGuest(options: GuestOptions): Promise<Guest>;
-
-// @alpha
-export function createHost(options: HostOptions): Host;
-
 // @beta
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
@@ -810,35 +804,8 @@ export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithN
 // @alpha
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
 
-// @alpha @sealed
-export interface Guest {
-    dispose(): void;
-    readonly error: Error | undefined;
-    readonly tree: ViewableTree;
-    readonly updateHostPromise: Promise<void> | undefined;
-}
-
-// @alpha @input
-export interface GuestOptions extends SandboxEndpointOptions {
-    readonly idCompressor: IIdCompressor_2;
-    readonly treeOptions: ForestOptions & ICodecOptions;
-}
-
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
-
-// @alpha @sealed
-export interface Host {
-    dispose(): void;
-    readonly error: Error | undefined;
-    readonly idCompressor: IIdCompressor_2;
-    readonly updateGuestPromise: Promise<void> | undefined;
-}
-
-// @alpha @input
-export interface HostOptions extends SandboxEndpointOptions {
-    readonly main: UntypedTreeView;
-}
 
 // @alpha @input
 export interface ICodecOptions {
@@ -1836,11 +1803,37 @@ export interface RunTransactionParamsBeta {
     readonly label?: unknown;
 }
 
-// @alpha @input
-export interface SandboxEndpointOptions {
-    readonly handleProtocolError?: (error: Error) => void;
-    readonly logger?: ITelemetryBaseLogger;
-    readonly port: MessagePort;
+// @alpha
+export namespace Sandboxing {
+    export function createGuest(options: GuestOptions): Promise<Guest>;
+    export function createHost(options: HostOptions): Host;
+    // @input
+    export interface EndpointOptions {
+        readonly handleProtocolError?: (error: Error) => void;
+        readonly logger?: ITelemetryBaseLogger;
+        readonly port: MessagePort;
+    }
+    export interface Guest {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly tree: ViewableTree;
+        readonly updateHostPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface GuestOptions extends EndpointOptions {
+        readonly idCompressor: IIdCompressor_2;
+        readonly treeOptions: ForestOptions & ICodecOptions;
+    }
+    export interface Host {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly idCompressor: IIdCompressor_2;
+        readonly updateGuestPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface HostOptions extends EndpointOptions {
+        readonly main: UntypedTreeView;
+    }
 }
 
 // @public @sealed
