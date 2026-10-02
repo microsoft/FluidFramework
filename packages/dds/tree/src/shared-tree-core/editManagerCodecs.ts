@@ -15,8 +15,6 @@ import {
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
-	makeDiscontinuedCodecAndSchema,
-	makeExperimentalCodecVersion,
 } from "../codec/index.js";
 import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 
@@ -70,8 +68,16 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 		EditManagerCodecOptions<TChangeset>,
 		EditManagerDecodingContext
 	>[] = [
-		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v1, "2.73.0"),
-		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v2, "2.73.0"),
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.v1,
+			discontinuedSince: "2.73.0",
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.v2,
+			discontinuedSince: "2.73.0",
+		},
 		{
 			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: EditManagerFormatVersion.v3,
@@ -96,7 +102,11 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					EditManagerFormatVersion.v4,
 				),
 		},
-		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v5, "2.74.0"),
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.v5,
+			discontinuedSince: "2.74.0",
+		},
 		{
 			minVersionForCollab: FluidClientVersion.v2_80,
 			formatVersion: EditManagerFormatVersion.v6,
@@ -121,9 +131,10 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					EditManagerFormatVersion.v7,
 				),
 		},
-		makeExperimentalCodecVersion(
-			EditManagerFormatVersion.vSharedBranches,
-			(options: EditManagerCodecOptions<TChangeset>) =>
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.vSharedBranches,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
 				makeSharedBranchesCodecWithVersion(
 					options.changeCodecs.resolve(
 						options.dependentChangeFormatVersion.lookup(
@@ -133,7 +144,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
 					options.revisionTagCodec,
 					EditManagerFormatVersion.vSharedBranches,
 				),
-		),
+		},
 	];
 
 	return VersionDispatchingCodecBuilder.build(editManagerCodecName, versions);

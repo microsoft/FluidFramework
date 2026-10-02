@@ -15,8 +15,6 @@ import {
 import {
 	FluidClientVersion,
 	Versioned,
-	makeDiscontinuedCodecAndSchema,
-	makeExperimentalCodecVersion,
 	throwDecodeError,
 	type DecodeErrorHandler,
 	type ICodecOptions,
@@ -72,7 +70,11 @@ describe("versioned Codecs", () => {
 				formatVersion: 2,
 				codec: () => codecV2,
 			},
-			makeExperimentalCodecVersion("X", codecVX),
+			{
+				minVersionForCollab: undefined,
+				formatVersion: "X",
+				codec: codecVX,
+			},
 		] as const;
 		const builder = VersionDispatchingCodecBuilder.build("Test", writableRegistry);
 		const experimentalSelectorBuilder = VersionDispatchingCodecBuilder.build(
@@ -106,7 +108,11 @@ describe("versioned Codecs", () => {
 					},
 				},
 			},
-			makeDiscontinuedCodecAndSchema(undefined, "2.0.0"),
+			{
+				minVersionForCollab: undefined,
+				formatVersion: undefined,
+				discontinuedSince: "2.0.0",
+			},
 		] as const;
 
 		it("round trip", () => {
@@ -409,7 +415,11 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 							(data as unknown as V1).value1 - options.offset,
 					}),
 				},
-				makeDiscontinuedCodecAndSchema(-1, "2.0.0"),
+				{
+					minVersionForCollab: undefined,
+					formatVersion: -1,
+					discontinuedSince: "2.0.0",
+				},
 			];
 			const lifecycleBuilder = VersionDispatchingCodecBuilder.build(
 				"FactoryOptions",
@@ -459,15 +469,19 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 						formatVersion: 2,
 						codec: (_options: ICodecOptions) => codecV2,
 					},
-					makeExperimentalCodecVersion("X", (options: BuildOptions) => ({
-						schema: Versioned,
-						encode: (data: number, context: EncodeContext) => ({
-							version: "X",
-							valueX: data + options.offset + context.encodeOffset,
+					{
+						minVersionForCollab: undefined,
+						formatVersion: "X",
+						codec: (options: BuildOptions) => ({
+							schema: Versioned,
+							encode: (data: number, context: EncodeContext) => ({
+								version: "X",
+								valueX: data + options.offset + context.encodeOffset,
+							}),
+							decode: (data: JsonCompatibleReadOnly, context: DecodeContext) =>
+								(data as unknown as VX).valueX - options.offset + context.decodeOffset,
 						}),
-						decode: (data: JsonCompatibleReadOnly, context: DecodeContext) =>
-							(data as unknown as VX).valueX - options.offset + context.decodeOffset,
-					})),
+					},
 					{
 						minVersionForCollab: undefined,
 						formatVersion: 0,
@@ -477,7 +491,11 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 								(data as unknown as V1).value1 + options.readonlyOffset + context.decodeOffset,
 						}),
 					},
-					makeDiscontinuedCodecAndSchema(-1, "2.0.0"),
+					{
+						minVersionForCollab: undefined,
+						formatVersion: -1,
+						discontinuedSince: "2.0.0",
+					},
 				],
 				{
 					selectWriteFormatVersion: (data, defaultVersion) =>

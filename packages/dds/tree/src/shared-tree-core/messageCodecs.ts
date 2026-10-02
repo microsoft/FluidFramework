@@ -16,8 +16,6 @@ import {
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
-	makeDiscontinuedCodecAndSchema,
-	makeExperimentalCodecVersion,
 } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
@@ -86,9 +84,21 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 		MessageDecodingContext
 	>[] = [
 		// The "undefined" wire format (no version field) is discontinued.
-		makeDiscontinuedCodecAndSchema(undefined, "2.73.0"),
-		makeDiscontinuedCodecAndSchema(MessageFormatVersion.v1, "2.73.0"),
-		makeDiscontinuedCodecAndSchema(MessageFormatVersion.v2, "2.73.0"),
+		{
+			minVersionForCollab: undefined,
+			formatVersion: undefined,
+			discontinuedSince: "2.73.0",
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: MessageFormatVersion.v1,
+			discontinuedSince: "2.73.0",
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: MessageFormatVersion.v2,
+			discontinuedSince: "2.73.0",
+		},
 		{
 			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: MessageFormatVersion.v3,
@@ -113,7 +123,11 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 					MessageFormatVersion.v4,
 				),
 		},
-		makeDiscontinuedCodecAndSchema(MessageFormatVersion.v5, "2.74.0"),
+		{
+			minVersionForCollab: undefined,
+			formatVersion: MessageFormatVersion.v5,
+			discontinuedSince: "2.74.0",
+		},
 		{
 			minVersionForCollab: FluidClientVersion.v2_80,
 			formatVersion: MessageFormatVersion.v6,
@@ -138,9 +152,10 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 					MessageFormatVersion.v7,
 				),
 		},
-		makeExperimentalCodecVersion(
-			MessageFormatVersion.vSharedBranches,
-			(options: MessageCodecBuilderOptions<TChangeset>) =>
+		{
+			minVersionForCollab: undefined,
+			formatVersion: MessageFormatVersion.vSharedBranches,
+			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
 				makeSharedBranchesCodecWithVersion(
 					options.changeCodecs.resolve(
 						options.dependentChangeFormatVersion.lookup(MessageFormatVersion.vSharedBranches),
@@ -148,7 +163,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 					options.revisionTagCodec,
 					MessageFormatVersion.vSharedBranches,
 				),
-		),
+		},
 	];
 
 	return VersionDispatchingCodecBuilder.build(messageCodecName, versions);

@@ -39,8 +39,6 @@ export {
 } from "./discriminatedUnions.js";
 export {
 	Versioned,
-	makeDiscontinuedCodecAndSchema,
-	makeExperimentalCodecVersion,
 	VersionDispatchingCodecBuilder,
 	type VersionDispatchingCodec,
 	type VersionDispatchingCodecBuilderOptions,

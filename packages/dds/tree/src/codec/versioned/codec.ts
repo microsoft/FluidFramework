@@ -298,52 +298,6 @@ export type CodecVersion<
 	| CodecVersionDiscontinued<TFormatVersion>;
 
 /**
- * Creates an experimental format declaration for a codec or codec factory.
- *
- * @remarks
- * See {@link CodecVersionExperimental} for compatibility requirements.
- */
-export function makeExperimentalCodecVersion<
-	TFormatVersion extends string,
-	TDecoded,
-	TEncodeContext = void,
-	TBuildOptions extends ICodecOptions = ICodecOptions,
-	TDecodeContext = TEncodeContext,
->(
-	formatVersion: TFormatVersion,
-	codec: CodecSource<TDecoded, TEncodeContext, TBuildOptions, TDecodeContext>,
-): CodecVersionExperimental<
-	TDecoded,
-	TEncodeContext,
-	TFormatVersion,
-	TBuildOptions,
-	TDecodeContext
-> {
-	return {
-		minVersionForCollab: undefined,
-		formatVersion,
-		codec,
-	};
-}
-
-/**
- * Creates a discontinued format declaration.
- *
- * @remarks
- * The builder supplies the codec which rejects encoding and decoding.
- */
-export function makeDiscontinuedCodecAndSchema<TFormatVersion extends FormatVersion>(
-	formatVersion: TFormatVersion,
-	discontinuedSince: SemanticVersion,
-): CodecVersionDiscontinued<TFormatVersion> {
-	return {
-		minVersionForCollab: undefined,
-		formatVersion,
-		discontinuedSince,
-	};
-}
-
-/**
  * Extracts codec sources, excluding discontinued entries which have no codec.
  */
 type CodecSourceFromCodecVersion<T> = T extends { readonly codec: infer TSource }
