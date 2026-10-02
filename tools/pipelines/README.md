@@ -3,6 +3,19 @@
 Azure Pipelines definitions and shared [`templates/`](./templates) for building, testing, and
 releasing the Fluid Framework.
 
+## Reducing CI checkout duration
+
+Prefer explicit `fetchDepth: 1` and `fetchTags: false` to reduce CI duration and network usage, including equivalent options on scripted fetches.
+Fetch additional history or tags only where needed; tags do not require full ancestry, but can still increase download size.
+Document exceptions and possible follow-up optimizations beside the checkout, linking here for shared constraints.
+
+### Release-tag checks in build jobs
+
+Npm and Docker builds still run `flub generate buildVersion` to detect duplicate releases and compute `isLatest` for publishing metadata.
+Those checks need tags, not ancestry; compilation and version-number calculation need neither.
+Use `fetchDepth: 1` with `fetchTags: true` unless other steps need history.
+To remove the tag dependency, move these checks into publishing or explicitly skip tag-dependent work for non-release builds.
+
 ## Mirroring base container images for the server pipelines
 
 The `server-*` pipelines run on a 1ES build pool whose network isolation blocks egress to Docker
