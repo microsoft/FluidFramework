@@ -315,7 +315,7 @@ export type ShardSynchronizationToken = ShardToken & {
  * ```
  *
  * Client B (Receiver)
- * 
+ *
  * ```typescript
  * // Receive the message from Client A
  * const receivedMessage = ...; // In Fluid, this would be an op or summary
