@@ -47,6 +47,87 @@ describe("Snapshot Normalizer", () => {
 		);
 	});
 
+	describe("SharedString snapshot format attributes", () => {
+		const attributes = {
+			type: "https://graph.microsoft.com/types/mergeTree",
+			snapshotFormatVersion: "0.1",
+			packageVersion: "X",
+		};
+
+		function createSnapshot(channelAttributes: object, blobName = ".attributes"): ITree {
+			return {
+				id: "root",
+				entries: [
+					new TreeTreeEntry("sharedString", {
+						id: "channel",
+						entries: [new BlobTreeEntry(blobName, JSON.stringify(channelAttributes))],
+					}),
+				],
+			};
+		}
+
+		it("compares a recorded legacy flag with an absent flag without mutating the snapshot", () => {
+			const snapshot = createSnapshot({
+				...attributes,
+				newMergeTreeSnapshotFormat: false,
+			});
+			const originalSnapshot = JSON.stringify(snapshot);
+			const normalizedSnapshot = getNormalizedSnapshot(snapshot);
+
+			assert.deepStrictEqual(
+				normalizedSnapshot,
+				getNormalizedSnapshot(createSnapshot(attributes)),
+			);
+			assert.strictEqual(JSON.stringify(snapshot), originalSnapshot);
+			assert.deepStrictEqual(getNormalizedSnapshot(normalizedSnapshot), normalizedSnapshot);
+		});
+
+		it("preserves the flat format flag as a meaningful snapshot difference", () => {
+			const snapshot = createSnapshot({
+				...attributes,
+				newMergeTreeSnapshotFormat: true,
+			});
+
+			assert.deepStrictEqual(getNormalizedSnapshot(snapshot), snapshot);
+			assert.notDeepStrictEqual(
+				getNormalizedSnapshot(snapshot),
+				getNormalizedSnapshot(createSnapshot(attributes)),
+			);
+		});
+
+		it("does not normalize the flag in other channel types", () => {
+			const snapshot = createSnapshot({
+				...attributes,
+				type: "https://graph.microsoft.com/types/sharedmatrix",
+				newMergeTreeSnapshotFormat: false,
+			});
+
+			assert.deepStrictEqual(getNormalizedSnapshot(snapshot), snapshot);
+		});
+
+		it("does not normalize similarly named fields outside the attributes blob", () => {
+			const snapshot = createSnapshot(
+				{ ...attributes, newMergeTreeSnapshotFormat: false },
+				"header",
+			);
+
+			assert.deepStrictEqual(getNormalizedSnapshot(snapshot), snapshot);
+		});
+
+		it("retains custom blob normalization for attributes", () => {
+			const config: ISnapshotNormalizerConfig = { blobsToNormalize: [".attributes"] };
+			const snapshot = createSnapshot({
+				...attributes,
+				newMergeTreeSnapshotFormat: false,
+			});
+
+			assert.deepStrictEqual(
+				getNormalizedSnapshot(snapshot, config),
+				getNormalizedSnapshot(createSnapshot(attributes), config),
+			);
+		});
+	});
+
 	it("can normalize GC blobs", () => {
 		const gcDetails = {
 			isRootNode: true,
