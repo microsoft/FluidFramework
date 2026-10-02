@@ -31,11 +31,8 @@ import type { GuestBranchInitialization } from "./hostSynchronization.js";
  * The Guest synchronization lifecycle.
  *
  * @remarks
- * Disposal stops edits and releases both checkouts and the ID space shard.
- *
- * On protocol failure, the session moves synchronization from active
- * to stopped without disposing the checkouts. The application must dispose the Guest
- * to release them after failure reporting.
+ * A failure moves synchronization to `Stopped`, leaving both checkouts available until disposal.
+ * Disposal also stops synchronization before releasing the checkouts and ID space shard.
  */
 enum GuestSynchronizationState {
 	/**
@@ -43,9 +40,8 @@ enum GuestSynchronizationState {
 	 */
 	Active = "active",
 	/**
-	 * Synchronization is terminal. The owner no longer routes messages, and any pending changes have been rejected.
-	 * Both checkouts remain until disposal. The authoring checkout remains available
-	 * for inspection if it is still usable.
+	 * No longer synchronizes changes; pending acknowledgments have been rejected.
+	 * After a failure, both checkouts remain until disposal so the authoring view can be inspected if usable.
 	 */
 	Stopped = "stopped",
 	/**
@@ -67,13 +63,8 @@ enum GuestSynchronizationState {
  * Each Host update replaces a suffix of {@link hostCheckout}, after which {@link checkout} rebases its local commits
  * onto the updated Host head.
  *
- * The owning {@link Guest} calls {@link dispose} to stop new edits and dispose both
- * checkouts and the child shard without waiting for acknowledgments.
- *
- * On protocol failure, the session calls {@link stop} from active.
- * This does not dispose either checkout, so the application can inspect the authoring checkout if
- * the checkout is still usable.
- *
+ * On failure, {@link stop} leaves the checkouts intact for inspection; {@link dispose}
+ * releases them and the ID space shard without waiting for acknowledgments.
  */
 export class GuestSynchronization {
 	/**
