@@ -90,7 +90,7 @@ export abstract class TreeNode implements WithType {
 	/**
 	 * Provides `instanceof` support for testing if a value is a `TreeNode`.
 	 * @remarks
-	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
+	 * For more options, like including leaf values or narrowing to collections of schemas, use `is` or `schema` from {@link TreeNodeApi}.
 	 * @privateRemarks
 	 * Due to type-only export, this functionality is not available outside the package.
 	 */
@@ -99,7 +99,7 @@ export abstract class TreeNode implements WithType {
 	/**
 	 * Provides `instanceof` support for all schema classes with public constructors.
 	 * @remarks
-	 * For more options, like including leaf values or narrowing to collections of schema, use `is` or `schema` from {@link TreeNodeApi}.
+	 * For more options, like including leaf values or narrowing to collections of schemas, use `is` or `schema` from {@link TreeNodeApi}.
 	 * @privateRemarks
 	 * Despite type-only export, this functionality is available outside the package since it is inherited by subclasses.
 	 */

@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import {
 	compareFluidHandles,
 	isFluidHandle,
@@ -27,11 +26,9 @@ import {
 	SandboxProtocolError,
 	validateTreePayloadVocabulary,
 } from "./common.js";
-import {
-	GuestTransportCodec,
-	HostTransportCodec,
-	normalizeTransportData,
-} from "./transport.js";
+import { GuestTransportCodec } from "./guestTransport.js";
+import { HostTransportCodec } from "./hostTransport.js";
+import { normalizeTransportData } from "./transport.js";
 
 /**
  * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.
@@ -42,39 +39,41 @@ type _DistinctIds =
 	| requireFalse<isAssignableTo<number, HandleToken>>
 	| requireFalse<isAssignableTo<number, BlobRequestId>>;
 
-describe("Sandbox transport codecs", () => {
-	function assertNullPrototypeRecords(value: unknown): void {
-		if (typeof value !== "object" || value === null || isLocalHandle(value)) {
-			return;
-		}
-		if (value instanceof ArrayBuffer) {
-			assert.equal(Object.getPrototypeOf(value), ArrayBuffer.prototype);
-			return;
-		}
-		if (Array.isArray(value)) {
-			assert.equal(Object.getPrototypeOf(value), Array.prototype);
-		} else {
-			assert.equal(Object.getPrototypeOf(value), null);
-		}
-		for (const child of Object.values(value)) {
-			assertNullPrototypeRecords(child);
-		}
+/**
+ * Recursively asserts that records have null prototypes while arrays and buffers retain their
+ * built-in prototypes.
+ */
+function assertNullPrototypeRecords(value: unknown): void {
+	if (typeof value !== "object" || value === null || isLocalHandle(value)) {
+		return;
 	}
-
-	function setupTransportCodecs() {
-		const bound: IFluidHandleInternal[] = [];
-		const host = new HostTransportCodec(
-			Object.assign(new MockHandle(undefined), {
-				bind: (handle: IFluidHandleInternal) => bound.push(handle),
-			}),
-		);
-		const requests: BlobRequestMessage[] = [];
-		const guest = new GuestTransportCodec((message) => requests.push(message));
-		return { host, guest, bound, requests };
+	if (value instanceof ArrayBuffer) {
+		assert.equal(Object.getPrototypeOf(value), ArrayBuffer.prototype);
+		return;
 	}
+	if (Array.isArray(value)) {
+		assert.equal(Object.getPrototypeOf(value), Array.prototype);
+	} else {
+		assert.equal(Object.getPrototypeOf(value), null);
+	}
+	for (const child of Object.values(value)) {
+		assertNullPrototypeRecords(child);
+	}
+}
 
-	it("replaces nested handles without mutating input and binds restored handles", () => {
-		const { host, guest, bound } = setupTransportCodecs();
+/**
+ * Creates paired Host and Guest transport codecs with captured blob requests.
+ */
+function setupTransportCodecs() {
+	const host = new HostTransportCodec();
+	const requests: BlobRequestMessage[] = [];
+	const guest = new GuestTransportCodec((message) => requests.push(message));
+	return { host, guest, requests };
+}
+
+describe("Transport and endpoint unit tests", () => {
+	it("replaces nested handles without mutating input", () => {
+		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(1));
 		const untouched = { value: 1 };
 		const input = { untouched, nested: [handle, { handle }] };
@@ -95,9 +94,6 @@ describe("Sandbox transport codecs", () => {
 		const decoded = guest.decode(structuredClone(encoded));
 		const restored = host.decode(guest.encode(decoded));
 		assert.deepEqual(restored, normalizeTransportData(input));
-		assert.deepEqual(bound, []);
-		host.bindHandles(restored);
-		assert.deepEqual(bound, [handle]);
 	});
 
 	it("normalizes every record, including generated handle and escape records", () => {
@@ -132,7 +128,7 @@ describe("Sandbox transport codecs", () => {
 		nested.child = {};
 		assert.throws(() => validateTreePayloadVocabulary(nested), /Invalid sandbox tree payload/);
 		assert.throws(
-			() => parseHostGuestMessage({ type: "acknowledgment" }),
+			() => parseHostGuestMessage({ type: "hostUpdateAck" }),
 			/Invalid Host and Guest/,
 		);
 	});
@@ -229,10 +225,18 @@ describe("Sandbox transport codecs", () => {
 					() =>
 						parseHostGuestMessage(
 							codec.decode(
-								structuredClone(codec.encode({ type: "dataChange", change: payload })),
+								structuredClone(
+									codec.encode({
+										type: "guestChange",
+										changeId: 0,
+										mainRevision: "root",
+										trunkRevision: "root",
+										change: payload,
+									}),
+								),
 							),
 						),
-					/Invalid sandbox tree payload/,
+					/Invalid Host and Guest protocol message/,
 				);
 			}
 			for (const message of [
@@ -371,10 +375,6 @@ describe("Sandbox transport codecs", () => {
 	});
 
 	it("classifies unsupported handle operations as usage errors", async () => {
-		assert.throws(
-			() => new HostTransportCodec(new MockHandle(undefined)),
-			validateUsageError(/requires a SharedTree handle/),
-		);
 		const { host, guest } = setupTransportCodecs();
 		const proxy = guest.decode(host.encode(new MockHandle("not a blob")));
 		assert(isFluidHandle(proxy));
@@ -503,8 +503,8 @@ describe("Sandbox transport codecs", () => {
 		}
 	});
 
-	it("rejects malformed serialized handle records before binding or creating proxies", () => {
-		const { host, guest, bound, requests } = setupTransportCodecs();
+	it("rejects malformed serialized handle records before creating proxies", () => {
+		const { host, guest, requests } = setupTransportCodecs();
 		host.encode(new MockHandle(new ArrayBuffer(1)));
 		for (const value of [
 			{ type: "__sandbox_handle__" },
@@ -515,12 +515,13 @@ describe("Sandbox transport codecs", () => {
 			assert.throws(() => host.decode(value), /Invalid sandbox handle token/);
 			assert.throws(() => guest.decode(value), /Invalid sandbox handle token/);
 		}
-		assert.equal(bound.length, 0);
 		assert.equal(requests.length, 0);
 	});
+});
 
+describe("Host and Guest round-trip integration tests", () => {
 	it("round-trips marker-shaped ordinary data in both directions", () => {
-		const { host, guest, bound } = setupTransportCodecs();
+		const { host, guest } = setupTransportCodecs();
 		const inputs = [
 			{ type: "__sandbox_handle__", label: "ordinary user data" },
 			{ type: "__sandbox_handle__", token: 0 },
@@ -542,11 +543,10 @@ describe("Sandbox transport codecs", () => {
 			assert(!isLocalHandle(onGuest));
 			assert(!isLocalHandle(onHost));
 		}
-		assert.deepEqual(bound, []);
 	});
 
 	it("restores nested handles in escaped objects without reinterpreting ordinary marker roots", () => {
-		const { host, guest, bound } = setupTransportCodecs();
+		const { host, guest } = setupTransportCodecs();
 		const handle = new MockHandle(new ArrayBuffer(0));
 		const value = {
 			type: "__sandbox_handle__",
@@ -557,9 +557,6 @@ describe("Sandbox transport codecs", () => {
 		validateTreePayloadVocabulary(decoded);
 		const restored = host.decode(structuredClone(guest.encode(decoded)));
 		assert.deepEqual(restored, normalizeTransportData(value));
-		assert.deepEqual(bound, []);
-		host.bindHandles(restored);
-		assert.deepEqual(bound, [handle]);
 	});
 
 	it("preserves prototype-related property names in null-prototype records", () => {
@@ -609,7 +606,15 @@ describe("Sandbox transport codecs", () => {
 		assert(fluidHandleSymbol in decoded[0]);
 		validateTreePayloadVocabulary(decoded);
 		assert.doesNotThrow(() =>
-			parseHostGuestMessage(normalizeTransportData({ type: "dataChange", change: decoded })),
+			parseHostGuestMessage(
+				normalizeTransportData({
+					type: "guestChange",
+					changeId: 0,
+					mainRevision: "root",
+					trunkRevision: "root",
+					change: decoded,
+				}),
+			),
 		);
 		assert.throws(
 			() => validateTreePayloadVocabulary(new ArrayBuffer(0)),
@@ -671,8 +676,8 @@ describe("Sandbox transport codecs", () => {
 		);
 	});
 
-	it("rejects malformed escapes and duplicate keys without binding handles", () => {
-		const { host, guest, bound } = setupTransportCodecs();
+	it("rejects malformed escapes and duplicate keys", () => {
+		const { host, guest } = setupTransportCodecs();
 		for (const value of [
 			{ type: "__sandbox_object__" },
 			{ type: "__sandbox_object__", entries: {} },
@@ -691,7 +696,6 @@ describe("Sandbox transport codecs", () => {
 			assert.throws(() => host.decode(value), SandboxProtocolError);
 			assert.throws(() => guest.decode(value), SandboxProtocolError);
 		}
-		assert.deepEqual(bound, []);
 	});
 
 	it("copies and restricts the entire message before restoring any handle", () => {

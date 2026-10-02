@@ -10,6 +10,7 @@ import type { FieldKey } from "../../core/index.js";
 import type { IncrementalEncodingPolicy } from "../../feature-libraries/index.js";
 import { oneFromIterable } from "../../util/index.js";
 import { getTreeNodeSchemaPrivateData, type AllowedTypesFull } from "../core/index.js";
+import type { FieldPropsAlpha } from "../fieldSchema.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import type { TreeSchema } from "../treeSchema.js";
 
@@ -21,14 +22,13 @@ import type { TreeSchema } from "../treeSchema.js";
  * @remarks
  * See {@link incrementalEncodingPolicyForAllowedTypes} for more details.
  *
- * Use {@link SchemaStaticsBeta.types} to add this metadata to allowed types in a schema.
+ * For new schemas, prefer setting {@link FieldPropsAlpha.summarizeIncrementally} through a
+ * {@link SchemaFactoryAlpha} field creation API rather than using this symbol directly.
  * @example
  * ```typescript
  * const sf = new SchemaFactoryAlpha("IncrementalSummarization");
  * class Foo extends sf.objectAlpha("foo", {
- *   bar: sf.types([{ type: sf.string, metadata: {} }], {
- *     custom: { [incrementalSummaryHint]: true },
- *   }),
+ *   bar: sf.required(sf.string, { summarizeIncrementally: true }),
  * }) {}
  * ```
  * @alpha
@@ -48,22 +48,21 @@ function isIncrementalSummaryHintInAllowedTypes(allowedTypes: AllowedTypesFull):
 
 /**
  * This helper function {@link incrementalEncodingPolicyForAllowedTypes} can be used to generate a callback function
- * of type {@link IncrementalEncodingPolicy}. It determines if each {@link AllowedTypes} in a schema should be
- * incrementally summarized.
+ * of type {@link IncrementalEncodingPolicy}. It determines if each field in a schema should be incrementally
+ * summarized.
  * This callback can be passed as the value for {@link SharedTreeOptions.shouldEncodeIncrementally} parameter
  * when creating the tree.
  *
  * @param rootSchema - The schema for the root of the tree.
- * @returns A callback function of type {@link IncrementalEncodingPolicy} which determines if allowed types should
- * be incrementally summarized based on whether they have opted in via the {@link incrementalSummaryHint} metadata.
+ * @returns A callback function of type {@link IncrementalEncodingPolicy} which determines if fields should
+ * be incrementally summarized based on whether they have opted in via
+ * {@link FieldPropsAlpha.summarizeIncrementally}.
  *
  * @remarks
  * This only works for forest type {@link ForestTypeOptimized} and compression strategy
  * {@link TreeCompressionStrategy.CompressedIncremental}.
- *
- * @privateRemarks
- * The {@link incrementalSummaryHint} will be replaced with a specialized metadata property once the
- * incremental summary feature and APIs are stabilized.
+ * See the {@link https://fluidframework.com/docs/data-structures/tree/incremental-summary/ | Incremental Summary documentation}
+ * for setup instructions and details about how incremental summary works.
  *
  * @alpha
  */
@@ -72,7 +71,7 @@ export function incrementalEncodingPolicyForAllowedTypes(
 ): IncrementalEncodingPolicy {
 	return (targetNodeIdentifier: string | undefined, targetFieldKey?: string) => {
 		if (targetNodeIdentifier === undefined) {
-			// Root fields cannot be allowed types, so we don't incrementally summarize them.
+			// The root is already an independent summary boundary.
 			return false;
 		}
 
@@ -98,7 +97,11 @@ export function incrementalEncodingPolicyForAllowedTypes(
 			if (targetPropertyKey !== undefined) {
 				const fieldSchema = targetNode.fields.get(targetPropertyKey);
 				if (fieldSchema !== undefined) {
-					return isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull);
+					return (
+						(fieldSchema.props as Partial<FieldPropsAlpha> | undefined)
+							?.summarizeIncrementally ??
+						isIncrementalSummaryHintInAllowedTypes(fieldSchema.allowedTypesFull)
+					);
 				}
 			}
 			return false;

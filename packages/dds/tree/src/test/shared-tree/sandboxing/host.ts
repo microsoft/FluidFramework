@@ -3,105 +3,103 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { findCommonAncestor, type GraphCommit } from "../../../core/index.js";
-import { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema, UnsafeUnknownSchema } from "../../../simple-tree/index.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+import {
+	castCursorToSynchronous,
+	findAncestor,
+	moveToDetachedField,
+	schemaDataIsEmpty,
+} from "../../../core/index.js";
+import {
+	defaultSchemaPolicy,
+	fieldBatchCodecBuilder,
+	schemaCodecBuilder,
+	TreeCompressionStrategy,
+} from "../../../feature-libraries/index.js";
+import type { TreeCheckout } from "../../../shared-tree/index.js";
+import type { UntypedTreeView } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 
 import {
-	type AcknowledgmentMessage,
 	type BlobRequestMessage,
 	type BlobResponseMessage,
-	type DataChangeMessage,
 	type HostGuestMessage,
-	getRevision,
-	makePromiseWithResolvers,
+	type HostInitializationMessage,
 	normalizeProtocolError,
 	parseHostGuestMessage,
-	type PromiseWithResolvers,
+	type SandboxEndpointOptions,
+	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
+	validateTreePayloadVocabulary,
 } from "./common.js";
-import { HostTransportCodec, normalizeTransportData } from "./transport.js";
+import { HostTransportCodec } from "./hostTransport.js";
+import { HostSynchronization } from "./hostSynchronization.js";
 import { SandboxSessionEndpoint } from "./session.js";
+import { normalizeTransportData } from "./transport.js";
+import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
- * Gets the revisions of the commits that are in the `ahead` view but not in the `behind` view.
- * The returned list includes commits that are in both views but have a different base.
- * Used for debugging and logging purposes only.
+ * Options for creating a Host.
+ * @typeParam TSchema - The schema of the synchronized tree.
  */
-function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	behind: TreeViewAlpha<TSchema>,
-	ahead: TreeViewAlpha<TSchema>,
-): string {
-	/**
-	 * Gets the head commit of a view.
-	 * Used for debugging and logging purposes only.
-	 */
-	const headFromView = (view: TreeViewAlpha<TSchema>): GraphCommit<unknown> => {
-		// Commit information is not exposed through the public APIs,
-		// so this diagnostic helper relies on implementation details.
-		assert(
-			view instanceof SchematizingSimpleTreeView,
-			"Expected view to be a SchematizingSimpleTreeView",
-		);
-		return view.checkout.mainBranch.getHead();
-	};
-	const behindHead = headFromView(behind);
-	const aheadHead = headFromView(ahead);
-	const targetPath: GraphCommit<unknown>[] = [];
-	const ancestor = findCommonAncestor(behindHead, [aheadHead, targetPath]);
-	assert(ancestor !== undefined, "Branches do not share a common ancestor.");
-	return `[${targetPath.map((commit) => commit.revision).join(", ")}]`;
+export interface HostOptions extends SandboxEndpointOptions {
+	// TODO: Use a branch with a forest once it can be supplied without a full view.
+	/** The application-owned view to synchronize with the Guest. */
+	readonly main: UntypedTreeView;
 }
 
 /**
- * The SharedTree that connects to Fluid services on behalf of a Guest.
- *
- * @typeParam TSchema - The schema of the synchronized tree.
+ * The SharedTree that connects to Fluid services on behalf of a {@link Guest}.
+ * @sealed
  */
-export class Host<const TSchema extends ImplicitFieldSchema> {
+export interface Host {
+	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+	readonly error: Error | undefined;
+	/** A promise for Guest acknowledgment of pending Host changes, if changes are pending. */
+	readonly updateGuestPromise: Promise<void> | undefined;
+	/** Ends the session and releases its resources. */
+	dispose(): void;
+}
+
+/**
+ * Creates and connects a {@link Host} which can support a {@link Guest}.
+ * @param options - The options for creating the Host.
+ * @returns The created Host instance.
+ */
+export function createHost(options: HostOptions): Host {
+	return new HostImplementation(options);
+}
+
+/**
+ * Implementation of {@link Host}.
+ * @typeParam TSchema - The schema of the synchronized tree supplied during construction.
+ */
+export class HostImplementation implements Host {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
+	/** Internal synchronization state exposed for testing. */
+	public readonly synchronization: HostSynchronization;
+	/** The checkout extracted from the application-provided view. */
+	private readonly mainCheckout: TreeCheckout;
+	private readonly port: MessagePort;
 	private disposed = false;
-	/** Borrowed application view, updated by peer changes. Session teardown does not dispose it. */
-	public readonly main: TreeViewAlpha<TSchema>;
-	/**
-	 * The local branch on the Host.
-	 * It reflects the state of the Guest, but can lag because synchronization is asynchronous.
-	 */
-	public readonly local: TreeViewAlpha<TSchema>;
-	/**
-	 * The promise and resolver for the process of sending changes to the Guest.
-	 * When this is defined, the Guest is behind the Host's main branch.
-	 * The promise resolves when the Guest catches up with the Host's main branch.
-	 * When this is undefined, no update is in progress and the Guest is up to date with the
-	 * Host's main branch.
-	 */
-	private updateInProgress?: PromiseWithResolvers;
-	/** A clone of the main branch from when the last update to the Guest started. */
-	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
-	/** Whether the Host is applying changes from the Guest to the main branch. */
-	private isApplyingGuestChanges: boolean = false;
-	/** The callback that unsubscribes from main branch changes. */
-	private readonly offMainChanged: () => void;
 
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
-				case "dataChange": {
-					this.receiveChangeFromGuest(message.change);
+				case "guestChange": {
+					this.synchronization.receiveChangeFromGuest(message);
 					break;
 				}
-				case "acknowledgment": {
-					this.receiveAckFromGuest();
+				case "hostUpdateAck": {
+					this.synchronization.receiveUpdateAck(message);
 					break;
 				}
 				case "blobRequest": {
@@ -110,15 +108,20 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 					});
 					break;
 				}
-				case "blobResponse": {
-					throw new SandboxProtocolError("The Host cannot receive blob responses.");
+				case "blobResponse":
+				case "hostUpdate":
+				case "hostInitialization":
+				case "guestChangeAck": {
+					throw new SandboxProtocolError(
+						`Host received a message with type ${JSON.stringify(message.type)}.`,
+					);
 				}
 				case "sessionFailure": {
 					this.session.fail(new Error(message.error), false);
 					break;
 				}
 				default: {
-					fail("Unexpected Host and Guest message type");
+					unreachableCase(message);
 				}
 			}
 		});
@@ -131,42 +134,45 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		);
 	};
 
-	public constructor(
-		main: TreeViewAlpha<TSchema>,
-		/** The Host endpoint of the Host and Guest message channel. */
-		private readonly port: MessagePort,
-		/** The SharedTree handle to which restored handles are bound. */
-		bindingHandle: IFluidHandle,
-		/** Reports terminal session failure asynchronously; the application must recreate the pair. */
-		handleProtocolError: (error: Error) => void = throwProtocolError,
-		/** Receives diagnostic messages from the synchronization algorithm. */
-		private readonly logger: (message: string) => void = () => {},
-	) {
-		this.codec = new HostTransportCodec(bindingHandle);
-		this.main = main;
-		this.local = main.fork();
+	public constructor({
+		main,
+		port,
+		logger,
+		handleProtocolError = throwProtocolError,
+	}: HostOptions) {
+		this.port = port;
+		this.codec = new HostTransportCodec();
+		this.mainCheckout = getCheckout(main);
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
-				this.offMainChanged();
+				this.synchronization.stop(error);
 				this.codec.dispose();
-				this.updateInProgress?.rejecter(error);
-				this.updateInProgress = undefined;
 			},
 			handleProtocolError,
 		);
-		this.offMainChanged = this.main.events.on("changed", () => {
-			// The Host might need to update the Guest after applying changes from the Guest,
-			// but receiveChangeFromGuest must first send an acknowledgment to the Guest.
-			this.session.run(() => {
-				if (!this.isApplyingGuestChanges) {
-					this.tryUpdateGuest("after main branch changed");
-				}
+		const hostLogger =
+			logger ??
+			createChildLogger({
+				logger: this.mainCheckout.breaker.logger,
+				namespace: "Host",
 			});
-		});
+		this.synchronization = new HostSynchronization(
+			this.mainCheckout,
+			(message) => this.postMessage(message),
+			(action) => this.session.run(action),
+			(error) => this.session.fail(error),
+			hostLogger,
+		);
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
+		try {
+			this.postMessage(this.createInitializationMessage(getIdCompressor(main)));
+		} catch (error) {
+			this.dispose();
+			throw error;
+		}
 	}
 
 	public dispose(): void {
@@ -177,105 +183,12 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.mainHeadFromLastUpdate?.dispose();
-		this.mainHeadFromLastUpdate = undefined;
-		this.local.dispose();
+		this.synchronization.dispose();
 	}
 
 	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
 	public get error(): Error | undefined {
 		return this.session.error;
-	}
-
-	/**
-	 * Informs the Host of a new change made on the Guest.
-	 * This method synchronously applies the change to the Host's local and main branches,
-	 * then asynchronously attempts to update the Guest if necessary.
-	 */
-	private receiveChangeFromGuest(change: JsonCompatibleReadOnly): void {
-		this.logger(`Host: received change [${getRevision(change)}] from Guest`);
-		if (this.mainHeadFromLastUpdate !== undefined) {
-			// The Guest authored this change before applying the update that is in progress.
-			// That update does not account for the new change, so the Guest will reject it as
-			// out of date. A new update based on the updated main head will replace it.
-			this.logger(
-				`Host:   abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
-			);
-			this.mainHeadFromLastUpdate.dispose();
-			this.mainHeadFromLastUpdate = undefined;
-		}
-		this.local.applyChange(change);
-		// applyChange runs the tree codec before handles are bound or the main branch is updated.
-		this.codec.bindHandles(change);
-		this.logger(
-			`Host:   merging changes from Guest: ${getMissingCommits(this.main, this.local)}`,
-		);
-		this.isApplyingGuestChanges = true;
-		try {
-			// TODO: Establish isolation for failures during main-tree merge, beyond validation on local.
-			this.main.merge(this.local, false);
-		} finally {
-			this.isApplyingGuestChanges = false;
-		}
-		this.postMessage({ type: "acknowledgment" } satisfies AcknowledgmentMessage);
-		this.tryUpdateGuest("after receiving change from Guest");
-	}
-
-	/**
-	 * Attempts to send changes to the Guest if the Guest is behind the Host's main branch.
-	 * If the Guest is already up to date, no update is sent and any pending synchronization promise is resolved and cleared.
-	 * If an update is awaiting acknowledgment, no additional update is sent.
-	 *
-	 * @remarks
-	 * Updating the Guest is asynchronous, so the Guest can still be behind the Host's main branch
-	 * after this method returns.
-	 * See {@link updateGuestPromise} for a promise that resolves when the Guest is fully up to date.
-	 *
-	 * @param prompt - Text for the log message that explains why an update is being considered.
-	 */
-	private tryUpdateGuest(prompt: string): void {
-		this.logger(`Host: considering sync ${prompt}...`);
-		if (this.local.isMissingEditsFrom(this.main)) {
-			this.logger(
-				`Host:   detected changes that need to be reflected in Guest ${getMissingCommits(this.local, this.main)}`,
-			);
-			if (this.mainHeadFromLastUpdate !== undefined) {
-				this.logger(
-					"Host:   update already in progress. Will wait for it to complete or fail.",
-				);
-				return;
-			}
-			if (this.updateInProgress === undefined) {
-				this.logger(
-					"Host:   no pre-existing update in progress. Creating new update promise.",
-				);
-				this.updateInProgress = makePromiseWithResolvers();
-				// Report through the session even when the application does not await synchronization.
-				this.updateInProgress.promise.catch((error: unknown) => this.session.fail(error));
-			} else {
-				this.logger("Host:   Reusing existing update promise.");
-			}
-			this.mainHeadFromLastUpdate = this.main.fork();
-			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
-			assert(
-				update !== undefined,
-				"Expected update to be defined since local is missing edits from main",
-			);
-			this.logger("Host:   sending update to Guest");
-			this.postMessage({
-				type: "dataChange",
-				change: update,
-			} satisfies DataChangeMessage);
-		} else {
-			this.logger("Host:   no changes that need to be reflected in Guest");
-			// The Guest is now caught up with the Host's main branch.
-			if (this.updateInProgress !== undefined) {
-				this.logger("Host:   resolving update promise");
-				const resolver = this.updateInProgress.resolver;
-				this.updateInProgress = undefined;
-				resolver();
-			}
-		}
 	}
 
 	private async receiveBlobRequest(message: BlobRequestMessage): Promise<void> {
@@ -303,26 +216,56 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 
-	/**
-	 * Informs the Host that the Guest acknowledged a change that the Host sent.
-	 * This lets the Host reflect the acknowledged change on the local branch.
-	 * It can also cause the Host to send changes that arrived after the acknowledged update.
-	 */
-	private receiveAckFromGuest(): void {
-		if (this.mainHeadFromLastUpdate === undefined) {
-			throw new SandboxProtocolError("Unexpectedly received ack from Guest");
+	private createInitializationMessage(idCompressor: IIdCompressor): HostInitializationMessage {
+		const initialization = this.synchronization.guestInitialization;
+		const checkout = this.mainCheckout.fork();
+		try {
+			const branch = checkout.mainBranch;
+			const base = findAncestor(
+				branch.getHead(),
+				(commit) => commit.revision === initialization.baseRevision,
+			);
+			assert(base !== undefined, "Expected the Guest initialization base in Host history");
+			checkout.switchBranch(branch.fork(base));
+			branch.dispose();
+			if (schemaDataIsEmpty(checkout.storedSchema)) {
+				throw new UsageError(
+					"The Host must have an initialized state at its finalized-history boundary before creating a Guest.",
+				);
+			}
+			const cursor = checkout.forest.allocateCursor();
+			try {
+				moveToDetachedField(checkout.forest, cursor);
+				const options = {
+					jsonValidator: sandboxFormatValidator,
+					minVersionForCollab: FluidClientVersion.v2_80,
+				};
+				const tree = fieldBatchCodecBuilder
+					.build(options)
+					.encode([castCursorToSynchronous(cursor)], {
+						encodeType: TreeCompressionStrategy.Compressed,
+						idCompressor,
+						schema: { schema: checkout.storedSchema, policy: defaultSchemaPolicy },
+						isSummary: true,
+					});
+				const normalizedTree = normalizeTransportData(tree);
+				const normalizedSchema = normalizeTransportData(
+					schemaCodecBuilder.build(options).encode(checkout.storedSchema),
+				);
+				validateTreePayloadVocabulary(normalizedTree);
+				validateTreePayloadVocabulary(normalizedSchema);
+				return {
+					type: "hostInitialization",
+					...initialization,
+					tree: normalizedTree as JsonCompatibleReadOnly,
+					schema: normalizedSchema as JsonCompatibleReadOnly,
+				};
+			} finally {
+				cursor.free();
+			}
+		} finally {
+			checkout.dispose();
 		}
-		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
-		this.logger(
-			`Host: received ack of update from Guest for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
-		);
-		// Reflect the acknowledged update on the local branch.
-		this.local.rebaseOnto(this.mainHeadFromLastUpdate);
-		this.mainHeadFromLastUpdate.dispose();
-		this.mainHeadFromLastUpdate = undefined;
-		// Changes can arrive after an update is sent. Try again to make sure that the Guest is
-		// fully up to date.
-		this.tryUpdateGuest("after receiving ack of update");
 	}
 
 	/**
@@ -336,6 +279,6 @@ export class Host<const TSchema extends ImplicitFieldSchema> {
 	 */
 	public get updateGuestPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
-		return this.updateInProgress?.promise;
+		return this.synchronization.updateGuestPromise;
 	}
 }

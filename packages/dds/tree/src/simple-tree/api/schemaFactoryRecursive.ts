@@ -28,11 +28,11 @@ import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
  * }
  * ```
  * @remarks
- * In this context recursive schema are defined as all {@link FieldSchema} and {@link TreeNodeSchema} schema which are part of a cycle such that walking down through each {@link TreeNodeSchemaCore.childTypes} the given starting schema can be reached again.
- * Schema referencing the recursive schema and schema they reference that are not part of a cycle are not considered recursive.
+ * In this context recursive schemas are defined as all {@link FieldSchema} and {@link TreeNodeSchema} schemas which are part of a cycle such that walking down through each {@link TreeNodeSchemaCore.childTypes} the given starting schema can be reached again.
+ * Schemas referencing the recursive schema and schemas they reference that are not part of a cycle are not considered recursive.
  *
  * TypeScript puts a lot of limitations on the typing of recursive schema.
- * To help avoid running into these limitations and thus getting schema that do not type check (or only type checks sometimes!),
+ * To help avoid running into these limitations and thus getting schemas that do not type check (or only type checks sometimes!),
  * {@link SchemaFactory} provides APIs (postfixed with `Recursive`) for writing recursive schema.
  * These APIs when combined with the patterns documented below should ensure that the schema provide robust type checking.
  * These special patterns (other than {@link LazyItem} forward references which are not recursion specific)

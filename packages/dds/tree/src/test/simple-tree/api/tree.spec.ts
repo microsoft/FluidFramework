@@ -5,11 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import type { Revertible } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
@@ -30,7 +32,11 @@ import {
 	type TreeViewBeta,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
+import type {
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
+	requireAssignableTo,
+} from "../../../util/index.js";
 import { expectSchemaEqual, getView, StringArray, TestTreeProviderLite } from "../../utils.js";
 import { getViewForForkedBranch } from "../utils.js";
 
@@ -143,20 +149,14 @@ describe("simple-tree tree", () => {
 	it("custom identifier copied from tree", () => {
 		class HasId extends schema.object("hasID", { id: schema.identifier }) {}
 		const config = new TreeViewConfiguration({ schema: HasId, enableSchemaValidation: true });
-		const treeSrc = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const treeSrc = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const view = treeSrc.viewWith(config);
 		view.initialize({});
 		const idFromInitialize = Tree.shortId(view.root);
 		assert(typeof idFromInitialize === "number");
 
-		const treeDst = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const treeDst = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const viewDst = treeDst.viewWith(config);
 		viewDst.initialize({});
@@ -170,10 +170,7 @@ describe("simple-tree tree", () => {
 	it("viewWith twice errors", () => {
 		class Empty extends schema.object("Empty", {}) {}
 		const config = new TreeViewConfiguration({ schema: Empty });
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "tree");
 
 		const view = tree.viewWith(config);
 		assert.throws(
@@ -357,11 +354,50 @@ describe("simple-tree tree", () => {
 
 		it("error if malformed", () => {
 			const config = new TreeViewConfiguration({ schema: schema.number });
-			const viewA = getView(config);
+			const viewA = getView(config, { jsonValidator: FormatValidatorBasic });
 			viewA.initialize(3);
-			assert.throws(() => {
-				viewA.applyChange({ invalid: "bogus" });
-			}, /cannot apply change.*invalid.*format/i);
+			let change: JsonCompatibleReadOnly | undefined;
+			viewA.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+			viewA.root = 4;
+
+			const valid = change ?? assert.fail("change not captured");
+			assert(
+				typeof valid === "object" && valid !== null && !Array.isArray(valid),
+				"Expected serialized change to be an object",
+			);
+			const serialized = valid as JsonCompatibleReadOnlyObject;
+			const malformed: JsonCompatibleReadOnly[] = [
+				// The value does not use the serialized change envelope.
+				{ invalid: "bogus" },
+				// The version is not supported.
+				{ ...serialized, version: 3 },
+				// The revision is neither a local revision number nor the root revision.
+				{ ...serialized, revision: "invalid" },
+				// The encoded change does not match the change-family schema.
+				{ ...serialized, change: "invalid" },
+				// Custom metadata must be an encoded metadata tree.
+				{ ...serialized, customMetadata: [] },
+				// The envelope does not permit additional properties.
+				{ ...serialized, extra: true },
+			];
+
+			for (const invalid of malformed) {
+				const target = viewA.fork();
+				assert.throws(
+					() => target.applyChange(invalid),
+					validateUsageError(/Encoded data does not match the expected schema/),
+				);
+			}
+
+			const semanticTarget = viewA.fork();
+			// The originator ID is not a stable ID.
+			assert.throws(
+				() => semanticTarget.applyChange({ ...serialized, originatorId: "invalid" }),
+				validateUsageError(/Invalid serialized change format/),
+			);
 		});
 
 		it("can be undone", () => {

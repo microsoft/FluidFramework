@@ -70,6 +70,10 @@ export {
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+export {
+	makeSerializedChangeCodec,
+	type SerializedChangeCodec,
+} from "./serializedChange.js";
 
 export {
 	getCodecTreeForChangeFormat,
