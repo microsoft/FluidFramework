@@ -336,8 +336,7 @@ export interface IIdCompressor {
 	 * Generates a new compressed ID.
 	 *
 	 * @remarks The returned ID is in session space and should not be serialized directly.
-	 * See {@link IIdCompressor} for more details.
-	 *
+	 * @see {@link IIdCompressor} for more details.
 	 * @returns A new local ID in session space.
 	 */
 	generateCompressedId(): SessionSpaceCompressedId;
