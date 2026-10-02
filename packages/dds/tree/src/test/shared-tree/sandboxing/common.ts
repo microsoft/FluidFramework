@@ -515,8 +515,8 @@ const GuestChangeAckMessage = Type.Object(
 );
 
 /**
- * Requests orderly session close after all earlier Guest changes have been sent.
- * @remarks The token lets the Host reclaim the stopped Guest's ID space shard.
+ * Notifies the Host that the Guest has terminated and will generate no further changes.
+ * @remarks The Host processes previously sent changes first, then may reclaim the Guest's ID space shard.
  */
 export type GuestCloseMessage = Static<typeof GuestCloseMessage>;
 const GuestCloseMessage = Type.Object(
@@ -525,16 +525,6 @@ const GuestCloseMessage = Type.Object(
 		type: Type.Literal("guestClose"),
 		/** Final child progress that lets the Host reclaim its ID space. */
 		idSpaceShardToken: DisposedGuestIdSpaceShardToken,
-	},
-	{ additionalProperties: false },
-);
-
-/** Confirms that the Host reclaimed the Guest's ID space shard. */
-export type GuestCloseAckMessage = Static<typeof GuestCloseAckMessage>;
-const GuestCloseAckMessage = Type.Object(
-	{
-		/** Confirms the Host reclaimed the child shard. */
-		type: Type.Literal("guestCloseAck"),
 	},
 	{ additionalProperties: false },
 );
@@ -550,7 +540,6 @@ export type HostGuestMessage =
 	| GuestChangeMessage
 	| GuestChangeAckMessage
 	| GuestCloseMessage
-	| GuestCloseAckMessage
 	| BlobRequestMessage
 	| BlobResponseMessage
 	| SessionFailureMessage;
@@ -624,7 +613,6 @@ const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
 const guestChangeValidator = validator.compile(GuestChangeMessage);
 const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
 const guestCloseValidator = validator.compile(GuestCloseMessage);
-const guestCloseAckValidator = validator.compile(GuestCloseAckMessage);
 
 /**
  * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
@@ -683,9 +671,6 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 		return data;
 	}
 	if (data.type === "guestClose" && guestCloseValidator.check(data)) {
-		return data;
-	}
-	if (data.type === "guestCloseAck" && guestCloseAckValidator.check(data)) {
 		return data;
 	}
 

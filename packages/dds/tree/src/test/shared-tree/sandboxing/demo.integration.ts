@@ -125,7 +125,8 @@ describe("End to End Host and Guest integrations", () => {
 			assert.equal(viewHost.root, "B");
 			assert.equal(host.error, undefined);
 			assert.equal(guest.error, undefined);
-			await guest.close();
+			guest.dispose();
+			host.dispose();
 			assert.equal(rootCompressor.getShardSyncToken(), undefined);
 		});
 	});

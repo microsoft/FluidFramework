@@ -79,7 +79,8 @@ These terms are similar to the terms for virtual machines.
 
 ## Key Assumptions
 
-1. Each message between the Host and the Guest eventually arrives.
+1. While both endpoints and their ports remain active, each message between the Host and the Guest eventually arrives.
+    A failed or torn-down endpoint may not deliver its final message.
 2. Messages that move in the same direction arrive in the order that they were sent.
     This requirement applies in each direction.
     Messages that move in opposite directions can arrive in any relative order.
@@ -123,10 +124,10 @@ The Guest keeps a checkout for the Host main branch and a separate checkout for 
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
 [GuestSynchronization](./guestSynchronization.ts) owns the hidden Host and authoring checkouts and the child ID space shard.
-The [Guest](./guest.ts) owns the port, message routing, and close handshake.
-GuestSynchronization creates and updates the authoring checkout and disposes it during orderly close.
+The [Guest](./guest.ts) owns the port, message routing, and one-way disposal notice.
+GuestSynchronization creates and updates the authoring checkout and disposes it during Guest disposal.
 Disposing the checkout also invalidates its authoring views.
-After a failure before orderly close, GuestSynchronization does not dispose the authoring checkout.
+After a failure, GuestSynchronization does not dispose the authoring checkout until application-managed cleanup.
 The application can inspect it if it is still usable, but must not make further edits.
 Application-managed cleanup calls `Guest.dispose()`, which releases both checkouts through GuestSynchronization.
 
@@ -294,16 +295,13 @@ The application owns teardown and recreation of the Host/Guest pair and sandbox.
 Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
 Recovery uses fresh session objects, not reset breakers.
 
-For an orderly close, call `Guest.close()`.
-GuestSynchronization stops new Guest edits, then disposes the authoring checkout to prevent further ID creation.
-GuestSynchronization waits for earlier Guest changes to be acknowledged, then disposes its child ID space shard and gives the disposal token to the Guest, which sends `guestClose`.
-The Host has processed those changes before it receives this message because Guest-to-Host delivery is ordered.
-The Host verifies the token, reclaims the shard, sends `guestCloseAck`, and disposes its session branches.
-The Guest then tells GuestSynchronization to release the hidden Host checkout and resolves the close promise.
-An outstanding Host update can be discarded during close; the application-owned main view remains available.
-
-The normal close flow returns the child ID space shard only after the Guest stops creating IDs and the Host acknowledges all earlier Guest changes.
-The Host keeps the application's main view throughout this flow.
+Call `Guest.dispose()` to synchronously stop Guest edits, release both Guest checkouts, and dispose its ID space shard.
+While the session is active, the Guest posts a final `guestClose` disposal token after previously sent changes, then closes its port without waiting for the Host.
+The Host processes those earlier changes first because Guest-to-Host delivery is ordered.
+It verifies the token, reclaims the Guest's ID space shard, and disposes its session branches without replying.
+Posting the notice does not confirm that the Host received it.
+Pending Guest acknowledgments reject even if the Host subsequently applies an earlier change; edits not sent before disposal can be lost.
+An outstanding Host update can also be discarded; the application-owned main view remains available.
 
 ```mermaid
 sequenceDiagram
@@ -313,61 +311,46 @@ sequenceDiagram
     participant Root as Host root ID compressor
 
     Note over Host,Root: Root reserves the active child ID space shard
-    Client->>Guest: close()
-    Guest->>Guest: Stop edits and dispose authoring view
-    opt Earlier Guest changes are still pending
-        Note over Guest,Host: guestChange messages were sent before close
-        Host-->>Guest: guestChangeAck for each earlier change
-        Guest->>Guest: Record the acknowledgment
-    end
-    Guest->>Guest: Dispose child shard after all acknowledgments, get final token
+    Client->>Guest: dispose()
+    Guest->>Guest: Stop edits, release checkouts, dispose child shard
     Guest->>Host: guestClose(disposal token)
-    Note over Guest,Host: Guest-to-Host messages arrive in send order
+    Guest-->>Client: dispose() returns without Host acknowledgment
+    Note over Guest,Host: Previously sent guestChange messages arrive first
     Host->>Root: Validate token and synchronizeWithShard(disposal token)
     Note over Host,Root: Root reclaims the child ID space shard
-    Host-->>Guest: guestCloseAck
     Host->>Host: Dispose session branches, keep main view
-    Guest->>Guest: Dispose session and both checkouts
-    Guest-->>Client: close() promise resolves
 ```
 
 The state names below belong to `GuestSynchronization`, not the Host's application-owned main view.
-`Closing` still accepts acknowledgments for earlier Guest changes.
-`Closed` stops synchronization but keeps both checkouts until `Guest.dispose()` reaches `Disposed`.
-On orderly close, the authoring checkout has already been disposed.
+`Stopped` ends synchronization but keeps both checkouts until `Guest.dispose()` reaches `Disposed`.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Active: Guest initialization
-    Active --> Closing: Guest.close() stops edits and disposes authoring view
-    Closing --> Closing: guestChangeAck drains pending changes
-    Closing --> Closed: guestCloseAck triggers Guest.dispose()
-    Active --> Closed: failure or abort calls closeForError()
-    Closing --> Closed: failure or abort calls closeForError()
-    Closed --> Disposed: Guest.dispose() releases remaining checkouts
+    Active --> Stopped: failure or Guest.dispose() calls stop()
+    Stopped --> Disposed: Guest.dispose() releases checkouts
 ```
 
 The Host tracks the child ID space shard separately from the Guest synchronization state.
-A Guest failure or abort cannot release the Host's allocation unless the Host already processed a valid `guestClose` token.
-A synchronous initialization send failure can also reclaim a shard that the Host knows it did not deliver.
+A Guest failure cannot notify the Host if its port is unavailable.
+The orchestrator must fence that Guest, ensuring it cannot send new changes or restart from its serialized shard, before disposing its Host session.
+Host disposal stops processing session messages before using its latest accepted child progress to reclaim the allocation.
+The Host has already learned the IDs used by every Guest change it accepted; unreported IDs in the fenced Guest are discarded.
+An initialization send failure also reclaims a shard that the Host knows it did not deliver.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Reserved: Host creates child ID space shard
-    Reserved --> Reserved: failure or abort before valid guestClose
     Reserved --> Reclaimed: valid guestClose and synchronizeWithShard
+    Reserved --> Reclaimed: fenced Guest followed by Host.dispose()
     Reserved --> Reclaimed: initialization send fails before delivery
-    Reclaimed --> Reclaimed: guestCloseAck lost
 ```
 
-Synchronous `Guest.dispose()` aborts the session without requesting ID space reclamation.
-If the port fails, the application can call it to reject a pending close promise.
-After a failure before orderly close, GuestSynchronization leaves the authoring checkout available for inspection until the application calls `Guest.dispose()`.
+After a failure, GuestSynchronization leaves the authoring checkout available for inspection until the application calls `Guest.dispose()`.
 GuestSynchronization releases both checkouts during cleanup.
-The Host does not reclaim an ID space shard without a valid close token, because the Guest might still create IDs.
-If the Host processed `guestClose` but the acknowledgment was lost, the shard has already been reclaimed.
-Each unreclaimed shard increases the root compressor's allocation stride; after enough replacement sessions, the compressor cannot create another shard.
-The application must stop and fence an old Guest before it can safely reclaim that shard.
+Do not treat `sessionFailure` as proof of fencing: retained Guest references may still create IDs until disposal or iframe termination.
+If a Guest disappears without its final notice, the Host remains active until the orchestrator disposes it.
+That disposal reclaims the shard only after its channel stops accepting Guest messages.
 
 The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
 

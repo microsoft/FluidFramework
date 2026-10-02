@@ -9,7 +9,6 @@ import {
 	deserializeIdCompressor,
 	SerializationVersion,
 	type IdCreationRange,
-	type SerializedIdCompressorWithOngoingSession,
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
@@ -73,7 +72,9 @@ export interface Host {
 	readonly error: Error | undefined;
 	/** A promise for Guest acknowledgment of pending Host changes, if changes are pending. */
 	readonly updateGuestPromise: Promise<void> | undefined;
-	/** Ends the session and releases its resources. */
+	/**
+	 * Stops receiving Guest messages, reclaims the Guest's ID space shard, and releases session resources.
+	 */
 	dispose(): void;
 }
 
@@ -98,6 +99,10 @@ export class HostImplementation implements Host {
 	private readonly mainCheckout: TreeCheckout;
 	private readonly port: MessagePort;
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
+	/**
+	 * Last accepted progress token from the Guest's ID space shard.
+	 * @remarks Used to reclaim the shard after the Guest is closed.
+	 */
 	private guestIdSpaceShardToken: ShardSynchronizationToken | undefined;
 	/** ID for the next finalized creation range sent to the Guest, starting at zero for each session. */
 	private nextIdRangeId = 0;
@@ -136,8 +141,7 @@ export class HostImplementation implements Host {
 				case "hostIdRange":
 				case "hostUpdate":
 				case "hostInitialization":
-				case "guestChangeAck":
-				case "guestCloseAck": {
+				case "guestChangeAck": {
 					throw new SandboxProtocolError(
 						`Host received a message with type ${JSON.stringify(message.type)}.`,
 					);
@@ -196,31 +200,10 @@ export class HostImplementation implements Host {
 		this.port.addEventListener("message", this.onMessage);
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
-		let initialization: HostInitializationMessage | undefined;
 		try {
-			initialization = this.createInitializationMessage(getIdCompressor(main));
-			this.postMessage(initialization);
+			this.postMessage(this.createInitializationMessage(getIdCompressor(main)));
 		} catch (error) {
-			try {
-				if (initialization !== undefined) {
-					// A synchronous send failure means the Guest never received its ID space shard.
-					// This Host created the string; it is not untrusted wire data.
-					// Deserialize the unsent shard to get the token needed to reclaim its space.
-					// TODO: consider `id-compressor` API change to make this more ergonomic.
-					const idSpaceShard = deserializeIdCompressor(
-						initialization.idCompressor as SerializedIdCompressorWithOngoingSession,
-						SerializationVersion.V3,
-					);
-					const token = idSpaceShard.disposeShard();
-					assert(
-						token !== undefined,
-						"Expected a disposal token for the unsent Guest ID space shard",
-					);
-					this.idCompressor.synchronizeWithShard(token);
-				}
-			} finally {
-				this.dispose();
-			}
+			this.dispose();
 			throw error;
 		}
 		this.offRangeFinalized = this.idCompressor.events.on("rangeFinalized", (range) =>
@@ -238,6 +221,13 @@ export class HostImplementation implements Host {
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
 		this.synchronization.dispose();
+
+		// No further changes will be received from the Guest, so we can safely reclaim its ID space shard.
+		const token = this.guestIdSpaceShardToken;
+		if (token !== undefined) {
+			this.idCompressor.synchronizeWithShard({ ...token, disposed: true });
+			this.guestIdSpaceShardToken = undefined;
+		}
 	}
 
 	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
@@ -307,14 +297,16 @@ export class HostImplementation implements Host {
 	}
 
 	/**
-	 * Reclaims an ID space shard after the Guest stops creating IDs.
+	 * Receive notification that the Guest has closed.
 	 *
 	 * @remarks
-	 * The Guest sends this message after its earlier changes have been acknowledged.
-	 * Delivery order ensures that the Host has processed those changes before this token.
+	 * This message indicates that the Guest will send no further changes.
+	 * It is therefore safe to reclaim its ID space shard.
+	 *
+	 * Delivery order ensures that the Host has processed all previous Guest changes before this token.
 	 * The Host checks that the token belongs to this session and has no less progress
-	 * than the last accepted Guest change. Only then does it reclaim the shard, confirm
-	 * the close, and dispose its session resources. The application's main view remains.
+	 * than the last accepted Guest change. Only then does it reclaim the shard and
+	 * dispose its session resources. The application's main view remains.
 	 *
 	 * @param message - The stopped Guest's disposal token.
 	 * @throws {@link SandboxProtocolError} if the token does not belong to this session or is stale.
@@ -331,7 +323,7 @@ export class HostImplementation implements Host {
 		// Guest messages arrive in order, so every earlier change has been processed.
 		// The validated disposal token belongs to this session and does not move backward.
 		this.idCompressor.synchronizeWithShard(token as ShardSynchronizationToken);
-		this.postMessage({ type: "guestCloseAck" });
+		this.guestIdSpaceShardToken = undefined;
 		this.dispose();
 	}
 

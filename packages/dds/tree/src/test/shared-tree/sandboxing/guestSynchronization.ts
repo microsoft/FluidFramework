@@ -34,16 +34,12 @@ import type { GuestBranchInitialization } from "./hostSynchronization.js";
  * The Guest synchronization lifecycle.
  *
  * @remarks
- * For an orderly close, the owning Guest moves synchronization from active to closing.
- * After the Host acknowledges the disposal token, the Guest moves it to closed
- * and then disposed.
+ * Disposal stops edits, disposes both checkouts and the child shard, then returns
+ * its disposal token to the owning Guest for a one-way message to the Host.
  *
- * On protocol failure, the session moves synchronization from active or closing
- * to closed without disposing the checkouts. The application must dispose the Guest
+ * On protocol failure, the session moves synchronization from active
+ * to stopped without disposing the checkouts. The application must dispose the Guest
  * to release them after failure reporting.
- *
- * Application disposal before an orderly close calls `Guest.dispose()`, which closes
- * and disposes synchronization without waiting for a close acknowledgment.
  */
 enum GuestSynchronizationState {
 	/**
@@ -51,22 +47,15 @@ enum GuestSynchronizationState {
 	 */
 	Active = "active",
 	/**
-	 * The edit listener is removed, but earlier Guest changes can still be acknowledged.
-	 * @remarks
-	 * Orderly close disposes the authoring view before the child ID space shard.
-	 */
-	Closing = "closing",
-	/**
 	 * Synchronization is terminal. The owner no longer routes messages, and any pending changes have been rejected.
-	 * Both checkouts remain until disposal unless orderly close already disposed the authoring checkout.
-	 * If a failure occurs before orderly close, the authoring checkout remains available
+	 * Both checkouts remain until disposal. The authoring checkout remains available
 	 * for inspection if it is still usable.
 	 */
-	Closed = "closed",
+	Stopped = "stopped",
 	/**
 	 * Both checkouts have been released.
 	 * @remarks
-	 * The authoring checkout might already have been released by orderly close.
+	 * The child shard has also been disposed.
 	 */
 	Disposed = "disposed",
 }
@@ -82,29 +71,24 @@ enum GuestSynchronizationState {
  * Each Host update replaces a suffix of {@link hostCheckout}, after which {@link checkout} rebases its local commits
  * onto the updated Host head.
  *
- * The owning {@link Guest} calls {@link close} for an orderly close.
- * This class stops new edits and disposes the authoring view before it can dispose
- * the child ID space shard. It waits for earlier Guest changes to be acknowledged
- * before it disposes the shard and returns its disposal token.
- * When the Host confirms reclamation, the Guest disposes its session, which calls
- * {@link closeForError} and then {@link dispose}.
+ * The owning {@link Guest} calls {@link dispose} to stop new edits, dispose both
+ * checkouts, and obtain a final child shard token without waiting for acknowledgments.
  *
- * On protocol failure, the session calls {@link closeForError} from active or closing.
+ * On protocol failure, the session calls {@link stop} from active.
  * This does not dispose either checkout, so the application can inspect the authoring checkout if
- * orderly close has not already disposed it and the checkout is still usable.
+ * the checkout is still usable.
  * The edit listener is removed, but retained references can still edit the view.
  * The application must not make further edits after a failure.
  * The application must then dispose the Guest to release both checkouts.
- * This failure path does not request shard reclamation.
- *
- * On local disposal before an orderly close, `Guest.dispose()` calls both methods.
+ * After failure, Guest disposal cannot notify the Host because the session has stopped.
+ * The orchestrator must fence the Guest and dispose the Host to reclaim its shard.
  *
  */
 export class GuestSynchronization {
 	/**
 	 * The Guest's authoring checkout, rebased over updates applied to {@link hostCheckout}.
 	 * @remarks
-	 * Orderly close disposes this checkout. After a failure before orderly close,
+	 * Disposal releases this checkout. After a failure,
 	 * the Guest can inspect it until application-managed cleanup calls {@link dispose}.
 	 */
 	public readonly checkout: TreeCheckout;
@@ -136,7 +120,7 @@ export class GuestSynchronization {
 
 	/**
 	 * The current synchronization state.
-	 * An idle session stays active until close or failure begins.
+	 * An idle session stays active until failure or disposal.
 	 */
 	private state = GuestSynchronizationState.Active;
 
@@ -360,94 +344,50 @@ export class GuestSynchronization {
 	}
 
 	/**
-	 * Stops new Guest edits and returns a disposal token after earlier changes are acknowledged.
-	 *
-	 * @remarks
-	 * This moves synchronization from active to closing, not to closed.
-	 * It removes the edit listener, then disposes the authoring view so retained
-	 * authoring references cannot create IDs after the child ID space shard is disposed.
-	 * Acknowledgments for changes already sent can still arrive. After they arrive,
-	 * this class disposes the child ID space shard and returns its disposal token.
-	 * A repeated call fails without disposing the view or child ID space shard again.
-	 * View disposal happens synchronously; if it fails, this method throws before
-	 * the Guest records the view as disposed.
-	 *
-	 * @returns A promise for the final ID space shard disposal token.
-	 */
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- View disposal failures must throw before Guest marks the view as disposed.
-	public close(): Promise<ShardSynchronizationToken> {
-		assert(
-			this.state === GuestSynchronizationState.Active,
-			"Cannot close Guest synchronization after closing has begun",
-		);
-		this.state = GuestSynchronizationState.Closing;
-		this.offCheckoutChanged();
-
-		const pending = this.pushInProgress?.promise;
-		this.checkout.dispose();
-		return Promise.resolve(pending).then(() => {
-			if (this.state !== GuestSynchronizationState.Closing) {
-				throw new Error(
-					"Guest synchronization closed before its ID space shard could be disposed.",
-				);
-			}
-			const token = this.idCompressor.disposeShard();
-			assert(token !== undefined, "Expected an ID space shard disposal token");
-			return token;
-		});
-	}
-
-	/**
 	 * Stops Guest synchronization and rejects pending changes without releasing the checkouts.
 	 *
 	 * @remarks
 	 * The session calls this on failure. Guest disposal also calls it after an
-	 * orderly close or abort. It removes the edit listener if necessary.
+	 * application teardown. It removes the edit listener if necessary.
 	 * It does not release either checkout or reclaim the ID space shard.
 	 * After a failure, the application can inspect the view if it
-	 * is still usable and orderly close has not already disposed it.
-	 * After an orderly close, no changes remain to reject.
+	 * is still usable.
 	 * Repeated calls have no effect.
 	 *
 	 * @param error - The reason pending Guest changes cannot complete.
 	 */
-	public closeForError(error: Error): void {
+	public stop(error: Error): void {
 		if (
-			this.state === GuestSynchronizationState.Closed ||
+			this.state === GuestSynchronizationState.Stopped ||
 			this.state === GuestSynchronizationState.Disposed
 		) {
 			return;
 		}
 		if (this.state === GuestSynchronizationState.Active) {
-			this.state = GuestSynchronizationState.Closing;
 			this.offCheckoutChanged();
 		}
-		this.state = GuestSynchronizationState.Closed;
+		this.state = GuestSynchronizationState.Stopped;
 		this.pendingChanges.clear();
 		this.pushInProgress?.rejecter(error);
 		this.pushInProgress = undefined;
 	}
 
 	/**
-	 * Stops synchronization and releases both checkouts.
+	 * Stops synchronization, releases both checkouts, and disposes the child shard.
 	 *
 	 * @remarks
-	 * The Guest calls this when it disposes its session, after a successful close,
-	 * an abort, or application-managed failure cleanup.
-	 * It calls {@link closeForError} to stop active or closing synchronization,
+	 * The Guest calls this before closing its port, or during application-managed failure cleanup.
+	 * It calls {@link stop} to stop active synchronization,
 	 * then releases the hidden {@link hostCheckout} branch and authoring {@link checkout}.
-	 * The authoring checkout may already be disposed after an orderly close.
-	 * On abort or failure, it does not dispose the ID space shard.
-	 * Only orderly close produces a token that lets the Host safely reclaim it.
-	 * Repeated calls have no effect.
+	 * The authoring checkout must be disposed before the compressor to prevent new IDs.
+	 * The owning Guest sends the returned token only if its session is still active.
+	 * Repeated calls return no token.
 	 */
-	public dispose(): void {
+	public dispose(): ShardSynchronizationToken | undefined {
 		if (this.state === GuestSynchronizationState.Disposed) {
-			return;
+			return undefined;
 		}
-		this.closeForError(
-			new Error("Guest synchronization disposed before synchronization completed."),
-		);
+		this.stop(new Error("Guest synchronization disposed before synchronization completed."));
 		this.state = GuestSynchronizationState.Disposed;
 
 		// TODO: Support cleanup of already-broken checkouts and invalidation of retained node references.
@@ -456,6 +396,7 @@ export class GuestSynchronization {
 		if (!this.checkout.disposed) {
 			this.checkout.dispose();
 		}
+		return this.idCompressor.disposeShard();
 	}
 
 	private log(message: string): void {

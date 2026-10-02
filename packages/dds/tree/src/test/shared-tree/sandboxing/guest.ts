@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	deserializeIdCompressor,
 	SerializationVersion,
@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/id-compressor/internal";
 import {
 	createChildLogger,
-	UsageError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -81,39 +80,18 @@ export interface Guest {
 	readonly updateHostPromise: Promise<void> | undefined;
 
 	/**
-	 * Stops Guest edits and waits for the Host to reclaim the child ID space shard.
+	 * Stops Guest edits and releases local resources synchronously.
 	 *
 	 * @remarks
-	 * Use this method for normal teardown. It stops new edits and disposes the authoring
-	 * checkout immediately. After the Host acknowledges earlier Guest changes, the Guest
-	 * sends a disposal token. The Guest releases its remaining resources when the Host
-	 * confirms shard reclamation. A second call throws, even while close is in progress.
-	 * If the connection fails or the acknowledgment never arrives, call {@link Guest.dispose}
-	 * to release local resources. The Host might keep the child ID space shard reserved.
+	 * While the session is active, this method sends a final child ID space shard token
+	 * after previously sent Guest changes, then closes the port without waiting for the
+	 * Host. The Host can reclaim the shard if it receives the token; sending it does not
+	 * confirm delivery. Pending change acknowledgments reject, even if the Host later
+	 * applies the changes. Changes that were never sent may be lost.
 	 *
-	 * @returns A promise that resolves when the Host confirms shard reclamation.
-	 * @throws {@link UsageError} if close has already started or the Guest is disposed.
-	 */
-	close(): Promise<void>;
-
-	/**
-	 * Releases the Guest's local resources without waiting for the Host.
-	 *
-	 * @remarks
-	 * Use {@link Guest.close} for normal teardown: it lets the Host reclaim the child ID
-	 * space shard and then disposes the Guest. Calling this method after a successful close
-	 * has no effect, so it is also safe for unconditional cleanup after attempting close.
-	 *
-	 * If the session fails, the connection is lost, or close cannot complete, call this
-	 * method to release local resources. When called before close completes, it stops the
-	 * session without sending a shard disposal token. The Host keeps the child ID space
-	 * shard reserved unless it already received a valid close token.
-	 *
-	 * Calling this method before `close` completes rejects pending work.
-	 * After a failure, the application can inspect the authoring view, if it is usable,
-	 * before calling this method to release both checkouts.
-	 *
-	 * Repeated calls have no effect.
+	 * After a failure, the application can inspect the authoring view, if usable,
+	 * before calling this method. To guarantee reclamation when the Host outlives
+	 * the Guest, the orchestrator must fence the Guest and dispose its Host session.
 	 */
 	dispose(): void;
 }
@@ -130,28 +108,6 @@ export async function createGuest(options: GuestOptions): Promise<Guest> {
 }
 
 /**
- * The Guest's local lifecycle and the promise for an orderly close.
- * @remarks
- * `closing` waits for earlier Guest changes before sending the shard disposal token.
- * `awaitingCloseAck` means the token was sent, so the Guest can accept the `guestCloseAck` message from the Host.
- *
- * A failure rejects the close promise but leaves the Guest in its current phase
- * until the application calls {@link Guest.dispose} to release local resources.
- * `disposed` does not imply that the Host reclaimed the shard.
- */
-type GuestState =
-	| { readonly phase: "active" }
-	| {
-			readonly phase: "closing";
-			readonly completion: ReturnType<typeof makePromiseWithResolvers>;
-	  }
-	| {
-			readonly phase: "awaitingCloseAck";
-			readonly completion: ReturnType<typeof makePromiseWithResolvers>;
-	  }
-	| { readonly phase: "disposed" };
-
-/**
  * Implementation of {@link Guest}.
  */
 export class GuestImplementation implements Guest {
@@ -164,7 +120,7 @@ export class GuestImplementation implements Guest {
 	private viewableTree: ViewableTree | undefined;
 	private readonly initialized = makePromiseWithResolvers();
 
-	private state: GuestState = { phase: "active" };
+	private disposed = false;
 
 	/** Internal synchronization state exposed for testing. */
 	public get synchronization(): GuestSynchronization {
@@ -187,16 +143,6 @@ export class GuestImplementation implements Guest {
 				this.session.fail(new Error(message.error), false);
 				return;
 			}
-			if (message.type === "guestCloseAck") {
-				if (this.state.phase !== "awaitingCloseAck") {
-					throw new SandboxProtocolError("Unexpected Guest close acknowledgment.");
-				}
-				// The Host has reclaimed the ID space shard. Final disposal can now release
-				// the hidden Host branch.
-				this.state.completion.resolver();
-				this.dispose();
-				return;
-			}
 			if (this.#synchronization === undefined) {
 				throw new SandboxProtocolError(
 					`Guest received a message with type ${JSON.stringify(message.type)} before initialization.`,
@@ -204,17 +150,9 @@ export class GuestImplementation implements Guest {
 			}
 			switch (message.type) {
 				case "hostUpdate": {
-					// The authoring view is disposed during close. The Host will discard its
-					// outstanding updates when it processes the Guest's close message.
-					if (this.state.phase !== "active") {
-						return;
-					}
 					return this.#synchronization.receiveHostUpdate(message);
 				}
 				case "hostIdRange": {
-					if (this.state.phase !== "active") {
-						return;
-					}
 					return this.#synchronization.receiveHostIdRange(message);
 				}
 				case "guestChangeAck": {
@@ -259,12 +197,9 @@ export class GuestImplementation implements Guest {
 			(error) => {
 				// A failure can occur during a tree event. Do not dispose the views in this callback.
 				// Guest.dispose() releases them when the application cleans up.
-				this.#synchronization?.closeForError(error);
+				this.#synchronization?.stop(error);
 				this.codec.dispose(error);
 				this.initialized.rejecter(error);
-				if (this.state.phase === "closing" || this.state.phase === "awaitingCloseAck") {
-					this.state.completion.rejecter(error);
-				}
 			},
 			handleProtocolError,
 		);
@@ -348,47 +283,24 @@ export class GuestImplementation implements Guest {
 		this.initialized.resolver();
 	}
 
-	// eslint-disable-next-line @typescript-eslint/promise-function-async -- Invalid calls must throw and the view must be disposed synchronously.
-	public close(): Promise<void> {
-		if (this.state.phase === "disposed") {
-			throw new UsageError("Cannot close a disposed Guest.");
-		}
-		if (this.state.phase !== "active") {
-			throw new UsageError("Guest is already closing.");
-		}
-		this.session.breaker.use();
-		const synchronization =
-			this.#synchronization ?? fail("Guest closed before initialization");
-		const completion = makePromiseWithResolvers();
-		this.state = { phase: "closing", completion };
-		this.session.run(() => {
-			const token = synchronization.close();
-			token.then(
-				(idSpaceShardToken) =>
-					this.session.run(() => {
-						assert(idSpaceShardToken.disposed, "Guest close requires a disposal token");
-						// The Host reclaims the shard only after it receives this token.
-						this.postMessage({
-							type: "guestClose",
-							idSpaceShardToken: { ...idSpaceShardToken, disposed: true },
-						});
-						this.state = { phase: "awaitingCloseAck", completion };
-					}),
-				(error: unknown) => this.session.fail(error),
-			);
-		});
-		return completion.promise;
-	}
-
 	public dispose(): void {
-		if (this.state.phase === "disposed") {
+		if (this.disposed) {
 			return;
 		}
+		this.disposed = true;
+
+		const token = this.#synchronization?.dispose();
+		if (token !== undefined && this.session.active) {
+			// Notify the host that the Guest is closing and provide the disposal token for the Guest's ID space shard.
+			this.postMessage({
+				type: "guestClose",
+				idSpaceShardToken: { ...token, disposed: true },
+			});
+		}
+
 		this.session.dispose();
-		this.state = { phase: "disposed" };
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);
-		this.#synchronization?.dispose();
 	}
 
 	public get error(): Error | undefined {
