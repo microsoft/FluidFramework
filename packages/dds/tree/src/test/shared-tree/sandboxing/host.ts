@@ -223,7 +223,10 @@ export class HostImplementation implements Host {
 		// No future changes will be processed from the Guest.
 		// Return the Guest's ID space shard to its originator.
 		if (this.guestIdSpaceShardToken !== undefined) {
-			this.idCompressor.synchronizeWithShard({ ...this.guestIdSpaceShardToken, disposed: true });
+			this.idCompressor.synchronizeWithShard({
+				...this.guestIdSpaceShardToken,
+				disposed: true,
+			});
 			this.guestIdSpaceShardToken = undefined;
 		}
 	}
