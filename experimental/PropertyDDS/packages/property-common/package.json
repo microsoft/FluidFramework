@@ -63,14 +63,11 @@
 	},
 	"dependencies": {
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
-		"ajv": "^8.17.1",
-		"async": "^3.2.2",
 		"base64-js": "^1.5.1",
 		"events_pkg": "npm:events@^3.1.0",
 		"lodash": "^4.18.1",
 		"murmurhash3js": "3.0.1",
-		"semver": "^7.7.1",
-		"traverse": "0.6.6"
+		"semver": "^7.7.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",

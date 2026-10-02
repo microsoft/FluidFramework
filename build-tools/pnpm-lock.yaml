@@ -693,15 +693,9 @@ importers:
       '@oclif/plugin-autocomplete':
         specifier: ^3.2.45
         version: 3.2.45(supports-color@10.2.2)
-      '@oclif/plugin-commands':
-        specifier: ^4.1.45
-        version: 4.1.45
       '@oclif/plugin-help':
         specifier: ^6.2.43
         version: 6.2.43
-      '@oclif/plugin-not-found':
-        specifier: ^3.2.80
-        version: 3.2.80(@types/node@22.19.17)
       semver:
         specifier: ^7.7.3
         version: 7.7.4
