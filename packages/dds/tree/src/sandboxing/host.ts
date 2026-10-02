@@ -14,23 +14,23 @@ import {
 } from "@fluidframework/id-compressor/internal";
 import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FluidClientVersion } from "../../../codec/index.js";
+import { FluidClientVersion } from "../codec/index.js";
 import {
 	castCursorToSynchronous,
 	findAncestor,
 	moveToDetachedField,
 	schemaDataIsEmpty,
-} from "../../../core/index.js";
+} from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
 	schemaCodecBuilder,
 	TreeCompressionStrategy,
-} from "../../../feature-libraries/index.js";
-import type { TreeCheckout } from "../../../shared-tree/index.js";
-import type { UntypedTreeView } from "../../../simple-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { brand } from "../../../util/index.js";
+} from "../feature-libraries/index.js";
+import type { TreeCheckout } from "../shared-tree/index.js";
+import type { UntypedTreeView } from "../simple-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestMessage,
@@ -55,6 +55,8 @@ import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
  * Options for creating a Host.
+ *
+ * @alpha @input
  */
 export interface HostOptions extends SandboxEndpointOptions {
 	// TODO: Use a branch with a forest once it can be supplied without a full view.
@@ -65,6 +67,7 @@ export interface HostOptions extends SandboxEndpointOptions {
 /**
  * The SharedTree that connects to Fluid services on behalf of a {@link Guest}.
  * @sealed
+ * @alpha
  */
 export interface Host {
 	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
@@ -81,6 +84,8 @@ export interface Host {
  * Creates and connects a {@link Host} which can support a {@link Guest}.
  * @param options - The options for creating the Host.
  * @returns The created Host instance.
+ *
+ * @alpha
  */
 export function createHost(options: HostOptions): Host {
 	return new HostImplementation(options);
@@ -177,12 +182,10 @@ export class HostImplementation implements Host {
 			},
 			handleProtocolError,
 		);
-		const hostLogger =
-			logger ??
-			createChildLogger({
-				logger: this.mainCheckout.breaker.logger,
-				namespace: "Host",
-			});
+		const hostLogger = createChildLogger({
+			logger: logger ?? this.mainCheckout.breaker.logger,
+			namespace: "Host",
+		});
 		this.synchronization = new HostSynchronization(
 			this.mainCheckout,
 			(message) => this.postMessage(message),
@@ -196,7 +199,7 @@ export class HostImplementation implements Host {
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
 		try {
-			this.postMessage(this.createInitializationMessage(getIdCompressor(main)));
+			this.postMessage(this.createInitializationMessage(this.idCompressor));
 		} catch (error) {
 			this.dispose();
 			throw error;

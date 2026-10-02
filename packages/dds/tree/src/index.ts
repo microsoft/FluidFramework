@@ -408,3 +408,13 @@ export { Component } from "./componentApi.js";
 
 export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
 export type { TreeDataStoreOptions } from "./treeDataStore.js";
+
+export {
+	createGuest,
+	createHost,
+	type Guest,
+	type GuestOptions,
+	type Host,
+	type HostOptions,
+	type SandboxEndpointOptions,
+} from "./sandboxing/index.js";

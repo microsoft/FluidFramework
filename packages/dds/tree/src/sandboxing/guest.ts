@@ -14,17 +14,17 @@ import {
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions } from "../../../codec/index.js";
-import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
+import type { ICodecOptions } from "../codec/index.js";
+import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
-import { createIndependentTreeCheckout } from "../../../shared-tree/independentView.js";
+import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
 import type {
 	ImplicitFieldSchema,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewConfiguration,
 	ViewableTree,
-} from "../../../simple-tree/index.js";
+} from "../simple-tree/index.js";
 
 import {
 	type HostGuestMessage,
@@ -42,6 +42,8 @@ import { normalizeTransportData } from "./transport.js";
 
 /**
  * Options for creating a Guest.
+ *
+ * @alpha @input
  */
 export interface GuestOptions extends SandboxEndpointOptions {
 	/** The forest and codec options used to initialize the Guest's tree. */
@@ -64,6 +66,7 @@ export interface GuestOptions extends SandboxEndpointOptions {
  * and releases local resources.
  *
  * @sealed
+ * @alpha
  */
 export interface Guest {
 	/**
@@ -114,6 +117,8 @@ export interface Guest {
  * @param options - The options for creating the Guest, including tree and codec options.
  *
  * @returns A promise that resolves to the created Guest instance.
+ *
+ * @alpha
  */
 export async function createGuest(options: GuestOptions): Promise<Guest> {
 	return GuestImplementation.create(options);
@@ -201,7 +206,7 @@ export class GuestImplementation implements Guest {
 	}: GuestOptions) {
 		this.treeOptions = treeOptions;
 		this.port = port;
-		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
+		this.logger = createChildLogger({ logger, namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {

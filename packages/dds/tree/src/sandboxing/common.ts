@@ -3,32 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	fluidHandleSymbol,
+	type IFluidHandle,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
 import { TypeSystem } from "@sinclair/typebox/system";
 
-import { extractJsonValidator } from "../../../codec/index.js";
-import type { RevisionTag } from "../../../core/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import {
-	type Brand,
-	brandedNumberType,
-	type JsonCompatibleReadOnly,
-} from "../../../util/index.js";
+import { extractJsonValidator } from "../codec/index.js";
+import type { RevisionTag } from "../core/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
+import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * Session options shared by the Host and Guest endpoints.
+ *
+ * @alpha @input
  */
 export interface SandboxEndpointOptions {
 	/** This endpoint's port in the Host and Guest message channel. */
 	readonly port: MessagePort;
 	/** The endpoint-scoped logger for diagnostic telemetry. */
-	readonly logger?: TelemetryLoggerExt;
+	readonly logger?: ITelemetryBaseLogger;
 	// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
 	/**
 	 * Reports terminal session failure asynchronously.
