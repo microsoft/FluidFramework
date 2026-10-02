@@ -21,6 +21,7 @@ import type {
 	ISummarizerNodeWithGC,
 	IPendingMessagesState,
 	IRuntimeMessageCollection,
+	IRuntimeResubmitMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/internal";
@@ -232,6 +233,11 @@ export class RemoteChannelContext implements IChannelContext {
 		assert(this.isLoaded, 0x196 /* "Remote channel must be loaded when resubmitting op" */);
 
 		this.services.deltaConnection.reSubmit(content, localOpMetadata, squash);
+	}
+
+	public reSubmitMessages(collection: IRuntimeResubmitMessageCollection): void {
+		assert(this.isLoaded, "Remote channel must be loaded when resubmitting ops");
+		this.services.deltaConnection.reSubmitMessages(collection);
 	}
 
 	public rollback(content: unknown, localOpMetadata: unknown): void {
