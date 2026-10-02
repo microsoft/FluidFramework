@@ -4,6 +4,7 @@
  */
 
 import type {
+	PositioningShorthand,
 	TableColumnDefinition,
 	TableColumnSizingOptions,
 } from "@fluentui/react-components";
@@ -99,6 +100,11 @@ interface DataRowProps {
 	infoTooltipContent: ReactElement | string | undefined;
 
 	/**
+	 * Placement of the information popover.
+	 */
+	infoTooltipPositioning?: PositioningShorthand;
+
+	/**
 	 * The value text associated with the label (second column).
 	 */
 	value: ReactElement | string | undefined;
@@ -117,7 +123,7 @@ interface DataRowProps {
  * @remarks {@link DataRowProps.value} will be wrapped in a <TableCell /> so it shouldn't have one itself.
  */
 function DataRow(props: DataRowProps): ReactElement {
-	const { label, infoTooltipContent, value, columnProps } = props;
+	const { label, infoTooltipContent, infoTooltipPositioning, value, columnProps } = props;
 
 	return (
 		<TableRow>
@@ -130,7 +136,18 @@ function DataRow(props: DataRowProps): ReactElement {
 				{infoTooltipContent === undefined ? (
 					<b>{label}</b>
 				) : (
-					<InfoLabel info={infoTooltipContent} style={{ whiteSpace: "nowrap" }}>
+					<InfoLabel
+						info={{
+							children: infoTooltipContent,
+							style: { width: "max-content", whiteSpace: "normal", overflowY: "auto" },
+						}}
+						infoButton={
+							infoTooltipPositioning === undefined
+								? undefined
+								: { popover: { positioning: infoTooltipPositioning } }
+						}
+						style={{ whiteSpace: "nowrap" }}
+					>
 						<b>{label}</b>
 					</InfoLabel>
 				)}
@@ -367,6 +384,13 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): ReactEle
 						<DataRow
 							label="Status"
 							infoTooltipContent={containerStatusTooltipText}
+							infoTooltipPositioning={{
+								position: "below",
+								align: "start",
+								// Prevent a fallback above the button from covering the heading.
+								pinned: true,
+								autoSize: true,
+							}}
 							value={containerStatusValueCell(statusComponents)}
 							columnProps={columnSizing_unstable}
 						/>
