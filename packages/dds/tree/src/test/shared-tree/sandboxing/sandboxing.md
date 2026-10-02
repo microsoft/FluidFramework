@@ -180,10 +180,10 @@ Ordered delivery ensures a range arrives before a later Host update that depends
 The Guest rejects out-of-order or repeated range IDs, progress for another shard, and progress that moves backward.
 The sandbox does not call `takeNextCreationRange()` to manufacture these messages; range submission and finalization belong to the runtime.
 
-Orderly close reclaims the child ID space shard after Guest changes are acknowledged.
-Failure or abort does not send a new reclamation request.
-The Host keeps the shard reserved unless it already received a valid close token.
-See [Session Failure and Application-Managed Recreation](#session-failure-and-application-managed-recreation) for the close handshake and lost-connection behavior.
+A synchronous Guest disposal sends a final shard token after previously sent changes, without waiting for their acknowledgment.
+If the Host receives the token, it reclaims the shard after processing those changes.
+If the Guest cannot notify the Host, the orchestrator must fence the Guest before disposing the Host, which then reclaims the shard from its last accepted progress.
+See [Session Failure and Application-Managed Recreation](#session-failure-and-application-managed-recreation) for teardown and lost-connection behavior.
 ID space sharding support was added in [PR 27559](https://github.com/microsoft/FluidFramework/pull/27559).
 
 ### Message Conversion and Validation
