@@ -72,6 +72,7 @@ export const hasStashData = <TChannelFactory extends IChannelFactory>(
 
 /**
  * Creates the load data from the client. The load data include everything needed to load a new client. It includes the summaries and the minimumSequenceNumber.
+ * Channel attributes are serialized after summarization to retain the values for that snapshot.
  * @internal
  */
 export function createLoadData(
@@ -106,7 +107,7 @@ export function createLoadData(
  * @internal
  */
 export function getSnapshotAttributes(summary: ISummaryTree): IChannelAttributes {
-	const blob = summary.tree[".attributes"];
+	const blob: ISummaryTree["tree"][string] | undefined = summary.tree[".attributes"];
 	assert(
 		blob?.type === SummaryType.Blob && typeof blob.content === "string",
 		"Expected serialized channel attributes in the summary",
