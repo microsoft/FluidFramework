@@ -523,19 +523,26 @@ describe("DDS fuzz client configuration", () => {
 		);
 	});
 
-	it("rejects attachment without recorded client configurations", async () => {
-		options.detachedStartOptions = { numOpsBeforeAttach: 1, rehydrateDisabled: true };
-		const model = mixinAttach(createModel(), options);
-		await runTestForSeed(model, options, 0, saveInfo);
-		const operations = readOperations();
-		const attach = operations.find((operation) => operation.type === "attach");
-		assert(attach !== undefined);
-		delete attach.clients;
-		await assert.rejects(
-			replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options),
-			/Missing recorded clientConfiguration/,
-		);
-	});
+	for (const configured of [false, true]) {
+		it(`rejects attachment without recorded clients, configured ${configured}`, async () => {
+			options.detachedStartOptions = { numOpsBeforeAttach: 1, rehydrateDisabled: true };
+			const base = createModel();
+			if (!configured) {
+				base.factory = new SharedNothingFactory();
+			}
+			const model = mixinAttach(base, options);
+			await runTestForSeed(model, options, 0, saveInfo);
+			const operations = readOperations();
+			const attach = operations.find((operation) => operation.type === "attach");
+			assert(attach !== undefined);
+			// @ts-expect-error Simulate a recording that omits the required client descriptors.
+			delete attach.clients;
+			await assert.rejects(
+				replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options),
+				/Attach operations require recorded client initializations/,
+			);
+		});
+	}
 
 	it("rejects configuration that changes when serialized", async () => {
 		const model = createModel();

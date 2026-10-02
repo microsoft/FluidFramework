@@ -187,9 +187,8 @@ export interface Attach<TClientConfiguration = unknown> {
 	type: "attach";
 	/**
 	 * Clients loaded at attachment, including the new summarizer.
-	 * Absent only in legacy recordings.
 	 */
-	clients?: ClientInitialization<TClientConfiguration>[];
+	clients: ClientInitialization<TClientConfiguration>[];
 }
 
 /**
@@ -918,6 +917,11 @@ export function mixinAttach<
 		TState
 	> = async (state, operation) => {
 		if (isOperationType<AttachOperation>("attach", operation)) {
+			if (!Array.isArray(operation.clients)) {
+				throw new ReducerPreconditionError(
+					"Attach operations require recorded client initializations.",
+				);
+			}
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<TChannelFactory, TClientConfiguration> =
@@ -931,19 +935,8 @@ export function mixinAttach<
 				objectStorage: new MockStorage(),
 			};
 			clientA.channel.connect(services);
-			// Legacy recordings chose attachment clients in the reducer.
-			const clientInitializations =
-				operation.clients ??
-				Array.from({ length: options.numberOfClients }, (_, index) =>
-					generateClientInitialization<TClientConfiguration>(
-						() => undefined,
-						state.random,
-						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
-						options,
-					),
-				);
 			const clients = await Promise.all(
-				clientInitializations.map(async (client) =>
+				operation.clients.map(async (client) =>
 					loadClient(
 						state.containerRuntimeFactory,
 						clientA,
