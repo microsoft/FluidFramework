@@ -345,13 +345,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 			this.wipReferenceSequenceNumber !== undefined,
 			0x1a4 /* "Not tracking a summary" */,
 		);
-		if (parentSkipRecursion && this._lastSummaryReferenceSequenceNumber === undefined) {
-			// This case the child is added after the latest non-failure summary.
-			// This node and all children should consider themselves as still not
-			// having a successful summary yet.
-			// We cannot "reuse" this node if unchanged since that summary, because
-			// handles will be unable to point to that node. It never made it to the
-			// tree itself, and only exists as an attach op in the _outstandingOps.
+		if (parentSkipRecursion) {
+			// When the parent skipped recursion (emitted a handle instead of a full subtree),
+			// this node's content is not directly stored in the new summary version. It is only
+			// transitively accessible via the parent's handle reference. We must clear
+			// _lastSummaryReferenceSequenceNumber so that this node does not attempt to emit a
+			// handle in future summaries pointing to this version, because the storage service
+			// cannot resolve nested paths through handle references.
+			this._lastSummaryReferenceSequenceNumber = undefined;
+			for (const child of this.children.values()) {
+				child.completeSummaryCore(proposalHandle, true);
+			}
 			this.clearSummary();
 			return;
 		}
