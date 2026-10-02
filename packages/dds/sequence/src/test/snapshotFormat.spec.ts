@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
-import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
 	mixinMonitoringContext,
@@ -21,41 +21,14 @@ import {
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
+import { assertSnapshotFormat } from "./snapshotFormatUtils.js";
+
 const snapshotFormatConfig = "Fluid.Sequence.newMergeTreeSnapshotFormat";
 
 interface SnapshotFormatFlags {
 	configuration?: boolean;
 	runtime?: boolean;
 	recorded?: boolean;
-}
-
-function assertSnapshotFormat(
-	sharedString: SharedStringClass,
-	summary: ISummaryTree,
-	useFlatFormat: boolean,
-): void {
-	const content = summary.tree.content;
-	assert(content.type === SummaryType.Tree);
-	const header = content.tree.header;
-	assert(header.type === SummaryType.Blob);
-	assert(typeof header.content === "string");
-	const chunk: unknown = JSON.parse(header.content);
-	assert(typeof chunk === "object" && chunk !== null);
-	assert.equal(
-		"version" in chunk ? chunk.version : undefined,
-		useFlatFormat ? "1" : undefined,
-	);
-	assert.equal("segments" in chunk, useFlatFormat);
-	assert.equal("segmentTexts" in chunk, !useFlatFormat);
-	if (useFlatFormat) {
-		assert.equal(content.tree.catchupOps, undefined);
-	}
-	assert("newMergeTreeSnapshotFormat" in sharedString.attributes);
-	assert.equal(sharedString.attributes.newMergeTreeSnapshotFormat, useFlatFormat);
-	assert.equal(
-		sharedString.attributes.snapshotFormatVersion,
-		SharedStringFactory.Attributes.snapshotFormatVersion,
-	);
 }
 
 for (const attachState of [AttachState.Detached, AttachState.Attached]) {

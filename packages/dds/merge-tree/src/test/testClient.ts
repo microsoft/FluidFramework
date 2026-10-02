@@ -56,7 +56,6 @@ import type { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import type { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { assertInserted, assertMergeNode, isRemoved } from "../segmentInfos.js";
-import { SnapshotV1 } from "../snapshotV1.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import type { OperationStamp } from "../stamps.js";
 import { TextSegment } from "../textSegment.js";
@@ -103,22 +102,13 @@ export class TestClient extends Client {
 		client1: TestClient,
 		newLongClientId: string,
 	): Promise<TestClient> {
-		const logger = createChildLogger({ namespace: "fluid:snapshot" });
-		// TestSerializer requires an undefined binding handle.
+		const snapshot = new SnapshotLegacy(
+			client1.mergeTree,
+			createChildLogger({ namespace: "fluid:snapshot" }),
+		);
+		snapshot.extractSync();
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const bind = undefined!;
-		let summaryTree: ISummaryTree;
-		if (client1.mergeTree.options?.newMergeTreeSnapshotFormat === true) {
-			const snapshot = new SnapshotV1(client1.mergeTree, logger, (id) =>
-				client1.getLongClientId(id),
-			);
-			snapshot.extractSync();
-			summaryTree = snapshot.emit(TestClient.serializer, bind).summary;
-		} else {
-			const snapshot = new SnapshotLegacy(client1.mergeTree, logger);
-			snapshot.extractSync();
-			summaryTree = snapshot.emit([], TestClient.serializer, bind).summary;
-		}
+		const summaryTree = snapshot.emit([], TestClient.serializer, undefined!).summary;
 		return TestClient.createFromSummary(
 			summaryTree,
 			newLongClientId,
