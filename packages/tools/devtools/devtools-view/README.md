@@ -62,6 +62,11 @@ Here are some guidelines and best practices to ensure your components are access
     Aim for a contrast ratio of at least 4.5:1.
     You can use online tools to verify color contrast compliance with [WCAG](https://www.w3.org/WAI/standards-guidelines/act/rules/09o5cg/proposed/) (Web Content Accessibility Guidelines).
 
+The left navigation uses `aria-current="page"` to identify the selected item.
+Each activation updates a persistent, polite status region through `ScreenReaderAnnouncement`, without a focus change.
+The message confirms the selection, not the completion of data loading.
+Keep the status region mounted and clear its text before a repeated announcement.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
