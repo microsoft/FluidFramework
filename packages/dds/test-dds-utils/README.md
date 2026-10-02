@@ -64,8 +64,8 @@ The factories must expose a common channel API that your model can use.
 Use `generateClientConfiguration(random, client)` to select a configuration with seeded randomness.
 The client context includes `clientId` and `isSummarizer`, so you can give the summarizer a specific configuration.
 Use `getFactory(clientConfiguration)` to resolve the recorded value without making new random choices.
-The configuration must round-trip through JSON without changes.
-Objects, arrays, strings, numbers, booleans, and `null` are supported; handles, functions, `undefined`, and non-finite numbers are not.
+Configuration values use the same Fluid serialization as other fuzz operations, including support for `IFluidHandle` values.
+Use the same serializable shapes as operation data; a configuration provider must return a value other than `undefined`.
 Do not mutate configurations after they are generated.
 
 For example, a model with an existing workload can select between two compatible factories:

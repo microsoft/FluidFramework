@@ -16,11 +16,17 @@ import {
 	takeAsync,
 	type SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
-import type { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	IChannelAttributes,
+	Serializable,
+} from "@fluidframework/datastore-definitions/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import execa from "execa";
-import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
 
 import type { Client } from "../clientLoading.js";
+import { DDSFuzzHandle } from "../ddsFuzzHandle.js";
 import {
 	createDDSFuzzSuite,
 	defaultDDSFuzzSuiteOptions,
@@ -546,21 +552,8 @@ describe("DDS fuzz client configuration", () => {
 		});
 	}
 
-	it("rejects configuration that changes when serialized", async () => {
-		const model = createModel();
-		assert(!isChannelFactory(model.factory));
-		model.factory.generateClientConfiguration = () => ({
-			version: "current",
-			options: { enabled: true },
-			invalid: Number.NaN,
-		});
-		await assert.rejects(
-			runTestForSeed(model, options, 0),
-			/clientConfiguration must round-trip through JSON/,
-		);
-	});
-
-	const configurations: JsonSerializable<unknown>[] = [
+	type JsonConfiguration = Exclude<Serializable<unknown>, undefined>;
+	const configurations: JsonConfiguration[] = [
 		// JSON null is a supported configuration, unlike undefined.
 		// eslint-disable-next-line unicorn/no-null
 		null,
@@ -568,13 +561,11 @@ describe("DDS fuzz client configuration", () => {
 		0,
 		"previous",
 		["previous", 1],
-		{ type: "__fluid_handle__", url: "/configuration-not-a-handle" },
 	];
 	for (const clientConfiguration of configurations) {
 		it(`preserves consumer-owned JSON: ${JSON.stringify(clientConfiguration)}`, async () => {
 			options.detachedStartOptions = { numOpsBeforeAttach: 1, rehydrateDisabled: true };
 			options.clientJoinOptions = { maxNumberOfClients: 4, clientAddProbability: 1 };
-			type JsonConfiguration = JsonSerializable<unknown>;
 			type JsonOperation = Operation | HarnessOperation<JsonConfiguration>;
 			const base: DDSFuzzModel<
 				SharedNothingFactory,
@@ -601,6 +592,97 @@ describe("DDS fuzz client configuration", () => {
 			}
 			const operations = JSON.parse(readFileSync(operationsFile, "utf8")) as JsonOperation[];
 			await replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options);
+		});
+	}
+
+	for (const numOpsBeforeAttach of [0, 1]) {
+		it(`uses the operation serializer for configuration handles, detached ops ${numOpsBeforeAttach}`, async () => {
+			interface HandleConfiguration {
+				handle: IFluidHandle;
+			}
+			interface HandleOperation {
+				type: "noop";
+				handle: IFluidHandle;
+			}
+			type HandleState = DDSFuzzTestState<SharedNothingFactory, HandleConfiguration>;
+			type HandleTestOperation = HandleOperation | HarnessOperation<HandleConfiguration>;
+			const handle = new DDSFuzzHandle(
+				"configuration",
+				new MockFluidDataStoreRuntime({ id: "configuration-source" }),
+			);
+			const resolvedHandles: IFluidHandle[] = [];
+			const recordHandle = (value: IFluidHandle): void => {
+				assert(isFluidHandle(value));
+				assert.notEqual(value, handle);
+				assert.equal(toFluidHandleInternal(value).absolutePath, handle.absolutePath);
+				resolvedHandles.push(value);
+			};
+			options.detachedStartOptions = {
+				numOpsBeforeAttach,
+				attachingBeforeRehydrateDisable: true,
+			};
+			options.clientJoinOptions = { maxNumberOfClients: 4, clientAddProbability: 1 };
+			const base: DDSFuzzModel<SharedNothingFactory, HandleTestOperation, HandleState> = {
+				workloadName: "configuration handles",
+				factory: {
+					generateClientConfiguration: () => ({ handle }),
+					getFactory: (configuration) => {
+						recordHandle(configuration.handle);
+						return new SharedNothingFactory();
+					},
+				},
+				generatorFactory: () => takeAsync(3, async () => ({ type: "noop", handle })),
+				reducer: (_, operation) => {
+					assert(operation.type === "noop");
+					recordHandle(operation.handle);
+				},
+				validateConsistency: () => {},
+			};
+			const model = mixinAttach(mixinNewClient(base, options), options);
+			const state = await runTestForSeed(model, options, 0, saveInfo);
+			assert.equal(state.clients.length, 4);
+			for (const client of [state.summarizerClient, ...state.clients]) {
+				assert(client.clientConfiguration !== undefined);
+				recordHandle(client.clientConfiguration.handle);
+			}
+			const operations = JSON.parse(
+				readFileSync(operationsFile, "utf8"),
+			) as HandleTestOperation[];
+			const encodedHandle = { type: "__fluid_handle__", url: handle.absolutePath };
+			for (const operation of operations) {
+				switch (operation.type) {
+					case "initialize": {
+						for (const client of [operation.initialClient, ...operation.clients]) {
+							assert.deepEqual(client.clientConfiguration, { handle: encodedHandle });
+						}
+						break;
+					}
+					case "attach": {
+						for (const client of operation.clients) {
+							assert.deepEqual(client.clientConfiguration, { handle: encodedHandle });
+						}
+						break;
+					}
+					case "addClient": {
+						assert.deepEqual(operation.clientConfiguration, { handle: encodedHandle });
+						break;
+					}
+					case "noop": {
+						assert.deepEqual(operation.handle, encodedHandle);
+						break;
+					}
+					default: {
+						break;
+					}
+				}
+			}
+			assert(!isChannelFactory(model.factory));
+			model.factory.generateClientConfiguration = () =>
+				assert.fail("Replay must use saved handles.");
+			await replayTest(model, 0, asyncGeneratorFromArray(operations), undefined, options);
+			for (const resolved of resolvedHandles) {
+				assert.equal(await resolved.get(), handle.absolutePath);
+			}
 		});
 	}
 

@@ -39,12 +39,12 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelFactory,
 	IChannelServices,
+	Serializable,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
@@ -116,7 +116,7 @@ export interface ClientSpec {
 /**
  * Chooses and resolves the recorded configuration for each new client.
  * @typeParam TChannelFactory - Factory used to create or load the DDS.
- * @typeParam TClientConfiguration - Consumer-defined JSON-serializable configuration.
+ * @typeParam TClientConfiguration - Consumer-defined Fluid-serializable configuration.
  * @internal
  */
 export interface DDSFuzzClientFactory<
@@ -126,12 +126,12 @@ export interface DDSFuzzClientFactory<
 	/**
 	 * Generates a configuration once per new client, including the summarizer.
 	 * This callback is not called during replay or when restoring an existing client.
-	 * The result must round-trip through JSON without changing its value.
+	 * The result uses the same Fluid serialization as other fuzz operations, including handle encoding.
 	 */
 	generateClientConfiguration: (
 		random: IRandom,
 		client: ClientSpec & { isSummarizer: boolean },
-	) => TClientConfiguration & JsonSerializable<TClientConfiguration>;
+	) => TClientConfiguration & Serializable<TClientConfiguration>;
 
 	/**
 	 * Resolves a recorded configuration to a factory.
@@ -142,7 +142,7 @@ export interface DDSFuzzClientFactory<
 
 /**
  * Describes a client constructed during initialization or attachment.
- * @typeParam TClientConfiguration - Consumer-defined JSON-serializable configuration.
+ * @typeParam TClientConfiguration - Consumer-defined Fluid-serializable configuration.
  * @internal
  */
 export interface ClientInitialization<TClientConfiguration = unknown> extends ClientSpec {
@@ -152,7 +152,7 @@ export interface ClientInitialization<TClientConfiguration = unknown> extends Cl
 
 /**
  * Records the clients constructed before the workload starts.
- * @typeParam TClientConfiguration - Consumer-defined JSON-serializable configuration.
+ * @typeParam TClientConfiguration - Consumer-defined Fluid-serializable configuration.
  * @internal
  */
 export interface Initialize<TClientConfiguration = unknown> {
@@ -180,7 +180,7 @@ export interface StashClient {
 }
 
 /**
- * @typeParam TClientConfiguration - Consumer-defined JSON-serializable configuration.
+ * @typeParam TClientConfiguration - Consumer-defined Fluid-serializable configuration.
  * @internal
  */
 export interface Attach<TClientConfiguration = unknown> {
@@ -222,7 +222,7 @@ export interface Rollback {
 }
 
 /**
- * @typeParam TClientConfiguration - Consumer-defined JSON-serializable configuration.
+ * @typeParam TClientConfiguration - Consumer-defined Fluid-serializable configuration.
  * @internal
  */
 export interface AddClient<TClientConfiguration = unknown> {
@@ -1708,14 +1708,8 @@ function normalizeClientFactory<TChannelFactory extends IChannelFactory, TClient
 ): NormalizedClientFactory<TChannelFactory, TClientConfiguration> {
 	if (!isChannelFactory(factory)) {
 		return {
-			generateClientConfiguration: (random, client) => {
-				const value = factory.generateClientConfiguration(random, client);
-				const serialized = JSON.stringify(value);
-				assert(serialized !== undefined, "clientConfiguration must be JSON-serializable.");
-				const copy: unknown = JSON.parse(serialized);
-				assert.deepEqual(value, copy, "clientConfiguration must round-trip through JSON.");
-				return copy as TClientConfiguration;
-			},
+			generateClientConfiguration: (random, client) =>
+				factory.generateClientConfiguration(random, client),
 			getFactory: (clientConfiguration) => {
 				if (clientConfiguration === undefined) {
 					throw new ReducerPreconditionError("Missing recorded clientConfiguration.");
@@ -1852,21 +1846,16 @@ async function initializeTestState<
 	return initialState;
 }
 
-function createSerializationContext(initialState: DDSFuzzTestState<IChannelFactory>): {
+function createSerializationContext(dataStoreRuntime = new MockFluidDataStoreRuntime()): {
 	serializer: DDSFuzzSerializer;
 	dummyHandleBindSource: ISharedObjectHandle;
 } {
-	const serializer = new DDSFuzzSerializer(
-		initialState.summarizerClient.dataStoreRuntime,
-		initialState.summarizerClient.dataStoreRuntime.id,
-		false,
-	);
+	const serializer = new DDSFuzzSerializer(dataStoreRuntime, dataStoreRuntime.id, false);
 
 	// This is unfortunately needed to pass to the Serializer, even though we don't do any handle binding.
-	const dummyHandleBindSource = Object.assign(
-		new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime),
-		{ bind: () => {} },
-	);
+	const dummyHandleBindSource = Object.assign(new DDSFuzzHandle("", dataStoreRuntime), {
+		bind: () => {},
+	});
 	assert(
 		isISharedObjectHandle(dummyHandleBindSource),
 		"PRECONDITION: must satisfy this for serializer",
@@ -1906,7 +1895,8 @@ export async function runTestForSeed<
 		containerRuntimeFactory: makeUnreachableCodePathProxy("runtime before initialization"),
 		isDetached: options.detachedStartOptions.numOpsBeforeAttach !== 0,
 	};
-	let serializationContext: ReturnType<typeof createSerializationContext>;
+	// Initialization needs a handle context before the first client's runtime exists.
+	let serializationContext = createSerializationContext();
 	let operationCount = 0;
 	let generator:
 		| AsyncGenerator<
@@ -1919,6 +1909,31 @@ export async function runTestForSeed<
 		| Initialize<TClientConfiguration>
 		| typeof done
 		| undefined;
+	const generateOperation: AsyncGenerator<
+		TOperation | Initialize<TClientConfiguration>,
+		DDSFuzzTestState<TChannelFactory, TClientConfiguration>
+	> = async (state) => {
+		if (needsInitialization) {
+			if (replayGenerator === undefined) {
+				return generateInitialize(factory.generateClientConfiguration, state.random, options);
+			}
+			const first = await replayGenerator(undefined);
+			if (
+				first !== done &&
+				isOperationType<Initialize<TClientConfiguration>>("initialize", first)
+			) {
+				return first;
+			}
+			// Legacy recordings omit initialization. Restore their unconfigured clients
+			// without invoking the consumer's configuration generator.
+			firstReplayOperation = first;
+			return generateInitialize<TClientConfiguration>(() => undefined, state.random, options);
+		}
+		assert(generator !== undefined, "Expected initialized workload generator.");
+		const bufferedOperation = firstReplayOperation;
+		firstReplayOperation = undefined;
+		return bufferedOperation ?? generator(state);
+	};
 	const finalState = await performFuzzActionsAsync<
 		TOperation | Initialize<TClientConfiguration>,
 		DDSFuzzTestState<TChannelFactory, TClientConfiguration>
@@ -1927,69 +1942,42 @@ export async function runTestForSeed<
 		// To make this work with handles that the DDS model may have generated, we use the FluidSerializer above
 		// to encode here and decode in the reducer.
 		async (state) => {
-			if (needsInitialization) {
-				if (replayGenerator === undefined) {
-					return generateInitialize(
-						factory.generateClientConfiguration,
-						state.random,
-						options,
-					);
-				}
-				const first = await replayGenerator(undefined);
-				if (
-					first !== done &&
-					isOperationType<Initialize<TClientConfiguration>>("initialize", first)
-				) {
-					return first;
-				}
-				// Legacy recordings omit initialization. Restore their unconfigured clients
-				// without invoking the consumer's configuration generator.
-				firstReplayOperation = first;
-				return generateInitialize<TClientConfiguration>(
-					() => undefined,
-					state.random,
-					options,
-				);
-			}
-			assert(generator !== undefined, "Expected initialized workload generator.");
-			const bufferedOperation = firstReplayOperation;
-			firstReplayOperation = undefined;
-			const operation = bufferedOperation ?? (await generator(state));
+			const operation = await generateOperation(state);
 			if (operation === done) {
 				return done;
 			}
-			return isClientConfigurationOperation(operation)
-				? operation
-				: (serializationContext.serializer.encode(
-						operation,
-						serializationContext.dummyHandleBindSource,
-					) as TOperation);
+			return serializationContext.serializer.encode(
+				operation,
+				serializationContext.dummyHandleBindSource,
+			) as TOperation | Initialize<TClientConfiguration>;
 		},
 		async (state, operation) => {
+			const decodedHandles = serializationContext.serializer.decode(operation) as
+				| TOperation
+				| Initialize<TClientConfiguration>;
 			if (needsInitialization) {
-				if (!isOperationType<Initialize<TClientConfiguration>>("initialize", operation)) {
+				if (!isOperationType<Initialize<TClientConfiguration>>("initialize", decodedHandles)) {
 					throw new ReducerPreconditionError("Fuzz tests must start with initialize.");
 				}
 				needsInitialization = false;
-				options.emitter.emit("operation", operation);
+				options.emitter.emit("operation", decodedHandles);
 				const initializedState = await initializeTestState(
 					factory,
 					options,
 					random,
-					operation,
+					decodedHandles,
 				);
 				options.emitter.emit("testStart", initializedState);
-				serializationContext = createSerializationContext(initializedState);
+				// eslint-disable-next-line require-atomic-updates -- Operations are reduced sequentially.
+				serializationContext = createSerializationContext(
+					initializedState.summarizerClient.dataStoreRuntime,
+				);
 				generator ??= model.generatorFactory();
 				return initializedState;
 			}
-			if (operation.type === "initialize") {
+			if (isOperationType<Initialize<TClientConfiguration>>("initialize", decodedHandles)) {
 				throw new ReducerPreconditionError("Unexpected initialize operation.");
 			}
-			// Configuration is plain JSON owned by the consumer, not Fluid-serialized data.
-			const decodedHandles = isClientConfigurationOperation(operation)
-				? (operation as TOperation)
-				: (serializationContext.serializer.decode(operation) as TOperation);
 			options.emitter.emit("operation", decodedHandles);
 			operationCount++;
 			return model.reducer(state, decodedHandles);
@@ -2005,14 +1993,6 @@ export async function runTestForSeed<
 	options.emitter.emit("testEnd", finalState);
 
 	return finalState;
-}
-
-function isClientConfigurationOperation(operation: BaseOperation): boolean {
-	return (
-		operation.type === "initialize" ||
-		operation.type === "addClient" ||
-		operation.type === "attach"
-	);
 }
 
 function runTest<
