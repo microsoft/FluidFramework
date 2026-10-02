@@ -36,7 +36,6 @@ import {
 	type BlobRequestMessage,
 	type BlobResponseMessage,
 	type GuestChangeMessage,
-	type GuestCloseMessage,
 	type HostGuestMessage,
 	type HostIdRangeId,
 	type HostInitializationMessage,
@@ -125,10 +124,6 @@ export class HostImplementation implements Host {
 				}
 				case "hostUpdateAck": {
 					this.synchronization.receiveUpdateAck(message);
-					break;
-				}
-				case "guestClose": {
-					this.receiveGuestClose(message);
 					break;
 				}
 				case "blobRequest": {
@@ -294,37 +289,6 @@ export class HostImplementation implements Host {
 		const authorizedToken = token as ShardSynchronizationToken;
 		this.idCompressor.synchronizeWithShard(authorizedToken);
 		this.guestIdSpaceShardToken = authorizedToken;
-	}
-
-	/**
-	 * Receive notification that the Guest has closed.
-	 *
-	 * @remarks
-	 * This message indicates that the Guest will send no further changes.
-	 * It is therefore safe to reclaim its ID space shard.
-	 *
-	 * Delivery order ensures that the Host has processed all previous Guest changes before this token.
-	 * The Host checks that the token belongs to this session and has no less progress
-	 * than the last accepted Guest change. Only then does it reclaim the shard and
-	 * dispose its session resources. The application's main view remains.
-	 *
-	 * @param message - The stopped Guest's disposal token.
-	 * @throws {@link SandboxProtocolError} if the token does not belong to this session or is stale.
-	 */
-	private receiveGuestClose(message: GuestCloseMessage): void {
-		const previous = this.guestIdSpaceShardToken;
-		const token = message.idSpaceShardToken;
-		if (token.shardId !== previous?.shardId) {
-			throw new SandboxProtocolError("Guest close token does not belong to this session.");
-		}
-		if (token.localGenCount < previous.localGenCount) {
-			throw new SandboxProtocolError("Guest close token has stale ID progress.");
-		}
-		// Guest messages arrive in order, so every earlier change has been processed.
-		// The validated disposal token belongs to this session and does not move backward.
-		this.idCompressor.synchronizeWithShard(token as ShardSynchronizationToken);
-		this.guestIdSpaceShardToken = undefined;
-		this.dispose();
 	}
 
 	/**

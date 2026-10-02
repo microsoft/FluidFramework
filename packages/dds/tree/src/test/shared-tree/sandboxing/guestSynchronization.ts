@@ -5,10 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IIdCompressorCore,
-	ShardSynchronizationToken,
-} from "@fluidframework/id-compressor/internal";
+import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ChangeMetadata, GraphCommit, RevisionTag } from "../../../core/index.js";
@@ -34,8 +31,7 @@ import type { GuestBranchInitialization } from "./hostSynchronization.js";
  * The Guest synchronization lifecycle.
  *
  * @remarks
- * Disposal stops edits, disposes both checkouts and the child shard, then returns
- * its disposal token to the owning Guest for a one-way message to the Host.
+ * Disposal stops edits and releases both checkouts and the ID space shard.
  *
  * On protocol failure, the session moves synchronization from active
  * to stopped without disposing the checkouts. The application must dispose the Guest
@@ -71,8 +67,8 @@ enum GuestSynchronizationState {
  * Each Host update replaces a suffix of {@link hostCheckout}, after which {@link checkout} rebases its local commits
  * onto the updated Host head.
  *
- * The owning {@link Guest} calls {@link dispose} to stop new edits, dispose both
- * checkouts, and obtain a final child shard token without waiting for acknowledgments.
+ * The owning {@link Guest} calls {@link dispose} to stop new edits and dispose both
+ * checkouts and the child shard without waiting for acknowledgments.
  *
  * On protocol failure, the session calls {@link stop} from active.
  * This does not dispose either checkout, so the application can inspect the authoring checkout if
@@ -80,7 +76,6 @@ enum GuestSynchronizationState {
  * The edit listener is removed, but retained references can still edit the view.
  * The application must not make further edits after a failure.
  * The application must then dispose the Guest to release both checkouts.
- * After failure, Guest disposal cannot notify the Host because the session has stopped.
  * The orchestrator must fence the Guest and dispose the Host to reclaim its shard.
  *
  */
@@ -314,15 +309,7 @@ export class GuestSynchronization {
 		}
 	}
 
-	/**
-	 * Processes an acknowledgment for a Guest change.
-	 *
-	 * @remarks
-	 * Acknowledgments remain necessary while closing so the Guest can finish sending
-	 * earlier changes before it sends its disposal token.
-	 *
-	 * @param message - The Guest change acknowledgment.
-	 */
+	/** Processes the Host's acknowledgment of a Guest change. */
 	public receiveChangeAck(message: GuestChangeAckMessage): void {
 		if (!this.pendingChanges.delete(message.changeId)) {
 			throw new SandboxProtocolError("Unexpected Guest change acknowledgment.");
@@ -378,16 +365,15 @@ export class GuestSynchronization {
 	 * Stops synchronization, releases both checkouts, and disposes the child shard.
 	 *
 	 * @remarks
-	 * The Guest calls this before closing its port, or during application-managed failure cleanup.
+	 * The Guest calls this during application-managed teardown or failure cleanup.
 	 * It calls {@link stop} to stop active synchronization,
 	 * then releases the hidden {@link hostCheckout} branch and authoring {@link checkout}.
 	 * The authoring checkout must be disposed before the compressor to prevent new IDs.
-	 * The owning Guest sends the returned token only if its session is still active.
-	 * Repeated calls return no token.
+	 * Repeated calls have no effect.
 	 */
-	public dispose(): ShardSynchronizationToken | undefined {
+	public dispose(): void {
 		if (this.state === GuestSynchronizationState.Disposed) {
-			return undefined;
+			return;
 		}
 		this.stop(new Error("Guest synchronization disposed before synchronization completed."));
 		this.state = GuestSynchronizationState.Disposed;
@@ -398,7 +384,8 @@ export class GuestSynchronization {
 		if (!this.checkout.disposed) {
 			this.checkout.dispose();
 		}
-		return this.idCompressor.disposeShard();
+
+		this.idCompressor.disposeShard();
 	}
 
 	private log(message: string): void {

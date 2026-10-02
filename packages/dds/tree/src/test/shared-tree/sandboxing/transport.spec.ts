@@ -31,7 +31,6 @@ import {
 	type BlobRequestId,
 	type BlobRequestMessage,
 	type GuestChangeMessage,
-	type GuestCloseMessage,
 	type HandleToken,
 	type HostIdRangeMessage,
 	type HostUpdateMessage,
@@ -68,7 +67,6 @@ type _DistinctIds =
 /** The validated wire shapes match compressor data without claiming the opaque token brand. */
 type _IdWireShapes =
 	| requireTrue<isAssignableTo<GuestChangeMessage["idSpaceShardToken"], ShardToken>>
-	| requireTrue<isAssignableTo<GuestCloseMessage["idSpaceShardToken"], ShardToken>>
 	| requireTrue<
 			isAssignableTo<HostUpdateMessage["parentIdProgress"], ParentIdProgressForShard>
 	  >

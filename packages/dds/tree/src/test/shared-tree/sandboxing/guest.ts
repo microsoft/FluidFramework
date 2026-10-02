@@ -80,15 +80,13 @@ export interface Guest {
 	 * Stops Guest edits and releases local resources synchronously.
 	 *
 	 * @remarks
-	 * While the session is active, this method sends a final child ID space shard token
-	 * after previously sent Guest changes, then closes the port without waiting for the
-	 * Host. The Host can reclaim the shard if it receives the token; sending it does not
-	 * confirm delivery. Pending change acknowledgments reject, even if the Host later
-	 * applies the changes. Changes that were never sent may be lost.
+	 * Pending change acknowledgments reject, even if the Host later applies previously sent changes.
+	 * Changes that were never sent may be lost.
 	 *
 	 * After a failure, the application can inspect the authoring view, if usable,
-	 * before calling this method. To guarantee reclamation when the Host outlives
-	 * the Guest, the orchestrator must fence the Guest and dispose its Host session.
+	 * before calling this method.
+	 *
+	 * Repeated calls have no effect.
 	 */
 	dispose(): void;
 }
@@ -160,7 +158,6 @@ export class GuestImplementation implements Guest {
 				}
 				case "blobRequest":
 				case "guestChange":
-				case "guestClose":
 				case "hostUpdateAck": {
 					throw new SandboxProtocolError(
 						`Guest received a message with type ${JSON.stringify(message.type)}.`,
@@ -285,16 +282,7 @@ export class GuestImplementation implements Guest {
 			return;
 		}
 		this.disposed = true;
-
-		const token = this.#synchronization?.dispose();
-		if (token !== undefined && this.session.active) {
-			// Notify the host that the Guest is closing and provide the disposal token for the Guest's ID space shard.
-			this.postMessage({
-				type: "guestClose",
-				idSpaceShardToken: { ...token, disposed: true },
-			});
-		}
-
+		this.#synchronization?.dispose();
 		this.session.dispose();
 		this.port.removeEventListener("message", this.onMessage);
 		this.port.removeEventListener("messageerror", this.onMessageError);

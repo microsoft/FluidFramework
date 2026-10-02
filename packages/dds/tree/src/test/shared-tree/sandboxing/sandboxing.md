@@ -124,7 +124,7 @@ The Guest keeps a checkout for the Host main branch and a separate checkout for 
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
 [GuestSynchronization](./guestSynchronization.ts) owns the hidden Host and authoring checkouts and the child ID space shard.
-The [Guest](./guest.ts) owns the port, message routing, and one-way disposal notice.
+The [Guest](./guest.ts) owns its port, message routing, and local disposal.
 GuestSynchronization creates and updates the authoring checkout and disposes it during Guest disposal.
 Disposing the checkout also invalidates its authoring views.
 After a failure, GuestSynchronization does not dispose the authoring checkout until application-managed cleanup.
@@ -180,9 +180,8 @@ Ordered delivery ensures a range arrives before a later Host update that depends
 The Guest rejects out-of-order or repeated range IDs, progress for another shard, and progress that moves backward.
 The sandbox does not call `takeNextCreationRange()` to manufacture these messages; range submission and finalization belong to the runtime.
 
-A synchronous Guest disposal sends a final shard token after previously sent changes, without waiting for their acknowledgment.
-If the Host receives the token, it reclaims the shard after processing those changes.
-If the Guest cannot notify the Host, the orchestrator must fence the Guest before disposing the Host, which then reclaims the shard from its last accepted progress.
+Guest disposal is local and does not notify the Host.
+After stopping or fencing the Guest, the orchestrator disposes the Host session to reclaim the shard from its last accepted progress.
 See [Session Failure and Application-Managed Recreation](#session-failure-and-application-managed-recreation) for teardown and lost-connection behavior.
 ID space sharding support was added in [PR 27559](https://github.com/microsoft/FluidFramework/pull/27559).
 
@@ -296,16 +295,16 @@ Host disposal preserves the application's main view, including successfully merg
 Recovery uses fresh session objects, not reset breakers.
 
 Call `Guest.dispose()` to synchronously stop Guest edits, release both Guest checkouts, and dispose its ID space shard.
-While the session is active, the Guest posts a final `guestClose` disposal token after previously sent changes, then closes its port without waiting for the Host.
-The Host processes those earlier changes first because Guest-to-Host delivery is ordered.
-It verifies the token, reclaims the Guest's ID space shard, and disposes its session branches without replying.
-Posting the notice does not confirm that the Host received it.
-Pending Guest acknowledgments reject even if the Host subsequently applies an earlier change; edits not sent before disposal can be lost.
+Guest disposal does not notify the Host or reclaim its reserved child ID space.
+The orchestrator must dispose the corresponding Host session after stopping the Guest, or after fencing a crashed iframe so its serialized shard cannot be reused.
+Host disposal stops processing messages, reclaims the shard from the last accepted Guest progress, and releases its session branches.
+Previously sent Guest changes that reach the Host before it stops can still be applied; other pending edits may be lost.
+Pending Guest acknowledgments reject even if the Host subsequently applies an earlier change.
 An outstanding Host update can also be discarded; the application-owned main view remains available.
 
 ```mermaid
 sequenceDiagram
-    participant Client as Sandboxed Client
+    participant Client as Orchestrator
     participant Guest
     participant Host
     participant Root as Host root ID compressor
@@ -313,10 +312,10 @@ sequenceDiagram
     Note over Host,Root: Root reserves the active child ID space shard
     Client->>Guest: dispose()
     Guest->>Guest: Stop edits, release checkouts, dispose child shard
-    Guest->>Host: guestClose(disposal token)
-    Guest-->>Client: dispose() returns without Host acknowledgment
-    Note over Guest,Host: Previously sent guestChange messages arrive first
-    Host->>Root: Validate token and synchronizeWithShard(disposal token)
+    Guest-->>Client: dispose() returns
+    Client->>Host: dispose() after Guest is stopped or fenced
+    Host->>Host: Stop receiving session messages
+    Host->>Root: synchronizeWithShard(last accepted progress, disposed)
     Note over Host,Root: Root reclaims the child ID space shard
     Host->>Host: Dispose session branches, keep main view
 ```
@@ -332,8 +331,7 @@ stateDiagram-v2
 ```
 
 The Host tracks the child ID space shard separately from the Guest synchronization state.
-A Guest failure cannot notify the Host if its port is unavailable.
-The orchestrator must fence that Guest, ensuring it cannot send new changes or restart from its serialized shard, before disposing its Host session.
+The orchestrator must stop or fence the Guest, ensuring it cannot send new changes or restart from its serialized shard, before disposing its Host session.
 Host disposal stops processing session messages before using its latest accepted child progress to reclaim the allocation.
 The Host has already learned the IDs used by every Guest change it accepted; unreported IDs in the fenced Guest are discarded.
 An initialization send failure also reclaims a shard that the Host knows it did not deliver.
@@ -341,16 +339,15 @@ An initialization send failure also reclaims a shard that the Host knows it did 
 ```mermaid
 stateDiagram-v2
     [*] --> Reserved: Host creates child ID space shard
-    Reserved --> Reclaimed: valid guestClose and synchronizeWithShard
-    Reserved --> Reclaimed: fenced Guest followed by Host.dispose()
+    Reserved --> Reclaimed: stopped or fenced Guest followed by Host.dispose()
     Reserved --> Reclaimed: initialization send fails before delivery
 ```
 
 After a failure, GuestSynchronization leaves the authoring checkout available for inspection until the application calls `Guest.dispose()`.
 GuestSynchronization releases both checkouts during cleanup.
 Do not treat `sessionFailure` as proof of fencing: retained Guest references may still create IDs until disposal or iframe termination.
-If a Guest disappears without its final notice, the Host remains active until the orchestrator disposes it.
-That disposal reclaims the shard only after its channel stops accepting Guest messages.
+The Host remains active until the orchestrator disposes it, even after Guest disposal.
+If the orchestrator does not dispose the Host, it continues sending updates and retains unacknowledged snapshots.
 
 The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
 
