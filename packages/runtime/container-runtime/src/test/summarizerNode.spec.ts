@@ -395,6 +395,104 @@ describe("Runtime", () => {
 					);
 				});
 			});
+
+			describe("Retire Pending Summary", () => {
+				async function submit(handle: string, referenceSequenceNumber: number): Promise<void> {
+					rootNode.startSummary(referenceSequenceNumber, logger, 0);
+					await rootNode.summarize(false);
+					await midNode?.summarize(false);
+					await leafNode?.summarize(false);
+					rootNode.completeSummary(handle);
+				}
+
+				async function assertTracked(
+					handle: string,
+					ackReferenceSequenceNumber: number,
+					expected: boolean,
+				): Promise<void> {
+					const result = await rootNode.refreshLatestSummary(
+						handle,
+						ackReferenceSequenceNumber,
+					);
+					assert.strictEqual(result.isSummaryTracked, expected);
+				}
+
+				it("removes only the retired handle, including from children realized later", async () => {
+					createRoot({ refSeq: 0 });
+					createMid({ type: CreateSummarizerNodeSource.FromSummary });
+					createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+					await submit("hA", 10);
+					await submit("hB", 20);
+
+					assert(rootNode.retireSummary("hA", 10), "A should be pending");
+					assert(!rootNode.retireSummary("hA", 10), "retiring A twice should be safe");
+					midNode?.createChild(getSummarizeInternalFn(2), "lateLeaf", {
+						type: CreateSummarizerNodeSource.FromSummary,
+					});
+
+					await assertTracked("hA", 10, false);
+					await assertTracked("hB", 20, true);
+					assert.strictEqual(rootNode.startSummary(30, logger, 20).invalidNodes, 0);
+				});
+
+				it("does not clear the next summary's work in progress", async () => {
+					createRoot({ refSeq: 0 });
+					createMid({ type: CreateSummarizerNodeSource.FromSummary });
+					createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+					await submit("hA", 10);
+
+					rootNode.startSummary(20, logger, 0);
+					assert(rootNode.retireSummary("hA", 10), "A should be pending");
+					assert(rootNode.isSummaryInProgress?.() === true, "B should still be in progress");
+					assert(
+						midNode?.isSummaryInProgress?.() === true,
+						"B's child should still be in progress",
+					);
+					await rootNode.summarize(false);
+					await midNode?.summarize(false);
+					await leafNode?.summarize(false);
+					rootNode.completeSummary("hB");
+
+					await assertTracked("hB", 20, true);
+				});
+
+				it("does not remove a newer proposal that reused the same handle", async () => {
+					createRoot({ refSeq: 0 });
+					createMid({ type: CreateSummarizerNodeSource.FromSummary });
+					await submit("shared", 10);
+					await submit("shared", 20);
+
+					assert.throws(() => rootNode.retireSummary("shared", 10), {
+						message: "UnexpectedRetiredSummaryReferenceSequenceNumber",
+					});
+					await assertTracked("shared", 20, true);
+				});
+
+				it("rejects a reused handle even when both proposals have the same reference sequence number", async () => {
+					createRoot({ refSeq: 0 });
+					rootNode.startSummary(10, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("shared", 1);
+					rootNode.startSummary(10, logger, 0);
+					await rootNode.summarize(false);
+					rootNode.completeSummary("shared", 2);
+
+					assert.throws(() => rootNode.retireSummary("shared", 10, 1), {
+						message: "UnexpectedRetiredSummaryClientSequenceNumber",
+					});
+					await assertTracked("shared", 10, true);
+				});
+
+				it("does not affect a normal ACK when the requested handle is absent", async () => {
+					createRoot({ refSeq: 0 });
+					createMid({ type: CreateSummarizerNodeSource.FromSummary });
+					createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+					await submit("hA", 10);
+
+					assert(!rootNode.retireSummary("missing", 10));
+					await assertTracked("hA", 10, true);
+				});
+			});
 		});
 	});
 });

@@ -337,6 +337,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
 			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
+			(...args) => this.internalsProvider.retireSummary(...args), // retireSummaryCallback
 			this._heuristicData,
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,

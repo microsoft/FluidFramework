@@ -265,15 +265,20 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
+	 * @param clientSequenceNumber - The client sequence number of the submitted summarize op, when available.
 	 */
-	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean): void {
+	protected completeSummaryCore(
+		proposalHandle: string,
+		parentSkipRecursion: boolean,
+		clientSequenceNumber?: number,
+	): void {
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
 			wipSerializedUsedRoutes = this.wipSerializedUsedRoutes;
 		}
 
-		super.completeSummaryCore(proposalHandle, parentSkipRecursion);
+		super.completeSummaryCore(proposalHandle, parentSkipRecursion, clientSequenceNumber);
 
 		// If GC is disabled, skip setting pending summary with GC state.
 		if (!this.gcDisabled) {

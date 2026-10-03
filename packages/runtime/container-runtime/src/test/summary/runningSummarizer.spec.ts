@@ -27,12 +27,19 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
-import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import { mergeStats } from "@fluidframework/runtime-utils/internal";
+import {
+	MockLogger,
+	createChildLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
 import {
 	type IGeneratedSummaryStats,
+	type IRefreshSummaryAckOptions,
+	type IRootSummarizerNode,
 	type ISummarizeHeuristicData,
 	type ISummarizerRuntime,
 	type ISummaryCancellationToken,
@@ -40,6 +47,7 @@ import {
 	type SubmitSummaryResult,
 	SummarizeHeuristicData,
 	SummaryCollection,
+	createRootSummarizerNode,
 	getFailMessage,
 	neverCancelledSummaryToken,
 	type ISummaryConfiguration,
@@ -52,6 +60,7 @@ import {
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
 	disposed = false;
+	public readonly clientId = "test";
 
 	constructor(
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
@@ -154,7 +163,7 @@ describe("Runtime", () => {
 				await flushPromises();
 			}
 
-			function emitBroadcast(timestamp = Date.now()) {
+			function emitBroadcast(timestamp = Date.now(), handle = "test-broadcast-handle") {
 				const referenceSequenceNumber = lastRefSeq;
 				lastSummarySeq = ++lastRefSeq;
 				const op = {
@@ -164,7 +173,7 @@ describe("Runtime", () => {
 					clientSequenceNumber: ++lastClientSeq,
 					sequenceNumber: lastSummarySeq,
 					contents: {
-						handle: "test-broadcast-handle",
+						handle,
 					},
 					timestamp,
 				};
@@ -247,7 +256,7 @@ describe("Runtime", () => {
 				const lastRefSeqBefore = lastRefSeq;
 
 				// immediate broadcast
-				emitBroadcast();
+				emitBroadcast(Date.now(), "test-handle");
 
 				if (shouldDeferGenerateSummary) {
 					deferGenerateSummary = new Deferred<void>();
@@ -274,6 +283,14 @@ describe("Runtime", () => {
 				disableHeuristics?: boolean,
 				submitSummaryCallback: () => Promise<SubmitSummaryResult> = successfulSubmitSummary,
 				cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
+				retireSummaryCallback: (
+					proposalHandle: string,
+					referenceSequenceNumber: number,
+					clientSequenceNumber: number,
+				) => void = () => {},
+				refreshLatestSummaryAckCallback: (
+					options: IRefreshSummaryAckOptions,
+				) => Promise<void> = async () => {},
 			): Promise<void> => {
 				heuristicData = new SummarizeHeuristicData(0, {
 					refSequenceNumber: 0,
@@ -293,7 +310,8 @@ describe("Runtime", () => {
 						}
 						return submitSummaryCallback();
 					},
-					async (options) => {},
+					refreshLatestSummaryAckCallback,
+					retireSummaryCallback,
 					heuristicData,
 					summaryCollection,
 					cancellationToken,
@@ -331,6 +349,365 @@ describe("Runtime", () => {
 					mockDeltaManager,
 					mockLogger.toTelemetryLogger(),
 				);
+			});
+
+			describe("Timed-out proposal retirement", () => {
+				interface SubmittedSummary {
+					handle: string;
+					clientSequenceNumber: number;
+					referenceSequenceNumber: number;
+					summarySequenceNumber?: number;
+				}
+
+				let node: IRootSummarizerNode;
+				let submissions: SubmittedSummary[];
+				let retired: string[];
+				let refreshed: { handle: string; tracked: boolean }[];
+				let failUploadFor: string | undefined;
+				let deferUploadFor: string | undefined;
+				let reuseHandleForB: boolean;
+				let uploadGate: Deferred<void> | undefined;
+
+				beforeEach(() => {
+					node = createRootSummarizerNode(
+						createChildLogger({ logger: mockLogger }),
+						async () => ({
+							id: "root",
+							summary: { type: SummaryType.Tree, tree: {} },
+							stats: mergeStats(),
+						}),
+						1,
+						0,
+					);
+					submissions = [];
+					retired = [];
+					refreshed = [];
+					failUploadFor = undefined;
+					deferUploadFor = undefined;
+					reuseHandleForB = false;
+					uploadGate = undefined;
+				});
+
+				const submit = async (): Promise<SubmitSummaryResult> => {
+					const handle =
+						runCount === 1 || (runCount === 2 && reuseHandleForB)
+							? "hA"
+							: runCount === 2
+								? "hB"
+								: `h${runCount}`;
+					const referenceSequenceNumber = lastRefSeq;
+					const summaryTree = { type: SummaryType.Tree, tree: {} } as const;
+					node.startSummary(
+						referenceSequenceNumber,
+						createChildLogger({ logger: mockLogger }),
+						node.referenceSequenceNumber,
+					);
+					await node.summarize(false);
+					if (deferUploadFor === handle) {
+						assert(uploadGate !== undefined);
+						await uploadGate.promise;
+					}
+					if (failUploadFor === handle) {
+						node.clearSummary();
+						return {
+							stage: "generate",
+							referenceSequenceNumber,
+							minimumSequenceNumber: 0,
+							error: new RetriableSummaryError("Upload failed"),
+							summaryTree,
+							summaryStats: emptySummaryStats,
+							generateDuration: 0,
+						};
+					}
+					const clientSequenceNumber = ++lastClientSeq;
+					node.completeSummary(handle, clientSequenceNumber);
+					submissions.push({ handle, clientSequenceNumber, referenceSequenceNumber });
+					return {
+						stage: "submit",
+						referenceSequenceNumber,
+						minimumSequenceNumber: 0,
+						summaryTree,
+						summaryStats: emptySummaryStats,
+						generateDuration: 0,
+						uploadDuration: 0,
+						submitOpDuration: 0,
+						handle,
+						clientSequenceNumber,
+					};
+				};
+
+				const start = async (): Promise<void> => {
+					await startRunningSummarizer(
+						true /* disableHeuristics */,
+						submit,
+						neverCancelledSummaryToken,
+						(handle, referenceSequenceNumber, clientSequenceNumber) => {
+							assert(
+								node.retireSummary(handle, referenceSequenceNumber, clientSequenceNumber),
+							);
+							retired.push(handle);
+						},
+						async (options) => {
+							assert(options.proposalHandle !== undefined);
+							const result =
+								options.isRetired === true
+									? { isSummaryTracked: false }
+									: await node.refreshLatestSummary(
+											options.proposalHandle,
+											options.summaryRefSeq,
+										);
+							refreshed.push({
+								handle: options.proposalHandle,
+								tracked: result.isSummaryTracked,
+							});
+						},
+					);
+					await emitNoOp(10);
+				};
+
+				const pending = (): Map<string, unknown> =>
+					(node as IRootSummarizerNode & { pendingSummaries: Map<string, unknown> })
+						.pendingSummaries;
+
+				const broadcast = (summary: SubmittedSummary): ISequencedDocumentMessage => {
+					summary.summarySequenceNumber = ++lastRefSeq;
+					const op = {
+						type: MessageType.Summarize,
+						clientId: summarizerClientId,
+						clientSequenceNumber: summary.clientSequenceNumber,
+						referenceSequenceNumber: summary.referenceSequenceNumber,
+						sequenceNumber: summary.summarySequenceNumber,
+						contents: { handle: summary.handle },
+						timestamp: Date.now(),
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+					mockDeltaManager.emit("op", op);
+					mockRuntime.emit("op", op, false);
+					return op;
+				};
+
+				const acknowledge = (summary: SubmittedSummary): ISequencedDocumentMessage => {
+					assert(summary.summarySequenceNumber !== undefined, "summary op must be broadcast");
+					const op = {
+						type: MessageType.SummaryAck,
+						sequenceNumber: ++lastRefSeq,
+						data: JSON.stringify({
+							handle: `ack${summary.handle}`,
+							summaryProposal: { summarySequenceNumber: summary.summarySequenceNumber },
+						}),
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+					mockDeltaManager.emit("op", op);
+					mockRuntime.emit("op", op, false);
+					return op;
+				};
+
+				const reject = (summary: SubmittedSummary): void => {
+					assert(summary.summarySequenceNumber !== undefined, "summary op must be broadcast");
+					const op = {
+						type: MessageType.SummaryNack,
+						sequenceNumber: ++lastRefSeq,
+						data: JSON.stringify({
+							summaryProposal: { summarySequenceNumber: summary.summarySequenceNumber },
+							message: "B was rejected",
+						}),
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+					mockDeltaManager.emit("op", op);
+					mockRuntime.emit("op", op, false);
+				};
+
+				async function expectResult(
+					result: Promise<{ success: boolean }>,
+					expectedSuccess: boolean,
+				): Promise<void> {
+					const outcome = await result;
+					assert.strictEqual(outcome.success, expectedSuccess);
+				}
+
+				it("keeps a normal ACK tracked", async () => {
+					await start();
+					const results = summarizer.summarizeOnDemand({ reason: "normal" });
+					await expectResult(results.summarySubmitted, true);
+					const summary = submissions[0];
+					broadcast(summary);
+					await expectResult(results.summaryOpBroadcasted, true);
+					acknowledge(summary);
+					await expectResult(results.receivedSummaryAckOrNack, true);
+					await flushPromises();
+
+					assert.deepStrictEqual(retired, []);
+					assert(
+						refreshed.some(({ handle, tracked }) => handle === "hA" && tracked),
+						"the normal ACK should advance the node baseline",
+					);
+					assert.strictEqual(node.referenceSequenceNumber, summary.referenceSequenceNumber);
+				});
+
+				it("retires an ACK timeout before B, then delivers A's late ACK untracked", async () => {
+					await start();
+					const resultsA = summarizer.summarizeOnDemand({ reason: "A" });
+					await expectResult(resultsA.summarySubmitted, true);
+					const summaryA = submissions[0];
+					broadcast(summaryA);
+					await expectResult(resultsA.summaryOpBroadcasted, true);
+					await tickAndFlushPromises(summaryConfig.maxAckWaitTime);
+					await expectResult(resultsA.receivedSummaryAckOrNack, false);
+					assert.deepStrictEqual(retired, ["hA"]);
+					assert(!pending().has("hA"), "A must be retired before the attempt completes");
+
+					await flushPromises();
+					failUploadFor = "hB";
+					const resultsB = summarizer.summarizeOnDemand({ reason: "B" });
+					await expectResult(resultsB.summarySubmitted, false);
+					await expectResult(resultsB.receivedSummaryAckOrNack, false);
+					await flushPromises();
+
+					acknowledge(summaryA);
+					await flushPromises();
+					assert.strictEqual(summaryCollection.latestAck?.summaryOp.contents.handle, "hA");
+					assert.deepStrictEqual(refreshed, [{ handle: "hA", tracked: false }]);
+					assert.strictEqual(node.referenceSequenceNumber, 0);
+				});
+
+				it("keeps A pending before its op and retires it during B's work in progress", async () => {
+					await start();
+					const resultsA = summarizer.summarizeOnDemand({ reason: "A" });
+					await expectResult(resultsA.summarySubmitted, true);
+					const summaryA = submissions[0];
+					await tickAndFlushPromises(summaryConfig.maxAckWaitTime);
+					await expectResult(resultsA.receivedSummaryAckOrNack, false);
+					assert(pending().has("hA"), "A must remain pending until its real op appears");
+					assert.deepStrictEqual(retired, []);
+
+					await flushPromises();
+					deferUploadFor = "hB";
+					uploadGate = new Deferred<void>();
+					const resultsB = summarizer.summarizeOnDemand({ reason: "B" });
+					await flushPromises();
+					assert(node.isSummaryInProgress?.() === true, "B should be in progress");
+
+					broadcast(summaryA);
+					assert.deepStrictEqual(retired, ["hA"]);
+					assert(!pending().has("hA"));
+					assert(node.isSummaryInProgress?.() === true, "retiring A must not clear B's work");
+					uploadGate.resolve();
+					await expectResult(resultsB.summarySubmitted, true);
+					assert(pending().has("hB"), "B should remain pending after A is retired");
+					summarizer.dispose();
+				});
+
+				it("handles an op/timer tie and duplicate late op and ACK without adopting A", async () => {
+					await start();
+					const results = summarizer.summarizeOnDemand({ reason: "tie" });
+					await expectResult(results.summarySubmitted, true);
+					const summary = submissions[0];
+
+					clock.tick(summaryConfig.maxAckWaitTime);
+					const summaryOp = broadcast(summary);
+					const summaryAck = acknowledge(summary);
+					await expectResult(results.receivedSummaryAckOrNack, false);
+					await flushPromises();
+					assert.deepStrictEqual(retired, ["hA"]);
+					assert.deepStrictEqual(refreshed, [{ handle: "hA", tracked: false }]);
+
+					summaryCollection.emit(MessageType.Summarize, summaryOp);
+					mockDeltaManager.emit("op", { ...summaryAck, sequenceNumber: ++lastRefSeq });
+					await flushPromises();
+					assert.deepStrictEqual(retired, ["hA"]);
+					assert.deepStrictEqual(refreshed, [{ handle: "hA", tracked: false }]);
+					assert.strictEqual(summaryCollection.latestAck?.summaryOp.contents.handle, "hA");
+				});
+
+				it("does not adopt B when the retired ACK's handle was reused", async () => {
+					await start();
+					const resultsA = summarizer.summarizeOnDemand({ reason: "A" });
+					await expectResult(resultsA.summarySubmitted, true);
+					const summaryA = submissions[0];
+					broadcast(summaryA);
+					await tickAndFlushPromises(summaryConfig.maxAckWaitTime);
+					await expectResult(resultsA.receivedSummaryAckOrNack, false);
+					await flushPromises();
+
+					reuseHandleForB = true;
+					await emitNoOp();
+					const resultsB = summarizer.summarizeOnDemand({ reason: "B" });
+					await expectResult(resultsB.summarySubmitted, true);
+					const summaryB = submissions[1];
+					assert.strictEqual(summaryB.handle, summaryA.handle);
+					broadcast(summaryB);
+					reject(summaryB);
+					await expectResult(resultsB.receivedSummaryAckOrNack, false);
+					await flushPromises();
+
+					acknowledge(summaryA);
+					await flushPromises();
+					assert.deepStrictEqual(refreshed, [{ handle: "hA", tracked: false }]);
+					assert(pending().has("hA"), "B must remain pending despite A's ACK");
+					assert.strictEqual(node.referenceSequenceNumber, 0);
+				});
+
+				it("disposes rather than allowing an ACK to adopt a proposal that could not be retired", async () => {
+					await startRunningSummarizer(
+						true /* disableHeuristics */,
+						submit,
+						neverCancelledSummaryToken,
+						() => {
+							throw new Error("Retirement failed");
+						},
+						async () => {
+							assert.fail("a failed retirement must not refresh the summary");
+						},
+					);
+					await emitNoOp(10);
+					const results = summarizer.summarizeOnDemand({ reason: "retirement-failure" });
+					await expectResult(results.summarySubmitted, true);
+					const summary = submissions[0];
+					broadcast(summary);
+					await tickAndFlushPromises(summaryConfig.maxAckWaitTime);
+
+					await expectResult(results.receivedSummaryAckOrNack, false);
+					assert.strictEqual(stopCall, 1);
+					assert(summarizer.disposed);
+					acknowledge(summary);
+					await flushPromises();
+					assert.deepStrictEqual(refreshed, []);
+					assert.strictEqual(node.referenceSequenceNumber, 0);
+				});
+
+				it("drops unbroadcast timeout markers on disposal without changing node tracking", async () => {
+					await start();
+					const results = summarizer.summarizeOnDemand({ reason: "missing-op" });
+					await expectResult(results.summarySubmitted, true);
+					await tickAndFlushPromises(summaryConfig.maxAckWaitTime);
+					await expectResult(results.receivedSummaryAckOrNack, false);
+					assert(pending().has("hA"));
+
+					summarizer.dispose();
+					broadcast(submissions[0]);
+					acknowledge(submissions[0]);
+					await flushPromises();
+					assert.deepStrictEqual(retired, []);
+					assert.deepStrictEqual(refreshed, []);
+					assert(pending().has("hA"), "disposal must not retire a pre-op proposal");
+					assert.strictEqual(summaryCollection.latestAck?.summaryOp.contents.handle, "hA");
+				});
+
+				it("stops instead of retaining unlimited missing-op markers", async () => {
+					await start();
+					for (let attempt = 0; attempt < 32; attempt++) {
+						const results = summarizer.summarizeOnDemand({ reason: `missing-${attempt}` });
+						await expectResult(results.summarySubmitted, true);
+						await tickAndFlushPromises(summaryConfig.maxAckWaitTime);
+						await expectResult(results.receivedSummaryAckOrNack, false);
+						await flushPromises();
+					}
+
+					assert.strictEqual(stopCall, 1);
+					await expectResult(
+						summarizer.summarizeOnDemand({ reason: "blocked" }).summarySubmitted,
+						false,
+					);
+					assert.strictEqual(runCount, 32);
+					summarizer.dispose();
+				});
 			});
 
 			describe("Summary Schedule", () => {
@@ -1055,8 +1432,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
-						"test-broadcast-handle",
-						"summarize op handle should be test-broadcast-handle",
+						"test-handle",
+						"summarize op handle should be test-handle",
 					);
 
 					assert(
@@ -1139,8 +1516,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
-						"test-broadcast-handle",
-						"summarize op handle should be test-broadcast-handle",
+						"test-handle",
+						"summarize op handle should be test-handle",
 					);
 
 					assert(
@@ -1287,8 +1664,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
-						"test-broadcast-handle",
-						"summarize op handle should be test-broadcast-handle",
+						"test-handle",
+						"summarize op handle should be test-handle",
 					);
 
 					assert(
@@ -1391,8 +1768,8 @@ describe("Runtime", () => {
 					);
 					assert.strictEqual(
 						broadcastResult.data.summarizeOp.contents.handle,
-						"test-broadcast-handle",
-						"summarize op handle should be test-broadcast-handle",
+						"test-handle",
+						"summarize op handle should be test-handle",
 					);
 
 					// Verify that heuristics are blocked while waiting for ack

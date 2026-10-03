@@ -540,5 +540,40 @@ describe("SummarizerNodeWithGC Tests", () => {
 				"The child node's latest summary path is incorrect",
 			);
 		});
+
+		it("retiring a pending proposal removes GC used routes without clearing a later proposal", async () => {
+			createRoot({ refSeq: 0 });
+			createMid({ type: CreateSummarizerNodeSource.FromSummary });
+
+			rootNode.startSummary(10, logger, 0);
+			rootNode.updateUsedRoutes([""]);
+			midNode?.updateUsedRoutes([""]);
+			await rootNode.summarize(false);
+			await midNode?.summarize(false);
+			rootNode.completeSummary("hA");
+
+			rootNode.startSummary(20, logger, 0);
+			rootNode.updateUsedRoutes([`/${nodeIds.midId}`, `/${nodeIds.midId}/${nodeIds.leafId}`]);
+			midNode?.updateUsedRoutes([`/${nodeIds.leafId}`]);
+			await rootNode.summarize(false);
+			await midNode?.summarize(false);
+			rootNode.completeSummary("hB");
+
+			assert(rootNode.retireSummary("hA", 10));
+			createLeaf({ type: CreateSummarizerNodeSource.FromSummary });
+
+			type PendingGCNode = ISummarizerNodeWithGC & {
+				pendingSummaries: Map<string, { serializedUsedRoutes?: string }>;
+				referenceUsedRoutes: string[] | undefined;
+			};
+			const lateChild = leafNode as PendingGCNode;
+			assert(!lateChild.pendingSummaries.has("hA"), "late children must not inherit A");
+			assert(lateChild.pendingSummaries.has("hB"), "late children must inherit B");
+			const retiredAck = await rootNode.refreshLatestSummary("hA", 10);
+			assert.strictEqual(retiredAck.isSummaryTracked, false);
+			const nextAck = await rootNode.refreshLatestSummary("hB", 20);
+			assert.strictEqual(nextAck.isSummaryTracked, true);
+			assert.deepStrictEqual(lateChild.referenceUsedRoutes, [""], "B's routes should be used");
+		});
 	});
 });
