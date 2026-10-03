@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	DoublyLinkedList,
+	assert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type {
 	Serializable,
 	IChannelAttributes,
@@ -47,6 +51,18 @@ import { SharedArrayRevertible } from "./sharedArrayRevertible.js";
 const snapshotFileName = "header";
 
 /**
+ * Per-op record kept in the FIFO {@link SharedArrayClass.pendingOps} ledger for each
+ * local in-flight op. Captures the op-shape data needed by downstream consumers
+ * (entryId for all ops, and targetEntryId for moves/toggleMoves).
+ */
+interface SharedArrayPendingOp<T> {
+	readonly op: ISharedArrayOperation<T>;
+	readonly type: OperationType;
+	readonly entryId: string;
+	readonly targetEntryId?: string;
+}
+
+/**
  * Represents a shared array that allows communication between distributed clients.
  *
  * @internal
@@ -76,6 +92,13 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 * We should not rollback to life an entry that was deleted by remote clients.
 	 */
 	private readonly remoteDeleteWithLocalPendingDelete: Set<string> = new Set<string>();
+
+	/**
+	 * FIFO ledger of in-flight local ops. Each entry is pushed at submit time (or in
+	 * {@link applyStashedOp}) and shifted off in {@link processMessagesCore} when the
+	 * local ack arrives. Records the per-op shape needed by downstream consumers.
+	 */
+	private readonly pendingOps = new DoublyLinkedList<SharedArrayPendingOp<T>>();
 
 	/**
 	 * Create a new shared array
@@ -220,7 +243,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.pendingOps.push(this.buildPendingOp(op));
+		this.submitArrayOp(op);
 	}
 
 	public delete(index: number): void {
@@ -247,7 +271,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.pendingOps.push(this.buildPendingOp(op));
+		this.submitArrayOp(op);
 	}
 
 	public rearrangeToFront(values: T[]): void {
@@ -324,7 +349,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.pendingOps.push(this.buildPendingOp(op));
+		this.submitArrayOp(op);
 	}
 
 	/**
@@ -360,7 +386,8 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.pendingOps.push(this.buildPendingOp(op));
+		this.submitArrayOp(op);
 	}
 	/**
 	 * Method to do undo/redo of move operation. All entries of the same payload/value are stored
@@ -398,11 +425,18 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			return;
 		}
 
-		this.submitLocalMessage(op);
+		this.pendingOps.push(this.buildPendingOp(op));
+		this.submitArrayOp(op);
 	}
 
 	public rollback(op: unknown, _localOpMetadata: unknown): void {
 		const arrayOp = op as ISharedArrayOperation<T>;
+		// Drop the matching record from the FIFO {@link pendingOps} ledger before applying
+		// the inverse mutation. Rollback runs LIFO and may target any in-flight op (not
+		// necessarily the head), so locate the matching entry by op-shape identity rather
+		// than shifting blindly. Doing this before the mutation also avoids leaving the
+		// ledger in an inconsistent state if the inverse mutation throws.
+		this.removeMatchingPendingOp(arrayOp);
 		switch (arrayOp.type) {
 			case OperationType.insertEntry: {
 				const liveEntry = this.getLiveEntry(arrayOp.entryId);
@@ -572,6 +606,54 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		return this.idToEntryMap.get(entryId) as SharedArrayEntry<T>;
 	}
 
+	/**
+	 * Normalize a local op into the FIFO ledger record stored in {@link pendingOps}.
+	 */
+	private buildPendingOp(op: ISharedArrayOperation<T>): SharedArrayPendingOp<T> {
+		switch (op.type) {
+			case OperationType.insertEntry:
+			case OperationType.deleteEntry:
+			case OperationType.toggle: {
+				return { op, type: op.type, entryId: op.entryId };
+			}
+			case OperationType.moveEntry:
+			case OperationType.toggleMove: {
+				return {
+					op,
+					type: op.type,
+					entryId: op.entryId,
+					targetEntryId: op.changedToEntryId,
+				};
+			}
+			default: {
+				unreachableCase(op);
+			}
+		}
+	}
+
+	/**
+	 * Locate and remove the {@link pendingOps} ledger record that corresponds to
+	 * the supplied rolled-back op. The ledger is FIFO but rollback can target any
+	 * in-flight op, so we walk the list and match by op-shape: `type` + `entryId`,
+	 * plus `targetEntryId` for {@link OperationType.moveEntry} and
+	 * {@link OperationType.toggleMove}. Asserts exactly one match is removed so the
+	 * ledger stays in sync with the locally-applied op set.
+	 */
+	private removeMatchingPendingOp(op: ISharedArrayOperation<T>): void {
+		const expected = this.buildPendingOp(op);
+		const match = this.pendingOps.find(
+			(node) =>
+				node.data.type === expected.type &&
+				node.data.entryId === expected.entryId &&
+				node.data.targetEntryId === expected.targetEntryId,
+		);
+		assert(
+			match !== undefined,
+			"rollback target must have a matching pendingOps ledger entry",
+		);
+		this.pendingOps.remove(match);
+	}
+
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
@@ -618,7 +700,24 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 					throw new Error("Unknown operation");
 				}
 			}
-			if (!local) {
+			if (local) {
+				// FIFO consume: the head of pendingOps is the ack target. The head must
+				// match the acked op on `type`, `entryId`, and (for move/toggleMove) the
+				// `changedToEntryId` we recorded as `targetEntryId`. A mismatch indicates
+				// the ledger and ack stream are out of sync (e.g. a rollback failed to
+				// remove its ledger entry) and would propagate as corruption downstream.
+				const acked = this.pendingOps.shift()?.data;
+				const ackedTargetEntryId =
+					op.type === OperationType.moveEntry || op.type === OperationType.toggleMove
+						? op.changedToEntryId
+						: undefined;
+				assert(
+					acked?.type === op.type &&
+						acked.entryId === op.entryId &&
+						acked.targetEntryId === ackedTargetEntryId,
+					0xb97 /* pendingOps head must match acked op shape */,
+				);
+			} else {
 				this.emitValueChangedEvent(op, local);
 			}
 		}
@@ -635,6 +734,14 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			this.getEntryForId(entryId).isAckPending = false;
 		} else {
 			if (insertAfterEntryId !== undefined) {
+				// This call site still uses the index-returning helper because the
+				// result feeds `getInternalInsertIndexByIgnoringLocalPendingInserts`,
+				// which iterates `sharedArray` from a starting array position to skip
+				// over locally-pending inserts. Rewriting that helper in terms of an
+				// entry reference would require restructuring how local-pending state
+				// is tracked, which is out of scope for this change. Switching to
+				// `findEntryById` + `indexOf` here would not be an improvement since
+				// `indexOf` is itself O(n).
 				index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
 			}
 			const newEntry = this.createNewEntry(entryId, value);
@@ -778,6 +885,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		this.emit("revertible", revertible);
 	}
 
+	private submitArrayOp(op: ISharedArrayOperation<T>): void {
+		this.submitLocalMessage(op);
+	}
+
 	private deleteCore(index: number): void {
 		const entry = this.sharedArray[index];
 		assert(entry !== undefined, 0xb94 /* Invalid index */);
@@ -873,17 +984,30 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		return -1;
 	}
 
+	/**
+	 * O(1) lookup of an entry by its entryId via {@link idToEntryMap}.
+	 * Returns `undefined` if the id is `undefined` or not present in the map.
+	 *
+	 * Prefer this over {@link findIndexOfEntryId} whenever the caller only needs
+	 * the entry (and not its array position), since the map-based lookup avoids
+	 * the linear scan over `sharedArray`.
+	 */
+	private findEntryById(entryId: string | undefined): SharedArrayEntry<T> | undefined {
+		if (entryId === undefined) {
+			return undefined;
+		}
+		return this.idToEntryMap.get(entryId);
+	}
+
 	private prepareToMakeEntryIdLive(entry: SharedArrayEntry<T>): void {
-		const prevIndex = this.findIndexOfEntryId(entry.prevEntryId);
-		const nextIndex = this.findIndexOfEntryId(entry.nextEntryId);
-		if (prevIndex !== -1) {
-			const prevEntry = this.sharedArray[prevIndex];
-			assert(prevEntry !== undefined, 0xb97 /* Invalid index */);
+		// We only need the neighbor entries to mutate their prev/next pointers; the
+		// array index is irrelevant here, so use the O(1) map-based lookup.
+		const prevEntry = this.findEntryById(entry.prevEntryId);
+		const nextEntry = this.findEntryById(entry.nextEntryId);
+		if (prevEntry !== undefined) {
 			prevEntry.nextEntryId = entry.nextEntryId;
 		}
-		if (nextIndex !== -1) {
-			const nextEntry = this.sharedArray[nextIndex];
-			assert(nextEntry !== undefined, 0xb98 /* Invalid index */);
+		if (nextEntry !== undefined) {
 			nextEntry.prevEntryId = entry.prevEntryId;
 		}
 		entry.prevEntryId = undefined;
@@ -958,7 +1082,15 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	): void {
 		let index = 0;
 		if (insertAfterEntryId !== undefined) {
-			index = this.findIndexOfEntryId(insertAfterEntryId) + 1;
+			// The map-based lookup is O(1); deriving the array index from the entry
+			// reference still requires `indexOf`, but that is unavoidable here since
+			// we need a position in `sharedArray` for splice insertion.
+			// If the entry is not present (matching the previous `findIndexOfEntryId`
+			// returning -1) we fall back to inserting at the front, preserving prior
+			// behavior.
+			const insertAfterEntry = this.findEntryById(insertAfterEntryId);
+			index =
+				insertAfterEntry === undefined ? 0 : this.sharedArray.indexOf(insertAfterEntry) + 1;
 		}
 		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(entryId, value);
 		newEntry.isAckPending = true;
@@ -1024,6 +1156,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				unreachableCase(op);
 			}
 		}
-		this.submitLocalMessage(op);
+		this.pendingOps.push(this.buildPendingOp(op));
+		this.submitArrayOp(op);
 	}
 }
