@@ -491,6 +491,23 @@ export interface IContainerContext {
  */
 export interface IContainerContextInternal extends IContainerContext {
 	/**
+	 * Reports the runtime's operation-only dirty state.
+	 *
+	 * @remarks
+	 * This state is true while the container is not attached or while the runtime has dirtyable local
+	 * operations that have not been acknowledged. It is distinct from
+	 * {@link IContainerContext.updateDirtyContainerState}, whose host-facing state may include local work
+	 * that has not produced an operation. The loader uses this state for reconnect ordering and
+	 * pending-state snapshot management.
+	 *
+	 * Optional for compatibility with older loaders. A runtime must report operation-only state separately
+	 * before broadening host-facing dirty state, since older loaders use that state for op-specific decisions.
+	 * Reporting a clean state may synchronously raise connection events. Callers must account for reentrant
+	 * operations before subsequently reporting host-facing dirty state.
+	 */
+	readonly updatePendingOpState?: (pending: boolean) => void;
+
+	/**
 	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
 	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
 	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading
