@@ -93,15 +93,7 @@ describe("End to End Host and Guest integrations", () => {
 			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
 			const idCompressor = getCheckout(viewHost)["idCompressor"];
 			const rootCompressor = toIdCompressorWithCore(idCompressor);
-			assert.equal(Reflect.get(rootCompressor, "writeVersion"), SerializationVersion.V2);
-			// TODO: Enable V3 through ContainerRuntime's document compatibility policy.
-			// This override is only for this isolated test document.
-			assert.equal(Reflect.set(rootCompressor, "writeVersion", SerializationVersion.V3), true);
-
-			// TODO: we should not have to initialize first:
-			viewHost.initialize("A");
-			// TODO: This should not be required.
-			await client.service.synchronize();
+			assert.equal(Reflect.get(rootCompressor, "writeVersion"), SerializationVersion.V3);
 
 			host = Sandboxing.createHost({
 				logger,
@@ -114,11 +106,9 @@ describe("End to End Host and Guest integrations", () => {
 				treeOptions: { jsonValidator: sandboxFormatValidator },
 			});
 			const viewGuest = guest.tree.viewWith(config);
-			// TODO: Support initializing the tree in the Guest instead of requiring Host initialization.
-			// viewGuest.initialize("B");
-			viewGuest.root = "B";
-			await (guest.updateHostPromise ?? assert.fail("Expected a pending Guest edit"));
-			await client.service.synchronize();
+
+			viewGuest.initialize("B");
+			await (guest.updateHostPromise ?? assert.fail("Expected Guest initialization update"));
 
 			assert.equal(viewHost.root, "B");
 			assert.equal(host.error, undefined);
