@@ -184,14 +184,6 @@ services:
       - ./gitrest:/home/node/server
       - /home/node/server/node_modules
     restart: on-failure
-  git:
-    platform: linux/amd64
-    image: mcr.microsoft.com/fluidframework/routerlicious/gitssh:latest
-    ports:
-      - "3022:22"
-    volumes:
-      - git:/home/git
-    restart: on-failure
   zookeeper:
     platform: linux/amd64
     image: wurstmeister/zookeeper:latest
