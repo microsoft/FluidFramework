@@ -16,6 +16,7 @@ import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
+	schemaDataIsEmpty,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -334,13 +335,20 @@ export function createIndependentTreeCheckout(
 		const fieldCursor = oneFromIterable(fieldCursors);
 		assert(fieldCursor !== undefined, 0xc94 /* expected exactly one field in batch */);
 
-		initialize(
-			checkout,
-			newSchema,
-			initializerFromChunk(checkout, () =>
-				combineChunks(checkout.forest.chunkField(fieldCursor)),
-			),
-		);
+		if (schemaDataIsEmpty(newSchema)) {
+			assert(
+				fieldCursor.getFieldLength() === 0,
+				"An empty schema cannot contain tree content.",
+			);
+		} else {
+			initialize(
+				checkout,
+				newSchema,
+				initializerFromChunk(checkout, () =>
+					combineChunks(checkout.forest.chunkField(fieldCursor)),
+				),
+			);
+		}
 	}
 
 	return checkout;

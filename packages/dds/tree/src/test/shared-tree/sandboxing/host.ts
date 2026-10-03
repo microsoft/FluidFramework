@@ -12,14 +12,13 @@ import {
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
-import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion } from "../../../codec/index.js";
 import {
 	castCursorToSynchronous,
 	findAncestor,
 	moveToDetachedField,
-	schemaDataIsEmpty,
 } from "../../../core/index.js";
 import {
 	defaultSchemaPolicy,
@@ -357,11 +356,6 @@ export class HostImplementation implements Host {
 			assert(base !== undefined, "Expected the Guest initialization base in Host history");
 			checkout.switchBranch(branch.fork(base));
 			branch.dispose();
-			if (schemaDataIsEmpty(checkout.storedSchema)) {
-				throw new UsageError(
-					"The Host must have an initialized state at its finalized-history boundary before creating a Guest.",
-				);
-			}
 			const cursor = checkout.forest.allocateCursor();
 			try {
 				moveToDetachedField(checkout.forest, cursor);
