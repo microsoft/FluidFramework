@@ -21,16 +21,22 @@ import {
 export namespace Sandboxing {
 	/**
 	 * Session options shared by the Host and Guest endpoints.
+	 *
+	 * @input
 	 */
 	export type EndpointOptions = SandboxEndpointOptions;
 
 	/**
 	 * Options for creating a Host.
+	 *
+	 * @input
 	 */
 	export type HostOptions = HostOptionsInternal;
 
 	/**
 	 * The SharedTree endpoint that connects to Fluid services on behalf of a {@link Sandboxing.Guest}.
+	 *
+	 * @sealed
 	 */
 	export type Host = HostInternal;
 
@@ -46,11 +52,15 @@ export namespace Sandboxing {
 
 	/**
 	 * Options for creating a Guest.
+	 *
+	 * @input
 	 */
 	export type GuestOptions = GuestOptionsInternal;
 
 	/**
 	 * An independent tree synchronized with a {@link Sandboxing.Host}.
+	 *
+	 * @sealed
 	 */
 	export type Guest = GuestInternal;
 
