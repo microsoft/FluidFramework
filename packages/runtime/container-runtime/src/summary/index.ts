@@ -119,6 +119,13 @@ export {
 	type SummarizeReason,
 } from "./summarizerUtils.js";
 export {
+	ApplicationSummaryProjectionController,
+	validateApplicationSummaryProjectionKey,
+	type IApplicationSummaryProjection,
+	type IApplicationSummaryProjectionContext,
+	type IApplicationSummaryProjectionResult,
+} from "./applicationSummaryProjection.js";
+export {
 	type IConnectedEvents,
 	type IConnectedState,
 	type ISummaryManagerConfig,
