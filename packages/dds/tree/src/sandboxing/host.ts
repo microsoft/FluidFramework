@@ -58,7 +58,7 @@ export class HostImplementation implements Sandboxing.Host {
 	public readonly synchronization: HostSynchronization;
 	/** The checkout extracted from the application-provided view. */
 	private readonly mainCheckout: TreeCheckout;
-	private readonly port: Sandboxing.MessagePort;
+	private readonly port: MessagePort;
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
 	/**
 	 * Last accepted progress token from the Guest's ID space shard.
@@ -76,7 +76,7 @@ export class HostImplementation implements Sandboxing.Host {
 	private disposed = false;
 
 	/** Receives and routes protocol messages from the Guest. */
-	private readonly onMessage = (event: Sandboxing.MessageEvent): void => {
+	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {

@@ -47,7 +47,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
-	private readonly port: Sandboxing.MessagePort;
+	private readonly port: MessagePort;
 	private readonly logger: TelemetryLoggerExt;
 	#synchronization: GuestSynchronization | undefined;
 	private viewableTree: ViewableTree | undefined;
@@ -64,7 +64,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 	}
 
 	/** Receives and routes protocol messages from the Host. */
-	private readonly onMessage = (event: Sandboxing.MessageEvent): void => {
+	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			if (message.type === "hostInitialization") {

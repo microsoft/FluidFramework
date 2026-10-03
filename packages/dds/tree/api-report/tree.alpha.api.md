@@ -1272,25 +1272,6 @@ export namespace Sandboxing {
     export interface HostOptions extends EndpointOptions {
         readonly main: UntypedTreeView;
     }
-    // @system
-    export interface MessageEvent {
-        readonly data?: unknown;
-        readonly type: string;
-    }
-    // @system
-    export type MessageEventHandler = {
-        bivarianceHack(event: MessageEvent): void;
-    }["bivarianceHack"];
-    // @input
-    export interface MessagePort {
-        addEventListener(type: "message", listener: MessageEventHandler): void;
-        addEventListener(type: "messageerror", listener: () => void): void;
-        close(): void;
-        postMessage(message: unknown): void;
-        removeEventListener(type: "message", listener: MessageEventHandler): void;
-        removeEventListener(type: "messageerror", listener: () => void): void;
-        start(): void;
-    }
 }
 
 // @public @sealed
