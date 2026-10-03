@@ -14,6 +14,7 @@ import {
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils/internal";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -23,7 +24,6 @@ import {
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";
 
-import { wrapObjectAndOverride } from "../mocking.js";
 import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?

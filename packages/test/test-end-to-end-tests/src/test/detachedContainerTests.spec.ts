@@ -32,6 +32,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/inte
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
 import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -47,8 +48,6 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-
-import { wrapObjectAndOverride } from "../mocking.js";
 
 const detachedContainerRefSeqNumber = 0;
 

@@ -17,6 +17,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import { isILoggingError, normalizeError } from "@fluidframework/telemetry-utils/internal";
+import { wrapObjectAndOverride } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
@@ -24,8 +25,6 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils/internal";
 import { v4 as uuid } from "uuid";
-
-import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?
 describeCompat("Errors Types", "NoCompat", (getTestObjectProvider, apis) => {
