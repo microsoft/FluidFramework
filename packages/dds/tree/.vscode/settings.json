@@ -17,6 +17,8 @@
 	// mocha test config isn't sufficient; it also needs to be enabled here.
 	"mochaExplorer.nodeArgv": ["--conditions", "allow-ff-test-exports"],
 	"cSpell.words": [
+		"bivariance",
+		"bivariantly",
 		"branchable",
 		"chunker",
 		"clonable",
@@ -36,6 +38,7 @@
 		"reentrantly",
 		"revertibles",
 		"rushstack",
+		"sandboxing",
 		"Stringifier",
 		"subclassable",
 		"summarizable",
