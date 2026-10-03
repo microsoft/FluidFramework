@@ -31,99 +31,32 @@ import {
 	type HostInitializationMessage,
 	makePromiseWithResolvers,
 	parseHostGuestMessage,
-	type SandboxEndpointOptions,
 	SandboxProtocolError,
 	throwProtocolError,
 } from "./common.js";
 import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
+import type { Sandboxing } from "./index.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 
 /**
- * Options for creating a Guest.
- * @input
- */
-export interface GuestOptions extends SandboxEndpointOptions {
-	/** The forest and codec options used to initialize the Guest's tree. */
-	readonly treeOptions: ForestOptions & ICodecOptions;
-}
-
-/**
- * An {@link ViewableTree} synchronized with a Host through a `MessagePort`.
- *
- * @remarks
- * Create using {@link createGuest}.
- * While active, the Guest accepts local edits and applies updates from the Host.
- *
- * If the session fails, synchronization stops.
- * Pending promises from {@link Guest.updateHostPromise} reject, and {@link Guest.error} remains readable.
- * The application must not edit the Guest after failure.
- * It can inspect the authoring view before disposal if the view is still usable.
- *
- * {@link Guest.dispose} stops both directions of synchronization, invalidates the Guest's tree views,
- * and releases local resources.
- *
- * @sealed
- */
-export interface Guest {
-	/**
-	 * The independent tree synchronized with the Host.
-	 */
-	readonly tree: ViewableTree;
-
-	/**
-	 * The terminal failure requiring application-managed Host and Guest recreation, if this session failed.
-	 *
-	 * @remarks This property remains readable after {@link Guest.dispose}.
-	 */
-	readonly error: Error | undefined;
-
-	/**
-	 * A promise for Host acknowledgment of all pending Guest changes, or `undefined`
-	 * if there are no pending changes.
-	 *
-	 * @remarks
-	 * If the Guest makes more changes while the promise is pending, the same promise
-	 * waits for those changes too.
-	 * The promise rejects on failure or disposal.
-	 * Reading this property after failure throws, even after reading {@link Guest.error}.
-	 */
-	readonly updateHostPromise: Promise<void> | undefined;
-
-	/**
-	 * Stops synchronization and releases local resources synchronously.
-	 *
-	 * @remarks
-	 * This method stops sending Guest changes and applying Host updates.
-	 * It closes the message port and disposes the Guest's tree views so they cannot be edited again.
-	 *
-	 * Pending promises from {@link Guest.updateHostPromise} reject, even if the Host later applies previously sent changes.
-	 * Changes that were never sent may be lost.
-	 *
-	 * After a failure, the application can inspect the authoring view, if usable,
-	 * before calling this method.
-	 *
-	 * Repeated calls have no effect.
-	 */
-	dispose(): void;
-}
-
-/**
- * Creates and connects a {@link Guest} to a {@link Host} using the provided options.
+ * Creates and connects a {@link Sandboxing.Guest} to a {@link Sandboxing.Host} using the provided options.
  *
  * @param options - The options for creating the Guest, including tree and codec options.
  *
  * @returns A promise that resolves to the created Guest instance.
  */
-export async function createGuest(options: GuestOptions): Promise<Guest> {
+export async function createGuest(
+	options: Sandboxing.GuestOptions,
+): Promise<Sandboxing.Guest> {
 	return GuestImplementation.create(options);
 }
 
 /**
- * Implementation of {@link Guest}.
+ * Implementation of {@link Sandboxing.Guest}.
  */
-export class GuestImplementation implements Guest {
+export class GuestImplementation implements Sandboxing.Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
@@ -199,7 +132,7 @@ export class GuestImplementation implements Guest {
 		port,
 		logger,
 		handleProtocolError = throwProtocolError,
-	}: GuestOptions) {
+	}: Sandboxing.GuestOptions) {
 		this.treeOptions = treeOptions;
 		this.port = port;
 		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
@@ -228,7 +161,7 @@ export class GuestImplementation implements Guest {
 	 * @param options - The tree and session options for the Guest.
 	 * @returns The initialized Guest.
 	 */
-	public static async create(options: GuestOptions): Promise<GuestImplementation> {
+	public static async create(options: Sandboxing.GuestOptions): Promise<GuestImplementation> {
 		const guest = new GuestImplementation(options);
 		await guest.initialized.promise;
 		return guest;
