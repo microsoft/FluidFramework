@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { DoublyLinkedList, assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -76,7 +76,7 @@ export class SharedCounter
 	/**
 	 * Tracks pending local ops that have not been ack'd yet.
 	 */
-	private readonly pendingOps: IPendingOperation[] = [];
+	private readonly pendingOps = new DoublyLinkedList<IPendingOperation>();
 
 	/**
 	 * The next message id to be used when submitting an op.
@@ -168,7 +168,7 @@ export class SharedCounter
 			// and we should now remove it from this.pendingOps.
 			// If the message is from a remote client, we should process it.
 			if (local) {
-				const pendingOp = this.pendingOps.shift();
+				const pendingOp = this.pendingOps.shift()?.data;
 				const messageId = messageContent.localOpMetadata;
 				assert(typeof messageId === "number", 0xc8e /* localOpMetadata should be a number */);
 				assert(
@@ -217,7 +217,7 @@ export class SharedCounter
 			typeof localOpMetadata === "number",
 			0xc90 /* localOpMetadata should be a number */,
 		);
-		const pendingOp = this.pendingOps.pop();
+		const pendingOp = this.pendingOps.pop()?.data;
 		assert(
 			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 			pendingOp !== undefined &&
