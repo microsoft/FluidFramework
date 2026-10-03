@@ -6,6 +6,7 @@
 import { Breakable } from "../util/index.js";
 
 import { normalizeProtocolError, type SessionFailureMessage } from "./common.js";
+import type { Sandboxing } from "./sandboxing.js";
 
 /**
  * Local fail-stop boundary for one endpoint of a sandbox session.
@@ -22,7 +23,7 @@ export class SandboxSessionEndpoint {
 	private disposed = false;
 
 	public constructor(
-		private readonly port: MessagePort,
+		private readonly port: Sandboxing.MessagePort,
 		/** Stops local synchronization and rejects pending work without editing or disposing trees. */
 		private readonly stop: (error: Error) => void,
 		/** Reports the first terminal error to the application, outside tree event dispatch. */

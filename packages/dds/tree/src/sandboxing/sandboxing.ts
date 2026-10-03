@@ -25,6 +25,57 @@ import { HostImplementation } from "./host.js";
  */
 export namespace Sandboxing {
 	/**
+	 * A message received from a {@link Sandboxing.MessagePort}.
+	 *
+	 * @system @alpha
+	 */
+	export interface MessageEvent {
+		/** The event type. */
+		readonly type: string;
+		/** The data sent by the other endpoint. */
+		readonly data?: unknown;
+	}
+
+	/**
+	 * Handles a message received from a {@link Sandboxing.MessagePort}.
+	 *
+	 * @remarks
+	 * Node.js and DOM `MessagePort` declarations use different event parameter types.
+	 * This type uses method syntax because TypeScript checks method parameters bivariantly,
+	 * allowing both platform declarations to satisfy the portable {@link Sandboxing.MessagePort} interface.
+	 * The method type is extracted immediately; `bivarianceHack` is not a property at runtime.
+	 *
+	 * @system @alpha
+	 */
+	export type MessageEventHandler = {
+		bivarianceHack(event: MessageEvent): void;
+	}["bivarianceHack"];
+
+	/**
+	 * The subset of a platform `MessagePort` used to communicate between sandbox endpoints.
+	 *
+	 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/MessagePort}
+	 *
+	 * @alpha @input
+	 */
+	export interface MessagePort {
+		/** Registers a listener for messages sent by the other endpoint. */
+		addEventListener(type: "message", listener: MessageEventHandler): void;
+		/** Registers a listener for message deserialization errors. */
+		addEventListener(type: "messageerror", listener: () => void): void;
+		/** Removes a listener previously registered for messages. */
+		removeEventListener(type: "message", listener: MessageEventHandler): void;
+		/** Removes a listener previously registered for message deserialization errors. */
+		removeEventListener(type: "messageerror", listener: () => void): void;
+		/** Begins dispatching messages queued for this port. */
+		start(): void;
+		/** Sends a message to the other endpoint. */
+		postMessage(message: unknown): void;
+		/** Disentangles the port, preventing further messages from being sent. */
+		close(): void;
+	}
+
+	/**
 	 * Session options shared by the Host and Guest endpoints.
 	 *
 	 * @alpha @input

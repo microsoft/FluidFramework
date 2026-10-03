@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import type { MessagePort as NodeMessagePort } from "node:worker_threads";
 
 import {
 	createFuzzDescribe,
@@ -38,7 +39,13 @@ import {
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
-import { brand, hasSome, type JsonCompatibleReadOnly } from "../../../util/index.js";
+import {
+	brand,
+	hasSome,
+	type isAssignableTo,
+	type JsonCompatibleReadOnly,
+	type requireTrue,
+} from "../../../util/index.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -60,6 +67,7 @@ import {
 	normalizeTransportData,
 	parseHostGuestMessage,
 	sandboxFormatValidator,
+	Sandboxing,
 	SandboxSessionEndpoint,
 	SandboxProtocolError,
 	getCheckout,
@@ -75,6 +83,13 @@ import {
 	setupCustom,
 	stringArrayConfig,
 } from "./sandboxingTestUtils.js";
+
+type _domMessagePortIsPortable = requireTrue<
+	isAssignableTo<MessagePort, Sandboxing.MessagePort>
+>;
+type _nodeMessagePortIsPortable = requireTrue<
+	isAssignableTo<NodeMessagePort, Sandboxing.MessagePort>
+>;
 
 /**
  * Creates a real child ID space shard token for envelope wire-shape tests.
