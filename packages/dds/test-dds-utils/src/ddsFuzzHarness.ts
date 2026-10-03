@@ -65,6 +65,7 @@ import {
 	type FuzzSerializedIdCompressor,
 	createLoadData,
 	createLoadDataFromStashData,
+	getSnapshotAttributes,
 	hasStashData,
 } from "./clientLoading.js";
 import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
@@ -1419,7 +1420,7 @@ async function loadClientFromSummaries<TChannelFactory extends IChannelFactory>(
 		dataStoreRuntime,
 		clientId,
 		services,
-		factory.attributes,
+		getSnapshotAttributes(summaries.summary),
 	)) as ReturnType<TChannelFactory["create"]>;
 	setupFuzzSerializer(channel, dataStoreRuntime);
 	channel.connect(services);
@@ -1467,7 +1468,7 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 		dataStoreRuntime,
 		clientId,
 		services,
-		factory.attributes,
+		getSnapshotAttributes(summaries.summary),
 	)) as ReturnType<TChannelFactory["create"]>;
 
 	if (summarizerClient.stashData) {

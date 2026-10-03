@@ -85,6 +85,13 @@ import {
 const snapshotFileName = "header";
 const contentPath = "content";
 
+interface SequenceAttributes extends IChannelAttributes {
+	/**
+	 * True when the most recent summary uses the flat format. Legacy summaries omit this flag.
+	 */
+	newMergeTreeSnapshotFormat?: boolean | undefined;
+}
+
 /**
  * Events emitted in response to changes to the sequence data.
  *
@@ -488,13 +495,17 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap;
+	private readonly sequenceAttributes: SequenceAttributes;
+	private readonly sequenceOptions: Readonly<Partial<SequenceOptions>>;
 	constructor(
 		dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
 	) {
-		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
+		const sequenceAttributes: SequenceAttributes = { ...attributes };
+		super(id, dataStoreRuntime, sequenceAttributes, "fluid_sequence_");
+		this.sequenceAttributes = sequenceAttributes;
 
 		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
@@ -510,6 +521,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						}
 					});
 
+		const runtimeOptions: Partial<SequenceOptions> = dataStoreRuntime.options;
 		const options = createConfigBasedOptionsProxy<SequenceOptions>(
 			loggerToMonitoringContext(this.logger).config,
 			"Fluid.Sequence",
@@ -519,9 +531,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
 				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
 				mergeTreeEnableAnnotateAdjust: (c, n) => c.getBoolean(n),
+				newMergeTreeSnapshotFormat: (c, n) =>
+					c.getBoolean(n) ??
+					runtimeOptions.newMergeTreeSnapshotFormat ??
+					sequenceAttributes.newMergeTreeSnapshotFormat ??
+					false,
 			},
 			dataStoreRuntime.options,
 		);
+		this.sequenceOptions = options;
 
 		this.client = new Client(
 			segmentFromSpec,
@@ -724,7 +742,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
 
-		return builder.getSummaryTree();
+		const summary = builder.getSummaryTree();
+		this.sequenceAttributes.newMergeTreeSnapshotFormat =
+			this.sequenceOptions.newMergeTreeSnapshotFormat === true ? true : undefined;
+		return summary;
 	}
 
 	/**
@@ -969,19 +990,20 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param message - Message with decoded and hydrated handles
 	 */
 	private processMergeTreeMsg(message: ISequencedDocumentMessage, local?: boolean) {
+		const useNewSnapshotFormat = this.sequenceOptions.newMergeTreeSnapshotFormat === true;
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {
 			ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		if (this.runtime.options.newMergeTreeSnapshotFormat !== true && needsTransformation) {
+		if (!useNewSnapshotFormat && needsTransformation) {
 			this.on("sequenceDelta", transformOps);
 		}
 
 		this.client.applyMsg(message, local);
 
-		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
+		if (!useNewSnapshotFormat) {
 			if (needsTransformation) {
 				this.removeListener("sequenceDelta", transformOps);
 				// shallow clone the message as we only overwrite top level properties,

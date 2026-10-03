@@ -11,14 +11,24 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { AsyncGenerator, BaseOperation } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import execa from "execa";
 
-import { type Client, hasStashData } from "../clientLoading.js";
+import {
+	type Client,
+	createLoadData,
+	createLoadDataFromStashData,
+	getSnapshotAttributes,
+	hasStashData,
+} from "../clientLoading.js";
 import type {
 	ChangeConnectionState,
 	ClientSpec,
@@ -43,10 +53,25 @@ import {
 } from "../ddsFuzzHarness.js";
 
 import { _dirname } from "./dirname.cjs";
-import type { Operation, SharedNothingFactory } from "./sharedNothing.js";
-import { baseModel, isNoopOp } from "./sharedNothing.js";
+import type { Operation } from "./sharedNothing.js";
+import { baseModel, isNoopOp, SharedNothingFactory } from "./sharedNothing.js";
 
 type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionState>;
+
+class DocumentAttributesFactory extends SharedNothingFactory {
+	public override get attributes(): IChannelAttributes {
+		return { ...super.attributes };
+	}
+
+	public override create(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+	): ReturnType<SharedNothingFactory["create"]> {
+		const channel = super.create(runtime, id);
+		Object.assign(channel.attributes, { packageVersion: "document" });
+		return channel;
+	}
+}
 
 /**
  * Mixes in spying functionality to a DDS fuzz model.
@@ -117,6 +142,133 @@ const defaultOptions: DDSFuzzSuiteOptions = {
 };
 
 describe("DDS Fuzz Harness", () => {
+	describe("snapshot attributes", () => {
+		const factory = new DocumentAttributesFactory();
+
+		function createClient(): Client<SharedNothingFactory> {
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime =
+				new MockContainerRuntimeFactoryForReconnection().createContainerRuntime(
+					dataStoreRuntime,
+				);
+			return {
+				dataStoreRuntime,
+				containerRuntime,
+				channel: factory.create(dataStoreRuntime, "source"),
+			};
+		}
+
+		it("captures attributes after summarization without retaining mutable references", () => {
+			const client = createClient();
+			const summarize = client.channel.getAttachSummary.bind(client.channel);
+			const metadata = { generation: 1 };
+			client.channel.getAttachSummary = (...args) => {
+				const summary = summarize(...args);
+				Object.assign(client.channel.attributes, {
+					packageVersion: "summarized",
+					metadata,
+				});
+				return summary;
+			};
+
+			const loadData = createLoadData(client, false);
+			Object.assign(client.channel.attributes, { packageVersion: "changed" });
+			metadata.generation = 2;
+			assert.deepEqual(getSnapshotAttributes(loadData.summaries.summary), {
+				...factory.attributes,
+				packageVersion: "summarized",
+				metadata: { generation: 1 },
+			});
+		});
+
+		it("retains the attributes from the stashed snapshot instead of the current channel", () => {
+			const client = createClient();
+			const stashData = createLoadData(client, false);
+			Object.assign(client.channel.attributes, { packageVersion: "changed" });
+
+			const loadData = createLoadDataFromStashData(client, stashData);
+			assert.equal(
+				getSnapshotAttributes(loadData.summaries.summary).packageVersion,
+				"document",
+			);
+		});
+
+		it("loads joining clients with summarized attributes instead of factory defaults", async () => {
+			const options: DDSFuzzSuiteOptions = {
+				...defaultOptions,
+				clientJoinOptions: {
+					maxNumberOfClients: 4,
+					clientAddProbability: 0.25,
+				},
+			};
+			const model = mixinNewClient(
+				{
+					...baseModel,
+					factory,
+					generatorFactory: () => takeAsync(30, baseModel.generatorFactory()),
+				},
+				options,
+			);
+			const state = await runTestForSeed(model, options, 0);
+			assert.equal(state.clients.length, 4);
+			for (const client of state.clients) {
+				assert.equal(client.channel.attributes.packageVersion, "document");
+				assert.notStrictEqual(
+					client.channel.attributes,
+					state.summarizerClient.channel.attributes,
+				);
+			}
+		});
+
+		it("retains summarized attributes through detached rehydration and attachment", async () => {
+			const options: DDSFuzzSuiteOptions = {
+				...defaultOptions,
+				detachedStartOptions: { numOpsBeforeAttach: 5 },
+			};
+			const model = mixinAttach(
+				{
+					...baseModel,
+					factory,
+					generatorFactory: () => takeAsync(12, baseModel.generatorFactory()),
+				},
+				options,
+			);
+			const state = await runTestForSeed(model, options, 0);
+			assert.equal(state.clients.length, 3);
+			assert.equal(state.summarizerClient.channel.attributes.packageVersion, "document");
+			for (const client of state.clients) {
+				assert.equal(client.channel.attributes.packageVersion, "document");
+			}
+		});
+
+		it("reloads stashed clients with the attributes from their saved summary", async () => {
+			const options: DDSFuzzSuiteOptions = {
+				...defaultOptions,
+				numberOfClients: 1,
+				clientJoinOptions: {
+					maxNumberOfClients: 1,
+					clientAddProbability: 0,
+					stashableClientProbability: 1,
+				},
+			};
+			const model = mixinStashedClient(
+				{
+					...baseModel,
+					factory,
+					generatorFactory: () => takeAsync(5, baseModel.generatorFactory()),
+					reducer: ({ clients }, operation) => {
+						assert(isNoopOp(operation));
+						clients[0].channel.noop();
+					},
+				},
+				options,
+			);
+			const state = await runTestForSeed(model, options, 0);
+			assert(state.clients[0].channel.applyStashedOpCalls > 0);
+			assert.equal(state.clients[0].channel.attributes.packageVersion, "document");
+		});
+	});
+
 	// This harness relies on some specific behavior of the shared mocks: putting acceptance tests here
 	// for that behavior makes them brittle.
 	describe("Fluid mocks", () => {

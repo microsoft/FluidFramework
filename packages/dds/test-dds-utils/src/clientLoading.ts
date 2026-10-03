@@ -3,13 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import { strict as assert } from "node:assert";
+
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+} from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions/internal";
 import {
 	serializeIdCompressor,
 	type SerializedIdCompressorWithNoSession,
 	type SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/id-compressor/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import type {
 	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
@@ -65,6 +72,7 @@ export const hasStashData = <TChannelFactory extends IChannelFactory>(
 
 /**
  * Creates the load data from the client. The load data include everything needed to load a new client. It includes the summaries and the minimumSequenceNumber.
+ * Channel attributes are serialized after summarization to retain the values for that snapshot.
  * @internal
  */
 export function createLoadData(
@@ -72,10 +80,12 @@ export function createLoadData(
 	withSession: boolean,
 ): ClientLoadData {
 	const compressor = client.dataStoreRuntime.idCompressor;
+	const summary = client.channel.getAttachSummary();
+	addBlobToSummary(summary, ".attributes", JSON.stringify(client.channel.attributes));
 	return {
 		minimumSequenceNumber: client.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
 		summaries: {
-			summary: client.channel.getAttachSummary().summary,
+			summary: summary.summary,
 			idCompressorSummary:
 				compressor === undefined
 					? undefined
@@ -89,6 +99,39 @@ export function createLoadData(
 								serializedCompressor: serializeIdCompressor(compressor, false),
 							},
 		},
+	};
+}
+
+/**
+ * Reads the channel attributes captured when the summary was generated.
+ * @internal
+ */
+export function getSnapshotAttributes(summary: ISummaryTree): IChannelAttributes {
+	const blob: ISummaryTree["tree"][string] | undefined = summary.tree[".attributes"];
+	assert(
+		blob?.type === SummaryType.Blob && typeof blob.content === "string",
+		"Expected serialized channel attributes in the summary",
+	);
+	const attributes: unknown = JSON.parse(blob.content);
+	assert(
+		typeof attributes === "object" &&
+			attributes !== null &&
+			"type" in attributes &&
+			typeof attributes.type === "string" &&
+			"snapshotFormatVersion" in attributes &&
+			typeof attributes.snapshotFormatVersion === "string",
+		"Expected valid channel attributes in the summary",
+	);
+	assert(
+		!("packageVersion" in attributes) ||
+			attributes.packageVersion === undefined ||
+			typeof attributes.packageVersion === "string",
+		"Expected a valid package version in the channel attributes",
+	);
+	return {
+		...attributes,
+		type: attributes.type,
+		snapshotFormatVersion: attributes.snapshotFormatVersion,
 	};
 }
 
