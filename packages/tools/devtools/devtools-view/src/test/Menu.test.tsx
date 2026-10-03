@@ -62,6 +62,19 @@ describe("Menu Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
+	it("Associates the 'Events' button with its 'Telemetry' section heading", () => {
+		render(<MenuWrapper />);
+
+		const telemetryHeading = screen.getByText("Telemetry");
+		const eventsButton = screen.getByRole("button", { name: "Events" });
+		const group = eventsButton.closest("[role='group']");
+
+		assert.ok(group);
+		assert.equal(group.getAttribute("aria-labelledby"), telemetryHeading.id);
+		assert.notEqual(telemetryHeading.id, "");
+		assert.equal(group, screen.getByRole("group", { name: "Telemetry" }));
+	});
+
 	it("Can tab/arrow navigate through the Menu", async () => {
 		render(<MenuWrapper />);
 
