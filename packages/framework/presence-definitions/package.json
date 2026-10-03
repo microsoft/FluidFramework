@@ -66,8 +66,6 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"concurrently": "^10.0.3",
-		"copyfiles": "^2.4.1",
-		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",
 		"rimraf": "^6.1.3",

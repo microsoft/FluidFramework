@@ -66,8 +66,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/register-collection": "workspace:~",
-		"@fluidframework/runtime-definitions": "workspace:~",
-		"uuid": "^11.1.0"
+		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.5",

@@ -48,9 +48,6 @@ importers:
       eslint:
         specifier: ~9.39.1
         version: 9.39.4(jiti@2.7.0)(supports-color@8.1.1)
-      eslint-config-prettier:
-        specifier: ~10.1.8
-        version: 10.1.8(eslint@9.39.4(jiti@2.7.0)(supports-color@8.1.1))
       jiti:
         specifier: ^2.6.1
         version: 2.7.0

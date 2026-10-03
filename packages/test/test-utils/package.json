@@ -115,7 +115,6 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"best-random": "^1.0.0",
 		"debug": "^4.3.4",
 		"uuid": "^11.1.0"
 	},
