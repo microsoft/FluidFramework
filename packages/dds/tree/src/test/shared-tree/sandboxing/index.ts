@@ -6,13 +6,13 @@
 import type { SandboxEndpointOptions } from "./common.js";
 import {
 	createGuest as createGuestInternal,
-	type Guest as GuestInternal,
-	type GuestOptions as GuestOptionsInternal,
+	type Guest as GuestBase,
+	type GuestOptions as GuestOptionsBase,
 } from "./guest.js";
 import {
 	createHost as createHostInternal,
-	type Host as HostInternal,
-	type HostOptions as HostOptionsInternal,
+	type Host as HostBase,
+	type HostOptions as HostOptionsBase,
 } from "./host.js";
 
 /**
@@ -31,14 +31,14 @@ export namespace Sandboxing {
 	 *
 	 * @input
 	 */
-	export type HostOptions = HostOptionsInternal;
+	export type HostOptions = HostOptionsBase;
 
 	/**
 	 * The SharedTree endpoint that connects to Fluid services on behalf of a {@link Sandboxing.Guest}.
 	 *
 	 * @sealed
 	 */
-	export type Host = HostInternal;
+	export type Host = HostBase;
 
 	/**
 	 * Creates and connects a Host that can support a {@link Sandboxing.Guest}.
@@ -55,14 +55,14 @@ export namespace Sandboxing {
 	 *
 	 * @input
 	 */
-	export type GuestOptions = GuestOptionsInternal;
+	export type GuestOptions = GuestOptionsBase;
 
 	/**
 	 * An independent tree synchronized with a {@link Sandboxing.Host}.
 	 *
 	 * @sealed
 	 */
-	export type Guest = GuestInternal;
+	export type Guest = GuestBase;
 
 	/**
 	 * Creates and connects a Guest to a {@link Sandboxing.Host}.
