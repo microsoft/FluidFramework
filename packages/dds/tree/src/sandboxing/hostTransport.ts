@@ -4,7 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { oob } from "@fluidframework/core-utils/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -59,9 +59,7 @@ export class HostTransportCodec extends TransportCodec {
 		if (!isHandleToken(token) || token >= this.handles.length) {
 			throw new SandboxProtocolError("Unknown sandbox handle token.");
 		}
-		const handle = this.handles[token];
-		assert(handle !== undefined, "Authorized sandbox handle must exist");
-		return handle;
+		return this.handles[token] ?? oob();
 	}
 
 	/**
