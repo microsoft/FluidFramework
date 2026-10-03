@@ -71,14 +71,15 @@ interface IDirectoryMessageHandler {
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @param clientSequenceNumber - The client sequence number of the message.
+	 * @param indexInBatch - The position of the message within its runtime batch, or a legacy
+	 * ordering fallback when that position is unavailable.
 	 */
 	process(
 		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectoryOperation,
 		local: boolean,
 		localOpMetadata: DirectoryLocalOpMetadata | undefined,
-		clientSequenceNumber: number,
+		indexInBatch: number,
 	): void;
 
 	/**
@@ -349,14 +350,14 @@ export interface IDirectoryNewStorageFormat {
  * 2. When both subdirectories A and B have a non-negative 'seq', they are compared as follows:
  * - If A and B have different 'seq', they are ordered based on 'seq', and the one with the lower 'seq' will be positioned ahead. Notably this rule
  * should not be applied in the directory ordering, since the lowest 'seq' is -1, when the directory is created locally but not acknowledged yet.
- * - In the case where A and B have equal 'seq', the one with the lower 'clientSeq' will be positioned ahead. This scenario occurs when grouped
- * batching is enabled, and a lower 'clientSeq' indicates that it was processed earlier after the batch was ungrouped.
+ * - In the case where A and B have equal 'seq', the one with the lower 'indexInBatch' will be positioned ahead. This scenario occurs when grouped
+ * batching is enabled, and a lower 'indexInBatch' indicates that it was processed earlier after the batch was ungrouped.
  *
  * 3. When both subdirectories A and B have a negative 'seq', they are compared as follows:
  * - If A and B have different 'seq', the one with lower 'seq' will be positioned ahead, which indicates the corresponding creation message was
  * acknowledged by the server earlier.
- * - If A and B have equal 'seq', the one with lower 'clientSeq' will be placed at the front. This scenario suggests that both subdirectories A
- * and B were created locally and not acknowledged yet, with the one possessing the lower 'clientSeq' being created earlier.
+ * - If A and B have equal 'seq', the one with lower 'indexInBatch' will be placed at the front. This scenario suggests that both subdirectories A
+ * and B were created locally and not acknowledged yet, with the one possessing the lower 'indexInBatch' being created earlier.
  *
  * 4. A 'seq' value of zero indicates that the subdirectory was created in detached state, and it is considered acknowledged for the
  * purpose of ordering.
@@ -365,7 +366,7 @@ const seqDataComparator = (a: SequenceData, b: SequenceData): number => {
 	if (isAcknowledgedOrDetached(a)) {
 		if (isAcknowledgedOrDetached(b)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return a.seq === b.seq ? a.clientSeq! - b.clientSeq! : a.seq - b.seq;
+			return a.seq === b.seq ? a.indexInBatch! - b.indexInBatch! : a.seq - b.seq;
 		} else {
 			return -1;
 		}
@@ -374,7 +375,7 @@ const seqDataComparator = (a: SequenceData, b: SequenceData): number => {
 			return 1;
 		} else {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return a.seq === b.seq ? a.clientSeq! - b.clientSeq! : a.seq - b.seq;
+			return a.seq === b.seq ? a.indexInBatch! - b.indexInBatch! : a.seq - b.seq;
 		}
 	}
 };
@@ -384,11 +385,11 @@ function isAcknowledgedOrDetached(seqData: SequenceData): boolean {
 }
 
 /**
- * The combination of sequence numebr and client sequence number of a subdirectory
+ * The combination of sequence number and intra-sequence ordering index of a subdirectory.
  */
 interface SequenceData {
 	seq: number;
-	clientSeq?: number;
+	indexInBatch?: number;
 }
 
 /**
@@ -424,7 +425,7 @@ export class SharedDirectory
 	 * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
 	 */
 	private readonly root: SubDirectory = new SubDirectory(
-		{ seq: 0, clientSeq: 0 },
+		{ seq: 0, indexInBatch: 0 },
 		new Set(),
 		this,
 		this.runtime,
@@ -727,8 +728,7 @@ export class SharedDirectory
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const [currentSubDir, currentSubDirObject] = stack.pop()!;
 			if (currentSubDirObject.subdirectories) {
-				// Utilize a map to store the seq -> clientSeq for the newly created subdirectory
-				const tempSeqNums = new Map<number, number>();
+				const nextIndexBySequenceNumber = new Map<number, number>();
 				for (const [subdirName, subdirObject] of Object.entries(
 					currentSubDirObject.subdirectories,
 				)) {
@@ -736,17 +736,12 @@ export class SharedDirectory
 					let seqData: SequenceData;
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
-						// We do not store the client sequence number in the storage because the order has already been
-						// guaranteed during the serialization process. As a result, it is only essential to utilize the
-						// "fake" client sequence number to signify the loading order, and there is no need to retain
-						// the actual client sequence number at this point.
+						// We do not store the ordering index because the order has already been guaranteed during
+						// serialization. Use a "fake" index to signify the loading order instead.
 						if (createInfo !== undefined && createInfo.csn > 0) {
-							if (!tempSeqNums.has(createInfo.csn)) {
-								tempSeqNums.set(createInfo.csn, 0);
-							}
-							let fakeClientSeq = tempSeqNums.get(createInfo.csn) as number;
-							seqData = { seq: createInfo.csn, clientSeq: fakeClientSeq };
-							tempSeqNums.set(createInfo.csn, ++fakeClientSeq);
+							const indexInBatch = nextIndexBySequenceNumber.get(createInfo.csn) ?? 0;
+							seqData = { seq: createInfo.csn, indexInBatch };
+							nextIndexBySequenceNumber.set(createInfo.csn, indexInBatch + 1);
 						} else {
 							/**
 							 * 1. If csn is -1, then initialize it with 0, otherwise we will never process ops for this
@@ -757,7 +752,7 @@ export class SharedDirectory
 							 */
 							seqData = {
 								seq: 0,
-								clientSeq: ++currentSubDir.localCreationSeq,
+								indexInBatch: currentSubDir.localCreationIndex++,
 							};
 						}
 						newSubDir = new SubDirectory(
@@ -814,7 +809,7 @@ export class SharedDirectory
 				op,
 				local,
 				messageContent.localOpMetadata as DirectoryLocalOpMetadata | undefined,
-				messageContent.clientSequenceNumber,
+				messageContent.indexInBatch ?? messageContent.clientSequenceNumber,
 			);
 		}
 	}
@@ -857,7 +852,7 @@ export class SharedDirectory
 				op: IDirectoryClearOperation,
 				local: boolean,
 				localOpMetadata: ClearLocalOpMetadata | undefined,
-				clientSequenceNumber: number,
+				_indexInBatch: number,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
@@ -877,7 +872,7 @@ export class SharedDirectory
 				op: IDirectoryDeleteOperation,
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
-				clientSequenceNumber: number,
+				_indexInBatch: number,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
@@ -897,7 +892,7 @@ export class SharedDirectory
 				op: IDirectorySetOperation,
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
-				clientSequenceNumber: number,
+				_indexInBatch: number,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
@@ -920,7 +915,7 @@ export class SharedDirectory
 				op: IDirectoryCreateSubDirectoryOperation,
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
-				clientSequenceNumber: number,
+				indexInBatch: number,
 			) => {
 				const parentSubdir = this.getSequencedWorkingDirectory(op.path) as
 					| SubDirectory
@@ -931,7 +926,7 @@ export class SharedDirectory
 						op,
 						local,
 						localOpMetadata,
-						clientSequenceNumber,
+						indexInBatch,
 					);
 				}
 			},
@@ -1135,7 +1130,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Assigns a unique ID to each subdirectory created locally but pending for acknowledgement, facilitating the tracking
 	 * of the creation order.
 	 */
-	public localCreationSeq: number = 0;
+	public localCreationIndex: number = 0;
 
 	private readonly mc: MonitoringContext;
 
@@ -1363,14 +1358,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * only by the local client). This ensures that if the directory is later attached, none of its data needs to be updated (the values
 	 * last set while detached will now be known to any new client, until they are changed).
 	 *
-	 * The client sequence number is incremented by 1 for maintaining the internal order of locally created subdirectories
+	 * The local creation index is incremented for maintaining the internal order of locally created subdirectories.
 	 *
 	 * @privateRemarks TODO: Convert these conventions to named constants. The semantics used here match those for merge-tree.
 	 */
 	private getLocalSeq(): SequenceData {
 		return this.directory.isAttached()
-			? { seq: -1, clientSeq: ++this.localCreationSeq }
-			: { seq: 0, clientSeq: ++this.localCreationSeq };
+			? { seq: -1, indexInBatch: this.localCreationIndex++ }
+			: { seq: 0, indexInBatch: this.localCreationIndex++ };
 	}
 
 	/**
@@ -2075,14 +2070,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @param clientSequenceNumber - The client sequence number of the message.
+	 * @param indexInBatch - The position of the message within its runtime batch, or a legacy
+	 * ordering fallback when that position is unavailable.
 	 */
 	public processCreateSubDirectoryMessage(
 		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectoryCreateSubDirectoryOperation,
 		local: boolean,
 		localOpMetadata: SubDirLocalOpMetadata | undefined,
-		clientSequenceNumber: number,
+		indexInBatch: number,
 	): void {
 		this.throwIfDisposed();
 
@@ -2127,7 +2123,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (subDir === undefined) {
 				const absolutePath = posix.join(this.absolutePath, op.subdirName);
 				subDir = new SubDirectory(
-					{ seq: msgEnvelope.sequenceNumber, clientSeq: clientSequenceNumber },
+					{ seq: msgEnvelope.sequenceNumber, indexInBatch },
 					new Set([msgEnvelope.clientId]),
 					this.directory,
 					this.runtime,
@@ -2163,7 +2159,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			subDir.seqData.seq === -1
 		) {
 			subDir.seqData.seq = msgEnvelope.sequenceNumber;
-			subDir.seqData.clientSeq = clientSequenceNumber;
+			subDir.seqData.indexInBatch = indexInBatch;
 		}
 	}
 
@@ -2717,7 +2713,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public clearSubDirectorySequencedData(): void {
 		this.seqData.seq = -1;
-		this.seqData.clientSeq = -1;
+		this.seqData.indexInBatch = -1;
 		this.sequencedStorageData.clear();
 		this._sequencedSubdirectories.clear();
 		this.clientIds.clear();

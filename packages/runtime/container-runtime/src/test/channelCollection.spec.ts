@@ -264,6 +264,7 @@ describe("Runtime", () => {
 							contents: attachMessage,
 							localOpMetadata: undefined,
 							clientSequenceNumber: 1,
+							indexInBatch: 0,
 						},
 					],
 					local,
