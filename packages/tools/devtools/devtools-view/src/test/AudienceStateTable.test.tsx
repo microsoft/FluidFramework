@@ -18,6 +18,23 @@ describe("AudienceStateTable Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
+	it("Defines column headers using native table semantics", () => {
+		render(<AudienceStateTable audienceStateItems={[]} />);
+
+		const expectedColumnNames = ["Client ID", "User ID", "Mode", "Scopes"];
+		const columnHeaders = screen.getAllByRole("columnheader");
+		assert.equal(columnHeaders.length, expectedColumnNames.length);
+
+		for (const [index, columnHeader] of columnHeaders.entries()) {
+			assert.equal(columnHeader.tagName, "TH");
+			assert.equal(columnHeader.getAttribute("scope"), "col");
+			assert.match(
+				columnHeader.textContent ?? "",
+				new RegExp(expectedColumnNames[index], "i"),
+			);
+		}
+	});
+
 	it("Can tab/arrow navigate through the AudienceStateTable", async () => {
 		render(<AudienceStateTable audienceStateItems={[]} />);
 
