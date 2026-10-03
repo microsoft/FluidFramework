@@ -73,6 +73,14 @@ export interface IOutboxParameters {
 	 * @returns A LocalBatchMessage for the ID allocation op, or undefined if no IDs need allocating.
 	 */
 	readonly generateIdAllocationOp: () => LocalBatchMessage | undefined;
+	/**
+	 * JIT callback to collect any pending extension op messages at flush time (see
+	 * {@link @fluidframework/container-runtime-definitions#ContainerExtension.getPendingOpMessage}).
+	 * Called after rebase (if any), so returned messages have the correct refSeq.
+	 *
+	 * @returns LocalBatchMessages for any extensions with a pending op, in registration order.
+	 */
+	readonly generateExtensionOpMessages: () => LocalBatchMessage[];
 }
 
 /**
@@ -451,8 +459,10 @@ export class Outbox {
 			// ID ranges aren't lost during rebase (since reSubmit drops IdAllocation ops).
 			// Only generate for non-staged batches — ID alloc ops are always non-staged.
 			const idAllocMsg = this.params.generateIdAllocationOp();
-			if (idAllocMsg !== undefined) {
-				rawBatch = { ...rawBatch, messages: [idAllocMsg, ...rawBatch.messages] };
+			const extensionOpMsgs = this.params.generateExtensionOpMessages();
+			const prependMsgs = idAllocMsg === undefined ? extensionOpMsgs : [idAllocMsg, ...extensionOpMsgs];
+			if (prependMsgs.length > 0) {
+				rawBatch = { ...rawBatch, messages: [...prependMsgs, ...rawBatch.messages] };
 			}
 			addBatchMetadata(rawBatch, resubmitInfo?.batchId);
 			const virtualizedBatch = this.virtualizeBatch(rawBatch, groupingEnabled);
