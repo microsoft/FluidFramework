@@ -7,6 +7,7 @@ import type { IFluidLoadable, IDisposable, Listenable } from "@fluidframework/co
 
 import type {
 	ChangeMetadata,
+	ChangeMetadataBeta,
 	CommitMetadata,
 	CustomMetadataTree,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
@@ -165,6 +166,11 @@ export interface ITreeAlpha extends ITree {
  * @sealed @beta
  */
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
+	/**
+	 * Events for the view's underlying branch.
+	 */
+	readonly events: Listenable<TreeBranchEventsBeta>;
+
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
 		params?: RunTransactionParamsBeta,
@@ -984,6 +990,11 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	 */
 	readonly compatibility: SchemaCompatibilityStatusBeta;
 
+	/**
+	 * {@inheritDoc TreeView.events}
+	 */
+	readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
+
 	// Override the base branch method to return a typed view rather than merely a branch.
 	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }
@@ -1036,7 +1047,8 @@ export interface TreeViewAlpha<
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 
 	// Override the base fork method to return a TreeViewAlpha.
-	fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
+	// Keep the alpha view first so event listeners infer alpha metadata.
+	fork(): TreeViewAlpha<TSchema> & ReturnType<UntypedTreeView["fork"]>;
 }
 
 /**
@@ -1162,12 +1174,25 @@ export interface SchemaCompatibilityStatus {
 
 /**
  * Events for {@link UntypedTreeView}.
- * @sealed @alpha
+ * @sealed @beta
  */
-export interface TreeBranchEvents {
+export interface TreeBranchEventsBeta {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).
+	 *
+	 * @param data - information about the change, including settlement events for local changes
+	 */
+	changed(data: ChangeMetadataBeta): void;
+}
+
+/**
+ * Events for {@link UntypedTreeView}.
+ * @sealed @alpha
+ */
+export interface TreeBranchEvents extends TreeBranchEventsBeta {
+	/**
+	 * Fired as described by {@link TreeBranchEventsBeta.changed}, with alpha change metadata and revertible support.
 	 *
 	 * @param data - information about the change
 	 * @param getRevertible - a function that allows users to get a revertible for the change. If not provided,
