@@ -62,6 +62,22 @@ describe("Menu Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
+	it("Identifies only the active page in the navigation", async () => {
+		render(<MenuWrapper />);
+
+		const user = userEvent.setup();
+		const home = screen.getByRole("button", { name: "Home" });
+		const events = screen.getByRole("button", { name: "Events" });
+
+		assert.equal(home.getAttribute("aria-current"), "page");
+		assert.equal(events.hasAttribute("aria-current"), false);
+
+		await user.click(events);
+
+		assert.equal(home.hasAttribute("aria-current"), false);
+		assert.equal(events.getAttribute("aria-current"), "page");
+	});
+
 	it("Can tab/arrow navigate through the Menu", async () => {
 		render(<MenuWrapper />);
 
