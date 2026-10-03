@@ -34,6 +34,20 @@ To run the example with SharePoint, complete these steps:
 To run the tests, first ensure you have followed the [build](#build) steps above.
 Next, run `npm run test` from a terminal within this directory.
 
+#### High contrast navigation
+
+The navigation tests cover light and dark color schemes with forced colors enabled and disabled.
+They check that the selection marker remains visible after keyboard focus moves away from the selected item.
+
+To verify the Windows contrast themes:
+
+1. Start the test app.
+2. In Windows accessibility settings, apply the Aquatic contrast theme.
+3. Select each navigation item in the embedded Devtools panel.
+4. Press Tab to move focus away from the selected item.
+5. Confirm that the selected item retains its vertical marker and that the next item has a separate focus indicator.
+6. Repeat these steps with the Desert contrast theme.
+
 <!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

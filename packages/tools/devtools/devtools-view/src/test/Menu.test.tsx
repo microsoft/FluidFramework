@@ -62,6 +62,29 @@ describe("Menu Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
+	for (const name of ["Home", ...containers, "Events", "Op Latency", "Settings"]) {
+		it(`Keeps ${name} selected after keyboard focus moves away`, async () => {
+			render(<MenuWrapper />);
+			const user = userEvent.setup();
+			const item = screen.getByRole("button", { name: new RegExp(`^${name}(?:$| )`) });
+
+			await user.click(item);
+			await user.tab();
+
+			assert.notEqual(document.activeElement, item);
+			assert.deepEqual(screen.getAllByRole("button", { current: "page" }), [item]);
+
+			const nextItem = screen.getByRole("button", {
+				name: name === "Home" ? "Events" : "Home",
+			});
+			nextItem.focus();
+			await user.keyboard("{Enter}");
+
+			assert.equal(item.hasAttribute("aria-current"), false);
+			assert.deepEqual(screen.getAllByRole("button", { current: "page" }), [nextItem]);
+		});
+	}
+
 	it("Can tab/arrow navigate through the Menu", async () => {
 		render(<MenuWrapper />);
 
