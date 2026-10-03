@@ -522,6 +522,136 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 	});
 });
 
+describe("FluidDataStoreRuntime.processChannelMessages", () => {
+	function createRuntime(id: string): FluidDataStoreRuntime_ForTesting {
+		return new FluidDataStoreRuntime(
+			new MockFluidDataStoreContext(id),
+			{} as unknown as ISharedObjectRegistry,
+			/* existing */ false,
+			async (rt) => rt,
+		) as unknown as FluidDataStoreRuntime_ForTesting;
+	}
+
+	/**
+	 * Builds a channel op message collection where each entry addresses the given channel.
+	 */
+	const channelOps = (addresses: string[]): IRuntimeMessageCollection => ({
+		envelope: {
+			type: DataStoreMessageType.ChannelOp,
+			sequenceNumber: 7,
+			clientId: "remote-client",
+		} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
+		local: false,
+		messagesContent: addresses.map((address, index) => ({
+			contents: { address, contents: {} },
+			clientSequenceNumber: index + 1,
+			localOpMetadata: undefined,
+		})),
+	});
+
+	/**
+	 * Asserts that processing the given ops fails with a `DataProcessingError` that carries the expected
+	 * diagnostics for a missing channel context.
+	 */
+	function assertMissingContextError(
+		runtime: FluidDataStoreRuntime_ForTesting,
+		addresses: string[],
+		expected: {
+			address: string;
+			bunchesProcessed: number;
+			bunchMessageCount: number;
+		},
+	): void {
+		assert.throws(
+			() => {
+				runtime.processMessages(channelOps(addresses));
+			},
+			(error: IErrorBase) => {
+				assert(isFluidError(error), "Expected a Fluid error");
+				assert.strictEqual(
+					error.errorType,
+					ContainerErrorTypes.dataProcessingError,
+					"Expected a DataProcessingError",
+				);
+				assert(
+					error.message.includes("Channel context not found"),
+					`Unexpected message: ${error.message}`,
+				);
+				const props = error.getTelemetryProperties();
+				assert.deepStrictEqual(
+					props.address,
+					{ value: expected.address, tag: TelemetryDataTag.CodeArtifact },
+					"Failing address should be tagged as a code artifact",
+				);
+				assert.strictEqual(
+					props.dataProcessingCodepath,
+					"processChannelMessages",
+					"Should record the code path",
+				);
+				assert.strictEqual(props.local, false, "Should record whether the ops were local");
+				assert.strictEqual(
+					props.bunchesProcessed,
+					expected.bunchesProcessed,
+					"Should record how many bunches were already processed",
+				);
+				assert.strictEqual(
+					props.bunchMessageCount,
+					expected.bunchMessageCount,
+					"Should record the size of the failing bunch",
+				);
+				assert.strictEqual(
+					props.totalMessageCount,
+					addresses.length,
+					"Should record the total number of messages",
+				);
+				assert.strictEqual(props.contextCount, 1, "Should record the number of contexts");
+				return true;
+			},
+			"Should throw for a missing channel context",
+		);
+	}
+
+	it("throws DataProcessingError when the first bunch has no channel context", () => {
+		const runtime = createRuntime("firstBunch");
+		sinon
+			.stub(runtime, "contexts")
+			.get(() => new Map([["known", { processMessages: () => {} }]]));
+
+		assertMissingContextError(runtime, ["missing"], {
+			address: "missing",
+			bunchesProcessed: 0,
+			bunchMessageCount: 1,
+		});
+	});
+
+	it("throws DataProcessingError when the last bunch has no channel context", () => {
+		const runtime = createRuntime("lastBunch");
+		sinon
+			.stub(runtime, "contexts")
+			.get(() => new Map([["known", { processMessages: () => {} }]]));
+
+		assertMissingContextError(runtime, ["known", "missing", "missing"], {
+			address: "missing",
+			bunchesProcessed: 1,
+			bunchMessageCount: 2,
+		});
+	});
+
+	it("throws DataProcessingError when flushing the previous bunch fails", () => {
+		const runtime = createRuntime("previousBunch");
+		sinon
+			.stub(runtime, "contexts")
+			.get(() => new Map([["known", { processMessages: () => {} }]]));
+
+		// The failure happens while flushing the first bunch, triggered by the address change.
+		assertMissingContextError(runtime, ["missing", "known"], {
+			address: "missing",
+			bunchesProcessed: 0,
+			bunchMessageCount: 1,
+		});
+	});
+});
+
 describe("LegacyTypeAwareRegistry", () => {
 	/**
 	 * Returns a simple registry backed by a plain-object map.
