@@ -8,8 +8,8 @@ Add experimental SharedTree sandboxing APIs
 The new alpha `Sandboxing.createHost` and `Sandboxing.createGuest` APIs synchronize a SharedTree [`ViewableTree`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface) across a `MessagePort`.
 The Host remains connected to Fluid services while the Guest exposes a normal schema-aware tree view on the other side of the message channel.
 
-Sandboxing requires the ID compressor's V3 serialization format.
-Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
+> [!IMPORTANT]
+> To use Sandboxing, you must set the container runtime's [`oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature) option to `"3.4.0"` or later.
 
 ```typescript
 import {
