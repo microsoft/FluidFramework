@@ -19,29 +19,13 @@ import {
  * APIs for synchronizing a SharedTree view across a sandbox boundary.
  */
 export namespace Sandboxing {
-	/* eslint-disable tsdoc/syntax -- Test-source TSDoc lint does not load the package's custom @input tag. */
-	/**
-	 * {@inheritDoc SandboxEndpointOptions}
-	 *
-	 * @input
-	 */
+	/** {@inheritDoc SandboxEndpointOptions} */
 	export type EndpointOptions = SandboxEndpointOptions;
-	/* eslint-enable tsdoc/syntax */
 
-	/* eslint-disable tsdoc/syntax -- Test-source TSDoc lint does not load the package's custom @input tag. */
-	/**
-	 * {@inheritDoc HostOptionsBase}
-	 *
-	 * @input
-	 */
+	/** {@inheritDoc HostOptionsBase} */
 	export type HostOptions = HostOptionsBase;
-	/* eslint-enable tsdoc/syntax */
 
-	/**
-	 * {@inheritDoc HostBase}
-	 *
-	 * @sealed
-	 */
+	/** {@inheritDoc HostBase} */
 	export type Host = HostBase;
 
 	/** {@inheritDoc createHostInternal} */
@@ -49,20 +33,10 @@ export namespace Sandboxing {
 		return createHostInternal(options);
 	}
 
-	/* eslint-disable tsdoc/syntax -- Test-source TSDoc lint does not load the package's custom @input tag. */
-	/**
-	 * {@inheritDoc GuestOptionsBase}
-	 *
-	 * @input
-	 */
+	/** {@inheritDoc GuestOptionsBase} */
 	export type GuestOptions = GuestOptionsBase;
-	/* eslint-enable tsdoc/syntax */
 
-	/**
-	 * {@inheritDoc GuestBase}
-	 *
-	 * @sealed
-	 */
+	/** {@inheritDoc GuestBase} */
 	export type Guest = GuestBase;
 
 	/** {@inheritDoc createGuestInternal} */
