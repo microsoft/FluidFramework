@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	fluidHandleSymbol,
-	type IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
 import * as Type from "@sinclair/typebox";
