@@ -1821,13 +1821,11 @@ export namespace Sandboxing {
     }
     // @input
     export interface GuestOptions extends EndpointOptions {
-        readonly idCompressor: IIdCompressor_2;
         readonly treeOptions: ForestOptions & ICodecOptions;
     }
     export interface Host {
         dispose(): void;
         readonly error: Error | undefined;
-        readonly idCompressor: IIdCompressor_2;
         readonly updateGuestPromise: Promise<void> | undefined;
     }
     // @input

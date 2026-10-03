@@ -9,6 +9,7 @@ import {
 	deserializeIdCompressor,
 	SerializationVersion,
 	type IdCreationRange,
+	type ParentShardSynchronizationToken,
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
@@ -275,7 +276,7 @@ export class HostImplementation implements Sandboxing.Host {
 	 *
 	 * @returns The parent synchronization token addressed to this Guest's ID space shard.
 	 */
-	private getParentIdSpaceShardSyncToken() {
+	private getParentIdSpaceShardSyncToken(): ParentShardSynchronizationToken {
 		const child = this.guestIdSpaceShardToken;
 		assert(child !== undefined, "Expected an initialized Guest ID space shard");
 		return this.idCompressor.getChildShardSyncToken(child);
