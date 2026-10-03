@@ -175,7 +175,7 @@ import {
 	normalizeError,
 	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { gt } from "semver-ts";
+import { gt, gte as greaterThanOrEqual } from "semver-ts";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -812,6 +812,11 @@ export interface LoadContainerRuntimeParams {
 	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.40.0, then `bar` would be set to
 	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
+	 *
+	 * Internal features introduced by version:
+	 *
+	 * - `3.4.0` - Uses the V3 serialization format for the ID compressor.
+	 *
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion;
 
@@ -1217,6 +1222,10 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
+		const idCompressorSerializationVersion = greaterThanOrEqual(minVersionForCollab, "3.4.0")
+			? SerializationVersion.V3
+			: SerializationVersion.V2;
+
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1238,20 +1247,20 @@ export class ContainerRuntime
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						pendingLocalState.pendingIdCompressorState,
-						SerializationVersion.V2,
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
 			} else if (serializedIdCompressor === undefined) {
 				return toIdCompressorWithCore(
-					createIdCompressor(SerializationVersion.V2, compressorLogger),
+					createIdCompressor(idCompressorSerializationVersion, compressorLogger),
 				);
 			} else {
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						serializedIdCompressor,
 						createSessionId(),
-						SerializationVersion.V2,
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
