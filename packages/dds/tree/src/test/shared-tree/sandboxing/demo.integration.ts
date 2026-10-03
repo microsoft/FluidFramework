@@ -94,10 +94,14 @@ describe("End to End Host and Guest integrations", () => {
 			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
 			const idCompressor = getCheckout(viewHost)["idCompressor"];
 			const rootCompressor = toIdCompressorWithCore(idCompressor);
-			assert.equal(Reflect.get(rootCompressor, "writeVersion"), SerializationVersion.V2);
-			// TODO: Enable V3 through ContainerRuntime's document compatibility policy.
-			// This override is only for this isolated test document.
-			assert.equal(Reflect.set(rootCompressor, "writeVersion", SerializationVersion.V3), true);
+			if (Reflect.get(rootCompressor, "writeVersion") !== SerializationVersion.V3) {
+				// TODO: Enable V3 through ContainerRuntime's document compatibility policy.
+				// This override is only needed when the test runtime has not already enabled V3.
+				assert.equal(
+					Reflect.set(rootCompressor, "writeVersion", SerializationVersion.V3),
+					true,
+				);
+			}
 
 			host = Sandboxing.createHost({
 				logger,
