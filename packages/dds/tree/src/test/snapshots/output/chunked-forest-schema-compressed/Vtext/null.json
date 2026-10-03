@@ -1,0 +1,19 @@
+{
+  "version": "text",
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.null",
+        "value": [
+          null
+        ]
+      }
+    }
+  ],
+  "data": [
+    [
+      0
+    ]
+  ]
+}

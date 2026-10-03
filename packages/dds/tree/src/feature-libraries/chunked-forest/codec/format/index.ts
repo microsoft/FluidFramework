@@ -28,6 +28,7 @@ export {
 	supportsIncrementalEncoding,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV1AndV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedChunkShape,
 } from "./versions.js";
 export type {
