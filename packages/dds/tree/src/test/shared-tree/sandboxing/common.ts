@@ -5,6 +5,7 @@
 
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
@@ -48,47 +49,52 @@ export class SandboxProtocolError extends Error {
 	public override readonly name = "SandboxProtocolError";
 }
 
+/** Shared wire bounds for nonnegative safe integers. */
+const nonNegativeSafeIntegerOptions = {
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+} as const;
+
+/** An integer from zero through the largest integer JavaScript can represent exactly. */
+const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
+
+/** Shared wire bounds for positive safe integers. */
+const PositiveSafeInteger = Type.Number({
+	minimum: 1,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
+
 /**
  * An index into the Host's table of handles authorized for one Guest.
  * Valid only within the owning session; the brand does not establish runtime authorization.
  */
 export type HandleToken = Brand<number, "sandbox.HandleToken">;
-const HandleToken = brandedNumberType<HandleToken>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const HandleToken = brandedNumberType<HandleToken>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one pending {@link BlobRequestMessage}, independently of its {@link HandleToken}.
  * Allocated by the Guest and echoed by the Host to match a response to its request.
  */
 export type BlobRequestId = Brand<number, "sandbox.BlobRequestId">;
-const BlobRequestId = brandedNumberType<BlobRequestId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const BlobRequestId = brandedNumberType<BlobRequestId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Host branch update and its acknowledgment.
  */
 export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
-const HostUpdateId = brandedNumberType<HostUpdateId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const HostUpdateId = brandedNumberType<HostUpdateId>(nonNegativeSafeIntegerOptions);
+
+/** Identifies a finalized ID creation range sent from the Host to the Guest. */
+export type HostIdRangeId = Brand<number, "sandbox.HostIdRangeId">;
+const HostIdRangeId = brandedNumberType<HostIdRangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Guest change and its acknowledgment.
  */
 export type GuestChangeId = Brand<number, "sandbox.GuestChangeId">;
-const GuestChangeId = brandedNumberType<GuestChangeId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const GuestChangeId = brandedNumberType<GuestChangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Wire discriminator for {@link SerializedHandle}. Ordinary records with this value must be escaped.
@@ -297,6 +303,86 @@ const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
 );
 
 /**
+ * Checks the ID format of an ID space shard token received through the port.
+ *
+ * @remarks
+ * This check does not show that the ID space shard belongs to this Host session.
+ * The Host checks that separately before it uses the token.
+ */
+const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
+	"Sandbox.IdSpaceShardSessionId",
+	(_schema, value) => typeof value === "string" && isStableId(value),
+)();
+
+/**
+ * Validates the ID space shard token that the Guest sends with each change.
+ *
+ * @remarks
+ * The Host uses this token to learn about new Guest IDs before it decodes the change.
+ * A change does not close the Guest session. The Guest can create more IDs after it sends the change.
+ * Therefore, this schema requires `disposed: false`.
+ */
+const GuestIdSpaceShardToken = Type.Object(
+	{
+		/** Identifies the child shard created for this Host and Guest session. */
+		shardId: IdSpaceShardSessionId,
+		/** The child's allocation progress after it encodes the Guest change. */
+		localGenCount: NonNegativeSafeInteger,
+		/** A change cannot request reclamation while the Guest can still create IDs. */
+		disposed: Type.Literal(false),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * Wire representation of {@link @fluidframework/id-compressor/internal#ParentShardSynchronizationToken}.
+ *
+ * @remarks
+ * The Host sends this ID space shard token to the Guest in {@link HostUpdateMessage} and
+ * {@link HostIdRangeMessage}. The Guest applies it to its child compressor before
+ * decoding Host branch commits or finalizing an ID creation range.
+ */
+const ParentIdSpaceShardSyncToken = Type.Object(
+	{
+		/** Distinguishes parent-to-child synchronization from child-to-parent synchronization. */
+		type: Type.Literal("parentIdSpaceShardSyncToken"),
+		/** Identifies the child ID space shard that can apply this token. */
+		shardId: IdSpaceShardSessionId,
+		/** Current parent generation count before a dependent range or change is decoded. */
+		localGenCount: NonNegativeSafeInteger,
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * An {@link @fluidframework/id-compressor/internal#IdCreationRange} already finalized by the Host runtime.
+ *
+ * @remarks
+ * This schema requires a nonempty range; it is not a request to finalize one.
+ */
+const FinalizedIdRange = Type.Object(
+	{
+		/** Identifies the client session that created the range. */
+		sessionId: IdSpaceShardSessionId,
+		/** Creation range already finalized by the Host runtime. */
+		ids: Type.Object(
+			{
+				/** The generation count of the range's first ID. */
+				firstGenCount: PositiveSafeInteger,
+				/** The number of IDs created in the range. */
+				count: PositiveSafeInteger,
+				/** Capacity requested if the range needs a new cluster. */
+				requestedClusterSize: PositiveSafeInteger,
+				/** Pairs of starting generation count and number of local IDs. */
+				localIdRanges: Type.Array(Type.Tuple([PositiveSafeInteger, PositiveSafeInteger])),
+			},
+			{ additionalProperties: false },
+		),
+	},
+	{ additionalProperties: false },
+);
+
+/**
  * Initializes the Guest's copy of the Host main branch.
  */
 export type HostInitializationMessage = Static<typeof HostInitializationMessage>;
@@ -316,12 +402,21 @@ const HostInitializationMessage = Type.Object(
 		schema: Type.Readonly(SerializedTreePayload),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
+		/**
+		 * Wire string for a {@link @fluidframework/id-compressor/internal#SerializedIdCompressorWithOngoingSession}.
+		 * @remarks
+		 * Envelope validation checks only the string shape. Guest deserialization validates
+		 * the compressor format and confirms it is a child ID space shard.
+		 */
+		idCompressor: Type.Readonly(Type.String()),
 	},
 	{ additionalProperties: false },
 );
 
 /**
- * Advances the Guest's copy of the Host main branch.
+ * A Host-to-Guest transition of the Host's main branch.
+ *
+ * @remarks This can include Host edits, peer edits, and Guest edits merged by the Host.
  */
 export type HostUpdateMessage = Static<typeof HostUpdateMessage>;
 const HostUpdateMessage = Type.Object(
@@ -338,6 +433,29 @@ const HostUpdateMessage = Type.Object(
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
+		/** Parent ID space shard token needed before the Guest decodes commits or revisions. */
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * Sends a newly finalized creation range from the Host to the Guest.
+ *
+ * @remarks The Guest applies it before a dependent {@link HostUpdateMessage}.
+ * The range may have originated with the Host or another client.
+ */
+export type HostIdRangeMessage = Static<typeof HostIdRangeMessage>;
+const HostIdRangeMessage = Type.Object(
+	{
+		/** Identifies this message as a finalized Host ID range. */
+		type: Type.Literal("hostIdRange"),
+		/** Sequence number for ranges sent to this Guest. */
+		rangeId: Type.Readonly(HostIdRangeId),
+		/** Synchronizes the Guest's child ID space shard before it finalizes the range. */
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
+		/** The finalized range to apply before dependent Host updates. */
+		range: Type.Readonly(FinalizedIdRange),
 	},
 	{ additionalProperties: false },
 );
@@ -372,6 +490,8 @@ const GuestChangeMessage = Type.Object(
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The serialized Guest-authored SharedTree change. */
 		change: Type.Readonly(SerializedTreePayload),
+		/** Child ID space shard progress needed by the Host before it can decode the change. */
+		idSpaceShardToken: Type.Readonly(GuestIdSpaceShardToken),
 	},
 	{ additionalProperties: false },
 );
@@ -396,6 +516,7 @@ const GuestChangeAckMessage = Type.Object(
 export type HostGuestMessage =
 	| HostInitializationMessage
 	| HostUpdateMessage
+	| HostIdRangeMessage
 	| HostUpdateAckMessage
 	| GuestChangeMessage
 	| GuestChangeAckMessage
@@ -467,6 +588,7 @@ const blobResponseValidator = validator.compile(
 );
 const hostInitializationValidator = validator.compile(HostInitializationMessage);
 const hostUpdateValidator = validator.compile(HostUpdateMessage);
+const hostIdRangeValidator = validator.compile(HostIdRangeMessage);
 const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
 const guestChangeValidator = validator.compile(GuestChangeMessage);
 const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
@@ -506,6 +628,9 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 	}
 
 	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
+		return data;
+	}
+	if (data.type === "hostIdRange" && hostIdRangeValidator.check(data)) {
 		return data;
 	}
 

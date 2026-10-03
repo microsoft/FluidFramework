@@ -9,6 +9,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "./identifiers.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -102,6 +103,11 @@ export type SerializationVersion =
  */
 export interface IIdCompressorCore {
 	/**
+	 * Events emitted by the ID compressor.
+	 */
+	readonly events: Listenable<IdCompressorEvents>;
+
+	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
 	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time a
 	 * range was taken (via this method or `takeUnfinalizedCreationRange`).
@@ -192,8 +198,36 @@ export interface IIdCompressorCore {
 	 * be disposed from the leaves upwards.
 	 * @param syncToken - The token for the shard, obtained by calling {@link IIdCompressorCore.getShardSyncToken} (non-destructive
 	 * synchronization) or {@link IIdCompressorCore.disposeShard} (synchronization plus reclamation of the disposed shard's ID space).
+	 * @throws `TypeError` if the token's generation count is not a nonnegative safe integer.
 	 */
 	synchronizeWithShard(syncToken: ShardSynchronizationToken): void;
+
+	/**
+	 * Gets a synchronization token from this compressor for an active child shard.
+	 *
+	 * @remarks
+	 * The child can apply this token without replacing its compressor.
+	 *
+	 * @param childToken - A token from the child shard that will receive this token.
+	 * @returns This parent's synchronization token for that child.
+	 * @throws If the child shard is not active on this compressor.
+	 */
+	getChildShardSyncToken(
+		childToken: ShardSynchronizationToken,
+	): ParentShardSynchronizationToken;
+
+	/**
+	 * Synchronizes this child shard with its parent's token.
+	 *
+	 * @remarks
+	 * This method keeps the child's allocation stride and does not finalize ID creation ranges.
+	 * Apply creation ranges from {@link IIdCompressorCore.events} separately, in order.
+	 *
+	 * @param token - Synchronization token obtained from this child's parent.
+	 * @throws If the token names another child or contains invalid state.
+	 * @throws `TypeError` if the token's generation count is not a nonnegative safe integer.
+	 */
+	synchronizeWithParent(token: ParentShardSynchronizationToken): void;
 
 	/**
 	 * Returns undefined if this compressor is not part of a shard group, and otherwise returns a synchronization token for this shard
@@ -234,24 +268,23 @@ export interface IIdCompressorCore {
 }
 
 /**
- * The state shared by all shard tokens: enough information to identify a shard and its progress
- * through its stride pattern. This is used to track which shard generated which IDs and to manage
- * reclamation of a disposed shard's ID space. The {@link ShardToken.disposed} flag distinguishes a
- * plain synchronization token from a disposal token. The branded {@link ShardSynchronizationToken}
- * is the concrete type handed to consumers.
+ * State shared by shard synchronization tokens.
+ * @remarks
+ * Treat these tokens as opaque: the compressor owns their interpretation and may add state in the future.
+ * The {@link ShardToken.disposed} flag distinguishes ordinary synchronization from shard reclamation.
+ * The branded {@link ShardSynchronizationToken} is the concrete child-to-parent token.
  * @internal
  */
 export interface ShardToken {
 	/**
-	 * The number of positions filled in this shard's stride pattern.
-	 * This tracks progress through the stride cycle, not the count of IDs actually generated.
-	 * For example, when a shard is created, it backfills entries for positions in its stride,
-	 * so this value may be non-zero even if the shard hasn't generated any IDs yet.
+	 * The sending compressor's generation count, which can include backfilled positions
+	 * rather than only IDs it generated.
+	 * @remarks Must be a nonnegative safe integer.
 	 */
 	localGenCount: number;
 
 	/**
-	 * Unique identifier for this shard within its parent.
+	 * Identifies the child shard involved in synchronization with its parent.
 	 */
 	shardId: SessionId;
 
@@ -272,6 +305,27 @@ export type ShardSynchronizationToken = ShardToken & {
 	readonly ShardSynchronizationToken: "c79724e1-9103-4415-95b5-bebb932be404";
 };
 
+/**
+ * A synchronization token from a parent to one of its active child shards.
+ * @remarks
+ * Unlike the child-to-parent {@link ShardSynchronizationToken}, this token cannot dispose a shard.
+ * It does not finalize ID creation ranges.
+ * @internal
+ */
+export interface ParentShardSynchronizationToken
+	extends Readonly<Omit<ShardToken, "disposed">> {
+	/** Identifies the parent-to-child token across a message boundary. */
+	readonly type: "parentIdSpaceShardSyncToken";
+}
+
+/**
+ * Events for finalized ID creation ranges.
+ * @internal
+ */
+export interface IdCompressorEvents {
+	/** Reports a range after finalization succeeds. */
+	rangeFinalized: (range: IdCreationRange) => void;
+}
 /**
  * A distributed UUID generator and compressor.
  *

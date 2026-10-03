@@ -4,7 +4,11 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	deserializeIdCompressor,
+	SerializationVersion,
+	type SerializedIdCompressorWithOngoingSession,
+} from "@fluidframework/id-compressor/internal";
 import {
 	createChildLogger,
 	type TelemetryLoggerExt,
@@ -42,24 +46,65 @@ import { normalizeTransportData } from "./transport.js";
 export interface GuestOptions extends SandboxEndpointOptions {
 	/** The forest and codec options used to initialize the Guest's tree. */
 	readonly treeOptions: ForestOptions & ICodecOptions;
-	/** The compressor shared by the Host and Guest for this session. */
-	readonly idCompressor: IIdCompressor;
 }
 
 /**
  * An {@link ViewableTree} synchronized with a Host through a `MessagePort`.
+ *
  * @remarks
  * Create using {@link createGuest}.
+ * While active, the Guest accepts local edits and applies updates from the Host.
+ *
+ * If the session fails, synchronization stops.
+ * Pending promises from {@link Guest.updateHostPromise} reject, and {@link Guest.error} remains readable.
+ * The application must not edit the Guest after failure.
+ * It can inspect the authoring view before disposal if the view is still usable.
+ *
+ * {@link Guest.dispose} stops both directions of synchronization, invalidates the Guest's tree views,
+ * and releases local resources.
+ *
  * @sealed
  */
 export interface Guest {
-	/** The independent tree synchronized with the Host. */
+	/**
+	 * The independent tree synchronized with the Host.
+	 */
 	readonly tree: ViewableTree;
-	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
+
+	/**
+	 * The terminal failure requiring application-managed Host and Guest recreation, if this session failed.
+	 *
+	 * @remarks This property remains readable after {@link Guest.dispose}.
+	 */
 	readonly error: Error | undefined;
-	/** A promise for Host acknowledgment of pending Guest changes, if changes are pending. */
+
+	/**
+	 * A promise for Host acknowledgment of all pending Guest changes, or `undefined`
+	 * if there are no pending changes.
+	 *
+	 * @remarks
+	 * If the Guest makes more changes while the promise is pending, the same promise
+	 * waits for those changes too.
+	 * The promise rejects on failure or disposal.
+	 * Reading this property after failure throws, even after reading {@link Guest.error}.
+	 */
 	readonly updateHostPromise: Promise<void> | undefined;
-	/** Ends the session and releases its resources. */
+
+	/**
+	 * Stops synchronization and releases local resources synchronously.
+	 *
+	 * @remarks
+	 * This method stops sending Guest changes and applying Host updates.
+	 * It closes the message port and disposes the Guest's tree views so they cannot be edited again.
+	 *
+	 * Pending promises from {@link Guest.updateHostPromise} reject, even if the Host later applies previously sent changes.
+	 * Changes that were never sent may be lost.
+	 *
+	 * After a failure, the application can inspect the authoring view, if usable,
+	 * before calling this method.
+	 *
+	 * Repeated calls have no effect.
+	 */
 	dispose(): void;
 }
 
@@ -81,7 +126,6 @@ export class GuestImplementation implements Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
-	private readonly idCompressor: IIdCompressor;
 	private readonly port: MessagePort;
 	private readonly logger: TelemetryLoggerExt;
 	#synchronization: GuestSynchronization | undefined;
@@ -94,7 +138,6 @@ export class GuestImplementation implements Guest {
 		return this.#synchronization ?? fail("Guest accessed before initialization");
 	}
 
-	/** The independent tree on the Guest. Available after {@link GuestImplementation.create} resolves. */
 	public get tree(): ViewableTree {
 		return this.viewableTree ?? fail("Guest accessed before initialization");
 	}
@@ -119,6 +162,9 @@ export class GuestImplementation implements Guest {
 			switch (message.type) {
 				case "hostUpdate": {
 					return this.#synchronization.receiveHostUpdate(message);
+				}
+				case "hostIdRange": {
+					return this.#synchronization.receiveHostIdRange(message);
 				}
 				case "guestChangeAck": {
 					return this.#synchronization.receiveChangeAck(message);
@@ -149,18 +195,18 @@ export class GuestImplementation implements Guest {
 
 	private constructor({
 		treeOptions,
-		idCompressor,
 		port,
 		logger,
 		handleProtocolError = throwProtocolError,
 	}: GuestOptions) {
 		this.treeOptions = treeOptions;
-		this.idCompressor = idCompressor;
 		this.port = port;
 		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
+				// A failure can occur during a tree event. Do not dispose the views in this callback.
+				// Guest.dispose() releases them when the application cleans up.
 				this.#synchronization?.stop(error);
 				this.codec.dispose(error);
 				this.initialized.rejecter(error);
@@ -191,10 +237,28 @@ export class GuestImplementation implements Guest {
 		if (this.#synchronization !== undefined) {
 			throw new SandboxProtocolError("The Guest received duplicate initialization.");
 		}
+		let idCompressor: ReturnType<typeof deserializeIdCompressor>;
+		try {
+			// The envelope only checks for a string. Deserialization validates its format.
+			idCompressor = deserializeIdCompressor(
+				message.idCompressor as SerializedIdCompressorWithOngoingSession,
+				SerializationVersion.V3,
+			);
+			// A second root with the same session ID would allocate colliding IDs.
+			if (idCompressor.getShardSyncToken() === undefined) {
+				throw new SandboxProtocolError(
+					"Guest initialization requires a child ID space shard.",
+				);
+			}
+		} catch (error) {
+			throw new SandboxProtocolError("Invalid serialized sandbox ID compressor.", {
+				cause: error,
+			});
+		}
 		const content: ViewContent = {
 			tree: message.tree as ViewContent["tree"],
 			schema: message.schema as ViewContent["schema"],
-			idCompressor: this.idCompressor,
+			idCompressor,
 		};
 		const hostTree = createIndependentTreeCheckout({
 			...this.treeOptions,
@@ -208,6 +272,7 @@ export class GuestImplementation implements Guest {
 				trunkRevision: message.trunkRevision,
 				commits: message.commits,
 			},
+			idCompressor,
 			(protocolMessage) => this.postMessage(protocolMessage),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
@@ -233,20 +298,17 @@ export class GuestImplementation implements Guest {
 			return;
 		}
 		this.disposed = true;
-		this.session.dispose();
-		this.port.removeEventListener("message", this.onMessage);
-		this.port.removeEventListener("messageerror", this.onMessageError);
-		const synchronization = this.#synchronization;
-		synchronization?.dispose();
-
-		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
-
-		// The synchronization leaves the tree alive, making it possible to save or stash unsaved changes.
-		// Currently we do no such thing and just dispose of it, but that could change in the future.
-		synchronization?.checkout.dispose();
+		try {
+			this.session.dispose();
+		} finally {
+			// Even if stopping pending work fails, remove the listeners and release both
+			// checkouts before propagating the error.
+			this.port.removeEventListener("message", this.onMessage);
+			this.port.removeEventListener("messageerror", this.onMessageError);
+			this.#synchronization?.dispose();
+		}
 	}
 
-	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
 	public get error(): Error | undefined {
 		return this.session.error;
 	}
@@ -257,15 +319,6 @@ export class GuestImplementation implements Guest {
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 
-	/**
-	 * Returns a promise that resolves when the Host acknowledges all changes made on the Guest,
-	 * or undefined if no such changes are in flight.
-	 *
-	 * If new local changes are made while a promise is in progress, the existing promise resolves
-	 * only after the Host acknowledges the new changes too.
-	 * A caller does not need to get the promise again after making new changes while it is pending.
-	 * Pending promises reject on failure or disposal. Access after failure throws.
-	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
 		return this.#synchronization?.updateHostPromise;

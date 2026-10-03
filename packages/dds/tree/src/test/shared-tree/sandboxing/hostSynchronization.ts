@@ -5,6 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ParentShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -50,7 +51,7 @@ const throwInvalidGuestChange = (): never => {
  */
 export type GuestBranchInitialization = Omit<
 	HostInitializationMessage,
-	"type" | "tree" | "schema"
+	"type" | "tree" | "schema" | "idCompressor"
 >;
 
 /** A Host update awaiting the Guest's acknowledgment. */
@@ -120,6 +121,12 @@ export class HostSynchronization {
 		 * The scoped logger for synchronization diagnostics.
 		 */
 		private readonly logger: TelemetryLoggerExt,
+		/** Authorizes and imports Guest IDs before a serialized change is decoded. */
+		private readonly synchronizeGuestIdSpaceShard: (
+			token: GuestChangeMessage["idSpaceShardToken"],
+		) => void,
+		/** Captures the parent ID space shard token after commits have been encoded. */
+		private readonly getParentIdSpaceShardSyncToken: () => ParentShardSynchronizationToken,
 	) {
 		this.localCheckout = this.mainCheckout.fork();
 		this.guestChangeCodec = makeSerializedChangeCodec(
@@ -176,6 +183,7 @@ export class HostSynchronization {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
+		this.synchronizeGuestIdSpaceShard(message.idSpaceShardToken);
 		this.localCheckout.applySerializedChange(
 			message.change,
 			this.guestChangeCodec,
@@ -278,13 +286,18 @@ export class HostSynchronization {
 		this.sentHead = head;
 		this.sentTrunkRevision = trunkRevision;
 		this.log(`Sending update ${updateId} from ${base.revision} to ${head.revision}`);
+		const serializedCommits = commits.map((commit) =>
+			this.mainCheckout.serializeCommit(commit),
+		);
+		const parentIdSpaceShardSyncToken = this.getParentIdSpaceShardSyncToken();
 		this.send({
 			type: "hostUpdate",
 			updateId,
 			baseRevision: base.revision,
 			mainRevision: head.revision,
 			trunkRevision,
-			commits: commits.map((commit) => this.mainCheckout.serializeCommit(commit)),
+			commits: serializedCommits,
+			parentIdSpaceShardSyncToken,
 		});
 	}
 

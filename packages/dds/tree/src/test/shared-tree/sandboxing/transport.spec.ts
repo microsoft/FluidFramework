@@ -7,18 +7,33 @@ import { strict as assert } from "node:assert";
 
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import {
+	createSessionId,
+	type IdCreationRange,
+	type ParentShardSynchronizationToken,
+	type ShardSynchronizationToken,
+	type ShardToken,
+} from "@fluidframework/id-compressor/internal";
+import {
 	compareFluidHandles,
 	isFluidHandle,
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { MockHandle, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { brand, type isAssignableTo, type requireFalse } from "../../../util/index.js";
+import {
+	brand,
+	type isAssignableTo,
+	type requireFalse,
+	type requireTrue,
+} from "../../../util/index.js";
 
 import {
 	type BlobRequestId,
 	type BlobRequestMessage,
+	type GuestChangeMessage,
 	type HandleToken,
+	type HostIdRangeMessage,
+	type HostUpdateMessage,
 	isHandleToken,
 	isLocalHandle,
 	isSerializedHandle,
@@ -31,6 +46,16 @@ import { HostTransportCodec } from "./hostTransport.js";
 import { normalizeTransportData } from "./transport.js";
 
 /**
+ * Valid token data for transport-shape tests; no Host has authorized this ID space shard.
+ * These tests validate the wire representation, not child-to-parent synchronization.
+ */
+const exampleIdSpaceShardToken = {
+	shardId: createSessionId(),
+	localGenCount: 1,
+	disposed: false,
+} as const satisfies ShardToken;
+
+/**
  * Compile-time checks that protocol ID brands are distinct and reject unbranded numbers.
  */
 type _DistinctIds =
@@ -38,6 +63,20 @@ type _DistinctIds =
 	| requireFalse<isAssignableTo<BlobRequestId, HandleToken>>
 	| requireFalse<isAssignableTo<number, HandleToken>>
 	| requireFalse<isAssignableTo<number, BlobRequestId>>;
+
+/** The validated wire shapes match compressor data without claiming the opaque token brand. */
+type _IdWireShapes =
+	| requireTrue<isAssignableTo<GuestChangeMessage["idSpaceShardToken"], ShardToken>>
+	| requireTrue<
+			isAssignableTo<
+				HostUpdateMessage["parentIdSpaceShardSyncToken"],
+				ParentShardSynchronizationToken
+			>
+	  >
+	| requireTrue<isAssignableTo<HostIdRangeMessage["range"], IdCreationRange>>
+	| requireFalse<
+			isAssignableTo<GuestChangeMessage["idSpaceShardToken"], ShardSynchronizationToken>
+	  >;
 
 /**
  * Recursively asserts that records have null prototypes while arrays and buffers retain their
@@ -232,6 +271,7 @@ describe("Transport and endpoint unit tests", () => {
 										mainRevision: "root",
 										trunkRevision: "root",
 										change: payload,
+										idSpaceShardToken: exampleIdSpaceShardToken,
 									}),
 								),
 							),
@@ -613,6 +653,7 @@ describe("Host and Guest round-trip integration tests", () => {
 					mainRevision: "root",
 					trunkRevision: "root",
 					change: decoded,
+					idSpaceShardToken: exampleIdSpaceShardToken,
 				}),
 			),
 		);
