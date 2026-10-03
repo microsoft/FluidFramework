@@ -1,0 +1,96 @@
+# Single-node Redpanda for full-stack Routerlicious on AKS.
+# Kafka wire-protocol compatible; the rdkafka orderer connects unchanged.
+# Service name "redpanda" -> clients use kafka.url = redpanda:9092 (same namespace).
+#
+# NOTE: storage is a PersistentVolumeClaim (managed-disk, RWO) so the broker's topic
+# metadata and log survive pod and cluster restarts. With an emptyDir, an AKS stop/start
+# wipes the volume and the rawdeltas/deltas topics are lost, which breaks new client
+# connections until the topics are recreated.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redpanda-data
+  labels:
+    app: redpanda
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-csi
+  resources:
+    requests:
+      storage: 16Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redpanda
+  labels:
+    app: redpanda
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redpanda
+  template:
+    metadata:
+      labels:
+        app: redpanda
+    spec:
+      # The redpanda image runs as uid/gid 101. On a fresh managed-disk PVC the mount is
+      # root-owned, so redpanda cannot write /var/lib/redpanda/data (Permission denied).
+      # fsGroup makes k8s chown the volume to gid 101 so the broker can write.
+      securityContext:
+        fsGroup: 101
+        runAsUser: 101
+        runAsGroup: 101
+      containers:
+        - name: redpanda
+          image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+          args:
+            - redpanda
+            - start
+            - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+            - --advertise-kafka-addr=PLAINTEXT://redpanda:9092
+            - --smp=1
+            - --memory=1G
+            - --reserve-memory=0M
+            - --overprovisioned
+            - --mode=dev-container
+          ports:
+            - name: kafka
+              containerPort: 9092
+            - name: admin
+              containerPort: 9644
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/redpanda/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: redpanda-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  labels:
+    app: redpanda
+spec:
+  selector:
+    app: redpanda
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+    - name: admin
+      port: 9644
+      targetPort: 9644
