@@ -294,14 +294,6 @@ export interface UntypedTreeView extends IDisposable, TreeContextBeta {
 }
 
 /**
- * Compatibility alias for {@link UntypedTreeView}.
- *
- * @deprecated Use {@link UntypedTreeView} instead.
- * @beta
- */
-export type TreeBranch = UntypedTreeView;
-
-/**
  * Provides additional APIs that may be used to interact with a tree node.
  * @sealed @beta
  */
@@ -660,14 +652,6 @@ export interface UntypedTreeViewAlpha
 	 */
 	computeNetChangeIfRebasedOnto(view: UntypedTreeView): JsonCompatibleReadOnly | undefined;
 }
-
-/**
- * Compatibility alias for {@link UntypedTreeViewAlpha}.
- *
- * @deprecated Use {@link UntypedTreeViewAlpha} instead.
- * @alpha
- */
-export type TreeBranchAlpha = UntypedTreeViewAlpha;
 
 /**
  * An editable view of a (version control style) branch of a shared tree based on some schema.

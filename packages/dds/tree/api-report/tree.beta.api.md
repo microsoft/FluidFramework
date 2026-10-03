@@ -1006,9 +1006,6 @@ export interface TreeBeta {
 // @beta
 export const TreeBeta: TreeBeta;
 
-// @beta @deprecated
-export type TreeBranch = UntypedTreeView;
-
 // @public @sealed
 export interface TreeChangeEvents {
     nodeChanged(unstable?: unknown): void;
