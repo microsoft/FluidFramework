@@ -100,28 +100,26 @@ extends:
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+        - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
             buildDirectory: ${{ variables.FluidFrameworkDirectory }}
+            installDependenciesDescription: Install root dependencies
+            installWorkspaceRootOnly: true
 
-        - task: Bash@3
-          displayName: Install root dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
-            script: |
-              set -eu -o pipefail
-              pnpm install --workspace-root --frozen-lockfile
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            buildDirectory: ${{ variables.FluidFrameworkDirectory }}/build-tools
+            installDependenciesDescription: Install build-tools dependencies
+            installPnpm: false
 
         - task: Bash@3
           name: InstallBuildTools
-          displayName: Install Fluid Build Tools (from repo)
+          displayName: Build and link Fluid Build Tools (from repo)
           inputs:
             targetType: 'inline'
             workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/build-tools
             script: |
               set -eu -o pipefail
-              pnpm i --frozen-lockfile
               pnpm build:compile
               cd packages/build-cli
               npm link

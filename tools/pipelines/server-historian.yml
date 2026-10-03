@@ -42,8 +42,10 @@ trigger:
     - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install.yml
     - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
 
@@ -62,8 +64,10 @@ pr:
     - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-install.yml
     - tools/pipelines/templates/include-use-node-version.yml
 
 variables:
