@@ -190,6 +190,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastObservedSeqNumber: number = 0;
 	private lastProcessedSequenceNumber: number = 0;
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
+	private serviceCheckpointSequenceNumber: number | undefined;
 
 	/**
 	 * Map of clientId to the last observed message from that client. This is used to validate
@@ -212,6 +213,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private opsSize: number = 0;
 	private prevEnqueueMessagesReason: string | undefined;
 	private previouslyProcessedMessage: ISequencedDocumentMessage | undefined;
+	private pendingStateAnchor: ISequencedDocumentMessage | undefined;
 
 	// The sequence number we initially loaded from
 	// In case of reading from a snapshot or pending state, its value will be equal to
@@ -267,6 +269,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	public get minimumSequenceNumber(): number {
 		return this.minSequenceNumber;
+	}
+
+	/**
+	 * Indicates whether pending-state history still needs validation against storage.
+	 */
+	public get hasPendingStateAnchor(): boolean {
+		return this.pendingStateAnchor !== undefined;
 	}
 
 	/**
@@ -436,7 +445,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.close(normalizeError(error));
 		});
 		const props: IConnectionManagerFactoryArgs = {
-			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
+			incomingOpHandler: (
+				messages: ISequencedDocumentMessage[],
+				reason: string,
+				connection?: IConnectionDetailsInternal,
+			) => {
+				if (connection !== undefined) {
+					// Initial ops can fail anchor validation before connectHandler runs. Snapshot
+					// this connection's raw checkpoint first, including clearing a previous value
+					// when the service omits it. Do not change connect-event or catch-up ordering.
+					this.serviceCheckpointSequenceNumber = connection.serviceCheckpointSequenceNumber;
+				}
 				try {
 					this.enqueueMessages(messages, reason);
 				} catch (error) {
@@ -523,8 +542,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		const props = this.connectionManager.connectionVerboseProps;
 		props.connectionLastQueuedSequenceNumber = this.lastQueuedSequenceNumber;
 		props.connectionLastObservedSeqNumber = this.lastObservedSeqNumber;
-
 		const checkpointSequenceNumber = connection.checkpointSequenceNumber;
+		this.serviceCheckpointSequenceNumber = connection.serviceCheckpointSequenceNumber;
 		this._checkpointSequenceNumber = checkpointSequenceNumber;
 		if (checkpointSequenceNumber !== undefined) {
 			this.updateLatestKnownOpSeqNumber(checkpointSequenceNumber);
@@ -579,23 +598,35 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * `"none"` does not initiate a fetch; `"all"` waits for all available missing ops from storage;
 	 * and `"cached"` waits only for cached ops before continuing the remaining storage fetch in the
 	 * background.
-	 * @param lastProcessedSequenceNumber - The latest sequence number already reflected in the
-	 * loaded state. It defaults to `snapshotSequenceNumber`. Offline loads may provide a later
-	 * sequence number so the DeltaManager skips downloading and processing ops already included in
-	 * that state.
+	 * @param lastProcessedMessage - The latest message already reflected in the loaded state.
+	 * Offline loads use it to skip already processed ops and validate that the service history has
+	 * not changed. Local edits and inbound processing can continue during validation, but outbound
+	 * submissions wait for an anchor match or a completed non-cache fetch that cannot find it.
+	 * A mismatch closes the container without sending queued edits; hosts must capture pending
+	 * state before closure if they need it for recovery.
 	 */
 	public async attachOpHandler(
 		minSequenceNumber: number,
 		snapshotSequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "cached" | "all" | "none" = "none",
-		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
+		lastProcessedMessage?: ISequencedDocumentMessage,
 	): Promise<void> {
+		if (lastProcessedMessage !== undefined) {
+			assert(
+				lastProcessedMessage.minimumSequenceNumber >= minSequenceNumber,
+				"The last processed message's minimum sequence number is below the snapshot minimum sequence number",
+			);
+		}
+		const lastProcessedSequenceNumber =
+			lastProcessedMessage?.sequenceNumber ?? snapshotSequenceNumber;
 		this.initSequenceNumber = snapshotSequenceNumber;
 		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
-		this.minSequenceNumber = minSequenceNumber;
+		this.minSequenceNumber = lastProcessedMessage?.minimumSequenceNumber ?? minSequenceNumber;
 		this.lastQueuedSequenceNumber = lastProcessedSequenceNumber;
 		this.lastObservedSeqNumber = lastProcessedSequenceNumber;
+		this.previouslyProcessedMessage = lastProcessedMessage;
+		this.pendingStateAnchor = lastProcessedMessage;
 
 		// We will use same check in other places to make sure all the seq number above are set properly.
 		assert(
@@ -620,12 +651,27 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
+		if (this.pendingStateAnchor !== undefined) {
+			// Hold submissions, not local edits or inbound catch-up, until history is checked.
+			// DeltaQueue counts pauses, so connection/reconnection and host pauses stay independent.
+			// On mismatch, close clears queued submissions without releasing this pause.
+			this.connectionManager.outbound
+				.pause()
+				.catch((error) => this.close(normalizeError(error)));
+		}
+
+		let prefetchP: Promise<void> | undefined;
+		const cacheOnly = prefetchType === "cached";
+		if (prefetchType !== "none") {
+			// Capture the saved-op validation range before queued socket ops can advance it.
+			prefetchP = this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
+		}
+
 		this._inbound.resume();
 		this._inboundSignal.resume();
 
-		if (prefetchType !== "none") {
-			const cacheOnly = prefetchType === "cached";
-			await this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
+		if (prefetchP !== undefined) {
+			await prefetchP;
 
 			// Keep going with fetching ops from storage once we have all cached ops in.
 			// But do not block load and make this request async / not blocking this api.
@@ -729,7 +775,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// Ops that are coming from this request should not cancel itself.
 			// This is useless for known ranges (to is defined) as it means request is over either way.
 			// And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
-			if (!opsFromFetch && cancelFetch(op)) {
+			if (!opsFromFetch && this.pendingStateAnchor === undefined && cancelFetch(op)) {
 				controller.abort("DeltaManager getDeltas fetch cancelled");
 				this._inbound.off("push", opListener);
 			}
@@ -882,6 +928,81 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	// Note: It's possible for a duplicate op to be broadcasted and have everything the same except the timestamp.
 	private comparableMessagePayload(m: ISequencedDocumentMessage): string {
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+	}
+
+	/**
+	 * Canonicalizes JSON-compatible message fields that may be represented as either parsed values
+	 * or strings, or whose object keys may be ordered differently after serialization.
+	 * Order keys by UTF-16 code units, not locale collation, which can equate distinct keys.
+	 */
+	private comparableMessageProperty(value: unknown): string | undefined {
+		let comparableValue = value;
+		if (typeof comparableValue === "string") {
+			const serializedValue = comparableValue;
+			try {
+				comparableValue = JSON.parse(comparableValue) as unknown;
+			} catch {
+				return serializedValue;
+			}
+		}
+		return JSON.stringify(comparableValue, (_key, child: unknown) =>
+			typeof child === "object" && child !== null && !Array.isArray(child)
+				? Object.fromEntries(
+						Object.entries(child).sort(([left], [right]) =>
+							left < right ? -1 : left > right ? 1 : 0,
+						),
+					)
+				: child,
+		);
+	}
+
+	/**
+	 * Removes the loader's replay-only marker before comparing service metadata.
+	 * Container adds `savedOp` during offline replay, and re-stashing persists that marker.
+	 * It is not part of service history. Empty metadata and absent metadata are equivalent;
+	 * all other fields (including nested fields named `savedOp`) remain significant.
+	 */
+	private comparableMessageMetadata(metadata: unknown): string | undefined {
+		if (typeof metadata !== "object" || metadata === null || Array.isArray(metadata)) {
+			return this.comparableMessageProperty(metadata);
+		}
+		const entries = Object.entries(metadata).filter(([key]) => key !== "savedOp");
+		return entries.length === 0
+			? undefined
+			: this.comparableMessageProperty(Object.fromEntries(entries));
+	}
+
+	/**
+	 * Compares fields that identify or change the replay semantics of a pending-state anchor.
+	 *
+	 * `clientSequenceNumber` identifies the original submission; `contents`, `metadata`, and
+	 * `compression` determine runtime and batch interpretation; and `data` is the payload for
+	 * system messages. Service or diagnostic decorations such as `serverMetadata`, `origin`,
+	 * `traces`, and `expHash1` are intentionally omitted because they may be rewritten without
+	 * changing the operation replayed by the client. Metadata excludes only the loader's
+	 * top-level `savedOp` replay marker, not service batch metadata.
+	 */
+	private pendingStateAnchorDifferences(
+		anchor: ISequencedDocumentMessage,
+		message: ISequencedDocumentMessage,
+	): {
+		clientSequenceNumberDiffer: boolean;
+		contentsDiffer: boolean;
+		metadataDiffer: boolean;
+		compressionDiffer: boolean;
+		dataDiffer: boolean;
+	} {
+		return {
+			clientSequenceNumberDiffer: anchor.clientSequenceNumber !== message.clientSequenceNumber,
+			contentsDiffer:
+				this.comparableMessageProperty(anchor.contents) !==
+				this.comparableMessageProperty(message.contents),
+			metadataDiffer:
+				this.comparableMessageMetadata(anchor.metadata) !==
+				this.comparableMessageMetadata(message.metadata),
+			compressionDiffer: anchor.compression !== message.compression,
+			dataDiffer: anchor.data !== message.data,
+		};
 	}
 
 	/**
@@ -1044,10 +1165,22 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			if (message.sequenceNumber <= this.lastQueuedSequenceNumber) {
 				// Validate that we do not have data loss, i.e. sequencing is reset and started again
 				// with numbers that this client already observed before.
-				if (this.previouslyProcessedMessage?.sequenceNumber === message.sequenceNumber) {
-					const message1 = this.comparableMessagePayload(this.previouslyProcessedMessage);
+				const previouslyObservedMessage =
+					this.pendingStateAnchor?.sequenceNumber === message.sequenceNumber
+						? this.pendingStateAnchor
+						: this.previouslyProcessedMessage;
+				if (previouslyObservedMessage?.sequenceNumber === message.sequenceNumber) {
+					const message1 = this.comparableMessagePayload(previouslyObservedMessage);
 					const message2 = this.comparableMessagePayload(message);
-					if (message1 !== message2) {
+					const anchorDifferences =
+						previouslyObservedMessage === this.pendingStateAnchor
+							? this.pendingStateAnchorDifferences(previouslyObservedMessage, message)
+							: undefined;
+					if (
+						message1 !== message2 ||
+						(anchorDifferences !== undefined &&
+							Object.values(anchorDifferences).includes(true))
+					) {
 						const error = new NonRetryableError(
 							// This looks like a data corruption but the culprit was that the file was overwritten
 							// in storage.  See PR #5882.
@@ -1062,12 +1195,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 							{
 								clientId: this.connectionManager.clientId,
 								sequenceNumber: message.sequenceNumber,
+								serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
 								message1,
 								message2,
+								...anchorDifferences,
 								driverVersion: undefined,
 							},
 						);
 						this.close(error);
+					}
+					if (previouslyObservedMessage === this.pendingStateAnchor) {
+						this.pendingStateAnchor = undefined;
+						if (!this._closed) {
+							this.connectionManager.outbound.resume();
+						}
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
@@ -1142,6 +1283,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				message,
 				{
 					clientId: this.connectionManager.clientId,
+					serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
 				},
 			);
 		}
@@ -1222,6 +1364,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
+		const pendingStateAnchor = cacheOnly ? undefined : this.pendingStateAnchor;
+		let fetchFrom: number | undefined;
+		let fetchCompleted = false;
 		try {
 			let from = this.lastQueuedSequenceNumber + 1;
 
@@ -1236,6 +1381,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				assert(from > 1, 0x0f3 /* "not positive" */);
 				from--;
 			}
+			fetchFrom = from;
 
 			const fetchReason = `${reason}_fetch`;
 			this.fetchReason = fetchReason;
@@ -1250,6 +1396,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				},
 				cacheOnly,
 			);
+			fetchCompleted = true;
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
 			this.close(normalizeError(error));
@@ -1257,6 +1404,27 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			this.refreshDelayInfo(this.deltaStorageDelayId);
 			this.fetchReason = undefined;
 			this.processPendingOps(reason);
+			if (
+				fetchCompleted &&
+				pendingStateAnchor !== undefined &&
+				this.pendingStateAnchor === pendingStateAnchor &&
+				!this._closed &&
+				this.fetchReason === undefined
+			) {
+				this.logger.sendTelemetryEvent({
+					eventName: "PendingStateAnchorNotValidated",
+					sequenceNumber: pendingStateAnchor.sequenceNumber,
+					fetchFrom,
+					serviceCheckpointSequenceNumber: this.serviceCheckpointSequenceNumber,
+				});
+				this.pendingStateAnchor = undefined;
+				// Preserve the availability-first policy when retention removes the anchor.
+				this.connectionManager.outbound.resume();
+				if (this.previouslyProcessedMessage === pendingStateAnchor) {
+					this.previouslyProcessedMessage = undefined;
+				}
+				this.fetchMissingDeltas("PendingStateAnchorNotValidated");
+			}
 		}
 	}
 
