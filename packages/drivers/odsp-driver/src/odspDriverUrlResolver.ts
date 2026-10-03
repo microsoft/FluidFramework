@@ -90,6 +90,24 @@ function removeBeginningSlash(str: string): string {
 const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
 	typeof pkg === "object" && typeof pkg?.name === "string" && typeof pkg?.fluid === "object";
 
+interface ICreateNewHeader {
+	fileName?: string;
+}
+
+function getCreateNewHeader(request: IRequest): ICreateNewHeader | undefined {
+	const header: unknown = request.headers?.[DriverHeader.createNew];
+	if (
+		typeof header !== "object" ||
+		header === null ||
+		("fileName" in header &&
+			header.fileName !== undefined &&
+			typeof header.fileName !== "string")
+	) {
+		return undefined;
+	}
+	return header;
+}
+
 /**
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format. Ex: `${siteUrl}?driveId=${driveId}&itemId=${itemId}&path=${path}`
@@ -103,12 +121,12 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
 	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
-		if (request.headers?.[DriverHeader.createNew]) {
+		const createNewHeader = getCreateNewHeader(request);
+		if (createNewHeader !== undefined) {
 			const [siteURL, queryString] = request.url.split("?");
 
 			const searchParams = new URLSearchParams(queryString);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-			const fileName: string = request.headers[DriverHeader.createNew].fileName;
+			const fileName = createNewHeader.fileName;
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");

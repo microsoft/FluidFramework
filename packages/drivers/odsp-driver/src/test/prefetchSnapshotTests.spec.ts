@@ -719,10 +719,12 @@ describe("Tests for prefetching snapshot", () => {
 			version: persistedCacheValueVersion,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
+		const appTree: ISnapshotTree | undefined = snapshotTreeWithGroupId.trees[".app"];
+		assert(appTree !== undefined, "App tree should be present");
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
+			blobs: { ...appTree.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"].trees,
+				...appTree.trees,
 				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
 			},
 			id: "SnapshotId",
@@ -971,10 +973,12 @@ describe("Tests for prefetching snapshot", () => {
 			snapshotFormatV: 1,
 		};
 		const odspCompactSnapshotWithGroupId = convertToCompactSnapshot(snapshotWithGroupId);
+		const appTree: ISnapshotTree | undefined = snapshotTreeWithGroupId.trees[".app"];
+		assert(appTree !== undefined, "App tree should be present");
 		const snapshotTreeWithGroupIdToCompare: ISnapshotTree = {
-			blobs: { ...snapshotTreeWithGroupId.trees[".app"].blobs },
+			blobs: { ...appTree.blobs },
 			trees: {
-				...snapshotTreeWithGroupId.trees[".app"].trees,
+				...appTree.trees,
 				".protocol": snapshotTreeWithGroupId.trees[".protocol"],
 			},
 			id: "SnapshotId",
