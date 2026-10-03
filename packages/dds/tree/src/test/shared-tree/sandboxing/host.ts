@@ -52,15 +52,6 @@ import { normalizeTransportData } from "./transport.js";
 import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
- * Creates and connects a {@link Sandboxing.Host} which can support a {@link Sandboxing.Guest}.
- * @param options - The options for creating the Host.
- * @returns The created Host instance.
- */
-export function createHost(options: Sandboxing.HostOptions): Sandboxing.Host {
-	return new HostImplementation(options);
-}
-
-/**
  * Implementation of {@link Sandboxing.Host}.
  */
 export class HostImplementation implements Sandboxing.Host {

@@ -41,19 +41,6 @@ import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 
 /**
- * Creates and connects a {@link Sandboxing.Guest} to a {@link Sandboxing.Host} using the provided options.
- *
- * @param options - The options for creating the Guest, including tree and codec options.
- *
- * @returns A promise that resolves to the created Guest instance.
- */
-export async function createGuest(
-	options: Sandboxing.GuestOptions,
-): Promise<Sandboxing.Guest> {
-	return GuestImplementation.create(options);
-}
-
-/**
  * Implementation of {@link Sandboxing.Guest}.
  */
 export class GuestImplementation implements Sandboxing.Guest {

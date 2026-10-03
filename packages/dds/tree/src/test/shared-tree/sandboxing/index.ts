@@ -9,8 +9,8 @@ import type { ICodecOptions } from "../../../codec/index.js";
 import type { ForestOptions } from "../../../shared-tree/index.js";
 import type { UntypedTreeView, ViewableTree } from "../../../simple-tree/index.js";
 
-import { createGuest as createGuestInternal } from "./guest.js";
-import { createHost as createHostInternal } from "./host.js";
+import { GuestImplementation } from "./guest.js";
+import { HostImplementation } from "./host.js";
 
 /**
  * APIs for synchronizing a SharedTree view across a sandbox boundary.
@@ -58,9 +58,13 @@ export namespace Sandboxing {
 		dispose(): void;
 	}
 
-	/** {@inheritDoc createHostInternal} */
+	/**
+	 * Creates and connects a {@link Sandboxing.Host} which can support a {@link Sandboxing.Guest}.
+	 * @param options - The options for creating the Host.
+	 * @returns The created Host instance.
+	 */
 	export function createHost(options: HostOptions): Host {
-		return createHostInternal(options);
+		return new HostImplementation(options);
 	}
 
 	/**
@@ -132,8 +136,14 @@ export namespace Sandboxing {
 		dispose(): void;
 	}
 
-	/** {@inheritDoc createGuestInternal} */
+	/**
+	 * Creates and connects a {@link Sandboxing.Guest} to a {@link Sandboxing.Host} using the provided options.
+	 *
+	 * @param options - The options for creating the Guest, including tree and codec options.
+	 *
+	 * @returns A promise that resolves to the created Guest instance.
+	 */
 	export async function createGuest(options: GuestOptions): Promise<Guest> {
-		return createGuestInternal(options);
+		return GuestImplementation.create(options);
 	}
 }
