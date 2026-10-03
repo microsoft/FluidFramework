@@ -16,11 +16,7 @@ import {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidClientVersion } from "../codec/index.js";
-import {
-	castCursorToSynchronous,
-	findAncestor,
-	moveToDetachedField,
-} from "../core/index.js";
+import { castCursorToSynchronous, findAncestor, moveToDetachedField } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
@@ -47,7 +43,7 @@ import {
 } from "./common.js";
 import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
-import type { Sandboxing } from "./index.js";
+import type { Sandboxing } from "./sandboxing.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";

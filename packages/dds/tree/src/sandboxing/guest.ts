@@ -36,7 +36,7 @@ import {
 } from "./common.js";
 import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
-import type { Sandboxing } from "./index.js";
+import type { Sandboxing } from "./sandboxing.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 

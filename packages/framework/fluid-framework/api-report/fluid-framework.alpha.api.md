@@ -1813,6 +1813,7 @@ export namespace Sandboxing {
         readonly logger?: ITelemetryBaseLogger;
         readonly port: MessagePort;
     }
+    // @sealed
     export interface Guest {
         dispose(): void;
         readonly error: Error | undefined;
@@ -1823,6 +1824,7 @@ export namespace Sandboxing {
     export interface GuestOptions extends EndpointOptions {
         readonly treeOptions: ForestOptions & ICodecOptions;
     }
+    // @sealed
     export interface Host {
         dispose(): void;
         readonly error: Error | undefined;
