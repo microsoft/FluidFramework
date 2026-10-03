@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	SerializationVersion,
-	toIdCompressorWithCore,
-} from "@fluidframework/id-compressor/internal";
+import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
 
 import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
 import {
@@ -72,7 +69,10 @@ describe("End to End Host and Guest integrations", () => {
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.string });
 
 		it("synchronizes a Guest edit through ServiceClient", async () => {
-			const client = startEphemeralService().defaultClient;
+			const client = startEphemeralService().newClient({
+				// At least `3.4.0` is required for id-compressor's V3 serialization format, which is required for ID space sharding.
+				oldestSupportedClient: "3.4.0",
+			});
 			const container = await client.createAttachedContainer(TestDataStore);
 			const tree = container.data;
 			// TODO: ideally we wouldn't require the host to create a view.
@@ -90,18 +90,10 @@ describe("End to End Host and Guest integrations", () => {
 
 			channel = new MessageChannel();
 
-			// TODO: we need to expose a better way to do this.
+			// TODO: we need to expose a better way to inspect the compressor's shard state.
 			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
 			const idCompressor = getCheckout(viewHost)["idCompressor"];
 			const rootCompressor = toIdCompressorWithCore(idCompressor);
-			if (Reflect.get(rootCompressor, "writeVersion") !== SerializationVersion.V3) {
-				// TODO: Enable V3 through ContainerRuntime's document compatibility policy.
-				// This override is only needed when the test runtime has not already enabled V3.
-				assert.equal(
-					Reflect.set(rootCompressor, "writeVersion", SerializationVersion.V3),
-					true,
-				);
-			}
 
 			host = Sandboxing.createHost({
 				logger,
