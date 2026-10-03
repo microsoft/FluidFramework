@@ -25,9 +25,8 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { createHost, type Host } from "./host.js";
-import { createGuest, type Guest } from "./guest.js";
 import { sandboxFormatValidator } from "./common.js";
+import { Sandboxing } from "./index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
@@ -45,8 +44,8 @@ describe("End to End Host and Guest integrations", () => {
 	// Currently shows limitations which need fixing.
 	describe("User Facing APIs", () => {
 		let channel: MessageChannel | undefined;
-		let host: Host | undefined;
-		let guest: Guest | undefined;
+		let host: Sandboxing.Host | undefined;
+		let guest: Sandboxing.Guest | undefined;
 
 		afterEach(() => {
 			channel?.port2.close();
@@ -77,7 +76,7 @@ describe("End to End Host and Guest integrations", () => {
 			const container = await client.createAttachedContainer(TestDataStore);
 			const tree = container.data;
 			// TODO: ideally we wouldn't require the host to create a view.
-			// See existing TODO on `HostOptions.main` for details.
+			// See existing TODO on `Sandboxing.HostOptions.main` for details.
 			const viewHost = asBeta(tree.viewWith(config));
 
 			const log: string[] = [];
@@ -100,12 +99,12 @@ describe("End to End Host and Guest integrations", () => {
 			// This override is only for this isolated test document.
 			assert.equal(Reflect.set(rootCompressor, "writeVersion", SerializationVersion.V3), true);
 
-			host = createHost({
+			host = Sandboxing.createHost({
 				logger,
 				main: viewHost,
 				port: channel.port1,
 			});
-			guest = await createGuest({
+			guest = await Sandboxing.createGuest({
 				logger,
 				port: channel.port2,
 				treeOptions: { jsonValidator: sandboxFormatValidator },
