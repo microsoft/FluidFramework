@@ -145,6 +145,7 @@ export type AddressedUnsequencedSignalEnvelope = IEnvelope<ISignalEnvelope["cont
  * If that is the case, the change likely needs to be staged directly on IFluidParentContext. Changes
  * being staged on IFluidParentContext can be added here as well, likely with optionality removed,
  * to ease interactions within this package.
+ * Assignability of the concrete contexts is checked in test/types/internalInterfaces.ts.
  */
 export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
