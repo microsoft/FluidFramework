@@ -23,6 +23,7 @@ import {
 
 /**
  * Session options shared by the Host and Guest endpoints.
+ * @input
  */
 export interface SandboxEndpointOptions {
 	/** This endpoint's port in the Host and Guest message channel. */
