@@ -19,57 +19,53 @@ import {
  * APIs for synchronizing a SharedTree view across a sandbox boundary.
  */
 export namespace Sandboxing {
+	/* eslint-disable tsdoc/syntax -- Test-source TSDoc lint does not load the package's custom @input tag. */
 	/**
-	 * Session options shared by the Host and Guest endpoints.
+	 * {@inheritDoc SandboxEndpointOptions}
 	 *
 	 * @input
 	 */
 	export type EndpointOptions = SandboxEndpointOptions;
+	/* eslint-enable tsdoc/syntax */
 
+	/* eslint-disable tsdoc/syntax -- Test-source TSDoc lint does not load the package's custom @input tag. */
 	/**
-	 * Options for creating a Host.
+	 * {@inheritDoc HostOptionsBase}
 	 *
 	 * @input
 	 */
 	export type HostOptions = HostOptionsBase;
+	/* eslint-enable tsdoc/syntax */
 
 	/**
-	 * The SharedTree endpoint that connects to Fluid services on behalf of a {@link Sandboxing.Guest}.
+	 * {@inheritDoc HostBase}
 	 *
 	 * @sealed
 	 */
 	export type Host = HostBase;
 
-	/**
-	 * Creates and connects a Host that can support a {@link Sandboxing.Guest}.
-	 *
-	 * @param options - The options for creating the Host.
-	 * @returns The created Host.
-	 */
+	/** {@inheritDoc createHostInternal} */
 	export function createHost(options: HostOptions): Host {
 		return createHostInternal(options);
 	}
 
+	/* eslint-disable tsdoc/syntax -- Test-source TSDoc lint does not load the package's custom @input tag. */
 	/**
-	 * Options for creating a Guest.
+	 * {@inheritDoc GuestOptionsBase}
 	 *
 	 * @input
 	 */
 	export type GuestOptions = GuestOptionsBase;
+	/* eslint-enable tsdoc/syntax */
 
 	/**
-	 * An independent tree synchronized with a {@link Sandboxing.Host}.
+	 * {@inheritDoc GuestBase}
 	 *
 	 * @sealed
 	 */
 	export type Guest = GuestBase;
 
-	/**
-	 * Creates and connects a Guest to a {@link Sandboxing.Host}.
-	 *
-	 * @param options - The options for creating the Guest.
-	 * @returns A promise that resolves to the created Guest.
-	 */
+	/** {@inheritDoc createGuestInternal} */
 	export async function createGuest(options: GuestOptions): Promise<Guest> {
 		return createGuestInternal(options);
 	}
