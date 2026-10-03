@@ -42,6 +42,7 @@ import { normalizeTransportData } from "./transport.js";
 
 /**
  * Options for creating a Guest.
+ * @input
  */
 export interface GuestOptions extends SandboxEndpointOptions {
 	/** The forest and codec options used to initialize the Guest's tree. */

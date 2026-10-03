@@ -54,6 +54,7 @@ import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
  * Options for creating a Host.
+ * @input
  */
 export interface HostOptions extends SandboxEndpointOptions {
 	// TODO: Use a branch with a forest once it can be supplied without a full view.
