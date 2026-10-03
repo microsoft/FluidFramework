@@ -27,7 +27,6 @@ import {
 	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import type { TreeCheckout } from "../../../shared-tree/index.js";
-import type { UntypedTreeView } from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { brand } from "../../../util/index.js";
 
@@ -40,7 +39,6 @@ import {
 	type HostInitializationMessage,
 	normalizeProtocolError,
 	parseHostGuestMessage,
-	type SandboxEndpointOptions,
 	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
@@ -48,47 +46,15 @@ import {
 } from "./common.js";
 import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
+import type { Sandboxing } from "./index.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
- * Options for creating a Host.
+ * Implementation of {@link Sandboxing.Host}.
  */
-export interface HostOptions extends SandboxEndpointOptions {
-	// TODO: Use a branch with a forest once it can be supplied without a full view.
-	/** The application-owned view to synchronize with the Guest. */
-	readonly main: UntypedTreeView;
-}
-
-/**
- * The SharedTree that connects to Fluid services on behalf of a {@link Guest}.
- * @sealed
- */
-export interface Host {
-	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
-	readonly error: Error | undefined;
-	/** A promise for Guest acknowledgment of pending Host changes, if changes are pending. */
-	readonly updateGuestPromise: Promise<void> | undefined;
-	/**
-	 * Stops receiving Guest messages, reclaims the Guest's ID space shard, and releases session resources.
-	 */
-	dispose(): void;
-}
-
-/**
- * Creates and connects a {@link Host} which can support a {@link Guest}.
- * @param options - The options for creating the Host.
- * @returns The created Host instance.
- */
-export function createHost(options: HostOptions): Host {
-	return new HostImplementation(options);
-}
-
-/**
- * Implementation of {@link Host}.
- */
-export class HostImplementation implements Host {
+export class HostImplementation implements Sandboxing.Host {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	/** Internal synchronization state exposed for testing. */
@@ -163,7 +129,7 @@ export class HostImplementation implements Host {
 		port,
 		logger,
 		handleProtocolError = throwProtocolError,
-	}: HostOptions) {
+	}: Sandboxing.HostOptions) {
 		this.port = port;
 		this.idCompressor = toIdCompressorWithCore(getIdCompressor(main));
 		this.codec = new HostTransportCodec();

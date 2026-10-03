@@ -94,8 +94,8 @@ These terms are similar to the terms for virtual machines.
 
 ### Endpoint Options
 
-`createHost` and `createGuest` each accept a named options object.
-Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions` in [common.ts](./common.ts).
+`Sandboxing.createHost` and `Sandboxing.createGuest` each accept a named options object.
+Their `Sandboxing.HostOptions` and `Sandboxing.GuestOptions` types include the properties from `Sandboxing.EndpointOptions`.
 The shared type defines the endpoint's port, logger, and optional protocol-error callback.
 Supply a separate port and scoped logger for each endpoint.
 The Host requires the application view and uses its checkout's runtime compressor; the Guest requires forest and codec options.
