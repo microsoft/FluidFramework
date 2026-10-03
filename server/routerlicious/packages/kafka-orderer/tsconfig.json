@@ -2,6 +2,9 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
+		"moduleResolution": "Node16",
+		"module": "Node16",
+		"types": ["node"],
 		"paths": {
 			"@fluidframework/server-kafka-orderer": ["./src/index.ts"],
 		},

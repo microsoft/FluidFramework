@@ -2,13 +2,15 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
+		"moduleResolution": "Node16",
+		"module": "Node16",
 		"paths": {
 			"@fluidframework/server-routerlicious-base": ["./src/index.ts"],
 		},
 		"strictNullChecks": true,
 		"rootDir": "./src",
 		"outDir": "./dist",
-		"types": ["mocha"],
+		"types": ["node", "mocha"],
 		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],

@@ -15,8 +15,8 @@ import * as HashNode from "../../hashFileNode.js";
 // Use rewire to access private functions
 const HashBrowser = rewire("../../hashFileBrowser");
 
-async function getFileContents(p: string): Promise<Buffer> {
-	return new Promise<Buffer>((resolve, reject) => {
+async function getFileContents(p: string): Promise<Buffer<ArrayBuffer>> {
+	return new Promise<Buffer<ArrayBuffer>>((resolve, reject) => {
 		fs.readFile(p, (error, data) => {
 			if (error) {
 				reject(error);
@@ -93,10 +93,10 @@ async function evaluateBrowserGitHash(page, file: Buffer): Promise<string> {
 }
 
 describe("Common-Utils", () => {
-	let xmlFile: Buffer;
-	let svgFile: Buffer;
-	let pdfFile: Buffer;
-	let gifFile: Buffer;
+	let xmlFile: Buffer<ArrayBuffer>;
+	let svgFile: Buffer<ArrayBuffer>;
+	let pdfFile: Buffer<ArrayBuffer>;
+	let gifFile: Buffer<ArrayBuffer>;
 
 	let server: http.Server;
 

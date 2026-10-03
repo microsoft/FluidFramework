@@ -23,6 +23,21 @@ hk requires the [pkl](https://pkl-lang.org/) CLI. Both hk and pkl can be install
 
 This document tracks dependencies that cannot be upgraded to their latest major versions due to technical limitations.
 
+### TypeScript
+
+Use `"typescript": "~6.0.3"` for direct compiler dependencies in every release group and standalone package.
+When you update the compiler, regenerate each affected workspace's `pnpm-lock.yaml`.
+The [compiler compatibility tests](./examples/utils/typescript-versions-host/package.json) intentionally install other TypeScript versions under aliases to check consumer compatibility.
+Do not replace those aliases or override compilers bundled with third-party tools solely to make all transitive versions match.
+
+TypeScript 6 no longer includes all visible `@types` packages by default.
+List the global types a project needs in its `compilerOptions.types`, including test-runner globals.
+Set `rootDir` explicitly when the output layout depends on the source directory rather than the directory containing the project configuration.
+
+Prefer modern Node module resolution for server and tool projects.
+The [server-services configuration](./server/routerlicious/packages/services/tsconfig.json) retains legacy resolution with `ignoreDeprecations: "6.0"` to preserve the CommonJS behavior of its database-extension loader.
+Changing that project to native dynamic imports requires a separate compatibility review.
+
 ### Pinned
 
 The following dependencies are pinned to older major versions because newer versions are incompatible with the current codebase.
