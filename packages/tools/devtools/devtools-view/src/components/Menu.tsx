@@ -23,6 +23,7 @@ import {
 	type PropsWithChildren,
 	type ReactElement,
 	useEffect,
+	useId,
 	useState,
 } from "react";
 
@@ -219,6 +220,13 @@ export type MenuSectionProps = PropsWithChildren<{
 	 * Section header.
 	 */
 	header: ReactElement;
+
+	/**
+	 * `id` of the section header element, used to programmatically associate the section's
+	 * children with their header via `aria-labelledby` so assistive technologies announce the
+	 * section name (e.g. "Telemetry") when focus lands on a child control (e.g. "Events").
+	 */
+	headerId?: string;
 }>;
 
 const useMenuSectionStyles = makeStyles({
@@ -235,14 +243,16 @@ const useMenuSectionStyles = makeStyles({
  * Generic component for a section of the menu.
  */
 export function MenuSection(props: MenuSectionProps): ReactElement {
-	const { header, children } = props;
+	const { header, children, headerId } = props;
 
 	const styles = useMenuSectionStyles();
 
 	return (
 		<div className={styles.root}>
 			{header}
-			<div className={styles.item}>{children}</div>
+			<div className={styles.item} role="group" aria-labelledby={headerId}>
+				{children}
+			</div>
 		</div>
 	);
 }
@@ -260,6 +270,12 @@ export interface MenuSectionLabelHeaderProps {
 	 * The icon to display in the header of the menu section.
 	 */
 	icon?: ReactElement;
+
+	/**
+	 * `id` applied to the header element, so it can be referenced (e.g. via `aria-labelledby`)
+	 * to programmatically associate this section's controls with the section name.
+	 */
+	id?: string;
 }
 
 const useMenuSectionLabelHeaderStyles = makeStyles({
@@ -275,11 +291,11 @@ const useMenuSectionLabelHeaderStyles = makeStyles({
  * Simple menu section header with a label.
  */
 export function MenuSectionLabelHeader(props: MenuSectionLabelHeaderProps): ReactElement {
-	const { label, icon } = props;
+	const { label, icon, id } = props;
 	const styles = useMenuSectionLabelHeaderStyles();
 
 	return (
-		<div className={styles.root}>
+		<div className={styles.root} id={id}>
 			{label}
 			{icon}
 		</div>
@@ -857,6 +873,8 @@ export function Menu(props: MenuProps): ReactElement {
 
 	const styles = useMenuStyles();
 
+	const telemetrySectionHeaderId = useId();
+
 	function onContainerClicked(containerKey: ContainerKey): void {
 		setSelection({ type: "containerMenuSelection", containerKey });
 		usageLogger?.sendTelemetryEvent({
@@ -928,7 +946,10 @@ export function Menu(props: MenuProps): ReactElement {
 	if (supportedFeatures.telemetry === true) {
 		menuSections.push(
 			<MenuSection
-				header={<MenuSectionLabelHeader label="Telemetry" />}
+				header={
+					<MenuSectionLabelHeader label="Telemetry" id={telemetrySectionHeaderId} />
+				}
+				headerId={telemetrySectionHeaderId}
 				key="telemetry-menu-section"
 			>
 				<MenuItem
