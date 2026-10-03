@@ -31,19 +31,19 @@ import {
 	type BlobRequestId,
 	type BlobRequestMessage,
 	type GuestChangeMessage,
+	GuestTransportCodec,
 	type HandleToken,
 	type HostIdRangeMessage,
+	HostTransportCodec,
 	type HostUpdateMessage,
 	isHandleToken,
 	isLocalHandle,
 	isSerializedHandle,
+	normalizeTransportData,
 	parseHostGuestMessage,
 	SandboxProtocolError,
 	validateTreePayloadVocabulary,
-} from "./common.js";
-import { GuestTransportCodec } from "./guestTransport.js";
-import { HostTransportCodec } from "./hostTransport.js";
-import { normalizeTransportData } from "./transport.js";
+} from "../../../sandboxing/index.js";
 
 /**
  * Valid token data for transport-shape tests; no Host has authorized this ID space shard.

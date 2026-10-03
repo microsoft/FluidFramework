@@ -5,10 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	SerializationVersion,
-	toIdCompressorWithCore,
-} from "@fluidframework/id-compressor/internal";
+import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
 
 import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
 import {
@@ -25,15 +22,13 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { createHost, type Host } from "./host.js";
-import { createGuest, type Guest } from "./guest.js";
-import { sandboxFormatValidator } from "./common.js";
+import { Sandboxing } from "../../../index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { asBeta } from "../../../api.js";
-import { getCheckout } from "./synchronizationUtils.js";
+import { getCheckout, sandboxFormatValidator } from "../../../sandboxing/index.js";
 
 describe("End to End Host and Guest integrations", () => {
 	afterEach(async function () {
@@ -45,8 +40,8 @@ describe("End to End Host and Guest integrations", () => {
 	// Currently shows limitations which need fixing.
 	describe("User Facing APIs", () => {
 		let channel: MessageChannel | undefined;
-		let host: Host | undefined;
-		let guest: Guest | undefined;
+		let host: Sandboxing.Host | undefined;
+		let guest: Sandboxing.Guest | undefined;
 
 		afterEach(() => {
 			channel?.port2.close();
@@ -73,11 +68,14 @@ describe("End to End Host and Guest integrations", () => {
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.string });
 
 		it("synchronizes a Guest edit through ServiceClient", async () => {
-			const client = startEphemeralService().defaultClient;
+			const client = startEphemeralService().newClient({
+				// At least `3.4.0` is required for id-compressor's V3 serialization format, which is required for ID space sharding.
+				oldestSupportedClient: "3.4.0",
+			});
 			const container = await client.createAttachedContainer(TestDataStore);
 			const tree = container.data;
 			// TODO: ideally we wouldn't require the host to create a view.
-			// See existing TODO on `HostOptions.main` for details.
+			// See existing TODO on `Sandboxing.HostOptions.main` for details.
 			const viewHost = asBeta(tree.viewWith(config));
 
 			const log: string[] = [];
@@ -91,21 +89,17 @@ describe("End to End Host and Guest integrations", () => {
 
 			channel = new MessageChannel();
 
-			// TODO: we need to expose a better way to do this.
+			// TODO: we need to expose a better way to inspect the compressor's shard state.
 			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
 			const idCompressor = getCheckout(viewHost)["idCompressor"];
 			const rootCompressor = toIdCompressorWithCore(idCompressor);
-			assert.equal(Reflect.get(rootCompressor, "writeVersion"), SerializationVersion.V2);
-			// TODO: Enable V3 through ContainerRuntime's document compatibility policy.
-			// This override is only for this isolated test document.
-			assert.equal(Reflect.set(rootCompressor, "writeVersion", SerializationVersion.V3), true);
 
-			host = createHost({
+			host = Sandboxing.createHost({
 				logger,
 				main: viewHost,
 				port: channel.port1,
 			});
-			guest = await createGuest({
+			guest = await Sandboxing.createGuest({
 				logger,
 				port: channel.port2,
 				treeOptions: { jsonValidator: sandboxFormatValidator },

@@ -9,27 +9,23 @@ import {
 	deserializeIdCompressor,
 	SerializationVersion,
 	type IdCreationRange,
+	type ParentShardSynchronizationToken,
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { FluidClientVersion } from "../../../codec/index.js";
-import {
-	castCursorToSynchronous,
-	findAncestor,
-	moveToDetachedField,
-} from "../../../core/index.js";
+import { FluidClientVersion } from "../codec/index.js";
+import { castCursorToSynchronous, findAncestor, moveToDetachedField } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
 	schemaCodecBuilder,
 	TreeCompressionStrategy,
-} from "../../../feature-libraries/index.js";
-import type { TreeCheckout } from "../../../shared-tree/index.js";
-import type { UntypedTreeView } from "../../../simple-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { brand } from "../../../util/index.js";
+} from "../feature-libraries/index.js";
+import type { TreeCheckout } from "../shared-tree/index.js";
+import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestMessage,
@@ -40,7 +36,6 @@ import {
 	type HostInitializationMessage,
 	normalizeProtocolError,
 	parseHostGuestMessage,
-	type SandboxEndpointOptions,
 	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
@@ -48,54 +43,22 @@ import {
 } from "./common.js";
 import { HostTransportCodec } from "./hostTransport.js";
 import { HostSynchronization } from "./hostSynchronization.js";
+import type { Sandboxing } from "./sandboxing.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 import { getCheckout, getIdCompressor } from "./synchronizationUtils.js";
 
 /**
- * Options for creating a Host.
+ * Implementation of {@link Sandboxing.Host}.
  */
-export interface HostOptions extends SandboxEndpointOptions {
-	// TODO: Use a branch with a forest once it can be supplied without a full view.
-	/** The application-owned view to synchronize with the Guest. */
-	readonly main: UntypedTreeView;
-}
-
-/**
- * The SharedTree that connects to Fluid services on behalf of a {@link Guest}.
- * @sealed
- */
-export interface Host {
-	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
-	readonly error: Error | undefined;
-	/** A promise for Guest acknowledgment of pending Host changes, if changes are pending. */
-	readonly updateGuestPromise: Promise<void> | undefined;
-	/**
-	 * Stops receiving Guest messages, reclaims the Guest's ID space shard, and releases session resources.
-	 */
-	dispose(): void;
-}
-
-/**
- * Creates and connects a {@link Host} which can support a {@link Guest}.
- * @param options - The options for creating the Host.
- * @returns The created Host instance.
- */
-export function createHost(options: HostOptions): Host {
-	return new HostImplementation(options);
-}
-
-/**
- * Implementation of {@link Host}.
- */
-export class HostImplementation implements Host {
+export class HostImplementation implements Sandboxing.Host {
 	public readonly codec: HostTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	/** Internal synchronization state exposed for testing. */
 	public readonly synchronization: HostSynchronization;
 	/** The checkout extracted from the application-provided view. */
 	private readonly mainCheckout: TreeCheckout;
-	private readonly port: MessagePort;
+	private readonly port: Sandboxing.MessagePort;
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
 	/**
 	 * Last accepted progress token from the Guest's ID space shard.
@@ -113,7 +76,7 @@ export class HostImplementation implements Host {
 	private disposed = false;
 
 	/** Receives and routes protocol messages from the Guest. */
-	private readonly onMessage = (event: MessageEvent<unknown>): void => {
+	private readonly onMessage = (event: Sandboxing.MessageEvent): void => {
 		this.session.run(() => {
 			const message = parseHostGuestMessage(this.codec.decode(event.data));
 			switch (message.type) {
@@ -163,7 +126,7 @@ export class HostImplementation implements Host {
 		port,
 		logger,
 		handleProtocolError = throwProtocolError,
-	}: HostOptions) {
+	}: Sandboxing.HostOptions) {
 		this.port = port;
 		this.idCompressor = toIdCompressorWithCore(getIdCompressor(main));
 		this.codec = new HostTransportCodec();
@@ -176,12 +139,10 @@ export class HostImplementation implements Host {
 			},
 			handleProtocolError,
 		);
-		const hostLogger =
-			logger ??
-			createChildLogger({
-				logger: this.mainCheckout.breaker.logger,
-				namespace: "Host",
-			});
+		const hostLogger = createChildLogger({
+			logger: logger ?? this.mainCheckout.breaker.logger,
+			namespace: "Host",
+		});
 		this.synchronization = new HostSynchronization(
 			this.mainCheckout,
 			(message) => this.postMessage(message),
@@ -195,7 +156,7 @@ export class HostImplementation implements Host {
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
 		try {
-			this.postMessage(this.createInitializationMessage(getIdCompressor(main)));
+			this.postMessage(this.createInitializationMessage(this.idCompressor));
 		} catch (error) {
 			this.dispose();
 			throw error;
@@ -311,7 +272,7 @@ export class HostImplementation implements Host {
 	 *
 	 * @returns The parent synchronization token addressed to this Guest's ID space shard.
 	 */
-	private getParentIdSpaceShardSyncToken() {
+	private getParentIdSpaceShardSyncToken(): ParentShardSynchronizationToken {
 		const child = this.guestIdSpaceShardToken;
 		assert(child !== undefined, "Expected an initialized Guest ID space shard");
 		return this.idCompressor.getChildShardSyncToken(child);

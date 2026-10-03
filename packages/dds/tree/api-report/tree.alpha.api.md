@@ -1241,6 +1241,58 @@ export interface RunTransactionParamsBeta {
     readonly label?: unknown;
 }
 
+// @alpha
+export namespace Sandboxing {
+    export function createGuest(options: GuestOptions): Promise<Guest>;
+    export function createHost(options: HostOptions): Host;
+    // @input
+    export interface EndpointOptions {
+        readonly handleProtocolError?: (error: Error) => void;
+        readonly logger?: ITelemetryBaseLogger;
+        readonly port: MessagePort;
+    }
+    // @sealed
+    export interface Guest {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly tree: ViewableTree;
+        readonly updateHostPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface GuestOptions extends EndpointOptions {
+        readonly treeOptions: ForestOptions & ICodecOptions;
+    }
+    // @sealed
+    export interface Host {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly updateGuestPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface HostOptions extends EndpointOptions {
+        readonly main: UntypedTreeView;
+    }
+    // @system
+    export interface MessageEvent {
+        readonly data?: unknown;
+        readonly type: string;
+    }
+    // @system
+    export type MessageEventHandler = {
+        bivarianceHack(event: MessageEvent): void;
+    }["bivarianceHack"];
+    // @input
+    export interface MessagePort {
+        addEventListener(type: "message", listener: MessageEventHandler): void;
+        addEventListener(type: "messageerror", listener: () => void): void;
+        close(): void;
+        postMessage(message: unknown): void;
+        removeEventListener(type: "message", listener: MessageEventHandler): void;
+        removeEventListener(type: "messageerror", listener: () => void): void;
+        start(): void;
+    }
+}
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;

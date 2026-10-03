@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import type { MessagePort as NodeMessagePort } from "node:worker_threads";
 
 import {
 	createFuzzDescribe,
@@ -38,7 +39,13 @@ import {
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
-import { brand, hasSome, type JsonCompatibleReadOnly } from "../../../util/index.js";
+import {
+	brand,
+	hasSome,
+	type isAssignableTo,
+	type JsonCompatibleReadOnly,
+	type requireTrue,
+} from "../../../util/index.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -50,20 +57,21 @@ import {
 
 import {
 	type GuestChangeMessage,
+	GuestImplementation,
+	GuestSynchronization,
+	HostImplementation,
 	type HostGuestMessage,
+	HostSynchronization,
 	type HostUpdateMessage,
 	makePromiseWithResolvers,
+	normalizeTransportData,
 	parseHostGuestMessage,
 	sandboxFormatValidator,
+	Sandboxing,
+	SandboxSessionEndpoint,
 	SandboxProtocolError,
-} from "./common.js";
-import { GuestImplementation } from "./guest.js";
-import { HostImplementation } from "./host.js";
-import { GuestSynchronization } from "./guestSynchronization.js";
-import { HostSynchronization } from "./hostSynchronization.js";
-import { SandboxSessionEndpoint } from "./session.js";
-import { normalizeTransportData } from "./transport.js";
-import { getCheckout } from "./synchronizationUtils.js";
+	getCheckout,
+} from "../../../sandboxing/index.js";
 import {
 	buildDirectSessionPorts,
 	buildIsolatedSessionPorts,
@@ -75,6 +83,13 @@ import {
 	setupCustom,
 	stringArrayConfig,
 } from "./sandboxingTestUtils.js";
+
+type _domMessagePortIsPortable = requireTrue<
+	isAssignableTo<MessagePort, Sandboxing.MessagePort>
+>;
+type _nodeMessagePortIsPortable = requireTrue<
+	isAssignableTo<NodeMessagePort, Sandboxing.MessagePort>
+>;
 
 /**
  * Creates a real child ID space shard token for envelope wire-shape tests.

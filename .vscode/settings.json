@@ -44,6 +44,8 @@
 
 	// Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
 	"cSpell.words": [
+		"bivariance",
+		"bivariantly",
 		"boop",
 		"contoso",
 		"corecursive",
@@ -68,6 +70,7 @@
 		"revertibles",
 		"Routerlicious",
 		"runtimes",
+		"sandboxing",
 		"snapshotlegacy",
 		"snapshotting",
 		"testconsumer",
