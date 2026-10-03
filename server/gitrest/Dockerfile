@@ -64,6 +64,7 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
 # This is needed because tools/pipelines/templates/include-install-pnpm.yml uses these options to work around CI package mirror limitations.
 ARG PNPM_CONFIG_TRUST_POLICY
 ARG PNPM_CONFIG_MINIMUM_RELEASE_AGE
+ARG PNPM_CONFIG_TRUST_LOCKFILE
 
 # Using a cache mount for the pnpm store improves the incremental docker build.
 # pnpm's default storeDir is $PNPM_HOME/store when PNPM_HOME is set
@@ -71,7 +72,7 @@ ARG PNPM_CONFIG_MINIMUM_RELEASE_AGE
 # matches and no --store-dir flag is needed.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
-    pnpm install
+    pnpm install --frozen-lockfile
 
 COPY . .
 
