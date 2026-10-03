@@ -7,8 +7,13 @@ import { strict as assert } from "node:assert";
 
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 
-import { isFluidHandle, lookupTemporaryBlobStorageId } from "../handles.js";
+import {
+	getDataStorePackagePath,
+	isFluidHandle,
+	lookupTemporaryBlobStorageId,
+} from "../handles.js";
 
 describe("Handles", () => {
 	it("encodeCompactIdToString() with strings", () => {
@@ -33,6 +38,66 @@ describe("Handles", () => {
 
 			// Symbol based:
 			assert(isFluidHandle({ [fluidHandleSymbol]: {} }));
+		});
+	});
+
+	describe("getDataStorePackagePath", () => {
+		it("forwards the handle's absolute path without resolving the handle", async () => {
+			const paths: string[] = [];
+			const runtime = {
+				getDataStorePackagePath: async (path: string) => {
+					paths.push(path);
+					return path === "/store/dds" ? ["store-package", "nested-package"] : undefined;
+				},
+			} as unknown as IContainerRuntimeBase;
+			const handle = {
+				[fluidHandleSymbol]: {
+					absolutePath: "/store/dds",
+					[fluidHandleSymbol]: {},
+				},
+				get: () => {
+					throw new Error("The handle should not be resolved");
+				},
+			} as unknown as IFluidHandle;
+			const missingHandle = {
+				[fluidHandleSymbol]: {
+					absolutePath: "/missing",
+					[fluidHandleSymbol]: {},
+				},
+			} as unknown as IFluidHandle;
+
+			assert.deepEqual(await getDataStorePackagePath(runtime, handle), [
+				"store-package",
+				"nested-package",
+			]);
+			assert.equal(await getDataStorePackagePath(runtime, missingHandle), undefined);
+			assert.deepEqual(paths, ["/store/dds", "/missing"]);
+		});
+
+		it("rejects invalid handles", async () => {
+			const runtime = {
+				getDataStorePackagePath: async () => ["store-package"],
+			} as unknown as IContainerRuntimeBase;
+
+			await assert.rejects(getDataStorePackagePath(runtime, {} as unknown as IFluidHandle), {
+				name: "TypeError",
+				message: "Invalid IFluidHandle",
+			});
+		});
+
+		it("rejects runtimes without the internal package path lookup", async () => {
+			const runtime = {} as unknown as IContainerRuntimeBase;
+			const handle = {
+				[fluidHandleSymbol]: {
+					absolutePath: "/store/dds",
+					[fluidHandleSymbol]: {},
+				},
+			} as unknown as IFluidHandle;
+
+			await assert.rejects(getDataStorePackagePath(runtime, handle), {
+				name: "TypeError",
+				message: "Container runtime does not support data store package path lookup",
+			});
 		});
 	});
 

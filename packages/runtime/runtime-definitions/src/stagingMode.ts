@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerRuntimeBase, StageControls } from "./dataStoreContext.js";
+import type { IContainerRuntimeBase, PackagePath, StageControls } from "./dataStoreContext.js";
 
 /**
  * Options for committing staged changes in experimental staging mode.
@@ -44,8 +44,8 @@ export interface StageControlsInternal extends StageControls {
 }
 
 /**
- * Internal extension of {@link IContainerRuntimeBase} whose {@link IContainerRuntimeBaseInternal.enterStagingMode}
- * returns {@link StageControlsInternal} (which exposes internal commit options such as squash)
+ * Internal extension of {@link IContainerRuntimeBase} exposing staging-mode commit options
+ * and data store package-path lookup.
  * @internal
  */
 export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
@@ -54,6 +54,19 @@ export interface IContainerRuntimeBaseInternal extends IContainerRuntimeBase {
 	 * @returns Controls for committing or discarding staged changes.
 	 */
 	enterStagingMode(): StageControlsInternal;
+
+	/**
+	 * Returns the package path of the data store containing a container-relative absolute path.
+	 * Paths within a data store return the containing data store's package path, not a DDS package path.
+	 *
+	 * @remarks
+	 * This lookup may read the data store's snapshot attributes but does not load the data store or resolve the path.
+	 * A path outside a known data store returns undefined.
+	 *
+	 * @param nodePath - The container-relative absolute path of a data store or an object within it.
+	 * @returns The containing data store's package path, or undefined if the path is not within a known data store.
+	 */
+	getDataStorePackagePath(nodePath: string): Promise<PackagePath | undefined>;
 }
 
 /**
