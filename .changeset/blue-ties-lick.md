@@ -7,8 +7,8 @@ Add experimental SharedTree sandboxing APIs
 
 The new alpha `Sandboxing.createHost` and `Sandboxing.createGuest` APIs synchronize a SharedTree view across a `MessagePort`.
 The Host remains connected to Fluid services while the Guest exposes a normal schema-aware tree view on the other side of the message channel.
+During initialization, the Host sends the Guest a serialized child ID space shard, so the endpoints do not share an ID compressor instance.
 
-The current alpha implementation requires both endpoints to share the Host's ID compressor and is intended for early experimentation.
 Sandboxing requires the ID compressor's V3 serialization format.
 Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
 
@@ -33,7 +33,6 @@ const host = Sandboxing.createHost({ main: hostView, port: channel.port1 });
 // Create the independent Guest tree on the other side of the channel.
 const guest = await Sandboxing.createGuest({
 	port: channel.port2,
-	idCompressor: host.idCompressor,
 	treeOptions: { jsonValidator: FormatValidatorBasic },
 });
 

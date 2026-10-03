@@ -348,9 +348,9 @@ These failures do not prevent you from writing the tests.
 ### Runtime ID Compressor Version
 
 The sandbox Host requires a V3 runtime ID compressor to create a child ID space shard.
-The current ServiceClient runtime creates a V2 compressor.
+ServiceClient runtimes configured with an older compatibility floor create a V2 compressor.
 The integration test overrides its live compressor to V3 only for an isolated test document; it does not establish production format compatibility.
-Enable V3 through the runtime's document compatibility policy before using a ServiceClient Host outside this test.
+Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable V3 before using a ServiceClient Host outside this test.
 
 ### Protocol Validation and Security Hardening
 
