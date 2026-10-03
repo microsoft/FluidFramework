@@ -18,7 +18,6 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
 export interface FluidMapLegacy<K, V> extends Omit<FluidMap<K, V>, "get" | "set" | "forEach"> {
     clear(): void;
     delete(key: K): boolean;
-    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
     forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void;
 }
 
@@ -96,9 +95,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @beta @sealed @legacy
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, FluidMap<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Omit<FluidMap<string, any>, "forEach"> {
     clear(): void;
     delete(key: string): boolean;
+    forEach(callbackfn: (value: any, key: string, map: Map<string, any>) => void, thisArg?: any): void;
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
