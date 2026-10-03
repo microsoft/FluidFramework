@@ -42,6 +42,7 @@ export interface ICreateGitServiceArgs {
 	cache?: ICache;
 	initialUpload?: boolean;
 	storageName?: string;
+	documentStorageName?: string;
 	allowDisabledTenant?: boolean;
 	isEphemeralContainer?: boolean;
 	ephemeralDocumentTTLSec?: number; // 24 hours

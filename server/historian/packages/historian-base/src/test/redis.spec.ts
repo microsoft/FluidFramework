@@ -68,6 +68,19 @@ testCache.forEach((fileSystem) => {
 			}
 			assert.strictEqual(await redis.delete("foo"), true);
 		});
+		if (fileSystem === "redisCache") {
+			it("only advances persistent deletion markers", async () => {
+				const cache = redis as RedisCache;
+				await cache.setDeletionMarkerIfNewer("deletion-marker", 200);
+				await cache.setDeletionMarkerIfNewer("deletion-marker", 100);
+
+				assert.strictEqual(await cache.get("deletion-marker"), 200);
+				assert.strictEqual(
+					await redisClientConnectionManager.getRedisClient().ttl("git:deletion-marker"),
+					-1,
+				);
+			});
+		}
 		it("single key CRD operations should not succeed without client recreation", async () => {
 			redisClientConnectionManager.invalidateRedisClient(false);
 			assert.rejects(async () => {

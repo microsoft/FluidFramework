@@ -11,7 +11,7 @@ import {
 	getAuthorizationTokenFromCredentials,
 	NetworkError,
 } from "@fluidframework/server-services-client";
-import type { IDocument } from "@fluidframework/server-services-core";
+import type { IDocument, IDocumentManager } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as nconf from "nconf";
 import * as sinon from "sinon";
@@ -53,9 +53,32 @@ describe("summary ownership", function () {
 
 	afterEach(() => sandbox.restore());
 
+	it("rejects a document manager that bypasses the summary validation contract", async () => {
+		const documentManager = {
+			readDocument: sandbox.stub().resolves(activeDocument),
+		} as unknown as IDocumentManager;
+
+		await assert.rejects(
+			validateSummaryDocument({
+				tenantId,
+				authorization,
+				documentManager,
+				operation: "get",
+				routeType: "latest",
+				ephemeralDocumentTTLSec: 24 * 60 * 60,
+			}),
+			(error: NetworkError) =>
+				error.code === 500 &&
+				error.message === "Document manager does not support protected summary validation.",
+		);
+	});
+
 	it("returns the exact active Alfred document", async () => {
 		const documentManager = new TestDocumentManager();
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const readStaticProperties = sandbox
+			.stub(documentManager, "readStaticProperties")
+			.resolves(activeDocument);
+		const readDocument = sandbox.spy(documentManager, "readDocument");
 
 		const result = await validateSummaryDocument({
 			tenantId,
@@ -67,12 +90,15 @@ describe("summary ownership", function () {
 		});
 
 		assert.strictEqual(result, activeDocument);
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId, undefined);
+		sinon.assert.notCalled(readDocument);
 	});
 
 	it("forwards the customer access token when reuse is enabled", async () => {
 		const documentManager = new TestDocumentManager();
-		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const readStaticProperties = sandbox
+			.stub(documentManager, "readStaticProperties")
+			.resolves(activeDocument);
 
 		const result = await validateSummaryDocument({
 			tenantId,
@@ -85,13 +111,13 @@ describe("summary ownership", function () {
 		});
 
 		assert.strictEqual(result, activeDocument);
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId, {
 			accessToken,
 		});
 	});
 
 	for (const testCase of [
-		{ name: "missing", document: null, outcome: "notFound" },
+		{ name: "missing", document: undefined, outcome: "notFound" },
 		{
 			name: "tenant mismatch",
 			document: { ...activeDocument, tenantId: "victim" },
@@ -104,17 +130,14 @@ describe("summary ownership", function () {
 		},
 		{
 			name: "scheduled deletion",
-			document: {
-				...activeDocument,
-				scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
-			},
-			outcome: "scheduledDeletion",
+			document: undefined,
+			outcome: "notFound",
 		},
 	]) {
 		it(`returns the same 404 for ${testCase.name}`, async () => {
 			const documentManager = new TestDocumentManager();
-			const readDocument = sandbox
-				.stub(documentManager, "readDocument")
+			const readStaticProperties = sandbox
+				.stub(documentManager, "readStaticProperties")
 				.resolves(testCase.document);
 			const info = sandbox.spy(Lumberjack, "info");
 
@@ -133,7 +156,7 @@ describe("summary ownership", function () {
 					error.code === 404 &&
 					error.message === "Document is deleted and cannot be accessed.",
 			);
-			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+			sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId, {
 				accessToken,
 			});
 			sinon.assert.calledWithMatch(
@@ -153,7 +176,7 @@ describe("summary ownership", function () {
 	it("uses createTime from the fresh document to reject expired ephemeral state", async () => {
 		const documentManager = new TestDocumentManager();
 		const info = sandbox.spy(Lumberjack, "info");
-		sandbox.stub(documentManager, "readDocument").resolves({
+		sandbox.stub(documentManager, "readStaticProperties").resolves({
 			...activeDocument,
 			createTime: 0,
 			isEphemeralContainer: true,
@@ -189,7 +212,7 @@ describe("summary ownership", function () {
 			createTime: 0,
 			isEphemeralContainer: true,
 		};
-		sandbox.stub(documentManager, "readDocument").resolves(expiredEphemeralDocument);
+		sandbox.stub(documentManager, "readStaticProperties").resolves(expiredEphemeralDocument);
 
 		const result = await validateSummaryDocument({
 			tenantId,
@@ -206,12 +229,7 @@ describe("summary ownership", function () {
 
 	it("still rejects scheduled deletion when ignoreEphemeralFlag is enabled", async () => {
 		const documentManager = new TestDocumentManager();
-		sandbox.stub(documentManager, "readDocument").resolves({
-			...activeDocument,
-			createTime: 0,
-			isEphemeralContainer: true,
-			scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
-		});
+		sandbox.stub(documentManager, "readStaticProperties").resolves(undefined);
 
 		await assert.rejects(
 			validateSummaryDocument({
@@ -251,8 +269,8 @@ describe("summary ownership", function () {
 			const clock = sandbox.useFakeTimers();
 			const documentManager = new TestDocumentManager();
 			const logError = sandbox.spy(Lumberjack, "error");
-			const readDocument = sandbox
-				.stub(documentManager, "readDocument")
+			const readStaticProperties = sandbox
+				.stub(documentManager, "readStaticProperties")
 				.rejects(testCase.error);
 
 			const rejection = assert.rejects(
@@ -269,8 +287,8 @@ describe("summary ownership", function () {
 			);
 			await clock.runAllAsync();
 			await rejection;
-			sinon.assert.callCount(readDocument, testCase.expectedCallCount);
-			sinon.assert.alwaysCalledWithExactly(readDocument, tenantId, documentId, {
+			sinon.assert.callCount(readStaticProperties, testCase.expectedCallCount);
+			sinon.assert.alwaysCalledWithExactly(readStaticProperties, tenantId, documentId, {
 				accessToken,
 			});
 			sinon.assert.calledWithMatch(
@@ -290,8 +308,8 @@ describe("summary ownership", function () {
 		const clock = sandbox.useFakeTimers();
 		const documentManager = new TestDocumentManager();
 		const info = sandbox.spy(Lumberjack, "info");
-		const readDocument = sandbox
-			.stub(documentManager, "readDocument")
+		const readStaticProperties = sandbox
+			.stub(documentManager, "readStaticProperties")
 			.rejects(new NetworkError(404, "Alfred document not found"));
 
 		const rejection = assert.rejects(
@@ -311,7 +329,7 @@ describe("summary ownership", function () {
 		);
 		await clock.runAllAsync();
 		await rejection;
-		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId, {
 			accessToken,
 		});
 		sinon.assert.calledWithMatch(
@@ -328,7 +346,7 @@ describe("summary ownership", function () {
 	it("treats a malformed successful Alfred response as a dependency error", async () => {
 		const documentManager = new TestDocumentManager();
 		const logError = sandbox.spy(Lumberjack, "error");
-		sandbox.stub(documentManager, "readDocument").resolves({
+		sandbox.stub(documentManager, "readStaticProperties").resolves({
 			...activeDocument,
 			createTime: Number.NaN,
 		});
@@ -369,8 +387,8 @@ describe("summary ownership", function () {
 				true,
 			);
 			const documentManager = new TestDocumentManager();
-			const readDocument = sandbox
-				.stub(documentManager, "readDocument")
+			const readStaticProperties = sandbox
+				.stub(documentManager, "readStaticProperties")
 				.rejects(dependencyError);
 
 			await assert.rejects(
@@ -385,7 +403,7 @@ describe("summary ownership", function () {
 				}),
 				(error) => error === dependencyError,
 			);
-			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId, {
+			sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId, {
 				accessToken,
 			});
 		});
@@ -433,7 +451,7 @@ describe("summary ownership", function () {
 	it("emits structured allowed ownership telemetry", async () => {
 		const info = sandbox.spy(Lumberjack, "info");
 		const documentManager = new TestDocumentManager();
-		sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		sandbox.stub(documentManager, "readStaticProperties").resolves(activeDocument);
 
 		await validateSummaryDocument({
 			tenantId,

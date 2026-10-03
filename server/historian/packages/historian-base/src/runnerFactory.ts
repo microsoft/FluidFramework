@@ -17,6 +17,7 @@ import type { Provider } from "nconf";
 
 import type { IHistorianResourcesCustomizations } from "./customizations";
 import { HistorianRunner } from "./runner";
+import { DocumentManager } from "./services/documentManager";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { configureThrottler } from "@fluidframework/server-services";
@@ -90,6 +91,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const gitCache = disableGitCache
 			? undefined
 			: new historianServices.RedisCache(redisClientConnectionManager, redisParams);
+		const documentDeletionMarkerCache =
+			gitCache ?? new historianServices.RedisCache(redisClientConnectionManager, redisParams);
 		const tenantCache = new historianServices.RedisTenantCache(
 			redisClientConnectionManager,
 			redisParams,
@@ -227,9 +230,14 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			riddlerEndpoint,
 			"http://invalid-api-use" /* internalHistorianUrl (explicitly invalid to avoid circular reference) */,
 		);
-		const documentManager: core.IDocumentManager =
+		const authoritativeDocumentManager =
 			customizations?.documentManager ??
-			new services.DocumentManager(alfredEndpoint, tenantManager, gitCache);
+			new services.DocumentManager(alfredEndpoint, tenantManager);
+		const documentManager = new DocumentManager(
+			authoritativeDocumentManager,
+			gitCache,
+			documentDeletionMarkerCache,
+		);
 		const simplifiedCustomDataRetriever =
 			customizations?.simplifiedCustomDataRetriever ??
 			new historianServices.SimplifiedCustomDataRetriever();

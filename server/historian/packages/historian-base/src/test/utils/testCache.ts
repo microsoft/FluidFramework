@@ -16,6 +16,13 @@ export class TestCache implements ICache {
 		this.dictionary.set(key, value);
 		return Promise.resolve();
 	}
+	async setDeletionMarkerIfNewer(key: string, deletedThroughCreateTime: number): Promise<void> {
+		const current = this.dictionary.get(key) as number | undefined;
+		if (current === undefined || deletedThroughCreateTime > current) {
+			this.dictionary.set(key, deletedThroughCreateTime);
+		}
+		return Promise.resolve();
+	}
 	async delete(key: string): Promise<boolean> {
 		return Promise.resolve(this.dictionary.delete(key));
 	}

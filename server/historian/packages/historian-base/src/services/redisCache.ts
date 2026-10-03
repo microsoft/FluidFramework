@@ -55,6 +55,28 @@ export class RedisCache implements ICache {
 		}
 	}
 
+	public async setDeletionMarkerIfNewer(
+		key: string,
+		deletedThroughCreateTime: number,
+	): Promise<void> {
+		const result = (await this.redisClientConnectionManager.getRedisClient().eval(
+			`
+local current = redis.call("GET", KEYS[1])
+if current and tonumber(current) >= tonumber(ARGV[1]) then
+	return 0
+end
+redis.call("SET", KEYS[1], ARGV[1])
+return 1
+`,
+			1,
+			this.getKey(key),
+			deletedThroughCreateTime,
+		)) as number;
+		if (result !== 0 && result !== 1) {
+			throw new Error(`Unexpected Redis deletion marker result: ${result}`);
+		}
+	}
+
 	public async delete(key: string): Promise<boolean> {
 		const result = await this.redisClientConnectionManager
 			.getRedisClient()

@@ -209,6 +209,20 @@ export async function deliCreate(
 		documentRepository,
 		localCheckpointEnabled,
 	);
+	const documentStaticCache = new services.RedisCache(redisClientConnectionManager, {
+		expireAfterSeconds: redisConfig.keyExpireAfterSeconds,
+		prefix: "git",
+	});
+	const documentDeletionMarkerCache = new services.RedisCache(redisClientConnectionManager, {
+		expireAfterSeconds: 0,
+		prefix: "git",
+	});
+	const documentManager = new services.DocumentManager(
+		"http://invalid-api-use",
+		tenantManager,
+		documentStaticCache,
+		documentDeletionMarkerCache,
+	);
 
 	const deliLambdaFactory = new DeliLambdaFactory(
 		operationsDbManager,
@@ -222,6 +236,7 @@ export async function deliCreate(
 		serviceConfiguration,
 		customizations?.clusterDrainingChecker,
 		ephemeralDocumentTTLSec,
+		documentManager,
 	);
 
 	deliLambdaFactory.on("dispose", () => {
