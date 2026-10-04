@@ -1811,7 +1811,7 @@ export namespace Sandboxing {
     export interface EndpointOptions {
         readonly handleProtocolError?: (error: Error) => void;
         readonly logger?: ITelemetryBaseLogger;
-        readonly port: MessagePort;
+        readonly port: InstanceType<typeof MessagePort>;
     }
     // @sealed
     export interface Guest {
