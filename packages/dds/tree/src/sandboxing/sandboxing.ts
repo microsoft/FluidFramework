@@ -30,14 +30,26 @@ export namespace Sandboxing {
 	 * @alpha @input
 	 */
 	export interface EndpointOptions {
-		/** This endpoint's port in the Host and Guest message channel. */
-		readonly port: MessagePort;
+		/**
+		 * This endpoint's port in the Host and Guest message channel.
+		 *
+		 * @privateRemarks
+		 * The odd typing here is intentional and important.
+		 * Without it, we take an implicit dependency on DOM types, which may not be available in all environments.
+		 */
+		readonly port: InstanceType<typeof MessagePort>;
+
 		/** The endpoint-scoped logger for diagnostic telemetry. */
 		readonly logger?: ITelemetryBaseLogger;
-		// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
+
 		/**
 		 * Reports terminal session failure asynchronously.
+		 *
+		 * @remarks
 		 * By default, the error is thrown. After a failure, the application must recreate the Host and Guest pair.
+		 *
+		 * @privateRemarks
+		 * TODO: Replace this callback with a `Listenable` event API for session errors and closure.
 		 */
 		readonly handleProtocolError?: (error: Error) => void;
 	}

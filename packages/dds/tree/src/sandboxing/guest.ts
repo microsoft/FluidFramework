@@ -47,7 +47,16 @@ export class GuestImplementation implements Sandboxing.Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
-	private readonly port: MessagePort;
+
+	/**
+	 * The port connecting this Guest to the Host.
+	 *
+	 * @privateRemarks
+	 * The odd typing here is intentional and important.
+	 * Without it, we take an implicit dependency on DOM types, which may not be available in all environments.
+	 */
+	private readonly port: InstanceType<typeof MessagePort>;
+
 	private readonly logger: TelemetryLoggerExt;
 	#synchronization: GuestSynchronization | undefined;
 	private viewableTree: ViewableTree | undefined;

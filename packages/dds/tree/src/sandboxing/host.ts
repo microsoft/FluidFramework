@@ -58,7 +58,16 @@ export class HostImplementation implements Sandboxing.Host {
 	public readonly synchronization: HostSynchronization;
 	/** The checkout extracted from the application-provided view. */
 	private readonly mainCheckout: TreeCheckout;
-	private readonly port: MessagePort;
+
+	/**
+	 * The port connecting this Host to the Guest.
+	 *
+	 * @privateRemarks
+	 * The odd typing here is intentional and important.
+	 * Without it, we take an implicit dependency on DOM types, which may not be available in all environments.
+	 */
+	private readonly port: InstanceType<typeof MessagePort>;
+
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
 	/**
 	 * Last accepted progress token from the Guest's ID space shard.
