@@ -11,14 +11,10 @@ import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
 import { TypeSystem } from "@sinclair/typebox/system";
 
-import { extractJsonValidator } from "../../../codec/index.js";
-import type { RevisionTag } from "../../../core/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import {
-	type Brand,
-	brandedNumberType,
-	type JsonCompatibleReadOnly,
-} from "../../../util/index.js";
+import { extractJsonValidator } from "../codec/index.js";
+import type { RevisionTag } from "../core/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
+import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * A violation of the sandbox protocol's data or state requirements.

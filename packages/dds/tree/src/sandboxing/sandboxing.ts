@@ -3,39 +3,61 @@
  * Licensed under the MIT License.
  */
 
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
-import type { ICodecOptions } from "../../../codec/index.js";
-import type { ForestOptions } from "../../../shared-tree/index.js";
-import type { UntypedTreeView, ViewableTree } from "../../../simple-tree/index.js";
+import type { ICodecOptions } from "../codec/index.js";
+import type { ForestOptions } from "../shared-tree/index.js";
+import type { UntypedTreeView, ViewableTree } from "../simple-tree/index.js";
 
 import { GuestImplementation } from "./guest.js";
 import { HostImplementation } from "./host.js";
 
 /**
  * APIs for synchronizing a SharedTree view across a sandbox boundary.
+ *
+ * @remarks
+ * The Host remains connected to Fluid services and synchronizes an independent Guest tree through a `MessagePort`.
+ *
+ * Sandboxing requires the ID compressor's V3 serialization format.
+ * Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
+ *
+ * @alpha
  */
 export namespace Sandboxing {
 	/**
 	 * Session options shared by the Host and Guest endpoints.
-	 * @input
+	 *
+	 * @alpha @input
 	 */
 	export interface EndpointOptions {
-		/** This endpoint's port in the Host and Guest message channel. */
-		readonly port: MessagePort;
+		/**
+		 * This endpoint's port in the Host and Guest message channel.
+		 *
+		 * @privateRemarks
+		 * The odd typing here is intentional and important.
+		 * Without it, we take an implicit dependency on DOM types, which may not be available in all environments.
+		 */
+		readonly port: InstanceType<typeof MessagePort>;
+
 		/** The endpoint-scoped logger for diagnostic telemetry. */
-		readonly logger?: TelemetryLoggerExt;
-		// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
+		readonly logger?: ITelemetryBaseLogger;
+
 		/**
 		 * Reports terminal session failure asynchronously.
+		 *
+		 * @remarks
 		 * By default, the error is thrown. After a failure, the application must recreate the Host and Guest pair.
+		 *
+		 * @privateRemarks
+		 * TODO: Replace this callback with a `Listenable` event API for session errors and closure.
 		 */
 		readonly handleProtocolError?: (error: Error) => void;
 	}
 
 	/**
 	 * Options for creating a Host.
-	 * @input
+	 *
+	 * @alpha @input
 	 */
 	export interface HostOptions extends EndpointOptions {
 		// TODO: Use a branch with a forest once it can be supplied without a full view.
@@ -45,7 +67,9 @@ export namespace Sandboxing {
 
 	/**
 	 * The SharedTree that connects to Fluid services on behalf of a {@link Sandboxing.Guest}.
+	 *
 	 * @sealed
+	 * @alpha
 	 */
 	export interface Host {
 		/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
@@ -62,6 +86,8 @@ export namespace Sandboxing {
 	 * Creates and connects a {@link Sandboxing.Host} which can support a {@link Sandboxing.Guest}.
 	 * @param options - The options for creating the Host.
 	 * @returns The created Host instance.
+	 *
+	 * @alpha
 	 */
 	export function createHost(options: HostOptions): Host {
 		return new HostImplementation(options);
@@ -69,7 +95,8 @@ export namespace Sandboxing {
 
 	/**
 	 * Options for creating a Guest.
-	 * @input
+	 *
+	 * @alpha @input
 	 */
 	export interface GuestOptions extends EndpointOptions {
 		/** The forest and codec options used to initialize the Guest's tree. */
@@ -92,11 +119,10 @@ export namespace Sandboxing {
 	 * and releases local resources.
 	 *
 	 * @sealed
+	 * @alpha
 	 */
 	export interface Guest {
-		/**
-		 * The independent tree synchronized with the Host.
-		 */
+		/** The independent tree synchronized with the Host. */
 		readonly tree: ViewableTree;
 
 		/**
@@ -142,6 +168,8 @@ export namespace Sandboxing {
 	 * @param options - The options for creating the Guest, including tree and codec options.
 	 *
 	 * @returns A promise that resolves to the created Guest instance.
+	 *
+	 * @alpha
 	 */
 	export async function createGuest(options: GuestOptions): Promise<Guest> {
 		return GuestImplementation.create(options);

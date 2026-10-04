@@ -20,8 +20,8 @@ import { configuredSharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TestTreeProviderLite } from "../../utils.js";
 
+import { getCheckout } from "../../../sandboxing/index.js";
 import { stringArrayConfig } from "./sandboxingTestUtils.js";
-import { getCheckout } from "./synchronizationUtils.js";
 
 /**
  * Creates a Host, peer, and compressed baseline before the Guest ID space shard exists.

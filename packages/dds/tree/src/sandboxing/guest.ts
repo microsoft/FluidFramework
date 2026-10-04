@@ -14,17 +14,17 @@ import {
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions } from "../../../codec/index.js";
-import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
+import type { ICodecOptions } from "../codec/index.js";
+import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
-import { createIndependentTreeCheckout } from "../../../shared-tree/independentView.js";
+import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
 import type {
 	ImplicitFieldSchema,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewConfiguration,
 	ViewableTree,
-} from "../../../simple-tree/index.js";
+} from "../simple-tree/index.js";
 
 import {
 	type HostGuestMessage,
@@ -36,7 +36,7 @@ import {
 } from "./common.js";
 import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
-import type { Sandboxing } from "./index.js";
+import type { Sandboxing } from "./sandboxing.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 
@@ -47,7 +47,16 @@ export class GuestImplementation implements Sandboxing.Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
-	private readonly port: MessagePort;
+
+	/**
+	 * The port connecting this Guest to the Host.
+	 *
+	 * @privateRemarks
+	 * The odd typing here is intentional and important.
+	 * Without it, we take an implicit dependency on DOM types, which may not be available in all environments.
+	 */
+	private readonly port: InstanceType<typeof MessagePort>;
+
 	private readonly logger: TelemetryLoggerExt;
 	#synchronization: GuestSynchronization | undefined;
 	private viewableTree: ViewableTree | undefined;
@@ -122,7 +131,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 	}: Sandboxing.GuestOptions) {
 		this.treeOptions = treeOptions;
 		this.port = port;
-		this.logger = logger ?? createChildLogger({ namespace: "Guest" });
+		this.logger = createChildLogger({ logger, namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
