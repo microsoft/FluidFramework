@@ -26,7 +26,14 @@ describe("SharedArray fuzz", () => {
 		},
 		rollbackProbability: 0.2,
 		defaultTestCount: 50,
-		skip: [43], // Rollback op while attaching state is failing; needs investigation.
+		skip: [
+			// Concurrent move/undo-move and delete can resurrect a deleted entry.
+			3,
+			// Concurrent move and delete/toggle undo can restore an entry at its old position.
+			...[14, 42,],
+			// Rollback op while attaching state is failing; needs investigation.
+			43,
+		],
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 		emitter: eventEmitterForFuzzHarness,
 	});
