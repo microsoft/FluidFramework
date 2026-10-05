@@ -142,6 +142,25 @@ describe("RedisCache ephemeral summary access", () => {
 		assert.strictEqual(await rawRedis.get(key), "unexpected");
 	});
 
+	for (const statePrefix of ["A", "D"]) {
+		it(`rejects and retains an unsafe ${statePrefix} timestamp during atomic activation`, async () => {
+			const key = "git:summaryAccess:v1:tenant%2Fa:doc";
+			const malformedValue = `${statePrefix}:9007199254740992`;
+			await rawRedis.set(key, malformedValue);
+
+			await assert.rejects(
+				cache.activateSummaryAccessIfNotDeleted(
+					"tenant/a",
+					"doc",
+					100,
+					Date.now() + 60_000,
+				),
+				MalformedEphemeralSummaryAccessRecordError,
+			);
+			assert.strictEqual(await rawRedis.get(key), malformedValue);
+		});
+	}
+
 	for (const invalidCreateTime of [-1, Number.NaN, Number.POSITIVE_INFINITY]) {
 		it(`rejects invalid createTime ${invalidCreateTime}`, async () => {
 			await assert.rejects(

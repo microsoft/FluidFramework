@@ -93,16 +93,10 @@ export class RedisCache implements ICache, IEphemeralSummaryAccessStore {
 			`
 local current = redis.call("GET", KEYS[1])
 if current then
-    if string.match(current, "^D:%d+$") then
-        return 0
-    end
-    if string.match(current, "^A:%d+$") then
-        return 1
-    end
-    return -1
+    return current
 end
 redis.call("SET", KEYS[1], ARGV[1], "EX", ARGV[2])
-return 2
+return 0
 `,
 			1,
 			this.getSummaryAccessKey(tenantId, documentId),
@@ -110,20 +104,16 @@ return 2
 			this.getExpirySeconds(expiresAt),
 		);
 
-		switch (result) {
-			case -1:
-				throw new MalformedEphemeralSummaryAccessRecordError(
-					"Malformed ephemeral summary access record.",
-				);
-			case 0:
-				return "deleted";
-			case 1:
-				return "alreadyActive";
-			case 2:
-				return "created";
-			default:
-				throw new Error(`Unexpected ephemeral summary access activation result: ${result}`);
+		if (result === 0) {
+			return "created";
 		}
+		if (typeof result !== "string") {
+			throw new Error(`Unexpected ephemeral summary access activation result: ${result}`);
+		}
+
+		return this.parseSummaryAccessRecord(result).state === "active"
+			? "alreadyActive"
+			: "deleted";
 	}
 
 	public async markSummaryAccessDeleted(
