@@ -3250,9 +3250,6 @@ importers:
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../packages/dds/tree
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework

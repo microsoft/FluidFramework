@@ -6,12 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
-import {
-	independentView,
-	FormattedTextDefault,
-	FormattedText,
-} from "@fluidframework/tree/internal";
+import { independentView, FormattedText } from "@fluidframework/tree/alpha";
 
+import { FormattedTextDefault } from "../formatted/index.js";
 import {
 	applyQuillDeltaToTree,
 	// eslint-disable-next-line import-x/no-internal-modules
