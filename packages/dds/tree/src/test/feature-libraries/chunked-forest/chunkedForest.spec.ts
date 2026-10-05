@@ -163,6 +163,7 @@ describe("Chunker", () => {
 
 	it("maintains one schema listener for the current cache contents", () => {
 		const schema = new TestSchema();
+		let shapeComputations = 0;
 		const chunker = new Chunker(
 			schema,
 			defaultSchemaPolicy,
@@ -170,8 +171,8 @@ describe("Chunker", () => {
 			Number.POSITIVE_INFINITY,
 			0,
 			0,
-			(type, shapes) => {
-				shapes.set(type, polymorphic);
+			() => {
+				shapeComputations += 1;
 				return polymorphic;
 			},
 		);
@@ -179,13 +180,17 @@ describe("Chunker", () => {
 		const secondType = brand<TreeNodeSchemaIdentifier>("second");
 
 		chunker.shapeFromSchema(firstType);
+		chunker.shapeFromSchema(firstType);
+		assert.equal(shapeComputations, 1);
 		chunker.shapeFromSchema(secondType);
+		assert.equal(shapeComputations, 2);
 		assert.equal(schema.hasAfterSchemaChangeListeners(), true);
 
 		schema.apply(schema);
 		assert.equal(schema.hasAfterSchemaChangeListeners(), false);
 
 		chunker.shapeFromSchema(firstType);
+		assert.equal(shapeComputations, 3);
 		assert.equal(schema.hasAfterSchemaChangeListeners(), true);
 		chunker.dispose();
 		assert.equal(schema.hasAfterSchemaChangeListeners(), false);

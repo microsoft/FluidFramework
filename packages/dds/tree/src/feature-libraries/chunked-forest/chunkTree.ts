@@ -154,7 +154,7 @@ export class Chunker implements IChunker {
 		public readonly uniformChunkNodeCount: number,
 		public readonly uniformChunkNodeCountDynamicTargetMax: number,
 		/**
-		 * Derives shape information and adds it to the supplied cache.
+		 * Derives shape information, which the chunker caches for `type`.
 		 *
 		 * The function can also cache shape information for dependencies that it examines.
 		 * All entries must be derived only from `chunkerSchema`, because the complete map is
@@ -167,7 +167,7 @@ export class Chunker implements IChunker {
 			type: TreeNodeSchemaIdentifier,
 			/**
 			 * The cache for the current schema version.
-			 * The function must add the result for `type` and can add results for other examined types.
+			 * The function can add results for other examined types.
 			 */
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 			/**
@@ -208,10 +208,15 @@ export class Chunker implements IChunker {
 			this.schemaChanged(),
 		);
 		const result = this.tryShapeWithSchema(schema, this.typeShapes, this.schema);
+		// tryShapeWithSchema may have added this item to the cache:
+		// if so, it should be the same as the returned result.
 		debugAssert(
 			() =>
-				this.typeShapes.get(schema) === result || "Returned shape does not match cached shape",
+				!this.typeShapes.has(schema) ||
+				this.typeShapes.get(schema) === result ||
+				"Returned shape does not match cached shape",
 		);
+		this.typeShapes.set(schema, result);
 		return result;
 	}
 
