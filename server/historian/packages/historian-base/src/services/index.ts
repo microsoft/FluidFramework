@@ -19,6 +19,7 @@ export type {
 	ActivateSummaryAccessResult,
 	IEphemeralSummaryAccessRecord,
 	IEphemeralSummaryAccessStore,
+	ISummaryAccessContext,
 } from "./definitions";
 export {
 	isEphemeralSummaryAccessStore,

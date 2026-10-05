@@ -38,6 +38,15 @@ export interface IEphemeralSummaryAccessRecord {
 	createTime: number;
 }
 
+export interface ISummaryAccessContext {
+	tenantId: string;
+	documentId: string;
+	isEphemeralContainer: boolean;
+	createTime: number;
+	storageName?: string;
+	source: "localEphemeral" | "alfred";
+}
+
 export class MalformedEphemeralSummaryAccessRecordError extends Error {}
 
 export type ActivateSummaryAccessResult = "created" | "alreadyActive" | "deleted";
