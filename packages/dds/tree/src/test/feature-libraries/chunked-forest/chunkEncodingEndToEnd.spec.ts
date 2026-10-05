@@ -24,8 +24,8 @@ import {
 	rootFieldKey,
 	type TaggedChange,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type TreeStoredSchemaSubscription,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
@@ -147,7 +147,7 @@ describe("End to end chunked encoding", () => {
 			(
 				type: TreeNodeSchemaIdentifier,
 				shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
-				chunkerSchema: TreeStoredSchemaSubscription,
+				chunkerSchema: TreeStoredSchema,
 			) =>
 				tryShapeFromNodeSchema(
 					{
