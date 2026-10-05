@@ -1,6 +1,6 @@
 # Sandbox Demo
 
-The test file in this folder contains an example architecture for a SharedTree view in a sandbox.
+The tests in this folder exercise an example architecture for a SharedTree view in a sandbox.
 
 The example contains these items:
 
@@ -87,20 +87,22 @@ These terms are similar to the terms for virtual machines.
     Thus, this protocol does not require version stabilization.
 4. Each message is compatible with [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort).
     This requirement includes initialization messages.
-    The example does not currently meet this requirement.
-    For more information, see "ID Sharding."
 5. The Guest is valid only during its owning Host session.
     Behavior after that session ends is unsupported.
+6. The ID compressor's V3 serialization format is enabled.
+    Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
 
 ## Architecture
 
 ### Endpoint Options
 
-The `Host` constructor and `Guest.create` each accept a named options object.
-Their `HostOptions` and `GuestOptions` interfaces extend `SandboxEndpointOptions` in [common.ts](./common.ts).
-The shared type defines the endpoint's port, logger, session compressor, and optional protocol-error callback.
-Supply a separate port and scoped logger for each endpoint, but share the compressor.
-The Host also requires the application view and binding handle; the Guest requires its schema configuration and tree options.
+`Sandboxing.createHost` and `Sandboxing.createGuest` each accept a named options object.
+Their `Sandboxing.HostOptions` and `Sandboxing.GuestOptions` types include the properties from `Sandboxing.EndpointOptions`.
+The shared type defines the endpoint's port, logger, and optional protocol-error callback.
+Supply a separate port and scoped logger for each endpoint.
+The Host requires the application view and uses its checkout's runtime compressor; the Guest requires forest and codec options.
+The Guest receives its own serialized ID space shard through initialization.
+After initialization, the sandboxed client selects a schema with `guest.tree.viewWith(config)`.
 If you omit the protocol-error callback, terminal errors are thrown asynchronously.
 
 ### Participants and Message Directions
@@ -119,12 +121,16 @@ flowchart LR
 
 ### Full-Duplex Synchronization
 
-The Guest keeps a copy of the Host main branch and a separate branch for Guest edits.
+The Guest keeps a checkout for the Host main branch and a separate checkout for Guest edits.
 The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
+[GuestSynchronization](./guestSynchronization.ts) owns the hidden Host and authoring checkouts and the child ID space shard.
+[Guest](./guest.ts) owns the port and message routing.
+On failure, synchronization stops but keeps the checkouts until the application disposes the Guest.
 
 The Host preserves the Guest's authoring state in its local branch.
 It applies Guest changes there and merges them into main without rebasing the local branch itself.
+Each change depends on the receiver knowing its IDs; see [ID Space Sharding](#id-space-sharding).
 Only a Guest acknowledgment advances that branch over a Host update.
 Each outstanding update retains the exact Host branch snapshot that was sent, because a revision can be rebased while a message is in flight.
 The Host disposes each snapshot after acknowledgment, or when the session stops.
@@ -142,8 +148,31 @@ This preserves pending Host edits as commits that can be rebased, including inse
 
 The baseline revision aliases the independent checkout's initial head.
 Branch validation recognizes this alias even when an update contains no commits.
-Initialization commits use the same handle encoding and decoding as subsequent changes.
-The ID compressor is still shared; see [ID Sharding](#id-sharding).
+Initialization commits use the same handle codec as subsequent changes and preserve custom metadata.
+After encoding the snapshot and retained commits, the Host creates a child ID space shard and sends it in `hostInitialization` over `MessagePort`.
+The Guest deserializes the shard before creating its checkouts.
+See [ID Space Sharding](#id-space-sharding).
+
+### ID Space Sharding
+
+The Host retains its runtime ID compressor and sends a serialized child shard to the Guest.
+The two compressor instances share a session ID, but neither automatically learns IDs created by the other.
+This requires V3; a V2 runtime compressor cannot create the shard.
+
+Each Guest change carries a child synchronization token captured after its change is serialized, since serialization can create IDs.
+The Host validates the shard and synchronizes before decoding the change.
+Consecutive changes can carry tokens with the same generation count when they create no new IDs.
+
+Host-to-Guest updates carry a parent synchronization token captured after their commits are encoded.
+The Host also forwards finalized creation ranges in order, even without a tree update.
+The Guest applies the parent token before decoding Host commits or finalizing a range; ordered delivery places a range before an update that uses its IDs.
+The runtime, not the sandbox, submits ID creation ranges for finalization.
+See [the protocol schemas](./common.ts) and [the compressor API](../../../../../../runtime/id-compressor/src/types/idCompressor.ts) for the message fields and progress operations.
+
+Guest disposal is local and does not notify the Host.
+After stopping or fencing the Guest, the orchestrator disposes the Host session to reclaim the shard from its last accepted progress.
+See [Session Failure and Application-Managed Recreation](#session-failure-and-application-managed-recreation) for teardown and lost-connection behavior.
+ID space sharding support was added in [PR 27559](https://github.com/microsoft/FluidFramework/pull/27559).
 
 ### Message Conversion and Validation
 
@@ -192,8 +221,7 @@ Restoration alone neither binds nor resolves handles.
 For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, binds its handles, merges into the main branch, and then acknowledges it.
 Incoming validation or processing failures and outgoing normalization, validation, or encoding failures terminate the session.
 
-Initialization is a separate entry point: the compressed initial tree follows normalization, payload validation, transport encoding, structured clone, transport decoding, payload validation, and tree-codec initialization.
-The complete initialization payload does not yet pass through `MessagePort`; see [ID Sharding](#id-sharding).
+Initialization is a separate entry point: the complete message, including the compressed tree, schema, retained commits, and serialized child compressor, follows normalization, validation, transport encoding, `MessagePort` structured clone, transport decoding, validation, and tree-codec initialization.
 
 These diagrams show the implemented layers, not a complete security guarantee.
 See [Protocol Validation and Security Hardening](#protocol-validation-and-security-hardening) for the validation still required before production use.
@@ -255,15 +283,26 @@ The application owns teardown and recreation of the Host/Guest pair and sandbox.
 Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
 Recovery uses fresh session objects, not reset breakers.
 
+Call `Guest.dispose()` to synchronously stop Guest edits, release both Guest checkouts, and dispose its ID space shard.
+Guest disposal does not notify the Host.
+The orchestrator must stop or fence the Guest before disposing the Host session, so the old iframe cannot send changes or restart from its serialized shard.
+Host disposal stops receiving messages, reclaims the shard using the last accepted Guest progress, and preserves the application's main view.
+Guest changes already accepted by the Host remain; pending edits and Host updates can be lost.
+An initialization send failure also reclaims a shard that the Guest never received.
+
+After failure, synchronization is stopped: the authoring checkout remains available for inspection if usable, but the application must not edit it.
+Do not treat `sessionFailure` as proof that the Guest has been fenced.
+If no failure reaches the Host, disposing the Guest alone does not stop Host updates or release unacknowledged snapshots.
+See [the Guest lifecycle](./guest.ts) and [GuestSynchronization](./guestSynchronization.ts) for the local cleanup contract.
+
 The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
 
 ### Test Coverage
 
-[Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
-End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
-The tests use real `MessagePort` channels; the sampled schedule tests use a two-channel relay to control delivery in each direction.
-Regression tests cover consecutive Guest changes authored before a concurrent insertion, empty baseline updates, and initialization with pending Host edits before and after history trimming.
-Initialization tests also sequence concurrent Peer edits before the pending Host edits.
+[Transport codec tests](../test/shared-tree/sandboxing/transport.spec.ts) and [end-to-end tests](../test/shared-tree/sandboxing/sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
+End-to-end tests cover initialization, separate compressors, ID progress, branch rebases, undo/redo, and session replacement.
+The [ServiceClient test](../test/shared-tree/sandboxing/demo.integration.ts) uses a test-only V3 override; an isolated iframe test is still pending.
+The tests use real `MessagePort` channels, with a two-channel relay to control delivery order in schedule tests.
 The schedule tests use `createFuzzDescribe`, `generateTestSeeds`, and `makeRandom` from `@fluid-private/stochastic-test-utils`.
 Each step samples from the actions that are currently legal, including Guest deletions and Host/Peer insertions at the start.
 This state-dependent sampling fits message schedules better than a fixed pairwise configuration matrix.
@@ -306,15 +345,12 @@ Complete these items in any order.
 Some tests will fail if you write them before you complete the implementation.
 These failures do not prevent you from writing the tests.
 
-### ID Sharding
+### Runtime ID Compressor Version
 
-The Host and the Guest currently use the same id-compressor instance.
-This design is not practical because the Host and the Guest can run in different processes.
-Update the code to serialize a sharded id-compressor.
-
-Sharding support was added in https://github.com/microsoft/FluidFramework/pull/26294.
-The change was reverted in https://github.com/microsoft/FluidFramework/pull/26394.
-Fix, restore, and use that implementation, or implement a different solution.
+The sandbox Host requires a V3 runtime ID compressor to create a child ID space shard.
+ServiceClient runtimes configured with an older compatibility floor create a V2 compressor.
+The integration test verifies that its runtime supplies a V3 compressor.
+Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable V3 before using a ServiceClient Host outside this test.
 
 ### Protocol Validation and Security Hardening
 
@@ -349,10 +385,6 @@ Guest trunk trimming is not a requirement for V1 because timeline support disabl
 In other configurations, make sure that the Guest does not keep an unlimited history.
 
 ### `MessagePort` and IFrame Testing
-
-Initialization data does not yet pass through the port.
-The compressed initial tree follows the separate path described in [Architecture](#message-conversion-and-validation).
-Complete [ID sharding](#id-sharding) before the entire initialization payload uses the message protocol.
 
 Add an integration test that uses an isolated iframe.
 This test makes sure that the implementation does not depend on shared global values.

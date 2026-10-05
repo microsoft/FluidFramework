@@ -5,9 +5,12 @@
 
 import { strict as assert, fail } from "node:assert";
 
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+
 import { createIdCompressor, IdCompressor } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
 import type {
+	IdCreationRange,
 	SerializedIdCompressorWithOngoingSession,
 	SessionSpaceCompressedId,
 } from "../index.js";
@@ -1325,6 +1328,216 @@ describe("IdCompressor Sharding", () => {
 			// The disposal token flows into synchronizeWithShard, which both syncs and reclaims.
 			root.synchronizeWithShard(disposalToken);
 			assert.equal(root.decompress(child1Id), expectedStable);
+		});
+
+		it("lets a live child learn parent IDs without changing its allocation stride", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+
+			const childId = child.generateCompressedId();
+			parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+			const parentId = parent.generateCompressedId();
+			assert.throws(() => child.decompress(parentId), {
+				name: "Error",
+				message: /Unknown ID/,
+			});
+
+			const parentToken = parent.getChildShardSyncToken(child.getShardSyncToken() ?? fail());
+			assert.equal(parentToken.type, "parentIdSpaceShardSyncToken");
+			assert.equal("disposed" in parentToken, false);
+			child.synchronizeWithParent(parentToken);
+			assert.equal(child.decompress(parentId), parent.decompress(parentId));
+			assert.equal(child.decompress(childId), parent.decompress(childId));
+
+			const nextChildId = child.generateCompressedId();
+			const nextParentId = parent.generateCompressedId();
+			assert.notEqual(nextChildId, nextParentId);
+			parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+			assert.equal(parent.decompress(nextChildId), child.decompress(nextChildId));
+		});
+
+		it("does not backfill when a child is already ahead of its parent", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			child.generateCompressedId();
+			child.generateCompressedId();
+			const childToken = child.getShardSyncToken() ?? fail();
+			const before = child.serialize(true);
+
+			child.synchronizeWithParent(parent.getChildShardSyncToken(childToken));
+			assert.equal(child.serialize(true), before);
+
+			const parentId = parent.generateCompressedId();
+			child.synchronizeWithParent(parent.getChildShardSyncToken(childToken));
+			assert.equal(child.serialize(true), before);
+			assert.equal(child.decompress(parentId), parent.decompress(parentId));
+		});
+
+		it("realigns to the original stride when reclaiming the last child", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childId = child.generateCompressedId();
+			const expectedStableId = child.decompress(childId);
+
+			parent.synchronizeWithShard(child.disposeShard() ?? fail());
+			assert.equal(parent.getShardSyncToken(), undefined);
+			assert.equal(parent.decompress(childId), expectedStableId);
+			assert.equal(parent.generateCompressedId(), -5);
+		});
+
+		it("preserves the active child when progress cannot fit in the ID space", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childToken = child.getShardSyncToken() ?? fail();
+			const before = parent.serialize(true);
+
+			assert.throws(
+				() =>
+					parent.synchronizeWithShard({
+						...childToken,
+						localGenCount: Number.MAX_SAFE_INTEGER,
+						disposed: true,
+					}),
+				{ name: "TypeError", message: /supported ID space/ },
+			);
+			assert.equal(parent.serialize(true), before);
+			assert.doesNotThrow(() => parent.getChildShardSyncToken(childToken));
+		});
+
+		it("applies local finalized ranges after parent and child generate IDs", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childId = child.generateCompressedId();
+			parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+			const parentId = parent.generateCompressedId();
+			const range = parent.takeNextCreationRange();
+			const finalized: IdCreationRange[] = [];
+			const off = parent.events.on("rangeFinalized", (value) => finalized.push(value));
+			try {
+				parent.finalizeCreationRange(range);
+				assert.deepEqual(finalized, [range]);
+
+				child.synchronizeWithParent(
+					parent.getChildShardSyncToken(child.getShardSyncToken() ?? fail()),
+				);
+				child.finalizeCreationRange(range);
+				for (const id of [parentId, childId]) {
+					assert.equal(child.decompress(id), parent.decompress(id));
+					assert.equal(child.normalizeToOpSpace(id), parent.normalizeToOpSpace(id));
+				}
+				const next = child.generateCompressedId();
+				parent.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+				assert.equal(parent.decompress(next), child.decompress(next));
+			} finally {
+				off();
+			}
+		});
+
+		it("rejects a token for another child or an invalid generation count without changing state", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [firstSerialized, secondSerialized] = parent.shard(2);
+			const first = deserialize(firstSerialized);
+			const second = deserialize(secondSerialized);
+			const parentToken = parent.getChildShardSyncToken(first.getShardSyncToken() ?? fail());
+			const before = first.serialize(true);
+
+			assert.throws(() => second.synchronizeWithParent(parentToken), {
+				name: "Error",
+				message: /parent synchronization token.*child shard/,
+			});
+			assert.throws(
+				() => first.synchronizeWithParent({ ...parentToken, localGenCount: 1.5 }),
+				{ name: "TypeError", message: /shard synchronization token generation count/ },
+			);
+			assert.equal(first.serialize(true), before);
+			assert.equal(second.generateCompressedId(), -5);
+		});
+
+		it("rejects invalid generation counts in either sync direction without changing state", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const childToken = child.getShardSyncToken() ?? fail();
+			const parentToken = parent.getChildShardSyncToken(childToken);
+			const originalParent = parent.serialize(true);
+			const originalChild = child.serialize(true);
+			for (const invalidCount of [
+				-1,
+				0.5,
+				Number.NaN,
+				Number.POSITIVE_INFINITY,
+				Number.MAX_SAFE_INTEGER + 1,
+			]) {
+				assert.throws(
+					() => child.synchronizeWithParent({ ...parentToken, localGenCount: invalidCount }),
+					{
+						name: "TypeError",
+						message: /Invalid shard synchronization token generation count/,
+					},
+				);
+				for (const disposed of [false, true]) {
+					assert.throws(
+						() =>
+							parent.synchronizeWithShard({
+								...childToken,
+								localGenCount: invalidCount,
+								disposed,
+							}),
+						{
+							name: "TypeError",
+							message: /Invalid shard synchronization token generation count/,
+						},
+					);
+				}
+				assert.equal(child.serialize(true), originalChild);
+				assert.equal(parent.serialize(true), originalParent);
+				assert.doesNotThrow(() => parent.getChildShardSyncToken(childToken));
+			}
+		});
+
+		it("reports finalized ranges so a child can apply them in order", () => {
+			const parent = createIdCompressor(SerializationVersion.V3);
+			const [serializedChild] = parent.shard(1);
+			const child = deserialize(serializedChild);
+			const remote = createIdCompressor(SerializationVersion.V3);
+			const remoteId = remote.generateCompressedId();
+			const encodedRemoteId = remote.normalizeToOpSpace(remoteId);
+			const range = remote.takeNextCreationRange();
+			const finalized: IdCreationRange[] = [];
+			const off = parent.events.on("rangeFinalized", (value) => finalized.push(value));
+			try {
+				parent.finalizeCreationRange(range);
+				assert.deepEqual(finalized, [range]);
+				assert.throws(
+					() => child.normalizeToSessionSpace(encodedRemoteId, remote.localSessionId),
+					{ name: "Error", message: /No IDs have ever been finalized/ },
+				);
+
+				for (const update of finalized) {
+					child.finalizeCreationRange(update);
+				}
+				const normalized = child.normalizeToSessionSpace(
+					encodedRemoteId,
+					remote.localSessionId,
+				);
+				assert.equal(child.decompress(normalized), remote.decompress(remoteId));
+				assert.throws(
+					() => parent.finalizeCreationRange(range),
+					(error: unknown) => {
+						assert(error instanceof LoggingError);
+						assert.match(error.message, /Ranges finalized out of order/);
+						return true;
+					},
+				);
+				assert.deepEqual(finalized, [range]);
+			} finally {
+				off();
+			}
 		});
 	});
 });

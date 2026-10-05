@@ -8,7 +8,7 @@ import { FluidHandleBase } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { brand } from "../../../util/index.js";
+import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestId,

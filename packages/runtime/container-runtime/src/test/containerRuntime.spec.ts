@@ -42,6 +42,10 @@ import {
 	type IDocumentAttributes,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import type {
 	FluidDataStoreMessage,
 	ISummaryTreeWithStats,
@@ -104,10 +108,12 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import { disableStrictLoaderLayerCompatibilityCheckKey } from "../runtimeLayerCompatState.js";
 import {
 	type ISummaryCancellationToken,
 	type IContainerRuntimeMetadata,
 	neverCancelledSummaryToken,
+	idCompressorBlobName,
 	metadataBlobName,
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
@@ -343,7 +349,220 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
+		describe("legacy loader compatibility", () => {
+			for (const [name, settings] of [
+				["strict compatibility enabled by default", {}],
+				[
+					"strict compatibility disabled",
+					{ [disableStrictLoaderLayerCompatibilityCheckKey]: true },
+				],
+			] as const) {
+				it(`rejects a loader without a tagged logger when ${name}`, async () => {
+					const untaggedLogger = new MockLogger();
+					const closeFn = Sinon.fake();
+					const legacyContext = {
+						...getMockContext({ logger: untaggedLogger, settings }),
+						taggedLogger: undefined,
+						logger: untaggedLogger,
+						closeFn,
+					};
+
+					await assert.rejects(
+						ContainerRuntime.loadRuntime2({
+							context: legacyContext as unknown as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							provideEntryPoint: mockProvideEntryPoint,
+						}),
+						(error: Error) =>
+							error instanceof UsageError &&
+							error.message === "Loader must provide a tagged logger",
+					);
+
+					assert(closeFn.calledOnce, "The incompatible container should be closed");
+					assert.deepEqual(
+						untaggedLogger.events,
+						[],
+						"Runtime telemetry must not be sent to the untagged logger",
+					);
+				});
+			}
+		});
+
 		describe("IdCompressor", () => {
+			/**
+			 * Asserts that pending local state and an attachment summary use the expected ID compressor serialization format.
+			 *
+			 * @remarks
+			 * This helper changes runtime state: capturing pending state flushes the pending batch,
+			 * and creating the attachment summary finalizes the compressor's next ID creation range.
+			 *
+			 * @param runtime - A runtime with an initialized ID compressor.
+			 * @param expectedVersion - The serialization format version expected in both persisted representations.
+			 */
+			function assertSerializationVersion(
+				runtime: ContainerRuntime,
+				expectedVersion: SerializationVersion,
+			): void {
+				// Capture local session state before creating the summary finalizes newly allocated IDs.
+				const pendingState = runtime.getPendingLocalState() as IPendingRuntimeState;
+				assert(pendingState.pendingIdCompressorState !== undefined);
+				// The base64 payload stores the format version in its first 64-bit floating-point slot.
+				// stringToBuffer returns an ArrayBuffer, so Float64Array views the decoded bytes, matching the compressor's reader.
+				assert.equal(
+					new Float64Array(stringToBuffer(pendingState.pendingIdCompressorState, "base64"))[0],
+					expectedVersion,
+					"Pending state should use the selected serialization version",
+				);
+
+				const summary = runtime.createSummary();
+				const blob: SummaryObject | undefined = summary.tree[idCompressorBlobName];
+				assert(blob?.type === SummaryType.Blob);
+				assert(typeof blob.content === "string");
+				// Summary blobs JSON-encode the base64 string; pending state stores that string directly.
+				const serialized: unknown = JSON.parse(blob.content);
+				assert(typeof serialized === "string");
+				assert.equal(
+					new Float64Array(stringToBuffer(serialized, "base64"))[0],
+					expectedVersion,
+					"Summary should use the selected serialization version",
+				);
+			}
+
+			for (const [oldestSupportedClient, expectedVersion] of [
+				[undefined, SerializationVersion.V2],
+				["2.0.0", SerializationVersion.V2],
+				["3.3.0", SerializationVersion.V2],
+				["3.4.0", SerializationVersion.V3],
+			] as const) {
+				for (const enableRuntimeIdCompressor of ["on", "delayed"] as const) {
+					it(`selects V${expectedVersion} with oldestSupportedClient ${oldestSupportedClient} in ${enableRuntimeIdCompressor} mode`, async () => {
+						const { runtime } = await ContainerRuntime.loadRuntime2({
+							context: getMockContext({
+								connected: enableRuntimeIdCompressor === "on",
+							}) as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: { enableRuntimeIdCompressor },
+							provideEntryPoint: mockProvideEntryPoint,
+							...(oldestSupportedClient === undefined ? {} : { oldestSupportedClient }),
+						});
+
+						if (enableRuntimeIdCompressor === "delayed") {
+							const pendingState = runtime.getPendingLocalState() as IPendingRuntimeState;
+							assert.equal(pendingState.pendingIdCompressorState, undefined);
+							changeConnectionState(runtime, true, mockClientId);
+							assert.equal(runtime.idCompressor, undefined);
+							runtime.generateDocumentUniqueId();
+							assertSerializationVersion(runtime, expectedVersion);
+						} else {
+							assert(runtime.idCompressor !== undefined);
+							const id = runtime.idCompressor.generateCompressedId();
+							const stableId = runtime.idCompressor.decompress(id);
+							assertSerializationVersion(runtime, expectedVersion);
+							assert.equal(runtime.idCompressor.recompress(stableId), id);
+						}
+					});
+				}
+			}
+
+			it("selects V3 with the deprecated minVersionForCollab option", async () => {
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: { enableRuntimeIdCompressor: "on" },
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab: "3.4.0",
+				});
+
+				assertSerializationVersion(runtime, SerializationVersion.V3);
+			});
+
+			for (const source of ["summary", "pending state"] as const) {
+				for (const serializedVersion of [SerializationVersion.V2, SerializationVersion.V3]) {
+					for (const [oldestSupportedClient, requestedVersion] of [
+						["3.3.0", SerializationVersion.V2],
+						["3.4.0", SerializationVersion.V3],
+					] as const) {
+						it(`restores V${serializedVersion} ${source} with oldestSupportedClient ${oldestSupportedClient}`, async () => {
+							const compressor = createIdCompressor(serializedVersion);
+							const id = compressor.generateCompressedId();
+							const stableId = compressor.decompress(id);
+							if (source === "summary") {
+								compressor.finalizeCreationRange(compressor.takeNextCreationRange());
+							}
+
+							// A different snapshot compressor verifies that pending state takes precedence.
+							const snapshotCompressor =
+								source === "summary"
+									? compressor
+									: createIdCompressor(SerializationVersion.V2);
+							const metadata: IContainerRuntimeMetadata = {
+								summaryFormatVersion: 1,
+								documentSchema: {
+									version: 1,
+									refSeq: 0,
+									info: { minVersionForCollab: "2.0.0" },
+									runtime: { explicitSchemaControl: true, idCompressorMode: "on" },
+								},
+							};
+							const blobs = new Map([
+								[metadataBlobName, JSON.stringify(metadata)],
+								[idCompressorBlobName, JSON.stringify(snapshotCompressor.serialize(false))],
+							]);
+							const context = {
+								...getMockContext({
+									baseSnapshot: {
+										trees: { ".channels": { trees: {}, blobs: {} } },
+										blobs: {
+											[metadataBlobName]: metadataBlobName,
+											[idCompressorBlobName]: idCompressorBlobName,
+										},
+									},
+									mockStorage: {
+										...defaultMockStorage,
+										readBlob: async (blobId) => {
+											const content = blobs.get(blobId);
+											assert(content !== undefined, `Unexpected blob: ${blobId}`);
+											return stringToBuffer(content, "utf8");
+										},
+									},
+								}),
+								pendingLocalState:
+									source === "pending state"
+										? { pendingIdCompressorState: compressor.serialize(true) }
+										: undefined,
+							};
+							const { runtime } = await ContainerRuntime.loadRuntime2({
+								context: context as IContainerContext,
+								registry: new FluidDataStoreRegistry([]),
+								existing: true,
+								provideEntryPoint: mockProvideEntryPoint,
+								oldestSupportedClient,
+							});
+
+							const restored = runtime.idCompressor;
+							assert(restored !== undefined);
+							if (source === "pending state") {
+								assert.equal(restored.localSessionId, compressor.localSessionId);
+								assert.equal(restored.recompress(stableId), id);
+							} else {
+								assert.notEqual(restored.localSessionId, compressor.localSessionId);
+							}
+							assert.equal(restored.decompress(restored.recompress(stableId)), stableId);
+							assertSerializationVersion(
+								runtime,
+								serializedVersion === SerializationVersion.V3
+									? SerializationVersion.V3
+									: requestedVersion,
+							);
+							assert.notEqual(restored.decompress(restored.generateCompressedId()), stableId);
+						});
+					}
+				}
+			}
+
 			it("finalizes idRange on attach", async () => {
 				const logger = new MockLogger();
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({

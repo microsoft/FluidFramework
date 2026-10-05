@@ -164,8 +164,6 @@ import {
 	GenericError,
 	LoggingError,
 	PerformanceEvent,
-	// eslint-disable-next-line import-x/no-deprecated
-	TaggedLoggerAdapter,
 	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
@@ -177,7 +175,7 @@ import {
 	normalizeError,
 	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { gt } from "semver-ts";
+import { gt, gte as greaterThanOrEqual } from "semver-ts";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -593,17 +591,6 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 const defaultStagingCommitOptions = { squash: false };
 
 /**
- * @deprecated
- * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
- * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
- * its usage is removed from TaggedLoggerAdapter fallback.
- */
-interface OldContainerContextWithLogger extends Omit<IContainerContext, "taggedLogger"> {
-	logger: ITelemetryBaseLogger;
-	taggedLogger: undefined;
-}
-
-/**
  * Events raised by the ContainerRuntime for its own internal use.
  */
 interface IContainerRuntimeInternalEvents {
@@ -835,6 +822,11 @@ export interface LoadContainerRuntimeParams {
 	 * understand the new op type. If a customer were to set oldestSupportedClient to 2.40.0, then `bar` would be set to
 	 * enable `foo` by default. If a customer were to set oldestSupportedClient to 2.0.0, then `bar` would be set to
 	 * disable `foo` by default.
+	 *
+	 * Internal features introduced by version:
+	 *
+	 * - `3.4.0` - Uses the V3 serialization format for the ID compressor.
+	 *
 	 */
 	oldestSupportedClient?: OldestSupportedClientVersion;
 
@@ -1025,15 +1017,14 @@ export class ContainerRuntime
 			deprecatedMinVersionForCollab ??
 			defaultMinVersionForCollab;
 
-		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
-		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45
-		const backCompatContext: IContainerContext | OldContainerContextWithLogger = context;
-		const passLogger =
-			backCompatContext.taggedLogger ??
-			// eslint-disable-next-line import-x/no-deprecated
-			new TaggedLoggerAdapter((backCompatContext as OldContainerContextWithLogger).logger);
+		if (context.taggedLogger === undefined) {
+			const error = new UsageError("Loader must provide a tagged logger");
+			context.closeFn(error);
+			throw error;
+		}
+
 		const logger = createChildLogger({
-			logger: passLogger,
+			logger: context.taggedLogger,
 			properties: {
 				all: {
 					runtimeVersion: pkgVersion,
@@ -1241,6 +1232,10 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
+		const idCompressorSerializationVersion = greaterThanOrEqual(minVersionForCollab, "3.4.0")
+			? SerializationVersion.V3
+			: SerializationVersion.V2;
+
 		const createIdCompressorFn = (): IIdCompressor & IIdCompressorCore => {
 			/**
 			 * Because the IdCompressor emits so much telemetry, this function is used to sample
@@ -1262,20 +1257,20 @@ export class ContainerRuntime
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						pendingLocalState.pendingIdCompressorState,
-						SerializationVersion.V2,
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);
 			} else if (serializedIdCompressor === undefined) {
 				return toIdCompressorWithCore(
-					createIdCompressor(SerializationVersion.V2, compressorLogger),
+					createIdCompressor(idCompressorSerializationVersion, compressorLogger),
 				);
 			} else {
 				return toIdCompressorWithCore(
 					deserializeIdCompressor(
 						serializedIdCompressor,
 						createSessionId(),
-						SerializationVersion.V2,
+						idCompressorSerializationVersion,
 						toITelemetryLoggerExt(compressorLogger),
 					),
 				);

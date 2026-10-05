@@ -5,6 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ParentShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -12,13 +13,14 @@ import {
 	findCommonAncestor,
 	type GraphCommit,
 	type RevisionTag,
-} from "../../../core/index.js";
-import type { SharedTreeChange } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- The sandbox Host requires internal Simple Tree APIs.
-import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
-import type { ImplicitFieldSchema } from "../../../simple-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { brand } from "../../../util/index.js";
+} from "../core/index.js";
+import {
+	makeSerializedChangeCodec,
+	type SerializedChangeCodec,
+	type SharedTreeChange,
+	type TreeCheckout,
+} from "../shared-tree/index.js";
+import { brand } from "../util/index.js";
 
 import {
 	type GuestChangeAckMessage,
@@ -29,9 +31,19 @@ import {
 	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	type PromiseWithResolvers,
+	sandboxFormatValidator,
 	SandboxProtocolError,
 } from "./common.js";
-import { getBranch, getFinalizedCommit, serializeCommit } from "./synchronizationUtils.js";
+
+/**
+ * Schema-validation error policy for codecs that decode untrusted Guest data on the Host.
+ * @remarks
+ * Guest codecs intentionally omit this policy so unexpected Host data continues to trigger the
+ * default validation assertions.
+ */
+const throwInvalidGuestChange = (): never => {
+	throw new SandboxProtocolError("Invalid encoded data from Guest.");
+};
 
 /**
  * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
@@ -39,13 +51,13 @@ import { getBranch, getFinalizedCommit, serializeCommit } from "./synchronizatio
  */
 export type GuestBranchInitialization = Omit<
 	HostInitializationMessage,
-	"type" | "tree" | "schema"
+	"type" | "tree" | "schema" | "idCompressor"
 >;
 
 /** A Host update awaiting the Guest's acknowledgment. */
 interface PendingHostUpdate {
 	/** The exact Host main-branch state sent in the update. */
-	readonly branch: ReturnType<typeof getBranch>;
+	readonly branch: TreeCheckout["mainBranch"];
 	/** The finalized-history boundary sent in the update. */
 	readonly trunkRevision: RevisionTag;
 }
@@ -56,11 +68,9 @@ interface PendingHostUpdate {
  * This class owns branch synchronization only.
  * The `Host` owns transport encoding, message routing, and session lifetime.
  */
-export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
-	/**
-	 * The Guest's authoring branch, advanced only by Guest changes and acknowledged Host updates.
-	 */
-	public readonly local: TreeViewAlpha<TSchema>;
+export class HostSynchronization {
+	/** The checkout for the Guest's authoring branch, advanced by Guest changes and acknowledged Host updates. */
+	public readonly localCheckout: TreeCheckout;
 	/** Host updates awaiting ordered acknowledgments, with the exact branch state sent for each update. */
 	private readonly pendingUpdates = new Map<HostUpdateId, PendingHostUpdate>();
 	/**
@@ -89,20 +99,16 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 	private stopped = false;
 	/** Whether the branches owned by this synchronization state have been disposed. */
 	private disposed = false;
+	/** Decodes untrusted Guest changes using Host protocol error semantics. */
+	private readonly guestChangeCodec: SerializedChangeCodec;
 
 	public constructor(
-		/**
-		 * The Host's main view to synchronize with the Guest.
-		 */
-		private readonly main: TreeViewAlpha<TSchema>,
+		/** The Host's main checkout to synchronize with the Guest. */
+		private readonly mainCheckout: TreeCheckout,
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
 		private readonly send: (message: HostUpdateMessage | GuestChangeAckMessage) => void,
-		/**
-		 * Binds handles in a change from the Guest to the Host's SharedTree.
-		 */
-		private readonly bindHandles: (change: JsonCompatibleReadOnly) => void,
 		/**
 		 * Runs an action within the Host session's error-handling boundary.
 		 */
@@ -115,11 +121,21 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		 * The scoped logger for synchronization diagnostics.
 		 */
 		private readonly logger: TelemetryLoggerExt,
+		/** Authorizes and imports Guest IDs before a serialized change is decoded. */
+		private readonly synchronizeGuestIdSpaceShard: (
+			token: GuestChangeMessage["idSpaceShardToken"],
+		) => void,
+		/** Captures the parent ID space shard token after commits have been encoded. */
+		private readonly getParentIdSpaceShardSyncToken: () => ParentShardSynchronizationToken,
 	) {
-		this.local = main.fork();
-		const branch = getBranch(main);
+		this.localCheckout = this.mainCheckout.fork();
+		this.guestChangeCodec = makeSerializedChangeCodec(
+			this.localCheckout.mainBranch.changeFamily,
+			sandboxFormatValidator,
+		);
+		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
-		const trunkRevision = getFinalizedCommit(main).revision;
+		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findAncestor(
 			[this.sentHead, commits],
@@ -133,7 +149,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			baseRevision: base.revision,
 			mainRevision: this.guestMainRevision,
 			trunkRevision: this.guestTrunkRevision,
-			commits: commits.map((commit) => serializeCommit(main, commit)),
+			commits: commits.map((commit) => this.mainCheckout.serializeCommit(commit)),
 		};
 		this.offAfterChange = branch.events.on("afterChange", () => {
 			this.run(() => this.sendMainUpdate());
@@ -167,10 +183,14 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
-		this.local.applyChange(message.change);
-		this.bindHandles(message.change);
+		this.synchronizeGuestIdSpaceShard(message.idSpaceShardToken);
+		this.localCheckout.applySerializedChange(
+			message.change,
+			this.guestChangeCodec,
+			throwInvalidGuestChange,
+		);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
-		this.main.merge(this.local, false);
+		this.mainCheckout.merge(this.localCheckout, false);
 		this.send({ type: "guestChangeAck", changeId: message.changeId });
 	}
 
@@ -183,7 +203,7 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			throw new SandboxProtocolError("Unexpected Host update acknowledgment.");
 		}
 		// A revision can be rebased while its update is in flight. Use the exact state sent.
-		getBranch(this.local).rebaseOnto(update.branch);
+		this.localCheckout.mainBranch.rebaseOnto(update.branch);
 		this.guestMainRevision = update.branch.getHead().revision;
 		this.guestTrunkRevision = update.trunkRevision;
 		this.pendingUpdates.delete(message.updateId);
@@ -239,12 +259,12 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 		}
 		this.stop(new Error("Host synchronization disposed before synchronization completed."));
 		this.disposed = true;
-		this.local.dispose();
+		this.localCheckout.dispose();
 	}
 
 	private sendMainUpdate(): void {
-		const head = getBranch(this.main).getHead();
-		const trunkRevision = getFinalizedCommit(this.main).revision;
+		const head = this.mainCheckout.mainBranch.getHead();
+		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findCommonAncestor(this.sentHead, [head, commits]);
 		assert(base !== undefined, "Host branch updates must share ancestry");
@@ -260,19 +280,24 @@ export class HostSynchronization<const TSchema extends ImplicitFieldSchema> {
 			this.updateInProgress.promise.catch((error: unknown) => this.fail(error));
 		}
 		this.pendingUpdates.set(updateId, {
-			branch: getBranch(this.main).fork(),
+			branch: this.mainCheckout.mainBranch.fork(),
 			trunkRevision,
 		});
 		this.sentHead = head;
 		this.sentTrunkRevision = trunkRevision;
 		this.log(`Sending update ${updateId} from ${base.revision} to ${head.revision}`);
+		const serializedCommits = commits.map((commit) =>
+			this.mainCheckout.serializeCommit(commit),
+		);
+		const parentIdSpaceShardSyncToken = this.getParentIdSpaceShardSyncToken();
 		this.send({
 			type: "hostUpdate",
 			updateId,
 			baseRevision: base.revision,
 			mainRevision: head.revision,
 			trunkRevision,
-			commits: commits.map((commit) => serializeCommit(this.main, commit)),
+			commits: serializedCommits,
+			parentIdSpaceShardSyncToken,
 		});
 	}
 
