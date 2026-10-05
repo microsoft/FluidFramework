@@ -208,6 +208,57 @@ describe("SharedCounter", () => {
 				assert.ok(fired1, "The event for first increment was not fired");
 				assert.ok(fired2, "The event for second increment was not fired");
 			});
+
+			it("preserves FIFO order when draining a burst of increments", () => {
+				// Submit a burst of N increments before any messages are processed. This exercises
+				// the pending-op queue: every increment is queued locally and submitted with a
+				// monotonically increasing messageId. When the acks come back in order, the local
+				// FIFO assert in SharedCounter.processMessage (matching pendingOps.shift() against
+				// the ack'd messageId) guarantees ordering -- a regression in pendingMessageIds
+				// management would trip that assert here.
+				const N = 32;
+				const deltas: number[] = [];
+				for (let i = 1; i <= N; i++) {
+					// Alternate sign so the running sum is non-trivial.
+					deltas.push(i % 2 === 0 ? -i : i);
+				}
+				const expectedSum = deltas.reduce((a, b) => a + b, 0);
+
+				// Track the order in which the remote observes the increments.
+				const remoteObserved: number[] = [];
+				testCounter2.on("incremented", (incrementAmount: number) => {
+					remoteObserved.push(incrementAmount);
+				});
+
+				for (const d of deltas) {
+					testCounter.increment(d);
+				}
+
+				// Local counter has already optimistically applied every increment.
+				assert.equal(
+					testCounter.value,
+					expectedSum,
+					"Local counter should reflect the full burst optimistically",
+				);
+
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(
+					testCounter.value,
+					expectedSum,
+					"Local counter value should equal sum of bursted increments",
+				);
+				assert.equal(
+					testCounter2.value,
+					expectedSum,
+					"Remote counter value should equal sum of bursted increments",
+				);
+				assert.deepEqual(
+					remoteObserved,
+					deltas,
+					"Remote counter should observe increments in FIFO submit order",
+				);
+			});
 		});
 	});
 
@@ -407,6 +458,51 @@ describe("SharedCounter", () => {
 				counter1.value,
 				10,
 				"counter1 should decrement only the rolled back increment",
+			);
+		});
+
+		it("preserves FIFO order across a burst with partial rollback", () => {
+			// Burst K increments, flush only the first M of them, then rollback the remainder.
+			// The flushed prefix must reach counter2 in submit order; the rolled-back suffix must
+			// reverse counter1 back to the value at the flush boundary. This exercises both the
+			// FIFO assert (during ack processing of the flushed prefix) and the LIFO pop in
+			// rollback (which must match against the most recently submitted pending op).
+			const K = 16;
+			const M = 10;
+			const deltas: number[] = [];
+			for (let i = 1; i <= K; i++) {
+				deltas.push(i % 2 === 0 ? -i : i);
+			}
+			const flushedSum = deltas.slice(0, M).reduce((a, b) => a + b, 0);
+
+			const remoteObserved: number[] = [];
+			counter2.on("incremented", (incrementAmount: number) => {
+				remoteObserved.push(incrementAmount);
+			});
+
+			for (const d of deltas) {
+				counter1.increment(d);
+			}
+
+			containerRuntime1.flushSomeMessages(M);
+			containerRuntime1.rollback?.();
+			containerRuntime1.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(
+				counter1.value,
+				flushedSum,
+				"counter1 should reflect only the flushed prefix after rolling back the rest",
+			);
+			assert.equal(
+				counter2.value,
+				flushedSum,
+				"counter2 should reflect only the flushed prefix",
+			);
+			assert.deepEqual(
+				remoteObserved,
+				deltas.slice(0, M),
+				"counter2 should observe the flushed prefix in FIFO submit order",
 			);
 		});
 
