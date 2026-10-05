@@ -79,3 +79,5 @@ export {
 	getCodecTreeForChangeFormat,
 	type SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+
+export { createViewableTreeAlpha } from "./viewableTree.js";
