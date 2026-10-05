@@ -160,6 +160,22 @@ export async function resolveSummaryAccess(
 				expiresAtFor(validated.document.createTime),
 			);
 		} catch (error) {
+			if (error instanceof MalformedEphemeralSummaryAccessRecordError) {
+				logSummaryOwnershipOutcome(
+					args.tenantId,
+					identity.documentId,
+					args.operation,
+					args.routeType,
+					"dependencyError",
+					error,
+					{
+						source: "localEphemeral",
+						localOutcome: "malformed",
+						fallbackReason: "localDependencyError",
+					},
+				);
+				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
+			}
 			activation = "writeError";
 			logSummaryOwnershipOutcome(
 				args.tenantId,

@@ -301,6 +301,46 @@ describe("summary access resolver", () => {
 		);
 	});
 
+	it("fails closed when atomic activation observes malformed local state", async () => {
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			isEphemeralContainer: true,
+		});
+		sandbox
+			.stub(cache, "activateSummaryAccessIfNotDeleted")
+			.rejects(
+				new MalformedEphemeralSummaryAccessRecordError(
+					"Malformed ephemeral summary access record.",
+				),
+			);
+		const logError = sandbox.spy(Lumberjack, "error");
+		const info = sandbox.spy(Lumberjack, "info");
+
+		await assert.rejects(
+			resolveSummaryAccess(getArgs()),
+			(error: unknown) => error instanceof NetworkError && error.code === 503,
+		);
+		sinon.assert.calledWithMatch(
+			logError,
+			"HistorianSummaryDocumentOwnershipValidation",
+			sinon.match({
+				outcome: "dependencyError",
+				source: "localEphemeral",
+				localOutcome: "malformed",
+				fallbackReason: "localDependencyError",
+			}),
+		);
+		const allowedEvents = info.getCalls().filter((call) => {
+			const properties = call.args[1];
+			return (
+				call.args[0] === "HistorianSummaryDocumentOwnershipValidation" &&
+				!(properties instanceof Map) &&
+				properties?.outcome === "allowed"
+			);
+		});
+		assert.strictEqual(allowedEvents.length, 0);
+	});
+
 	it("logs a write error but preserves the fresh Alfred authorization", async () => {
 		sandbox.stub(documentManager, "readDocument").resolves({
 			...activeDocument,
