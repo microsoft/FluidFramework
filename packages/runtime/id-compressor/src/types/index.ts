@@ -15,6 +15,7 @@ export type {
 	IIdCompressor,
 	ShardToken,
 	ShardSynchronizationToken,
+	SerializedIdCompressorShard,
 	ParentShardSynchronizationToken,
 	IdCompressorEvents,
 } from "./idCompressor.js";

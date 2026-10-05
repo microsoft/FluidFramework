@@ -54,6 +54,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 	ShardSynchronizationToken,
+	SerializedIdCompressorShard,
 	ParentShardSynchronizationToken,
 	IdCompressorEvents,
 } from "./types/index.js";
@@ -279,9 +280,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		this.ongoingGhostSession = { ghostSessionId };
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
-	 */
 	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void {
 		if (this.shardingState) {
 			throw new Error("Cannot start a ghost session while sharded.");
@@ -294,10 +292,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.shard}
-	 */
-	public shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[] {
+	public shard(newShardCount: number): SerializedIdCompressorShard[] {
 		if (!Number.isSafeInteger(newShardCount) || newShardCount <= 0) {
 			throw new Error("Shard count must be a positive safe integer");
 		}
@@ -334,7 +329,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const serialized = this.serialize(true);
 		const { localGenCount: parentGenCount } = this;
 
-		const shards: SerializedIdCompressorWithOngoingSession[] = [];
+		const shards: SerializedIdCompressorShard[] = [];
 
 		// Children are positioned at consecutive positions within the parents current stride cycle
 		// e.g. if parent owns the "evens" space (-2, -4, -6, ...) and is sharded into 3 (two children)
@@ -364,14 +359,15 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				shardId: childShardId,
 			};
 
-			shards.push(child.serialize(true));
+			shards.push({
+				serialized: child.serialize(true),
+				syncToken: child.makeShardToken(false),
+			});
 		}
 
 		return shards;
 	}
-	/**
-	 * {@inheritdoc IIdCompressorCore.synchronizeWithShard}
-	 */
+
 	public synchronizeWithShard(syncToken: ShardSynchronizationToken): void {
 		const isNowLeaf = this.synchronizeChild(syncToken);
 		// A disposal token additionally reclaims the child's ID space. If reclaiming the last child
@@ -473,9 +469,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return isLeaf;
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.dispose}
-	 */
 	public disposeShard(): ShardSynchronizationToken | undefined {
 		if (this.shardingState === undefined) {
 			return undefined;
@@ -495,9 +488,6 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		return token;
 	}
 
-	/**
-	 * {@inheritdoc IIdCompressorCore.getShardSyncToken}
-	 */
 	public getShardSyncToken(): ShardSynchronizationToken | undefined {
 		if (this.shardingState === undefined) {
 			return undefined;

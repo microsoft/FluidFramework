@@ -11,6 +11,7 @@ import {
 	type FieldKey,
 	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	type TreeStoredSchemaSubscription,
 	TreeStoredSchemaRepository,
 	rootFieldKey,
@@ -86,7 +87,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				(
 					type: TreeNodeSchemaIdentifier,
 					shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
-					chunkerSchema: TreeStoredSchemaSubscription,
+					chunkerSchema: TreeStoredSchema,
 				) =>
 					tryShapeFromNodeSchema(
 						{
@@ -112,7 +113,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				(
 					type: TreeNodeSchemaIdentifier,
 					shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
-					chunkerSchema: TreeStoredSchemaSubscription,
+					chunkerSchema: TreeStoredSchema,
 				) =>
 					tryShapeFromNodeSchema(
 						{
@@ -138,7 +139,7 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				(
 					type: TreeNodeSchemaIdentifier,
 					shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
-					chunkerSchema: TreeStoredSchemaSubscription,
+					chunkerSchema: TreeStoredSchema,
 				) =>
 					tryShapeFromNodeSchema(
 						{
@@ -152,6 +153,49 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 			),
 	],
 ];
+
+describe("Chunker", () => {
+	class TestSchema extends TreeStoredSchemaRepository {
+		public hasAfterSchemaChangeListeners(): boolean {
+			return this._events.hasListeners("afterSchemaChange");
+		}
+	}
+
+	it("maintains one schema listener for the current cache contents", () => {
+		const schema = new TestSchema();
+		let shapeComputations = 0;
+		const chunker = new Chunker(
+			schema,
+			defaultSchemaPolicy,
+			Number.POSITIVE_INFINITY,
+			Number.POSITIVE_INFINITY,
+			0,
+			0,
+			() => {
+				shapeComputations += 1;
+				return polymorphic;
+			},
+		);
+		const firstType = brand<TreeNodeSchemaIdentifier>("first");
+		const secondType = brand<TreeNodeSchemaIdentifier>("second");
+
+		chunker.shapeFromSchema(firstType);
+		chunker.shapeFromSchema(firstType);
+		assert.equal(shapeComputations, 1);
+		chunker.shapeFromSchema(secondType);
+		assert.equal(shapeComputations, 2);
+		assert.equal(schema.hasAfterSchemaChangeListeners(), true);
+
+		schema.apply(schema);
+		assert.equal(schema.hasAfterSchemaChangeListeners(), false);
+
+		chunker.shapeFromSchema(firstType);
+		assert.equal(shapeComputations, 3);
+		assert.equal(schema.hasAfterSchemaChangeListeners(), true);
+		chunker.dispose();
+		assert.equal(schema.hasAfterSchemaChangeListeners(), false);
+	});
+});
 
 describe("ChunkedForest", () => {
 	for (const [name, chunker] of chunkers) {

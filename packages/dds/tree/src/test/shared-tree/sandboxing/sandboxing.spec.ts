@@ -80,15 +80,7 @@ import {
  * Creates a real child ID space shard token for envelope wire-shape tests.
  */
 function createTestIdSpaceShardToken() {
-	const [serializedIdSpaceShard] = createIdCompressor(SerializationVersion.V3).shard(1);
-	assert(serializedIdSpaceShard !== undefined, "Expected a serialized test ID space shard");
-	const idSpaceShard = deserializeIdCompressor(
-		serializedIdSpaceShard,
-		SerializationVersion.V3,
-	);
-	const token =
-		idSpaceShard.getShardSyncToken() ??
-		assert.fail("Expected a child ID space shard synchronization token");
+	const [{ syncToken: token }] = createIdCompressor(SerializationVersion.V3).shard(1);
 	assert(!token.disposed, "Expected an active child ID space shard");
 	return { ...token, disposed: false as const };
 }
@@ -107,11 +99,7 @@ function createTestIdSpaceShardToken() {
  */
 function createTestParentIdSpaceShardSyncToken() {
 	const root = createIdCompressor(SerializationVersion.V3);
-	const [serializedChild] = root.shard(1);
-	assert(serializedChild !== undefined, "Expected a child ID space shard");
-	const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
-	const token = child.getShardSyncToken();
-	assert(token !== undefined, "Expected a child ID space shard token");
+	const [{ syncToken: token }] = root.shard(1);
 	return root.getChildShardSyncToken(token);
 }
 
@@ -991,7 +979,7 @@ describe("Host and Guest correctness", () => {
 		const child = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(guestView)));
 		const guestToken =
 			child.getShardSyncToken() ?? assert.fail("Expected a Guest shard token");
-		const [serializedSibling] = root.shard(1);
+		const [{ serialized: serializedSibling }] = root.shard(1);
 		assert(serializedSibling !== undefined, "Expected a sibling child shard");
 		const sibling = deserializeIdCompressor(serializedSibling, SerializationVersion.V3);
 		const siblingToken = sibling.getShardSyncToken() ?? assert.fail("Expected sibling token");
@@ -1721,7 +1709,8 @@ describe("Host and Guest correctness", () => {
 			const sibling =
 				reason === "a foreign ID space shard"
 					? (() => {
-							const [serializedIdSpaceShard] = toIdCompressorWithCore(root).shard(1);
+							const [{ serialized: serializedIdSpaceShard }] =
+								toIdCompressorWithCore(root).shard(1);
 							assert(
 								serializedIdSpaceShard !== undefined,
 								"Expected a second active ID space shard",
@@ -2111,7 +2100,7 @@ describe("Host and Guest correctness", () => {
 		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
 		guest.dispose();
 		host.dispose();
-		const [serializedChild] = root.shard(1);
+		const [{ serialized: serializedChild }] = root.shard(1);
 		assert(serializedChild !== undefined, "Expected a child ID space shard");
 		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
 		const idSpaceShardToken =
@@ -2204,7 +2193,7 @@ describe("Host and Guest correctness", () => {
 		const revision = mintRevisionTag();
 		const sent: HostGuestMessage[] = [];
 		const root = toIdCompressorWithCore(getCheckoutIdCompressor(getCheckout(main)));
-		const [serializedChild] = root.shard(1);
+		const [{ serialized: serializedChild }] = root.shard(1);
 		assert(serializedChild !== undefined, "Expected a serialized child ID space shard");
 		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
 		const childToken = child.getShardSyncToken();
@@ -2252,7 +2241,7 @@ describe("Host and Guest correctness", () => {
 	it("disposes the authoring view and shard once without waiting for acknowledgments", async () => {
 		const { main, provider } = await setup(["a"]);
 		const root = toIdCompressorWithCore(provider.getCompressor(provider.trees[1]));
-		const [serializedChild] = root.shard(1);
+		const [{ serialized: serializedChild }] = root.shard(1);
 		assert(serializedChild !== undefined, "Expected a child ID space shard");
 		const child = deserializeIdCompressor(serializedChild, SerializationVersion.V3);
 		const revision = getCheckout(main).mainBranch.getHead().revision;

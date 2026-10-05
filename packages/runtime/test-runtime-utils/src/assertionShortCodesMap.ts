@@ -2015,8 +2015,6 @@ export const shortCodeMap = {
 	"0xd5f": "Expected an initialized Guest ID space shard",
 	"0xd60": "Finalized ID range must contain IDs",
 	"0xd61": "Expected the Guest initialization base in Host history",
-	"0xd62": "Expected one serialized Guest ID space shard",
-	"0xd63": "Expected a Guest ID space shard token",
 	"0xd64": "Host branch must contain its finalized-history boundary",
 	"0xd65": "Host branch updates must share ancestry",
 	"0xd66": "Expected view to be a SchematizingSimpleTreeView",
