@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ChannelConfigurationChannel,
 	ChannelConfigurationFactory,
@@ -13,7 +14,7 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { DataCorruptionError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 
 function invalidConfiguration(): never {
 	throw new DataCorruptionError("Invalid or unsupported channel configuration", {});
@@ -34,8 +35,6 @@ export function validateChannelConfiguration(
 		typeof configuration !== "object" ||
 		configuration === null ||
 		Object.keys(configuration).length !== 3 ||
-		(Object.getPrototypeOf(configuration) !== Object.prototype &&
-			Object.getPrototypeOf(configuration) !== null) ||
 		!("version" in configuration) ||
 		configuration.version !== 1 ||
 		!("revision" in configuration) ||
@@ -50,55 +49,6 @@ export function validateChannelConfiguration(
 	) {
 		invalidConfiguration();
 	}
-	const ancestors = new Set<object>();
-	const visit = (value: unknown): void => {
-		if (value === null || typeof value === "string" || typeof value === "boolean") {
-			return;
-		}
-		if (typeof value === "number" && Number.isFinite(value) && !Object.is(value, -0)) {
-			return;
-		}
-		if (
-			typeof value !== "object" ||
-			value === null ||
-			ancestors.has(value) ||
-			(Array.isArray(value)
-				? Object.getPrototypeOf(value) !== Array.prototype
-				: Object.getPrototypeOf(value) !== Object.prototype &&
-					Object.getPrototypeOf(value) !== null) ||
-			("type" in value && value.type === "__fluid_handle__")
-		) {
-			invalidConfiguration();
-		}
-		ancestors.add(value);
-		if (Array.isArray(value)) {
-			if (Object.keys(value).length !== value.length) {
-				invalidConfiguration();
-			}
-			for (let i = 0; i < value.length; i++) {
-				if (!Object.hasOwn(value, i)) {
-					invalidConfiguration();
-				}
-			}
-		}
-		for (const key of Reflect.ownKeys(value)) {
-			if (Array.isArray(value) && key === "length") {
-				continue;
-			}
-			const descriptor = Object.getOwnPropertyDescriptor(value, key);
-			if (
-				typeof key !== "string" ||
-				descriptor === undefined ||
-				!("value" in descriptor) ||
-				descriptor.enumerable !== true
-			) {
-				invalidConfiguration();
-			}
-			visit(descriptor.value);
-		}
-		ancestors.delete(value);
-	};
-	visit(configuration);
 	if (
 		factory !== undefined &&
 		(factory as IChannelFactory & ChannelConfigurationFactory)
@@ -133,13 +83,10 @@ export function verifyChannelConfigurationCapability(
 		return;
 	}
 	requireChannelConfigurationController(channel);
-	if (
+	assert(
 		(
 			runtime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
-		).isChannelConfigurationEnabled?.(channel.attributes.type) !== true
-	) {
-		throw new UsageError(
-			"Document channel configuration is not active for this type; cannot attach a configured channel",
-		);
-	}
+		).isChannelConfigurationEnabled?.(channel.attributes.type) === true,
+		"Document channel configuration is not active for this type; cannot attach a configured channel",
+	);
 }

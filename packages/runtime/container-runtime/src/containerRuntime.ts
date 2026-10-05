@@ -1098,16 +1098,18 @@ export class ContainerRuntime
 			channelConfigurationTypes,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 		const channelConfigurationProperty = new PersistedStringSet();
-		if (!channelConfigurationProperty.validate(channelConfigurationTypes)) {
-			throw new UsageError("Channel configuration types must be an array of nonempty strings");
-		}
+		assert(
+			channelConfigurationProperty.validate(channelConfigurationTypes),
+			"Channel configuration types must be an array of nonempty strings",
+		);
 		const requestedChannelConfigurationTypes = channelConfigurationProperty.or(
 			undefined,
 			channelConfigurationTypes,
 		);
-		if (requestedChannelConfigurationTypes !== undefined && !explicitSchemaControl) {
-			throw new UsageError("Channel configuration requires explicit schema control");
-		}
+		assert(
+			requestedChannelConfigurationTypes === undefined || explicitSchemaControl,
+			"Channel configuration requires explicit schema control",
+		);
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
 		if (!explicitSchemaControl) {

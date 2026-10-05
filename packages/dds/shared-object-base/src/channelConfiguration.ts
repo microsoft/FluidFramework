@@ -4,17 +4,19 @@
  */
 
 import type { ReadonlyJsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
-	copyChannelConfiguration,
-	copyChannelConfigurationSnapshot,
+	parseChannelConfigurationSnapshot,
 	parseChannelConfigurationMessage,
 	type ChannelConfigurationMessageV1,
 } from "./channelConfigurationFormat.js";
 
 /**
- * An immutable JSON property bag without handles.
+ * A readonly JSON property bag without handles.
+ *
+ * Configuration is owned by Fluid Framework code. Callers must supply values that round-trip
+ * through JSON and must not mutate them after submission. The protocol does not copy or freeze them.
  *
  * This type represents persisted configuration for a channel. Its semantics are defined by the channel author.
  * Generally, channel authors should use this for settings that should apply to all clients of the same channel instance in a document. For example,
@@ -227,9 +229,9 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	public constructor(
 		private readonly options: ChannelConfigurationControllerOptions<TConfig>,
 	) {
-		const snapshot = copyChannelConfigurationSnapshot(options.snapshot);
+		const snapshot = parseChannelConfigurationSnapshot(options.snapshot);
 		this.validateSupported(snapshot.values);
-		this.snapshot = Object.freeze({ revision: snapshot.revision, values: snapshot.values });
+		this.snapshot = { revision: snapshot.revision, values: snapshot.values };
 	}
 
 	public get current(): ChannelConfigurationSnapshot<TConfig> {
@@ -244,13 +246,13 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		this.verifyCanSubmit();
 		this.options.verifyCanChange();
 		const previous = this.snapshot;
-		const values = copyChannelConfiguration(next);
-		const message = Object.freeze({
+		const values = next;
+		const message: ChannelConfigurationMessageV1 = {
 			version: 1,
 			isChannelConfigurationOp: true,
 			expectedRevision: previous.revision,
 			values,
-		} as const);
+		};
 		this.processing = true;
 		try {
 			this.validateSupported(values);
@@ -272,16 +274,14 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			}
 		}
 		return new Promise<ConfigurationChangeResult<TConfig>>((resolve, reject) => {
-			const metadata = Object.freeze({});
+			const metadata = {};
 			this.pending.set(metadata, { resolve, reject });
 			try {
 				this.options.submit(message, metadata);
 			} catch (error) {
 				this.pending.delete(metadata);
 				reject(
-					error instanceof Error
-						? error
-						: new UsageError("Failed to submit channel configuration"),
+					error instanceof Error ? error : new Error("Failed to submit channel configuration"),
 				);
 			}
 		});
@@ -314,14 +314,15 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			this.verifyCanSubmit();
 			this.processing = true;
 			const message = parseChannelConfigurationMessage(content);
-			if (message.expectedRevision > this.snapshot.revision) {
-				throw new UsageError("Channel configuration proposal has a future revision");
-			}
+			assert(
+				message.expectedRevision <= this.snapshot.revision,
+				"Channel configuration proposal has a future revision",
+			);
 			let result: ConfigurationChangeResult<TConfig>;
 			if (message.expectedRevision < this.snapshot.revision) {
-				result = Object.freeze({ ...context, status: "conflict", current: this.snapshot });
+				result = { ...context, status: "conflict", current: this.snapshot };
 			} else {
-				const values = copyChannelConfiguration(message.values);
+				const values = message.values;
 				this.validateSupported(values);
 				this.checkOverflow();
 				this.options.definition.validateTransition(this.snapshot.values, values);
@@ -347,7 +348,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	public reSubmit(content: unknown, localOpMetadata: unknown): void {
 		this.verifyCanSubmit();
 		try {
-			const message = this.copyProposal(content);
+			const message = parseChannelConfigurationMessage(content);
 			this.options.submit(message, localOpMetadata);
 		} catch (error) {
 			this.dispose(error);
@@ -363,7 +364,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	public applyStashedOp(content: unknown): void {
 		this.verifyCanSubmit();
 		try {
-			this.options.submit(this.copyProposal(content), undefined);
+			this.options.submit(parseChannelConfigurationMessage(content), undefined);
 		} catch (error) {
 			this.dispose(error);
 			throw error;
@@ -376,14 +377,14 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	public rollback(localOpMetadata: unknown): void {
 		const pending = this.pending.get(localOpMetadata);
 		this.pending.delete(localOpMetadata);
-		pending?.reject(new UsageError("Channel configuration request was rolled back"));
+		pending?.reject(new Error("Channel configuration request was rolled back"));
 	}
 
 	/**
 	 * Rejects live promises. Rejection does not assert that uncertain delivery cannot commit.
 	 */
 	public dispose(
-		error: unknown = new UsageError("Channel configuration controller disposed"),
+		error: unknown = new Error("Channel configuration controller disposed"),
 	): void {
 		if (this.disposed) {
 			return;
@@ -404,30 +405,21 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		if (this.disposed) {
 			throw this.disposalError;
 		}
-		if (this.processing) {
-			throw new UsageError("Cannot submit during a channel configuration callback");
-		}
+		assert(!this.processing, "Cannot submit during a channel configuration callback");
 	}
 
 	private validateSupported(values: ChannelConfiguration): asserts values is TConfig {
-		if (!this.options.definition.isSupported(values)) {
-			throw new UsageError("Unsupported channel configuration values");
-		}
+		assert(
+			this.options.definition.isSupported(values),
+			"Unsupported channel configuration values",
+		);
 	}
 
 	private checkOverflow(): void {
-		if (this.snapshot.revision === Number.MAX_SAFE_INTEGER) {
-			throw new UsageError("Channel configuration revision overflow");
-		}
-	}
-
-	private copyProposal(content: unknown): ChannelConfigurationMessageV1 {
-		const message = parseChannelConfigurationMessage(content);
-		const copy = Object.freeze({
-			...message,
-			values: copyChannelConfiguration(message.values),
-		});
-		return copy;
+		assert(
+			this.snapshot.revision !== Number.MAX_SAFE_INTEGER,
+			"Channel configuration revision overflow",
+		);
 	}
 
 	private apply(
@@ -435,17 +427,17 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		context: ChannelConfigurationContext,
 	): ConfigurationChangeResult<TConfig> {
 		const previous = this.snapshot;
-		this.snapshot = Object.freeze({
+		this.snapshot = {
 			revision: previous.revision + 1,
 			values,
-		});
-		const change = Object.freeze({ ...context, previous, current: this.snapshot });
+		};
+		const change = { ...context, previous, current: this.snapshot };
 		for (const listener of [...this.listeners]) {
 			listener(change);
 			if (this.disposed) {
 				throw this.disposalError;
 			}
 		}
-		return Object.freeze({ ...context, status: "applied", current: this.snapshot });
+		return { ...context, status: "applied", current: this.snapshot };
 	}
 }

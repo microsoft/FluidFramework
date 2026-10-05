@@ -29,6 +29,7 @@ import {
 	MockFluidDataStoreContext,
 	MockHandle,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type {
@@ -395,14 +396,16 @@ describe("configured kernel composition", () => {
 					assert.equal(test.errors.length, 1);
 					const rawError = test.errors[0];
 					if (malformed) {
-						assert(rawError instanceof UsageError);
-						assert.equal(error, rawError);
+						assert(rawError instanceof Error);
+						assert(!(rawError instanceof UsageError));
+						validateAssertionError("Unsupported channel configuration protocol version")(
+							rawError,
+						);
 					} else {
 						assert.equal(rawError, processorError);
-						assert(error instanceof DataProcessingError);
-						assert.notEqual(error, processorError);
 					}
-					assert(error instanceof UsageError || error instanceof DataProcessingError);
+					assert(error instanceof DataProcessingError);
+					assert.notEqual(error, rawError);
 					assert.equal(
 						error.getTelemetryProperties().dataProcessingCodepath,
 						"channelDeltaConnectionFailedToProcessMessages",
@@ -427,7 +430,9 @@ describe("configured kernel composition", () => {
 				await Promise.all(pending);
 				assert.equal(rejections.length, 2);
 				for (const error of rejections) {
-					assert(error instanceof UsageError);
+					assert(error instanceof Error);
+					assert(!(error instanceof UsageError));
+					assert(!(error instanceof DataProcessingError));
 					assert.match(error.message, /disposed/);
 					assert.notEqual(error, test.errors[0]);
 				}
@@ -572,13 +577,21 @@ describe("configured kernel composition", () => {
 	it("requires creation opt-in but not document-schema readiness for local configuration", async () => {
 		const { runtime, services } = harness(AttachState.Detached);
 		runtime.isChannelConfigurationCreationEnabled = () => false;
-		assert.throws(() => makeKind({}).getFactory().create(runtime, "dark"), /creation/i);
+		assert.throws(
+			() => makeKind({}).getFactory().create(runtime, "dark"),
+			validateAssertionError("Channel configuration creation is not enabled for this type"),
+		);
 		runtime.isChannelConfigurationCreationEnabled = (type) => type === "configured-test";
 		runtime.isChannelConfigurationEnabled = () => false;
 		const shared = makeKind({}).getFactory().create(runtime, "local");
 		await requireConfig(shared).requestChange({ retain: true });
 		shared.connect(services);
-		assert.throws(() => runtime.setAttachState(AttachState.Attaching), /capability/i);
+		assert.throws(
+			() => runtime.setAttachState(AttachState.Attaching),
+			validateAssertionError(
+				"Channel configuration document capability is not enabled for this type",
+			),
+		);
 		assert.equal(requireConfig(shared).current.values.retain, true);
 	});
 
@@ -795,20 +808,20 @@ describe("configured kernel composition", () => {
 		await assert.rejects(config.requestChange({}), /disposed/);
 	});
 
-	it("does not share state with factory attributes or another instance", async () => {
+	it("keeps per-instance configuration replacements separate from factory defaults", async () => {
 		const { runtime } = harness(AttachState.Detached);
 		const initial = { retain: false };
 		const factory = makeKind(initial).getFactory();
 		const one = factory.create(runtime, "one");
 		const two = factory.create(runtime, "two");
-		initial.retain = true;
+		assert.equal(requireConfig(one).current.values, initial);
+		assert.equal(requireConfig(two).current.values, initial);
 		await requireConfig(one).requestChange({ retain: true });
 		assert.equal(requireConfig(two).current.values.retain, false);
 		assert(!("configuration" in factory.attributes));
 		assert.notEqual(one.attributes, two.attributes);
 		assert.notEqual(one.attributes, factory.attributes);
-		assert.equal(Object.isFrozen(one.attributes), true);
-		assert.equal(Object.isFrozen(factory.attributes), false);
+		assert.equal(Object.isFrozen(one.attributes), false);
 	});
 
 	it("keeps newly created unconfigured instances on the existing protocol", () => {
@@ -831,7 +844,7 @@ describe("configured kernel composition", () => {
 		]) {
 			const config = requireConfig(shared);
 			assert.deepEqual(config.current, { revision: 0, values: { retain: false } });
-			assert(Object.isFrozen(config.current));
+			assert.equal(Object.isFrozen(config.current), false);
 			const initialAttributes = JSON.parse(JSON.stringify(shared.attributes)) as {
 				configuration: unknown;
 			};

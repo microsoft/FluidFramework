@@ -25,10 +25,7 @@ import type {
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import {
-	extractTelemetryLoggerExt,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	ChannelConfigurationController,
@@ -167,7 +164,7 @@ class SharedObjectFromKernel<
 		super(
 			id,
 			runtime,
-			// Only configured channels add an instance-specific getter and freeze their attributes.
+			// Only configured channels add an instance-specific getter.
 			// Copy first so this does not change factory attributes or another channel's snapshot.
 			configuration.kind === "unconfigured" ? attributes : { ...attributes },
 			telemetryContextPrefix,
@@ -176,9 +173,7 @@ class SharedObjectFromKernel<
 		this.#loadingConfiguration = configuration.kind === "load";
 		if (configuration.kind !== "unconfigured") {
 			const definition = factory.configurationDefinition;
-			if (definition === undefined) {
-				throw new UsageError("Factory does not support channel configuration");
-			}
+			assert(definition !== undefined, "Factory does not support channel configuration");
 			const controller = new ChannelConfigurationController({
 				definition,
 				snapshot:
@@ -188,12 +183,11 @@ class SharedObjectFromKernel<
 				isAttached: () => this.isAttached(),
 				verifyCanChange: () => {
 					this.#verifyConfigurationSubmission();
-					if (this.#initializingConfiguration) {
-						throw new UsageError("Cannot change configuration during kernel initialization");
-					}
-					if (runtime.isReadOnly()) {
-						throw new UsageError("Cannot change configuration on a read-only runtime");
-					}
+					assert(
+						!this.#initializingConfiguration,
+						"Cannot change configuration during kernel initialization",
+					);
+					assert(!runtime.isReadOnly(), "Cannot change configuration on a read-only runtime");
 				},
 				submit: (message, metadata) => {
 					assert(
@@ -227,12 +221,11 @@ class SharedObjectFromKernel<
 			sharedObjectProtocols.set(this, this.#configurationProtocol);
 			Object.defineProperty(this.attributes, "configuration", {
 				enumerable: true,
-				get: () => Object.freeze({ version: 1, ...controller.current }),
+				get: () => ({ version: 1, ...controller.current }),
 			});
-			Object.freeze(this.attributes);
 			runtime.once("dispose", () =>
 				this.#configurationProtocol?.close(
-					new UsageError("Runtime disposed with pending configuration changes"),
+					new Error("Runtime disposed with pending configuration changes"),
 				),
 			);
 		}
@@ -270,12 +263,11 @@ class SharedObjectFromKernel<
 	}
 
 	#verifyConfigurationSubmission(): void {
-		if (this.runtime.disposed) {
-			throw new UsageError("Cannot submit to a disposed configured channel");
-		}
-		if (this.#loadingConfiguration && this.#initializingConfiguration) {
-			throw new UsageError("Cannot submit while loading configured kernel state");
-		}
+		assert(!this.runtime.disposed, "Cannot submit to a disposed configured channel");
+		assert(
+			!this.#loadingConfiguration || !this.#initializingConfiguration,
+			"Cannot submit while loading configured kernel state",
+		);
 		this.#configurationProtocol?.controller.verifyCanSubmit();
 	}
 
@@ -343,16 +335,13 @@ class SharedObjectFromKernel<
 	}
 
 	protected override didAttach(): void {
-		if (
-			this.#configurationProtocol !== undefined &&
-			(this.runtime as ChannelConfigurationRuntime).isChannelConfigurationEnabled?.(
-				this.attributes.type,
-			) !== true
-		) {
-			throw new UsageError(
-				"Channel configuration document capability is not enabled for this type",
-			);
-		}
+		assert(
+			this.#configurationProtocol === undefined ||
+				(this.runtime as ChannelConfigurationRuntime).isChannelConfigurationEnabled?.(
+					this.attributes.type,
+				) === true,
+			"Channel configuration document capability is not enabled for this type",
+		);
 		this.#kernel.didAttach?.();
 	}
 }
@@ -563,7 +552,7 @@ export interface SharedObjectOptions<
 	 * Enables persisted configuration on new instances and supplies their initial values.
 	 * Omit this option to keep creating unconfigured instances. Loading always uses persisted
 	 * attributes instead, so new creation settings do not change existing channels.
-	 * Each instance receives an immutable copy; factory attributes remain unchanged.
+	 * Values must remain unchanged after they are supplied; factory attributes remain unchanged.
 	 */
 	readonly initialConfiguration?: TConfig;
 
@@ -639,14 +628,13 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 		 */
 		public create(runtime: IFluidDataStoreRuntime, id: string): T & IChannel {
-			if (
-				options.initialConfiguration !== undefined &&
-				(runtime as ChannelConfigurationRuntime).isChannelConfigurationCreationEnabled?.(
-					ChannelFactory.Attributes.type,
-				) !== true
-			) {
-				throw new UsageError("Channel configuration creation is not enabled for this type");
-			}
+			assert(
+				options.initialConfiguration === undefined ||
+					(runtime as ChannelConfigurationRuntime).isChannelConfigurationCreationEnabled?.(
+						ChannelFactory.Attributes.type,
+					) === true,
+				"Channel configuration creation is not enabled for this type",
+			);
 			const shared = new SharedObjectFromKernel(
 				id,
 				runtime,

@@ -76,6 +76,7 @@ import {
 	MockDeltaManager,
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import Sinon, { type SinonFakeTimers } from "sinon";
 
@@ -872,7 +873,9 @@ describe("Runtime", () => {
 								explicitSchemaControl: true,
 								channelConfigurationTypes: invalid as string[],
 							}),
-							/Channel configuration types must be an array of nonempty strings/,
+							validateAssertionError(
+								"Channel configuration types must be an array of nonempty strings",
+							),
 						);
 						await assert.rejects(
 							loadConfigurationRuntime(
@@ -899,7 +902,7 @@ describe("Runtime", () => {
 							explicitSchemaControl: false,
 							channelConfigurationTypes: [typeA],
 						}),
-						/Channel configuration requires explicit schema control/,
+						validateAssertionError("Channel configuration requires explicit schema control"),
 					);
 				});
 

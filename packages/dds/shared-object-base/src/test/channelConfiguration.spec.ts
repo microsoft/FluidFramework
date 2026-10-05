@@ -8,6 +8,10 @@
 
 import { strict as assert } from "node:assert";
 
+import { onAssertionFailure } from "@fluidframework/core-utils/internal";
+import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import {
 	ChannelConfigurationController,
 	type ChannelConfiguration,
@@ -17,8 +21,7 @@ import {
 	type ChannelConfigurationAttachedContext,
 } from "../channelConfiguration.js";
 import {
-	copyChannelConfiguration,
-	copyChannelConfigurationSnapshot,
+	parseChannelConfigurationSnapshot,
 	hasChannelConfigurationMarker,
 	parseChannelConfigurationMessage,
 	type ChannelConfigurationMessageV1,
@@ -129,11 +132,11 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(changes.length, 1);
 	});
 
-	it("copies values and captures the expected revision before returning", async () => {
+	it("retains readonly values and captures the expected revision before returning", async () => {
 		const { controller, submitted } = harness();
 		const input = { nested: [{ enabled: true }] };
 		const request = controller.requestChange(input);
-		at(input.nested).enabled = false;
+		assert.equal(at(submitted).message.values, input);
 		controller.process(proposal(0, { other: true }), context(false));
 		assert.equal(at(submitted).message.expectedRevision, 0);
 		assert.deepEqual(at(submitted).message.values, { nested: [{ enabled: true }] });
@@ -187,7 +190,6 @@ describe("ChannelConfigurationController", () => {
 			assert.equal(controller.current, change.current);
 			assert.equal(change.previous.revision, order.length);
 			assert.equal(change.current.revision, order.length + 1);
-			assert.equal(Object.isFrozen(change), true);
 			order.push("callback");
 		});
 		const request = controller.requestChange({});
@@ -268,6 +270,29 @@ describe("ChannelConfigurationController", () => {
 		}
 	});
 
+	it("reports invalid internal requests as assertions rather than usage errors", async () => {
+		const { controller, submitted } = harness();
+		let assertion: Error | undefined;
+		const unsubscribe = onAssertionFailure((error) => {
+			assertion = error;
+		});
+		try {
+			await assert.rejects(
+				controller.requestChange({ unsupported: true }),
+				(error: unknown) => {
+					assert(error instanceof Error);
+					assert.equal(error, assertion);
+					assert(!(error instanceof UsageError));
+					return validateAssertionError("Unsupported channel configuration values")(error);
+				},
+			);
+			assert.equal(submitted.length, 0);
+			assert.equal(controller.current.revision, 0);
+		} finally {
+			unsubscribe();
+		}
+	});
+
 	it("enforces the injected lifecycle guard for both attached and unattached changes", async () => {
 		for (const attached of [true, false]) {
 			const { controller, submitted } = harness({
@@ -328,7 +353,7 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(submitted.length, 1);
 		const restored = at(submitted);
 		assert.deepEqual(restored.message, stashed);
-		assert.notEqual(restored.message, stashed);
+		assert.equal(restored.message, stashed);
 		assert.equal(restored.metadata, undefined);
 		assert.equal(controller.current, initial);
 		assert.equal(changes.length, 0);
@@ -339,7 +364,13 @@ describe("ChannelConfigurationController", () => {
 
 	it("rolls back only the associated request and clears it from pending bookkeeping", async () => {
 		const { controller, submitted } = harness();
-		const rolledBack = assert.rejects(controller.requestChange({}), /rolled back/);
+		const rolledBack = assert.rejects(controller.requestChange({}), (error: unknown) => {
+			assert(error instanceof Error);
+			assert(!(error instanceof UsageError));
+			assert(!(error instanceof DataProcessingError));
+			assert.match(error.message, /rolled back/);
+			return true;
+		});
 		const surviving = controller.requestChange({ enabled: false });
 		controller.rollback(at(submitted).metadata);
 		controller.rollback(at(submitted).metadata);
@@ -404,7 +435,6 @@ describe("ChannelConfigurationController", () => {
 	for (const [name, values] of [
 		["unsupported", { unsupported: true }],
 		["invalid transition", { unsafe: true }],
-		["invalid JSON", { invalid: undefined }],
 	] as const) {
 		it(`fails receiving ${name} at the current revision and rejects live requests`, async () => {
 			const { controller } = harness();
@@ -418,10 +448,13 @@ describe("ChannelConfigurationController", () => {
 
 	it("rejects a future revision as a fatal processing failure", async () => {
 		const { controller, changes } = harness();
-		const request = assert.rejects(controller.requestChange({}), /future revision/);
+		const request = assert.rejects(
+			controller.requestChange({}),
+			validateAssertionError("Channel configuration proposal has a future revision"),
+		);
 		assert.throws(
 			() => controller.process(proposal(1, {}), context(false)),
-			/future revision/,
+			validateAssertionError("Channel configuration proposal has a future revision"),
 		);
 		await request;
 		assert.equal(changes.length, 0);
@@ -486,6 +519,39 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(controller.current.revision, 1);
 	});
 
+	it("leaves JSON serialization and its failures to the normal submission or snapshot path", async () => {
+		for (const attached of [false, true]) {
+			const failure = new TypeError("Configuration serialization failed");
+			let serializationAttempts = 0;
+			const values = {
+				get value(): string {
+					serializationAttempts++;
+					throw failure;
+				},
+			};
+			const { controller } = harness({
+				isAttached: () => attached,
+				submit: (message) => {
+					JSON.stringify(message);
+				},
+			});
+			const request = controller.requestChange(values);
+			if (attached) {
+				await assert.rejects(request, (error: unknown) => error === failure);
+				assert.equal(controller.current.revision, 0);
+			} else {
+				await request;
+				assert.equal(controller.current.values, values);
+				assert.equal(serializationAttempts, 0);
+				assert.throws(
+					() => JSON.stringify(controller.current),
+					(error: unknown) => error === failure,
+				);
+			}
+			assert.equal(serializationAttempts, 1);
+		}
+	});
+
 	it("loads snapshots independently of attachment state", () => {
 		const snapshot = { version: 1, revision: 4, values: { text: "a".repeat(32 * 1024) } };
 		for (const attached of [false, true]) {
@@ -497,7 +563,7 @@ describe("ChannelConfigurationController", () => {
 				revision: snapshot.revision,
 				values: snapshot.values,
 			});
-			assert.equal(Object.isFrozen(controller.current.values), true);
+			assert.equal(controller.current.values, snapshot.values);
 			assert.equal(changes.length, 0);
 		}
 	});
@@ -550,147 +616,28 @@ describe("ChannelConfigurationController", () => {
 });
 
 describe("channel configuration format", () => {
-	it("copies and deeply freezes snapshots and values independently of input ownership", () => {
+	it("reads snapshots without copying or freezing their values", () => {
 		const input = {
 			version: 1,
 			revision: 2,
 			values: { nested: [{ flag: false }], nullable: null },
 		};
-		const copy = copyChannelConfigurationSnapshot(input);
-		at(input.values.nested).flag = true;
-		input.revision = 3;
-		assert.deepEqual(copy, {
-			version: 1,
-			revision: 2,
-			values: { nested: [{ flag: false }], nullable: null },
-		});
-		assert.equal(Object.isFrozen(copy), true);
-		assert.equal(Object.isFrozen(copy.values), true);
-		assert.equal(Object.isFrozen(copy.values.nested), true);
-		assert.equal(Reflect.set(copy, "revision", 5), false);
-		assert.equal(Reflect.set(copy.values, "nullable", true), false);
-		const nested = copy.values.nested;
-		assert(Array.isArray(nested));
-		assert.equal(Object.isFrozen(at(nested)), true);
-		assert.equal(Reflect.set(at(nested), "flag", true), false);
-	});
-
-	it("allows repeated references without cycles and safe JSON keys without prototype mutation", () => {
-		const repeated = { flag: true };
-		const values = Object.create(null) as Record<string, unknown>;
-		values.first = repeated;
-		values.second = repeated;
-		values.__proto__ = { safe: true };
-		const copy = copyChannelConfiguration(values);
-		assert.deepEqual(copy.first, copy.second);
-		assert.notEqual(copy.first, repeated);
-		assert.equal(Object.getPrototypeOf(copy), Object.prototype);
-		assert.deepEqual(Object.getOwnPropertyDescriptor(copy, "__proto__")?.value, {
-			safe: true,
-		});
-		assert.equal(Object.hasOwn(copy, "safe"), false);
-	});
-
-	const invalidValues: readonly [string, () => unknown][] = [
-		["undefined", () => ({ value: undefined })],
-		["NaN", () => ({ value: Number.NaN })],
-		["Infinity", () => ({ value: Infinity })],
-		["negative Infinity", () => ({ value: -Infinity })],
-		["negative zero", () => ({ value: -0 })],
-		["nested negative zero", () => ({ values: [{ value: -0 }] })],
-		["symbol values", () => ({ value: Symbol("value") })],
-		["symbol keys", () => ({ [Symbol("key")]: true })],
-		["functions", () => ({ value: () => {} })],
-		["bigints", () => ({ value: 1n })],
-		[
-			"sparse arrays",
-			() => {
-				const value: unknown[] = [];
-				value.length = 3;
-				return { value };
-			},
-		],
-		["arrays with undefined elements", () => ({ value: [undefined] })],
-		["arrays with custom properties", () => ({ value: Object.assign([], { custom: true }) })],
-		[
-			"custom array prototypes",
-			() => {
-				const value: unknown[] = [];
-				Object.setPrototypeOf(value, null);
-				return { value };
-			},
-		],
-		["dates", () => ({ value: new Date(0) })],
-		["custom prototypes", () => ({ value: Object.create({ inherited: true }) as unknown })],
-		["serialized handles", () => ({ value: { type: "__fluid_handle__", url: "/data" } })],
-		[
-			"nested serialized handles",
-			() => ({ value: [{ nested: { type: "__fluid_handle__" } }] }),
-		],
-		["nonenumerable properties", () => Object.defineProperty({}, "hidden", { value: true })],
-		[
-			"object cycles",
-			() => {
-				const value: Record<string, unknown> = {};
-				value.self = value;
-				return value;
-			},
-		],
-		[
-			"array cycles",
-			() => {
-				const value: unknown[] = [];
-				value.push(value);
-				return { value };
-			},
-		],
-		["top-level arrays", () => []],
-		["top-level null", () => null],
-		["top-level strings", () => "value"],
-	];
-	for (const [name, create] of invalidValues) {
-		it(`rejects ${name} in copying and both local authority modes`, async () => {
-			const value = create();
-			assert.throws(() => copyChannelConfiguration(value));
-			for (const attached of [true, false]) {
-				const { controller, submitted, changes } = harness({ isAttached: () => attached });
-				await assert.rejects(controller.requestChange(value as ChannelConfiguration));
-				assert.equal(controller.current.revision, 0);
-				assert.equal(submitted.length, 0);
-				assert.equal(changes.length, 0);
-			}
-		});
-	}
-
-	it("rejects accessors and toJSON without executing application code", () => {
-		let calls = 0;
-		const getter = (): boolean => {
-			calls++;
-			return true;
-		};
-		const record = Object.defineProperty({}, "flag", { get: getter, enumerable: true });
-		const array = Object.defineProperty([false], "0", { get: getter, enumerable: true });
-		const serializable = {
-			toJSON: () => {
-				calls++;
-				return {};
-			},
-		};
-		for (const value of [record, { array }, serializable]) {
-			assert.throws(() => copyChannelConfiguration(value));
-		}
-		assert.throws(() =>
-			parseChannelConfigurationMessage(Object.defineProperty({}, "version", { get: getter })),
-		);
-		assert.equal(calls, 0);
+		const snapshot = parseChannelConfigurationSnapshot(input);
+		assert.equal(snapshot, input);
+		assert.equal(snapshot.values, input.values);
+		assert.equal(Object.isFrozen(snapshot), false);
+		assert.equal(Object.isFrozen(snapshot.values), false);
+		assert.deepEqual(JSON.parse(JSON.stringify(snapshot)), input);
 	});
 
 	it("validates configuration ops without interpreting obsolete values", () => {
-		const values = { unsupported: undefined };
-		const parsed = parseChannelConfigurationMessage(proposal(0, values));
+		const values = { unsupported: true };
+		const message = proposal(0, values);
+		const parsed = parseChannelConfigurationMessage(message);
+		assert.equal(parsed, message);
 		assert.equal(parsed.isChannelConfigurationOp, true);
 		assert.equal(parsed.values, values);
-		assert.equal(Object.isFrozen(parsed), true);
+		assert.equal(Object.isFrozen(parsed), false);
 	});
 
 	it("recognizes only the reserved top-level key without interpreting ordinary payloads", () => {
@@ -723,17 +670,6 @@ describe("channel configuration format", () => {
 		assert.equal(calls, 0);
 	});
 
-	it("rejects negative zero in persisted and sequenced values instead of serializing it as zero", () => {
-		const values = { value: -0 };
-		assert.equal(JSON.stringify(values), '{"value":0}');
-		assert.throws(() => copyChannelConfigurationSnapshot({ version: 1, revision: 0, values }));
-		const { controller, changes } = harness();
-		assert.throws(() => controller.process(proposal(0, values), context(false)), /non-JSON/);
-		assert.equal(controller.current.revision, 0);
-		assert.equal(changes.length, 0);
-		assert.deepEqual(copyChannelConfiguration({ value: 0 }), { value: 0 });
-	});
-
 	for (const revision of [
 		-1,
 		-0,
@@ -746,7 +682,7 @@ describe("channel configuration format", () => {
 	]) {
 		it(`rejects invalid revision ${String(revision)} in snapshots and configuration ops`, () => {
 			assert.throws(() =>
-				copyChannelConfigurationSnapshot({ version: 1, revision, values: {} }),
+				parseChannelConfigurationSnapshot({ version: 1, revision, values: {} }),
 			);
 			assert.throws(() =>
 				parseChannelConfigurationMessage({
@@ -784,7 +720,7 @@ describe("channel configuration format", () => {
 			{ version: 1, revision: 0 },
 			{ version: 1, revision: 0, values: {}, extra: true },
 		]) {
-			assert.throws(() => copyChannelConfigurationSnapshot(snapshot));
+			assert.throws(() => parseChannelConfigurationSnapshot(snapshot));
 		}
 	});
 });

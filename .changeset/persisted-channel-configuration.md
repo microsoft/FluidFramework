@@ -7,7 +7,8 @@
 ---
 Add opt-in persisted channel configuration infrastructure
 
-Internal kernel factories can opt new DDS instances into immutable JSON configuration stored with channel attributes.
+Internal kernel factories can opt new DDS instances into readonly JSON configuration stored with channel attributes.
+Fluid Framework code owns these values and must preserve their JSON round-trip behavior; the protocol does not deep-copy, freeze, or recursively validate them.
 The internal configuration facet exposes read-only revision and values without an encoding version; only persisted attributes and configuration wire ops carry `version: 1`.
 Unattached instances apply replacements locally; attached instances use sequenced compare-and-swap barriers.
 Configuration ops use `{ version: 1, isChannelConfigurationOp: true, expectedRevision, values }`.

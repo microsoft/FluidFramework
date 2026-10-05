@@ -26,7 +26,10 @@ import type {
 	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import { createMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreContext,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	validateChannelConfiguration,
@@ -44,8 +47,6 @@ import { RemoteChannelContext } from "../remoteChannelContext.js";
 describe("Channel configuration compatibility", () => {
 	const attributes = { type: "configured", snapshotFormatVersion: "1" };
 	const snapshot = { version: 1, revision: 0, values: { enabled: true } };
-	const sparse: unknown[] = [];
-	sparse.length = 2;
 	const runtime = {
 		attachState: AttachState.Attached,
 		isChannelConfigurationEnabled: (type: string) => type === attributes.type,
@@ -73,6 +74,26 @@ describe("Channel configuration compatibility", () => {
 				},
 			} as IChannelAttributes),
 		);
+	});
+
+	it("leaves configuration values to normal JSON serialization", () => {
+		let reads = 0;
+		const configured = {
+			...attributes,
+			configuration: {
+				...snapshot,
+				values: {
+					get enabled(): boolean {
+						reads++;
+						return true;
+					},
+				},
+			},
+		};
+		assert(validateChannelConfiguration(configured));
+		assert.equal(reads, 0);
+		assert.deepEqual(JSON.parse(JSON.stringify(configured.configuration)), snapshot);
+		assert.equal(reads, 1);
 	});
 
 	it("loads legacy instances unchanged through a configuration-capable factory", async () => {
@@ -121,12 +142,7 @@ describe("Channel configuration compatibility", () => {
 		{ ...snapshot, revision: 1.5 },
 		{ ...snapshot, revision: Number.MAX_SAFE_INTEGER + 1 },
 		{ ...snapshot, values: [] },
-		{ ...snapshot, values: { bad: undefined } },
-		{ ...snapshot, values: { bad: Infinity } },
-		{ ...snapshot, values: { bad: -0 } },
 		{ ...snapshot, extra: true },
-		{ ...snapshot, values: { bad: { type: "__fluid_handle__", url: "/dds" } } },
-		{ ...snapshot, values: { bad: sparse } },
 	]) {
 		it(`rejects malformed configuration ${JSON.stringify(configuration)}`, async () => {
 			let loaded = false;
@@ -210,7 +226,9 @@ describe("Channel configuration compatibility", () => {
 		});
 		assert.throws(
 			() => summarizeChannel(configured, true, false, undefined, unavailableRuntime),
-			/channel configuration is not active/,
+			validateAssertionError(
+				"Document channel configuration is not active for this type; cannot attach a configured channel",
+			),
 		);
 		assert.equal(captured, false);
 		assert.throws(

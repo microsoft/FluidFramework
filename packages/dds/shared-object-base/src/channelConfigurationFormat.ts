@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * JSON values in version 1 of the persisted channel configuration protocol.
@@ -90,42 +91,24 @@ export function verifyOrdinaryChannelMessage(value: unknown): void {
  * @internal
  */
 export function validateConfigurationRevision(revision: unknown): asserts revision is number {
-	if (
-		typeof revision !== "number" ||
-		!Number.isSafeInteger(revision) ||
-		revision < 0 ||
-		Object.is(revision, -0)
-	) {
-		throw new UsageError("Channel configuration revision must be a non-negative safe integer");
-	}
+	assert(
+		typeof revision === "number" &&
+			Number.isSafeInteger(revision) &&
+			revision >= 0 &&
+			!Object.is(revision, -0),
+		"Channel configuration revision must be a non-negative safe integer",
+	);
 }
 
 /**
- * Reads plain, enumerable data properties without invoking accessors.
+ * Checks the top-level shape without copying or inspecting configuration values.
  */
 function readRecord(value: unknown): Record<string, unknown> {
-	if (typeof value !== "object" || value === null || Array.isArray(value)) {
-		throw new UsageError("Channel configuration must use a JSON object");
-	}
-	const prototype: unknown = Object.getPrototypeOf(value);
-	if (prototype !== Object.prototype && prototype !== null) {
-		throw new UsageError("Channel configuration cannot use custom prototypes");
-	}
-	const result: Record<string, unknown> = {};
-	for (const key of Reflect.ownKeys(value)) {
-		if (typeof key !== "string") {
-			throw new UsageError("Channel configuration cannot contain symbol properties");
-		}
-		const descriptor = Object.getOwnPropertyDescriptor(value, key);
-		if (descriptor?.enumerable !== true || !("value" in descriptor)) {
-			throw new UsageError("Channel configuration requires enumerable data properties");
-		}
-		Object.defineProperty(result, key, {
-			value: descriptor.value,
-			enumerable: true,
-		});
-	}
-	return result;
+	assert(
+		typeof value === "object" && value !== null && !Array.isArray(value),
+		"Channel configuration must use a JSON object",
+	);
+	return value as Record<string, unknown>;
 }
 
 /**
@@ -136,112 +119,33 @@ export function parseChannelConfigurationMessage(
 	value: unknown,
 ): ChannelConfigurationMessageV1 {
 	const record = readRecord(value);
-	if (record.version !== 1) {
-		throw new UsageError("Unsupported channel configuration protocol version");
-	}
+	assert(record.version === 1, "Unsupported channel configuration protocol version");
 	validateConfigurationRevision(record.expectedRevision);
-	if (
-		record.isChannelConfigurationOp !== true ||
-		Object.keys(record).length !== 4 ||
-		!Object.hasOwn(record, "values") ||
-		typeof record.values !== "object" ||
-		record.values === null ||
-		Array.isArray(record.values)
-	) {
-		throw new UsageError("Invalid channel configuration message");
-	}
-	return Object.freeze({
-		version: 1,
-		isChannelConfigurationOp: true,
-		expectedRevision: record.expectedRevision,
-		values: record.values as ChannelConfigurationValuesV1,
-	});
+	assert(
+		record.isChannelConfigurationOp === true &&
+			Object.keys(record).length === 4 &&
+			Object.hasOwn(record, "values") &&
+			typeof record.values === "object" &&
+			record.values !== null &&
+			!Array.isArray(record.values),
+		"Invalid channel configuration message",
+	);
+	return value as ChannelConfigurationMessageV1;
 }
 
 /**
- * Validates, copies, and freezes JSON without executing application serialization code.
- * Rejects negative zero rather than changing it to zero during serialization.
+ * Reads a version 1 snapshot. Reader-specific validation is separate.
  * @internal
  */
-export function copyChannelConfiguration(value: unknown): ChannelConfigurationValuesV1 {
-	const ancestors = new Set<object>();
-	function copy(input: unknown): ChannelConfigurationValueV1 {
-		if (input === null || typeof input === "boolean" || typeof input === "string") {
-			return input;
-		}
-		if (typeof input === "number" && Number.isFinite(input) && !Object.is(input, -0)) {
-			return input;
-		}
-		if (typeof input !== "object" || input === null) {
-			throw new UsageError("Channel configuration contains a non-JSON value");
-		}
-		if (ancestors.has(input)) {
-			throw new UsageError("Channel configuration cannot contain cycles");
-		}
-		ancestors.add(input);
-		try {
-			if (Array.isArray(input)) {
-				if (Object.getPrototypeOf(input) !== Array.prototype) {
-					throw new UsageError("Channel configuration cannot use custom array prototypes");
-				}
-				const keys = Reflect.ownKeys(input);
-				if (
-					keys.length !== input.length + 1 ||
-					keys.some(
-						(key) =>
-							typeof key !== "string" ||
-							(key !== "length" &&
-								(!/^(0|[1-9]\d*)$/.test(key) || Number(key) >= input.length)),
-					)
-				) {
-					throw new UsageError("Channel configuration cannot contain sparse or custom arrays");
-				}
-				const array: ChannelConfigurationValueV1[] = [];
-				for (let index = 0; index < input.length; index++) {
-					const descriptor = Object.getOwnPropertyDescriptor(input, index);
-					if (descriptor?.enumerable !== true || !("value" in descriptor)) {
-						throw new UsageError("Channel configuration arrays require data elements");
-					}
-					array.push(copy(descriptor.value));
-				}
-				return Object.freeze(array);
-			}
-			const record = readRecord(input);
-			if (record.type === "__fluid_handle__") {
-				throw new UsageError("Channel configuration cannot contain Fluid handles");
-			}
-			const result: Record<string, ChannelConfigurationValueV1> = {};
-			for (const key of Object.keys(record)) {
-				Object.defineProperty(result, key, {
-					value: copy(record[key]),
-					enumerable: true,
-				});
-			}
-			return Object.freeze(result);
-		} finally {
-			ancestors.delete(input);
-		}
-	}
-
-	readRecord(value);
-	return copy(value) as ChannelConfigurationValuesV1;
-}
-
-/**
- * Copies a validated version 1 snapshot. Reader-specific validation is separate.
- * @internal
- */
-export function copyChannelConfigurationSnapshot(
+export function parseChannelConfigurationSnapshot(
 	value: unknown,
 ): ChannelConfigurationSnapshotV1 {
 	const record = readRecord(value);
-	if (record.version !== 1 || Object.keys(record).length !== 3) {
-		throw new UsageError("Invalid channel configuration snapshot version or fields");
-	}
+	assert(
+		record.version === 1 && Object.keys(record).length === 3,
+		"Invalid channel configuration snapshot version or fields",
+	);
 	validateConfigurationRevision(record.revision);
-	return Object.freeze({
-		version: 1,
-		revision: record.revision,
-		values: copyChannelConfiguration(record.values),
-	});
+	readRecord(record.values);
+	return value as ChannelConfigurationSnapshotV1;
 }

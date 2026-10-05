@@ -180,18 +180,18 @@ messages in a grouped runtime message can share an envelope sequence number. A p
 counter gives every accepted barrier a distinct identity even in that case. Sequence numbers
 remain available for ordering and diagnostics.
 
-`values` is an immutable, JSON-only property bag. Nested records and arrays are allowed.
-Reuse `ReadonlyJsonTypeWith<never>` from `core-interfaces` for the API value type. Runtime validation
-must additionally reject non-finite numbers, undefined values, sparse arrays, cycles, custom
-serialization, and Fluid handles. The configuration does not participate in GC and must not
-contain references disguised as serialized handles.
+`values` is a readonly JSON property bag owned by Fluid Framework code. Nested records and arrays are allowed.
+Reuse `ReadonlyJsonTypeWith<never>` from `core-interfaces` for the API value type.
+DDS authors must supply values that round-trip through JSON and must not mutate them after submission.
+The configuration does not participate in GC and must not contain Fluid handles.
 
 Unlike `DocumentSchema` feature flags, `false` and `null` may be meaningful values. Each DDS
 defines their meaning. Removing a key requires omitting it from the replacement bag; no implicit
 patch merging, `and`, `or`, or client-local defaults are applied on load.
 
-Copy and deeply freeze input before retaining or submitting it. Do not rely on TypeScript
-`readonly` alone. New factory defaults apply only to creation, never to existing persisted state.
+The protocol trusts this internal contract instead of copying, freezing, or recursively inspecting values.
+Serialization uses the normal op and summary paths; failures retain their diagnostic stacks.
+New factory defaults apply only to creation, never to existing persisted state.
 Message-size limits belong to the normal runtime submission path, not the configuration protocol.
 DDS authors should keep configuration small; the protocol does not impose a separate size limit,
 truncate values, or fall back to defaults.
@@ -230,11 +230,12 @@ export interface ConfiguredChannelAttributes extends IChannelAttributes {
 Keep the wire-format declaration independently versioned in a dedicated persisted-format module;
 the API types here must not make future API refactors silently change the wire format. An internal derived
 attributes type avoids requiring every legacy `IChannelAttributes` implementation to change.
-An opted-in instance's `attributes.configuration` getter returns an immutable `{ version: 1, ...controller.current }` value.
+An opted-in instance's `attributes.configuration` getter returns `{ version: 1, ...controller.current }`.
 The other attributes are preserved. Updating one instance must never mutate `factory.attributes` or another
 instance's attributes.
-The wrapper copies attributes only for configured instances, before adding the configuration getter
-and freezing the copy. Unconfigured instances keep the existing attributes behavior.
+The wrapper copies attributes only for configured instances, before adding the configuration getter.
+This shallow copy keeps the per-instance getter off the shared factory attributes.
+Unconfigured instances keep the existing attributes behavior.
 
 ## Wire protocol and processing
 
@@ -439,7 +440,7 @@ protocol, not an async callback.
 
 A callback or receive-side validation failure is a fatal processing failure. Do not catch it and
 continue under either configuration. A local validation failure rejects the request without
-emitting an op. The getter is immutable and cannot serve as a second mutation API.
+emitting an op. The getter exposes readonly state; changes must use `requestChange`.
 
 ### Ordinary ops and configuration changes
 
@@ -513,9 +514,12 @@ Configuration control messages do not become DDS data-op events. Runtime-level r
 that they sequenced.
 
 Processing errors propagate to the existing `ChannelDeltaConnection` error boundary, including buffered replay.
+Internal configuration contracts and invariants use assertions, not `UsageError`, which is for incorrect API use by external consumers.
+The existing op-processing boundary converts assertion failures to `DataProcessingError`.
 There is no configured-only error wrapper in `SharedObjectCore`.
 Configuration callback or validation failures reject pending configuration requests before rethrowing.
 Runtime disposal closes outstanding requests for other fatal failures.
+Normal rollback and runtime disposal use ordinary errors; a supplied failure is propagated unchanged.
 Existing DDS event-listener error handling is unchanged.
 
 ## Creation, attachment, load, and summaries
@@ -528,7 +532,7 @@ configured one by applying current factory defaults. Reader support remains enab
 when deployment policy stops creating new configured channels.
 
 Until attachment, configuration replacements apply locally and immediately through the same
-validation and immutable state path. Repeated replacements, including identical values, advance
+validation and readonly state path. Repeated replacements, including identical values, advance
 the revision and notify the active kernel. These changes require neither a control op nor a
 document-schema upgrade round trip. An unbound channel in an attached container is also
 unattached. After attachment, every replacement requires an actual sequenced barrier;
@@ -723,7 +727,7 @@ DDS-specific invalidation events and telemetry are outside this design.
 | Area | Proposed changes |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; configuration-op dispatch and shared reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
+| `shared-object-base` | Controller and compositional kernel facet; per-instance configuration attributes; configuration-op dispatch and shared reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
 | `datastore` | Factory and attach capability checks; retain lazy replay ordering, ordinary stashed-op handling, and summary invalidation. |
 | `container-runtime` | Additive persisted type set requested through normal schema features; propagate per-type readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
 | Initial adopter | New opt-in DDS instances with configuration validation and a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
