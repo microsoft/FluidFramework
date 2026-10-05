@@ -32,6 +32,48 @@ export interface ICache {
 	delete(key: string): Promise<boolean>;
 }
 
+export interface IEphemeralSummaryAccessRecord {
+	version: 1;
+	state: "active" | "deleted";
+	createTime: number;
+}
+
+export class MalformedEphemeralSummaryAccessRecordError extends Error {}
+
+export type ActivateSummaryAccessResult = "created" | "alreadyActive" | "deleted";
+
+export interface IEphemeralSummaryAccessStore {
+	readSummaryAccess(
+		tenantId: string,
+		documentId: string,
+	): Promise<IEphemeralSummaryAccessRecord | undefined>;
+
+	activateSummaryAccessIfNotDeleted(
+		tenantId: string,
+		documentId: string,
+		createTime: number,
+		expiresAt: number,
+	): Promise<ActivateSummaryAccessResult>;
+
+	markSummaryAccessDeleted(
+		tenantId: string,
+		documentId: string,
+		createTime: number,
+		expiresAt: number,
+	): Promise<void>;
+}
+
+export function isEphemeralSummaryAccessStore(
+	cache: ICache | undefined,
+): cache is ICache & IEphemeralSummaryAccessStore {
+	const candidate = cache as Partial<IEphemeralSummaryAccessStore> | undefined;
+	return (
+		typeof candidate?.readSummaryAccess === "function" &&
+		typeof candidate.activateSummaryAccessIfNotDeleted === "function" &&
+		typeof candidate.markSummaryAccessDeleted === "function"
+	);
+}
+
 export interface ICreateGitServiceArgs {
 	config: nconf.Provider;
 	tenantId: string;
