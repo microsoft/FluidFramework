@@ -326,4 +326,66 @@ describe("SharedMap rollback", () => {
 			"Map should have expected entries post-rollback",
 		);
 	});
+
+	// Regression test for the PendingKeySet.lifetime back-pointer. A set -> delete -> set
+	// sequence on the same key produces two distinct PendingKeyLifetime entries in
+	// pendingData (the delete terminates the first lifetime; the second set opens a new
+	// one). Rolling the second set back must walk the back-pointer to the second
+	// lifetime — not the first matching entry found in pendingData — and the assertions
+	// that policed the lifetime/keySet invariants (0xbf3, 0xbf5) must hold throughout.
+	it("should rollback set/delete/set sequence on the same key", () => {
+		const { sharedMap, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+		sharedMap.set("key1", "value1");
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		const valueChanges: IValueChanged[] = [];
+		sharedMap.on("valueChanged", (event: IValueChanged) => {
+			valueChanges.push(event);
+		});
+
+		// set -> delete -> set on the same key: opens lifetime, terminates it with the
+		// delete, then opens a second lifetime whose PendingKeySet must back-point to it.
+		sharedMap.set("key1", "value2");
+		sharedMap.delete("key1");
+		sharedMap.set("key1", "value3");
+
+		assert.strictEqual(
+			sharedMap.get("key1"),
+			"value3",
+			"Pending value should reflect the final set",
+		);
+		assert.deepStrictEqual(
+			valueChanges,
+			[
+				{ key: "key1", previousValue: "value1" },
+				{ key: "key1", previousValue: "value2" },
+				{ key: "key1", previousValue: undefined },
+			],
+			"Pre-rollback value changes should match the set/delete/set sequence",
+		);
+
+		// Rolling back must succeed without tripping any assert and must restore the
+		// original sequenced value. The events fire in LIFO order.
+		valueChanges.length = 0;
+		containerRuntime.rollback?.();
+
+		assert.strictEqual(
+			sharedMap.get("key1"),
+			"value1",
+			"Value should be restored to the sequenced value after rollback",
+		);
+		assert.deepStrictEqual(
+			valueChanges,
+			[
+				// Roll back the second set (uses the lifetime back-pointer).
+				{ key: "key1", previousValue: "value3" },
+				// Roll back the delete (restores value2).
+				{ key: "key1", previousValue: undefined },
+				// Roll back the first set (restores the sequenced value1).
+				{ key: "key1", previousValue: "value2" },
+			],
+			"Post-rollback value changes should unwind the sequence in LIFO order",
+		);
+	});
 });
