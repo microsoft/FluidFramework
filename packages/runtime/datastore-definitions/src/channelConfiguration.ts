@@ -21,7 +21,7 @@ export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<
  * The format version describes the encoding; the revision counts accepted replacements.
  * @internal
  */
-export interface ChannelConfigurationSnapshot<
+export interface ChannelConfigurationSnapshotV1<
 	TConfig extends ChannelConfiguration = ChannelConfiguration,
 > {
 	readonly version: 1;
@@ -36,7 +36,7 @@ export interface ChannelConfigurationSnapshot<
  * @internal
  */
 export interface ConfiguredChannelAttributes extends IChannelAttributes {
-	readonly configuration: ChannelConfigurationSnapshot;
+	readonly configuration: ChannelConfigurationSnapshotV1;
 }
 
 /**

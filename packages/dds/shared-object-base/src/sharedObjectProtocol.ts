@@ -5,6 +5,8 @@
 
 import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
 
+import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
+
 /**
  * An instance-specific protocol at the boundary before handle decoding and DDS events.
  * This is not part of the subclass API: only shared infrastructure registers protocols.
@@ -32,6 +34,7 @@ export interface SharedObjectProtocol {
 
 class DefaultSharedObjectProtocol implements SharedObjectProtocol {
 	public prepareLocalMessage(content: unknown): unknown {
+		verifyOrdinaryChannelMessage(content);
 		return content;
 	}
 

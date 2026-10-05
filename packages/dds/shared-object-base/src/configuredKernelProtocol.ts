@@ -4,14 +4,17 @@
  */
 
 import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	ChannelConfiguration,
 	ChannelConfigurationController,
 	ConfigurationChangeResult,
 } from "./channelConfiguration.js";
-import { parseConfiguredChannelMessage } from "./channelConfigurationFormat.js";
+import {
+	hasChannelConfigurationMarker,
+	parseChannelConfigurationMessage,
+	verifyOrdinaryChannelMessage,
+} from "./channelConfigurationFormat.js";
 import type { SharedKernelMessageCollection } from "./sharedObjectKernel.js";
 import type { SharedObjectProtocol } from "./sharedObjectProtocol.js";
 
@@ -21,7 +24,6 @@ import type { SharedObjectProtocol } from "./sharedObjectProtocol.js";
 export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 	implements SharedObjectProtocol
 {
-	private replayRevision: number | undefined;
 	private submittingControl = false;
 
 	public constructor(
@@ -49,12 +51,8 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 			this.submittingControl = false;
 			return content;
 		}
-		return {
-			version: 1,
-			kind: "operation",
-			revision: this.replayRevision ?? this.controller.current.revision,
-			contents: content,
-		};
+		verifyOrdinaryChannelMessage(content);
+		return content;
 	}
 
 	public processMessages(
@@ -70,11 +68,11 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 			}
 		};
 		for (const [messageIndex, message] of messages.messagesContent.entries()) {
-			const envelope = parseConfiguredChannelMessage(message.contents);
-			if (envelope.kind === "configuration") {
+			if (hasChannelConfigurationMarker(message.contents)) {
 				flush();
+				const proposal = parseChannelConfigurationMessage(message.contents);
 				const result = this.controller.process(
-					envelope,
+					proposal,
 					{
 						source: "sequenced",
 						sequenceNumber: messages.envelope.sequenceNumber,
@@ -86,23 +84,17 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 				);
 				this.recordResult(result);
 			} else {
-				this.verifyRevision(envelope.revision);
-				ordinary.push({
-					...message,
-					contents: envelope.contents,
-					configurationRevision: envelope.revision,
-				});
+				ordinary.push(message);
 			}
 		}
 		flush();
 	}
 
 	public applyStashedOp(content: unknown, apply: (content: unknown) => void): void {
-		const message = parseConfiguredChannelMessage(content);
-		if (message.kind === "configuration") {
-			this.controller.applyStashedOp(message);
+		if (hasChannelConfigurationMarker(content)) {
+			this.controller.applyStashedOp(parseChannelConfigurationMessage(content));
 		} else {
-			this.withRevision(message.revision, () => apply(message.contents));
+			apply(content);
 		}
 	}
 
@@ -111,11 +103,10 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 		metadata: unknown,
 		submit: (content: unknown, metadata: unknown) => void,
 	): void {
-		const message = parseConfiguredChannelMessage(content);
-		if (message.kind === "configuration") {
-			this.controller.reSubmit(message, metadata);
+		if (hasChannelConfigurationMarker(content)) {
+			this.controller.reSubmit(parseChannelConfigurationMessage(content), metadata);
 		} else {
-			this.withRevision(message.revision, () => submit(message.contents, metadata));
+			submit(content, metadata);
 		}
 	}
 
@@ -124,32 +115,15 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 		metadata: unknown,
 		rollback: (content: unknown, metadata: unknown) => void,
 	): void {
-		const message = parseConfiguredChannelMessage(content);
-		if (message.kind === "configuration") {
+		if (hasChannelConfigurationMarker(content)) {
+			parseChannelConfigurationMessage(content);
 			this.controller.rollback(metadata);
 		} else {
-			this.withRevision(message.revision, () => rollback(message.contents, metadata));
+			rollback(content, metadata);
 		}
 	}
 
 	public close(error: unknown): void {
 		this.controller.dispose(error);
-	}
-
-	private verifyRevision(revision: number): void {
-		if (revision > this.controller.current.revision) {
-			throw new UsageError("Channel operation has a future configuration revision");
-		}
-	}
-
-	private withRevision(revision: number, callback: () => void): void {
-		this.verifyRevision(revision);
-		const previous = this.replayRevision;
-		this.replayRevision = revision;
-		try {
-			callback();
-		} finally {
-			this.replayRevision = previous;
-		}
 	}
 }

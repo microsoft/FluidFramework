@@ -19,7 +19,8 @@ import {
 import {
 	copyChannelConfiguration,
 	copyChannelConfigurationSnapshot,
-	parseConfiguredChannelMessage,
+	hasChannelConfigurationMarker,
+	parseChannelConfigurationMessage,
 	type ChannelConfigurationMessageV1,
 } from "../channelConfigurationFormat.js";
 
@@ -68,7 +69,7 @@ function context(
 }
 
 function proposal(expectedRevision: number, values: unknown): unknown {
-	return { version: 1, kind: "configuration", expectedRevision, values };
+	return { version: 1, isChannelConfigurationOp: true, expectedRevision, values };
 }
 
 function at<T>(values: readonly T[], index: number = 0): T {
@@ -117,7 +118,7 @@ describe("ChannelConfigurationController", () => {
 		assert.notEqual(at(submitted).metadata, at(submitted, 1).metadata);
 		assert.deepEqual(JSON.parse(JSON.stringify(at(submitted).message)), {
 			version: 1,
-			kind: "configuration",
+			isChannelConfigurationOp: true,
 			expectedRevision: 0,
 			values: { enabled: false },
 		});
@@ -317,7 +318,12 @@ describe("ChannelConfigurationController", () => {
 	it("reconstructs a stashed configuration for acknowledgement without activating it", () => {
 		const { controller, submitted, changes } = harness();
 		const initial = controller.current;
-		const stashed = { version: 1, kind: "configuration", expectedRevision: 0, values: {} };
+		const stashed = {
+			version: 1,
+			isChannelConfigurationOp: true,
+			expectedRevision: 0,
+			values: {},
+		};
 		controller.applyStashedOp(stashed);
 		assert.equal(submitted.length, 1);
 		const restored = at(submitted);
@@ -487,7 +493,10 @@ describe("ChannelConfigurationController", () => {
 				snapshot,
 				isAttached: () => attached,
 			});
-			assert.deepEqual(controller.current, snapshot);
+			assert.deepEqual(controller.current, {
+				revision: snapshot.revision,
+				values: snapshot.values,
+			});
 			assert.equal(Object.isFrozen(controller.current.values), true);
 			assert.equal(changes.length, 0);
 		}
@@ -671,24 +680,47 @@ describe("channel configuration format", () => {
 			assert.throws(() => copyChannelConfiguration(value));
 		}
 		assert.throws(() =>
-			parseConfiguredChannelMessage(Object.defineProperty({}, "version", { get: getter })),
+			parseChannelConfigurationMessage(Object.defineProperty({}, "version", { get: getter })),
 		);
 		assert.equal(calls, 0);
 	});
 
-	it("validates message envelopes but leaves ordinary contents to the DDS serializer", () => {
-		const contents = { unsupported: undefined };
-		const parsed = parseConfiguredChannelMessage({
-			version: 1,
-			kind: "operation",
-			revision: 0,
-			contents,
-		});
-		assert.equal(parsed.kind, "operation");
-		if (parsed.kind === "operation") {
-			assert.equal(parsed.contents, contents);
-		}
+	it("validates configuration ops without interpreting obsolete values", () => {
+		const values = { unsupported: undefined };
+		const parsed = parseChannelConfigurationMessage(proposal(0, values));
+		assert.equal(parsed.isChannelConfigurationOp, true);
+		assert.equal(parsed.values, values);
 		assert.equal(Object.isFrozen(parsed), true);
+	});
+
+	it("recognizes only the reserved top-level key without interpreting ordinary payloads", () => {
+		for (const contents of [
+			undefined,
+			null,
+			false,
+			5,
+			"data",
+			[],
+			[1, { isChannelConfigurationOp: true }],
+			{ kind: "configuration", version: 1, revision: 5, contents: {} },
+			{ value: { isChannelConfigurationOp: true } },
+		]) {
+			assert.equal(hasChannelConfigurationMarker(contents), false);
+		}
+		for (const marker of [true, false, undefined, 1]) {
+			assert.equal(hasChannelConfigurationMarker({ isChannelConfigurationOp: marker }), true);
+		}
+		let calls = 0;
+		const accessor = Object.defineProperty({}, "isChannelConfigurationOp", {
+			get: () => {
+				calls++;
+				return true;
+			},
+			enumerable: true,
+		});
+		assert.equal(hasChannelConfigurationMarker(accessor), true);
+		assert.throws(() => parseChannelConfigurationMessage(accessor));
+		assert.equal(calls, 0);
 	});
 
 	it("rejects negative zero in persisted and sequenced values instead of serializing it as zero", () => {
@@ -712,41 +744,40 @@ describe("channel configuration format", () => {
 		"0",
 		undefined,
 	]) {
-		it(`rejects invalid revision ${String(revision)} in snapshots and both envelope kinds`, () => {
+		it(`rejects invalid revision ${String(revision)} in snapshots and configuration ops`, () => {
 			assert.throws(() =>
 				copyChannelConfigurationSnapshot({ version: 1, revision, values: {} }),
 			);
 			assert.throws(() =>
-				parseConfiguredChannelMessage({
+				parseChannelConfigurationMessage({
 					version: 1,
-					kind: "configuration",
+					isChannelConfigurationOp: true,
 					expectedRevision: revision,
 					values: {},
-				}),
-			);
-			assert.throws(() =>
-				parseConfiguredChannelMessage({
-					version: 1,
-					kind: "operation",
-					revision,
-					contents: {},
 				}),
 			);
 		});
 	}
 
-	it("rejects unknown versions, missing fields, extra fields, and invalid kinds", () => {
+	it("rejects unknown versions, missing fields, extra fields, and invalid markers", () => {
 		for (const message of [
 			{},
-			{ version: 2, kind: "configuration", expectedRevision: 0, values: {} },
-			{ version: 1, kind: "configuration", expectedRevision: 0 },
-			{ version: 1, kind: "configuration", expectedRevision: 0, values: {}, extra: 1 },
-			{ version: 1, kind: "configuration", expectedRevision: 0, values: [] },
-			{ version: 1, kind: "configuration", expectedRevision: 0, values: null },
-			{ version: 1, kind: "operation", revision: 0 },
-			{ version: 1, kind: "unknown", revision: 0, contents: {} },
+			{ version: 2, isChannelConfigurationOp: true, expectedRevision: 0, values: {} },
+			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0 },
+			{
+				version: 1,
+				isChannelConfigurationOp: true,
+				expectedRevision: 0,
+				values: {},
+				extra: 1,
+			},
+			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: [] },
+			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: null },
+			{ version: 1, isChannelConfigurationOp: false, expectedRevision: 0, values: {} },
+			{ version: 1, isChannelConfigurationOp: 1, expectedRevision: 0, values: {} },
+			{ version: 1, expectedRevision: 0, values: {} },
 		]) {
-			assert.throws(() => parseConfiguredChannelMessage(message));
+			assert.throws(() => parseChannelConfigurationMessage(message));
 		}
 		for (const snapshot of [
 			{ version: 2, revision: 0, values: {} },

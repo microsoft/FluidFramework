@@ -7,19 +7,18 @@
 Introduce an opt-in, per-channel configuration protocol, implemented by shared infrastructure rather
 than by individual DDSes. Each opted-in DDS has a persisted configuration and a monotonically
 increasing configuration revision. Configuration changes on attached channels are explicit compare-and-swap (CAS) ops.
-Ordinary DDS ops carry the configuration revision captured for their original logical submission.
+Ordinary DDS ops keep their existing wire format, without a configuration wrapper or revision metadata.
 
 The shared mechanism accepts a configuration change only if its expected revision is current.
-It delivers ordinary ops to the DDS regardless of whether their configuration revision is older
-than current, exposing that revision as processing metadata. A configuration change does not
-inherently invalidate in-flight ops.
+It delivers ordinary ops to the DDS even if they were authored before the current configuration.
+A configuration change does not inherently invalidate in-flight ops.
 
 The following decisions were clarified for this proposal:
 
 | Topic | Decision |
 | --- | --- |
 | Barrier semantics | Sequenced CAS, not consensus or a wait for all clients to acknowledge. |
-| Ordinary ops from earlier revisions | Delivered normally, with their configuration revision exposed to the DDS. Any invalidation policy and related events are DDS responsibilities, deferred from this design. |
+| Ordinary ops authored before a configuration change | Delivered normally, without configuration revision metadata. Any invalidation policy and related events are DDS responsibilities, deferred from this design. |
 | Local application | Preserve each DDS's existing optimistic, acknowledgement, and resubmission behavior. Attached configuration changes wait for sequencing; unattached configuration changes apply locally. |
 | Configuration values | Full replacement is allowed, including disabling or removing settings. |
 | Adoption | Creation-time opt-in for new DDS instances. Migrating existing instances is out of scope. |
@@ -55,7 +54,7 @@ desired/session distinction, and one-proposal-per-session policy are not the req
 ## Ownership and scope
 
 Put a reusable `ChannelConfigurationController` in `shared-object-base`. It owns configuration
-state, CAS decisions, revision stamping/exposure, and configuration-request completion tracking.
+state, CAS decisions, and configuration-request completion tracking.
 An internal protocol adapter integrates it with `SharedObjectCore`'s lifecycle.
 The primary DDS API is a typed configuration facet in `KernelArgs`, available before the
 kernel factory constructs or loads the kernel. It does not require kernel implementations
@@ -66,7 +65,7 @@ and how it processes ordinary ops, including optimistic local state and acknowle
 not implement configuration CAS comparisons, maintain a second configuration store, or interpret
 configuration-control ops in its ordinary op handler. If a particular flag should invalidate
 in-flight ops, the DDS author must separately design that policy, any reconciliation of optimistic
-state, and associated events. The common wrapper supplies revision metadata, not that policy.
+state, and associated events. The common wrapper supplies neither ordinary-op revision metadata nor that policy.
 
 The datastore runtime continues to own channel routing, summary scheduling, and factory loading.
 It validates protocol support before loading a configured channel. Container runtime owns the
@@ -197,11 +196,20 @@ Message-size limits belong to the normal runtime submission path, not the config
 DDS authors should keep configuration small; the protocol does not impose a separate size limit,
 truncate values, or fall back to defaults.
 
-These types describe the internal API:
+The DDS-facing `ChannelConfigurationSnapshot` in `shared-object-base` is read-only in-memory state with only `{ revision, values }`.
+The facet's `current`, change notifications, and request results expose this state without `version`.
+The persisted `ChannelConfigurationSnapshotV1` in `datastore-definitions` has `{ version: 1, revision, values }`, as shown in the attributes above.
+Only persisted and wire formats need an encoding version because other releases must read them.
+The in-memory API is not an encoding and does not expose that detail.
+
+These types distinguish the internal API from persisted attributes:
 
 ```typescript
 import type { ReadonlyJsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-import type { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
+import type {
+    ChannelConfigurationSnapshotV1,
+    IChannelAttributes,
+} from "@fluidframework/datastore-definitions/internal";
 
 export type ChannelConfiguration = Readonly<
     Record<string, ReadonlyJsonTypeWith<never>>
@@ -210,76 +218,74 @@ export type ChannelConfiguration = Readonly<
 export interface ChannelConfigurationSnapshot<
     TConfig extends ChannelConfiguration = ChannelConfiguration,
 > {
-    readonly version: 1;
     readonly revision: number;
     readonly values: TConfig;
 }
 
 export interface ConfiguredChannelAttributes extends IChannelAttributes {
-    readonly configuration: ChannelConfigurationSnapshot;
+    readonly configuration: ChannelConfigurationSnapshotV1;
 }
 ```
 
 Keep the wire-format declaration independently versioned in a dedicated persisted-format module;
-the API aliases here must not make future API refactors silently change the wire format. An internal derived
+the API types here must not make future API refactors silently change the wire format. An internal derived
 attributes type avoids requiring every legacy `IChannelAttributes` implementation to change.
-An opted-in instance's `attributes` getter returns its current controller snapshot together with
-the existing attributes. Updating one instance must never mutate `factory.attributes` or another
+An opted-in instance's `attributes.configuration` getter returns an immutable `{ version: 1, ...controller.current }` value.
+The other attributes are preserved. Updating one instance must never mutate `factory.attributes` or another
 instance's attributes.
 The wrapper copies attributes only for configured instances, before adding the configuration getter
 and freezing the copy. Unconfigured instances keep the existing attributes behavior.
 
 ## Wire protocol and processing
 
-Keep existing container/datastore/channel addressing. For an opted-in channel only, wrap
-channel op contents in the following envelope:
+Keep existing container/datastore/channel addressing.
+For an opted-in channel, configuration ops have the following shape.
+Ordinary DDS ops remain unchanged and unwrapped.
 
 ```typescript
-export type ConfiguredChannelMessage =
-    | {
-          readonly version: 1;
-          readonly kind: "configuration";
-          readonly expectedRevision: number;
-          readonly values: ChannelConfiguration;
-      }
-    | {
-          readonly version: 1;
-          readonly kind: "operation";
-          readonly revision: number;
-          readonly contents: unknown;
-      };
+import type { ChannelConfigurationValuesV1 } from "./channelConfigurationFormat.js";
+
+export interface ChannelConfigurationMessageV1 {
+    readonly version: 1;
+    readonly isChannelConfigurationOp: true;
+    readonly expectedRevision: number;
+    readonly values: ChannelConfigurationValuesV1;
+}
 ```
 
-The attributes marker selects this protocol. Never infer opt-in by inspecting an arbitrary
-legacy DDS payload for a property named `kind` or `version`.
+The persisted attributes marker selects configured dispatch.
+Only configured dispatch uses the presence of an own top-level `isChannelConfigurationOp` property to classify a message as a configuration op.
+Any value reserves that property; the configuration parser requires its value to be `true`.
+Nested application data can use the same name.
+An absent attributes marker selects unconfigured DDS dispatch, not automatic opt-in based on a payload.
+The shared ordinary-op guard still rejects the reserved top-level property on unconfigured channels.
 
-For every incoming logical message, in order:
+For every incoming logical message on a configured channel, in order:
 
-1. Validate the protocol envelope and its revision as a non-negative safe integer.
-2. For a configuration message, an expected revision less than current is a CAS conflict.
+1. If the reserved own top-level property is absent, decode and deliver the ordinary payload through the normal DDS data-op path.
+   Preserve DDS op events, local metadata, and local/remote acknowledgement behavior.
+   Add no configuration revision or provenance metadata.
+2. Otherwise, parse the configuration op and validate its expected revision as a non-negative safe integer.
+   An expected revision less than current is a CAS conflict.
    Consume the op without changing state or calling the DDS configuration callback.
 3. If the expected revision equals current, validate the proposed configuration and transition.
    Replace the values, increment the revision, then synchronously notify the active DDS.
-4. For an ordinary op whose revision is less than or equal to current, decode and deliver its
-   contents through the normal DDS data-op path, preserving DDS op events, local metadata, and
-   local/remote acknowledgement behavior. Expose the op's configuration revision to the handler.
-   Do not discard it or infer its validity from a revision mismatch.
-5. A revision greater than current, an unknown protocol version, or an invalid envelope is a
-   processing error. These indicate an invalid protocol message, not an earlier-revision op.
+4. An expected revision greater than current, an unknown configuration protocol version, or an invalid configuration op is a processing error.
+   These checks do not apply to ordinary DDS payloads.
 
 A losing configuration proposal does not require DDS-specific validation of its obsolete values.
 A matching-revision proposal that this client cannot understand fails the client; it must not
 continue under the previous configuration. Ordinary payload validation remains the DDS's job.
-The shared wrapper neither selects a DDS decoder nor suppresses an ordinary op based on its
-configuration revision.
+Primitive, array, and object payloads keep their existing shapes.
+The shared wrapper neither selects a DDS decoder nor suppresses an ordinary op because it was authored before a configuration change.
 
 Even a successful replacement with identical values advances the revision and calls the
 configuration callback. It is still an explicitly requested barrier, but does not invalidate
 pending ordinary ops. Reject revision overflow rather than reusing an identity.
 
-Process mixed collections one logical message at a time, or split contiguous ordinary-op runs at
-every barrier. Deliver each run under the configuration active at that point in the stream,
-with each message's own submitted revision. Messages in a run need not all have the same revision.
+Split grouped collections only around configuration ops, preserving contiguous ordinary-op runs.
+Deliver each run under the configuration active at that point in the stream.
+Configuration callbacks run synchronously before later ordinary ops reach handle decoding or DDS op events.
 Grouping must not move a configuration callback across an ordinary op.
 
 ### Example
@@ -290,9 +296,9 @@ and independently requests configuration Y.
 | Stream position | Message | Shared-layer result |
 | --- | --- | --- |
 | 100 | A: configuration, expected revision 7, values X | Applied; configuration is X at revision 8. |
-| 101 | B: ordinary op, revision 7 | Delivered normally on all clients with op revision 7 and current configuration revision 8. B uses its normal local-acknowledgement path. |
+| 101 | B: ordinary op authored while configuration revision 7 was current | Delivered normally on all clients under current configuration X at revision 8, without provenance metadata. B uses its normal local-acknowledgement path. |
 | 102 | B: configuration, expected revision 7, values Y | CAS conflict; no callback and no revision change. |
-| 103 | A: ordinary op submitted after observing revision 8 | Delivered with op revision 8 and current configuration X. |
+| 103 | A: ordinary op submitted after observing revision 8 | Delivered normally under current configuration X, without provenance metadata. |
 
 If B's ordinary op had sequenced before position 100, the current configuration at delivery
 would still have been revision 7. Neither ordering causes the shared layer to discard the op.
@@ -305,10 +311,7 @@ All new symbols below are `@internal`; they are not application-facing promises 
 implementations.
 
 ```typescript
-import type {
-    IRuntimeMessageCollection,
-    IRuntimeMessagesContent,
-} from "@fluidframework/runtime-definitions/internal";
+import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definitions/internal";
 
 export interface ChannelConfigurationDefinition<
     TConfig extends ChannelConfiguration,
@@ -353,14 +356,7 @@ export type ConfigurationChangeResult<TConfig extends ChannelConfiguration> =
           readonly current: ChannelConfigurationSnapshot<TConfig>;
       } & ChannelConfigurationAttachedContext);
 
-export type SharedKernelMessageCollection = Omit<
-    IRuntimeMessageCollection,
-    "messagesContent"
-> & {
-    readonly messagesContent: readonly (IRuntimeMessagesContent & {
-        readonly configurationRevision?: number;
-    })[];
-};
+export type SharedKernelMessageCollection = IRuntimeMessageCollection;
 
 export interface ChannelConfigurationFacet<
     TConfig extends ChannelConfiguration,
@@ -445,21 +441,18 @@ A callback or receive-side validation failure is a fatal processing failure. Do 
 continue under either configuration. A local validation failure rejects the request without
 emitting an op. The getter is immutable and cannot serve as a second mutation API.
 
-### Ordinary ops and configuration revision metadata
+### Ordinary ops and configuration changes
 
 Keep `submitLocalMessage(contents, localOpMetadata)` and the DDS's existing mutation APIs.
-The wrapper stamps new ordinary messages with the active configuration revision. It does not
+The wrapper leaves ordinary messages unchanged and adds no configuration revision metadata. It does not
 change when the DDS applies local edits, emits events, resolves its own promises, or reconciles
 acknowledgements. There is no shared `"dropped"` result or new acknowledgement-based data API.
 
-`SharedKernel.processMessagesCore` receives normal runtime message fields plus
-`messages.messagesContent[i].configurationRevision`, copied from that op's envelope. The current
-configuration is available through the facet's `current`. For example, the op revision may be 7
-while `configuration.current.revision` is 8. Both are meaningful; the wrapper must not replace the
-op's revision with current or discard the op because they differ.
-
-The DDS may ignore the metadata for flags that do not affect in-flight ops. A future DDS-specific
-invalidation design can use it, but must also address local optimistic state, acknowledgements,
+`SharedKernel.processMessagesCore` receives the normal `IRuntimeMessageCollection`, with no added fields.
+The current configuration is available through the facet's `current`.
+An op authored before a configuration change can arrive afterward and is delivered normally.
+There is no ordinary-op configuration revision on the wire or in delivered metadata.
+A future DDS-specific invalidation design must address local optimistic state, acknowledgements,
 and events. This proposal does not add that behavior or prescribe an invalidation API.
 
 The revision identifies configuration history, not an op codec or a full snapshot of earlier
@@ -468,9 +461,9 @@ encoding depends on configuration must retain their existing format-compatibilit
 (for example, self-describing payloads); receiving a later barrier does not make older payloads
 undecodable or dispensable.
 
-There is intentionally no automatic "new revision" submission queue while a proposal is pending.
-An op submitted before the barrier is observed still uses the old revision, even if submitted
-after the proposal. Callers needing the new behavior wait for the proposal result and re-read
+There is intentionally no automatic submission queue for a pending configuration proposal.
+The current configuration remains unchanged until the barrier is observed.
+Callers needing the new behavior wait for the proposal result and re-read
 the current configuration before constructing their op.
 
 For example, a summary-only setting need not affect ordinary ops at all:
@@ -493,8 +486,8 @@ public processMessagesCore(messages: SharedKernelMessageCollection): void {
 ```
 
 `MyConfig`, the summary setting, and `processDataMessages` are DDS-specific illustrative code.
-Here the existing data handler can ignore `configurationRevision` and retain its normal optimistic
-and acknowledgement behavior. CAS remains entirely in the shared configuration mechanism.
+Here the existing data handler retains its normal optimistic and acknowledgement behavior.
+CAS remains entirely in the shared configuration mechanism.
 
 ### Shared wrapper integration
 
@@ -504,15 +497,19 @@ It does nothing for detached submissions or protocol cleanup.
 The configured protocol uses the same dispatch interface.
 
 The protocol adapter separates configuration-control traffic from ordinary DDS traffic, forwarding
-ordinary message collections to `SharedKernel.processMessagesCore` with revision metadata.
+ordinary message collections to `SharedKernel.processMessagesCore` without added metadata.
 It handles configuration requests during resubmission, stashed-op restoration, and rollback,
-but delegates ordinary payloads to the DDS's existing hooks. Guard against unwrapped configured
-traffic and double wrapping; `submitLocalMessage` remains the ordinary submission entry point.
+but delegates ordinary payloads to the DDS's existing hooks.
+`submitLocalMessage` remains the ordinary submission entry point.
+SharedObject guards ordinary submission, receive, stash, resubmit, and rollback against an own top-level `isChannelConfigurationOp` property.
+It throws `DataProcessingError` for any value of this reserved property, even on unconfigured channels, to prevent future collisions.
+The configuration controller has a scoped submission bypass only for its genuine proposals.
+The guard does not inspect nested application data or impose a DDS payload schema.
 
-Integrate at the `SharedObjectCore` dispatch boundary: inspect control/revision envelopes before
-handle decoding and DDS `pre-op`/`op` events. All valid ordinary envelopes, including those from
-earlier revisions, use the existing handle serializer and event/error machinery. Config control
-messages do not become DDS data-op events. Runtime-level raw-op observability may still report
+Integrate at the `SharedObjectCore` dispatch boundary: configured dispatch identifies configuration ops before
+handle decoding and DDS `pre-op`/`op` events.
+All ordinary ops, including those authored before a configuration change, use the existing handle serializer and event/error machinery.
+Configuration control messages do not become DDS data-op events. Runtime-level raw-op observability may still report
 that they sequenced.
 
 Processing errors propagate to the existing `ChannelDeltaConnection` error boundary, including buffered replay.
@@ -555,11 +552,11 @@ Interrupted attachment uses the existing runtime pending attachment machinery.
 
 For loading an attached channel:
 
-1. Read attributes and validate the shared protocol marker and revision.
+1. Read attributes and validate the persisted configuration version, shared protocol marker, and revision.
 2. Check factory support, construct the controller and DDS, and validate configuration.
 3. Initialize configuration-dependent components, then load DDS state from the same snapshot.
 4. Replay buffered messages through the controller in original order, including intermediate
-   configuration callbacks and delivery of ordinary ops with their original revision metadata.
+   configuration callbacks and normal delivery of ordinary ops without added metadata.
 5. Expose the channel only after replay finishes. Also prevent DDS load hooks from submitting
    ops against a partially replayed configuration.
 
@@ -567,7 +564,7 @@ Do not pre-apply the latest configuration and then replay old DDS ops. Those ops
 configurations to be decoded or applied correctly. Likewise, do not collapse multiple barriers to
 their final values: callbacks may have changed persisted DDS state.
 
-Normal and attach summaries write the controller's authoritative snapshot via the instance's
+Normal and attach summaries write the controller's authoritative revision and values with `version: 1` via the instance's
 `attributes`. No pending configuration proposal, local desired configuration, or configuration
 request promise is summarized. DDS data follows the existing summary contract, including correct
 handling of optimistic/pending state. The persisted configuration and DDS data must represent
@@ -586,38 +583,32 @@ data or make an older reader compatible.
 ## Pending ops, reconnect, and failure semantics
 
 Configuration-control ops use shared CAS bookkeeping. Ordinary ops retain the DDS's existing
-pending-state, rebase, acknowledgement, and rollback behavior; adding a configuration wrapper
+pending-state, rebase, acknowledgement, and rollback behavior; adding the configuration protocol
 must not replace those paths with identity-only replay.
 
 | Flow | Required behavior |
 | --- | --- |
-| Disconnect/offline submission after attachment | Retain pending revision metadata. Ordinary edits may be optimistic as usual; an offline configuration proposal is not locally activated. |
-| Reconnect | Preserve a configuration proposal's expected revision. For ordinary ops, invoke the DDS's normal resubmission/rebase hooks and preserve revision metadata through the wrapper. |
+| Disconnect/offline submission after attachment | Retain each configuration proposal's expected revision. Ordinary edits may be optimistic as usual; an offline configuration proposal is not locally activated. |
+| Reconnect | Preserve a configuration proposal's expected revision. For ordinary ops, invoke the DDS's normal resubmission/rebase hooks without adding revision metadata. |
 | Stashed state | Restore configuration requests without applying their proposed values. Restore ordinary payloads through the DDS's existing `applyStashedOp` behavior, including optimistic state, at the loader's historical replay position. |
-| Local acknowledgement | Consume configuration requests in the shared layer. Deliver all ordinary acknowledgements, including earlier-revision ops, through the existing DDS path without double application or leaked pending counts. |
-| Staging/squashing | Keep configuration barriers distinct and ordered. Ordinary DDS squash remains available within a revision; do not combine outputs across configuration/control boundaries. |
+| Local acknowledgement | Consume configuration requests in the shared layer. Deliver all ordinary acknowledgements, including ops authored before a configuration change, through the existing DDS path without double application or leaked pending counts. |
+| Staging/squashing | Keep configuration barriers distinct and ordered. Ordinary DDS squash remains available; do not combine outputs across configuration/control boundaries. |
 | Rollback of unsent staged ops | Cancel configuration requests and reject their live promises. For ordinary ops, run the DDS's normal rollback, including undoing optimistic state. |
 | Disposal or fatal failure | Reject outstanding configuration promises explicitly; ordinary promises retain DDS lifecycle handling. If delivery was uncertain, rejection does not assert that the operation can never commit. |
 
-For ordinary ops, preserve the revision captured for the original logical submission during
-transport retries and DDS resubmission/restoration. The wrapper supplies that revision as the
-default for messages produced by the corresponding DDS hook, rather than stamping the receiver's
-current revision. This also covers one-to-many resubmission or stashed-op reconstruction. New
-logical edits outside replay capture the current revision normally.
-
-This metadata is submission provenance, not a promise that a DDS rebase leaves the payload bytes
-unchanged. The DDS still owns rebase semantics and payload format compatibility. The wrapper must
-not discard, accept, or reinterpret reconstructed data based on the preserved revision. Any future
-invalidation policy must specify how it interacts with that DDS's rebase/squash behavior.
+Ordinary transport retries, resubmission, and stashed-op restoration add no configuration revision or provenance metadata.
+There is no revision-preservation or `replayRevision` machinery for ordinary ops.
+This also applies to one-to-many resubmission and stashed-op reconstruction.
+The DDS still owns rebase semantics and payload format compatibility.
+Any future invalidation policy must specify how it interacts with that DDS's rebase/squash behavior.
 
 Do not copy `DocumentSchema`'s resubmission behavior for configuration proposals, which may
 regenerate a schema proposal. Changing the expected revision during replay could unexpectedly
 make a previously losing configuration change succeed. Retain it until the caller explicitly
 requests a new proposal.
 
-Update the integration with `ChannelDeltaConnection`'s stashed metadata handling so reconstructed
-ordinary contents retain their configuration revision alongside existing local metadata.
-Configuration envelopes must not reach the DDS's `applyStashedOp` at all. Deduplication and
+`ChannelDeltaConnection`'s stashed metadata handling keeps reconstructed ordinary contents and existing local metadata without adding configuration metadata.
+Configuration ops must not reach the DDS's `applyStashedOp` at all. Deduplication and
 detection of already-acknowledged batches remain the responsibility of existing runtime machinery.
 
 Configuration results resolve after their synchronous change callback completes (or after a CAS
@@ -703,7 +694,7 @@ snapshot preserves all persisted type memberships and explicit schema control ev
 requested list is empty, omitted, or a subset.
 
 Ship protocol readers and the new wrapper dark first. Gate creation by deployment policy, with no
-behavioral changes to existing DDSes. The internal runtime option
+behavioral changes to existing DDSes apart from the reserved-key guards. The internal runtime option
 `channelConfigurationTypes?: readonly string[]` supplies the local creation allow-list and requested
 document additions. Nonempty lists require `explicitSchemaControl: true`. For example, a deployment
 may request only `["https://example.com/types/a"]`; it cannot create configured instances of type B.
@@ -717,24 +708,29 @@ settings are disabled. They protect the wrapper protocol and historical summarie
 configuration values. Neither a DDS configuration barrier nor a package rollback removes a member.
 Existing unmarked instances remain legacy even when their type is in the document set.
 
+This wire format replaces the earlier wrapped prototype.
+There is no automatic migration or compatibility with saved pending ops from that prototype.
+Normal stable unconfigured summaries remain readable.
+
 Record configuration proposal outcomes and compatibility/processing failures with channel type,
 protocol version, revision, and sequencing context. Do not log arbitrary configuration values or
-DDS payloads: they may contain application data. Earlier-revision ordinary ops are not errors or
-drops in this protocol; DDS-specific invalidation events and telemetry are outside this design.
+DDS payloads: they may contain application data.
+Ordinary ops authored before a configuration change are not errors or drops in this protocol;
+DDS-specific invalidation events and telemetry are outside this design.
 
 ## Implementation boundaries
 
 | Area | Proposed changes |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; control-op dispatch and ordinary-op revision metadata; configuration-request completion tracking; normal DDS attachment state. |
-| `datastore` | Factory and attach capability checks; retain lazy replay ordering; align stashed-envelope handling and summary invalidation. |
+| `shared-object-base` | Controller and compositional kernel facet; immutable per-instance attributes; configuration-op dispatch and shared reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
+| `datastore` | Factory and attach capability checks; retain lazy replay ordering, ordinary stashed-op handling, and summary invalidation. |
 | `container-runtime` | Additive persisted type set requested through normal schema features; propagate per-type readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
 | Initial adopter | New opt-in DDS instances with configuration validation and a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
 
 Share the existing base's serializer, telemetry, error handling, and summary support through
 targeted hooks. Do not duplicate the whole `SharedObjectCore` implementation or change the
-legacy dispatch path's semantics. Generated API reports are regenerated through existing build
+legacy dispatch path's semantics apart from the shared reserved-key guards. Generated API reports are regenerated through existing build
 tasks, never hand-edited.
 
 ## Required coverage before enabling the feature
@@ -745,30 +741,33 @@ test harnesses. The key scenarios are:
 | Scenario | Expected result |
 | --- | --- |
 | Two configuration proposals based on one revision | Exactly one wins, on every client; loser never invokes the change callback. |
-| Old data op before versus after a winning barrier | Delivered in both cases with the submitted revision; the current configuration reflects stream order and normal data-op events/acknowledgements are preserved. |
-| Identical replacement; A-to-B-to-A replacement | Each successful barrier has a distinct revision; returning to earlier values does not erase an op's revision provenance. |
+| Old data op before versus after a winning barrier | Delivered in both cases without configuration revision metadata; the current configuration reflects stream order and normal data-op events/acknowledgements are preserved. |
+| Identical replacement; A-to-B-to-A replacement | Each successful barrier has a distinct revision; returning to earlier values does not reset the configuration revision. |
 | Barrier and data ops in one grouped envelope | Preserve logical order and callback boundaries, including shared sequence numbers. |
-| Multiple DDSes | Configuration and revision metadata for one channel do not affect another. |
+| Multiple DDSes | Configuration and its revision for one channel do not affect another. |
 | Existing local application | Optimistic edits, local events, acknowledgements, and DDS-specific promises behave as before; only attached configuration activation waits for sequencing. |
-| Non-invalidating configuration flag | An ordinary op in flight across a flag change reaches the data handler unchanged, with its earlier configuration revision. |
+| Non-invalidating configuration flag | An ordinary op in flight across a flag change reaches the data handler unchanged, without configuration revision metadata. |
 | Disable/remove setting | Full replacement persists; no feature-gate/default merging on reload. |
 | Configuration callback updates DDS state | Data and configuration summarize/reload consistently; replay reproduces the update. |
-| Lazy load with several intervening barriers | Snapshot configuration initializes first; all configuration callbacks and ordinary ops replay in order with their revision metadata. |
+| Lazy load with several intervening barriers | Snapshot configuration initializes first; all configuration callbacks and ordinary ops replay in order without ordinary-op revision metadata. |
 | Attributes-only change and incremental summary | New configuration cannot be hidden by a stale channel summary handle. |
 | New/detached/attaching/rehydrated channel | Normal attachment selects local or sequenced changes; serialization stays local and attachment captures the latest attributes. |
-| Reconnect/stashed/already-acked/duplicate batch | Revision provenance survives DDS replay/rebase and local-metadata reconstruction; optimistic state is restored normally, with no double apply or leaked pending count. |
-| Staging rollback and disposal | Configuration requests receive explicit cancellation/error outcomes; ordinary DDS squash/rollback remains functional without crossing revision boundaries. |
-| Future revision, malformed input, unsupported winning config | Predictable failure before dependent state is processed. |
+| Reconnect/stashed/already-acked/duplicate batch | Configuration proposals keep their expected revisions; ordinary DDS replay/rebase and local-metadata reconstruction restore optimistic state normally without added configuration metadata, double apply, or leaked pending counts. |
+| Staging rollback and disposal | Configuration requests receive explicit cancellation/error outcomes; ordinary DDS squash/rollback remains functional without crossing configuration-op boundaries. |
+| Future expected revision, malformed configuration op, unsupported winning config | Predictable failure before dependent state is processed. |
+| Ordinary primitive, array, and object payloads | Preserve the existing payload shapes; ordinary validation remains the DDS's responsibility. |
+| Reserved own top-level property | Any value identifies a configuration candidate only on configured dispatch; parsing requires `true`. Ordinary submission, receive, stash, resubmit, and rollback reject the property with `DataProcessingError`, even on unconfigured channels. |
+| Nested application property with the reserved name | Remains ordinary application data; no configuration dispatch or shared rejection. |
 | Unsupported obsolete config in a losing proposal | CAS conflict without attempting DDS-specific interpretation. |
 | Supported runtime with unsupported factory | Fail before loading the configured channel or rewriting its summary. |
 | Unsupported runtime and first configured attachment | Document-schema capability excludes it before it can process new-protocol data. |
 | Independent type rollouts | Creation and attachment check the exact type; enabling A does not enable B. |
 | Equivalent type requests | Reordered, duplicate, subset, empty, and absent requests do not cause a schema proposal when no members are added. |
 | Concurrent type additions | A losing proposal is not retried automatically; later proposals retain all observed persisted members. |
-| Legacy document/channel | No opt-in, no new envelopes, and no changes to existing behavior. |
+| Legacy document/channel | No opt-in or new envelopes; existing behavior is unchanged apart from reserved-key guards. Normal stable unconfigured summaries remain readable. |
 
-The shared mechanism provides persisted configuration, ordered CAS updates, and op revision
-metadata without changing ordinary DDS consistency semantics. Attached configuration activation incurs
+The shared mechanism provides persisted configuration and ordered CAS updates
+without changing ordinary DDS wire formats or consistency semantics. Attached configuration activation incurs
 acknowledgement latency; unattached changes apply locally and ordinary APIs retain their existing behavior. Flags that invalidate
 in-flight ops require a separate DDS-authored design, including reconciliation and events, rather
 than a universal dropping rule in the common wrapper.

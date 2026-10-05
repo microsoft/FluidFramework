@@ -59,6 +59,7 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
+import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
@@ -559,15 +560,19 @@ export abstract class SharedObjectCore<
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
-				getSharedObjectProtocol(this).applyStashedOp(content, (ordinaryContent) =>
-					this.applyStashedOp(parseHandles(ordinaryContent, this.serializer)),
-				);
+				getSharedObjectProtocol(this).applyStashedOp(content, (ordinaryContent) => {
+					verifyOrdinaryChannelMessage(ordinaryContent);
+					this.applyStashedOp(parseHandles(ordinaryContent, this.serializer));
+				});
 			},
 			rollback: (content: unknown, localOpMetadata: unknown) => {
 				getSharedObjectProtocol(this).rollback(
 					content,
 					localOpMetadata,
-					(ordinaryContent, metadata) => this.rollback(ordinaryContent, metadata),
+					(ordinaryContent, metadata) => {
+						verifyOrdinaryChannelMessage(ordinaryContent);
+						this.rollback(ordinaryContent, metadata);
+					},
 				);
 			},
 		} satisfies IDeltaHandler);
@@ -630,6 +635,7 @@ export abstract class SharedObjectCore<
 		// Decode any handles in the contents before processing the messages.
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
 		for (const messageContent of messagesContent) {
+			verifyOrdinaryChannelMessage(messageContent.contents);
 			const decodedMessageContent: IRuntimeMessagesContent = {
 				...messageContent,
 				contents: parseHandles(messageContent.contents, this.serializer),
@@ -681,6 +687,7 @@ export abstract class SharedObjectCore<
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
 		const submit = (ordinaryContent: unknown, metadata: unknown): void => {
+			verifyOrdinaryChannelMessage(ordinaryContent);
 			if (squash) {
 				this.reSubmitSquashed(ordinaryContent, metadata);
 			} else {

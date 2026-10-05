@@ -9,7 +9,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	copyChannelConfiguration,
 	copyChannelConfigurationSnapshot,
-	parseConfiguredChannelMessage,
+	parseChannelConfigurationMessage,
 	type ChannelConfigurationMessageV1,
 } from "./channelConfigurationFormat.js";
 
@@ -26,18 +26,15 @@ import {
 export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<never>>>;
 
 /**
- * Persisted form of a channel's configuration at a specific point in time.
+ * A read-only view of a channel's accepted configuration at a specific point in time.
+ *
+ * This is the in-memory API, not the persisted encoding. The shared wrapper adds format
+ * version information when it stores this state in channel attributes.
  * @internal
  */
 export interface ChannelConfigurationSnapshot<
 	TConfig extends ChannelConfiguration = ChannelConfiguration,
 > {
-	/**
-	 * Version number for the format used in the encoding of this interface.
-	 *
-	 * This number need only be bumped if the encoding format changes in a way that is not backward compatible.
-	 */
-	readonly version: 1;
 	/**
 	 * The revision of this configuration snapshot.
 	 *
@@ -232,7 +229,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	) {
 		const snapshot = copyChannelConfigurationSnapshot(options.snapshot);
 		this.validateSupported(snapshot.values);
-		this.snapshot = Object.freeze({ ...snapshot, values: snapshot.values });
+		this.snapshot = Object.freeze({ revision: snapshot.revision, values: snapshot.values });
 	}
 
 	public get current(): ChannelConfigurationSnapshot<TConfig> {
@@ -250,7 +247,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		const values = copyChannelConfiguration(next);
 		const message = Object.freeze({
 			version: 1,
-			kind: "configuration",
+			isChannelConfigurationOp: true,
 			expectedRevision: previous.revision,
 			values,
 		} as const);
@@ -316,7 +313,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		try {
 			this.verifyCanSubmit();
 			this.processing = true;
-			const message = this.readConfigurationMessage(content);
+			const message = parseChannelConfigurationMessage(content);
 			if (message.expectedRevision > this.snapshot.revision) {
 				throw new UsageError("Channel configuration proposal has a future revision");
 			}
@@ -424,16 +421,8 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		}
 	}
 
-	private readConfigurationMessage(content: unknown): ChannelConfigurationMessageV1 {
-		const message = parseConfiguredChannelMessage(content);
-		if (message.kind !== "configuration") {
-			throw new UsageError("Expected a channel configuration proposal");
-		}
-		return message;
-	}
-
 	private copyProposal(content: unknown): ChannelConfigurationMessageV1 {
-		const message = this.readConfigurationMessage(content);
+		const message = parseChannelConfigurationMessage(content);
 		const copy = Object.freeze({
 			...message,
 			values: copyChannelConfiguration(message.values),
@@ -447,7 +436,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	): ConfigurationChangeResult<TConfig> {
 		const previous = this.snapshot;
 		this.snapshot = Object.freeze({
-			version: 1,
 			revision: previous.revision + 1,
 			values,
 		});

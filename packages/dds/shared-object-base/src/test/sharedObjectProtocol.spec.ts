@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
@@ -83,6 +84,52 @@ class LegacySharedObject extends SharedObject {
 }
 
 describe("SharedObject protocol dispatch", () => {
+	for (const attachState of [AttachState.Detached, AttachState.Attached]) {
+		it(`rejects the reserved configuration key on ordinary submissions (${attachState})`, async () => {
+			const runtime = new MockFluidDataStoreRuntime({ attachState });
+			const shared = new LegacySharedObject(runtime);
+			const submitted: unknown[] = [];
+			const delta = new MockDeltaConnection(
+				(contents: unknown) => submitted.push(contents),
+				() => {},
+			);
+			await shared.load({ deltaConnection: delta, objectStorage: new MockStorage() });
+			for (const isChannelConfigurationOp of [true, false, 1]) {
+				assert.throws(() => shared.submit({ isChannelConfigurationOp }), DataProcessingError);
+			}
+			assert.equal(submitted.length, 0);
+			runtime.dispose();
+		});
+	}
+
+	it("rejects the reserved key before ordinary delivery or replay hooks", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const shared = new LegacySharedObject(runtime);
+		const delta = new MockDeltaConnection(
+			() => 0,
+			() => {},
+		);
+		await shared.load({ deltaConnection: delta, objectStorage: new MockStorage() });
+		const contents = {
+			isChannelConfigurationOp: true,
+			version: 1,
+			expectedRevision: 0,
+			values: {},
+		};
+		for (const invoke of [
+			() => delta.processMessages(collection(contents, {})),
+			() => delta.applyStashedOp(contents),
+			() => delta.reSubmit(contents, {}, false),
+			() => delta.reSubmit(contents, {}, true),
+			() => delta.rollback?.(contents, {}),
+		]) {
+			assert.throws(invoke, DataProcessingError);
+		}
+		assert.deepEqual(shared.calls, []);
+		assert.deepEqual(shared.messages, []);
+		runtime.dispose();
+	});
+
 	it("shares the stateless default and resolves registered protocols", () => {
 		const first = {};
 		const second = {};

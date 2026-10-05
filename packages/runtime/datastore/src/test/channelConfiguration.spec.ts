@@ -460,7 +460,12 @@ describe("Channel configuration compatibility", () => {
 			messagesContent: [
 				{
 					clientSequenceNumber: 1,
-					contents: { version: 1, kind: "configuration", expectedRevision: 0, values: {} },
+					contents: {
+						version: 1,
+						isChannelConfigurationOp: true,
+						expectedRevision: 0,
+						values: {},
+					},
 				},
 			],
 		} as unknown as IRuntimeMessageCollection;
@@ -503,7 +508,12 @@ describe("Channel configuration compatibility", () => {
 			messagesContent: [
 				{
 					clientSequenceNumber: 1,
-					contents: { version: 1, kind: "configuration", expectedRevision: 0, values: {} },
+					contents: {
+						version: 1,
+						isChannelConfigurationOp: true,
+						expectedRevision: 0,
+						values: {},
+					},
 				},
 			],
 		} as unknown as IRuntimeMessageCollection);

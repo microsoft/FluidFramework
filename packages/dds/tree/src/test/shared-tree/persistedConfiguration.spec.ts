@@ -242,13 +242,6 @@ function historyStart(tree: ISharedTree, idCompressor: IIdCompressor): string | 
 	);
 }
 
-function operationRevision(contents: unknown): number {
-	assert(typeof contents === "object" && contents !== null);
-	assert("kind" in contents && contents.kind === "operation");
-	assert("revision" in contents && typeof contents.revision === "number");
-	return contents.revision;
-}
-
 function deliverMessage(
 	delta: MockDeltaConnection,
 	contents: unknown,
@@ -662,7 +655,7 @@ describe("SharedTree persisted configuration", () => {
 		clients[0].containerRuntime.submit(
 			{
 				version: 1,
-				kind: "configuration",
+				isChannelConfigurationOp: true,
 				expectedRevision: 0,
 				values: {},
 			},
@@ -1086,7 +1079,7 @@ describe("SharedTree persisted configuration", () => {
 		}
 	});
 
-	it("applies and resubmits a stashed Tree edit under its original revision after a history barrier", async () => {
+	it("applies and resubmits an unwrapped stashed Tree edit after a history barrier", async () => {
 		const { clients } = setup();
 		const snapshot = await summarize(clients[0].tree);
 		const idCompressor = compressor(clients[0].runtime);
@@ -1095,14 +1088,15 @@ describe("SharedTree persisted configuration", () => {
 		const stashedRevision = headRevision(original.tree);
 		assert.equal(original.submitted.length, 1);
 		const [stashed] = original.submitted;
-		assert.equal(operationRevision(stashed.contents), 0);
+		assert(typeof stashed.contents === "object" && stashed.contents !== null);
+		assert(!Object.hasOwn(stashed.contents, "isChannelConfigurationOp"));
 
 		const restored = await load(snapshot, idCompressor);
 		deliverMessage(
 			restored.delta,
 			{
 				version: 1,
-				kind: "configuration",
+				isChannelConfigurationOp: true,
 				expectedRevision: 0,
 				values: { retainHistory: true },
 			},
@@ -1115,13 +1109,13 @@ describe("SharedTree persisted configuration", () => {
 		assert.equal(headRevision(restored.tree), stashedRevision);
 		assert.equal(restored.submitted.length, 1);
 		const [replayed] = restored.submitted;
-		assert.equal(operationRevision(replayed.contents), 0);
+		assert.deepEqual(replayed.contents, stashed.contents);
 		assert.equal(configuration(restored.tree).current.revision, 1);
 
 		restored.delta.reSubmit(replayed.contents, replayed.metadata, false);
 		assert.equal(restored.submitted.length, 2);
 		const resubmitted = restored.submitted[1];
-		assert.equal(operationRevision(resubmitted.contents), 0);
+		assert.deepEqual(resubmitted.contents, stashed.contents);
 		assert.deepEqual([...view.root], ["stashed edit"]);
 		deliverMessage(restored.delta, resubmitted.contents, 101, true, resubmitted.metadata);
 		assert.deepEqual([...view.root], ["stashed edit"]);
@@ -1129,7 +1123,8 @@ describe("SharedTree persisted configuration", () => {
 
 		view.root.insertAtEnd("new edit");
 		const fresh = restored.submitted[2];
-		assert.equal(operationRevision(fresh.contents), 1);
+		assert(typeof fresh.contents === "object" && fresh.contents !== null);
+		assert(!Object.hasOwn(fresh.contents, "isChannelConfigurationOp"));
 		deliverMessage(restored.delta, fresh.contents, 102, true, fresh.metadata);
 		const loaded = await load(await summarize(restored.tree), idCompressor);
 		assert.deepEqual(
@@ -1216,14 +1211,14 @@ describe("SharedTree persisted configuration", () => {
 			messagesContent: [
 				{
 					version: 1,
-					kind: "configuration",
+					isChannelConfigurationOp: true,
 					expectedRevision: 0,
 					values: { retainHistory: true },
 				},
-				{ version: 1, kind: "configuration", expectedRevision: 1, values: {} },
+				{ version: 1, isChannelConfigurationOp: true, expectedRevision: 1, values: {} },
 				{
 					version: 1,
-					kind: "configuration",
+					isChannelConfigurationOp: true,
 					expectedRevision: 2,
 					values: { retainHistory: true },
 				},
@@ -1265,7 +1260,12 @@ describe("SharedTree persisted configuration", () => {
 			local: false,
 			messagesContent: [
 				{
-					contents: { version: 1, kind: "configuration", expectedRevision: 0, values: {} },
+					contents: {
+						version: 1,
+						isChannelConfigurationOp: true,
+						expectedRevision: 0,
+						values: {},
+					},
 					clientSequenceNumber: 1,
 					localOpMetadata: undefined,
 				},

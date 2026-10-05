@@ -90,7 +90,6 @@ function makeKind(
 						"operation",
 						message.contents,
 						message.localOpMetadata,
-						message.configurationRevision,
 						args.configuration?.current.revision,
 						messages.local,
 					]);
@@ -190,12 +189,8 @@ function collection(
 	};
 }
 
-function operation(contents: unknown, revision: number = 0): unknown {
-	return { version: 1, kind: "operation", revision, contents };
-}
-
 function barrier(expectedRevision: number, retain: boolean): unknown {
-	return { version: 1, kind: "configuration", expectedRevision, values: { retain } };
+	return { version: 1, isChannelConfigurationOp: true, expectedRevision, values: { retain } };
 }
 
 function requireConfig(view: View): ChannelConfigurationFacet<Config> {
@@ -321,9 +316,9 @@ describe("configured kernel composition", () => {
 			async () => ({}),
 		);
 		const message = collection([
-			operation("snapshot configuration"),
+			"snapshot configuration",
 			barrier(0, true),
-			operation("earlier revision"),
+			"authored before configuration changed",
 			barrier(1, false),
 		]);
 		runtime.processMessages({
@@ -342,7 +337,7 @@ describe("configured kernel composition", () => {
 			loaded.observed.map((item): unknown => (Array.isArray(item) ? item[0] : item)),
 			["initial", "operation", "configuration", "operation", "configuration"],
 		);
-		const restoredOperation = { address: "dds", contents: operation("stashed earlier") };
+		const restoredOperation = { address: "dds", contents: "stashed earlier" };
 		const restoredMetadata = await runtime.applyStashedOp({
 			type: "op",
 			content: restoredOperation,
@@ -351,8 +346,8 @@ describe("configured kernel composition", () => {
 		runtime.processMessages(collection([restoredOperation], true, [restoredMetadata]));
 		assert.equal(runtime.isDirty, false);
 		assert.deepEqual(loaded.observed.slice(-2), [
-			["operation", { stashed: 1, contents: "stashed earlier" }, "restored-one", 0, 2, true],
-			["operation", { stashed: 2, contents: "stashed earlier" }, "restored-two", 0, 2, true],
+			["operation", { stashed: 1, contents: "stashed earlier" }, "restored-one", 2, true],
+			["operation", { stashed: 2, contents: "stashed earlier" }, "restored-two", 2, true],
 		]);
 		const restoredProposal = { address: "dds", contents: barrier(2, true) };
 		const proposalMetadata = await runtime.applyStashedOp({
@@ -375,7 +370,7 @@ describe("configured kernel composition", () => {
 
 	for (const lazy of [false, true]) {
 		for (const malformed of [false, true]) {
-			it(`leaves ${malformed ? "malformed envelopes" : "DDS processor errors"} to the real delta connection during ${lazy ? "lazy replay" : "live processing"}`, async () => {
+			it(`leaves ${malformed ? "malformed configuration ops" : "DDS processor errors"} to the real delta connection during ${lazy ? "lazy replay" : "live processing"}`, async () => {
 				const processorError = new Error("DDS processor failed");
 				const factory = makeKind({}, true, "configured-test", {
 					processMessages: () => {
@@ -414,7 +409,7 @@ describe("configured kernel composition", () => {
 					);
 					return true;
 				};
-				const contents = malformed ? { version: 2, kind: "operation" } : operation("fail");
+				const contents = malformed ? { version: 2, isChannelConfigurationOp: true } : "fail";
 				if (lazy) {
 					test.process(contents);
 					assert.equal(test.errors.length, 0);
@@ -505,7 +500,7 @@ describe("configured kernel composition", () => {
 		});
 		let closedError: unknown;
 		assert.throws(
-			() => test.process(operation("trigger listener")),
+			() => test.process("trigger listener"),
 			(error: unknown) => {
 				assert(error instanceof DataProcessingError);
 				assert.notEqual(error, listenerError);
@@ -530,7 +525,7 @@ describe("configured kernel composition", () => {
 			(error: unknown) => error === closedError,
 		);
 		assert.throws(
-			() => test.process(operation("closed")),
+			() => test.process("closed"),
 			(error: unknown) => error === closedError,
 		);
 		await assert.rejects(config.requestChange({}), (error: unknown) => error === closedError);
@@ -651,7 +646,7 @@ describe("configured kernel composition", () => {
 		const proposal = submitted[0];
 		assert(proposal !== undefined);
 		assert.deepEqual(proposal.contents, barrier(2, true));
-		assert.deepEqual(submitted[1]?.contents, operation("attaching", 2));
+		assert.equal(submitted[1]?.contents, "attaching");
 		delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
 		const result = await change;
 		assert.equal(result.source, "sequenced");
@@ -704,7 +699,7 @@ describe("configured kernel composition", () => {
 		assert.equal(config.current.values.retain, true);
 	});
 
-	it("envelopes ordinary edits from synchronous dirty listeners on an attached channel", async () => {
+	it("leaves ordinary edits from synchronous dirty listeners unwrapped on an attached channel", async () => {
 		const events = new EventEmitter();
 		const { runtime, delta, services, submitted } = harness(AttachState.Attached, () =>
 			events.emit("dirty"),
@@ -727,7 +722,7 @@ describe("configured kernel composition", () => {
 		const request = config.requestChange({ retain: true });
 		assert.equal(submitted.length, 2);
 		assert.deepEqual(submitted[0]?.contents, barrier(0, true));
-		assert.deepEqual(submitted[1]?.contents, operation(contents));
+		assert.deepEqual(submitted[1]?.contents, contents);
 		assert.equal(submitted[1]?.metadata, metadata);
 		assert.equal(config.current.revision, 0);
 		assert.deepEqual(shared.observed.at(-1), ["optimistic", contents]);
@@ -741,9 +736,9 @@ describe("configured kernel composition", () => {
 		);
 		const result = await request;
 		assert.equal(result.status, "applied");
-		assert.deepEqual(shared.observed.at(-1), ["operation", contents, metadata, 0, 1, true]);
+		assert.deepEqual(shared.observed.at(-1), ["operation", contents, metadata, 1, true]);
 		remote.delta.processMessages(collection(submitted.map((message) => message.contents)));
-		assert.deepEqual(peer.observed.at(-1), ["operation", contents, undefined, 0, 1, false]);
+		assert.deepEqual(peer.observed.at(-1), ["operation", contents, undefined, 1, false]);
 	});
 
 	it("keeps a rehydrated detached channel local until attaching", async () => {
@@ -826,6 +821,125 @@ describe("configured kernel composition", () => {
 		assert.equal(Object.isFrozen(factory.attributes), false);
 	});
 
+	it("exposes revision and values in memory and encodes a version only in attributes", async () => {
+		const { runtime, services } = harness(AttachState.Detached);
+		const factory = makeKind({ retain: false }).getFactory();
+		const original = factory.create(runtime, "original");
+		for (const shared of [
+			original,
+			await factory.load(runtime, "loaded", services, original.attributes),
+		]) {
+			const config = requireConfig(shared);
+			assert.deepEqual(config.current, { revision: 0, values: { retain: false } });
+			assert(Object.isFrozen(config.current));
+			const initialAttributes = JSON.parse(JSON.stringify(shared.attributes)) as {
+				configuration: unknown;
+			};
+			assert.deepEqual(initialAttributes.configuration, {
+				version: 1,
+				revision: 0,
+				values: { retain: false },
+			});
+			const result = await config.requestChange({ retain: true });
+			assert.deepEqual(result.current, { revision: 1, values: { retain: true } });
+			const updatedAttributes = JSON.parse(JSON.stringify(shared.attributes)) as {
+				configuration: unknown;
+			};
+			assert.deepEqual(updatedAttributes.configuration, {
+				version: 1,
+				revision: 1,
+				values: { retain: true },
+			});
+		}
+	});
+
+	for (const attachState of [AttachState.Detached, AttachState.Attached]) {
+		it(`rejects DDS submissions using the reserved marker (${attachState})`, () => {
+			const { runtime, services, submitted } = harness(attachState);
+			const shared = makeKind({}).getFactory().create(runtime, "configured");
+			shared.connect(services);
+			for (const isChannelConfigurationOp of [true, false, 1]) {
+				assert.throws(
+					() => shared.edit({ isChannelConfigurationOp, values: "private data" }),
+					(error: unknown) => {
+						assert(error instanceof DataProcessingError);
+						assert(!error.message.includes("private data"));
+						return true;
+					},
+				);
+			}
+			assert.equal(submitted.length, 0);
+			assert.equal(requireConfig(shared).current.revision, 0);
+		});
+	}
+
+	it("only permits the reserved marker for the controller's own submission", async () => {
+		const { runtime, services, delta, submitted } = harness(AttachState.Attached, () => {
+			assert.throws(() => shared.edit(barrier(0, false)), DataProcessingError);
+		});
+		const shared = makeKind({}).getFactory().create(runtime, "configured");
+		shared.connect(services);
+		const request = requireConfig(shared).requestChange({ retain: true });
+		assert.equal(submitted.length, 1);
+		const control = submitted[0];
+		assert(control !== undefined);
+		assert.deepEqual(control.contents, barrier(0, true));
+		delta.processMessages(collection([control.contents], true, [control.metadata]));
+		const result = await request;
+		assert.equal(result.status, "applied");
+	});
+
+	it("preserves ordinary wire bytes and events for primitive, array and object payloads", () => {
+		const { runtime, services, delta, submitted } = harness();
+		const shared = makeKind({}).getFactory().create(runtime, "configured");
+		shared.connect(services);
+		const events: unknown[] = [];
+		(shared as View & ISharedObject).on("op", (message) => events.push(message.contents));
+		const payloads = [
+			7,
+			"ordinary",
+			false,
+			[1, { isChannelConfigurationOp: true }],
+			{ version: 99, kind: "configuration", revision: 123, contents: {} },
+			{ data: { isChannelConfigurationOp: true, expectedRevision: 0 } },
+		];
+		const metadata = { pending: true };
+		for (const contents of payloads) {
+			shared.edit(contents, metadata);
+			const sent = submitted.at(-1);
+			assert(sent !== undefined);
+			assert.equal(JSON.stringify(sent.contents), JSON.stringify(contents));
+			assert.equal(sent.metadata, metadata);
+			delta.processMessages(collection([sent.contents], true, [metadata]));
+			assert.deepEqual(shared.observed.at(-1), ["operation", contents, metadata, 0, true]);
+		}
+		assert.deepEqual(events, payloads);
+		assert.equal(requireConfig(shared).current.revision, 0);
+	});
+
+	it("rejects invalid marked configuration ops instead of passing them to the DDS", () => {
+		const { runtime, services, delta } = harness();
+		const shared = makeKind({}).getFactory().create(runtime, "configured");
+		shared.connect(services);
+		for (const marker of [false, 1, undefined]) {
+			assert.throws(
+				() =>
+					delta.processMessages(
+						collection([
+							{
+								version: 1,
+								isChannelConfigurationOp: marker,
+								expectedRevision: 0,
+								values: {},
+							},
+						]),
+					),
+				/Invalid channel configuration message/,
+			);
+		}
+		assert.deepEqual(shared.observed, [["initial", { revision: 0, values: {} }]]);
+	});
+
 	it("loads both protocols with one reader factory and ignores new-instance defaults", async () => {
 		const { runtime, services } = harness(AttachState.Detached);
 		const original = makeKind({ retain: false }).getFactory().create(runtime, "original");
@@ -877,7 +991,7 @@ describe("configured kernel composition", () => {
 		}
 	});
 
-	it("replays mixed batches in logical order and delivers earlier revisions and normal events", async () => {
+	it("replays mixed batches in logical order and delivers raw ops and normal events", async () => {
 		const { runtime, delta, services } = harness();
 		const factory = makeKind({ retain: false }).getFactory();
 		const original = factory.create(runtime, "original");
@@ -887,20 +1001,14 @@ describe("configured kernel composition", () => {
 		requireConfig(shared).on("changed", (change) => changes.push(change));
 		(shared as View & ISharedObject).on("op", (message) => events.push(message.contents));
 		delta.processMessages(
-			collection([
-				operation("before"),
-				barrier(0, true),
-				operation("older"),
-				barrier(1, false),
-				operation("after", 2),
-			]),
+			collection(["before", barrier(0, true), "older", barrier(1, false), "after"]),
 		);
 		assert.deepEqual(
 			shared.observed.filter((item) => Array.isArray(item) && item[0] === "operation"),
 			[
-				["operation", "before", undefined, 0, 0, false],
-				["operation", "older", undefined, 0, 1, false],
-				["operation", "after", undefined, 2, 2, false],
+				["operation", "before", undefined, 0, false],
+				["operation", "older", undefined, 1, false],
+				["operation", "after", undefined, 2, false],
 			],
 		);
 		assert.deepEqual(
@@ -926,7 +1034,7 @@ describe("configured kernel composition", () => {
 		);
 	});
 
-	it("preserves original revision through one-to-many replay and ordinary rollback", async () => {
+	it("preserves raw DDS payloads through one-to-many replay and ordinary rollback", async () => {
 		const { runtime, delta, services, submitted } = harness();
 		const factory = makeKind({}).getFactory();
 		const shared = await factory.load(
@@ -937,21 +1045,21 @@ describe("configured kernel composition", () => {
 		);
 		delta.processMessages(collection([barrier(0, true)]));
 		const metadata = { pending: true };
-		delta.reSubmit(operation("old"), metadata, false);
+		delta.reSubmit("old", metadata, false);
 		assert.deepEqual(submitted, [
-			{ contents: operation({ part: 1, contents: "old" }), metadata },
-			{ contents: operation({ part: 2, contents: "old" }), metadata },
+			{ contents: { part: 1, contents: "old" }, metadata },
+			{ contents: { part: 2, contents: "old" }, metadata },
 		]);
 		submitted.length = 0;
-		delta.applyStashedOp(operation("old"));
+		delta.applyStashedOp("old");
 		assert.deepEqual(submitted, [
-			{ contents: operation({ stashed: 1, contents: "old" }), metadata: "restored-one" },
-			{ contents: operation({ stashed: 2, contents: "old" }), metadata: "restored-two" },
+			{ contents: { stashed: 1, contents: "old" }, metadata: "restored-one" },
+			{ contents: { stashed: 2, contents: "old" }, metadata: "restored-two" },
 		]);
-		delta.rollback?.(operation("old"), metadata);
+		delta.rollback?.("old", metadata);
 		assert.deepEqual(shared.observed.at(-1), ["rollback", "old", metadata]);
 		shared.edit("new", metadata);
-		assert.deepEqual(submitted.at(-1), { contents: operation("new", 1), metadata });
+		assert.deepEqual(submitted.at(-1), { contents: "new", metadata });
 	});
 
 	it("preserves optimistic edits, handle encoding and local acknowledgement metadata", async () => {
@@ -976,9 +1084,8 @@ describe("configured kernel composition", () => {
 		assert(Array.isArray(observed));
 		assert.equal(observed[0], "operation");
 		assert.equal(observed[2], metadata);
-		assert.equal(observed[3], 0);
-		assert.equal(observed[4], 1);
-		assert.equal(observed[5], true);
+		assert.equal(observed[3], 1);
+		assert.equal(observed[4], true);
 		const processed: unknown = observed[1];
 		assert(typeof processed === "object" && processed !== null && "handle" in processed);
 		assert(isFluidHandle(processed.handle));

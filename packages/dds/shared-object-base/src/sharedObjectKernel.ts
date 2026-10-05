@@ -22,7 +22,6 @@ import type {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
-	IRuntimeMessagesContent,
 	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -113,18 +112,10 @@ export interface SharedKernel {
 }
 
 /**
- * Ordinary kernel messages, with original submission provenance on configured channels.
- * A message from an earlier revision is still delivered normally.
+ * Ordinary kernel messages, delivered without configuration ops or changes to DDS payloads.
  * @internal
  */
-export type SharedKernelMessageCollection = Omit<
-	IRuntimeMessageCollection,
-	"messagesContent"
-> & {
-	readonly messagesContent: readonly (IRuntimeMessagesContent & {
-		readonly configurationRevision?: number;
-	})[];
-};
+export type SharedKernelMessageCollection = IRuntimeMessageCollection;
 
 /**
  * Selects whether this channel uses persisted configuration and where its initial values come from.
@@ -221,7 +212,7 @@ class SharedObjectFromKernel<
 						eventName: "ChannelConfiguration",
 						status: result.status,
 						source: result.source,
-						protocolVersion: result.current.version,
+						protocolVersion: 1,
 						configurationRevision: result.current.revision,
 						...(result.source === "sequenced"
 							? {
@@ -236,7 +227,7 @@ class SharedObjectFromKernel<
 			sharedObjectProtocols.set(this, this.#configurationProtocol);
 			Object.defineProperty(this.attributes, "configuration", {
 				enumerable: true,
-				get: () => controller.current,
+				get: () => Object.freeze({ version: 1, ...controller.current }),
 			});
 			Object.freeze(this.attributes);
 			runtime.once("dispose", () =>

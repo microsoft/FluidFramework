@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * JSON values in version 1 of the persisted channel configuration protocol.
@@ -37,6 +37,10 @@ export interface ChannelConfigurationValuesV1 {
  * @internal
  */
 export interface ChannelConfigurationSnapshotV1 {
+	/**
+	 * Encoding version, separate from the configuration revision exposed to the DDS.
+	 * Change this when the persisted format requires a backward-incompatible change.
+	 */
 	readonly version: 1;
 	readonly revision: number;
 	readonly values: ChannelConfigurationValuesV1;
@@ -51,32 +55,35 @@ export interface ChannelConfigurationSnapshotV1 {
  */
 export interface ChannelConfigurationMessageV1 {
 	readonly version: 1;
-	readonly kind: "configuration";
+	readonly isChannelConfigurationOp: true;
 	readonly expectedRevision: number;
 	readonly values: ChannelConfigurationValuesV1;
 }
 
 /**
- * An ordinary DDS op with the configuration revision at its original submission.
- *
- * The revision records when the op was authored; it does not determine whether the op is valid.
- * An op submitted before a configuration change is still delivered if it sequences after that change.
- * @internal
+ * Detects the reserved top-level key without interpreting ordinary DDS payloads.
+ * A present but invalid marker must fail validation, not fall through to the DDS.
  */
-export interface ConfiguredChannelOperationV1 {
-	readonly version: 1;
-	readonly kind: "operation";
-	readonly revision: number;
-	readonly contents: unknown;
+export function hasChannelConfigurationMarker(value: unknown): boolean {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		Object.hasOwn(value, "isChannelConfigurationOp")
+	);
 }
 
 /**
- * Version 1 channel messages, selected only by a configured channel's attributes.
- * @internal
+ * Prevents DDS-authored ops from being mistaken for configuration changes.
+ * The key is reserved even on unconfigured channels; nested application data is unaffected.
  */
-export type ConfiguredChannelMessage =
-	| ChannelConfigurationMessageV1
-	| ConfiguredChannelOperationV1;
+export function verifyOrdinaryChannelMessage(value: unknown): void {
+	if (hasChannelConfigurationMarker(value)) {
+		throw DataProcessingError.create(
+			"Ordinary DDS ops cannot use the reserved isChannelConfigurationOp key",
+			"SharedObjectReservedConfigurationKey",
+		);
+	}
+}
 
 /**
  * Rejects invalid revision identities.
@@ -122,45 +129,33 @@ function readRecord(value: unknown): Record<string, unknown> {
 }
 
 /**
- * Validates an envelope without interpreting obsolete configuration values or DDS contents.
+ * Validates a marked configuration op without interpreting obsolete configuration values.
  * @internal
  */
-export function parseConfiguredChannelMessage(value: unknown): ConfiguredChannelMessage {
+export function parseChannelConfigurationMessage(
+	value: unknown,
+): ChannelConfigurationMessageV1 {
 	const record = readRecord(value);
 	if (record.version !== 1) {
 		throw new UsageError("Unsupported channel configuration protocol version");
 	}
-	if (record.kind === "configuration") {
-		validateConfigurationRevision(record.expectedRevision);
-		if (
-			Object.keys(record).length !== 4 ||
-			!Object.hasOwn(record, "values") ||
-			typeof record.values !== "object" ||
-			record.values === null ||
-			Array.isArray(record.values)
-		) {
-			throw new UsageError("Invalid channel configuration message");
-		}
-		return Object.freeze({
-			version: 1,
-			kind: "configuration",
-			expectedRevision: record.expectedRevision,
-			values: record.values as ChannelConfigurationValuesV1,
-		});
+	validateConfigurationRevision(record.expectedRevision);
+	if (
+		record.isChannelConfigurationOp !== true ||
+		Object.keys(record).length !== 4 ||
+		!Object.hasOwn(record, "values") ||
+		typeof record.values !== "object" ||
+		record.values === null ||
+		Array.isArray(record.values)
+	) {
+		throw new UsageError("Invalid channel configuration message");
 	}
-	if (record.kind === "operation") {
-		validateConfigurationRevision(record.revision);
-		if (Object.keys(record).length !== 4 || !Object.hasOwn(record, "contents")) {
-			throw new UsageError("Invalid configured channel operation");
-		}
-		return Object.freeze({
-			version: 1,
-			kind: "operation",
-			revision: record.revision,
-			contents: record.contents,
-		});
-	}
-	throw new UsageError("Invalid configured channel message kind");
+	return Object.freeze({
+		version: 1,
+		isChannelConfigurationOp: true,
+		expectedRevision: record.expectedRevision,
+		values: record.values as ChannelConfigurationValuesV1,
+	});
 }
 
 /**
