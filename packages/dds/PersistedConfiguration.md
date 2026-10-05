@@ -193,8 +193,9 @@ patch merging, `and`, `or`, or client-local defaults are applied on load.
 
 Copy and deeply freeze input before retaining or submitting it. Do not rely on TypeScript
 `readonly` alone. New factory defaults apply only to creation, never to existing persisted state.
-Validate the serialized size against the runtime's supported message limits before submission;
-do not truncate configuration or silently fall back to defaults.
+Message-size limits belong to the normal runtime submission path, not the configuration protocol.
+DDS authors should keep configuration small; the protocol does not impose a separate size limit,
+truncate values, or fall back to defaults.
 
 These types describe the internal API:
 
@@ -225,6 +226,8 @@ attributes type avoids requiring every legacy `IChannelAttributes` implementatio
 An opted-in instance's `attributes` getter returns its current controller snapshot together with
 the existing attributes. Updating one instance must never mutate `factory.attributes` or another
 instance's attributes.
+The wrapper copies attributes only for configured instances, before adding the configuration getter
+and freezing the copy. Unconfigured instances keep the existing attributes behavior.
 
 ## Wire protocol and processing
 
@@ -318,7 +321,7 @@ export interface ChannelConfigurationDefinition<
     readonly validateTransition: (previous: TConfig, next: TConfig) => void;
 }
 
-export interface ChannelConfigurationSequencedContext {
+export interface ChannelConfigurationAttachedContext {
     readonly source: "sequenced";
     readonly sequenceNumber: number;
     readonly clientSequenceNumber: number;
@@ -326,9 +329,14 @@ export interface ChannelConfigurationSequencedContext {
     readonly local: boolean;
 }
 
+export interface ChannelConfigurationDetachedContext {
+    readonly source: "local";
+    readonly local: true;
+}
+
 export type ChannelConfigurationContext =
-    | { readonly source: "local"; readonly local: true }
-    | ChannelConfigurationSequencedContext;
+    | ChannelConfigurationDetachedContext
+    | ChannelConfigurationAttachedContext;
 
 export type ChannelConfigurationChange<TConfig extends ChannelConfiguration> = {
     readonly previous: ChannelConfigurationSnapshot<TConfig>;
@@ -343,7 +351,7 @@ export type ConfigurationChangeResult<TConfig extends ChannelConfiguration> =
     | ({
           readonly status: "conflict";
           readonly current: ChannelConfigurationSnapshot<TConfig>;
-      } & ChannelConfigurationSequencedContext);
+      } & ChannelConfigurationAttachedContext);
 
 export type SharedKernelMessageCollection = Omit<
     IRuntimeMessageCollection,
@@ -386,10 +394,8 @@ before returning its promise, without submitting any op or waiting for a connect
 This is a final local change, not an optimistic proposal.
 Changes and results distinguish `source: "local"` from `source: "sequenced"`; only sequenced
 changes carry service sequence information.
-Before a service advertises its size limit, unattached configuration uses a conservative
-16 KiB serialized UTF-8 bound. A known runtime limit takes precedence.
-Submission limits do not constrain persisted snapshot loads, including detached rehydration,
-or already-sequenced changes.
+The controller does not read the runtime's message-size limit or add a detached size limit.
+Attached proposals use the normal submission path, including its message-size handling.
 
 The shared mechanism, not the DDS, decides and reports `"applied"` or `"conflict"`. The returned
 snapshot is the state at processing that result; another change can occur before the caller's
@@ -412,6 +418,10 @@ using existing pending local-op metadata; completion metadata is not part of the
 The facet is initialized once before kernel construction. For load it exposes the snapshot's
 validated configuration, not the latest configuration from buffered ops.
 Reading that initial snapshot is not a configuration-change notification.
+The wrapper explicitly distinguishes an unconfigured instance, a configured creation, and a
+configured load. Unconfigured means no persisted configuration, not a third lifecycle phase:
+both new and loaded channels can be unconfigured. The controller itself validates creation
+and loaded snapshots in the same way and does not need their source.
 
 The `"changed"` listener runs synchronously for every accepted barrier, local or remote,
 including barriers replayed during load. The controller's getter already exposes `current`.

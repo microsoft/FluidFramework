@@ -142,9 +142,6 @@ function harness(
 		isChannelConfigurationCreationEnabled: (type: string) => type === "configured-test",
 		isChannelConfigurationEnabled: (type: string) => type === "configured-test",
 	});
-	Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
-		value: 1024 * 1024,
-	});
 	const submitted: { contents: unknown; metadata: unknown }[] = [];
 	let dirty = 0;
 	const delta = new MockDeltaConnection(
@@ -268,9 +265,6 @@ function datastoreHarness(
 		true,
 		async () => ({}),
 	);
-	Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
-		value: 1024 * 1024,
-	});
 	return {
 		runtime,
 		errors,
@@ -817,6 +811,19 @@ describe("configured kernel composition", () => {
 		assert.equal(requireConfig(two).current.values.retain, false);
 		assert(!("configuration" in factory.attributes));
 		assert.notEqual(one.attributes, two.attributes);
+		assert.notEqual(one.attributes, factory.attributes);
+		assert.equal(Object.isFrozen(one.attributes), true);
+		assert.equal(Object.isFrozen(factory.attributes), false);
+	});
+
+	it("keeps newly created unconfigured instances on the existing protocol", () => {
+		const { runtime } = harness(AttachState.Detached);
+		const factory = makeKind().getFactory();
+		const shared = factory.create(runtime, "unconfigured");
+		assert.equal(shared.config, undefined);
+		assert.equal(shared.attributes, factory.attributes);
+		assert.deepEqual(shared.observed, [["initial", undefined]]);
+		assert.equal(Object.isFrozen(factory.attributes), false);
 	});
 
 	it("loads both protocols with one reader factory and ignores new-instance defaults", async () => {
@@ -827,16 +834,19 @@ describe("configured kernel composition", () => {
 		const reader = makeKind().getFactory();
 		runtime.isChannelConfigurationCreationEnabled = () => false;
 		const loaded = await reader.load(runtime, "loaded", services, persisted);
+		assert.notEqual(loaded.attributes, persisted);
 		assert.equal(requireConfig(loaded).current.values.retain, true);
 		assert.equal(requireConfig(loaded).current.revision, 1);
 		await requireConfig(loaded).requestChange({});
 		assert.equal(requireConfig(loaded).current.revision, 2);
+		assert.deepEqual(persisted, JSON.parse(JSON.stringify(original.attributes)));
 		const other = harness(AttachState.Detached);
 		const legacy = await makeKind({ retain: true })
 			.getFactory()
 			.load(other.runtime, "legacy", other.services, reader.attributes);
 		assert.equal(legacy.config, undefined);
 		assert(!("configuration" in legacy.attributes));
+		assert.equal(legacy.attributes, reader.attributes);
 	});
 
 	it("rejects unsupported or malformed marked instances before constructing the kernel", async () => {

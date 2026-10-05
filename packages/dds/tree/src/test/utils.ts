@@ -519,9 +519,6 @@ export class TestTreeProviderLite {
 						type === SharedTreeFactoryType,
 					isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
 				});
-				Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
-					value: 1024 * 1024,
-				});
 			}
 			const tree = this.factory.create(runtime, `tree-${i}`);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);

@@ -10,13 +10,15 @@ import type { IChannelAttributes } from "./storage.js";
 export type { ChannelConfigurationRuntime } from "@fluidframework/runtime-definitions/internal";
 
 /**
- * Immutable JSON values for one channel's configuration.
+ * Immutable JSON settings shared by all clients of one channel instance.
+ * The channel author defines the keys and their meaning; different instances can have different settings.
  * @internal
  */
 export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<never>>>;
 
 /**
- * Version 1 of the persisted channel configuration format.
+ * Persisted configuration for a channel at a specific point in its history.
+ * The format version describes the encoding; the revision counts accepted replacements.
  * @internal
  */
 export interface ChannelConfigurationSnapshot<
@@ -29,6 +31,8 @@ export interface ChannelConfigurationSnapshot<
 
 /**
  * Attributes for an instance using the configuration protocol.
+ * The configuration is stored with these attributes so a reader can select the protocol and
+ * initialize the channel's settings before it loads channel data or processes buffered ops.
  * @internal
  */
 export interface ConfiguredChannelAttributes extends IChannelAttributes {
@@ -36,7 +40,9 @@ export interface ConfiguredChannelAttributes extends IChannelAttributes {
 }
 
 /**
- * Optional factory capability. Reader support does not opt legacy instances in.
+ * Declares that a factory can read the configuration protocol.
+ * Reader support is separate from enabling configuration on new instances. A channel whose
+ * attributes have no configuration continues to use the existing protocol.
  * @internal
  */
 export interface ChannelConfigurationFactory {
@@ -44,7 +50,9 @@ export interface ChannelConfigurationFactory {
 }
 
 /**
- * A configured instance registers its controller before connecting or replaying.
+ * Declares that a channel instance has initialized the configuration protocol.
+ * The runtime checks this before connecting the channel or replaying ops, so a reader cannot
+ * silently load a configured instance without its configuration controller.
  * @internal
  */
 export interface ChannelConfigurationChannel extends ChannelConfigurationFactory {}

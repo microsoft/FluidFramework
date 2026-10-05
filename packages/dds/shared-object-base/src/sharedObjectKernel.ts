@@ -127,6 +127,15 @@ export type SharedKernelMessageCollection = Omit<
 };
 
 /**
+ * Selects whether this channel uses persisted configuration and where its initial values come from.
+ * Unconfigured channels use the existing protocol for both creation and loading.
+ */
+type ConfigurationInitialization<TConfig extends ChannelConfiguration> =
+	| { readonly kind: "unconfigured" }
+	| { readonly kind: "create"; readonly values: TConfig }
+	| { readonly kind: "load"; readonly snapshot: unknown };
+
+/**
  * SharedObject implementation that delegates to a SharedKernel.
  * @typeParam TOut - The type of the object exposed to the app.
  * Once initialized, instances of this class forward properties to the `TOut` value provided by the factory.
@@ -162,31 +171,29 @@ class SharedObjectFromKernel<
 		attributes: IChannelAttributes,
 		public readonly factory: SharedKernelFactory<TOut, TConfig>,
 		telemetryContextPrefix: string,
-		source:
-			| { readonly initialConfiguration: TConfig }
-			| { readonly snapshot: unknown }
-			| undefined,
+		configuration: ConfigurationInitialization<TConfig>,
 	) {
 		super(
 			id,
 			runtime,
-			source === undefined ? attributes : { ...attributes },
+			// Only configured channels add an instance-specific getter and freeze their attributes.
+			// Copy first so this does not change factory attributes or another channel's snapshot.
+			configuration.kind === "unconfigured" ? attributes : { ...attributes },
 			telemetryContextPrefix,
 		);
 
-		this.#loadingConfiguration = source !== undefined && "snapshot" in source;
-		if (source !== undefined) {
+		this.#loadingConfiguration = configuration.kind === "load";
+		if (configuration.kind !== "unconfigured") {
 			const definition = factory.configurationDefinition;
 			if (definition === undefined) {
 				throw new UsageError("Factory does not support channel configuration");
 			}
 			const controller = new ChannelConfigurationController({
 				definition,
-				source: this.#loadingConfiguration ? "load" : "create",
 				snapshot:
-					"snapshot" in source
-						? source.snapshot
-						: { version: 1, revision: 0, values: source.initialConfiguration },
+					configuration.kind === "load"
+						? configuration.snapshot
+						: { version: 1, revision: 0, values: configuration.values },
 				isAttached: () => this.isAttached(),
 				verifyCanChange: () => {
 					this.#verifyConfigurationSubmission();
@@ -204,7 +211,6 @@ class SharedObjectFromKernel<
 					);
 					this.#configurationProtocol.submitControl(message, metadata);
 				},
-				maxMessageSize: () => this.deltaManager.maxMessageSize,
 			});
 			this.#configurationProtocol = new ConfiguredKernelProtocol(
 				controller,
@@ -396,8 +402,10 @@ export interface SharedKernelFactory<
 	TConfig extends ChannelConfiguration = ChannelConfiguration,
 > {
 	/**
-	 * Reader support, independent of whether new instances opt into configuration.
-	 * Marker-absent instances still load through the legacy protocol.
+	 * Defines the configuration values this factory can read and validate.
+	 * This does not enable configuration on new instances; use
+	 * {@link SharedObjectOptions.initialConfiguration} for that.
+	 * Instances without configuration in their persisted attributes still use the existing protocol.
 	 */
 	readonly configurationDefinition?: ChannelConfigurationDefinition<TConfig>;
 
@@ -416,7 +424,8 @@ export interface SharedKernelFactory<
 export interface KernelArgs<TConfig extends ChannelConfiguration = ChannelConfiguration> {
 	/**
 	 * Per-instance configuration, available before the kernel is constructed or loaded.
-	 * Undefined for legacy instances, even when the factory supports configured readers.
+	 * Read its current snapshot to initialize configuration-dependent state, then subscribe to changes.
+	 * Undefined for unconfigured instances, even when the factory can read configured instances.
 	 */
 	readonly configuration?: ChannelConfigurationFacet<TConfig>;
 	/**
@@ -560,7 +569,9 @@ export interface SharedObjectOptions<
 	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>, TConfig>;
 
 	/**
-	 * Opts new instances into configuration. Load always uses persisted attributes instead.
+	 * Enables persisted configuration on new instances and supplies their initial values.
+	 * Omit this option to keep creating unconfigured instances. Loading always uses persisted
+	 * attributes instead, so new creation settings do not change existing channels.
 	 * Each instance receives an immutable copy; factory attributes remain unchanged.
 	 */
 	readonly initialConfiguration?: TConfig;
@@ -625,7 +636,9 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 				attributes,
 				options.factory,
 				options.telemetryContextPrefix,
-				"configuration" in attributes ? { snapshot: attributes.configuration } : undefined,
+				"configuration" in attributes
+					? { kind: "load", snapshot: attributes.configuration }
+					: { kind: "unconfigured" },
 			);
 			await shared.load(services);
 			return shared as unknown as T & IChannel;
@@ -650,8 +663,8 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 				options.factory,
 				options.telemetryContextPrefix,
 				options.initialConfiguration === undefined
-					? undefined
-					: { initialConfiguration: options.initialConfiguration },
+					? { kind: "unconfigured" }
+					: { kind: "create", values: options.initialConfiguration },
 			);
 
 			shared.initializeLocal();

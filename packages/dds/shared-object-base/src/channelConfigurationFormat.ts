@@ -7,7 +7,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * JSON values in version 1 of the persisted channel configuration protocol.
- * Keep these declarations independent of the DDS-facing configuration API.
+ *
+ * Keep these declarations independent of the DDS-facing configuration API. A change to that API
+ * must not silently change the format already stored in documents or sent between clients.
  * @internal
  */
 export type ChannelConfigurationValueV1 =
@@ -28,7 +30,10 @@ export interface ChannelConfigurationValuesV1 {
 }
 
 /**
- * The configuration stored in version 1 channel attributes.
+ * The configuration stored with a channel instance's attributes.
+ *
+ * The version identifies the encoding format. The revision counts accepted replacements,
+ * including replacements with unchanged values. It is not the channel's op sequence number.
  * @internal
  */
 export interface ChannelConfigurationSnapshotV1 {
@@ -38,7 +43,10 @@ export interface ChannelConfigurationSnapshotV1 {
 }
 
 /**
- * A full replacement proposed against a specific configuration revision.
+ * Requests a full replacement of a channel's configuration.
+ *
+ * The controller applies the replacement only if `expectedRevision` still matches the current
+ * revision when this message is sequenced. Otherwise, an older revision produces a conflict.
  * @internal
  */
 export interface ChannelConfigurationMessageV1 {
@@ -49,7 +57,10 @@ export interface ChannelConfigurationMessageV1 {
 }
 
 /**
- * Ordinary DDS contents with their original configuration revision.
+ * An ordinary DDS op with the configuration revision at its original submission.
+ *
+ * The revision records when the op was authored; it does not determine whether the op is valid.
+ * An op submitted before a configuration change is still delivered if it sequences after that change.
  * @internal
  */
 export interface ConfiguredChannelOperationV1 {

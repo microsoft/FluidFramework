@@ -14,7 +14,7 @@ import {
 	type ChannelConfigurationChange,
 	type ChannelConfigurationControllerOptions,
 	type ChannelConfigurationDefinition,
-	type ChannelConfigurationSequencedContext,
+	type ChannelConfigurationAttachedContext,
 } from "../channelConfiguration.js";
 import {
 	copyChannelConfiguration,
@@ -45,11 +45,9 @@ function harness(
 	const controller = new ChannelConfigurationController({
 		definition,
 		snapshot: { version: 1, revision: 0, values: { enabled: true } },
-		source: "load",
 		isAttached: () => true,
 		verifyCanChange: () => {},
 		submit: (message, metadata) => submitted.push({ message, metadata }),
-		maxMessageSize: () => 1024 * 1024,
 		...options,
 	});
 	controller.on("changed", (change) => changes.push(change));
@@ -59,7 +57,7 @@ function harness(
 function context(
 	local: boolean = true,
 	messageIndex: number = 0,
-): ChannelConfigurationSequencedContext {
+): ChannelConfigurationAttachedContext {
 	return {
 		source: "sequenced",
 		sequenceNumber: 10,
@@ -427,7 +425,6 @@ describe("ChannelConfigurationController", () => {
 	it("rejects a restored future revision when sequenced replay reaches it", () => {
 		const { controller, submitted, changes } = harness({
 			snapshot: { version: 1, revision: 4, values: {} },
-			maxMessageSize: () => undefined,
 		});
 		controller.applyStashedOp(proposal(5, {}));
 		const restored = at(submitted);
@@ -483,162 +480,63 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(controller.current.revision, 1);
 	});
 
-	it("enforces UTF-8 message size including the configuration envelope", async () => {
-		let limit = 1024;
-		const { controller, submitted } = harness({ maxMessageSize: () => limit });
-		const next = { unicode: "🌊".repeat(30) };
-		const encodedSize = new TextEncoder().encode(JSON.stringify(proposal(0, next))).byteLength;
-		limit = encodedSize - 1;
-		await assert.rejects(controller.requestChange(next), /message size/);
-		assert.equal(submitted.length, 0);
-		limit = encodedSize;
-		const accepted = controller.requestChange(next);
-		controller.process(at(submitted).message, context(), at(submitted).metadata);
-		assert.equal((await accepted).status, "applied");
-	});
-
-	it("loads persisted snapshots independently of attachment state and submission limits", () => {
-		const snapshot = { version: 1, revision: 4, values: { text: "a".repeat(1024) } };
-		for (const limit of [0, undefined, 64]) {
-			for (const attached of [false, true]) {
-				let reads = 0;
-				const { controller, changes } = harness({
-					snapshot,
-					isAttached: () => attached,
-					maxMessageSize: () => {
-						reads++;
-						return limit;
-					},
-				});
-				assert.deepEqual(controller.current, snapshot);
-				assert.equal(Object.isFrozen(controller.current.values), true);
-				assert.equal(changes.length, 0);
-				assert.equal(reads, 0);
-			}
-		}
-	});
-
-	it("applies sequenced barriers identically despite unavailable or smaller submission limits", () => {
-		const values = { text: "a".repeat(1024) };
-		for (const limit of [0, undefined, 64]) {
-			let reads = 0;
+	it("loads snapshots independently of attachment state", () => {
+		const snapshot = { version: 1, revision: 4, values: { text: "a".repeat(32 * 1024) } };
+		for (const attached of [false, true]) {
 			const { controller, changes } = harness({
-				maxMessageSize: () => {
-					reads++;
-					return limit;
-				},
+				snapshot,
+				isAttached: () => attached,
 			});
-			controller.process(proposal(0, values), context(false));
-			controller.process(proposal(1, values), context(false, 1));
-			assert.deepEqual(controller.current, { version: 1, revision: 2, values });
-			assert.equal(changes.length, 2);
-			assert.equal(reads, 0);
-		}
-	});
-
-	it("captures obsolete stashed intent unchanged without consulting submission limits", () => {
-		const message = proposal(0, { unsupported: "a".repeat(1024) });
-		for (const limit of [0, undefined, 64]) {
-			let reads = 0;
-			const { controller, submitted, changes } = harness({
-				snapshot: { version: 1, revision: 2, values: {} },
-				maxMessageSize: () => {
-					reads++;
-					return limit;
-				},
-			});
-			const snapshot = controller.current;
-			controller.applyStashedOp(message);
-			const restored = at(submitted);
-			assert.deepEqual(restored.message, message);
-			assert.equal(restored.metadata, undefined);
-			assert.equal(controller.current, snapshot);
-			const result = controller.process(restored.message, context(), restored.metadata);
-			assert.equal(result.status, "conflict");
-			assert.equal(result.current, snapshot);
+			assert.deepEqual(controller.current, snapshot);
+			assert.equal(Object.isFrozen(controller.current.values), true);
 			assert.equal(changes.length, 0);
-			assert.equal(reads, 0);
 		}
 	});
 
-	it("still validates live resubmission against the current runtime limit", async () => {
-		for (const unavailableOrSmallerLimit of [0, undefined, 64]) {
-			let limit: number | undefined = 1024 * 1024;
-			const { controller, submitted } = harness({ maxMessageSize: () => limit });
-			const request = controller.requestChange({ text: "a".repeat(1024) });
-			const original = at(submitted);
-			limit = unavailableOrSmallerLimit;
-			const rejected = assert.rejects(request, /size/);
-			assert.throws(() => controller.reSubmit(original.message, original.metadata), /size/);
-			await rejected;
-			assert.equal(controller.current.revision, 0);
-			assert.equal(submitted.length, 1);
+	it("does not impose a protocol size limit on local or attached replacements", async () => {
+		const values = { text: "a".repeat(32 * 1024) };
+		for (const attached of [false, true]) {
+			const { controller, submitted } = harness({ isAttached: () => attached });
+			const request = controller.requestChange(values);
+			if (attached) {
+				assert.equal(controller.current.revision, 0);
+				const original = at(submitted);
+				controller.reSubmit(original.message, original.metadata);
+				const resubmitted = at(submitted, 1);
+				assert.deepEqual(resubmitted.message, original.message);
+				assert.equal(resubmitted.metadata, original.metadata);
+				controller.process(resubmitted.message, context(), resubmitted.metadata);
+			} else {
+				assert.equal(controller.current.revision, 1);
+				assert.equal(submitted.length, 0);
+			}
+			assert.equal((await request).status, "applied");
+			assert.deepEqual(controller.current.values, values);
 		}
 	});
 
-	it("allows detached changes with an unknown limit but still bounds their serialized size", async () => {
-		for (const limit of [0, undefined]) {
-			const { controller, submitted, changes } = harness({
-				isAttached: () => false,
-				maxMessageSize: () => limit,
-			});
-			const first = controller.requestChange({});
-			assert.equal(controller.current.revision, 1);
-			assert.equal(changes.length, 1);
-			assert.equal((await first).source, "local");
-			const overhead = new TextEncoder().encode(
-				JSON.stringify(proposal(1, { text: "" })),
-			).byteLength;
-			const maximum = { text: "a".repeat(16 * 1024 - overhead) };
-			await assert.rejects(
-				controller.requestChange({ text: `${maximum.text}a` }),
-				/message size/,
-			);
-			const accepted = controller.requestChange(maximum);
-			assert.equal(controller.current.revision, 2);
-			assert.equal((await accepted).source, "local");
-			assert.equal(submitted.length, 0);
-		}
-	});
-
-	it("does not carry the detached fallback into attached submissions", async () => {
-		let attached = false;
-		let limit = 0;
-		const { controller, submitted } = harness({
-			isAttached: () => attached,
-			maxMessageSize: () => limit,
+	it("captures obsolete stashed intent unchanged", () => {
+		const message = proposal(0, { unsupported: "a".repeat(32 * 1024) });
+		const { controller, submitted, changes } = harness({
+			snapshot: { version: 1, revision: 2, values: {} },
 		});
-		await controller.requestChange({});
-		attached = true;
-		await assert.rejects(controller.requestChange({}), /size limit/);
-		assert.equal(controller.current.revision, 1);
-		assert.equal(submitted.length, 0);
-		limit = 1024;
-		const accepted = controller.requestChange({});
-		controller.process(at(submitted).message, context(), at(submitted).metadata);
-		assert.equal((await accepted).source, "sequenced");
+		const snapshot = controller.current;
+		controller.applyStashedOp(message);
+		const restored = at(submitted);
+		assert.deepEqual(restored.message, message);
+		assert.equal(restored.metadata, undefined);
+		assert.equal(controller.current, snapshot);
+		const result = controller.process(restored.message, context(), restored.metadata);
+		assert.equal(result.status, "conflict");
+		assert.equal(result.current, snapshot);
+		assert.equal(changes.length, 0);
 	});
 
-	it("validates initial values and rejects invalid or unknown live submission limits", async () => {
+	it("validates initial values", () => {
 		assert.throws(
 			() => harness({ snapshot: { version: 1, revision: 0, values: { unsupported: true } } }),
 			/Unsupported/,
 		);
-		assert.throws(
-			() => harness({ source: "create", isAttached: () => false, maxMessageSize: () => 1 }),
-			/message size/,
-		);
-		for (const limit of [0, undefined, -1, Number.NaN, Infinity, 1.5]) {
-			const { controller } = harness({ maxMessageSize: () => limit });
-			await assert.rejects(controller.requestChange({}), /size limit/);
-		}
-		for (const limit of [-1, Number.NaN, Infinity, 1.5]) {
-			assert.throws(
-				() =>
-					harness({ source: "create", isAttached: () => false, maxMessageSize: () => limit }),
-				/size limit/,
-			);
-		}
 	});
 });
 

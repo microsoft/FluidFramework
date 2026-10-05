@@ -14,49 +14,72 @@ import {
 } from "./channelConfigurationFormat.js";
 
 /**
- * Bounds detached configuration before a service advertises its limit.
- * This is not a service capability; attached submissions use the runtime's actual limit.
- */
-const detachedConfigurationMaxMessageSize = 16 * 1024;
-
-/**
  * An immutable JSON property bag without handles.
+ *
+ * This type represents persisted configuration for a channel. Its semantics are defined by the channel author.
+ * Generally, channel authors should use this for settings that should apply to all clients of the same channel instance in a document. For example,
+ * a channel might expose a setting dictating how much history should be retained. It's desirable for that
+ * setting to be consistent across multiple collaborators on the document, as flip-flopping the setting could
+ * lead to apparent data loss from the user perspective.
  * @internal
  */
 export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<never>>>;
 
 /**
- * Authoritative configuration at one point in a channel's history.
+ * Persisted form of a channel's configuration at a specific point in time.
  * @internal
  */
 export interface ChannelConfigurationSnapshot<
 	TConfig extends ChannelConfiguration = ChannelConfiguration,
 > {
+	/**
+	 * Version number for the format used in the encoding of this interface.
+	 *
+	 * This number need only be bumped if the encoding format changes in a way that is not backward compatible.
+	 */
 	readonly version: 1;
+	/**
+	 * The revision of this configuration snapshot.
+	 *
+	 * This is the field used to implement compare-and-swap semantics for configuration updates. As such,
+	 * it is incremented each time a replacement is accepted, even if the values are unchanged.
+	 */
 	readonly revision: number;
+	/**
+	 * The channel-specific configuration values at this revision.
+	 */
 	readonly values: TConfig;
 }
 
 /**
- * Reader support and deterministic transition validation, independent of creation defaults.
+ * Defines which configuration values a channel can read and which changes it can apply.
+ *
+ * A factory supplies this definition even when it does not create configured channels by default.
+ * This lets the same factory load both configured and unconfigured channel instances.
  * @internal
  */
 export interface ChannelConfigurationDefinition<TConfig extends ChannelConfiguration> {
 	/**
-	 * Rejects unknown keys and values this reader cannot support. Must be pure.
+	 * Returns whether this reader supports the configuration, including all of its keys and values.
+	 * This function must be pure: loading configuration must not change channel state.
 	 */
 	readonly isSupported: (values: ChannelConfiguration) => values is TConfig;
 	/**
-	 * Throws if the transition cannot preserve existing DDS data. Must be pure and deterministic.
+	 * Throws if replacing the previous configuration with the next would not preserve the channel's data.
+	 * This function must be pure and deterministic so all clients accept or reject the same transition.
+	 * Use the configuration's changed event to update channel state after a replacement is accepted.
 	 */
 	readonly validateTransition: (previous: TConfig, next: TConfig) => void;
 }
 
 /**
- * The stream position of a sequenced configuration proposal.
+ * Identifies where an attached channel's configuration proposal was sequenced.
+ *
+ * Attached channels wait for sequencing before applying a proposal, even when the local client
+ * submitted it. The sequence information describes that outcome, not when the request was made.
  * @internal
  */
-export interface ChannelConfigurationSequencedContext {
+export interface ChannelConfigurationAttachedContext {
 	readonly source: "sequenced";
 	readonly sequenceNumber: number;
 	readonly clientSequenceNumber: number;
@@ -64,31 +87,38 @@ export interface ChannelConfigurationSequencedContext {
 	 * Logical position within the delivered collection; sequence numbers can be shared.
 	 * This index is delivery-local, can differ after stash reconstruction, and must not
 	 * be persisted as a barrier identity.
-	 * Use the channel configuration revision to identify an accepted barrier.
+	 * Use the channel configuration revision to identify an accepted replacement.
 	 */
 	readonly messageIndex: number;
 	readonly local: boolean;
 }
 
 /**
- * A final, unattached local change has no service sequence information.
+ * Identifies a configuration change applied locally before the channel is attached.
+ *
+ * The channel applies the change immediately without submitting an op. The change is final,
+ * not optimistic: it becomes part of the configuration included in the attach summary.
  * @internal
  */
-export interface ChannelConfigurationLocalContext {
+export interface ChannelConfigurationDetachedContext {
 	readonly source: "local";
 	readonly local: true;
 }
 
 /**
- * Identifies local authority or the actual sequenced barrier.
+ * Distinguishes an immediate unattached change from a proposal processed in the sequenced stream.
+ * Check `source` before using sequence information, which does not exist for local changes.
  * @internal
  */
 export type ChannelConfigurationContext =
-	| ChannelConfigurationLocalContext
-	| ChannelConfigurationSequencedContext;
+	| ChannelConfigurationDetachedContext
+	| ChannelConfigurationAttachedContext;
 
 /**
- * A synchronous notification after the authoritative snapshot is replaced.
+ * Describes an accepted configuration replacement.
+ *
+ * Listeners run synchronously after the current snapshot changes and before the next channel op
+ * is delivered. There is no notification for a conflicting proposal or for the initial snapshot.
  * @internal
  */
 export type ChannelConfigurationChange<TConfig extends ChannelConfiguration> = {
@@ -97,7 +127,12 @@ export type ChannelConfigurationChange<TConfig extends ChannelConfiguration> = {
 } & ChannelConfigurationContext;
 
 /**
- * The snapshot when a proposal completes, not necessarily when its promise continuation runs.
+ * The outcome of a request to replace a channel's configuration.
+ *
+ * An applied request replaces all values. A conflict means another request changed the revision
+ * first, so this request did not change the configuration. Unattached local changes cannot conflict.
+ * The result contains the snapshot at the time the request was processed. Another replacement can
+ * be accepted before the caller resumes after awaiting the result.
  * @internal
  */
 export type ConfigurationChangeResult<TConfig extends ChannelConfiguration> =
@@ -108,39 +143,63 @@ export type ConfigurationChangeResult<TConfig extends ChannelConfiguration> =
 	| ({
 			readonly status: "conflict";
 			readonly current: ChannelConfigurationSnapshot<TConfig>;
-	  } & ChannelConfigurationSequencedContext);
+	  } & ChannelConfigurationAttachedContext);
 
 /**
- * Compositional configuration API supplied before a kernel is constructed.
+ * Per-instance configuration API supplied before a channel's kernel is constructed.
+ *
+ * Read the current snapshot to initialize the kernel, then subscribe to changes before processing
+ * channel ops. The initial snapshot does not produce a changed event.
  * @internal
  */
 export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration> {
+	/**
+	 * The latest accepted configuration. Attached requests do not update it optimistically.
+	 */
 	readonly current: ChannelConfigurationSnapshot<TConfig>;
+	/**
+	 * Requests a full replacement of the configuration.
+	 * Requests are applied with first-write-wins semantics using the current revision
+	 * for compare-and-swap.
+	 *
+	 * @param next - The complete set of configuration values. Omit a key to remove it.
+	 * @returns The applied or conflicting outcome. Rejects if validation or submission fails,
+	 * or the channel closes before the request completes.
+	 */
 	requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
+	/**
+	 * Registers a synchronous listener for accepted replacements.
+	 * Listeners must not submit channel ops or request another configuration change.
+	 */
 	on(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
+	/**
+	 * Removes a previously registered change listener.
+	 */
 	off(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
 }
 
 /**
- * Lifecycle and transport supplied by the shared wrapper.
+ * Supplies the channel lifecycle and submission functions used by the configuration controller.
+ *
+ * The shared wrapper supplies these functions so the controller does not need a runtime reference.
+ * Message-size limits remain the responsibility of the normal submission path, not this protocol.
  * @internal
  */
 export interface ChannelConfigurationControllerOptions<TConfig extends ChannelConfiguration> {
 	readonly definition: ChannelConfigurationDefinition<TConfig>;
+	/**
+	 * The initial snapshot, from either creation settings or persisted channel attributes.
+	 * Both sources receive the same format and reader-support validation.
+	 */
 	readonly snapshot: unknown;
-	readonly source: "create" | "load";
+	/**
+	 * Whether the channel is attached.
+	 *
+	 * @remarks While detached, configuration changes can be applied immediately.
+	 */
 	readonly isAttached: () => boolean;
 	readonly verifyCanChange: () => void;
 	readonly submit: (message: ChannelConfigurationMessageV1, localOpMetadata: unknown) => void;
-	/**
-	 * Maximum serialized submission size in bytes, supplied by the runtime.
-	 * When this returns zero or undefined for an unattached channel, use a conservative
-	 * 16 KiB bound without waiting for a connection. Other invalid limits are rejected.
-	 * Attached submissions require a valid runtime limit.
-	 * This client-local limit does not constrain loaded snapshots, sequenced messages,
-	 * or stashed-op capture.
-	 */
-	readonly maxMessageSize: () => number | undefined;
 }
 
 interface PendingChange<TConfig extends ChannelConfiguration> {
@@ -149,8 +208,11 @@ interface PendingChange<TConfig extends ChannelConfiguration> {
 }
 
 /**
- * Shared compare-and-swap state and local request completion tracking.
- * Attached proposals are never activated before sequencing.
+ * Maintains a channel's accepted configuration and completes local requests.
+ *
+ * Before attachment, a request replaces the local snapshot immediately. After attachment, the
+ * controller applies a sequenced proposal only if its expected revision matches the current one.
+ * The shared wrapper uses this controller so each DDS does not need its own compare-and-swap logic.
  * @internal
  */
 export class ChannelConfigurationController<TConfig extends ChannelConfiguration>
@@ -169,9 +231,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		private readonly options: ChannelConfigurationControllerOptions<TConfig>,
 	) {
 		const snapshot = copyChannelConfigurationSnapshot(options.snapshot);
-		if (options.source === "create") {
-			this.checkSize(snapshot);
-		}
 		this.validateSupported(snapshot.values);
 		this.snapshot = Object.freeze({ ...snapshot, values: snapshot.values });
 	}
@@ -195,7 +254,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			expectedRevision: previous.revision,
 			values,
 		} as const);
-		this.checkSize(message);
 		this.processing = true;
 		try {
 			this.validateSupported(values);
@@ -252,7 +310,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	 */
 	public process(
 		content: unknown,
-		context: ChannelConfigurationSequencedContext,
+		context: ChannelConfigurationAttachedContext,
 		localOpMetadata?: unknown,
 	): ConfigurationChangeResult<TConfig> {
 		try {
@@ -293,7 +351,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		this.verifyCanSubmit();
 		try {
 			const message = this.copyProposal(content);
-			this.checkSize(message);
 			this.options.submit(message, localOpMetadata);
 		} catch (error) {
 			this.dispose(error);
@@ -364,20 +421,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	private checkOverflow(): void {
 		if (this.snapshot.revision === Number.MAX_SAFE_INTEGER) {
 			throw new UsageError("Channel configuration revision overflow");
-		}
-	}
-
-	private checkSize(value: unknown): void {
-		const runtimeLimit = this.options.maxMessageSize();
-		const limit =
-			(runtimeLimit === 0 || runtimeLimit === undefined) && !this.options.isAttached()
-				? detachedConfigurationMaxMessageSize
-				: runtimeLimit;
-		if (typeof limit !== "number" || !Number.isSafeInteger(limit) || limit <= 0) {
-			throw new UsageError("Channel configuration requires a supported message size limit");
-		}
-		if (new TextEncoder().encode(JSON.stringify(value)).byteLength > limit) {
-			throw new UsageError("Channel configuration exceeds the supported message size");
 		}
 	}
 

@@ -43,8 +43,8 @@ export type {
 	ChannelConfigurationFacet,
 	ChannelConfigurationChange,
 	ChannelConfigurationContext,
-	ChannelConfigurationLocalContext,
-	ChannelConfigurationSequencedContext,
+	ChannelConfigurationDetachedContext,
+	ChannelConfigurationAttachedContext,
 	ConfigurationChangeResult,
 } from "./channelConfiguration.js";
 export { defineDataStore, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";

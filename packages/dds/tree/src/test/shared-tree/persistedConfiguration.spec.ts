@@ -78,10 +78,6 @@ function configureRuntime(runtime: MockFluidDataStoreRuntime, creationEnabled = 
 			creationEnabled && type === SharedTreeFactoryType,
 		isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
 	});
-	Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
-		value: 1024 * 1024,
-		configurable: true,
-	});
 }
 
 function configuration(tree: ISharedTree): ChannelConfigurationFacet<Configuration> {
