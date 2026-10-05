@@ -6,6 +6,7 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import {
+	type BufferPlaceholder,
 	type HandleToken,
 	createBufferPlaceholder,
 	escapedObjectType,
@@ -19,13 +20,46 @@ import {
 } from "./common.js";
 
 /**
+ * Data accepted by the sandbox at the structured-clone boundary.
+ */
+export type MessagePortData =
+	// eslint-disable-next-line @rushstack/no-new-null -- Null is part of the supported transport vocabulary.
+	| null
+	| undefined
+	| boolean
+	| number
+	| string
+	| ArrayBuffer
+	| readonly MessagePortData[]
+	| { readonly [key: string]: MessagePortData };
+
+/**
+ * Data after restricted transport copying and transport unescaping.
+ *
+ * @remarks
+ * Records have null prototypes, buffers are registered placeholders, and authorized handles have
+ * been restored. Protocol schemas and protocol state have not been validated.
+ */
+export type NormalizedTransportData =
+	// eslint-disable-next-line @rushstack/no-new-null -- Null is part of the supported transport vocabulary.
+	| null
+	| undefined
+	| boolean
+	| number
+	| string
+	| IFluidHandle
+	| BufferPlaceholder
+	| readonly NormalizedTransportData[]
+	| { readonly [key: string]: NormalizedTransportData };
+
+/**
  * Copies structured-clone messages and replaces handles without changing the input.
  * {@link TransportCodec.decode} restores authorized handles without binding or resolving them.
  * Decoded buffers remain placeholders until blob-response validation.
  * Callers must perform semantic validation after decoding; this layer checks only transport structure.
  */
 export abstract class TransportCodec {
-	public encode(value: unknown): unknown {
+	public encode(value: unknown): MessagePortData {
 		return copyTransportData(
 			value,
 			(handle) =>
@@ -41,10 +75,10 @@ export abstract class TransportCodec {
 							entries: Object.entries(record),
 						})
 					: record,
-		);
+		) as MessagePortData;
 	}
 
-	public decode(value: unknown): unknown {
+	public decode(value: unknown): NormalizedTransportData {
 		// Restrict the entire graph before schema checks or token restoration.
 		const copied = copyTransportData(value, () => {
 			throw new SandboxProtocolError("Handles must cross the sandbox boundary as tokens.");
@@ -89,7 +123,7 @@ export abstract class TransportCodec {
 			// Do not interpret the reconstructed root as a marker a second time.
 			return record;
 		};
-		return restore(copied);
+		return restore(copied) as NormalizedTransportData;
 	}
 
 	protected abstract encodeHandle(handle: IFluidHandle): HandleToken;
@@ -100,8 +134,8 @@ export abstract class TransportCodec {
  * Copies outgoing semantic data into null-prototype records before validation.
  * Local handles remain opaque leaves; buffers become identity-checked placeholders via {@link createBufferPlaceholder}.
  */
-export function normalizeTransportData(value: unknown): unknown {
-	return copyTransportData(value, (handle) => handle);
+export function normalizeTransportData(value: unknown): NormalizedTransportData {
+	return copyTransportData(value, (handle) => handle) as NormalizedTransportData;
 }
 
 /**

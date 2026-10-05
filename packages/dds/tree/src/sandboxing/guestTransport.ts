@@ -12,8 +12,8 @@ import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestId,
-	type BlobRequestMessage,
 	type BlobResponseMessage,
+	type GuestToHostMessage,
 	type HandleToken,
 	normalizeProtocolError,
 	SandboxProtocolError,
@@ -50,7 +50,7 @@ class GuestHandle extends FluidHandleBase<ArrayBuffer> {
 /**
  * Restores {@link GuestHandle} proxies and resolves blobs independently of tree synchronization.
  * Caches one proxy per {@link HandleToken} and permits sending only proxies created by this codec.
- * {@link GuestTransportCodec.dispose} rejects pending requests and clears the session's proxy tables.
+ * {@link dispose} rejects pending requests and clears the session's proxy tables.
  */
 export class GuestTransportCodec extends TransportCodec {
 	private readonly sessionId = uuid();
@@ -63,7 +63,7 @@ export class GuestTransportCodec extends TransportCodec {
 	private nextRequestId = 0;
 	private disposed = false;
 
-	public constructor(private readonly send: (message: BlobRequestMessage) => void) {
+	public constructor(private readonly send: (message: GuestToHostMessage) => void) {
 		super();
 	}
 
@@ -103,7 +103,7 @@ export class GuestTransportCodec extends TransportCodec {
 		return new Promise<ArrayBuffer>((resolve, reject) => {
 			this.pending.set(requestId, { resolve, reject });
 			try {
-				this.send({ type: "blobRequest", requestId, token });
+				this.send({ blobRequest: { requestId, token } });
 			} catch (error) {
 				this.pending.delete(requestId);
 				reject(normalizeProtocolError(error));

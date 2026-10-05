@@ -11,7 +11,7 @@ import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
 import { TypeSystem } from "@sinclair/typebox/system";
 
-import { extractJsonValidator } from "../codec/index.js";
+import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
@@ -132,9 +132,9 @@ export function isLocalHandle(value: unknown): value is IFluidHandle {
  * Ordinary data with the same property remains ordinary data.
  *
  * Placeholders are not sent over the wire: encoding replaces them with buffers, and receiving creates new placeholders.
- * {@link validateTreePayloadVocabulary} rejects registered placeholders; {@link parseHostGuestMessage} unwraps only validated blob-response fields for application use.
+ * {@link validateTreePayloadVocabulary} rejects registered placeholders; the Guest unwraps only a validated blob-response field for application use.
  */
-interface BufferPlaceholder {
+export interface BufferPlaceholder {
 	/** Describes the placeholder shape; this property alone does not establish buffer identity. */
 	readonly arrayBufferMarker: true;
 }
@@ -367,8 +367,6 @@ const FinalizedIdRange = Type.Object(
 export type HostInitializationMessage = Static<typeof HostInitializationMessage>;
 const HostInitializationMessage = Type.Object(
 	{
-		/** Identifies this message as the initial Host branch state. */
-		type: Type.Readonly(Type.Literal("hostInitialization")),
 		/** Identifies the commit represented by the snapshot. */
 		baseRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies the Host main-branch head produced by replaying `commits`. */
@@ -400,8 +398,6 @@ const HostInitializationMessage = Type.Object(
 export type HostUpdateMessage = Static<typeof HostUpdateMessage>;
 const HostUpdateMessage = Type.Object(
 	{
-		/** Identifies this message as a Host branch update. */
-		type: Type.Readonly(Type.Literal("hostUpdate")),
 		/** Identifies this update and the acknowledgment that completes it. */
 		updateId: Type.Readonly(HostUpdateId),
 		/** Identifies the retained commit after which `commits` replaces the Guest's Host branch. */
@@ -427,8 +423,6 @@ const HostUpdateMessage = Type.Object(
 export type HostIdRangeMessage = Static<typeof HostIdRangeMessage>;
 const HostIdRangeMessage = Type.Object(
 	{
-		/** Identifies this message as a finalized Host ID range. */
-		type: Type.Literal("hostIdRange"),
 		/** Sequence number for ranges sent to this Guest. */
 		rangeId: Type.Readonly(HostIdRangeId),
 		/** Synchronizes the Guest's child ID space shard before it finalizes the range. */
@@ -445,8 +439,6 @@ const HostIdRangeMessage = Type.Object(
 export type HostUpdateAckMessage = Static<typeof HostUpdateAckMessage>;
 const HostUpdateAckMessage = Type.Object(
 	{
-		/** Identifies this message as a Host update acknowledgment. */
-		type: Type.Readonly(Type.Literal("hostUpdateAck")),
 		/** Identifies the applied Host update. */
 		updateId: Type.Readonly(HostUpdateId),
 	},
@@ -459,8 +451,6 @@ const HostUpdateAckMessage = Type.Object(
 export type GuestChangeMessage = Static<typeof GuestChangeMessage>;
 const GuestChangeMessage = Type.Object(
 	{
-		/** Identifies this message as a Guest-authored change. */
-		type: Type.Readonly(Type.Literal("guestChange")),
 		/** Identifies this change and the acknowledgment that completes it. */
 		changeId: Type.Readonly(GuestChangeId),
 		/** Identifies the Host main-branch head that the Guest had acknowledged when it authored the change. */
@@ -481,27 +471,11 @@ const GuestChangeMessage = Type.Object(
 export type GuestChangeAckMessage = Static<typeof GuestChangeAckMessage>;
 const GuestChangeAckMessage = Type.Object(
 	{
-		/** Identifies this message as a Guest change acknowledgment. */
-		type: Type.Readonly(Type.Literal("guestChangeAck")),
 		/** Identifies the applied Guest change. */
 		changeId: Type.Readonly(GuestChangeId),
 	},
 	{ additionalProperties: false },
 );
-
-/**
- * A message that the Host and the Guest can send through their shared protocol.
- */
-export type HostGuestMessage =
-	| HostInitializationMessage
-	| HostUpdateMessage
-	| HostIdRangeMessage
-	| HostUpdateAckMessage
-	| GuestChangeMessage
-	| GuestChangeAckMessage
-	| BlobRequestMessage
-	| BlobResponseMessage
-	| SessionFailureMessage;
 
 /**
  * Terminal notification in either direction. The application must recreate the Host/Guest pair.
@@ -510,13 +484,11 @@ export type HostGuestMessage =
 export type SessionFailureMessage = Static<typeof SessionFailureMessage>;
 const SessionFailureMessage = Type.Object(
 	{
-		type: Type.Literal("sessionFailure"),
 		/** A diagnostic description, not an error object or stack trace. */
 		error: Type.String(),
 	},
 	{ additionalProperties: false },
 );
-const sessionFailureValidator = validator.compile(SessionFailureMessage);
 
 /**
  * Guest-to-Host request to resolve an authorized {@link HandleToken} as a blob.
@@ -525,7 +497,6 @@ const sessionFailureValidator = validator.compile(SessionFailureMessage);
 export type BlobRequestMessage = Static<typeof BlobRequestMessage>;
 const BlobRequestMessage = Type.Object(
 	{
-		type: Type.Readonly(Type.Literal("blobRequest")),
 		/** Identifies this pending resolution, independently of the handle token. */
 		requestId: Type.Readonly(BlobRequestId),
 		/** Identifies the handle to resolve in the Host's session-local table. */
@@ -540,10 +511,9 @@ const BlobRequestMessage = Type.Object(
  */
 const BlobSuccessMessage = Type.Object(
 	{
-		type: Type.Readonly(Type.Literal("blobResponse")),
 		/** Matches the outstanding Guest request. */
 		requestId: Type.Readonly(BlobRequestId),
-		/** Unwrapped by {@link parseHostGuestMessage} only after the response passes validation. */
+		/** Unwrapped by the Guest only after the response passes validation. */
 		blob: Type.Readonly(RegisteredBufferPlaceholder),
 	},
 	{ additionalProperties: false },
@@ -553,7 +523,6 @@ const BlobSuccessMessage = Type.Object(
  */
 const BlobErrorMessage = Type.Object(
 	{
-		type: Type.Readonly(Type.Literal("blobResponse")),
 		/** Matches the outstanding Guest request. */
 		requestId: Type.Readonly(BlobRequestId),
 		/** Error message used to reject the Guest proxy's cached resolution promise. */
@@ -561,99 +530,119 @@ const BlobErrorMessage = Type.Object(
 	},
 	{ additionalProperties: false },
 );
-const blobRequestValidator = validator.compile(BlobRequestMessage);
-const blobResponseValidator = validator.compile(
-	Type.Union([BlobSuccessMessage, BlobErrorMessage]),
-);
-const hostInitializationValidator = validator.compile(HostInitializationMessage);
-const hostUpdateValidator = validator.compile(HostUpdateMessage);
-const hostIdRangeValidator = validator.compile(HostIdRangeMessage);
-const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
-const guestChangeValidator = validator.compile(GuestChangeMessage);
-const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
+/**
+ * Application representation of a successful Host-to-Guest blob response.
+ */
+type BlobSuccessResponseMessage = Omit<Static<typeof BlobSuccessMessage>, "blob"> & {
+	readonly blob: ArrayBuffer;
+};
 
 /**
  * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
- * The sender supplies an {@link ArrayBuffer}; the receiver obtains one through {@link parseHostGuestMessage} after placeholder validation and unwrapping.
+ * The sender supplies an {@link ArrayBuffer}; the Guest obtains one after placeholder validation and unwrapping.
  * The Guest must also match the request ID against its outstanding requests.
  */
-export type BlobResponseMessage =
-	| (Omit<Static<typeof BlobSuccessMessage>, "blob"> & { readonly blob: ArrayBuffer })
-	| Static<typeof BlobErrorMessage>;
+export type BlobResponseMessage = BlobSuccessResponseMessage | Static<typeof BlobErrorMessage>;
+
+type DiscriminatedUnion<TMembers extends { [TKey in keyof TMembers]: object }> = {
+	readonly [TKey in keyof TMembers]: Readonly<Record<TKey, TMembers[TKey]>> &
+		Partial<Record<Exclude<keyof TMembers, TKey>, never>>;
+}[keyof TMembers];
+
+interface HostToGuestMessageMembers {
+	readonly hostInitialization: HostInitializationMessage;
+	readonly hostUpdate: HostUpdateMessage;
+	readonly hostIdRange: HostIdRangeMessage;
+	readonly guestChangeAck: GuestChangeAckMessage;
+	readonly blobResponse: BlobSuccessResponseMessage;
+	readonly blobResponseError: Static<typeof BlobErrorMessage>;
+	readonly sessionFailure: SessionFailureMessage;
+}
+
+/**
+ * A local message sent from the Host to the Guest before transport normalization.
+ *
+ * @remarks
+ * Each message has exactly one union member.
+ * A successful blob response contains its application-facing {@link ArrayBuffer}.
+ */
+export type HostToGuestMessage = DiscriminatedUnion<HostToGuestMessageMembers>;
+
+/**
+ * A Host-to-Guest message after transport decoding and semantic validation.
+ *
+ * @remarks
+ * A successful blob response still contains its registered {@link BufferPlaceholder}.
+ * The Guest unwraps that field before passing the response to application-facing logic.
+ */
+export type ValidatedHostToGuestMessage = Static<typeof hostToGuestMessageSchema>;
+const hostToGuestMessageSchema = Type.Object(
+	{
+		/** Initializes the Guest with a {@link HostInitializationMessage}. */
+		hostInitialization: Type.Optional(HostInitializationMessage),
+		/** Updates the Guest's copy of the Host branch with a {@link HostUpdateMessage}. */
+		hostUpdate: Type.Optional(HostUpdateMessage),
+		/** Sends the Guest a finalized ID range in a {@link HostIdRangeMessage}. */
+		hostIdRange: Type.Optional(HostIdRangeMessage),
+		/** Acknowledges a {@link GuestChangeMessage} with a {@link GuestChangeAckMessage}. */
+		guestChangeAck: Type.Optional(GuestChangeAckMessage),
+		/** Returns the resolved buffer for a {@link BlobRequestMessage}. */
+		blobResponse: Type.Optional(BlobSuccessMessage),
+		/** Reports that the Host could not resolve a {@link BlobRequestMessage}. */
+		blobResponseError: Type.Optional(BlobErrorMessage),
+		/**
+		 * Reports a terminal Host failure to the Guest.
+		 * The Guest stops the session without sending another failure notification.
+		 */
+		sessionFailure: Type.Optional(SessionFailureMessage),
+	},
+	unionOptions,
+);
+
+interface GuestToHostMessageMembers {
+	readonly hostUpdateAck: HostUpdateAckMessage;
+	readonly guestChange: GuestChangeMessage;
+	readonly blobRequest: BlobRequestMessage;
+	readonly sessionFailure: SessionFailureMessage;
+}
+
+/**
+ * A local message sent from the Guest to the Host before transport normalization.
+ *
+ * @remarks
+ * Each message has exactly one union member.
+ */
+export type GuestToHostMessage = DiscriminatedUnion<GuestToHostMessageMembers>;
+
+/**
+ * A Guest-to-Host message after transport decoding and semantic validation.
+ */
+export type ValidatedGuestToHostMessage = Static<typeof guestToHostMessageSchema>;
+const guestToHostMessageSchema = Type.Object(
+	{
+		/** Acknowledges a {@link HostUpdateMessage} with a {@link HostUpdateAckMessage}. */
+		hostUpdateAck: Type.Optional(HostUpdateAckMessage),
+		/** Sends a Guest-authored change in a {@link GuestChangeMessage}. */
+		guestChange: Type.Optional(GuestChangeMessage),
+		/** Requests that the Host resolve an authorized blob with a {@link BlobRequestMessage}. */
+		blobRequest: Type.Optional(BlobRequestMessage),
+		/**
+		 * Reports a terminal Guest failure to the Host.
+		 * The Host stops the session without sending another failure notification.
+		 */
+		sessionFailure: Type.Optional(SessionFailureMessage),
+	},
+	unionOptions,
+);
+
+export const hostToGuestMessageValidator = validator.compile(hostToGuestMessageSchema);
+export const guestToHostMessageValidator = validator.compile(guestToHostMessageSchema);
 
 /**
  * Checks the numeric format of a {@link HandleToken}, not its authorization.
  */
 export function isHandleToken(value: unknown): value is HandleToken {
 	return handleTokenValidator.check(value);
-}
-
-/**
- * Validates data from a Host and Guest message channel.
- *
- * @param data - Normalized or decoded message data, with registered {@link BufferPlaceholder} placeholders.
- * @returns The validated protocol message.
- * @throws {@link SandboxProtocolError} if the data is not a valid protocol message envelope.
- */
-export function parseHostGuestMessage(data: unknown): HostGuestMessage {
-	if (
-		typeof data !== "object" ||
-		data === null ||
-		Object.getPrototypeOf(data) !== null ||
-		!Object.hasOwn(data, "type") ||
-		!("type" in data)
-	) {
-		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
-	}
-
-	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
-		return data;
-	}
-	if (data.type === "hostIdRange" && hostIdRangeValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "hostInitialization" && hostInitializationValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "hostUpdateAck" && hostUpdateAckValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "guestChange" && guestChangeValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "guestChangeAck" && guestChangeAckValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "sessionFailure" && sessionFailureValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "blobRequest" && blobRequestValidator.check(data)) {
-		return data;
-	}
-	if (data.type === "blobResponse" && blobResponseValidator.check(data)) {
-		if ("error" in data) {
-			return data;
-		}
-		const blob = getTransportBuffer(data.blob);
-		assert(
-			blob !== undefined,
-			0xd56 /* Validated blob placeholder must have a registered buffer */,
-		);
-		const response: object = Object.create(null);
-		return Object.assign(response, {
-			type: "blobResponse" as const,
-			requestId: data.requestId,
-			blob,
-		});
-	}
-
-	throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 }
 
 /**

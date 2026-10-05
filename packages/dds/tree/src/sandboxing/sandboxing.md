@@ -219,6 +219,12 @@ flowchart TB
 
 The entire incoming graph is restricted before marker validation or handle restoration.
 Restoration alone neither binds nor resolves handles.
+`TransportCodec.decode` performs the restricted copy and transport unescaping, then returns
+`NormalizedTransportData`.
+This type describes the transport vocabulary after normalization but does not claim that the data
+has passed a protocol schema or protocol-state check.
+The receiving endpoint checks its directional schema and dispatches the validated message once.
+The Guest's successful blob-response handler performs the only buffer-placeholder unwrapping.
 For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, binds its handles, merges into the main branch, and then acknowledges it.
 Incoming validation or processing failures and outgoing normalization, validation, or encoding failures terminate the session.
 
@@ -260,7 +266,8 @@ The [pipeline](#message-conversion-and-validation) enforces these additional rul
   Marker-shaped user data remains ordinary data and cannot forge a buffer.
 - **Identifiers and messages:** Use distinct branded types for handle tokens and blob request IDs; brands do not confer authorization.
   Handle-marker and blob-message schemas require nonnegative safe-integer IDs, required fields, and no extra properties.
-  Blob responses contain either a blob or an error string, never both.
+  A blob request produces either a `blobResponse` containing a buffer or a `blobResponseError` containing an error string.
+  Each directional message contains exactly one union member.
 - **Protocol state:** Enforce the [message directions](#participants-and-message-directions), token authorization, and response matching against outstanding requests.
 - **Local handles:** Legacy string-property lookalikes remain ordinary data.
   Removing the general `isFluidHandle` helper's legacy fallback is separate work.

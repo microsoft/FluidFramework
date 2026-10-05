@@ -30,20 +30,101 @@ import {
 import {
 	type BlobRequestId,
 	type BlobRequestMessage,
+	type BlobResponseMessage,
 	type GuestChangeMessage,
+	type GuestToHostMessage,
 	GuestTransportCodec,
+	getTransportBuffer,
+	guestToHostMessageValidator,
 	type HandleToken,
 	type HostIdRangeMessage,
+	hostToGuestMessageValidator,
 	HostTransportCodec,
 	type HostUpdateMessage,
 	isHandleToken,
 	isLocalHandle,
 	isSerializedHandle,
 	normalizeTransportData,
-	parseHostGuestMessage,
 	SandboxProtocolError,
+	type ValidatedHostToGuestMessage,
 	validateTreePayloadVocabulary,
 } from "../../../sandboxing/index.js";
+
+type FlattenEnvelope<T> = {
+	[K in keyof T]-?: NonNullable<T[K]> & {
+		readonly type: K extends "blobResponseError" ? "blobResponse" : K;
+	};
+}[keyof T];
+
+type ParsedHostToGuestMessage = Omit<ValidatedHostToGuestMessage, "blobResponse"> & {
+	readonly blobResponse?: Extract<BlobResponseMessage, { readonly blob: ArrayBuffer }>;
+};
+
+type HostGuestMessage =
+	| FlattenEnvelope<ParsedHostToGuestMessage>
+	| FlattenEnvelope<GuestToHostMessage>;
+
+function parseHostToGuestMessage(data: unknown): ParsedHostToGuestMessage {
+	if (!hostToGuestMessageValidator.check(data)) {
+		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
+	}
+	if (data.blobResponse === undefined) {
+		// The only representation difference is the absent successful blob-response member.
+		return data as unknown as ParsedHostToGuestMessage;
+	}
+	const blob = getTransportBuffer(data.blobResponse.blob);
+	assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
+	const response: object = Object.create(null);
+	const envelope: object = Object.create(null);
+	return Object.assign(envelope, {
+		blobResponse: Object.assign(response, {
+			requestId: data.blobResponse.requestId,
+			blob,
+		}),
+	}) as ParsedHostToGuestMessage;
+}
+
+function parseGuestToHostMessage(data: unknown): GuestToHostMessage {
+	if (!guestToHostMessageValidator.check(data)) {
+		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
+	}
+	return data as GuestToHostMessage;
+}
+
+function parseHostGuestMessage(data: unknown): HostGuestMessage {
+	if (typeof data !== "object" || data === null) {
+		return parseHostToGuestMessage(data) as HostGuestMessage;
+	}
+	const normalized =
+		"type" in data && typeof data.type === "string"
+			? normalizeTransportData({
+					[data.type === "blobResponse" && "error" in data ? "blobResponseError" : data.type]:
+						Object.fromEntries(
+							Object.entries(data).filter(([property]) => property !== "type"),
+						),
+				})
+			: data;
+	assert(typeof normalized === "object" && normalized !== null);
+	const key = Reflect.ownKeys(normalized)[0];
+	if (typeof key !== "string") {
+		return parseHostToGuestMessage(normalized) as HostGuestMessage;
+	}
+	const message =
+		key === "hostUpdateAck" ||
+		key === "guestChange" ||
+		key === "blobRequest" ||
+		key === "sessionFailure"
+			? parseGuestToHostMessage(normalized)
+			: parseHostToGuestMessage(normalized);
+	const member = message[key as keyof typeof message];
+	assert(typeof member === "object" && member !== null);
+	// The helper presents directional envelopes in the flattened shape used by these tests.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return {
+		type: key === "blobResponseError" ? "blobResponse" : key,
+		...member,
+	} as HostGuestMessage;
+}
 
 /**
  * Valid token data for transport-shape tests; no Host has authorized this ID space shard.
@@ -106,7 +187,10 @@ function assertNullPrototypeRecords(value: unknown): void {
 function setupTransportCodecs() {
 	const host = new HostTransportCodec();
 	const requests: BlobRequestMessage[] = [];
-	const guest = new GuestTransportCodec((message) => requests.push(message));
+	const guest = new GuestTransportCodec((message) => {
+		assert("blobRequest" in message);
+		requests.push(message.blobRequest as BlobRequestMessage);
+	});
 	return { host, guest, requests };
 }
 
@@ -197,6 +281,21 @@ describe("Transport and endpoint unit tests", () => {
 		} finally {
 			channel.port1.close();
 			channel.port2.close();
+		}
+	});
+
+	it("distinguishes normalized transport data from validated protocol messages", () => {
+		const { host } = setupTransportCodecs();
+		const normalized = normalizeTransportData({ hostUpdateAck: { updateId: 0 } });
+		const decoded = host.decode(structuredClone(host.encode(normalized)));
+		assert.equal(Object.getPrototypeOf(decoded), null);
+		assert(guestToHostMessageValidator.check(decoded));
+
+		for (const value of [null, "message", [], new ArrayBuffer(0)]) {
+			const transportData = host.decode(
+				structuredClone(host.encode(normalizeTransportData(value))),
+			);
+			assert(!guestToHostMessageValidator.check(transportData));
 		}
 	});
 
@@ -317,7 +416,7 @@ describe("Transport and endpoint unit tests", () => {
 		assert.equal(requests.length, 1);
 		const request = requests[0];
 		const blob = await host.resolveBlob(request.token);
-		guest.receiveBlobResponse({ type: "blobResponse", requestId: request.requestId, blob });
+		guest.receiveBlobResponse({ requestId: request.requestId, blob });
 		assert.equal(await first, blob);
 		assert.equal(proxy.get(), first);
 		assert.equal(requests.length, 1);
@@ -329,7 +428,6 @@ describe("Transport and endpoint unit tests", () => {
 		assert(isFluidHandle(proxy));
 		const promise = proxy.get();
 		guest.receiveBlobResponse({
-			type: "blobResponse",
 			requestId: requests[0].requestId,
 			error: "Blob unavailable",
 		});
@@ -348,14 +446,12 @@ describe("Transport and endpoint unit tests", () => {
 		const secondPromise = second.get();
 		const secondBlob = new ArrayBuffer(2);
 		guest.receiveBlobResponse({
-			type: "blobResponse",
 			requestId: requests[1].requestId,
 			blob: secondBlob,
 		});
 		assert.equal(await secondPromise, secondBlob);
 		const firstBlob = new ArrayBuffer(1);
 		guest.receiveBlobResponse({
-			type: "blobResponse",
 			requestId: requests[0].requestId,
 			blob: firstBlob,
 		});
@@ -374,7 +470,6 @@ describe("Transport and endpoint unit tests", () => {
 		assert.throws(
 			() =>
 				guest.receiveBlobResponse({
-					type: "blobResponse",
 					requestId: brand<BlobRequestId>(0),
 					blob: new ArrayBuffer(1),
 				}),
@@ -493,7 +588,6 @@ describe("Transport and endpoint unit tests", () => {
 		assert.throws(
 			() =>
 				guest.receiveBlobResponse({
-					type: "blobResponse",
 					requestId: brand<BlobRequestId>(0),
 					blob: new ArrayBuffer(0),
 				}),

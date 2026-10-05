@@ -23,12 +23,11 @@ import {
 import { brand } from "../util/index.js";
 
 import {
-	type GuestChangeAckMessage,
 	type GuestChangeMessage,
 	type HostInitializationMessage,
+	type HostToGuestMessage,
 	type HostUpdateAckMessage,
 	type HostUpdateId,
-	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	type PromiseWithResolvers,
 	sandboxFormatValidator,
@@ -51,7 +50,7 @@ const throwInvalidGuestChange = (): never => {
  */
 export type GuestBranchInitialization = Omit<
 	HostInitializationMessage,
-	"type" | "tree" | "schema" | "idCompressor"
+	"tree" | "schema" | "idCompressor"
 >;
 
 /** A Host update awaiting the Guest's acknowledgment. */
@@ -108,7 +107,7 @@ export class HostSynchronization {
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
-		private readonly send: (message: HostUpdateMessage | GuestChangeAckMessage) => void,
+		private readonly send: (message: HostToGuestMessage) => void,
 		/**
 		 * Runs an action within the Host session's error-handling boundary.
 		 */
@@ -194,7 +193,7 @@ export class HostSynchronization {
 		);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
 		this.mainCheckout.merge(this.localCheckout, false);
-		this.send({ type: "guestChangeAck", changeId: message.changeId });
+		this.send({ guestChangeAck: { changeId: message.changeId } });
 	}
 
 	/**
@@ -294,13 +293,14 @@ export class HostSynchronization {
 		);
 		const parentIdSpaceShardSyncToken = this.getParentIdSpaceShardSyncToken();
 		this.send({
-			type: "hostUpdate",
-			updateId,
-			baseRevision: base.revision,
-			mainRevision: head.revision,
-			trunkRevision,
-			commits: serializedCommits,
-			parentIdSpaceShardSyncToken,
+			hostUpdate: {
+				updateId,
+				baseRevision: base.revision,
+				mainRevision: head.revision,
+				trunkRevision,
+				commits: serializedCommits,
+				parentIdSpaceShardSyncToken,
+			},
 		});
 	}
 
