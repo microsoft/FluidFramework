@@ -197,7 +197,7 @@ describe("schematizeTree", () => {
 						new TreeStoredSchemaRepository(),
 						initializerFromChunk(checkout, () => treeChunkFromCursor(fieldJsonCursor([5]))),
 					),
-				/Cannot initialize a forbidden root with content/,
+				/0xd67/,
 			);
 			assert.equal(count, 0);
 		});
