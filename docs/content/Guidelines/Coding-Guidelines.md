@@ -612,7 +612,7 @@ Assert tagging does not apply to every package or test, so follow the applicable
 Never specifically catch assertion failures in production code.
 Tests that intentionally exercise assertions can validate them with [validateAssertionError](../../../packages/runtime/test-runtime-utils/src/validateAssertionError.ts).
 
-If a production catch handles all errors and might receive an assertion failure, rethrow the error so the implementation bug is not hidden.
+If a production `catch` handles all errors and might receive an assertion failure, rethrow the error so the implementation bug is not hidden.
 Report telemetry as appropriate before rethrowing.
 
 #### ✔ DO account for assertion cost and build configuration
