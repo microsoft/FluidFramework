@@ -9,7 +9,8 @@ import {
 	createIndependentTreeCheckout,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/independentView.js";
-import { exportSimpleSchema, ForestTypeExpensiveDebug } from "../../shared-tree/sharedTree.js";
+import { exportSimpleSchema, ForestTypeExpensiveDebug } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Allow importing the module being tested
 import { createViewableTreeAlpha } from "../../shared-tree/viewableTree.js";
 import {
 	FieldKind,
@@ -22,8 +23,8 @@ import {
 import { testIdCompressor } from "../utils.js";
 import { ValueSchema } from "../../core/index.js";
 
-describe("createViewableTreeAlpha", () => {
-	it("exposes checkout views, content, and schema", () => {
+describe("viewableTree", () => {
+	it("createViewableTreeAlpha", () => {
 		const checkout = createIndependentTreeCheckout({
 			forest: ForestTypeExpensiveDebug,
 			idCompressor: testIdCompressor,
