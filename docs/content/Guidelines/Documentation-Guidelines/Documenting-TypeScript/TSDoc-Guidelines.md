@@ -893,7 +893,7 @@ Use the `@inheritDoc` tag to indicate that the associated member's documentation
 >
 > While API-Extractor does not currently support automatic documentation inheritance like this, most other tools do (including IntelliSense).
 >
-> We have decided that it is generally preferrable for IntelliSense to work well over our generated API docs in this case.
+> We have decided that it is generally preferable for IntelliSense to work well over our generated API docs in this case.
 > Users of our API docs can still navigate to base definitions to read the docs as needed.
 
 ##### \@inheritDoc: Rationale
