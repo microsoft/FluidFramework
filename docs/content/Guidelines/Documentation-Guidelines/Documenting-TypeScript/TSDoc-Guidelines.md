@@ -889,16 +889,20 @@ See: <https://api-extractor.com/pages/tsdoc/tag_inheritdoc/>
 Use the `@inheritDoc` tag to indicate that the associated member's documentation is the same as some other API member.
 
 > [!IMPORTANT]
-> Do not use the `@inheritDoc` tag when documenting an API member the inherits from some base type.
+> Do not use the `@inheritDoc` tag when documenting an API member that inherits from a base type.
 >
 > While API-Extractor does not currently support automatic documentation inheritance like this, most other tools do (including IntelliSense).
 >
 > We have decided that it is generally preferable for IntelliSense to work well over our generated API docs in this case.
 > Users of our API docs can still navigate to base definitions to read the docs as needed.
+>
+> One exception is when the member needs a local TSDoc comment to apply additional tags, such as `@sealed`, `@deprecated`, or documentation for an additional parameter.
+> In this case, use `@inheritDoc` in the local comment instead of duplicating or replacing the inherited summary.
 
 ##### \@inheritDoc: Rationale
 
-This can be extremely useful in reducing duplicated documentation - especially when implementing an interface, or overriding members of a parent class.
+This can be useful for reducing duplicated documentation when declarations that are not related through inheritance have the same semantics.
+It also lets a naturally inherited member retain its inherited documentation when the member needs a local TSDoc comment for additional tags.
 
 ##### \@inheritDoc: Enforcement
 
@@ -929,6 +933,34 @@ export function log(logger: Logger, data: unknown): void {
 ```
 
 Because the global function `log` doesn't inherit from `Logger.log`, but we would like to reuse the documentation, `@inheritDoc` is a good candidate.
+
+###### Applying tags to a naturally inherited member
+
+```typescript
+export class BaseLogger {
+	/**
+	 * Logs the provided data.
+	 */
+	public log(data: unknown): void {
+		// ...
+	}
+}
+
+export class Logger extends BaseLogger {
+	/**
+	 * {@inheritDoc BaseLogger.log}
+	 *
+	 * @sealed
+	 */
+	public override log(data: unknown): void {
+		// ...
+	}
+}
+```
+
+The `log` method naturally inherits its documentation from `BaseLogger.log`.
+However, the `@sealed` tag requires a local TSDoc comment.
+Using `@inheritDoc` preserves the inherited documentation without duplicating its summary.
 
 ###### Inheriting documentation from an imported member from another package
 
