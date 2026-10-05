@@ -65,6 +65,8 @@ export const generateSubModelMap = (
 	for (const model of models) {
 		const { reducer, generatorFactory, factory, validateConsistency, minimizationTransforms } =
 			model;
+		// There's nothing fundamentally wrong with allowing fuzz models that use different channel factory
+		// configurations. The local server stress harness would need to be adjusted to handle it, though.
 		assert(
 			isChannelFactory(factory),
 			"Local server stress tests require DDS models with a fixed channel factory.",
