@@ -612,16 +612,15 @@ Assert tagging does not apply to every package or test, so follow the applicable
 Never specifically catch assertion failures in production code.
 Tests that intentionally exercise assertions can validate them with [validateAssertionError](../../../packages/runtime/test-runtime-utils/src/validateAssertionError.ts).
 
-If a production catch handles all errors and might receive an assertion failure, rethrow the error and/or explicitly report telemetry so the implementation bug is not hidden.
-
-Do not continue normal control flow based on an assertion failure.
-Where available, prefer [onAssertionFailure](../../../packages/common/core-utils/src/assert.ts) for first-chance assertion telemetry because it reports the failure before intermediate catch blocks can swallow or obscure it.
+If a production catch handles all errors and might receive an assertion failure, rethrow the error so the implementation bug is not hidden.
+Report telemetry as appropriate before rethrowing.
 
 #### ✔ DO account for assertion cost and build configuration
 
 `assert` checks run in all build configurations, including production.
-The condition is evaluated on every call, so consider its runtime and bundle-size costs, especially in frequently executed code.
-Assert tagging reduces message size, but the assertion call and condition still have nonzero cost.
+The condition is evaluated on every call, so consider its runtime cost, especially in frequently executed code.
+Assertions may also introduce bundle-size cost, which should be considered.
+Assert tagging reduces message size, but the assertion call and condition still have nonzero runtime and bundle-size costs.
 Keep assertion checks free of side effects.
 
 For checks needed only for documentation and debugging, especially expensive checks, consider `debugAssert` from `@fluidframework/core-utils/internal`, defined alongside `assert` in the file linked above.
