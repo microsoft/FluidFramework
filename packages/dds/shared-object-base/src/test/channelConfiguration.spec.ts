@@ -28,6 +28,7 @@ import {
 } from "../channelConfigurationFormat.js";
 
 const definition: ChannelConfigurationDefinition<ChannelConfiguration> = {
+	defaultConfiguration: {},
 	isSupported: (values): values is ChannelConfiguration =>
 		!Object.hasOwn(values, "unsupported"),
 	validateTransition: (_previous, next) => {
@@ -168,6 +169,7 @@ describe("ChannelConfigurationController", () => {
 		let validations = 0;
 		const { controller, changes } = harness({
 			definition: {
+				defaultConfiguration: {},
 				isSupported: (values): values is ChannelConfiguration => {
 					validations++;
 					return !Object.hasOwn(values, "unsupported");

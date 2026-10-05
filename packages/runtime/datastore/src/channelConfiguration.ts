@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
 	ChannelConfigurationChannel,
 	ChannelConfigurationFactory,
@@ -32,8 +32,7 @@ export function validateChannelConfiguration(
 	}
 	const configuration = attributes.configuration;
 	if (
-		typeof configuration !== "object" ||
-		configuration === null ||
+		!isObject(configuration) ||
 		Object.keys(configuration).length !== 3 ||
 		!("version" in configuration) ||
 		configuration.version !== 1 ||
@@ -43,8 +42,7 @@ export function validateChannelConfiguration(
 		configuration.revision < 0 ||
 		Object.is(configuration.revision, -0) ||
 		!("values" in configuration) ||
-		typeof configuration.values !== "object" ||
-		configuration.values === null ||
+		!isObject(configuration.values) ||
 		Array.isArray(configuration.values)
 	) {
 		invalidConfiguration();
@@ -86,7 +84,7 @@ export function verifyChannelConfigurationCapability(
 	assert(
 		(
 			runtime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
-		).isChannelConfigurationEnabled?.(channel.attributes.type) === true,
-		"Document channel configuration is not active for this type; cannot attach a configured channel",
+		).isSharedObjectConfigurationEnabled?.() === true,
+		"Shared object configuration is not active; cannot attach a configured channel",
 	);
 }

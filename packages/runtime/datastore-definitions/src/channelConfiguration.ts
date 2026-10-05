@@ -41,8 +41,8 @@ export interface ConfiguredChannelAttributes extends IChannelAttributes {
 
 /**
  * Declares that a factory can read the configuration protocol.
- * Reader support is separate from enabling configuration on new instances. A channel whose
- * attributes have no configuration continues to use the existing protocol.
+ * Reader support is separate from per-instance activation. A supporting factory uses its
+ * default configuration for unmarked channels and can process their first configuration op.
  * @internal
  */
 export interface ChannelConfigurationFactory {

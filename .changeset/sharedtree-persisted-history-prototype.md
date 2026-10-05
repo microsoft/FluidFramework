@@ -7,6 +7,9 @@
 Add an internal opt-in prototype for persisted SharedTree history configuration
 
 SharedTree can create explicitly configured instances with `configuredSharedTree({}, { retainHistory: false })`.
+Existing unmarked Trees see the stable default configuration `{}`, with history retention disabled.
+They can opt into persistent configuration through their first accepted configuration change.
+The document's `sharedObjectConfiguration` flag must be active before an attached Tree submits a configuration change.
 The package-private kernel configuration facet can request full replacements such as `{ retainHistory: true }`.
 Attached changes apply at a sequenced barrier; unattached changes apply locally without an op.
 Enabling waits for the next committed main-trunk change, whose existing revision becomes the retained history start.

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { DocumentsSchemaController as PreviousDocumentsSchemaController } from "@fluidframework/container-runtime-previous/internal/test/summary";
 import {
 	defaultMinVersionForCollab,
 	type SemanticVersion,
@@ -97,91 +98,64 @@ describe("Runtime", () => {
 		createController(validConfig);
 	});
 
-	describe("channel configuration", () => {
-		const typeA = "test-channel-a";
-		const typeB = "test-channel-b";
-		const typeC = "test-channel-c";
-
+	describe("SharedObject configuration", () => {
 		it("initializes new documents synchronously and keeps the capability sticky", () => {
-			const requested = [typeB, typeA, typeB];
 			const controller = new DocumentsSchemaController(
 				false,
 				0,
 				undefined,
-				{ ...features, channelConfiguration: requested },
+				{ ...features, sharedObjectConfiguration: true },
 				() => {},
 				{ minVersionForCollab: defaultMinVersionForCollab },
 				logger,
 				false,
 			);
-			requested.push(typeC);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, true);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 			const schema = controller.summarizeDocumentSchema(0);
 			assert(schema !== undefined);
 			const reader = createController(schema);
-			assert.deepEqual(reader.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
+			assert.equal(reader.sessionSchema.runtime.sharedObjectConfiguration, true);
 		});
 
 		it("waits for the actual schema acknowledgement", () => {
 			const controller = createController(validConfig, {
 				...features,
-				channelConfiguration: [typeA],
+				sharedObjectConfiguration: true,
 			});
-			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 			const proposal = controller.maybeGenerateSchemaMessage();
 			assert(proposal !== undefined);
-			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA]);
+			assert.equal(proposal.runtime.sharedObjectConfiguration, true);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 			controller.processDocumentSchemaMessages([proposal], true, 1);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, true);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-		});
-
-		it("keeps an active type available while another type waits for acknowledgement", () => {
-			const controller = createController(
-				{
-					...validConfig,
-					runtime: {
-						...validConfig.runtime,
-						explicitSchemaControl: true,
-						channelConfiguration: [typeA],
-					},
-				},
-				{ ...features, channelConfiguration: [typeB] },
-			);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
-			const proposal = controller.maybeGenerateSchemaMessage();
-			assert(proposal !== undefined);
-			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA, typeB]);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
-			controller.processDocumentSchemaMessages([proposal], true, 1);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
 		});
 
 		it("regenerates an unacknowledged proposal only after the normal reconnect reset", () => {
 			const controller = createController(validConfig, {
 				...features,
-				channelConfiguration: [typeA],
+				sharedObjectConfiguration: true,
 			});
 			const proposal = controller.maybeGenerateSchemaMessage();
 			assert(proposal !== undefined);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 			controller.pendingOpNotAcked();
 			assert.deepEqual(controller.maybeGenerateSchemaMessage(), proposal);
-			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 			controller.processDocumentSchemaMessages([proposal], true, 1);
 			controller.pendingOpNotAcked();
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, true);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 		});
 
 		it("does not retry after a competing schema wins, even after a reconnect reset", () => {
 			const controller = createController(validConfig, {
 				...features,
-				channelConfiguration: [typeA],
+				sharedObjectConfiguration: true,
 				opGroupingEnabled: true,
 			});
 			const original = controller.maybeGenerateSchemaMessage();
@@ -193,7 +167,6 @@ describe("Runtime", () => {
 						runtime: {
 							explicitSchemaControl: true,
 							opGroupingEnabled: true,
-							channelConfiguration: [typeB],
 						},
 					},
 				],
@@ -201,51 +174,52 @@ describe("Runtime", () => {
 				1,
 			);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeB]);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 			assert.equal(controller.sessionSchema.runtime.opGroupingEnabled, true);
 			assert.equal(controller.processDocumentSchemaMessages([original], true, 2), false);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 			controller.pendingOpNotAcked();
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeB]);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 
 			const reloaded = new DocumentsSchemaController(
 				true,
 				2,
 				controller.summarizeDocumentSchema(2),
-				{ ...features, channelConfiguration: [typeA] },
+				{ ...features, sharedObjectConfiguration: true },
 				() => {},
 				{ minVersionForCollab: defaultMinVersionForCollab },
 				logger,
 				false,
 			);
-			assert.deepEqual(reloaded.sessionSchema.runtime.channelConfiguration, [typeB]);
+			assert.equal(reloaded.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 			const nextProposal = reloaded.maybeGenerateSchemaMessage();
 			assert(nextProposal !== undefined);
-			assert.deepEqual(nextProposal.runtime.channelConfiguration, [typeA, typeB]);
+			assert.equal(nextProposal.runtime.sharedObjectConfiguration, true);
 			reloaded.processDocumentSchemaMessages([nextProposal], true, 3);
-			assert.deepEqual(reloaded.sessionSchema.runtime.channelConfiguration, [typeA, typeB]);
+			assert.equal(reloaded.sessionSchema.runtime.sharedObjectConfiguration, true);
 		});
 
 		it("preserves the persisted capability in the session and unrelated schema proposals", () => {
 			const controller = createController({
 				...validConfig,
-				runtime: { explicitSchemaControl: true, channelConfiguration: [typeA] },
+				runtime: { explicitSchemaControl: true, sharedObjectConfiguration: true },
 			});
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, true);
 			assert.equal(controller.sessionSchema.runtime.compressionLz4, undefined);
 			const proposal = controller.maybeGenerateSchemaMessage();
 			assert(proposal !== undefined);
-			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA]);
+			assert.equal(proposal.runtime.sharedObjectConfiguration, true);
 			assert.equal(proposal.runtime.compressionLz4, true);
 			assert.equal(proposal.runtime.idCompressorMode, "delayed");
 			controller.processDocumentSchemaMessages([proposal], true, 1);
-			assert.deepEqual(controller.sessionSchema.runtime.channelConfiguration, [typeA]);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, true);
 			assert.equal(controller.sessionSchema.runtime.compressionLz4, true);
 			assert.equal(controller.sessionSchema.runtime.idCompressorMode, "delayed");
-			assert.deepEqual(controller.summarizeDocumentSchema(1)?.runtime.channelConfiguration, [
-				typeA,
-			]);
+			assert.equal(
+				controller.summarizeDocumentSchema(1)?.runtime.sharedObjectConfiguration,
+				true,
+			);
 			assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 		});
 
@@ -254,13 +228,13 @@ describe("Runtime", () => {
 				true,
 				0,
 				validConfig,
-				{ ...features, channelConfiguration: [typeA] },
+				{ ...features, sharedObjectConfiguration: true },
 				() => {},
 				{ minVersionForCollab: defaultMinVersionForCollab },
 				logger,
 				true,
 			);
-			assert.equal(disabled.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(disabled.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 			assert.equal(disabled.maybeGenerateSchemaMessage(), undefined);
 			disabled.pendingOpNotAcked();
 			assert.equal(disabled.maybeGenerateSchemaMessage(), undefined);
@@ -273,113 +247,49 @@ describe("Runtime", () => {
 			});
 			const proposal = controller.maybeGenerateSchemaMessage();
 			assert(proposal !== undefined);
-			assert.equal(proposal.runtime.channelConfiguration, undefined);
+			assert.equal(proposal.runtime.sharedObjectConfiguration, undefined);
 			assert.equal(proposal.runtime.compressionLz4, true);
 			controller.processDocumentSchemaMessages([proposal], true, 1);
-			assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
+			assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, undefined);
 			assert.equal(controller.sessionSchema.runtime.compressionLz4, true);
 		});
 
-		for (const requested of [[typeA, typeB], [typeB, typeA, typeB], [typeA], [], undefined]) {
-			it(`does not propose or normalize persisted members for ${JSON.stringify(requested)}`, () => {
-				const persisted = [typeB, typeA, typeB];
+		for (const requested of [true, undefined] as const) {
+			it(`does not propose a redundant change when requested is ${requested}`, () => {
 				const controller = createController(
 					{
 						...validConfig,
 						runtime: {
 							...validConfig.runtime,
 							explicitSchemaControl: true,
-							channelConfiguration: persisted,
+							sharedObjectConfiguration: true,
 						},
 					},
-					{ ...features, channelConfiguration: requested },
+					{ ...features, sharedObjectConfiguration: requested },
 				);
-				assert.equal(controller.sessionSchema.runtime.channelConfiguration, persisted);
+				assert.equal(controller.sessionSchema.runtime.sharedObjectConfiguration, true);
 				assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
 				assert.equal(
-					controller.summarizeDocumentSchema(0)?.runtime.channelConfiguration,
-					persisted,
+					controller.summarizeDocumentSchema(0)?.runtime.sharedObjectConfiguration,
+					true,
 				);
 			});
 		}
-
-		for (const requested of [[], undefined]) {
-			it(`does not propose a change to an empty persisted set for ${JSON.stringify(requested)}`, () => {
-				const controller = createController(
-					{ ...validConfig, runtime: { ...validConfig.runtime, channelConfiguration: [] } },
-					{ ...features, channelConfiguration: requested },
-				);
-				assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-			});
-
-			it(`normalizes an empty desired set to undefined for ${JSON.stringify(requested)}`, () => {
-				const controller = new DocumentsSchemaController(
-					false,
-					0,
-					undefined,
-					{ ...features, channelConfiguration: requested },
-					() => {},
-					{ minVersionForCollab: defaultMinVersionForCollab },
-					logger,
-					false,
-				);
-				assert.equal(controller.sessionSchema.runtime.channelConfiguration, undefined);
-				assert.equal(controller.maybeGenerateSchemaMessage(), undefined);
-			});
-		}
-
-		it("unions true additions into a copied, sorted, deduplicated set", () => {
-			const persisted = [typeB, typeA, typeB];
-			const requested = [typeC, typeC, typeA];
-			const controller = createController(
-				{
-					...validConfig,
-					runtime: { ...validConfig.runtime, channelConfiguration: persisted },
-				},
-				{ ...features, channelConfiguration: requested },
-			);
-			requested.push("another-type");
-			const proposal = controller.maybeGenerateSchemaMessage();
-			assert(proposal !== undefined);
-			assert.deepEqual(proposal.runtime.channelConfiguration, [typeA, typeB, typeC]);
-			assert.equal(controller.sessionSchema.runtime.channelConfiguration, persisted);
-			assert.deepEqual(persisted, [typeB, typeA, typeB]);
-		});
-
-		it("preserves exact type IDs without trimming or case normalization", () => {
-			const controller = createController(validConfig, {
-				...features,
-				channelConfiguration: ["type", "Type", " type ", " "],
-			});
-			assert.deepEqual(controller.maybeGenerateSchemaMessage()?.runtime.channelConfiguration, [
-				" ",
-				" type ",
-				"Type",
-				"type",
-			]);
-		});
 
 		it("rejects invalid capability property values and requests", () => {
-			const sparse: string[] = [];
-			sparse.length = 1;
-			for (const channelConfiguration of [
-				true,
+			for (const sharedObjectConfiguration of [
 				false,
 				// eslint-disable-next-line unicorn/no-null -- Malformed serialized schema.
 				null,
 				"true",
 				0,
 				{},
-				[typeA, false],
-				[typeA, undefined],
-				// eslint-disable-next-line unicorn/no-null -- Malformed serialized schema.
-				[typeA, null],
-				[""],
-				sparse,
+				[],
+				["test-channel"],
 			]) {
 				testWrongConfig({
 					...validConfig,
-					runtime: { channelConfiguration } as unknown as Record<
+					runtime: { sharedObjectConfiguration } as unknown as Record<
 						string,
 						DocumentSchemaValueType
 					>,
@@ -387,10 +297,52 @@ describe("Runtime", () => {
 				assert.throws(() =>
 					createController(validConfig, {
 						...features,
-						channelConfiguration: channelConfiguration as string[],
+						sharedObjectConfiguration: sharedObjectConfiguration as true,
 					}),
 				);
 			}
+		});
+
+		it("rejects unknown enabled runtime capabilities in snapshots and schema ops", () => {
+			testWrongConfig({
+				...validConfig,
+				runtime: {
+					...validConfig.runtime,
+					sharedObjectConfiguration: true,
+					unknownSharedObjectCapability: true,
+				},
+			});
+		});
+
+		it("causes older clients to reject the capability in snapshots and schema ops", () => {
+			const createPreviousController = (schema: IDocumentSchema) =>
+				new PreviousDocumentsSchemaController(
+					true,
+					0,
+					schema,
+					features,
+					() => {},
+					{ minVersionForCollab: defaultMinVersionForCollab },
+					logger,
+					false,
+				);
+			const controller = createPreviousController(validConfig);
+			const incompatibleSchema = {
+				...validConfig,
+				runtime: {
+					...validConfig.runtime,
+					explicitSchemaControl: true,
+					sharedObjectConfiguration: true,
+				},
+			} as const satisfies IDocumentSchema;
+			assert.throws(
+				() => createPreviousController(incompatibleSchema),
+				/Document can't be opened with current version of the code/,
+			);
+			assert.throws(
+				() => controller.processDocumentSchemaMessages([incompatibleSchema], false, 1),
+				/Document can't be opened with current version of the code/,
+			);
 		});
 	});
 

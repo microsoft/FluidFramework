@@ -7,7 +7,9 @@
 ---
 Add opt-in persisted channel configuration infrastructure
 
-Internal kernel factories can opt new DDS instances into readonly JSON configuration stored with channel attributes.
+Internal kernel factories can opt new and existing DDS instances into readonly JSON configuration stored with channel attributes.
+Supporting factories supply a stable `defaultConfiguration` for unmarked instances.
+Reading these defaults does not change the summary; the first accepted replacement starts persistent configuration.
 Fluid Framework code owns these values and must preserve their JSON round-trip behavior; the protocol does not deep-copy, freeze, or recursively validate them.
 The internal configuration facet exposes read-only revision and values without an encoding version; only persisted attributes and configuration wire ops carry `version: 1`.
 Unattached instances apply replacements locally; attached instances use sequenced compare-and-swap barriers.
@@ -16,19 +18,28 @@ Ordinary DDS operations stay unwrapped and carry no configuration revision or pr
 Their existing processing and replay behavior is unchanged, including for ops authored before a configuration change.
 The own top-level `isChannelConfigurationOp` property is reserved for configuration ops regardless of its value.
 Ordinary submission, receive, stash, resubmit, and rollback reject it with `DataProcessingError`, even on unconfigured channels; nested application data can still use that name.
-The document capability and factory reader checks prevent unsupported readers from loading configured channels.
-Existing DDS instances remain on the legacy protocol, and no production DDS opts in by default.
+One sticky document-schema flag, `sharedObjectConfiguration`, requires support for the SharedObject configuration protocol.
+The internal runtime option `enableSharedObjectConfiguration` requests this flag through normal schema upgrades.
+Factory reader checks reject unsupported configured snapshots, and SharedObjects without a configuration definition reject configuration ops.
+No production DDS persists configuration merely because it is loaded or created without explicit configuration.
 This wire format replaces the earlier wrapped prototype without automatic migration or compatibility with its saved pending ops.
 Normal stable unconfigured summaries remain readable.
 
-Reader support is separate from the initial configuration of new instances:
+Reader defaults are separate from optional initial configuration on new instances:
 
 ```typescript
 const kind = makeSharedObjectKind({
     ...options,
-    factory: { ...factory, configurationDefinition },
-    initialConfiguration: { retainHistory: false },
+    factory: {
+        ...factory,
+        configurationDefinition: {
+            ...configurationDefinition,
+            defaultConfiguration: { retainHistory: false },
+        },
+    },
 });
 // Inside factory.create or factory.loadCore:
 const current = args.configuration?.current;
+// In a later API call, after construction and once the document flag is active:
+await args.configuration?.requestChange({ retainHistory: true });
 ```

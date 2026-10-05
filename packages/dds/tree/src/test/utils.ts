@@ -164,7 +164,6 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
-import { SharedTreeFactoryType } from "../sharedTreeAttributes.js";
 import {
 	type CheckoutEvents,
 	type ITreePrivate,
@@ -298,7 +297,7 @@ export class TestTreeProvider {
 	 * {@link create} followed by {@link createTree} _trees_ times.
 	 * @param summarizeType - enum to manually, automatically, or disable summarization
 	 * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
-	 * @param enableChannelConfiguration - Whether to enable persisted configuration for the Tree type.
+	 * @param enableChannelConfiguration - Whether to enable persisted shared-object configuration.
 	 *
 	 * @example
 	 *
@@ -340,7 +339,7 @@ export class TestTreeProvider {
 					...(enableChannelConfiguration
 						? {
 								explicitSchemaControl: true,
-								channelConfigurationTypes: [SharedTreeFactoryType],
+								enableSharedObjectConfiguration: true,
 							}
 						: {}),
 				},
@@ -479,7 +478,7 @@ export class TestTreeProviderLite {
 	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
 	 * @param flushMode - The flush mode to use for the container runtime. This is FlushMode.Immediate by default. Tests
 	 * that need ops to be processed in a batch or bunch should use FlushMode.TurnBased.
-	 * @param enableChannelConfiguration - Whether to enable persisted configuration for the Tree type.
+	 * @param enableChannelConfiguration - Whether to enable persisted shared-object configuration.
 	 * @example
 	 *
 	 * ```typescript
@@ -515,9 +514,7 @@ export class TestTreeProviderLite {
 			});
 			if (enableChannelConfiguration) {
 				Object.assign(runtime, {
-					isChannelConfigurationCreationEnabled: (type: string) =>
-						type === SharedTreeFactoryType,
-					isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
+					isSharedObjectConfigurationEnabled: () => true,
 				});
 			}
 			const tree = this.factory.create(runtime, `tree-${i}`);

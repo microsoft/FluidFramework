@@ -72,7 +72,6 @@ import {
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
-import { SharedTreeFactoryType } from "../../sharedTreeAttributes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -1219,7 +1218,7 @@ describe("SharedTree", () => {
 			const { summary } = await channel.summarize();
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 			Object.assign(runtime, {
-				isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
+				isSharedObjectConfigurationEnabled: () => true,
 			});
 			return (await factory.load(
 				runtime,

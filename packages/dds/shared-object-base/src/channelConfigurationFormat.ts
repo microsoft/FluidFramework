@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -66,11 +66,7 @@ export interface ChannelConfigurationMessageV1 {
  * A present but invalid marker must fail validation, not fall through to the DDS.
  */
 export function hasChannelConfigurationMarker(value: unknown): boolean {
-	return (
-		typeof value === "object" &&
-		value !== null &&
-		Object.hasOwn(value, "isChannelConfigurationOp")
-	);
+	return isObject(value) && Object.hasOwn(value, "isChannelConfigurationOp");
 }
 
 /**
@@ -105,7 +101,7 @@ export function validateConfigurationRevision(revision: unknown): asserts revisi
  */
 function readRecord(value: unknown): Record<string, unknown> {
 	assert(
-		typeof value === "object" && value !== null && !Array.isArray(value),
+		isObject(value) && !Array.isArray(value),
 		"Channel configuration must use a JSON object",
 	);
 	return value as Record<string, unknown>;
@@ -125,8 +121,7 @@ export function parseChannelConfigurationMessage(
 		record.isChannelConfigurationOp === true &&
 			Object.keys(record).length === 4 &&
 			Object.hasOwn(record, "values") &&
-			typeof record.values === "object" &&
-			record.values !== null &&
+			isObject(record.values) &&
 			!Array.isArray(record.values),
 		"Invalid channel configuration message",
 	);

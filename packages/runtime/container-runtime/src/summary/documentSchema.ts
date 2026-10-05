@@ -150,9 +150,9 @@ export interface IDocumentSchemaFeatures {
 	opGroupingEnabled: boolean;
 	createBlobPayloadPending: true | undefined;
 	/**
-	 * Stable channel type IDs with a sticky reader requirement for persisted configuration.
+	 * Sticky document requirement that SharedObjects support persisted configuration.
 	 */
-	channelConfiguration?: string[] | undefined;
+	sharedObjectConfiguration?: true | undefined;
 
 	/**
 	 * List of disallowed versions of the runtime.
@@ -237,44 +237,10 @@ class TrueOrUndefinedMax extends TrueOrUndefined {
 	}
 }
 
-/**
- * An additive string set whose session value includes only persisted members.
- * @internal
- */
-export class PersistedStringSet implements IProperty<string[] | undefined> {
-	public and(persistedSchema?: string[]): string[] | undefined {
+class PersistedTrueOrUndefined extends TrueOrUndefined {
+	public and(persistedSchema?: true): true | undefined {
+		// A local request must not activate the capability before its schema proposal is accepted.
 		return persistedSchema;
-	}
-
-	public or(
-		persistedSchema?: string[],
-		providedSchema?: readonly string[],
-	): string[] | undefined {
-		assert(this.validate(providedSchema), "Invalid persisted string set");
-		if (
-			providedSchema === undefined ||
-			providedSchema.every((value) => persistedSchema?.includes(value) === true)
-		) {
-			// same() compares by identity. Keep even noncanonical persisted arrays on a no-op.
-			return persistedSchema;
-		}
-		return [...new Set([...(persistedSchema ?? []), ...providedSchema])].sort();
-	}
-
-	public validate(value: unknown): value is string[] | undefined {
-		if (value === undefined) {
-			return true;
-		}
-		if (!Array.isArray(value)) {
-			return false;
-		}
-		for (let index = 0; index < value.length; index++) {
-			const member: unknown = value[index];
-			if (!Object.hasOwn(value, index) || typeof member !== "string" || member.length === 0) {
-				return false;
-			}
-		}
-		return true;
 	}
 }
 
@@ -345,7 +311,8 @@ const documentSchemaSupportedConfigs = {
 	opGroupingEnabled: new TrueOrUndefined(),
 	compressionLz4: new TrueOrUndefined(),
 	createBlobPayloadPending: new TrueOrUndefined(),
-	channelConfiguration: new PersistedStringSet(),
+	// Accept true only with the SharedObject protocol implementation; a runtime-only prerequisite must reject true.
+	sharedObjectConfiguration: new PersistedTrueOrUndefined(),
 	disallowedVersions: new CheckVersions(),
 };
 
@@ -747,10 +714,7 @@ export class DocumentsSchemaController {
 				idCompressorMode: features.idCompressorMode,
 				opGroupingEnabled: boolToProp(features.opGroupingEnabled),
 				createBlobPayloadPending: features.createBlobPayloadPending,
-				channelConfiguration: documentSchemaSupportedConfigs.channelConfiguration.or(
-					undefined,
-					features.channelConfiguration,
-				),
+				sharedObjectConfiguration: features.sharedObjectConfiguration,
 				disallowedVersions: arrayToProp(features.disallowedVersions),
 				...retiredFeatureValues(),
 			},

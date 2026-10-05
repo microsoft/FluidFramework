@@ -59,6 +59,12 @@ export interface ChannelConfigurationSnapshot<
  */
 export interface ChannelConfigurationDefinition<TConfig extends ChannelConfiguration> {
 	/**
+	 * The configuration used before a channel first persists configuration.
+	 * These values must describe the DDS's existing behavior and be the same on all clients.
+	 * They are not creation options: loading an unmarked channel always uses these defaults.
+	 */
+	readonly defaultConfiguration: TConfig;
+	/**
 	 * Returns whether this reader supports the configuration, including all of its keys and values.
 	 * This function must be pure: loading configuration must not change channel state.
 	 */
@@ -149,6 +155,8 @@ export type ConfigurationChangeResult<TConfig extends ChannelConfiguration> =
  *
  * Read the current snapshot to initialize the kernel, then subscribe to changes before processing
  * channel ops. The initial snapshot does not produce a changed event.
+ * An unmarked channel starts with the DDS's default configuration at revision zero. Its first
+ * accepted replacement makes configuration persistent, even if the values do not change.
  * @internal
  */
 export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration> {
@@ -187,8 +195,8 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 export interface ChannelConfigurationControllerOptions<TConfig extends ChannelConfiguration> {
 	readonly definition: ChannelConfigurationDefinition<TConfig>;
 	/**
-	 * The initial snapshot, from either creation settings or persisted channel attributes.
-	 * Both sources receive the same format and reader-support validation.
+	 * The initial snapshot, from default values, explicit creation settings, or persisted attributes.
+	 * All sources receive the same format and reader-support validation.
 	 */
 	readonly snapshot: unknown;
 	/**

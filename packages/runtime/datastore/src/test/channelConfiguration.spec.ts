@@ -49,7 +49,7 @@ describe("Channel configuration compatibility", () => {
 	const snapshot = { version: 1, revision: 0, values: { enabled: true } };
 	const runtime = {
 		attachState: AttachState.Attached,
-		isChannelConfigurationEnabled: (type: string) => type === attributes.type,
+		isSharedObjectConfigurationEnabled: () => true,
 	} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 
 	function channel(): IChannel & ChannelConfigurationChannel {
@@ -216,8 +216,7 @@ describe("Channel configuration compatibility", () => {
 		let captured = false;
 		const configured = channel();
 		const unavailableRuntime = {
-			isChannelConfigurationCreationEnabled: (type: string) => type === attributes.type,
-			isChannelConfigurationEnabled: () => false,
+			isSharedObjectConfigurationEnabled: () => false,
 		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 		Object.assign(configured, {
 			getAttachSummary: () => {
@@ -227,45 +226,37 @@ describe("Channel configuration compatibility", () => {
 		assert.throws(
 			() => summarizeChannel(configured, true, false, undefined, unavailableRuntime),
 			validateAssertionError(
-				"Document channel configuration is not active for this type; cannot attach a configured channel",
+				"Shared object configuration is not active; cannot attach a configured channel",
 			),
 		);
 		assert.equal(captured, false);
 		assert.throws(
 			() => verifyChannelConfigurationCapability(configured, unavailableRuntime),
-			/channel configuration is not active/,
+			/Shared object configuration is not active/,
 		);
 	});
 
-	it("does not attach another type just because one type is active", () => {
+	it("allows different supporting DDS types under the same document flag", () => {
 		const configured = channel();
 		const other = {
 			...channel(),
 			attributes: { ...channel().attributes, type: "other-configured" },
 		};
 		summarizeChannel(configured, true, false, undefined, runtime);
-		assert.throws(
-			() => summarizeChannel(other, true, false, undefined, runtime),
-			/channel configuration is not active for this type/,
-		);
-		assert.throws(
-			() => verifyChannelConfigurationCapability(other, runtime),
-			/channel configuration is not active for this type/,
-		);
+		summarizeChannel(other, true, false, undefined, runtime);
+		verifyChannelConfigurationCapability(other, runtime);
 	});
 
-	for (const type of [attributes.type, "other-configured"]) {
-		it(`checks persisted type membership before loading ${type}`, async () => {
-			const saved = { ...channel().attributes, type };
+	for (const enabled of [false, true]) {
+		it(`checks the document flag before loading configured channels (${enabled})`, async () => {
+			const saved = channel().attributes;
 			const attachedRuntime = {
-				isChannelConfigurationEnabled: (channelType: string) =>
-					channelType === attributes.type,
-				isChannelConfigurationCreationEnabled: () => false,
+				isSharedObjectConfigurationEnabled: () => enabled,
 				attachState: AttachState.Attached,
 			} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 			let loaded = false;
 			const factory = {
-				attributes: { ...attributes, type },
+				attributes,
 				channelConfigurationProtocolVersion: 1,
 				load: async () => {
 					loaded = true;
@@ -281,7 +272,7 @@ describe("Channel configuration compatibility", () => {
 					createMockLoggerExt(),
 					attributes.type,
 				);
-			if (type === attributes.type) {
+			if (enabled) {
 				await load();
 				assert.equal(loaded, true);
 			} else {
@@ -306,7 +297,7 @@ describe("Channel configuration compatibility", () => {
 		const dataStoreContext = new MockFluidDataStoreContext();
 		const localRuntime = {
 			attachState: AttachState.Detached,
-			isChannelConfigurationEnabled: (type: string) => type === attributes.type,
+			isSharedObjectConfigurationEnabled: () => true,
 		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 		const configured = channel();
 		const order: string[] = [];
@@ -357,8 +348,7 @@ describe("Channel configuration compatibility", () => {
 			const dataStoreContext = new MockFluidDataStoreContext();
 			const localRuntime = {
 				attachState,
-				isChannelConfigurationCreationEnabled: () => true,
-				isChannelConfigurationEnabled: () => false,
+				isSharedObjectConfigurationEnabled: () => false,
 			} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 			let captured = false;
 			let connected = false;
@@ -382,8 +372,11 @@ describe("Channel configuration compatibility", () => {
 				() => {},
 				() => {},
 			);
-			assert.throws(() => context.getAttachSummary(), /channel configuration is not active/);
-			assert.throws(() => context.makeVisible(), /channel configuration is not active/);
+			assert.throws(
+				() => context.getAttachSummary(),
+				/Shared object configuration is not active/,
+			);
+			assert.throws(() => context.makeVisible(), /Shared object configuration is not active/);
 			assert.equal(captured, false);
 			assert.equal(connected, false);
 		});
@@ -399,7 +392,7 @@ describe("Channel configuration compatibility", () => {
 				const localRuntime = {
 					attachState,
 					connected,
-					isChannelConfigurationEnabled: () => false,
+					isSharedObjectConfigurationEnabled: () => false,
 				} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
 				let loaded = false;
 				const loading = loadChannel(
@@ -428,12 +421,9 @@ describe("Channel configuration compatibility", () => {
 		}
 	}
 
-	it("loads configured rehydrated channels lazily and replays queued messages with creation disabled", async () => {
+	it("loads configured rehydrated channels lazily and replays queued messages", async () => {
 		const dataStoreContext = new MockFluidDataStoreContext();
-		const localRuntime = {
-			...runtime,
-			isChannelConfigurationCreationEnabled: () => false,
-		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+		const localRuntime = runtime;
 		const configured = channel();
 		let loaded = false;
 		const replayed: IRuntimeMessageCollection[] = [];

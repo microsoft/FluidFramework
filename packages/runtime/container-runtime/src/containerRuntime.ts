@@ -272,8 +272,6 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
-// eslint-disable-next-line import-x/no-internal-modules -- Share validation without a package-level export.
-import { PersistedStringSet } from "./summary/documentSchema.js";
 import {
 	VersionMarkResolver,
 	type IVersionMarkResolver,
@@ -546,11 +544,11 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	readonly enableGroupedBatching: boolean;
 
 	/**
-	 * Stable channel type IDs allowed to create configured channels. Persisted types remain
-	 * readable when omitted. Existing documents request these types through normal schema
-	 * proposals; they may not become active this session. Publication requires the type to be active.
+	 * Requests SharedObject configuration support in the document schema. Existing documents
+	 * require an accepted schema proposal before the capability becomes active. Once persisted,
+	 * the capability remains active even when this option is disabled.
 	 */
-	readonly channelConfigurationTypes?: readonly string[];
+	readonly enableSharedObjectConfiguration?: boolean;
 }
 
 /**
@@ -1095,20 +1093,16 @@ export class ContainerRuntime
 			createBlobPayloadPending = defaultConfigs.createBlobPayloadPending,
 			stagingModeAutoFlushThreshold = defaultConfigs.stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade = defaultConfigs.disableSchemaUpgrade,
-			channelConfigurationTypes,
+			enableSharedObjectConfiguration,
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
-		const channelConfigurationProperty = new PersistedStringSet();
 		assert(
-			channelConfigurationProperty.validate(channelConfigurationTypes),
-			"Channel configuration types must be an array of nonempty strings",
-		);
-		const requestedChannelConfigurationTypes = channelConfigurationProperty.or(
-			undefined,
-			channelConfigurationTypes,
+			enableSharedObjectConfiguration === undefined ||
+				typeof enableSharedObjectConfiguration === "boolean",
+			"SharedObject configuration option must be a boolean",
 		);
 		assert(
-			requestedChannelConfigurationTypes === undefined || explicitSchemaControl,
-			"Channel configuration requires explicit schema control",
+			enableSharedObjectConfiguration !== true || explicitSchemaControl,
+			"SharedObject configuration requires explicit schema control",
 		);
 
 		// If explicitSchemaControl is off, ensure that options which require explicitSchemaControl are not enabled.
@@ -1295,27 +1289,28 @@ export class ContainerRuntime
 			compressionOptions.compressionAlgorithm === "lz4";
 
 		const persistedRuntimeSchema = metadata?.documentSchema?.runtime;
-		const persistedChannelConfigurationTypes = persistedRuntimeSchema?.channelConfiguration;
-		if (!channelConfigurationProperty.validate(persistedChannelConfigurationTypes)) {
+		const persistedSharedObjectConfiguration =
+			persistedRuntimeSchema?.sharedObjectConfiguration;
+		if (
+			persistedSharedObjectConfiguration !== undefined &&
+			persistedSharedObjectConfiguration !== true
+		) {
 			throw new DataCorruptionError(
-				"Channel configuration types must be an array of nonempty strings",
+				"SharedObject configuration capability must be true or undefined",
 				{},
 			);
 		}
 		if (
-			persistedChannelConfigurationTypes !== undefined &&
-			persistedChannelConfigurationTypes.length > 0 &&
+			persistedSharedObjectConfiguration === true &&
 			persistedRuntimeSchema?.explicitSchemaControl !== true
 		) {
 			throw new DataCorruptionError(
-				"Channel configuration requires explicit document schema control",
+				"SharedObject configuration requires explicit document schema control",
 				{},
 			);
 		}
 		const rehydratingConfiguredDocument =
-			!existing &&
-			persistedChannelConfigurationTypes !== undefined &&
-			persistedChannelConfigurationTypes.length > 0;
+			!existing && persistedSharedObjectConfiguration === true;
 
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
@@ -1328,12 +1323,10 @@ export class ContainerRuntime
 				opGroupingEnabled: enableGroupedBatching,
 				createBlobPayloadPending,
 				disallowedVersions: [],
-				channelConfiguration: rehydratingConfiguredDocument
-					? channelConfigurationProperty.or(
-							persistedChannelConfigurationTypes,
-							requestedChannelConfigurationTypes,
-						)
-					: requestedChannelConfigurationTypes,
+				sharedObjectConfiguration:
+					rehydratingConfiguredDocument || enableSharedObjectConfiguration === true
+						? true
+						: undefined,
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1373,9 +1366,9 @@ export class ContainerRuntime
 			createBlobPayloadPending,
 			stagingModeAutoFlushThreshold,
 			disableSchemaUpgrade,
-			...(requestedChannelConfigurationTypes === undefined
+			...(enableSharedObjectConfiguration === undefined
 				? {}
-				: { channelConfigurationTypes: requestedChannelConfigurationTypes }),
+				: { enableSharedObjectConfiguration }),
 		};
 
 		validateMinimumVersionForCollab(updatedMinVersionForCollab);
@@ -1770,17 +1763,10 @@ export class ContainerRuntime
 		recentBatchInfo?: [number, string][],
 	) {
 		super();
-		Object.defineProperties(this, {
-			isChannelConfigurationEnabled: {
-				value: (type: string): boolean =>
-					this.documentsSchemaController.sessionSchema.runtime.channelConfiguration?.includes(
-						type,
-					) === true,
-			},
-			isChannelConfigurationCreationEnabled: {
-				value: (type: string): boolean =>
-					this.runtimeOptions.channelConfigurationTypes?.includes(type) === true,
-			},
+		Object.defineProperty(this, "isSharedObjectConfigurationEnabled", {
+			value: (): boolean =>
+				this.documentsSchemaController.sessionSchema.runtime.sharedObjectConfiguration ===
+				true,
 		});
 
 		const {

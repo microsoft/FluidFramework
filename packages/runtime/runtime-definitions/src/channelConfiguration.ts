@@ -4,24 +4,16 @@
  */
 
 /**
- * Provides separate checks for creating configured channels locally and attaching them to a document.
+ * Reports whether the document supports SharedObject configuration.
  *
- * Each check uses the stable channel type identifier from its factory attributes. Enabling one type
- * does not enable other channel types. These checks are passed from the container runtime to data
- * stores and channels so the shared configuration protocol does not need DDS-specific knowledge.
+ * This capability is passed from the container runtime to data stores and channels.
  * @internal
  */
 export interface ChannelConfigurationRuntime {
 	/**
-	 * Whether the persisted document schema permits attaching configured channels of this type.
-	 * A local creation option alone does not make the type active: the document must record support
-	 * before a configured instance can attach.
+	 * Whether the active document schema permits SharedObject configuration.
+	 * A local request alone does not enable this capability on an existing document: its schema
+	 * proposal must be accepted first. Once enabled, local rollout options cannot disable it.
 	 */
-	readonly isChannelConfigurationEnabled?: (type: string) => boolean;
-	/**
-	 * Whether local deployment options permit creating configured channels of this type.
-	 * Turning this off prevents new configured instances, but does not prevent reading or attaching
-	 * instances of a type that the document already supports.
-	 */
-	readonly isChannelConfigurationCreationEnabled?: (type: string) => boolean;
+	readonly isSharedObjectConfigurationEnabled?: () => boolean;
 }

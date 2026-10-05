@@ -19,7 +19,8 @@ import type { SharedKernelMessageCollection } from "./sharedObjectKernel.js";
 import type { SharedObjectProtocol } from "./sharedObjectProtocol.js";
 
 /**
- * Routes a configured kernel's transport while retaining ordinary DDS hooks and metadata.
+ * Routes a configuration-capable kernel's transport, including before its first configuration op.
+ * Retains ordinary DDS hooks and metadata.
  */
 export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 	implements SharedObjectProtocol
@@ -30,12 +31,14 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 		public readonly controller: ChannelConfigurationController<TConfig>,
 		private readonly submit: (contents: unknown, metadata: unknown) => void,
 		private readonly verifyCanSubmit: () => void,
+		private readonly verifyConfigurationEnabled: () => void,
 		private readonly recordResult: (result: ConfigurationChangeResult<TConfig>) => void,
 	) {}
 
 	public submitWhileDetached(contents: unknown, metadata: unknown): void {}
 
 	public submitControl(contents: unknown, metadata: unknown): void {
+		this.verifyConfigurationEnabled();
 		this.submittingControl = true;
 		try {
 			this.submit(contents, metadata);
@@ -70,6 +73,7 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 		for (const [messageIndex, message] of messages.messagesContent.entries()) {
 			if (hasChannelConfigurationMarker(message.contents)) {
 				flush();
+				this.verifyConfigurationEnabled();
 				const proposal = parseChannelConfigurationMessage(message.contents);
 				const result = this.controller.process(
 					proposal,

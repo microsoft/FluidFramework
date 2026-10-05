@@ -413,17 +413,12 @@ export class FluidDataStoreRuntime
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
-		for (const key of [
-			"isChannelConfigurationEnabled",
-			"isChannelConfigurationCreationEnabled",
-		] as const) {
-			Object.defineProperty(this, key, {
-				value: (type: string): boolean =>
-					(this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime)[key]?.(
-						type,
-					) === true,
-			});
-		}
+		Object.defineProperty(this, "isSharedObjectConfigurationEnabled", {
+			value: (): boolean =>
+				(
+					this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime
+				).isSharedObjectConfigurationEnabled?.() === true,
+		});
 		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(

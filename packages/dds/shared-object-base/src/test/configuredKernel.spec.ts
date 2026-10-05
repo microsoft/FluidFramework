@@ -51,6 +51,7 @@ import { createSingleBlobSummary } from "../utils.js";
 type Config = Readonly<{ retain?: boolean }>;
 
 const definition: ChannelConfigurationDefinition<Config> = {
+	defaultConfiguration: {},
 	isSupported: (values): values is Config =>
 		Object.keys(values).every((key) => key === "retain") &&
 		(values.retain === undefined || typeof values.retain === "boolean"),
@@ -125,8 +126,7 @@ function makeKind(
 
 interface Harness {
 	readonly runtime: MockFluidDataStoreRuntime & {
-		isChannelConfigurationCreationEnabled: (type: string) => boolean;
-		isChannelConfigurationEnabled: (type: string) => boolean;
+		isSharedObjectConfigurationEnabled: () => boolean;
 	};
 	readonly delta: MockDeltaConnection;
 	readonly services: IChannelServices;
@@ -139,8 +139,7 @@ function harness(
 	onSubmit?: () => void,
 ): Harness {
 	const runtime = Object.assign(new MockFluidDataStoreRuntime({ attachState }), {
-		isChannelConfigurationCreationEnabled: (type: string) => type === "configured-test",
-		isChannelConfigurationEnabled: (type: string) => type === "configured-test",
+		isSharedObjectConfigurationEnabled: () => true,
 	});
 	const submitted: { contents: unknown; metadata: unknown }[] = [];
 	let dirty = 0;
@@ -214,8 +213,7 @@ function datastoreHarness(
 	context.isLocalDataStore = false;
 	context.attachState = AttachState.Attached;
 	context.containerRuntime = Object.assign(context.containerRuntime, {
-		isChannelConfigurationEnabled: (type: string) => type === "configured-test",
-		isChannelConfigurationCreationEnabled: () => false,
+		isSharedObjectConfigurationEnabled: () => true,
 	});
 	context.baseSnapshot = {
 		blobs: {},
@@ -273,16 +271,16 @@ function datastoreHarness(
 }
 
 describe("configured kernel composition", () => {
-	it("initializes from snapshot and replays lazy datastore barriers before exposure and summary", async () => {
-		const factory = makeKind({ retain: false }).getFactory();
+	it("activates an unmarked snapshot during lazy replay before exposure and summary", async () => {
+		const factory = makeKind().getFactory();
 		const baseline = factory.create(harness(AttachState.Detached).runtime, "baseline");
+		assert(!("configuration" in baseline.attributes));
 		const attributes = JSON.stringify(baseline.attributes);
 		const context = new MockFluidDataStoreContext("store", true);
 		context.isLocalDataStore = false;
 		context.attachState = AttachState.Attached;
 		context.containerRuntime = Object.assign(context.containerRuntime, {
-			isChannelConfigurationEnabled: (type: string) => type === "configured-test",
-			isChannelConfigurationCreationEnabled: () => false,
+			isSharedObjectConfigurationEnabled: () => true,
 		});
 		context.baseSnapshot = {
 			blobs: {},
@@ -331,8 +329,21 @@ describe("configured kernel composition", () => {
 		});
 		assert.equal(factoryLookups, 0);
 		assert.deepEqual(invalidated, [10]);
+		const replayedSummary = await runtime.summarize(true, false);
+		const replayedChannel = replayedSummary.summary.tree.dds;
+		assert(replayedChannel?.type === SummaryType.Tree);
+		const replayedAttributes = replayedChannel.tree[".attributes"];
+		assert(replayedAttributes?.type === SummaryType.Blob);
+		assert.equal(
+			replayedAttributes.content,
+			JSON.stringify({
+				...factory.attributes,
+				configuration: { version: 1, revision: 2, values: { retain: false } },
+			}),
+		);
 		const loaded = (await runtime.getChannel("dds")) as IChannel & View;
 		assert.equal(factoryLookups, 1);
+		assert("configuration" in loaded.attributes);
 		assert.equal(requireConfig(loaded).current.revision, 2);
 		assert.deepEqual(
 			loaded.observed.map((item): unknown => (Array.isArray(item) ? item[0] : item)),
@@ -574,64 +585,42 @@ describe("configured kernel composition", () => {
 		assert.equal(sequenced.source, "sequenced");
 	});
 
-	it("requires creation opt-in but not document-schema readiness for local configuration", async () => {
+	it("allows local activation but requires document capability before attachment", async () => {
 		const { runtime, services } = harness(AttachState.Detached);
-		runtime.isChannelConfigurationCreationEnabled = () => false;
-		assert.throws(
-			() => makeKind({}).getFactory().create(runtime, "dark"),
-			validateAssertionError("Channel configuration creation is not enabled for this type"),
-		);
-		runtime.isChannelConfigurationCreationEnabled = (type) => type === "configured-test";
-		runtime.isChannelConfigurationEnabled = () => false;
-		const shared = makeKind({}).getFactory().create(runtime, "local");
+		runtime.isSharedObjectConfigurationEnabled = () => false;
+		const shared = makeKind().getFactory().create(runtime, "local");
 		await requireConfig(shared).requestChange({ retain: true });
 		shared.connect(services);
 		assert.throws(
 			() => runtime.setAttachState(AttachState.Attaching),
-			validateAssertionError(
-				"Channel configuration document capability is not enabled for this type",
-			),
+			validateAssertionError("Shared object configuration document capability is not enabled"),
 		);
 		assert.equal(requireConfig(shared).current.values.retain, true);
 	});
 
-	it("checks the exact factory type separately for creation and attachment", async () => {
-		const { runtime, services, submitted } = harness();
-		const firstFactory = makeKind({}).getFactory();
-		const secondFactory = makeKind({}, true, "other-configured-test").getFactory();
-		const first = firstFactory.create(runtime, "first-instance");
-		first.connect(services);
-		assert.throws(
-			() => secondFactory.create(runtime, firstFactory.type),
-			/creation is not enabled for this type/,
-		);
+	it("allows ordinary use before the document flag and activation once it is enabled", async () => {
+		const { runtime, services, delta, submitted } = harness();
+		runtime.isSharedObjectConfigurationEnabled = () => false;
+		const shared = makeKind().getFactory().create(runtime, "dormant");
+		shared.connect(services);
+		shared.edit("before activation");
+		assert.equal(submitted[0]?.contents, "before activation");
+		const config = requireConfig(shared);
+		await assert.rejects(config.requestChange({ retain: true }), /capability is not enabled/);
+		assert.equal(config.current.revision, 0);
+		assert(!("configuration" in shared.attributes));
+		assert.equal(submitted.length, 1);
 
-		runtime.isChannelConfigurationCreationEnabled = (type) =>
-			type === firstFactory.type || type === secondFactory.type;
-		const second = secondFactory.create(runtime, firstFactory.type);
-		const config = requireConfig(second);
-		const change = config.requestChange({ retain: true });
-		assert.equal(config.current.revision, 1);
+		runtime.isSharedObjectConfigurationEnabled = () => true;
+		const request = config.requestChange({ retain: true });
+		assert(!("configuration" in shared.attributes));
+		const proposal = submitted[1];
+		assert(proposal !== undefined);
+		delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
+		const result = await request;
+		assert.equal(result.status, "applied");
+		assert("configuration" in shared.attributes);
 		assert.equal(config.current.values.retain, true);
-		const result = await change;
-		assert.equal(result.source, "local");
-		assert.equal(submitted.length, 0);
-		assert.throws(
-			() => second.connect(harness().services),
-			/capability is not enabled for this type/,
-		);
-
-		runtime.isChannelConfigurationEnabled = (type) =>
-			type === firstFactory.type || type === secondFactory.type;
-		runtime.isChannelConfigurationCreationEnabled = () => false;
-		const loaded = await secondFactory.load(
-			runtime,
-			"reader",
-			harness().services,
-			second.attributes,
-		);
-		assert.equal(requireConfig(loaded).current.values.retain, true);
-		assert.equal(requireConfig(first).current.revision, 0);
 	});
 
 	it("keeps connected detached changes local and sequences changes from attaching onward", async () => {
@@ -760,7 +749,6 @@ describe("configured kernel composition", () => {
 		const base = factory.create(runtime, "base");
 		await requireConfig(base).requestChange({ retain: true });
 		const attributes = JSON.parse(JSON.stringify(base.attributes)) as IChannelAttributes;
-		runtime.isChannelConfigurationCreationEnabled = () => false;
 		const shared = await makeKind().getFactory().load(runtime, "loaded", services, attributes);
 		const config = requireConfig(shared);
 		assert.equal(config.current.values.retain, true);
@@ -783,22 +771,19 @@ describe("configured kernel composition", () => {
 
 	it("restores configuration intent without activation and rejects rollback, read-only and disposal", async () => {
 		const { runtime, delta, services, submitted } = harness();
-		const factory = makeKind({}).getFactory();
-		const shared = await factory.load(
-			runtime,
-			"loaded",
-			services,
-			factory.create(runtime, "base").attributes,
-		);
+		const factory = makeKind().getFactory();
+		const shared = await factory.load(runtime, "loaded", services, factory.attributes);
 		const config = requireConfig(shared);
 		delta.applyStashedOp(barrier(0, true));
 		assert.equal(config.current.revision, 0);
+		assert(!("configuration" in shared.attributes));
 		assert.deepEqual(submitted[0]?.contents, barrier(0, true));
 		const rollback = config.requestChange({ retain: true });
 		const last = submitted.at(-1);
 		assert(last !== undefined);
 		delta.rollback?.(last.contents, last.metadata);
 		await assert.rejects(rollback, /rolled back/);
+		assert(!("configuration" in shared.attributes));
 		runtime.notifyReadOnlyState(true);
 		await assert.rejects(config.requestChange({}), /read-only/);
 		runtime.notifyReadOnlyState(false);
@@ -824,15 +809,71 @@ describe("configured kernel composition", () => {
 		assert.equal(Object.isFrozen(one.attributes), false);
 	});
 
-	it("keeps newly created unconfigured instances on the existing protocol", () => {
+	it("keeps DDSes without a configuration definition on the existing protocol", () => {
 		const { runtime } = harness(AttachState.Detached);
-		const factory = makeKind().getFactory();
+		const factory = makeKind(undefined, false).getFactory();
 		const shared = factory.create(runtime, "unconfigured");
 		assert.equal(shared.config, undefined);
 		assert.equal(shared.attributes, factory.attributes);
 		assert.deepEqual(shared.observed, [["initial", undefined]]);
 		assert.equal(Object.isFrozen(factory.attributes), false);
 	});
+
+	it("uses defaults without marking instances and persists the first identical local replacement", async () => {
+		const { runtime, submitted } = harness(AttachState.Detached);
+		const factory = makeKind(undefined, true, "configured-test", {
+			configurationDefinition: {
+				...definition,
+				defaultConfiguration: { retain: false },
+			},
+		}).getFactory();
+		const first = factory.create(runtime, "first");
+		const second = factory.create(runtime, "second");
+		const config = requireConfig(first);
+		assert.deepEqual(config.current, { revision: 0, values: { retain: false } });
+		assert.deepEqual(first.observed, [["initial", config.current]]);
+		assert(!("configuration" in first.attributes));
+		first.getAttachSummary();
+		assert(!("configuration" in first.attributes));
+		config.on("changed", () => assert("configuration" in first.attributes));
+		await config.requestChange({ retain: false });
+		assert("configuration" in first.attributes);
+		await config.requestChange({});
+		assert("configuration" in first.attributes);
+		assert(!("configuration" in second.attributes));
+		assert(!("configuration" in factory.attributes));
+		assert.equal(requireConfig(second).current.revision, 0);
+		assert.deepEqual(submitted, []);
+	});
+
+	it("does not accept a configuration op before document capability is active", async () => {
+		const { runtime, services, delta } = harness();
+		runtime.isSharedObjectConfigurationEnabled = () => false;
+		const factory = makeKind().getFactory();
+		const shared = await factory.load(runtime, "existing", services, factory.attributes);
+		assert.throws(
+			() => delta.processMessages(collection([barrier(0, true)])),
+			/capability is not enabled/,
+		);
+		assert.equal(requireConfig(shared).current.revision, 0);
+		assert(!("configuration" in shared.attributes));
+	});
+
+	for (const lazy of [false, true]) {
+		it(`rejects activation for a nonparticipating DDS during ${lazy ? "lazy replay" : "live processing"}`, async () => {
+			const test = datastoreHarness(makeKind(undefined, false).getFactory());
+			if (lazy) {
+				test.process(barrier(0, true));
+				await assert.rejects(test.runtime.getChannel("dds"), DataProcessingError);
+			} else {
+				await test.runtime.getChannel("dds");
+				assert.equal(test.shared.config, undefined);
+				test.process("ordinary");
+				assert.throws(() => test.process(barrier(0, true)), DataProcessingError);
+			}
+			test.runtime.dispose();
+		});
+	}
 
 	it("exposes revision and values in memory and encodes a version only in attributes", async () => {
 		const { runtime, services } = harness(AttachState.Detached);
@@ -959,7 +1000,6 @@ describe("configured kernel composition", () => {
 		await requireConfig(original).requestChange({ retain: true });
 		const persisted = JSON.parse(JSON.stringify(original.attributes)) as IChannelAttributes;
 		const reader = makeKind().getFactory();
-		runtime.isChannelConfigurationCreationEnabled = () => false;
 		const loaded = await reader.load(runtime, "loaded", services, persisted);
 		assert.notEqual(loaded.attributes, persisted);
 		assert.equal(requireConfig(loaded).current.values.retain, true);
@@ -968,12 +1008,20 @@ describe("configured kernel composition", () => {
 		assert.equal(requireConfig(loaded).current.revision, 2);
 		assert.deepEqual(persisted, JSON.parse(JSON.stringify(original.attributes)));
 		const other = harness(AttachState.Detached);
-		const legacy = await makeKind({ retain: true })
+		const legacy = await makeKind({ retain: true }, true, "configured-test", {
+			configurationDefinition: {
+				...definition,
+				defaultConfiguration: { retain: false },
+			},
+		})
 			.getFactory()
 			.load(other.runtime, "legacy", other.services, reader.attributes);
-		assert.equal(legacy.config, undefined);
+		assert.deepEqual(requireConfig(legacy).current, {
+			revision: 0,
+			values: { retain: false },
+		});
 		assert(!("configuration" in legacy.attributes));
-		assert.equal(legacy.attributes, reader.attributes);
+		assert.notEqual(legacy.attributes, reader.attributes);
 	});
 
 	it("rejects unsupported or malformed marked instances before constructing the kernel", async () => {
@@ -1006,9 +1054,10 @@ describe("configured kernel composition", () => {
 
 	it("replays mixed batches in logical order and delivers raw ops and normal events", async () => {
 		const { runtime, delta, services } = harness();
-		const factory = makeKind({ retain: false }).getFactory();
+		const factory = makeKind().getFactory();
 		const original = factory.create(runtime, "original");
 		const shared = await factory.load(runtime, "loaded", services, original.attributes);
+		assert(!("configuration" in shared.attributes));
 		const events: unknown[] = [];
 		const changes: ChannelConfigurationChange<Config>[] = [];
 		requireConfig(shared).on("changed", (change) => changes.push(change));

@@ -30,7 +30,6 @@ import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { type RevertibleAlpha, RevertibleStatus } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
-import { SharedTreeFactoryType } from "../../sharedTreeAttributes.js";
 import {
 	TreeViewConfiguration,
 	type ITree,
@@ -135,7 +134,7 @@ async function loadFreshClient(
 	const { summary } = await channel.summarize();
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 	Object.assign(runtime, {
-		isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
+		isSharedObjectConfigurationEnabled: () => true,
 	});
 	return (await factory.load(
 		runtime,

@@ -344,13 +344,10 @@ describe("Runtime", () => {
 	});
 
 	describe("Container Runtime", () => {
-		describe("Channel configuration capability", () => {
-			const typeA = "test-channel-a";
-			const typeB = "test-channel-b";
-			const typeC = "test-channel-c";
+		describe("SharedObject configuration capability", () => {
 			const configurationOptions = {
 				explicitSchemaControl: true,
-				channelConfigurationTypes: [typeA],
+				enableSharedObjectConfiguration: true,
 			};
 
 			async function loadConfigurationRuntime(
@@ -416,56 +413,22 @@ describe("Runtime", () => {
 
 			it("initializes new detached containers before attachment without sending ops", async () => {
 				const runtime = await loadConfigurationRuntime(false);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), true);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), true);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), false);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeB), false);
+				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
 				assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
 				assert.equal(submittedOps.length, 0);
 				runtime.dispose();
 			});
 
-			it("copies and canonicalizes the local type allow-list before loading", async () => {
-				const requested = [typeB, typeA, typeB];
-				const loading = loadConfigurationRuntime(false, {
-					explicitSchemaControl: true,
-					channelConfigurationTypes: requested,
-				});
-				requested.splice(0, requested.length, typeC);
-				const runtime = await loading;
-				assert.deepEqual(runtime.sessionSchema.channelConfiguration, [typeA, typeB]);
-				for (const type of [typeA, typeB]) {
-					assert.equal(runtime.isChannelConfigurationEnabled?.(type), true);
-					assert.equal(runtime.isChannelConfigurationCreationEnabled?.(type), true);
-				}
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeC), false);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeC), false);
+			it("persists the capability in the attach snapshot", async () => {
+				const runtime = await loadConfigurationRuntime(false);
+				assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 				const metadata: SummaryObject | undefined =
 					runtime.createSummary().tree[metadataBlobName];
 				assert(metadata?.type === SummaryType.Blob);
 				assert(typeof metadata.content === "string");
 				const persisted = JSON.parse(metadata.content) as IContainerRuntimeMetadata;
-				assert.deepEqual(persisted.documentSchema?.runtime.channelConfiguration, [
-					typeA,
-					typeB,
-				]);
+				assert.equal(persisted.documentSchema?.runtime.sharedObjectConfiguration, true);
 				assert.equal(submittedOps.length, 0);
-				runtime.dispose();
-			});
-
-			it("uses exact type IDs for readiness and creation queries", async () => {
-				const runtime = await loadConfigurationRuntime(false, {
-					explicitSchemaControl: true,
-					channelConfigurationTypes: [` ${typeA} `, typeB.toUpperCase()],
-				});
-				for (const type of [typeA, typeB]) {
-					assert.equal(runtime.isChannelConfigurationEnabled?.(type), false);
-					assert.equal(runtime.isChannelConfigurationCreationEnabled?.(type), false);
-				}
-				for (const type of [` ${typeA} `, typeB.toUpperCase()]) {
-					assert.equal(runtime.isChannelConfigurationEnabled?.(type), true);
-					assert.equal(runtime.isChannelConfigurationCreationEnabled?.(type), true);
-				}
 				runtime.dispose();
 			});
 
@@ -475,21 +438,20 @@ describe("Runtime", () => {
 					context: context as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
-					runtimeOptions: { explicitSchemaControl: true, channelConfigurationTypes: [typeA] },
+					runtimeOptions: configurationOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				const capability = runtime as ContainerRuntime & ChannelConfigurationRuntime;
 				runtime.createSummary();
 				assert.equal(runtime.attachState, AttachState.Detached);
-				assert.equal(capability.isChannelConfigurationEnabled?.(typeA), true);
+				assert.equal(capability.isSharedObjectConfigurationEnabled?.(), true);
 				assert.equal(submittedOps.length, 0);
 				const privates = runtime as unknown as ContainerRuntime_WithPrivates;
 				const attached = sandbox
 					.stub(privates.channelCollection, "setAttachState")
 					.callsFake((state) => {
 						assert.equal(state, AttachState.Attaching);
-						assert.equal(capability.isChannelConfigurationEnabled?.(typeA), true);
-						assert.equal(capability.isChannelConfigurationEnabled?.(typeB), false);
+						assert.equal(capability.isSharedObjectConfigurationEnabled?.(), true);
 					});
 				runtime.createSummary();
 				assert.equal(runtime.attachState, AttachState.Detached);
@@ -506,15 +468,14 @@ describe("Runtime", () => {
 				it(`proposes on ordinary data and waits for the schema acknowledgement (${FlushMode[flushMode]})`, async () => {
 					const runtime = await loadConfigurationRuntime(true, {
 						explicitSchemaControl: true,
-						channelConfigurationTypes: [typeA],
+						enableSharedObjectConfiguration: true,
 						flushMode,
 					});
 					const privates = runtime as unknown as ContainerRuntime_WithPrivates;
 					stubChannelCollection(privates);
 					await clock.tickAsync(0);
 					assert.equal(submittedOps.length, 0);
-					assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), true);
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 					submitDataStoreOp(runtime, "1", testDataStoreMessage);
 					await clock.tickAsync(0);
 					assert.equal(submittedOps.length, 2);
@@ -523,15 +484,14 @@ describe("Runtime", () => {
 						contents: IDocumentSchemaChangeMessageOutgoing;
 					};
 					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
-					assert.deepEqual(proposal.contents.runtime.channelConfiguration, [typeA]);
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
+					assert.equal(proposal.contents.runtime.sharedObjectConfiguration, true);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 					submitDataStoreOp(runtime, "1", testDataStoreMessage);
 					await clock.tickAsync(0);
 					assert.equal(submittedOps.length, 3, "Only one schema proposal is sent");
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 					processConfigurationOp(runtime, proposal, 1, 1);
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), true);
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), false);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
 					processConfigurationOp(
 						runtime,
 						submittedOps[1] as LocalContainerRuntimeMessage,
@@ -545,45 +505,10 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("keeps one type active while a new requested type waits for acknowledgement", async () => {
-				const requested = [typeB];
-				const runtime = await loadConfigurationRuntime(
-					true,
-					{ explicitSchemaControl: true, channelConfigurationTypes: requested },
-					{
-						version: 1,
-						refSeq: 0,
-						info: { minVersionForCollab: defaultMinVersionForCollab },
-						runtime: { explicitSchemaControl: true, channelConfiguration: [typeA] },
-					},
-				);
-				requested.push(typeC);
-				stubChannelCollection(runtime as unknown as ContainerRuntime_WithPrivates);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), true);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), false);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), false);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeB), true);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeC), false);
-				submitDataStoreOp(runtime, "1", testDataStoreMessage);
-				assert.equal(submittedOps.length, 2);
-				const proposal = submittedOps[0] as {
-					type: ContainerMessageType.DocumentSchemaChange;
-					contents: IDocumentSchemaChangeMessageOutgoing;
-				};
-				assert.deepEqual(proposal.contents.runtime.channelConfiguration, [typeA, typeB]);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), true);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), false);
-				processConfigurationOp(runtime, proposal, 1, 1);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), true);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), true);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeC), false);
-				runtime.dispose();
-			});
-
 			it("does not retry a losing proposal, including on later ordinary data", async () => {
 				const runtime = await loadConfigurationRuntime(true, {
 					explicitSchemaControl: true,
-					channelConfigurationTypes: [typeA],
+					enableSharedObjectConfiguration: true,
 					enableRuntimeIdCompressor: "delayed",
 				});
 				stubChannelCollection(runtime as unknown as ContainerRuntime_WithPrivates);
@@ -593,7 +518,7 @@ describe("Runtime", () => {
 					type: ContainerMessageType.DocumentSchemaChange;
 					contents: IDocumentSchemaChangeMessageOutgoing;
 				};
-				assert.deepEqual(first.contents.runtime.channelConfiguration, [typeA]);
+				assert.equal(first.contents.runtime.sharedObjectConfiguration, true);
 				processConfigurationOp(
 					runtime,
 					{
@@ -603,7 +528,6 @@ describe("Runtime", () => {
 							runtime: {
 								explicitSchemaControl: true,
 								idCompressorMode: "delayed",
-								channelConfiguration: [typeB],
 							},
 						},
 					},
@@ -613,9 +537,7 @@ describe("Runtime", () => {
 				);
 				await clock.tickAsync(0);
 				assert.equal(submittedOps.length, 2);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), true);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeB), false);
+				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 				assert.equal(runtime.sessionSchema.idCompressorMode, "delayed");
 				processConfigurationOp(runtime, first, 2, 1);
 				processConfigurationOp(runtime, submittedOps[1] as LocalContainerRuntimeMessage, 3, 2);
@@ -628,15 +550,14 @@ describe("Runtime", () => {
 					(submittedOps[2] as LocalContainerRuntimeMessage).type,
 					ContainerMessageType.FluidDataStoreOp,
 				);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), true);
+				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 				runtime.dispose();
 			});
 
 			it("does not propose schema changes when upgrades are disabled", async () => {
 				const runtime = await loadConfigurationRuntime(true, {
 					explicitSchemaControl: true,
-					channelConfigurationTypes: [typeA],
+					enableSharedObjectConfiguration: true,
 					disableSchemaUpgrade: true,
 				});
 				submitDataStoreOp(runtime, "1", testDataStoreMessage);
@@ -646,12 +567,11 @@ describe("Runtime", () => {
 					(submittedOps[0] as LocalContainerRuntimeMessage).type,
 					ContainerMessageType.FluidDataStoreOp,
 				);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), true);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
+				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 				runtime.dispose();
 			});
 
-			for (const creationOptions of [{}, { channelConfigurationTypes: [] }]) {
+			for (const creationOptions of [{}, { enableSharedObjectConfiguration: false }]) {
 				for (const existing of [false, true]) {
 					it(`leaves legacy documents unchanged with dark creation (${JSON.stringify({
 						existing,
@@ -661,9 +581,8 @@ describe("Runtime", () => {
 							explicitSchemaControl: false,
 							...creationOptions,
 						});
-						assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
-						assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), false);
-						assert.equal(runtime.sessionSchema.channelConfiguration, undefined);
+						assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+						assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 						assert.equal(runtime.sessionSchema.explicitSchemaControl, undefined);
 						if (existing) {
 							submitDataStoreOp(runtime, "1", testDataStoreMessage);
@@ -696,13 +615,12 @@ describe("Runtime", () => {
 						contents: IDocumentSchemaChangeMessageOutgoing;
 					};
 					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
-					assert.equal(proposal.contents.runtime.channelConfiguration, undefined);
+					assert.equal(proposal.contents.runtime.sharedObjectConfiguration, undefined);
 					assert.equal(proposal.contents.runtime.idCompressorMode, "delayed");
-					assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), false);
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 					processConfigurationOp(runtime, proposal, 1, 1);
 					assert.equal(runtime.sessionSchema.idCompressorMode, "delayed");
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 					runtime.dispose();
 				});
 
@@ -722,15 +640,11 @@ describe("Runtime", () => {
 									info: { minVersionForCollab: defaultMinVersionForCollab },
 									runtime: {
 										explicitSchemaControl: true,
-										channelConfiguration: [typeA, typeB],
+										sharedObjectConfiguration: true,
 									},
 								},
 							);
-							assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), false);
-							assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeB), false);
-							assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), true);
-							assert.equal(runtime.isChannelConfigurationEnabled?.(typeB), true);
-							assert.equal(runtime.isChannelConfigurationEnabled?.(typeC), false);
+							assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
 							assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
 							assert.equal(submittedOps.length, 0);
 							if (!existing) {
@@ -739,10 +653,10 @@ describe("Runtime", () => {
 								assert(metadata?.type === SummaryType.Blob);
 								assert(typeof metadata.content === "string");
 								const persisted = JSON.parse(metadata.content) as IContainerRuntimeMetadata;
-								assert.deepEqual(persisted.documentSchema?.runtime.channelConfiguration, [
-									typeA,
-									typeB,
-								]);
+								assert.equal(
+									persisted.documentSchema?.runtime.sharedObjectConfiguration,
+									true,
+								);
 								assert.equal(persisted.documentSchema?.runtime.explicitSchemaControl, true);
 							}
 							runtime.dispose();
@@ -751,63 +665,42 @@ describe("Runtime", () => {
 				}
 			}
 
-			for (const requested of [[typeA], [typeC]]) {
-				it(`preserves all types when rehydrating with ${JSON.stringify(requested)}`, async () => {
-					const runtime = await loadConfigurationRuntime(
-						false,
-						{ explicitSchemaControl: true, channelConfigurationTypes: requested },
-						{
-							version: 1,
-							refSeq: 0,
-							info: { minVersionForCollab: defaultMinVersionForCollab },
-							runtime: {
-								explicitSchemaControl: true,
-								channelConfiguration: [typeB, typeA, typeB],
-							},
+			for (const persistedCapability of [true, undefined] as const) {
+				it(`enables configuration when rehydrating with persisted capability ${persistedCapability}`, async () => {
+					const runtime = await loadConfigurationRuntime(false, configurationOptions, {
+						version: 1,
+						refSeq: 0,
+						info: { minVersionForCollab: defaultMinVersionForCollab },
+						runtime: {
+							explicitSchemaControl: true,
+							sharedObjectConfiguration: persistedCapability,
 						},
-					);
-					const expected = [...new Set([typeA, typeB, ...requested])].sort();
-					assert.deepEqual(runtime.sessionSchema.channelConfiguration, expected);
+					});
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 					assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
-					for (const type of [typeA, typeB, typeC]) {
-						assert.equal(
-							runtime.isChannelConfigurationEnabled?.(type),
-							expected.includes(type),
-						);
-						assert.equal(
-							runtime.isChannelConfigurationCreationEnabled?.(type),
-							requested.includes(type),
-						);
-					}
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
 					const metadata: SummaryObject | undefined =
 						runtime.createSummary().tree[metadataBlobName];
 					assert(metadata?.type === SummaryType.Blob);
 					assert(typeof metadata.content === "string");
 					const persisted = JSON.parse(metadata.content) as IContainerRuntimeMetadata;
-					assert.deepEqual(persisted.documentSchema?.runtime.channelConfiguration, expected);
+					assert.equal(persisted.documentSchema?.runtime.sharedObjectConfiguration, true);
 					assert.equal(persisted.documentSchema?.runtime.explicitSchemaControl, true);
 					assert.equal(submittedOps.length, 0);
 					runtime.dispose();
 				});
 			}
 
-			for (const requested of [
-				[typeA, typeB],
-				[typeB, typeA, typeB],
-				[typeA],
-				[],
-				undefined,
-			]) {
-				it(`does not propose redundant type changes for ${JSON.stringify(requested)}`, async () => {
-					const persisted = [typeB, typeA, typeB];
+			for (const requested of [true, false, undefined]) {
+				it(`does not propose redundant capability changes for ${requested}`, async () => {
 					const runtime = await loadConfigurationRuntime(
 						true,
-						{ explicitSchemaControl: true, channelConfigurationTypes: requested },
+						{ explicitSchemaControl: true, enableSharedObjectConfiguration: requested },
 						{
 							version: 1,
 							refSeq: 0,
 							info: { minVersionForCollab: defaultMinVersionForCollab },
-							runtime: { explicitSchemaControl: true, channelConfiguration: persisted },
+							runtime: { explicitSchemaControl: true, sharedObjectConfiguration: true },
 						},
 					);
 					submitDataStoreOp(runtime, "1", testDataStoreMessage);
@@ -816,26 +709,14 @@ describe("Runtime", () => {
 						(submittedOps[0] as LocalContainerRuntimeMessage).type,
 						ContainerMessageType.FluidDataStoreOp,
 					);
-					assert.deepEqual(runtime.sessionSchema.channelConfiguration, persisted);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
 					runtime.dispose();
 				});
 			}
 
-			it("does not let later mutation enable creation from an empty allow-list", async () => {
-				const requested: string[] = [];
-				const runtime = await loadConfigurationRuntime(false, {
-					explicitSchemaControl: false,
-					channelConfigurationTypes: requested,
-				});
-				requested.push(typeA);
-				assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), false);
-				assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
-				assert.equal(runtime.sessionSchema.channelConfiguration, undefined);
-				runtime.dispose();
-			});
-
 			for (const existing of [false, true]) {
-				it(`allows an empty persisted set without explicit schema control (existing: ${existing})`, async () => {
+				it(`allows an absent capability without explicit schema control (existing: ${existing})`, async () => {
 					const runtime = await loadConfigurationRuntime(
 						existing,
 						{ explicitSchemaControl: false },
@@ -843,40 +724,33 @@ describe("Runtime", () => {
 							version: 1,
 							refSeq: 0,
 							info: { minVersionForCollab: defaultMinVersionForCollab },
-							runtime: { channelConfiguration: [] },
+							runtime: {},
 						},
 					);
-					assert.equal(runtime.isChannelConfigurationEnabled?.(typeA), false);
-					assert.equal(runtime.isChannelConfigurationCreationEnabled?.(typeA), false);
+					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 					assert.equal(runtime.sessionSchema.explicitSchemaControl, undefined);
 					runtime.dispose();
 				});
 
-				it(`rejects malformed requested and persisted type lists (existing: ${existing})`, async () => {
-					const sparse: string[] = [];
-					sparse.length = 1;
+				it(`rejects malformed requested and persisted capabilities (existing: ${existing})`, async () => {
 					for (const invalid of [
-						true,
-						false,
 						// eslint-disable-next-line unicorn/no-null -- Malformed serialized schema.
 						null,
 						"type",
 						0,
 						{},
-						[""],
-						[typeA, 1],
-						[typeA, undefined],
-						sparse,
+						[],
+						["test-channel"],
 					]) {
 						await assert.rejects(
 							loadConfigurationRuntime(existing, {
 								explicitSchemaControl: true,
-								channelConfigurationTypes: invalid as string[],
+								enableSharedObjectConfiguration: invalid as boolean,
 							}),
-							validateAssertionError(
-								"Channel configuration types must be an array of nonempty strings",
-							),
+							validateAssertionError("SharedObject configuration option must be a boolean"),
 						);
+					}
+					for (const invalid of [false, "true", 0, [], ["test-channel"]]) {
 						await assert.rejects(
 							loadConfigurationRuntime(
 								existing,
@@ -887,11 +761,11 @@ describe("Runtime", () => {
 									info: { minVersionForCollab: defaultMinVersionForCollab },
 									runtime: {
 										explicitSchemaControl: true,
-										channelConfiguration: invalid as string[],
+										sharedObjectConfiguration: invalid as true,
 									},
 								},
 							),
-							/Channel configuration types must be an array of nonempty strings/,
+							/SharedObject configuration capability must be true or undefined/,
 						);
 					}
 				});
@@ -900,9 +774,11 @@ describe("Runtime", () => {
 					await assert.rejects(
 						loadConfigurationRuntime(existing, {
 							explicitSchemaControl: false,
-							channelConfigurationTypes: [typeA],
+							enableSharedObjectConfiguration: true,
 						}),
-						validateAssertionError("Channel configuration requires explicit schema control"),
+						validateAssertionError(
+							"SharedObject configuration requires explicit schema control",
+						),
 					);
 				});
 
@@ -915,10 +791,10 @@ describe("Runtime", () => {
 								version: 1,
 								refSeq: 0,
 								info: { minVersionForCollab: defaultMinVersionForCollab },
-								runtime: { channelConfiguration: [typeA] },
+								runtime: { sharedObjectConfiguration: true },
 							},
 						),
-						/Channel configuration requires explicit document schema control/,
+						/SharedObject configuration requires explicit document schema control/,
 					);
 				});
 			}

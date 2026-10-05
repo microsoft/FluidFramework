@@ -44,6 +44,7 @@ import { Breakable, copyProperty } from "./util/index.js";
 
 const historyConfigurationDefinition: ChannelConfigurationDefinition<TreeHistoryConfiguration> =
 	{
+		defaultConfiguration: {},
 		isSupported: (values): values is TreeHistoryConfiguration =>
 			Object.keys(values).every((key) => key === "retainHistory") &&
 			(values.retainHistory === undefined || typeof values.retainHistory === "boolean"),
@@ -206,8 +207,9 @@ export function configuredSharedTreeAlpha(
  * This should be renamed to `configuredSharedTreeAlpha` to avoid colliding with the eventual public version which will have less options.
  *
  * @param initialConfiguration - Internal, opt-in prototype configuration for new instances only.
- * Omit this argument to create legacy instances. All factories can read configured instances.
- * History retention is controlled only by persisted configuration.
+ * Omit this argument to use the default configuration without a persisted configuration marker.
+ * All factories can read configured instances and activate configuration on existing instances.
+ * History retention is disabled by default and controlled by persisted configuration changes.
  *
  * @internal
  */

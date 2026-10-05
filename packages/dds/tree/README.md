@@ -51,9 +51,10 @@ Read the **@fluidframework/tree** API documentation at <https://fluidframework.c
 
 ## Status
 
-An internal, opt-in [persisted history configuration prototype](../PersistedConfiguration.md#sharedtree-history-prototype) is available for explicitly configured new instances.
+An internal, opt-in [persisted history configuration prototype](../PersistedConfiguration.md#sharedtree-history-prototype) is available for new and existing instances.
 It replaces the old `SharedTreeOptions.retainHistory` option and retains history from the first committed main-trunk change after enabling.
-Default factories still use bounded retention and do not migrate legacy documents.
+Default factories still use bounded retention and do not persist configuration until a change is accepted.
+Existing instances can enable retention when the document enables shared-object configuration.
 
 Notable considerations that users should be aware of:
 

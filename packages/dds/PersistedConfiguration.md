@@ -21,7 +21,7 @@ The following decisions were clarified for this proposal:
 | Ordinary ops authored before a configuration change | Delivered normally, without configuration revision metadata. Any invalidation policy and related events are DDS responsibilities, deferred from this design. |
 | Local application | Preserve each DDS's existing optimistic, acknowledgement, and resubmission behavior. Attached configuration changes wait for sequencing; unattached configuration changes apply locally. |
 | Configuration values | Full replacement is allowed, including disabling or removing settings. |
-| Adoption | Creation-time opt-in for new DDS instances. Migrating existing instances is out of scope. |
+| Adoption | A DDS declares stable defaults. New or existing instances start persisting configuration on their first accepted change, or at creation when explicit initial values are supplied. |
 | Unloaded DDSes | Preserve lazy loading; validate and replay configuration before exposing the instance. |
 
 "Known to all clients" means clients observing the same prefix of the channel's history derive the
@@ -76,25 +76,26 @@ is a separate integration, not permission to bypass the shared controller.
 
 Non-goals are application schema management, general consensus, cross-channel transactions,
 ordinary-op invalidation or its reconciliation/event APIs, automatic retries of rejected edits,
-migration of existing DDS instances, and asynchronous data migrations during a configuration callback.
+asynchronous data migrations during a configuration callback.
 
 ### SharedTree history prototype
 
 The production SharedTree implementation declares configuration reader support regardless of its creation policy.
 The internal `configuredSharedTree(options, initialConfiguration)` factory accepts an optional second argument of type `Readonly<{ retainHistory?: boolean }>`.
-Omit this argument to keep creating legacy instances; an absent attributes marker never migrates automatically.
+Omit this argument to create unmarked instances with the stable default configuration `{}`.
+Loading or summarizing an unmarked instance does not activate persistence; its first accepted configuration change does.
 Persisted configuration is the only history retention policy, including on summarizers.
 An omitted `retainHistory` means `false`.
 This replaces the old `SharedTreeOptions.retainHistory` option; use the second factory argument instead.
 Trees without persisted configuration use normal bounded retention and can still load stable existing summaries.
 
 ```typescript
-import { configuredSharedTree, SharedTreeFactoryType } from "@fluidframework/tree/internal";
+import { configuredSharedTree } from "@fluidframework/tree/internal";
 
 // Set these internal container runtime options before creating the Tree.
 const runtimeOptions = {
     explicitSchemaControl: true,
-    channelConfigurationTypes: [SharedTreeFactoryType],
+    enableSharedObjectConfiguration: true,
 };
 const kind = configuredSharedTree({}, { retainHistory: false });
 const tree = kind.getFactory().create(dataStoreRuntime, "tree");
@@ -106,9 +107,9 @@ if (configuration !== undefined) {
 }
 ```
 
-`SharedTreeFactoryType` is the stable type ID `https://graph.microsoft.com/types/tree`.
-This runtime option allows new configured Trees, not configured instances of other DDS types.
-An empty or omitted type list disables new configured instances but does not prevent reading persisted configured instances.
+This runtime option requests document-level support for SharedObject configuration.
+It does not configure any DDS instance or require every DDS to support configuration.
+Once the document flag is active, omitting the local option does not prevent reading or changing configuration.
 Only SharedTree adopts the configuration protocol in production in this prototype.
 The internal test/debug type `ISharedTree` in this example is imported from `treeFactory.ts` inside the Tree package.
 The creation entry point is exported as internal; the per-instance request surface is not a new public Tree API.
@@ -117,10 +118,10 @@ Requests from an attached Tree take effect only when sequenced, including reques
 Normal DDS attachment controls this choice: an unbound Tree or a Tree in a detached datastore applies changes locally without an op.
 A bound Tree in an attaching or attached datastore submits configuration ops.
 Serialization alone does not attach the Tree or change this behavior.
-Attachment requires the Tree type in the persisted document capability set.
-In an existing document, normal outgoing traffic can propose adding the Tree type through the desired document schema.
-Attach only after `isChannelConfigurationEnabled(SharedTreeFactoryType)` reports that the type is active; setting the local option does not make attachment ready.
-If the proposal loses a compare-and-swap race, the type may remain unavailable for the session; there is no separate activation API or automatic retry.
+Configured attachment and attached configuration changes require the persisted document flag.
+In an existing document, normal outgoing traffic can propose the flag through the desired document schema.
+Wait until `isSharedObjectConfigurationEnabled()` reports that it is active; setting the local option does not make the document ready.
+If the proposal loses a compare-and-swap race, the flag may remain unavailable for the session; there is no separate activation API or automatic retry.
 Attaching before readiness throws an error instead of switching to the legacy protocol.
 
 Enabling waits for the next committed change on the main trunk.
@@ -151,8 +152,9 @@ The existing branch-history inspection API can therefore include pre-enable prot
 
 ## Persisted state
 
-Add an optional `configuration` member to the serialized attributes blob. Absence means the
-existing channel protocol, not "configuration revision zero."
+Add an optional `configuration` member to the serialized attributes blob.
+For a supporting DDS, absence means the stable default configuration at revision zero, without persistent configuration.
+For a DDS without a configuration definition, absence keeps its existing protocol and no configuration facet is supplied.
 
 ```json
 {
@@ -191,7 +193,8 @@ patch merging, `and`, `or`, or client-local defaults are applied on load.
 
 The protocol trusts this internal contract instead of copying, freezing, or recursively inspecting values.
 Serialization uses the normal op and summary paths; failures retain their diagnostic stacks.
-New factory defaults apply only to creation, never to existing persisted state.
+The definition's default configuration applies only when persisted configuration is absent.
+Explicit `initialConfiguration` values apply only to creation, never to loaded state.
 Message-size limits belong to the normal runtime submission path, not the configuration protocol.
 DDS authors should keep configuration small; the protocol does not impose a separate size limit,
 truncate values, or fall back to defaults.
@@ -233,9 +236,10 @@ attributes type avoids requiring every legacy `IChannelAttributes` implementatio
 An opted-in instance's `attributes.configuration` getter returns `{ version: 1, ...controller.current }`.
 The other attributes are preserved. Updating one instance must never mutate `factory.attributes` or another
 instance's attributes.
-The wrapper copies attributes only for configured instances, before adding the configuration getter.
+The wrapper copies attributes for configuration-capable instances, before they can add the configuration getter.
 This shallow copy keeps the per-instance getter off the shared factory attributes.
-Unconfigured instances keep the existing attributes behavior.
+The getter is added at configured creation, configured load, or the first accepted replacement.
+DDSes without a configuration definition keep the existing attributes behavior.
 
 ## Wire protocol and processing
 
@@ -254,12 +258,12 @@ export interface ChannelConfigurationMessageV1 {
 }
 ```
 
-The persisted attributes marker selects configured dispatch.
-Only configured dispatch uses the presence of an own top-level `isChannelConfigurationOp` property to classify a message as a configuration op.
+The factory's configuration definition selects configuration-capable dispatch, including for unmarked instances.
+This dispatch uses the presence of an own top-level `isChannelConfigurationOp` property to classify a message as a configuration op.
 Any value reserves that property; the configuration parser requires its value to be `true`.
 Nested application data can use the same name.
-An absent attributes marker selects unconfigured DDS dispatch, not automatic opt-in based on a payload.
-The shared ordinary-op guard still rejects the reserved top-level property on unconfigured channels.
+The first accepted configuration op adds the attributes marker before notifying the DDS.
+Without a configuration definition, the shared ordinary-op guard rejects the reserved top-level property instead of passing it to an unsupported DDS.
 
 For every incoming logical message on a configured channel, in order:
 
@@ -317,6 +321,9 @@ import type { IRuntimeMessageCollection } from "@fluidframework/runtime-definiti
 export interface ChannelConfigurationDefinition<
     TConfig extends ChannelConfiguration,
 > {
+    // Stable values that describe existing behavior on every client.
+    readonly defaultConfiguration: TConfig;
+
     // Pure validation; unknown keys and unsupported values must be rejected.
     readonly isSupported: (values: ChannelConfiguration) => values is TConfig;
 
@@ -371,8 +378,10 @@ export interface ChannelConfigurationFacet<
 
 `SharedKernelFactory<T, TConfig>.configurationDefinition` declares reader support.
 `SharedObjectOptions<T, TConfig>.initialConfiguration` separately opts new instances in.
-`KernelArgs<TConfig>.configuration` contains the facet for marked instances and is undefined
-for legacy instances. The wrapper creates it before calling `factory.create` or `factory.loadCore`.
+`KernelArgs<TConfig>.configuration` contains the facet whenever the factory defines configuration.
+It is undefined only for DDSes that do not support configuration.
+Unmarked instances start with `defaultConfiguration` at revision zero.
+The wrapper creates the facet before calling `factory.create` or `factory.loadCore`.
 The kernel can read it during construction and register a listener before loading its state.
 Existing submission, load, summary, GC, connection, resubmission, stashed-op, and rollback hooks
 remain available for ordinary DDS operations.
@@ -383,7 +392,7 @@ including when grouped messages share a service sequence number.
 
 ### Requesting a configuration change
 
-`requestChange` captures the current revision and clones the replacement values
+`requestChange` captures the current revision and replacement values
 synchronously at invocation, before any asynchronous work. It validates locally, then submits
 one control op if the channel is attached. It never changes attached configuration optimistically.
 For an unattached channel, it replaces the authoritative state and synchronously notifies listeners
@@ -412,13 +421,12 @@ using existing pending local-op metadata; completion metadata is not part of the
 
 ### Applying changes to a live DDS
 
-The facet is initialized once before kernel construction. For load it exposes the snapshot's
-validated configuration, not the latest configuration from buffered ops.
+The facet is initialized once before kernel construction.
+For load it exposes the snapshot's validated configuration, or the definition's defaults when unmarked, not the latest configuration from buffered ops.
 Reading that initial snapshot is not a configuration-change notification.
-The wrapper explicitly distinguishes an unconfigured instance, a configured creation, and a
-configured load. Unconfigured means no persisted configuration, not a third lifecycle phase:
-both new and loaded channels can be unconfigured. The controller itself validates creation
-and loaded snapshots in the same way and does not need their source.
+The wrapper distinguishes creation from load, each with optional explicit configuration.
+Factory support is separate from these lifecycle states.
+The controller validates defaults, creation values, and loaded snapshots in the same way.
 
 The `"changed"` listener runs synchronously for every accepted barrier, local or remote,
 including barriers replayed during load. The controller's getter already exposes `current`.
@@ -525,11 +533,12 @@ Existing DDS event-listener error handling is unchanged.
 ## Creation, attachment, load, and summaries
 
 At creation the wrapper uses `SharedObjectOptions.initialConfiguration`, when provided.
-Loading obtains configuration exclusively from persisted attributes. A supporting factory
-loads both marked and unmarked channels: absent markers select the legacy protocol, and
-present markers require supported, valid configuration. Never turn a legacy channel into a
-configured one by applying current factory defaults. Reader support remains enabled even
-when deployment policy stops creating new configured channels.
+Otherwise, a supporting factory uses its stable `defaultConfiguration`.
+Loading uses persisted configuration when present and the same stable defaults when absent.
+It never uses `initialConfiguration` to replace loaded state.
+Reading defaults does not add an attributes marker; the first accepted replacement adds it, including a replacement with identical values.
+Once present, the marker remains even when all settings return to defaults.
+Reader support remains enabled when deployment policy stops requesting the document flag.
 
 Until attachment, configuration replacements apply locally and immediately through the same
 validation and readonly state path. Repeated replacements, including identical values, advance
@@ -628,10 +637,9 @@ is not a sufficient guard.
 
 Use two checks:
 
-1. **Container protocol gate:** `DocumentSchema.runtime.channelConfiguration` is an additive
-   set of DDS type identifiers, stored as a JSON string array. Each entry requires readers to
-   understand this protocol for that type. A nonempty set requires explicit schema control.
-   Runtimes that understand document-schema enforcement but not this property fail on it.
+1. **Container protocol gate:** `DocumentSchema.runtime.sharedObjectConfiguration: true` requires SharedObject configuration support.
+   The flag requires explicit schema control.
+   Runtimes that enforce document schemas but do not support this flag fail on it.
 2. **DDS factory gate:** an internal factory capability marker checked before `factory.load`.
    A supported runtime with an older DDS factory must fail predictably rather than load the
    configured channel through the legacy path.
@@ -650,67 +658,52 @@ instances, not evidence that every configuration value is supported.
 The runtime also requires the returned configured instance to have registered its shared controller
 before connecting/replaying it; a factory marker alone must not enable a legacy dispatch path.
 
-Type identifiers are the exact stable `factory.type` / `attributes.type` strings, not instance IDs.
-The runtime does not import DDS implementations or keep a second factory registry. This allows
-each DDS type to roll out independently. For example, the following uses illustrative type IDs,
-not built-in DDS types:
+The flag does not list DDS types or activate configuration on individual channels.
+The runtime does not need a startup inventory of supporting DDS types or a second factory registry.
+Each DDS independently supplies a configuration definition, or continues without configuration support.
 
 ```json
 {
   "runtime": {
     "explicitSchemaControl": true,
-    "channelConfiguration": [
-      "https://example.com/types/a",
-      "https://example.com/types/b"
-    ]
+    "sharedObjectConfiguration": true
   }
 }
 ```
 
-New requested sets and unions that add members remove duplicates and use stable ordering.
-An empty requested set is treated as absent. When a union adds no members, the property handler keeps
-the persisted array identity so equivalent, reordered, duplicate, or subset requests do not cause a schema proposal.
-An existing persisted array need not be rewritten just to normalize its ordering.
-The earlier prototype boolean is not supported and has no wildcard meaning.
+The flag must be active before a configured channel attaches or an attached channel submits its first configuration op.
+For a new container, include it in the initial document schema before attachment.
+For an existing container, `enableSharedObjectConfiguration: true` requests it through the normal desired schema.
+Ordinary outgoing traffic gives the schema controller an opportunity to propose the change.
+Wait for an accepted schema change, not just submission of the proposal: the schema CAS can lose.
+Once active, the flag applies to all supporting DDSes.
 
-The channel's type must be in the active document set before a configured channel can be attached.
-For a new container, include requested types in the initial document schema before attachment.
-For an existing container, `channelConfigurationTypes` requests additions through the normal desired
-schema. Ordinary outgoing traffic gives the schema controller an opportunity to propose the change.
-Attachment is allowed only after a sequenced schema change activates that type, not merely because
-it was requested. An active type A does not permit attaching type B.
+The schema controller keeps its existing one-attempt policy.
+If another schema wins without the flag, configuration can remain unavailable for the session.
+A later session can propose it again.
+There is no automatic retry, separate activation method, or synthetic ordinary op to trigger the proposal.
+Disabled schema upgrades remain disabled.
 
-The schema controller keeps its existing one-attempt policy. If another schema wins without
-adding a requested type, that type may remain unavailable for the rest of the session. A later
-session can propose the missing type while retaining the observed members. The runtime does
-not retry the upgrade automatically or provide a separate activation method. It does not create
-an ordinary edit just to trigger a schema proposal. Disabled schema upgrades remain disabled.
-Attempting to attach a configured channel while its type is unavailable throws an error;
-it does not silently switch the channel to the legacy protocol.
+`isSharedObjectConfigurationEnabled()` reports the active document flag.
+A missing query does not grant permission.
+Local configuration edits do not need document readiness, but their snapshots cannot attach without the flag.
+Detached rehydration preserves a persisted flag and explicit schema control even when the local option is false or omitted.
+The flag stays present when the local option is off or all DDS settings return to defaults.
+It protects the shared protocol, not individual settings.
 
-New-instance creation requires `isChannelConfigurationCreationEnabled(type)`; attachment additionally
-requires `isChannelConfigurationEnabled(type)`. These optional internal runtime queries return
-booleans; a missing query does not grant permission. Creation uses the local requested type list.
-Attachment and reads use persisted membership, even when the local list omits that type.
-Local configuration edits do not require document readiness. These datastore-runtime queries keep
-DDS packages independent of the container runtime implementation. Loading a configured detached
-snapshot preserves all persisted type memberships and explicit schema control even when the local
-requested list is empty, omitted, or a subset.
+For the prerequisite compatibility PR, register the flag with validation that rejects `true`.
+No client in that release can safely process or summarize configured SharedObjects.
+Change validation to accept `true` only in the follow-up that adds the SharedObject protocol and preservation checks.
+This combined prototype includes that follow-up and accepts the flag.
+Keep `enableSharedObjectConfiguration` off by default.
+`minVersionForCollab` gives rollout guidance, but its current warning alone is not enforcement.
+Clients predating document-schema enforcement still need the existing deployment and old-client exclusion strategy.
 
-Ship protocol readers and the new wrapper dark first. Gate creation by deployment policy, with no
-behavioral changes to existing DDSes apart from the reserved-key guards. The internal runtime option
-`channelConfigurationTypes?: readonly string[]` supplies the local creation allow-list and requested
-document additions. Nonempty lists require `explicitSchemaControl: true`. For example, a deployment
-may request only `["https://example.com/types/a"]`; it cannot create configured instances of type B.
-`minVersionForCollab` is useful rollout guidance, but its
-current warning alone is not enforcement. Clients predating document-schema enforcement require
-the existing deployment/old-client exclusion strategy; the new field cannot retroactively make
-them safe.
-
-Persisted type memberships stay sticky even when local creation is disabled or all current DDS
-settings are disabled. They protect the wrapper protocol and historical summaries/ops, not individual
-configuration values. Neither a DDS configuration barrier nor a package rollback removes a member.
-Existing unmarked instances remain legacy even when their type is in the document set.
+Supporting factories expose stable defaults on unmarked instances without changing their summaries.
+The first accepted configuration replacement activates persistence.
+An unsupported SharedObject rejects the first configuration op instead of passing it to its DDS.
+Lazy replay must apply activation before exposing or summarizing the channel.
+A changed channel cannot reuse a summary handle that omits activation.
 
 This wire format replaces the earlier wrapped prototype.
 There is no automatic migration or compatibility with saved pending ops from that prototype.
@@ -729,8 +722,8 @@ DDS-specific invalidation events and telemetry are outside this design.
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
 | `shared-object-base` | Controller and compositional kernel facet; per-instance configuration attributes; configuration-op dispatch and shared reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
 | `datastore` | Factory and attach capability checks; retain lazy replay ordering, ordinary stashed-op handling, and summary invalidation. |
-| `container-runtime` | Additive persisted type set requested through normal schema features; propagate per-type readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
-| Initial adopter | New opt-in DDS instances with configuration validation and a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
+| `container-runtime` | Persisted SharedObject configuration flag requested through normal schema features; propagate readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
+| Initial adopter | Stable defaults and configuration validation for new and existing DDS instances, with a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |
 
 Share the existing base's serializer, telemetry, error handling, and summary support through
 targeted hooks. Do not duplicate the whole `SharedObjectCore` implementation or change the
@@ -765,10 +758,10 @@ test harnesses. The key scenarios are:
 | Unsupported obsolete config in a losing proposal | CAS conflict without attempting DDS-specific interpretation. |
 | Supported runtime with unsupported factory | Fail before loading the configured channel or rewriting its summary. |
 | Unsupported runtime and first configured attachment | Document-schema capability excludes it before it can process new-protocol data. |
-| Independent type rollouts | Creation and attachment check the exact type; enabling A does not enable B. |
-| Equivalent type requests | Reordered, duplicate, subset, empty, and absent requests do not cause a schema proposal when no members are added. |
-| Concurrent type additions | A losing proposal is not retried automatically; later proposals retain all observed persisted members. |
-| Legacy document/channel | No opt-in or new envelopes; existing behavior is unchanged apart from reserved-key guards. Normal stable unconfigured summaries remain readable. |
+| Optional DDS participation | DDSes without a definition continue ordinary operation and reject configuration ops. Supporting DDSes use defaults before activation. |
+| Repeated flag requests | An active flag remains active without another schema proposal, even when the local option is off. |
+| Concurrent schema changes | A losing proposal is not retried automatically and does not activate configuration. |
+| Existing unmarked channel | Stable defaults at revision zero; no summary marker until the first accepted replacement. Normal stable summaries remain readable. |
 
 The shared mechanism provides persisted configuration and ordered CAS updates
 without changing ordinary DDS wire formats or consistency semantics. Attached configuration activation incurs

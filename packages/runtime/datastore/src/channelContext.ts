@@ -218,7 +218,7 @@ export async function loadChannel(
 		dataStoreRuntime.attachState !== AttachState.Detached &&
 		(
 			dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
-		).isChannelConfigurationEnabled?.(attributes.type) !== true
+		).isSharedObjectConfigurationEnabled?.() !== true
 	) {
 		throw new DataCorruptionError("Configured channel requires document capability", {});
 	}

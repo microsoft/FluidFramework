@@ -47,7 +47,7 @@ import { asAlpha } from "../../api.js";
 import type { EncodedRevisionTag } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import type { SharedTreeOptions } from "../../shared-tree/index.js";
-import { SharedTreeFactoryType } from "../../sharedTreeAttributes.js";
+import { EditManagerFormatVersion } from "../../shared-tree-core/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
@@ -72,11 +72,9 @@ function factory(
 	).getFactory() as IChannelFactory<ISharedTree>;
 }
 
-function configureRuntime(runtime: MockFluidDataStoreRuntime, creationEnabled = true): void {
+function configureRuntime(runtime: MockFluidDataStoreRuntime, enabled = true): void {
 	Object.assign(runtime, {
-		isChannelConfigurationCreationEnabled: (type: string) =>
-			creationEnabled && type === SharedTreeFactoryType,
-		isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
+		isSharedObjectConfigurationEnabled: () => enabled,
 	});
 }
 
@@ -166,9 +164,10 @@ async function load(
 	idCompressor: IIdCompressor,
 	reader: IChannelFactory<ISharedTree> = factory(),
 	attachState = AttachState.Attached,
+	configurationEnabled = true,
 ) {
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor, attachState });
-	configureRuntime(runtime, false);
+	configureRuntime(runtime, configurationEnabled);
 	const submitted: { contents: unknown; metadata: unknown }[] = [];
 	const delta = new MockDeltaConnection(
 		(contents: unknown, metadata) => submitted.push({ contents, metadata }),
@@ -204,6 +203,7 @@ interface EncodedHistoryCommit {
 }
 
 interface EditManagerSummary {
+	version: number;
 	historyStart?: EncodedRevisionTag;
 	trunk?: EncodedHistoryCommit[];
 	main?: { trunk: EncodedHistoryCommit[] };
@@ -219,6 +219,22 @@ function editManagerBlob(summary: ISummaryTree): EditManagerSummary {
 	assert(blob?.type === SummaryType.Blob, "Expected the EditManager String blob");
 	assert.equal(typeof blob.content, "string");
 	return JSON.parse(blob.content as string) as EditManagerSummary;
+}
+
+function assertUnmarkedSummary(summary: ISummaryTree): void {
+	const attributes = summary.tree[".attributes"];
+	assert(attributes?.type === SummaryType.Blob, "Expected persisted channel attributes");
+	assert.equal(typeof attributes.content, "string");
+	assert.equal(
+		Object.hasOwn(
+			JSON.parse(attributes.content as string) as IChannelAttributes,
+			"configuration",
+		),
+		false,
+	);
+	const history = editManagerBlob(summary);
+	assert.equal(history.version, EditManagerFormatVersion.v3);
+	assert.equal(Object.hasOwn(history, "historyStart"), false);
 }
 
 function mainTrunk(summary: EditManagerSummary): EncodedHistoryCommit[] {
@@ -283,9 +299,9 @@ function detached(initialConfiguration: Configuration = disabledConfiguration) {
 
 describe("SharedTree persisted configuration", () => {
 	it("persists configuration-only changes through the real datastore and a reader-only summarizer", async () => {
-		const creator = factory({ retainHistory: false });
+		const creator = factory();
 		const reader = factory();
-		let creationEnabled = true;
+		let rolloutEnabled = true;
 		const loadedTrees: ISharedTree[] = [];
 		const channelFactory: IChannelFactory<ISharedTree> & ChannelConfigurationFactory = {
 			type: creator.type,
@@ -296,28 +312,12 @@ describe("SharedTree persisted configuration", () => {
 			},
 			create: (runtime, id) => {
 				const capabilities = runtime as ChannelConfigurationRuntime;
-				for (const type of [SharedTreeFactoryType, "unrelated-dds-type"]) {
-					assert.equal(
-						capabilities.isChannelConfigurationCreationEnabled?.(type),
-						type === SharedTreeFactoryType,
-					);
-					assert.equal(
-						capabilities.isChannelConfigurationEnabled?.(type),
-						type === SharedTreeFactoryType,
-					);
-				}
+				assert.equal(capabilities.isSharedObjectConfigurationEnabled?.(), true);
 				return creator.create(runtime, id);
 			},
 			load: async (runtime, id, services, attributes) => {
 				const capabilities = runtime as ChannelConfigurationRuntime;
-				assert.equal(
-					capabilities.isChannelConfigurationCreationEnabled?.(SharedTreeFactoryType),
-					creationEnabled,
-				);
-				assert.equal(
-					capabilities.isChannelConfigurationEnabled?.(SharedTreeFactoryType),
-					true,
-				);
+				assert.equal(capabilities.isSharedObjectConfigurationEnabled?.(), true);
 				const tree = await reader.load(runtime, id, services, attributes);
 				loadedTrees.push(tree);
 				return tree;
@@ -337,7 +337,7 @@ describe("SharedTree persisted configuration", () => {
 					{
 						enableRuntimeIdCompressor: "on",
 						explicitSchemaControl: true,
-						channelConfigurationTypes: creationEnabled ? [SharedTreeFactoryType] : [],
+						enableSharedObjectConfiguration: rolloutEnabled,
 						summaryOptions: {
 							summaryConfigOverrides: {
 								state: "disableHeuristics",
@@ -354,6 +354,8 @@ describe("SharedTree persisted configuration", () => {
 			const dataObject = await container.getEntryPoint();
 			assert(dataObject instanceof TestFluidObjectInternal);
 			const tree = (await dataObject.getInitialSharedObject("tree")) as ISharedTree;
+			assert.deepEqual(configuration(tree).current, { revision: 0, values: {} });
+			assert.equal(Object.hasOwn(tree.attributes, "configuration"), false);
 			const view = tree.viewWith(viewConfiguration);
 			view.initialize([]);
 			view.root.insertAtEnd("before enable");
@@ -367,7 +369,7 @@ describe("SharedTree persisted configuration", () => {
 			const expectedStart = editManagerBlob(await summarize(tree)).historyStart;
 			assert.notEqual(expectedStart, undefined);
 
-			creationEnabled = false;
+			rolloutEnabled = false;
 			const { summarizer } = await createSummarizer(provider, container);
 			await summarizeNow(summarizer, "initial configured Tree summary");
 			assert(loadedTrees.length > 0, "The real summarizer must load the configured channel");
@@ -413,22 +415,124 @@ describe("SharedTree persisted configuration", () => {
 		}
 	});
 
-	it("keeps unmarked stable summaries readable without adopting reader creation defaults", async () => {
-		const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-		configureRuntime(runtime);
-		const reader = factory();
-		const legacy = reader.create(runtime, "legacy");
-		assert.equal(legacy.kernel.configuration, undefined);
-		const view = legacy.viewWith(viewConfiguration);
-		view.initialize([]);
-		view.root.insertAtEnd("legacy history");
-		const summary = await summarize(legacy);
-		assert.equal(editManagerBlob(summary).historyStart, undefined);
-		const loaded = await load(summary, compressor(runtime), factory({ retainHistory: true }));
-		assert.equal(loaded.tree.kernel.configuration, undefined);
-		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
-		assert.deepEqual([...loaded.tree.viewWith(viewConfiguration).root], ["legacy history"]);
-	});
+	for (const enabled of [false, true]) {
+		it(`keeps default-backed summaries unmarked with the document capability ${enabled ? "on" : "off"}`, async () => {
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			configureRuntime(runtime, enabled);
+			const legacy = factory().create(runtime, "legacy");
+			assert.deepEqual(configuration(legacy).current, { revision: 0, values: {} });
+			assert.equal(Object.hasOwn(legacy.attributes, "configuration"), false);
+			assertUnmarkedSummary(await summarize(legacy));
+			const view = legacy.viewWith(viewConfiguration);
+			view.initialize([]);
+			view.root.insertAtEnd("legacy history");
+			const summary = await summarize(legacy);
+			assertUnmarkedSummary(summary);
+			const loaded = await load(
+				summary,
+				compressor(runtime),
+				factory({ retainHistory: true }),
+				AttachState.Attached,
+				enabled,
+			);
+			assert.deepEqual(configuration(loaded.tree).current, { revision: 0, values: {} });
+			assert.equal(Object.hasOwn(loaded.tree.attributes, "configuration"), false);
+			assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
+			assert.deepEqual([...loaded.tree.viewWith(viewConfiguration).root], ["legacy history"]);
+			const resummarized = await summarize(loaded.tree);
+			assertUnmarkedSummary(resummarized);
+			const reloaded = await load(
+				resummarized,
+				compressor(runtime),
+				factory(),
+				AttachState.Detached,
+				enabled,
+			);
+			assert.deepEqual(configuration(reloaded.tree).current, { revision: 0, values: {} });
+			reloaded.tree.viewWith(viewConfiguration).root.insertAtEnd("still bounded");
+			assertUnmarkedSummary(await summarize(reloaded.tree));
+		});
+	}
+
+	for (const attachState of [AttachState.Attached, AttachState.Detached]) {
+		it(`activates an existing unmarked ${attachState} Tree and waits for its first committed change`, async () => {
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const source = factory().create(runtime, "unmarked");
+			const sourceView = source.viewWith(viewConfiguration);
+			sourceView.initialize([]);
+			sourceView.root.insertAtEnd("before activation");
+			const summary = await summarize(source);
+			assertUnmarkedSummary(summary);
+			const loaded = await load(
+				summary,
+				compressor(runtime),
+				factory({ retainHistory: true }),
+				attachState,
+			);
+			assert.deepEqual(configuration(loaded.tree).current, { revision: 0, values: {} });
+			const before = revisions(loaded.tree);
+			const request = configuration(loaded.tree).requestChange({ retainHistory: true });
+			if (attachState === AttachState.Attached) {
+				assert.equal(loaded.submitted.length, 1);
+				assert.deepEqual(configuration(loaded.tree).current, { revision: 0, values: {} });
+				const pending = await summarize(loaded.tree);
+				assertUnmarkedSummary(pending);
+				const pendingReload = await load(pending, compressor(runtime));
+				assert.deepEqual(configuration(pendingReload.tree).current, {
+					revision: 0,
+					values: {},
+				});
+				assertUnmarkedSummary(await summarize(pendingReload.tree));
+				const proposal = loaded.submitted[0];
+				deliverMessage(loaded.delta, proposal.contents, 100, true, proposal.metadata);
+			} else {
+				assert.equal(loaded.submitted.length, 0);
+				assert.equal(configuration(loaded.tree).current.values.retainHistory, true);
+			}
+			const result = await request;
+			assert.equal(result.status, "applied");
+			assert.equal(
+				result.source,
+				attachState === AttachState.Attached ? "sequenced" : "local",
+			);
+			assert.equal(Object.hasOwn(loaded.tree.attributes, "configuration"), true);
+			assert.deepEqual(revisions(loaded.tree), before);
+			assert.equal(historyStart(loaded.tree, compressor(runtime)), undefined);
+
+			// Activation is persisted even though no Tree commit has established the history start.
+			const activated = await load(
+				await summarize(loaded.tree),
+				compressor(runtime),
+				factory(),
+				attachState,
+			);
+			assert.deepEqual(configuration(activated.tree).current, {
+				revision: 1,
+				values: { retainHistory: true },
+			});
+			assert.equal(historyStart(activated.tree, compressor(runtime)), undefined);
+			const view = activated.tree.viewWith(viewConfiguration);
+			assert.deepEqual([...view.root], ["before activation"]);
+			view.root.insertAtEnd("first retained edit");
+			const retainedEdit = headRevision(activated.tree);
+			if (attachState === AttachState.Attached) {
+				assert.equal(activated.submitted.length, 1);
+				const edit = activated.submitted[0];
+				deliverMessage(activated.delta, edit.contents, 101, true, edit.metadata);
+			} else {
+				assert.equal(activated.submitted.length, 0);
+			}
+			assert.equal(historyStart(activated.tree, compressor(runtime)), retainedEdit);
+			const reloaded = await load(
+				await summarize(activated.tree),
+				compressor(runtime),
+				factory(),
+				attachState,
+			);
+			assert.equal(historyStart(reloaded.tree, compressor(runtime)), retainedEdit);
+			assert.deepEqual([...reloaded.tree.viewWith(viewConfiguration).root], [...view.root]);
+		});
+	}
 
 	for (const initialConfiguration of [{}, { retainHistory: false }, { retainHistory: true }]) {
 		it(`persists ${JSON.stringify(initialConfiguration)} instead of conflicting reader defaults`, async () => {
@@ -1377,7 +1481,7 @@ describe("SharedTree persisted configuration", () => {
 	}
 
 	for (const configured of [false, true]) {
-		it(`rejects a retained start without ${configured ? "enabled retention" : "persisted configuration capability"}`, async () => {
+		it(`rejects a retained start without ${configured ? "enabled retention" : "persisted configuration"}`, async () => {
 			const source = detached({ retainHistory: true });
 			const summary = await summarize(source.tree);
 			assert.notEqual(editManagerBlob(summary).historyStart, undefined);
