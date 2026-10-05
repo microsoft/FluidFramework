@@ -16,7 +16,7 @@ import type { UntypedTreeView } from "../simple-tree/api/index.js";
 export function getCheckout(view: UntypedTreeView): TreeCheckout {
 	assert(
 		view instanceof SchematizingSimpleTreeView,
-		"Expected view to be a SchematizingSimpleTreeView",
+		0xd66 /* Expected view to be a SchematizingSimpleTreeView */,
 	);
 	return view.checkout;
 }

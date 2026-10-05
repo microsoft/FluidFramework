@@ -143,9 +143,12 @@ export class GuestSynchronization {
 					const idSpaceShardToken = this.idCompressor.getShardSyncToken();
 					assert(
 						idSpaceShardToken !== undefined,
-						"Guest edits require a child ID space shard",
+						0xd5b /* Guest edits require a child ID space shard */,
 					);
-					assert(!idSpaceShardToken.disposed, "Guest change needs a live ID space shard");
+					assert(
+						!idSpaceShardToken.disposed,
+						0xd5c /* Guest change needs a live ID space shard */,
+					);
 					const changeId = brand<GuestChangeId>(this.nextChangeId++);
 					if (this.pushInProgress === undefined) {
 						this.pushInProgress = makePromiseWithResolvers();
@@ -277,7 +280,7 @@ export class GuestSynchronization {
 			commit !== base;
 			commit = commit.parent
 		) {
-			assert(commit !== undefined, "Updated Host branch must descend from its base");
+			assert(commit !== undefined, 0xd5d /* Updated Host branch must descend from its base */);
 			this.hostCommits.set(commit.revision, commit);
 		}
 		// The snapshot's baseline revision aliases the independent checkout's initial head.
@@ -307,7 +310,10 @@ export class GuestSynchronization {
 		}
 		this.log(`Change ${message.changeId} acknowledged`);
 		if (this.pendingChanges.size === 0) {
-			assert(this.pushInProgress !== undefined, "Missing push promise for Guest changes");
+			assert(
+				this.pushInProgress !== undefined,
+				0xd5e /* Missing push promise for Guest changes */,
+			);
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
 			resolver();
