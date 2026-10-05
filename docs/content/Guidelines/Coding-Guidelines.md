@@ -521,7 +521,7 @@ Use errors to report invalid input or usage by callers of supported, non-interna
 Validate these conditions before they can violate internal invariants.
 
 > [!NOTE]
-> Here, callers are application code or code in other packages, not people using a Fluid-powered application.
+> Here, "callers" are application code or code in other packages, not people using a Fluid-powered application.
 > Invalid data entered by a person should normally be represented in application control flow rather than thrown as an exception that escapes the validation layer.
 
 Use `UsageError` from `@fluidframework/telemetry-utils/internal` for incorrect user-facing API usage.
