@@ -88,7 +88,7 @@ export namespace FormattedTextDefault {
 	 * Quill formats line attributes (headers, list, blockquote, etc... ) on the newline character
 	 * and only lines using this atom can have line-specific formatting.
 	 * The optional indent level mirrors Quill's indent attribute,
-	 * which is applies to the line before the line break.
+	 * which applies to the line before the line break.
 	 * Any tagged line can be indented independently.
 	 * @sealed
 	 * @internal
