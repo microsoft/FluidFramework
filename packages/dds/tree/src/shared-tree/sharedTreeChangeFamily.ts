@@ -104,6 +104,10 @@ export class SharedTreeChangeFamily
 		);
 	}
 
+	public hasSchemaChange(change: SharedTreeChange): boolean {
+		return hasSchemaChange(change);
+	}
+
 	public buildProcessor(
 		processFn: ProcessChangeFn<SharedTreeChange, SharedTreeChangeProcessingContext>,
 	): (change: SharedTreeChange) => SharedTreeChange {

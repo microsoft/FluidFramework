@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Breakable } from "../../../util/index.js";
-
+import { Breakable } from "../util/index.js";
 import { normalizeProtocolError, type SessionFailureMessage } from "./common.js";
 
 /**
@@ -22,7 +21,14 @@ export class SandboxSessionEndpoint {
 	private disposed = false;
 
 	public constructor(
-		private readonly port: MessagePort,
+		/**
+		 * This endpoint's port in the Host and Guest message channel.
+		 *
+		 * @privateRemarks
+		 * The odd typing here is intentional and important.
+		 * Without it, we take an implicit dependency on DOM types, which may not be available in all environments.
+		 */
+		private readonly port: InstanceType<typeof MessagePort>,
 		/** Stops local synchronization and rejects pending work without editing or disposing trees. */
 		private readonly stop: (error: Error) => void,
 		/** Reports the first terminal error to the application, outside tree event dispatch. */

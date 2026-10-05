@@ -9,6 +9,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "./identifiers.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
@@ -102,6 +103,11 @@ export type SerializationVersion =
  */
 export interface IIdCompressorCore {
 	/**
+	 * Events emitted by the ID compressor.
+	 */
+	readonly events: Listenable<IdCompressorEvents>;
+
+	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
 	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time a
 	 * range was taken (via this method or `takeUnfinalizedCreationRange`).
@@ -192,8 +198,36 @@ export interface IIdCompressorCore {
 	 * be disposed from the leaves upwards.
 	 * @param syncToken - The token for the shard, obtained by calling {@link IIdCompressorCore.getShardSyncToken} (non-destructive
 	 * synchronization) or {@link IIdCompressorCore.disposeShard} (synchronization plus reclamation of the disposed shard's ID space).
+	 * @throws `TypeError` if the token's generation count is not a nonnegative safe integer.
 	 */
 	synchronizeWithShard(syncToken: ShardSynchronizationToken): void;
+
+	/**
+	 * Gets a synchronization token from this compressor for an active child shard.
+	 *
+	 * @remarks
+	 * The child can apply this token without replacing its compressor.
+	 *
+	 * @param childToken - A token from the child shard that will receive this token.
+	 * @returns This parent's synchronization token for that child.
+	 * @throws If the child shard is not active on this compressor.
+	 */
+	getChildShardSyncToken(
+		childToken: ShardSynchronizationToken,
+	): ParentShardSynchronizationToken;
+
+	/**
+	 * Synchronizes this child shard with its parent's token.
+	 *
+	 * @remarks
+	 * This method keeps the child's allocation stride and does not finalize ID creation ranges.
+	 * Apply creation ranges from {@link IIdCompressorCore.events} separately, in order.
+	 *
+	 * @param token - Synchronization token obtained from this child's parent.
+	 * @throws If the token names another child or contains invalid state.
+	 * @throws `TypeError` if the token's generation count is not a nonnegative safe integer.
+	 */
+	synchronizeWithParent(token: ParentShardSynchronizationToken): void;
 
 	/**
 	 * Returns undefined if this compressor is not part of a shard group, and otherwise returns a synchronization token for this shard
@@ -234,24 +268,23 @@ export interface IIdCompressorCore {
 }
 
 /**
- * The state shared by all shard tokens: enough information to identify a shard and its progress
- * through its stride pattern. This is used to track which shard generated which IDs and to manage
- * reclamation of a disposed shard's ID space. The {@link ShardToken.disposed} flag distinguishes a
- * plain synchronization token from a disposal token. The branded {@link ShardSynchronizationToken}
- * is the concrete type handed to consumers.
+ * State shared by shard synchronization tokens.
+ * @remarks
+ * Treat these tokens as opaque: the compressor owns their interpretation and may add state in the future.
+ * The {@link ShardToken.disposed} flag distinguishes ordinary synchronization from shard reclamation.
+ * The branded {@link ShardSynchronizationToken} is the concrete child-to-parent token.
  * @internal
  */
 export interface ShardToken {
 	/**
-	 * The number of positions filled in this shard's stride pattern.
-	 * This tracks progress through the stride cycle, not the count of IDs actually generated.
-	 * For example, when a shard is created, it backfills entries for positions in its stride,
-	 * so this value may be non-zero even if the shard hasn't generated any IDs yet.
+	 * The sending compressor's generation count, which can include backfilled positions
+	 * rather than only IDs it generated.
+	 * @remarks Must be a nonnegative safe integer.
 	 */
 	localGenCount: number;
 
 	/**
-	 * Unique identifier for this shard within its parent.
+	 * Identifies the child shard involved in synchronization with its parent.
 	 */
 	shardId: SessionId;
 
@@ -273,26 +306,49 @@ export type ShardSynchronizationToken = ShardToken & {
 };
 
 /**
+ * A synchronization token from a parent to one of its active child shards.
+ * @remarks
+ * Unlike the child-to-parent {@link ShardSynchronizationToken}, this token cannot dispose a shard.
+ * It does not finalize ID creation ranges.
+ * @internal
+ */
+export interface ParentShardSynchronizationToken
+	extends Readonly<Omit<ShardToken, "disposed">> {
+	/** Identifies the parent-to-child token across a message boundary. */
+	readonly type: "parentIdSpaceShardSyncToken";
+}
+
+/**
+ * Events for finalized ID creation ranges.
+ * @internal
+ */
+export interface IdCompressorEvents {
+	/** Reports a range after finalization succeeds. */
+	rangeFinalized: (range: IdCreationRange) => void;
+}
+/**
  * A distributed UUID generator and compressor.
+ *
+ * @remarks
  * `IdCompressor` offers the ability to generate arbitrary non-colliding v4 UUIDs, called stable IDs, while compressing them into small integers
  * for efficient storage and transmission. It also provides the ability to decompress these integers back into their original UUIDs.
  *
  * The compressor is designed to be used in a distributed environment, where multiple clients may be generating IDs concurrently.
- * IDs generated by a compressor, via calls to `generateCompressedId`, are created in the compressor's "local" session.
+ * IDs generated by a compressor, via calls to {@link IIdCompressor.generateCompressedId}, are created in the compressor's "local" session.
  * These IDs are unique within the session, but may not be unique across sessions. In the context of Fluid, the scope of a session
  * is the same as the scope of a container. This means that anytime IDs are transferred between sessions, they must be translated
  * through a process called "normalization":
+ *
  * - The scope of a local session (in which local IDs are unique) is called the "session space" of the client.
  * - The context of persisted state (in Fluid, this is the context of ops and summaries) is called "op space".
- * - `SessionSpaceCompressedId`s, generated via calls to `generateCompressedId`, should NEVER be serialized directly.
+ * - {@link SessionSpaceCompressedId | SessionSpaceCompressedIds}, generated via calls to {@link IIdCompressor.generateCompressedId}, should NEVER be serialized directly.
  * In Fluid, this means they should not be included in ops or summaries.
  * - Before serialization, IDs must be normalized to op space to ensure they are interpretable by other clients.
  * - Upon receipt, IDs should be normalized back to session space before use.
  *
- * Example Usage:
+ * @example
  *
- * ### Client A (Sender)
- *
+ * Client A (Sender)
  * ```typescript
  * // Generate several local IDs
  * const localId1 = idCompressor.generateCompressedId();
@@ -312,7 +368,7 @@ export type ShardSynchronizationToken = ShardToken & {
  * };
  * ```
  *
- * ### Client B (Receiver)
+ * Client B (Receiver)
  *
  * ```typescript
  * // Receive the message from Client A
@@ -334,27 +390,34 @@ export interface IIdCompressor {
 
 	/**
 	 * Generates a new compressed ID.
-	 * The returned ID is in session space and should not be serialized directly. See `IIdCompressor` for more details.
+	 *
+	 * @remarks The returned ID is in session space and should not be serialized directly.
+	 * @see {@link IIdCompressor} for more details.
 	 * @returns A new local ID in session space.
 	 */
 	generateCompressedId(): SessionSpaceCompressedId;
 
 	/**
 	 * Generates a new ID that is guaranteed to be unique across all sessions known to this compressor without the need for any
-	 * normalization. The returned ID is not guaranteed to be a compressed ID (small number); it may be a stable ID (UUID string).
+	 * normalization.
+	 *
+	 * @remarks The returned ID is not guaranteed to be a compressed ID (small number); it may be a stable ID (UUID string).
 	 * In Fluid, the likelihood of generating the bulkier stable ID is dictated by network conditions and is highly probable in
 	 * scenarios such as offline. This is still useful for use cases where simplicity is more important than performance and
 	 * this approach will often be superior to generating a UUID.
-	 * If small numbers are a requirement, `generateCompressedId` and normalization should be used instead.
-	 * See `IIdCompressor` for more details.
+	 *
+	 * If small numbers are a requirement, {@link IIdCompressor.generateCompressedId} and normalization should be used instead.
+	 * @see {@link IIdCompressor} for more details.
 	 * @returns A new local ID in session space.
 	 */
 	generateDocumentUniqueId(): (SessionSpaceCompressedId & OpSpaceCompressedId) | StableId;
 
 	/**
 	 * Normalizes a session space ID into op space.
-	 * The returned ID is in op space and can be safely serialized.
+	 *
+	 * @remarks The returned ID is in op space and can be safely serialized.
 	 * However, it should be {@link IIdCompressor.normalizeToSessionSpace|normalized back to session space} before use.
+	 *
 	 * @param id - The local ID to normalize.
 	 * @returns The ID in op space.
 	 */
@@ -362,23 +425,25 @@ export interface IIdCompressor {
 
 	/**
 	 * Normalizes an ID into session space.
-	 * @param id - The ID to normalize.
-	 * @param originSessionId - The {@link IIdCompressor.localSessionId} of the compressor which {@link IIdCompressor.normalizeToOpSpace|encoded} `id`.
-	 * This might not be the client that created `id` in the first place, but rather the client that serialized it.
-	 * This is an important distinction in the case of a reference, where a client might refer to an ID created by another client.
-	 * @returns The session-space ID in the local session corresponding to `id`.
+	 *
 	 * @remarks
 	 * For this to be valid, `originSessionId` must be the {@link IIdCompressor.localSessionId} of the compressor that normalized `id` to op space.
-	 * Additionally, this compressor must know about the relevant {@link IdCreationRange} from the encoding `IIdCompressor`.
+	 * Additionally, this compressor must know about the relevant {@link IdCreationRange} from the encoding {@link IIdCompressor}.
 	 * This can be accomplished using creating the compressor using {@link (deserializeIdCompressor:1)},
 	 * or relying on something (like the Fluid runtime) to synchronize the range information using internal mechanisms.
 	 *
-	 * The {@link IIdCompressor} provided by the Fluid Framework runtime will automatically track {@link IdCreationRange| Id Creation Ranges} (via its own ops) from other clients in the container.
+	 * The {@link IIdCompressor} provided by the Fluid Framework runtime will automatically track {@link IdCreationRange | Id Creation Ranges} (via its own ops) from other clients in the container.
 	 * It is up to the user of the {@link IIdCompressor} to ensure the relevant session information is available,
 	 * either by depending on the originating client's session ID for ops, or by explicitly storing it alongside the data containing the {@link OpSpaceCompressedId}.
 	 *
 	 * Note that attachment summaries, while they are ops, are also interpreted as summaries without the context of their originating session,
 	 * so they should explicitly include session IDs if required to decode them just like regular summaries and exported data.
+	 *
+	 * @param id - The ID to normalize.
+	 * @param originSessionId - The {@link IIdCompressor.localSessionId} of the compressor which {@link IIdCompressor.normalizeToOpSpace|encoded} `id`.
+	 * This might not be the client that created `id` in the first place, but rather the client that serialized it.
+	 * This is an important distinction in the case of a reference, where a client might refer to an ID created by another client.
+	 * @returns The session-space ID in the local session corresponding to `id`.
 	 */
 	normalizeToSessionSpace(
 		id: OpSpaceCompressedId,

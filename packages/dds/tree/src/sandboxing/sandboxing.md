@@ -1,6 +1,6 @@
 # Sandbox Demo
 
-The test file in this folder contains an example architecture for a SharedTree view in a sandbox.
+The tests in this folder exercise an example architecture for a SharedTree view in a sandbox.
 
 The example contains these items:
 
@@ -27,11 +27,16 @@ These terms are similar to the terms for virtual machines.
   A `sessionFailure` message notifies the peer when the transport still works.
 - **Sequenced edits**: Edits ordered by Fluid services.
   The **trunk** is the branch containing sequenced history.
+- **Finalized-history boundary**: A commit through which history will not be rebased or replaced.
+  The protocol's `trunkRevision` identifies this boundary, which may conservatively precede the newest finalized commit.
+  SharedTree supplies its sequenced trunk head; checkouts without a supplied boundary use their current commit-graph root.
+  An older boundary can require more history to be replayed and prevent optimizations based on finalized history.
+  Guest initialization requires an initialized tree and schema at this boundary.
 - **Host-local edits**: Edits on the Host that are not sequenced.
 - **Guest-local edits**: Edits on the Guest that the Host has not acknowledged.
 - **Host-originated edits**: Edits that the Host makes directly, not edits received from a Guest.
 - **Main branch**: The Host branch that participates in Fluid collaboration.
-  The Host also maintains a **local branch** to track and reconcile Guest edits.
+  The Host also maintains a **local branch** that reconstructs the Guest's authoring state.
   The main view belongs to the application; the sandbox Host borrows it and owns its session branches.
 - **Data change**: A sandbox message containing an encoded SharedTree change.
 - **Acknowledgment**: A sandbox message confirming that the receiver applied a data change.
@@ -82,12 +87,23 @@ These terms are similar to the terms for virtual machines.
     Thus, this protocol does not require version stabilization.
 4. Each message is compatible with [MessagePort](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort).
     This requirement includes initialization messages.
-    The example does not currently meet this requirement.
-    For more information, see "ID Sharding."
 5. The Guest is valid only during its owning Host session.
     Behavior after that session ends is unsupported.
+6. The ID compressor's V3 serialization format is enabled.
+    Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable that format.
 
 ## Architecture
+
+### Endpoint Options
+
+`Sandboxing.createHost` and `Sandboxing.createGuest` each accept a named options object.
+Their `Sandboxing.HostOptions` and `Sandboxing.GuestOptions` types include the properties from `Sandboxing.EndpointOptions`.
+The shared type defines the endpoint's port, logger, and optional protocol-error callback.
+Supply a separate port and scoped logger for each endpoint.
+The Host requires the application view and uses its checkout's runtime compressor; the Guest requires forest and codec options.
+The Guest receives its own serialized ID space shard through initialization.
+After initialization, the sandboxed client selects a schema with `guest.tree.viewWith(config)`.
+If you omit the protocol-error callback, terminal errors are thrown asynchronously.
 
 ### Participants and Message Directions
 
@@ -98,10 +114,65 @@ Blob requests use the same channel as changes and acknowledgments, but do not bl
 flowchart LR
     P["Peers"] <--> F["Fluid services"]
     F <--> H["Host<br/>Main and local branches<br/>Authorized handle table"]
-    H <-->|"Data changes and acknowledgments"| G["Guest<br/>Independent TreeView<br/>Handle proxies"]
+    H <-->|"Branch updates, Guest changes, and acknowledgments"| G["Guest<br/>Host branch copy and local TreeView<br/>Handle proxies"]
     G -->|"Blob requests"| H
     H -->|"Blob responses: buffer or error"| G
 ```
+
+### Full-Duplex Synchronization
+
+The Guest keeps a checkout for the Host main branch and a separate checkout for Guest edits.
+The Host sends branch transitions without waiting for outstanding Guest edits.
+The Guest applies each transition to its Host branch copy, rebases its local edits, and acknowledges the update.
+[GuestSynchronization](./guestSynchronization.ts) owns the hidden Host and authoring checkouts and the child ID space shard.
+[Guest](./guest.ts) owns the port and message routing.
+On failure, synchronization stops but keeps the checkouts until the application disposes the Guest.
+
+The Host preserves the Guest's authoring state in its local branch.
+It applies Guest changes there and merges them into main without rebasing the local branch itself.
+Each change depends on the receiver knowing its IDs; see [ID Space Sharding](#id-space-sharding).
+Only a Guest acknowledgment advances that branch over a Host update.
+Each outstanding update retains the exact Host branch snapshot that was sent, because a revision can be rebased while a message is in flight.
+The Host disposes each snapshot after acknowledgment, or when the session stops.
+
+Ordered messages in each direction let the Host check a Guest change's main and trunk revisions against the last acknowledged update.
+Revisions alone are not enough to select an authoring state from the current main branch.
+
+### Initialization
+
+Initialization transfers a snapshot at the oldest retained Host revision, followed by the retained commits in order.
+The snapshot can be uninitialized if history still includes the original schema and content initialization.
+Otherwise, it contains compressed tree content and its stored schema.
+The Guest replays the commits before exposing its local view.
+This preserves pending Host edits as commits that can be rebased, including insertions and deletions made before the session started.
+
+The baseline revision aliases the independent checkout's initial head.
+Branch validation recognizes this alias even when an update contains no commits.
+Initialization commits use the same handle codec as subsequent changes and preserve custom metadata.
+After encoding the snapshot and retained commits, the Host creates a child ID space shard and sends it in `hostInitialization` over `MessagePort`.
+The Guest deserializes the shard before creating its checkouts.
+See [ID Space Sharding](#id-space-sharding).
+
+### ID Space Sharding
+
+The Host retains its runtime ID compressor and sends a serialized child shard to the Guest.
+The two compressor instances share a session ID, but neither automatically learns IDs created by the other.
+This requires V3; a V2 runtime compressor cannot create the shard.
+
+Each Guest change carries a child synchronization token captured after its change is serialized, since serialization can create IDs.
+The Host validates the shard and synchronizes before decoding the change.
+Consecutive changes can carry tokens with the same generation count when they create no new IDs.
+
+Host-to-Guest updates carry a parent synchronization token captured after their commits are encoded.
+The Host also forwards finalized creation ranges in order, even without a tree update.
+The Guest applies the parent token before decoding Host commits or finalizing a range; ordered delivery places a range before an update that uses its IDs.
+The runtime, not the sandbox, submits ID creation ranges for finalization.
+See [the protocol schemas](./common.ts) and [the compressor API](../../../../../../runtime/id-compressor/src/types/idCompressor.ts) for the message fields and progress operations.
+
+Guest disposal is local and does not notify the Host.
+After stopping or fencing the Guest, the orchestrator disposes the Host session to reclaim the shard from its last accepted progress.
+See [Session Failure and Application-Managed Recreation](#session-failure-and-application-managed-recreation) for teardown and lost-connection behavior.
+ID space sharding support was added in [PR 27559](https://github.com/microsoft/FluidFramework/pull/27559).
 
 ### Message Conversion and Validation
 
@@ -150,8 +221,7 @@ Restoration alone neither binds nor resolves handles.
 For Guest-to-Host changes, the Host applies the change to its local branch through the tree codec, binds its handles, merges into the main branch, and then acknowledges it.
 Incoming validation or processing failures and outgoing normalization, validation, or encoding failures terminate the session.
 
-Initialization is a separate entry point: the compressed initial tree follows normalization, payload validation, transport encoding, structured clone, transport decoding, payload validation, and tree-codec initialization.
-The complete initialization payload does not yet pass through `MessagePort`; see [ID Sharding](#id-sharding).
+Initialization is a separate entry point: the complete message, including the compressed tree, schema, retained commits, and serialized child compressor, follows normalization, validation, transport encoding, `MessagePort` structured clone, transport decoding, validation, and tree-codec initialization.
 
 These diagrams show the implemented layers, not a complete security guarantee.
 See [Protocol Validation and Security Hardening](#protocol-validation-and-security-hardening) for the validation still required before production use.
@@ -213,13 +283,55 @@ The application owns teardown and recreation of the Host/Guest pair and sandbox.
 Host disposal preserves the application's main view, including successfully merged edits whose acknowledgments failed.
 Recovery uses fresh session objects, not reset breakers.
 
+Call `Guest.dispose()` to synchronously stop Guest edits, release both Guest checkouts, and dispose its ID space shard.
+Guest disposal does not notify the Host.
+The orchestrator must stop or fence the Guest before disposing the Host session, so the old iframe cannot send changes or restart from its serialized shard.
+Host disposal stops receiving messages, reclaims the shard using the last accepted Guest progress, and preserves the application's main view.
+Guest changes already accepted by the Host remain; pending edits and Host updates can be lost.
+An initialization send failure also reclaims a shard that the Guest never received.
+
+After failure, synchronization is stopped: the authoring checkout remains available for inspection if usable, but the application must not edit it.
+Do not treat `sessionFailure` as proof that the Guest has been fenced.
+If no failure reaches the Host, disposing the Guest alone does not stop Host updates or release unacknowledged snapshots.
+See [the Guest lifecycle](./guest.ts) and [GuestSynchronization](./guestSynchronization.ts) for the local cleanup contract.
+
 The tested failure paths preserve main-tree usability; see [Session Fault Isolation](#session-fault-isolation) for remaining work.
 
 ### Test Coverage
 
-[Transport codec tests](./transport.spec.ts) and [end-to-end tests](./sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
-End-to-end tests also cover initialization, bidirectional handle edits, deletion/undo/redo, and application-managed session replacement after failures.
-The tests use real `MessagePort` channels; the permutation test uses a two-channel relay to control delivery in each direction.
+[Transport codec tests](../test/shared-tree/sandboxing/transport.spec.ts) and [end-to-end tests](../test/shared-tree/sandboxing/sandboxing.spec.ts) cover handle identity, concurrent resolution, resolution failures, escaping, and malformed handle/blob messages.
+End-to-end tests cover initialization, separate compressors, ID progress, branch rebases, undo/redo, and session replacement.
+The [ServiceClient test](../test/shared-tree/sandboxing/demo.integration.ts) uses a test-only V3 override; an isolated iframe test is still pending.
+The tests use real `MessagePort` channels, with a two-channel relay to control delivery order in schedule tests.
+The schedule tests use `createFuzzDescribe`, `generateTestSeeds`, and `makeRandom` from `@fluid-private/stochastic-test-utils`.
+Each step samples from the actions that are currently legal, including Guest deletions and Host/Peer insertions at the start.
+This state-dependent sampling fits message schedules better than a fixed pairwise configuration matrix.
+Each schedule starts with nonempty content and ends by draining all sandbox and Fluid messages and verifying convergence.
+
+By default, the suite runs 50 deterministic seeds with 20 sampled steps each.
+`FUZZ_TEST_COUNT` increases the number of seeds.
+`FUZZ_STRESS_RUN=normal` increases each schedule to 100 steps while keeping seeds deterministic.
+Every seed is a separate named test, and convergence failures include the action sequence.
+The targeted regression tests remain separate from the sampled schedules.
+
+Run these commands from `packages/dds/tree` after building the tests:
+
+```bash
+# Run the default sample.
+pnpm test:mocha:esm --grep 'Synchronization schedules'
+
+# Run more seeds at the default depth.
+FUZZ_TEST_COUNT=500 pnpm test:mocha:esm --grep 'Synchronization schedules'
+
+# Run more seeds with longer schedules.
+FUZZ_TEST_COUNT=200 FUZZ_STRESS_RUN=normal pnpm test:mocha:esm --grep 'Synchronization schedules'
+
+# Replay one seed from the default sample.
+pnpm test:mocha:esm --grep 'Synchronization schedules seed 7$'
+```
+
+For a seed outside the default sample, set `FUZZ_TEST_COUNT` to at least the seed plus one.
+To replay a normal stress run, also set `FUZZ_STRESS_RUN=normal` to preserve the schedule length.
 
 ## Remaining Work Before Production
 
@@ -233,21 +345,18 @@ Complete these items in any order.
 Some tests will fail if you write them before you complete the implementation.
 These failures do not prevent you from writing the tests.
 
-### ID Sharding
+### Runtime ID Compressor Version
 
-The Host and the Guest currently use the same id-compressor instance.
-This design is not practical because the Host and the Guest can run in different processes.
-Update the code to serialize a sharded id-compressor.
-
-Sharding support was added in https://github.com/microsoft/FluidFramework/pull/26294.
-The change was reverted in https://github.com/microsoft/FluidFramework/pull/26394.
-Fix, restore, and use that implementation, or implement a different solution.
+The sandbox Host requires a V3 runtime ID compressor to create a child ID space shard.
+ServiceClient runtimes configured with an older compatibility floor create a V2 compressor.
+The integration test verifies that its runtime supplies a V3 compressor.
+Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later to enable V3 before using a ServiceClient Host outside this test.
 
 ### Protocol Validation and Security Hardening
 
 Before using the sandbox with an untrusted participant, extend the existing [transport validation](#transport-validation):
 
-- Complete schemas for data changes, acknowledgments, and the full initialization payload.
+- Complete validation of the full initialization payload.
 - Validate codec-specific change structure before mutation, beyond the value vocabulary, to prevent partial application of malformed changes.
 - Verify that tree codecs reject handles in structural-record positions, including record-node data, without traversing handle internals or invoking getters.
 - Define resource limits for message size, nesting depth, outstanding requests, and blob data.
@@ -277,10 +386,6 @@ In other configurations, make sure that the Guest does not keep an unlimited his
 
 ### `MessagePort` and IFrame Testing
 
-Initialization data does not yet pass through the port.
-The compressed initial tree follows the separate path described in [Architecture](#message-conversion-and-validation).
-Complete [ID sharding](#id-sharding) before the entire initialization payload uses the message protocol.
-
 Add an integration test that uses an isolated iframe.
 This test makes sure that the implementation does not depend on shared global values.
 
@@ -296,35 +401,14 @@ Extend undo and redo coverage, including an operation that reverses a deletion a
 Make sure that timeline APIs such as `TreeView.branchHistory` operate in the Guest.
 
 The Guest timeline must match the Host timeline.
-The current architecture adds corrective changes instead of editing history, which makes the timeline incorrect.
-The [Full-Duplex Architecture](#full-duplex-architecture-required-for-timeline-compatibility) is necessary for the correct behavior.
-Also complete these tasks:
+The [full-duplex architecture](#full-duplex-synchronization) preserves branch transitions and retained initialization commits.
+Complete these remaining tasks:
 
 - Make sure that the timeline operates correctly for changes that are still local to the Guest.
-- Give the Guest all Host history during initialization. The timeline must include changes from before the Guest was created.
-    - Consider a Host snapshot or summary for this initialization. The snapshot or summary might have to include local edits. If it includes local edits, add an option that permits this behavior.
-    - Consider serializing the revision manager directly instead of using a SharedTree snapshot.
-    - Validate when Host has local changes.
+- Define how much pre-session history the timeline retains beyond the history still available on the Host at initialization.
 - Make sure that history operations on a local branch do not cause incorrect behavior.
 - If the protocol uses our codecs, use versions that preserve commit metadata. One possible solution is to set the minimum collaboration version to the current version.
 
-### Full-Duplex Architecture (Required for Timeline Compatibility)
+### Sampled Test Resource Usage (optional)
 
-Application developers can reproduce the current architecture with their own protocols, without access to SharedTree internals.
-The architecture does not require merge resolution in the Guest.
-However, it delays updates to the Guest while the Guest has local changes.
-As a result, the Guest can receive updates late.
-A very active Guest editor can also cause increasingly expensive local rebase operations.
-
-Consider this alternative architecture:
-
-* On the Guest, keep a copy of the sequenced trunk branch, the local Host main branch, and the local Guest branches.
-* Do not perform merge resolution for the Guest on the Host. Instead, the Host notifies the Guest of new commits on the trunk and main branches. The Guest then rebases its local branches.
-* When the Guest sends edits to the Host, include the revisions of the latest commits on the main and trunk branches. Use the revisions that were current when the Guest created the edits. The Host uses this information to update its branches.
-
-This design is a simple variant of the edit manager.
-The edit manager does a similar task for the Host, but it manages the branches of all remote clients instead of one Guest.
-
-### Fix Memory Leak in Exhaustive Test (optional)
-
-See the comment on the "All permutations" test.
+Profile memory use and runtime before further increasing the default seed count or depth of the schedule tests.

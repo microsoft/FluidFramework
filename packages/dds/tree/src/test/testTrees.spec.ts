@@ -55,7 +55,7 @@ describe("test tree catalogs", () => {
 	});
 
 	// Currently we expect every schema to have at least one test tree.
-	// If we ever add schema which can't have any valid trees
+	// If we ever add schemas which can't have any valid trees
 	// (like a recursive required field, or required field with no allowed types), this test will need to be updated to exclude those cases.
 	it("includes at least one simple tree for every schema", () => {
 		const treeSchemas = new Set(testSimpleTrees.map((tree) => tree.schema));

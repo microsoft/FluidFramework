@@ -1,5 +1,17 @@
 # @fluidframework/quill-react
 
+## 3.3.0
+
+### Minor Changes
+
+- The Quill views now use quill-next and no longer need a DOM at import time ([#28318](https://github.com/microsoft/FluidFramework/pull/28318)) [8c7da38b6ad](https://github.com/microsoft/FluidFramework/commit/8c7da38b6ad01791e0535e54281753479f4a5924)
+
+  The Quill-based views now depend on `quill-next` instead of `quill`, and on `@quill-next/delta-es` instead of `quill-delta`.
+  Unlike `quill`, `quill-next` does not access the DOM when it is imported.
+  You no longer need to set up JSDOM before you import this package in Node.js tests or server-side code.
+
+  If your application imports Quill assets, such as theme stylesheets, from `quill`, import them from `quill-next` instead.
+
 ## 3.2.0
 
 Dependency updates only.
