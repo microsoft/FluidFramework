@@ -979,9 +979,6 @@ export interface SchemaCompatibilityStatusBeta extends SchemaCompatibilityStatus
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	extends TreeView<TSchema>,
 		UntypedTreeView {
-	/**
-	 * {@inheritDoc TreeView.compatibility}
-	 */
 	readonly compatibility: SchemaCompatibilityStatusBeta;
 
 	// Override the base branch method to return a typed view rather than merely a branch.

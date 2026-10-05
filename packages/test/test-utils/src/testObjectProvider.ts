@@ -343,9 +343,6 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
  * @internal
  */
 export class TestObjectProvider implements ITestObjectProvider {
-	/**
-	 * {@inheritDoc ITestObjectProvider."type"}
-	 */
 	public readonly type = "TestObjectProvider";
 	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
@@ -377,9 +374,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentIdStrategy = getDocumentIdStrategy(driver.type);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.logger}
-	 */
 	public get logger(): ITelemetryBaseLogger {
 		if (this._logger === undefined) {
 			this._tracker = new EventAndErrorTrackingLogger(getTestLogger?.());
@@ -405,9 +399,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this._tracker;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
-	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._documentServiceFactory) {
@@ -416,9 +407,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this._documentServiceFactory;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.urlResolver}
-	 */
 	public get urlResolver(): IUrlResolver {
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._urlResolver) {
@@ -427,30 +415,18 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this._urlResolver;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.documentId}
-	 */
 	public get documentId(): string {
 		return this._documentIdStrategy.get();
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.defaultCodeDetails}
-	 */
 	public get defaultCodeDetails(): IFluidCodeDetails {
 		return defaultCodeDetails;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.opProcessingController}
-	 */
 	public get opProcessingController(): IOpProcessingController {
 		return this._loaderContainerTracker;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.createLoader}
-	 */
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
@@ -471,9 +447,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return loader;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.createContainer}
-	 */
 	public async createContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
@@ -526,9 +499,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this.updateDocumentId(container.resolvedUrl);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.loadContainer}
-	 */
 	public async loadContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
@@ -553,9 +523,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
-	 */
 	public makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader {
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
@@ -563,9 +530,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.makeTestContainer}
-	 */
 	public async makeTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 	): Promise<IContainer> {
@@ -587,9 +551,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return container;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.loadTestContainer}
-	 */
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
@@ -603,9 +564,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return container;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.reset}
-	 */
 	public reset(): void {
 		this._loaderContainerTracker.reset();
 		this._documentServiceFactory = undefined;
@@ -620,9 +578,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
-	 */
 	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
 		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
@@ -639,9 +594,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return waitContainerToCatchUp_original(container);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.updateDocumentId}
-	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
 		this.logger.send(
@@ -654,9 +606,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 		);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.resetLoaderContainerTracker}
-	 */
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false): void {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
@@ -669,9 +618,6 @@ export class TestObjectProvider implements ITestObjectProvider {
  * @internal
  */
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
-	/**
-	 * {@inheritDoc ITestObjectProvider."type"}
-	 */
 	public readonly type = "TestObjectProviderWithVersionedLoad";
 	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _logger: ITelemetryBaseLogger | undefined;
@@ -706,9 +652,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._documentIdStrategy = getDocumentIdStrategy(driverForCreating.type);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.logger}
-	 */
 	public get logger(): ITelemetryBaseLogger {
 		if (this._logger === undefined) {
 			this._tracker = new EventAndErrorTrackingLogger(getTestLogger?.());
@@ -726,9 +669,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this._tracker;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
-	 */
 	public get documentServiceFactory(): IDocumentServiceFactory {
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._documentServiceFactory) {
@@ -737,9 +677,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this._documentServiceFactory;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.urlResolver}
-	 */
 	public get urlResolver(): IUrlResolver {
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._urlResolver) {
@@ -748,37 +685,22 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this._urlResolver;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.documentId}
-	 */
 	public get documentId(): string {
 		return this._documentIdStrategy.get();
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.defaultCodeDetails}
-	 */
 	public get defaultCodeDetails(): IFluidCodeDetails {
 		return defaultCodeDetails;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.opProcessingController}
-	 */
 	public get opProcessingController(): IOpProcessingController {
 		return this._loaderContainerTracker;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.driver}
-	 */
 	public get driver(): ITestDriver {
 		return this.useCreateApi ? this.driverForCreating : this.driverForLoading;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.createFluidEntryPoint}
-	 */
 	public get createFluidEntryPoint(): (
 		testContainerConfig?: ITestContainerConfig,
 	) => fluidEntryPoint {
@@ -829,9 +751,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return loader;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.createLoader}
-	 */
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
@@ -848,9 +767,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this.createLoaderForLoading(packageEntries, loaderProps);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.createContainer}
-	 */
 	public async createContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
@@ -903,9 +819,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this.updateDocumentId(container.resolvedUrl);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.loadContainer}
-	 */
 	public async loadContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
@@ -933,9 +846,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
-	 */
 	public makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader {
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
@@ -944,9 +854,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.makeTestContainer}
-	 */
 	public async makeTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 	): Promise<IContainer> {
@@ -971,9 +878,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return container;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.loadTestContainer}
-	 */
 	public async loadTestContainer(
 		testContainerConfig?: ITestContainerConfig,
 		requestHeader?: IRequestHeader,
@@ -993,9 +897,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return container;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.reset}
-	 */
 	public reset(): void {
 		this.useCreateApi = true;
 		this._loaderContainerTracker.reset();
@@ -1011,9 +912,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		this._documentCreated = false;
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.ensureSynchronized}
-	 */
 	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
 		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
@@ -1030,9 +928,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return waitContainerToCatchUp_original(container);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.updateDocumentId}
-	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
 		this.logger.send(
@@ -1045,9 +940,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		);
 	}
 
-	/**
-	 * {@inheritDoc ITestObjectProvider.resetLoaderContainerTracker}
-	 */
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false): void {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);

@@ -101,9 +101,6 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		}
 	}
 
-	/**
-	 * {@inheritDoc IPartitionLambda.handler}
-	 */
 	public handler(message: IQueuedMessage): undefined {
 		if (this.opsCountTelemetryEnabled) {
 			setInterval(() => {

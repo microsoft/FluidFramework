@@ -81,9 +81,6 @@ export interface IContainerTelemetry extends IFluidTelemetry {
  * @beta
  */
 export interface ContainerConnectedTelemetry extends IContainerTelemetry {
-	/**
-	 * {@inheritDoc IFluidTelemetry.eventName}
-	 */
 	eventName: "fluidframework.container.connected";
 }
 
@@ -99,9 +96,6 @@ export interface ContainerConnectedTelemetry extends IContainerTelemetry {
  * @beta
  */
 export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
-	/**
-	 * {@inheritDoc IFluidTelemetry.eventName}
-	 */
 	eventName: "fluidframework.container.disconnected";
 }
 
@@ -115,9 +109,6 @@ export interface ContainerDisconnectedTelemetry extends IContainerTelemetry {
  * @beta
  */
 export interface ContainerDisposedTelemetry extends IContainerTelemetry {
-	/**
-	 * {@inheritDoc IFluidTelemetry.eventName}
-	 */
 	eventName: "fluidframework.container.disposed";
 	/**
 	 * If the container was closed due to error (as opposed to an explicit call to

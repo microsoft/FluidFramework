@@ -1485,9 +1485,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
-	 */
 	public generateDocumentUniqueId(): string | number {
 		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
 	}
@@ -2870,9 +2867,6 @@ export class ContainerRuntime
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
-	 */
 	public async getEntryPoint(): Promise<FluidObject> {
 		return this.entryPoint;
 	}
@@ -3911,9 +3905,6 @@ export class ContainerRuntime
 		this.updateHasStagedChangesState();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.orderSequentially}
-	 */
 	public orderSequentially<T>(callback: () => T): T {
 		let checkpoint: IBatchCheckpoint | undefined;
 		let stageControls: StageControlsInternal | undefined;
