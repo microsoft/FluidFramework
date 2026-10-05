@@ -116,7 +116,7 @@ function initializeFromChunk(
 	if (checkout.storedSchema.rootFieldSchema.kind === FieldKinds.forbidden.identifier) {
 		assert(
 			contentChunk.topLevelLength === 0,
-			"Cannot initialize a forbidden root with content",
+			0xd67 /* Cannot initialize a forbidden root with content */,
 		);
 		return;
 		// No further initialization needed for forbidden root.

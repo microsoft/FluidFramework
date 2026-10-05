@@ -283,7 +283,7 @@ export class HostImplementation implements Sandboxing.Host {
 	 */
 	private getParentIdSpaceShardSyncToken(): ParentShardSynchronizationToken {
 		const child = this.guestIdSpaceShardToken;
-		assert(child !== undefined, "Expected an initialized Guest ID space shard");
+		assert(child !== undefined, 0xd5f /* Expected an initialized Guest ID space shard */);
 		return this.idCompressor.getChildShardSyncToken(child);
 	}
 
@@ -305,7 +305,7 @@ export class HostImplementation implements Sandboxing.Host {
 		if (this.nextIdRangeId > Number.MAX_SAFE_INTEGER) {
 			throw new SandboxProtocolError("Host ID range identifiers are exhausted.");
 		}
-		assert(range.ids !== undefined, "Finalized ID range must contain IDs");
+		assert(range.ids !== undefined, 0xd60 /* Finalized ID range must contain IDs */);
 		this.postMessage({
 			type: "hostIdRange",
 			rangeId: brand<HostIdRangeId>(this.nextIdRangeId++),
@@ -323,7 +323,10 @@ export class HostImplementation implements Sandboxing.Host {
 				branch.getHead(),
 				(commit) => commit.revision === initialization.baseRevision,
 			);
-			assert(base !== undefined, "Expected the Guest initialization base in Host history");
+			assert(
+				base !== undefined,
+				0xd61 /* Expected the Guest initialization base in Host history */,
+			);
 			checkout.switchBranch(branch.fork(base));
 			branch.dispose();
 			const cursor = checkout.forest.allocateCursor();
@@ -354,7 +357,7 @@ export class HostImplementation implements Sandboxing.Host {
 				const [serializedIdSpaceShard] = this.idCompressor.shard(1);
 				assert(
 					serializedIdSpaceShard !== undefined,
-					"Expected one serialized Guest ID space shard",
+					0xd62 /* Expected one serialized Guest ID space shard */,
 				);
 
 				// TODO: Have shard() return the child sync token alongside its serialized state
@@ -366,7 +369,7 @@ export class HostImplementation implements Sandboxing.Host {
 				this.guestIdSpaceShardToken = idSpaceShard.getShardSyncToken();
 				assert(
 					this.guestIdSpaceShardToken !== undefined,
-					"Expected a Guest ID space shard token",
+					0xd63 /* Expected a Guest ID space shard token */,
 				);
 
 				return {

@@ -65,11 +65,11 @@ export class GuestImplementation implements Sandboxing.Guest {
 
 	/** Internal synchronization state exposed for testing. */
 	public get synchronization(): GuestSynchronization {
-		return this.#synchronization ?? fail("Guest accessed before initialization");
+		return this.#synchronization ?? fail(0xd59 /* Guest accessed before initialization */);
 	}
 
 	public get tree(): ViewableTree {
-		return this.viewableTree ?? fail("Guest accessed before initialization");
+		return this.viewableTree ?? fail(0xd5a /* Guest accessed before initialization */);
 	}
 
 	/** Receives and routes protocol messages from the Host. */

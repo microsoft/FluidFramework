@@ -141,7 +141,10 @@ export class HostSynchronization {
 			[this.sentHead, commits],
 			(commit) => commit.revision === trunkRevision,
 		);
-		assert(base !== undefined, "Host branch must contain its finalized-history boundary");
+		assert(
+			base !== undefined,
+			0xd64 /* Host branch must contain its finalized-history boundary */,
+		);
 		this.sentTrunkRevision = trunkRevision;
 		this.guestMainRevision = this.sentHead.revision;
 		this.guestTrunkRevision = trunkRevision;
@@ -267,7 +270,7 @@ export class HostSynchronization {
 		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findCommonAncestor(this.sentHead, [head, commits]);
-		assert(base !== undefined, "Host branch updates must share ancestry");
+		assert(base !== undefined, 0xd65 /* Host branch updates must share ancestry */);
 		if (head === this.sentHead && trunkRevision === this.sentTrunkRevision) {
 			return;
 		}

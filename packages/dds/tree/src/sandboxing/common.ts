@@ -641,7 +641,10 @@ export function parseHostGuestMessage(data: unknown): HostGuestMessage {
 			return data;
 		}
 		const blob = getTransportBuffer(data.blob);
-		assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
+		assert(
+			blob !== undefined,
+			0xd56 /* Validated blob placeholder must have a registered buffer */,
+		);
 		const response: object = Object.create(null);
 		return Object.assign(response, {
 			type: "blobResponse" as const,
@@ -677,8 +680,8 @@ export function makePromiseWithResolvers(): PromiseWithResolvers {
 		resolver = resolve;
 		rejecter = reject;
 	});
-	assert(resolver !== undefined, "Resolve function should have been assigned");
-	assert(rejecter !== undefined, "Reject function should have been assigned");
+	assert(resolver !== undefined, 0xd57 /* Resolve function should have been assigned */);
+	assert(rejecter !== undefined, 0xd58 /* Reject function should have been assigned */);
 	return { promise, resolver, rejecter };
 }
 
