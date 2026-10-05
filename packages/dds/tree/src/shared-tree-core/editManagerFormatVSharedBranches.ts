@@ -7,7 +7,7 @@ import type { SessionId } from "@fluidframework/id-compressor";
 import * as Type from "@sinclair/typebox";
 import type { ObjectOptions, TSchema } from "@sinclair/typebox";
 
-import { SessionIdSchema } from "../core/index.js";
+import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 
 import { EncodedSharedBranch, EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
@@ -17,6 +17,7 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 export interface EncodedEditManager<TChangeset> {
+	readonly historyStart?: EncodedRevisionTag;
 	readonly version: typeof EditManagerFormatVersion.vSharedBranches;
 	readonly originator: SessionId;
 	readonly main: EncodedSharedBranch<TChangeset>;
@@ -26,6 +27,7 @@ export interface EncodedEditManager<TChangeset> {
 export const EncodedEditManager = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object(
 		{
+			historyStart: Type.Optional(RevisionTagSchema),
 			version: Type.Literal(EditManagerFormatVersion.vSharedBranches),
 			originator: SessionIdSchema,
 			main: EncodedSharedBranch(tChange, true),

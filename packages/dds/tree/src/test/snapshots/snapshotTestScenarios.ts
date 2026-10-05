@@ -379,16 +379,12 @@ export function generateTestTrees(options: SharedTreeOptions): TestTree[] {
 		{
 			/**
 			 * Locks the persisted representation of custom commit metadata, including its absence before
-			 * the version that introduced it. `retainHistory` keeps the annotated commit in the summary.
+			 * the version that introduced it. A second client keeps the annotated commit in the collaboration window.
 			 */
 			name: "custom-metadata",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("test trees");
-				const provider = new TestTreeProviderLite(
-					1,
-					configuredSharedTree({ ...factoryOptions, retainHistory: true }).getFactory(),
-					true,
-				);
+				const provider = new TestTreeProviderLite(2, factory, true);
 				const tree = provider.trees[0];
 				const view = asAlpha(
 					tree.viewWith(

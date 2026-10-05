@@ -84,8 +84,10 @@ migration of existing DDS instances, and asynchronous data migrations during a c
 The production SharedTree implementation declares configuration reader support regardless of its creation policy.
 The internal `configuredSharedTree(options, initialConfiguration)` factory accepts an optional second argument of type `Readonly<{ retainHistory?: boolean }>`.
 Omit this argument to keep creating legacy instances; an absent attributes marker never migrates automatically.
-For marked instances, omitted `retainHistory` means `false`, and the persisted value overrides local `options.retainHistory`, including on summarizers.
-Legacy `configuredSharedTree({ retainHistory: true })` behavior is unchanged.
+Persisted configuration is the only history retention policy, including on summarizers.
+An omitted `retainHistory` means `false`.
+This replaces the old `SharedTreeOptions.retainHistory` option; use the second factory argument instead.
+Trees without persisted configuration use normal bounded retention and can still load stable existing summaries.
 
 ```typescript
 import { configuredSharedTree, SharedTreeFactoryType } from "@fluidframework/tree/internal";
@@ -122,22 +124,30 @@ Attach only after `isChannelConfigurationEnabled(SharedTreeFactoryType)` reports
 If the proposal loses a compare-and-swap race, the type may remain unavailable for the session; there is no separate activation API or automatic retry.
 Attaching before readiness throws an error instead of switching to the legacy protocol.
 
-Enabling starts history at the accepted barrier, not at the oldest commit retained by the current client.
-Tree records the first covered main-trunk sequence number and Tree batch index, together with the enabling configuration revision, in its versioned `HistoryRetention` summary blob.
-The index comes from committed trunk processing, not an optimistic local branch or the delivery-local `messageIndex`.
-Thus a commit that sequences after enable is retained even if it was authored under an earlier configuration revision, including when it shares the barrier's envelope sequence number.
+Enabling waits for the next committed change on the main trunk.
+That change becomes the first retained history commit; the configuration op itself is not a Tree commit.
+For an attached Tree, the start is the first change sequenced after enable, not an optimistic local change.
+A commit qualifies even if it was authored before enable or shares the configuration op's envelope sequence number.
+For an unattached Tree, the first local committed change after enable becomes the start.
 An identical enabled replacement does not move the start.
-Disabling and then enabling starts a new retention epoch and cannot recover history already evicted.
+Disabling clears the start, and enabling again waits for a new committed change.
+Enabling and disabling without an intervening Tree change never creates a start.
 
-The same metadata preserves the unattached synthetic sequence cursor, even if trimming leaves no commits in the summary.
-This keeps the start stable through detached serialization, reload, further local configuration changes, and attach.
-It also preserves the last known collaboration-window minimum, so a configuration-only disable after loading can resume safe pruning without waiting for another Tree edit.
-Loading restores the saved start before replay; it never derives a new start from the latest unrelated configuration replacement or from the summarizer's locally retained ancestry.
-Missing, unsupported, or inconsistent configured history metadata fails loading rather than silently selecting a different policy.
+The edit-manager summary stores one optional `historyStart` revision reference.
+It uses the existing revision codec and refers to a retained main-trunk commit, not the root sentinel.
+Loading resolves that reference through the decoded trunk, including the commit's originating session.
+There is no separate history summary blob or copy of the configuration revision, barrier sequence, batch index, detached cursor, or collaboration minimum.
+The optional field extends the existing edit-manager formats under the configured-channel capability; normal unconfigured summaries keep their existing shape.
+A reference to a missing commit or to the root sentinel is rejected, as is a start with retention disabled.
+If retention is enabled but no Tree change has followed it, the summary has no start reference.
+Reloading that summary still waits for the next committed change, even if older history remains for a local fork or collaboration.
+The same rule applies to initially enabled creation and detached serialization, reload, and attachment.
 
 History required for collaboration, local forks, undo, or shared-branch ancestry remains subject to the existing correctness rules.
 Such history can precede the archival start and is not backfilled archival coverage.
 Disabling resumes normal safe pruning and summary selection; it does not purge required repair data or invalidate branches and revertibles.
+After loading, pruning can wait until normal collaboration processing supplies a safe bound.
+Re-enabling cannot recover history already removed.
 The existing branch-history inspection API can therefore include pre-enable protocol history and is not an archival-history filter.
 
 ## Persisted state

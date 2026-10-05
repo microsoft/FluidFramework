@@ -207,7 +207,7 @@ export function configuredSharedTreeAlpha(
  *
  * @param initialConfiguration - Internal, opt-in prototype configuration for new instances only.
  * Omit this argument to create legacy instances. All factories can read configured instances.
- * Persisted settings override local options, including `retainHistory`, on configured instances.
+ * History retention is controlled only by persisted configuration.
  *
  * @internal
  */

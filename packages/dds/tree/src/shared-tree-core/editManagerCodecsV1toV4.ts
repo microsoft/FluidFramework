@@ -13,7 +13,9 @@ import {
 
 import type { SummaryData } from "./editManager.js";
 import {
+	decodeHistoryStart,
 	decodeSharedBranch,
+	encodeHistoryStart,
 	encodeSharedBranch,
 	type EditManagerDecodingContext,
 	type EditManagerEncodingContext,
@@ -76,6 +78,15 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 				trunk: mainBranch.trunk,
 				branches: mainBranch.peers,
 				version,
+				...(data.historyStart === undefined
+					? {}
+					: {
+							historyStart: encodeHistoryStart(
+								data.historyStart,
+								data.main.trunk,
+								mainBranch.trunk,
+							),
+						}),
 			};
 			return encoded as EncodedEditManager<TChangeset> &
 				Versioned &
@@ -85,17 +96,23 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 			json: EncodedEditManager<TChangeset> & JsonCompatibleReadOnly,
 			context: EditManagerDecodingContext,
 		): SummaryData<TChangeset> => {
+			const main = decodeSharedBranch(
+				changeCodec,
+				revisionTagCodec,
+				{
+					trunk: json.trunk,
+					peers: json.branches,
+				},
+				context,
+				undefined, // Non "vSharedBranches" versions do not encode the summary originatorId.
+			);
 			return {
-				main: decodeSharedBranch(
-					changeCodec,
-					revisionTagCodec,
-					{
-						trunk: json.trunk,
-						peers: json.branches,
-					},
-					context,
-					undefined, // Non "vSharedBranches" versions do not encode the summary originatorId.
-				),
+				main,
+				...(json.historyStart === undefined
+					? {}
+					: {
+							historyStart: decodeHistoryStart(json.historyStart, json.trunk, main.trunk),
+						}),
 			};
 		},
 	};

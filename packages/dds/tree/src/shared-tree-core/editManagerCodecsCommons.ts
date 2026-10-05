@@ -5,6 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { IJsonCodec } from "../codec/index.js";
 import type {
@@ -55,6 +56,39 @@ export interface EditManagerDecodingContext {
 	readonly isSummary: boolean;
 	/** See {@link IdentifierHealingConfig}. */
 	readonly healing?: IdentifierHealingConfig;
+}
+
+/**
+ * Reuses the trunk commit's revision encoding, including its operation-space normalization.
+ */
+export function encodeHistoryStart(
+	historyStart: RevisionTag,
+	trunk: readonly Commit<unknown>[],
+	encodedTrunk: readonly EncodedCommit<unknown>[],
+): EncodedRevisionTag {
+	const index = trunk.findIndex((candidate) => candidate.revision === historyStart);
+	const commit = encodedTrunk[index];
+	assert(
+		historyStart !== "root" && commit !== undefined,
+		"History start must reference a retained main-trunk commit",
+	);
+	return commit.revision;
+}
+
+/**
+ * Resolves the reference through the trunk, which decoded each revision with its originating session.
+ */
+export function decodeHistoryStart(
+	historyStart: EncodedRevisionTag,
+	encodedTrunk: readonly EncodedCommit<unknown>[],
+	trunk: readonly Commit<unknown>[],
+): RevisionTag {
+	const index = encodedTrunk.findIndex((candidate) => candidate.revision === historyStart);
+	const commit = trunk[index];
+	if (historyStart === "root" || commit === undefined) {
+		throw new UsageError("History start must reference a retained main-trunk commit");
+	}
+	return commit.revision;
 }
 
 function encodeCommit<TChangeset, T extends Commit<TChangeset>>(

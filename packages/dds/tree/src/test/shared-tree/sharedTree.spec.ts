@@ -15,6 +15,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { startEphemeralService } from "@fluidframework/local-driver/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISharedObjectKind,
 	SharedObjectKindAlpha,
@@ -71,6 +72,7 @@ import {
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import { SharedTreeFactoryType } from "../../sharedTreeAttributes.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -1102,15 +1104,18 @@ describe("SharedTree", () => {
 			}
 		});
 
-		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
+		// This covers in-memory retention only. See the "Persists retained history" suite below for the
 		// summary round-trip behavior.
 		it("does not evict trunk commits when retainHistory is enabled", () => {
 			const provider = new TestTreeProviderLite(
 				2,
-				configuredSharedTree({
-					jsonValidator: FormatValidatorBasic,
-					retainHistory: true,
-				}).getFactory(),
+				configuredSharedTree(
+					{ jsonValidator: FormatValidatorBasic },
+					{ retainHistory: true },
+				).getFactory(),
+				true,
+				FlushMode.Immediate,
+				true,
 			);
 			const viewInit = provider.trees[0].viewWith(
 				new TreeViewConfiguration({
@@ -1145,7 +1150,7 @@ describe("SharedTree", () => {
 			provider.synchronizeMessages();
 
 			// All of the edits (plus the two additional ones) should still be present on the trunk since
-			// retainHistory prevents trunk commits from ever being trimmed.
+			// retained history starts at the first committed change.
 			const expectedCount = priorEditCount + sequencedEditCount + 2;
 			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, expectedCount);
 			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, expectedCount);
@@ -1158,11 +1163,20 @@ describe("SharedTree", () => {
 		 * past most of them.
 		 * @returns the provider and the number of trunk commits the first tree still holds in memory.
 		 */
-		function generateHistory(factory: IChannelFactory<ITree>): {
+		function generateHistory(
+			factory: IChannelFactory<ITree>,
+			enableChannelConfiguration = false,
+		): {
 			provider: TestTreeProviderLite;
 			retainedCommitCount: number;
 		} {
-			const provider = new TestTreeProviderLite(2, factory);
+			const provider = new TestTreeProviderLite(
+				2,
+				factory,
+				true,
+				FlushMode.Immediate,
+				enableChannelConfiguration,
+			);
 			const viewInit = provider.trees[0].viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
@@ -1201,8 +1215,12 @@ describe("SharedTree", () => {
 			factory: IChannelFactory<ITree>,
 			idCompressor: IIdCompressor,
 		): Promise<ISharedTree> {
-			const { summary } = await (tree as unknown as IChannel).summarize();
+			const channel = tree as unknown as IChannel;
+			const { summary } = await channel.summarize();
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
+			Object.assign(runtime, {
+				isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
+			});
 			return (await factory.load(
 				runtime,
 				"loaded",
@@ -1210,7 +1228,7 @@ describe("SharedTree", () => {
 					deltaConnection: runtime.createDeltaConnection(),
 					objectStorage: MockStorage.createFromSummary(summary),
 				},
-				factory.attributes,
+				channel.attributes,
 			)) as ISharedTree;
 		}
 
@@ -1219,11 +1237,11 @@ describe("SharedTree", () => {
 		}
 
 		it("persists the retained trunk when retainHistory is enabled", async () => {
-			const factory = configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				retainHistory: true,
-			}).getFactory();
-			const { provider, retainedCommitCount } = generateHistory(factory);
+			const factory = configuredSharedTree(
+				{ jsonValidator: FormatValidatorBasic },
+				{ retainHistory: true },
+			).getFactory();
+			const { provider, retainedCommitCount } = generateHistory(factory, true);
 			// Nothing was evicted, so the summarizing client holds every commit.
 			assert(retainedCommitCount > 10);
 			const tree = provider.trees[0];

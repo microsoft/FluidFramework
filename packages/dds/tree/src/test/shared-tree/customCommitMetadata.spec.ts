@@ -30,6 +30,7 @@ import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { type RevertibleAlpha, RevertibleStatus } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { SharedTreeFactoryType } from "../../sharedTreeAttributes.js";
 import {
 	TreeViewConfiguration,
 	type ITree,
@@ -61,11 +62,13 @@ interface MetadataOptions {
 
 /** A factory whose defaults enable persisted commit metadata. */
 function makeFactory(options: MetadataOptions = {}): IChannelFactory<ITree> {
-	return configuredSharedTree({
-		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: options.minVersionForCollab ?? FluidClientVersion.v2_117,
-		retainHistory: options.retainHistory ?? false,
-	}).getFactory();
+	return configuredSharedTree(
+		{
+			jsonValidator: FormatValidatorBasic,
+			minVersionForCollab: options.minVersionForCollab ?? FluidClientVersion.v2_117,
+		},
+		options.retainHistory === undefined ? undefined : { retainHistory: options.retainHistory },
+	).getFactory();
 }
 
 /**
@@ -83,7 +86,13 @@ function createConnectedViews(
 	count: number,
 	options: MetadataOptions = {},
 ): { provider: TestTreeProviderLite; views: TreeViewAlpha<typeof StringArray>[] } {
-	const provider = new TestTreeProviderLite(count, makeFactory(options));
+	const provider = new TestTreeProviderLite(
+		count,
+		makeFactory(options),
+		true,
+		FlushMode.Immediate,
+		options.retainHistory !== undefined,
+	);
 	const first = asAlpha(provider.trees[0].viewWith(config));
 	first.initialize([]);
 	provider.synchronizeMessages();
@@ -122,8 +131,12 @@ async function loadFreshClient(
 	factory: IChannelFactory<ITree>,
 	idCompressor: IIdCompressor,
 ): Promise<ISharedTree> {
-	const { summary } = await (tree as unknown as IChannel).summarize();
+	const channel = tree as unknown as IChannel;
+	const { summary } = await channel.summarize();
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor });
+	Object.assign(runtime, {
+		isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
+	});
 	return (await factory.load(
 		runtime,
 		"loaded",
@@ -131,7 +144,7 @@ async function loadFreshClient(
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: MockStorage.createFromSummary(summary),
 		},
-		factory.attributes,
+		channel.attributes,
 	)) as ISharedTree;
 }
 
@@ -782,10 +795,8 @@ describe("custom commit metadata", () => {
 			const provider = await TestTreeProvider.create(
 				1,
 				SummarizeType.onDemand,
-				new SharedTreeTestFactory(() => {}, undefined, {
-					minVersionForCollab: FluidClientVersion.v2_117,
-					retainHistory: true,
-				}),
+				makeFactory({ retainHistory: true }),
+				true,
 			);
 			const view1 = asAlpha(provider.trees[0].viewWith(config));
 			view1.initialize([]);

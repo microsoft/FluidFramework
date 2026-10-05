@@ -17,7 +17,9 @@ import {
 import type { BranchId } from "./branch.js";
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
 import {
+	decodeHistoryStart,
 	decodeSharedBranch,
+	encodeHistoryStart,
 	encodeSharedBranch,
 	type EditManagerDecodingContext,
 	type EditManagerEncodingContext,
@@ -70,6 +72,13 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				originator: data.originator,
 				version,
 			};
+			if (data.historyStart !== undefined) {
+				json.historyStart = encodeHistoryStart(
+					data.historyStart,
+					data.main.trunk,
+					mainBranch.trunk,
+				);
+			}
 			if (data.branches !== undefined && data.branches.size > 0) {
 				const branches: EncodedSharedBranch<JsonCompatibleReadOnly>[] = [];
 				for (const [_, branch] of data.branches) {
@@ -104,6 +113,13 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				main: mainBranch,
 				originator: json.originator,
 			};
+			if (json.historyStart !== undefined) {
+				decoded.historyStart = decodeHistoryStart(
+					json.historyStart,
+					json.main.trunk,
+					mainBranch.trunk,
+				);
+			}
 
 			if (json.branches !== undefined) {
 				const branches = new Map<BranchId, SharedBranchSummaryData<TChangeset>>();

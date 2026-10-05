@@ -26,7 +26,6 @@ export function testChangeEditManagerFactory(options: {
 	sessionId?: SessionId;
 	autoDiscardRevertibles?: boolean;
 	retainHistory?: boolean;
-	configurationRevision?: number;
 }): {
 	manager: TestEditManager;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
@@ -35,7 +34,6 @@ export function testChangeEditManagerFactory(options: {
 	const manager = editManagerFactory(family, {
 		sessionId: options.sessionId,
 		retainHistory: options.retainHistory,
-		configurationRevision: options.configurationRevision,
 	});
 
 	return { manager, family };
@@ -46,7 +44,6 @@ export function editManagerFactory<TChange = TestChange>(
 	options: {
 		sessionId?: SessionId;
 		retainHistory?: boolean;
-		configurationRevision?: number;
 	} = {},
 ): EditManager<ChangeFamilyEditor, TChange> {
 	const genId = () => testIdCompressor.generateCompressedId();
@@ -57,7 +54,6 @@ export function editManagerFactory<TChange = TestChange>(
 		undefined,
 		undefined,
 		options.retainHistory,
-		options.configurationRevision,
 	);
 
 	return manager;

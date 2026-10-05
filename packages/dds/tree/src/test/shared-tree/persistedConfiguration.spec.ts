@@ -18,7 +18,12 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import {
+	createSessionId,
+	deserializeIdCompressor,
+	serializeIdCompressor,
+} from "@fluidframework/id-compressor/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ChannelConfigurationChange,
@@ -39,6 +44,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { asAlpha } from "../../api.js";
+import type { EncodedRevisionTag } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import type { SharedTreeOptions } from "../../shared-tree/index.js";
 import { SharedTreeFactoryType } from "../../sharedTreeAttributes.js";
@@ -195,11 +201,49 @@ function compressor(runtime: MockFluidDataStoreRuntime): IIdCompressor {
 	return runtime.idCompressor;
 }
 
-function historyBlob(summary: ISummaryTree): Record<string, unknown> {
-	const blob = summary.tree.HistoryRetention;
-	assert(blob?.type === SummaryType.Blob);
+interface EncodedHistoryCommit {
+	revision: EncodedRevisionTag;
+	sessionId: SessionId;
+	sequenceNumber: number;
+}
+
+interface EditManagerSummary {
+	historyStart?: EncodedRevisionTag;
+	trunk?: EncodedHistoryCommit[];
+	main?: { trunk: EncodedHistoryCommit[] };
+}
+
+function editManagerBlob(summary: ISummaryTree): EditManagerSummary {
+	assert.equal(summary.tree.HistoryRetention, undefined);
+	const indexes = summary.tree.indexes;
+	assert(indexes?.type === SummaryType.Tree, "Expected the indexes summary");
+	const editManager = indexes.tree.EditManager;
+	assert(editManager?.type === SummaryType.Tree, "Expected the EditManager summary");
+	const blob = editManager.tree.String;
+	assert(blob?.type === SummaryType.Blob, "Expected the EditManager String blob");
 	assert.equal(typeof blob.content, "string");
-	return JSON.parse(blob.content as string) as Record<string, unknown>;
+	return JSON.parse(blob.content as string) as EditManagerSummary;
+}
+
+function mainTrunk(summary: EditManagerSummary): EncodedHistoryCommit[] {
+	const trunk = summary.main?.trunk ?? summary.trunk;
+	assert(trunk !== undefined, "Expected the main trunk");
+	return trunk;
+}
+
+function historyStart(tree: ISharedTree, idCompressor: IIdCompressor): string | undefined {
+	const summary = editManagerBlob(tree.getAttachSummary().summary);
+	const marker = summary.historyStart;
+	if (marker === undefined) {
+		return undefined;
+	}
+	assert.notEqual(marker, "root", "History must start at a committed change");
+	const commit = mainTrunk(summary).find(({ revision }) => revision === marker);
+	assert(commit !== undefined, "The history start must reference a main-trunk commit");
+	assert(typeof marker === "number", "Expected an encoded compressed revision");
+	return idCompressor.decompress(
+		idCompressor.normalizeToSessionSpace(marker, commit.sessionId),
+	);
 }
 
 function operationRevision(contents: unknown): number {
@@ -215,13 +259,14 @@ function deliverMessage(
 	sequenceNumber: number,
 	local = false,
 	localOpMetadata?: unknown,
+	minimumSequenceNumber = 0,
 ): void {
 	delta.processMessages({
 		envelope: {
 			clientId: "client",
 			sequenceNumber,
 			referenceSequenceNumber: 0,
-			minimumSequenceNumber: 0,
+			minimumSequenceNumber,
 			timestamp: 0,
 			type: MessageType.Operation,
 		},
@@ -250,7 +295,7 @@ function detached(initialConfiguration: Configuration = disabledConfiguration) {
 describe("SharedTree persisted configuration", () => {
 	it("persists configuration-only changes through the real datastore and a reader-only summarizer", async () => {
 		const creator = factory({ retainHistory: false });
-		const reader = factory(undefined, { retainHistory: false });
+		const reader = factory();
 		let creationEnabled = true;
 		const loadedTrees: ISharedTree[] = [];
 		const channelFactory: IChannelFactory<ISharedTree> & ChannelConfigurationFactory = {
@@ -330,7 +375,8 @@ describe("SharedTree persisted configuration", () => {
 			view.root.insertAtEnd("after enable");
 			const retainedEdit = headRevision(tree);
 			await provider.ensureSynchronized();
-			const expectedState = tree.kernel.getHistoryRetentionState();
+			const expectedStart = editManagerBlob(await summarize(tree)).historyStart;
+			assert.notEqual(expectedStart, undefined);
 
 			creationEnabled = false;
 			const { summarizer } = await createSummarizer(provider, container);
@@ -340,7 +386,10 @@ describe("SharedTree persisted configuration", () => {
 				assert.deepEqual(configuration(summarizedTree).current.values, {
 					retainHistory: true,
 				});
-				assert.deepEqual(summarizedTree.kernel.getHistoryRetentionState(), expectedState);
+				assert.equal(
+					editManagerBlob(await summarize(summarizedTree)).historyStart,
+					expectedStart,
+				);
 				assert(revisions(summarizedTree).includes(retainedEdit));
 			}
 			await provider.ensureSynchronized();
@@ -364,7 +413,7 @@ describe("SharedTree persisted configuration", () => {
 			const loaded = (await loadedDataObject.getInitialSharedObject("tree")) as ISharedTree;
 			assert.equal(configuration(loaded).current.revision, 2);
 			assert.deepEqual(configuration(loaded).current.values, { retainHistory: true });
-			assert.deepEqual(loaded.kernel.getHistoryRetentionState(), expectedState);
+			assert.equal(editManagerBlob(await summarize(loaded)).historyStart, expectedStart);
 			assert(revisions(loaded).includes(retainedEdit));
 			assert.deepEqual(
 				[...loaded.viewWith(viewConfiguration).root],
@@ -375,21 +424,20 @@ describe("SharedTree persisted configuration", () => {
 		}
 	});
 
-	it("keeps reader support separate from legacy creation and local retention options", async () => {
+	it("keeps unmarked stable summaries readable without adopting reader creation defaults", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 		configureRuntime(runtime);
-		const reader = factory(undefined, { retainHistory: true });
+		const reader = factory();
 		const legacy = reader.create(runtime, "legacy");
 		assert.equal(legacy.kernel.configuration, undefined);
-		assert.equal(legacy.kernel.getHistoryRetentionState(), undefined);
 		const view = legacy.viewWith(viewConfiguration);
 		view.initialize([]);
 		view.root.insertAtEnd("legacy history");
 		const summary = await summarize(legacy);
-		assert.equal(summary.tree.HistoryRetention, undefined);
+		assert.equal(editManagerBlob(summary).historyStart, undefined);
 		const loaded = await load(summary, compressor(runtime), factory({ retainHistory: true }));
 		assert.equal(loaded.tree.kernel.configuration, undefined);
-		assert.equal(loaded.tree.kernel.getHistoryRetentionState(), undefined);
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
 		assert.deepEqual([...loaded.tree.viewWith(viewConfiguration).root], ["legacy history"]);
 	});
 
@@ -403,42 +451,109 @@ describe("SharedTree persisted configuration", () => {
 			advanceWindow();
 			const source = clients[0];
 			const summary = await summarize(source.tree);
-			const expectedState = source.tree.kernel.getHistoryRetentionState();
-			assert.equal(historyBlob(summary).version, 1);
+			const expectedStart = historyStart(source.tree, compressor(source.runtime));
+			assert.equal(expectedStart !== undefined, initialConfiguration.retainHistory === true);
 			for (const reader of [
-				factory(undefined, { retainHistory: !initialConfiguration.retainHistory }),
-				factory(
-					{ retainHistory: !initialConfiguration.retainHistory },
-					{ retainHistory: !initialConfiguration.retainHistory },
-				),
+				factory(),
+				factory({ retainHistory: !initialConfiguration.retainHistory }),
 				configuredSharedTreeInternal(
-					{ jsonValidator: FormatValidatorBasic, retainHistory: true },
+					{ jsonValidator: FormatValidatorBasic },
 					{ retainHistory: true },
 				).getFactory() as IChannelFactory<ISharedTree>,
 			]) {
 				const loaded = await load(summary, compressor(source.runtime), reader);
 				assert.deepEqual(configuration(loaded.tree).current.values, initialConfiguration);
-				assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), expectedState);
+				assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), expectedStart);
 				assert.deepEqual(revisions(loaded.tree), revisions(source.tree));
 				// A reader-only client must preserve the same policy when it becomes the summarizer.
 				const resummarized = await summarize(loaded.tree);
 				const reloaded = await load(resummarized, compressor(source.runtime));
 				assert.deepEqual(configuration(reloaded.tree).current.values, initialConfiguration);
+				assert.equal(historyStart(reloaded.tree, compressor(reloaded.runtime)), expectedStart);
 				assert.deepEqual(revisions(reloaded.tree), revisions(source.tree));
 			}
 		});
 	}
 
-	it("starts initially enabled history at the first synthetic sequence", () => {
-		const { tree } = detached({ retainHistory: true });
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: {
-				revision: 0,
-				sequenceNumber: Number.MIN_SAFE_INTEGER + 1,
-				indexInBatch: 0,
-			},
+	it("resolves the encoded history start with another compressor session", async () => {
+		const { clients, views, synchronize, advanceWindow } = setup();
+		const source = clients[0];
+		const request = configuration(source.tree).requestChange({ retainHistory: true });
+		synchronize();
+		await request;
+		views[0].root.insertAtEnd("first retained revision");
+		const firstEdit = headRevision(source.tree);
+		synchronize();
+		advanceWindow();
+		const summary = await summarize(source.tree);
+		const encoded = editManagerBlob(summary);
+		assert(
+			mainTrunk(encoded).some(({ revision }) => revision === encoded.historyStart),
+			"The marker uses the same encoded revision as the referenced main-trunk commit",
+		);
+		const targetCompressor = deserializeIdCompressor(
+			serializeIdCompressor(compressor(source.runtime), false),
+			createSessionId(),
+		);
+		assert.notEqual(
+			targetCompressor.localSessionId,
+			compressor(source.runtime).localSessionId,
+		);
+		const loaded = await load(summary, targetCompressor);
+		assert.equal(historyStart(loaded.tree, targetCompressor), firstEdit);
+		assert.deepEqual(revisions(loaded.tree), revisions(source.tree));
+		assert.deepEqual([...loaded.tree.viewWith(viewConfiguration).root], [...views[0].root]);
+		const resummarized = await summarize(loaded.tree);
+		assert.equal(editManagerBlob(resummarized).historyStart, encoded.historyStart);
+		const reloaded = await load(resummarized, compressor(clients[1].runtime));
+		assert.equal(historyStart(reloaded.tree, compressor(reloaded.runtime)), firstEdit);
+	});
+
+	it("waits for the first local committed change when initially enabled", async () => {
+		const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+		configureRuntime(runtime);
+		const tree = factory({ retainHistory: true }).create(runtime, "initially-enabled");
+		tree.connect({
+			deltaConnection: runtime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
 		});
+		assert.equal(historyStart(tree, compressor(runtime)), undefined);
+		const loaded = await load(
+			await summarize(tree),
+			compressor(runtime),
+			factory(),
+			AttachState.Detached,
+		);
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
+		const view = loaded.tree.viewWith(viewConfiguration);
+		view.initialize([]);
+		const first = historyStart(loaded.tree, compressor(loaded.runtime));
+		assert(first !== undefined, "Initialization commits the first retained change");
+		assert(revisions(loaded.tree).includes(first));
+		view.root.insertAtEnd("later local change");
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), first);
+	});
+
+	it("waits for the first sequenced change when initially enabled", async () => {
+		const runtimeFactory = new MockContainerRuntimeFactoryWithOpBunching();
+		const runtime = new MockFluidDataStoreRuntime();
+		const containerRuntime = runtimeFactory.createContainerRuntime(runtime);
+		configureRuntime(runtime);
+		const tree = factory({ retainHistory: true }).create(runtime, "initially-enabled");
+		tree.connect({
+			deltaConnection: runtime.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+		assert.equal(historyStart(tree, compressor(runtime)), undefined);
+		const view = tree.viewWith(viewConfiguration);
+		view.initialize([]);
+		containerRuntime.flush();
+		runtimeFactory.processAllMessages();
+		const first = historyStart(tree, compressor(runtime));
+		assert(first !== undefined, "Sequenced initialization establishes the retained start");
+		assert(revisions(tree).includes(first));
+		const loaded = await load(await summarize(tree), compressor(runtime));
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), first);
 	});
 
 	it("does not backfill pre-enable history held only by a local fork", async () => {
@@ -454,25 +569,62 @@ describe("SharedTree persisted configuration", () => {
 		synchronize();
 		const result = await request;
 		assert.equal(result.status, "applied");
-		assert.deepEqual(
-			clients[0].tree.kernel.getHistoryRetentionState(),
-			clients[1].tree.kernel.getHistoryRetentionState(),
-		);
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), undefined);
+			const loaded = await load(await summarize(client.tree), compressor(client.runtime));
+			assert.equal(configuration(loaded.tree).current.values.retainHistory, true);
+			assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
+			loaded.tree.viewWith(viewConfiguration).root.insertAtEnd("first change after reload");
+			const firstLoadedEdit = headRevision(loaded.tree);
+			const edit = loaded.submitted[0];
+			deliverMessage(loaded.delta, edit.contents, 100, true, edit.metadata);
+			assert.equal(
+				historyStart(loaded.tree, compressor(loaded.runtime)),
+				firstLoadedEdit,
+				"Loading older history must not backfill a pending history start",
+			);
+		}
 		views[0].root.insertAtEnd("after enable");
 		const after = headRevision(clients[0].tree);
 		synchronize();
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), after);
+		}
 		advanceWindow();
 		assert(revisions(clients[0].tree).includes(before), "The fork still needs old history");
 		for (const client of clients) {
 			const loaded = await load(await summarize(client.tree), compressor(client.runtime));
 			assert(!revisions(loaded.tree).includes(before), "Fork history is not archival history");
 			assert(revisions(loaded.tree).includes(after));
+			assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), after);
 		}
 		fork.root.insertAtEnd("fork edit");
 		fork.rebaseOnto(views[0]);
 		views[0].merge(fork);
 		synchronize();
 		assert(views[1].root.includes("fork edit"));
+	});
+
+	it("pins sequenced order rather than local optimistic order", async () => {
+		const { clients, views, synchronize, runtimeFactory } = setup({}, true);
+		const request = configuration(clients[0].tree).requestChange({ retainHistory: true });
+		synchronize();
+		await request;
+		views[0].root.insertAtEnd("optimistic first");
+		const optimisticEdit = headRevision(clients[0].tree);
+		views[1].root.insertAtEnd("sequenced first");
+		const firstSequencedEdit = headRevision(clients[1].tree);
+		clients[1].containerRuntime.flush();
+		runtimeFactory.processAllMessages();
+		assert.equal(
+			historyStart(clients[1].tree, compressor(clients[1].runtime)),
+			firstSequencedEdit,
+		);
+		synchronize();
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), firstSequencedEdit);
+			assert(revisions(client.tree).includes(optimisticEdit));
+		}
 	});
 
 	it("retains edits authored before enable but sequenced after the barrier", async () => {
@@ -486,6 +638,9 @@ describe("SharedTree persisted configuration", () => {
 		synchronize();
 		const result = await request;
 		assert.equal(result.status, "applied");
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), oldRevisionEdit);
+		}
 		advanceWindow();
 		for (const client of clients) {
 			assert(revisions(client.tree).includes(oldRevisionEdit));
@@ -497,7 +652,7 @@ describe("SharedTree persisted configuration", () => {
 		}
 	});
 
-	it("uses committed Tree batch indexes, not grouped message indexes or optimistic edits", async () => {
+	it("pins the first committed Tree revision after a configuration change within one sequence", async () => {
 		const { clients, views, synchronize, advanceWindow } = setup({}, true);
 		const tree = clients[0].tree;
 		const noop = configuration(tree).requestChange({});
@@ -505,6 +660,8 @@ describe("SharedTree persisted configuration", () => {
 		await noop;
 		views[0].root.insertAtEnd("before the grouped barrier");
 		const before = headRevision(tree);
+		views[0].root.insertAtEnd("also before the grouped barrier");
+		const secondBefore = headRevision(tree);
 		// An obsolete proposal occupies a message index, but is neither a Tree commit nor a new revision.
 		clients[0].containerRuntime.submit(
 			{
@@ -518,67 +675,90 @@ describe("SharedTree persisted configuration", () => {
 		const pending = configuration(tree).requestChange({ retainHistory: true });
 		views[0].root.insertAtEnd("after the grouped barrier");
 		const after = headRevision(tree);
+		views[0].root.insertAtEnd("also after the grouped barrier");
+		const secondAfter = headRevision(tree);
 		synchronize();
 		const result = await pending;
 		assert(result.source === "sequenced");
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: {
-				revision: result.current.revision,
-				sequenceNumber: result.sequenceNumber,
-				indexInBatch: 1,
-			},
-		});
+		assert.equal(historyStart(tree, compressor(clients[0].runtime)), after);
+		const commits = mainTrunk(editManagerBlob(await summarize(tree)));
+		const groupedCommits = commits.filter(
+			({ sequenceNumber }) => sequenceNumber === result.sequenceNumber,
+		);
+		assert.equal(groupedCommits.length, 4, "All four Tree commits share the barrier sequence");
 		advanceWindow();
 		for (const client of clients) {
 			const loaded = await load(await summarize(client.tree), compressor(client.runtime));
 			assert(!revisions(loaded.tree).includes(before));
+			assert(!revisions(loaded.tree).includes(secondBefore));
 			assert(revisions(loaded.tree).includes(after));
+			assert(revisions(loaded.tree).includes(secondAfter));
+			assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), after);
 		}
 	});
 
-	it("keeps an identical enabled replacement in the same epoch and reenables in a new epoch", async () => {
+	it("keeps an identical enabled replacement at the same start and waits again after reenabling", async () => {
 		const { clients, views, synchronize, advanceWindow } = setup();
 		const tree = clients[0].tree;
 		let request = configuration(tree).requestChange({ retainHistory: true });
 		synchronize();
 		await request;
-		const firstStart = tree.kernel.getHistoryRetentionState();
-		views[0].root.insertAtEnd("first epoch");
-		const firstEpochEdit = headRevision(tree);
+		assert.equal(historyStart(tree, compressor(clients[0].runtime)), undefined);
+		request = configuration(tree).requestChange({ retainHistory: true });
+		synchronize();
+		await request;
+		assert.equal(historyStart(tree, compressor(clients[0].runtime)), undefined);
+		views[0].root.insertAtEnd("first retained change");
+		const firstEdit = headRevision(tree);
 		synchronize();
 		request = configuration(tree).requestChange({ retainHistory: true });
 		synchronize();
 		await request;
-		assert.equal(configuration(tree).current.revision, 2);
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), firstStart);
+		assert.equal(configuration(tree).current.revision, 3);
+		assert.equal(historyStart(tree, compressor(clients[0].runtime)), firstEdit);
 		const loaded = await load(await summarize(tree), compressor(clients[0].runtime));
-		assert.equal(configuration(loaded.tree).current.revision, 2);
-		assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), firstStart);
+		assert.equal(configuration(loaded.tree).current.revision, 3);
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), firstEdit);
 		request = configuration(tree).requestChange({});
 		synchronize();
 		await request;
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), { version: 1, start: null });
+		assert.equal(historyStart(tree, compressor(clients[0].runtime)), undefined);
 		advanceWindow();
+		for (const client of clients) {
+			assert(!revisions(client.tree).includes(firstEdit));
+		}
 		request = configuration(tree).requestChange({ retainHistory: true });
 		synchronize();
 		const reenable = await request;
 		assert(reenable.source === "sequenced");
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: { revision: 4, sequenceNumber: reenable.sequenceNumber, indexInBatch: 0 },
-		});
-		views[0].root.insertAtEnd("second epoch");
-		const secondEpochEdit = headRevision(tree);
+		assert.equal(historyStart(tree, compressor(clients[0].runtime)), undefined);
+		views[0].root.insertAtEnd("new retained change");
+		const secondEdit = headRevision(tree);
 		synchronize();
 		advanceWindow();
 		const reloaded = await load(await summarize(tree), compressor(clients[0].runtime));
-		assert(!revisions(reloaded.tree).includes(firstEpochEdit));
-		assert(revisions(reloaded.tree).includes(secondEpochEdit));
+		assert(!revisions(reloaded.tree).includes(firstEdit));
+		assert(revisions(reloaded.tree).includes(secondEdit));
+		assert.equal(historyStart(reloaded.tree, compressor(reloaded.runtime)), secondEdit);
 	});
 
-	it("does not reset the winning history epoch when a concurrent proposal conflicts", async () => {
+	it("does not establish a start when enable is disabled before the first commit", async () => {
 		const { clients, synchronize } = setup();
+		for (const retainHistory of [true, false]) {
+			const request = configuration(clients[0].tree).requestChange({ retainHistory });
+			synchronize();
+			await request;
+			for (const client of clients) {
+				assert.equal(historyStart(client.tree, compressor(client.runtime)), undefined);
+				const loaded = await load(await summarize(client.tree), compressor(client.runtime));
+				assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
+				assert.equal(configuration(loaded.tree).current.values.retainHistory, retainHistory);
+			}
+		}
+	});
+
+	it("does not change the winning retention policy when a concurrent proposal conflicts", async () => {
+		const { clients, views, synchronize } = setup();
 		const first = configuration(clients[0].tree).requestChange({ retainHistory: true });
 		const second = configuration(clients[1].tree).requestChange({});
 		synchronize();
@@ -586,11 +766,15 @@ describe("SharedTree persisted configuration", () => {
 		assert.equal(winner.status, "applied");
 		assert.equal(loser.status, "conflict");
 		assert.equal(configuration(clients[0].tree).current.revision, 1);
-		assert.deepEqual(
-			clients[0].tree.kernel.getHistoryRetentionState(),
-			clients[1].tree.kernel.getHistoryRetentionState(),
-		);
-		assert.equal(clients[0].tree.kernel.getHistoryRetentionState()?.start?.revision, 1);
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), undefined);
+		}
+		views[0].root.insertAtEnd("winning configuration");
+		const retainedEdit = headRevision(clients[0].tree);
+		synchronize();
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), retainedEdit);
+		}
 	});
 
 	it("preserves divergent shared branch contents through toggles and summary reload", async () => {
@@ -609,6 +793,14 @@ describe("SharedTree persisted configuration", () => {
 			const request = configuration(tree).requestChange({ retainHistory });
 			synchronize();
 			await request;
+			assert.equal(historyStart(tree, compressor(clients[0].runtime)), undefined);
+			branch.root.insertAtEnd(`branch edit while ${retainHistory}`);
+			synchronize();
+			assert.equal(
+				historyStart(tree, compressor(clients[0].runtime)),
+				undefined,
+				"Shared-branch commits must not establish the main-trunk history start",
+			);
 			advanceWindow();
 		}
 		const loaded = await load(
@@ -618,13 +810,19 @@ describe("SharedTree persisted configuration", () => {
 		);
 		assert.deepEqual(
 			[...loaded.tree.viewSharedBranchWith(branchId, viewConfiguration).root],
-			["shared base", "divergent branch edit"],
+			[
+				"shared base",
+				"divergent branch edit",
+				"branch edit while true",
+				"branch edit while false",
+				"branch edit while true",
+			],
 		);
 		assert(!loaded.tree.viewWith(viewConfiguration).root.includes("divergent branch edit"));
 		assert.equal(loaded.tree.getSharedBranchName(branchId), "retained branch");
-		assert.deepEqual(
-			loaded.tree.kernel.getHistoryRetentionState(),
-			tree.kernel.getHistoryRetentionState(),
+		assert.equal(
+			historyStart(loaded.tree, compressor(loaded.runtime)),
+			historyStart(tree, compressor(clients[0].runtime)),
 		);
 	});
 
@@ -669,9 +867,8 @@ describe("SharedTree persisted configuration", () => {
 	it("applies detached configuration synchronously without submitting an operation", async () => {
 		const { tree, runtime, view, submitted } = detached();
 		view.root.insertAtEnd("before the detached barrier");
-		const prior = historyBlob(await summarize(tree));
+		assert.equal(historyStart(tree, compressor(runtime)), undefined);
 		assert.equal(tree.isAttached(), false);
-		assert.equal(typeof prior.detachedSequenceNumber, "number");
 		const changes: ChannelConfigurationChange<Configuration>[] = [];
 		const listener = (change: ChannelConfigurationChange<Configuration>): void => {
 			changes.push(change);
@@ -681,20 +878,15 @@ describe("SharedTree persisted configuration", () => {
 		const request = configuration(tree).requestChange({ retainHistory: true });
 		assert.equal(changes.length, 1, "Detached notification is synchronous");
 		assert.equal(changes[0].source, "local");
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: {
-				revision: 1,
-				sequenceNumber: (prior.detachedSequenceNumber as number) + 1,
-				indexInBatch: 0,
-			},
-		});
+		assert.equal(historyStart(tree, compressor(runtime)), undefined);
 		const result = await request;
 		assert.equal(result.source, "local");
 		configuration(tree).off("changed", listener);
 		await configuration(tree).requestChange({ retainHistory: true });
 		assert.equal(changes.length, 1);
 		view.root.insertAtEnd("retained while detached");
+		const firstEdit = headRevision(tree);
+		assert.equal(historyStart(tree, compressor(runtime)), firstEdit);
 		assert.deepEqual(submitted, []);
 		const loaded = await load(
 			await summarize(tree),
@@ -702,10 +894,7 @@ describe("SharedTree persisted configuration", () => {
 			factory(),
 			AttachState.Detached,
 		);
-		assert.deepEqual(
-			loaded.tree.kernel.getHistoryRetentionState(),
-			tree.kernel.getHistoryRetentionState(),
-		);
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), firstEdit);
 		assert.deepEqual(loaded.submitted, []);
 	});
 
@@ -725,34 +914,34 @@ describe("SharedTree persisted configuration", () => {
 		assert.equal(tree.isAttached(), false);
 		const local = await configuration(tree).requestChange({ retainHistory: true });
 		assert.equal(local.source, "local");
-		const state = tree.kernel.getHistoryRetentionState();
-		assert(state !== undefined && state.start !== null);
+		assert.equal(historyStart(tree, compressor(runtime)), undefined);
 		view.root.insertAtEnd("retained before binding");
+		const firstEdit = headRevision(tree);
+		assert.equal(historyStart(tree, compressor(runtime)), firstEdit);
 		assert.equal(submitted.length, 0);
 
 		tree.connect({ deltaConnection: delta, objectStorage: new MockStorage() });
 		assert.equal(tree.isAttached(), true);
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), state);
+		assert.equal(historyStart(tree, compressor(runtime)), firstEdit);
 		const request = configuration(tree).requestChange({ retainHistory: false });
 		assert.equal(configuration(tree).current.values.retainHistory, true);
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), state);
+		assert.equal(historyStart(tree, compressor(runtime)), firstEdit);
 		assert.equal(submitted.length, 1);
 		const proposal = submitted[0];
 		deliverMessage(delta, proposal.contents, 100, true, proposal.metadata);
 		const sequenced = await request;
 		assert.equal(sequenced.source, "sequenced");
-		assert.deepEqual(tree.kernel.getHistoryRetentionState(), { version: 1, start: null });
+		assert.equal(historyStart(tree, compressor(runtime)), undefined);
 		assert.deepEqual([...view.root], ["before binding", "retained before binding"]);
 	});
 
-	it("preserves the detached cursor through summary reload, local changes, and attach", async () => {
+	it("starts at a detached change after reload and preserves it through normal attach", async () => {
 		const source = detached();
 		for (let i = 0; i < 5; i++) {
 			source.view.root.insertAtEnd(`detached-${i}`);
 		}
 		const summary = await summarize(source.tree);
-		const prior = historyBlob(summary);
-		assert.equal(typeof prior.detachedSequenceNumber, "number");
+		assert.equal(editManagerBlob(summary).historyStart, undefined);
 		const loaded = await load(
 			summary,
 			compressor(source.runtime),
@@ -763,21 +952,15 @@ describe("SharedTree persisted configuration", () => {
 		assert.equal(loaded.tree.isAttached(), false);
 		const local = await configuration(loaded.tree).requestChange({ retainHistory: true });
 		assert.equal(local.source, "local");
-		const state = loaded.tree.kernel.getHistoryRetentionState();
-		assert.deepEqual(state, {
-			version: 1,
-			start: {
-				revision: 1,
-				sequenceNumber: (prior.detachedSequenceNumber as number) + 1,
-				indexInBatch: 0,
-			},
-		});
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
 		loaded.tree.viewWith(viewConfiguration).root.insertAtEnd("after reload");
+		const firstEdit = headRevision(loaded.tree);
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), firstEdit);
 		await configuration(loaded.tree).requestChange({ retainHistory: true });
 		assert.equal(loaded.submitted.length, 0);
 		loaded.runtime.setAttachState(AttachState.Attaching);
 		assert.equal(loaded.tree.isAttached(), true);
-		assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), state);
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), firstEdit);
 		const request = configuration(loaded.tree).requestChange({ retainHistory: true });
 		assert.equal(configuration(loaded.tree).current.revision, 2);
 		assert.equal(loaded.submitted.length, 1);
@@ -788,61 +971,59 @@ describe("SharedTree persisted configuration", () => {
 		assert.equal(configuration(loaded.tree).current.revision, 3);
 		loaded.runtime.setAttachState(AttachState.Attached);
 		const attached = await load(await summarize(loaded.tree), compressor(source.runtime));
-		assert.deepEqual(attached.tree.kernel.getHistoryRetentionState(), state);
+		assert.equal(historyStart(attached.tree, compressor(attached.runtime)), firstEdit);
 		assert(attached.tree.viewWith(viewConfiguration).root.includes("after reload"));
 	});
 
-	it("preserves the detached cursor when enabling is followed by a summary with no retained commits", async () => {
-		const source = detached();
-		for (let i = 0; i < 5; i++) {
-			source.view.root.insertAtEnd(`before-enable-${i}`);
-		}
-		await configuration(source.tree).requestChange({ retainHistory: true });
-		const enabledState = source.tree.kernel.getHistoryRetentionState();
-		assert(enabledState !== undefined && enabledState.start !== null);
-		assert(enabledState.start.sequenceNumber > Number.MIN_SAFE_INTEGER + 1);
+	for (const attachBeforeEdit of [false, true]) {
+		it(`preserves pending-start detached configuration through reload and ${attachBeforeEdit ? "attach" : "a local edit"}`, async () => {
+			const source = detached();
+			for (let i = 0; i < 5; i++) {
+				source.view.root.insertAtEnd(`before-enable-${i}`);
+			}
+			await configuration(source.tree).requestChange({ retainHistory: true });
+			assert.equal(historyStart(source.tree, compressor(source.runtime)), undefined);
 
-		// No edit follows enable: trimming removes every trunk commit that could restore the cursor.
-		const summary = await summarize(source.tree);
-		assert.equal(source.tree.kernel.checkout.branchHistory.length, 0);
-		assert.equal(
-			historyBlob(summary).detachedSequenceNumber,
-			enabledState.start.sequenceNumber - 1,
-		);
-		const loaded = await load(
-			summary,
-			compressor(source.runtime),
-			factory(),
-			AttachState.Detached,
-		);
-		assert.equal(loaded.tree.kernel.checkout.branchHistory.length, 0);
-		assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), enabledState);
-
-		await configuration(loaded.tree).requestChange({});
-		await configuration(loaded.tree).requestChange({ retainHistory: true });
-		assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: { ...enabledState.start, revision: 3 },
+			// No edit follows enable, so the summary has no retained history start.
+			const summary = await summarize(source.tree);
+			assert.equal(editManagerBlob(summary).historyStart, undefined);
+			const loaded = await load(
+				summary,
+				compressor(source.runtime),
+				factory(),
+				AttachState.Detached,
+			);
+			assert.equal(configuration(loaded.tree).current.values.retainHistory, true);
+			assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
+			const view = loaded.tree.viewWith(viewConfiguration);
+			assert.deepEqual([...view.root], [...source.view.root]);
+			if (attachBeforeEdit) {
+				loaded.runtime.setAttachState(AttachState.Attaching);
+				loaded.runtime.setAttachState(AttachState.Attached);
+				assert.equal(loaded.tree.isAttached(), true);
+				assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
+			}
+			view.root.insertAtEnd("first retained edit");
+			const retainedEdit = headRevision(loaded.tree);
+			if (attachBeforeEdit) {
+				assert.equal(loaded.submitted.length, 1);
+				const edit = loaded.submitted[0];
+				deliverMessage(loaded.delta, edit.contents, 100, true, edit.metadata);
+			} else {
+				assert.deepEqual(loaded.submitted, []);
+			}
+			assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), retainedEdit);
+			const reloaded = await load(
+				await summarize(loaded.tree),
+				compressor(source.runtime),
+				factory(),
+				attachBeforeEdit ? AttachState.Attached : AttachState.Detached,
+			);
+			assert.equal(historyStart(reloaded.tree, compressor(reloaded.runtime)), retainedEdit);
+			assert(revisions(reloaded.tree).includes(retainedEdit));
+			assert.deepEqual([...reloaded.tree.viewWith(viewConfiguration).root], [...view.root]);
 		});
-		const view = loaded.tree.viewWith(viewConfiguration);
-		assert.deepEqual([...view.root], [...source.view.root]);
-		view.root.insertAtEnd("first retained edit");
-		const retainedEdit = headRevision(loaded.tree);
-		const updatedSummary = await summarize(loaded.tree);
-		assert.equal(
-			historyBlob(updatedSummary).detachedSequenceNumber,
-			enabledState.start.sequenceNumber,
-		);
-		const reloaded = await load(
-			updatedSummary,
-			compressor(source.runtime),
-			factory(),
-			AttachState.Detached,
-		);
-		assert(revisions(reloaded.tree).includes(retainedEdit));
-		assert.deepEqual([...reloaded.tree.viewWith(viewConfiguration).root], [...view.root]);
-		assert.deepEqual(loaded.submitted, []);
-	});
+	}
 
 	it("keeps an offline attached request pending until sequencing and retains its pending edit", async () => {
 		const { clients, views, synchronize, advanceWindow } = setup();
@@ -859,14 +1040,14 @@ describe("SharedTree persisted configuration", () => {
 		await Promise.resolve();
 		assert.equal(completed, false);
 		assert.equal(configuration(clients[0].tree).current.revision, 0);
-		assert.deepEqual(clients[0].tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: null,
-		});
+		assert.equal(historyStart(clients[1].tree, compressor(clients[1].runtime)), undefined);
 		clients[0].containerRuntime.connected = true;
 		synchronize();
 		const sequencedResult = await request;
 		assert.equal(sequencedResult.source, "sequenced");
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), offlineEdit);
+		}
 		advanceWindow();
 		for (let i = 0; i < clients.length; i++) {
 			assert(revisions(clients[i].tree).includes(offlineEdit));
@@ -886,11 +1067,15 @@ describe("SharedTree persisted configuration", () => {
 		synchronize();
 		await request;
 		assert.equal(configuration(clients[0].tree).current.revision, 0);
+		assert.equal(historyStart(clients[1].tree, compressor(clients[1].runtime)), undefined);
 		clients[0].containerRuntime.connected = true;
 		assert.equal(configuration(clients[0].tree).current.revision, 1);
 		assert.deepEqual([...views[0].root], ["pending before the barrier"]);
 		synchronize();
 		assert.deepEqual([...views[1].root], ["pending before the barrier"]);
+		for (const client of clients) {
+			assert.equal(historyStart(client.tree, compressor(client.runtime)), pendingRevision);
+		}
 		advanceWindow();
 		for (const client of clients) {
 			assert(revisions(client.tree).includes(pendingRevision));
@@ -927,7 +1112,7 @@ describe("SharedTree persisted configuration", () => {
 			},
 			100,
 		);
-		const state = restored.tree.kernel.getHistoryRetentionState();
+		assert.equal(historyStart(restored.tree, idCompressor), undefined);
 		const view = restored.tree.viewWith(viewConfiguration);
 		restored.delta.applyStashedOp(stashed.contents);
 		assert.deepEqual([...view.root], ["stashed edit"]);
@@ -944,7 +1129,7 @@ describe("SharedTree persisted configuration", () => {
 		assert.deepEqual([...view.root], ["stashed edit"]);
 		deliverMessage(restored.delta, resubmitted.contents, 101, true, resubmitted.metadata);
 		assert.deepEqual([...view.root], ["stashed edit"]);
-		assert.deepEqual(restored.tree.kernel.getHistoryRetentionState(), state);
+		assert.equal(historyStart(restored.tree, idCompressor), stashedRevision);
 
 		view.root.insertAtEnd("new edit");
 		const fresh = restored.submitted[2];
@@ -956,6 +1141,7 @@ describe("SharedTree persisted configuration", () => {
 			["stashed edit", "new edit"],
 		);
 		assert(revisions(loaded.tree).includes(stashedRevision));
+		assert.equal(historyStart(loaded.tree, idCompressor), stashedRevision);
 	});
 
 	it("rolls back an optimistic Tree edit after a history barrier without rolling back configuration", async () => {
@@ -972,13 +1158,17 @@ describe("SharedTree persisted configuration", () => {
 		clients[1].containerRuntime.flush();
 		runtimeFactory.processAllMessages();
 		await request;
-		const state = clients[0].tree.kernel.getHistoryRetentionState();
+		assert.equal(historyStart(clients[1].tree, compressor(clients[1].runtime)), undefined);
 		assert.equal(configuration(clients[0].tree).current.revision, 1);
 		assert(clients[0].containerRuntime.rollback !== undefined);
 		clients[0].containerRuntime.rollback();
 		assert.deepEqual([...views[0].root], ["preserve this node"]);
 		assert(!revisions(clients[0].tree).includes(rolledBackRevision));
-		assert.deepEqual(clients[0].tree.kernel.getHistoryRetentionState(), state);
+		assert.equal(
+			historyStart(clients[0].tree, compressor(clients[0].runtime)),
+			undefined,
+			"The rolled-back optimistic change must not pin history",
+		);
 
 		views[0].root.insertAtEnd("after rollback");
 		const retainedRevision = headRevision(clients[0].tree);
@@ -989,7 +1179,7 @@ describe("SharedTree persisted configuration", () => {
 			const loaded = await load(await summarize(client.tree), compressor(client.runtime));
 			assert(!revisions(loaded.tree).includes(rolledBackRevision));
 			assert(revisions(loaded.tree).includes(retainedRevision));
-			assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), state);
+			assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), retainedRevision);
 		}
 	});
 
@@ -1003,13 +1193,10 @@ describe("SharedTree persisted configuration", () => {
 		assert.deepEqual(revisions(client.tree), editsBefore);
 		const loaded = await load(await summarize(client.tree), compressor(client.runtime));
 		assert.deepEqual(configuration(loaded.tree).current, configuration(client.tree).current);
-		assert.deepEqual(
-			loaded.tree.kernel.getHistoryRetentionState(),
-			client.tree.kernel.getHistoryRetentionState(),
-		);
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
 	});
 
-	it("restores the snapshot epoch before replaying trailing configuration barriers", async () => {
+	it("restores the snapshot start before replaying trailing configuration changes", async () => {
 		const { clients, views, synchronize, advanceWindow } = setup({ retainHistory: true });
 		views[0].root.insertAtEnd("retained by the snapshot");
 		synchronize();
@@ -1018,7 +1205,8 @@ describe("SharedTree persisted configuration", () => {
 			await summarize(clients[0].tree),
 			compressor(clients[0].runtime),
 		);
-		const initialState = loaded.tree.kernel.getHistoryRetentionState();
+		const initialStart = historyStart(loaded.tree, compressor(loaded.runtime));
+		assert(initialStart !== undefined, "The snapshot has retained history");
 		loaded.delta.processMessages({
 			envelope: {
 				clientId: "remote",
@@ -1050,27 +1238,23 @@ describe("SharedTree persisted configuration", () => {
 			})),
 		});
 		assert.equal(configuration(loaded.tree).current.revision, 3);
-		assert.notDeepEqual(loaded.tree.kernel.getHistoryRetentionState(), initialState);
-		assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: { revision: 3, sequenceNumber: 100, indexInBatch: 0 },
-		});
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
 		const reloaded = await load(await summarize(loaded.tree), compressor(clients[0].runtime));
-		assert.deepEqual(
-			reloaded.tree.kernel.getHistoryRetentionState(),
-			loaded.tree.kernel.getHistoryRetentionState(),
-		);
+		assert.equal(historyStart(reloaded.tree, compressor(reloaded.runtime)), undefined);
+		reloaded.tree.viewWith(viewConfiguration).root.insertAtEnd("after trailing configuration");
+		const retainedEdit = headRevision(reloaded.tree);
+		const edit = reloaded.submitted[0];
+		deliverMessage(reloaded.delta, edit.contents, 101, true, edit.metadata);
+		assert.equal(historyStart(reloaded.tree, compressor(reloaded.runtime)), retainedEdit);
 	});
 
-	it("prunes old archival history after a loaded configuration-only disable", async () => {
+	it("resumes ordinary safe pruning after a loaded configuration-only disable", async () => {
 		const { clients, views, synchronize, advanceWindow } = setup({ retainHistory: true });
 		views[0].root.insertAtEnd("old archived edit");
 		const oldEdit = headRevision(clients[0].tree);
 		synchronize();
 		advanceWindow();
 		const summary = await summarize(clients[0].tree);
-		const savedMinimum = historyBlob(summary).minimumSequenceNumber;
-		assert(typeof savedMinimum === "number" && savedMinimum > 0);
 		const loaded = await load(summary, compressor(clients[0].runtime));
 		assert(revisions(loaded.tree).includes(oldEdit));
 		loaded.delta.processMessages({
@@ -1091,13 +1275,14 @@ describe("SharedTree persisted configuration", () => {
 				},
 			],
 		});
-		assert.deepEqual(loaded.tree.kernel.getHistoryRetentionState(), {
-			version: 1,
-			start: null,
-		});
+		assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), undefined);
+		const view = loaded.tree.viewWith(viewConfiguration);
+		view.root.insertAtEnd("advance the loaded collaboration window");
+		const edit = loaded.submitted[0];
+		deliverMessage(loaded.delta, edit.contents, 101, true, edit.metadata, 100);
 		assert(
 			!revisions(loaded.tree).includes(oldEdit),
-			"Config-only disable must use the restored collaboration window to trim immediately",
+			"Disabled history must be pruned when the collaboration window advances",
 		);
 		const reloaded = await load(await summarize(loaded.tree), compressor(clients[0].runtime));
 		assert(!revisions(reloaded.tree).includes(oldEdit));
@@ -1116,13 +1301,13 @@ describe("SharedTree persisted configuration", () => {
 			);
 			const source = detached({ retainHistory: true });
 			const previous = configuration(source.tree).current;
-			const previousHistory = source.tree.kernel.getHistoryRetentionState();
+			const previousStart = historyStart(source.tree, compressor(source.runtime));
 			await assert.rejects(
 				configuration(source.tree).requestChange(invalidConfiguration),
 				/Unsupported channel configuration values/,
 			);
 			assert.deepEqual(configuration(source.tree).current, previous);
-			assert.deepEqual(source.tree.kernel.getHistoryRetentionState(), previousHistory);
+			assert.equal(historyStart(source.tree, compressor(source.runtime)), previousStart);
 			assert.deepEqual(source.submitted, []);
 
 			const summary = await summarize(source.tree);
@@ -1150,66 +1335,76 @@ describe("SharedTree persisted configuration", () => {
 		});
 	}
 
-	for (const corruption of [
-		"missing",
-		"unsupported",
-		"inconsistent",
-		"missing detached cursor",
-		"invalid detached cursor",
-		"missing minimum sequence number",
-		"invalid minimum sequence number",
+	for (const [description, marker] of [
+		["an invalid encoded revision", "invalid"],
+		["the root revision", "root"],
+		["a revision missing from the main trunk", Number.MAX_SAFE_INTEGER],
 	] as const) {
-		it(`rejects ${corruption} persisted history metadata`, async () => {
+		it(`rejects ${description} as the persisted history start`, async () => {
 			const { tree, runtime } = detached({ retainHistory: true });
 			const summary = await summarize(tree);
-			const { HistoryRetention: _history, ...otherEntries } = summary.tree;
-			const history = historyBlob(summary);
-			switch (corruption) {
-				case "unsupported": {
-					history.version = 2;
-					break;
-				}
-				case "inconsistent": {
-					history.start = null;
-					break;
-				}
-				case "missing detached cursor": {
-					delete history.detachedSequenceNumber;
-					break;
-				}
-				case "invalid detached cursor": {
-					history.detachedSequenceNumber = "invalid";
-					break;
-				}
-				case "missing minimum sequence number": {
-					delete history.minimumSequenceNumber;
-					break;
-				}
-				case "invalid minimum sequence number": {
-					history.minimumSequenceNumber = "invalid";
-					break;
-				}
-				case "missing": {
-					break;
-				}
-				default: {
-					assert.fail("Unexpected history corruption case");
-				}
+			const history = editManagerBlob(summary);
+			assert.notEqual(history.historyStart, undefined);
+			const indexes = summary.tree.indexes;
+			assert(indexes?.type === SummaryType.Tree, "Expected the indexes summary");
+			const editManager = indexes.tree.EditManager;
+			assert(editManager?.type === SummaryType.Tree, "Expected the EditManager summary");
+			const corrupt: ISummaryTree = {
+				...summary,
+				tree: {
+					...summary.tree,
+					indexes: {
+						...indexes,
+						tree: {
+							...indexes.tree,
+							EditManager: {
+								...editManager,
+								tree: {
+									...editManager.tree,
+									String: {
+										type: SummaryType.Blob,
+										content: JSON.stringify({ ...history, historyStart: marker }),
+									},
+								},
+							},
+						},
+					},
+				},
+			};
+			await assert.rejects(
+				load(corrupt, compressor(runtime)),
+				marker === "invalid"
+					? /0xac1/ // Existing codec schema-validation error.
+					: /History start must reference a retained main-trunk commit/,
+			);
+		});
+	}
+
+	for (const configured of [false, true]) {
+		it(`rejects a retained start without ${configured ? "enabled retention" : "persisted configuration capability"}`, async () => {
+			const source = detached({ retainHistory: true });
+			const summary = await summarize(source.tree);
+			assert.notEqual(editManagerBlob(summary).historyStart, undefined);
+			const blob = summary.tree[".attributes"];
+			assert(blob?.type === SummaryType.Blob, "Expected persisted channel attributes");
+			assert.equal(typeof blob.content, "string");
+			const attributes = JSON.parse(blob.content as string) as {
+				configuration?: { values: Configuration };
+			};
+			if (configured) {
+				assert(attributes.configuration !== undefined, "Expected persisted configuration");
+				attributes.configuration.values = { retainHistory: false };
+			} else {
+				delete attributes.configuration;
 			}
 			const corrupt: ISummaryTree = {
 				...summary,
-				tree:
-					corruption === "missing"
-						? otherEntries
-						: {
-								...otherEntries,
-								HistoryRetention: {
-									type: SummaryType.Blob,
-									content: JSON.stringify(history),
-								},
-							},
+				tree: {
+					...summary.tree,
+					".attributes": { type: SummaryType.Blob, content: JSON.stringify(attributes) },
+				},
 			};
-			await assert.rejects(load(corrupt, compressor(runtime)), /history|History/);
+			await assert.rejects(load(corrupt, compressor(source.runtime)), /history|History/);
 		});
 	}
 });

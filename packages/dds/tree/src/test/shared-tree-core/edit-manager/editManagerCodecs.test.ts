@@ -20,7 +20,7 @@ import {
 	type SharedBranchSummaryData,
 	type SummaryData,
 } from "../../../shared-tree-core/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, isJsonObject } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import {
 	type EncodingTestData,
@@ -90,6 +90,18 @@ const testCases: EncodingTestData<SummaryData<TestChange>, unknown, ChangeEncodi
 			"multiple commits",
 			{
 				originator: dummyContext.originatorId,
+				main: {
+					trunk: trunkCommits,
+					peerLocalBranches: new Map(),
+				},
+			},
+			dummyContext,
+		],
+		[
+			"retention starts at a main-trunk commit",
+			{
+				originator: dummyContext.originatorId,
+				historyStart: tags[1],
 				main: {
 					trunk: trunkCommits,
 					peerLocalBranches: new Map(),
@@ -239,6 +251,86 @@ export function testCodec(): void {
 		makeEncodingTestSuite(family, testCases, undefined, [
 			EditManagerFormatVersion.vSharedBranches,
 		]);
+
+		for (const version of supportedEditManagerFormatVersions) {
+			describe(`history start in version ${version}`, () => {
+				const codec = family.resolve(version);
+				const data: SummaryData<TestChange> = {
+					originator: dummyContext.originatorId,
+					main: { trunk: trunkCommits, peerLocalBranches: new Map() },
+				};
+
+				it("omits the marker when retention has not started", () => {
+					const encoded = codec.encode(data, dummyContext);
+					assert(isJsonObject(encoded));
+					assert(!("historyStart" in encoded));
+					assert.equal(codec.decode(encoded, dummyContext).historyStart, undefined);
+				});
+
+				for (const [name, historyStart] of [
+					["unknown revision", mintRevisionTag()],
+					["root revision", "root"],
+				] as const) {
+					it(`rejects an in-memory ${name} marker`, () => {
+						assert.throws(() => codec.encode({ ...data, historyStart }, dummyContext));
+					});
+
+					it(`rejects an encoded ${name} marker`, () => {
+						const encoded = codec.encode(data, dummyContext);
+						assert(isJsonObject(encoded));
+						assert.throws(() =>
+							codec.decode(
+								{
+									...encoded,
+									historyStart: testRevisionTagCodec.encode(historyStart),
+								},
+								dummyContext,
+							),
+						);
+					});
+				}
+
+				it("rejects a marker that only references a peer's local commit", () => {
+					const revision = mintRevisionTag();
+					const withPeer: SummaryData<TestChange> = {
+						...data,
+						main: {
+							...data.main,
+							peerLocalBranches: new Map([
+								[
+									"4" as SessionId,
+									{
+										base: tags[1],
+										commits: [
+											{
+												sessionId: "4" as SessionId,
+												revision,
+												change: TestChange.mint([0, 1, 2], 4),
+												customMetadata: undefined,
+											},
+										],
+									},
+								],
+							]),
+						},
+					};
+					assert.throws(() =>
+						codec.encode({ ...withPeer, historyStart: revision }, dummyContext),
+					);
+					const encoded = codec.encode(withPeer, dummyContext);
+					assert(isJsonObject(encoded));
+					assert.throws(() =>
+						codec.decode(
+							{
+								...encoded,
+								historyStart: testRevisionTagCodec.encode(revision),
+							},
+							dummyContext,
+						),
+					);
+				});
+			});
+		}
 
 		it("Extra properties on commits are omitted from encoding", () => {
 			interface ExtraData {

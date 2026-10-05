@@ -47,7 +47,6 @@ import {
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
-	readAndParseSnapshotBlob,
 } from "../util/index.js";
 
 import type { BranchId, SharedTreeBranch } from "./branch.js";
@@ -72,13 +71,7 @@ import {
 	type SummaryElementStringifier,
 } from "./summaryTypes.js";
 import { VersionedSummarizer } from "./versionedSummarizer.js";
-import {
-	historyRetentionBlobKey,
-	parseHistoryRetentionState,
-	type HistoryRetentionState,
-	type HistoryRetentionSummary,
-	type TreeHistoryConfiguration,
-} from "./historyRetention.js";
+import type { TreeHistoryConfiguration } from "./historyRetention.js";
 
 export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
@@ -89,11 +82,6 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
 	 */
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
-
-	/**
-	 * {@inheritDoc SharedTreeOptions.retainHistory}
-	 */
-	readonly retainHistory?: boolean;
 
 	/**
 	 * {@inheritDoc SharedTreeOptions.validateCommitsOnFirstSubmission}
@@ -215,10 +203,7 @@ export class SharedTreeCore<
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
-			configuration === undefined
-				? (coreOptions.retainHistory ?? false)
-				: configuration.current.values.retainHistory === true,
-			configuration?.current.revision,
+			configuration?.current.values.retainHistory === true,
 		);
 
 		this.registerSharedBranch("main");
@@ -264,24 +249,8 @@ export class SharedTreeCore<
 		}
 
 		configuration?.on("changed", (change) => {
-			this.editManager.setHistoryRetention(
-				change.current.values.retainHistory === true,
-				change.current.revision,
-				brand(
-					change.source === "sequenced"
-						? change.sequenceNumber
-						: (this.detachedRevision ??
-								fail("Unpublished history changes require a detached Tree")) + 1,
-				),
-			);
+			this.editManager.setHistoryRetention(change.current.values.retainHistory === true);
 		});
-	}
-
-	/**
-	 * The persisted archival epoch, not the oldest history needed by this client's forks or undo.
-	 */
-	public getHistoryRetentionState(): HistoryRetentionState | undefined {
-		return this.editManager.getHistoryRetentionState();
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -319,47 +288,12 @@ export class SharedTreeCore<
 			);
 		}
 		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
-		const historyRetention = this.getHistoryRetentionState();
-		if (historyRetention !== undefined) {
-			builder.addBlob(
-				historyRetentionBlobKey,
-				stringify({
-					...historyRetention,
-					detachedSequenceNumber: this.detachedRevision ?? null,
-					minimumSequenceNumber: this.editManager.getMinimumSequenceNumber(),
-				} satisfies HistoryRetentionSummary),
-			);
-		}
 	}
 
 	protected async loadInternal(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		let loadedMinimumSequenceNumber: SeqNumber | undefined;
-		const hasHistoryRetention = await services.contains(historyRetentionBlobKey);
-		if (this.configuration !== undefined) {
-			if (!hasHistoryRetention) {
-				throw new UsageError("Configured SharedTree summary is missing its history boundary");
-			}
-			const state = parseHistoryRetentionState(
-				await readAndParseSnapshotBlob(historyRetentionBlobKey, services, parse),
-			);
-			if (
-				(state.start !== null) !==
-					(this.configuration.current.values.retainHistory === true) ||
-				(state.start !== null && state.start.revision > this.configuration.current.revision)
-			) {
-				throw new UsageError("SharedTree history boundary does not match its configuration");
-			}
-			this.editManager.loadHistoryRetentionState(state);
-			loadedMinimumSequenceNumber = brand(state.minimumSequenceNumber);
-			if (this.detachedRevision !== undefined && state.detachedSequenceNumber !== null) {
-				this.detachedRevision = brand(state.detachedSequenceNumber);
-			}
-		} else if (hasHistoryRetention) {
-			throw new UsageError("SharedTree history boundary requires persisted configuration");
-		}
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services, parse);
 		const loadSummarizables = summarizables.map(async (s) =>
@@ -383,11 +317,6 @@ export class SharedTreeCore<
 				);
 			}
 			await Promise.all(loadSummarizables);
-		}
-		if (loadedMinimumSequenceNumber !== undefined) {
-			// Restore the last known collaboration window without trimming before checkout.load().
-			// This also lets a trailing configuration-only disable release previously archived history.
-			this.editManager.advanceMinimumSequenceNumber(loadedMinimumSequenceNumber, false);
 		}
 	}
 

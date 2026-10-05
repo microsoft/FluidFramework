@@ -164,6 +164,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
+import { SharedTreeFactoryType } from "../sharedTreeAttributes.js";
 import {
 	type CheckoutEvents,
 	type ITreePrivate,
@@ -297,6 +298,7 @@ export class TestTreeProvider {
 	 * {@link create} followed by {@link createTree} _trees_ times.
 	 * @param summarizeType - enum to manually, automatically, or disable summarization
 	 * @param factory - The factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
+	 * @param enableChannelConfiguration - Whether to enable persisted configuration for the Tree type.
 	 *
 	 * @example
 	 *
@@ -311,6 +313,7 @@ export class TestTreeProvider {
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
 		factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
+		enableChannelConfiguration = false,
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -334,6 +337,12 @@ export class TestTreeProvider {
 							summarizeType === SummarizeType.disabled ? { state: "disabled" } : undefined,
 					},
 					enableRuntimeIdCompressor: "on",
+					...(enableChannelConfiguration
+						? {
+								explicitSchemaControl: true,
+								channelConfigurationTypes: [SharedTreeFactoryType],
+							}
+						: {}),
 				},
 			);
 
@@ -470,6 +479,7 @@ export class TestTreeProviderLite {
 	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
 	 * @param flushMode - The flush mode to use for the container runtime. This is FlushMode.Immediate by default. Tests
 	 * that need ops to be processed in a batch or bunch should use FlushMode.TurnBased.
+	 * @param enableChannelConfiguration - Whether to enable persisted configuration for the Tree type.
 	 * @example
 	 *
 	 * ```typescript
@@ -484,6 +494,7 @@ export class TestTreeProviderLite {
 		private readonly factory: IChannelFactory<ITree> = DefaultTestSharedTreeKind.getFactory(),
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
+		enableChannelConfiguration = false,
 	) {
 		this.runtimeFactory = new MockContainerRuntimeFactoryWithOpBunching({
 			flushMode,
@@ -502,6 +513,16 @@ export class TestTreeProviderLite {
 				idCompressor,
 				logger: this.logger,
 			});
+			if (enableChannelConfiguration) {
+				Object.assign(runtime, {
+					isChannelConfigurationCreationEnabled: (type: string) =>
+						type === SharedTreeFactoryType,
+					isChannelConfigurationEnabled: (type: string) => type === SharedTreeFactoryType,
+				});
+				Object.defineProperty(runtime.deltaManagerInternal, "maxMessageSize", {
+					value: 1024 * 1024,
+				});
+			}
 			const tree = this.factory.create(runtime, `tree-${i}`);
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
 			this.containerRuntimeMap.set(tree.id, containerRuntime);
