@@ -4,80 +4,59 @@
  */
 
 import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	deserializeIdCompressor,
+	SerializationVersion,
+	type SerializedIdCompressorWithOngoingSession,
+} from "@fluidframework/id-compressor/internal";
+import {
+	createChildLogger,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions } from "../../../codec/index.js";
-import type { ForestOptions, ViewContent } from "../../../shared-tree/index.js";
+import type { ICodecOptions } from "../codec/index.js";
+import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
-import { createIndependentTreeCheckout } from "../../../shared-tree/independentView.js";
+import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
 import type {
 	ImplicitFieldSchema,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewConfiguration,
 	ViewableTree,
-} from "../../../simple-tree/index.js";
+} from "../simple-tree/index.js";
 
 import {
 	type HostGuestMessage,
 	type HostInitializationMessage,
 	makePromiseWithResolvers,
 	parseHostGuestMessage,
-	type SandboxEndpointOptions,
 	SandboxProtocolError,
 	throwProtocolError,
 } from "./common.js";
 import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
+import type { Sandboxing } from "./sandboxing.js";
 import { SandboxSessionEndpoint } from "./session.js";
 import { normalizeTransportData } from "./transport.js";
 
 /**
- * Options for creating a Guest.
+ * Implementation of {@link Sandboxing.Guest}.
  */
-export interface GuestOptions extends SandboxEndpointOptions {
-	/** The forest and codec options used to initialize the Guest's tree. */
-	readonly treeOptions: ForestOptions & ICodecOptions;
-}
-
-/**
- * An {@link ViewableTree} synchronized with a Host through a `MessagePort`.
- * @remarks
- * Create using {@link createGuest}.
- * @sealed
- */
-export interface Guest {
-	/** The independent tree synchronized with the Host. */
-	readonly tree: ViewableTree;
-	/** Terminal failure requiring application-managed Host and Guest recreation, if this session failed. */
-	readonly error: Error | undefined;
-	/** A promise for Host acknowledgment of pending Guest changes, if changes are pending. */
-	readonly updateHostPromise: Promise<void> | undefined;
-	/** Ends the session and releases its resources. */
-	dispose(): void;
-}
-
-/**
- * Creates and connects a {@link Guest} to a {@link Host} using the provided options.
- *
- * @param options - The options for creating the Guest, including tree and codec options.
- *
- * @returns A promise that resolves to the created Guest instance.
- */
-export async function createGuest(options: GuestOptions): Promise<Guest> {
-	return GuestImplementation.create(options);
-}
-
-/**
- * Implementation of {@link Guest}.
- */
-export class GuestImplementation implements Guest {
+export class GuestImplementation implements Sandboxing.Guest {
 	private readonly codec: GuestTransportCodec;
 	private readonly session: SandboxSessionEndpoint;
 	private readonly treeOptions: ForestOptions & ICodecOptions;
-	private readonly idCompressor: IIdCompressor;
-	private readonly port: MessagePort;
+
+	/**
+	 * The port connecting this Guest to the Host.
+	 *
+	 * @privateRemarks
+	 * The odd typing here is intentional and important.
+	 * Without it, we take an implicit dependency on DOM types, which may not be available in all environments.
+	 */
+	private readonly port: InstanceType<typeof MessagePort>;
+
 	private readonly logger: TelemetryLoggerExt;
 	#synchronization: GuestSynchronization | undefined;
 	private viewableTree: ViewableTree | undefined;
@@ -86,12 +65,11 @@ export class GuestImplementation implements Guest {
 
 	/** Internal synchronization state exposed for testing. */
 	public get synchronization(): GuestSynchronization {
-		return this.#synchronization ?? fail("Guest accessed before initialization");
+		return this.#synchronization ?? fail(0xd59 /* Guest accessed before initialization */);
 	}
 
-	/** The independent tree on the Guest. Available after {@link GuestImplementation.create} resolves. */
 	public get tree(): ViewableTree {
-		return this.viewableTree ?? fail("Guest accessed before initialization");
+		return this.viewableTree ?? fail(0xd5a /* Guest accessed before initialization */);
 	}
 
 	/** Receives and routes protocol messages from the Host. */
@@ -114,6 +92,9 @@ export class GuestImplementation implements Guest {
 			switch (message.type) {
 				case "hostUpdate": {
 					return this.#synchronization.receiveHostUpdate(message);
+				}
+				case "hostIdRange": {
+					return this.#synchronization.receiveHostIdRange(message);
 				}
 				case "guestChangeAck": {
 					return this.#synchronization.receiveChangeAck(message);
@@ -144,18 +125,18 @@ export class GuestImplementation implements Guest {
 
 	private constructor({
 		treeOptions,
-		idCompressor,
 		port,
 		logger,
 		handleProtocolError = throwProtocolError,
-	}: GuestOptions) {
+	}: Sandboxing.GuestOptions) {
 		this.treeOptions = treeOptions;
-		this.idCompressor = idCompressor;
 		this.port = port;
-		this.logger = logger;
+		this.logger = createChildLogger({ logger, namespace: "Guest" });
 		this.session = new SandboxSessionEndpoint(
 			port,
 			(error) => {
+				// A failure can occur during a tree event. Do not dispose the views in this callback.
+				// Guest.dispose() releases them when the application cleans up.
 				this.#synchronization?.stop(error);
 				this.codec.dispose(error);
 				this.initialized.rejecter(error);
@@ -176,7 +157,7 @@ export class GuestImplementation implements Guest {
 	 * @param options - The tree and session options for the Guest.
 	 * @returns The initialized Guest.
 	 */
-	public static async create(options: GuestOptions): Promise<GuestImplementation> {
+	public static async create(options: Sandboxing.GuestOptions): Promise<GuestImplementation> {
 		const guest = new GuestImplementation(options);
 		await guest.initialized.promise;
 		return guest;
@@ -186,10 +167,28 @@ export class GuestImplementation implements Guest {
 		if (this.#synchronization !== undefined) {
 			throw new SandboxProtocolError("The Guest received duplicate initialization.");
 		}
+		let idCompressor: ReturnType<typeof deserializeIdCompressor>;
+		try {
+			// The envelope only checks for a string. Deserialization validates its format.
+			idCompressor = deserializeIdCompressor(
+				message.idCompressor as SerializedIdCompressorWithOngoingSession,
+				SerializationVersion.V3,
+			);
+			// A second root with the same session ID would allocate colliding IDs.
+			if (idCompressor.getShardSyncToken() === undefined) {
+				throw new SandboxProtocolError(
+					"Guest initialization requires a child ID space shard.",
+				);
+			}
+		} catch (error) {
+			throw new SandboxProtocolError("Invalid serialized sandbox ID compressor.", {
+				cause: error,
+			});
+		}
 		const content: ViewContent = {
 			tree: message.tree as ViewContent["tree"],
 			schema: message.schema as ViewContent["schema"],
-			idCompressor: this.idCompressor,
+			idCompressor,
 		};
 		const hostTree = createIndependentTreeCheckout({
 			...this.treeOptions,
@@ -203,6 +202,7 @@ export class GuestImplementation implements Guest {
 				trunkRevision: message.trunkRevision,
 				commits: message.commits,
 			},
+			idCompressor,
 			(protocolMessage) => this.postMessage(protocolMessage),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
@@ -228,20 +228,17 @@ export class GuestImplementation implements Guest {
 			return;
 		}
 		this.disposed = true;
-		this.session.dispose();
-		this.port.removeEventListener("message", this.onMessage);
-		this.port.removeEventListener("messageerror", this.onMessageError);
-		const synchronization = this.#synchronization;
-		synchronization?.dispose();
-
-		// TODO: Support cleanup of already-broken views and invalidation of retained node references.
-
-		// The synchronization leaves the tree alive, making it possible to save or stash unsaved changes.
-		// Currently we do no such thing and just dispose of it, but that could change in the future.
-		synchronization?.checkout.dispose();
+		try {
+			this.session.dispose();
+		} finally {
+			// Even if stopping pending work fails, remove the listeners and release both
+			// checkouts before propagating the error.
+			this.port.removeEventListener("message", this.onMessage);
+			this.port.removeEventListener("messageerror", this.onMessageError);
+			this.#synchronization?.dispose();
+		}
 	}
 
-	/** Terminal failure requiring application-managed Host/Guest recreation, if this session failed. */
 	public get error(): Error | undefined {
 		return this.session.error;
 	}
@@ -252,15 +249,6 @@ export class GuestImplementation implements Guest {
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 
-	/**
-	 * Returns a promise that resolves when the Host acknowledges all changes made on the Guest,
-	 * or undefined if no such changes are in flight.
-	 *
-	 * If new local changes are made while a promise is in progress, the existing promise resolves
-	 * only after the Host acknowledges the new changes too.
-	 * A caller does not need to get the promise again after making new changes while it is pending.
-	 * Pending promises reject on failure or disposal. Access after failure throws.
-	 */
 	public get updateHostPromise(): Promise<void> | undefined {
 		this.session.breaker.use();
 		return this.#synchronization?.updateHostPromise;

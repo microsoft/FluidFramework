@@ -1,5 +1,13 @@
 # @fluid-experimental/last-edited
 
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+Dependency updates only.
+
 ## 3.2.0
 
 Dependency updates only.

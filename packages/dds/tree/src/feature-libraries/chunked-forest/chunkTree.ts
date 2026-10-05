@@ -14,6 +14,7 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
 	type Value,
@@ -60,10 +61,14 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
 		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
-		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+		(
+			type: TreeNodeSchemaIdentifier,
+			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+			chunkerSchema: TreeStoredSchema,
+		) =>
 			tryShapeFromNodeSchema(
 				{
-					schema,
+					schema: chunkerSchema,
 					policy,
 					shouldEncodeIncrementally,
 					shapes,
@@ -108,6 +113,15 @@ export const polymorphic = new Polymorphic();
  */
 export type ShapeInfo = TreeShape | Polymorphic;
 
+/**
+ * A stateful chunking policy that derives and caches tree shapes from stored schema.
+ *
+ * @remarks
+ * Shape information is valid only for the current contents of {@link schema}.
+ * The first cache miss registers one schema-change callback.
+ * When the schema changes, the callback clears the complete cache and unregisters itself.
+ * A later cache miss registers a new callback for the new schema version.
+ */
 export class Chunker implements IChunker {
 	/**
 	 * Cache for information about possible shapes for types.
@@ -116,19 +130,51 @@ export class Chunker implements IChunker {
 	 */
 	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 
+	/**
+	 * Unregisters the schema-change callback for the current cache contents.
+	 *
+	 * This is `undefined` while the cache is empty and no invalidation callback is needed.
+	 * At most one callback is registered at a time.
+	 */
 	private unregisterSchemaCallback: (() => void) | undefined;
 
 	public constructor(
+		/**
+		 * The stored schema from which this chunker derives shape information.
+		 *
+		 * Changes to this schema invalidate all cached shape information.
+		 */
 		public readonly schema: TreeStoredSchemaSubscription,
+		/**
+		 * The schema policy used to interpret {@link schema} when deriving chunk shapes.
+		 */
 		public readonly policy: SchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
 		public readonly uniformChunkNodeCountDynamicTargetMax: number,
-		// eslint-disable-next-line @typescript-eslint/no-shadow
-		private readonly tryShapeFromNodeSchema: (
+		/**
+		 * Derives shape information, which the chunker caches for `type`.
+		 *
+		 * The function can also cache shape information for dependencies that it examines.
+		 * All entries must be derived only from `chunkerSchema`, because the complete map is
+		 * retained until that schema changes.
+		 */
+		private readonly tryShapeWithSchema: (
+			/**
+			 * The node schema identifier for which to derive shape information.
+			 */
 			type: TreeNodeSchemaIdentifier,
+			/**
+			 * The cache for the current schema version.
+			 * The function can add results for other examined types.
+			 */
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+			/**
+			 * The stored schema whose current contents apply to all entries in `shapes`.
+			 * The chunker, not this function, monitors the schema for changes.
+			 */
+			chunkerSchema: TreeStoredSchema,
 		) => ShapeInfo,
 	) {}
 
@@ -142,19 +188,36 @@ export class Chunker implements IChunker {
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
 			this.uniformChunkNodeCountDynamicTargetMax,
-			this.tryShapeFromNodeSchema,
+			this.tryShapeWithSchema,
 		);
 	}
 
 	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
 		const cached = this.typeShapes.get(schema);
 		if (cached !== undefined) {
+			debugAssert(
+				() =>
+					this.unregisterSchemaCallback !== undefined ||
+					"Must not hit cache when invalidation is not set up",
+			);
 			return cached;
 		}
-		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
+		// This is done after the hot path (cache hit case above) as an optimization:
+		// it should always already be set in the cache hit case, so checking it here instead of above avoids a redundant check.
+		this.unregisterSchemaCallback ??= this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
-		return this.tryShapeFromNodeSchema(schema, this.typeShapes);
+		const result = this.tryShapeWithSchema(schema, this.typeShapes, this.schema);
+		// tryShapeWithSchema may have added this item to the cache:
+		// if so, it should be the same as the returned result.
+		debugAssert(
+			() =>
+				!this.typeShapes.has(schema) ||
+				this.typeShapes.get(schema) === result ||
+				"Returned shape does not match cached shape",
+		);
+		this.typeShapes.set(schema, result);
+		return result;
 	}
 
 	public dispose(): void {
@@ -746,7 +809,7 @@ export function tryCoalesceUniformChunks(
 		leftCompressor === undefined ||
 			rightCompressor === undefined ||
 			leftCompressor === rightCompressor,
-		"tryCoalesceUniformChunks: left and right carry different idCompressors",
+		0xd50 /* tryCoalesceUniformChunks: left and right carry different idCompressors */,
 	);
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
 	// Don't merge if the result would exceed the per-chunk node cap: this keeps chunks from

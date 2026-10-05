@@ -4,46 +4,26 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { oob } from "@fluidframework/core-utils/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import {
-	type ISharedObjectHandle,
-	isISharedObjectHandle,
-} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { brand } from "../../../util/index.js";
+import { brand } from "../util/index.js";
 
 import { type HandleToken, isHandleToken, SandboxProtocolError } from "./common.js";
-import { TransportCodec, visitLocalHandles } from "./transport.js";
+import { TransportCodec } from "./transport.js";
 
 /**
  * Owns the handles authorized for one Guest. Entries live until {@link HostTransportCodec.dispose}.
  * Equivalent handle paths share a token; returned tokens restore the original Host handles.
- * {@link HostTransportCodec.bindHandles} is separate from decoding so callers can first validate and apply the change locally.
  */
 export class HostTransportCodec extends TransportCodec {
 	/** Host handles indexed by the token that authorizes Guest access. */
 	private readonly handles: IFluidHandle[] = [];
 	/** Maps each authorized handle path to its stable session-local token. */
 	private readonly tokens = new Map<string, HandleToken>();
-	/** The SharedTree handle used to bind handles returned by the Guest. */
-	private readonly bindingHandle: ISharedObjectHandle;
 	/** Whether this codec has released its session-local handle tables. */
 	private disposed = false;
-
-	/**
-	 * Creates a Host transport codec that binds returned handles to the provided SharedTree.
-	 *
-	 * @param bindingHandle - The SharedTree handle that owns handles returned by the Guest.
-	 */
-	public constructor(bindingHandle: IFluidHandle) {
-		super();
-		const internal = toFluidHandleInternal(bindingHandle);
-		if (!isISharedObjectHandle(internal)) {
-			throw new UsageError("The Host requires a SharedTree handle for binding.");
-		}
-		this.bindingHandle = internal;
-	}
 
 	/**
 	 * Authorizes a Host handle for the Guest and returns its session-local token.
@@ -66,17 +46,6 @@ export class HostTransportCodec extends TransportCodec {
 		return this.getHandle(token);
 	}
 
-	/**
-	 * Binds restored handles only after the receiving code has validated the change.
-	 */
-	public bindHandles(value: unknown): void {
-		const handles = new Set<IFluidHandle>();
-		visitLocalHandles(value, (handle) => handles.add(handle));
-		for (const handle of handles) {
-			this.bindingHandle.bind(toFluidHandleInternal(handle));
-		}
-	}
-
 	/** Throws if this codec has been disposed. */
 	private checkActive(): void {
 		if (this.disposed) {
@@ -90,7 +59,7 @@ export class HostTransportCodec extends TransportCodec {
 		if (!isHandleToken(token) || token >= this.handles.length) {
 			throw new SandboxProtocolError("Unknown sandbox handle token.");
 		}
-		return this.handles[token];
+		return this.handles[token] ?? oob();
 	}
 
 	/**
