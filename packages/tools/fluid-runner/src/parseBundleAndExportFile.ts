@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
-import {
-	type IExportFileResponse,
-	createFluidRunnerContainerAndExecute,
-} from "./exportFile.js";
+import { type IExportFileResponse, createContainerAndExecute } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
 import {
@@ -21,6 +17,7 @@ import {
 } from "./logger/loggerUtils.js";
 /* eslint-enable import-x/no-internal-modules */
 import { getArgsValidationError, getSnapshotFileContent } from "./utils.js";
+import { writeFluidFileConverterOutput } from "./writeFluidFileConverterOutput.js";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 
@@ -84,12 +81,12 @@ export async function parseBundleAndExportFile(
 					return { success: false, eventName, errorMessage: argsValidationError };
 				}
 
-				fs.writeFileSync(
+				writeFluidFileConverterOutput(
 					outputFile,
-					await createFluidRunnerContainerAndExecute(
+					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
-						baseLogger, // Pass baseLogger with ITelemetryBaseLogger type
+						logger,
 						options,
 						timeout,
 						disableNetworkFetch,
