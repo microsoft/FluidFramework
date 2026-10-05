@@ -83,10 +83,14 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				1,
 				0,
-				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+				(
+					type: TreeNodeSchemaIdentifier,
+					shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+					chunkerSchema: TreeStoredSchemaSubscription,
+				) =>
 					tryShapeFromNodeSchema(
 						{
-							schema,
+							schema: chunkerSchema,
 							policy: defaultSchemaPolicy,
 							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 							shapes,
@@ -105,10 +109,14 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				Number.POSITIVE_INFINITY,
 				defaultChunkPolicy.uniformChunkNodeCount,
 				defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
-				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+				(
+					type: TreeNodeSchemaIdentifier,
+					shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+					chunkerSchema: TreeStoredSchemaSubscription,
+				) =>
 					tryShapeFromNodeSchema(
 						{
-							schema,
+							schema: chunkerSchema,
 							policy: defaultSchemaPolicy,
 							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 							shapes,
@@ -127,10 +135,14 @@ const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] =
 				1,
 				defaultChunkPolicy.uniformChunkNodeCount,
 				defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
-				(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+				(
+					type: TreeNodeSchemaIdentifier,
+					shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+					chunkerSchema: TreeStoredSchemaSubscription,
+				) =>
 					tryShapeFromNodeSchema(
 						{
-							schema,
+							schema: chunkerSchema,
 							policy: defaultSchemaPolicy,
 							shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 							shapes,

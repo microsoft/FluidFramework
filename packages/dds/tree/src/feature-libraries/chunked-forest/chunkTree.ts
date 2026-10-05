@@ -60,10 +60,14 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
 		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
-		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+		(
+			type: TreeNodeSchemaIdentifier,
+			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+			chunkerSchema: TreeStoredSchemaSubscription,
+		) =>
 			tryShapeFromNodeSchema(
 				{
-					schema,
+					schema: chunkerSchema,
 					policy,
 					shouldEncodeIncrementally,
 					shapes,
@@ -125,10 +129,10 @@ export class Chunker implements IChunker {
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
 		public readonly uniformChunkNodeCountDynamicTargetMax: number,
-		// eslint-disable-next-line @typescript-eslint/no-shadow
-		private readonly tryShapeFromNodeSchema: (
+		private readonly tryShapeWithSchema: (
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+			chunkerSchema: TreeStoredSchemaSubscription,
 		) => ShapeInfo,
 	) {}
 
@@ -142,7 +146,7 @@ export class Chunker implements IChunker {
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
 			this.uniformChunkNodeCountDynamicTargetMax,
-			this.tryShapeFromNodeSchema,
+			this.tryShapeWithSchema,
 		);
 	}
 
@@ -154,7 +158,7 @@ export class Chunker implements IChunker {
 		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
-		return this.tryShapeFromNodeSchema(schema, this.typeShapes);
+		return this.tryShapeWithSchema(schema, this.typeShapes, this.schema);
 	}
 
 	public dispose(): void {
