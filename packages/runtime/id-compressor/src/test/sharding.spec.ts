@@ -140,8 +140,7 @@ describe("IdCompressor Sharding", () => {
 			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create 2 shards (stride=3)
-			const [{ serialized: child1Ser }, { serialized: child2Ser }] =
-				parent.shard(2);
+			const [{ serialized: child1Ser }, { serialized: child2Ser }] = parent.shard(2);
 			const child1 = IdCompressor.deserialize({
 				serialized: child1Ser,
 				requestedWriteVersion: SerializationVersion.V3,
@@ -184,8 +183,7 @@ describe("IdCompressor Sharding", () => {
 			//   - Parent: localGenCount=3, next generates at 6, 9, 12, ...
 			//   - Child1: localGenCount=4, next generates at 7, 10, 13, ...
 			//   - Child2: localGenCount=5, next generates at 8, 11, 14, ...
-			const [{ serialized: child1Ser }, { serialized: child2Ser }] =
-				parent.shard(2);
+			const [{ serialized: child1Ser }, { serialized: child2Ser }] = parent.shard(2);
 			const child1 = IdCompressor.deserialize({
 				serialized: child1Ser,
 				requestedWriteVersion: SerializationVersion.V3,
@@ -224,8 +222,7 @@ describe("IdCompressor Sharding", () => {
 			//   - Parent: localGenCount=5, next generates at 8, 11, 14, ...
 			//   - Child1: localGenCount=6, next generates at 9, 12, 15, ...
 			//   - Child2: localGenCount=7, next generates at 10, 13, 16, ...
-			const [{ serialized: child1Ser }, { serialized: child2Ser }] =
-				parent.shard(2);
+			const [{ serialized: child1Ser }, { serialized: child2Ser }] = parent.shard(2);
 			const child1 = IdCompressor.deserialize({
 				serialized: child1Ser,
 				requestedWriteVersion: SerializationVersion.V3,
@@ -253,10 +250,8 @@ describe("IdCompressor Sharding", () => {
 			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create 2 shards (stride = 3)
-			const [
-				{ serialized: serializedChild1 },
-				{ serialized: serializedChild2 },
-			] = parent.shard(2);
+			const [{ serialized: serializedChild1 }, { serialized: serializedChild2 }] =
+				parent.shard(2);
 
 			const child1 = IdCompressor.deserialize({
 				serialized: serializedChild1,
@@ -503,11 +498,7 @@ describe("IdCompressor Sharding", () => {
 			const parent = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
 
 			// Create 3 shards
-			const [
-				{ serialized: s1 },
-				{ serialized: s2 },
-				{ serialized: s3 },
-			] = parent.shard(3);
+			const [{ serialized: s1 }, { serialized: s2 }, { serialized: s3 }] = parent.shard(3);
 			const child1 = IdCompressor.deserialize({
 				serialized: s1,
 				requestedWriteVersion: SerializationVersion.V3,
@@ -592,8 +583,7 @@ describe("IdCompressor Sharding", () => {
 
 			// Level 1: Root shards into 2 children (stride=3)
 			// Root at 0, child1 at 1, child2 at 2
-			const [{ serialized: child1Ser }, { serialized: child2Ser }] =
-				root.shard(2);
+			const [{ serialized: child1Ser }, { serialized: child2Ser }] = root.shard(2);
 			const child1 = IdCompressor.deserialize({
 				serialized: child1Ser,
 				requestedWriteVersion: SerializationVersion.V3,
@@ -613,10 +603,7 @@ describe("IdCompressor Sharding", () => {
 
 			// Level 2: Child1 recursively shards into 2 grandchildren (stride becomes 9)
 			// Child1 at 4, grandchild1 at 7, grandchild2 at 10
-			const [
-				{ serialized: grandchild1Ser },
-				{ serialized: grandchild2Ser },
-			] = child1.shard(2);
+			const [{ serialized: grandchild1Ser }, { serialized: grandchild2Ser }] = child1.shard(2);
 			const grandchild1 = IdCompressor.deserialize({
 				serialized: grandchild1Ser,
 				requestedWriteVersion: SerializationVersion.V3,
@@ -1061,8 +1048,7 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(parent.generateCompressedId(), -3);
 
 			// Shard into 3 (stride=3)
-			const [{ serialized: child1Ser }, { serialized: child2Ser }] =
-				parent.shard(2);
+			const [{ serialized: child1Ser }, { serialized: child2Ser }] = parent.shard(2);
 			const child1 = IdCompressor.deserialize({
 				serialized: child1Ser,
 				requestedWriteVersion: SerializationVersion.V3,
@@ -1343,8 +1329,7 @@ describe("IdCompressor Sharding", () => {
 			// disposeShard() returns a sync token whose `disposed` flag is set, so it is a valid
 			// argument to synchronizeWithShard and additionally reclaims the shard's ID space.
 			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
-			const [{ serialized: child1Ser }, { serialized: child2Ser }] =
-				root.shard(2);
+			const [{ serialized: child1Ser }, { serialized: child2Ser }] = root.shard(2);
 			const child1 = deserialize(child1Ser);
 			deserialize(child2Ser); // keep the root a non-leaf so it stays in sharding mode
 
@@ -1467,10 +1452,8 @@ describe("IdCompressor Sharding", () => {
 
 		it("rejects a token for another child or an invalid generation count without changing state", () => {
 			const parent = createIdCompressor(SerializationVersion.V3);
-			const [
-				{ serialized: firstSerialized },
-				{ serialized: secondSerialized },
-			] = parent.shard(2);
+			const [{ serialized: firstSerialized }, { serialized: secondSerialized }] =
+				parent.shard(2);
 			const first = deserialize(firstSerialized);
 			const second = deserialize(secondSerialized);
 			const parentToken = parent.getChildShardSyncToken(first.getShardSyncToken() ?? fail());
