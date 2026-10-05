@@ -1536,6 +1536,125 @@ describe("Runtime", () => {
 				assert.strictEqual(savedEvents, 0, "Must not emit a stale saved transition");
 				assert.deepStrictEqual(opDirtyStates, [false, true, false, true]);
 			});
+
+			it("keeps runtime, DDS, and GC connection state consistent when a saved listener disconnects during reconnect", async () => {
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+
+				const runtimeRef: { current?: ContainerRuntime } = {};
+				let reconnectOnClean = false;
+				let propagatingConnection = false;
+
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						updatePendingOpState: (pending) => {
+							// Mirrors the loader: draining pending ops releases the reconnect barrier,
+							// which synchronously propagates the new connection state to the runtime.
+							if (!pending && reconnectOnClean) {
+								reconnectOnClean = false;
+								propagatingConnection = true;
+								try {
+									assert(
+										runtimeRef.current !== undefined,
+										"Expected the runtime to be loaded",
+									);
+									changeConnectionState(runtimeRef.current, true, mockClientId);
+								} finally {
+									propagatingConnection = false;
+								}
+							}
+						},
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				runtimeRef.current = containerRuntime;
+
+				// Observe what the runtime propagates to its children.
+				const runtimeWithChildren = containerRuntime as unknown as {
+					channelCollection: {
+						setConnectionState(connected: boolean, clientId?: string): void;
+					};
+					garbageCollector: {
+						setConnectionState(connected: boolean, clientId?: string): void;
+					};
+				};
+				const channelStates: boolean[] = [];
+				const gcStates: boolean[] = [];
+				sandbox
+					.stub(runtimeWithChildren.channelCollection, "setConnectionState")
+					.callsFake((connected: boolean) => {
+						channelStates.push(connected);
+					});
+				sandbox
+					.stub(runtimeWithChildren.garbageCollector, "setConnectionState")
+					.callsFake((connected: boolean) => {
+						gcStates.push(connected);
+					});
+
+				// Disconnect with an op still outstanding, as when a reconnect is waiting for ops to drain.
+				changeConnectionState(containerRuntime, false, mockClientId);
+				(containerRuntime as unknown as ContainerRuntimeWithSubmit).submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+				clock.tick(0);
+				await Promise.resolve();
+
+				// The host tears the connection down as soon as the container reports itself saved.
+				let savedCount = 0;
+				let savedDuringPropagation = false;
+				containerRuntime.on("saved", () => {
+					savedCount++;
+					if (propagatingConnection) {
+						savedDuringPropagation = true;
+					}
+					changeConnectionState(containerRuntime, false, mockClientId);
+				});
+
+				reconnectOnClean = true;
+				// Final acknowledgement: drains pending ops and so releases the reconnect.
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+
+				assert.strictEqual(savedCount, 1, "Should emit exactly one saved transition");
+				assert.strictEqual(
+					containerRuntime.connected,
+					false,
+					"The runtime must observe the disconnect requested by the saved listener",
+				);
+				assert.strictEqual(
+					channelStates.at(-1),
+					false,
+					"DDSs must not be left connected after the runtime disconnected",
+				);
+				assert.strictEqual(
+					gcStates.at(-1),
+					false,
+					"GC must not be left connected after the runtime disconnected",
+				);
+				assert.strictEqual(
+					savedDuringPropagation,
+					false,
+					"Must not publish saved while connection state is still propagating",
+				);
+			});
 		});
 
 		describe("Staged changes flag", () => {

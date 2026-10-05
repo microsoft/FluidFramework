@@ -1591,6 +1591,13 @@ export class ContainerRuntime
 	 */
 	private lastOpDirty: boolean;
 	private emitDirtyDocumentEvent = true;
+	/**
+	 * Tracks in-progress pending-op-state notifications.
+	 *
+	 * @remarks Used to defer host-facing dirty-state publication to the outermost notification. See
+	 * {@link ContainerRuntime.publishDirtyState}.
+	 */
+	private readonly pendingOpStateNotificationRunner = new RunCounter();
 	private lastEmittedHasStagedChanges: boolean;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
@@ -3277,6 +3284,13 @@ export class ContainerRuntime
 
 		if (canSendOpsChanged) {
 			this.replayPendingStates();
+			// replayPendingStates() can synchronously reenter this method, e.g. via a host listener
+			// reacting to a dirty-state change by calling disconnect(). The nested call has already
+			// propagated the newer connection state, so continuing here would overwrite it -- and leave
+			// the runtime disagreeing with its children -- using our now-stale argument.
+			if (this.canSendOps !== canSendOps) {
+				return;
+			}
 		}
 
 		this.channelCollection.setConnectionState(canSendOps, clientId);
@@ -5115,19 +5129,35 @@ export class ContainerRuntime
 		}
 
 		if (opDirtyChanged) {
-			// This callback can synchronously release reconnect waiters and raise "connected", whose
-			// listeners may submit another op and reenter this method. Keep the public dirty cache
-			// unchanged until after the callback so nested work cannot produce a stale transition.
-			this.updatePendingOpState?.(opDirty);
-			if (this.lastOpDirty !== opDirty) {
-				return;
-			}
-			if (!opDirty) {
-				this.internalEvents.emit("opsSaved");
-				if (this.lastOpDirty !== opDirty) {
-					return;
+			// These notifications can synchronously release reconnect waiters and raise "connected",
+			// whose listeners may submit another op and reenter this method. Track the nesting so only
+			// the outermost notification publishes host-facing dirty state.
+			this.pendingOpStateNotificationRunner.run(() => {
+				this.updatePendingOpState?.(opDirty);
+				// Only announce drained ops if that is still true after the callback above, which may
+				// have reentered this method and made the container dirty again.
+				if (!opDirty && this.lastOpDirty === opDirty) {
+					this.internalEvents.emit("opsSaved");
 				}
-			}
+			});
+		}
+
+		this.publishDirtyState();
+	}
+
+	/**
+	 * Emit "dirty" or "saved" if host-facing dirty state has changed since the last emit.
+	 *
+	 * @remarks Publication is deferred while a pending-op-state notification is in progress. Such a
+	 * notification can synchronously drive a full connection-state propagation, and publishing from
+	 * inside one lets a listener (e.g. a host calling disconnect() on "saved") reenter that propagation,
+	 * which the interrupted outer frame would then overwrite with its stale state. Nested pending-op-state
+	 * updates still take effect immediately; only the host-facing event is deferred, and the outermost
+	 * frame publishes whatever state is current once nesting unwinds.
+	 */
+	private publishDirtyState(): void {
+		if (this.pendingOpStateNotificationRunner.running) {
+			return;
 		}
 
 		const dirty = this.computeCurrentDirtyState();
