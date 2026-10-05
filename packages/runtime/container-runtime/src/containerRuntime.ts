@@ -591,6 +591,16 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 const defaultStagingCommitOptions = { squash: false };
 
 /**
+ * Events raised by the ContainerRuntime for its own internal use.
+ */
+interface IContainerRuntimeInternalEvents {
+	/**
+	 * Raised when the container transitions from having pending local operations to having none.
+	 */
+	opsSaved: () => void;
+}
+
+/**
  * State saved when the container closes, to be given back to a newly
  * instantiated runtime in a new instance of the container, so it can load to the
  * same state
@@ -1573,12 +1583,35 @@ export class ContainerRuntime
 	}
 
 	private lastEmittedDirty: boolean;
+	/**
+	 * The op-only portion of dirty state as of the last evaluation.
+	 *
+	 * @remarks Tracked separately from {@link ContainerRuntime.lastEmittedDirty} so internal consumers
+	 * that specifically care about operation acknowledgement do not depend on the host-facing aggregate.
+	 */
+	private lastOpDirty: boolean;
 	private emitDirtyDocumentEvent = true;
+	/**
+	 * Tracks in-progress pending-op-state notifications.
+	 *
+	 * @remarks Used to defer host-facing dirty-state publication to the outermost notification. See
+	 * {@link ContainerRuntime.publishDirtyState}.
+	 */
+	private readonly pendingOpStateNotificationRunner = new RunCounter();
 	private lastEmittedHasStagedChanges: boolean;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
 	private readonly signalTelemetryManager = new SignalTelemetryManager();
+
+	private readonly internalEvents = createEmitter<IContainerRuntimeInternalEvents>();
+
+	/**
+	 * Reports op-only dirty state to loaders that can keep it separate from host-facing dirty state.
+	 */
+	private readonly updatePendingOpState:
+		| IContainerContextInternal["updatePendingOpState"]
+		| undefined;
 
 	/**
 	 * Summarizer is responsible for coordinating when to send generate and send summaries.
@@ -1736,6 +1769,7 @@ export class ContainerRuntime
 			getConnectionState,
 		} = context;
 
+		this.updatePendingOpState = (context as IContainerContextInternal).updatePendingOpState;
 		this.getConnectionState = getConnectionState;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
@@ -2306,6 +2340,8 @@ export class ContainerRuntime
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
+		this.lastOpDirty = this.computeCurrentOpDirtyState();
+		this.updatePendingOpState?.(this.lastOpDirty);
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
 
@@ -3002,6 +3038,7 @@ export class ContainerRuntime
 		// So temporarily disable dirty state change events, and save the old state.
 		// When we're done, we'll emit the event if the state changed.
 		const oldState = this.lastEmittedDirty;
+		const oldOpState = this.lastOpDirty;
 		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
 		this.emitDirtyDocumentEvent = false;
 
@@ -3016,6 +3053,7 @@ export class ContainerRuntime
 		} finally {
 			// Restore the old state, re-enable event emit
 			this.lastEmittedDirty = oldState;
+			this.lastOpDirty = oldOpState;
 			this.emitDirtyDocumentEvent = true;
 		}
 
@@ -3246,6 +3284,13 @@ export class ContainerRuntime
 
 		if (canSendOpsChanged) {
 			this.replayPendingStates();
+			// replayPendingStates() can synchronously reenter this method, e.g. via a host listener
+			// reacting to a dirty-state change by calling disconnect(). The nested call has already
+			// propagated the newer connection state, so continuing here would overwrite it -- and leave
+			// the runtime disagreeing with its children -- using our now-stale argument.
+			if (this.canSendOps !== canSendOps) {
+				return;
+			}
 		}
 
 		this.channelCollection.setConnectionState(canSendOps, clientId);
@@ -4179,11 +4224,26 @@ export class ContainerRuntime
 	 * Returns true if the container is dirty: not attached, or has pending user messages (ignores "non-dirtyable" ones though)
 	 */
 	private computeCurrentDirtyState(): boolean {
+		return this.computeCurrentOpDirtyState();
+	}
+
+	/**
+	 * Returns the operation-only portion of dirty state: not attached, or has pending user messages
+	 * (ignoring non-dirtyable messages).
+	 */
+	private computeCurrentOpDirtyState(): boolean {
 		return (
 			this.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingUserChanges() ||
 			this.outbox.containsUserChanges()
 		);
+	}
+
+	/**
+	 * The op-only portion of dirty state as of the last evaluation.
+	 */
+	private get isOpDirty(): boolean {
+		return this.lastOpDirty;
 	}
 
 	/**
@@ -4645,32 +4705,40 @@ export class ContainerRuntime
 			);
 		}
 
-		// If the container is dirty, i.e., there are pending unacked ops, the summary will not be eventual consistent
-		// and it may even be incorrect. So, wait for the container to be saved with a timeout. If the container is not
-		// saved within the timeout, check if it should be failed or can continue.
-		if (this.isDirty) {
+		// Pending unacknowledged operations can make the summary inconsistent. Wait for the op-only state
+		// to become saved rather than coupling summarization to the host-facing aggregate dirty state.
+		if (this.isOpDirty) {
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
 				this.mc.config.getNumber("Fluid.Summarizer.waitForPendingOpsTimeoutMs") ??
 				defaultPendingOpsWaitTimeoutMs;
 			await new Promise<void>((resolve, reject) => {
-				const timeoutId = setTimeout(() => resolve(), pendingOpsTimeout);
-				this.once("saved", () => {
-					clearTimeout(timeoutId);
+				const timeoutId = setTimeout(() => {
+					cleanup();
+					resolve();
+				}, pendingOpsTimeout);
+				const offOpsSaved = this.internalEvents.on("opsSaved", () => {
+					cleanup();
 					resolve();
 				});
-				this.once("dispose", () => {
-					clearTimeout(timeoutId);
+				const onDispose = (): void => {
+					cleanup();
 					reject(new Error("Runtime is disposed while summarizing"));
-				});
+				};
+				const cleanup = (): void => {
+					clearTimeout(timeoutId);
+					offOpsSaved();
+					this.off("dispose", onDispose);
+				};
+				this.once("dispose", onDispose);
 			});
 
 			// Log that there are pending ops while summarizing. This will help us gather data on how often this
 			// happens, whether we attempted to wait for these ops to be acked and what was the result.
 			summaryNumberLogger.sendTelemetryEvent({
 				eventName: "PendingOpsWhileSummarizing",
-				saved: !this.isDirty,
+				saved: !this.isOpDirty,
 				timeout: pendingOpsTimeout,
 				countBefore,
 				countAfter: this.pendingMessagesCount,
@@ -4972,9 +5040,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * This helper is called during summarization. If the container is dirty, it will return a failed summarize result
-	 * (IBaseSummarizeResult) unless this is the final summarize attempt, in which case the summary is allowed to
-	 * proceed to make progress in documents where there are consistently pending ops in the summarizer.
+	 * This helper is called during summarization. If there are pending unacknowledged operations, it will
+	 * return a failed summarize result (IBaseSummarizeResult) unless this is the final summarize attempt,
+	 * in which case the summary is allowed to proceed to make progress.
 	 * @param logger - The logger to be used for sending telemetry.
 	 * @param referenceSequenceNumber - The reference sequence number of the summary attempt.
 	 * @param minimumSequenceNumber - The minimum sequence number of the summary attempt.
@@ -4989,7 +5057,7 @@ export class ContainerRuntime
 		finalAttempt: boolean,
 		beforeSummaryGeneration: boolean,
 	): Promise<IBaseSummarizeResult | undefined> {
-		if (!this.isDirty) {
+		if (!this.isOpDirty) {
 			return;
 		}
 
@@ -5051,13 +5119,51 @@ export class ContainerRuntime
 	 * But those events don't exist so we manually call this wherever we know those changes happen.
 	 */
 	private updateDocumentDirtyState(): void {
-		const dirty: boolean = this.computeCurrentDirtyState();
+		const opDirty = this.computeCurrentOpDirtyState();
+		const opDirtyChanged = this.lastOpDirty !== opDirty;
+		this.lastOpDirty = opDirty;
 
+		if (!this.emitDirtyDocumentEvent) {
+			this.lastEmittedDirty = opDirty;
+			return;
+		}
+
+		if (opDirtyChanged) {
+			// These notifications can synchronously release reconnect waiters and raise "connected",
+			// whose listeners may submit another op and reenter this method. Track the nesting so only
+			// the outermost notification publishes host-facing dirty state.
+			this.pendingOpStateNotificationRunner.run(() => {
+				this.updatePendingOpState?.(opDirty);
+				// Only announce drained ops if that is still true after the callback above, which may
+				// have reentered this method and made the container dirty again.
+				if (!opDirty && this.lastOpDirty === opDirty) {
+					this.internalEvents.emit("opsSaved");
+				}
+			});
+		}
+
+		this.publishDirtyState();
+	}
+
+	/**
+	 * Emit "dirty" or "saved" if host-facing dirty state has changed since the last emit.
+	 *
+	 * @remarks Publication is deferred while a pending-op-state notification is in progress. Such a
+	 * notification can synchronously drive a full connection-state propagation, and publishing from
+	 * inside one lets a listener (e.g. a host calling disconnect() on "saved") reenter that propagation,
+	 * which the interrupted outer frame would then overwrite with its stale state. Nested pending-op-state
+	 * updates still take effect immediately; only the host-facing event is deferred, and the outermost
+	 * frame publishes whatever state is current once nesting unwinds.
+	 */
+	private publishDirtyState(): void {
+		if (this.pendingOpStateNotificationRunner.running) {
+			return;
+		}
+
+		const dirty = this.computeCurrentDirtyState();
 		if (this.lastEmittedDirty !== dirty) {
 			this.lastEmittedDirty = dirty;
-			if (this.emitDirtyDocumentEvent) {
-				this.emit(dirty ? "dirty" : "saved");
-			}
+			this.emit(dirty ? "dirty" : "saved");
 		}
 	}
 

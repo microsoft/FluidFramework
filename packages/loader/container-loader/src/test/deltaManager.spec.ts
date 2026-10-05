@@ -75,6 +75,7 @@ describe("Loader", () => {
 						new ConnectionManager(
 							() => service,
 							() => false,
+							() => false,
 							client as IClient,
 							reconnectAllowed,
 							dmLogger,

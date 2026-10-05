@@ -281,9 +281,10 @@ describe("Runtime", () => {
 			baseSnapshot?: ISnapshotTree;
 			connected?: boolean;
 			attachState?: AttachState;
+			updatePendingOpState?: (pending: boolean) => void;
 		} = {},
 		clientId: string = mockClientId,
-	): Partial<IContainerContext> => {
+	): Partial<IContainerContextInternal> => {
 		const {
 			settings = {},
 			logger = new MockLogger(),
@@ -292,6 +293,7 @@ describe("Runtime", () => {
 			baseSnapshot,
 			connected = true,
 			attachState = AttachState.Attached,
+			updatePendingOpState = (_pending: boolean): void => {},
 		} = params;
 
 		const mockContext = {
@@ -303,6 +305,7 @@ describe("Runtime", () => {
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
+			updatePendingOpState,
 			getLoadedFromVersion: () => loadedFromVersion,
 			submitFn: (
 				_type: MessageType,
@@ -325,7 +328,7 @@ describe("Runtime", () => {
 			connected,
 			storage: mockStorage as IContainerStorageService,
 			baseSnapshot,
-		} satisfies Partial<IContainerContext>;
+		} satisfies Partial<IContainerContextInternal>;
 
 		// Update the delta manager's last message which is used for validation during summarization.
 		mockContext.deltaManager.lastMessage = {
@@ -1402,6 +1405,255 @@ describe("Runtime", () => {
 				});
 				assert.deepStrictEqual(updateDirtyStateStub.calledOnce, true);
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[true]]);
+			});
+
+			it("reports op-only transitions and orders clean notifications", async () => {
+				const opDirtyStates: boolean[] = [];
+				const notifications: string[] = [];
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						updatePendingOpState: (pending) => {
+							opDirtyStates.push(pending);
+							notifications.push(`pending:${pending}`);
+						},
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				assert.deepStrictEqual(opDirtyStates, [false], "Expected the initial op state");
+
+				type RuntimeWithDirtyInternals = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+					internalEvents: {
+						on(event: "opsSaved", listener: () => void): () => void;
+					};
+				};
+				const runtimeWithInternals = containerRuntime as unknown as RuntimeWithDirtyInternals;
+				runtimeWithInternals.submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+				clock.tick(0);
+				await Promise.resolve();
+				assert.deepStrictEqual(opDirtyStates, [false, true]);
+
+				const offOpsSaved = runtimeWithInternals.internalEvents.on("opsSaved", () => {
+					notifications.push("opsSaved");
+				});
+				containerRuntime.on("saved", () => {
+					notifications.push("saved");
+				});
+				notifications.length = 0;
+
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+
+				assert.deepStrictEqual(opDirtyStates, [false, true, false]);
+				assert.deepStrictEqual(notifications, ["pending:false", "opsSaved", "saved"]);
+				offOpsSaved();
+			});
+
+			it("does not emit saved when an op-state callback synchronously submits new work", async () => {
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+
+				const runtimeRef: { current?: ContainerRuntime } = {};
+				let submitOnClean = false;
+				const opDirtyStates: boolean[] = [];
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						updatePendingOpState: (pending) => {
+							opDirtyStates.push(pending);
+							if (!pending && submitOnClean) {
+								submitOnClean = false;
+								assert(runtimeRef.current !== undefined, "Expected the runtime to be loaded");
+								(runtimeRef.current as unknown as ContainerRuntimeWithSubmit).submit(
+									{ type: ContainerMessageType.Rejoin, contents: undefined },
+									undefined,
+									undefined,
+								);
+							}
+						},
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				runtimeRef.current = containerRuntime;
+
+				let dirtyEvents = 0;
+				let savedEvents = 0;
+				containerRuntime.on("dirty", () => dirtyEvents++);
+				containerRuntime.on("saved", () => savedEvents++);
+
+				(containerRuntime as unknown as ContainerRuntimeWithSubmit).submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+				clock.tick(0);
+				await Promise.resolve();
+				submitOnClean = true;
+
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					true,
+					"The reentrant op must replace the acknowledged op without a clean interval",
+				);
+				assert.strictEqual(dirtyEvents, 1, "Should not emit a duplicate dirty transition");
+				assert.strictEqual(savedEvents, 0, "Must not emit a stale saved transition");
+				assert.deepStrictEqual(opDirtyStates, [false, true, false, true]);
+			});
+
+			it("keeps runtime, DDS, and GC connection state consistent when a saved listener disconnects during reconnect", async () => {
+				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+					submit(
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
+						localOpMetadata: unknown,
+						metadata: Record<string, unknown> | undefined,
+					): void;
+				};
+
+				const runtimeRef: { current?: ContainerRuntime } = {};
+				let reconnectOnClean = false;
+				let propagatingConnection = false;
+
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({
+						updatePendingOpState: (pending) => {
+							// Mirrors the loader: draining pending ops releases the reconnect barrier,
+							// which synchronously propagates the new connection state to the runtime.
+							if (!pending && reconnectOnClean) {
+								reconnectOnClean = false;
+								propagatingConnection = true;
+								try {
+									assert(
+										runtimeRef.current !== undefined,
+										"Expected the runtime to be loaded",
+									);
+									changeConnectionState(runtimeRef.current, true, mockClientId);
+								} finally {
+									propagatingConnection = false;
+								}
+							}
+						},
+					}) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				runtimeRef.current = containerRuntime;
+
+				// Observe what the runtime propagates to its children.
+				const runtimeWithChildren = containerRuntime as unknown as {
+					channelCollection: {
+						setConnectionState(connected: boolean, clientId?: string): void;
+					};
+					garbageCollector: {
+						setConnectionState(connected: boolean, clientId?: string): void;
+					};
+				};
+				const channelStates: boolean[] = [];
+				const gcStates: boolean[] = [];
+				sandbox
+					.stub(runtimeWithChildren.channelCollection, "setConnectionState")
+					.callsFake((connected: boolean) => {
+						channelStates.push(connected);
+					});
+				sandbox
+					.stub(runtimeWithChildren.garbageCollector, "setConnectionState")
+					.callsFake((connected: boolean) => {
+						gcStates.push(connected);
+					});
+
+				// Disconnect with an op still outstanding, as when a reconnect is waiting for ops to drain.
+				changeConnectionState(containerRuntime, false, mockClientId);
+				(containerRuntime as unknown as ContainerRuntimeWithSubmit).submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+				clock.tick(0);
+				await Promise.resolve();
+
+				// The host tears the connection down as soon as the container reports itself saved.
+				let savedCount = 0;
+				let savedDuringPropagation = false;
+				containerRuntime.on("saved", () => {
+					savedCount++;
+					if (propagatingConnection) {
+						savedDuringPropagation = true;
+					}
+					changeConnectionState(containerRuntime, false, mockClientId);
+				});
+
+				reconnectOnClean = true;
+				// Final acknowledgement: drains pending ops and so releases the reconnect.
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+
+				assert.strictEqual(savedCount, 1, "Should emit exactly one saved transition");
+				assert.strictEqual(
+					containerRuntime.connected,
+					false,
+					"The runtime must observe the disconnect requested by the saved listener",
+				);
+				assert.strictEqual(
+					channelStates.at(-1),
+					false,
+					"DDSs must not be left connected after the runtime disconnected",
+				);
+				assert.strictEqual(
+					gcStates.at(-1),
+					false,
+					"GC must not be left connected after the runtime disconnected",
+				);
+				assert.strictEqual(
+					savedDuringPropagation,
+					false,
+					"Must not publish saved while connection state is still propagating",
+				);
 			});
 		});
 
