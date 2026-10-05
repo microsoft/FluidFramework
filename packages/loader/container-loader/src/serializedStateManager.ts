@@ -164,7 +164,7 @@ export type ISerializedStateManagerDocumentStorageService = Pick<
 };
 
 interface ISerializerEvent extends IEvent {
-	(event: "saved", listener: (dirty: boolean) => void): void;
+	(event: "saved", listener: () => void): void;
 }
 
 /**
@@ -172,7 +172,7 @@ interface ISerializerEvent extends IEvent {
  *
  * It holds the pendingLocalState the container was rehydrated from (if any),
  * as well as the snapshot to be used for serialization.
- * It also keeps track of container dirty state and which local ops have been processed
+ * It also keeps track of pending operation state and which local ops have been processed.
  */
 export class SerializedStateManager implements IDisposable {
 	private readonly processedOps: ISequencedDocumentMessage[] = [];
@@ -187,8 +187,9 @@ export class SerializedStateManager implements IDisposable {
 	 * @param subLogger - Container's logger to use as parent for our logger
 	 * @param storageAdapter - Storage adapter for fetching snapshots
 	 * @param offlineLoadEnabled - Is serializing/rehydrating containers allowed?
-	 * @param containerEvent - Source of the "saved" event when the container has all its pending state uploaded
-	 * @param containerDirty - Is the container "dirty"? That's the opposite of "saved" - there is pending state that may not have been received yet by the service.
+	 * @param containerEvent - Source of the "saved" event when the container has no pending operations.
+	 * @param containerDirty - Whether local operations may not have been received by the service yet.
+	 * Non-op work is excluded because it cannot leave pending operations behind a newer snapshot.
 	 */
 	constructor(
 		subLogger: ITelemetryBaseLogger,

@@ -32,6 +32,7 @@ import {
 	MockLogger,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
+import { stub } from "sinon";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
@@ -208,6 +209,122 @@ describe("Container close/dispose telemetry", () => {
 });
 
 describe("Container", () => {
+	/* eslint-disable @typescript-eslint/dot-notation -- Exercise private loader callbacks without loading a runtime. */
+	describe("pending operation state", () => {
+		let container: Container;
+		let logger: MockLogger;
+		let notifications: string[];
+
+		beforeEach(() => {
+			logger = new MockLogger();
+			container = createTestContainer(logger);
+			notifications = [];
+			container.on("dirty", () => notifications.push("dirty"));
+			container.on("saved", () => notifications.push("saved"));
+			container["pendingOpStateEvents"].on("saved", () =>
+				notifications.push("pendingOpsSaved"),
+			);
+		});
+
+		afterEach(() => {
+			container.dispose();
+		});
+
+		it("mirrors older runtime dirty reports without duplicate notifications", () => {
+			const connectionManager = container["_deltaManager"].connectionManager;
+			stub(container["connectionStateHandler"], "containerSaved").callsFake(() => {
+				assert.strictEqual(container.isDirty, true);
+				notifications.push("reconnect");
+			});
+			container.on("dirty", () => assert.strictEqual(connectionManager.hasPendingOps(), true));
+
+			container["updateDirtyContainerState"](true);
+			container["updateDirtyContainerState"](true);
+			assert.strictEqual(container.isDirty, true);
+			assert.strictEqual(connectionManager.hasPendingOps(), true);
+
+			container["updateDirtyContainerState"](false);
+			container["updateDirtyContainerState"](false);
+			assert.strictEqual(container.isDirty, false);
+			assert.strictEqual(connectionManager.hasPendingOps(), false);
+			assert.deepEqual(notifications, ["dirty", "reconnect", "pendingOpsSaved", "saved"]);
+		});
+
+		it("stops mirroring after the first explicit pending-op report, even if it is clean", () => {
+			container["updatePendingOpState"](false);
+			container["updateDirtyContainerState"](true);
+			assert.strictEqual(container.isDirty, true);
+			assert.strictEqual(container["_deltaManager"].connectionManager.hasPendingOps(), false);
+			assert.strictEqual(container["_deltaManager"].connectionManager.shouldJoinWrite(), true);
+
+			container["updateDirtyContainerState"](false);
+			assert.deepEqual(notifications, ["dirty", "saved"]);
+		});
+
+		it("notifies internal consumers when ops are saved while the host stays dirty", () => {
+			const reconnect = stub(container["connectionStateHandler"], "containerSaved");
+			container["updatePendingOpState"](true);
+			assert.strictEqual(
+				container.isDirty,
+				false,
+				"The runtime reports host state separately",
+			);
+			container["updateDirtyContainerState"](true);
+
+			container["updatePendingOpState"](false);
+			container["updatePendingOpState"](false);
+			assert.strictEqual(reconnect.callCount, 1);
+			assert.strictEqual(container.isDirty, true);
+			assert.strictEqual(container["_deltaManager"].connectionManager.hasPendingOps(), false);
+			assert.deepEqual(notifications, ["dirty", "pendingOpsSaved"]);
+
+			container["updateDirtyContainerState"](false);
+			assert.strictEqual(reconnect.callCount, 1);
+			assert.deepEqual(notifications, ["dirty", "pendingOpsSaved", "saved"]);
+		});
+
+		it("advances the pending-state snapshot without a public saved event", () => {
+			container["updatePendingOpState"](true);
+			container["updateDirtyContainerState"](true);
+			const serializedStateManager = container["serializedStateManager"];
+			serializedStateManager.addProcessedOp(
+				failSometimeProxy<ISequencedDocumentMessage>({ sequenceNumber: 1 }),
+			);
+			const snapshot = {
+				snapshotSequenceNumber: 1,
+				snapshot: { blobs: {}, trees: {} },
+			};
+			assert.strictEqual(serializedStateManager["handleSnapshotRefreshed"](snapshot), -1);
+			assert.strictEqual(serializedStateManager["snapshotInfo"], undefined);
+
+			container["updatePendingOpState"](false);
+			assert.strictEqual(serializedStateManager["snapshotInfo"], snapshot);
+			logger.assertMatchAny([{ eventName: "serializedStateManager:SnapshotRefreshed" }]);
+			assert.strictEqual(container.isDirty, true);
+			assert.deepEqual(notifications, ["dirty", "pendingOpsSaved"]);
+		});
+
+		for (const separatePendingOpState of [false, true]) {
+			it(`does not emit stale saved events after a reentrant op (separate state: ${separatePendingOpState})`, () => {
+				const reportPending = separatePendingOpState
+					? container["updatePendingOpState"]
+					: container["updateDirtyContainerState"];
+				reportPending(true);
+				container["updateDirtyContainerState"](true);
+				stub(container["connectionStateHandler"], "containerSaved").callsFake(() => {
+					reportPending(true);
+					container["updateDirtyContainerState"](true);
+				});
+
+				reportPending(false);
+				assert.strictEqual(container.isDirty, true);
+				assert.strictEqual(container["_deltaManager"].connectionManager.hasPendingOps(), true);
+				assert.deepEqual(notifications, ["dirty"]);
+			});
+		}
+	});
+	/* eslint-enable @typescript-eslint/dot-notation */
+
 	describe("waitContainerToCatchUp", () => {
 		it("Closed Container fails", async () => {
 			const mockContainer = new MockContainer();
