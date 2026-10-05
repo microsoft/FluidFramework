@@ -30,11 +30,8 @@ import type {
 	ImplicitFieldSchema,
 	TreeViewAlpha,
 	TreeViewBeta,
-	ITreeAlpha,
 	ViewableTree,
-	TreeView,
-	VerboseTree,
-	SimpleTreeSchema,
+	ViewableTreeAlpha,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatibleReadOnly,
@@ -44,6 +41,7 @@ import {
 } from "../util/index.js";
 
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
+import { createViewableTreeAlpha } from "./viewableTree.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
@@ -248,7 +246,7 @@ export function createIndependentTreeBeta<const Unused = unknown>(
  * If content is provided, the idCompressor is a required part of it: otherwise it is optional and provided at the top level.
  *
  * @privateRemarks
- * TODO: Support more of {@link ITreeAlpha}, including branching APIs to allow for merges.
+ * TODO: Support branching APIs from {@link ITreeAlpha} to allow for merges.
  * TODO: Better unify this logic with SharedTreeKernel and SharedTreeCore.
  *
  * Before further stabilizing: consider better ways to handle initialized vs uninitialized trees.
@@ -258,25 +256,9 @@ export function createIndependentTreeBeta<const Unused = unknown>(
  */
 export function createIndependentTreeAlpha(
 	options?: CreateIndependentTreeAlphaOptions,
-): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
+): ViewableTreeAlpha {
 	const checkout = createIndependentTreeCheckout(options);
-
-	return {
-		viewWith<TRoot extends ImplicitFieldSchema>(
-			config: TreeViewConfiguration<TRoot>,
-		): TreeView<TRoot> {
-			const out: TreeViewAlpha<TRoot> = checkout.viewWith(config);
-			return out as TreeView<TRoot>;
-		},
-
-		exportVerbose(): VerboseTree | undefined {
-			return checkout.exportVerbose();
-		},
-
-		exportSimpleSchema(): SimpleTreeSchema {
-			return exportSimpleSchema(checkout.storedSchema);
-		},
-	};
+	return createViewableTreeAlpha(checkout, () => exportSimpleSchema(checkout.storedSchema));
 }
 
 /**

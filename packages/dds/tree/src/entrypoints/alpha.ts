@@ -310,6 +310,7 @@ export {
 	VerboseTree, 
 	VerboseTreeNode, 
 	ViewContent, 
+	ViewableTreeAlpha,
 	VoidTransactionCallbackStatusAlpha, 
 	allowUnused, 
 	asAlpha, 

@@ -161,6 +161,9 @@ export interface ArrayPlaceAnchor {
 export function asAlpha(tree: ITree): ITreeAlpha;
 
 // @alpha
+export function asAlpha(tree: ViewableTree): ViewableTreeAlpha;
+
+// @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
@@ -321,7 +324,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T>;
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
-export function createIndependentTreeAlpha(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+export function createIndependentTreeAlpha(options?: CreateIndependentTreeAlphaOptions): ViewableTreeAlpha;
 
 // @alpha
 export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & ((IndependentViewOptions & {
@@ -1252,10 +1255,8 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 }
 
 // @alpha @sealed
-export interface ITreeAlpha extends ITree {
+export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
     createSharedBranch(name?: string): string;
-    exportSimpleSchema(): SimpleTreeSchema;
-    exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
@@ -2993,6 +2994,12 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 // @public @sealed @system
 export interface ViewableTree {
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+}
+
+// @alpha @sealed
+export interface ViewableTreeAlpha extends ViewableTree {
+    exportSimpleSchema(): SimpleTreeSchema;
+    exportVerbose(): VerboseTree | undefined;
 }
 
 // @alpha

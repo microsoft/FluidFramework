@@ -72,6 +72,7 @@ export {
 	IterableTreeArrayContent,
 	TreeNode,
 	type ViewableTree,
+	type ViewableTreeAlpha,
 	type ITree,
 	type TreeNodeSchema,
 	TreeViewConfiguration,
