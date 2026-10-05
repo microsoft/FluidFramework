@@ -20,6 +20,7 @@ export function createResults(inventory) {
 		tenants[tenantId] = {
 			selfHostTenantId: tenant.selfHostTenantId || tenantId,
 			successful: [],
+			warnings: [],
 			failed: [],
 		};
 	}
@@ -30,6 +31,14 @@ export function recordSuccess(results, tenantId, documentId, selfHostDocumentId)
 	results.tenants[tenantId].successful.push({
 		documentId,
 		...(selfHostDocumentId === undefined ? {} : { selfHostDocumentId }),
+	});
+}
+
+export function recordWarning(results, tenantId, documentId, warning) {
+	results.tenants[tenantId].warnings.push({
+		documentId,
+		message: warning.message,
+		...(typeof warning.status === "number" ? { httpStatus: warning.status } : {}),
 	});
 }
 

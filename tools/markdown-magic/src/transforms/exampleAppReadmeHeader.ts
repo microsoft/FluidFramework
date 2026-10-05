@@ -19,12 +19,14 @@ export const exampleAppReadmeHeaderTransform: Transform = transform(
 		...headingLevelSchema,
 		gettingStarted: { type: "boolean", default: true },
 		usesTinylicious: { type: "boolean", default: true },
+		serviceClient: { type: "boolean", default: false },
 	},
 	async (options, context) =>
 		options.gettingStarted
 			? generateGettingStarted(
 					await readPackage(context, options),
 					options.usesTinylicious,
+					options.serviceClient,
 					{ includeHeading: true },
 					context,
 				)

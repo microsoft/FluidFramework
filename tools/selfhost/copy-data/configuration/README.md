@@ -11,6 +11,8 @@ tenant's `key2`.
   `document-inventory.json` output. Its `errors` collection must be empty.
 - A deployed self-hosted environment. Record its Historian endpoint,
   subscription ID, resource group, and AKS name in the copy configuration.
+- The self-hosted Alfred deployment must set `alfred.enforceServerGeneratedDocumentId`
+  to `false`. When documents are copied, the existing `documentId` is used.
 
 ## Commands
 

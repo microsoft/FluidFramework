@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/replay-driver",
-	"version": "3.2.0",
+	"version": "3.5.0",
 	"description": "Document replay version of Socket.IO implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -72,7 +72,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@2.116.0",
+		"@fluidframework/replay-driver-previous": "npm:@fluidframework/replay-driver@3.3.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/nock": "^9.3.0",
 		"@types/node": "catalog:types",
@@ -82,14 +82,10 @@
 		"jiti": "^2.6.1",
 		"nock": "^13.3.3",
 		"rimraf": "^6.1.3",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_ReplayDocumentServiceFactory": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "internal"
 	}
 }

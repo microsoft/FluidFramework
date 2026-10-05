@@ -12,6 +12,7 @@ import {
 	RESULTS_FILE_NAME,
 	createResults,
 	recordSuccess,
+	recordWarning,
 	writeStageResults,
 } from "./results.mjs";
 
@@ -20,12 +21,21 @@ test("writes a stage result without replacing prior stages", async () => {
 	try {
 		const results = createResults({ tenants: { source: { documents: ["document"] } } });
 		recordSuccess(results, "source", "document");
+		recordWarning(results, "source", "existing-document", {
+			message: "The self-hosted document already exists",
+		});
 		await writeStageResults(directory, "document-copy", results);
 		await writeStageResults(directory, "mongodb-data", { tenants: {} });
 
 		const saved = JSON.parse(await readFile(path.join(directory, RESULTS_FILE_NAME), "utf8"));
 		assert.deepEqual(saved.stages["document-copy"].tenants.source.successful, [
 			{ documentId: "document" },
+		]);
+		assert.deepEqual(saved.stages["document-copy"].tenants.source.warnings, [
+			{
+				documentId: "existing-document",
+				message: "The self-hosted document already exists",
+			},
 		]);
 		assert.deepEqual(saved.stages["mongodb-data"], { tenants: {} });
 	} finally {

@@ -7,7 +7,7 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["chai", "mocha"],
+		"types": ["chai", "mocha", "node"],
 		"noImplicitAny": true,
 		"noUnusedLocals": true,
 		"noImplicitOverride": true,

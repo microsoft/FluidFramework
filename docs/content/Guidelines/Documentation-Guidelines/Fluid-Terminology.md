@@ -17,6 +17,20 @@ This document outlines common dos and don'ts regarding our terminology.
 
 - "Fluid service", not "Fluid server"
 
+### Schema
+
+When referring to a data structure, use "schema" as the singular noun and "schemas" as the plural noun.
+
+- Correct: "a schema", "two schemas", "schemas are compatible", "a collection of schemas"
+- Incorrect: "two schema", "schema are compatible", "a collection of schema"
+
+Keep "schema" singular when it modifies another noun:
+
+- "schema types"
+- "schema definitions"
+- "schema changes"
+- "schema compatibility"
+
 ## Casing
 
 - "Container code" - not "Container Code"

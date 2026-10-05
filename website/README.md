@@ -13,6 +13,38 @@ If you don't have `pnpm` installed, you will need to do so first.
 pnpm i
 ```
 
+## DOMPurify browser script
+
+`static/dompurify/purify.min.js` is a checked-in copy of DOMPurify's browser distribution. Its source is `dist/purify.min.js` in the official `dompurify` npm package. The website build does not generate this file.
+
+`docusaurus.config.ts` loads this script before `static/trusted-types-policy.js`. The Trusted Types policy uses `DOMPurify.sanitize` to sanitize HTML.
+
+The website serves this checked-in file directly. Updating the dependency in `package.json` does not update the script that browsers receive.
+
+### Update DOMPurify
+
+Keep the package dependency, lockfile, and checked-in browser script consistent.
+
+1. Update the `dompurify` dependency to the selected version.
+2. Regenerate `pnpm-lock.yaml` with pnpm.
+3. Confirm the installed version and the lockfile resolution.
+4. Copy `dist/purify.min.js` from that installed package into `static/dompurify/purify.min.js`.
+5. Preserve the upstream license notice and apply the repository's formatting.
+6. Build the website and check navigation, search, HTML sanitization, and Mermaid diagrams.
+
+For example, from the `website` directory, copy and format the installed distribution with PowerShell:
+
+```powershell
+Copy-Item .\node_modules\dompurify\dist\purify.min.js .\static\dompurify\purify.min.js
+pnpm exec prettier --write .\static\dompurify\purify.min.js
+```
+
+Do not manually modify DOMPurify's implementation.
+
+The update to 3.4.15 changed `package.json`, regenerated `pnpm-lock.yaml`, and replaced the checked-in browser distribution. The lockfile resolves both the direct dependency and Mermaid's DOMPurify dependency to 3.4.15.
+
+TODO: AB#84053 - Investigate using the installed DOMPurify dependency directly instead of maintaining a checked-in copy. Preserve its load order before the Trusted Types policy. This follow-up does not block dependency updates.
+
 ## Local Development
 
 There are two options for local testing.

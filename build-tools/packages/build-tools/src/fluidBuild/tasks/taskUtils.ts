@@ -131,6 +131,13 @@ export async function globFn(pattern: string, options: glob.IOptions = {}): Prom
 	});
 }
 
+/**
+ * Loads a module using its module format.
+ *
+ * @param modulePath - The path of the module to load.
+ * @param moduleType - The package module type. A `.js` file is treated as ESM when this is `"module"`.
+ * @returns The module namespace for an ESM module, or the `module.exports` value for a CommonJS module.
+ */
 export async function loadModule(modulePath: string, moduleType?: string): Promise<unknown> {
 	const ext = path.extname(modulePath);
 	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");

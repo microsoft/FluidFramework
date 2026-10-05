@@ -26,6 +26,15 @@ Run this command to install the package:
 npm i @fluidframework/tinylicious-driver
 ```
 
+## Importing from this package
+
+This package uses [package.json exports](https://nodejs.org/api/packages.html#exports) to separate APIs by support level.
+For information about the support guarantees, read [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+Import the `public` APIs from `@fluidframework/tinylicious-driver`.
+
+Import the `alpha` APIs from `@fluidframework/tinylicious-driver/alpha`.
+
 ## API Documentation
 
 Read the **@fluidframework/tinylicious-driver** API documentation at <https://fluidframework.com/docs/apis/tinylicious-driver>.

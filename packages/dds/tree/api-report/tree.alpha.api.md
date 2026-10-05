@@ -179,7 +179,7 @@ export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSche
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
 // @alpha
-export function checkCompatibility(viewWhichCreatedStoredSchema: TreeViewConfiguration, view: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
+export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
 export function cloneWithReplacements(root: unknown, rootKey: string, replacer: (key: string, value: unknown) => {
@@ -276,7 +276,7 @@ export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: nu
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
-export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+export function createIndependentTreeAlpha(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
 
 // @alpha
 export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & ((IndependentViewOptions & {
@@ -287,7 +287,7 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewT
 }));
 
 // @beta
-export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+export function createIndependentTreeBeta<const Unused = unknown>(options?: ForestOptions): ViewableTree;
 
 // @beta
 export function createIndependentTreeView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions): TreeViewBeta<TSchema>;
@@ -422,6 +422,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
 export interface FieldPropsAlpha<TCustomMetadata = unknown> extends FieldProps<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
     readonly stagedOptionalUpgrade?: SchemaUpgrade;
+    readonly summarizeIncrementally?: boolean;
 }
 
 // @public @sealed
@@ -1238,6 +1239,39 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+}
+
+// @alpha
+export namespace Sandboxing {
+    export function createGuest(options: GuestOptions): Promise<Guest>;
+    export function createHost(options: HostOptions): Host;
+    // @input
+    export interface EndpointOptions {
+        readonly handleProtocolError?: (error: Error) => void;
+        readonly logger?: ITelemetryBaseLogger;
+        readonly port: InstanceType<typeof MessagePort>;
+    }
+    // @sealed
+    export interface Guest {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly tree: ViewableTree;
+        readonly updateHostPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface GuestOptions extends EndpointOptions {
+        readonly treeOptions: ForestOptions & ICodecOptions;
+    }
+    // @sealed
+    export interface Host {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly updateGuestPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface HostOptions extends EndpointOptions {
+        readonly main: UntypedTreeView;
+    }
 }
 
 // @public @sealed
@@ -2123,7 +2157,7 @@ export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema
 export type TreeParsingOptions = TreeEncodingOptions<KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys>;
 
 // @beta
-export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
     [Symbol.iterator](): FluidIterableIterator<[
     string,
     TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
@@ -2131,7 +2165,7 @@ export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = Imp
 }
 
 // @beta @sealed @system
-export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>, TreeNode {
+export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes> | undefined>, TreeNode {
     // (undocumented)
     [Symbol.iterator](): FluidIterableIterator<[
     string,

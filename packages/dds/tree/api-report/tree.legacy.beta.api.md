@@ -155,7 +155,7 @@ export function configuredSharedTreeBetaLegacy(options: SharedTreeOptionsBeta): 
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @beta
-export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSchema>(options?: ForestOptions): ViewableTree;
+export function createIndependentTreeBeta<const Unused = unknown>(options?: ForestOptions): ViewableTree;
 
 // @beta
 export function createIndependentTreeView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: ForestOptions): TreeViewBeta<TSchema>;
@@ -1134,7 +1134,7 @@ export type TreeNodeSchemaNonClass<Name extends string = string, Kind extends No
 export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 // @beta
-export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
     [Symbol.iterator](): FluidIterableIterator<[
     string,
     TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
@@ -1142,7 +1142,7 @@ export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = Imp
 }
 
 // @beta @sealed @system
-export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>, TreeNode {
+export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes> | undefined>, TreeNode {
     // (undocumented)
     [Symbol.iterator](): FluidIterableIterator<[
     string,

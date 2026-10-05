@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "3.2.0",
+	"version": "3.5.0",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -103,7 +103,7 @@
 		"nock": "^13.3.3",
 		"rimraf": "^6.1.3",
 		"sinon": "^18.0.1",
-		"typescript": "~6.0.3"
+		"typescript": "catalog:TypeScript"
 	},
 	"typeValidation": {
 		"disabled": true

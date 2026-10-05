@@ -26,8 +26,12 @@ async function readJson(filePath, name, errors) {
 	let text;
 	try {
 		text = await readFile(filePath, "utf8");
-	} catch {
-		errors.push(`Unable to read ${name}`);
+	} catch (error) {
+		errors.push(
+			name === "inventory file" && error?.code === "ENOENT"
+				? "Inventory file does not exist. Run node inventory.mjs before node copy-data.mjs --execute"
+				: `Unable to read ${name}`,
+		);
 		return undefined;
 	}
 
@@ -47,6 +51,10 @@ function validateInventory(inventory, config, errors, warnings) {
 		typeof inventory.tenants !== "object"
 	) {
 		errors.push("Inventory must contain tenants");
+		return;
+	}
+	if (Object.keys(inventory.tenants).length === 0) {
+		errors.push("Inventory contains no tenants to copy");
 		return;
 	}
 	if (!Array.isArray(inventory.errors) || inventory.errors.length > 0) {
