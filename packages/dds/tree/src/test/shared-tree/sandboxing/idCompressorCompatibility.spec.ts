@@ -54,7 +54,7 @@ function createCompatibilityFixture() {
 
 	/** Loads the earlier baseline with a new child ID space shard of the Host's current compressor state. */
 	const createGuest = () => {
-		const [serializedIdSpaceShard] = parent.shard(1);
+		const [{ serialized: serializedIdSpaceShard }] = parent.shard(1);
 		assert(serializedIdSpaceShard !== undefined, "Expected a serialized child ID space shard");
 		const idSpaceShard = deserializeIdCompressor(
 			serializedIdSpaceShard,

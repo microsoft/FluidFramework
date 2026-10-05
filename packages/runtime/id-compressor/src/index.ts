@@ -31,6 +31,7 @@ export type {
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
+	SerializedIdCompressorShard,
 	SessionId,
 	SessionSpaceCompressedId,
 	ShardSynchronizationToken,

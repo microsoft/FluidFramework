@@ -150,6 +150,7 @@ The baseline revision aliases the independent checkout's initial head.
 Branch validation recognizes this alias even when an update contains no commits.
 Initialization commits use the same handle codec as subsequent changes and preserve custom metadata.
 After encoding the snapshot and retained commits, the Host creates a child ID space shard and sends it in `hostInitialization` over `MessagePort`.
+The Host keeps the initial synchronization token returned with the serialized shard for updates and eventual reclamation.
 The Guest deserializes the shard before creating its checkouts.
 See [ID Space Sharding](#id-space-sharding).
 

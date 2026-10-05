@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	deserializeIdCompressor,
-	SerializationVersion,
 	type IdCreationRange,
 	type ParentShardSynchronizationToken,
 	type ShardSynchronizationToken,
@@ -351,30 +349,16 @@ export class HostImplementation implements Sandboxing.Host {
 				// Create the ID space shard only after serializing the baseline and retained commits,
 				// so that the child snapshot includes every ID the Guest needs during
 				// initialization.
-				const [serializedIdSpaceShard] = this.idCompressor.shard(1);
-				assert(
-					serializedIdSpaceShard !== undefined,
-					"Expected one serialized Guest ID space shard",
-				);
-
-				// TODO: Have shard() return the child sync token alongside its serialized state
-				// so the Host need not deserialize it before sending updates or disposing the session.
-				const idSpaceShard = deserializeIdCompressor(
-					serializedIdSpaceShard,
-					SerializationVersion.V3,
-				);
-				this.guestIdSpaceShardToken = idSpaceShard.getShardSyncToken();
-				assert(
-					this.guestIdSpaceShardToken !== undefined,
-					"Expected a Guest ID space shard token",
-				);
+				const { serialized: serializedShard, syncToken } =
+					this.idCompressor.shard(1)[0] ?? oob();
+				this.guestIdSpaceShardToken = syncToken;
 
 				return {
 					type: "hostInitialization",
 					...initialization,
 					tree: normalizedTree as JsonCompatibleReadOnly,
 					schema: normalizedSchema as JsonCompatibleReadOnly,
-					idCompressor: serializedIdSpaceShard,
+					idCompressor: serializedShard,
 				};
 			} finally {
 				cursor.free();
