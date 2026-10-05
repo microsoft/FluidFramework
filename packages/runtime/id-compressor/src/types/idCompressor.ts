@@ -180,12 +180,11 @@ export interface IIdCompressorCore {
 	 * @param newShardCount - The number of additional different shards to split this compressor into.
 	 * Must be a positive safe integer.
 	 * @throws If `newShardCount` is not a positive safe integer or the resulting stride exceeds the sharding limit.
-	 * @returns An array of serialized compressors of size `newShardCount`.
-	 * These can be passed across a marshalling boundary and rehydrated on the other side, and will safely share the ID space of `this`.
+	 * @returns An array of `newShardCount` {@link SerializedIdCompressorShard} objects.
 	 * Note that this method should only be needed when multiple JS runtimes are in play, as sharded compressors essentially
 	 * attempt to emulate a single static compressor and any code running in the same JS runtime can simply use statics.
 	 */
-	shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[];
+	shard(newShardCount: number): SerializedIdCompressorShard[];
 
 	/**
 	 * Synchronizes `this` compressor with a child shard. Synchronization will occur for the state of the child at the time `syncToken`
@@ -265,6 +264,30 @@ export interface IIdCompressorCore {
 	 * This only includes finalized state and is therefore suitable for use in summaries.
 	 */
 	serialize(withSession: false): SerializedIdCompressorWithNoSession;
+}
+
+/**
+ * The serialized state of a new child compressor and its initial synchronization token.
+ *
+ * @sealed
+ * @internal
+ */
+export interface SerializedIdCompressorShard {
+	/**
+	 * Serialized child state that can be rehydrated across a marshalling boundary.
+	 */
+	readonly serialized: SerializedIdCompressorWithOngoingSession;
+
+	/**
+	 * Initial, non-disposing token for this child shard.
+	 *
+	 * @remarks
+	 * After the child generates IDs, obtain its updated token before synchronizing
+	 * with the parent or reclaiming the child's ID space.
+	 *
+	 * This can be used to immediately dispose of a new shard if it is not used.
+	 */
+	readonly syncToken: ShardSynchronizationToken;
 }
 
 /**
