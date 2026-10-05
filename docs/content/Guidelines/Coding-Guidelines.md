@@ -566,9 +566,10 @@ Such an API can contain assertions about its implementation, but validate caller
 
 #### ✔ DO use assertions to document and validate internal invariants
 
-In this guidance, internal includes implementation details within a package and APIs marked `@internal`, even when called across package boundaries.
-These APIs are not part of the supported user-facing API surface.
-Use assertions to validate their input requirements and assumptions, just as for package-internal code.
+> [!NOTE]
+> In this guidance, "internal" includes implementation details within a package and APIs marked `@internal`, even when called across package boundaries.
+> These APIs are not part of the supported user-facing API surface.
+> Use assertions to validate their input requirements and assumptions, just as for package-internal code.
 
 Use [assert](../../../packages/common/core-utils/src/assert.ts) from `@fluidframework/core-utils/internal` when a false condition indicates an implementation bug.
 An assertion documents an assumption in executable code and detects when the assumption stops being true.
@@ -633,8 +634,10 @@ debugAssert(() => cachedValues.size <= capacity || "The cache must stay within c
 ```
 
 `debugAssert` can be disabled or removed from production builds, which can reduce runtime cost and bundle size.
-Do not perform side effects or catch errors in a `debugAssert` callback because doing so can cause behavior to differ between test and production configurations.
-When in doubt, do not use `debugAssert`.
+
+> [!WARNING]
+> Do not perform side effects or catch errors in a `debugAssert` callback because doing so can cause behavior to differ between test and production configurations.
+> When in doubt, do not use `debugAssert`.
 
 ### Events
 
