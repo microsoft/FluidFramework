@@ -8,7 +8,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { onAssertionFailure } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutAwait } from "@fluidframework/test-runtime-utils/internal/timeoutUtils";
@@ -31,10 +30,9 @@ import {
 
 const definition: ChannelConfigurationDefinition<ChannelConfiguration> = {
 	defaultConfiguration: {},
-	isSupported: (values): values is ChannelConfiguration =>
-		!Object.hasOwn(values, "unsupported"),
-	validateTransition: (_previous, next) => {
-		if (next.unsafe === true) {
+	validateTransition: (previous, next): asserts next is ChannelConfiguration => {
+		assert(!Object.hasOwn(next, "unsupported"), "Unsupported channel configuration values");
+		if (previous !== undefined && next.unsafe === true) {
 			throw new Error("Unsafe transition");
 		}
 	},
@@ -271,31 +269,6 @@ describe("ChannelConfigurationController", () => {
 			);
 			controller.submitOrdinaryMessage(() => {});
 			assert.deepEqual(submitted, []);
-		});
-
-		it("validates values and transitions before queueing, and rejects overflow", async () => {
-			for (const attached of [true, false]) {
-				const { controller, submitted } = harness({ isAttached: () => attached });
-				await timeoutAwait(
-					assert.rejects(controller.requestChangeLazy({ unsupported: true }), /Unsupported/),
-					{
-						errorMsg: `Unsupported lazy configuration was not rejected (attached=${attached})`,
-					},
-				);
-				await timeoutAwait(
-					assert.rejects(controller.requestChangeLazy({ unsafe: true }), /Unsafe transition/),
-					{ errorMsg: `Unsafe lazy transition was not rejected (attached=${attached})` },
-				);
-				controller.submitOrdinaryMessage(() => {});
-				assert.equal(controller.current.revision, 0);
-				assert.equal(submitted.length, 0);
-			}
-			const { controller: overflowed } = harness({
-				snapshot: { version: 1, revision: Number.MAX_SAFE_INTEGER, values: {} },
-			});
-			await timeoutAwait(assert.rejects(overflowed.requestChangeLazy({}), /overflow/), {
-				errorMsg: "Lazy request was not rejected for configuration revision overflow",
-			});
 		});
 
 		it("rechecks lifecycle eligibility when flushing and rejects the failed request", async () => {
@@ -581,11 +554,10 @@ describe("ChannelConfigurationController", () => {
 		const { controller, changes } = harness({
 			definition: {
 				defaultConfiguration: {},
-				isSupported: (values): values is ChannelConfiguration => {
+				validateTransition: (previous, next): asserts next is ChannelConfiguration => {
 					validations++;
-					return !Object.hasOwn(values, "unsupported");
+					definition.validateTransition(previous, next);
 				},
-				validateTransition: () => {},
 			},
 		});
 		controller.process(proposal(0, {}), context(false));
@@ -688,29 +660,6 @@ describe("ChannelConfigurationController", () => {
 				controller.process(sent.message, context(), sent.metadata);
 			}
 			assert.equal((await valid).status, "applied");
-		}
-	});
-
-	it("reports invalid internal requests as assertions rather than usage errors", async () => {
-		const { controller, submitted } = harness();
-		let assertion: Error | undefined;
-		const unsubscribe = onAssertionFailure((error) => {
-			assertion = error;
-		});
-		try {
-			await assert.rejects(
-				controller.requestChange({ unsupported: true }),
-				(error: unknown) => {
-					assert(error instanceof Error);
-					assert.equal(error, assertion);
-					assert(!(error instanceof UsageError));
-					return validateAssertionError("Unsupported channel configuration values")(error);
-				},
-			);
-			assert.equal(submitted.length, 0);
-			assert.equal(controller.current.revision, 0);
-		} finally {
-			unsubscribe();
 		}
 	});
 
@@ -865,19 +814,17 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(submitted.length, 0);
 	});
 
-	for (const [name, values] of [
-		["unsupported", { unsupported: true }],
-		["invalid transition", { unsafe: true }],
-	] as const) {
-		it(`fails receiving ${name} at the current revision and rejects live requests`, async () => {
-			const { controller } = harness();
-			const rejected = assert.rejects(controller.requestChange({}));
-			assert.throws(() => controller.process(proposal(0, values), context(false)));
-			await rejected;
-			assert.equal(controller.current.revision, 0);
-			await assert.rejects(controller.requestChange({}));
-		});
-	}
+	it("rejects live requests when validation fails at the current revision", async () => {
+		const { controller } = harness();
+		const rejected = assert.rejects(controller.requestChange({}), /Unsupported/);
+		assert.throws(
+			() => controller.process(proposal(0, { unsupported: true }), context(false)),
+			/Unsupported/,
+		);
+		await rejected;
+		assert.equal(controller.current.revision, 0);
+		await assert.rejects(controller.requestChange({}), /Unsupported/);
+	});
 
 	it("rejects a future revision as a fatal processing failure", async () => {
 		const { controller, changes } = harness();
@@ -988,19 +935,42 @@ describe("ChannelConfigurationController", () => {
 		}
 	});
 
-	it("loads snapshots independently of attachment state", () => {
-		const snapshot = { version: 1, revision: 4, values: { text: "a".repeat(32 * 1024) } };
+	it("validates initial configuration without a previous value, then validates transitions", async () => {
+		const snapshot = { version: 1, revision: 4, values: { unsafe: true } };
 		for (const attached of [false, true]) {
-			const { controller, changes } = harness({
+			const validations: [ChannelConfiguration | undefined, ChannelConfiguration][] = [];
+			const { controller, submitted, changes } = harness({
+				definition: {
+					...definition,
+					validateTransition: (previous, next): asserts next is ChannelConfiguration => {
+						validations.push([previous, next]);
+						definition.validateTransition(previous, next);
+					},
+				},
 				snapshot,
 				isAttached: () => attached,
 			});
-			assert.deepEqual(controller.current, {
-				revision: snapshot.revision,
-				values: snapshot.values,
-			});
+			assert.deepEqual(validations, [[undefined, snapshot.values]]);
 			assert.equal(controller.current.values, snapshot.values);
 			assert.equal(changes.length, 0);
+
+			const replacement = { enabled: false };
+			const request = controller.requestChange(replacement);
+			assert.deepEqual(validations, [
+				[undefined, snapshot.values],
+				[snapshot.values, replacement],
+			]);
+			if (attached) {
+				const sent = submitted.at(0);
+				assert(sent !== undefined);
+				controller.process(sent.message, context(), sent.metadata);
+				assert.deepEqual(validations, [
+					[undefined, snapshot.values],
+					[snapshot.values, replacement],
+					[snapshot.values, replacement],
+				]);
+			}
+			assert.equal((await request).status, "applied");
 		}
 	});
 

@@ -54,10 +54,13 @@ type Config = Readonly<{ retain?: boolean }>;
 
 const definition: ChannelConfigurationDefinition<Config> = {
 	defaultConfiguration: { retain: false },
-	isSupported: (values): values is Config =>
-		Object.keys(values).every((key) => key === "retain") &&
-		(values.retain === undefined || typeof values.retain === "boolean"),
-	validateTransition: () => {},
+	validateTransition: (_previous, next): asserts next is Config => {
+		assert(
+			Object.keys(next).every((key) => key === "retain") &&
+				(next.retain === undefined || typeof next.retain === "boolean"),
+			"Unsupported channel configuration values",
+		);
+	},
 };
 
 interface ConfiguredObject extends SharedObjectCore {

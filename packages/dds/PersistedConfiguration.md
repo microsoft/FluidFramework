@@ -277,12 +277,13 @@ export interface ChannelConfigurationDefinition<
     // Stable values that describe existing behavior on every client.
     readonly defaultConfiguration: TConfig;
 
-    // Pure validation; unknown keys and unsupported values must be rejected.
-    readonly isSupported: (values: ChannelConfiguration) => values is TConfig;
-
-    // Pure, deterministic validation of a transition between supported configurations.
+    // Pure, deterministic validation; unknown keys and unsupported values must be rejected.
+    // During creation and loading, previous is undefined: validate next without applying transition rules.
     // Throw if this transition cannot safely preserve existing DDS data.
-    readonly validateTransition: (previous: TConfig, next: TConfig) => void;
+    readonly validateTransition: (
+        previous: TConfig | undefined,
+        next: ChannelConfiguration,
+    ) => asserts next is TConfig;
 }
 
 export interface ChannelConfigurationAttachedContext {
@@ -406,6 +407,9 @@ Reading that initial snapshot is not a configuration-change notification.
 The shared core distinguishes creation settings from configuration read from channel attributes on load.
 Factory support is separate from these lifecycle states.
 The controller validates defaults, creation values, and loaded snapshots in the same way.
+It calls `validateTransition` with `previous === undefined` for each of these initial configurations.
+This is not a transition from the defaults: a configuration can be valid to load even when changing existing data to use it would be unsafe.
+DDS authors can call their own support predicate inside `validateTransition`, then apply transition rules only when `previous` is defined.
 
 The `"changed"` listener runs synchronously for every accepted barrier, local or remote,
 including barriers replayed during load. The controller's getter already exposes `current`.

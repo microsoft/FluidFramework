@@ -59,10 +59,13 @@ type Config = Readonly<{ retain?: boolean }>;
 
 const definition: ChannelConfigurationDefinition<Config> = {
 	defaultConfiguration: {},
-	isSupported: (values): values is Config =>
-		Object.keys(values).every((key) => key === "retain") &&
-		(values.retain === undefined || typeof values.retain === "boolean"),
-	validateTransition: () => {},
+	validateTransition: (_previous, next): asserts next is Config => {
+		assert(
+			Object.keys(next).every((key) => key === "retain") &&
+				(next.retain === undefined || typeof next.retain === "boolean"),
+			"Unsupported channel configuration values",
+		);
+	},
 };
 
 interface View {
@@ -694,7 +697,8 @@ describe("configured kernel composition", () => {
 			const factory = makeKind({}, true, "configured-test", {
 				configurationDefinition: {
 					...definition,
-					validateTransition: () => {
+					validateTransition: (previous, next): asserts next is Config => {
+						definition.validateTransition(previous, next);
 						if (failValidation) {
 							throw failure;
 						}

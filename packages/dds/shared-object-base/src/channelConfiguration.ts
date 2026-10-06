@@ -66,21 +66,29 @@ export interface ChannelConfigurationDefinition<TConfig extends ChannelConfigura
 	 */
 	readonly defaultConfiguration: TConfig;
 	/**
-	 * Returns whether this reader supports the configuration, including all of its keys and values.
-	 * This function must be pure: loading configuration must not change channel state.
-	 */
-	readonly isSupported: (values: ChannelConfiguration) => values is TConfig;
-	/**
-	 * Throws if replacing the previous configuration with the next would not preserve the channel's data.
+	 * Validates the next configuration, including all of its keys and values.
+	 * Throws if it is unsupported or replacing the previous configuration would not preserve the channel's data.
 	 * Invoked on both the sending side of a configuration change request and on the processing side.
+	 *
+	 * During creation and loading, `previous` is `undefined` and `next` is the initial configuration:
+	 * the definition's defaults, explicit creation settings, or a loaded snapshot.
+	 * This validates the initial configuration, not a transition from the defaults.
+	 * A configuration can be valid to load even when a transition to it would be unsafe.
+	 * DDS authors can call their own support predicate here, then check transition rules when `previous` is defined.
 	 *
 	 * Throwing an exception generally will result in at least data loss.
 	 * However, catching invariant violations on the sending side can prevent more severe document corruption.
 	 *
 	 * This function must be pure and deterministic so all clients accept or reject the same transition.
 	 * Use the configuration's changed event to update channel state after a replacement is accepted.
+	 *
+	 * @param previous - The current configuration, or `undefined` during creation and loading.
+	 * @param next - The unvalidated configuration. On success, this function asserts that it satisfies `TConfig`.
 	 */
-	readonly validateTransition: (previous: TConfig, next: TConfig) => void;
+	readonly validateTransition: (
+		previous: TConfig | undefined,
+		next: ChannelConfiguration,
+	) => asserts next is TConfig;
 }
 
 /**
@@ -280,7 +288,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		private readonly options: ChannelConfigurationControllerOptions<TConfig>,
 	) {
 		const snapshot = parseChannelConfigurationSnapshot(options.snapshot);
-		this.#validateSupported(snapshot.values);
+		this.options.definition.validateTransition(undefined, snapshot.values);
 		this.#snapshot = { revision: snapshot.revision, values: snapshot.values };
 	}
 
@@ -317,7 +325,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		};
 		this.#processing = true;
 		try {
-			this.#validateSupported(values);
 			this.#checkOverflow();
 			this.options.definition.validateTransition(previous.values, values);
 		} finally {
@@ -428,7 +435,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 				result = { ...context, status: "conflict", current: this.#snapshot };
 			} else {
 				const values = message.values;
-				this.#validateSupported(values);
 				this.#checkOverflow();
 				this.options.definition.validateTransition(this.#snapshot.values, values);
 				result = this.#apply(values, context);
@@ -517,13 +523,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		if (this.#disposed) {
 			throw this.#disposalError;
 		}
-	}
-
-	#validateSupported(values: ChannelConfiguration): asserts values is TConfig {
-		assert(
-			this.options.definition.isSupported(values),
-			"Unsupported channel configuration values",
-		);
 	}
 
 	#checkOverflow(): void {
