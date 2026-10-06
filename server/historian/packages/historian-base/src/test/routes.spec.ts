@@ -1558,6 +1558,48 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(deleteSummary);
 	});
 
+	it("marks EC access deleted before calling GitRest", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		const events: string[] = [];
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			isEphemeralContainer: true,
+		});
+		sandbox.stub(cache, "markSummaryAccessDeleted").callsFake(async () => {
+			events.push("markDeleted");
+		});
+		sandbox.stub(RestGitService.prototype, "deleteSummary").callsFake(async () => {
+			events.push("deleteSummary");
+			return true;
+		});
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+
+		assert.deepStrictEqual(events, ["markDeleted", "deleteSummary"]);
+	});
+
+	it("does not call GitRest when deleted-state persistence fails", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			isEphemeralContainer: true,
+		});
+		sandbox.stub(cache, "markSummaryAccessDeleted").rejects(new Error("redis unavailable"));
+		const deleteSummary = sandbox.stub(RestGitService.prototype, "deleteSummary");
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(503);
+
+		sinon.assert.notCalled(deleteSummary);
+	});
+
 	it("requires ownership for non-initial POST and ignores caller routing metadata", async () => {
 		sandbox.stub(documentManager, "readDocument").resolves(null);
 		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");

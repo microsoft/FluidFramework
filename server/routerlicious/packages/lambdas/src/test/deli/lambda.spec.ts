@@ -4,10 +4,11 @@
  */
 
 import { MessageType } from "@fluidframework/protocol-definitions";
-import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
+import { defaultHash, getNextHash, NetworkError } from "@fluidframework/server-services-client";
 import {
 	CheckpointService,
 	DefaultServiceConfiguration,
+	type IDocument,
 	IPartitionLambda,
 	IProducer,
 	ISequencedOperationMessage,
@@ -17,6 +18,7 @@ import {
 	NackOperationType,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	KafkaMessageFactory,
 	MessageFactory,
@@ -67,6 +69,12 @@ describe("Routerlicious", () => {
 
 			let messageFactory: MessageFactory;
 			let kafkaMessageFactory: KafkaMessageFactory;
+			let mongoManager: MongoManager;
+			let documentRepository: TestNotImplementedDocumentRepository;
+			let checkpointService: CheckpointService;
+			let readDocument = Sinon.stub();
+			let metadataEvents: string[] = [];
+			let cleanupFactories: DeliLambdaFactory[] = [];
 
 			/**
 			 * Waits for the system to quiesce
@@ -117,22 +125,104 @@ describe("Routerlicious", () => {
 				return start;
 			}
 
+			async function waitForCondition(predicate: () => boolean): Promise<void> {
+				for (let attempt = 0; attempt < 50; attempt++) {
+					if (predicate()) {
+						return;
+					}
+					await new Promise<void>((resolve) => {
+						setImmediate(resolve);
+					});
+				}
+				assert.fail("Timed out waiting for asynchronous Deli cleanup.");
+			}
+
+			async function createEphemeralCleanupHarness(
+				enableCleanup: boolean,
+				options: { createTime?: number; ttlSec?: number } = {},
+			) {
+				const ephemeralDocument: IDocument = {
+					version: "1.0",
+					createTime: options.createTime ?? Date.now(),
+					documentId: testId,
+					tenantId: testTenantId,
+					session: {
+						ordererUrl: "http://orderer",
+						deltaStreamUrl: "http://delta",
+						historianUrl: "http://historian",
+						isSessionAlive: true,
+						isSessionActive: true,
+					},
+					scribe: "",
+					deli: "",
+					isEphemeralContainer: true,
+				};
+				const gitManager = await testTenantManager.getTenantGitManager(
+					testTenantId,
+					testId,
+				);
+				const deleteSummary = Sinon.stub(gitManager, "deleteSummary").callsFake(
+					async (_softDelete: boolean) => {
+						return;
+					},
+				);
+				Sinon.stub(gitManager, "getRef").resolves(null);
+				readDocument.resolves(ephemeralDocument);
+
+				const serviceConfiguration = {
+					...DefaultServiceConfiguration,
+					deli: {
+						...DefaultServiceConfiguration.deli,
+						enableEphemeralContainerSummaryCleanup: enableCleanup,
+						ephemeralContainerSoftDeleteTimeInMs: 0,
+					},
+				};
+				const harnessFactory = new DeliLambdaFactory(
+					mongoManager,
+					documentRepository,
+					checkpointService,
+					testTenantManager,
+					undefined,
+					testForwardProducer,
+					undefined,
+					testReverseProducer,
+					serviceConfiguration,
+					undefined,
+					options.ttlSec ?? 9000,
+				);
+				const harnessLambda = await harnessFactory.create(
+					{ documentId: testId, tenantId: testTenantId },
+					testContext,
+				);
+				cleanupFactories.push(harnessFactory);
+				metadataEvents.length = 0;
+				return {
+					deleteSummary,
+					events: metadataEvents,
+					lambda: harnessLambda,
+				};
+			}
+
 			beforeEach(async () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
-				const mongoManager = new MongoManager(dbFactory);
-				const documentRepository = new TestNotImplementedDocumentRepository();
+				mongoManager = new MongoManager(dbFactory);
+				documentRepository = new TestNotImplementedDocumentRepository();
 				const checkpointRepository = new TestNotImplementedCheckpointRepository();
-				const checkpointService = new CheckpointService(
+				checkpointService = new CheckpointService(
 					checkpointRepository,
 					documentRepository,
 					false,
 				);
-				Sinon.replace(
-					documentRepository,
-					"readOne",
-					Sinon.fake.resolves(_.cloneDeep(testData[0])),
-				);
-				Sinon.replace(documentRepository, "updateOne", Sinon.fake.resolves(undefined));
+				metadataEvents = [];
+				cleanupFactories = [];
+				readDocument = Sinon.stub(documentRepository, "readOne");
+				readDocument.resolves(_.cloneDeep(testData[0]));
+				Sinon.stub(documentRepository, "updateOne").callsFake(async () => {
+					metadataEvents.push("updateMetadata");
+				});
+				Sinon.stub(documentRepository, "deleteOne").callsFake(async () => {
+					metadataEvents.push("deleteMetadata");
+				});
 
 				Sinon.replace(
 					checkpointRepository,
@@ -228,7 +318,82 @@ describe("Routerlicious", () => {
 					factory.dispose(),
 					factoryWithSignals.dispose(),
 					factoryWithBatching.dispose(),
+					...cleanupFactories.map(async (cleanupFactory) => cleanupFactory.dispose()),
 				]);
+				Sinon.restore();
+			});
+
+			describe("ephemeral summary cleanup", () => {
+				it("hard deletes before metadata when cleanup is enabled", async () => {
+					const harness = await createEphemeralCleanupHarness(true);
+					harness.deleteSummary.callsFake(async (softDelete: boolean) => {
+						harness.events.push(`delete:${softDelete}`);
+					});
+
+					harness.lambda.close(LambdaCloseType.ActivityTimeout);
+					await waitForCondition(() => harness.events.includes("updateMetadata"));
+
+					Sinon.assert.calledOnceWithExactly(harness.deleteSummary, false);
+					assert.deepStrictEqual(harness.events.slice(0, 2), [
+						"delete:false",
+						"updateMetadata",
+					]);
+				});
+
+				it("soft deletes before metadata when cleanup is disabled", async () => {
+					const harness = await createEphemeralCleanupHarness(false);
+					harness.deleteSummary.callsFake(async (softDelete: boolean) => {
+						harness.events.push(`delete:${softDelete}`);
+					});
+
+					harness.lambda.close(LambdaCloseType.ActivityTimeout);
+					await waitForCondition(() => harness.events.includes("updateMetadata"));
+
+					Sinon.assert.calledOnceWithExactly(harness.deleteSummary, true);
+					assert.deepStrictEqual(harness.events.slice(0, 2), [
+						"delete:true",
+						"updateMetadata",
+					]);
+				});
+
+				it("does not mutate metadata when Historian deletion fails", async () => {
+					const errorLog = Sinon.spy(Lumberjack, "error");
+					const harness = await createEphemeralCleanupHarness(false);
+					harness.deleteSummary.rejects(
+						new NetworkError(503, "historian unavailable", false),
+					);
+
+					harness.lambda.close(LambdaCloseType.ActivityTimeout);
+					await waitForCondition(
+						() =>
+							errorLog.calledWithMatch("Failed to handle session alive and active") ||
+							harness.events.includes("updateMetadata") ||
+							harness.events.includes("deleteMetadata"),
+					);
+
+					Sinon.assert.calledWithMatch(
+						errorLog,
+						"Failed to handle session alive and active",
+					);
+					assert.strictEqual(harness.events.includes("updateMetadata"), false);
+					assert.strictEqual(harness.events.includes("deleteMetadata"), false);
+				});
+
+				it("skips Historian after EC expiry and continues metadata cleanup", async () => {
+					const harness = await createEphemeralCleanupHarness(true, {
+						createTime: Date.now() - 2000,
+						ttlSec: 1,
+					});
+					harness.deleteSummary.callsFake(async (softDelete: boolean) => {
+						harness.events.push(`delete:${softDelete}`);
+					});
+
+					harness.lambda.close(LambdaCloseType.ActivityTimeout);
+					await waitForCondition(() => harness.events.includes("updateMetadata"));
+
+					Sinon.assert.notCalled(harness.deleteSummary);
+					assert.deepStrictEqual(harness.events, ["updateMetadata"]);
+				});
 			});
 
 			describe(".handler", () => {

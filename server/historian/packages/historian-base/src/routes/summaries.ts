@@ -6,6 +6,7 @@
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	LatestSummaryId,
+	NetworkError,
 	type IWholeFlatSummary,
 	type IWholeSummaryPayload,
 	type IWriteSummaryResponse,
@@ -221,13 +222,35 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const { service } = await createProtectedSummaryService(
+		const { service, access } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"delete",
 			"notApplicable",
 			true,
 		);
+		const accessStore = isEphemeralSummaryAccessStore(cache) ? cache : undefined;
+		if (access.isEphemeralContainer && accessStore !== undefined) {
+			try {
+				await accessStore.markSummaryAccessDeleted(
+					access.tenantId,
+					access.documentId,
+					access.createTime,
+					access.createTime + (ephemeralDocumentTTLSec ?? 24 * 60 * 60) * 1000,
+				);
+			} catch (error) {
+				utils.logSummaryOwnershipOutcome(
+					access.tenantId,
+					access.documentId,
+					"delete",
+					"notApplicable",
+					"dependencyError",
+					error,
+					{ source: access.source },
+				);
+				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
+			}
+		}
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);
