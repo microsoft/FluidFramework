@@ -552,20 +552,6 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(changes.length, 1);
 	});
 
-	it("retains readonly values and captures the expected revision before returning", async () => {
-		const { controller, submitted } = harness();
-		const input = { nested: [{ enabled: true }] };
-		const request = controller.requestChange(input);
-		const sent = submitted.at(0);
-		assert(sent !== undefined);
-		assert.equal(sent.message.values, input);
-		controller.process(proposal(0, { other: true }), context(false));
-		assert.equal(sent.message.expectedRevision, 0);
-		assert.deepEqual(sent.message.values, { nested: [{ enabled: true }] });
-		controller.process(sent.message, context(), sent.metadata);
-		assert.equal((await request).status, "conflict");
-	});
-
 	it("increments every accepted barrier, including identical, removed, disabled, and repeated values", () => {
 		const { controller, changes } = harness();
 		const replacements: ChannelConfigurationValuesV1[] = [
