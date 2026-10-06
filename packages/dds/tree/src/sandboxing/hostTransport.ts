@@ -63,25 +63,27 @@ export class HostTransportCodec extends TransportCodec {
 	}
 
 	/**
-	 * Checks authorization before resolution errors are converted into nonfatal blob responses.
-	 */
-	public assertAuthorizedToken(token: HandleToken): void {
-		this.getHandle(token);
-	}
-
-	/**
 	 * Resolves an authorized handle to blob content for the Guest.
 	 * Fluid-object handles are not supported.
+	 *
+	 * @remarks
+	 * Token authorization is synchronous so callers can distinguish a protocol violation from
+	 * an asynchronous failure to resolve an authorized handle.
 	 */
-	public async resolveBlob(token: HandleToken): Promise<ArrayBuffer> {
-		const result = await this.getHandle(token).get();
-		if (!(result instanceof ArrayBuffer)) {
-			// If needed, a customizable Host policy could support Guest get() calls for Fluid-object handles.
-			throw new UsageError(
-				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
-			);
-		}
-		return result;
+	// eslint-disable-next-line @typescript-eslint/promise-function-async -- An async function would convert authorization errors into resolution failures.
+	public resolveBlob(token: HandleToken): Promise<ArrayBuffer> {
+		const handle = this.getHandle(token);
+		return Promise.resolve()
+			.then(async () => handle.get())
+			.then((result) => {
+				if (!(result instanceof ArrayBuffer)) {
+					// If needed, a customizable Host policy could support Guest get() calls for Fluid-object handles.
+					throw new UsageError(
+						"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
+					);
+				}
+				return result;
+			});
 	}
 
 	/** Disables this codec and releases its session-local handle tables. */

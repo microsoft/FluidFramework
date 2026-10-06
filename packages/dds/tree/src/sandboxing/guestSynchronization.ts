@@ -16,9 +16,8 @@ import { brand } from "../util/index.js";
 import {
 	type GuestChangeAckMessage,
 	type GuestChangeId,
-	type GuestChangeMessage,
+	type GuestToHostMessage,
 	getRevision,
-	type HostUpdateAckMessage,
 	type HostUpdateMessage,
 	type HostIdRangeMessage,
 	makePromiseWithResolvers,
@@ -114,7 +113,7 @@ export class GuestSynchronization {
 		/** The independent child compressor owned by this class and used by both Guest views. */
 		private readonly idCompressor: IIdCompressorCore,
 		/** Sends a synchronization protocol message to the Host. */
-		private readonly send: (message: GuestChangeMessage | HostUpdateAckMessage) => void,
+		private readonly send: (message: GuestToHostMessage) => void,
 		/** Runs an action within the Guest session's error-handling boundary. */
 		private readonly run: (action: () => void) => void,
 		/** Reports an asynchronous synchronization failure to the Guest session. */
@@ -159,12 +158,13 @@ export class GuestSynchronization {
 						`Sending change ${changeId} [${getRevision(change)}] based on main ${this.mainRevision}`,
 					);
 					this.send({
-						type: "guestChange",
-						changeId,
-						mainRevision: this.mainRevision,
-						trunkRevision: this.trunkRevision,
-						change,
-						idSpaceShardToken: { ...idSpaceShardToken, disposed: false },
+						guestChange: {
+							changeId,
+							mainRevision: this.mainRevision,
+							trunkRevision: this.trunkRevision,
+							change,
+							idSpaceShardToken: { ...idSpaceShardToken, disposed: false },
+						},
 					});
 				});
 			},
@@ -195,7 +195,7 @@ export class GuestSynchronization {
 		this.mainRevision = message.mainRevision;
 		this.trunkRevision = message.trunkRevision;
 		this.checkout.rebaseOnto(this.hostCheckout);
-		this.send({ type: "hostUpdateAck", updateId: message.updateId });
+		this.send({ hostUpdateAck: { updateId: message.updateId } });
 	}
 
 	/**
