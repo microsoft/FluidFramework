@@ -35,13 +35,16 @@ import winston from "winston";
 
 import type {
 	ICache,
+	ISummaryAccessContext,
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
 	RestGitService,
 } from "../services";
+import { isEphemeralSummaryAccessStore } from "../services";
 import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
 
+import { resolveSummaryAccess } from "./summaryAccess";
 import * as utils from "./utils";
 
 export function create(
@@ -111,8 +114,9 @@ export function create(
 		routeType: utils.SummaryRouteType,
 		allowDisabledTenant = false,
 		query?: Query,
-	): Promise<RestGitService> {
-		await utils.validateSummaryDocument({
+	): Promise<{ service: RestGitService; access: ISummaryAccessContext }> {
+		const accessStore = isEphemeralSummaryAccessStore(cache) ? cache : undefined;
+		const access = await resolveSummaryAccess({
 			tenantId,
 			authorization,
 			documentManager,
@@ -121,8 +125,9 @@ export function create(
 			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
 			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 			reuseCustomerAccessToken: reuseCustomerAccessTokenForSummaryOwnership,
+			accessStore,
 		});
-		return utils.createGitService({
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
@@ -135,7 +140,9 @@ export function create(
 			simplifiedCustomDataRetriever,
 			postEphemeralContainerChecker,
 			query,
+			summaryAccessContext: access,
 		});
+		return { service, access };
 	}
 
 	async function getSummary(
@@ -146,7 +153,7 @@ export function create(
 		query?: Query,
 	): Promise<IWholeFlatSummary> {
 		const routeType: utils.SummaryRouteType = sha === LatestSummaryId ? "latest" : "sha";
-		const service = await createProtectedSummaryService(
+		const { service } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"get",
@@ -197,14 +204,14 @@ export function create(
 				query,
 			});
 		} else {
-			service = await createProtectedSummaryService(
+			({ service } = await createProtectedSummaryService(
 				tenantId,
 				authorization,
 				"post",
 				"notApplicable",
 				false,
 				query,
-			);
+			));
 		}
 		return service.createSummary(params, initial);
 	}
@@ -214,7 +221,7 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await createProtectedSummaryService(
+		const { service } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"delete",

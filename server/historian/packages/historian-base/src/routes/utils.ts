@@ -535,8 +535,10 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
+		summaryAccessContext,
 	} = createArgs;
-	const documentId = getTokenDocumentId(tenantId, authorization);
+	const documentId =
+		summaryAccessContext?.documentId ?? getTokenDocumentId(tenantId, authorization);
 	const token = parseToken(tenantId, authorization);
 	if (!token) {
 		throw new NetworkError(403, "Authorization token is missing.");
@@ -551,16 +553,18 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	const isEphemeral = ignoreEphemeralFlag
-		? false
-		: await checkAndCacheIsEphemeral({
-				documentId,
-				tenantId,
-				documentManager,
-				ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
-				isEphemeralContainerOverride: isEphemeralContainer,
-				cache,
-		  });
+	const isEphemeral =
+		summaryAccessContext?.isEphemeralContainer ??
+		(ignoreEphemeralFlag
+			? false
+			: await checkAndCacheIsEphemeral({
+					documentId,
+					tenantId,
+					documentManager,
+					ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+					isEphemeralContainerOverride: isEphemeralContainer,
+					cache,
+			  }));
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
@@ -578,6 +582,8 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
+			: summaryAccessContext !== undefined
+			? summaryAccessContext.storageName
 			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
 	return new RestGitService(
 		details.storage,

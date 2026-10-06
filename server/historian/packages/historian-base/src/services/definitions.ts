@@ -99,6 +99,7 @@ export interface ICreateGitServiceArgs {
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
 	query?: Query;
+	summaryAccessContext?: ISummaryAccessContext;
 }
 
 export interface ITenantService {

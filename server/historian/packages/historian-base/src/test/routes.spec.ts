@@ -32,12 +32,16 @@ const documentId = "testDocumentId";
 const tenantKey = "testTenantKey";
 const testUrl = "http://localhost/historian";
 const defaultCache = new TestCache();
-const createTestProvider = (reuseCustomerAccessTokenForSummaryOwnership = false): nconf.Provider =>
+const createTestProvider = (
+	reuseCustomerAccessTokenForSummaryOwnership = false,
+	ignoreEphemeralFlag = true,
+): nconf.Provider =>
 	new nconf.Provider({}).defaults({
 		auth: {
 			maxTokenLifetimeSec: 1000000,
 			enableTokenExpiration: true,
 		},
+		ignoreEphemeralFlag,
 		logger: {
 			morganFormat: "json",
 		},
@@ -1440,7 +1444,61 @@ describe("summary ownership routes", () => {
 		);
 	});
 
-	it("preserves legacy storage routing after fresh validation", async () => {
+	it("serves repeated EC latest and SHA GETs from local access without Alfred", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		const createTime = Date.now();
+		await cache.activateSummaryAccessIfNotDeleted(
+			tenantId,
+			documentId,
+			createTime,
+			createTime + 24 * 60 * 60 * 1000,
+		);
+		const readDocument = sandbox.spy(documentManager, "readDocument");
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/${sha}`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledTwice(getSummary);
+	});
+
+	it("denies deleted EC access before serving a cached latest summary", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		await cache.set(`${tenantId}:${documentId}:summary:container`, {
+			id: "cached-deleted-summary",
+			trees: [],
+			blobs: [],
+		});
+		await cache.markSummaryAccessDeleted(
+			tenantId,
+			documentId,
+			activeDocument.createTime,
+			activeDocument.createTime + 24 * 60 * 60 * 1000,
+		);
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const getSummary = sandbox.spy(RestGitService.prototype, "getSummary");
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(404);
+
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.notCalled(getSummary);
+	});
+
+	it("uses the Alfred context without secondary static or storage-name lookup", async () => {
 		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
@@ -1454,10 +1512,9 @@ describe("summary ownership routes", () => {
 			.expect(200);
 
 		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
-		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId);
-		sinon.assert.calledOnceWithExactly(storageNameRetrieverGet, tenantId, documentId);
-		assert.ok(readDocument.calledBefore(readStaticProperties));
-		assert.ok(readStaticProperties.calledBefore(getSummary));
+		sinon.assert.notCalled(readStaticProperties);
+		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledOnce(getSummary);
 	});
 
 	it("cannot serve cached latest after scheduled deletion", async () => {
