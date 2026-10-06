@@ -39,3 +39,23 @@ test("loads the separate Guest bundle in an opaque-origin iframe", async ({ page
 	});
 	expect(pageErrors).toEqual([]);
 });
+
+test("creates, reloads, and edits the Host inventory while the Guest remains a placeholder", async ({
+	page,
+}) => {
+	await page.goto("/");
+	const host = page.getByRole("region", { name: "Host", exact: true });
+	await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("0");
+	await expect(page).toHaveURL(/#[^#]+$/);
+	const documentURL = page.url();
+
+	await page.reload();
+	await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("0");
+	await expect(page).toHaveURL(documentURL);
+	await host.getByRole("button", { name: "Increase nut quantity" }).click();
+	await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("1");
+
+	const guest = page.frameLocator('iframe[title="Guest inventory"]');
+	await expect(guest.getByText("Tree synchronization is not implemented yet.")).toBeVisible();
+	await expect(guest.getByRole("button", { name: "Add Part" })).toHaveCount(0);
+});

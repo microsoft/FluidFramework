@@ -2,12 +2,13 @@
 
 An example of using the SharedTree sandboxing APIs to edit one inventory from a Host page and an isolated Guest iframe.
 
-> **Implementation status: page scaffold.**
-> You can run separate Host and Guest pages, with the Guest isolated in an opaque-origin iframe.
-> Inventory data, Fluid connections, sandbox synchronization, status reporting, and restart are not implemented yet.
+> **Implementation status: editable Host inventory.**
+> The Host loads a Fluid container and displays inventory controls beside the isolated Guest iframe.
+> Loading and startup errors are displayed, but the Guest remains a placeholder.
+> Sandbox synchronization, Guest session status, and restart are not implemented yet.
 > The intended behavior and acceptance criteria below remain implementation guidance.
 
-## Run the scaffold
+## Run the example
 
 From the repository root:
 
@@ -26,9 +27,26 @@ pnpm start
 
 Open <http://localhost:8080>.
 You should see Host and Guest panes side by side.
+The Host starts with `nut` and `bolt`, each with quantity `0`.
+Use its controls to change quantities and add or remove parts.
+Decrement is disabled at zero.
 The Guest heading inside the iframe is rendered by its separate bundle, not by the Host.
 Both pages explicitly state that tree synchronization is not implemented yet.
-No Fluid service is needed for this scaffold, and service-selection query parameters do not yet affect it.
+No separate Fluid service is needed with the default session-storage-backed service.
+The Host stores the container ID in the URL hash so reloading the page loads the same document.
+
+To collaborate across browser sessions, start Tinylicious in a separate terminal and select it when starting the example:
+
+```bash
+pnpm exec tinylicious
+```
+
+```bash
+pnpm start:tinylicious
+```
+
+Share the resulting URL, including its container ID, with another browser session.
+Use a fresh URL without a container ID when switching between service types.
 
 The development server disables hot module replacement and live reload so they cannot replace a Guest outside application-managed teardown.
 Refresh the top-level page after changing the code.
@@ -59,8 +77,13 @@ pnpm webpack
 
 After source or unit-test changes, rebuild with `pnpm build:esm` followed by `pnpm build:test:esm` before running Mocha.
 Playwright starts and stops its own development server.
-The current tests cover page rendering in both React Strict Mode settings, the iframe configuration, and actual browser isolation.
+The current Mocha tests cover inventory controls and tree observations in both React Strict Mode settings, Host loading/error rendering, and in-process container creation and loading.
+They also create a real sandbox Host to verify V3 compatibility and check that disposing it leaves the application-owned view usable.
+The browser tests cover session-backed creation, reload, and editing, as well as actual iframe isolation.
 They do not yet cover tree synchronization or lifecycle controls.
+
+The source compiler configuration follows `inventory-app` by disabling `exactOptionalPropertyTypes`.
+Some existing Fluid dependency declarations are incompatible with that option; other strict checks and dependency declaration checking remain enabled.
 
 ### Page build and cross-origin script loading
 
@@ -81,7 +104,7 @@ You will use two editable inventory views displayed side by side:
 - **Host:** The application-owned tree view connected to Fluid services.
 - **Guest:** An independent tree view inside an iframe, synchronized with the Host through a `MessagePort`.
 
-The example will adapt the schema and interactions from [inventory-app](../inventory-app/README.md) without changing that example.
+The example adapts the schema and interactions from [inventory-app](../inventory-app/README.md) without changing that example.
 Both pages will compile the same schema and React components into separate JavaScript contexts.
 The Guest will not load a Fluid container or connect to Fluid services.
 
@@ -92,16 +115,18 @@ It will not include blob handling, undo/redo controls, or a protocol-message log
 
 ### Service selection
 
-The Host will use the existing example service-selection and container-loading conventions:
+The Host uses the existing example service-selection and container-loading conventions:
 
 - Use the session-storage-backed service by default, or select it with `?fluidClient=session`.
 - Use `?fluidClient=tinylicious` with a running Tinylicious service to collaborate across browser sessions.
+- Use `?fluidClient=ephemeral` for an in-memory service.
+  Reloading creates a new service, so remove the old container ID before reloading in this mode.
 - Store the container ID in the Host page's URL hash.
   A missing ID creates a new document; an existing ID loads that document.
 
-The Host must explicitly configure `oldestSupportedClient: "3.4.0"` or later.
+The Host explicitly configures `oldestSupportedClient: "3.4.0"`.
 Sandboxing requires the ID compressor's V3 serialization format.
-This example will not change the shared example helper's default compatibility setting.
+This example does not change the shared example helper's default compatibility setting.
 The Host and Guest will use the same version of the tree package.
 
 ### Editing walkthrough
@@ -152,6 +177,14 @@ The API synchronizes trees across an existing boundary; the application creates 
 The iframe must use `sandbox="allow-scripts"` without `allow-same-origin`.
 This gives the Guest an opaque origin, even when its HTML and scripts are served from the same server as the Host.
 Neither page reads the other's DOM or passes live tree objects across the boundary.
+
+### Host startup contract
+
+The Host loads or creates its container once per page startup, outside React rendering and effects.
+Show the existing example loading view until its inventory view is ready.
+Retain the container, including its application-owned view, in the ready state rather than returning only the inventory root.
+Show and log startup failures instead of rendering an editable inventory or loading the Guest iframe.
+At this implementation stage, the Guest remains a placeholder and does not receive inventory data.
 
 ### Bootstrap contract
 
@@ -231,7 +264,8 @@ A rejection does not prove that the corresponding edits were never applied.
 
 ## Acceptance criteria and test strategy
 
-The following are planned tests, not claims of existing coverage.
+The following table describes the full acceptance criteria, including behavior not yet implemented.
+See [Build and test](#build-and-test) for current coverage.
 Most behavior will be tested with Mocha, adding jsdom and React testing utilities where DOM behavior is involved.
 Pure validation and lifecycle logic should not require a real browser.
 
@@ -270,7 +304,7 @@ Follow the [Documentation Guidelines](../../../docs/content/Guidelines/Documenta
 
 For each behavior, document its contract, write a focused failing test, confirm the expected failure, implement the behavior, and refactor with tests passing.
 Keep the documentation aligned with implemented behavior throughout development.
-The scaffold has executable unit and browser tests.
+The example has executable unit and browser tests.
 Add the remaining behavior tests with each subsequent feature, rather than postponing them until the application is complete.
 
 Before considering the example complete, validate its type-check/build, lint/format checks, Mocha suite, limited Playwright suite, production bundle, and Tinylicious startup.
