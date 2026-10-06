@@ -37,6 +37,7 @@ import type {
 	ChannelConfigurationFacet,
 	ChannelConfigurationChange,
 } from "../channelConfiguration.js";
+import type { ChannelConfigurationMessageV1 } from "../channelConfigurationFormat.js";
 import type { ISharedObjectKind, SharedObjectKindAlpha } from "../sharedObject.js";
 import {
 	defaultSharedObjectProtocol,
@@ -190,7 +191,7 @@ function collection(
 	};
 }
 
-function barrier(expectedRevision: number, retain: boolean): unknown {
+function barrier(expectedRevision: number, retain: boolean): ChannelConfigurationMessageV1 {
 	return { version: 1, isChannelConfigurationOp: true, expectedRevision, values: { retain } };
 }
 
@@ -347,7 +348,7 @@ describe("configured kernel composition", () => {
 				assert.throws(
 					() =>
 						shared.edit({
-							get invalid(): unknown {
+							get invalid(): never {
 								throw failure;
 							},
 						}),

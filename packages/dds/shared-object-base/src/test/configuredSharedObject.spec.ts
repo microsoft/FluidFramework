@@ -35,6 +35,7 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
+import type { ChannelConfigurationMessageV1 } from "../channelConfigurationFormat.js";
 import {
 	type ChannelConfigurationDefinition,
 	type ChannelConfigurationFacet,
@@ -271,7 +272,7 @@ function collection(
 	};
 }
 
-function barrier(expectedRevision: number, retain: boolean): unknown {
+function barrier(expectedRevision: number, retain: boolean): ChannelConfigurationMessageV1 {
 	return { version: 1, isChannelConfigurationOp: true, expectedRevision, values: { retain } };
 }
 

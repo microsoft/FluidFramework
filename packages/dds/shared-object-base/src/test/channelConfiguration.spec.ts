@@ -25,6 +25,7 @@ import {
 	hasChannelConfigurationMarker,
 	parseChannelConfigurationMessage,
 	type ChannelConfigurationMessageV1,
+	type ChannelConfigurationValuesV1,
 } from "../channelConfigurationFormat.js";
 
 const definition: ChannelConfigurationDefinition<ChannelConfiguration> = {
@@ -72,14 +73,11 @@ function context(
 	};
 }
 
-function proposal(expectedRevision: number, values: unknown): unknown {
+function proposal(
+	expectedRevision: number,
+	values: ChannelConfigurationValuesV1,
+): ChannelConfigurationMessageV1 {
 	return { version: 1, isChannelConfigurationOp: true, expectedRevision, values };
-}
-
-function at<T>(values: readonly T[], index: number = 0): T {
-	const value = values[index];
-	assert(value !== undefined);
-	return value;
 }
 
 describe("ChannelConfigurationController", () => {
@@ -101,7 +99,8 @@ describe("ChannelConfigurationController", () => {
 			controller.process(proposal(0, {}), context(false));
 			assert.equal(submitted.length, 0);
 			controller.submitOrdinaryMessage(() => {});
-			const sent = at(submitted);
+			const sent = submitted.at(0);
+			assert(sent !== undefined);
 			assert.equal(sent.message.expectedRevision, 0);
 			assert.equal(sent.message.values, values);
 			controller.submitOrdinaryMessage(() => {});
@@ -122,7 +121,11 @@ describe("ChannelConfigurationController", () => {
 				submitted.map(({ message }) => message),
 				[proposal(0, { enabled: false }), proposal(0, {})],
 			);
-			assert.notEqual(at(submitted).metadata, at(submitted, 1).metadata);
+			const firstOp = submitted.at(0);
+			const secondOp = submitted.at(1);
+			assert(firstOp !== undefined);
+			assert(secondOp !== undefined);
+			assert.notEqual(firstOp.metadata, secondOp.metadata);
 			for (const item of submitted) {
 				controller.process(item.message, context(), item.metadata);
 			}
@@ -135,11 +138,15 @@ describe("ChannelConfigurationController", () => {
 			const lazy = controller.requestChangeLazy({});
 			const eager = controller.requestChange({ enabled: false });
 			assert.equal(submitted.length, 1);
-			controller.process(at(submitted).message, context(), at(submitted).metadata);
+			const eagerOp = submitted.at(0);
+			assert(eagerOp !== undefined);
+			controller.process(eagerOp.message, context(), eagerOp.metadata);
 			assert.equal((await eager).status, "applied");
 			controller.submitOrdinaryMessage(() => {});
-			assert.equal(at(submitted, 1).message.expectedRevision, 0);
-			controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
+			const lazyOp = submitted.at(1);
+			assert(lazyOp !== undefined);
+			assert.equal(lazyOp.message.expectedRevision, 0);
+			controller.process(lazyOp.message, context(), lazyOp.metadata);
 			assert.equal((await lazy).status, "conflict");
 		});
 
@@ -148,7 +155,9 @@ describe("ChannelConfigurationController", () => {
 			const request = controller.requestChangeLazy({});
 			assert.equal(controller.current.revision, 1);
 			assert.equal(changes.length, 1);
-			assert.equal(at(changes).source, "local");
+			const change = changes.at(0);
+			assert(change !== undefined);
+			assert.equal(change.source, "local");
 			assert.equal((await request).source, "local");
 			controller.submitOrdinaryMessage(() => {});
 			assert.deepEqual(submitted, []);
@@ -220,8 +229,10 @@ describe("ChannelConfigurationController", () => {
 			fail = false;
 			controller.submitOrdinaryMessage(() => {});
 			assert.equal(sent.length, 1);
-			assert.deepEqual(at(sent).message, proposal(0, { enabled: false }));
-			controller.process(at(sent).message, context(), at(sent).metadata);
+			const survivingOp = sent.at(0);
+			assert(survivingOp !== undefined);
+			assert.deepEqual(survivingOp.message, proposal(0, { enabled: false }));
+			controller.process(survivingOp.message, context(), survivingOp.metadata);
 			assert.equal((await surviving).status, "applied");
 		});
 
@@ -286,7 +297,9 @@ describe("ChannelConfigurationController", () => {
 			assert.equal(sent.length, 0);
 			controller.submitOrdinaryMessage(() => {});
 			assert.equal(sent.length, 1);
-			controller.process(at(sent).message, context(), at(sent).metadata);
+			const survivingOp = sent.at(0);
+			assert(survivingOp !== undefined);
+			controller.process(survivingOp.message, context(), survivingOp.metadata);
 			assert.equal((await surviving).status, "applied");
 		});
 
@@ -300,7 +313,9 @@ describe("ChannelConfigurationController", () => {
 			assert.equal(submitted.length, 0);
 			controller.submitOrdinaryMessage(() => {});
 			assert.equal(submitted.length, 1);
-			controller.process(at(submitted).message, context(), at(submitted).metadata);
+			const sent = submitted.at(0);
+			assert(sent !== undefined);
+			controller.process(sent.message, context(), sent.metadata);
 			assert.equal((await request).status, "applied");
 		});
 
@@ -338,13 +353,15 @@ describe("ChannelConfigurationController", () => {
 			const { controller, submitted } = harness();
 			const rolledBack = assert.rejects(controller.requestChangeLazy({}), /rolled back/);
 			controller.submitOrdinaryMessage(() => {});
-			const first = at(submitted);
+			const first = submitted.at(0);
+			assert(first !== undefined);
 			controller.reSubmit(first.message, first.metadata);
-			assert.deepEqual(at(submitted, 1), first);
+			assert.deepEqual(submitted.at(1), first);
 			controller.rollback(first.metadata);
 			await rolledBack;
 			controller.applyStashedOp(first.message);
-			const restored = at(submitted, 2);
+			const restored = submitted.at(2);
+			assert(restored !== undefined);
 			assert.equal(restored.message, first.message);
 			assert.equal(restored.metadata, undefined);
 			controller.process(restored.message, context(), restored.metadata);
@@ -357,8 +374,10 @@ describe("ChannelConfigurationController", () => {
 		const second = harness();
 		const firstRequest = first.controller.requestChange({ enabled: false });
 		const secondRequest = second.controller.requestChange({ enabled: null });
-		const firstOp = at(first.submitted);
-		const secondOp = at(second.submitted);
+		const firstOp = first.submitted.at(0);
+		const secondOp = second.submitted.at(0);
+		assert(firstOp !== undefined);
+		assert(secondOp !== undefined);
 		assert.equal(firstOp.message.expectedRevision, secondOp.message.expectedRevision);
 		assert.equal(first.controller.current.revision, 0);
 		assert.equal(second.controller.current.revision, 0);
@@ -388,15 +407,19 @@ describe("ChannelConfigurationController", () => {
 		const two = controller.requestChange({});
 		assert.equal(controller.current, previous);
 		assert.equal(changes.length, 0);
-		assert.notEqual(at(submitted).metadata, at(submitted, 1).metadata);
-		assert.deepEqual(JSON.parse(JSON.stringify(at(submitted).message)), {
+		const firstOp = submitted.at(0);
+		const secondOp = submitted.at(1);
+		assert(firstOp !== undefined);
+		assert(secondOp !== undefined);
+		assert.notEqual(firstOp.metadata, secondOp.metadata);
+		assert.deepEqual(JSON.parse(JSON.stringify(firstOp.message)), {
 			version: 1,
 			isChannelConfigurationOp: true,
 			expectedRevision: 0,
 			values: { enabled: false },
 		});
-		controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
-		controller.process(at(submitted).message, context(true, 1), at(submitted).metadata);
+		controller.process(secondOp.message, context(), secondOp.metadata);
+		controller.process(firstOp.message, context(true, 1), firstOp.metadata);
 		assert.equal((await one).status, "conflict");
 		assert.equal((await two).status, "applied");
 		assert.equal(changes.length, 1);
@@ -406,17 +429,19 @@ describe("ChannelConfigurationController", () => {
 		const { controller, submitted } = harness();
 		const input = { nested: [{ enabled: true }] };
 		const request = controller.requestChange(input);
-		assert.equal(at(submitted).message.values, input);
+		const sent = submitted.at(0);
+		assert(sent !== undefined);
+		assert.equal(sent.message.values, input);
 		controller.process(proposal(0, { other: true }), context(false));
-		assert.equal(at(submitted).message.expectedRevision, 0);
-		assert.deepEqual(at(submitted).message.values, { nested: [{ enabled: true }] });
-		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		assert.equal(sent.message.expectedRevision, 0);
+		assert.deepEqual(sent.message.values, { nested: [{ enabled: true }] });
+		controller.process(sent.message, context(), sent.metadata);
 		assert.equal((await request).status, "conflict");
 	});
 
 	it("increments every accepted barrier, including identical, removed, disabled, and repeated values", () => {
 		const { controller, changes } = harness();
-		const replacements = [
+		const replacements: ChannelConfigurationValuesV1[] = [
 			{ enabled: true },
 			{ enabled: false },
 			{},
@@ -427,11 +452,15 @@ describe("ChannelConfigurationController", () => {
 			controller.process(proposal(index, values), context(false, index));
 			assert.equal(controller.current.revision, index + 1);
 			assert.deepEqual(controller.current.values, values);
-			assert.equal(at(changes, index).source, "sequenced");
-			assert.equal(at(changes, index).current, controller.current);
+			const change = changes.at(index);
+			assert(change !== undefined);
+			assert.equal(change.source, "sequenced");
+			assert.equal(change.current, controller.current);
 		}
 		assert.equal(changes.length, replacements.length);
-		assert.equal(at(changes).previous.revision, 0);
+		const firstChange = changes.at(0);
+		assert(firstChange !== undefined);
+		assert.equal(firstChange.previous.revision, 0);
 	});
 
 	it("does not interpret unsupported obsolete values on a conflict", () => {
@@ -465,7 +494,9 @@ describe("ChannelConfigurationController", () => {
 		});
 		const request = controller.requestChange({});
 		const complete = request.then(() => order.push("promise"));
-		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		const sent = submitted.at(0);
+		assert(sent !== undefined);
+		controller.process(sent.message, context(), sent.metadata);
 		assert.deepEqual(order, ["callback"]);
 		controller.process(proposal(1, { enabled: false }), context(false, 1));
 		const result = await request;
@@ -508,7 +539,9 @@ describe("ChannelConfigurationController", () => {
 			assert.equal(result.current.revision, index + 1);
 			assert.equal("sequenceNumber" in result, false);
 			assert.equal("messageIndex" in result, false);
-			assert.equal("sequenceNumber" in at(changes, index), false);
+			const change = changes.at(index);
+			assert(change !== undefined);
+			assert.equal("sequenceNumber" in change, false);
 		}
 	});
 
@@ -520,8 +553,10 @@ describe("ChannelConfigurationController", () => {
 		const next = controller.requestChange({ enabled: false });
 		assert.equal(controller.current.revision, 1);
 		assert.equal(changes.length, 1);
-		assert.equal(at(submitted).message.expectedRevision, 1);
-		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		const sent = submitted.at(0);
+		assert(sent !== undefined);
+		assert.equal(sent.message.expectedRevision, 1);
+		controller.process(sent.message, context(), sent.metadata);
 		assert.equal((await next).source, "sequenced");
 		assert.equal(controller.current.revision, 2);
 	});
@@ -535,7 +570,9 @@ describe("ChannelConfigurationController", () => {
 			assert.equal(submitted.length, 0);
 			const valid = controller.requestChange({});
 			if (attached) {
-				controller.process(at(submitted).message, context(), at(submitted).metadata);
+				const sent = submitted.at(0);
+				assert(sent !== undefined);
+				controller.process(sent.message, context(), sent.metadata);
 			}
 			assert.equal((await valid).status, "applied");
 		}
@@ -594,20 +631,25 @@ describe("ChannelConfigurationController", () => {
 	it("resubmits and restores original expected revisions without activation or retagging", async () => {
 		const { controller, submitted, changes } = harness();
 		const request = controller.requestChange({ enabled: false });
-		const original = at(submitted);
+		const original = submitted.at(0);
+		assert(original !== undefined);
 		controller.process(proposal(0, {}), context(false));
 		const current = controller.current;
 		controller.reSubmit(original.message, original.metadata);
-		assert.equal(at(submitted, 1).message.expectedRevision, 0);
-		assert.equal(at(submitted, 1).metadata, original.metadata);
+		const resubmitted = submitted.at(1);
+		assert(resubmitted !== undefined);
+		assert.equal(resubmitted.message.expectedRevision, 0);
+		assert.equal(resubmitted.metadata, original.metadata);
 		assert.equal(controller.current, current);
 		assert.equal(changes.length, 1);
 		controller.applyStashedOp(proposal(0, { unsupported: true }));
 		assert.equal(controller.current, current);
 		assert.equal(submitted.length, 3);
-		assert.deepEqual(at(submitted, 2).message, proposal(0, { unsupported: true }));
-		assert.equal(at(submitted, 2).metadata, undefined);
-		controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
+		const restored = submitted.at(2);
+		assert(restored !== undefined);
+		assert.deepEqual(restored.message, proposal(0, { unsupported: true }));
+		assert.equal(restored.metadata, undefined);
+		controller.process(resubmitted.message, context(), resubmitted.metadata);
 		assert.equal((await request).status, "conflict");
 	});
 
@@ -622,7 +664,8 @@ describe("ChannelConfigurationController", () => {
 		};
 		controller.applyStashedOp(stashed);
 		assert.equal(submitted.length, 1);
-		const restored = at(submitted);
+		const restored = submitted.at(0);
+		assert(restored !== undefined);
 		assert.deepEqual(restored.message, stashed);
 		assert.equal(restored.message, stashed);
 		assert.equal(restored.metadata, undefined);
@@ -643,11 +686,15 @@ describe("ChannelConfigurationController", () => {
 			return true;
 		});
 		const surviving = controller.requestChange({ enabled: false });
-		controller.rollback(at(submitted).metadata);
-		controller.rollback(at(submitted).metadata);
+		const rolledBackOp = submitted.at(0);
+		assert(rolledBackOp !== undefined);
+		controller.rollback(rolledBackOp.metadata);
+		controller.rollback(rolledBackOp.metadata);
 		await rolledBack;
 		assert.equal(controller.current.revision, 0);
-		controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
+		const survivingOp = submitted.at(1);
+		assert(survivingOp !== undefined);
+		controller.process(survivingOp.message, context(), survivingOp.metadata);
 		assert.equal((await surviving).status, "applied");
 		controller.dispose();
 	});
@@ -681,8 +728,10 @@ describe("ChannelConfigurationController", () => {
 		controller.on("changed", () => {
 			throw failure;
 		});
+		const sent = submitted.at(0);
+		assert(sent !== undefined);
 		assert.throws(
-			() => controller.process(at(submitted).message, context(), at(submitted).metadata),
+			() => controller.process(sent.message, context(), sent.metadata),
 			(error) => error === failure,
 		);
 		await Promise.all([first, second]);
@@ -737,7 +786,8 @@ describe("ChannelConfigurationController", () => {
 			snapshot: { version: 1, revision: 4, values: {} },
 		});
 		controller.applyStashedOp(proposal(5, {}));
-		const restored = at(submitted);
+		const restored = submitted.at(0);
+		assert(restored !== undefined);
 		assert.equal(restored.message.expectedRevision, 5);
 		assert.throws(
 			() => controller.process(restored.message, context(), restored.metadata),
@@ -777,7 +827,9 @@ describe("ChannelConfigurationController", () => {
 		const first = controller.requestChange({});
 		fail = true;
 		await assert.rejects(controller.requestChange({ enabled: false }), /Submit failed/);
-		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		const sent = submitted.at(0);
+		assert(sent !== undefined);
+		controller.process(sent.message, context(), sent.metadata);
 		assert.equal((await first).status, "applied");
 		controller.dispose();
 	});
@@ -846,9 +898,11 @@ describe("ChannelConfigurationController", () => {
 			const request = controller.requestChange(values);
 			if (attached) {
 				assert.equal(controller.current.revision, 0);
-				const original = at(submitted);
+				const original = submitted.at(0);
+				assert(original !== undefined);
 				controller.reSubmit(original.message, original.metadata);
-				const resubmitted = at(submitted, 1);
+				const resubmitted = submitted.at(1);
+				assert(resubmitted !== undefined);
 				assert.deepEqual(resubmitted.message, original.message);
 				assert.equal(resubmitted.metadata, original.metadata);
 				controller.process(resubmitted.message, context(), resubmitted.metadata);
@@ -868,7 +922,8 @@ describe("ChannelConfigurationController", () => {
 		});
 		const snapshot = controller.current;
 		controller.applyStashedOp(message);
-		const restored = at(submitted);
+		const restored = submitted.at(0);
+		assert(restored !== undefined);
 		assert.deepEqual(restored.message, message);
 		assert.equal(restored.metadata, undefined);
 		assert.equal(controller.current, snapshot);
