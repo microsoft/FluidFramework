@@ -1,7 +1,7 @@
 # Ephemeral Summary GET Ownership Fast Path
 
-**Status:** Approved design  
-**Date:** 2026-10-05  
+**Status:** Approved design
+**Date:** 2026-10-05
 **Security issue:** MSRC 130146
 
 ## Summary
