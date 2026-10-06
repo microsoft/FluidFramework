@@ -8,6 +8,8 @@
 Add opt-in persisted channel configuration infrastructure
 
 Internal kernel factories can opt new and existing DDS instances into readonly JSON configuration stored with channel attributes.
+Inheritance-based DDSes can use `initializeSharedObjectConfiguration` during construction to obtain the same facet.
+The helper shares controller, lifecycle, and persistence behavior with kernel factories, including subclasses of `SharedObjectCore` with custom asynchronous summaries.
 Supporting factories supply a stable `defaultConfiguration` for unmarked instances.
 Reading these defaults does not change the summary; the first accepted replacement starts persistent configuration.
 Fluid Framework code owns these values and must preserve their JSON round-trip behavior; the protocol does not deep-copy, freeze, or recursively validate them.

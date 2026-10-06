@@ -151,9 +151,9 @@ export type ConfigurationChangeResult<TConfig extends ChannelConfiguration> =
 	  } & ChannelConfigurationAttachedContext);
 
 /**
- * Per-instance configuration API supplied before a channel's kernel is constructed.
+ * Per-instance configuration API supplied before the channel initializes its state.
  *
- * Read the current snapshot to initialize the kernel, then subscribe to changes before processing
+ * Read the current snapshot to initialize the DDS, then subscribe to changes before processing
  * channel ops. The initial snapshot does not produce a changed event.
  * An unmarked channel starts with the DDS's default configuration at revision zero. Its first
  * accepted replacement makes configuration persistent, even if the values do not change.

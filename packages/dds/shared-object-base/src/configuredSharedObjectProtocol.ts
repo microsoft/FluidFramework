@@ -15,14 +15,13 @@ import {
 	parseChannelConfigurationMessage,
 	verifyOrdinaryChannelMessage,
 } from "./channelConfigurationFormat.js";
-import type { SharedKernelMessageCollection } from "./sharedObjectKernel.js";
 import type { SharedObjectProtocol } from "./sharedObjectProtocol.js";
 
 /**
- * Routes a configuration-capable kernel's transport, including before its first configuration op.
+ * Routes a configuration-capable shared object's transport, including before its first configuration op.
  * Retains ordinary DDS hooks and metadata.
  */
-export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
+export class ConfiguredSharedObjectProtocol<TConfig extends ChannelConfiguration>
 	implements SharedObjectProtocol
 {
 	private submittingControl = false;
@@ -73,7 +72,7 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 		deliver: (messages: IRuntimeMessageCollection) => void,
 	): void {
 		this.controller.verifyCanSubmit();
-		const ordinary: SharedKernelMessageCollection["messagesContent"][number][] = [];
+		const ordinary: IRuntimeMessageCollection["messagesContent"][number][] = [];
 		const flush = (): void => {
 			if (ordinary.length > 0) {
 				deliver({ ...messages, messagesContent: [...ordinary] });

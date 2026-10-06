@@ -26,21 +26,20 @@ import type {
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	ChannelConfigurationController,
-	type ChannelConfiguration,
-	type ChannelConfigurationDefinition,
-	type ChannelConfigurationFacet,
+import type {
+	ChannelConfiguration,
+	ChannelConfigurationDefinition,
+	ChannelConfigurationFacet,
 } from "./channelConfiguration.js";
-import { ConfiguredKernelProtocol } from "./configuredKernelProtocol.js";
 import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKindAlpha,
+	initializeSharedObjectConfiguration,
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKindAlpha,
 } from "./sharedObject.js";
-import { sharedObjectProtocols } from "./sharedObjectProtocol.js";
+import type { SharedObjectConfigurationInitialization } from "./sharedObjectConfiguration.js";
 import type { ISharedObjectEvents, ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
@@ -114,14 +113,6 @@ export interface SharedKernel {
 export type SharedKernelMessageCollection = IRuntimeMessageCollection;
 
 /**
- * Supplies explicit creation values or a persisted snapshot when present.
- * Otherwise, a configuration-capable factory uses its default configuration without persisting it.
- */
-type ConfigurationInitialization<TConfig extends ChannelConfiguration> =
-	| { readonly kind: "create"; readonly values?: TConfig }
-	| { readonly kind: "load"; readonly snapshot?: unknown };
-
-/**
  * SharedObject implementation that delegates to a SharedKernel.
  * @typeParam TOut - The type of the object exposed to the app.
  * Once initialized, instances of this class forward properties to the `TOut` value provided by the factory.
@@ -147,9 +138,6 @@ class SharedObjectFromKernel<
 	#lazyData: FactoryOut<TOut> | undefined = undefined;
 
 	readonly #kernelArgs: KernelArgs<TConfig>;
-	readonly #configurationProtocol: ConfiguredKernelProtocol<TConfig> | undefined;
-	#initializingConfiguration = true;
-	readonly #loadingConfiguration: boolean;
 
 	public constructor(
 		id: string,
@@ -157,103 +145,23 @@ class SharedObjectFromKernel<
 		attributes: IChannelAttributes,
 		public readonly factory: SharedKernelFactory<TOut, TConfig>,
 		telemetryContextPrefix: string,
-		configuration: ConfigurationInitialization<TConfig>,
+		initialization: SharedObjectConfigurationInitialization<TConfig>,
 	) {
-		super(
-			id,
-			runtime,
-			// Configuration-capable channels can add an instance-specific getter.
-			// Copy first so this does not change factory attributes or another channel's snapshot.
-			factory.configurationDefinition === undefined ? attributes : { ...attributes },
-			telemetryContextPrefix,
-		);
+		super(id, runtime, attributes, telemetryContextPrefix);
 
-		this.#loadingConfiguration = configuration.kind === "load";
 		const definition = factory.configurationDefinition;
 		const hasConfiguration =
-			configuration.kind === "load"
-				? "snapshot" in configuration
-				: configuration.values !== undefined;
+			initialization.kind === "load"
+				? "configuration" in attributes
+				: initialization.initialConfiguration !== undefined;
 		assert(
 			!hasConfiguration || definition !== undefined,
 			"Factory does not support channel configuration",
 		);
-		if (definition !== undefined) {
-			const controller = new ChannelConfigurationController({
-				definition,
-				snapshot:
-					configuration.kind === "load" && hasConfiguration
-						? configuration.snapshot
-						: {
-								version: 1,
-								revision: 0,
-								values:
-									configuration.kind === "create"
-										? (configuration.values ?? definition.defaultConfiguration)
-										: definition.defaultConfiguration,
-							},
-				isAttached: () => this.isAttached(),
-				verifyCanChange: () => {
-					this.#verifyConfigurationSubmission();
-					assert(
-						!this.#initializingConfiguration,
-						"Cannot change configuration during kernel initialization",
-					);
-					assert(!runtime.isReadOnly(), "Cannot change configuration on a read-only runtime");
-					if (this.isAttached()) {
-						this.#verifyConfigurationEnabled();
-					}
-				},
-				submit: (message, metadata) => {
-					assert(
-						this.#configurationProtocol !== undefined,
-						"Configuration protocol must be initialized",
-					);
-					this.#configurationProtocol.submitControl(message, metadata);
-				},
-			});
-			this.#configurationProtocol = new ConfiguredKernelProtocol(
-				controller,
-				(content, metadata) => this.submitLocalMessage(content, metadata),
-				() => this.#verifyConfigurationSubmission(),
-				() => this.#verifyConfigurationEnabled(),
-				(result) =>
-					extractTelemetryLoggerExt(this.logger).sendTelemetryEvent({
-						eventName: "ChannelConfiguration",
-						status: result.status,
-						source: result.source,
-						protocolVersion: 1,
-						configurationRevision: result.current.revision,
-						...(result.source === "sequenced"
-							? {
-									sequenceNumber: result.sequenceNumber,
-									clientSequenceNumber: result.clientSequenceNumber,
-									messageIndex: result.messageIndex,
-									local: result.local,
-								}
-							: {}),
-					}),
-			);
-			sharedObjectProtocols.set(this, this.#configurationProtocol);
-			const persistConfiguration = (): void => {
-				Object.defineProperty(this.attributes, "configuration", {
-					enumerable: true,
-					get: () => ({ version: 1, ...controller.current }),
-				});
-				controller.off("changed", persistConfiguration);
-			};
-			if (hasConfiguration) {
-				persistConfiguration();
-			} else {
-				// Register before the kernel so its first changed callback sees persisted attributes.
-				controller.on("changed", persistConfiguration);
-			}
-			runtime.once("dispose", () =>
-				this.#configurationProtocol?.close(
-					new Error("Runtime disposed with pending configuration changes"),
-				),
-			);
-		}
+		const configuration =
+			definition === undefined
+				? undefined
+				: initializeSharedObjectConfiguration(this, { definition, initialization });
 
 		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
 		// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
@@ -277,32 +185,8 @@ class SharedObjectFromKernel<
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab,
-			...(this.#configurationProtocol === undefined
-				? {}
-				: { configuration: this.#configurationProtocol.controller }),
+			...(configuration === undefined ? {} : { configuration }),
 		};
-	}
-
-	public get channelConfigurationProtocolVersion(): 1 | undefined {
-		return this.#configurationProtocol === undefined ? undefined : 1;
-	}
-
-	#verifyConfigurationSubmission(): void {
-		assert(!this.runtime.disposed, "Cannot submit to a disposed configured channel");
-		assert(
-			!this.#loadingConfiguration || !this.#initializingConfiguration,
-			"Cannot submit while loading configured kernel state",
-		);
-		this.#configurationProtocol?.controller.verifyCanSubmit();
-	}
-
-	#verifyConfigurationEnabled(): void {
-		assert(
-			(
-				this.runtime as IFluidDataStoreRuntimeInternalConfig
-			).isSharedObjectConfigurationEnabled?.() === true,
-			"Shared object configuration document capability is not enabled",
-		);
 	}
 
 	protected override summarizeCore(
@@ -321,7 +205,6 @@ class SharedObjectFromKernel<
 
 	protected override initializeLocalCore(): void {
 		this.#initializeData(this.factory.create(this.#kernelArgs));
-		this.#initializingConfiguration = false;
 	}
 
 	#initializeData(data: FactoryOut<TOut>): void {
@@ -341,7 +224,6 @@ class SharedObjectFromKernel<
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
 		this.#initializeData(await this.factory.loadCore(this.#kernelArgs, storage));
-		this.#initializingConfiguration = false;
 	}
 
 	protected override onDisconnect(): void {
@@ -369,9 +251,6 @@ class SharedObjectFromKernel<
 	}
 
 	protected override didAttach(): void {
-		if ("configuration" in this.attributes) {
-			this.#verifyConfigurationEnabled();
-		}
 		this.#kernel.didAttach?.();
 	}
 }
@@ -647,9 +526,7 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 				attributes,
 				options.factory,
 				options.telemetryContextPrefix,
-				"configuration" in attributes
-					? { kind: "load", snapshot: attributes.configuration }
-					: { kind: "load" },
+				{ kind: "load" },
 			);
 			await shared.load(services);
 			return shared as unknown as T & IChannel;
@@ -667,7 +544,7 @@ function makeChannelFactory<T extends object, TConfig extends ChannelConfigurati
 				options.telemetryContextPrefix,
 				options.initialConfiguration === undefined
 					? { kind: "create" }
-					: { kind: "create", values: options.initialConfiguration },
+					: { kind: "create", initialConfiguration: options.initialConfiguration },
 			);
 
 			shared.initializeLocal();

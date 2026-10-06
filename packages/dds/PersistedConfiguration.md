@@ -56,9 +56,9 @@ desired/session distinction, and one-proposal-per-session policy are not the req
 Put a reusable `ChannelConfigurationController` in `shared-object-base`. It owns configuration
 state, CAS decisions, and configuration-request completion tracking.
 An internal protocol adapter integrates it with `SharedObjectCore`'s lifecycle.
-The primary DDS API is a typed configuration facet in `KernelArgs`, available before the
-kernel factory constructs or loads the kernel. It does not require kernel implementations
-such as `SharedTreeKernel` to extend `SharedObject`.
+Both inheritance-based DDSes and kernel factories use the same internal `initializeSharedObjectConfiguration` helper.
+Kernel implementations receive its typed facet in `KernelArgs`, before the kernel factory constructs or loads the kernel.
+They do not need to extend `SharedObject`.
 
 The DDS owns the meaning and validation of its configuration, how it reacts to an accepted change,
 and how it processes ordinary ops, including optimistic local state and acknowledgements. It does
@@ -71,12 +71,36 @@ The datastore runtime continues to own channel routing, summary scheduling, and 
 It validates protocol support before loading a configured channel. Container runtime owns the
 document-level compatibility gate described below.
 
-Version 1 supports DDSes using `makeSharedObjectKind`. Adapting a direct `IChannel` implementation
-is a separate integration, not permission to bypass the shared controller.
+Version 1 supports DDSes using `makeSharedObjectKind` or extending `SharedObjectCore`, including through `SharedObject`.
+Adapting a direct `IChannel` implementation is a separate integration, not permission to bypass the shared controller.
 
 Non-goals are application schema management, general consensus, cross-channel transactions,
 ordinary-op invalidation or its reconciliation/event APIs, automatic retries of rejected edits,
 asynchronous data migrations during a configuration callback.
+
+### Inheritance-based DDSes
+
+A participating factory advertises `channelConfigurationProtocolVersion: 1` and supplies an explicit creation or load mode to the DDS constructor.
+After `super()`, the constructor registers its definition before configuration-dependent setup:
+
+```typescript
+this.configuration = initializeSharedObjectConfiguration(this, {
+    definition,
+    initialization,
+});
+this.initializeSettings(this.configuration.current.values);
+this.configuration.on("changed", (change) => {
+    this.applySettings(change.current.values);
+});
+```
+
+`initialization` is `{ kind: "create", initialConfiguration? }` or `{ kind: "load" }`.
+Load reads the instance's channel attributes, never the factory's creation settings.
+Registration is allowed once, before initialization, loading, connection, or binding starts.
+The facet is readable immediately, but requests cannot change configuration until `initializeLocalCore` or `loadCore` completes.
+The base class checks configured attachment before calling `didAttach`, even when a subclass overrides that hook without calling `super`.
+The same controller, protocol dispatch, disposal, and attribute persistence serve inheritance-based and kernel-based DDSes.
+Custom asynchronous summaries still store configuration in the channel attributes written by the datastore.
 
 ### SharedTree history prototype
 
@@ -421,10 +445,10 @@ using existing pending local-op metadata; completion metadata is not part of the
 
 ### Applying changes to a live DDS
 
-The facet is initialized once before kernel construction.
+The facet is initialized once, before kernel construction or during an inheritance-based DDS's constructor.
 For load it exposes the snapshot's validated configuration, or the definition's defaults when unmarked, not the latest configuration from buffered ops.
 Reading that initial snapshot is not a configuration-change notification.
-The wrapper distinguishes creation from load, each with optional explicit configuration.
+The shared core distinguishes creation settings from configuration read from channel attributes on load.
 Factory support is separate from these lifecycle states.
 The controller validates defaults, creation values, and loaded snapshots in the same way.
 
@@ -542,7 +566,7 @@ Reader support remains enabled when deployment policy stops requesting the docum
 
 Until attachment, configuration replacements apply locally and immediately through the same
 validation and readonly state path. Repeated replacements, including identical values, advance
-the revision and notify the active kernel. These changes require neither a control op nor a
+the revision and notify the active DDS. These changes require neither a control op nor a
 document-schema upgrade round trip. An unbound channel in an attached container is also
 unattached. After attachment, every replacement requires an actual sequenced barrier;
 disconnecting an already-attached channel does not restore local authority.
@@ -746,7 +770,7 @@ DDS-specific invalidation events and telemetry are outside this design.
 | Area | Proposed changes |
 | --- | --- |
 | `datastore-definitions` | Internal persisted-state/factory capability types, without new required members on legacy channel contracts. |
-| `shared-object-base` | Controller and compositional kernel facet; per-instance configuration attributes; configuration-op dispatch and shared reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
+| `shared-object-base` | Shared-core configuration initializer and kernel facet; per-instance configuration attributes; configuration-op dispatch and shared reserved-key guards; configuration-request completion tracking; normal DDS attachment state. |
 | `datastore` | Factory and attach capability checks; retain lazy replay ordering, ordinary stashed-op handling, and summary invalidation. |
 | `container-runtime` | Persisted SharedObject configuration flag requested through normal schema features; propagate readiness; retain the existing one-attempt policy, pending accounting, and ordinary-op replay behavior. |
 | Initial adopter | Stable defaults and configuration validation for new and existing DDS instances, with a synchronous change callback. Preserve their existing local mutation, acknowledgement, and ordinary-op lifecycle behavior. |

@@ -13,6 +13,7 @@ export {
 	type SharedObjectKindAlpha,
 	createSharedObjectKind,
 	createSharedObjectKindAlpha,
+	initializeSharedObjectConfiguration,
 	type SharedObjectKey,
 } from "./sharedObject.js";
 export type { ISharedObject, ISharedObjectEvents } from "./types.js";
@@ -47,6 +48,10 @@ export type {
 	ChannelConfigurationAttachedContext,
 	ConfigurationChangeResult,
 } from "./channelConfiguration.js";
+export type {
+	SharedObjectConfigurationInitialization,
+	SharedObjectConfigurationOptions,
+} from "./sharedObjectConfiguration.js";
 export { defineDataStore, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
 export { makeStubDataStoreKind } from "./stubSharedObject.js";
 export type {
