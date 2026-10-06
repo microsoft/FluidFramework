@@ -9,7 +9,7 @@ import {
 	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 } from "@fluidframework/devtools-core/internal";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { type FC, useState } from "react";
 
@@ -35,7 +35,7 @@ describe("Menu Accessibility Check", () => {
 			},
 		};
 	});
-	const MenuWrapper: FC = () => {
+	const MenuWrapper: FC<{ telemetry?: boolean }> = ({ telemetry = true }) => {
 		const [menuSelection, setMenuSelection] = useState<MenuSelection>({
 			type: "homeMenuSelection",
 		});
@@ -50,7 +50,7 @@ describe("Menu Accessibility Check", () => {
 					currentSelection={menuSelection}
 					setSelection={setMenuSelection}
 					containers={containers}
-					supportedFeatures={supportedFeatures}
+					supportedFeatures={{ ...supportedFeatures, telemetry }}
 					onRemoveContainer={mockRemoveContainer}
 				/>
 			</MessageRelayContext.Provider>
@@ -60,6 +60,67 @@ describe("Menu Accessibility Check", () => {
 	it("Menu is accessible", async () => {
 		const { container } = render(<MenuWrapper />);
 		await assertNoAccessibilityViolations(container);
+	});
+
+	it("Associates the 'Events' button with its 'Telemetry' section heading", () => {
+		const { rerender } = render(<MenuWrapper />);
+
+		const telemetryHeading = screen.getByText("Telemetry");
+		const headingId = telemetryHeading.id;
+		const eventsButton = screen.getByRole("button", { name: "Events" });
+		const group = eventsButton.closest("[role='group']");
+
+		assert.ok(group);
+		assert.equal(group.getAttribute("aria-labelledby"), telemetryHeading.id);
+		assert.notEqual(telemetryHeading.id, "");
+		assert.equal(group, screen.getByRole("group", { name: "Telemetry" }));
+		assert.deepEqual(screen.getAllByRole("group"), [group]);
+
+		rerender(<MenuWrapper />);
+		assert.equal(group, screen.getByRole("group", { name: "Telemetry" }));
+		assert.equal(group.getAttribute("aria-labelledby"), headingId);
+		assert.equal(telemetryHeading.id, headingId);
+		assert.equal(eventsButton, screen.getByRole("button", { name: "Events" }));
+	});
+
+	it("Uses a distinct Telemetry heading ID for each menu", () => {
+		const firstMenu = render(<MenuWrapper />);
+		const secondMenu = render(<MenuWrapper />);
+		const headingIds = new Set<string>();
+
+		for (const menu of [firstMenu, secondMenu]) {
+			const menuQueries = within(menu.container);
+			const heading = menuQueries.getByText("Telemetry");
+			const group = menuQueries.getByRole("group", { name: "Telemetry" });
+			const eventsButton = within(group).getByRole("button", { name: "Events" });
+
+			assert.notEqual(heading.id, "");
+			assert.equal(group.getAttribute("aria-labelledby"), heading.id);
+			assert.equal(document.querySelector(`[id="${heading.id}"]`), heading);
+			assert.equal(eventsButton.closest("[role='group']"), group);
+			headingIds.add(heading.id);
+		}
+
+		assert.equal(headingIds.size, 2);
+	});
+
+	it("Exposes the Telemetry group only when telemetry is supported", () => {
+		const { rerender } = render(<MenuWrapper telemetry={false} />);
+		assert.equal(screen.queryByText("Telemetry"), null);
+		assert.equal(screen.queryByRole("button", { name: "Events" }), null);
+		assert.deepEqual(screen.queryAllByRole("group"), []);
+
+		rerender(<MenuWrapper telemetry={true} />);
+		const group = screen.getByRole("group", { name: "Telemetry" });
+		assert.equal(
+			screen.getByRole("button", { name: "Events" }).closest("[role='group']"),
+			group,
+		);
+
+		rerender(<MenuWrapper telemetry={false} />);
+		assert.equal(screen.queryByText("Telemetry"), null);
+		assert.equal(screen.queryByRole("button", { name: "Events" }), null);
+		assert.deepEqual(screen.queryAllByRole("group"), []);
 	});
 
 	it("Can tab/arrow navigate through the Menu", async () => {
@@ -100,6 +161,12 @@ describe("Menu Accessibility Check", () => {
 
 		await user.tab();
 		const opLatency = screen.getByRole("button", { name: "Op Latency" });
+		assert.equal(document.activeElement, opLatency);
+
+		await user.tab({ shift: true });
+		assert.equal(document.activeElement, events);
+
+		await user.tab();
 		assert.equal(document.activeElement, opLatency);
 
 		await user.tab();
