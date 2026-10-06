@@ -78,10 +78,10 @@ describe("versioned Codecs", () => {
 		] as const;
 		const builder = VersionDispatchingCodecBuilder.build("Test", writableRegistry);
 		const experimentalSelectorBuilder = VersionDispatchingCodecBuilder.build(
-			"PerValue",
+			"Selected",
 			writableRegistry,
 			{
-				selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? "X" : defaultVersion),
+				selectWriteFormatVersion: () => "X",
 			},
 		);
 		const lifecycleRegistry = [
@@ -126,6 +126,8 @@ describe("versioned Codecs", () => {
 			});
 			const v1 = codec1.encode(42);
 			const v2 = codec2.encode(42);
+			assert.equal(codec1.writeVersion, 1);
+			assert.equal(codec2.writeVersion, 2);
 			assert.deepEqual(v1, { version: 1, value1: 42 });
 			assert.deepEqual(v2, { version: 2, value2: 42 });
 			assert.equal(codec1.decode(v1), 42);
@@ -161,14 +163,60 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.equal(codec2.decode(v2), 42);
 		});
 
-		it("selects write versions per value", () => {
-			const codec = experimentalSelectorBuilder.build({
-				minVersionForCollab: "2.0.0",
+		it("selects a fixed write format from build options", () => {
+			const defaults: (1 | 2 | "X")[] = [];
+			const selectedBuilder = VersionDispatchingCodecBuilder.build(
+				"Selected",
+				writableRegistry,
+				{
+					selectWriteFormatVersion: (options, defaultVersion) => {
+						defaults.push(defaultVersion);
+						return options.minVersionForCollab === lowestMinVersionForCollab ? "X" : 1;
+					},
+				},
+			);
+			const experimentalCodec = selectedBuilder.build({
+				minVersionForCollab: lowestMinVersionForCollab,
+				jsonValidator: FormatValidatorBasic,
+			});
+			const stableCodec = selectedBuilder.build({
+				minVersionForCollab: FluidClientVersion.v2_43,
 				jsonValidator: FormatValidatorBasic,
 			});
 
-			assert.deepEqual(codec.encode(42), { version: 1, value1: 42 });
-			assert.deepEqual(codec.encode(-1), { version: "X", valueX: -1 });
+			assert.equal(experimentalCodec.writeVersion, "X");
+			assert.deepEqual(experimentalCodec.encode(-1), { version: "X", valueX: -1 });
+			assert.deepEqual(experimentalCodec.encode(42), { version: "X", valueX: 42 });
+			assert.equal(stableCodec.writeVersion, 1);
+			assert.deepEqual(stableCodec.encode(-1), { version: 1, value1: -1 });
+			assert.deepEqual(stableCodec.encode(42), { version: 1, value1: 42 });
+			assert.deepEqual(defaults, [1, 2]);
+		});
+
+		it("rejects invalid overrides before invoking the selector", () => {
+			let selectorCalls = 0;
+			const selectedBuilder = VersionDispatchingCodecBuilder.build(
+				"Selected",
+				writableRegistry,
+				{
+					selectWriteFormatVersion: (_options, defaultVersion) => {
+						selectorCalls++;
+						return defaultVersion;
+					},
+				},
+			);
+			assert.throws(
+				() =>
+					selectedBuilder.build({
+						minVersionForCollab: lowestMinVersionForCollab,
+						jsonValidator: FormatValidatorBasic,
+						writeVersionOverrides: new Map([["Selected", 2]]),
+					}),
+				validateUsageError(
+					'Codec "Selected" does not support requested format version 2 because it is only compatible back to client version 2.43.0 and the requested oldest compatible client was 2.0.0. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.',
+				),
+			);
+			assert.equal(selectorCalls, 0);
 		});
 
 		{
@@ -213,7 +261,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 				lifecycleRegistry,
 				{
 					// @ts-expect-error Read-only formats are not eligible for encoding.
-					selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? 0 : defaultVersion),
+					selectWriteFormatVersion: () => 0,
 				},
 			);
 			const decoder = lifecycleBuilder.buildDecoder({
@@ -252,12 +300,12 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 				);
 			}
 
-			const codec = lifecycleBuilder.build({
-				minVersionForCollab: "2.0.0",
-				jsonValidator: FormatValidatorBasic,
-			});
 			assert.throws(
-				() => codec.encode(-1),
+				() =>
+					lifecycleBuilder.build({
+						minVersionForCollab: "2.0.0",
+						jsonValidator: FormatValidatorBasic,
+					}),
 				validateUsageError(
 					'Codec "Lifecycle" cannot encode data using readonly format version 0.',
 				),
@@ -269,75 +317,86 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 				// @ts-expect-error Discontinued formats are not eligible for encoding.
 				selectWriteFormatVersion: () => undefined,
 			});
-			const codec = legacyBuilder.build({
-				minVersionForCollab: "2.0.0",
-				jsonValidator: FormatValidatorBasic,
-			});
-
 			assert.throws(
-				() => codec.encode(42),
+				() =>
+					legacyBuilder.build({
+						minVersionForCollab: "2.0.0",
+						jsonValidator: FormatValidatorBasic,
+					}),
 				validateUsageError(
 					'Codec "Legacy" cannot encode data using discontinued format version undefined.',
 				),
 			);
 		});
 
-		it("rejects per-value formats that conflict with an explicit override", () => {
+		it("requires selected formats to match an explicit override", () => {
+			assert.throws(
+				() =>
+					experimentalSelectorBuilder.build({
+						minVersionForCollab: "2.0.0",
+						jsonValidator: FormatValidatorBasic,
+						writeVersionOverrides: new Map([["Selected", 1]]),
+					}),
+				validateUsageError(
+					'Codec "Selected" selected format version "X", which conflicts with explicitly selected format version 1.',
+				),
+			);
 			const codec = experimentalSelectorBuilder.build({
 				minVersionForCollab: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
-				writeVersionOverrides: new Map([["PerValue", 1]]),
+				writeVersionOverrides: new Map([["Selected", "X"]]),
+				allowPossiblyIncompatibleWriteVersionOverrides: true,
 			});
-
-			assert.throws(
-				() => codec.encode(-1),
-				validateUsageError(
-					'Codec "PerValue" cannot encode this data using explicitly selected format version 1. The data requires format version "X".',
-				),
-			);
+			assert.equal(codec.writeVersion, "X");
+			assert.deepEqual(codec.encode(42), { version: "X", valueX: 42 });
 		});
 
-		it("rejects unsupported per-value formats", () => {
-			const perValueBuilder = VersionDispatchingCodecBuilder.build(
-				"PerValue",
+		it("rejects unsupported selected formats during build", () => {
+			const selectedBuilder = VersionDispatchingCodecBuilder.build(
+				"Selected",
 				writableRegistry,
 				{
 					// @ts-expect-error Unregistered formats are not eligible for encoding.
 					selectWriteFormatVersion: () => 3,
 				},
 			);
-			const codec = perValueBuilder.build({
-				minVersionForCollab: "2.0.0",
-				jsonValidator: FormatValidatorBasic,
-			});
-
 			assert.throws(
-				() => codec.encode(42),
+				() =>
+					selectedBuilder.build({
+						minVersionForCollab: "2.0.0",
+						jsonValidator: FormatValidatorBasic,
+					}),
 				validateUsageError(
-					'Codec "PerValue" selected unsupported format version 3 while encoding. Supported versions are: [1,2,"X"].',
+					'Codec "Selected" selected unsupported format version 3. Supported versions are: [1,2,"X"].',
 				),
 			);
 		});
 
-		it("rejects per-value stable formats incompatible with minVersionForCollab", () => {
-			const perValueBuilder = VersionDispatchingCodecBuilder.build(
-				"PerValue",
+		it("validates selected stable formats against minVersionForCollab during build", () => {
+			const selectedBuilder = VersionDispatchingCodecBuilder.build(
+				"Selected",
 				writableRegistry,
 				{
-					selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? 2 : defaultVersion),
+					selectWriteFormatVersion: () => 2,
 				},
 			);
-			const codec = perValueBuilder.build({
-				minVersionForCollab: "2.0.0",
-				jsonValidator: FormatValidatorBasic,
-			});
-
 			assert.throws(
-				() => codec.encode(-1),
+				() =>
+					selectedBuilder.build({
+						minVersionForCollab: "2.0.0",
+						jsonValidator: FormatValidatorBasic,
+						allowPossiblyIncompatibleWriteVersionOverrides: true,
+					}),
 				validateUsageError(
-					'Codec "PerValue" selected format version 2 for this data, but that format is only compatible back to client version 2.43.0 and the requested oldest compatible client was 2.0.0.',
+					'Codec "Selected" selected format version 2, but that format is only compatible back to client version 2.43.0 and the requested oldest compatible client was 2.0.0.',
 				),
 			);
+			const compatibleCodec = selectedBuilder.build({
+				minVersionForCollab: FluidClientVersion.v2_43,
+				jsonValidator: FormatValidatorBasic,
+			});
+			assert.equal(compatibleCodec.writeVersion, 2);
+			assert.deepEqual(compatibleCodec.encode(-1), { version: 2, value2: -1 });
 		});
 
 		it("bad override", () => {
@@ -498,8 +557,8 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					},
 				],
 				{
-					selectWriteFormatVersion: (data, defaultVersion) =>
-						data < 0 ? "X" : defaultVersion,
+					selectWriteFormatVersion: (options, defaultVersion) =>
+						options.offset > options.readonlyOffset ? "X" : defaultVersion,
 				},
 			);
 			const codec = contextualBuilder.build({
