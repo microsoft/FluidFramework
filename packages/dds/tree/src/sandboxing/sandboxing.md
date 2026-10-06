@@ -166,14 +166,14 @@ flowchart TB
 
     W --> C
     R -->|"Tree data"| T["Tree codec and change application"]
-    R -->|"Blob message"| B["Resolve or settle one request"]
+    R -->|"Blob message"| H["Resolve or settle one request"]
     R -->|"Acknowledgment"| A["Advance synchronization"]
     R -->|"Session failure"| X["Stop the endpoint"]
 
     classDef conversion fill:#e8f1ff,stroke:#3166a3,color:#111;
     classDef validation fill:#e7f4e8,stroke:#397a42,color:#111;
     classDef boundary fill:#fff4cc,stroke:#967000,color:#111;
-    class N,E,C,U,B conversion;
+    class N,E,C,U,B,H conversion;
     class V,Q,R validation;
     class W boundary;
 ```
