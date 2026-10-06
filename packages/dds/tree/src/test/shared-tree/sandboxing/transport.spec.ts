@@ -30,7 +30,6 @@ import {
 import {
 	type BlobRequestId,
 	type BlobRequestMessage,
-	type BlobResponseMessage,
 	type GuestChangeMessage,
 	type GuestToHostMessage,
 	GuestTransportCodec,
@@ -38,6 +37,7 @@ import {
 	guestToHostMessageValidator,
 	type HandleToken,
 	type HostIdRangeMessage,
+	type HostToGuestMessage,
 	hostToGuestMessageValidator,
 	HostTransportCodec,
 	type HostUpdateMessage,
@@ -46,7 +46,6 @@ import {
 	isSerializedHandle,
 	normalizeTransportData,
 	SandboxProtocolError,
-	type ValidatedHostToGuestMessage,
 	validateTreePayloadVocabulary,
 } from "../../../sandboxing/index.js";
 
@@ -56,8 +55,11 @@ type FlattenEnvelope<T> = {
 	};
 }[keyof T];
 
-type ParsedHostToGuestMessage = Omit<ValidatedHostToGuestMessage, "blobResponse"> & {
-	readonly blobResponse?: Extract<BlobResponseMessage, { readonly blob: ArrayBuffer }>;
+type ParsedHostToGuestMessage = Omit<HostToGuestMessage, "blobResponse"> & {
+	readonly blobResponse?: {
+		readonly requestId: BlobRequestId;
+		readonly blob: ArrayBuffer;
+	};
 };
 
 type HostGuestMessage =
@@ -88,7 +90,7 @@ function parseGuestToHostMessage(data: unknown): GuestToHostMessage {
 	if (!guestToHostMessageValidator.check(data)) {
 		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 	}
-	return data as GuestToHostMessage;
+	return data;
 }
 
 function parseHostGuestMessage(data: unknown): HostGuestMessage {
@@ -416,7 +418,7 @@ describe("Transport and endpoint unit tests", () => {
 		assert.equal(requests.length, 1);
 		const request = requests[0];
 		const blob = await host.resolveBlob(request.token);
-		guest.receiveBlobResponse({ requestId: request.requestId, blob });
+		guest.receiveBlobResponse(request.requestId, blob);
 		assert.equal(await first, blob);
 		assert.equal(proxy.get(), first);
 		assert.equal(requests.length, 1);
@@ -427,10 +429,7 @@ describe("Transport and endpoint unit tests", () => {
 		const proxy = guest.decode(host.encode(new MockHandle(new ArrayBuffer(1))));
 		assert(isFluidHandle(proxy));
 		const promise = proxy.get();
-		guest.receiveBlobResponse({
-			requestId: requests[0].requestId,
-			error: "Blob unavailable",
-		});
+		guest.receiveBlobResponseError(requests[0].requestId, "Blob unavailable");
 		await assert.rejects(promise, { name: "Error", message: "Blob unavailable" });
 		assert.equal(proxy.get(), promise);
 		assert.equal(requests.length, 1);
@@ -445,16 +444,10 @@ describe("Transport and endpoint unit tests", () => {
 		const firstPromise = first.get();
 		const secondPromise = second.get();
 		const secondBlob = new ArrayBuffer(2);
-		guest.receiveBlobResponse({
-			requestId: requests[1].requestId,
-			blob: secondBlob,
-		});
+		guest.receiveBlobResponse(requests[1].requestId, secondBlob);
 		assert.equal(await secondPromise, secondBlob);
 		const firstBlob = new ArrayBuffer(1);
-		guest.receiveBlobResponse({
-			requestId: requests[0].requestId,
-			blob: firstBlob,
-		});
+		guest.receiveBlobResponse(requests[0].requestId, firstBlob);
 		assert.equal(await firstPromise, firstBlob);
 	});
 
@@ -468,11 +461,7 @@ describe("Transport and endpoint unit tests", () => {
 		assert(isFluidHandle(proxy));
 		await assert.rejects(proxy.get(), (error: unknown) => error === transportError);
 		assert.throws(
-			() =>
-				guest.receiveBlobResponse({
-					requestId: brand<BlobRequestId>(0),
-					blob: new ArrayBuffer(1),
-				}),
+			() => guest.receiveBlobResponse(brand<BlobRequestId>(0), new ArrayBuffer(1)),
 			SandboxProtocolError,
 		);
 	});
@@ -586,11 +575,7 @@ describe("Transport and endpoint unit tests", () => {
 			);
 		}
 		assert.throws(
-			() =>
-				guest.receiveBlobResponse({
-					requestId: brand<BlobRequestId>(0),
-					blob: new ArrayBuffer(0),
-				}),
+			() => guest.receiveBlobResponse(brand<BlobRequestId>(0), new ArrayBuffer(0)),
 			SandboxProtocolError,
 		);
 	});

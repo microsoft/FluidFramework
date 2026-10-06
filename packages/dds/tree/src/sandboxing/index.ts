@@ -9,7 +9,7 @@ export { HostImplementation } from "./host.js";
 export {
 	type BlobRequestId,
 	type BlobRequestMessage,
-	type BlobResponseMessage,
+	createBufferPlaceholder,
 	type GuestChangeMessage,
 	type GuestToHostMessage,
 	getTransportBuffer,
@@ -27,8 +27,6 @@ export {
 	SandboxProtocolError,
 	sandboxFormatValidator,
 	throwProtocolError,
-	type ValidatedGuestToHostMessage,
-	type ValidatedHostToGuestMessage,
 	validateTreePayloadVocabulary,
 } from "./common.js";
 export { GuestSynchronization } from "./guestSynchronization.js";

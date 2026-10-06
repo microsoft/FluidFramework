@@ -148,6 +148,12 @@ const transportBuffers = new WeakMap<object, ArrayBuffer>();
  * Hides a copied transport buffer from schema validation behind an identity-checked {@link BufferPlaceholder}.
  */
 export function createBufferPlaceholder(buffer: ArrayBuffer): BufferPlaceholder {
+	if (Object.getPrototypeOf(buffer) !== ArrayBuffer.prototype) {
+		throw new SandboxProtocolError("Unsupported sandbox transport object.");
+	}
+	if (Reflect.ownKeys(buffer).length > 0) {
+		throw new SandboxProtocolError("Sandbox buffers cannot have custom properties.");
+	}
 	const record: object = Object.create(null);
 	const placeholder = Object.freeze(
 		Object.assign(record, { arrayBufferMarker: true as const }),
@@ -492,7 +498,8 @@ const SessionFailureMessage = Type.Object(
 
 /**
  * Guest-to-Host request to resolve an authorized {@link HandleToken} as a blob.
- * The Host returns a {@link BlobResponseMessage} with the same {@link BlobRequestId}.
+ * The Host returns a `blobResponse` or `blobResponseError` member with the same
+ * {@link BlobRequestId}.
  */
 export type BlobRequestMessage = Static<typeof BlobRequestMessage>;
 const BlobRequestMessage = Type.Object(
@@ -507,7 +514,7 @@ const BlobRequestMessage = Type.Object(
 
 /**
  * Validation representation of a successful Host-to-Guest blob response.
- * Its blob is a registered {@link BufferPlaceholder}, unlike the {@link ArrayBuffer} exposed by {@link BlobResponseMessage}.
+ * Its blob is a registered {@link BufferPlaceholder}.
  */
 const BlobSuccessMessage = Type.Object(
 	{
@@ -531,51 +538,13 @@ const BlobErrorMessage = Type.Object(
 	{ additionalProperties: false },
 );
 /**
- * Application representation of a successful Host-to-Guest blob response.
- */
-type BlobSuccessResponseMessage = Omit<Static<typeof BlobSuccessMessage>, "blob"> & {
-	readonly blob: ArrayBuffer;
-};
-
-/**
- * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
- * The sender supplies an {@link ArrayBuffer}; the Guest obtains one after placeholder validation and unwrapping.
- * The Guest must also match the request ID against its outstanding requests.
- */
-export type BlobResponseMessage = BlobSuccessResponseMessage | Static<typeof BlobErrorMessage>;
-
-type DiscriminatedUnion<TMembers extends { [TKey in keyof TMembers]: object }> = {
-	readonly [TKey in keyof TMembers]: Readonly<Record<TKey, TMembers[TKey]>> &
-		Partial<Record<Exclude<keyof TMembers, TKey>, never>>;
-}[keyof TMembers];
-
-interface HostToGuestMessageMembers {
-	readonly hostInitialization: HostInitializationMessage;
-	readonly hostUpdate: HostUpdateMessage;
-	readonly hostIdRange: HostIdRangeMessage;
-	readonly guestChangeAck: GuestChangeAckMessage;
-	readonly blobResponse: BlobSuccessResponseMessage;
-	readonly blobResponseError: Static<typeof BlobErrorMessage>;
-	readonly sessionFailure: SessionFailureMessage;
-}
-
-/**
- * A local message sent from the Host to the Guest before transport normalization.
- *
- * @remarks
- * Each message has exactly one union member.
- * A successful blob response contains its application-facing {@link ArrayBuffer}.
- */
-export type HostToGuestMessage = DiscriminatedUnion<HostToGuestMessageMembers>;
-
-/**
- * A Host-to-Guest message after transport decoding and semantic validation.
+ * A normalized Host-to-Guest protocol message.
  *
  * @remarks
  * A successful blob response still contains its registered {@link BufferPlaceholder}.
  * The Guest unwraps that field before passing the response to application-facing logic.
  */
-export type ValidatedHostToGuestMessage = Static<typeof hostToGuestMessageSchema>;
+export type HostToGuestMessage = Static<typeof hostToGuestMessageSchema>;
 const hostToGuestMessageSchema = Type.Object(
 	{
 		/** Initializes the Guest with a {@link HostInitializationMessage}. */
@@ -599,25 +568,10 @@ const hostToGuestMessageSchema = Type.Object(
 	unionOptions,
 );
 
-interface GuestToHostMessageMembers {
-	readonly hostUpdateAck: HostUpdateAckMessage;
-	readonly guestChange: GuestChangeMessage;
-	readonly blobRequest: BlobRequestMessage;
-	readonly sessionFailure: SessionFailureMessage;
-}
-
 /**
- * A local message sent from the Guest to the Host before transport normalization.
- *
- * @remarks
- * Each message has exactly one union member.
+ * A normalized Guest-to-Host protocol message.
  */
-export type GuestToHostMessage = DiscriminatedUnion<GuestToHostMessageMembers>;
-
-/**
- * A Guest-to-Host message after transport decoding and semantic validation.
- */
-export type ValidatedGuestToHostMessage = Static<typeof guestToHostMessageSchema>;
+export type GuestToHostMessage = Static<typeof guestToHostMessageSchema>;
 const guestToHostMessageSchema = Type.Object(
 	{
 		/** Acknowledges a {@link HostUpdateMessage} with a {@link HostUpdateAckMessage}. */

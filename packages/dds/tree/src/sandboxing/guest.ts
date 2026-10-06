@@ -31,11 +31,11 @@ import {
 	getTransportBuffer,
 	guestToHostMessageValidator,
 	type HostInitializationMessage,
+	type HostToGuestMessage,
 	hostToGuestMessageValidator,
 	makePromiseWithResolvers,
 	SandboxProtocolError,
 	throwProtocolError,
-	type ValidatedHostToGuestMessage,
 } from "./common.js";
 import { GuestTransportCodec } from "./guestTransport.js";
 import { GuestSynchronization } from "./guestSynchronization.js";
@@ -67,7 +67,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 	private disposed = false;
 
 	private readonly messageDispatcher = new DiscriminatedUnionDispatcher<
-		ValidatedHostToGuestMessage,
+		HostToGuestMessage,
 		[],
 		void
 	>({
@@ -87,14 +87,11 @@ export class GuestImplementation implements Sandboxing.Guest {
 			this.getSynchronizationForMessage("blob response");
 			const blob = getTransportBuffer(message.blob);
 			assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
-			const response: object = Object.create(null);
-			this.codec.receiveBlobResponse(
-				Object.assign(response, { requestId: message.requestId, blob }),
-			);
+			this.codec.receiveBlobResponse(message.requestId, blob);
 		},
 		blobResponseError: (message) => {
 			this.getSynchronizationForMessage("blob response error");
-			this.codec.receiveBlobResponse(message);
+			this.codec.receiveBlobResponseError(message.requestId, message.error);
 		},
 		sessionFailure: (message) => {
 			this.session.fail(new Error(message.error), false);

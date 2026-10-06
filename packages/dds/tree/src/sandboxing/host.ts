@@ -27,8 +27,9 @@ import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestMessage,
-	type BlobResponseMessage,
+	createBufferPlaceholder,
 	type GuestChangeMessage,
+	type GuestToHostMessage,
 	guestToHostMessageValidator,
 	type HostToGuestMessage,
 	type HostIdRangeId,
@@ -38,7 +39,6 @@ import {
 	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
-	type ValidatedGuestToHostMessage,
 	validateTreePayloadVocabulary,
 } from "./common.js";
 import { HostTransportCodec } from "./hostTransport.js";
@@ -85,7 +85,7 @@ export class HostImplementation implements Sandboxing.Host {
 	private disposed = false;
 
 	private readonly messageDispatcher = new DiscriminatedUnionDispatcher<
-		ValidatedGuestToHostMessage,
+		GuestToHostMessage,
 		[],
 		void
 	>({
@@ -205,21 +205,29 @@ export class HostImplementation implements Sandboxing.Host {
 
 	private async receiveBlobRequest(message: BlobRequestMessage): Promise<void> {
 		this.codec.assertAuthorizedToken(message.token);
-		let response: BlobResponseMessage;
+		let blob: ArrayBuffer;
 		try {
-			const blob = await this.codec.resolveBlob(message.token);
-			response = { requestId: message.requestId, blob };
+			blob = await this.codec.resolveBlob(message.token);
 		} catch (error) {
-			response = {
-				requestId: message.requestId,
-				error: normalizeProtocolError(error).message,
-			};
+			if (this.session.active) {
+				this.postMessage({
+					blobResponseError: {
+						requestId: message.requestId,
+						error: normalizeProtocolError(error).message,
+					},
+				});
+			}
+			return;
 		}
+
 		if (this.session.active) {
 			// Do not transfer: detaching the Host's buffer could break other consumers.
-			this.postMessage(
-				"error" in response ? { blobResponseError: response } : { blobResponse: response },
-			);
+			this.postMessage({
+				blobResponse: {
+					requestId: message.requestId,
+					blob: createBufferPlaceholder(blob),
+				},
+			});
 		}
 	}
 

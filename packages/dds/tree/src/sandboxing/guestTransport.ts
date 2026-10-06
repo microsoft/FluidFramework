@@ -12,7 +12,6 @@ import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestId,
-	type BlobResponseMessage,
 	type GuestToHostMessage,
 	type HandleToken,
 	normalizeProtocolError,
@@ -111,17 +110,24 @@ export class GuestTransportCodec extends TransportCodec {
 		});
 	}
 
-	public receiveBlobResponse(message: BlobResponseMessage): void {
-		const pending = this.pending.get(message.requestId);
+	public receiveBlobResponse(requestId: BlobRequestId, blob: ArrayBuffer): void {
+		this.takePendingBlobRequest(requestId).resolve(blob);
+	}
+
+	public receiveBlobResponseError(requestId: BlobRequestId, error: string): void {
+		this.takePendingBlobRequest(requestId).reject(new Error(error));
+	}
+
+	private takePendingBlobRequest(requestId: BlobRequestId): {
+		resolve: (value: ArrayBuffer) => void;
+		reject: (error: Error) => void;
+	} {
+		const pending = this.pending.get(requestId);
 		if (pending === undefined) {
 			throw new SandboxProtocolError("Unexpected sandbox blob response.");
 		}
-		this.pending.delete(message.requestId);
-		if ("error" in message) {
-			pending.reject(new Error(message.error));
-		} else {
-			pending.resolve(message.blob);
-		}
+		this.pending.delete(requestId);
+		return pending;
 	}
 
 	public dispose(error: Error = new Error("The Guest handle session is disposed.")): void {

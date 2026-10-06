@@ -49,7 +49,7 @@ import {
 } from "../../utils.js";
 
 import {
-	type BlobResponseMessage,
+	type BlobRequestId,
 	type GuestChangeMessage,
 	type GuestToHostMessage,
 	getTransportBuffer,
@@ -57,6 +57,7 @@ import {
 	GuestImplementation,
 	GuestSynchronization,
 	HostImplementation,
+	type HostToGuestMessage,
 	hostToGuestMessageValidator,
 	HostSynchronization,
 	type HostUpdateMessage,
@@ -66,7 +67,6 @@ import {
 	SandboxSessionEndpoint,
 	SandboxProtocolError,
 	getCheckout,
-	type ValidatedHostToGuestMessage,
 } from "../../../sandboxing/index.js";
 import {
 	buildDirectSessionPorts,
@@ -86,8 +86,11 @@ type FlattenEnvelope<T> = {
 	};
 }[keyof T];
 
-type ParsedHostToGuestMessage = Omit<ValidatedHostToGuestMessage, "blobResponse"> & {
-	readonly blobResponse?: Extract<BlobResponseMessage, { readonly blob: ArrayBuffer }>;
+type ParsedHostToGuestMessage = Omit<HostToGuestMessage, "blobResponse"> & {
+	readonly blobResponse?: {
+		readonly requestId: BlobRequestId;
+		readonly blob: ArrayBuffer;
+	};
 };
 
 type HostGuestMessage =
@@ -118,7 +121,7 @@ function parseGuestToHostMessage(data: unknown): GuestToHostMessage {
 	if (!guestToHostMessageValidator.check(data)) {
 		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 	}
-	return data as GuestToHostMessage;
+	return data;
 }
 
 function parseHostGuestMessage(data: unknown): HostGuestMessage {
