@@ -26,8 +26,17 @@ import { FormatValidatorBasic } from "../external-utilities/index.js";
 import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
- * Closed classifications for failures reported across the sandbox boundary.
- * A peer's code is a reported diagnosis, not evidence of the failure's cause.
+ * Kind of failure reported across the sandbox boundary.
+ * @remarks
+ * This is a fixed set of options instead of free form strings so these values from the guest
+ * can be included in host telemetry without risk of exposing sensitive data
+ * which a compromised guest could have included.
+ *
+ * Currently these are just a few rough categories of errors,
+ * but the set can be extended to provide finer grained reporting.
+ *
+ * Each of these has an extended message in {@link sandboxFailureDescriptions}
+ * which can serve as documentation for it.
  */
 export enum SandboxFailureCode {
 	ProtocolViolation = "protocolViolation",
