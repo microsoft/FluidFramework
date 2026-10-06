@@ -122,9 +122,6 @@ export interface IErrorBase extends Partial<Error> {
  * @internal
  */
 export interface IGenericError extends IErrorBase {
-	/**
-	 * {@inheritDoc IErrorBase.errorType}
-	 */
 	readonly errorType: typeof FluidErrorTypes.genericError;
 
 	// TODO: Use `unknown` instead (API-Breaking)
@@ -137,9 +134,6 @@ export interface IGenericError extends IErrorBase {
  * @internal
  */
 export interface IUsageError extends IErrorBase {
-	/**
-	 * {@inheritDoc IErrorBase.errorType}
-	 */
 	readonly errorType: typeof FluidErrorTypes.usageError;
 }
 
@@ -148,9 +142,6 @@ export interface IUsageError extends IErrorBase {
  * @legacy @beta
  */
 export interface IThrottlingWarning extends IErrorBase {
-	/**
-	 * {@inheritDoc IErrorBase.errorType}
-	 */
 	readonly errorType: typeof FluidErrorTypes.throttlingError;
 	readonly retryAfterSeconds: number;
 }
@@ -161,9 +152,6 @@ export interface IThrottlingWarning extends IErrorBase {
  * @legacy @beta
  */
 export interface ILayerIncompatibilityError extends IErrorBase {
-	/**
-	 * {@inheritDoc IErrorBase.errorType}
-	 */
 	readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
 	/**
 	 * The layer that is reporting the incompatibility.

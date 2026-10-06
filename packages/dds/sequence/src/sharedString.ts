@@ -155,9 +155,6 @@ export class SharedStringClass
 		this.mergeTreeTextHelper = this.client.createTextHelper();
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.insertMarkerRelative}
-	 */
 	public insertMarkerRelative(
 		relativePos1: IRelativePosition,
 		refType: ReferenceType,
@@ -169,18 +166,12 @@ export class SharedStringClass
 		);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.insertMarker}
-	 */
 	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
 		this.guardReentrancy(() =>
 			this.client.insertSegmentLocal(pos, Marker.make(refType, props)),
 		);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.insertTextRelative}
-	 */
 	public insertTextRelative(
 		relativePos1: IRelativePosition,
 		text: string,
@@ -192,39 +183,24 @@ export class SharedStringClass
 		);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.insertText}
-	 */
 	public insertText(pos: number, text: string, props?: PropertySet): void {
 		this.guardReentrancy(() =>
 			this.client.insertSegmentLocal(pos, TextSegment.make(text, props)),
 		);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.replaceText}
-	 */
 	public replaceText(start: number, end: number, text: string, props?: PropertySet): void {
 		this.replaceRange(start, end, TextSegment.make(text, props));
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.removeText}
-	 */
 	public removeText(start: number, end: number): void {
 		this.removeRange(start, end);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.annotateMarker}
-	 */
 	public annotateMarker(marker: Marker, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateMarker(marker, props));
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.searchForMarker}
-	 */
 	public searchForMarker(
 		startPos: number,
 		markerLabel: string,
@@ -233,33 +209,21 @@ export class SharedStringClass
 		return this.client.searchForMarker(startPos, markerLabel, forwards);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.getText}
-	 */
 	public getText(start?: number, end?: number) {
 		const collabWindow = this.client.getCollabWindow();
 		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "", start, end);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.getTextWithPlaceholders}
-	 */
 	public getTextWithPlaceholders(start?: number, end?: number) {
 		const collabWindow = this.client.getCollabWindow();
 		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, " ", start, end);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.getTextRangeWithMarkers}
-	 */
 	public getTextRangeWithMarkers(start: number, end: number) {
 		const collabWindow = this.client.getCollabWindow();
 		return this.mergeTreeTextHelper.getText(collabWindow.localPerspective, "*", start, end);
 	}
 
-	/**
-	 * {@inheritDoc ISharedString.getMarkerFromId}
-	 */
 	public getMarkerFromId(id: string): ISegment | undefined {
 		return this.client.getMarkerFromId(id);
 	}
