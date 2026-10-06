@@ -59,9 +59,7 @@ export class SnapshotLoader {
 		this.logger = createChildLogger({ logger, namespace: "SnapshotLoader" });
 	}
 
-	public async initialize(
-		services: IChannelStorageService,
-	): Promise<{
+	public async initialize(services: IChannelStorageService): Promise<{
 		catchupOpsP: Promise<ISequencedDocumentMessage[]>;
 		snapshotVersion: VersionedMergeTreeChunk["version"];
 	}> {

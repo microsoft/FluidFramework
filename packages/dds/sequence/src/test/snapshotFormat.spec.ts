@@ -62,11 +62,7 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 			flags: SnapshotFormatFlags,
 			runtime = createRuntime(flags),
 		): SharedStringClass {
-			const sharedString = new SharedStringClass(
-				runtime,
-				"shared-string",
-				factory.attributes,
-			);
+			const sharedString = new SharedStringClass(runtime, "shared-string", factory.attributes);
 			sharedString.initializeLocal();
 			sharedString.insertText(0, "before");
 			if (attachState === AttachState.Attached) {
