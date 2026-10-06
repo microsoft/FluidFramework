@@ -131,6 +131,7 @@ export async function summarizeChannelAsync(
 	telemetryContext?: ITelemetryContext,
 	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ): Promise<ISummaryTreeWithStats> {
+	verifyChannelConfigurationController(channel);
 	const summarizeResult = await channel.summarize(
 		fullTree,
 		trackState,

@@ -191,7 +191,7 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 	 * This API is useful for configuration updates that aren't particular about the exact timing
 	 * of their application, but still benefit from synchronization across clients. Lazily flushing
 	 * the configuration request change has the benefit that it avoids unnecessary edits to the channel.
-	 * Such unnecessary editscan cause problems with ODSP's representation of "file last edited"
+	 * Such unnecessary edits can cause problems with ODSP's representation of "file last edited"
 	 * or other data model listeners that may track edits to particular parts of the document.
 	 *
 	 * Synchronous callbacks during the flush must not submit another ordinary op or request

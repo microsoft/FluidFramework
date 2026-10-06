@@ -278,6 +278,20 @@ describe("Channel configuration compatibility", () => {
 		assert.throws(() => verifyChannelConfigurationController(configured), /did not register/);
 	});
 
+	it("requires a controller before capturing an asynchronous new-protocol snapshot", async () => {
+		let captured = false;
+		const configured = channel();
+		Object.assign(configured, {
+			channelConfigurationProtocolVersion: undefined,
+			summarize: async () => {
+				captured = true;
+				return new SummaryTreeBuilder().getSummaryTree();
+			},
+		});
+		await assert.rejects(summarizeChannelAsync(configured), /did not register/);
+		assert.equal(captured, false);
+	});
+
 	it("allows different supporting DDS types without document configuration", () => {
 		const configured = channel();
 		const other = {
