@@ -2943,6 +2943,94 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
 
+  examples/data-objects/sandboxed-inventory-app:
+    dependencies:
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~2.4.5
+        version: 2.4.5
+      '@fluid-example/webpack-fluid-loader':
+        specifier: workspace:~
+        version: link:../../utils/webpack-fluid-loader
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../packages/test/mocha-test-setup
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: catalog:buildTools
+        version: 0.67.0(@types/node@22.19.17)(supports-color@8.1.1)
+      '@fluidframework/eslint-config-fluid':
+        specifier: catalog:eslint
+        version: 14.0.0(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@8.1.1)(typescript@6.0.3)
+      '@fluidframework/test-tools':
+        specifier: ^2.0.0
+        version: 2.0.1
+      '@playwright/test':
+        specifier: ^1.62.1
+        version: 1.62.1
+      '@testing-library/react':
+        specifier: ^16.3.0
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7)(@types/react@18.3.15)(react-dom@18.3.1)(react@18.3.1)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.7(@types/react@18.3.15)
+      eslint:
+        specifier: catalog:eslint
+        version: 9.39.1(jiti@2.6.1)(supports-color@8.1.1)
+      eslint-plugin-react:
+        specifier: ~7.37.5
+        version: 7.37.5(eslint@9.39.1)
+      eslint-plugin-react-hooks:
+        specifier: ~7.0.1
+        version: 7.0.1(eslint@9.39.1)(supports-color@8.1.1)
+      global-jsdom:
+        specifier: ^26.0.0
+        version: 26.0.0(jsdom@26.1.0)
+      html-webpack-plugin:
+        specifier: ^5.6.0
+        version: 5.6.3(webpack@5.109.0)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
+      jsdom:
+        specifier: ^26.1.0
+        version: 26.1.0(supports-color@8.1.1)
+      mocha:
+        specifier: ^11.7.5
+        version: 11.7.5
+      rimraf:
+        specifier: ^6.1.3
+        version: 6.1.3
+      typescript:
+        specifier: catalog:TypeScript
+        version: 6.0.3
+      webpack:
+        specifier: ^5.104.1
+        version: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.26)(uglify-js@3.19.3)(webpack-cli@5.1.4)
+      webpack-cli:
+        specifier: ^5.1.4
+        version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
+      webpack-dev-server:
+        specifier: ~5.2.6
+        version: 5.2.6(debug@4.4.3)(supports-color@8.1.1)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
+
   examples/data-objects/smde:
     devDependencies:
       '@biomejs/biome':
@@ -22790,7 +22878,7 @@ packages:
     hasBin: true
 
   js-yaml@4.3.2:
-    resolution: {integrity: sha1-jkT7FKJkPFlya7FXh7XxUSyz0/s=}
+    resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
   jsdoc-type-pratt-parser@6.10.0:
@@ -32932,7 +33020,7 @@ snapshots:
       webpack: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.26)(uglify-js@3.19.3)(webpack-cli@5.1.4)
       webpack-cli: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
     optionalDependencies:
-      webpack-dev-server: 5.2.6(debug@4.4.3)(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
+      webpack-dev-server: 5.2.6(debug@4.4.3)(supports-color@8.1.1)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   '@xtuc/ieee754@1.2.0': {}
 
@@ -33434,6 +33522,23 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  body-parser@1.20.3(supports-color@8.1.1):
+    dependencies:
+      bytes: 3.1.2
+      content-type: 1.0.5
+      debug: 2.6.9(supports-color@8.1.1)
+      depd: 2.0.0
+      destroy: 1.2.0
+      http-errors: 2.0.0
+      iconv-lite: 0.4.24
+      on-finished: 2.4.1
+      qs: 6.15.3
+      raw-body: 2.5.2
+      type-is: 1.6.18
+      unpipe: 1.0.0
+    transitivePeerDependencies:
+      - supports-color
+
   bonjour-service@1.3.0:
     dependencies:
       fast-deep-equal: 3.1.3
@@ -33890,6 +33995,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  compression@1.8.1(supports-color@8.1.1):
+    dependencies:
+      bytes: 3.1.2
+      compressible: 2.0.18
+      debug: 2.6.9(supports-color@8.1.1)
+      negotiator: 0.6.4
+      on-headers: 1.1.0
+      safe-buffer: 5.2.1
+      vary: 1.1.2
+    transitivePeerDependencies:
+      - supports-color
+
   concat-map@0.0.1: {}
 
   concurrently@10.0.3:
@@ -34155,6 +34272,12 @@ snapshots:
       ms: 2.0.0
     optionalDependencies:
       supports-color: 10.2.2
+
+  debug@2.6.9(supports-color@8.1.1):
+    dependencies:
+      ms: 2.0.0
+    optionalDependencies:
+      supports-color: 8.1.1
 
   debug@3.2.7(supports-color@10.2.2):
     dependencies:
@@ -34666,7 +34789,7 @@ snapshots:
       tinyglobby: 0.2.15
       unrs-resolver: 1.11.1
     optionalDependencies:
-      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@8.1.1)
+      eslint-plugin-import-x: 4.16.2(@typescript-eslint/utils@8.66.0)(eslint@9.39.1)(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -35007,7 +35130,7 @@ snapshots:
       array.prototype.tosorted: 1.1.4
       doctrine: 2.1.0
       es-iterator-helpers: 1.2.1
-      eslint: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
+      eslint: 9.39.1(jiti@2.6.1)(supports-color@8.1.1)
       estraverse: 5.3.0
       hasown: 2.0.4
       jsx-ast-utils: 3.3.5
@@ -35318,6 +35441,42 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  express@4.22.1(supports-color@8.1.1):
+    dependencies:
+      accepts: 1.3.8
+      array-flatten: 1.1.1
+      body-parser: 1.20.3(supports-color@8.1.1)
+      content-disposition: 0.5.4
+      content-type: 1.0.5
+      cookie: 0.7.2
+      cookie-signature: 1.0.6
+      debug: 2.6.9(supports-color@8.1.1)
+      depd: 2.0.0
+      encodeurl: 2.0.0
+      escape-html: 1.0.3
+      etag: 1.8.1
+      finalhandler: 1.3.1(supports-color@8.1.1)
+      fresh: 0.5.2
+      http-errors: 2.0.0
+      merge-descriptors: 1.0.3
+      methods: 1.1.2
+      on-finished: 2.4.1
+      parseurl: 1.3.3
+      path-to-regexp: 0.1.13
+      proxy-addr: 2.0.7
+      qs: 6.15.3
+      range-parser: 1.2.1
+      safe-buffer: 5.2.1
+      send: 0.19.0(supports-color@8.1.1)
+      serve-static: 1.16.2(supports-color@8.1.1)
+      setprototypeof: 1.2.0
+      statuses: 2.0.1
+      type-is: 1.6.18
+      utils-merge: 1.0.1
+      vary: 1.1.2
+    transitivePeerDependencies:
+      - supports-color
+
   extend-shallow@2.0.1:
     dependencies:
       is-extendable: 0.1.1
@@ -35438,6 +35597,18 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  finalhandler@1.3.1(supports-color@8.1.1):
+    dependencies:
+      debug: 2.6.9(supports-color@8.1.1)
+      encodeurl: 2.0.0
+      escape-html: 1.0.3
+      on-finished: 2.4.1
+      parseurl: 1.3.3
+      statuses: 2.0.1
+      unpipe: 1.0.0
+    transitivePeerDependencies:
+      - supports-color
+
   find-root@1.1.0: {}
 
   find-up@4.1.0:
@@ -35495,7 +35666,7 @@ snapshots:
 
   follow-redirects@1.16.0(debug@4.4.3):
     optionalDependencies:
-      debug: 4.4.3(supports-color@10.2.2)
+      debug: 4.4.3(supports-color@8.1.1)
 
   for-each@0.3.5:
     dependencies:
@@ -35708,7 +35879,7 @@ snapshots:
 
   global-jsdom@26.0.0(jsdom@26.1.0):
     dependencies:
-      jsdom: 26.1.0(supports-color@10.2.2)
+      jsdom: 26.1.0(supports-color@8.1.1)
 
   globals@14.0.0: {}
 
@@ -35968,6 +36139,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  http-proxy-agent@7.0.2(supports-color@8.1.1):
+    dependencies:
+      agent-base: 7.1.3
+      debug: 4.4.3(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
+
   http-proxy-middleware@2.0.10(@types/express@4.17.25)(debug@4.4.3):
     dependencies:
       '@types/http-proxy': 1.17.15
@@ -36004,6 +36182,13 @@ snapshots:
     dependencies:
       agent-base: 7.1.3
       debug: 4.4.3(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  https-proxy-agent@7.0.6(supports-color@8.1.1):
+    dependencies:
+      agent-base: 7.1.3
+      debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -37049,6 +37234,33 @@ snapshots:
       html-encoding-sniffer: 4.0.0
       http-proxy-agent: 7.0.2(supports-color@10.2.2)
       https-proxy-agent: 7.0.6(supports-color@10.2.2)
+      is-potential-custom-element-name: 1.0.1
+      nwsapi: 2.2.16
+      parse5: 7.2.1
+      rrweb-cssom: 0.8.0
+      saxes: 6.0.0
+      symbol-tree: 3.2.4
+      tough-cookie: 5.1.2
+      w3c-xmlserializer: 5.0.0
+      webidl-conversions: 7.0.0
+      whatwg-encoding: 3.1.1
+      whatwg-mimetype: 4.0.0
+      whatwg-url: 14.2.0
+      ws: 8.21.0
+      xml-name-validator: 5.0.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  jsdom@26.1.0(supports-color@8.1.1):
+    dependencies:
+      cssstyle: 4.6.0
+      data-urls: 5.0.0
+      decimal.js: 10.6.0
+      html-encoding-sniffer: 4.0.0
+      http-proxy-agent: 7.0.2(supports-color@8.1.1)
+      https-proxy-agent: 7.0.6(supports-color@8.1.1)
       is-potential-custom-element-name: 1.0.1
       nwsapi: 2.2.16
       parse5: 7.2.1
@@ -39727,6 +39939,24 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  send@0.19.0(supports-color@8.1.1):
+    dependencies:
+      debug: 2.6.9(supports-color@8.1.1)
+      depd: 2.0.0
+      destroy: 1.2.0
+      encodeurl: 1.0.2
+      escape-html: 1.0.3
+      etag: 1.8.1
+      fresh: 0.5.2
+      http-errors: 2.0.0
+      mime: 1.6.0
+      ms: 2.1.3
+      on-finished: 2.4.1
+      range-parser: 1.2.1
+      statuses: 2.0.1
+    transitivePeerDependencies:
+      - supports-color
+
   sentence-case@3.0.4:
     dependencies:
       no-case: 3.0.4
@@ -39751,12 +39981,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  serve-index@1.9.1(supports-color@8.1.1):
+    dependencies:
+      accepts: 1.3.8
+      batch: 0.6.1
+      debug: 2.6.9(supports-color@8.1.1)
+      escape-html: 1.0.3
+      http-errors: 1.6.3
+      mime-types: 2.1.35
+      parseurl: 1.3.3
+    transitivePeerDependencies:
+      - supports-color
+
   serve-static@1.16.2(supports-color@10.2.2):
     dependencies:
       encodeurl: 2.0.0
       escape-html: 1.0.3
       parseurl: 1.3.3
       send: 0.19.0(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  serve-static@1.16.2(supports-color@8.1.1):
+    dependencies:
+      encodeurl: 2.0.0
+      escape-html: 1.0.3
+      parseurl: 1.3.3
+      send: 0.19.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -40116,6 +40367,17 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  spdy-transport@3.0.0(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      detect-node: 2.1.0
+      hpack.js: 2.1.6
+      obuf: 1.1.2
+      readable-stream: 3.6.2
+      wbuf: 1.7.3
+    transitivePeerDependencies:
+      - supports-color
+
   spdy@4.0.2(supports-color@10.2.2):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
@@ -40123,6 +40385,16 @@ snapshots:
       http-deceiver: 1.2.7
       select-hose: 2.0.0
       spdy-transport: 3.0.0(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
+  spdy@4.0.2(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      handle-thing: 2.0.1
+      http-deceiver: 1.2.7
+      select-hose: 2.0.0
+      spdy-transport: 3.0.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -41258,7 +41530,7 @@ snapshots:
       webpack-merge: 5.10.0
     optionalDependencies:
       webpack-bundle-analyzer: 4.10.2
-      webpack-dev-server: 5.2.6(debug@4.4.3)(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
+      webpack-dev-server: 5.2.6(debug@4.4.3)(supports-color@8.1.1)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   webpack-dev-middleware@7.4.5(tslib@2.8.1)(webpack@5.109.0):
     dependencies:
@@ -41301,6 +41573,46 @@ snapshots:
       serve-index: 1.9.1(supports-color@10.2.2)
       sockjs: 0.3.24
       spdy: 4.0.2(supports-color@10.2.2)
+      webpack-dev-middleware: 7.4.5(tslib@2.8.1)(webpack@5.109.0)
+      ws: 8.21.0
+    optionalDependencies:
+      webpack: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.26)(uglify-js@3.19.3)(webpack-cli@5.1.4)
+      webpack-cli: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - tslib
+      - utf-8-validate
+
+  webpack-dev-server@5.2.6(debug@4.4.3)(supports-color@8.1.1)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0):
+    dependencies:
+      '@types/bonjour': 3.5.13
+      '@types/connect-history-api-fallback': 1.5.4
+      '@types/express': 4.17.25
+      '@types/express-serve-static-core': 4.19.6
+      '@types/serve-index': 1.9.4
+      '@types/serve-static': 1.15.7
+      '@types/sockjs': 0.3.36
+      '@types/ws': 8.5.13
+      ansi-html-community: 0.0.8
+      bonjour-service: 1.3.0
+      chokidar: 3.6.0
+      colorette: 2.0.20
+      compression: 1.8.1(supports-color@8.1.1)
+      connect-history-api-fallback: 2.0.0
+      express: 4.22.1(supports-color@8.1.1)
+      graceful-fs: 4.2.11
+      http-proxy-middleware: 2.0.10(@types/express@4.17.25)(debug@4.4.3)
+      ipaddr.js: 2.2.0
+      launch-editor: 2.14.1
+      open: 10.2.0
+      p-retry: 6.2.1
+      schema-utils: 4.3.3
+      selfsigned: 5.5.0
+      serve-index: 1.9.1(supports-color@8.1.1)
+      sockjs: 0.3.24
+      spdy: 4.0.2(supports-color@8.1.1)
       webpack-dev-middleware: 7.4.5(tslib@2.8.1)(webpack@5.109.0)
       ws: 8.21.0
     optionalDependencies:

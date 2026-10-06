@@ -2,10 +2,77 @@
 
 An example of using the SharedTree sandboxing APIs to edit one inventory from a Host page and an isolated Guest iframe.
 
-> **Implementation status: specification only.**
-> This directory does not yet contain a runnable application or tests.
-> The sections below describe the intended behavior and acceptance criteria for implementation.
-> Setup and test commands will be added as the corresponding package scripts become available.
+> **Implementation status: page scaffold.**
+> You can run separate Host and Guest pages, with the Guest isolated in an opaque-origin iframe.
+> Inventory data, Fluid connections, sandbox synchronization, status reporting, and restart are not implemented yet.
+> The intended behavior and acceptance criteria below remain implementation guidance.
+
+## Run the scaffold
+
+From the repository root:
+
+```bash
+corepack enable
+pnpm install
+pnpm run build:fast --nolint @fluid-example/sandboxed-inventory-app
+```
+
+Then run the example:
+
+```bash
+cd examples/data-objects/sandboxed-inventory-app
+pnpm start
+```
+
+Open <http://localhost:8080>.
+You should see Host and Guest panes side by side.
+The Guest heading inside the iframe is rendered by its separate bundle, not by the Host.
+Both pages explicitly state that tree synchronization is not implemented yet.
+No Fluid service is needed for this scaffold, and service-selection query parameters do not yet affect it.
+
+The development server disables hot module replacement and live reload so they cannot replace a Guest outside application-managed teardown.
+Refresh the top-level page after changing the code.
+
+### Build and test
+
+After building, run these commands from this directory:
+
+```bash
+# Run the Mocha/jsdom unit tests.
+pnpm test:mocha
+
+# Install Chromium once, then run the limited browser suite.
+pnpm exec playwright install chromium
+pnpm test:playwright
+
+# Run both suites.
+pnpm test
+
+# Type-check the browser tests, lint, and check formatting.
+pnpm check:types:test:playwright
+pnpm eslint
+pnpm check:format
+
+# Build optimized pages and bundles into dist/.
+pnpm webpack
+```
+
+After source or unit-test changes, rebuild with `pnpm build:esm` followed by `pnpm build:test:esm` before running Mocha.
+Playwright starts and stops its own development server.
+The current tests cover page rendering in both React Strict Mode settings, the iframe configuration, and actual browser isolation.
+They do not yet cover tree synchronization or lifecycle controls.
+
+### Page build and cross-origin script loading
+
+[webpack.config.cjs](./webpack.config.cjs) generates separate HTML pages with only their respective entry bundle:
+[src/index.tsx](./src/index.tsx) for the Host and [src/guest.tsx](./src/guest.tsx) for the Guest.
+Both use [src/page.ejs](./src/page.ejs) as their HTML template.
+The Guest entry point does not import container-loading or service-client utilities.
+
+The opaque-origin Guest loads its bundle as a module using cross-origin resource sharing (CORS).
+The development server permits anonymous cross-origin access to `/guest.bundle.js` only, using `Access-Control-Allow-Origin: *`.
+It does not disable host/origin checks for other routes or add `allow-same-origin` to the iframe.
+If you serve the production output yourself, configure the same CORS response header for the Guest bundle.
 
 ## Purpose and scope
 
@@ -203,10 +270,11 @@ Follow the [Documentation Guidelines](../../../docs/content/Guidelines/Documenta
 
 For each behavior, document its contract, write a focused failing test, confirm the expected failure, implement the behavior, and refactor with tests passing.
 Keep the documentation aligned with implemented behavior throughout development.
-This specification step adds no executable tests; introduce them with the test harness and each subsequent feature, rather than postponing them until the application is complete.
+The scaffold has executable unit and browser tests.
+Add the remaining behavior tests with each subsequent feature, rather than postponing them until the application is complete.
 
 Before considering the example complete, validate its type-check/build, lint/format checks, Mocha suite, limited Playwright suite, production bundle, and Tinylicious startup.
-Document exact runnable commands when those scripts exist.
+Keep the runnable commands above up to date as those features are added.
 
 ## Limitations
 
