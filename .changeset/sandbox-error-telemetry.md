@@ -1,5 +1,6 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 "__section": tree
 ---
 Preserve tagged diagnostics when reporting sandbox session errors
