@@ -245,11 +245,11 @@ describe("SharedObject protocol dispatch", () => {
 				shared.calls.push(["protocol-stash"]);
 				apply(contents);
 			},
-			reSubmit: (contents, localMetadata, submit): void => {
+			reSubmit: (contents, localMetadata, reSubmit): void => {
 				assert.equal(contents, serialized);
 				assert.equal(localMetadata, metadata);
 				shared.calls.push(["protocol-resubmit"]);
-				submit(contents, localMetadata);
+				reSubmit(contents, localMetadata);
 			},
 			rollback: (contents, localMetadata, rollback): void => {
 				assert.equal(contents, serialized);

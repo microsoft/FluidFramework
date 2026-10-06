@@ -665,14 +665,14 @@ export abstract class SharedObjectCore<
 	 * the legacy behavior (no squashing) will be used.
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
-		const submit = (ordinaryContent: unknown, metadata: unknown): void => {
+		const reSubmit = (ordinaryContent: unknown, metadata: unknown): void => {
 			if (squash) {
 				this.reSubmitSquashed(ordinaryContent, metadata);
 			} else {
 				this.reSubmitCore(ordinaryContent, metadata);
 			}
 		};
-		getSharedObjectProtocol(this).reSubmit(content, localOpMetadata, submit);
+		getSharedObjectProtocol(this).reSubmit(content, localOpMetadata, reSubmit);
 	}
 
 	/**
