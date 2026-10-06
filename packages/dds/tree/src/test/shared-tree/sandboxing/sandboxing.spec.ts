@@ -49,7 +49,6 @@ import {
 } from "../../utils.js";
 
 import {
-	type BlobRequestId,
 	type GuestChangeMessage,
 	type GuestToHostMessage,
 	getTransportBuffer,
@@ -80,22 +79,15 @@ import {
 	stringArrayConfig,
 } from "./sandboxingTestUtils.js";
 
-type FlattenEnvelope<T> = {
-	[K in keyof T]-?: NonNullable<T[K]> & {
-		readonly type: K extends "blobResponseError" ? "blobResponse" : K;
-	};
-}[keyof T];
-
 type ParsedHostToGuestMessage = Omit<HostToGuestMessage, "blobResponse"> & {
-	readonly blobResponse?: {
-		readonly requestId: BlobRequestId;
+	readonly blobResponse?: Omit<NonNullable<HostToGuestMessage["blobResponse"]>, "blob"> & {
 		readonly blob: ArrayBuffer;
 	};
 };
 
-type HostGuestMessage =
-	| FlattenEnvelope<ParsedHostToGuestMessage>
-	| FlattenEnvelope<GuestToHostMessage>;
+type ProtocolMessage = ParsedHostToGuestMessage | GuestToHostMessage;
+type ProtocolMessageMembers = ParsedHostToGuestMessage & GuestToHostMessage;
+type ProtocolMessageType = keyof ProtocolMessageMembers;
 
 function parseHostToGuestMessage(data: unknown): ParsedHostToGuestMessage {
 	if (!hostToGuestMessageValidator.check(data)) {
@@ -124,39 +116,18 @@ function parseGuestToHostMessage(data: unknown): GuestToHostMessage {
 	return data;
 }
 
-function parseHostGuestMessage(data: unknown): HostGuestMessage {
-	if (typeof data !== "object" || data === null) {
-		return parseHostToGuestMessage(data) as HostGuestMessage;
+function parseProtocolMessage(data: unknown): ProtocolMessage {
+	if (hostToGuestMessageValidator.check(data)) {
+		return parseHostToGuestMessage(data);
 	}
-	const normalized =
-		"type" in data && typeof data.type === "string"
-			? normalizeTransportData({
-					[data.type]: Object.fromEntries(
-						Object.entries(data).filter(([property]) => property !== "type"),
-					),
-				})
-			: data;
-	assert(typeof normalized === "object" && normalized !== null);
-	const key = Reflect.ownKeys(normalized)[0];
-	if (typeof key !== "string") {
-		return parseHostToGuestMessage(normalized) as HostGuestMessage;
-	}
-	const message =
-		key === "hostUpdateAck" ||
-		key === "guestChange" ||
-		key === "blobRequest" ||
-		key === "sessionFailure"
-			? parseGuestToHostMessage(normalized)
-			: parseHostToGuestMessage(normalized);
-	const member = message[key as keyof typeof message];
-	assert(typeof member === "object" && member !== null);
-	Object.defineProperty(message, "type", {
-		value: key === "blobResponseError" ? "blobResponse" : key,
-	});
-	for (const [property, value] of Object.entries(member)) {
-		Object.defineProperty(message, property, { value });
-	}
-	return message as HostGuestMessage;
+	return parseGuestToHostMessage(data);
+}
+
+function getProtocolMessageMember<K extends ProtocolMessageType>(
+	message: ProtocolMessage,
+	type: K,
+): NonNullable<ProtocolMessageMembers[K]> | undefined {
+	return (message as ProtocolMessageMembers)[type] ?? undefined;
 }
 
 /**
@@ -198,16 +169,17 @@ function getCheckoutIdCompressor(checkout: ReturnType<typeof getCheckout>): IIdC
  * Waits for a particular protocol message on an isolated test port.
  * Unrelated messages remain available to other listeners.
  */
-async function nextProtocolMessage(
+async function nextProtocolMessage<K extends ProtocolMessageType>(
 	port: MessagePort,
-	type: string,
-): Promise<HostGuestMessage> {
+	type: K,
+): Promise<NonNullable<ProtocolMessageMembers[K]>> {
 	return new Promise((resolve) => {
 		const onMessage = (event: MessageEvent<unknown>): void => {
-			const message = parseHostGuestMessage(normalizeTransportData(event.data));
-			if (message.type === type) {
+			const message = parseProtocolMessage(normalizeTransportData(event.data));
+			const member = getProtocolMessageMember(message, type);
+			if (member !== undefined) {
 				port.removeEventListener("message", onMessage);
-				resolve(message);
+				resolve(member);
 			}
 		};
 		port.addEventListener("message", onMessage);
@@ -269,7 +241,7 @@ describe("Host and Guest message protocol", () => {
 
 		for (const message of messages) {
 			const normalized = normalizeTransportData(message);
-			assert.deepEqual(parseHostGuestMessage(normalized), normalized);
+			assert.deepEqual(parseProtocolMessage(normalized), normalized);
 		}
 	});
 
@@ -295,99 +267,141 @@ describe("Host and Guest message protocol", () => {
 
 	it("rejects invalid message envelopes", () => {
 		const validChange = {
-			type: "guestChange",
-			changeId: 0,
-			mainRevision: "root",
-			trunkRevision: "root",
-			change: {},
+			guestChange: {
+				changeId: 0,
+				mainRevision: "root",
+				trunkRevision: "root",
+				change: {},
+			},
 		};
 		const token = createTestIdSpaceShardToken();
 		const invalidMessages: unknown[] = [
 			null,
 			"guestChange",
 			{},
-			{ type: "unknown" },
-			{ type: "hostInitialization" },
+			{ unknown: {} },
+			{ hostInitialization: {} },
 			// Initialization requires the serialized child compressor, even when all other fields are present.
 			{
-				type: "hostInitialization",
-				baseRevision: "root",
-				mainRevision: "root",
-				trunkRevision: "root",
-				tree: [],
-				schema: {},
-				commits: [],
+				hostInitialization: {
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					tree: [],
+					schema: {},
+					commits: [],
+				},
 			},
 			// A number cannot represent the serialized compressor state.
 			{
-				type: "hostInitialization",
-				baseRevision: "root",
-				mainRevision: "root",
-				trunkRevision: "root",
-				tree: [],
-				schema: {},
-				commits: [],
-				idCompressor: 1,
+				hostInitialization: {
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					tree: [],
+					schema: {},
+					commits: [],
+					idCompressor: 1,
+				},
 			},
-			{ type: "guestChange" },
+			{ guestChange: {} },
 			// Every Host update needs a parent token so the Guest can decode its commits.
 			{
-				type: "hostUpdate",
-				updateId: 0,
-				baseRevision: "root",
-				mainRevision: "root",
-				trunkRevision: "root",
-				commits: [],
+				hostUpdate: {
+					updateId: 0,
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					commits: [],
+				},
 			},
 			// A negative generation count is not valid in a parent synchronization token.
 			{
-				type: "hostUpdate",
-				updateId: 0,
-				baseRevision: "root",
-				mainRevision: "root",
-				trunkRevision: "root",
-				commits: [],
-				parentIdSpaceShardSyncToken: {
-					...createTestParentIdSpaceShardSyncToken(),
-					localGenCount: -1,
+				hostUpdate: {
+					updateId: 0,
+					baseRevision: "root",
+					mainRevision: "root",
+					trunkRevision: "root",
+					commits: [],
+					parentIdSpaceShardSyncToken: {
+						...createTestParentIdSpaceShardSyncToken(),
+						localGenCount: -1,
+					},
 				},
 			},
 			// A Guest change cannot be decoded safely without the child ID space shard progress token.
 			validChange,
-			{ ...validChange, idSpaceShardToken: null },
+			{ guestChange: { ...validChange.guestChange, idSpaceShardToken: null } },
 			// Disposal would let a change message reclaim the ID space while the Guest is still active.
-			{ ...validChange, idSpaceShardToken: { ...token, disposed: true } },
-			// Progress must be a nonnegative safe integer, and the child ID must be a valid session ID.
-			{ ...validChange, idSpaceShardToken: { ...token, localGenCount: -1 } },
-			{ ...validChange, idSpaceShardToken: { ...token, localGenCount: 1.5 } },
 			{
-				...validChange,
-				idSpaceShardToken: { ...token, localGenCount: Number.MAX_SAFE_INTEGER + 1 },
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, disposed: true },
+				},
 			},
-			{ ...validChange, idSpaceShardToken: { ...token, shardId: "not a session ID" } },
+			// Progress must be a nonnegative safe integer, and the child ID must be a valid session ID.
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, localGenCount: -1 },
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, localGenCount: 1.5 },
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: {
+						...token,
+						localGenCount: Number.MAX_SAFE_INTEGER + 1,
+					},
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, shardId: "not a session ID" },
+				},
+			},
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: { ...token, unexpected: true },
+				},
+			},
 			// Unexpected fields must not bypass the token or message envelope validation.
-			{ ...validChange, idSpaceShardToken: { ...token, unexpected: true } },
-			{ ...validChange, idSpaceShardToken: token, extra: true },
-			{ type: "hostUpdateAck" },
+			{
+				guestChange: {
+					...validChange.guestChange,
+					idSpaceShardToken: token,
+					extra: true,
+				},
+			},
+			{ hostUpdateAck: {} },
 			// The Guest needs both a parent token and the finalized range.
-			{ type: "hostIdRange", rangeId: 0 },
+			{ hostIdRange: { rangeId: 0 } },
 			// Generation counts start at one, and the range also needs its count, cluster size, and local ID ranges.
 			{
-				type: "hostIdRange",
-				rangeId: 0,
-				parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
-				range: { sessionId: createSessionId(), ids: { firstGenCount: 0 } },
+				hostIdRange: {
+					rangeId: 0,
+					parentIdSpaceShardSyncToken: createTestParentIdSpaceShardSyncToken(),
+					range: { sessionId: createSessionId(), ids: { firstGenCount: 0 } },
+				},
 			},
-			{ type: "guestChangeAck" },
-			{ type: "guestClose", idSpaceShardToken: createTestIdSpaceShardToken() },
-			{ type: "sessionFailure" },
-			{ type: "sessionFailure", error: 0 },
-			{ type: "sessionFailure", error: "failure", extra: true },
+			{ guestChangeAck: {} },
+			{ guestClose: { idSpaceShardToken: createTestIdSpaceShardToken() } },
+			{ sessionFailure: {} },
+			{ sessionFailure: { error: 0 } },
+			{ sessionFailure: { error: "failure", extra: true } },
 		];
 
 		for (const message of invalidMessages) {
 			assert.throws(
-				() => parseHostGuestMessage(normalizeTransportData(message)),
+				() => parseProtocolMessage(normalizeTransportData(message)),
 				SandboxProtocolError,
 			);
 		}
@@ -502,23 +516,23 @@ describe("Host and Guest correctness", () => {
 			stringArrayConfig,
 			buildIsolatedSessionPorts,
 		);
-		const guestChange = new Promise<HostGuestMessage>((resolve) => {
+		const guestChange = new Promise<GuestToHostMessage>((resolve) => {
 			interop.sendToGuest.addEventListener(
 				"message",
 				(event: MessageEvent<unknown>) =>
-					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+					resolve(parseGuestToHostMessage(normalizeTransportData(event.data))),
 				{ once: true },
 			);
 			interop.sendToGuest.start();
 		});
 		guestView.root.push("guest");
 		const change = await guestChange;
-		assert.equal(change.type, "guestChange");
+		assert(change.guestChange !== undefined);
 
-		const hostMessages: HostGuestMessage[] = [];
+		const hostMessages: ParsedHostToGuestMessage[] = [];
 		const ready = new Promise<void>((resolve) => {
 			interop.sendToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
-				const message = parseHostGuestMessage(normalizeTransportData(event.data));
+				const message = parseHostToGuestMessage(normalizeTransportData(event.data));
 				hostMessages.push(message);
 				if (hostMessages.length === 2) {
 					resolve();
@@ -529,15 +543,15 @@ describe("Host and Guest correctness", () => {
 		peer.root.insertAtStart("peer");
 		provider.synchronizeMessages();
 		await ready;
-		assert.equal(hostMessages[0]?.type, "hostIdRange");
-		assert.equal(hostMessages[1]?.type, "hostUpdate");
+		assert(hostMessages[0]?.hostIdRange !== undefined);
+		assert(hostMessages[1]?.hostUpdate !== undefined);
 		assert.deepEqual([...guestView.root], ["a", "b", "guest"]);
 
-		const updateAck = new Promise<HostGuestMessage>((resolve) => {
+		const updateAck = new Promise<GuestToHostMessage>((resolve) => {
 			interop.sendToGuest.addEventListener(
 				"message",
 				(event: MessageEvent<unknown>) =>
-					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+					resolve(parseGuestToHostMessage(normalizeTransportData(event.data))),
 				{ once: true },
 			);
 		});
@@ -545,15 +559,15 @@ describe("Host and Guest correctness", () => {
 		interop.sendToGuest.postMessage(hostMessages[0]);
 		interop.sendToGuest.postMessage(hostMessages[1]);
 		const hostAcknowledgment = await updateAck;
-		assert.equal(hostAcknowledgment.type, "hostUpdateAck");
+		assert(hostAcknowledgment.hostUpdateAck !== undefined);
 		assert.deepEqual([...guestView.root], ["peer", "a", "b", "guest"]);
 
 		// The Guest change was authored against the earlier Host state. Deliver it before the
 		// Host update acknowledgment, as required by message order in this direction.
-		const changeAck = new Promise<HostGuestMessage>((resolve) => {
+		const changeAck = new Promise<ParsedHostToGuestMessage>((resolve) => {
 			const onMessage = (event: MessageEvent<unknown>): void => {
-				const message = parseHostGuestMessage(normalizeTransportData(event.data));
-				if (message.type === "guestChangeAck") {
+				const message = parseHostToGuestMessage(normalizeTransportData(event.data));
+				if (message.guestChangeAck !== undefined) {
 					interop.sendToHost.removeEventListener("message", onMessage);
 					resolve(message);
 				}
@@ -562,16 +576,14 @@ describe("Host and Guest correctness", () => {
 		});
 		interop.sendToHost.postMessage(change);
 		const guestAcknowledgment = await changeAck;
-		assert.equal(guestAcknowledgment.type, "guestChangeAck");
+		assert(guestAcknowledgment.guestChangeAck !== undefined);
 		assert.deepEqual([...main.root], [...guestView.root]);
-		const nextUpdate = hostMessages.find(
-			(message) => message.type === "hostUpdate" && message.updateId === 1,
-		);
+		const nextUpdate = hostMessages.find((message) => message.hostUpdate?.updateId === 1);
 		assert(nextUpdate !== undefined, "Expected an update for the merged Guest change");
-		const nextUpdateAck = new Promise<HostGuestMessage>((resolve) => {
+		const nextUpdateAck = new Promise<GuestToHostMessage>((resolve) => {
 			const onMessage = (event: MessageEvent<unknown>): void => {
-				const message = parseHostGuestMessage(normalizeTransportData(event.data));
-				if (message.type === "hostUpdateAck" && message.updateId === 1) {
+				const message = parseGuestToHostMessage(normalizeTransportData(event.data));
+				if (message.hostUpdateAck?.updateId === 1) {
 					interop.sendToGuest.removeEventListener("message", onMessage);
 					resolve(message);
 				}
@@ -609,8 +621,8 @@ describe("Host and Guest correctness", () => {
 			ports.guestPort.addEventListener(
 				"message",
 				(event: MessageEvent<unknown>) => {
-					const message = parseHostGuestMessage(normalizeTransportData(event.data));
-					assert.equal(message.type, "hostIdRange");
+					const message = parseHostToGuestMessage(normalizeTransportData(event.data));
+					assert(message.hostIdRange !== undefined);
 					resolve();
 				},
 				{ once: true },
@@ -665,10 +677,10 @@ describe("Host and Guest correctness", () => {
 			false,
 			() => reported.resolver(),
 		);
-		const deliveredRange = new Promise<HostGuestMessage>((resolve) => {
+		const deliveredRange = new Promise<ParsedHostToGuestMessage>((resolve) => {
 			const onMessage = (event: MessageEvent<unknown>): void => {
-				const message = parseHostGuestMessage(normalizeTransportData(event.data));
-				if (message.type === "hostIdRange") {
+				const message = parseHostToGuestMessage(normalizeTransportData(event.data));
+				if (message.hostIdRange !== undefined) {
 					ports.guestPort.removeEventListener("message", onMessage);
 					resolve(message);
 				}
@@ -678,7 +690,7 @@ describe("Host and Guest correctness", () => {
 		peer.root.push("peer");
 		provider.synchronizeMessages();
 		const range = await deliveredRange;
-		assert.equal(range.type, "hostIdRange");
+		assert(range.hostIdRange !== undefined);
 		await host.updateGuestPromise;
 		ports.hostPort.postMessage(range);
 		await reported.promise;
@@ -794,9 +806,9 @@ describe("Host and Guest correctness", () => {
 		);
 		const updates: HostUpdateMessage[] = [];
 		ports.guestPort.addEventListener("message", (event: MessageEvent<unknown>) => {
-			const message = parseHostGuestMessage(normalizeTransportData(event.data));
-			if (message.type === "hostUpdate") {
-				updates.push(message);
+			const message = parseHostToGuestMessage(normalizeTransportData(event.data));
+			if (message.hostUpdate !== undefined) {
+				updates.push(message.hostUpdate);
 			}
 		});
 
@@ -839,9 +851,9 @@ describe("Host and Guest correctness", () => {
 				idCompressor: "not a serialized compressor",
 			},
 		};
-		assert.equal(
-			parseHostGuestMessage(normalizeTransportData(initialization)).type,
-			"hostInitialization",
+		assert(
+			parseHostToGuestMessage(normalizeTransportData(initialization)).hostInitialization !==
+				undefined,
 		);
 		channel.port1.postMessage(initialization);
 		try {
@@ -1128,7 +1140,7 @@ describe("Host and Guest correctness", () => {
 		assert.doesNotThrow(() => root.getChildShardSyncToken(token));
 
 		const changeAck = nextProtocolMessage(interop.sendToHost, "guestChangeAck");
-		interop.sendToHost.postMessage(change);
+		interop.sendToHost.postMessage({ guestChange: change });
 		await changeAck;
 		await rejected;
 		assert.deepEqual([...main.root], ["initial", "pending"]);
@@ -1207,11 +1219,11 @@ describe("Host and Guest correctness", () => {
 			change,
 			idSpaceShardToken: createTestIdSpaceShardToken(),
 		};
-		const received = new Promise<HostGuestMessage>((resolve) => {
+		const received = new Promise<GuestToHostMessage>((resolve) => {
 			channel.port2.addEventListener(
 				"message",
 				(event: MessageEvent<unknown>) =>
-					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+					resolve(parseGuestToHostMessage(normalizeTransportData(event.data))),
 				{ once: true },
 			);
 			channel.port2.start();
@@ -1219,11 +1231,10 @@ describe("Host and Guest correctness", () => {
 
 		channel.port1.postMessage({ guestChange: message });
 		const receivedMessage = await received;
-
 		assert.deepEqual(receivedMessage, normalizeTransportData({ guestChange: message }));
-		if (receivedMessage.type === "guestChange") {
-			assert.notEqual(receivedMessage.change, change);
-		}
+		assert.deepEqual(receivedMessage, normalizeTransportData({ guestChange: message }));
+		assert(receivedMessage.guestChange !== undefined);
+		assert.notEqual(receivedMessage.guestChange.change, change);
 		channel.port1.close();
 		channel.port2.close();
 	});
@@ -1653,11 +1664,11 @@ describe("Host and Guest correctness", () => {
 			false,
 			() => {},
 		);
-		const received = new Promise<HostGuestMessage>((resolve) => {
+		const received = new Promise<ProtocolMessage>((resolve) => {
 			interop.sendToHost.addEventListener(
 				"message",
 				(event: MessageEvent<unknown>) =>
-					resolve(parseHostGuestMessage(normalizeTransportData(event.data))),
+					resolve(parseProtocolMessage(normalizeTransportData(event.data))),
 				{ once: true },
 			);
 			interop.sendToHost.start();
@@ -1880,9 +1891,9 @@ describe("Host and Guest correctness", () => {
 		let firstChange: GuestChangeMessage | undefined;
 		// Capture the genuine token sent with the first edit so the second message can replay it.
 		ports.hostPort.addEventListener("message", (event: MessageEvent<unknown>) => {
-			const message = parseHostGuestMessage(normalizeTransportData(event.data));
-			if (message.type === "guestChange") {
-				firstChange ??= message;
+			const message = parseGuestToHostMessage(normalizeTransportData(event.data));
+			if (message.guestChange !== undefined) {
+				firstChange ??= message.guestChange;
 			}
 		});
 		guestView.root.push("first");
@@ -1925,8 +1936,8 @@ describe("Host and Guest correctness", () => {
 		);
 		let acknowledgmentReceived = false;
 		interop.sendToHost.addEventListener("message", (event: MessageEvent<unknown>) => {
-			const message = parseHostGuestMessage(normalizeTransportData(event.data));
-			acknowledgmentReceived ||= message.type === "guestChangeAck";
+			const message = parseHostToGuestMessage(normalizeTransportData(event.data));
+			acknowledgmentReceived ||= message.guestChangeAck !== undefined;
 		});
 		interop.sendToHost.start();
 
@@ -1983,9 +1994,9 @@ describe("Host and Guest correctness", () => {
 		);
 		const changes: GuestChangeMessage[] = [];
 		ports.hostPort.addEventListener("message", (event: MessageEvent<unknown>) => {
-			const message = parseHostGuestMessage(normalizeTransportData(event.data));
-			if (message.type === "guestChange") {
-				changes.push(message);
+			const message = parseGuestToHostMessage(normalizeTransportData(event.data));
+			if (message.guestChange !== undefined) {
+				changes.push(message.guestChange);
 			}
 		});
 
@@ -2095,11 +2106,14 @@ describe("Host and Guest correctness", () => {
 		const replacementGuest = await createGuestForHost(ports.guestPort);
 		const replacementGuestView = asAlpha(replacementGuest.tree.viewWith(stringArrayConfig));
 		try {
-			const wireMessage = parseHostGuestMessage(normalizeTransportData(await initialization));
-			assert(wireMessage.type === "hostInitialization", "Expected Host initialization");
+			const wireMessage = parseHostToGuestMessage(
+				normalizeTransportData(await initialization),
+			);
+			const initializationMessage =
+				wireMessage.hostInitialization ?? assert.fail("Expected Host initialization");
 			// The port carries serialized child state, not the live root compressor supplied to the Host.
-			assert.equal(typeof wireMessage.idCompressor, "string");
-			assert.equal(wireMessage.commits.length, 1);
+			assert.equal(typeof initializationMessage.idCompressor, "string");
+			assert.equal(initializationMessage.commits.length, 1);
 			// The replacement Guest must use its own child instance while the Host retains the runtime root.
 			const replacementCompressor = getCheckoutIdCompressor(
 				replacementGuest.synchronization.checkout,
@@ -2682,9 +2696,9 @@ describe("Host and Guest correctness", () => {
 			/** Controls queued message delivery between the Host and the Guest. */
 			interface MessageRelay {
 				/** Messages that the Host sent and the relay has not sent to the Guest. */
-				readonly hostToGuest: HostGuestMessage[];
+				readonly hostToGuest: ParsedHostToGuestMessage[];
 				/** Messages that the Guest sent and the relay has not sent to the Host. */
-				readonly guestToHost: HostGuestMessage[];
+				readonly guestToHost: GuestToHostMessage[];
 
 				/** Sends the first queued Host message to the Guest. */
 				dispatchToGuest(): void;
@@ -2843,7 +2857,7 @@ describe("Host and Guest correctness", () => {
 					(event: MessageEvent<unknown>) => {
 						try {
 							relay.hostToGuest.push(
-								parseHostGuestMessage(normalizeTransportData(event.data)),
+								parseHostToGuestMessage(normalizeTransportData(event.data)),
 							);
 						} finally {
 							messagesMovingToRelay -= 1;
@@ -2856,7 +2870,7 @@ describe("Host and Guest correctness", () => {
 					(event: MessageEvent<unknown>) => {
 						try {
 							relay.guestToHost.push(
-								parseHostGuestMessage(normalizeTransportData(event.data)),
+								parseGuestToHostMessage(normalizeTransportData(event.data)),
 							);
 						} finally {
 							messagesMovingToRelay -= 1;
@@ -2873,7 +2887,7 @@ describe("Host and Guest correctness", () => {
 					interop: relay,
 					deliverInitialization: async () => {
 						await relay.waitForMessages();
-						assert.equal(relay.hostToGuest[0]?.type, "hostInitialization");
+						assert(relay.hostToGuest[0]?.hostInitialization !== undefined);
 						relay.dispatchToGuest();
 						await relay.waitForMessages();
 					},
@@ -2925,16 +2939,16 @@ describe("Host and Guest correctness", () => {
 							}
 							if (hasSome(interop.hostToGuest)) {
 								potentialNext.push(
-									interop.hostToGuest[0].type === "guestChangeAck"
-										? Step.HostToGuestAck
-										: Step.HostToGuestEdit,
+									interop.hostToGuest[0].guestChangeAck === undefined
+										? Step.HostToGuestEdit
+										: Step.HostToGuestAck,
 								);
 							}
 							if (hasSome(interop.guestToHost)) {
 								potentialNext.push(
-									interop.guestToHost[0].type === "hostUpdateAck"
-										? Step.GuestToHostAck
-										: Step.GuestToHostEdit,
+									interop.guestToHost[0].hostUpdateAck === undefined
+										? Step.GuestToHostEdit
+										: Step.GuestToHostAck,
 								);
 							}
 							const step = random.pick(potentialNext);

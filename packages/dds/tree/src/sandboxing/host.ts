@@ -204,10 +204,10 @@ export class HostImplementation implements Sandboxing.Host {
 	}
 
 	private async receiveBlobRequest(message: BlobRequestMessage): Promise<void> {
-		this.codec.assertAuthorizedToken(message.token);
+		const resolution = this.codec.resolveBlob(message.token);
 		let blob: ArrayBuffer;
 		try {
-			blob = await this.codec.resolveBlob(message.token);
+			blob = await resolution;
 		} catch (error) {
 			if (this.session.active) {
 				this.postMessage({

@@ -49,22 +49,13 @@ import {
 	validateTreePayloadVocabulary,
 } from "../../../sandboxing/index.js";
 
-type FlattenEnvelope<T> = {
-	[K in keyof T]-?: NonNullable<T[K]> & {
-		readonly type: K extends "blobResponseError" ? "blobResponse" : K;
-	};
-}[keyof T];
-
 type ParsedHostToGuestMessage = Omit<HostToGuestMessage, "blobResponse"> & {
-	readonly blobResponse?: {
-		readonly requestId: BlobRequestId;
+	readonly blobResponse?: Omit<NonNullable<HostToGuestMessage["blobResponse"]>, "blob"> & {
 		readonly blob: ArrayBuffer;
 	};
 };
 
-type HostGuestMessage =
-	| FlattenEnvelope<ParsedHostToGuestMessage>
-	| FlattenEnvelope<GuestToHostMessage>;
+type ProtocolMessage = ParsedHostToGuestMessage | GuestToHostMessage;
 
 function parseHostToGuestMessage(data: unknown): ParsedHostToGuestMessage {
 	if (!hostToGuestMessageValidator.check(data)) {
@@ -93,39 +84,11 @@ function parseGuestToHostMessage(data: unknown): GuestToHostMessage {
 	return data;
 }
 
-function parseHostGuestMessage(data: unknown): HostGuestMessage {
-	if (typeof data !== "object" || data === null) {
-		return parseHostToGuestMessage(data) as HostGuestMessage;
+function parseProtocolMessage(data: unknown): ProtocolMessage {
+	if (hostToGuestMessageValidator.check(data)) {
+		return parseHostToGuestMessage(data);
 	}
-	const normalized =
-		"type" in data && typeof data.type === "string"
-			? normalizeTransportData({
-					[data.type === "blobResponse" && "error" in data ? "blobResponseError" : data.type]:
-						Object.fromEntries(
-							Object.entries(data).filter(([property]) => property !== "type"),
-						),
-				})
-			: data;
-	assert(typeof normalized === "object" && normalized !== null);
-	const key = Reflect.ownKeys(normalized)[0];
-	if (typeof key !== "string") {
-		return parseHostToGuestMessage(normalized) as HostGuestMessage;
-	}
-	const message =
-		key === "hostUpdateAck" ||
-		key === "guestChange" ||
-		key === "blobRequest" ||
-		key === "sessionFailure"
-			? parseGuestToHostMessage(normalized)
-			: parseHostToGuestMessage(normalized);
-	const member = message[key as keyof typeof message];
-	assert(typeof member === "object" && member !== null);
-	// The helper presents directional envelopes in the flattened shape used by these tests.
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	return {
-		type: key === "blobResponseError" ? "blobResponse" : key,
-		...member,
-	} as HostGuestMessage;
+	return parseGuestToHostMessage(data);
 }
 
 /**
@@ -252,10 +215,7 @@ describe("Transport and endpoint unit tests", () => {
 		const nested: Record<string, unknown> = Object.create(null);
 		nested.child = {};
 		assert.throws(() => validateTreePayloadVocabulary(nested), /Invalid sandbox tree payload/);
-		assert.throws(
-			() => parseHostGuestMessage({ type: "hostUpdateAck" }),
-			/Invalid Host and Guest/,
-		);
+		assert.throws(() => parseProtocolMessage({ hostUpdateAck: {} }), /Invalid Host and Guest/);
 	});
 
 	it("restores null prototypes after MessagePort reconstructs ordinary records", async () => {
@@ -308,35 +268,48 @@ describe("Transport and endpoint unit tests", () => {
 			[host, guest],
 			[guest, host],
 		]) {
-			const message = { type: "blobResponse", requestId: 0, blob };
+			const message = { blobResponse: { requestId: 0, blob } };
 			const normalized = normalizeTransportData(message);
 			const wire = structuredClone(sender.encode(normalized));
 			const decoded = receiver.decode(wire);
-			assert(typeof decoded === "object" && decoded !== null && "blob" in decoded);
-			assert.deepEqual(decoded.blob, normalizeTransportData({ arrayBufferMarker: true }));
+			assert(
+				typeof decoded === "object" &&
+					decoded !== null &&
+					"blobResponse" in decoded &&
+					typeof decoded.blobResponse === "object" &&
+					decoded.blobResponse !== null &&
+					"blob" in decoded.blobResponse,
+			);
+			const decodedBlob = decoded.blobResponse.blob;
+			assert.deepEqual(decodedBlob, normalizeTransportData({ arrayBufferMarker: true }));
 			assertNullPrototypeRecords(decoded);
 			assert.throws(
-				() => validateTreePayloadVocabulary(decoded.blob),
+				() => validateTreePayloadVocabulary(decodedBlob),
 				/Invalid sandbox tree payload/,
 			);
 
-			const parsed = parseHostGuestMessage(decoded);
-			assert(parsed.type === "blobResponse" && "blob" in parsed);
-			assert(parsed.blob instanceof ArrayBuffer);
-			assert.notEqual(parsed.blob, blob);
-			assert.deepEqual(new Uint8Array(parsed.blob), new Uint8Array(blob));
+			const parsed = parseHostToGuestMessage(decoded);
+			assert(parsed.blobResponse !== undefined);
+			assert(parsed.blobResponse.blob instanceof ArrayBuffer);
+			assert.notEqual(parsed.blobResponse.blob, blob);
+			assert.deepEqual(new Uint8Array(parsed.blobResponse.blob), new Uint8Array(blob));
 			assert.deepEqual(new Uint8Array(blob), new Uint8Array([0, 127, 255]));
 
 			for (const fake of [
 				{ arrayBufferMarker: true },
 				{ arrayBufferMarker: true, extra: 1 },
-				structuredClone(decoded.blob),
+				structuredClone(decodedBlob),
 			]) {
 				const data = receiver.decode(structuredClone(sender.encode(fake)));
 				validateTreePayloadVocabulary(data);
 				assert.deepEqual(data, normalizeTransportData(fake));
 				assert.throws(
-					() => parseHostGuestMessage(normalizeTransportData({ ...message, blob: data })),
+					() =>
+						parseProtocolMessage(
+							normalizeTransportData({
+								blobResponse: { ...message.blobResponse, blob: data },
+							}),
+						),
 					/Invalid Host and Guest/,
 				);
 			}
@@ -363,16 +336,17 @@ describe("Transport and endpoint unit tests", () => {
 				}
 				assert.throws(
 					() =>
-						parseHostGuestMessage(
+						parseProtocolMessage(
 							codec.decode(
 								structuredClone(
 									codec.encode({
-										type: "guestChange",
-										changeId: 0,
-										mainRevision: "root",
-										trunkRevision: "root",
-										change: payload,
-										idSpaceShardToken: exampleIdSpaceShardToken,
+										guestChange: {
+											changeId: 0,
+											mainRevision: "root",
+											trunkRevision: "root",
+											change: payload,
+											idSpaceShardToken: exampleIdSpaceShardToken,
+										},
 									}),
 								),
 							),
@@ -383,12 +357,12 @@ describe("Transport and endpoint unit tests", () => {
 			for (const message of [
 				blob,
 				{ type: blob },
-				{ type: "blobResponse", requestId: blob, blob },
-				{ type: "blobResponse", requestId: 0, error: blob },
-				{ type: "blobRequest", requestId: 0, token: blob },
+				{ blobResponse: { requestId: blob, blob } },
+				{ blobResponseError: { requestId: 0, error: blob } },
+				{ blobRequest: { requestId: 0, token: blob } },
 			]) {
 				assert.throws(
-					() => parseHostGuestMessage(codec.decode(structuredClone(codec.encode(message)))),
+					() => parseProtocolMessage(codec.decode(structuredClone(codec.encode(message)))),
 					/Invalid Host and Guest/,
 				);
 			}
@@ -479,8 +453,10 @@ describe("Transport and endpoint unit tests", () => {
 			validateUsageError(/disposed/),
 		);
 		host.dispose();
-		await assert.rejects(
-			host.resolveBlob(brand<HandleToken>(0)),
+		assert.throws(
+			() => {
+				host.resolveBlob(brand<HandleToken>(0));
+			},
 			validateUsageError(/disposed/),
 		);
 		assert.throws(
@@ -542,8 +518,12 @@ describe("Transport and endpoint unit tests", () => {
 			() => host.decode({ type: "__sandbox_handle__", token: 1 }),
 			SandboxProtocolError,
 		);
-		await assert.rejects(host.resolveBlob(brand<HandleToken>(1)), SandboxProtocolError);
-		await assert.rejects(host.resolveBlob(brand<HandleToken>(-1)), SandboxProtocolError);
+		assert.throws(() => {
+			host.resolveBlob(brand<HandleToken>(1));
+		}, SandboxProtocolError);
+		assert.throws(() => {
+			host.resolveBlob(brand<HandleToken>(-1));
+		}, SandboxProtocolError);
 	});
 
 	it("does not interpret Host URLs as sandbox handles", () => {
@@ -555,22 +535,22 @@ describe("Transport and endpoint unit tests", () => {
 	it("rejects malformed blob messages and unexpected responses", () => {
 		const { guest } = setupTransportCodecs();
 		for (const message of [
-			{ type: "blobRequest", requestId: 0, token: -1 },
-			{ type: "blobRequest", requestId: 0.5, token: 0 },
-			{ type: "blobRequest", token: 0 },
-			{ type: "blobResponse", requestId: 0, blob: "not a blob" },
-			{ type: "blobResponse", requestId: 0, error: new Error("not a string") },
-			{ type: "blobResponse", requestId: 0, blob: new ArrayBuffer(0), error: "both" },
-			{ type: "blobRequest", requestId: 0 },
-			{ type: "blobRequest", requestId: 0, token: 0, extra: true },
-			{ type: "blobResponse", requestId: 0 },
-			{ type: "blobResponse", requestId: 0, blob: undefined },
-			{ type: "blobResponse", requestId: 0, blob: new Uint8Array(1) },
-			{ type: "blobResponse", requestId: 0, blob: new ArrayBuffer(0), extra: true },
-			{ type: "blobResponse", requestId: 0, error: "failure", extra: true },
+			{ blobRequest: { requestId: 0, token: -1 } },
+			{ blobRequest: { requestId: 0.5, token: 0 } },
+			{ blobRequest: { token: 0 } },
+			{ blobResponse: { requestId: 0, blob: "not a blob" } },
+			{ blobResponseError: { requestId: 0, error: new Error("not a string") } },
+			{ blobResponse: { requestId: 0, blob: new ArrayBuffer(0), error: "both" } },
+			{ blobRequest: { requestId: 0 } },
+			{ blobRequest: { requestId: 0, token: 0, extra: true } },
+			{ blobResponse: { requestId: 0 } },
+			{ blobResponse: { requestId: 0, blob: undefined } },
+			{ blobResponse: { requestId: 0, blob: new Uint8Array(1) } },
+			{ blobResponse: { requestId: 0, blob: new ArrayBuffer(0), extra: true } },
+			{ blobResponseError: { requestId: 0, error: "failure", extra: true } },
 		]) {
 			assert.throws(
-				() => parseHostGuestMessage(normalizeTransportData(message)),
+				() => parseProtocolMessage(normalizeTransportData(message)),
 				SandboxProtocolError,
 			);
 		}
@@ -585,15 +565,12 @@ describe("Transport and endpoint unit tests", () => {
 			assert(isHandleToken(id));
 			assert(isSerializedHandle({ type: "__sandbox_handle__", token: id }));
 			for (const message of [
-				{ type: "blobRequest", requestId: id, token: id },
-				{ type: "blobResponse", requestId: id, blob: new ArrayBuffer(0) },
-				{ type: "blobResponse", requestId: id, error: "failure" },
+				{ blobRequest: { requestId: id, token: id } },
+				{ blobResponse: { requestId: id, blob: new ArrayBuffer(0) } },
+				{ blobResponseError: { requestId: id, error: "failure" } },
 			]) {
 				const normalized = normalizeTransportData(message);
-				assert.deepEqual(
-					normalizeTransportData(parseHostGuestMessage(normalized)),
-					normalized,
-				);
+				assert.deepEqual(normalizeTransportData(parseProtocolMessage(normalized)), normalized);
 			}
 		}
 		for (const id of [
@@ -609,13 +586,13 @@ describe("Transport and endpoint unit tests", () => {
 			assert(!isHandleToken(id));
 			assert(!isSerializedHandle({ type: "__sandbox_handle__", token: id }));
 			for (const message of [
-				{ type: "blobRequest", requestId: 0, token: id },
-				{ type: "blobRequest", requestId: id, token: 0 },
-				{ type: "blobResponse", requestId: id, blob: new ArrayBuffer(0) },
-				{ type: "blobResponse", requestId: id, error: "failure" },
+				{ blobRequest: { requestId: 0, token: id } },
+				{ blobRequest: { requestId: id, token: 0 } },
+				{ blobResponse: { requestId: id, blob: new ArrayBuffer(0) } },
+				{ blobResponseError: { requestId: id, error: "failure" } },
 			]) {
 				assert.throws(
-					() => parseHostGuestMessage(normalizeTransportData(message)),
+					() => parseProtocolMessage(normalizeTransportData(message)),
 					/Invalid Host and Guest|Unsupported sandbox transport/,
 				);
 			}
@@ -725,14 +702,15 @@ describe("Host and Guest round-trip integration tests", () => {
 		assert(fluidHandleSymbol in decoded[0]);
 		validateTreePayloadVocabulary(decoded);
 		assert.doesNotThrow(() =>
-			parseHostGuestMessage(
+			parseProtocolMessage(
 				normalizeTransportData({
-					type: "guestChange",
-					changeId: 0,
-					mainRevision: "root",
-					trunkRevision: "root",
-					change: decoded,
-					idSpaceShardToken: exampleIdSpaceShardToken,
+					guestChange: {
+						changeId: 0,
+						mainRevision: "root",
+						trunkRevision: "root",
+						change: decoded,
+						idSpaceShardToken: exampleIdSpaceShardToken,
+					},
 				}),
 			),
 		);
