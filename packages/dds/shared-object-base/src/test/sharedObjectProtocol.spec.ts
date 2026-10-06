@@ -84,6 +84,32 @@ class LegacySharedObject extends SharedObject {
 }
 
 describe("SharedObject protocol dispatch", () => {
+	it("does not register a configuration protocol for legacy subclasses during creation or load", async () => {
+		for (const initialize of ["create", "load"] as const) {
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const shared = new LegacySharedObject(runtime);
+			assert.equal(sharedObjectProtocols.has(shared), false);
+			const attributes = shared.attributes;
+			if (initialize === "create") {
+				shared.initializeLocal();
+			} else {
+				await shared.load({
+					deltaConnection: new MockDeltaConnection(
+						() => 0,
+						() => {},
+					),
+					objectStorage: new MockStorage(),
+				});
+			}
+			assert.equal(sharedObjectProtocols.has(shared), false);
+			assert.equal(getSharedObjectProtocol(shared), defaultSharedObjectProtocol);
+			assert(!("channelConfigurationProtocolVersion" in shared));
+			assert.equal(shared.attributes, attributes);
+			assert(!("configuration" in shared.attributes));
+			runtime.dispose();
+		}
+	});
+
 	for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 		it(`rejects the reserved configuration key on ordinary submissions (${attachState})`, async () => {
 			const runtime = new MockFluidDataStoreRuntime({ attachState });

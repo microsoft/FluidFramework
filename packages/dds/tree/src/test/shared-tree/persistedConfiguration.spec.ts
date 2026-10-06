@@ -745,6 +745,35 @@ describe("SharedTree persisted configuration", () => {
 		}
 	});
 
+	for (const grouped of [false, true]) {
+		it(`retains the edit that triggers a lazy history-enable request (grouped=${grouped})`, async () => {
+			const { clients, views, synchronize, advanceWindow } = setup({}, grouped);
+			views[0].root.insertAtEnd("before lazy enable");
+			const before = headRevision(clients[0].tree);
+			synchronize();
+			const request = configuration(clients[0].tree).requestChangeLazy({
+				retainHistory: true,
+			});
+			synchronize();
+			assert.equal(configuration(clients[0].tree).current.revision, 0);
+			views[0].root.insertAtEnd("triggers lazy enable");
+			const triggeringEdit = headRevision(clients[0].tree);
+			synchronize();
+			const result = await request;
+			assert.equal(result.status, "applied");
+			for (const client of clients) {
+				assert.equal(historyStart(client.tree, compressor(client.runtime)), triggeringEdit);
+			}
+			advanceWindow();
+			for (const client of clients) {
+				const loaded = await load(await summarize(client.tree), compressor(client.runtime));
+				assert(!revisions(loaded.tree).includes(before));
+				assert(revisions(loaded.tree).includes(triggeringEdit));
+				assert.equal(historyStart(loaded.tree, compressor(loaded.runtime)), triggeringEdit);
+			}
+		});
+	}
+
 	it("pins the first committed Tree revision after a configuration change within one sequence", async () => {
 		const { clients, views, synchronize, advanceWindow } = setup({}, true);
 		const tree = clients[0].tree;

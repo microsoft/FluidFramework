@@ -429,9 +429,10 @@ The controller does not read the runtime's message-size limit or add a detached 
 Attached proposals use the normal submission path, including its message-size handling.
 
 `requestChangeLazy` performs the same validation and captures the same original revision, but an attached channel waits until its next fresh ordinary op before submitting the proposal.
-The control op is submitted after that ordinary submission returns successfully.
-Sending the ordinary op first preserves optimistic edit order when synchronous dirty listeners make more edits.
-The triggering ordinary op, and any edits made by those listeners before the control op is submitted, precede the configuration barrier.
+Queued control ops are submitted in request order before the triggering ordinary op, after its payload passes ordinary-message validation and handle preparation.
+Synchronous callbacks during this flush must not submit another ordinary op or request another configuration change.
+These attempts assert rather than allowing a nested submission to overtake the triggering op.
+The guard ends before submitting the ordinary op, so normal dirty-listener behavior outside the flush is unchanged.
 Other channels' edits, incoming ops, configuration ops, summaries, and replay of existing pending ops do not flush it.
 Unattached channels, including unpublished channels in attached datastores, still apply the change immediately.
 Do not await a lazy request before making the edit intended to trigger it: an idle channel may leave the promise pending indefinitely.
@@ -442,9 +443,10 @@ Multiple lazy requests retain invocation order and their original revisions; the
 An eager request can overtake them and cause a CAS conflict.
 Disposal rejects both deferred and submitted requests.
 Submission eligibility is checked again when flushing.
-If ordinary submission fails, the lazy request remains queued.
-If submitting a deferred request fails, that request rejects and the triggering edit throws, though its ordinary op has already been submitted.
+If ordinary-message validation or handle preparation fails, the lazy request remains queued.
+If submitting a deferred request fails, that request rejects and the triggering edit throws without submitting its ordinary op.
 Later deferred requests remain queued for a subsequent edit.
+If the ordinary submission fails after the flush, already-submitted configuration requests retain their normal pending-op handling and are not submitted again on the next edit.
 Requests made during submission wait for a subsequent ordinary op rather than treating an op already being sent as their trigger.
 After submission, normal control-op acknowledgement, resubmission, stash, and rollback handling applies.
 Before submission, a lazy request is not part of runtime staging, so rolling back other ops does not cancel it.

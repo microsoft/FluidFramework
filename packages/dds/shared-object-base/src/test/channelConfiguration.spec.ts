@@ -117,7 +117,7 @@ describe("ChannelConfigurationController", () => {
 			const first = controller.requestChangeLazy({ enabled: false });
 			const second = controller.requestChangeLazy({});
 			assert.equal(submitted.length, 0);
-			controller.submitOrdinaryMessage(() => {});
+			controller.submitOrdinaryMessage(() => assert.equal(submitted.length, 2));
 			assert.deepEqual(
 				submitted.map(({ message }) => message),
 				[proposal(0, { enabled: false }), proposal(0, {})],
@@ -225,19 +225,32 @@ describe("ChannelConfigurationController", () => {
 			assert.equal((await surviving).status, "applied");
 		});
 
-		it("allows reentrant flushing without submitting a request twice", async () => {
+		it("asserts on reentrant ordinary and configuration submissions during a lazy flush", async () => {
 			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
+			const rejected: Promise<void>[] = [];
 			const { controller } = harness({
 				submit: (message, metadata) => {
 					sent.push({ message, metadata });
-					controller.submitOrdinaryMessage(() => {});
+					assert.throws(
+						() => controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent")),
+						/reentrantly while flushing lazy configuration/,
+					);
+					for (const method of ["requestChange", "requestChangeLazy"] as const) {
+						rejected.push(
+							assert.rejects(
+								controller[method]({}),
+								/reentrantly while flushing lazy configuration/,
+							),
+						);
+					}
 				},
 			});
 			const requests = [
 				controller.requestChangeLazy({ enabled: false }),
 				controller.requestChangeLazy({}),
 			];
-			controller.submitOrdinaryMessage(() => {});
+			controller.submitOrdinaryMessage(() => assert.equal(sent.length, 2));
+			await Promise.all(rejected);
 			assert.equal(sent.length, 2);
 			for (const item of sent) {
 				controller.process(item.message, context(), item.metadata);
@@ -248,30 +261,27 @@ describe("ChannelConfigurationController", () => {
 			);
 		});
 
-		it("does not resume an older flush after a nested lazy submission fails", async () => {
-			const failure = new Error("Nested submission failed");
+		it("propagates an uncaught reentrancy assertion and resets the flush guard", async () => {
 			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
 			let fail = true;
 			const { controller } = harness({
 				submit: (message, metadata) => {
 					if (fail) {
 						fail = false;
-						throw failure;
+						controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent"));
 					}
 					sent.push({ message, metadata });
 				},
 			});
 			const rejected = assert.rejects(
 				controller.requestChangeLazy({}),
-				(error) => error === failure,
+				/reentrantly while flushing lazy configuration/,
 			);
 			const surviving = controller.requestChangeLazy({ enabled: false });
-			controller.submitOrdinaryMessage(() => {
-				assert.throws(
-					() => controller.submitOrdinaryMessage(() => {}),
-					(error) => error === failure,
-				);
-			});
+			assert.throws(
+				() => controller.submitOrdinaryMessage(() => assert.fail("Triggering op sent")),
+				/reentrantly while flushing lazy configuration/,
+			);
 			await rejected;
 			assert.equal(sent.length, 0);
 			controller.submitOrdinaryMessage(() => {});

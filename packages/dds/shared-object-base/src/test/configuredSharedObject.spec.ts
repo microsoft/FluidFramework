@@ -818,7 +818,7 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				await pending;
 			});
 
-			it("submits a queued control after the triggering ordinary op and replays that op with the old configuration", async () => {
+			it("submits a queued control before the triggering ordinary op and replays that op with the accepted configuration", async () => {
 				const { runtime, services, submitted, delta } = harness();
 				const shared = factory().create(runtime, "ordered");
 				shared.connect(services);
@@ -829,12 +829,11 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				});
 				const ordinary = { edit: "fresh" };
 				const metadata = { source: "edit" };
-				const before = shared.config.current;
 				assert.equal(submitted.length, 0);
 				shared.edit(ordinary, metadata);
 				assert.equal(submitted.length, 2);
-				assert.deepEqual(submitted[0], { contents: ordinary, metadata });
-				assert.deepEqual(submitted[1]?.contents, barrier(0, true));
+				assert.deepEqual(submitted[0]?.contents, barrier(0, true));
+				assert.deepEqual(submitted[1], { contents: ordinary, metadata });
 				assert.equal(shared.config.current.revision, 0);
 				assert(!("configuration" in shared.attributes));
 				await Promise.resolve();
@@ -853,10 +852,10 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				assert.equal(result.source, "sequenced");
 				assert.deepEqual(shared.config.current, { revision: 1, values: { retain: true } });
 				assert.equal(shared.observed.length, 4);
-				assert.deepEqual(shared.observed.slice(0, 3), [
-					["pre-op", ordinary, before, true],
-					["process", ordinary, before, true, metadata],
-					["op", ordinary, before, true],
+				assert.deepEqual(shared.observed.slice(-3), [
+					["pre-op", ordinary, shared.config.current, true],
+					["process", ordinary, shared.config.current, true, metadata],
+					["op", ordinary, shared.config.current, true],
 				]);
 			});
 
@@ -894,7 +893,7 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				shared.edit("fresh");
 				assert.deepEqual(
 					submitted.map((message) => message.contents),
-					["fresh", barrier(0, true)],
+					[barrier(0, true), "fresh"],
 				);
 				delta.processMessages(
 					collection(
@@ -926,10 +925,10 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				assert.equal(shared.config.current.revision, 2);
 				assert.equal(submitted.length, 1);
 				shared.edit("trigger");
-				const lazyProposal = submitted[2];
+				const lazyProposal = submitted[1];
 				assert(lazyProposal !== undefined);
 				assert.deepEqual(lazyProposal.contents, barrier(0, true));
-				assert.equal(submitted[1]?.contents, "trigger");
+				assert.equal(submitted[2]?.contents, "trigger");
 				delta.processMessages(
 					collection([lazyProposal.contents], true, [lazyProposal.metadata]),
 				);
@@ -997,10 +996,10 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				assert.equal(shared.config.current.revision, 0);
 				assert(!("configuration" in shared.attributes));
 				shared.edit("fresh");
-				const proposal = submitted[6];
+				const proposal = submitted[5];
 				assert(proposal !== undefined);
 				assert.deepEqual(proposal.contents, barrier(0, true));
-				assert.equal(submitted[5]?.contents, "fresh");
+				assert.equal(submitted[6]?.contents, "fresh");
 				delta.reSubmit(proposal.contents, proposal.metadata, false);
 				assert.deepEqual(submitted[7], proposal);
 				delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));

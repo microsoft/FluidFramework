@@ -176,13 +176,15 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 	requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
 	/**
 	 * Requests a full replacement, deferring attached submission until this channel next submits
-	 * a fresh ordinary op. The proposal follows that op and uses the revision captured now,
+	 * a fresh ordinary op. The proposal precedes that op and uses the revision captured now,
 	 * not the revision at submission. Unattached changes apply immediately, as with requestChange.
 	 *
 	 * Deferred requests are process-local: they do not dirty the channel or appear in summaries
 	 * or stashed ops. Configuration ops, resubmission, and stash replay do not flush them.
 	 * Multiple requests are not coalesced. Once submitted, normal acknowledgement, resubmission,
 	 * stash, and rollback handling applies.
+	 * Synchronous callbacks during the flush must not submit another ordinary op or request
+	 * another configuration change.
 	 *
 	 * @param next - The complete set of configuration values. Omit a key to remove it.
 	 * @returns The applied or conflicting outcome. Remains pending while the channel is idle.
@@ -246,7 +248,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	>();
 	private readonly pending = new Map<unknown, PendingChange<TConfig>>();
 	readonly #lazyRequests = new Map<unknown, ChannelConfigurationMessageV1>();
-	#lazyFlushGeneration = 0;
+	#flushingLazy = false;
 	private disposed = false;
 	private disposalError: unknown;
 	private processing = false;
@@ -280,6 +282,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		lazy: boolean,
 	): Promise<ConfigurationChangeResult<TConfig>> {
 		this.verifyCanSubmit();
+		this.#verifyNotFlushingLazy();
 		this.options.verifyCanChange();
 		const previous = this.snapshot;
 		const values = next;
@@ -321,35 +324,35 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	}
 
 	/**
-	 * Submits an ordinary op, then flushes requests that were already queued before submission.
-	 * Sending the ordinary op first preserves optimistic edit order if submission emits dirty
-	 * events that cause further edits. Replay must not flush new intent into pending-op capture.
+	 * Flushes queued configuration requests before submitting the next ordinary op.
+	 * Reentrant submission during the flush is prohibited so a nested edit cannot overtake
+	 * the triggering op. Replay must not flush new intent into pending-op capture.
 	 */
 	public submitOrdinaryMessage(submit: () => void): void {
 		this.verifyCanSubmit();
+		this.#verifyNotFlushingLazy();
 		if (this.#lazyRequests.size === 0) {
 			submit();
 			return;
 		}
-		const generation = this.#lazyFlushGeneration;
-		const requests = [...this.#lazyRequests];
-		submit();
-		for (const [metadata, message] of requests) {
-			if (generation !== this.#lazyFlushGeneration) {
-				// A nested flush failed, even if a dirty listener caught its error.
-				break;
+		this.#flushingLazy = true;
+		try {
+			for (const [metadata, message] of this.#lazyRequests) {
+				this.#lazyRequests.delete(metadata);
+				this.#submitPendingChange(message, metadata);
 			}
-			// Nested ordinary submission or disposal may already have removed this request.
-			// Delete before submitting to avoid sending it twice through a dirty callback.
-			if (this.#lazyRequests.delete(metadata)) {
-				try {
-					this.#submitPendingChange(message, metadata);
-				} catch (error) {
-					this.#lazyFlushGeneration++;
-					throw error;
-				}
-			}
+		} finally {
+			this.#flushingLazy = false;
 		}
+		this.verifyCanSubmit();
+		submit();
+	}
+
+	#verifyNotFlushingLazy(): void {
+		assert(
+			!this.#flushingLazy,
+			"Cannot submit reentrantly while flushing lazy configuration changes",
+		);
 	}
 
 	#submitPendingChange(message: ChannelConfigurationMessageV1, metadata: unknown): void {

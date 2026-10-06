@@ -40,6 +40,11 @@ import type {
 } from "../channelConfiguration.js";
 import type { ISharedObjectKind, SharedObjectKindAlpha } from "../sharedObject.js";
 import {
+	defaultSharedObjectProtocol,
+	getSharedObjectProtocol,
+	sharedObjectProtocols,
+} from "../sharedObjectProtocol.js";
+import {
 	makeSharedObjectKind,
 	type FactoryOut,
 	type KernelArgs,
@@ -278,7 +283,7 @@ function datastoreHarness(
 
 describe("configured kernel composition", () => {
 	describe("lazy configuration", () => {
-		it("preserves optimistic edit order through synchronous dirty listeners without duplication", async () => {
+		it("asserts on dirty-listener reentry while submitting lazy controls before the ordinary op", async () => {
 			const events = new EventEmitter();
 			const test = harness(AttachState.Attached, () => events.emit("dirty"));
 			const shared = makeKind().getFactory().create(test.runtime, "lazy");
@@ -288,14 +293,18 @@ describe("configured kernel composition", () => {
 			const second = config.requestChangeLazy({ retain: false });
 			assert.equal(test.submitted.length, 0);
 			assert.equal(test.dirty, 0);
-			events.once("dirty", () => shared.edit("nested", "nested metadata"));
+			events.once("dirty", () => {
+				assert.throws(
+					() => shared.edit("nested", "nested metadata"),
+					/reentrantly while flushing lazy configuration/,
+				);
+			});
 			shared.edit("outer", "outer metadata");
 			assert.deepEqual(
 				test.submitted.map(({ contents }) => contents),
-				["outer", "nested", barrier(0, true), barrier(0, false)],
+				[barrier(0, true), barrier(0, false), "outer"],
 			);
-			assert.equal(test.submitted[0]?.metadata, "outer metadata");
-			assert.equal(test.submitted[1]?.metadata, "nested metadata");
+			assert.equal(test.submitted[2]?.metadata, "outer metadata");
 			assert.equal(config.current.revision, 0);
 			test.delta.processMessages(
 				collection(
@@ -310,11 +319,33 @@ describe("configured kernel composition", () => {
 			assert.equal(secondResult.status, "conflict");
 			assert.deepEqual(
 				shared.observed.filter((item) => Array.isArray(item) && item[0] === "operation"),
-				[
-					["operation", "outer", "outer metadata", 0, true],
-					["operation", "nested", "nested metadata", 0, true],
-				],
+				[["operation", "outer", "outer metadata", 1, true]],
 			);
+		});
+
+		it("allows normal dirty-listener edits once the lazy flush has completed", async () => {
+			const events = new EventEmitter();
+			const test = harness(AttachState.Attached, () => events.emit("dirty"));
+			const shared = makeKind().getFactory().create(test.runtime, "lazy");
+			shared.connect(test.services);
+			const request = requireConfig(shared).requestChangeLazy({ retain: true });
+			events.once("dirty", () => {
+				events.once("dirty", () => shared.edit("nested"));
+			});
+			shared.edit("outer");
+			assert.deepEqual(
+				test.submitted.map(({ contents }) => contents),
+				[barrier(0, true), "outer", "nested"],
+			);
+			test.delta.processMessages(
+				collection(
+					test.submitted.map(({ contents }) => contents),
+					true,
+					test.submitted.map(({ metadata }) => metadata),
+				),
+			);
+			const result = await request;
+			assert.equal(result.status, "applied");
 		});
 
 		for (const onlyBind of [false, true]) {
@@ -341,8 +372,8 @@ describe("configured kernel composition", () => {
 				const metadata = { ordinary: true };
 				shared.edit({ handle }, metadata);
 				assert.equal(submitted.length, 2);
-				assert.deepEqual(submitted[1]?.contents, barrier(0, true));
-				assert.equal(submitted[0]?.metadata, metadata);
+				assert.deepEqual(submitted[0]?.contents, barrier(0, true));
+				assert.equal(submitted[1]?.metadata, metadata);
 				delta.processMessages(
 					collection(
 						submitted.map(({ contents }) => contents),
@@ -352,18 +383,18 @@ describe("configured kernel composition", () => {
 				);
 				const result = await request;
 				assert.equal(result.status, "applied");
-				const observed = shared.observed.at(-2);
+				const observed = shared.observed.at(-1);
 				assert(Array.isArray(observed));
 				assert.equal(observed[0], "operation");
 				assert.equal(observed[2], metadata);
-				assert.equal(observed[3], 0);
+				assert.equal(observed[3], 1);
 				const processed: unknown = observed[1];
 				assert(typeof processed === "object" && processed !== null && "handle" in processed);
 				assert(isFluidHandle(processed.handle));
 			});
 		}
 
-		it("propagates a control submission failure after sending the triggering ordinary op", async () => {
+		it("propagates a control submission failure without sending the triggering ordinary op", async () => {
 			const { runtime, delta, services, submitted } = harness();
 			const shared = makeKind().getFactory().create(runtime, "lazy");
 			shared.connect(services);
@@ -380,21 +411,18 @@ describe("configured kernel composition", () => {
 				(error) => error === failure,
 			);
 			assert.throws(
-				() => shared.edit("sent first"),
+				() => shared.edit("not submitted"),
 				(error) => error === failure,
 			);
 			await rejected;
-			assert.equal(submitted.length, 1);
+			assert.equal(submitted.length, 0);
 			delta.submit = submit;
 			shared.edit("next");
-			assert.deepEqual(submitted, [
-				{ contents: "sent first", metadata: undefined },
-				{ contents: "next", metadata: undefined },
-			]);
+			assert.deepEqual(submitted, [{ contents: "next", metadata: undefined }]);
 			assert(!("configuration" in shared.attributes));
 		});
 
-		it("does not submit lazy controls after disposal during the ordinary op", async () => {
+		it("does not submit the ordinary op after disposal during the lazy flush", async () => {
 			const events = new EventEmitter();
 			const test = harness(AttachState.Attached, () => events.emit("submit"));
 			const shared = makeKind().getFactory().create(test.runtime, "lazy");
@@ -404,34 +432,37 @@ describe("configured kernel composition", () => {
 				/disposed/,
 			);
 			events.once("submit", () => test.runtime.dispose());
-			shared.edit("ordinary");
+			assert.throws(() => shared.edit("ordinary"), /disposed/);
 			await rejected;
 			assert.deepEqual(
 				test.submitted.map(({ contents }) => contents),
-				["ordinary"],
+				[barrier(0, true)],
 			);
 		});
 
-		it("keeps lazy intent queued when the ordinary submission itself fails", async () => {
+		it("does not resubmit flushed configuration when the ordinary submission fails", async () => {
 			const { runtime, delta, services, submitted } = harness();
 			const shared = makeKind().getFactory().create(runtime, "lazy");
 			shared.connect(services);
 			const request = requireConfig(shared).requestChangeLazy({ retain: true });
 			const submit = delta.submit.bind(delta);
 			const failure = new Error("Ordinary submission failed");
-			delta.submit = () => {
-				throw failure;
+			delta.submit = (contents, metadata) => {
+				if (typeof contents === "string") {
+					throw failure;
+				}
+				return submit(contents, metadata);
 			};
 			assert.throws(
 				() => shared.edit("failed"),
 				(error) => error === failure,
 			);
-			assert.equal(submitted.length, 0);
+			assert.equal(submitted.length, 1);
 			delta.submit = submit;
 			shared.edit("successful");
 			assert.deepEqual(
 				submitted.map(({ contents }) => contents),
-				["successful", barrier(0, true)],
+				[barrier(0, true), "successful"],
 			);
 			delta.processMessages(
 				collection(
@@ -1010,14 +1041,22 @@ describe("configured kernel composition", () => {
 		assert.equal(Object.isFrozen(one.attributes), false);
 	});
 
-	it("keeps DDSes without a configuration definition on the existing protocol", () => {
-		const { runtime } = harness(AttachState.Detached);
+	it("keeps DDSes without a configuration definition on the existing protocol", async () => {
+		const { runtime, services } = harness(AttachState.Detached);
 		const factory = makeKind(undefined, false).getFactory();
 		const shared = factory.create(runtime, "unconfigured");
 		assert.equal(shared.config, undefined);
 		assert.equal(shared.attributes, factory.attributes);
 		assert.deepEqual(shared.observed, [["initial", undefined]]);
 		assert.equal(Object.isFrozen(factory.attributes), false);
+		const loaded = await factory.load(runtime, "loaded", services, factory.attributes);
+		for (const instance of [shared, loaded]) {
+			assert.equal(sharedObjectProtocols.has(instance), false);
+			assert.equal(getSharedObjectProtocol(instance), defaultSharedObjectProtocol);
+			assert(!("channelConfigurationProtocolVersion" in instance));
+			assert(!("configuration" in instance.attributes));
+			assert.equal(instance.config, undefined);
+		}
 	});
 
 	it("uses defaults without marking instances and persists the first identical local replacement", async () => {
@@ -1030,6 +1069,8 @@ describe("configured kernel composition", () => {
 		}).getFactory();
 		const first = factory.create(runtime, "first");
 		const second = factory.create(runtime, "second");
+		assert.equal(sharedObjectProtocols.has(first), true);
+		assert.notEqual(getSharedObjectProtocol(first), defaultSharedObjectProtocol);
 		const config = requireConfig(first);
 		assert.deepEqual(config.current, { revision: 0, values: { retain: false } });
 		assert.deepEqual(first.observed, [["initial", config.current]]);
