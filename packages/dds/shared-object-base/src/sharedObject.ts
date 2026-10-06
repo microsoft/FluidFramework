@@ -62,6 +62,7 @@ import { v4 as uuid } from "uuid";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
+import { getSharedObjectProtocol } from "./sharedObjectProtocol.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
@@ -246,6 +247,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
+			getSharedObjectProtocol(this).close(error);
 		}
 	}
 
@@ -418,6 +420,8 @@ export abstract class SharedObjectCore<
 	 */
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
+		const protocol = getSharedObjectProtocol(this);
+		const preparedContent = protocol.prepareLocalMessage(content);
 		if (this.isAttached()) {
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
 			// Once the layer-compat window passes we can remove the encoding codepath here altogether
@@ -425,11 +429,15 @@ export abstract class SharedObjectCore<
 				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
 					.submitMessagesWithoutEncodingHandles === true;
 			const contentToSubmit = onlyBind
-				? bindHandles(content, this.handle)
-				: makeHandlesSerializable(content, this.serializer, this.handle);
+				? bindHandles(preparedContent, this.handle)
+				: makeHandlesSerializable(preparedContent, this.serializer, this.handle);
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			protocol.submitLocalMessage(preparedContent, () => {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			});
+		} else {
+			protocol.submitWhileDetached(preparedContent, localOpMetadata);
 		}
 	}
 
@@ -535,10 +543,18 @@ export abstract class SharedObjectCore<
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
-				this.applyStashedOp(parseHandles(content, this.serializer));
+				getSharedObjectProtocol(this).applyStashedOp(content, (ordinaryContent) => {
+					this.applyStashedOp(parseHandles(ordinaryContent, this.serializer));
+				});
 			},
 			rollback: (content: unknown, localOpMetadata: unknown) => {
-				this.rollback(content, localOpMetadata);
+				getSharedObjectProtocol(this).rollback(
+					content,
+					localOpMetadata,
+					(ordinaryContent, metadata) => {
+						this.rollback(ordinaryContent, metadata);
+					},
+				);
 			},
 		} satisfies IDeltaHandler);
 	}
@@ -589,6 +605,12 @@ export abstract class SharedObjectCore<
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
 
+		getSharedObjectProtocol(this).processMessages(messagesCollection, (messages) =>
+			this.#processOrdinaryMessages(messages),
+		);
+	}
+
+	#processOrdinaryMessages(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 
 		// Decode any handles in the contents before processing the messages.
@@ -643,11 +665,14 @@ export abstract class SharedObjectCore<
 	 * the legacy behavior (no squashing) will be used.
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
-		if (squash) {
-			this.reSubmitSquashed(content, localOpMetadata);
-		} else {
-			this.reSubmitCore(content, localOpMetadata);
-		}
+		const submit = (ordinaryContent: unknown, metadata: unknown): void => {
+			if (squash) {
+				this.reSubmitSquashed(ordinaryContent, metadata);
+			} else {
+				this.reSubmitCore(ordinaryContent, metadata);
+			}
+		};
+		getSharedObjectProtocol(this).reSubmit(content, localOpMetadata, submit);
 	}
 
 	/**
