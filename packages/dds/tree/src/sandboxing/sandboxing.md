@@ -4,8 +4,37 @@ This document describes the experimental architecture for using a SharedTree vie
 The Host remains connected to Fluid services and synchronizes an independent Guest tree through a `MessagePort`.
 The Guest uses the normal SharedTree view APIs and conflict-resolution behavior.
 
-This implementation is alpha and is not yet a complete security boundary for an untrusted participant.
-See [Security Boundary and Known Limitations](#security-boundary-and-known-limitations) before using it outside tests or controlled environments.
+> [!WARNING]
+> This implementation is alpha and is not yet a complete security boundary for an untrusted participant.
+> See [Security Boundary and Known Limitations](#security-boundary-and-known-limitations) before using it outside tests or controlled environments.
+
+## Core Concepts
+
+- **Host:** The SharedTree endpoint connected to Fluid services.
+  The Host borrows the application-owned main view and owns the session branches and authorized-handle table.
+- **Guest:** The independent tree and view inside the sandbox.
+  It owns a copy of the Host branch and a separate authoring checkout for Guest edits.
+- **Peer:** Another Fluid client that collaborates with the Host through Fluid services.
+- **Session:** One Host-to-Guest connection, including its branches, ID space shard, handle authority, and pending requests.
+- **Finalized-history boundary:** A commit through which history will not be rebased or replaced.
+  The protocol uses `trunkRevision` to identify this boundary.
+- **Handle token:** A session-local index that authorizes the Guest to refer to one Fluid handle provided by the Host.
+  A token is neither a secret nor a Fluid handle URL.
+- **Guest proxy:** A local `IFluidHandle` whose `get()` requests blob content from the Host.
+
+### Transport Representations
+
+- **Wire representation:** Structured-clone-compatible data sent through the port.
+  It contains handle markers, escaped records, and actual buffers.
+- **Normalized transport data:** A restricted local copy with null-prototype records, restored handles, and registered buffer placeholders.
+  It has not yet passed protocol schema or state validation.
+- **Tree payload:** Encoded initial tree data or an encoded change.
+  Its permitted value vocabulary is distinct from the codec-specific structure of the payload.
+
+Structured clone does not preserve null record prototypes or Fluid handle symbols.
+The handle marker is `{ type: "__sandbox_handle__", token }`.
+The escape record is `{ type: "__sandbox_object__", entries }`.
+The transport uses escape records when ordinary data collides with a marker shape.
 
 ## Status and Prerequisites
 
@@ -23,34 +52,6 @@ The implementation requires these conditions:
 - The runtime ID compressor uses the V3 serialization format.
   Set the container runtime's `oldestSupportedClient` option to `"3.4.0"` or later.
 
-## Core Concepts
-
-- **Host:** The SharedTree endpoint connected to Fluid services.
-  The Host borrows the application-owned main view and owns the session branches and authorized-handle table.
-- **Guest:** The independent tree and view inside the sandbox.
-  It owns a copy of the Host branch and a separate authoring checkout for Guest edits.
-- **Peer:** Another Fluid client that collaborates with the Host through Fluid services.
-- **Session:** One Host-to-Guest connection, including its branches, ID space shard, handle authority, and pending requests.
-- **Finalized-history boundary:** A commit through which history will not be rebased or replaced.
-  The protocol uses `trunkRevision` to identify this boundary.
-- **Handle token:** A session-local index that authorizes the Guest to refer to one Host handle.
-  A token is neither a secret nor a Host handle URL.
-- **Guest proxy:** A local `IFluidHandle` whose `get()` requests blob content from the Host.
-
-### Transport Representations
-
-- **Wire representation:** Structured-clone-compatible data sent through the port.
-  It contains handle markers, escaped records, and actual buffers.
-- **Normalized transport data:** A restricted local copy with null-prototype records, restored handles, and registered buffer placeholders.
-  It has not yet passed protocol schema or state validation.
-- **Tree payload:** Encoded initial tree data or an encoded change.
-  Its permitted value vocabulary is distinct from the codec-specific structure of the payload.
-
-Structured clone does not preserve null record prototypes or Fluid handle symbols.
-The handle marker is `{ type: "__sandbox_handle__", token }`.
-The escape record is `{ type: "__sandbox_object__", entries }`.
-The transport uses escape records when ordinary data collides with a marker shape.
-
 ## Architecture
 
 Applications create one Host and one Guest with separate endpoints of a `MessageChannel`.
@@ -67,26 +68,11 @@ flowchart LR
     H -->|"Blob response or error"| G
 ```
 
-Blob resolution uses the same channel but does not block tree synchronization while the Host resolves content.
-
-Host-to-Guest messages contain exactly one of these members:
-
-- `hostInitialization`
-- `hostUpdate`
-- `hostIdRange`
-- `guestChangeAck`
-- `blobResponse`
-- `blobResponseError`
-- `sessionFailure`
-
-Guest-to-Host messages contain exactly one of these members:
-
-- `hostUpdateAck`
-- `guestChange`
-- `blobRequest`
-- `sessionFailure`
+> [!NOTE]
+> Blob resolution uses the same channel but does not block tree synchronization while the Host resolves content.
 
 The directional TypeBox schemas in [common.ts](./common.ts) define the message types and runtime validators.
+Each message contains exactly one member from its directional schema.
 Each endpoint validates its incoming direction and dispatches the validated envelope once.
 
 ### Synchronization Model
@@ -96,27 +82,32 @@ The Host sends branch transitions without waiting for outstanding Guest edits.
 The Guest applies each transition to its Host branch, rebases its authoring checkout, and acknowledges the update.
 
 The Host maintains a local branch that reconstructs the Guest's authoring state.
-It applies Guest changes to that branch and merges accepted changes into the application-owned main branch without rebasing the local branch during the merge.
-Only a Guest acknowledgment advances the Host's local branch over a Host update.
+It applies Guest changes to that branch and merges accepted changes into the application-owned main branch without rebasing the local branch.
+The local branch must continue to represent the Host state that the Guest has confirmed.
+Only a Guest acknowledgment proves that the Guest applied a Host update, so only that acknowledgment advances the local branch over the update.
 
-Each outstanding Host update retains the exact branch snapshot that was sent.
-This is required because a revision can be rebased while its update is in flight.
-The Host releases that snapshot after acknowledgment or session shutdown.
+Each pending Host update retains a disposable snapshot of the exact branch state that was sent.
+A revision can be rebased while its update is in flight, so the revision alone might no longer identify that state.
+When the Guest acknowledges the update in order, the Host rebases its local branch onto the retained snapshot and then releases the snapshot.
+Session shutdown releases snapshots for updates that remain pending.
 Ordered delivery lets each endpoint validate message identifiers and the revisions on which a change was authored.
 Revisions alone cannot reconstruct the Guest's authoring state from the current main branch.
 
-### Initialization and ID Space Sharding
+### Guest Initialization and ID Space Sharding
 
-Initialization sends:
+The Guest initialization message contains:
 
 - Compressed tree content and stored schema at the oldest retained Host revision.
 - Retained commits after that revision, in application order.
 - A serialized child ID space shard for the Guest.
 
-The Guest replays the retained commits before exposing its view.
-This preserves pending Host edits as commits that can be rebased.
-The initialization snapshot can be uninitialized when the retained history still contains the original schema and content initialization.
-The baseline revision aliases the independent checkout's initial head, including when no retained commits follow it.
+The Guest first creates its Host branch from the baseline tree and schema.
+It then replays each retained commit before exposing its view.
+Keeping those commits separate lets the Guest rebase pending Host edits if Host history changes.
+
+The baseline snapshot can be uninitialized when the retained commits include the original schema and content initialization.
+The baseline revision identifies the independent checkout's initial head, even when no retained commits follow it.
+
 Initialization commits use the same handle transport as subsequent changes and preserve custom commit metadata.
 
 The Host creates the child shard after it encodes the baseline and retained commits so the serialized child knows every ID used by initialization.
@@ -140,48 +131,71 @@ After the application stops or fences the Guest, Host disposal reclaims the chil
 ### Message Conversion and Validation
 
 Both directions use the same transport pipeline.
-Blue steps convert data, green steps validate it, and the yellow step crosses the structured-clone boundary.
 
 ```mermaid
-flowchart TB
-    subgraph Sending["Sender"]
-        S["Typed local message"]
-        N["Restricted copy and normalization<br/>Null-prototype records<br/>Registered buffer placeholders"]
-        V["Directional schema validation"]
-        E["Transport encoding<br/>Handles to tokens<br/>Escaped marker collisions<br/>Placeholders to buffers"]
-        S --> N --> V --> E
+flowchart LR
+    subgraph Key["Key"]
+        direction LR
+        K1[/"Message or outcome"/]
+        K2["Conversion"]
+        K3[["Validation"]]
+        K4(["Structured-clone boundary"])
+        K1 ~~~ K2 ~~~ K3 ~~~ K4
     end
-
-    W["MessagePort structured clone"]
-    E --> W
-
-    subgraph Receiving["Receiver"]
-        C["Restrict and copy the complete graph"]
-        U["Validate markers<br/>Restore handles and escaped records"]
-        Q["Directional schema validation"]
-        B["Unwrap a validated blob response"]
-        R["Dispatch and validate protocol state"]
-        C --> U --> Q --> B --> R
-    end
-
-    W --> C
-    R -->|"Tree data"| T["Tree codec and change application"]
-    R -->|"Blob message"| H["Resolve or settle one request"]
-    R -->|"Acknowledgment"| A["Advance synchronization"]
-    R -->|"Session failure"| X["Stop the endpoint"]
 
     classDef conversion fill:#e8f1ff,stroke:#3166a3,color:#111;
     classDef validation fill:#e7f4e8,stroke:#397a42,color:#111;
     classDef boundary fill:#fff4cc,stroke:#967000,color:#111;
-    class N,E,C,U,B,H conversion;
+    classDef outcome fill:#f2f2f2,stroke:#555,color:#111;
+    class K2 conversion;
+    class K3 validation;
+    class K4 boundary;
+    class K1 outcome;
+```
+
+```mermaid
+flowchart TB
+    subgraph Sending["Sender"]
+        S[/"Typed local message"/]
+        N["Convert: restricted copy and normalization<br/>Null-prototype records<br/>Registered buffer placeholders"]
+        V[["Validate: directional schema"]]
+        E["Convert: transport encoding<br/>Handles to tokens<br/>Escaped marker collisions<br/>Placeholders to buffers"]
+        S --> N --> V --> E
+    end
+
+    W(["Boundary: MessagePort structured clone"])
+    E --> W
+
+    subgraph Receiving["Receiver"]
+        C["Convert: restrict and copy the complete graph"]
+        U["Convert: validate markers<br/>Restore handles and escaped records"]
+        Q[["Validate: directional schema"]]
+        B["Convert: unwrap a validated blob response"]
+        R[["Validate protocol state and dispatch"]]
+        C --> U --> Q --> B --> R
+    end
+
+    W --> C
+    R -->|"Tree data"| T[/"Tree codec and change application"/]
+    R -->|"Blob message"| H[/"Resolve or settle one request"/]
+    R -->|"Acknowledgment"| A[/"Advance synchronization"/]
+    R -->|"Session failure"| X[/"Stop the endpoint"/]
+
+    classDef conversion fill:#e8f1ff,stroke:#3166a3,color:#111;
+    classDef validation fill:#e7f4e8,stroke:#397a42,color:#111;
+    classDef boundary fill:#fff4cc,stroke:#967000,color:#111;
+    classDef outcome fill:#f2f2f2,stroke:#555,color:#111;
+    class N,E,C,U,B conversion;
     class V,Q,R validation;
     class W boundary;
+    class S,T,H,A,X outcome;
 ```
 
 [transport.ts](./transport.ts) restricts the complete incoming graph before it interprets markers or restores handles.
-It accepts null, undefined, booleans, finite numbers, strings, dense arrays, ordinary or null-prototype records, and buffers.
-Local handles are opaque leaves on send; received handles must use authorized tokens.
-The transport rejects unsupported objects, cycles, sparse arrays, accessors, symbol properties, non-enumerable record properties, and invalid prototypes.
+Its transport vocabulary contains only null, undefined, booleans, finite numbers, strings, dense arrays, ordinary or null-prototype records, buffers, and Fluid handles.
+When encoding outgoing data, the transport treats Fluid handles as indivisible values and replaces them with tokens.
+Incoming data must represent handles with authorized token markers.
+The transport rejects every other value, including unsupported objects, cycles, sparse arrays, accessors, symbol properties, non-enumerable record properties, and invalid prototypes.
 All copied and reconstructed records have null prototypes.
 Repeated ordinary references are copied independently.
 
@@ -212,7 +226,9 @@ The Guest can send an authorized proxy back to the Host but cannot introduce a n
 The Host validates returned tokens in both Guest changes and blob requests.
 Only the Host binds handles and performs Fluid attachment.
 
-Only blob handles that resolve to an `ArrayBuffer` are supported.
+> [!NOTE]
+> The sandbox supports only blob handles that resolve to an `ArrayBuffer`.
+
 A Guest proxy sends a `blobRequest`, and the Host replies with either `blobResponse` or `blobResponseError`.
 The request ID matches a response to its pending request and is distinct from the handle token.
 Blob-resolution failures reject only the proxy's `get()` operation.
@@ -248,9 +264,9 @@ Disposing only the Guest does not stop Host updates or release unacknowledged Ho
 The application must fence an old Guest before Host disposal so an old iframe cannot continue sending messages or restart from its serialized shard.
 If initialization fails after shard creation, the Host reclaims the shard that the Guest did not receive.
 
-Internal invariant failures, application usage errors, and protocol errors preserve their local classification.
-The local session error stores the original cause.
-Peer notifications contain only a diagnostic message.
+The local endpoint wraps the first terminal failure in a session error and retains the original `Error` as its cause.
+This preserves the local distinction between invariant failures, application usage errors, and protocol errors.
+The peer receives only the diagnostic message in `sessionFailure`, not the original error object or classification.
 
 ## Security Boundary and Known Limitations
 
