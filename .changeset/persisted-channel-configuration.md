@@ -15,6 +15,9 @@ Reading these defaults does not change the summary; the first accepted replaceme
 Fluid Framework code owns these values and must preserve their JSON round-trip behavior; the protocol does not deep-copy, freeze, or recursively validate them.
 The internal configuration facet exposes read-only revision and values without an encoding version; only persisted attributes and configuration wire ops carry `version: 1`.
 Unattached instances apply replacements locally; attached instances use sequenced compare-and-swap barriers.
+`requestChangeLazy` defers an attached request until the same channel's next fresh ordinary op, submitting the control op afterward to preserve optimistic edit order.
+It leaves idle channels unchanged and applies immediately while unattached.
+Deferred intent is process-local until submitted, retains its original expected revision, and is not flushed by summaries, other channels, configuration ops, or replay.
 Configuration ops use `{ version: 1, isChannelConfigurationOp: true, expectedRevision, values }`.
 Ordinary DDS operations stay unwrapped and carry no configuration revision or provenance metadata.
 Their existing processing and replay behavior is unchanged, including for ops authored before a configuration change.

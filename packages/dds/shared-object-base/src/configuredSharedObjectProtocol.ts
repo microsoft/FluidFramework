@@ -25,6 +25,7 @@ export class ConfiguredSharedObjectProtocol<TConfig extends ChannelConfiguration
 	implements SharedObjectProtocol
 {
 	private submittingControl = false;
+	#replaying = false;
 
 	readonly #submit: (contents: unknown, metadata: unknown) => void;
 	readonly #verifyCanSubmit: () => void;
@@ -67,6 +68,14 @@ export class ConfiguredSharedObjectProtocol<TConfig extends ChannelConfiguration
 		return content;
 	}
 
+	public submitLocalMessage(content: unknown, submit: () => void): void {
+		if (!this.#replaying && !hasChannelConfigurationMarker(content)) {
+			this.controller.submitOrdinaryMessage(submit);
+		} else {
+			submit();
+		}
+	}
+
 	public processMessages(
 		messages: IRuntimeMessageCollection,
 		deliver: (messages: IRuntimeMessageCollection) => void,
@@ -104,11 +113,13 @@ export class ConfiguredSharedObjectProtocol<TConfig extends ChannelConfiguration
 	}
 
 	public applyStashedOp(content: unknown, apply: (content: unknown) => void): void {
-		if (hasChannelConfigurationMarker(content)) {
-			this.controller.applyStashedOp(parseChannelConfigurationMessage(content));
-		} else {
-			apply(content);
-		}
+		this.#withoutLazySubmission(() => {
+			if (hasChannelConfigurationMarker(content)) {
+				this.controller.applyStashedOp(parseChannelConfigurationMessage(content));
+			} else {
+				apply(content);
+			}
+		});
 	}
 
 	public reSubmit(
@@ -116,11 +127,13 @@ export class ConfiguredSharedObjectProtocol<TConfig extends ChannelConfiguration
 		metadata: unknown,
 		submit: (content: unknown, metadata: unknown) => void,
 	): void {
-		if (hasChannelConfigurationMarker(content)) {
-			this.controller.reSubmit(parseChannelConfigurationMessage(content), metadata);
-		} else {
-			submit(content, metadata);
-		}
+		this.#withoutLazySubmission(() => {
+			if (hasChannelConfigurationMarker(content)) {
+				this.controller.reSubmit(parseChannelConfigurationMessage(content), metadata);
+			} else {
+				submit(content, metadata);
+			}
+		});
 	}
 
 	public rollback(
@@ -128,11 +141,23 @@ export class ConfiguredSharedObjectProtocol<TConfig extends ChannelConfiguration
 		metadata: unknown,
 		rollback: (content: unknown, metadata: unknown) => void,
 	): void {
-		if (hasChannelConfigurationMarker(content)) {
-			parseChannelConfigurationMessage(content);
-			this.controller.rollback(metadata);
-		} else {
-			rollback(content, metadata);
+		this.#withoutLazySubmission(() => {
+			if (hasChannelConfigurationMarker(content)) {
+				parseChannelConfigurationMessage(content);
+				this.controller.rollback(metadata);
+			} else {
+				rollback(content, metadata);
+			}
+		});
+	}
+
+	#withoutLazySubmission(action: () => void): void {
+		const wasReplaying = this.#replaying;
+		this.#replaying = true;
+		try {
+			action();
+		} finally {
+			this.#replaying = wasReplaying;
 		}
 	}
 

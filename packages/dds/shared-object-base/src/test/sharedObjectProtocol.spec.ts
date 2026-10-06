@@ -137,6 +137,7 @@ describe("SharedObject protocol dispatch", () => {
 		assert.equal(getSharedObjectProtocol(second), defaultSharedObjectProtocol);
 		const registered = {
 			prepareLocalMessage: (content: unknown) => ({ content }),
+			submitLocalMessage: defaultSharedObjectProtocol.submitLocalMessage,
 			submitWhileDetached: defaultSharedObjectProtocol.submitWhileDetached,
 			processMessages: defaultSharedObjectProtocol.processMessages,
 			applyStashedOp: defaultSharedObjectProtocol.applyStashedOp,

@@ -395,6 +395,7 @@ export interface ChannelConfigurationFacet<
 > {
     readonly current: ChannelConfigurationSnapshot<TConfig>;
     requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
+    requestChangeLazy(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
     on(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
     off(event: "changed", listener: (change: ChannelConfigurationChange<TConfig>) => void): void;
 }
@@ -426,6 +427,27 @@ Changes and results distinguish `source: "local"` from `source: "sequenced"`; on
 changes carry service sequence information.
 The controller does not read the runtime's message-size limit or add a detached size limit.
 Attached proposals use the normal submission path, including its message-size handling.
+
+`requestChangeLazy` performs the same validation and captures the same original revision, but an attached channel waits until its next fresh ordinary op before submitting the proposal.
+The control op is submitted after that ordinary submission returns successfully.
+Sending the ordinary op first preserves optimistic edit order when synchronous dirty listeners make more edits.
+The triggering ordinary op, and any edits made by those listeners before the control op is submitted, precede the configuration barrier.
+Other channels' edits, incoming ops, configuration ops, summaries, and replay of existing pending ops do not flush it.
+Unattached channels, including unpublished channels in attached datastores, still apply the change immediately.
+Do not await a lazy request before making the edit intended to trigger it: an idle channel may leave the promise pending indefinitely.
+
+Deferred intent does not dirty the channel, update attributes, or enter runtime pending-state storage.
+It is process-local and is lost across reload unless the caller requests it again.
+Multiple lazy requests retain invocation order and their original revisions; they are not coalesced or rebased when flushed.
+An eager request can overtake them and cause a CAS conflict.
+Disposal rejects both deferred and submitted requests.
+Submission eligibility is checked again when flushing.
+If ordinary submission fails, the lazy request remains queued.
+If submitting a deferred request fails, that request rejects and the triggering edit throws, though its ordinary op has already been submitted.
+Later deferred requests remain queued for a subsequent edit.
+Requests made during submission wait for a subsequent ordinary op rather than treating an op already being sent as their trigger.
+After submission, normal control-op acknowledgement, resubmission, stash, and rollback handling applies.
+Before submission, a lazy request is not part of runtime staging, so rolling back other ops does not cancel it.
 
 The shared mechanism, not the DDS, decides and reports `"applied"` or `"conflict"`. The returned
 snapshot is the state at processing that result; another change can occur before the caller's
@@ -472,7 +494,7 @@ protocol, not an async callback.
 
 A callback or receive-side validation failure is a fatal processing failure. Do not catch it and
 continue under either configuration. A local validation failure rejects the request without
-emitting an op. The getter exposes readonly state; changes must use `requestChange`.
+emitting an op. The getter exposes readonly state; changes must use `requestChange` or `requestChangeLazy`.
 
 ### Ordinary ops and configuration changes
 
@@ -494,7 +516,7 @@ encoding depends on configuration must retain their existing format-compatibilit
 (for example, self-describing payloads); receiving a later barrier does not make older payloads
 undecodable or dispensable.
 
-There is intentionally no automatic submission queue for a pending configuration proposal.
+There is intentionally no queue holding ordinary ops behind a pending configuration proposal.
 The current configuration remains unchanged until the barrier is observed.
 Callers needing the new behavior wait for the proposal result and re-read
 the current configuration before constructing their op.

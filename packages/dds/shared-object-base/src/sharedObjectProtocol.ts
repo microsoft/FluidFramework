@@ -13,6 +13,7 @@ import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
  */
 export interface SharedObjectProtocol {
 	prepareLocalMessage(content: unknown): unknown;
+	submitLocalMessage(content: unknown, submit: () => void): void;
 	submitWhileDetached(content: unknown, metadata: unknown): void;
 	processMessages(
 		messages: IRuntimeMessageCollection,
@@ -39,6 +40,10 @@ class DefaultSharedObjectProtocol implements SharedObjectProtocol {
 	}
 
 	public submitWhileDetached(content: unknown, metadata: unknown): void {}
+
+	public submitLocalMessage(content: unknown, submit: () => void): void {
+		submit();
+	}
 
 	public processMessages(
 		messages: IRuntimeMessageCollection,

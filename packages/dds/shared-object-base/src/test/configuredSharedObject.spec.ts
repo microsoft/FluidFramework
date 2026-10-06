@@ -149,6 +149,10 @@ class ConfiguredSharedObject extends SharedObject implements ConfiguredObject {
 	protected applyStashedOp(contents: unknown): void {
 		this.edit(contents);
 	}
+
+	protected override rollback(contents: unknown, metadata: unknown): void {
+		this.edit({ rollback: contents }, metadata);
+	}
 }
 
 class ConfiguredSharedObjectCore extends SharedObjectCore implements ConfiguredObject {
@@ -214,6 +218,10 @@ class ConfiguredSharedObjectCore extends SharedObjectCore implements ConfiguredO
 	protected applyStashedOp(contents: unknown): void {
 		this.edit(contents);
 	}
+
+	protected override rollback(contents: unknown, metadata: unknown): void {
+		this.edit({ rollback: contents }, metadata);
+	}
 }
 
 function harness(attachState: AttachState = AttachState.Attached): {
@@ -223,20 +231,25 @@ function harness(attachState: AttachState = AttachState.Attached): {
 	delta: MockDeltaConnection;
 	services: IChannelServices;
 	submitted: { contents: unknown; metadata: unknown }[];
+	readonly dirty: number;
 } {
 	const runtime = Object.assign(new MockFluidDataStoreRuntime({ attachState }), {
 		isSharedObjectConfigurationEnabled: () => true,
 	});
 	const submitted: { contents: unknown; metadata: unknown }[] = [];
+	let dirty = 0;
 	const delta = new MockDeltaConnection(
 		(contents, metadata) => submitted.push({ contents, metadata }),
-		() => {},
+		() => dirty++,
 	);
 	return {
 		runtime,
 		delta,
 		services: { deltaConnection: delta, objectStorage: new MockStorage() },
 		submitted,
+		get dirty() {
+			return dirty;
+		},
 	};
 }
 
@@ -574,16 +587,18 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				const { runtime, services, submitted } = harness(AttachState.Detached);
 				const rejected: Promise<void>[] = [];
 				const check = (shared: ConfiguredObject): void => {
-					rejected.push(
-						assert.rejects(
-							shared.config.requestChange({ retain: true }),
-							validateAssertionError(
-								stage === "load"
-									? "Cannot submit while loading configured shared object state"
-									: "Cannot change configuration during shared object initialization",
+					for (const method of ["requestChange", "requestChangeLazy"] as const) {
+						rejected.push(
+							assert.rejects(
+								shared.config[method]({ retain: true }),
+								validateAssertionError(
+									stage === "load"
+										? "Cannot submit while loading configured shared object state"
+										: "Cannot change configuration during shared object initialization",
+								),
 							),
-						),
-					);
+						);
+					}
 				};
 				const reader = factory(undefined, {
 					[stage]:
@@ -606,7 +621,7 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 						? await reader.load(runtime, "loading", services, reader.attributes)
 						: reader.create(runtime, "creating");
 				await Promise.all(rejected);
-				assert.equal(rejected.length, stage === "load" ? 2 : 1);
+				assert.equal(rejected.length, stage === "load" ? 4 : 2);
 				assert.equal(initialized.config.current.revision, 0);
 				const result = await initialized.config.requestChange({ retain: true });
 				assert.equal(result.status, "applied");
@@ -639,14 +654,16 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 					);
 				}
 				assert(shared !== undefined);
-				await assert.rejects(
-					shared.config.requestChange({}),
-					validateAssertionError(
-						stage === "load"
-							? "Cannot submit while loading configured shared object state"
-							: "Cannot change configuration during shared object initialization",
-					),
-				);
+				for (const method of ["requestChange", "requestChangeLazy"] as const) {
+					await assert.rejects(
+						shared.config[method]({}),
+						validateAssertionError(
+							stage === "load"
+								? "Cannot submit while loading configured shared object state"
+								: "Cannot change configuration during shared object initialization",
+						),
+					);
+				}
 			});
 		}
 
@@ -771,6 +788,225 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				shared.config.requestChange({}),
 				(error: unknown) => error === closedError,
 			);
+		});
+
+		describe("lazy configuration changes", () => {
+			it("does not persist, dirty, or flush idle requests during summaries, incoming ops, or other channel edits", async () => {
+				const test = harness();
+				const reader = factory();
+				const shared = reader.create(test.runtime, "idle");
+				shared.connect(test.services);
+				const pending = assert.rejects(
+					shared.config.requestChangeLazy({ retain: true }),
+					/disposed/,
+				);
+				const baseline = shared.config.current;
+				shared.getAttachSummary();
+				await shared.summarize();
+				test.delta.processMessages(collection(["incoming"]));
+				const other = reader.create(test.runtime, "other");
+				const otherConnection = harness();
+				other.connect(otherConnection.services);
+				other.edit("unrelated");
+				assert.equal(otherConnection.submitted.length, 1);
+				assert.equal(test.submitted.length, 0);
+				assert.equal(test.dirty, 0);
+				assert.equal(shared.config.current, baseline);
+				assert(!("configuration" in roundTripAttributes(shared)));
+				assert(!("configuration" in reader.attributes));
+				test.runtime.dispose();
+				await pending;
+			});
+
+			it("submits a queued control after the triggering ordinary op and replays that op with the old configuration", async () => {
+				const { runtime, services, submitted, delta } = harness();
+				const shared = factory().create(runtime, "ordered");
+				shared.connect(services);
+				const request = shared.config.requestChangeLazy({ retain: true });
+				let completed = false;
+				const completion = request.then(() => {
+					completed = true;
+				});
+				const ordinary = { edit: "fresh" };
+				const metadata = { source: "edit" };
+				const before = shared.config.current;
+				assert.equal(submitted.length, 0);
+				shared.edit(ordinary, metadata);
+				assert.equal(submitted.length, 2);
+				assert.deepEqual(submitted[0], { contents: ordinary, metadata });
+				assert.deepEqual(submitted[1]?.contents, barrier(0, true));
+				assert.equal(shared.config.current.revision, 0);
+				assert(!("configuration" in shared.attributes));
+				await Promise.resolve();
+				assert.equal(completed, false);
+				shared.observed.length = 0;
+				delta.processMessages(
+					collection(
+						submitted.map((message) => message.contents),
+						true,
+						submitted.map((message) => message.metadata),
+					),
+				);
+				const result = await request;
+				await completion;
+				assert.equal(result.status, "applied");
+				assert.equal(result.source, "sequenced");
+				assert.deepEqual(shared.config.current, { revision: 1, values: { retain: true } });
+				assert.equal(shared.observed.length, 4);
+				assert.deepEqual(shared.observed.slice(0, 3), [
+					["pre-op", ordinary, before, true],
+					["process", ordinary, before, true, metadata],
+					["op", ordinary, before, true],
+				]);
+			});
+
+			it("applies lazy requests immediately when detached or unpublished in an attached datastore", async () => {
+				for (const attachState of [AttachState.Detached, AttachState.Attached]) {
+					const { runtime, services, submitted } = harness(attachState);
+					runtime.isSharedObjectConfigurationEnabled = () => false;
+					const shared = factory().create(runtime, "local");
+					if (attachState === AttachState.Detached) {
+						shared.connect(services);
+					}
+					assert.equal(shared.isAttached(), false);
+					const request = shared.config.requestChangeLazy({ retain: true });
+					assert.deepEqual(shared.config.current, { revision: 1, values: { retain: true } });
+					assert("configuration" in roundTripAttributes(shared));
+					const result = await request;
+					assert.equal(result.status, "applied");
+					assert.equal(result.source, "local");
+					assert.deepEqual(submitted, []);
+				}
+			});
+
+			it("keeps disconnected bound requests deferred through reconnect until a fresh edit", async () => {
+				const { runtime, services, submitted, delta } = harness();
+				const shared = factory().create(runtime, "disconnected");
+				shared.connect(services);
+				delta.setConnectionState(false);
+				assert.equal(shared.connected, false);
+				assert.equal(shared.isAttached(), true);
+				const request = shared.config.requestChangeLazy({ retain: true });
+				assert.equal(submitted.length, 0);
+				assert.equal(shared.config.current.revision, 0);
+				delta.setConnectionState(true);
+				assert.equal(submitted.length, 0);
+				shared.edit("fresh");
+				assert.deepEqual(
+					submitted.map((message) => message.contents),
+					["fresh", barrier(0, true)],
+				);
+				delta.processMessages(
+					collection(
+						submitted.map((message) => message.contents),
+						true,
+						submitted.map((message) => message.metadata),
+					),
+				);
+				const result = await request;
+				assert.equal(result.status, "applied");
+			});
+
+			it("does not flush or rebase the captured revision when eager and remote changes advance it", async () => {
+				const { runtime, services, submitted, delta } = harness();
+				const shared = factory().create(runtime, "conflict");
+				shared.connect(services);
+				const lazy = shared.config.requestChangeLazy({ retain: true });
+				const eager = shared.config.requestChange({ retain: false });
+				assert.equal(submitted.length, 1);
+				const eagerProposal = submitted[0];
+				assert(eagerProposal !== undefined);
+				assert.deepEqual(eagerProposal.contents, barrier(0, false));
+				delta.processMessages(
+					collection([eagerProposal.contents], true, [eagerProposal.metadata]),
+				);
+				const eagerResult = await eager;
+				assert.equal(eagerResult.status, "applied");
+				delta.processMessages(collection([barrier(1, true)]));
+				assert.equal(shared.config.current.revision, 2);
+				assert.equal(submitted.length, 1);
+				shared.edit("trigger");
+				const lazyProposal = submitted[2];
+				assert(lazyProposal !== undefined);
+				assert.deepEqual(lazyProposal.contents, barrier(0, true));
+				assert.equal(submitted[1]?.contents, "trigger");
+				delta.processMessages(
+					collection([lazyProposal.contents], true, [lazyProposal.metadata]),
+				);
+				const result = await lazy;
+				assert.equal(result.status, "conflict");
+				assert.deepEqual(result.current, { revision: 2, values: { retain: true } });
+			});
+
+			it("rejects unsent lazy requests and future requests when the runtime is disposed", async () => {
+				const { runtime, services, submitted } = harness();
+				const shared = factory().create(runtime, "disposed-lazy");
+				shared.connect(services);
+				const pending = assert.rejects(
+					shared.config.requestChangeLazy({ retain: true }),
+					/disposed/,
+				);
+				runtime.dispose();
+				await pending;
+				await assert.rejects(shared.config.requestChangeLazy({}), /disposed/);
+				assert.deepEqual(submitted, []);
+				assert.equal(shared.config.current.revision, 0);
+				assert(!("configuration" in shared.attributes));
+			});
+
+			it("checks values, document readiness, and read-only state at invocation rather than first edit", async () => {
+				const { runtime, services, submitted } = harness();
+				const shared = factory().create(runtime, "invalid-lazy");
+				shared.connect(services);
+				const unsupported = { retain: true, unsupported: true };
+				await assert.rejects(
+					shared.config.requestChangeLazy(unsupported),
+					/Unsupported channel configuration values/,
+				);
+				runtime.isSharedObjectConfigurationEnabled = () => false;
+				await assert.rejects(
+					shared.config.requestChangeLazy({ retain: true }),
+					/capability is not enabled/,
+				);
+				runtime.isSharedObjectConfigurationEnabled = () => true;
+				runtime.notifyReadOnlyState(true);
+				await assert.rejects(shared.config.requestChangeLazy({ retain: true }), /read-only/);
+				runtime.notifyReadOnlyState(false);
+				shared.edit("fresh");
+				assert.deepEqual(submitted, [{ contents: "fresh", metadata: undefined }]);
+				assert.equal(shared.config.current.revision, 0);
+				assert(!("configuration" in shared.attributes));
+			});
+
+			it("suppresses lazy flushing during resubmit, squash, stash, and rollback, then resubmits materialized controls normally", async () => {
+				const { runtime, services, submitted, delta } = harness();
+				const shared = factory().create(runtime, "replay-lazy");
+				shared.connect(services);
+				const metadata = { source: "original" };
+				shared.edit("original", metadata);
+				const request = shared.config.requestChangeLazy({ retain: true });
+				delta.reSubmit("original", metadata, false);
+				delta.reSubmit("original", metadata, true);
+				delta.applyStashedOp("stashed");
+				assert(delta.rollback !== undefined);
+				delta.rollback("original", metadata);
+				assert.deepEqual(
+					submitted.map((message) => message.contents),
+					["original", "original", "original", "stashed", { rollback: "original" }],
+				);
+				assert.equal(shared.config.current.revision, 0);
+				assert(!("configuration" in shared.attributes));
+				shared.edit("fresh");
+				const proposal = submitted[6];
+				assert(proposal !== undefined);
+				assert.deepEqual(proposal.contents, barrier(0, true));
+				assert.equal(submitted[5]?.contents, "fresh");
+				delta.reSubmit(proposal.contents, proposal.metadata, false);
+				assert.deepEqual(submitted[7], proposal);
+				delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
+				const result = await request;
+				assert.equal(result.status, "applied");
+			});
 		});
 
 		it("loads and summarizes lazy configuration replay through the real datastore runtime", async () => {

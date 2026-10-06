@@ -175,6 +175,21 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 	 */
 	requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
 	/**
+	 * Requests a full replacement, deferring attached submission until this channel next submits
+	 * a fresh ordinary op. The proposal follows that op and uses the revision captured now,
+	 * not the revision at submission. Unattached changes apply immediately, as with requestChange.
+	 *
+	 * Deferred requests are process-local: they do not dirty the channel or appear in summaries
+	 * or stashed ops. Configuration ops, resubmission, and stash replay do not flush them.
+	 * Multiple requests are not coalesced. Once submitted, normal acknowledgement, resubmission,
+	 * stash, and rollback handling applies.
+	 *
+	 * @param next - The complete set of configuration values. Omit a key to remove it.
+	 * @returns The applied or conflicting outcome. Remains pending while the channel is idle.
+	 * Rejects if validation or submission fails, or the channel closes before completion.
+	 */
+	requestChangeLazy(next: TConfig): Promise<ConfigurationChangeResult<TConfig>>;
+	/**
 	 * Registers a synchronous listener for accepted replacements.
 	 * Listeners must not submit channel ops or request another configuration change.
 	 */
@@ -230,6 +245,8 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		(change: ChannelConfigurationChange<TConfig>) => void
 	>();
 	private readonly pending = new Map<unknown, PendingChange<TConfig>>();
+	readonly #lazyRequests = new Map<unknown, ChannelConfigurationMessageV1>();
+	#lazyFlushGeneration = 0;
 	private disposed = false;
 	private disposalError: unknown;
 	private processing = false;
@@ -251,6 +268,17 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	 * synchronously; attached changes complete only after their sequenced outcome.
 	 */
 	public async requestChange(next: TConfig): Promise<ConfigurationChangeResult<TConfig>> {
+		return this.#requestChange(next, false);
+	}
+
+	public async requestChangeLazy(next: TConfig): Promise<ConfigurationChangeResult<TConfig>> {
+		return this.#requestChange(next, true);
+	}
+
+	async #requestChange(
+		next: TConfig,
+		lazy: boolean,
+	): Promise<ConfigurationChangeResult<TConfig>> {
 		this.verifyCanSubmit();
 		this.options.verifyCanChange();
 		const previous = this.snapshot;
@@ -284,15 +312,59 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		return new Promise<ConfigurationChangeResult<TConfig>>((resolve, reject) => {
 			const metadata = {};
 			this.pending.set(metadata, { resolve, reject });
-			try {
-				this.options.submit(message, metadata);
-			} catch (error) {
-				this.pending.delete(metadata);
-				reject(
-					error instanceof Error ? error : new Error("Failed to submit channel configuration"),
-				);
+			if (lazy) {
+				this.#lazyRequests.set(metadata, message);
+			} else {
+				this.#submitPendingChange(message, metadata);
 			}
 		});
+	}
+
+	/**
+	 * Submits an ordinary op, then flushes requests that were already queued before submission.
+	 * Sending the ordinary op first preserves optimistic edit order if submission emits dirty
+	 * events that cause further edits. Replay must not flush new intent into pending-op capture.
+	 */
+	public submitOrdinaryMessage(submit: () => void): void {
+		this.verifyCanSubmit();
+		if (this.#lazyRequests.size === 0) {
+			submit();
+			return;
+		}
+		const generation = this.#lazyFlushGeneration;
+		const requests = [...this.#lazyRequests];
+		submit();
+		for (const [metadata, message] of requests) {
+			if (generation !== this.#lazyFlushGeneration) {
+				// A nested flush failed, even if a dirty listener caught its error.
+				break;
+			}
+			// Nested ordinary submission or disposal may already have removed this request.
+			// Delete before submitting to avoid sending it twice through a dirty callback.
+			if (this.#lazyRequests.delete(metadata)) {
+				try {
+					this.#submitPendingChange(message, metadata);
+				} catch (error) {
+					this.#lazyFlushGeneration++;
+					throw error;
+				}
+			}
+		}
+	}
+
+	#submitPendingChange(message: ChannelConfigurationMessageV1, metadata: unknown): void {
+		try {
+			this.verifyCanSubmit();
+			this.options.verifyCanChange();
+			this.options.submit(message, metadata);
+		} catch (error) {
+			const pending = this.pending.get(metadata);
+			this.pending.delete(metadata);
+			pending?.reject(
+				error instanceof Error ? error : new Error("Failed to submit channel configuration"),
+			);
+			throw error;
+		}
 	}
 
 	public on(
@@ -403,6 +475,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			pending.reject(error);
 		}
 		this.pending.clear();
+		this.#lazyRequests.clear();
 		this.listeners.clear();
 	}
 

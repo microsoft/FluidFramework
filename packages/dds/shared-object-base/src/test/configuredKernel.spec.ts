@@ -277,6 +277,196 @@ function datastoreHarness(
 }
 
 describe("configured kernel composition", () => {
+	describe("lazy configuration", () => {
+		it("preserves optimistic edit order through synchronous dirty listeners without duplication", async () => {
+			const events = new EventEmitter();
+			const test = harness(AttachState.Attached, () => events.emit("dirty"));
+			const shared = makeKind().getFactory().create(test.runtime, "lazy");
+			shared.connect(test.services);
+			const config = requireConfig(shared);
+			const first = config.requestChangeLazy({ retain: true });
+			const second = config.requestChangeLazy({ retain: false });
+			assert.equal(test.submitted.length, 0);
+			assert.equal(test.dirty, 0);
+			events.once("dirty", () => shared.edit("nested", "nested metadata"));
+			shared.edit("outer", "outer metadata");
+			assert.deepEqual(
+				test.submitted.map(({ contents }) => contents),
+				["outer", "nested", barrier(0, true), barrier(0, false)],
+			);
+			assert.equal(test.submitted[0]?.metadata, "outer metadata");
+			assert.equal(test.submitted[1]?.metadata, "nested metadata");
+			assert.equal(config.current.revision, 0);
+			test.delta.processMessages(
+				collection(
+					test.submitted.map(({ contents }) => contents),
+					true,
+					test.submitted.map(({ metadata }) => metadata),
+				),
+			);
+			const firstResult = await first;
+			const secondResult = await second;
+			assert.equal(firstResult.status, "applied");
+			assert.equal(secondResult.status, "conflict");
+			assert.deepEqual(
+				shared.observed.filter((item) => Array.isArray(item) && item[0] === "operation"),
+				[
+					["operation", "outer", "outer metadata", 0, true],
+					["operation", "nested", "nested metadata", 0, true],
+				],
+			);
+		});
+
+		for (const onlyBind of [false, true]) {
+			it(`does not flush until ordinary validation and handle preparation succeed (onlyBind=${onlyBind})`, async () => {
+				const { runtime, delta, services, submitted } = harness();
+				Object.assign(runtime, { submitMessagesWithoutEncodingHandles: onlyBind });
+				const shared = makeKind().getFactory().create(runtime, "lazy");
+				shared.connect(services);
+				const request = requireConfig(shared).requestChangeLazy({ retain: true });
+				assert.throws(() => shared.edit(barrier(0, false)), DataProcessingError);
+				const failure = new Error("Payload preparation failed");
+				assert.throws(
+					() =>
+						shared.edit({
+							get invalid(): unknown {
+								throw failure;
+							},
+						}),
+					(error) => error === failure,
+				);
+				assert.equal(submitted.length, 0);
+				assert(!("configuration" in shared.attributes));
+				const handle = new MockHandle("value");
+				const metadata = { ordinary: true };
+				shared.edit({ handle }, metadata);
+				assert.equal(submitted.length, 2);
+				assert.deepEqual(submitted[1]?.contents, barrier(0, true));
+				assert.equal(submitted[0]?.metadata, metadata);
+				delta.processMessages(
+					collection(
+						submitted.map(({ contents }) => contents),
+						true,
+						submitted.map(({ metadata: localMetadata }) => localMetadata),
+					),
+				);
+				const result = await request;
+				assert.equal(result.status, "applied");
+				const observed = shared.observed.at(-2);
+				assert(Array.isArray(observed));
+				assert.equal(observed[0], "operation");
+				assert.equal(observed[2], metadata);
+				assert.equal(observed[3], 0);
+				const processed: unknown = observed[1];
+				assert(typeof processed === "object" && processed !== null && "handle" in processed);
+				assert(isFluidHandle(processed.handle));
+			});
+		}
+
+		it("propagates a control submission failure after sending the triggering ordinary op", async () => {
+			const { runtime, delta, services, submitted } = harness();
+			const shared = makeKind().getFactory().create(runtime, "lazy");
+			shared.connect(services);
+			const failure = new Error("Submission failed");
+			const submit = delta.submit.bind(delta);
+			delta.submit = (contents, metadata) => {
+				if (typeof contents === "string") {
+					return submit(contents, metadata);
+				}
+				throw failure;
+			};
+			const rejected = assert.rejects(
+				requireConfig(shared).requestChangeLazy({ retain: true }),
+				(error) => error === failure,
+			);
+			assert.throws(
+				() => shared.edit("sent first"),
+				(error) => error === failure,
+			);
+			await rejected;
+			assert.equal(submitted.length, 1);
+			delta.submit = submit;
+			shared.edit("next");
+			assert.deepEqual(submitted, [
+				{ contents: "sent first", metadata: undefined },
+				{ contents: "next", metadata: undefined },
+			]);
+			assert(!("configuration" in shared.attributes));
+		});
+
+		it("does not submit lazy controls after disposal during the ordinary op", async () => {
+			const events = new EventEmitter();
+			const test = harness(AttachState.Attached, () => events.emit("submit"));
+			const shared = makeKind().getFactory().create(test.runtime, "lazy");
+			shared.connect(test.services);
+			const rejected = assert.rejects(
+				requireConfig(shared).requestChangeLazy({ retain: true }),
+				/disposed/,
+			);
+			events.once("submit", () => test.runtime.dispose());
+			shared.edit("ordinary");
+			await rejected;
+			assert.deepEqual(
+				test.submitted.map(({ contents }) => contents),
+				["ordinary"],
+			);
+		});
+
+		it("keeps lazy intent queued when the ordinary submission itself fails", async () => {
+			const { runtime, delta, services, submitted } = harness();
+			const shared = makeKind().getFactory().create(runtime, "lazy");
+			shared.connect(services);
+			const request = requireConfig(shared).requestChangeLazy({ retain: true });
+			const submit = delta.submit.bind(delta);
+			const failure = new Error("Ordinary submission failed");
+			delta.submit = () => {
+				throw failure;
+			};
+			assert.throws(
+				() => shared.edit("failed"),
+				(error) => error === failure,
+			);
+			assert.equal(submitted.length, 0);
+			delta.submit = submit;
+			shared.edit("successful");
+			assert.deepEqual(
+				submitted.map(({ contents }) => contents),
+				["successful", barrier(0, true)],
+			);
+			delta.processMessages(
+				collection(
+					submitted.map(({ contents }) => contents),
+					true,
+					submitted.map(({ metadata }) => metadata),
+				),
+			);
+			const result = await request;
+			assert.equal(result.status, "applied");
+		});
+
+		it("keeps new lazy intent out of real datastore stashed-op submission capture", async () => {
+			const test = datastoreHarness(makeKind().getFactory());
+			await test.runtime.getChannel("dds");
+			const pending = assert.rejects(
+				requireConfig(test.shared).requestChangeLazy({ retain: true }),
+				/disposed/,
+			);
+			assert.equal(test.runtime.isDirty, false);
+			const content = { address: "dds", contents: "restored" };
+			const metadata = await test.runtime.applyStashedOp({ type: "op", content });
+			test.runtime.processMessages(collection([content], true, [metadata]));
+			assert.deepEqual(test.shared.observed.slice(-2), [
+				["operation", { stashed: 1, contents: "restored" }, "restored-one", 0, true],
+				["operation", { stashed: 2, contents: "restored" }, "restored-two", 0, true],
+			]);
+			assert.equal(test.runtime.isDirty, false);
+			assert(!("configuration" in test.shared.attributes));
+			assert.equal(test.errors.length, 0);
+			test.runtime.dispose();
+			await pending;
+		});
+	});
+
 	it("activates an unmarked snapshot during lazy replay before exposure and summary", async () => {
 		const factory = makeKind().getFactory();
 		const baseline = factory.create(harness(AttachState.Detached).runtime, "baseline");

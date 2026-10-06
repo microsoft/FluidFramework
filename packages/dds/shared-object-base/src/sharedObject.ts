@@ -631,8 +631,10 @@ export abstract class SharedObjectCore<
 				? bindHandles(preparedContent, this.handle)
 				: makeHandlesSerializable(preparedContent, this.serializer, this.handle);
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			protocol.submitLocalMessage(preparedContent, () => {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			});
 		} else {
 			protocol.submitWhileDetached(preparedContent, localOpMetadata);
 		}
