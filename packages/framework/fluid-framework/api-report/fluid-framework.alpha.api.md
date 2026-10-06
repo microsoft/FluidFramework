@@ -161,6 +161,9 @@ export interface ArrayPlaceAnchor {
 export function asAlpha(tree: ITree): ITreeAlpha;
 
 // @alpha
+export function asAlpha(tree: ViewableTree): ViewableTreeAlpha;
+
+// @alpha
 export function asAlpha<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
@@ -321,7 +324,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T>;
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
 // @alpha
-export function createIndependentTreeAlpha(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
+export function createIndependentTreeAlpha(options?: CreateIndependentTreeAlphaOptions): ViewableTreeAlpha;
 
 // @alpha
 export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & ((IndependentViewOptions & {
@@ -512,6 +515,7 @@ export interface FieldProps<TCustomMetadata = unknown> {
 export interface FieldPropsAlpha<TCustomMetadata = unknown> extends FieldProps<TCustomMetadata> {
     readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
     readonly stagedOptionalUpgrade?: SchemaUpgrade;
+    readonly summarizeIncrementally?: boolean;
 }
 
 // @public @sealed
@@ -545,6 +549,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
 
 // @alpha @sealed @system
 export interface FieldSchemaAlphaUnsafe<out Kind extends FieldKind, out Types extends System_Unsafe.ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown, out TProps extends FieldPropsAlpha<TCustomMetadata> | undefined = undefined> extends FieldSchemaAlpha<Kind, any, TCustomMetadata, TProps>, System_Unsafe.FieldSchemaUnsafe<Kind, Types, TCustomMetadata> {
+    // (undocumented)
     readonly allowedTypes: Types;
 }
 
@@ -1257,10 +1262,8 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 }
 
 // @alpha @sealed
-export interface ITreeAlpha extends ITree {
+export interface ITreeAlpha extends ITree, ViewableTreeAlpha {
     createSharedBranch(name?: string): string;
-    exportSimpleSchema(): SimpleTreeSchema;
-    exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
@@ -1748,7 +1751,9 @@ export interface Revertible {
 // @alpha @sealed
 export interface RevertibleAlpha extends Revertible {
     clone: (view: UntypedTreeView) => RevertibleAlpha;
+    // (undocumented)
     revert(): void;
+    // (undocumented)
     revert(dispose: boolean): void;
     revert(options: RevertOptionsAlpha): void;
 }
@@ -1806,6 +1811,39 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+}
+
+// @alpha
+export namespace Sandboxing {
+    export function createGuest(options: GuestOptions): Promise<Guest>;
+    export function createHost(options: HostOptions): Host;
+    // @input
+    export interface EndpointOptions {
+        readonly handleProtocolError?: (error: Error) => void;
+        readonly logger?: ITelemetryBaseLogger;
+        readonly port: InstanceType<typeof MessagePort>;
+    }
+    // @sealed
+    export interface Guest {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly tree: ViewableTree;
+        readonly updateHostPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface GuestOptions extends EndpointOptions {
+        readonly treeOptions: ForestOptions & ICodecOptions;
+    }
+    // @sealed
+    export interface Host {
+        dispose(): void;
+        readonly error: Error | undefined;
+        readonly updateGuestPromise: Promise<void> | undefined;
+    }
+    // @input
+    export interface HostOptions extends EndpointOptions {
+        readonly main: UntypedTreeView;
+    }
 }
 
 // @public @sealed
@@ -2267,8 +2305,11 @@ export namespace System_Unsafe {
     export type FieldHasDefaultUnsafe<T extends ImplicitFieldSchemaUnsafe> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, ImplicitAllowedTypesUnsafe> ? true : false;
     // @sealed @system
     export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown> extends FieldSchema<Kind, any, TCustomMetadata> {
+        // (undocumented)
         readonly allowedTypes: Types;
+        // (undocumented)
         readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
+        // (undocumented)
         readonly kind: Kind;
     }
     // @system
@@ -2767,7 +2808,9 @@ export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.Implic
 
 // @alpha @sealed (undocumented)
 export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
+    // (undocumented)
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
+    // (undocumented)
     readonly root: FieldSchemaAlpha;
 }
 
@@ -2810,6 +2853,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
+    // (undocumented)
     readonly compatibility: SchemaCompatibilityStatusBeta;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
@@ -2965,6 +3009,12 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 // @public @sealed @system
 export interface ViewableTree {
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
+}
+
+// @alpha @sealed
+export interface ViewableTreeAlpha extends ViewableTree {
+    exportSimpleSchema(): SimpleTreeSchema;
+    exportVerbose(): VerboseTree | undefined;
 }
 
 // @alpha

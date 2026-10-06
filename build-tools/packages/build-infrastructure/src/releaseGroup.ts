@@ -16,14 +16,8 @@ import type {
  * {@inheritDoc IReleaseGroup}
  */
 export class ReleaseGroup implements IReleaseGroup {
-	/**
-	 * {@inheritDoc IReleaseGroup.name}
-	 */
 	public readonly name: ReleaseGroupName;
 
-	/**
-	 * {@inheritDoc IReleaseGroup.adoPipelineUrl}
-	 */
 	public readonly adoPipelineUrl: string | undefined;
 
 	public constructor(
@@ -64,22 +58,13 @@ export class ReleaseGroup implements IReleaseGroup {
 		}
 	}
 
-	/**
-	 * {@inheritDoc IReleaseGroup.packages}
-	 */
 	public readonly packages: IPackage[];
 
-	/**
-	 * {@inheritDoc IReleaseGroup.version}
-	 */
 	public get version(): string {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.packages[0]!.version;
 	}
 
-	/**
-	 * {@inheritDoc IReleaseGroup.releaseGroupDependencies}
-	 */
 	public get releaseGroupDependencies(): IReleaseGroup[] {
 		const dependentReleaseGroups = new Set<IReleaseGroup>();
 		const ignoredDependencies = new Set<PackageName>();

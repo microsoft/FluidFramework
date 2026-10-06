@@ -5,6 +5,7 @@
 
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ParentShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -12,22 +13,36 @@ import {
 	findCommonAncestor,
 	type GraphCommit,
 	type RevisionTag,
-} from "../../../core/index.js";
-import type { SharedTreeChange, TreeCheckout } from "../../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { brand } from "../../../util/index.js";
+} from "../core/index.js";
+import {
+	makeSerializedChangeCodec,
+	type SerializedChangeCodec,
+	type SharedTreeChange,
+	type TreeCheckout,
+} from "../shared-tree/index.js";
+import { brand } from "../util/index.js";
 
 import {
-	type GuestChangeAckMessage,
 	type GuestChangeMessage,
 	type HostInitializationMessage,
+	type HostToGuestMessage,
 	type HostUpdateAckMessage,
 	type HostUpdateId,
-	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	type PromiseWithResolvers,
+	sandboxFormatValidator,
 	SandboxProtocolError,
 } from "./common.js";
+
+/**
+ * Schema-validation error policy for codecs that decode untrusted Guest data on the Host.
+ * @remarks
+ * Guest codecs intentionally omit this policy so unexpected Host data continues to trigger the
+ * default validation assertions.
+ */
+const throwInvalidGuestChange = (): never => {
+	throw new SandboxProtocolError("Invalid encoded data from Guest.");
+};
 
 /**
  * A finalized snapshot and the subsequent commits needed to reconstruct the Host branch.
@@ -35,7 +50,7 @@ import {
  */
 export type GuestBranchInitialization = Omit<
 	HostInitializationMessage,
-	"type" | "tree" | "schema"
+	"tree" | "schema" | "idCompressor"
 >;
 
 /** A Host update awaiting the Guest's acknowledgment. */
@@ -83,6 +98,8 @@ export class HostSynchronization {
 	private stopped = false;
 	/** Whether the branches owned by this synchronization state have been disposed. */
 	private disposed = false;
+	/** Decodes untrusted Guest changes using Host protocol error semantics. */
+	private readonly guestChangeCodec: SerializedChangeCodec;
 
 	public constructor(
 		/** The Host's main checkout to synchronize with the Guest. */
@@ -90,11 +107,7 @@ export class HostSynchronization {
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
-		private readonly send: (message: HostUpdateMessage | GuestChangeAckMessage) => void,
-		/**
-		 * Binds handles in a change from the Guest to the Host's SharedTree.
-		 */
-		private readonly bindHandles: (change: JsonCompatibleReadOnly) => void,
+		private readonly send: (message: HostToGuestMessage) => void,
 		/**
 		 * Runs an action within the Host session's error-handling boundary.
 		 */
@@ -107,8 +120,18 @@ export class HostSynchronization {
 		 * The scoped logger for synchronization diagnostics.
 		 */
 		private readonly logger: TelemetryLoggerExt,
+		/** Authorizes and imports Guest IDs before a serialized change is decoded. */
+		private readonly synchronizeGuestIdSpaceShard: (
+			token: GuestChangeMessage["idSpaceShardToken"],
+		) => void,
+		/** Captures the parent ID space shard token after commits have been encoded. */
+		private readonly getParentIdSpaceShardSyncToken: () => ParentShardSynchronizationToken,
 	) {
 		this.localCheckout = this.mainCheckout.fork();
+		this.guestChangeCodec = makeSerializedChangeCodec(
+			this.localCheckout.mainBranch.changeFamily,
+			sandboxFormatValidator,
+		);
 		const branch = this.mainCheckout.mainBranch;
 		this.sentHead = branch.getHead();
 		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
@@ -117,7 +140,10 @@ export class HostSynchronization {
 			[this.sentHead, commits],
 			(commit) => commit.revision === trunkRevision,
 		);
-		assert(base !== undefined, "Host branch must contain its finalized-history boundary");
+		assert(
+			base !== undefined,
+			0xd64 /* Host branch must contain its finalized-history boundary */,
+		);
 		this.sentTrunkRevision = trunkRevision;
 		this.guestMainRevision = this.sentHead.revision;
 		this.guestTrunkRevision = trunkRevision;
@@ -159,11 +185,15 @@ export class HostSynchronization {
 		this.log(
 			`Received Guest change ${message.changeId} based on main ${message.mainRevision}`,
 		);
-		this.localCheckout.applyChange(message.change);
-		this.bindHandles(message.change);
+		this.synchronizeGuestIdSpaceShard(message.idSpaceShardToken);
+		this.localCheckout.applySerializedChange(
+			message.change,
+			this.guestChangeCodec,
+			throwInvalidGuestChange,
+		);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
 		this.mainCheckout.merge(this.localCheckout, false);
-		this.send({ type: "guestChangeAck", changeId: message.changeId });
+		this.send({ guestChangeAck: { changeId: message.changeId } });
 	}
 
 	/**
@@ -239,7 +269,7 @@ export class HostSynchronization {
 		const trunkRevision = this.mainCheckout.getFinalizedCommit().revision;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		const base = findCommonAncestor(this.sentHead, [head, commits]);
-		assert(base !== undefined, "Host branch updates must share ancestry");
+		assert(base !== undefined, 0xd65 /* Host branch updates must share ancestry */);
 		if (head === this.sentHead && trunkRevision === this.sentTrunkRevision) {
 			return;
 		}
@@ -258,13 +288,19 @@ export class HostSynchronization {
 		this.sentHead = head;
 		this.sentTrunkRevision = trunkRevision;
 		this.log(`Sending update ${updateId} from ${base.revision} to ${head.revision}`);
+		const serializedCommits = commits.map((commit) =>
+			this.mainCheckout.serializeCommit(commit),
+		);
+		const parentIdSpaceShardSyncToken = this.getParentIdSpaceShardSyncToken();
 		this.send({
-			type: "hostUpdate",
-			updateId,
-			baseRevision: base.revision,
-			mainRevision: head.revision,
-			trunkRevision,
-			commits: commits.map((commit) => this.mainCheckout.serializeCommit(commit)),
+			hostUpdate: {
+				updateId,
+				baseRevision: base.revision,
+				mainRevision: head.revision,
+				trunkRevision,
+				commits: serializedCommits,
+				parentIdSpaceShardSyncToken,
+			},
 		});
 	}
 

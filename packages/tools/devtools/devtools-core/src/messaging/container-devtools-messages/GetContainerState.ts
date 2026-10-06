@@ -34,9 +34,6 @@ export namespace GetContainerState {
 	 * @internal
 	 */
 	export interface Message extends IDevtoolsMessage<HasContainerKey> {
-		/**
-		 * {@inheritDoc IDevtoolsMessage."type"}
-		 */
 		type: typeof MessageType;
 	}
 

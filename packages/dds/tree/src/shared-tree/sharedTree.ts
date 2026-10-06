@@ -91,6 +91,8 @@ import {
 	type SimpleNodeSchema,
 	FieldKind,
 	type ITreeAlpha,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+	type ViewableTreeAlpha,
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
 	type SchemaType,
@@ -112,6 +114,7 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import { createViewableTreeAlpha } from "./viewableTree.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -323,6 +326,7 @@ export class SharedTreeKernel
 			fieldBatchCodec,
 			removedRoots,
 			chunkCompressionStrategy: options.treeEncodeType,
+			codecOptions: options,
 			getFinalizedCommit: () => this.getTrunkHead(),
 		});
 
@@ -330,10 +334,8 @@ export class SharedTreeKernel
 		this.registerCheckout("main", this.checkout);
 
 		this.view = {
+			...createViewableTreeAlpha(this.checkout, () => this.exportSimpleSchema()),
 			contentSnapshot: () => this.contentSnapshot(),
-			exportSimpleSchema: () => this.exportSimpleSchema(),
-			exportVerbose: () => this.exportVerbose(),
-			viewWith: this.viewWith.bind(this),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
 			getSharedBranchName: this.getSharedBranchName.bind(this),
@@ -494,7 +496,7 @@ export function exportSimpleSchema(
 /**
  * A way to parse schema in the persisted format from {@link extractPersistedSchema}.
  * @remarks
- * This behaves identically to {@link ITreeAlpha.exportSimpleSchema},
+ * This behaves identically to {@link ViewableTreeAlpha.exportSimpleSchema},
  * except that it gets the schema from the caller instead of from an existing tree.
  *
  * This can be useful for inspecting the contents of persisted schema,

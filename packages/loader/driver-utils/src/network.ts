@@ -56,9 +56,6 @@ export class GenericNetworkError
 	extends LoggingError
 	implements IDriverErrorBase, IFluidErrorBase
 {
-	/**
-	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
-	 */
 	readonly errorType = DriverErrorTypes.genericNetworkError;
 
 	constructor(
