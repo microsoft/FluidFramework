@@ -1946,6 +1946,7 @@ export interface TreeBranchCommitMetadata {
     readonly custom: JsonCompatibleReadOnlyObject | undefined;
     readonly customTree: CustomMetadataTree | undefined;
     getParent(): TreeBranchCommitMetadata | undefined;
+    revertTo?(options?: RevertToOptionsAlpha): void;
     readonly revision: CommitRevision;
 }
 

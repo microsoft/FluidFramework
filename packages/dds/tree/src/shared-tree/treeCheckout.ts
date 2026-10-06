@@ -671,7 +671,50 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public get branchHistory(): DefaultTreeBranchHistory {
-		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
+		if (this._branchHistory === undefined) {
+			const branch = this.branch;
+			const canRevert = (): boolean =>
+				branch === this.branch &&
+				!this.disposed &&
+				this.#transaction.size === 0 &&
+				!this.editLock.isLocked;
+			this._branchHistory = new DefaultTreeBranchHistory(
+				branch,
+				this.idCompressor,
+				(revisionString) => {
+					if (!canRevert()) {
+						return undefined;
+					}
+					const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+					if (revision === undefined) {
+						return undefined;
+					}
+					const head = this.#transaction.branch.getHead();
+					const path = this.tryGetRevertPath(revision);
+					let wasUsed = false;
+					return Array.isArray(path)
+						? (options) => {
+								if (wasUsed) {
+									throw new UsageError(
+										"The same `revertTo` method cannot be called more than once. Access it on the commit metadata before each call.",
+									);
+								}
+								wasUsed = true;
+								if (
+									!canRevert() ||
+									this.#transaction.branch.getHead() !== head ||
+									path.some((commit) => commit.wasTrimmed)
+								) {
+									throw new UsageError(
+										"The target branch has changed since `revertTo` was requested. Avoid retaining references directly to the `revertTo` property.",
+									);
+								}
+								this.revertToCommit(revisionString, path, options);
+							}
+						: undefined;
+				},
+			);
+		}
 		return this._branchHistory;
 	}
 
@@ -1560,6 +1603,14 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {
+		this.revertToCommit(revisionString, undefined, options);
+	}
+
+	private revertToCommit(
+		revisionString: string,
+		path: GraphCommit<SharedTreeChange>[] | undefined,
+		options?: RevertToOptionsAlpha,
+	): void {
 		this.checkNotDisposed(
 			"The branch has already been disposed and prior revisions cannot be reverted to.",
 		);
@@ -1572,33 +1623,20 @@ export class TreeCheckout implements ITreeCheckout {
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
 		}
-		// Populated with the commits that came after the target commit, from oldest to newest.
-		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
-		const targetCommit = findAncestor(
-			[this.#transaction.activeBranch.getHead(), commitsToUndo],
-			(commit) => {
-				if (commit.revision === revision) {
-					return true;
-				}
-				if (hasSchemaChange(commit.change)) {
-					assert(
-						commit.revision !== "root",
-						0xd4f /* Unexpected schema change in root commit */,
-					);
-					const schemaRevision = this.idCompressor.decompress(commit.revision);
-					throw new UsageError(
-						`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${schemaRevision}.`,
-					);
-				}
-				return false;
-			},
-		);
-		if (targetCommit === undefined) {
-			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		let commitsToUndo = path;
+		if (commitsToUndo === undefined) {
+			const pathOrError = this.tryGetRevertPath(revision);
+			if (typeof pathOrError === "string") {
+				throw new UsageError(
+					`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${pathOrError}.`,
+				);
+			} else if (pathOrError === undefined) {
+				throw new UsageError(`No commit found with revision: ${revisionString}`);
+			}
+			commitsToUndo = pathOrError;
 		}
 		if (!hasSome(commitsToUndo)) {
-			// The target commit is already the head of the branch, so there is nothing to revert.
-			return;
+			return; // The target commit is already the head of the branch, so there is nothing to revert.
 		}
 		const revisionForInvert = this.mintRevisionTag();
 		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
@@ -1612,6 +1650,37 @@ export class TreeCheckout implements ITreeCheckout {
 			CommitKind.Default,
 			toMetadataTree(customMetadata),
 		);
+	}
+
+	/**
+	 * Returns the commits that came after the target commit, from oldest to newest.
+	 * If a schema change is encountered before reaching the target commit, returns the revision id of the commit where the schema changed.
+	 * Otherwise, if the target commit is not found, returns `undefined`.
+	 */
+	private tryGetRevertPath(
+		revision: RevisionTag,
+	): GraphCommit<SharedTreeChange>[] | StableId | undefined {
+		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
+		let schemaChangeRevision: StableId | undefined;
+		if (
+			findAncestor([this.#transaction.branch.getHead(), commitsToUndo], (commit) => {
+				if (commit.revision === revision) {
+					return true;
+				}
+				if (hasSchemaChange(commit.change)) {
+					assert(
+						commit.revision !== "root",
+						0xd4f /* Unexpected schema change in root commit */,
+					);
+					schemaChangeRevision = this.idCompressor.decompress(commit.revision);
+					return true;
+				}
+				return false;
+			}) === undefined
+		) {
+			return undefined;
+		}
+		return schemaChangeRevision ?? commitsToUndo;
 	}
 
 	private rebase(view: UntypedTreeView): void {
@@ -2105,6 +2174,10 @@ class EditLock {
 	private status:
 		| { readonly isLocked: false }
 		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
+
+	public get isLocked(): boolean {
+		return this.status.isLocked;
+	}
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.

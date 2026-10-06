@@ -660,7 +660,9 @@ export const revertToGenerator = (state: FuzzTestState): RevertTo => {
 		revisionMetadata !== undefined;
 		revisionMetadata = revisionMetadata.getParent()
 	) {
-		allRevisions.push(revisionMetadata.revision);
+		if (revisionMetadata.revertTo !== undefined) {
+			allRevisions.push(revisionMetadata.revision);
+		}
 	}
 	assert(allRevisions.length > 0, "No revisions available to revert to.");
 	const revision = state.random.pick(allRevisions);
@@ -751,13 +753,8 @@ export function makeOpGenerator(
 				[
 					() => revertToGenerator,
 					revertTo,
-					(state: FuzzTestState) => {
-						const view = viewFromState(state);
-						return (
-							view.checkout.transaction.size === 0 &&
-							view.branchHistory.getHead() !== undefined
-						);
-					},
+					(state: FuzzTestState) =>
+						viewFromState(state).branchHistory.getHead()?.revertTo !== undefined,
 				],
 				[
 					() => schemaEditGenerator,

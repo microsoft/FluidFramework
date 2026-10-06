@@ -662,11 +662,12 @@ describe("custom commit metadata", () => {
 	describe("revertTo", () => {
 		it("attaches metadata to the commit it produces", () => {
 			const view = createView();
-			const revision = view.branchHistory.getHead()?.revision;
-			assert(revision !== undefined);
+			const commit = view.branchHistory.getHead();
+			assert(commit !== undefined);
 
 			view.root.insertAtEnd("a");
-			view.revertTo(revision, { customMetadata: { tag: "the-revert" } });
+			assert(commit.revertTo !== undefined);
+			commit.revertTo({ customMetadata: { tag: "the-revert" } });
 
 			assert.deepEqual([...view.root], []);
 			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
