@@ -2,6 +2,8 @@
 
 > **Status:** Draft / exploratory.
 
+**Reference and starting point:** [Pages 2.0.docx](https://microsoft-my.sharepoint-df.com/:w:/p/harsyed/cQpMHqmy3UzgQ7aaUscMtTmkEgUCooTNKc1qMRqThCzpvU3XAw).
+
 An agentic harness should be able to create a Fluid file without running Fluid: write ordinary application files into a `.fluid` ZIP, then let a capable application establish collaboration.
 The same format should support non-Fluid readers and editors, sensitivity-label protection, and lossless export/import when collaborative state is preserved.
 
@@ -11,16 +13,17 @@ Document-only creation is the first rollout; full collaborative round-trip suppo
 
 ## Proposal
 
-### 1. Package layout and manifest
+### 1. Package layout and Fluid envelope manifest
 
 The ZIP has fixed top-level names:
 
 ```text
 container.fluid
-├── manifest.json             Envelope version and file-level protection metadata
-├── document/                 Ordinary, application-defined files
+├── fluid-manifest.json       Fluid envelope version and file-level protection metadata
+├── document/                 Application projection
+│   ├── manifest.json         Example application manifest
 │   ├── index.html
-│   └── media/cover.png
+│   └── assets/cover.png
 └── .collab/                  Opaque collaborative state
     ├── integrity.json        Internal checksum record; excluded from its own hash
     ├── tree.json             Logical tree, node metadata, and blob references
@@ -32,13 +35,13 @@ container.fluid
 The layout inside `.collab` is illustrative, not a public wire-format specification.
 Non-Fluid tools only need to understand `document/`; they can preserve `.collab` untouched or discard it.
 
-**Keep `manifest.json` small.**
+**Keep the Fluid envelope manifest, `fluid-manifest.json`, small.**
 It contains the envelope version (`packageFormatVersion`) and, when applicable, sensitivity-label information.
 
-**For document-only files, the manifest and all its fields are optional.**
+**For document-only files, `fluid-manifest.json` and all its fields are optional.**
 An omitted version means version 1; omitted sensitivity-label information means the file is unlabeled.
 A harness can therefore create a ZIP containing only `document/index.html` and its assets.
-A package containing `.collab` must include the manifest and its version.
+A package containing `.collab` must include `fluid-manifest.json` and its version.
 Malformed metadata or an unsupported version is not equivalent to omission.
 
 **Portable metadata, not service state.**
@@ -46,18 +49,20 @@ The [ODSP label contract](packages/drivers/odsp-driver-definitions/src/sessionPr
 Microsoft's [label metadata documentation](https://learn.microsoft.com/en-us/information-protection/develop/concept-mip-metadata) confirms that label identity, tenant, and labeling/protection information can be embedded in files.
 The exact `.fluid` serialization and protection integration remain to be agreed; copying a service response is not an established file format.
 No additional ODSP-specific embedded metadata has been established by the repository.
-[Drive/item IDs, ETags, sharing permissions, and service modification metadata](https://learn.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0) are service properties, not fields to copy into this manifest.
+[Drive/item IDs, ETags, sharing permissions, and service modification metadata](https://learn.microsoft.com/en-us/graph/api/resources/driveitem?view=graph-rest-1.0) are service properties, not fields to copy into the Fluid envelope manifest.
 Epoch likewise remains service-owned.
 
 Labels and protection must work from initial creation through export, import, and collaboration, without an unprotected intermediate file.
 
-An application-owned `document/manifest.json`, if present, is unrelated to the envelope manifest.
-
-### 2. Application content: `document/`
+### 2. Application projection: `document/`
 
 `document/` contains an application-defined, **importable** representation: HTML, images, or another supported application format.
 It is not merely a preview; every supported format needs an application-supported path into collaborative state.
 Tools may author it directly without a prior summary or `.collab`.
+
+All names, formats, and application semantics under `document/` are application-owned; Fluid and SharePoint Online (SPO) treat them as opaque application content.
+For example, `document/manifest.json` can describe the document type or title.
+This **application manifest** is distinct from `fluid-manifest.json`; its schema and whether it is required are defined by the application, not this proposal.
 
 Its files must be self-contained, with ordinary names and bytes and **no references into `.collab`**.
 Export materializes shared assets here, even when that duplicates bytes stored under `.collab/.blobs`.
@@ -142,7 +147,7 @@ These checks detect incidental modification, not authenticity, correct rendering
 They are not authorization or sensitivity-label protection.
 
 **With no `.collab`, no checksum record is needed: every write is a file overwrite.**
-With `.collab`, SharePoint Online (SPO) may recognize an unchanged re-upload as a no-op.
+With `.collab`, SPO may recognize an unchanged re-upload as a no-op.
 Logical-content comparison is preferred, but treating any archive-byte change as an overwrite is acceptable.
 Any no-op decision must include operations and meaningful protection metadata and must not discard an intervening edit.
 
@@ -152,7 +157,7 @@ The same flow handles a newly created document-only file and recovery after an e
 
 1. **Read:** extend `getLatest` to return either valid collaborative state or a document-only response with an opaque file ETag/generation token bound to the returned state. Return an error if neither representation is usable.
 2. **Import:** the calling application may read without establishing collaboration, or import the document and prepare an initial summary. Any protocol-capable application with the file's required read/write permissions may submit it; no exclusive application identity or importer-discovery mechanism is required.
-3. **Commit conditionally:** the service atomically checks both the generation token and that the file still requires establishment, then commits the summary. The resulting package includes the required versioned manifest. Only one competing importer wins; intervening edits or replacements reject stale imports.
+3. **Commit conditionally:** the service atomically checks both the generation token and that the file still requires establishment, then commits the summary. The resulting package includes the required versioned `fluid-manifest.json`. Only one competing importer wins; intervening edits or replacements reject stale imports.
 4. **Resume:** collaborative APIs become available. After a conflict, obtain fresh state, bypassing stale document-only cache entries; if another client established `.collab`, use that state instead.
 
 Establishment must preserve epoch and the file's last-writer identity/timestamp.
@@ -192,7 +197,7 @@ Before enablement, demonstrate:
 
 | Scenario | Required outcome |
 |---|---|
-| Creation and reads | A harness creates a document-only ZIP without a manifest or previous summary. Reads return the document and generation token without establishing collaboration; omission defaults apply. |
+| Creation and reads | A harness creates a document-only ZIP without `fluid-manifest.json` or a previous summary. Reads return the document and generation token without establishing collaboration; omission defaults apply. |
 | Assets and collaboration | Import binary assets, establish, edit with multiple clients, summarize, and reopen with expected state and unchanged asset bytes. |
 | Protection | Labeled files stay protected through creation, reads, establishment, and reopening, with no unprotected intermediate file and normal read/write authorization. |
 | Competing importers | One wins; the loser refreshes and adopts the winner's state. Epoch and last-writer metadata are preserved. |
@@ -232,8 +237,10 @@ SummaryTree
     │   ├── 0                  ISummaryAttachment: id = "storage-cover"
     │   └── .redirectTable     ISummaryBlob: runtime blob-ID mappings
     └── document/              Proposed ISummaryTree, groupId = "document"
-        ├── index.html         ISummaryBlob: HTML referring to cover.png
-        └── cover.png          ISummaryAttachment: id = "storage-cover"
+        ├── manifest.json      ISummaryBlob: application-defined document metadata
+        ├── index.html         ISummaryBlob: HTML referring to assets/cover.png
+        └── assets/
+            └── cover.png      ISummaryAttachment: id = "storage-cover"
 ```
 
 Operations are **not part of the summary**.
@@ -243,10 +250,12 @@ For an export endpoint E = 102, the exporter also captures sequenced operations 
 
 ```text
 container.fluid
-├── manifest.json              { "packageFormatVersion": 1 }
+├── fluid-manifest.json        { "packageFormatVersion": 1 }
 ├── document/
+│   ├── manifest.json          Application manifest from the document contribution
 │   ├── index.html             Ordinary HTML from the document contribution
-│   └── cover.png              Materialized PNG bytes
+│   └── assets/
+│       └── cover.png          Materialized PNG bytes
 └── .collab/
     ├── integrity.json         Collaboration/document checksums; not self-hashed
     ├── tree.json              Collaboration tree, metadata, and typed blob IDs
@@ -259,6 +268,6 @@ container.fluid
 ```
 
 Segment names and IDs are illustrative; runtime identity mapping is omitted.
-The PNG is duplicated **in the interchange package**: once as `document/cover.png`, once in the collaboration blob pool.
+The PNG is duplicated **in the interchange package**: once as `document/assets/cover.png`, once in the collaboration blob pool.
 The live summary above only references it.
 Here `document/` reflects S = 100; replaying `.collab/.ops` reaches E = 102.
