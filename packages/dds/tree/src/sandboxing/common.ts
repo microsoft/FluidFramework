@@ -221,29 +221,15 @@ const TreePayloadVocabulary = Type.Recursive((Self) =>
 /**
  * TypeBox-backed format validator used by sandbox protocol codecs and trees.
  * @remarks
- * Sandbox validation must not implicitly inherit a SharedTree's configured validator because it may
- * be a no-op and is not configured to enforce the sandbox protocol boundary.
- *
- * This reexporting alias exists to centralize the policy of which format validator is used within the sandbox.
- * Technically, we probably don't need to use this inside the guest, or for validating output from the host,
- * but for now we use it for everything in both.
+ * The sandbox uses the same validator for protocol schemas and tree codecs.
+ * It does not inherit the Host SharedTree's configured validator because that validator can be a no-op
+ * and is not configured to enforce the sandbox protocol boundary.
  */
 export const sandboxFormatValidator = FormatValidatorBasic;
 
 /**
- * The sandbox always enables format validation for handle records and blob messages.
- * @remarks
- * These messages may cross a security boundary,
- * and the validation is an important part of making that robust.
- * To mitigate the risk of accidental omission,
- * the sandbox always enables format validation for these messages.
- * This has a bundle size and performance cost for cases which do not require it.
- * That is an intentional tradeoff.
- *
- * In the future, we could require callers to provide a validator explicitly,
- * allowing alternative implementations or an explicit opt-out for trusted scenarios.
- * Do not implicitly inherit the Host SharedTree's validator:
- * it may be a no-op and is not configured to enforce this security boundary.
+ * The sandbox always validates protocol data, including handle and blob messages.
+ * This policy accepts the bundle-size and runtime cost to prevent accidental omission at the boundary.
  */
 const validator = extractJsonValidator(sandboxFormatValidator);
 const handleTokenValidator = validator.compile(HandleToken);

@@ -31,13 +31,11 @@ import {
 	type BlobRequestId,
 	type BlobRequestMessage,
 	type GuestChangeMessage,
-	type GuestToHostMessage,
 	GuestTransportCodec,
 	getTransportBuffer,
 	guestToHostMessageValidator,
 	type HandleToken,
 	type HostIdRangeMessage,
-	type HostToGuestMessage,
 	hostToGuestMessageValidator,
 	HostTransportCodec,
 	type HostUpdateMessage,
@@ -48,48 +46,6 @@ import {
 	SandboxProtocolError,
 	validateTreePayloadVocabulary,
 } from "../../../sandboxing/index.js";
-
-type ParsedHostToGuestMessage = Omit<HostToGuestMessage, "blobResponse"> & {
-	readonly blobResponse?: Omit<NonNullable<HostToGuestMessage["blobResponse"]>, "blob"> & {
-		readonly blob: ArrayBuffer;
-	};
-};
-
-type ProtocolMessage = ParsedHostToGuestMessage | GuestToHostMessage;
-
-function parseHostToGuestMessage(data: unknown): ParsedHostToGuestMessage {
-	if (!hostToGuestMessageValidator.check(data)) {
-		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
-	}
-	if (data.blobResponse === undefined) {
-		// The only representation difference is the absent successful blob-response member.
-		return data as unknown as ParsedHostToGuestMessage;
-	}
-	const blob = getTransportBuffer(data.blobResponse.blob);
-	assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
-	const response: object = Object.create(null);
-	const envelope: object = Object.create(null);
-	return Object.assign(envelope, {
-		blobResponse: Object.assign(response, {
-			requestId: data.blobResponse.requestId,
-			blob,
-		}),
-	}) as ParsedHostToGuestMessage;
-}
-
-function parseGuestToHostMessage(data: unknown): GuestToHostMessage {
-	if (!guestToHostMessageValidator.check(data)) {
-		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
-	}
-	return data;
-}
-
-function parseProtocolMessage(data: unknown): ProtocolMessage {
-	if (hostToGuestMessageValidator.check(data)) {
-		return parseHostToGuestMessage(data);
-	}
-	return parseGuestToHostMessage(data);
-}
 
 /**
  * Valid token data for transport-shape tests; no Host has authorized this ID space shard.
@@ -215,7 +171,7 @@ describe("Transport and endpoint unit tests", () => {
 		const nested: Record<string, unknown> = Object.create(null);
 		nested.child = {};
 		assert.throws(() => validateTreePayloadVocabulary(nested), /Invalid sandbox tree payload/);
-		assert.throws(() => parseProtocolMessage({ hostUpdateAck: {} }), /Invalid Host and Guest/);
+		assert(!guestToHostMessageValidator.check({ hostUpdateAck: {} }));
 	});
 
 	it("restores null prototypes after MessagePort reconstructs ordinary records", async () => {
@@ -288,11 +244,12 @@ describe("Transport and endpoint unit tests", () => {
 				/Invalid sandbox tree payload/,
 			);
 
-			const parsed = parseHostToGuestMessage(decoded);
-			assert(parsed.blobResponse !== undefined);
-			assert(parsed.blobResponse.blob instanceof ArrayBuffer);
-			assert.notEqual(parsed.blobResponse.blob, blob);
-			assert.deepEqual(new Uint8Array(parsed.blobResponse.blob), new Uint8Array(blob));
+			assert(hostToGuestMessageValidator.check(decoded));
+			assert(decoded.blobResponse !== undefined);
+			const parsedBlob = getTransportBuffer(decoded.blobResponse.blob);
+			assert(parsedBlob !== undefined);
+			assert.notEqual(parsedBlob, blob);
+			assert.deepEqual(new Uint8Array(parsedBlob), new Uint8Array(blob));
 			assert.deepEqual(new Uint8Array(blob), new Uint8Array([0, 127, 255]));
 
 			for (const fake of [
@@ -303,14 +260,12 @@ describe("Transport and endpoint unit tests", () => {
 				const data = receiver.decode(structuredClone(sender.encode(fake)));
 				validateTreePayloadVocabulary(data);
 				assert.deepEqual(data, normalizeTransportData(fake));
-				assert.throws(
-					() =>
-						parseProtocolMessage(
-							normalizeTransportData({
-								blobResponse: { ...message.blobResponse, blob: data },
-							}),
-						),
-					/Invalid Host and Guest/,
+				assert(
+					!hostToGuestMessageValidator.check(
+						normalizeTransportData({
+							blobResponse: { ...message.blobResponse, blob: data },
+						}),
+					),
 				);
 			}
 		}
@@ -334,24 +289,22 @@ describe("Transport and endpoint unit tests", () => {
 						/Invalid sandbox tree payload/,
 					);
 				}
-				assert.throws(
-					() =>
-						parseProtocolMessage(
-							codec.decode(
-								structuredClone(
-									codec.encode({
-										guestChange: {
-											changeId: 0,
-											mainRevision: "root",
-											trunkRevision: "root",
-											change: payload,
-											idSpaceShardToken: exampleIdSpaceShardToken,
-										},
-									}),
-								),
+				assert(
+					!guestToHostMessageValidator.check(
+						codec.decode(
+							structuredClone(
+								codec.encode({
+									guestChange: {
+										changeId: 0,
+										mainRevision: "root",
+										trunkRevision: "root",
+										change: payload,
+										idSpaceShardToken: exampleIdSpaceShardToken,
+									},
+								}),
 							),
 						),
-					/Invalid Host and Guest protocol message/,
+					),
 				);
 			}
 			for (const message of [
@@ -361,10 +314,9 @@ describe("Transport and endpoint unit tests", () => {
 				{ blobResponseError: { requestId: 0, error: blob } },
 				{ blobRequest: { requestId: 0, token: blob } },
 			]) {
-				assert.throws(
-					() => parseProtocolMessage(codec.decode(structuredClone(codec.encode(message)))),
-					/Invalid Host and Guest/,
-				);
+				const decodedMessage = codec.decode(structuredClone(codec.encode(message)));
+				assert(!hostToGuestMessageValidator.check(decodedMessage));
+				assert(!guestToHostMessageValidator.check(decodedMessage));
 			}
 		}
 	});
@@ -549,10 +501,15 @@ describe("Transport and endpoint unit tests", () => {
 			{ blobResponse: { requestId: 0, blob: new ArrayBuffer(0), extra: true } },
 			{ blobResponseError: { requestId: 0, error: "failure", extra: true } },
 		]) {
-			assert.throws(
-				() => parseProtocolMessage(normalizeTransportData(message)),
-				SandboxProtocolError,
-			);
+			let normalized: ReturnType<typeof normalizeTransportData>;
+			try {
+				normalized = normalizeTransportData(message);
+			} catch (error) {
+				assert(error instanceof SandboxProtocolError);
+				continue;
+			}
+			assert(!hostToGuestMessageValidator.check(normalized));
+			assert(!guestToHostMessageValidator.check(normalized));
 		}
 		assert.throws(
 			() => guest.receiveBlobResponse(brand<BlobRequestId>(0), new ArrayBuffer(0)),
@@ -570,7 +527,10 @@ describe("Transport and endpoint unit tests", () => {
 				{ blobResponseError: { requestId: id, error: "failure" } },
 			]) {
 				const normalized = normalizeTransportData(message);
-				assert.deepEqual(normalizeTransportData(parseProtocolMessage(normalized)), normalized);
+				assert(
+					hostToGuestMessageValidator.check(normalized) ||
+						guestToHostMessageValidator.check(normalized),
+				);
 			}
 		}
 		for (const id of [
@@ -591,10 +551,15 @@ describe("Transport and endpoint unit tests", () => {
 				{ blobResponse: { requestId: id, blob: new ArrayBuffer(0) } },
 				{ blobResponseError: { requestId: id, error: "failure" } },
 			]) {
-				assert.throws(
-					() => parseProtocolMessage(normalizeTransportData(message)),
-					/Invalid Host and Guest|Unsupported sandbox transport/,
-				);
+				let normalized: ReturnType<typeof normalizeTransportData>;
+				try {
+					normalized = normalizeTransportData(message);
+				} catch (error) {
+					assert(error instanceof SandboxProtocolError);
+					continue;
+				}
+				assert(!hostToGuestMessageValidator.check(normalized));
+				assert(!guestToHostMessageValidator.check(normalized));
 			}
 		}
 	});
@@ -701,8 +666,8 @@ describe("Host and Guest round-trip integration tests", () => {
 		assert(isLocalHandle(decoded[0]));
 		assert(fluidHandleSymbol in decoded[0]);
 		validateTreePayloadVocabulary(decoded);
-		assert.doesNotThrow(() =>
-			parseProtocolMessage(
+		assert(
+			guestToHostMessageValidator.check(
 				normalizeTransportData({
 					guestChange: {
 						changeId: 0,
