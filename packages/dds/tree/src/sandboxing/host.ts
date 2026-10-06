@@ -35,7 +35,7 @@ import {
 	type HostIdRangeId,
 	type HostInitializationMessage,
 	hostToGuestMessageValidator,
-	normalizeProtocolError,
+	getTelemetrySafeProtocolErrorMessage,
 	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
@@ -101,7 +101,7 @@ export class HostImplementation implements Sandboxing.Host {
 			});
 		},
 		sessionFailure: (message) => {
-			this.session.fail(new Error(message.error), false);
+			this.session.fail(SandboxProtocolError.fromPeerMessage(message, "Guest"), false);
 		},
 	});
 
@@ -140,6 +140,7 @@ export class HostImplementation implements Sandboxing.Host {
 				this.codec.dispose();
 			},
 			handleProtocolError,
+			"Host",
 		);
 		const hostLogger = createChildLogger({
 			logger: logger ?? this.mainCheckout.breaker.logger,
@@ -213,7 +214,7 @@ export class HostImplementation implements Sandboxing.Host {
 				this.postMessage({
 					blobResponseError: {
 						requestId: message.requestId,
-						error: normalizeProtocolError(error).message,
+						error: getTelemetrySafeProtocolErrorMessage(error),
 					},
 				});
 			}

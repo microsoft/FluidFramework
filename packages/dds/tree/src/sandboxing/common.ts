@@ -3,9 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	fluidHandleSymbol,
+	type IFluidHandle,
+	type ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
+import {
+	LoggingError,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
@@ -17,15 +26,93 @@ import { FormatValidatorBasic } from "../external-utilities/index.js";
 import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
+ * Closed classifications for failures reported across the sandbox boundary.
+ * A peer's code is a reported diagnosis, not evidence of the failure's cause.
+ */
+export enum SandboxFailureCode {
+	ProtocolViolation = "protocolViolation",
+	ApplicationUsageError = "applicationUsageError",
+	ProcessingFailure = "processingFailure",
+}
+
+/**
+ * Local descriptions for validated failure codes. These contain no peer-provided text.
+ */
+export const sandboxFailureDescriptions: Readonly<Record<SandboxFailureCode, string>> = {
+	[SandboxFailureCode.ProtocolViolation]: "Sandbox protocol violation.",
+	[SandboxFailureCode.ApplicationUsageError]: "Invalid sandbox application use.",
+	[SandboxFailureCode.ProcessingFailure]: "Sandbox processing failed.",
+};
+
+/**
  * A violation of the sandbox protocol's data or state requirements.
+ * @remarks
  * Used by either endpoint, including shared validation on send and receive.
  * This identifies the failed contract, not which participant is at fault.
+ * Includes failures reported by a peer that terminate the local session;
+ * see {@link SandboxProtocolError.fromPeerMessage} for constructing such errors.
  *
- * TODO: Ensure we have an established pattern for communicating a telemetry safe portion of the message,
- * and a separate one which might include document contents directly.
+ * On the Host, tag otherwise-unclassified Guest protocol properties as `SandboxGuestData`.
+ * Guest properties that may contain schema or sensitive data require `UserData` tagging.
  */
-export class SandboxProtocolError extends Error {
+export class SandboxProtocolError extends LoggingError {
 	public override readonly name = "SandboxProtocolError";
+
+	public constructor(
+		/**
+		 * A message that is safe to include in telemetry and logs.
+		 * @remarks
+		 * Must not contain guest controlled information,
+		 * nor any other sensitive data which needs tagging.
+		 */
+		safeMessage: string,
+		options?: {
+			readonly telemetryProperties?: ITelemetryBaseProperties;
+			readonly cause?: unknown;
+		},
+	) {
+		super(safeMessage, options?.telemetryProperties);
+		this.cause = options?.cause;
+	}
+
+	/**
+	 * Constructs a local error from a schema-validated peer failure notification.
+	 * Peer-provided diagnostic strings are never used as the local error's message.
+	 *
+	 * @param message - The validated failure notification.
+	 * @param peer - The endpoint that sent the notification, not the receiving endpoint.
+	 */
+	public static fromPeerMessage(
+		message: SessionFailureMessage,
+		peer: "Host" | "Guest",
+	): SandboxProtocolError {
+		const prefix = peer === "Guest" ? "fromGuest" : "fromHost";
+		// The validated code is safe to log, but remains a peer-reported diagnosis.
+		const telemetryProperties: ITelemetryBaseProperties = {
+			[`${prefix}Code`]: message.code,
+		};
+		if (message.protocolMessage !== undefined) {
+			telemetryProperties[prefix] =
+				peer === "Guest"
+					? {
+							tag: TelemetryDataTag.SandboxGuestData,
+							value: message.protocolMessage,
+						}
+					: message.protocolMessage;
+		}
+		if (message.sensitiveMessage !== undefined) {
+			telemetryProperties[`${prefix}Sensitive`] = {
+				tag: TelemetryDataTag.UserData,
+				value: message.sensitiveMessage,
+			};
+		}
+		return new SandboxProtocolError(
+			`The ${peer} reported a sandbox session failure. ${sandboxFailureDescriptions[message.code]}`,
+			{
+				telemetryProperties,
+			},
+		);
+	}
 }
 
 /** Shared wire bounds for nonnegative safe integers. */
@@ -476,8 +563,15 @@ const GuestChangeAckMessage = Type.Object(
 export type SessionFailureMessage = Static<typeof SessionFailureMessage>;
 const SessionFailureMessage = Type.Object(
 	{
-		/** A diagnostic description, not an error object or stack trace. */
-		error: Type.String(),
+		/** A bounded, peer-reported classification. Receivers use their own description. */
+		code: Type.Enum(SandboxFailureCode),
+		/**
+		 * Protocol-only diagnostics. An uncompromised sender must not put schema or sensitive data here.
+		 * The Host treats this as `SandboxGuestData`, regardless of the reported code.
+		 */
+		protocolMessage: Type.Optional(Type.String()),
+		/** Potentially sensitive diagnostics. Receivers must tag this as `UserData`. */
+		sensitiveMessage: Type.Optional(Type.String()),
 	},
 	{ additionalProperties: false },
 );
@@ -634,6 +728,55 @@ export function normalizeProtocolError(error: unknown): Error {
 	return error instanceof Error
 		? error
 		: new Error("Host and Guest protocol processing failed.", { cause: error });
+}
+
+/**
+ * Returns an error message that is safe to send across the sandbox boundary.
+ */
+export function getTelemetrySafeProtocolErrorMessage(error: unknown): string {
+	const normalized = normalizeProtocolError(error);
+	return LoggingError.typeCheck(normalized)
+		? normalized.message
+		: "Host and Guest protocol processing failed.";
+}
+
+/**
+ * Classifies a local error without inspecting its diagnostic text.
+ */
+export function getSandboxFailureCode(error: Error): SandboxFailureCode {
+	return error instanceof SandboxProtocolError
+		? SandboxFailureCode.ProtocolViolation
+		: error instanceof UsageError
+			? SandboxFailureCode.ApplicationUsageError
+			: SandboxFailureCode.ProcessingFailure;
+}
+
+/**
+ * Creates a failure notification without invoking a tree or transport codec.
+ * Only SandboxProtocolError messages are promoted to the protocol-only field.
+ * Their constructor requires messages without Guest-controlled or sensitive data.
+ * Nested causes remain potentially sensitive, regardless of their error type.
+ * Sensitive diagnostics are sent only from the Guest to the Host.
+ */
+export function createSessionFailureMessage(
+	error: Error,
+	endpoint: "Host" | "Guest",
+): SessionFailureMessage {
+	const code = getSandboxFailureCode(error);
+	const protocolMessage = error instanceof SandboxProtocolError ? error.message : undefined;
+	const sensitiveMessage =
+		error instanceof SandboxProtocolError
+			? error.cause === undefined
+				? undefined
+				: normalizeProtocolError(error.cause).message
+			: error.message;
+	return {
+		code,
+		...(protocolMessage === undefined ? undefined : { protocolMessage }),
+		...(endpoint === "Guest" && sensitiveMessage !== undefined
+			? { sensitiveMessage }
+			: undefined),
+	};
 }
 
 /**

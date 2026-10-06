@@ -22,7 +22,13 @@ import {
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { compareFluidHandles } from "@fluidframework/runtime-utils/internal";
-import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	LoggingError,
+	MockLogger,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockHandle,
 	validateAssertionError,
@@ -49,6 +55,7 @@ import {
 } from "../../utils.js";
 
 import {
+	createSessionFailureMessage,
 	type GuestChangeMessage,
 	type GuestToHostMessage,
 	guestToHostMessageValidator,
@@ -64,6 +71,7 @@ import {
 	sandboxFormatValidator,
 	SandboxSessionEndpoint,
 	SandboxProtocolError,
+	SandboxFailureCode,
 	getCheckout,
 } from "../../../sandboxing/index.js";
 import {
@@ -196,7 +204,7 @@ describe("Host and Guest message protocol", () => {
 			!guestToHostMessageValidator.check(
 				normalizeTransportData({
 					hostUpdateAck: { updateId: 0 },
-					sessionFailure: { error: "failure" },
+					sessionFailure: { code: SandboxFailureCode.ProcessingFailure },
 				}),
 			),
 		);
@@ -332,14 +340,226 @@ describe("Host and Guest message protocol", () => {
 			{ guestChangeAck: {} },
 			{ guestClose: { idSpaceShardToken: createTestIdSpaceShardToken() } },
 			{ sessionFailure: {} },
-			{ sessionFailure: { error: 0 } },
-			{ sessionFailure: { error: "failure", extra: true } },
+			{ sessionFailure: { error: "legacy failure" } },
+			{ sessionFailure: { code: 0 } },
+			{ sessionFailure: { code: "ProtocolViolation" } },
+			{ sessionFailure: { code: "unknownFailure" } },
+			{ sessionFailure: { code: "__proto__" } },
+			{ sessionFailure: { code: "constructor" } },
+			{ sessionFailure: { code: "toString" } },
+			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, extra: true } },
+			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, protocolMessage: 0 } },
+			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, sensitiveMessage: {} } },
 		];
 
 		for (const message of invalidMessages) {
 			const normalized = normalizeTransportData(message);
 			assert(!hostToGuestMessageValidator.check(normalized));
 			assert(!guestToHostMessageValidator.check(normalized));
+		}
+	});
+
+	it("accepts only known failure codes with independently optional diagnostics", () => {
+		for (const code of Object.values(SandboxFailureCode)) {
+			for (const diagnostics of [
+				{},
+				{ protocolMessage: "Received 2, expected 1." },
+				{ sensitiveMessage: "Schema or document information" },
+				{ protocolMessage: "", sensitiveMessage: "" },
+			]) {
+				const message = normalizeTransportData({
+					sessionFailure: { code, ...diagnostics },
+				});
+				assert(hostToGuestMessageValidator.check(message));
+				assert(guestToHostMessageValidator.check(message));
+			}
+		}
+	});
+
+	it("sends safe protocol error messages and sends nested causes only to the Host", () => {
+		const protocolMessage = "Received 2, expected 1.";
+		const sensitiveMessage = "Private document contents";
+		const error = new SandboxProtocolError(protocolMessage, {
+			cause: new Error(sensitiveMessage),
+		});
+		assert.deepEqual(createSessionFailureMessage(error, "Guest"), {
+			code: SandboxFailureCode.ProtocolViolation,
+			protocolMessage,
+			sensitiveMessage,
+		});
+		assert.deepEqual(createSessionFailureMessage(error, "Host"), {
+			code: SandboxFailureCode.ProtocolViolation,
+			protocolMessage,
+		});
+		assert.equal(error.getTelemetryProperties().cause, undefined);
+		assert.deepEqual(
+			createSessionFailureMessage(
+				new SandboxProtocolError("Local-only description."),
+				"Guest",
+			),
+			{
+				code: SandboxFailureCode.ProtocolViolation,
+				protocolMessage: "Local-only description.",
+			},
+		);
+		for (const [cause, code] of [
+			[new Error(sensitiveMessage), SandboxFailureCode.ProcessingFailure],
+			[new UsageError(sensitiveMessage), SandboxFailureCode.ApplicationUsageError],
+			[new LoggingError(sensitiveMessage), SandboxFailureCode.ProcessingFailure],
+		] as const) {
+			assert.deepEqual(createSessionFailureMessage(cause, "Guest"), {
+				code,
+				sensitiveMessage,
+			});
+			assert.deepEqual(createSessionFailureMessage(cause, "Host"), { code });
+		}
+	});
+
+	it("looks up peer failure codes locally without using either diagnostic as the error message", () => {
+		const protocolMessage = "Received 2, expected 1.";
+		const sensitiveMessage = "Private schema identifier";
+		for (const peer of ["Host", "Guest"] as const) {
+			const error = SandboxProtocolError.fromPeerMessage(
+				{
+					code: SandboxFailureCode.ProcessingFailure,
+					protocolMessage,
+					sensitiveMessage,
+				},
+				peer,
+			);
+			assert.equal(
+				error.message,
+				`The ${peer} reported a sandbox session failure. Sandbox processing failed.`,
+			);
+			const properties = error.getTelemetryProperties();
+			assert.equal(
+				properties[peer === "Guest" ? "fromGuestCode" : "fromHostCode"],
+				SandboxFailureCode.ProcessingFailure,
+			);
+			assert.deepEqual(
+				properties[peer === "Guest" ? "fromGuestSensitive" : "fromHostSensitive"],
+				{
+					value: sensitiveMessage,
+					tag: TelemetryDataTag.UserData,
+				},
+			);
+			if (peer === "Guest") {
+				assert.deepEqual(properties.fromGuest, {
+					value: protocolMessage,
+					tag: TelemetryDataTag.SandboxGuestData,
+				});
+			} else {
+				assert.equal(properties.fromHost, protocolMessage);
+			}
+		}
+	});
+
+	it("creates peer failure telemetry with independent optional fields and a fixed error name", () => {
+		const protocolMessage = "Received 2, expected 1.";
+		const sensitiveMessage = "Private document contents";
+		for (const peer of ["Host", "Guest"] as const) {
+			for (const diagnostics of [
+				{},
+				{ protocolMessage },
+				{ sensitiveMessage },
+				{ protocolMessage, sensitiveMessage },
+				{ protocolMessage: "", sensitiveMessage: "" },
+			]) {
+				const notification = {
+					code: SandboxFailureCode.ProcessingFailure,
+					...diagnostics,
+				};
+				assert(
+					guestToHostMessageValidator.check(
+						normalizeTransportData({ sessionFailure: notification }),
+					),
+				);
+				const error = SandboxProtocolError.fromPeerMessage(notification, peer);
+				const logger = new MockLogger();
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "GuestFailure" }, error);
+				const [event] = logger.events;
+				assert(event !== undefined);
+				assert.equal(event.name, "SandboxProtocolError");
+				assert.equal(
+					event.error,
+					`The ${peer} reported a sandbox session failure. Sandbox processing failed.`,
+				);
+				assert.equal(
+					event[peer === "Guest" ? "fromGuestCode" : "fromHostCode"],
+					SandboxFailureCode.ProcessingFailure,
+				);
+				assert.deepEqual(
+					event[peer === "Guest" ? "fromGuest" : "fromHost"],
+					diagnostics.protocolMessage === undefined
+						? undefined
+						: peer === "Host"
+							? diagnostics.protocolMessage
+							: {
+									value: diagnostics.protocolMessage,
+									tag: TelemetryDataTag.SandboxGuestData,
+								},
+				);
+				assert.deepEqual(
+					event[peer === "Guest" ? "fromGuestSensitive" : "fromHostSensitive"],
+					diagnostics.sensitiveMessage === undefined
+						? undefined
+						: {
+								value: diagnostics.sensitiveMessage,
+								tag: TelemetryDataTag.UserData,
+							},
+				);
+			}
+		}
+	});
+
+	it("sends classified diagnostics through the failure channel without the failed codec", async () => {
+		const protocolMessage = "Received 2, expected 1.";
+		const secret = "Private schema identifier";
+		for (const endpointName of ["Host", "Guest"] as const) {
+			for (const [cause, code, expectedProtocolMessage] of [
+				[
+					new SandboxProtocolError(protocolMessage, {
+						cause: new Error(secret),
+					}),
+					SandboxFailureCode.ProtocolViolation,
+					protocolMessage,
+				],
+				[new Error(secret), SandboxFailureCode.ProcessingFailure, undefined],
+				[new LoggingError(secret), SandboxFailureCode.ProcessingFailure, undefined],
+				[new UsageError(secret), SandboxFailureCode.ApplicationUsageError, undefined],
+			] as const) {
+				const channel = new MessageChannel();
+				const received = nextMessage(channel.port2);
+				const reported = makePromiseWithResolvers();
+				const endpoint = new SandboxSessionEndpoint(
+					channel.port1,
+					() => {},
+					() => reported.resolver(),
+					endpointName,
+				);
+				try {
+					endpoint.fail(cause);
+					const notification = await received;
+					await reported.promise;
+					assert.deepEqual(notification, {
+						sessionFailure: {
+							code,
+							...(expectedProtocolMessage === undefined
+								? undefined
+								: { protocolMessage: expectedProtocolMessage }),
+							...(endpointName === "Guest" ? { sensitiveMessage: secret } : undefined),
+						},
+					});
+					assert(guestToHostMessageValidator.check(notification));
+					assert(hostToGuestMessageValidator.check(notification));
+					assert(endpoint.error !== undefined);
+					assert(!endpoint.error.message.includes(secret));
+					assert.equal(endpoint.error.cause, cause);
+				} finally {
+					endpoint.dispose();
+					channel.port2.close();
+				}
+			}
 		}
 	});
 
@@ -393,11 +613,211 @@ describe("Host and Guest message protocol", () => {
 			}
 		}
 	});
+
+	it("preserves tagged protocol diagnostics without logging the cause", async () => {
+		const secret = "Guest document contents";
+		const original = new Error(secret);
+		const cause = new SandboxProtocolError("Invalid Guest data.", {
+			cause: original,
+			telemetryProperties: {
+				receivedData: { value: secret, tag: TelemetryDataTag.UserData },
+				expectedCount: 1,
+			},
+		});
+		assert.equal(cause.name, "SandboxProtocolError");
+		assert.equal(cause.cause, original);
+		const channel = new MessageChannel();
+		const reported = makePromiseWithResolvers();
+		const logger = new MockLogger();
+		const endpoint = new SandboxSessionEndpoint(
+			channel.port1,
+			() => {},
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		try {
+			endpoint.fail(cause, false);
+			await reported.promise;
+			const [event] = logger.events;
+			assert(event !== undefined);
+			assert.equal(
+				event.error,
+				"Sandbox session failed; recreate the Host and Guest. Invalid Guest data.",
+			);
+			assert.equal(event.message, event.error);
+			assert.equal(event.cause, undefined);
+			assert.equal(event.expectedCount, 1);
+			assert.deepEqual(event.receivedData, {
+				value: secret,
+				tag: TelemetryDataTag.UserData,
+			});
+			const { stack } = event;
+			assert(typeof stack === "string");
+			assert(!stack.includes(secret));
+		} finally {
+			endpoint.dispose();
+			channel.port2.close();
+		}
+	});
+
+	it("keeps unknown and shutdown error messages out of safe telemetry and peer notifications", async () => {
+		const channel = new MessageChannel();
+		const reported = makePromiseWithResolvers();
+		const secret = "Private document contents";
+		const peerMessage = new Promise<unknown>((resolve) => {
+			channel.port2.addEventListener("message", (event) => resolve(event.data), {
+				once: true,
+			});
+			channel.port2.start();
+		});
+		const logger = new MockLogger();
+		const endpoint = new SandboxSessionEndpoint(
+			channel.port1,
+			() => {
+				throw new Error(`Shutdown: ${secret}`);
+			},
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		try {
+			endpoint.fail(new Error(secret));
+			await reported.promise;
+			assert.deepEqual(await peerMessage, {
+				sessionFailure: { code: SandboxFailureCode.ProcessingFailure },
+			});
+			const [event] = logger.events;
+			assert(event !== undefined);
+			const { error: errorMessage, stack } = event;
+			assert(typeof errorMessage === "string");
+			assert(typeof stack === "string");
+			assert(!errorMessage.includes(secret));
+			assert(!stack.includes(secret));
+			assert.deepEqual(event.originalErrorMessage, {
+				value: secret,
+				tag: TelemetryDataTag.UserData,
+			});
+			assert.deepEqual(event.localShutdownError, {
+				value: `Shutdown: ${secret}`,
+				tag: TelemetryDataTag.UserData,
+			});
+			assert.throws(
+				() => endpoint.breaker.use(),
+				(error: unknown) => {
+					assert(error instanceof UsageError);
+					assert(!error.message.includes(secret));
+					assert.equal(error.cause, endpoint.error?.cause);
+					return true;
+				},
+			);
+		} finally {
+			endpoint.dispose();
+			channel.port2.close();
+		}
+	});
 });
 
 describe("Host and Guest correctness", () => {
 	afterEach(function () {
 		disposeActiveSessions(this.currentTest?.state === "failed");
+	});
+
+	it("logs the Guest's code separately from its tagged protocol and sensitive diagnostics", async () => {
+		const reported = makePromiseWithResolvers();
+		const logger = new MockLogger();
+		const { host, interop } = await setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		const protocolMessage = "Received 2, expected 1.";
+		const secret = "Guest schema and document contents";
+		interop.sendToHost.postMessage({
+			sessionFailure: {
+				code: SandboxFailureCode.ProtocolViolation,
+				protocolMessage,
+				sensitiveMessage: secret,
+			},
+		});
+		await reported.promise;
+		const [event] = logger.events;
+		assert(event !== undefined);
+		const { error: errorMessage, message } = event;
+		assert(typeof errorMessage === "string");
+		assert(typeof message === "string");
+		assert(!errorMessage.includes(secret));
+		assert(!message.includes(secret));
+		assert.equal(event.fromGuestCode, SandboxFailureCode.ProtocolViolation);
+		assert.deepEqual(event.fromGuest, {
+			value: protocolMessage,
+			tag: TelemetryDataTag.SandboxGuestData,
+		});
+		assert.deepEqual(event.fromGuestSensitive, {
+			value: secret,
+			tag: TelemetryDataTag.UserData,
+		});
+		assert(host.error?.cause instanceof SandboxProtocolError);
+	});
+
+	it("does not trust a compromised Guest's protocol text as the local error message", async () => {
+		const reported = makePromiseWithResolvers();
+		const logger = new MockLogger();
+		const { interop } = await setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			(error) => {
+				logger.toTelemetryLogger().sendErrorEvent({ eventName: "SessionFailure" }, error);
+				reported.resolver();
+			},
+		);
+		const secret = "Compromised Guest document contents";
+		interop.sendToHost.postMessage({
+			sessionFailure: {
+				code: SandboxFailureCode.ApplicationUsageError,
+				protocolMessage: secret,
+			},
+		});
+		await reported.promise;
+		const [event] = logger.events;
+		assert(event !== undefined);
+		const { error: errorMessage, message } = event;
+		assert(typeof errorMessage === "string");
+		assert(typeof message === "string");
+		assert(!errorMessage.includes(secret));
+		assert(!message.includes(secret));
+		assert.equal(event.fromGuestCode, SandboxFailureCode.ApplicationUsageError);
+		assert.deepEqual(event.fromGuest, {
+			value: secret,
+			tag: TelemetryDataTag.SandboxGuestData,
+		});
+	});
+
+	it("rejects an unknown Guest failure code before looking up its description", async () => {
+		const reported = makePromiseWithResolvers();
+		const { host, interop } = await setupCustom(
+			[],
+			stringArrayConfig,
+			buildIsolatedSessionPorts,
+			false,
+			() => reported.resolver(),
+		);
+		interop.sendToHost.postMessage({
+			sessionFailure: { code: "constructor", protocolMessage: "Private contents" },
+		});
+		await reported.promise;
+		assert(host.error?.cause instanceof SandboxProtocolError);
+		assert.match(host.error.cause.message, /Invalid Host and Guest protocol message/);
+		assert.equal(host.error.cause.getTelemetryProperties().fromGuestCode, undefined);
 	});
 
 	it("initializes through the port with a distinct child compressor", async () => {
@@ -1322,7 +1742,7 @@ describe("Host and Guest correctness", () => {
 		assert.equal(guest.error, undefined);
 	});
 
-	it("propagates Host resolution failures through the port", async () => {
+	it("sanitizes unknown Host resolution failures sent through the port", async () => {
 		const { host, main, guest, guestView } = await setupCustom(
 			[],
 			handleArrayConfig,
@@ -1337,7 +1757,7 @@ describe("Host and Guest correctness", () => {
 		await host.updateGuestPromise;
 		await assert.rejects(guestView.root[0].get(), {
 			name: "Error",
-			message: "Blob retrieval failed",
+			message: "Host and Guest protocol processing failed.",
 		});
 		guestView.root.push(guestView.root[0]);
 		await guest.updateHostPromise;
@@ -1384,11 +1804,18 @@ describe("Host and Guest correctness", () => {
 			}
 			await Promise.all([failed.promise, blobRejected, pushRejected]);
 
-			assert.match(guest.error?.message ?? "", /foreign/);
-			assert.match(host.error?.message ?? "", /foreign/);
+			assert.match(guest.error?.message ?? "", /Invalid sandbox application use/);
+			assert.match(host.error?.message ?? "", /The Guest reported a sandbox session failure/);
 			assert(guest.error?.cause instanceof UsageError);
-			assert(host.error?.cause instanceof Error);
-			assert.equal(host.error.cause.constructor, Error);
+			assert(host.error?.cause instanceof SandboxProtocolError);
+			assert.deepEqual(host.error.cause.getTelemetryProperties().fromGuestSensitive, {
+				value: guest.error.cause.message,
+				tag: TelemetryDataTag.UserData,
+			});
+			assert.equal(
+				host.error.cause.getTelemetryProperties().fromGuestCode,
+				SandboxFailureCode.ApplicationUsageError,
+			);
 			assert.equal(errors[0], guest.error);
 			assert.equal(errors[1], host.error);
 			assert.throws(
@@ -1506,13 +1933,13 @@ describe("Host and Guest correctness", () => {
 				}
 			},
 		);
-		await assert.rejects(guestView.root[0].get(), /buffers cannot have custom properties/);
+		await assert.rejects(guestView.root[0].get(), /Sandbox protocol violation/);
 		await reported.promise;
 		assert(host.error !== undefined);
 		assert(guest.error !== undefined);
 		assert(host.error.cause instanceof SandboxProtocolError);
 		assert(guest.error.cause instanceof Error);
-		assert.equal(guest.error.cause.constructor, Error);
+		assert(guest.error.cause instanceof SandboxProtocolError);
 		main.root.push(handle);
 		assert.equal(main.root.length, 2);
 	});
@@ -1545,7 +1972,12 @@ describe("Host and Guest correctness", () => {
 		);
 		assert.doesNotThrow(() => main.root.push("retained edit"));
 		await reported.promise;
-		assert.match(host.error?.message ?? "", /Peer notification failed: Transport unavailable/);
+		assert(host.error instanceof LoggingError);
+		assert(!host.error.message.includes("Transport unavailable"));
+		assert.deepEqual(host.error.getTelemetryProperties().peerNotificationError, {
+			value: "Transport unavailable",
+			tag: TelemetryDataTag.UserData,
+		});
 		assert.equal(host.error?.cause, transportError);
 		assert.equal(guest.error, undefined);
 		host.dispose();
@@ -1642,7 +2074,8 @@ describe("Host and Guest correctness", () => {
 			await received,
 			normalizeTransportData({
 				sessionFailure: {
-					error: "Unknown sandbox handle token.",
+					code: SandboxFailureCode.ProtocolViolation,
+					protocolMessage: "Unknown sandbox handle token.",
 				},
 			}),
 		);
@@ -1739,6 +2172,13 @@ describe("Host and Guest correctness", () => {
 			const error = receiver === "Host" ? host.error : guest.error;
 			assert(error?.cause instanceof SandboxProtocolError);
 			assert.match(error.cause.message, /identifier order/);
+			if (receiver === "Host") {
+				assert.deepEqual(error.cause.getTelemetryProperties().receivedChangeId, {
+					value: 1,
+					tag: TelemetryDataTag.SandboxGuestData,
+				});
+				assert.equal(error.cause.getTelemetryProperties().expectedChangeId, 0);
+			}
 		});
 
 		it(`classifies message deserialization failure on the ${receiver} as a protocol error`, async () => {

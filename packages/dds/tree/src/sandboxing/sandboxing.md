@@ -250,6 +250,17 @@ The transport codecs do not implement `IFluidSerializer` or JSON stringification
 [SandboxSessionEndpoint](./session.ts) treats protocol and synchronization failures as terminal.
 It stops local synchronization, rejects pending work, reports the first failure to the application, and notifies the peer when the transport still works.
 A received `sessionFailure` is not echoed.
+Its `code` must be one of the closed `SandboxFailureCode` values.
+The receiver uses a local description for that code and treats it as a peer-reported diagnosis, not a verified cause.
+Both endpoints construct received failures with `SandboxProtocolError.fromPeerMessage`, passing the sending endpoint as `peer`.
+The optional `protocolMessage` comes from a `SandboxProtocolError`'s safe message.
+That message must not include Guest-controlled information, schema information, or other sensitive data.
+Other error types are not assumed to have safe messages.
+The Host tags a Guest's `protocolMessage` as `SandboxGuestData`.
+The optional `sensitiveMessage` comes from a protocol error's nested cause or another error's message.
+It can contain schema information or document contents and is tagged as `UserData`.
+Sensitive diagnostics are sent only from the Guest to the Host, never from the Host to the Guest.
+Neither diagnostic field is concatenated into the receiving endpoint's telemetry-safe error message.
 Failure reporting runs outside tree event dispatch so it cannot interrupt the main-tree edit that triggered the failure.
 
 The application must stop or fence the Guest, dispose both endpoints, and create a new pair.

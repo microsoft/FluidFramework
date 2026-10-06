@@ -94,7 +94,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 			this.codec.receiveBlobResponseError(message.requestId, message.error);
 		},
 		sessionFailure: (message) => {
-			this.session.fail(new Error(message.error), false);
+			this.session.fail(SandboxProtocolError.fromPeerMessage(message, "Host"), false);
 		},
 	});
 
@@ -153,6 +153,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 				this.initialized.rejecter(error);
 			},
 			handleProtocolError,
+			"Guest",
 		);
 		this.codec = new GuestTransportCodec((message) =>
 			this.session.run(() => this.postMessage(message)),

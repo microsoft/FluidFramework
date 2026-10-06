@@ -3,8 +3,54 @@
  * Licensed under the MIT License.
  */
 
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
+
 import { Breakable } from "../util/index.js";
-import { normalizeProtocolError, type SessionFailureMessage } from "./common.js";
+import {
+	createSessionFailureMessage,
+	getSandboxFailureCode,
+	normalizeProtocolError,
+	sandboxFailureDescriptions,
+	type SandboxFailureCode,
+	SandboxProtocolError,
+} from "./common.js";
+
+/** A terminal session error that preserves tagged diagnostics and its original cause. */
+class SandboxSessionError extends LoggingError {
+	public override readonly name = "SandboxSessionError";
+	public readonly failureCode: SandboxFailureCode;
+
+	public constructor(cause: Error) {
+		const code = getSandboxFailureCode(cause);
+		super(
+			`Sandbox session failed; recreate the Host and Guest. ${
+				cause instanceof SandboxProtocolError
+					? cause.message
+					: sandboxFailureDescriptions[code]
+			}`,
+			{
+				...(LoggingError.typeCheck(cause) ? cause.getTelemetryProperties() : undefined),
+				...(cause instanceof SandboxProtocolError
+					? cause.cause === undefined
+						? undefined
+						: {
+								originalErrorMessage: {
+									value: normalizeProtocolError(cause.cause).message,
+									tag: TelemetryDataTag.UserData,
+								},
+							}
+					: {
+							originalErrorMessage: {
+								value: cause.message,
+								tag: TelemetryDataTag.UserData,
+							},
+						}),
+			},
+		);
+		this.cause = cause;
+		this.failureCode = code;
+	}
+}
 
 /**
  * Local fail-stop boundary for one endpoint of a sandbox session.
@@ -33,6 +79,8 @@ export class SandboxSessionEndpoint {
 		private readonly stop: (error: Error) => void,
 		/** Reports the first terminal error to the application, outside tree event dispatch. */
 		private readonly report: (error: Error) => void,
+		/** Only the Guest may send sensitive diagnostic text to its peer. */
+		private readonly endpoint: "Host" | "Guest" = "Host",
 	) {}
 
 	/** The first terminal failure, with the original error and its classification in `cause`. Remains available after disposal. */
@@ -56,19 +104,30 @@ export class SandboxSessionEndpoint {
 			return;
 		}
 		try {
-			this.breaker.run(action);
+			this.breaker.run(() => {
+				try {
+					action();
+				} catch (error) {
+					throw new SandboxSessionError(normalizeProtocolError(error));
+				}
+			});
 		} catch (error) {
-			const cause = normalizeProtocolError(error);
-			const failure = new Error(
-				`Sandbox session failed; recreate the Host and Guest. ${cause.message}`,
-				{ cause },
-			);
+			const failure =
+				error instanceof SandboxSessionError
+					? error
+					: new SandboxSessionError(normalizeProtocolError(error));
+			const cause = normalizeProtocolError(failure.cause);
 			this.failure = failure;
 			try {
 				try {
 					this.stop(failure);
 				} catch (stopError) {
-					failure.message += ` Local shutdown failed: ${normalizeProtocolError(stopError).message}`;
+					failure.addTelemetryProperties({
+						localShutdownError: {
+							value: normalizeProtocolError(stopError).message,
+							tag: TelemetryDataTag.UserData,
+						},
+					});
 				}
 				if (notifyPeer) {
 					try {
@@ -76,13 +135,16 @@ export class SandboxSessionEndpoint {
 						const message: object = Object.create(null);
 						this.port.postMessage(
 							Object.assign(message, {
-								sessionFailure: {
-									error: cause.message,
-								} satisfies SessionFailureMessage,
+								sessionFailure: createSessionFailureMessage(cause, this.endpoint),
 							}),
 						);
 					} catch (notificationError) {
-						failure.message += ` Peer notification failed: ${normalizeProtocolError(notificationError).message}`;
+						failure.addTelemetryProperties({
+							peerNotificationError: {
+								value: normalizeProtocolError(notificationError).message,
+								tag: TelemetryDataTag.UserData,
+							},
+						});
 					}
 				}
 			} finally {
