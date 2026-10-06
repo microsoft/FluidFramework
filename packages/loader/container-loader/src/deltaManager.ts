@@ -647,7 +647,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			connectionSequenceBaseline.sequenceNumber = lastProcessedSequenceNumber;
 			// Connection messages may arrive before the loaded sequence state is known.
 			// Now that the baseline is available, reject incompatible buffered self-joins before replay.
-			if (this.pending.some((message) => this.validateSelfJoinSequenceNumber(message))) {
+			try {
+				if (this.pending.some((message) => this.validateSelfJoinSequenceNumber(message))) {
+					return;
+				}
+			} catch (error) {
+				// Some loads do not await attachment, so notify the container through close
+				// rather than leaving it with an unobserved rejection and no op handler.
+				this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
+				this.close(normalizeError(error));
 				return;
 			}
 		}

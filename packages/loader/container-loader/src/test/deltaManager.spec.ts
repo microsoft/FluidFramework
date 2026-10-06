@@ -243,6 +243,66 @@ describe("Loader", () => {
 			});
 
 			describe("Self-join sequence validation", () => {
+				for (const data of ['{"clientId":42}', "42", '"test"']) {
+					it(`does not match non-string or absent client IDs in overlapping join data '${data}'`, async () => {
+						await startDeltaManager(true, logger, undefined, {
+							lastProcessedSequenceNumber: 13,
+						});
+						deltaConnection.emitOp(docId, [
+							{ ...generateClientJoin("test", 6), data },
+							{ ...generateOp(), sequenceNumber: 14 },
+						]);
+						await yieldEventLoop();
+
+						assert.strictEqual(expectedError, undefined);
+						assert.strictEqual(deltaManager.disposed, false);
+						assert.strictEqual(deltaManager.lastSequenceNumber, 14);
+						deltaManager.dispose();
+					});
+				}
+
+				for (const data of ["not-json", "null"]) {
+					it(`closes on malformed live join data '${data}' without processing the following op`, async () => {
+						await startDeltaManager(true, logger, undefined, {
+							lastProcessedSequenceNumber: 13,
+						});
+						deltaConnection.emitOp(docId, [
+							{ ...generateClientJoin("test", 6), data },
+							{ ...generateOp(), sequenceNumber: 14 },
+						]);
+
+						assert(isFluidError(expectedError), "Parsing failure must reach the close event");
+						assert.strictEqual(deltaManager.disposed, true);
+						assert.strictEqual(deltaManager.lastSequenceNumber, 13);
+						assert.strictEqual(deltaManager.inbound.length, 0);
+					});
+
+					for (const source of ["initial", "socket"] as const) {
+						it(`closes on malformed ${source} join data '${data}' buffered before attach`, async () => {
+							const messages = [
+								{ ...generateClientJoin("test", 6), data },
+								{ ...generateOp(), sequenceNumber: 14 },
+							];
+							// Pending-state loads do not await attachment. A rejected attachment
+							// promise alone cannot notify the container that initialization failed.
+							await startDeltaManager(true, logger, undefined, {
+								connectBeforeAttach: true,
+								lastProcessedSequenceNumber: 13,
+								initialMessages: source === "initial" ? messages : [],
+								earlySocketMessages: source === "socket" ? messages : [],
+							});
+
+							assert(
+								isFluidError(expectedError),
+								"Parsing failure must reach the close event",
+							);
+							assert.strictEqual(deltaManager.disposed, true);
+							assert.strictEqual(deltaManager.lastSequenceNumber, 13);
+							assert.strictEqual(deltaManager.inbound.length, 0);
+						});
+					}
+				}
+
 				/**
 				 * Loads state at 13 and processes a storage batch before stream setup can finish.
 				 * The batch must end with a new operation above 13 so processing provides the barrier.
