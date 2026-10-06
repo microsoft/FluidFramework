@@ -24,7 +24,6 @@ import {
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import type {
-	ChannelConfigurationRuntime,
 	IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -55,12 +54,14 @@ import {
 	type IEnvelope,
 	type IFluidDataStoreChannel,
 	type IFluidDataStoreContext,
+	type FluidDataStoreContextInternal,
 	VisibilityState,
 	gcDataBlobKey,
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 	notifiesReadOnlyState,
+	supportsSharedObjectConfiguration,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
 	type OldestSupportedClientVersion,
@@ -121,6 +122,8 @@ type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 interface IFluidDataStoreContextFeaturesToTypes {
 	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
 	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
+	[supportsSharedObjectConfiguration]: IFluidDataStoreContext &
+		Required<Pick<FluidDataStoreContextInternal, "isSharedObjectConfigurationEnabled">>;
 }
 
 function contextSupportsFeature<K extends keyof IFluidDataStoreContextFeaturesToTypes>(
@@ -386,6 +389,12 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
+	 * See IFluidDataStoreRuntimeInternalConfig.isSharedObjectConfigurationEnabled.
+	 * Like submitMessagesWithoutEncodingHandles, consumers access this through the internal interface.
+	 */
+	private readonly isSharedObjectConfigurationEnabled: () => boolean;
+
+	/**
 	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 *
 	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
@@ -413,12 +422,6 @@ export class FluidDataStoreRuntime
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
-		Object.defineProperty(this, "isSharedObjectConfigurationEnabled", {
-			value: (): boolean =>
-				(
-					this.dataStoreContext.containerRuntime as ChannelConfigurationRuntime
-				).isSharedObjectConfigurationEnabled?.() === true,
-		});
 		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(
@@ -443,6 +446,14 @@ export class FluidDataStoreRuntime
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this), this.mc);
+
+		this.isSharedObjectConfigurationEnabled = contextSupportsFeature(
+			dataStoreContext,
+			supportsSharedObjectConfiguration,
+		)
+			? () => dataStoreContext.isSharedObjectConfigurationEnabled()
+			: () => false;
+		debugAssert(() => this.isSharedObjectConfigurationEnabled !== undefined);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();

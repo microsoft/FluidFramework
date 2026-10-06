@@ -547,6 +547,10 @@ export interface ContainerRuntimeOptionsInternal extends ContainerRuntimeOptions
 	 * Requests SharedObject configuration support in the document schema. Existing documents
 	 * require an accepted schema proposal before the capability becomes active. Once persisted,
 	 * the capability remains active even when this option is disabled.
+	 *
+	 * This option is off by default. Once minimumSupportedReleaseVersion for
+	 * configured DDSes is known, this option should be wired into the compatibility defaults and validation
+	 * maps so enablement respects oldestSupportedClient (called minVersionForCollab internally).
 	 */
 	readonly enableSharedObjectConfiguration?: boolean;
 }
@@ -1763,11 +1767,6 @@ export class ContainerRuntime
 		recentBatchInfo?: [number, string][],
 	) {
 		super();
-		Object.defineProperty(this, "isSharedObjectConfigurationEnabled", {
-			value: (): boolean =>
-				this.documentsSchemaController.sessionSchema.runtime.sharedObjectConfiguration ===
-				true,
-		});
 
 		const {
 			options,
@@ -2197,6 +2196,8 @@ export class ContainerRuntime
 		);
 
 		const parentContext = formParentContext<IFluidRootParentContextPrivate>(this, {
+			isSharedObjectConfigurationEnabled: () =>
+				this.sessionSchema.sharedObjectConfiguration === true,
 			submitMessage: this.submitMessage.bind(this),
 
 			// Due to a mismatch between different layers in terms of
@@ -2422,6 +2423,10 @@ export class ContainerRuntime
 	}
 
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
+		if (schema.runtime.sharedObjectConfiguration === true) {
+			this.channelCollection.validateDatastoreCompatibility();
+		}
+
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "SchemaChangeAccept",
 			sessionRuntimeSchema: JSON.stringify(schema),

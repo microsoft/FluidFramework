@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export type { ChannelConfigurationRuntime } from "./channelConfiguration.js";
-
 export type {
 	AttributionInfo,
 	AttributionKey,
@@ -23,6 +21,7 @@ export type {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
 	FluidDataStoreContextInternal,
+	FluidParentContextInternal,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
@@ -72,6 +71,7 @@ export type {
 export {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	supportsSharedObjectConfiguration,
 } from "./runtimeLayerCompatFeatureNames.js";
 export type {
 	IVersionMarkResolver,

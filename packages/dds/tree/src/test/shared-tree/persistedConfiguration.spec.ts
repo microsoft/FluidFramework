@@ -12,7 +12,7 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import type {
 	ChannelConfigurationFactory,
-	ChannelConfigurationRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 	IChannelAttributes,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
@@ -311,12 +311,12 @@ describe("SharedTree persisted configuration", () => {
 					.channelConfigurationProtocolVersion;
 			},
 			create: (runtime, id) => {
-				const capabilities = runtime as ChannelConfigurationRuntime;
+				const capabilities = runtime as IFluidDataStoreRuntimeInternalConfig;
 				assert.equal(capabilities.isSharedObjectConfigurationEnabled?.(), true);
 				return creator.create(runtime, id);
 			},
 			load: async (runtime, id, services, attributes) => {
-				const capabilities = runtime as ChannelConfigurationRuntime;
+				const capabilities = runtime as IFluidDataStoreRuntimeInternalConfig;
 				assert.equal(capabilities.isSharedObjectConfigurationEnabled?.(), true);
 				const tree = await reader.load(runtime, id, services, attributes);
 				loadedTrees.push(tree);

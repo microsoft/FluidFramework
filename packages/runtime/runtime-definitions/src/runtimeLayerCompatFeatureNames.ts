@@ -17,3 +17,14 @@ export const encodeHandlesInContainerRuntime = "encodeHandlesInContainerRuntime"
  * @internal
  */
 export const notifiesReadOnlyState = "notifiesReadOnlyState";
+
+/**
+ * Indicates support for the SharedObject configuration protocol across the runtime/datastore boundary.
+ * A supporting datastore context also exposes isSharedObjectConfigurationEnabled to read document state.
+ * This capability does not mean that configuration is enabled in any particular document.
+ * @remarks
+ * Supporting and older releases can share a generation during rollout. This check can be replaced
+ * by a generation floor once the supporting releases are known.
+ * @internal
+ */
+export const supportsSharedObjectConfiguration = "supportsSharedObjectConfiguration";

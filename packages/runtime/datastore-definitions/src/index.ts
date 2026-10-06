@@ -38,5 +38,4 @@ export type {
 	ConfiguredChannelAttributes,
 	ChannelConfigurationFactory,
 	ChannelConfigurationChannel,
-	ChannelConfigurationRuntime,
 } from "./channelConfiguration.js";

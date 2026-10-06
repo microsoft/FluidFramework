@@ -17,6 +17,7 @@ import {
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import { supportsSharedObjectConfiguration } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -41,6 +42,7 @@ import {
 	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
 	runtimeCoreCompatDetails,
+	runtimeCompatDetailsForDataStore,
 	disableStrictLoaderLayerCompatibilityCheckKey,
 } from "../runtimeLayerCompatState.js";
 
@@ -138,6 +140,70 @@ async function createAndLoadDataStore(
 }
 
 describe("Runtime Layer compatibility", () => {
+	describe("SharedObject configuration", () => {
+		const compatibleDetails: ILayerCompatDetails = {
+			...runtimeCoreCompatDetails,
+			supportedFeatures: new Set([supportsSharedObjectConfiguration]),
+		};
+		const oldDetails: ILayerCompatDetails = {
+			...runtimeCoreCompatDetails,
+			supportedFeatures: new Set(),
+		};
+		const mc = createChildMonitoringContext({ logger: createChildLogger() });
+
+		it("advertises static support without requiring it for ordinary documents", () => {
+			assert(
+				runtimeCompatDetailsForDataStore.supportedFeatures.has(
+					supportsSharedObjectConfiguration,
+				),
+			);
+			assert(
+				!dataStoreSupportRequirementsForRuntime.requiredFeatures.includes(
+					supportsSharedObjectConfiguration,
+				),
+			);
+		});
+
+		for (const details of [undefined, oldDetails]) {
+			const description =
+				details === undefined ? "missing compatibility details" : "old features";
+			it(`rejects ${description} only for enabled documents`, () => {
+				const dispose = Sinon.fake();
+				assert.doesNotThrow(() => validateDatastoreCompatibility(details, dispose, mc));
+				assert(dispose.notCalled);
+				assert.throws(
+					() => validateDatastoreCompatibility(details, dispose, mc, true),
+					(error: Error) => isLayerIncompatibilityError(error),
+				);
+				assert(dispose.calledOnce);
+				assert.doesNotThrow(() => validateDatastoreCompatibility(details, dispose, mc));
+				assert(dispose.calledOnce, "Document-specific requirements must not leak");
+			});
+
+			it(`retains the explicit testing bypass for ${description}`, () => {
+				const configProvider = createTestConfigProvider();
+				configProvider.set("Fluid.AllowIncompatibleLayers", true);
+				const bypassMc = mixinMonitoringContext(
+					new MockLogger().toTelemetryLogger(),
+					configProvider,
+				);
+				const dispose = Sinon.fake();
+				assert.doesNotThrow(() =>
+					validateDatastoreCompatibility(details, dispose, bypassMc, true),
+				);
+				assert(dispose.notCalled);
+			});
+		}
+
+		it("accepts supported data stores for enabled documents", () => {
+			const dispose = Sinon.fake();
+			assert.doesNotThrow(() =>
+				validateDatastoreCompatibility(compatibleDetails, dispose, mc, true),
+			);
+			assert(dispose.notCalled);
+		});
+	});
+
 	/**
 	 * These tests ensure that the validation logic for layer compatibility is correct
 	 * and has the correct error / properties.

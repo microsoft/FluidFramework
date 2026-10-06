@@ -14,7 +14,6 @@ import type {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeInternalConfig,
-	ChannelConfigurationRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
@@ -299,8 +298,9 @@ class SharedObjectFromKernel<
 
 	#verifyConfigurationEnabled(): void {
 		assert(
-			(this.runtime as ChannelConfigurationRuntime).isSharedObjectConfigurationEnabled?.() ===
-				true,
+			(
+				this.runtime as IFluidDataStoreRuntimeInternalConfig
+			).isSharedObjectConfigurationEnabled?.() === true,
 			"Shared object configuration document capability is not enabled",
 		);
 	}

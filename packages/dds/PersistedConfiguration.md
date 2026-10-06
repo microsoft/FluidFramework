@@ -635,12 +635,18 @@ Adding an attributes field alone is unsafe. Old runtimes can ignore it, and an o
 with its defaults or write a summary that loses the field. The existing snapshot-version warning
 is not a sufficient guard.
 
-Use two checks:
+Use three checks:
 
 1. **Container protocol gate:** `DocumentSchema.runtime.sharedObjectConfiguration: true` requires SharedObject configuration support.
    The flag requires explicit schema control.
    Runtimes that enforce document schemas but do not support this flag fail on it.
-2. **DDS factory gate:** an internal factory capability marker checked before `factory.load`.
+2. **Runtime/datastore layer gate:** `supportsSharedObjectConfiguration` in `ILayerCompatDetails.supportedFeatures` advertises protocol support.
+   An enabled document requires this feature from its datastore runtimes, including already loaded runtimes when the flag activates.
+   Lazy datastores are checked when their runtime is bound, before pending ops are replayed.
+   Missing compatibility details do not authorize this protocol.
+   Unsupported layers fail with the existing layer-incompatibility error.
+   Documents without the flag retain the existing compatibility behavior.
+3. **DDS factory gate:** an internal factory capability marker checked before `factory.load`.
    A supported runtime with an older DDS factory must fail predictably rather than load the
    configured channel through the legacy path.
 
@@ -686,6 +692,15 @@ Disabled schema upgrades remain disabled.
 
 `isSharedObjectConfigurationEnabled()` reports the active document flag.
 A missing query does not grant permission.
+The runtime advertises `supportsSharedObjectConfiguration` to datastores and exposes this query on their typed context.
+Datastores use the existing feature guard to access the query, and forward it to SharedObjects through `IFluidDataStoreRuntimeInternalConfig`.
+The query reads live document state, so an accepted schema upgrade becomes visible without recreating the datastore or DDS.
+The layer feature describes implementation support within one client, not document activation; its shared feature sets never change when a document enables configuration.
+The prototype uses a named feature because supporting and older releases can share a generation.
+Once the supporting releases are known, an enabled document can instead require the first fully supporting datastore generation through the existing layer-compatibility check.
+After the normal runtime/datastore compatibility floors guarantee support, no configuration-specific support check is needed.
+The runtime's package version alone does not establish the datastore's support, since those layers can use different versions.
+Document readiness remains separate and must still follow the accepted schema state.
 Local configuration edits do not need document readiness, but their snapshots cannot attach without the flag.
 Detached rehydration preserves a persisted flag and explicit schema control even when the local option is false or omitted.
 The flag stays present when the local option is off or all DDS settings return to defaults.
@@ -695,8 +710,19 @@ For the prerequisite compatibility PR, register the flag with validation that re
 No client in that release can safely process or summarize configured SharedObjects.
 Change validation to accept `true` only in the follow-up that adds the SharedObject protocol and preservation checks.
 This combined prototype includes that follow-up and accepts the flag.
-Keep `enableSharedObjectConfiguration` off by default.
-`minVersionForCollab` gives rollout guidance, but its current warning alone is not enforcement.
+Keep `enableSharedObjectConfiguration` off by default while reader support is deployed.
+
+Once the first release that supports configured DDSes is known, use it as `minimumSupportedReleaseVersion`.
+Wire the internal flag into `containerCompatibility.ts`'s compatibility defaults and validation maps, instead of excluding it from `RuntimeOptionsAffectingDocSchema`.
+Use the standard explicit-schema-control requirement.
+Validation must prevent enabling writes when `oldestSupportedClient` is below `minimumSupportedReleaseVersion`.
+The prerequisite release that rejects the flag is not a supporting release.
+Choose default enablement separately; reader support alone must not start writing the new format.
+Applications can advance `oldestSupportedClient` after deploying reader support, and document activation then uses the normal schema-upgrade flow.
+The prototype currently permits explicit internal opt-in without a release-version check; this is not the production rollout policy.
+
+`oldestSupportedClient` is called `minVersionForCollab` internally.
+The persisted minimum-version field produces a warning for older clients; the document schema's feature checks enforce compatibility.
 Clients predating document-schema enforcement still need the existing deployment and old-client exclusion strategy.
 
 Supporting factories expose stable defaults on unmarked instances without changing their summaries.

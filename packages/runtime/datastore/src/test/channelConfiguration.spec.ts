@@ -11,7 +11,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import type {
 	ChannelConfigurationChannel,
-	ChannelConfigurationRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 	ConfiguredChannelAttributes,
 	IChannel,
 	IChannelAttributes,
@@ -50,7 +50,7 @@ describe("Channel configuration compatibility", () => {
 	const runtime = {
 		attachState: AttachState.Attached,
 		isSharedObjectConfigurationEnabled: () => true,
-	} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+	} as unknown as IFluidDataStoreRuntime & IFluidDataStoreRuntimeInternalConfig;
 
 	function channel(): IChannel & ChannelConfigurationChannel {
 		return {
@@ -217,7 +217,7 @@ describe("Channel configuration compatibility", () => {
 		const configured = channel();
 		const unavailableRuntime = {
 			isSharedObjectConfigurationEnabled: () => false,
-		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+		} as unknown as IFluidDataStoreRuntime & IFluidDataStoreRuntimeInternalConfig;
 		Object.assign(configured, {
 			getAttachSummary: () => {
 				captured = true;
@@ -253,7 +253,7 @@ describe("Channel configuration compatibility", () => {
 			const attachedRuntime = {
 				isSharedObjectConfigurationEnabled: () => enabled,
 				attachState: AttachState.Attached,
-			} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+			} as unknown as IFluidDataStoreRuntime & IFluidDataStoreRuntimeInternalConfig;
 			let loaded = false;
 			const factory = {
 				attributes,
@@ -298,7 +298,7 @@ describe("Channel configuration compatibility", () => {
 		const localRuntime = {
 			attachState: AttachState.Detached,
 			isSharedObjectConfigurationEnabled: () => true,
-		} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+		} as unknown as IFluidDataStoreRuntime & IFluidDataStoreRuntimeInternalConfig;
 		const configured = channel();
 		const order: string[] = [];
 		Object.assign(configured, {
@@ -349,7 +349,7 @@ describe("Channel configuration compatibility", () => {
 			const localRuntime = {
 				attachState,
 				isSharedObjectConfigurationEnabled: () => false,
-			} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+			} as unknown as IFluidDataStoreRuntime & IFluidDataStoreRuntimeInternalConfig;
 			let captured = false;
 			let connected = false;
 			const configured = channel();
@@ -393,7 +393,7 @@ describe("Channel configuration compatibility", () => {
 					attachState,
 					connected,
 					isSharedObjectConfigurationEnabled: () => false,
-				} as unknown as IFluidDataStoreRuntime & ChannelConfigurationRuntime;
+				} as unknown as IFluidDataStoreRuntime & IFluidDataStoreRuntimeInternalConfig;
 				let loaded = false;
 				const loading = loadChannel(
 					localRuntime,

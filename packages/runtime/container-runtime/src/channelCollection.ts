@@ -31,6 +31,7 @@ import type {
 	AliasResult,
 	ContainerExtensionProvider,
 	FluidDataStoreMessage,
+	FluidParentContextInternal,
 	IAttachMessage,
 	IEnvelope,
 	IFluidDataStoreChannel,
@@ -38,7 +39,6 @@ import type {
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	IGarbageCollectionData,
 	IInboundSignalMessage,
 	InboundAttachMessage,
@@ -147,7 +147,7 @@ export type AddressedUnsequencedSignalEnvelope = IEnvelope<ISignalEnvelope["cont
  * to ease interactions within this package.
  */
 export interface IFluidParentContextPrivate
-	extends IFluidParentContext,
+	extends FluidParentContextInternal,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
 	readonly minVersionForCollab: OldestSupportedClientVersion;
@@ -196,13 +196,13 @@ type SubmitKeys = "submitMessage" | "submitSignal";
 /**
  * Creates a shallow wrapper of {@link IFluidParentContextPrivate} or
  * {@link IFluidRootParentContextPrivate} with `submitMessage` and `submitSignal`
- * methods replaced with the provided overrides.
+ * methods replaced with the provided overrides, and an optional SharedObject readiness override.
  */
 export function formParentContext<
 	T extends IFluidParentContextPrivate | IFluidRootParentContextPrivate,
 >(
 	context: Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys>,
-	overrides: Pick<T, SubmitKeys>,
+	overrides: Pick<T, SubmitKeys | "isSharedObjectConfigurationEnabled">,
 ): Omit<IFluidParentContextPrivate & IFluidRootParentContextPrivate, SubmitKeys> &
 	Pick<T, SubmitKeys> {
 	return {
@@ -231,6 +231,9 @@ export function formParentContext<
 			return context.attachState;
 		},
 		isReadOnly: () => context.isReadOnly(),
+		isSharedObjectConfigurationEnabled:
+			overrides.isSharedObjectConfigurationEnabled ??
+			(() => context.isSharedObjectConfigurationEnabled?.() ?? false),
 		containerRuntime: context.containerRuntime,
 		scope: context.scope,
 		gcThrowOnTombstoneUsage: context.gcThrowOnTombstoneUsage,
@@ -1218,6 +1221,15 @@ export class ChannelCollection
 					error,
 				);
 			}
+		}
+	}
+
+	/**
+	 * Validates realized data stores after a document schema change without loading lazy stores.
+	 */
+	public validateDatastoreCompatibility(): void {
+		for (const [, context] of this.contexts) {
+			context.validateDatastoreCompatibility();
 		}
 	}
 

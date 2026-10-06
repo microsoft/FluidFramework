@@ -714,6 +714,22 @@ export interface IFluidParentContext
 }
 
 /**
+ * Internal extension to {@link IFluidParentContext} for use across Fluid Framework packages.
+ * @remarks
+ * Like {@link FluidDataStoreContextInternal}, additions must follow layer compatibility patterns.
+ * @internal
+ */
+export interface FluidParentContextInternal extends IFluidParentContext {
+	/**
+	 * Whether the document has enabled the SharedObject configuration protocol.
+	 * Existing documents enable it through the normal DocumentSchema upgrade.
+	 * Once enabled, the document retains this compatibility requirement.
+	 * This does not mean that individual SharedObjects use configuration.
+	 */
+	readonly isSharedObjectConfigurationEnabled?: () => boolean;
+}
+
+/**
  * A path which selects a {@link (IFluidDataStoreFactory:interface)} within a hierarchial registry.
  * @remarks
  * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a {@link NamedFluidDataStoreRegistryEntries}.
@@ -802,6 +818,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
  */
 export interface FluidDataStoreContextInternal
 	extends IFluidDataStoreContext,
+		FluidParentContextInternal,
 		ContainerExtensionProvider {}
 
 /**

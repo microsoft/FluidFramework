@@ -10,7 +10,12 @@ import type {
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannel,
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
+} from "@fluidframework/datastore-definitions/internal";
+import { supportsSharedObjectConfiguration } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -20,6 +25,7 @@ import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/in
 import Sinon from "sinon";
 
 import {
+	dataStoreCompatDetailsForRuntime,
 	dataStoreCoreCompatDetails,
 	runtimeSupportRequirementsForDataStore,
 	validateRuntimeCompatibility,
@@ -268,6 +274,55 @@ describe("DataStore Layer compatibility", () => {
 				async () => createDataStoreRuntime(runtimeCompatDetails),
 				"Runtime with generation >= minSupportedGeneration should be compatible",
 			);
+		});
+
+		for (const hasCompatDetails of [false, true]) {
+			it(`does not use an unadvertised configuration API (${hasCompatDetails ? "feature absent" : "details absent"})`, () => {
+				const readiness = Sinon.fake.returns(true);
+				Object.assign(dataStoreContext, {
+					isSharedObjectConfigurationEnabled: readiness,
+				});
+				const runtime: IFluidDataStoreRuntime = createDataStoreRuntime(
+					hasCompatDetails
+						? {
+								pkgVersion,
+								generation: runtimeSupportRequirementsForDataStore.minSupportedGeneration,
+								supportedFeatures: new Set(),
+							}
+						: undefined,
+				);
+				assert.equal(
+					(
+						runtime as IFluidDataStoreRuntimeInternalConfig
+					).isSharedObjectConfigurationEnabled?.(),
+					false,
+				);
+				assert.equal(readiness.called, false);
+			});
+		}
+
+		it("forwards live document readiness through the advertised context API", () => {
+			let enabled = false;
+			Object.assign(dataStoreContext, {
+				isSharedObjectConfigurationEnabled() {
+					assert.equal(this, dataStoreContext);
+					return enabled;
+				},
+			});
+			const runtime: IFluidDataStoreRuntime = createDataStoreRuntime({
+				pkgVersion,
+				generation: runtimeSupportRequirementsForDataStore.minSupportedGeneration,
+				supportedFeatures: new Set([supportsSharedObjectConfiguration]),
+			});
+			const config = runtime as IFluidDataStoreRuntimeInternalConfig;
+			assert.equal(config.isSharedObjectConfigurationEnabled?.(), false);
+			assert(
+				dataStoreCompatDetailsForRuntime.supportedFeatures.has(
+					supportsSharedObjectConfiguration,
+				),
+			);
+			enabled = true;
+			assert.equal(config.isSharedObjectConfigurationEnabled?.(), true);
 		});
 
 		it("Runtime with generation < minSupportedGeneration is not compatible", async () => {

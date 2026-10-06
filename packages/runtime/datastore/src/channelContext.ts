@@ -5,7 +5,7 @@
 
 import { AttachState } from "@fluidframework/container-definitions/internal";
 import type {
-	ChannelConfigurationRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
@@ -217,7 +217,7 @@ export async function loadChannel(
 		configured &&
 		dataStoreRuntime.attachState !== AttachState.Detached &&
 		(
-			dataStoreRuntime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
+			dataStoreRuntime as IFluidDataStoreRuntimeInternalConfig
 		).isSharedObjectConfigurationEnabled?.() !== true
 	) {
 		throw new DataCorruptionError("Configured channel requires document capability", {});

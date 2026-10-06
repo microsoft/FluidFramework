@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import { EventEmitter } from "node:events";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { generation, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
 import type {
@@ -15,10 +15,11 @@ import type {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
-import type {
-	IRuntimeMessageCollection,
-	IRuntimeStorageService,
-	ISummarizerNodeWithGC,
+import {
+	type IRuntimeMessageCollection,
+	type IRuntimeStorageService,
+	type ISummarizerNodeWithGC,
+	supportsSharedObjectConfiguration,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -212,9 +213,14 @@ function datastoreHarness(
 	const context = new MockFluidDataStoreContext("store", true);
 	context.isLocalDataStore = false;
 	context.attachState = AttachState.Attached;
-	context.containerRuntime = Object.assign(context.containerRuntime, {
+	Object.assign(context, {
 		isSharedObjectConfigurationEnabled: () => true,
 	});
+	context.ILayerCompatDetails = {
+		generation,
+		pkgVersion: "test",
+		supportedFeatures: new Set([supportsSharedObjectConfiguration]),
+	};
 	context.baseSnapshot = {
 		blobs: {},
 		trees: { dds: { blobs: { ".attributes": "attributes" }, trees: {} } },
@@ -279,9 +285,14 @@ describe("configured kernel composition", () => {
 		const context = new MockFluidDataStoreContext("store", true);
 		context.isLocalDataStore = false;
 		context.attachState = AttachState.Attached;
-		context.containerRuntime = Object.assign(context.containerRuntime, {
+		Object.assign(context, {
 			isSharedObjectConfigurationEnabled: () => true,
 		});
+		context.ILayerCompatDetails = {
+			generation,
+			pkgVersion: "test",
+			supportedFeatures: new Set([supportsSharedObjectConfiguration]),
+		};
 		context.baseSnapshot = {
 			blobs: {},
 			trees: { dds: { blobs: { ".attributes": "attributes" }, trees: {} } },

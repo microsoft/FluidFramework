@@ -9,6 +9,7 @@ import {
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
+import { supportsSharedObjectConfiguration } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
 	type MonitoringContext,
@@ -40,7 +41,11 @@ export const dataStoreCompatDetailsForRuntime: ILayerCompatDetails = {
 	/**
 	 * The features supported by the DataStore layer across the DataStore / Runtime boundary.
 	 */
-	supportedFeatures: new Set<string>(),
+	supportedFeatures: new Set<string>([
+		// Supported from generation 11 onwards (ILayerCompatDetails.generation).
+		// Source: @fluid-internal/client-utils package.json's fluidCompatMetadata.generation.
+		supportsSharedObjectConfiguration,
+	]),
 };
 
 /**

@@ -7,7 +7,7 @@ import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
 	ChannelConfigurationChannel,
 	ChannelConfigurationFactory,
-	ChannelConfigurationRuntime,
+	IFluidDataStoreRuntimeInternalConfig,
 	ConfiguredChannelAttributes,
 	IChannel,
 	IChannelAttributes,
@@ -83,7 +83,7 @@ export function verifyChannelConfigurationCapability(
 	requireChannelConfigurationController(channel);
 	assert(
 		(
-			runtime as IFluidDataStoreRuntime & ChannelConfigurationRuntime
+			runtime as IFluidDataStoreRuntimeInternalConfig
 		).isSharedObjectConfigurationEnabled?.() === true,
 		"Shared object configuration is not active; cannot attach a configured channel",
 	);

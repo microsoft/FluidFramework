@@ -45,6 +45,9 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 	| "summaryOptions"
 	| "stagingModeAutoFlushThreshold"
 	| "disableSchemaUpgrade"
+	// TODO: Once minimumSupportedReleaseVersion for configured DDSes is known, remove this
+	// exclusion and add the flag to the defaults and validation maps below, including the
+	// standard explicit-schema-control requirement. Until then, it is an internal prototype opt-in.
 	| "enableSharedObjectConfiguration"
 >;
 

@@ -13,6 +13,7 @@ import type { ICriticalContainerError } from "@fluidframework/container-definiti
 import {
 	encodeHandlesInContainerRuntime,
 	notifiesReadOnlyState,
+	supportsSharedObjectConfiguration,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	validateLayerCompatibility,
@@ -85,7 +86,13 @@ export const runtimeCompatDetailsForDataStore: ILayerCompatDetails = {
 	/**
 	 * The features supported by the Runtime layer across the Runtime / DataStore boundary.
 	 */
-	supportedFeatures: new Set<string>([encodeHandlesInContainerRuntime, notifiesReadOnlyState]),
+	supportedFeatures: new Set<string>([
+		encodeHandlesInContainerRuntime,
+		notifiesReadOnlyState,
+		// Supported from generation 11 onwards (ILayerCompatDetails.generation).
+		// Source: @fluid-internal/client-utils package.json's fluidCompatMetadata.generation.
+		supportsSharedObjectConfiguration,
+	]),
 };
 
 /**
@@ -150,16 +157,27 @@ export function validateDatastoreCompatibility(
 	maybeDataStoreCompatDetailsForRuntime: ILayerCompatDetails | undefined,
 	disposeFn: () => void,
 	mc: MonitoringContext,
+	sharedObjectConfigurationEnabled: boolean = false,
 ): void {
 	validateLayerCompatibility(
 		/* validatingLayer */ {
 			layer: "runtime",
 			packageInfo: runtimeCoreCompatDetails,
-			compatSupportRequirements: dataStoreSupportRequirementsForRuntime,
+			compatSupportRequirements: sharedObjectConfigurationEnabled
+				? {
+						...dataStoreSupportRequirementsForRuntime,
+						requiredFeatures: [
+							...dataStoreSupportRequirementsForRuntime.requiredFeatures,
+							supportsSharedObjectConfiguration,
+						],
+					}
+				: dataStoreSupportRequirementsForRuntime,
 		},
 		/* targetLayer */ {
 			layer: "dataStore",
 			compatDetails: maybeDataStoreCompatDetailsForRuntime,
+			// Missing metadata cannot authorize the configured SharedObject protocol.
+			strictCompatibilityCheck: sharedObjectConfigurationEnabled,
 		},
 		{ disposeFn, mc },
 	);

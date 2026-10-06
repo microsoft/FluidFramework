@@ -285,6 +285,13 @@ export abstract class FluidDataStoreContext
 		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode === true) ||
 		this.parentContext.isReadOnly();
 
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#FluidParentContextInternal.isSharedObjectConfigurationEnabled}
+	 */
+	public isSharedObjectConfigurationEnabled(): boolean {
+		return this.parentContext.isSharedObjectConfigurationEnabled?.() ?? false;
+	}
+
 	public get connected(): boolean {
 		return this.parentContext.connected;
 	}
@@ -996,14 +1003,28 @@ export abstract class FluidDataStoreContext
 		this.pendingMessagesState = undefined;
 	}
 
-	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
+	/**
+	 * Validates a data store before binding, or the bound data store after a schema change.
+	 */
+	public validateDatastoreCompatibility(
+		channel: IFluidDataStoreChannel | undefined = this.channel,
+	): void {
+		if (channel === undefined) {
+			return;
+		}
 		// Validate that the DataStore is compatible with this Runtime.
 		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
 		validateDatastoreCompatibility(
 			maybeDataStoreCompatDetails.ILayerCompatDetails,
 			this.dispose.bind(this),
 			this.mc,
+			this.isSharedObjectConfigurationEnabled(),
 		);
+	}
+
+	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
+		this.validateDatastoreCompatibility(channel);
+		this.processPendingOps(channel);
 
 		// And now mark the runtime active
 		this.loaded = true;
@@ -1045,7 +1066,6 @@ export abstract class FluidDataStoreContext
 			await channel.entryPoint.get();
 		}
 
-		this.processPendingOps(channel);
 		this.completeBindingRuntime(channel);
 	}
 
@@ -1627,7 +1647,6 @@ export class LocalDetachedFluidDataStoreContext
 	 */
 	public unsafe_AttachRuntimeSync(channel: IFluidDataStoreChannel): IDataStore {
 		this.channelP = Promise.resolve(channel);
-		this.processPendingOps(channel);
 		this.completeBindingRuntime(channel);
 		return this.channelToDataStoreFn(channel);
 	}

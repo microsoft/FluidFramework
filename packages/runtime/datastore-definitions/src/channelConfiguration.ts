@@ -7,8 +7,6 @@ import type { ReadonlyJsonTypeWith } from "@fluidframework/core-interfaces/inter
 
 import type { IChannelAttributes } from "./storage.js";
 
-export type { ChannelConfigurationRuntime } from "@fluidframework/runtime-definitions/internal";
-
 /**
  * Immutable JSON settings shared by all clients of one channel instance.
  * The channel author defines the keys and their meaning; different instances can have different settings.

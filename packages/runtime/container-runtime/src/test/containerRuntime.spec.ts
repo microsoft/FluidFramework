@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { stringToBuffer, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type ICriticalContainerError,
@@ -43,7 +43,6 @@ import {
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	ChannelConfigurationRuntime,
 	FluidDataStoreMessage,
 	ISummaryTreeWithStats,
 	FluidDataStoreRegistryEntry,
@@ -57,7 +56,10 @@ import type {
 	ISummarizeInternalResult,
 	StagingModeChangedEvent,
 } from "@fluidframework/runtime-definitions/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	supportsSharedObjectConfiguration,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	cleanedPackageVersion,
 	defaultMinVersionForCollab,
@@ -69,6 +71,7 @@ import {
 	createChildLogger,
 	isFluidError,
 	isILoggingError,
+	isLayerIncompatibilityError,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -93,6 +96,7 @@ import {
 	type IContainerRuntimeOptionsInternal,
 	type UnknownIncomingTypedMessage,
 } from "../containerRuntime.js";
+import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 import {
 	ContainerMessageType,
@@ -106,6 +110,10 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import type { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import {
+	runtimeCompatDetailsForDataStore,
+	runtimeCoreCompatDetails,
+} from "../runtimeLayerCompatState.js";
 import {
 	type ISummaryCancellationToken,
 	type IContainerRuntimeMetadata,
@@ -354,7 +362,8 @@ describe("Runtime", () => {
 				existing: boolean,
 				runtimeOptions: IContainerRuntimeOptionsInternal = configurationOptions,
 				documentSchema?: IDocumentSchema,
-			): Promise<ContainerRuntime & ChannelConfigurationRuntime> {
+				registry: IFluidDataStoreRegistry = new FluidDataStoreRegistry([]),
+			): Promise<ContainerRuntime> {
 				const metadata: IContainerRuntimeMetadata = {
 					summaryFormatVersion: 1,
 					documentSchema,
@@ -377,7 +386,7 @@ describe("Runtime", () => {
 							},
 						},
 					}) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
+					registry,
 					existing,
 					runtimeOptions: {
 						enableGroupedBatching: false,
@@ -411,9 +420,175 @@ describe("Runtime", () => {
 				);
 			}
 
+			const configurationOp = {
+				type: ContainerMessageType.DocumentSchemaChange,
+				contents: {
+					version: 1,
+					refSeq: 0,
+					info: { minVersionForCollab: defaultMinVersionForCollab },
+					runtime: {
+						explicitSchemaControl: true,
+						sharedObjectConfiguration: true,
+					},
+				},
+			};
+
+			function createConfigurationRegistry(details: ILayerCompatDetails | undefined) {
+				const channel = new MockFluidDataStoreRuntime();
+				channel.ILayerCompatDetails = details;
+				const instantiate = sandbox.stub().resolves(channel);
+				const process = sandbox.spy(channel, "processMessages");
+				const connect = sandbox.spy(channel, "setConnectionState");
+				const factory: IFluidDataStoreFactory = {
+					type: "test",
+					get IFluidDataStoreFactory() {
+						return factory;
+					},
+					instantiateDataStore: instantiate,
+				};
+				return {
+					registry: new FluidDataStoreRegistry([["test", factory]]),
+					instantiate,
+					process,
+					connect,
+				};
+			}
+
+			for (const details of [
+				undefined,
+				{ ...runtimeCoreCompatDetails, supportedFeatures: new Set<string>() },
+			]) {
+				const description =
+					details === undefined ? "missing compatibility details" : "old features";
+
+				it(`allows data stores with ${description} in ordinary documents`, async () => {
+					const { registry } = createConfigurationRegistry(details);
+					const runtime = await loadConfigurationRuntime(false, {}, undefined, registry);
+					const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+					const context = privates.channelCollection.createDataStoreContext(["test"]);
+					await context.realize();
+					assert.equal(context.isSharedObjectConfigurationEnabled?.(), false);
+					runtime.dispose();
+				});
+
+				it(`rejects ${description} before replaying pending data store ops`, async () => {
+					const { registry, process, connect } = createConfigurationRegistry(details);
+					const runtime = await loadConfigurationRuntime(
+						false,
+						configurationOptions,
+						undefined,
+						registry,
+					);
+					const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+					const context = privates.channelCollection.createDataStoreContext(["test"]);
+					assert(context instanceof LocalFluidDataStoreContext);
+					context.processMessages({
+						envelope: {
+							type: "op",
+							clientId: "otherClient",
+							sequenceNumber: 1,
+							minimumSequenceNumber: 0,
+							referenceSequenceNumber: 0,
+							timestamp: 1,
+						},
+						messagesContent: [
+							{ contents: {}, localOpMetadata: undefined, clientSequenceNumber: 1 },
+						],
+						local: false,
+					});
+					await assert.rejects(context.realize(), (error: Error) =>
+						isLayerIncompatibilityError(error),
+					);
+					assert(process.notCalled, "Incompatible stores must not process configured ops");
+					assert(connect.notCalled, "Incompatible stores must not be bound");
+					runtime.dispose();
+				});
+
+				it(`rejects realized data stores with ${description} when the schema activates`, async () => {
+					const { registry } = createConfigurationRegistry(details);
+					const runtime = await loadConfigurationRuntime(true, {}, undefined, registry);
+					const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+					const context = privates.channelCollection.createDataStoreContext(["test"]);
+					await context.realize();
+					assert.equal(context.isSharedObjectConfigurationEnabled?.(), false);
+					assert.throws(
+						() => processConfigurationOp(runtime, configurationOp, 1, 1, false),
+						(error: Error) => isLayerIncompatibilityError(error),
+					);
+					runtime.dispose();
+				});
+
+				it(`defers validation of lazy stores with ${description} until realization`, async () => {
+					const { registry, instantiate, process, connect } =
+						createConfigurationRegistry(details);
+					const runtime = await loadConfigurationRuntime(true, {}, undefined, registry);
+					const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+					const context = privates.channelCollection.createDataStoreContext(["test"]);
+					processConfigurationOp(runtime, configurationOp, 1, 1, false);
+					assert.equal(context.isSharedObjectConfigurationEnabled?.(), true);
+					assert(instantiate.notCalled, "A schema change must not realize lazy stores");
+					await assert.rejects(context.realize(), (error: Error) =>
+						isLayerIncompatibilityError(error),
+					);
+					assert(process.notCalled);
+					assert(connect.notCalled);
+					runtime.dispose();
+				});
+			}
+
+			it("forwards live document readiness without changing static support or other documents", async () => {
+				const staticFeatures = [...runtimeCompatDetailsForDataStore.supportedFeatures];
+				const { registry } = createConfigurationRegistry({
+					...runtimeCoreCompatDetails,
+					supportedFeatures: new Set([supportsSharedObjectConfiguration]),
+				});
+				const runtime = await loadConfigurationRuntime(true, {}, undefined, registry);
+				const otherRuntime = await loadConfigurationRuntime(true, {});
+				const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+				const context = privates.channelCollection.createDataStoreContext(["test"]);
+				const otherPrivates = otherRuntime as unknown as ContainerRuntime_WithPrivates;
+				const otherContext = otherPrivates.channelCollection.createDataStoreContext(["test"]);
+				await context.realize();
+				assert.equal(context.isSharedObjectConfigurationEnabled?.(), false);
+				processConfigurationOp(runtime, configurationOp, 1, 1, false);
+				assert.equal(context.isSharedObjectConfigurationEnabled?.(), true);
+				assert.equal(otherRuntime.sessionSchema.sharedObjectConfiguration, undefined);
+				assert.equal(otherContext.isSharedObjectConfigurationEnabled?.(), false);
+				assert.deepEqual(
+					[...runtimeCompatDetailsForDataStore.supportedFeatures],
+					staticFeatures,
+				);
+				runtime.dispose();
+				otherRuntime.dispose();
+			});
+
+			it("does not validate realized stores for a losing configuration proposal", async () => {
+				const { registry } = createConfigurationRegistry(undefined);
+				const runtime = await loadConfigurationRuntime(true, {}, undefined, registry);
+				const privates = runtime as unknown as ContainerRuntime_WithPrivates;
+				const context = privates.channelCollection.createDataStoreContext(["test"]);
+				await context.realize();
+				processConfigurationOp(
+					runtime,
+					{
+						...configurationOp,
+						contents: {
+							...configurationOp.contents,
+							runtime: { explicitSchemaControl: true },
+						},
+					},
+					1,
+					1,
+					false,
+				);
+				processConfigurationOp(runtime, configurationOp, 2, 2, false);
+				assert.equal(context.isSharedObjectConfigurationEnabled?.(), false);
+				runtime.dispose();
+			});
+
 			it("initializes new detached containers before attachment without sending ops", async () => {
 				const runtime = await loadConfigurationRuntime(false);
-				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
+				assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 				assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
 				assert.equal(submittedOps.length, 0);
 				runtime.dispose();
@@ -441,17 +616,16 @@ describe("Runtime", () => {
 					runtimeOptions: configurationOptions,
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const capability = runtime as ContainerRuntime & ChannelConfigurationRuntime;
 				runtime.createSummary();
 				assert.equal(runtime.attachState, AttachState.Detached);
-				assert.equal(capability.isSharedObjectConfigurationEnabled?.(), true);
+				assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 				assert.equal(submittedOps.length, 0);
 				const privates = runtime as unknown as ContainerRuntime_WithPrivates;
 				const attached = sandbox
 					.stub(privates.channelCollection, "setAttachState")
 					.callsFake((state) => {
 						assert.equal(state, AttachState.Attaching);
-						assert.equal(capability.isSharedObjectConfigurationEnabled?.(), true);
+						assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 					});
 				runtime.createSummary();
 				assert.equal(runtime.attachState, AttachState.Detached);
@@ -475,7 +649,7 @@ describe("Runtime", () => {
 					stubChannelCollection(privates);
 					await clock.tickAsync(0);
 					assert.equal(submittedOps.length, 0);
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 					submitDataStoreOp(runtime, "1", testDataStoreMessage);
 					await clock.tickAsync(0);
 					assert.equal(submittedOps.length, 2);
@@ -485,13 +659,13 @@ describe("Runtime", () => {
 					};
 					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
 					assert.equal(proposal.contents.runtime.sharedObjectConfiguration, true);
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 					submitDataStoreOp(runtime, "1", testDataStoreMessage);
 					await clock.tickAsync(0);
 					assert.equal(submittedOps.length, 3, "Only one schema proposal is sent");
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 					processConfigurationOp(runtime, proposal, 1, 1);
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 					processConfigurationOp(
 						runtime,
 						submittedOps[1] as LocalContainerRuntimeMessage,
@@ -537,7 +711,7 @@ describe("Runtime", () => {
 				);
 				await clock.tickAsync(0);
 				assert.equal(submittedOps.length, 2);
-				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+				assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 				assert.equal(runtime.sessionSchema.idCompressorMode, "delayed");
 				processConfigurationOp(runtime, first, 2, 1);
 				processConfigurationOp(runtime, submittedOps[1] as LocalContainerRuntimeMessage, 3, 2);
@@ -550,7 +724,7 @@ describe("Runtime", () => {
 					(submittedOps[2] as LocalContainerRuntimeMessage).type,
 					ContainerMessageType.FluidDataStoreOp,
 				);
-				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+				assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 				runtime.dispose();
 			});
 
@@ -567,7 +741,7 @@ describe("Runtime", () => {
 					(submittedOps[0] as LocalContainerRuntimeMessage).type,
 					ContainerMessageType.FluidDataStoreOp,
 				);
-				assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+				assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 				runtime.dispose();
 			});
 
@@ -581,7 +755,6 @@ describe("Runtime", () => {
 							explicitSchemaControl: false,
 							...creationOptions,
 						});
-						assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
 						assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 						assert.equal(runtime.sessionSchema.explicitSchemaControl, undefined);
 						if (existing) {
@@ -617,10 +790,10 @@ describe("Runtime", () => {
 					assert.equal(proposal.type, ContainerMessageType.DocumentSchemaChange);
 					assert.equal(proposal.contents.runtime.sharedObjectConfiguration, undefined);
 					assert.equal(proposal.contents.runtime.idCompressorMode, "delayed");
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 					processConfigurationOp(runtime, proposal, 1, 1);
 					assert.equal(runtime.sessionSchema.idCompressorMode, "delayed");
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 					runtime.dispose();
 				});
 
@@ -644,7 +817,7 @@ describe("Runtime", () => {
 									},
 								},
 							);
-							assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
+							assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 							assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
 							assert.equal(submittedOps.length, 0);
 							if (!existing) {
@@ -678,7 +851,6 @@ describe("Runtime", () => {
 					});
 					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
 					assert.equal(runtime.sessionSchema.explicitSchemaControl, true);
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
 					const metadata: SummaryObject | undefined =
 						runtime.createSummary().tree[metadataBlobName];
 					assert(metadata?.type === SummaryType.Blob);
@@ -710,7 +882,6 @@ describe("Runtime", () => {
 						ContainerMessageType.FluidDataStoreOp,
 					);
 					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, true);
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), true);
 					runtime.dispose();
 				});
 			}
@@ -727,7 +898,7 @@ describe("Runtime", () => {
 							runtime: {},
 						},
 					);
-					assert.equal(runtime.isSharedObjectConfigurationEnabled?.(), false);
+					assert.equal(runtime.sessionSchema.sharedObjectConfiguration, undefined);
 					assert.equal(runtime.sessionSchema.explicitSchemaControl, undefined);
 					runtime.dispose();
 				});
