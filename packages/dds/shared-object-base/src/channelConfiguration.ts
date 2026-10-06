@@ -238,7 +238,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		private readonly options: ChannelConfigurationControllerOptions<TConfig>,
 	) {
 		const snapshot = parseChannelConfigurationSnapshot(options.snapshot);
-		this.validateSupported(snapshot.values);
+		this.#validateSupported(snapshot.values);
 		this.snapshot = { revision: snapshot.revision, values: snapshot.values };
 	}
 
@@ -263,8 +263,8 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		};
 		this.processing = true;
 		try {
-			this.validateSupported(values);
-			this.checkOverflow();
+			this.#validateSupported(values);
+			this.#checkOverflow();
 			this.options.definition.validateTransition(previous.values, values);
 		} finally {
 			this.processing = false;
@@ -273,7 +273,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		if (!this.options.isAttached()) {
 			this.processing = true;
 			try {
-				return this.apply(values, { source: "local", local: true });
+				return this.#apply(values, { source: "local", local: true });
 			} catch (error) {
 				this.dispose(error);
 				throw error;
@@ -331,10 +331,10 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 				result = { ...context, status: "conflict", current: this.snapshot };
 			} else {
 				const values = message.values;
-				this.validateSupported(values);
-				this.checkOverflow();
+				this.#validateSupported(values);
+				this.#checkOverflow();
 				this.options.definition.validateTransition(this.snapshot.values, values);
-				result = this.apply(values, context);
+				result = this.#apply(values, context);
 			}
 			if (context.local) {
 				const pending = this.pending.get(localOpMetadata);
@@ -416,21 +416,21 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 		assert(!this.processing, "Cannot submit during a channel configuration callback");
 	}
 
-	private validateSupported(values: ChannelConfiguration): asserts values is TConfig {
+	#validateSupported(values: ChannelConfiguration): asserts values is TConfig {
 		assert(
 			this.options.definition.isSupported(values),
 			"Unsupported channel configuration values",
 		);
 	}
 
-	private checkOverflow(): void {
+	#checkOverflow(): void {
 		assert(
 			this.snapshot.revision !== Number.MAX_SAFE_INTEGER,
 			"Channel configuration revision overflow",
 		);
 	}
 
-	private apply(
+	#apply(
 		values: TConfig,
 		context: ChannelConfigurationContext,
 	): ConfigurationChangeResult<TConfig> {

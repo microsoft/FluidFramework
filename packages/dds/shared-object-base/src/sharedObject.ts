@@ -625,11 +625,11 @@ export abstract class SharedObjectCore<
 		this.verifyNotClosed(); // This will result in container closure.
 
 		getSharedObjectProtocol(this).processMessages(messagesCollection, (messages) =>
-			this.processOrdinaryMessages(messages),
+			this.#processOrdinaryMessages(messages),
 		);
 	}
 
-	private processOrdinaryMessages(messagesCollection: IRuntimeMessageCollection): void {
+	#processOrdinaryMessages(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 
 		// Decode any handles in the contents before processing the messages.

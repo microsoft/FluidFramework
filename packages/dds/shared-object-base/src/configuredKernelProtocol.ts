@@ -27,28 +27,38 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 {
 	private submittingControl = false;
 
+	readonly #submit: (contents: unknown, metadata: unknown) => void;
+	readonly #verifyCanSubmit: () => void;
+	readonly #verifyConfigurationEnabled: () => void;
+	readonly #recordResult: (result: ConfigurationChangeResult<TConfig>) => void;
+
 	public constructor(
 		public readonly controller: ChannelConfigurationController<TConfig>,
-		private readonly submit: (contents: unknown, metadata: unknown) => void,
-		private readonly verifyCanSubmit: () => void,
-		private readonly verifyConfigurationEnabled: () => void,
-		private readonly recordResult: (result: ConfigurationChangeResult<TConfig>) => void,
-	) {}
+		submit: (contents: unknown, metadata: unknown) => void,
+		verifyCanSubmit: () => void,
+		verifyConfigurationEnabled: () => void,
+		recordResult: (result: ConfigurationChangeResult<TConfig>) => void,
+	) {
+		this.#submit = submit;
+		this.#verifyCanSubmit = verifyCanSubmit;
+		this.#verifyConfigurationEnabled = verifyConfigurationEnabled;
+		this.#recordResult = recordResult;
+	}
 
 	public submitWhileDetached(contents: unknown, metadata: unknown): void {}
 
 	public submitControl(contents: unknown, metadata: unknown): void {
-		this.verifyConfigurationEnabled();
+		this.#verifyConfigurationEnabled();
 		this.submittingControl = true;
 		try {
-			this.submit(contents, metadata);
+			this.#submit(contents, metadata);
 		} finally {
 			this.submittingControl = false;
 		}
 	}
 
 	public prepareLocalMessage(content: unknown): unknown {
-		this.verifyCanSubmit();
+		this.#verifyCanSubmit();
 		if (this.submittingControl) {
 			// Consume the bypass before submission can synchronously trigger another DDS edit.
 			this.submittingControl = false;
@@ -73,7 +83,7 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 		for (const [messageIndex, message] of messages.messagesContent.entries()) {
 			if (hasChannelConfigurationMarker(message.contents)) {
 				flush();
-				this.verifyConfigurationEnabled();
+				this.#verifyConfigurationEnabled();
 				const proposal = parseChannelConfigurationMessage(message.contents);
 				const result = this.controller.process(
 					proposal,
@@ -86,7 +96,7 @@ export class ConfiguredKernelProtocol<TConfig extends ChannelConfiguration>
 					},
 					message.localOpMetadata,
 				);
-				this.recordResult(result);
+				this.#recordResult(result);
 			} else {
 				ordinary.push(message);
 			}
