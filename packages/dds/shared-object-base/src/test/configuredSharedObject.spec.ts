@@ -34,6 +34,7 @@ import {
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { timeoutAwait } from "@fluidframework/test-runtime-utils/internal/timeoutUtils";
 
 import type { ChannelConfigurationMessageV1 } from "../channelConfigurationFormat.js";
 import {
@@ -628,7 +629,9 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 					stage === "load"
 						? await reader.load(runtime, "loading", services, reader.attributes)
 						: reader.create(runtime, "creating");
-				await Promise.all(rejected);
+				await timeoutAwait(Promise.all(rejected), {
+					errorMsg: `Configuration requests made during ${stage} were not rejected`,
+				});
 				assert.equal(rejected.length, stage === "load" ? 4 : 2);
 				assert.equal(initialized.config.current.revision, 0);
 				const result = await initialized.config.requestChange({ retain: true });
@@ -663,13 +666,16 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				}
 				assert(shared !== undefined);
 				for (const method of ["requestChange", "requestChangeLazy"] as const) {
-					await assert.rejects(
-						shared.config[method]({}),
-						validateAssertionError(
-							stage === "load"
-								? "Cannot submit while loading configured shared object state"
-								: "Cannot change configuration during shared object initialization",
+					await timeoutAwait(
+						assert.rejects(
+							shared.config[method]({}),
+							validateAssertionError(
+								stage === "load"
+									? "Cannot submit while loading configured shared object state"
+									: "Cannot change configuration during shared object initialization",
+							),
 						),
+						{ errorMsg: `${method} was not rejected after ${stage} failed` },
 					);
 				}
 			});
@@ -823,7 +829,9 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				assert(!("configuration" in roundTripAttributes(shared)));
 				assert(!("configuration" in reader.attributes));
 				test.runtime.dispose();
-				await pending;
+				await timeoutAwait(pending, {
+					errorMsg: "Idle lazy request was not rejected on runtime disposal",
+				});
 			});
 
 			it("submits a queued control before the triggering ordinary op and replays that op with the accepted configuration", async () => {
@@ -854,7 +862,10 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 						submitted.map((message) => message.metadata),
 					),
 				);
-				const result = await request;
+				const result = await timeoutAwait(request, {
+					errorMsg:
+						"Lazy request did not resolve after the control and triggering op were sequenced",
+				});
 				await completion;
 				assert.equal(result.status, "applied");
 				assert.equal(result.source, "sequenced");
@@ -878,7 +889,9 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 					const request = shared.config.requestChangeLazy({ retain: true });
 					assert.deepEqual(shared.config.current, { revision: 1, values: { retain: true } });
 					assert("configuration" in roundTripAttributes(shared));
-					const result = await request;
+					const result = await timeoutAwait(request, {
+						errorMsg: `Unpublished lazy request did not resolve locally (attachState=${attachState})`,
+					});
 					assert.equal(result.status, "applied");
 					assert.equal(result.source, "local");
 					assert.deepEqual(submitted, []);
@@ -909,37 +922,61 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 						submitted.map((message) => message.metadata),
 					),
 				);
-				const result = await request;
+				const result = await timeoutAwait(request, {
+					errorMsg:
+						"Disconnected lazy request did not resolve after reconnect and a fresh edit",
+				});
 				assert.equal(result.status, "applied");
 			});
 
-			it("does not flush or rebase the captured revision when eager and remote changes advance it", async () => {
+			it("flushes a lazy request before an eager request and applies the lazy change", async () => {
+				const { runtime, services, submitted, delta } = harness();
+				const shared = factory().create(runtime, "ordered-configuration");
+				shared.connect(services);
+				const lazy = shared.config.requestChangeLazy({ retain: true });
+				const eager = shared.config.requestChange({ retain: false });
+				assert.deepEqual(
+					submitted.map((message) => message.contents),
+					[barrier(0, true), barrier(0, false)],
+				);
+				assert.equal(shared.config.current.revision, 0);
+				delta.processMessages(
+					collection(
+						submitted.map((message) => message.contents),
+						true,
+						submitted.map((message) => message.metadata),
+					),
+				);
+				const results = await timeoutAwait(Promise.all([lazy, eager]), {
+					errorMsg:
+						"Lazy and eager requests did not resolve after sequencing in request order",
+				});
+				assert.deepEqual(
+					results.map((result) => result.status),
+					["applied", "conflict"],
+				);
+				assert.deepEqual(shared.config.current, { revision: 1, values: { retain: true } });
+			});
+
+			it("does not flush or rebase the captured revision when remote changes advance it", async () => {
 				const { runtime, services, submitted, delta } = harness();
 				const shared = factory().create(runtime, "conflict");
 				shared.connect(services);
 				const lazy = shared.config.requestChangeLazy({ retain: true });
-				const eager = shared.config.requestChange({ retain: false });
-				assert.equal(submitted.length, 1);
-				const eagerProposal = submitted[0];
-				assert(eagerProposal !== undefined);
-				assert.deepEqual(eagerProposal.contents, barrier(0, false));
-				delta.processMessages(
-					collection([eagerProposal.contents], true, [eagerProposal.metadata]),
-				);
-				const eagerResult = await eager;
-				assert.equal(eagerResult.status, "applied");
-				delta.processMessages(collection([barrier(1, true)]));
+				delta.processMessages(collection([barrier(0, false), barrier(1, true)]));
 				assert.equal(shared.config.current.revision, 2);
-				assert.equal(submitted.length, 1);
+				assert.equal(submitted.length, 0);
 				shared.edit("trigger");
-				const lazyProposal = submitted[1];
+				const lazyProposal = submitted[0];
 				assert(lazyProposal !== undefined);
 				assert.deepEqual(lazyProposal.contents, barrier(0, true));
-				assert.equal(submitted[2]?.contents, "trigger");
+				assert.equal(submitted[1]?.contents, "trigger");
 				delta.processMessages(
 					collection([lazyProposal.contents], true, [lazyProposal.metadata]),
 				);
-				const result = await lazy;
+				const result = await timeoutAwait(lazy, {
+					errorMsg: "Lazy request did not resolve after conflicting with remote changes",
+				});
 				assert.equal(result.status, "conflict");
 				assert.deepEqual(result.current, { revision: 2, values: { retain: true } });
 			});
@@ -953,8 +990,12 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 					/disposed/,
 				);
 				runtime.dispose();
-				await pending;
-				await assert.rejects(shared.config.requestChangeLazy({}), /disposed/);
+				await timeoutAwait(pending, {
+					errorMsg: "Unsent lazy request was not rejected on runtime disposal",
+				});
+				await timeoutAwait(assert.rejects(shared.config.requestChangeLazy({}), /disposed/), {
+					errorMsg: "New lazy request was not rejected after runtime disposal",
+				});
 				assert.deepEqual(submitted, []);
 				assert.equal(shared.config.current.revision, 0);
 				assert(!("configuration" in shared.attributes));
@@ -965,12 +1006,18 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				const shared = factory().create(runtime, "invalid-lazy");
 				shared.connect(services);
 				const unsupported = { retain: true, unsupported: true };
-				await assert.rejects(
-					shared.config.requestChangeLazy(unsupported),
-					/Unsupported channel configuration values/,
+				await timeoutAwait(
+					assert.rejects(
+						shared.config.requestChangeLazy(unsupported),
+						/Unsupported channel configuration values/,
+					),
+					{ errorMsg: "Lazy request with unsupported values was not rejected at invocation" },
 				);
 				runtime.notifyReadOnlyState(true);
-				await assert.rejects(shared.config.requestChangeLazy({ retain: true }), /read-only/);
+				await timeoutAwait(
+					assert.rejects(shared.config.requestChangeLazy({ retain: true }), /read-only/),
+					{ errorMsg: "Lazy request on a read-only runtime was not rejected at invocation" },
+				);
 				runtime.notifyReadOnlyState(false);
 				shared.edit("fresh");
 				assert.deepEqual(submitted, [{ contents: "fresh", metadata: undefined }]);
@@ -1004,7 +1051,10 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				delta.reSubmit(proposal.contents, proposal.metadata, false);
 				assert.deepEqual(submitted[7], proposal);
 				delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
-				const result = await request;
+				const result = await timeoutAwait(request, {
+					errorMsg:
+						"Lazy request did not resolve after replay suppression and control resubmission",
+				});
 				assert.equal(result.status, "applied");
 			});
 		});

@@ -11,6 +11,7 @@ import { strict as assert } from "node:assert";
 import { onAssertionFailure } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import { timeoutAwait } from "@fluidframework/test-runtime-utils/internal/timeoutUtils";
 
 import {
 	ChannelConfigurationController,
@@ -106,7 +107,15 @@ describe("ChannelConfigurationController", () => {
 			controller.submitOrdinaryMessage(() => {});
 			assert.equal(submitted.length, 1);
 			controller.process(sent.message, context(), sent.metadata);
-			assert.equal((await request).status, "conflict");
+			assert.equal(
+				(
+					await timeoutAwait(request, {
+						errorMsg:
+							"Lazy request did not resolve after its conflicting proposal was processed",
+					})
+				).status,
+				"conflict",
+			);
 			await completion;
 			assert.equal(settled, true);
 		});
@@ -129,25 +138,119 @@ describe("ChannelConfigurationController", () => {
 			for (const item of submitted) {
 				controller.process(item.message, context(), item.metadata);
 			}
-			assert.equal((await first).status, "applied");
-			assert.equal((await second).status, "conflict");
+			assert.equal(
+				(
+					await timeoutAwait(first, {
+						errorMsg: "First lazy request did not resolve after its proposal was accepted",
+					})
+				).status,
+				"applied",
+			);
+			assert.equal(
+				(
+					await timeoutAwait(second, {
+						errorMsg: "Second lazy request did not resolve after its proposal conflicted",
+					})
+				).status,
+				"conflict",
+			);
 		});
 
-		it("does not flush when an eager request submits and sequences first", async () => {
+		it("flushes a lazy request before a later eager request so the lazy change wins", async () => {
 			const { controller, submitted } = harness();
 			const lazy = controller.requestChangeLazy({});
 			const eager = controller.requestChange({ enabled: false });
-			assert.equal(submitted.length, 1);
-			const eagerOp = submitted.at(0);
-			assert(eagerOp !== undefined);
-			controller.process(eagerOp.message, context(), eagerOp.metadata);
-			assert.equal((await eager).status, "applied");
-			controller.submitOrdinaryMessage(() => {});
-			const lazyOp = submitted.at(1);
+			assert.equal(submitted.length, 2);
+			const lazyOp = submitted.at(0);
+			const eagerOp = submitted.at(1);
 			assert(lazyOp !== undefined);
-			assert.equal(lazyOp.message.expectedRevision, 0);
+			assert(eagerOp !== undefined);
+			assert.deepEqual(lazyOp.message, proposal(0, {}));
+			assert.deepEqual(eagerOp.message, proposal(0, { enabled: false }));
 			controller.process(lazyOp.message, context(), lazyOp.metadata);
-			assert.equal((await lazy).status, "conflict");
+			controller.process(eagerOp.message, context(), eagerOp.metadata);
+			assert.equal(
+				(
+					await timeoutAwait(lazy, {
+						errorMsg:
+							"Lazy request did not resolve after being flushed ahead of an eager request",
+					})
+				).status,
+				"applied",
+			);
+			assert.equal(
+				(
+					await timeoutAwait(eager, {
+						errorMsg:
+							"Eager request did not resolve after conflicting with the earlier lazy change",
+					})
+				).status,
+				"conflict",
+			);
+			assert.deepEqual(controller.current, { revision: 1, values: {} });
+			controller.submitOrdinaryMessage(() => {});
+			assert.equal(submitted.length, 2);
+		});
+
+		it("captures the eager revision before a lazy flush with synchronous delivery", async () => {
+			const { controller } = harness({
+				submit: (message, metadata) => controller.process(message, context(), metadata),
+			});
+			const lazy = controller.requestChangeLazy({ enabled: false });
+			const eager = controller.requestChange({});
+			const results = await timeoutAwait(Promise.all([lazy, eager]), {
+				errorMsg: "Lazy and eager requests did not resolve after synchronous delivery",
+			});
+			assert.deepEqual(
+				results.map((result) => result.status),
+				["applied", "conflict"],
+			);
+			assert.deepEqual(controller.current, { revision: 1, values: { enabled: false } });
+		});
+
+		it("rejects the eager request without submitting it if the lazy flush fails", async () => {
+			const failure = new Error("Lazy submission failed");
+			let submissions = 0;
+			const { controller } = harness({
+				submit: () => {
+					submissions++;
+					throw failure;
+				},
+			});
+			const lazy = assert.rejects(
+				controller.requestChangeLazy({ enabled: false }),
+				(error) => error === failure,
+			);
+			const eager = assert.rejects(controller.requestChange({}), (error) => error === failure);
+			await timeoutAwait(Promise.all([lazy, eager]), {
+				errorMsg: "Lazy and eager requests were not rejected after the lazy flush failed",
+			});
+			assert.equal(submissions, 1);
+			assert.equal(controller.current.revision, 0);
+		});
+
+		it("does not flush a lazy request when a later eager request fails validation", async () => {
+			const { controller, submitted } = harness();
+			const lazy = controller.requestChangeLazy({});
+			await timeoutAwait(
+				assert.rejects(controller.requestChange({ unsupported: true }), /Unsupported/),
+				{ errorMsg: "Unsupported eager configuration was not rejected before the lazy flush" },
+			);
+			assert.equal(submitted.length, 0);
+			controller.submitOrdinaryMessage(() => {});
+			assert.equal(submitted.length, 1);
+			const sent = submitted.at(0);
+			assert(sent !== undefined);
+			controller.process(sent.message, context(), sent.metadata);
+			assert.equal(
+				(
+					await timeoutAwait(lazy, {
+						errorMsg:
+							"Lazy request did not resolve after an invalid eager request was rejected",
+					})
+				).status,
+				"applied",
+			);
 		});
 
 		it("applies unattached replacements synchronously without queued submission", async () => {
@@ -158,7 +261,14 @@ describe("ChannelConfigurationController", () => {
 			const change = changes.at(0);
 			assert(change !== undefined);
 			assert.equal(change.source, "local");
-			assert.equal((await request).source, "local");
+			assert.equal(
+				(
+					await timeoutAwait(request, {
+						errorMsg: "Unattached lazy request did not resolve after local application",
+					})
+				).source,
+				"local",
+			);
 			controller.submitOrdinaryMessage(() => {});
 			assert.deepEqual(submitted, []);
 		});
@@ -166,13 +276,15 @@ describe("ChannelConfigurationController", () => {
 		it("validates values and transitions before queueing, and rejects overflow", async () => {
 			for (const attached of [true, false]) {
 				const { controller, submitted } = harness({ isAttached: () => attached });
-				await assert.rejects(
-					controller.requestChangeLazy({ unsupported: true }),
-					/Unsupported/,
+				await timeoutAwait(
+					assert.rejects(controller.requestChangeLazy({ unsupported: true }), /Unsupported/),
+					{
+						errorMsg: `Unsupported lazy configuration was not rejected (attached=${attached})`,
+					},
 				);
-				await assert.rejects(
-					controller.requestChangeLazy({ unsafe: true }),
-					/Unsafe transition/,
+				await timeoutAwait(
+					assert.rejects(controller.requestChangeLazy({ unsafe: true }), /Unsafe transition/),
+					{ errorMsg: `Unsafe lazy transition was not rejected (attached=${attached})` },
 				);
 				controller.submitOrdinaryMessage(() => {});
 				assert.equal(controller.current.revision, 0);
@@ -181,7 +293,9 @@ describe("ChannelConfigurationController", () => {
 			const { controller: overflowed } = harness({
 				snapshot: { version: 1, revision: Number.MAX_SAFE_INTEGER, values: {} },
 			});
-			await assert.rejects(overflowed.requestChangeLazy({}), /overflow/);
+			await timeoutAwait(assert.rejects(overflowed.requestChangeLazy({}), /overflow/), {
+				errorMsg: "Lazy request was not rejected for configuration revision overflow",
+			});
 		});
 
 		it("rechecks lifecycle eligibility when flushing and rejects the failed request", async () => {
@@ -189,22 +303,26 @@ describe("ChannelConfigurationController", () => {
 			const { controller, submitted } = harness({
 				verifyCanChange: () => assert(allowed, "Submission prohibited"),
 			});
-			await assert.rejects(controller.requestChangeLazy({}), /Submission prohibited/);
+			await timeoutAwait(
+				assert.rejects(controller.requestChangeLazy({}), /Submission prohibited/),
+				{ errorMsg: "Lazy request was not rejected by its initial lifecycle check" },
+			);
 			allowed = true;
 			const queued = assert.rejects(controller.requestChangeLazy({}), /Submission prohibited/);
 			allowed = false;
 			assert.throws(() => controller.submitOrdinaryMessage(() => {}), /Submission prohibited/);
-			await queued;
+			await timeoutAwait(queued, {
+				errorMsg: "Queued lazy request was not rejected when the flush lifecycle check failed",
+			});
 			assert.deepEqual(submitted, []);
 			allowed = true;
-			controller.submitOrdinaryMessage(() => {});
+			assert.throws(() => controller.submitOrdinaryMessage(() => {}), /Submission prohibited/);
 			assert.deepEqual(submitted, []);
-			controller.dispose();
 		});
 
-		it("rejects failed submissions, propagates the error, and leaves later requests queued", async () => {
+		it("treats a failed submission as fatal and rejects all outstanding requests", async () => {
 			const failure = new Error("Transport failed");
-			let fail = true;
+			let fail = false;
 			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
 			const { controller } = harness({
 				submit: (message, metadata) => {
@@ -214,26 +332,35 @@ describe("ChannelConfigurationController", () => {
 					sent.push({ message, metadata });
 				},
 			});
+			const pending = assert.rejects(
+				controller.requestChange({}),
+				(error) => error === failure,
+			);
+			fail = true;
 			const rejected = assert.rejects(
 				controller.requestChangeLazy({}),
 				(error) => error === failure,
 			);
-			const surviving = controller.requestChangeLazy({ enabled: false });
-			assert.throws(
-				() => controller.submitOrdinaryMessage(() => {}),
+			const queued = assert.rejects(
+				controller.requestChangeLazy({ enabled: false }),
 				(error) => error === failure,
 			);
-			await rejected;
+			assert.throws(
+				() => controller.submitOrdinaryMessage(() => assert.fail("Triggering op sent")),
+				(error) => error === failure,
+			);
+			await timeoutAwait(Promise.all([pending, rejected, queued]), {
+				errorMsg:
+					"Outstanding requests were not rejected after a lazy control submission failed",
+			});
 			assert.equal(controller.current.revision, 0);
-			assert.equal(sent.length, 0);
-			fail = false;
-			controller.submitOrdinaryMessage(() => {});
 			assert.equal(sent.length, 1);
-			const survivingOp = sent.at(0);
-			assert(survivingOp !== undefined);
-			assert.deepEqual(survivingOp.message, proposal(0, { enabled: false }));
-			controller.process(survivingOp.message, context(), survivingOp.metadata);
-			assert.equal((await surviving).status, "applied");
+			fail = false;
+			assert.throws(
+				() => controller.submitOrdinaryMessage(() => assert.fail("Op sent after disposal")),
+				(error) => error === failure,
+			);
+			assert.equal(sent.length, 1);
 		});
 
 		it("asserts on reentrant ordinary and configuration submissions during a lazy flush", async () => {
@@ -261,62 +388,49 @@ describe("ChannelConfigurationController", () => {
 				controller.requestChangeLazy({}),
 			];
 			controller.submitOrdinaryMessage(() => assert.equal(sent.length, 2));
-			await Promise.all(rejected);
+			await timeoutAwait(Promise.all(rejected), {
+				errorMsg: "Reentrant configuration requests were not rejected during the lazy flush",
+			});
 			assert.equal(sent.length, 2);
 			for (const item of sent) {
 				controller.process(item.message, context(), item.metadata);
 			}
 			assert.deepEqual(
-				(await Promise.all(requests)).map((result) => result.status),
+				(
+					await timeoutAwait(Promise.all(requests), {
+						errorMsg:
+							"Lazy requests did not resolve after sequencing the reentrancy-safe flush",
+					})
+				).map((result) => result.status),
 				["applied", "conflict"],
 			);
 		});
 
-		it("propagates an uncaught reentrancy assertion and resets the flush guard", async () => {
-			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
-			let fail = true;
+		it("treats an uncaught reentrancy assertion during submission as fatal", async () => {
 			const { controller } = harness({
-				submit: (message, metadata) => {
-					if (fail) {
-						fail = false;
-						controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent"));
-					}
-					sent.push({ message, metadata });
+				submit: () => {
+					controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent"));
 				},
 			});
 			const rejected = assert.rejects(
 				controller.requestChangeLazy({}),
 				/reentrantly while flushing lazy configuration/,
 			);
-			const surviving = controller.requestChangeLazy({ enabled: false });
+			const queued = assert.rejects(
+				controller.requestChangeLazy({ enabled: false }),
+				/reentrantly while flushing lazy configuration/,
+			);
 			assert.throws(
 				() => controller.submitOrdinaryMessage(() => assert.fail("Triggering op sent")),
 				/reentrantly while flushing lazy configuration/,
 			);
-			await rejected;
-			assert.equal(sent.length, 0);
-			controller.submitOrdinaryMessage(() => {});
-			assert.equal(sent.length, 1);
-			const survivingOp = sent.at(0);
-			assert(survivingOp !== undefined);
-			controller.process(survivingOp.message, context(), survivingOp.metadata);
-			assert.equal((await surviving).status, "applied");
-		});
-
-		it("waits for a later ordinary op for requests created during submission", async () => {
-			const { controller, submitted } = harness();
-			let request: ReturnType<typeof controller.requestChangeLazy> | undefined;
-			controller.submitOrdinaryMessage(() => {
-				request = controller.requestChangeLazy({});
+			await timeoutAwait(Promise.all([rejected, queued]), {
+				errorMsg: "Lazy requests were not rejected after the uncaught reentrancy assertion",
 			});
-			assert(request !== undefined);
-			assert.equal(submitted.length, 0);
-			controller.submitOrdinaryMessage(() => {});
-			assert.equal(submitted.length, 1);
-			const sent = submitted.at(0);
-			assert(sent !== undefined);
-			controller.process(sent.message, context(), sent.metadata);
-			assert.equal((await request).status, "applied");
+			assert.throws(
+				() => controller.verifyCanSubmit(),
+				/reentrantly while flushing lazy configuration/,
+			);
 		});
 
 		it("prohibits lazy requests and flushing inside configuration callbacks", async () => {
@@ -329,24 +443,35 @@ describe("ChannelConfigurationController", () => {
 					/configuration callback/,
 				);
 			});
-			await controller.requestChangeLazy({});
-			await nested;
+			await timeoutAwait(controller.requestChangeLazy({}), {
+				errorMsg: "Local lazy request did not resolve after its configuration callback",
+			});
+			assert(nested !== undefined);
+			await timeoutAwait(nested, {
+				errorMsg: "Nested lazy request was not rejected from a configuration callback",
+			});
 		});
 
 		it("rejects deferred and submitted requests together on disposal", async () => {
 			const { controller } = harness();
 			const failure = new Error("Runtime closed");
 			const pending = [
-				assert.rejects(controller.requestChangeLazy({}), (error) => error === failure),
 				assert.rejects(controller.requestChange({}), (error) => error === failure),
+				assert.rejects(controller.requestChangeLazy({}), (error) => error === failure),
 			];
 			controller.dispose(failure);
-			await Promise.all(pending);
+			await timeoutAwait(Promise.all(pending), {
+				errorMsg:
+					"Deferred and submitted configuration requests were not rejected on disposal",
+			});
 			assert.throws(
 				() => controller.submitOrdinaryMessage(() => {}),
 				(error) => error === failure,
 			);
-			await assert.rejects(controller.requestChangeLazy({}), (error) => error === failure);
+			await timeoutAwait(
+				assert.rejects(controller.requestChangeLazy({}), (error) => error === failure),
+				{ errorMsg: "New lazy request was not rejected after controller disposal" },
+			);
 		});
 
 		it("uses ordinary control resubmission, rollback, and stash after materialization", async () => {
@@ -358,7 +483,9 @@ describe("ChannelConfigurationController", () => {
 			controller.reSubmit(first.message, first.metadata);
 			assert.deepEqual(submitted.at(1), first);
 			controller.rollback(first.metadata);
-			await rolledBack;
+			await timeoutAwait(rolledBack, {
+				errorMsg: "Materialized lazy request was not rejected after rollback",
+			});
 			controller.applyStashedOp(first.message);
 			const restored = submitted.at(2);
 			assert(restored !== undefined);
@@ -813,7 +940,7 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(controller.current.revision, Number.MAX_SAFE_INTEGER);
 	});
 
-	it("rejects a failed submission without leaking or cancelling other pending requests", async () => {
+	it("treats a failed eager submission as fatal and rejects other pending requests", async () => {
 		let fail = false;
 		const submitted: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
 		const { controller } = harness({
@@ -824,14 +951,14 @@ describe("ChannelConfigurationController", () => {
 				submitted.push({ message, metadata });
 			},
 		});
-		const first = controller.requestChange({});
+		const first = assert.rejects(controller.requestChange({}), /Submit failed/);
 		fail = true;
 		await assert.rejects(controller.requestChange({ enabled: false }), /Submit failed/);
-		const sent = submitted.at(0);
-		assert(sent !== undefined);
-		controller.process(sent.message, context(), sent.metadata);
-		assert.equal((await first).status, "applied");
-		controller.dispose();
+		await timeoutAwait(first, {
+			errorMsg: "Pending request was not rejected after an eager control submission failed",
+		});
+		assert.equal(submitted.length, 1);
+		assert.throws(() => controller.verifyCanSubmit(), /Submit failed/);
 	});
 
 	it("handles synchronous delivery by a submit callback without losing completion metadata", async () => {

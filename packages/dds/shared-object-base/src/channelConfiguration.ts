@@ -171,6 +171,9 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 	 * Requests a full replacement of the configuration.
 	 * Requests are applied with first-write-wins semantics using the current revision
 	 * for compare-and-swap.
+	 * Attached requests flush earlier deferred requests before submitting, without rebasing
+	 * any request's captured revision.
+	 * Configuration requests made reentrantly during submission are unsupported.
 	 *
 	 * @param next - The complete set of configuration values.
 	 * @returns The applied or conflicting outcome. Rejects if validation or submission fails,
@@ -180,11 +183,12 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 
 	/**
 	 * Requests a full replacement, deferring attached submission until this channel next submits
-	 * a fresh ordinary op. The proposal precedes that op and uses the revision captured now,
-	 * not the revision at submission. Unattached changes apply immediately, as with requestChange.
+	 * a fresh ordinary op or makes a valid eager configuration request. The proposal precedes
+	 * that submission and uses the revision captured now, not the revision at submission.
+	 * Unattached changes apply immediately, as with requestChange.
 	 *
 	 * Deferred requests are process-local: they do not dirty the channel or appear in summaries
-	 * or stashed ops. Configuration ops, resubmission, and stash replay do not flush them.
+	 * or stashed ops. Incoming configuration ops, resubmission, and stash replay do not flush them.
 	 * Multiple requests are not coalesced. Once submitted, normal acknowledgement, resubmission,
 	 * stash, and rollback handling applies.
 	 *
@@ -196,6 +200,7 @@ export interface ChannelConfigurationFacet<TConfig extends ChannelConfiguration>
 	 *
 	 * Synchronous callbacks during the flush must not submit another ordinary op or request
 	 * another configuration change.
+	 * Configuration requests made reentrantly during submission are unsupported.
 	 *
 	 * @param next - The complete set of configuration values. Omit a key to remove it.
 	 * @returns The applied or conflicting outcome. Remains pending while the channel is idle.
@@ -330,6 +335,9 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 				this.#processing = false;
 			}
 		}
+		if (!lazy) {
+			this.#flushLazyRequests();
+		}
 		return new Promise<ConfigurationChangeResult<TConfig>>((resolve, reject) => {
 			const metadata = {};
 			this.#pending.set(metadata, { resolve, reject });
@@ -347,6 +355,11 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	 * the triggering op. Replay must not flush new intent into pending-op capture.
 	 */
 	public submitOrdinaryMessage(submit: () => void): void {
+		this.#flushLazyRequests();
+		submit();
+	}
+
+	#flushLazyRequests(): void {
 		this.verifyCanSubmit();
 		this.#verifyNotFlushingLazy();
 		this.#flushingLazy = true;
@@ -359,7 +372,6 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			this.#flushingLazy = false;
 		}
 		this.verifyCanSubmit();
-		submit();
 	}
 
 	#verifyNotFlushingLazy(): void {
@@ -375,11 +387,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			this.options.verifyCanChange();
 			this.options.submit(message, metadata);
 		} catch (error) {
-			const pending = this.#pending.get(metadata);
-			this.#pending.delete(metadata);
-			pending?.reject(
-				error instanceof Error ? error : new Error("Failed to submit channel configuration"),
-			);
+			this.dispose(error);
 			throw error;
 		}
 	}

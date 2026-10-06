@@ -31,6 +31,7 @@ import {
 	MockStorage,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { timeoutAwait } from "@fluidframework/test-runtime-utils/internal/timeoutUtils";
 
 import type {
 	ChannelConfigurationDefinition,
@@ -301,8 +302,12 @@ describe("configured kernel composition", () => {
 					test.submitted.map(({ metadata }) => metadata),
 				),
 			);
-			const firstResult = await first;
-			const secondResult = await second;
+			const firstResult = await timeoutAwait(first, {
+				errorMsg: "First lazy kernel request did not resolve after its proposal was accepted",
+			});
+			const secondResult = await timeoutAwait(second, {
+				errorMsg: "Second lazy kernel request did not resolve after its proposal conflicted",
+			});
 			assert.equal(firstResult.status, "applied");
 			assert.equal(secondResult.status, "conflict");
 			assert.deepEqual(
@@ -332,7 +337,10 @@ describe("configured kernel composition", () => {
 					test.submitted.map(({ metadata }) => metadata),
 				),
 			);
-			const result = await request;
+			const result = await timeoutAwait(request, {
+				errorMsg:
+					"Lazy kernel request did not resolve after dirty-listener edits were sequenced",
+			});
 			assert.equal(result.status, "applied");
 		});
 
@@ -369,7 +377,9 @@ describe("configured kernel composition", () => {
 						submitted.map(({ metadata: localMetadata }) => localMetadata),
 					),
 				);
-				const result = await request;
+				const result = await timeoutAwait(request, {
+					errorMsg: `Lazy kernel request did not resolve after payload preparation succeeded (onlyBind=${onlyBind})`,
+				});
 				assert.equal(result.status, "applied");
 				const observed = shared.observed.at(-1);
 				assert(Array.isArray(observed));
@@ -402,11 +412,16 @@ describe("configured kernel composition", () => {
 				() => shared.edit("not submitted"),
 				(error) => error === failure,
 			);
-			await rejected;
+			await timeoutAwait(rejected, {
+				errorMsg: "Lazy kernel request was not rejected after control submission failed",
+			});
 			assert.equal(submitted.length, 0);
 			delta.submit = submit;
-			shared.edit("next");
-			assert.deepEqual(submitted, [{ contents: "next", metadata: undefined }]);
+			assert.throws(
+				() => shared.edit("next"),
+				(error) => error === failure,
+			);
+			assert.equal(submitted.length, 0);
 			assert(!("configuration" in shared.attributes));
 		});
 
@@ -421,7 +436,9 @@ describe("configured kernel composition", () => {
 			);
 			events.once("submit", () => test.runtime.dispose());
 			assert.throws(() => shared.edit("ordinary"), /disposed/);
-			await rejected;
+			await timeoutAwait(rejected, {
+				errorMsg: "Lazy kernel request was not rejected on disposal during its flush",
+			});
 			assert.deepEqual(
 				test.submitted.map(({ contents }) => contents),
 				[barrier(0, true)],
@@ -459,7 +476,10 @@ describe("configured kernel composition", () => {
 					submitted.map(({ metadata }) => metadata),
 				),
 			);
-			const result = await request;
+			const result = await timeoutAwait(request, {
+				errorMsg:
+					"Flushed lazy kernel request did not resolve after ordinary submission failed",
+			});
 			assert.equal(result.status, "applied");
 		});
 
@@ -482,7 +502,10 @@ describe("configured kernel composition", () => {
 			assert(!("configuration" in test.shared.attributes));
 			assert.equal(test.errors.length, 0);
 			test.runtime.dispose();
-			await pending;
+			await timeoutAwait(pending, {
+				errorMsg:
+					"Lazy kernel intent preserved during stash capture was not rejected on disposal",
+			});
 		});
 	});
 
