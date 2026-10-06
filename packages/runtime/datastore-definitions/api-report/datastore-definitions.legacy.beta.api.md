@@ -119,7 +119,7 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
     (event: "attached", listener: () => void): any;
     // (undocumented)
-    (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
+    (event: "op", listener: (message: ISequencedRuntimeMessage) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
