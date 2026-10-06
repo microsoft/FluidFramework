@@ -1,0 +1,997 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+/* eslint-disable unicorn/no-null -- JSON null must be accepted, unlike undefined. */
+/* eslint-disable unicorn/no-await-expression-member -- Read one field from each request outcome. */
+
+import { strict as assert } from "node:assert";
+
+import { onAssertionFailure } from "@fluidframework/core-utils/internal";
+import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
+import {
+	ChannelConfigurationController,
+	type ChannelConfiguration,
+	type ChannelConfigurationChange,
+	type ChannelConfigurationControllerOptions,
+	type ChannelConfigurationDefinition,
+	type ChannelConfigurationAttachedContext,
+} from "../channelConfiguration.js";
+import {
+	parseChannelConfigurationSnapshot,
+	hasChannelConfigurationMarker,
+	parseChannelConfigurationMessage,
+	type ChannelConfigurationMessageV1,
+} from "../channelConfigurationFormat.js";
+
+const definition: ChannelConfigurationDefinition<ChannelConfiguration> = {
+	defaultConfiguration: {},
+	isSupported: (values): values is ChannelConfiguration =>
+		!Object.hasOwn(values, "unsupported"),
+	validateTransition: (_previous, next) => {
+		if (next.unsafe === true) {
+			throw new Error("Unsafe transition");
+		}
+	},
+};
+
+function harness(
+	options: Partial<ChannelConfigurationControllerOptions<ChannelConfiguration>> = {},
+): {
+	controller: ChannelConfigurationController<ChannelConfiguration>;
+	submitted: { message: ChannelConfigurationMessageV1; metadata: unknown }[];
+	changes: ChannelConfigurationChange<ChannelConfiguration>[];
+} {
+	const submitted: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
+	const changes: ChannelConfigurationChange<ChannelConfiguration>[] = [];
+	const controller = new ChannelConfigurationController({
+		definition,
+		snapshot: { version: 1, revision: 0, values: { enabled: true } },
+		isAttached: () => true,
+		verifyCanChange: () => {},
+		submit: (message, metadata) => submitted.push({ message, metadata }),
+		...options,
+	});
+	controller.on("changed", (change) => changes.push(change));
+	return { controller, submitted, changes };
+}
+
+function context(
+	local: boolean = true,
+	messageIndex: number = 0,
+): ChannelConfigurationAttachedContext {
+	return {
+		source: "sequenced",
+		sequenceNumber: 10,
+		clientSequenceNumber: messageIndex + 1,
+		messageIndex,
+		local,
+	};
+}
+
+function proposal(expectedRevision: number, values: unknown): unknown {
+	return { version: 1, isChannelConfigurationOp: true, expectedRevision, values };
+}
+
+function at<T>(values: readonly T[], index: number = 0): T {
+	const value = values[index];
+	assert(value !== undefined);
+	return value;
+}
+
+describe("ChannelConfigurationController", () => {
+	describe("lazy requests", () => {
+		it("captures intent without submitting or changing state, even across a newer barrier", async () => {
+			const { controller, submitted, changes } = harness();
+			const initial = controller.current;
+			const values = { nested: [{ enabled: true }] };
+			const request = controller.requestChangeLazy(values);
+			let settled = false;
+			const completion = request.then(() => {
+				settled = true;
+			});
+			await Promise.resolve();
+			assert.equal(settled, false);
+			assert.equal(controller.current, initial);
+			assert.equal(submitted.length, 0);
+			assert.deepEqual(changes, []);
+			controller.process(proposal(0, {}), context(false));
+			assert.equal(submitted.length, 0);
+			controller.submitOrdinaryMessage(() => {});
+			const sent = at(submitted);
+			assert.equal(sent.message.expectedRevision, 0);
+			assert.equal(sent.message.values, values);
+			controller.submitOrdinaryMessage(() => {});
+			assert.equal(submitted.length, 1);
+			controller.process(sent.message, context(), sent.metadata);
+			assert.equal((await request).status, "conflict");
+			await completion;
+			assert.equal(settled, true);
+		});
+
+		it("submits multiple requests in order without coalescing or rebasing", async () => {
+			const { controller, submitted } = harness();
+			const first = controller.requestChangeLazy({ enabled: false });
+			const second = controller.requestChangeLazy({});
+			assert.equal(submitted.length, 0);
+			controller.submitOrdinaryMessage(() => assert.equal(submitted.length, 2));
+			assert.deepEqual(
+				submitted.map(({ message }) => message),
+				[proposal(0, { enabled: false }), proposal(0, {})],
+			);
+			assert.notEqual(at(submitted).metadata, at(submitted, 1).metadata);
+			for (const item of submitted) {
+				controller.process(item.message, context(), item.metadata);
+			}
+			assert.equal((await first).status, "applied");
+			assert.equal((await second).status, "conflict");
+		});
+
+		it("does not flush when an eager request submits and sequences first", async () => {
+			const { controller, submitted } = harness();
+			const lazy = controller.requestChangeLazy({});
+			const eager = controller.requestChange({ enabled: false });
+			assert.equal(submitted.length, 1);
+			controller.process(at(submitted).message, context(), at(submitted).metadata);
+			assert.equal((await eager).status, "applied");
+			controller.submitOrdinaryMessage(() => {});
+			assert.equal(at(submitted, 1).message.expectedRevision, 0);
+			controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
+			assert.equal((await lazy).status, "conflict");
+		});
+
+		it("applies unattached replacements synchronously without queued submission", async () => {
+			const { controller, submitted, changes } = harness({ isAttached: () => false });
+			const request = controller.requestChangeLazy({});
+			assert.equal(controller.current.revision, 1);
+			assert.equal(changes.length, 1);
+			assert.equal(at(changes).source, "local");
+			assert.equal((await request).source, "local");
+			controller.submitOrdinaryMessage(() => {});
+			assert.deepEqual(submitted, []);
+		});
+
+		it("validates values and transitions before queueing, and rejects overflow", async () => {
+			for (const attached of [true, false]) {
+				const { controller, submitted } = harness({ isAttached: () => attached });
+				await assert.rejects(
+					controller.requestChangeLazy({ unsupported: true }),
+					/Unsupported/,
+				);
+				await assert.rejects(
+					controller.requestChangeLazy({ unsafe: true }),
+					/Unsafe transition/,
+				);
+				controller.submitOrdinaryMessage(() => {});
+				assert.equal(controller.current.revision, 0);
+				assert.equal(submitted.length, 0);
+			}
+			const { controller: overflowed } = harness({
+				snapshot: { version: 1, revision: Number.MAX_SAFE_INTEGER, values: {} },
+			});
+			await assert.rejects(overflowed.requestChangeLazy({}), /overflow/);
+		});
+
+		it("rechecks lifecycle eligibility when flushing and rejects the failed request", async () => {
+			let allowed = false;
+			const { controller, submitted } = harness({
+				verifyCanChange: () => assert(allowed, "Submission prohibited"),
+			});
+			await assert.rejects(controller.requestChangeLazy({}), /Submission prohibited/);
+			allowed = true;
+			const queued = assert.rejects(controller.requestChangeLazy({}), /Submission prohibited/);
+			allowed = false;
+			assert.throws(() => controller.submitOrdinaryMessage(() => {}), /Submission prohibited/);
+			await queued;
+			assert.deepEqual(submitted, []);
+			allowed = true;
+			controller.submitOrdinaryMessage(() => {});
+			assert.deepEqual(submitted, []);
+			controller.dispose();
+		});
+
+		it("rejects failed submissions, propagates the error, and leaves later requests queued", async () => {
+			const failure = new Error("Transport failed");
+			let fail = true;
+			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
+			const { controller } = harness({
+				submit: (message, metadata) => {
+					if (fail) {
+						throw failure;
+					}
+					sent.push({ message, metadata });
+				},
+			});
+			const rejected = assert.rejects(
+				controller.requestChangeLazy({}),
+				(error) => error === failure,
+			);
+			const surviving = controller.requestChangeLazy({ enabled: false });
+			assert.throws(
+				() => controller.submitOrdinaryMessage(() => {}),
+				(error) => error === failure,
+			);
+			await rejected;
+			assert.equal(controller.current.revision, 0);
+			assert.equal(sent.length, 0);
+			fail = false;
+			controller.submitOrdinaryMessage(() => {});
+			assert.equal(sent.length, 1);
+			assert.deepEqual(at(sent).message, proposal(0, { enabled: false }));
+			controller.process(at(sent).message, context(), at(sent).metadata);
+			assert.equal((await surviving).status, "applied");
+		});
+
+		it("asserts on reentrant ordinary and configuration submissions during a lazy flush", async () => {
+			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
+			const rejected: Promise<void>[] = [];
+			const { controller } = harness({
+				submit: (message, metadata) => {
+					sent.push({ message, metadata });
+					assert.throws(
+						() => controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent")),
+						/reentrantly while flushing lazy configuration/,
+					);
+					for (const method of ["requestChange", "requestChangeLazy"] as const) {
+						rejected.push(
+							assert.rejects(
+								controller[method]({}),
+								/reentrantly while flushing lazy configuration/,
+							),
+						);
+					}
+				},
+			});
+			const requests = [
+				controller.requestChangeLazy({ enabled: false }),
+				controller.requestChangeLazy({}),
+			];
+			controller.submitOrdinaryMessage(() => assert.equal(sent.length, 2));
+			await Promise.all(rejected);
+			assert.equal(sent.length, 2);
+			for (const item of sent) {
+				controller.process(item.message, context(), item.metadata);
+			}
+			assert.deepEqual(
+				(await Promise.all(requests)).map((result) => result.status),
+				["applied", "conflict"],
+			);
+		});
+
+		it("propagates an uncaught reentrancy assertion and resets the flush guard", async () => {
+			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
+			let fail = true;
+			const { controller } = harness({
+				submit: (message, metadata) => {
+					if (fail) {
+						fail = false;
+						controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent"));
+					}
+					sent.push({ message, metadata });
+				},
+			});
+			const rejected = assert.rejects(
+				controller.requestChangeLazy({}),
+				/reentrantly while flushing lazy configuration/,
+			);
+			const surviving = controller.requestChangeLazy({ enabled: false });
+			assert.throws(
+				() => controller.submitOrdinaryMessage(() => assert.fail("Triggering op sent")),
+				/reentrantly while flushing lazy configuration/,
+			);
+			await rejected;
+			assert.equal(sent.length, 0);
+			controller.submitOrdinaryMessage(() => {});
+			assert.equal(sent.length, 1);
+			controller.process(at(sent).message, context(), at(sent).metadata);
+			assert.equal((await surviving).status, "applied");
+		});
+
+		it("waits for a later ordinary op for requests created during submission", async () => {
+			const { controller, submitted } = harness();
+			let request: ReturnType<typeof controller.requestChangeLazy> | undefined;
+			controller.submitOrdinaryMessage(() => {
+				request = controller.requestChangeLazy({});
+			});
+			assert(request !== undefined);
+			assert.equal(submitted.length, 0);
+			controller.submitOrdinaryMessage(() => {});
+			assert.equal(submitted.length, 1);
+			controller.process(at(submitted).message, context(), at(submitted).metadata);
+			assert.equal((await request).status, "applied");
+		});
+
+		it("prohibits lazy requests and flushing inside configuration callbacks", async () => {
+			const { controller } = harness({ isAttached: () => false });
+			let nested: Promise<void> | undefined;
+			controller.on("changed", () => {
+				nested = assert.rejects(controller.requestChangeLazy({}), /configuration callback/);
+				assert.throws(
+					() => controller.submitOrdinaryMessage(() => {}),
+					/configuration callback/,
+				);
+			});
+			await controller.requestChangeLazy({});
+			await nested;
+		});
+
+		it("rejects deferred and submitted requests together on disposal", async () => {
+			const { controller } = harness();
+			const failure = new Error("Runtime closed");
+			const pending = [
+				assert.rejects(controller.requestChangeLazy({}), (error) => error === failure),
+				assert.rejects(controller.requestChange({}), (error) => error === failure),
+			];
+			controller.dispose(failure);
+			await Promise.all(pending);
+			assert.throws(
+				() => controller.submitOrdinaryMessage(() => {}),
+				(error) => error === failure,
+			);
+			await assert.rejects(controller.requestChangeLazy({}), (error) => error === failure);
+		});
+
+		it("uses ordinary control resubmission, rollback, and stash after materialization", async () => {
+			const { controller, submitted } = harness();
+			const rolledBack = assert.rejects(controller.requestChangeLazy({}), /rolled back/);
+			controller.submitOrdinaryMessage(() => {});
+			const first = at(submitted);
+			controller.reSubmit(first.message, first.metadata);
+			assert.deepEqual(at(submitted, 1), first);
+			controller.rollback(first.metadata);
+			await rolledBack;
+			controller.applyStashedOp(first.message);
+			const restored = at(submitted, 2);
+			assert.equal(restored.message, first.message);
+			assert.equal(restored.metadata, undefined);
+			controller.process(restored.message, context(), restored.metadata);
+			assert.equal(controller.current.revision, 1);
+		});
+	});
+
+	it("resolves one winner and one conflict for competing clients at the same revision", async () => {
+		const first = harness();
+		const second = harness();
+		const firstRequest = first.controller.requestChange({ enabled: false });
+		const secondRequest = second.controller.requestChange({ enabled: null });
+		const firstOp = at(first.submitted);
+		const secondOp = at(second.submitted);
+		assert.equal(firstOp.message.expectedRevision, secondOp.message.expectedRevision);
+		assert.equal(first.controller.current.revision, 0);
+		assert.equal(second.controller.current.revision, 0);
+
+		first.controller.process(firstOp.message, context(), firstOp.metadata);
+		second.controller.process(firstOp.message, context(false));
+		first.controller.process(secondOp.message, context(false, 1));
+		second.controller.process(secondOp.message, context(true, 1), secondOp.metadata);
+
+		const winner = await firstRequest;
+		const loser = await secondRequest;
+		assert.equal(winner.status, "applied");
+		assert.equal(loser.status, "conflict");
+		assert.equal(winner.source, "sequenced");
+		assert.equal(loser.source, "sequenced");
+		assert.deepEqual(first.controller.current, second.controller.current);
+		assert.equal(first.changes.length, 1);
+		assert.equal(second.changes.length, 1);
+		assert.equal(winner.current.revision, 1);
+		assert.deepEqual(loser.current.values, { enabled: false });
+	});
+
+	it("tracks multiple live requests by opaque local metadata without optimistic changes", async () => {
+		const { controller, submitted, changes } = harness();
+		const previous = controller.current;
+		const one = controller.requestChange({ enabled: false });
+		const two = controller.requestChange({});
+		assert.equal(controller.current, previous);
+		assert.equal(changes.length, 0);
+		assert.notEqual(at(submitted).metadata, at(submitted, 1).metadata);
+		assert.deepEqual(JSON.parse(JSON.stringify(at(submitted).message)), {
+			version: 1,
+			isChannelConfigurationOp: true,
+			expectedRevision: 0,
+			values: { enabled: false },
+		});
+		controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
+		controller.process(at(submitted).message, context(true, 1), at(submitted).metadata);
+		assert.equal((await one).status, "conflict");
+		assert.equal((await two).status, "applied");
+		assert.equal(changes.length, 1);
+	});
+
+	it("retains readonly values and captures the expected revision before returning", async () => {
+		const { controller, submitted } = harness();
+		const input = { nested: [{ enabled: true }] };
+		const request = controller.requestChange(input);
+		assert.equal(at(submitted).message.values, input);
+		controller.process(proposal(0, { other: true }), context(false));
+		assert.equal(at(submitted).message.expectedRevision, 0);
+		assert.deepEqual(at(submitted).message.values, { nested: [{ enabled: true }] });
+		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		assert.equal((await request).status, "conflict");
+	});
+
+	it("increments every accepted barrier, including identical, removed, disabled, and repeated values", () => {
+		const { controller, changes } = harness();
+		const replacements = [
+			{ enabled: true },
+			{ enabled: false },
+			{},
+			{ enabled: null },
+			{ enabled: true },
+		];
+		for (const [index, values] of replacements.entries()) {
+			controller.process(proposal(index, values), context(false, index));
+			assert.equal(controller.current.revision, index + 1);
+			assert.deepEqual(controller.current.values, values);
+			assert.equal(at(changes, index).source, "sequenced");
+			assert.equal(at(changes, index).current, controller.current);
+		}
+		assert.equal(changes.length, replacements.length);
+		assert.equal(at(changes).previous.revision, 0);
+	});
+
+	it("does not interpret unsupported obsolete values on a conflict", () => {
+		let validations = 0;
+		const { controller, changes } = harness({
+			definition: {
+				defaultConfiguration: {},
+				isSupported: (values): values is ChannelConfiguration => {
+					validations++;
+					return !Object.hasOwn(values, "unsupported");
+				},
+				validateTransition: () => {},
+			},
+		});
+		controller.process(proposal(0, {}), context(false));
+		const before = validations;
+		const result = controller.process(proposal(0, { unsupported: true }), context(false, 1));
+		assert.equal(result.status, "conflict");
+		assert.equal(validations, before);
+		assert.equal(changes.length, 1);
+	});
+
+	it("updates the getter and notifies synchronously before request completion", async () => {
+		const { controller, submitted } = harness();
+		const order: string[] = [];
+		controller.on("changed", (change) => {
+			assert.equal(controller.current, change.current);
+			assert.equal(change.previous.revision, order.length);
+			assert.equal(change.current.revision, order.length + 1);
+			order.push("callback");
+		});
+		const request = controller.requestChange({});
+		const complete = request.then(() => order.push("promise"));
+		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		assert.deepEqual(order, ["callback"]);
+		controller.process(proposal(1, { enabled: false }), context(false, 1));
+		const result = await request;
+		assert.equal(result.current.revision, 1);
+		assert.equal(controller.current.revision, 2);
+		await complete;
+		assert.deepEqual(order, ["callback", "callback", "promise"]);
+	});
+
+	it("supports synchronous on/off notifications without an initial event", () => {
+		const { controller, changes } = harness();
+		let calls = 0;
+		const listener = (): void => {
+			calls++;
+		};
+		controller.on("changed", listener);
+		assert.equal(changes.length, 0);
+		controller.process(proposal(0, {}), context(false));
+		controller.off("changed", listener);
+		controller.process(proposal(1, {}), context(false, 1));
+		assert.equal(calls, 1);
+		assert.equal(changes.length, 2);
+	});
+
+	it("applies repeated detached changes immediately without submit or service sequence fields", async () => {
+		const { controller, submitted, changes } = harness({ isAttached: () => false });
+		const first = controller.requestChange({ enabled: false });
+		assert.deepEqual(controller.current.values, { enabled: false });
+		assert.equal(controller.current.revision, 1);
+		assert.equal(changes.length, 1);
+		const second = controller.requestChange({});
+		const third = controller.requestChange({});
+		assert.equal(controller.current.revision, 3);
+		assert.equal(changes.length, 3);
+		assert.equal(submitted.length, 0);
+		for (const [index, request] of [first, second, third].entries()) {
+			const result = await request;
+			assert.equal(result.source, "local");
+			assert.equal(result.status, "applied");
+			assert.equal(result.current.revision, index + 1);
+			assert.equal("sequenceNumber" in result, false);
+			assert.equal("messageIndex" in result, false);
+			assert.equal("sequenceNumber" in at(changes, index), false);
+		}
+	});
+
+	it("uses attachment rather than connection state to choose authority", async () => {
+		let attached = false;
+		const { controller, submitted, changes } = harness({ isAttached: () => attached });
+		assert.equal((await controller.requestChange({})).source, "local");
+		attached = true;
+		const next = controller.requestChange({ enabled: false });
+		assert.equal(controller.current.revision, 1);
+		assert.equal(changes.length, 1);
+		assert.equal(at(submitted).message.expectedRevision, 1);
+		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		assert.equal((await next).source, "sequenced");
+		assert.equal(controller.current.revision, 2);
+	});
+
+	it("rejects local validation without submitting and permits a subsequent valid request", async () => {
+		for (const attached of [true, false]) {
+			const { controller, submitted } = harness({ isAttached: () => attached });
+			await assert.rejects(controller.requestChange({ unsupported: true }), /Unsupported/);
+			await assert.rejects(controller.requestChange({ unsafe: true }), /Unsafe transition/);
+			assert.equal(controller.current.revision, 0);
+			assert.equal(submitted.length, 0);
+			const valid = controller.requestChange({});
+			if (attached) {
+				controller.process(at(submitted).message, context(), at(submitted).metadata);
+			}
+			assert.equal((await valid).status, "applied");
+		}
+	});
+
+	it("reports invalid internal requests as assertions rather than usage errors", async () => {
+		const { controller, submitted } = harness();
+		let assertion: Error | undefined;
+		const unsubscribe = onAssertionFailure((error) => {
+			assertion = error;
+		});
+		try {
+			await assert.rejects(
+				controller.requestChange({ unsupported: true }),
+				(error: unknown) => {
+					assert(error instanceof Error);
+					assert.equal(error, assertion);
+					assert(!(error instanceof UsageError));
+					return validateAssertionError("Unsupported channel configuration values")(error);
+				},
+			);
+			assert.equal(submitted.length, 0);
+			assert.equal(controller.current.revision, 0);
+		} finally {
+			unsubscribe();
+		}
+	});
+
+	it("enforces the injected lifecycle guard for both attached and unattached changes", async () => {
+		for (const attached of [true, false]) {
+			const { controller, submitted } = harness({
+				isAttached: () => attached,
+				verifyCanChange: () => {
+					throw new Error("Read-only or prohibited phase");
+				},
+			});
+			await assert.rejects(controller.requestChange({}), /Read-only/);
+			assert.equal(submitted.length, 0);
+			controller.process(proposal(0, {}), context(false));
+			assert.equal(controller.current.revision, 1);
+		}
+	});
+
+	it("prohibits reentrant requests and ordinary submission during callbacks", async () => {
+		const { controller } = harness({ isAttached: () => false });
+		let nested: Promise<unknown> | undefined;
+		controller.on("changed", () => {
+			nested = assert.rejects(controller.requestChange({}), /configuration callback/);
+			assert.throws(() => controller.verifyCanSubmit(), /configuration callback/);
+		});
+		await controller.requestChange({});
+		await nested;
+		assert.equal(controller.current.revision, 1);
+	});
+
+	it("resubmits and restores original expected revisions without activation or retagging", async () => {
+		const { controller, submitted, changes } = harness();
+		const request = controller.requestChange({ enabled: false });
+		const original = at(submitted);
+		controller.process(proposal(0, {}), context(false));
+		const current = controller.current;
+		controller.reSubmit(original.message, original.metadata);
+		assert.equal(at(submitted, 1).message.expectedRevision, 0);
+		assert.equal(at(submitted, 1).metadata, original.metadata);
+		assert.equal(controller.current, current);
+		assert.equal(changes.length, 1);
+		controller.applyStashedOp(proposal(0, { unsupported: true }));
+		assert.equal(controller.current, current);
+		assert.equal(submitted.length, 3);
+		assert.deepEqual(at(submitted, 2).message, proposal(0, { unsupported: true }));
+		assert.equal(at(submitted, 2).metadata, undefined);
+		controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
+		assert.equal((await request).status, "conflict");
+	});
+
+	it("reconstructs a stashed configuration for acknowledgement without activating it", () => {
+		const { controller, submitted, changes } = harness();
+		const initial = controller.current;
+		const stashed = {
+			version: 1,
+			isChannelConfigurationOp: true,
+			expectedRevision: 0,
+			values: {},
+		};
+		controller.applyStashedOp(stashed);
+		assert.equal(submitted.length, 1);
+		const restored = at(submitted);
+		assert.deepEqual(restored.message, stashed);
+		assert.equal(restored.message, stashed);
+		assert.equal(restored.metadata, undefined);
+		assert.equal(controller.current, initial);
+		assert.equal(changes.length, 0);
+		controller.process(restored.message, context(), restored.metadata);
+		assert.equal(controller.current.revision, 1);
+		assert.equal(changes.length, 1);
+	});
+
+	it("rolls back only the associated request and clears it from pending bookkeeping", async () => {
+		const { controller, submitted } = harness();
+		const rolledBack = assert.rejects(controller.requestChange({}), (error: unknown) => {
+			assert(error instanceof Error);
+			assert(!(error instanceof UsageError));
+			assert(!(error instanceof DataProcessingError));
+			assert.match(error.message, /rolled back/);
+			return true;
+		});
+		const surviving = controller.requestChange({ enabled: false });
+		controller.rollback(at(submitted).metadata);
+		controller.rollback(at(submitted).metadata);
+		await rolledBack;
+		assert.equal(controller.current.revision, 0);
+		controller.process(at(submitted, 1).message, context(), at(submitted, 1).metadata);
+		assert.equal((await surviving).status, "applied");
+		controller.dispose();
+	});
+
+	it("rejects outstanding requests on disposal and prevents later changes", async () => {
+		const { controller } = harness();
+		const failure = new Error("Closed runtime");
+		const first = assert.rejects(controller.requestChange({}), (error) => error === failure);
+		const second = assert.rejects(
+			controller.requestChange({ enabled: false }),
+			(error) => error === failure,
+		);
+		controller.dispose(failure);
+		controller.dispose(new Error("Second close"));
+		await Promise.all([first, second]);
+		await assert.rejects(controller.requestChange({}), (error) => error === failure);
+		assert.throws(
+			() => controller.process(proposal(0, {}), context(false)),
+			(error) => error === failure,
+		);
+	});
+
+	it("rejects all pending promises when an accepted barrier callback fails", async () => {
+		const { controller, submitted } = harness();
+		const failure = new Error("Callback failed");
+		const first = assert.rejects(controller.requestChange({}), (error) => error === failure);
+		const second = assert.rejects(
+			controller.requestChange({ enabled: false }),
+			(error) => error === failure,
+		);
+		controller.on("changed", () => {
+			throw failure;
+		});
+		assert.throws(
+			() => controller.process(at(submitted).message, context(), at(submitted).metadata),
+			(error) => error === failure,
+		);
+		await Promise.all([first, second]);
+		await assert.rejects(controller.requestChange({}), (error) => error === failure);
+	});
+
+	it("treats local callback failure as fatal rather than rolling back and continuing", async () => {
+		const { controller, submitted } = harness({ isAttached: () => false });
+		controller.on("changed", () => {
+			throw new Error("Local callback failed");
+		});
+		await assert.rejects(controller.requestChange({}), /Local callback failed/);
+		assert.equal(controller.current.revision, 1);
+		await assert.rejects(
+			controller.requestChange({ enabled: false }),
+			/Local callback failed/,
+		);
+		assert.equal(submitted.length, 0);
+	});
+
+	for (const [name, values] of [
+		["unsupported", { unsupported: true }],
+		["invalid transition", { unsafe: true }],
+	] as const) {
+		it(`fails receiving ${name} at the current revision and rejects live requests`, async () => {
+			const { controller } = harness();
+			const rejected = assert.rejects(controller.requestChange({}));
+			assert.throws(() => controller.process(proposal(0, values), context(false)));
+			await rejected;
+			assert.equal(controller.current.revision, 0);
+			await assert.rejects(controller.requestChange({}));
+		});
+	}
+
+	it("rejects a future revision as a fatal processing failure", async () => {
+		const { controller, changes } = harness();
+		const request = assert.rejects(
+			controller.requestChange({}),
+			validateAssertionError("Channel configuration proposal has a future revision"),
+		);
+		assert.throws(
+			() => controller.process(proposal(1, {}), context(false)),
+			validateAssertionError("Channel configuration proposal has a future revision"),
+		);
+		await request;
+		assert.equal(changes.length, 0);
+		assert.equal(controller.current.revision, 0);
+	});
+
+	it("rejects a restored future revision when sequenced replay reaches it", () => {
+		const { controller, submitted, changes } = harness({
+			snapshot: { version: 1, revision: 4, values: {} },
+		});
+		controller.applyStashedOp(proposal(5, {}));
+		const restored = at(submitted);
+		assert.equal(restored.message.expectedRevision, 5);
+		assert.throws(
+			() => controller.process(restored.message, context(), restored.metadata),
+			/future revision/,
+		);
+		assert.equal(controller.current.revision, 4);
+		assert.equal(changes.length, 0);
+	});
+
+	it("rejects revision overflow on requests and incoming barriers, but permits old conflicts", async () => {
+		const snapshot = { version: 1, revision: Number.MAX_SAFE_INTEGER, values: {} };
+		const { controller, submitted } = harness({ snapshot });
+		await assert.rejects(controller.requestChange({}), /overflow/);
+		assert.equal(submitted.length, 0);
+		assert.equal(
+			controller.process(proposal(Number.MAX_SAFE_INTEGER - 1, {}), context(false)).status,
+			"conflict",
+		);
+		assert.throws(
+			() => controller.process(proposal(Number.MAX_SAFE_INTEGER, {}), context(false)),
+			/overflow/,
+		);
+		assert.equal(controller.current.revision, Number.MAX_SAFE_INTEGER);
+	});
+
+	it("rejects a failed submission without leaking or cancelling other pending requests", async () => {
+		let fail = false;
+		const submitted: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
+		const { controller } = harness({
+			submit: (message, metadata) => {
+				if (fail) {
+					throw new Error("Submit failed");
+				}
+				submitted.push({ message, metadata });
+			},
+		});
+		const first = controller.requestChange({});
+		fail = true;
+		await assert.rejects(controller.requestChange({ enabled: false }), /Submit failed/);
+		controller.process(at(submitted).message, context(), at(submitted).metadata);
+		assert.equal((await first).status, "applied");
+		controller.dispose();
+	});
+
+	it("handles synchronous delivery by a submit callback without losing completion metadata", async () => {
+		const { controller } = harness({
+			submit: (message, metadata) => controller.process(message, context(), metadata),
+		});
+		assert.equal((await controller.requestChange({})).status, "applied");
+		assert.equal(controller.current.revision, 1);
+	});
+
+	it("leaves JSON serialization and its failures to the normal submission or snapshot path", async () => {
+		for (const attached of [false, true]) {
+			const failure = new TypeError("Configuration serialization failed");
+			let serializationAttempts = 0;
+			const values = {
+				get value(): string {
+					serializationAttempts++;
+					throw failure;
+				},
+			};
+			const { controller } = harness({
+				isAttached: () => attached,
+				submit: (message) => {
+					JSON.stringify(message);
+				},
+			});
+			const request = controller.requestChange(values);
+			if (attached) {
+				await assert.rejects(request, (error: unknown) => error === failure);
+				assert.equal(controller.current.revision, 0);
+			} else {
+				await request;
+				assert.equal(controller.current.values, values);
+				assert.equal(serializationAttempts, 0);
+				assert.throws(
+					() => JSON.stringify(controller.current),
+					(error: unknown) => error === failure,
+				);
+			}
+			assert.equal(serializationAttempts, 1);
+		}
+	});
+
+	it("loads snapshots independently of attachment state", () => {
+		const snapshot = { version: 1, revision: 4, values: { text: "a".repeat(32 * 1024) } };
+		for (const attached of [false, true]) {
+			const { controller, changes } = harness({
+				snapshot,
+				isAttached: () => attached,
+			});
+			assert.deepEqual(controller.current, {
+				revision: snapshot.revision,
+				values: snapshot.values,
+			});
+			assert.equal(controller.current.values, snapshot.values);
+			assert.equal(changes.length, 0);
+		}
+	});
+
+	it("does not impose a protocol size limit on local or attached replacements", async () => {
+		const values = { text: "a".repeat(32 * 1024) };
+		for (const attached of [false, true]) {
+			const { controller, submitted } = harness({ isAttached: () => attached });
+			const request = controller.requestChange(values);
+			if (attached) {
+				assert.equal(controller.current.revision, 0);
+				const original = at(submitted);
+				controller.reSubmit(original.message, original.metadata);
+				const resubmitted = at(submitted, 1);
+				assert.deepEqual(resubmitted.message, original.message);
+				assert.equal(resubmitted.metadata, original.metadata);
+				controller.process(resubmitted.message, context(), resubmitted.metadata);
+			} else {
+				assert.equal(controller.current.revision, 1);
+				assert.equal(submitted.length, 0);
+			}
+			assert.equal((await request).status, "applied");
+			assert.deepEqual(controller.current.values, values);
+		}
+	});
+
+	it("captures obsolete stashed intent unchanged", () => {
+		const message = proposal(0, { unsupported: "a".repeat(32 * 1024) });
+		const { controller, submitted, changes } = harness({
+			snapshot: { version: 1, revision: 2, values: {} },
+		});
+		const snapshot = controller.current;
+		controller.applyStashedOp(message);
+		const restored = at(submitted);
+		assert.deepEqual(restored.message, message);
+		assert.equal(restored.metadata, undefined);
+		assert.equal(controller.current, snapshot);
+		const result = controller.process(restored.message, context(), restored.metadata);
+		assert.equal(result.status, "conflict");
+		assert.equal(result.current, snapshot);
+		assert.equal(changes.length, 0);
+	});
+
+	it("validates initial values", () => {
+		assert.throws(
+			() => harness({ snapshot: { version: 1, revision: 0, values: { unsupported: true } } }),
+			/Unsupported/,
+		);
+	});
+});
+
+describe("channel configuration format", () => {
+	it("reads snapshots without copying or freezing their values", () => {
+		const input = {
+			version: 1,
+			revision: 2,
+			values: { nested: [{ flag: false }], nullable: null },
+		};
+		const snapshot = parseChannelConfigurationSnapshot(input);
+		assert.equal(snapshot, input);
+		assert.equal(snapshot.values, input.values);
+		assert.equal(Object.isFrozen(snapshot), false);
+		assert.equal(Object.isFrozen(snapshot.values), false);
+		assert.deepEqual(JSON.parse(JSON.stringify(snapshot)), input);
+	});
+
+	it("validates configuration ops without interpreting obsolete values", () => {
+		const values = { unsupported: true };
+		const message = proposal(0, values);
+		const parsed = parseChannelConfigurationMessage(message);
+		assert.equal(parsed, message);
+		assert.equal(parsed.isChannelConfigurationOp, true);
+		assert.equal(parsed.values, values);
+		assert.equal(Object.isFrozen(parsed), false);
+	});
+
+	it("recognizes only the reserved top-level key without interpreting ordinary payloads", () => {
+		for (const contents of [
+			undefined,
+			null,
+			false,
+			5,
+			"data",
+			[],
+			[1, { isChannelConfigurationOp: true }],
+			{ kind: "configuration", version: 1, revision: 5, contents: {} },
+			{ value: { isChannelConfigurationOp: true } },
+		]) {
+			assert.equal(hasChannelConfigurationMarker(contents), false);
+		}
+		for (const marker of [true, false, undefined, 1]) {
+			assert.equal(hasChannelConfigurationMarker({ isChannelConfigurationOp: marker }), true);
+		}
+		let calls = 0;
+		const accessor = Object.defineProperty({}, "isChannelConfigurationOp", {
+			get: () => {
+				calls++;
+				return true;
+			},
+			enumerable: true,
+		});
+		assert.equal(hasChannelConfigurationMarker(accessor), true);
+		assert.throws(() => parseChannelConfigurationMessage(accessor));
+		assert.equal(calls, 0);
+	});
+
+	for (const revision of [
+		-1,
+		-0,
+		0.5,
+		Number.NaN,
+		Infinity,
+		Number.MAX_SAFE_INTEGER + 1,
+		"0",
+		undefined,
+	]) {
+		it(`rejects invalid revision ${String(revision)} in snapshots and configuration ops`, () => {
+			assert.throws(() =>
+				parseChannelConfigurationSnapshot({ version: 1, revision, values: {} }),
+			);
+			assert.throws(() =>
+				parseChannelConfigurationMessage({
+					version: 1,
+					isChannelConfigurationOp: true,
+					expectedRevision: revision,
+					values: {},
+				}),
+			);
+		});
+	}
+
+	it("rejects unknown versions, missing fields, extra fields, and invalid markers", () => {
+		for (const message of [
+			{},
+			{ version: 2, isChannelConfigurationOp: true, expectedRevision: 0, values: {} },
+			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0 },
+			{
+				version: 1,
+				isChannelConfigurationOp: true,
+				expectedRevision: 0,
+				values: {},
+				extra: 1,
+			},
+			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: [] },
+			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: null },
+			{ version: 1, isChannelConfigurationOp: false, expectedRevision: 0, values: {} },
+			{ version: 1, isChannelConfigurationOp: 1, expectedRevision: 0, values: {} },
+			{ version: 1, expectedRevision: 0, values: {} },
+		]) {
+			assert.throws(() => parseChannelConfigurationMessage(message));
+		}
+		for (const snapshot of [
+			{ version: 2, revision: 0, values: {} },
+			{ version: 1, revision: 0 },
+			{ version: 1, revision: 0, values: {}, extra: true },
+		]) {
+			assert.throws(() => parseChannelConfigurationSnapshot(snapshot));
+		}
+	});
+});

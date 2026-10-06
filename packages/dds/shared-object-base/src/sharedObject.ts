@@ -59,9 +59,18 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
+import {
+	ChannelConfigurationController,
+	type ChannelConfiguration,
+	type ChannelConfigurationFacet,
+} from "./channelConfiguration.js";
+import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
+import { ConfiguredSharedObjectProtocol } from "./configuredSharedObjectProtocol.js";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
+import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
+import { getSharedObjectProtocol, sharedObjectProtocols } from "./sharedObjectProtocol.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
@@ -72,6 +81,31 @@ import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
  */
 interface ProcessTelemetryProperties {
 	sequenceDifference: number;
+}
+
+// Initialized by SharedObjectCore so the internal helper can use its private implementation
+// without adding configuration methods to the legacy subclass API.
+let initializeConfiguration: <TConfig extends ChannelConfiguration>(
+	sharedObject: SharedObjectCore,
+	options: SharedObjectConfigurationOptions<TConfig>,
+) => ChannelConfigurationFacet<TConfig>;
+
+/**
+ * Registers configuration support once during a SharedObjectCore subclass's construction.
+ * @remarks
+ * Call after super() and before configuration-dependent setup or any load, initialization,
+ * connection, or binding. The returned facet is readable immediately. Requests are allowed only
+ * after initializeLocalCore or loadCore completes. Loading reads the instance's attributes;
+ * unmarked instances use the definition's defaults without activating persistence.
+ *
+ * The channel factory must separately advertise channelConfigurationProtocolVersion: 1.
+ * @internal
+ */
+export function initializeSharedObjectConfiguration<TConfig extends ChannelConfiguration>(
+	sharedObject: SharedObjectCore,
+	options: SharedObjectConfigurationOptions<TConfig>,
+): ChannelConfigurationFacet<TConfig> {
+	return initializeConfiguration(sharedObject, options);
 }
 
 /**
@@ -136,6 +170,16 @@ export abstract class SharedObjectCore<
 	 */
 	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
 
+	#configurationRegistrationClosed = false;
+	#configurationLifecycle:
+		| { readonly kind: "create" | "load"; initialized: boolean }
+		| undefined;
+
+	static {
+		initializeConfiguration = (sharedObject, options) =>
+			sharedObject.#initializeConfiguration(options);
+	}
+
 	/**
 	 * Gets the connection state
 	 * @returns The state of the connection
@@ -183,6 +227,122 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
+	}
+
+	#initializeConfiguration<TConfig extends ChannelConfiguration>({
+		definition,
+		initialization,
+	}: SharedObjectConfigurationOptions<TConfig>): ChannelConfigurationFacet<TConfig> {
+		assert(
+			!this.#configurationRegistrationClosed,
+			"Configuration must be initialized before the shared object lifecycle starts",
+		);
+		assert(
+			this.#configurationLifecycle === undefined,
+			"Shared object configuration is already initialized",
+		);
+		const lifecycle = { kind: initialization.kind, initialized: false };
+		this.#configurationLifecycle = lifecycle;
+		const hasConfiguration =
+			initialization.kind === "load"
+				? "configuration" in this.attributes
+				: initialization.initialConfiguration !== undefined;
+		const controller = new ChannelConfigurationController({
+			definition,
+			snapshot:
+				initialization.kind === "load" && "configuration" in this.attributes
+					? this.attributes.configuration
+					: {
+							version: 1,
+							revision: 0,
+							values:
+								initialization.kind === "create"
+									? (initialization.initialConfiguration ?? definition.defaultConfiguration)
+									: definition.defaultConfiguration,
+						},
+			isAttached: () => this.isAttached(),
+			verifyCanChange: () => {
+				verifyCanSubmit();
+				assert(
+					lifecycle.initialized,
+					"Cannot change configuration during shared object initialization",
+				);
+				assert(
+					!this.runtime.isReadOnly(),
+					"Cannot change configuration on a read-only runtime",
+				);
+			},
+			submit: (message, metadata) => protocol.submitControl(message, metadata),
+		});
+		const verifyCanSubmit = (): void => {
+			this.verifyNotClosed();
+			assert(!this.runtime.disposed, "Cannot submit to a disposed configured channel");
+			assert(
+				lifecycle.kind !== "load" || lifecycle.initialized,
+				"Cannot submit while loading configured shared object state",
+			);
+			controller.verifyCanSubmit();
+		};
+		const protocol = new ConfiguredSharedObjectProtocol(
+			controller,
+			(content, metadata) => this.submitLocalMessage(content, metadata),
+			verifyCanSubmit,
+			(result) =>
+				extractTelemetryLoggerExt(this.logger).sendTelemetryEvent({
+					eventName: "ChannelConfiguration",
+					status: result.status,
+					source: result.source,
+					protocolVersion: 1,
+					configurationRevision: result.current.revision,
+					...(result.source === "sequenced"
+						? {
+								sequenceNumber: result.sequenceNumber,
+								clientSequenceNumber: result.clientSequenceNumber,
+								messageIndex: result.messageIndex,
+								local: result.local,
+							}
+						: {}),
+				}),
+		);
+		sharedObjectProtocols.set(this, protocol);
+		// Configuration-capable channels can add an instance-specific getter.
+		// Copy first so this does not change factory attributes or another channel's snapshot.
+		Object.defineProperty(this, "attributes", { value: { ...this.attributes } });
+		Object.defineProperty(this, "channelConfigurationProtocolVersion", { value: 1 });
+		const persistConfiguration = (): void => {
+			Object.defineProperty(this.attributes, "configuration", {
+				enumerable: true,
+				get: () => ({ version: 1, ...controller.current }),
+			});
+			controller.off("changed", persistConfiguration);
+		};
+		if (hasConfiguration) {
+			persistConfiguration();
+		} else {
+			// Register before the DDS so its first changed callback sees persisted attributes.
+			controller.on("changed", persistConfiguration);
+		}
+		this.runtime.once("dispose", () =>
+			protocol.close(new Error("Runtime disposed with pending configuration changes")),
+		);
+		return controller;
+	}
+
+	#beginInitialization(kind: "create" | "load"): void {
+		this.#configurationRegistrationClosed = true;
+		if (this.#configurationLifecycle !== undefined) {
+			assert(
+				this.#configurationLifecycle.kind === kind &&
+					!this.#configurationLifecycle.initialized,
+				"Shared object configuration initialization mode does not match its lifecycle",
+			);
+		}
+	}
+
+	#completeInitialization(): void {
+		if (this.#configurationLifecycle !== undefined) {
+			this.#configurationLifecycle.initialized = true;
+		}
 	}
 
 	/**
@@ -246,6 +406,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
+			getSharedObjectProtocol(this).close(error);
 		}
 	}
 
@@ -304,11 +465,13 @@ export abstract class SharedObjectCore<
 	 * @param services - Services used by the shared object
 	 */
 	public async load(services: IChannelServices): Promise<void> {
+		this.#beginInitialization("load");
 		this.services = services;
 		// set this before load so that isAttached is true
 		// for attached runtimes when load core is running
 		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
+		this.#completeInitialization();
 		this.attachDeltaHandler();
 		this.setBoundAndHandleAttach();
 	}
@@ -318,10 +481,13 @@ export abstract class SharedObjectCore<
 	 * it is attached to the document.
 	 */
 	public initializeLocal(): void {
+		this.#beginInitialization("create");
 		this.initializeLocalCore();
+		this.#completeInitialization();
 	}
 
 	public bindToContext(): void {
+		this.#configurationRegistrationClosed = true;
 		// ensure the method only runs once by removing the implementation
 		// without this the method suffers from re-entrancy issues
 		this.bindToContext = () => {};
@@ -334,6 +500,7 @@ export abstract class SharedObjectCore<
 	}
 
 	public connect(services: IChannelServices): void {
+		this.#configurationRegistrationClosed = true;
 		// handle the case where load is called
 		// before connect; loading detached data stores
 		if (this.services === undefined) {
@@ -418,6 +585,8 @@ export abstract class SharedObjectCore<
 	 */
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
+		const protocol = getSharedObjectProtocol(this);
+		const preparedContent = protocol.prepareLocalMessage(content);
 		if (this.isAttached()) {
 			// NOTE: We may also be encoding in the ContainerRuntime layer.
 			// Once the layer-compat window passes we can remove the encoding codepath here altogether
@@ -425,11 +594,15 @@ export abstract class SharedObjectCore<
 				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
 					.submitMessagesWithoutEncodingHandles === true;
 			const contentToSubmit = onlyBind
-				? bindHandles(content, this.handle)
-				: makeHandlesSerializable(content, this.serializer, this.handle);
+				? bindHandles(preparedContent, this.handle)
+				: makeHandlesSerializable(preparedContent, this.serializer, this.handle);
 
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			protocol.submitLocalMessage(preparedContent, () => {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			});
+		} else {
+			protocol.submitWhileDetached(preparedContent, localOpMetadata);
 		}
 	}
 
@@ -535,10 +708,20 @@ export abstract class SharedObjectCore<
 				this.reSubmit(content, localOpMetadata, squash);
 			},
 			applyStashedOp: (content: unknown): void => {
-				this.applyStashedOp(parseHandles(content, this.serializer));
+				getSharedObjectProtocol(this).applyStashedOp(content, (ordinaryContent) => {
+					verifyOrdinaryChannelMessage(ordinaryContent);
+					this.applyStashedOp(parseHandles(ordinaryContent, this.serializer));
+				});
 			},
 			rollback: (content: unknown, localOpMetadata: unknown) => {
-				this.rollback(content, localOpMetadata);
+				getSharedObjectProtocol(this).rollback(
+					content,
+					localOpMetadata,
+					(ordinaryContent, metadata) => {
+						verifyOrdinaryChannelMessage(ordinaryContent);
+						this.rollback(ordinaryContent, metadata);
+					},
+				);
 			},
 		} satisfies IDeltaHandler);
 	}
@@ -589,15 +772,23 @@ export abstract class SharedObjectCore<
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
 
+		getSharedObjectProtocol(this).processMessages(messagesCollection, (messages) =>
+			this.#processOrdinaryMessages(messages),
+		);
+	}
+
+	#processOrdinaryMessages(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 
 		// Decode any handles in the contents before processing the messages.
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+		for (const messageContent of messagesContent) {
+			verifyOrdinaryChannelMessage(messageContent.contents);
 			const decodedMessageContent: IRuntimeMessagesContent = {
-				contents: parseHandles(contents, this.serializer),
-				localOpMetadata,
-				clientSequenceNumber,
+				...messageContent,
+				contents: parseHandles(messageContent.contents, this.serializer),
+				localOpMetadata: messageContent.localOpMetadata,
+				clientSequenceNumber: messageContent.clientSequenceNumber,
 			};
 			decodedMessagesContent.push(decodedMessageContent);
 		}
@@ -643,11 +834,15 @@ export abstract class SharedObjectCore<
 	 * the legacy behavior (no squashing) will be used.
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
-		if (squash) {
-			this.reSubmitSquashed(content, localOpMetadata);
-		} else {
-			this.reSubmitCore(content, localOpMetadata);
-		}
+		const submit = (ordinaryContent: unknown, metadata: unknown): void => {
+			verifyOrdinaryChannelMessage(ordinaryContent);
+			if (squash) {
+				this.reSubmitSquashed(ordinaryContent, metadata);
+			} else {
+				this.reSubmitCore(ordinaryContent, metadata);
+			}
+		};
+		getSharedObjectProtocol(this).reSubmit(content, localOpMetadata, submit);
 	}
 
 	/**
