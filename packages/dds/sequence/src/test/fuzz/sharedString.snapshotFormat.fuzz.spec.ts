@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { bufferToString } from "@fluid-internal/client-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import type {
 	IChannelAttributes,
@@ -13,7 +14,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 
 import type { SharedStringClass } from "../../sharedString.js";
-import { assertSnapshotFormat } from "../snapshotFormatUtils.js";
+import { assertSnapshotFormat, getSnapshotFormat } from "../snapshotFormatUtils.js";
 
 import {
 	baseSharedStringModel,
@@ -21,26 +22,20 @@ import {
 	SharedStringFuzzFactory,
 } from "./fuzzUtils.js";
 
-function getRecordedFormat(attributes: IChannelAttributes): boolean | undefined {
-	const value =
-		"newMergeTreeSnapshotFormat" in attributes
-			? attributes.newMergeTreeSnapshotFormat
-			: undefined;
-	assert(value === undefined || typeof value === "boolean");
-	return value;
-}
-
 function observeSnapshots(
 	channel: SharedStringClass,
 	runtime: IFluidDataStoreRuntime,
+	loadedFormat = false,
 ): SharedStringClass {
+	let rememberedFormat = loadedFormat;
 	const summarize = channel.getAttachSummary.bind(channel);
 	channel.getAttachSummary = (...args) => {
 		const explicitFlag: unknown = runtime.options.newMergeTreeSnapshotFormat;
 		assert(explicitFlag === undefined || typeof explicitFlag === "boolean");
-		const expectedFormat = explicitFlag ?? getRecordedFormat(channel.attributes) ?? false;
+		const expectedFormat = explicitFlag ?? rememberedFormat;
 		const result = summarize(...args);
 		assertSnapshotFormat(channel, result.summary, expectedFormat);
+		rememberedFormat = expectedFormat;
 		return result;
 	};
 	return channel;
@@ -65,15 +60,14 @@ class SnapshotFormatFuzzFactory extends SharedStringFuzzFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<SharedStringClass> {
-		const recordedFormat = getRecordedFormat(attributes);
-		assert(recordedFormat !== false, "Legacy summaries must omit the recorded flag");
+		const header = await services.objectStorage.readBlob("content/header");
+		const loadedSnapshotFormat = getSnapshotFormat(bufferToString(header, "utf8"));
 		if (this.loadedFormat === undefined) {
-			assert.equal(recordedFormat, this.initialFormat ? true : undefined);
+			assert.equal(loadedSnapshotFormat, this.initialFormat);
 		}
 		runtime.options.newMergeTreeSnapshotFormat = this.loadedFormat;
 		const channel = await super.load(runtime, id, services, attributes);
-		assert.equal(getRecordedFormat(channel.attributes), recordedFormat);
-		return observeSnapshots(channel, runtime);
+		return observeSnapshots(channel, runtime, loadedSnapshotFormat);
 	}
 }
 

@@ -10,6 +10,19 @@ import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitio
 import { SharedStringFactory } from "../sequenceFactory.js";
 import type { ISharedString } from "../sharedString.js";
 
+function parseSnapshotHeader(header: string): object {
+	const chunk: unknown = JSON.parse(header);
+	assert(typeof chunk === "object" && chunk !== null);
+	return chunk;
+}
+
+export function getSnapshotFormat(header: string): boolean {
+	const chunk = parseSnapshotHeader(header);
+	const version = "version" in chunk ? chunk.version : undefined;
+	assert(version === undefined || version === "1");
+	return version === "1";
+}
+
 export function assertSnapshotFormat(
 	sharedString: ISharedString,
 	summary: ISummaryTree,
@@ -20,8 +33,7 @@ export function assertSnapshotFormat(
 	const header = content.tree.header;
 	assert(header.type === SummaryType.Blob);
 	assert(typeof header.content === "string");
-	const chunk: unknown = JSON.parse(header.content);
-	assert(typeof chunk === "object" && chunk !== null);
+	const chunk = parseSnapshotHeader(header.content);
 	assert.equal(
 		"version" in chunk ? chunk.version : undefined,
 		useFlatFormat ? "1" : undefined,
@@ -31,15 +43,6 @@ export function assertSnapshotFormat(
 	if (useFlatFormat) {
 		assert.equal(content.tree.catchupOps, undefined);
 	}
-	assert.equal(
-		"newMergeTreeSnapshotFormat" in sharedString.attributes
-			? sharedString.attributes.newMergeTreeSnapshotFormat
-			: undefined,
-		useFlatFormat ? true : undefined,
-	);
-	const attributes: unknown = JSON.parse(JSON.stringify(sharedString.attributes));
-	assert(typeof attributes === "object" && attributes !== null);
-	assert.equal("newMergeTreeSnapshotFormat" in attributes, useFlatFormat);
 	assert.equal(
 		sharedString.attributes.snapshotFormatVersion,
 		SharedStringFactory.Attributes.snapshotFormatVersion,

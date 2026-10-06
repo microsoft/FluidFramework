@@ -50,13 +50,7 @@ function assertSummaryFormat(
 	const channel = getSummaryTree(summary, [".channels", dataStoreId, ".channels", channelId]);
 	const attributes = readSummaryBlob(channel, ".attributes");
 	assert(typeof attributes === "object" && attributes !== null);
-	assert.equal("newMergeTreeSnapshotFormat" in attributes, useFlatFormat);
-	assert.equal(
-		"newMergeTreeSnapshotFormat" in attributes
-			? attributes.newMergeTreeSnapshotFormat
-			: undefined,
-		useFlatFormat ? true : undefined,
-	);
+	assert.equal("newMergeTreeSnapshotFormat" in attributes, false);
 
 	const content = getSummaryTree(channel, ["content"]);
 	const chunk = readSummaryBlob(content, "header");
@@ -97,13 +91,13 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 	}
 
 	for (const initialFlag of [false, true]) {
-		it(`retains ${initialFlag ? "flat" : "legacy"} selection and records explicit overrides through summary reloads`, async () => {
+		it(`retains ${initialFlag ? "flat" : "legacy"} selection and explicit overrides through summary reloads`, async () => {
 			let container = await provider.makeTestContainer(createConfig(initialFlag));
 			await waitForContainerConnection(container);
 			let dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			let sharedString = await dataObject.getSharedObject<SharedString>(stringId);
 			let summaryVersion: string | undefined;
-			let recordedFlag = initialFlag;
+			let previousFormat = initialFlag;
 			let expectedText = "";
 
 			for (const [index, explicitFlag] of [
@@ -124,7 +118,7 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 				await provider.ensureSynchronized();
 
 				const summary = await summarizeNow(summarizer);
-				const expectedFlag = explicitFlag ?? recordedFlag;
+				const expectedFlag = explicitFlag ?? previousFormat;
 				assertSummaryFormat(
 					summary.summaryTree,
 					dataObject.context.id,
@@ -139,19 +133,14 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 				const loadedObject = await getContainerEntryPointBackCompat<ITestFluidObject>(loaded);
 				const loadedString = await loadedObject.getSharedObject<SharedString>(stringId);
 				assert.equal(loadedString.getText(), expectedText);
-				assert.equal(
-					"newMergeTreeSnapshotFormat" in loadedString.attributes
-						? loadedString.attributes.newMergeTreeSnapshotFormat
-						: undefined,
-					expectedFlag ? true : undefined,
-				);
+				assert.equal("newMergeTreeSnapshotFormat" in loadedString.attributes, false);
 
 				container.close();
 				container = loaded;
 				dataObject = loadedObject;
 				sharedString = loadedString;
 				summaryVersion = summary.summaryVersion;
-				recordedFlag = expectedFlag;
+				previousFormat = expectedFlag;
 			}
 			container.close();
 		}).timeout(10000);

@@ -35,7 +35,9 @@ import {
 import {
 	type IJSONSegmentWithMergeInfo,
 	type MergeTreeChunkV1,
+	type VersionedMergeTreeChunk,
 	hasMergeInfo,
+	toLatestVersion,
 } from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -44,6 +46,7 @@ import * as opstampUtils from "./stamps.js";
 
 export class SnapshotLoader {
 	private readonly logger: TelemetryLoggerExt;
+	private snapshotVersion: VersionedMergeTreeChunk["version"];
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -58,7 +61,10 @@ export class SnapshotLoader {
 
 	public async initialize(
 		services: IChannelStorageService,
-	): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+	): Promise<{
+		catchupOpsP: Promise<ISequencedDocumentMessage[]>;
+		snapshotVersion: VersionedMergeTreeChunk["version"];
+	}> {
 		const headerLoadedP = services.readBlob(SnapshotLegacy.header).then((header) => {
 			assert(!!header, 0x05f /* "Missing blob header on legacy snapshot!" */);
 			return this.loadHeader(bufferToString(header, "utf8"));
@@ -72,7 +78,7 @@ export class SnapshotLoader {
 
 		await headerLoadedP;
 
-		return { catchupOpsP };
+		return { catchupOpsP, snapshotVersion: this.snapshotVersion };
 	}
 
 	private async loadBodyAndCatchupOps(
@@ -181,12 +187,14 @@ export class SnapshotLoader {
 	};
 
 	private loadHeader(header: string): MergeTreeChunkV1 {
-		const chunk = SnapshotV1.processChunk(
+		const originalChunk = this.serializer.parse(header) as VersionedMergeTreeChunk;
+		// Legacy chunks normalize to V1, so capture the version before converting.
+		this.snapshotVersion = originalChunk.version;
+		const chunk = toLatestVersion(
 			SnapshotLegacy.header,
-			header,
+			originalChunk,
 			this.logger,
 			this.mergeTree.options,
-			this.serializer,
 		);
 		const segs = chunk.segments.map((element) => this.specToSegment(element));
 		this.extractAttribution(segs, chunk);

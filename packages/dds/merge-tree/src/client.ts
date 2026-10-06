@@ -103,6 +103,7 @@ import {
 	type IHasRemovalInfo,
 } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
+import type { VersionedMergeTreeChunk } from "./snapshotChunks.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
 import { SnapshotV1 } from "./snapshotV1.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
@@ -1588,7 +1589,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		runtime: IFluidDataStoreRuntime,
 		storage: IChannelStorageService,
 		serializer: IFluidSerializer,
-	): Promise<{ catchupOpsP: Promise<ISequencedDocumentMessage[]> }> {
+	): Promise<{
+		catchupOpsP: Promise<ISequencedDocumentMessage[]>;
+		snapshotVersion: VersionedMergeTreeChunk["version"];
+	}> {
 		const loader = new SnapshotLoader(runtime, this, this._mergeTree, this.logger, serializer);
 
 		return loader.initialize(storage);

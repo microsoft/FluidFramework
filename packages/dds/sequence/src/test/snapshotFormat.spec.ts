@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import type { IChannelAttributes } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
@@ -28,7 +27,6 @@ const snapshotFormatConfig = "Fluid.Sequence.newMergeTreeSnapshotFormat";
 interface SnapshotFormatFlags {
 	configuration?: boolean;
 	runtime?: boolean;
-	recorded?: boolean;
 }
 
 for (const attachState of [AttachState.Detached, AttachState.Attached]) {
@@ -60,13 +58,15 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 			return runtime;
 		}
 
-		function createString(flags: SnapshotFormatFlags): SharedStringClass {
-			const runtime = createRuntime(flags);
-			const attributes =
-				flags.recorded === undefined
-					? factory.attributes
-					: { ...factory.attributes, newMergeTreeSnapshotFormat: flags.recorded };
-			const sharedString = new SharedStringClass(runtime, "shared-string", attributes);
+		function createString(
+			flags: SnapshotFormatFlags,
+			runtime = createRuntime(flags),
+		): SharedStringClass {
+			const sharedString = new SharedStringClass(
+				runtime,
+				"shared-string",
+				factory.attributes,
+			);
 			sharedString.initializeLocal();
 			sharedString.insertText(0, "before");
 			if (attachState === AttachState.Attached) {
@@ -81,7 +81,6 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 
 		async function loadString(
 			summary: ISummaryTree,
-			attributes: IChannelAttributes,
 			flags: SnapshotFormatFlags,
 		): Promise<SharedStringClass> {
 			const runtime = createRuntime(flags);
@@ -92,7 +91,7 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 					deltaConnection: runtime.createDeltaConnection(),
 					objectStorage: MockStorage.createFromSummary(summary),
 				},
-				attributes,
+				factory.attributes,
 			);
 			assert.equal(sharedString.isAttached(), attachState === AttachState.Attached);
 			return sharedString;
@@ -100,12 +99,19 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 
 		for (const configuration of [undefined, false, true]) {
 			for (const runtime of [undefined, false, true]) {
-				for (const recorded of [undefined, false, true]) {
-					it(`uses configuration=${configuration}, runtime=${runtime}, recorded=${recorded}`, async () => {
-						const sharedString = createString({ configuration, runtime, recorded });
+				for (const loadedFormat of [undefined, false, true]) {
+					it(`uses configuration=${configuration}, runtime=${runtime}, loadedFormat=${loadedFormat}`, async () => {
+						const flags = { configuration, runtime };
+						let sharedString: SharedStringClass;
+						if (loadedFormat === undefined) {
+							sharedString = createString(flags);
+						} else {
+							const source = createString({ runtime: loadedFormat });
+							sharedString = await loadString(source.getAttachSummary().summary, flags);
+						}
 						sharedString.insertText(sharedString.getLength(), " after");
 						containerRuntimeFactory.processAllMessages();
-						const expectedFormat = configuration ?? runtime ?? recorded ?? false;
+						const expectedFormat = configuration ?? runtime ?? loadedFormat ?? false;
 
 						assertSnapshotFormat(
 							sharedString,
@@ -114,7 +120,7 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 						);
 						const summary = await sharedString.summarize();
 						assertSnapshotFormat(sharedString, summary.summary, expectedFormat);
-						const loaded = await loadString(summary.summary, sharedString.attributes, {});
+						const loaded = await loadString(summary.summary, {});
 						assert.equal(loaded.getText(), "before after");
 						const loadedSummary = await loaded.summarize();
 						assertSnapshotFormat(loaded, loadedSummary.summary, expectedFormat);
@@ -128,21 +134,21 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 				const sharedString = createString({ runtime: useFlatFormat });
 				const summary = await sharedString.summarize();
 				assertSnapshotFormat(sharedString, summary.summary, useFlatFormat);
-				const loaded = await loadString(summary.summary, sharedString.attributes, {});
+				const loaded = await loadString(summary.summary, {});
 				loaded.insertText(loaded.getLength(), " after");
 				containerRuntimeFactory.processAllMessages();
 
 				const nextSummary = await loaded.summarize();
 				assertSnapshotFormat(loaded, nextSummary.summary, useFlatFormat);
-				const reloaded = await loadString(nextSummary.summary, loaded.attributes, {});
+				const reloaded = await loadString(nextSummary.summary, {});
 				assert.equal(reloaded.getText(), "before after");
 				assertSnapshotFormat(reloaded, reloaded.getAttachSummary().summary, useFlatFormat);
 			});
 
-			it(`records an explicit ${useFlatFormat ? "legacy" : "flat"} override for subsequent loads`, async () => {
+			it(`uses an explicit ${useFlatFormat ? "legacy" : "flat"} override for subsequent loads`, async () => {
 				const sharedString = createString({ runtime: useFlatFormat });
 				const summary = sharedString.getAttachSummary();
-				const loaded = await loadString(summary.summary, sharedString.attributes, {
+				const loaded = await loadString(summary.summary, {
 					runtime: !useFlatFormat,
 				});
 				loaded.insertText(loaded.getLength(), " override");
@@ -151,24 +157,47 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 				const nextSummary = await loaded.summarize();
 				assertSnapshotFormat(loaded, nextSummary.summary, !useFlatFormat);
 				assertSnapshotFormat(sharedString, summary.summary, useFlatFormat);
-				const reloaded = await loadString(nextSummary.summary, loaded.attributes, {});
+				const reloaded = await loadString(nextSummary.summary, {});
 				assert.equal(reloaded.getText(), "before override");
 				const reloadedSummary = await reloaded.summarize();
 				assertSnapshotFormat(reloaded, reloadedSummary.summary, !useFlatFormat);
 			});
 		}
 
-		it("does not share recorded flags between instances or mutate factory attributes", async () => {
+		it("remembers each successfully written format when runtime overrides are removed", async () => {
+			const runtime = createRuntime({ runtime: true });
+			const sharedString = createString({ runtime: true }, runtime);
+			assertSnapshotFormat(sharedString, sharedString.getAttachSummary().summary, true);
+
+			runtime.options.newMergeTreeSnapshotFormat = undefined;
+			const inheritedFlat = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, inheritedFlat.summary, true);
+
+			runtime.options.newMergeTreeSnapshotFormat = false;
+			const explicitLegacy = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, explicitLegacy.summary, false);
+
+			runtime.options.newMergeTreeSnapshotFormat = undefined;
+			const inheritedLegacy = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, inheritedLegacy.summary, false);
+		});
+
+		it("keeps format memory per instance without changing DDS attributes", async () => {
 			const originalAttributes = { ...factory.attributes };
-			const flatString = createString({ runtime: true });
-			const flatSummary = await flatString.summarize();
-			assertSnapshotFormat(flatString, flatSummary.summary, true);
+			const source = createString({ runtime: true });
+			const sourceSummary = await source.summarize();
+			const flatString = await loadString(sourceSummary.summary, {});
+			const inheritedFlat = await flatString.summarize();
+			assertSnapshotFormat(flatString, inheritedFlat.summary, true);
 			assert.deepEqual(factory.attributes, originalAttributes);
 
 			const legacyString = createString({});
 			const legacySummary = await legacyString.summarize();
 			assertSnapshotFormat(legacyString, legacySummary.summary, false);
-			assert.notEqual(flatString.attributes, legacyString.attributes);
+			const nextFlat = await flatString.summarize();
+			assertSnapshotFormat(flatString, nextFlat.summary, true);
+			assert.deepEqual(flatString.attributes, originalAttributes);
+			assert.deepEqual(legacyString.attributes, originalAttributes);
 			assert.deepEqual(factory.attributes, originalAttributes);
 		});
 	});

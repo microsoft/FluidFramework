@@ -85,13 +85,6 @@ import {
 const snapshotFileName = "header";
 const contentPath = "content";
 
-interface SequenceAttributes extends IChannelAttributes {
-	/**
-	 * True when the most recent summary uses the flat format. Legacy summaries omit this flag.
-	 */
-	newMergeTreeSnapshotFormat?: boolean | undefined;
-}
-
 /**
  * Events emitted in response to changes to the sequence data.
  *
@@ -495,7 +488,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap;
-	private readonly sequenceAttributes: SequenceAttributes;
+	private useFlatSnapshotFormat = false;
 	private readonly sequenceOptions: Readonly<Partial<SequenceOptions>>;
 	constructor(
 		dataStoreRuntime: IFluidDataStoreRuntime,
@@ -503,9 +496,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
 	) {
-		const sequenceAttributes: SequenceAttributes = { ...attributes };
-		super(id, dataStoreRuntime, sequenceAttributes, "fluid_sequence_");
-		this.sequenceAttributes = sequenceAttributes;
+		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
 		const getMinInFlightRefSeq = () => this.inFlightRefSeqs.get(0);
 		this.guardReentrancy =
@@ -534,8 +525,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				newMergeTreeSnapshotFormat: (c, n) =>
 					c.getBoolean(n) ??
 					runtimeOptions.newMergeTreeSnapshotFormat ??
-					sequenceAttributes.newMergeTreeSnapshotFormat ??
-					false,
+					this.useFlatSnapshotFormat,
 			},
 			dataStoreRuntime.options,
 		);
@@ -743,8 +733,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
 
 		const summary = builder.getSummaryTree();
-		this.sequenceAttributes.newMergeTreeSnapshotFormat =
-			this.sequenceOptions.newMergeTreeSnapshotFormat === true ? true : undefined;
+		this.useFlatSnapshotFormat = this.sequenceOptions.newMergeTreeSnapshotFormat === true;
 		return summary;
 	}
 
@@ -847,11 +836,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			// this will load the header, and return a promise
 			// that will resolve when the body is loaded
 			// and the catchup ops are available.
-			const { catchupOpsP } = await this.client.load(
+			const { catchupOpsP, snapshotVersion } = await this.client.load(
 				this.runtime,
 				new ObjectStoragePartition(storage, contentPath),
 				this.serializer,
 			);
+			this.useFlatSnapshotFormat = snapshotVersion === "1";
 
 			// process the catch up ops, and finishing the loading process
 			for (const m of await catchupOpsP) {
