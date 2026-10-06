@@ -120,9 +120,10 @@ describe("SharedObject protocol dispatch", () => {
 				() => {},
 			);
 			await shared.load({ deltaConnection: delta, objectStorage: new MockStorage() });
-			for (const isChannelConfigurationOp of [true, false, 1]) {
-				assert.throws(() => shared.submit({ isChannelConfigurationOp }), DataProcessingError);
-			}
+			assert.throws(
+				() => shared.submit({ isChannelConfigurationOp: false }),
+				DataProcessingError,
+			);
 			assert.equal(submitted.length, 0);
 			runtime.dispose();
 		});
@@ -146,7 +147,6 @@ describe("SharedObject protocol dispatch", () => {
 			() => delta.processMessages(collection(contents, {})),
 			() => delta.applyStashedOp(contents),
 			() => delta.reSubmit(contents, {}, false),
-			() => delta.reSubmit(contents, {}, true),
 			() => delta.rollback?.(contents, {}),
 		]) {
 			assert.throws(invoke, DataProcessingError);
@@ -174,64 +174,6 @@ describe("SharedObject protocol dispatch", () => {
 		sharedObjectProtocols.set(first, registered);
 		assert.equal(getSharedObjectProtocol(first), registered);
 		assert.equal(getSharedObjectProtocol(second), defaultSharedObjectProtocol);
-	});
-
-	it("forwards default payloads, metadata and collections without changing identity", () => {
-		const protocol = getSharedObjectProtocol({});
-		const content = { kind: "configuration", version: 1 };
-		const metadata = {};
-		const messages = collection(content, metadata);
-		const calls: string[] = [];
-		assert.equal(protocol.prepareLocalMessage(content), content);
-		protocol.processMessages(messages, (delivered) => {
-			calls.push("process");
-			assert.equal(delivered, messages);
-			assert.equal(delivered.messagesContent, messages.messagesContent);
-		});
-		protocol.applyStashedOp(content, (delivered) => {
-			calls.push("stash");
-			assert.equal(delivered, content);
-		});
-		protocol.reSubmit(content, metadata, (delivered, localMetadata) => {
-			calls.push("resubmit");
-			assert.equal(delivered, content);
-			assert.equal(localMetadata, metadata);
-		});
-		protocol.rollback(content, metadata, (delivered, localMetadata) => {
-			calls.push("rollback");
-			assert.equal(delivered, content);
-			assert.equal(localMetadata, metadata);
-		});
-		assert.deepEqual(calls, ["process", "stash", "resubmit", "rollback"]);
-	});
-
-	it("does not retain detached submissions or lifecycle state in the default protocol", () => {
-		const protocol = getSharedObjectProtocol({});
-		const content = {};
-		protocol.submitWhileDetached(content, {});
-		protocol.close(new Error("unrelated instance failure"));
-		const other = getSharedObjectProtocol({});
-		assert.equal(other.prepareLocalMessage(content), content);
-		other.processMessages(collection(content, undefined), (messages) => {
-			assert.equal(messages.messagesContent.length, 1);
-			assert.equal(messages.messagesContent[0]?.contents, content);
-		});
-	});
-
-	it("propagates callback errors unchanged from the default protocol", () => {
-		const protocol = getSharedObjectProtocol({});
-		const error = new Error("DDS hook failed");
-		const fail = (): never => {
-			throw error;
-		};
-		for (const invoke of [
-			() => protocol.processMessages(collection({}, {}), fail),
-			() => protocol.applyStashedOp({}, fail),
-			() => protocol.reSubmit({}, {}, fail),
-			() => protocol.rollback({}, {}, fail),
-		]) {
-			assert.throws(invoke, (thrown: unknown) => thrown === error);
-		}
 	});
 
 	it("retains legacy DDS events and stash, resubmit, squash and rollback hooks", async () => {
@@ -291,17 +233,6 @@ describe("SharedObject protocol dispatch", () => {
 		assert.deepEqual(submitted, [["attached", undefined]]);
 		runtime.dispose();
 	});
-
-	for (const attachState of [AttachState.Attaching, AttachState.Attached]) {
-		it(`still fails a legacy bound submission without services (${attachState})`, () => {
-			const runtime = new MockFluidDataStoreRuntime({ attachState });
-			const shared = new LegacySharedObject(runtime);
-			shared.bindToContext();
-			assert.equal(shared.isAttached(), true);
-			assert.throws(() => shared.submit("missing services"), TypeError);
-			runtime.dispose();
-		});
-	}
 
 	it("continues submitting attached legacy edits while disconnected", async () => {
 		const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Attached });

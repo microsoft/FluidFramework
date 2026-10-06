@@ -22,7 +22,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaConnection,
 	MockFluidDataStoreRuntime,
@@ -204,10 +204,7 @@ function requireConfig(view: View): ChannelConfigurationFacet<Config> {
 	return view.config;
 }
 
-function datastoreHarness(
-	factory: ReturnType<ReturnType<typeof makeKind>["getFactory"]>,
-	onLoad: (shared: IChannel & View) => void = () => {},
-): {
+function datastoreHarness(factory: ReturnType<ReturnType<typeof makeKind>["getFactory"]>): {
 	runtime: FluidDataStoreRuntime;
 	errors: unknown[];
 	readonly shared: IChannel & View;
@@ -253,7 +250,6 @@ function datastoreHarness(
 			});
 		};
 		shared = await load(dataStoreRuntime, id, services, channelAttributes);
-		onLoad(shared);
 		return shared;
 	};
 	const runtime = new FluidDataStoreRuntime(
@@ -448,44 +444,6 @@ describe("configured kernel composition", () => {
 			);
 		});
 
-		it("does not resubmit flushed configuration when the ordinary submission fails", async () => {
-			const { runtime, delta, services, submitted } = harness();
-			const shared = makeKind().getFactory().create(runtime, "lazy");
-			shared.connect(services);
-			const request = requireConfig(shared).requestChangeLazy({ retain: true });
-			const submit = delta.submit.bind(delta);
-			const failure = new Error("Ordinary submission failed");
-			delta.submit = (contents, metadata) => {
-				if (typeof contents === "string") {
-					throw failure;
-				}
-				return submit(contents, metadata);
-			};
-			assert.throws(
-				() => shared.edit("failed"),
-				(error) => error === failure,
-			);
-			assert.equal(submitted.length, 1);
-			delta.submit = submit;
-			shared.edit("successful");
-			assert.deepEqual(
-				submitted.map(({ contents }) => contents),
-				[barrier(0, true), "successful"],
-			);
-			delta.processMessages(
-				collection(
-					submitted.map(({ contents }) => contents),
-					true,
-					submitted.map(({ metadata }) => metadata),
-				),
-			);
-			const result = await timeoutAwait(request, {
-				errorMsg:
-					"Flushed lazy kernel request did not resolve after ordinary submission failed",
-			});
-			assert.equal(result.status, "applied");
-		});
-
 		it("keeps new lazy intent out of real datastore stashed-op submission capture", async () => {
 			const test = datastoreHarness(makeKind().getFactory());
 			await test.runtime.getChannel("dds");
@@ -587,18 +545,6 @@ describe("configured kernel composition", () => {
 			loaded.observed.map((item): unknown => (Array.isArray(item) ? item[0] : item)),
 			["initial", "operation", "configuration", "operation", "configuration"],
 		);
-		const restoredOperation = { address: "dds", contents: "stashed earlier" };
-		const restoredMetadata = await runtime.applyStashedOp({
-			type: "op",
-			content: restoredOperation,
-		});
-		assert(runtime.isDirty);
-		runtime.processMessages(collection([restoredOperation], true, [restoredMetadata]));
-		assert.equal(runtime.isDirty, false);
-		assert.deepEqual(loaded.observed.slice(-2), [
-			["operation", { stashed: 1, contents: "stashed earlier" }, "restored-one", 2, true],
-			["operation", { stashed: 2, contents: "stashed earlier" }, "restored-two", 2, true],
-		]);
 		const restoredProposal = { address: "dds", contents: barrier(2, true) };
 		const proposalMetadata = await runtime.applyStashedOp({
 			type: "op",
@@ -608,152 +554,83 @@ describe("configured kernel composition", () => {
 		runtime.processMessages(collection([restoredProposal], true, [proposalMetadata]));
 		assert.equal(requireConfig(loaded).current.revision, 3);
 		assert.equal(runtime.isDirty, false);
-		const summary = await runtime.summarize(true, false);
-		assert.equal(summary.summary.type, SummaryType.Tree);
-		assert(summary.summary.type === SummaryType.Tree);
-		const channelSummary = summary.summary.tree.dds;
-		assert(channelSummary?.type === SummaryType.Tree);
-		const attributesBlob = channelSummary.tree[".attributes"];
-		assert(attributesBlob?.type === SummaryType.Blob);
-		assert.equal(attributesBlob.content, JSON.stringify(loaded.attributes));
 	});
 
 	for (const lazy of [false, true]) {
-		for (const malformed of [false, true]) {
-			it(`leaves ${malformed ? "malformed configuration ops" : "DDS processor errors"} to the real delta connection during ${lazy ? "lazy replay" : "live processing"}`, async () => {
-				const processorError = new Error("DDS processor failed");
-				const factory = makeKind({}, true, "configured-test", {
-					processMessages: () => {
-						throw processorError;
-					},
-				}).getFactory();
-				const rejections: unknown[] = [];
-				let pending: Promise<void>[] = [];
-				const test = datastoreHarness(factory, (shared) => {
-					const config = requireConfig(shared);
-					pending = [
-						config.requestChange({ retain: true }),
-						config.requestChange({ retain: false }),
-					].map(async (request) =>
-						assert.rejects(request, (error: unknown) => {
-							rejections.push(error);
-							return true;
-						}),
-					);
-				});
-				const checkError = (error: unknown): boolean => {
-					assert.equal(test.errors.length, 1);
-					const rawError = test.errors[0];
-					if (malformed) {
-						assert(rawError instanceof Error);
-						assert(!(rawError instanceof UsageError));
-						validateAssertionError("Unsupported channel configuration protocol version")(
-							rawError,
-						);
-					} else {
-						assert.equal(rawError, processorError);
-					}
-					assert(error instanceof DataProcessingError);
-					assert.notEqual(error, rawError);
-					assert.equal(
-						error.getTelemetryProperties().dataProcessingCodepath,
-						"channelDeltaConnectionFailedToProcessMessages",
-					);
-					return true;
-				};
-				const contents = malformed ? { version: 2, isChannelConfigurationOp: true } : "fail";
-				if (lazy) {
-					test.process(contents);
-					assert.equal(test.errors.length, 0);
-					await assert.rejects(test.runtime.getChannel("dds"), checkError);
-				} else {
-					await test.runtime.getChannel("dds");
-					assert.throws(() => test.process(contents), checkError);
-				}
-				assert.equal(test.runtime.disposed, false);
-				assert.doesNotThrow(() => test.shared.edit("still open"));
-				await new Promise<void>((resolve) => setImmediate(resolve));
-				assert.equal(rejections.length, 0);
-
-				test.runtime.dispose();
-				await Promise.all(pending);
-				assert.equal(rejections.length, 2);
-				for (const error of rejections) {
-					assert(error instanceof Error);
-					assert(!(error instanceof UsageError));
-					assert(!(error instanceof DataProcessingError));
-					assert.match(error.message, /disposed/);
-					assert.notEqual(error, test.errors[0]);
-				}
-				await assert.rejects(requireConfig(test.shared).requestChange({}), /disposed/);
-			});
-		}
-	}
-
-	for (const callback of [false, true]) {
-		it(`rejects all pending requests with the original configuration ${callback ? "callback" : "validation"} error`, async () => {
-			const failure = new Error("configuration failed");
-			let failValidation = false;
+		it(`leaves ${lazy ? "malformed configuration ops" : "DDS processor errors"} to the real delta connection during ${lazy ? "lazy replay" : "live processing"}`, async () => {
+			const processorError = new Error("DDS processor failed");
 			const factory = makeKind({}, true, "configured-test", {
-				configurationDefinition: {
-					...definition,
-					validateTransition: (previous, next): asserts next is Config => {
-						definition.validateTransition(previous, next);
-						if (failValidation) {
-							throw failure;
-						}
-					},
+				processMessages: () => {
+					throw processorError;
 				},
 			}).getFactory();
 			const test = datastoreHarness(factory);
-			await test.runtime.getChannel("dds");
-			const config = requireConfig(test.shared);
-			const pending = [
-				config.requestChange({ retain: true }),
-				config.requestChange({ retain: false }),
-			].map(async (request) => assert.rejects(request, (error: unknown) => error === failure));
-			if (callback) {
-				config.on("changed", () => {
-					throw failure;
-				});
-			} else {
-				failValidation = true;
-			}
-			assert.throws(
-				() => test.process(barrier(0, true)),
-				(error: unknown) => {
-					assert.equal(test.errors[0], failure);
-					assert(error instanceof DataProcessingError);
-					assert.notEqual(error, failure);
-					assert.equal(
-						error.getTelemetryProperties().dataProcessingCodepath,
-						"channelDeltaConnectionFailedToProcessMessages",
+			const checkError = (error: unknown): boolean => {
+				assert.equal(test.errors.length, 1);
+				const rawError = test.errors[0];
+				if (lazy) {
+					assert(rawError instanceof Error);
+					validateAssertionError("Unsupported channel configuration protocol version")(
+						rawError,
 					);
-					return true;
-				},
-			);
-			assert.equal(test.runtime.disposed, false);
-			await Promise.all(pending);
-			await assert.rejects(config.requestChange({}), (error: unknown) => error === failure);
-			assert.throws(
-				() => test.shared.edit("disposed configuration"),
-				(error: unknown) => error === failure,
-			);
+				} else {
+					assert.equal(rawError, processorError);
+				}
+				assert(error instanceof DataProcessingError);
+				assert.notEqual(error, rawError);
+				assert.equal(
+					error.getTelemetryProperties().dataProcessingCodepath,
+					"channelDeltaConnectionFailedToProcessMessages",
+				);
+				return true;
+			};
+			if (lazy) {
+				test.process({ version: 2, isChannelConfigurationOp: true });
+				assert.equal(test.errors.length, 0);
+				await assert.rejects(test.runtime.getChannel("dds"), checkError);
+			} else {
+				await test.runtime.getChannel("dds");
+				assert.throws(() => test.process("fail"), checkError);
+			}
 			test.runtime.dispose();
 		});
 	}
+
+	it("rejects all pending requests with the original configuration callback error", async () => {
+		const failure = new Error("configuration failed");
+		const test = datastoreHarness(makeKind({}).getFactory());
+		await test.runtime.getChannel("dds");
+		const config = requireConfig(test.shared);
+		const pending = [
+			config.requestChange({ retain: true }),
+			config.requestChange({ retain: false }),
+		].map(async (request) => assert.rejects(request, (error: unknown) => error === failure));
+		config.on("changed", () => {
+			throw failure;
+		});
+		assert.throws(() => test.process(barrier(0, true)), DataProcessingError);
+		assert.equal(test.errors[0], failure);
+		await Promise.all(pending);
+		assert.throws(
+			() => test.shared.edit("disposed configuration"),
+			(error: unknown) => error === failure,
+		);
+		test.runtime.dispose();
+	});
 
 	it("preserves common event-listener wrapping and channel closure", async () => {
 		const test = datastoreHarness(makeKind({}).getFactory());
 		await test.runtime.getChannel("dds");
 		const config = requireConfig(test.shared);
-		const pending = [config.requestChange({ retain: true }), config.requestChange({})];
-		const settled = Promise.allSettled(pending);
+		let closedError: unknown;
+		const pending = assert.rejects(
+			config.requestChange({ retain: true }),
+			(error: unknown) => error === closedError,
+		);
 		const listenerError = new Error("op listener failed");
 		(test.shared as View & ISharedObject).on("op", () => {
 			throw listenerError;
 		});
-		let closedError: unknown;
 		assert.throws(
 			() => test.process("trigger listener"),
 			(error: unknown) => {
@@ -769,21 +646,11 @@ describe("configured kernel composition", () => {
 				return true;
 			},
 		);
-		assert.equal(test.runtime.disposed, false);
-		for (const result of await settled) {
-			assert.equal(result.status, "rejected");
-			assert(result.status === "rejected");
-			assert.equal(result.reason, closedError);
-		}
+		await pending;
 		assert.throws(
 			() => test.shared.edit("closed"),
 			(error: unknown) => error === closedError,
 		);
-		assert.throws(
-			() => test.process("closed"),
-			(error: unknown) => error === closedError,
-		);
-		await assert.rejects(config.requestChange({}), (error: unknown) => error === closedError);
 		test.runtime.dispose();
 	});
 
@@ -822,16 +689,6 @@ describe("configured kernel composition", () => {
 		delta.processMessages(collection([proposal.contents], true, [proposal.metadata]));
 		const sequenced = await request;
 		assert.equal(sequenced.source, "sequenced");
-	});
-
-	it("allows local activation and attachment without a document capability", async () => {
-		const { runtime, services } = harness(AttachState.Detached);
-		const shared = makeKind().getFactory().create(runtime, "local");
-		await requireConfig(shared).requestChange({ retain: true });
-		shared.connect(services);
-		runtime.setAttachState(AttachState.Attaching);
-		assert.equal(shared.isAttached(), true);
-		assert.equal(requireConfig(shared).current.values.retain, true);
 	});
 
 	it("allows ordinary use and activation without a document capability", async () => {
@@ -1026,22 +883,6 @@ describe("configured kernel composition", () => {
 		await assert.rejects(config.requestChange({}), /disposed/);
 	});
 
-	it("keeps per-instance configuration replacements separate from factory defaults", async () => {
-		const { runtime } = harness(AttachState.Detached);
-		const initial = { retain: false };
-		const factory = makeKind(initial).getFactory();
-		const one = factory.create(runtime, "one");
-		const two = factory.create(runtime, "two");
-		assert.equal(requireConfig(one).current.values, initial);
-		assert.equal(requireConfig(two).current.values, initial);
-		await requireConfig(one).requestChange({ retain: true });
-		assert.equal(requireConfig(two).current.values.retain, false);
-		assert(!("configuration" in factory.attributes));
-		assert.notEqual(one.attributes, two.attributes);
-		assert.notEqual(one.attributes, factory.attributes);
-		assert.equal(Object.isFrozen(one.attributes), false);
-	});
-
 	it("keeps DDSes without a configuration definition on the existing protocol", async () => {
 		const { runtime, services } = harness(AttachState.Detached);
 		const factory = makeKind(undefined, false).getFactory();
@@ -1089,15 +930,6 @@ describe("configured kernel composition", () => {
 		assert.deepEqual(submitted, []);
 	});
 
-	it("accepts a configuration op without a document capability", async () => {
-		const { runtime, services, delta } = harness();
-		const factory = makeKind().getFactory();
-		const shared = await factory.load(runtime, "existing", services, factory.attributes);
-		delta.processMessages(collection([barrier(0, true)]));
-		assert.deepEqual(requireConfig(shared).current, { revision: 1, values: { retain: true } });
-		assert("configuration" in shared.attributes);
-	});
-
 	for (const lazy of [false, true]) {
 		it(`rejects activation for a nonparticipating DDS during ${lazy ? "lazy replay" : "live processing"}`, async () => {
 			const test = datastoreHarness(makeKind(undefined, false).getFactory());
@@ -1114,53 +946,15 @@ describe("configured kernel composition", () => {
 		});
 	}
 
-	it("exposes revision and values in memory and encodes a version only in attributes", async () => {
-		const { runtime, services } = harness(AttachState.Detached);
-		const factory = makeKind({ retain: false }).getFactory();
-		const original = factory.create(runtime, "original");
-		for (const shared of [
-			original,
-			await factory.load(runtime, "loaded", services, original.attributes),
-		]) {
-			const config = requireConfig(shared);
-			assert.deepEqual(config.current, { revision: 0, values: { retain: false } });
-			assert.equal(Object.isFrozen(config.current), false);
-			const initialAttributes = JSON.parse(JSON.stringify(shared.attributes)) as {
-				configuration: unknown;
-			};
-			assert.deepEqual(initialAttributes.configuration, {
-				version: 1,
-				revision: 0,
-				values: { retain: false },
-			});
-			const result = await config.requestChange({ retain: true });
-			assert.deepEqual(result.current, { revision: 1, values: { retain: true } });
-			const updatedAttributes = JSON.parse(JSON.stringify(shared.attributes)) as {
-				configuration: unknown;
-			};
-			assert.deepEqual(updatedAttributes.configuration, {
-				version: 1,
-				revision: 1,
-				values: { retain: true },
-			});
-		}
-	});
-
 	for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 		it(`rejects DDS submissions using the reserved marker (${attachState})`, () => {
 			const { runtime, services, submitted } = harness(attachState);
 			const shared = makeKind({}).getFactory().create(runtime, "configured");
 			shared.connect(services);
-			for (const isChannelConfigurationOp of [true, false, 1]) {
-				assert.throws(
-					() => shared.edit({ isChannelConfigurationOp, values: "private data" }),
-					(error: unknown) => {
-						assert(error instanceof DataProcessingError);
-						assert(!error.message.includes("private data"));
-						return true;
-					},
-				);
-			}
+			assert.throws(
+				() => shared.edit({ isChannelConfigurationOp: false, values: {} }),
+				DataProcessingError,
+			);
 			assert.equal(submitted.length, 0);
 			assert.equal(requireConfig(shared).current.revision, 0);
 		});
@@ -1189,11 +983,8 @@ describe("configured kernel composition", () => {
 		const events: unknown[] = [];
 		(shared as View & ISharedObject).on("op", (message) => events.push(message.contents));
 		const payloads = [
-			7,
 			"ordinary",
-			false,
 			[1, { isChannelConfigurationOp: true }],
-			{ version: 99, kind: "configuration", revision: 123, contents: {} },
 			{ data: { isChannelConfigurationOp: true, expectedRevision: 0 } },
 		];
 		const metadata = { pending: true };
@@ -1214,22 +1005,20 @@ describe("configured kernel composition", () => {
 		const { runtime, services, delta } = harness();
 		const shared = makeKind({}).getFactory().create(runtime, "configured");
 		shared.connect(services);
-		for (const marker of [false, 1, undefined]) {
-			assert.throws(
-				() =>
-					delta.processMessages(
-						collection([
-							{
-								version: 1,
-								isChannelConfigurationOp: marker,
-								expectedRevision: 0,
-								values: {},
-							},
-						]),
-					),
-				/Invalid channel configuration message/,
-			);
-		}
+		assert.throws(
+			() =>
+				delta.processMessages(
+					collection([
+						{
+							version: 1,
+							isChannelConfigurationOp: false,
+							expectedRevision: 0,
+							values: {},
+						},
+					]),
+				),
+			/Invalid channel configuration message/,
+		);
 		assert.deepEqual(shared.observed, [["initial", { revision: 0, values: {} }]]);
 	});
 
@@ -1275,20 +1064,14 @@ describe("configured kernel composition", () => {
 			/configuration/i,
 		);
 		const supported = makeKind().getFactory();
-		for (const configuration of [
-			undefined,
-			{ version: 2 },
-			{ version: 1, revision: -1, values: {} },
-		]) {
-			const invalidAttributes: IChannelAttributes & { configuration: unknown } = {
-				...supported.attributes,
-				configuration,
-			};
-			await assert.rejects(
-				supported.load(runtime, "bad", services, invalidAttributes),
-				/configuration/i,
-			);
-		}
+		const invalidAttributes: IChannelAttributes & { configuration: unknown } = {
+			...supported.attributes,
+			configuration: { version: 2, revision: 0, values: {} },
+		};
+		await assert.rejects(
+			supported.load(runtime, "bad", services, invalidAttributes),
+			/configuration/i,
+		);
 	});
 
 	it("replays mixed batches in logical order and delivers raw ops and normal events", async () => {

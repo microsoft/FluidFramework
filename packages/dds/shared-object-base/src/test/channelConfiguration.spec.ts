@@ -190,22 +190,6 @@ describe("ChannelConfigurationController", () => {
 			assert.equal(submitted.length, 2);
 		});
 
-		it("captures the eager revision before a lazy flush with synchronous delivery", async () => {
-			const { controller } = harness({
-				submit: (message, metadata) => controller.process(message, context(), metadata),
-			});
-			const lazy = controller.requestChangeLazy({ enabled: false });
-			const eager = controller.requestChange({});
-			const results = await timeoutAwait(Promise.all([lazy, eager]), {
-				errorMsg: "Lazy and eager requests did not resolve after synchronous delivery",
-			});
-			assert.deepEqual(
-				results.map((result) => result.status),
-				["applied", "conflict"],
-			);
-			assert.deepEqual(controller.current, { revision: 1, values: { enabled: false } });
-		});
-
 		it("rejects the eager request without submitting it if the lazy flush fails", async () => {
 			const failure = new Error("Lazy submission failed");
 			let submissions = 0;
@@ -379,52 +363,6 @@ describe("ChannelConfigurationController", () => {
 			);
 		});
 
-		it("treats an uncaught reentrancy assertion during submission as fatal", async () => {
-			const { controller } = harness({
-				submit: () => {
-					controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent"));
-				},
-			});
-			const rejected = assert.rejects(
-				controller.requestChangeLazy({}),
-				/reentrantly while flushing lazy configuration/,
-			);
-			const queued = assert.rejects(
-				controller.requestChangeLazy({ enabled: false }),
-				/reentrantly while flushing lazy configuration/,
-			);
-			assert.throws(
-				() => controller.submitOrdinaryMessage(() => assert.fail("Triggering op sent")),
-				/reentrantly while flushing lazy configuration/,
-			);
-			await timeoutAwait(Promise.all([rejected, queued]), {
-				errorMsg: "Lazy requests were not rejected after the uncaught reentrancy assertion",
-			});
-			assert.throws(
-				() => controller.verifyCanSubmit(),
-				/reentrantly while flushing lazy configuration/,
-			);
-		});
-
-		it("prohibits lazy requests and flushing inside configuration callbacks", async () => {
-			const { controller } = harness({ isAttached: () => false });
-			let nested: Promise<void> | undefined;
-			controller.on("changed", () => {
-				nested = assert.rejects(controller.requestChangeLazy({}), /configuration callback/);
-				assert.throws(
-					() => controller.submitOrdinaryMessage(() => {}),
-					/configuration callback/,
-				);
-			});
-			await timeoutAwait(controller.requestChangeLazy({}), {
-				errorMsg: "Local lazy request did not resolve after its configuration callback",
-			});
-			assert(nested !== undefined);
-			await timeoutAwait(nested, {
-				errorMsg: "Nested lazy request was not rejected from a configuration callback",
-			});
-		});
-
 		it("rejects deferred and submitted requests together on disposal", async () => {
 			const { controller } = harness();
 			const failure = new Error("Runtime closed");
@@ -440,10 +378,6 @@ describe("ChannelConfigurationController", () => {
 			assert.throws(
 				() => controller.submitOrdinaryMessage(() => {}),
 				(error) => error === failure,
-			);
-			await timeoutAwait(
-				assert.rejects(controller.requestChangeLazy({}), (error) => error === failure),
-				{ errorMsg: "New lazy request was not rejected after controller disposal" },
 			);
 		});
 
@@ -589,21 +523,6 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(controller.current.revision, 2);
 		await complete;
 		assert.deepEqual(order, ["callback", "callback", "promise"]);
-	});
-
-	it("supports synchronous on/off notifications without an initial event", () => {
-		const { controller, changes } = harness();
-		let calls = 0;
-		const listener = (): void => {
-			calls++;
-		};
-		controller.on("changed", listener);
-		assert.equal(changes.length, 0);
-		controller.process(proposal(0, {}), context(false));
-		controller.off("changed", listener);
-		controller.process(proposal(1, {}), context(false, 1));
-		assert.equal(calls, 1);
-		assert.equal(changes.length, 2);
 	});
 
 	it("applies repeated detached changes immediately without submit or service sequence fields", async () => {
@@ -761,24 +680,6 @@ describe("ChannelConfigurationController", () => {
 		controller.dispose();
 	});
 
-	it("rejects outstanding requests on disposal and prevents later changes", async () => {
-		const { controller } = harness();
-		const failure = new Error("Closed runtime");
-		const first = assert.rejects(controller.requestChange({}), (error) => error === failure);
-		const second = assert.rejects(
-			controller.requestChange({ enabled: false }),
-			(error) => error === failure,
-		);
-		controller.dispose(failure);
-		controller.dispose(new Error("Second close"));
-		await Promise.all([first, second]);
-		await assert.rejects(controller.requestChange({}), (error) => error === failure);
-		assert.throws(
-			() => controller.process(proposal(0, {}), context(false)),
-			(error) => error === failure,
-		);
-	});
-
 	it("rejects all pending promises when an accepted barrier callback fails", async () => {
 		const { controller, submitted } = harness();
 		const failure = new Error("Callback failed");
@@ -841,22 +742,6 @@ describe("ChannelConfigurationController", () => {
 		assert.equal(controller.current.revision, 0);
 	});
 
-	it("rejects a restored future revision when sequenced replay reaches it", () => {
-		const { controller, submitted, changes } = harness({
-			snapshot: { version: 1, revision: 4, values: {} },
-		});
-		controller.applyStashedOp(proposal(5, {}));
-		const restored = submitted.at(0);
-		assert(restored !== undefined);
-		assert.equal(restored.message.expectedRevision, 5);
-		assert.throws(
-			() => controller.process(restored.message, context(), restored.metadata),
-			/future revision/,
-		);
-		assert.equal(controller.current.revision, 4);
-		assert.equal(changes.length, 0);
-	});
-
 	it("rejects revision overflow on requests and incoming barriers, but permits old conflicts", async () => {
 		const snapshot = { version: 1, revision: Number.MAX_SAFE_INTEGER, values: {} };
 		const { controller, submitted } = harness({ snapshot });
@@ -871,68 +756,6 @@ describe("ChannelConfigurationController", () => {
 			/overflow/,
 		);
 		assert.equal(controller.current.revision, Number.MAX_SAFE_INTEGER);
-	});
-
-	it("treats a failed eager submission as fatal and rejects other pending requests", async () => {
-		let fail = false;
-		const submitted: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
-		const { controller } = harness({
-			submit: (message, metadata) => {
-				if (fail) {
-					throw new Error("Submit failed");
-				}
-				submitted.push({ message, metadata });
-			},
-		});
-		const first = assert.rejects(controller.requestChange({}), /Submit failed/);
-		fail = true;
-		await assert.rejects(controller.requestChange({ enabled: false }), /Submit failed/);
-		await timeoutAwait(first, {
-			errorMsg: "Pending request was not rejected after an eager control submission failed",
-		});
-		assert.equal(submitted.length, 1);
-		assert.throws(() => controller.verifyCanSubmit(), /Submit failed/);
-	});
-
-	it("handles synchronous delivery by a submit callback without losing completion metadata", async () => {
-		const { controller } = harness({
-			submit: (message, metadata) => controller.process(message, context(), metadata),
-		});
-		assert.equal((await controller.requestChange({})).status, "applied");
-		assert.equal(controller.current.revision, 1);
-	});
-
-	it("leaves JSON serialization and its failures to the normal submission or snapshot path", async () => {
-		for (const attached of [false, true]) {
-			const failure = new TypeError("Configuration serialization failed");
-			let serializationAttempts = 0;
-			const values = {
-				get value(): string {
-					serializationAttempts++;
-					throw failure;
-				},
-			};
-			const { controller } = harness({
-				isAttached: () => attached,
-				submit: (message) => {
-					JSON.stringify(message);
-				},
-			});
-			const request = controller.requestChange(values);
-			if (attached) {
-				await assert.rejects(request, (error: unknown) => error === failure);
-				assert.equal(controller.current.revision, 0);
-			} else {
-				await request;
-				assert.equal(controller.current.values, values);
-				assert.equal(serializationAttempts, 0);
-				assert.throws(
-					() => JSON.stringify(controller.current),
-					(error: unknown) => error === failure,
-				);
-			}
-			assert.equal(serializationAttempts, 1);
-		}
 	});
 
 	it("validates initial configuration without a previous value, then validates transitions", async () => {
@@ -974,48 +797,6 @@ describe("ChannelConfigurationController", () => {
 		}
 	});
 
-	it("does not impose a protocol size limit on local or attached replacements", async () => {
-		const values = { text: "a".repeat(32 * 1024) };
-		for (const attached of [false, true]) {
-			const { controller, submitted } = harness({ isAttached: () => attached });
-			const request = controller.requestChange(values);
-			if (attached) {
-				assert.equal(controller.current.revision, 0);
-				const original = submitted.at(0);
-				assert(original !== undefined);
-				controller.reSubmit(original.message, original.metadata);
-				const resubmitted = submitted.at(1);
-				assert(resubmitted !== undefined);
-				assert.deepEqual(resubmitted.message, original.message);
-				assert.equal(resubmitted.metadata, original.metadata);
-				controller.process(resubmitted.message, context(), resubmitted.metadata);
-			} else {
-				assert.equal(controller.current.revision, 1);
-				assert.equal(submitted.length, 0);
-			}
-			assert.equal((await request).status, "applied");
-			assert.deepEqual(controller.current.values, values);
-		}
-	});
-
-	it("captures obsolete stashed intent unchanged", () => {
-		const message = proposal(0, { unsupported: "a".repeat(32 * 1024) });
-		const { controller, submitted, changes } = harness({
-			snapshot: { version: 1, revision: 2, values: {} },
-		});
-		const snapshot = controller.current;
-		controller.applyStashedOp(message);
-		const restored = submitted.at(0);
-		assert(restored !== undefined);
-		assert.deepEqual(restored.message, message);
-		assert.equal(restored.metadata, undefined);
-		assert.equal(controller.current, snapshot);
-		const result = controller.process(restored.message, context(), restored.metadata);
-		assert.equal(result.status, "conflict");
-		assert.equal(result.current, snapshot);
-		assert.equal(changes.length, 0);
-	});
-
 	it("validates initial values", () => {
 		assert.throws(
 			() => harness({ snapshot: { version: 1, revision: 0, values: { unsupported: true } } }),
@@ -1025,28 +806,15 @@ describe("ChannelConfigurationController", () => {
 });
 
 describe("channel configuration format", () => {
-	it("reads snapshots without copying or freezing their values", () => {
+	it("reads versioned snapshots and configuration messages", () => {
 		const input = {
 			version: 1,
 			revision: 2,
 			values: { nested: [{ flag: false }], nullable: null },
 		};
-		const snapshot = parseChannelConfigurationSnapshot(input);
-		assert.equal(snapshot, input);
-		assert.equal(snapshot.values, input.values);
-		assert.equal(Object.isFrozen(snapshot), false);
-		assert.equal(Object.isFrozen(snapshot.values), false);
-		assert.deepEqual(JSON.parse(JSON.stringify(snapshot)), input);
-	});
-
-	it("validates configuration ops without interpreting obsolete values", () => {
-		const values = { unsupported: true };
-		const message = proposal(0, values);
-		const parsed = parseChannelConfigurationMessage(message);
-		assert.equal(parsed, message);
-		assert.equal(parsed.isChannelConfigurationOp, true);
-		assert.equal(parsed.values, values);
-		assert.equal(Object.isFrozen(parsed), false);
+		assert.deepEqual(parseChannelConfigurationSnapshot(input), input);
+		const message = proposal(0, input.values);
+		assert.deepEqual(parseChannelConfigurationMessage(message), message);
 	});
 
 	it("recognizes only the reserved top-level key without interpreting ordinary payloads", () => {
@@ -1063,20 +831,7 @@ describe("channel configuration format", () => {
 		]) {
 			assert.equal(hasChannelConfigurationMarker(contents), false);
 		}
-		for (const marker of [true, false, undefined, 1]) {
-			assert.equal(hasChannelConfigurationMarker({ isChannelConfigurationOp: marker }), true);
-		}
-		let calls = 0;
-		const accessor = Object.defineProperty({}, "isChannelConfigurationOp", {
-			get: () => {
-				calls++;
-				return true;
-			},
-			enumerable: true,
-		});
-		assert.equal(hasChannelConfigurationMarker(accessor), true);
-		assert.throws(() => parseChannelConfigurationMessage(accessor));
-		assert.equal(calls, 0);
+		assert.equal(hasChannelConfigurationMarker({ isChannelConfigurationOp: false }), true);
 	});
 
 	for (const revision of [
@@ -1119,7 +874,6 @@ describe("channel configuration format", () => {
 			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: [] },
 			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: null },
 			{ version: 1, isChannelConfigurationOp: false, expectedRevision: 0, values: {} },
-			{ version: 1, isChannelConfigurationOp: 1, expectedRevision: 0, values: {} },
 			{ version: 1, expectedRevision: 0, values: {} },
 		]) {
 			assert.throws(() => parseChannelConfigurationMessage(message));

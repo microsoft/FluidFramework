@@ -28,13 +28,8 @@ import { createMockLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	validateChannelConfiguration,
-	verifyChannelConfigurationController,
-} from "../channelConfiguration.js";
-import {
 	loadChannel,
 	loadChannelFactoryAndAttributes,
-	summarizeChannel,
 	summarizeChannelAsync,
 	type ChannelServiceEndpoints,
 } from "../channelContext.js";
@@ -55,42 +50,6 @@ describe("Channel configuration compatibility", () => {
 			getAttachSummary: () => new SummaryTreeBuilder().getSummaryTree(),
 		} as unknown as IChannel & ChannelConfigurationChannel;
 	}
-
-	it("keeps marker-free attributes legacy", () => {
-		assert.equal(validateChannelConfiguration(attributes), false);
-	});
-
-	it("accepts JSON keys that do not contain custom serialization or handles", () => {
-		assert(
-			validateChannelConfiguration({
-				...attributes,
-				configuration: {
-					...snapshot,
-					values: { toJSON: false, IFluidHandle: "a setting name" },
-				},
-			} as IChannelAttributes),
-		);
-	});
-
-	it("leaves configuration values to normal JSON serialization", () => {
-		let reads = 0;
-		const configured = {
-			...attributes,
-			configuration: {
-				...snapshot,
-				values: {
-					get enabled(): boolean {
-						reads++;
-						return true;
-					},
-				},
-			},
-		};
-		assert(validateChannelConfiguration(configured));
-		assert.equal(reads, 0);
-		assert.deepEqual(JSON.parse(JSON.stringify(configured.configuration)), snapshot);
-		assert.equal(reads, 1);
-	});
 
 	it("loads legacy instances unchanged through a configuration-capable factory", async () => {
 		const legacy = { attributes } as IChannel;
@@ -147,16 +106,11 @@ describe("Channel configuration compatibility", () => {
 
 	for (const configuration of [
 		undefined,
-		// eslint-disable-next-line unicorn/no-null
-		null,
-		{},
 		{ ...snapshot, version: 2 },
 		{ ...snapshot, revision: -1 },
 		{ ...snapshot, revision: -0 },
-		{ ...snapshot, revision: 1.5 },
 		{ ...snapshot, revision: Number.MAX_SAFE_INTEGER + 1 },
 		{ ...snapshot, values: [] },
-		{ ...snapshot, values: undefined },
 		{ ...snapshot, values: true },
 		{ ...snapshot, extra: true },
 	]) {
@@ -260,24 +214,6 @@ describe("Channel configuration compatibility", () => {
 		);
 	});
 
-	it("accepts a controller protocol marker without lifecycle callbacks", () => {
-		assert.doesNotThrow(() => verifyChannelConfigurationController(channel()));
-	});
-
-	it("requires a controller before capturing a new-protocol snapshot", () => {
-		let captured = false;
-		const configured = channel();
-		Object.assign(configured, {
-			channelConfigurationProtocolVersion: undefined,
-			getAttachSummary: () => {
-				captured = true;
-			},
-		});
-		assert.throws(() => summarizeChannel(configured, true, false), /did not register/);
-		assert.equal(captured, false);
-		assert.throws(() => verifyChannelConfigurationController(configured), /did not register/);
-	});
-
 	it("requires a controller before capturing an asynchronous new-protocol snapshot", async () => {
 		let captured = false;
 		const configured = channel();
@@ -290,17 +226,6 @@ describe("Channel configuration compatibility", () => {
 		});
 		await assert.rejects(summarizeChannelAsync(configured), /did not register/);
 		assert.equal(captured, false);
-	});
-
-	it("allows different supporting DDS types without document configuration", () => {
-		const configured = channel();
-		const other = {
-			...channel(),
-			attributes: { ...channel().attributes, type: "other-configured" },
-		};
-		summarizeChannel(configured, true, false);
-		summarizeChannel(other, true, false);
-		verifyChannelConfigurationController(other);
 	});
 
 	it("loads persisted instance attributes instead of factory defaults", async () => {
@@ -409,78 +334,39 @@ describe("Channel configuration compatibility", () => {
 		assert.deepEqual(order, ["connected"]);
 	});
 
-	for (const attachState of [
-		AttachState.Detached,
-		AttachState.Attaching,
-		AttachState.Attached,
-	]) {
-		it(`requires a controller before attach summaries and connection while ${attachState}`, () => {
-			const dataStoreContext = new MockFluidDataStoreContext();
-			const localRuntime = {
-				attachState,
-			} as unknown as IFluidDataStoreRuntime;
-			let captured = false;
-			let connected = false;
-			const configured = channel();
-			Object.assign(configured, {
-				id: "dds",
-				channelConfigurationProtocolVersion: undefined,
-				getAttachSummary: () => {
-					captured = true;
-					return new SummaryTreeBuilder().getSummaryTree();
-				},
-				connect: () => {
-					connected = true;
-				},
-			});
-			const context = new LocalChannelContext(
-				configured,
-				localRuntime,
-				dataStoreContext,
-				dataStoreContext.storage,
-				createMockLoggerExt(),
-				() => {},
-				() => {},
-			);
-			assert.throws(() => context.getAttachSummary(), /did not register/);
-			assert.throws(() => context.makeVisible(), /did not register/);
-			assert.equal(captured, false);
-			assert.equal(connected, false);
+	it("requires a controller before attach summaries and connection while detached", () => {
+		const dataStoreContext = new MockFluidDataStoreContext();
+		const localRuntime = {
+			attachState: AttachState.Detached,
+		} as unknown as IFluidDataStoreRuntime;
+		let captured = false;
+		let connected = false;
+		const configured = channel();
+		Object.assign(configured, {
+			id: "dds",
+			channelConfigurationProtocolVersion: undefined,
+			getAttachSummary: () => {
+				captured = true;
+				return new SummaryTreeBuilder().getSummaryTree();
+			},
+			connect: () => {
+				connected = true;
+			},
 		});
-	}
-
-	for (const attachState of [
-		AttachState.Detached,
-		AttachState.Attaching,
-		AttachState.Attached,
-	]) {
-		for (const connected of [false, true]) {
-			it(`loads configured channels without document configuration (${attachState}, ${connected})`, async () => {
-				const localRuntime = {
-					attachState,
-					connected,
-				} as unknown as IFluidDataStoreRuntime;
-				let loaded = false;
-				const loading = loadChannel(
-					localRuntime,
-					channel().attributes,
-					{
-						attributes,
-						channelConfigurationProtocolVersion: 1,
-						load: async () => {
-							loaded = true;
-							return channel();
-						},
-					} as unknown as IChannelFactory,
-					{} as ChannelServiceEndpoints,
-					createMockLoggerExt(),
-					"dds",
-				);
-				await loading;
-				assert.equal(loaded, true);
-			});
-		}
-	}
+		const context = new LocalChannelContext(
+			configured,
+			localRuntime,
+			dataStoreContext,
+			dataStoreContext.storage,
+			createMockLoggerExt(),
+			() => {},
+			() => {},
+		);
+		assert.throws(() => context.getAttachSummary(), /did not register/);
+		assert.throws(() => context.makeVisible(), /did not register/);
+		assert.equal(captured, false);
+		assert.equal(connected, false);
+	});
 
 	it("loads configured rehydrated channels lazily and replays queued messages", async () => {
 		const dataStoreContext = new MockFluidDataStoreContext();

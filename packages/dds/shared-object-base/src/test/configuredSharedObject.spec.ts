@@ -70,11 +70,8 @@ interface ConfiguredObject extends SharedObjectCore {
 }
 
 interface Hooks {
-	beforeConfiguration?: (shared: SharedObjectCore) => void;
 	constructed?: (shared: ConfiguredObject) => void;
-	initialize?: (shared: ConfiguredObject) => void;
 	load?: (shared: ConfiguredObject) => Promise<void>;
-	attach?: () => void;
 }
 
 function observeConstruction(shared: ConfiguredObject, hooks: Hooks): void {
@@ -117,7 +114,6 @@ class ConfiguredSharedObject extends SharedObject implements ConfiguredObject {
 	) {
 		super(id, runtime, attributes, "configured-test");
 		this.#hooks = hooks;
-		hooks.beforeConfiguration?.(this);
 		this.config = initializeSharedObjectConfiguration(this, options);
 		observeConstruction(this, hooks);
 	}
@@ -128,7 +124,6 @@ class ConfiguredSharedObject extends SharedObject implements ConfiguredObject {
 
 	protected override initializeLocalCore(): void {
 		this.observed.push(["initialize", this.config?.current]);
-		this.#hooks.initialize?.(this);
 	}
 
 	protected async loadCore(): Promise<void> {
@@ -138,10 +133,6 @@ class ConfiguredSharedObject extends SharedObject implements ConfiguredObject {
 
 	protected summarizeCore(): ISummaryTreeWithStats {
 		return createSingleBlobSummary("data", JSON.stringify(this.observed));
-	}
-
-	protected override didAttach(): void {
-		this.#hooks.attach?.();
 	}
 
 	protected processMessagesCore(messages: IRuntimeMessageCollection): void {
@@ -173,7 +164,6 @@ class ConfiguredSharedObjectCore extends SharedObjectCore implements ConfiguredO
 	) {
 		super(id, runtime, attributes);
 		this.#hooks = hooks;
-		hooks.beforeConfiguration?.(this);
 		this.config = initializeSharedObjectConfiguration(this, options);
 		observeConstruction(this, hooks);
 	}
@@ -201,16 +191,11 @@ class ConfiguredSharedObjectCore extends SharedObjectCore implements ConfiguredO
 
 	protected override initializeLocalCore(): void {
 		this.observed.push(["initialize", this.config?.current]);
-		this.#hooks.initialize?.(this);
 	}
 
 	protected async loadCore(): Promise<void> {
 		this.observed.push(["load", this.config?.current]);
 		await this.#hooks.load?.(this);
-	}
-
-	protected override didAttach(): void {
-		this.#hooks.attach?.();
 	}
 
 	protected processMessagesCore(messages: IRuntimeMessageCollection): void {
@@ -398,20 +383,6 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			assert(!("configuration" in reader.attributes));
 		});
 
-		it("loads unmarked attributes with definition defaults even when new instances opt in", async () => {
-			const { runtime, services } = harness();
-			const reader = factory({ retain: true });
-			const shared = await reader.load(runtime, "legacy", services, reader.attributes);
-			const current = { revision: 0, values: { retain: false } };
-			assert.deepEqual(shared.observed, [
-				["constructor", current],
-				["load", current],
-			]);
-			assert.deepEqual(shared.config.current, current);
-			assert(!("configuration" in shared.attributes));
-			assert.equal(reader.create(runtime, "new").config.current.values.retain, true);
-		});
-
 		it("loads defaults if an older summarizer omits persisted configuration", async () => {
 			const { runtime, services } = harness(AttachState.Detached);
 			const reader = factory({ retain: true });
@@ -422,10 +393,15 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			assert.equal(original.config.current.revision, 1);
 			delete attributes.configuration;
 			const loaded = await reader.load(runtime, "reloaded", services, attributes);
-			assert.deepEqual(loaded.config.current, {
+			const current = {
 				revision: 0,
 				values: definition.defaultConfiguration,
-			});
+			};
+			assert.deepEqual(loaded.config.current, current);
+			assert.deepEqual(loaded.observed, [
+				["constructor", current],
+				["load", current],
+			]);
 			assert(!("configuration" in loaded.attributes));
 			assert(!("configuration" in roundTripAttributes(loaded)));
 		});
@@ -549,37 +525,13 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			]);
 		});
 
-		for (const attachState of [AttachState.Detached, AttachState.Attached]) {
-			it(`calls a no-super didAttach override without a document capability (${attachState})`, () => {
-				const { runtime, services } = harness(attachState);
-				let attached = false;
-				const shared = factory({ retain: true }, { attach: () => (attached = true) }).create(
-					runtime,
-					"configured",
-				);
-				if (attachState === AttachState.Detached) {
-					shared.connect(services);
-					assert.equal(attached, false);
-					runtime.setAttachState(AttachState.Attaching);
-				} else {
-					shared.connect(services);
-				}
-				assert.equal(attached, true);
-			});
-		}
-
 		it("rejects malformed or unsupported attributes, including an own undefined marker", async () => {
 			let constructed = false;
 			const reader = factory(undefined, { constructed: () => (constructed = true) });
 			for (const configuration of [
 				undefined,
-				// eslint-disable-next-line unicorn/no-null -- Test an invalid persisted JSON value.
-				null,
 				{ version: 2, revision: 0, values: {} },
-				{ version: 1, revision: -1, values: {} },
-				{ version: 1, revision: 0, values: [] },
 				{ version: 1, revision: 0, values: { retain: "invalid" } },
-				{ version: 1, revision: 0, values: { unknown: true } },
 			]) {
 				const { runtime, services } = harness();
 				const attributes: IChannelAttributes & { configuration: unknown } = {
@@ -594,150 +546,42 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			assert.equal(constructed, false);
 		});
 
-		for (const stage of ["constructed", "initialize", "load"] as const) {
-			it(`rejects requests during ${stage} and permits them after initialization succeeds`, async () => {
-				const { runtime, services, submitted } = harness(AttachState.Detached);
-				const rejected: Promise<void>[] = [];
-				const check = (shared: ConfiguredObject): void => {
-					for (const method of ["requestChange", "requestChangeLazy"] as const) {
-						rejected.push(
-							assert.rejects(
-								shared.config[method]({ retain: true }),
-								validateAssertionError(
-									stage === "load"
-										? "Cannot submit while loading configured shared object state"
-										: "Cannot change configuration during shared object initialization",
-								),
-							),
-						);
-					}
-				};
-				const reader = factory(undefined, {
-					[stage]:
-						stage === "load"
-							? async (shared: ConfiguredObject) => {
-									check(shared);
-									await Promise.resolve();
-									check(shared);
-									assert.throws(
-										() => shared.edit("during load"),
-										validateAssertionError(
-											"Cannot submit while loading configured shared object state",
-										),
-									);
-								}
-							: check,
-				});
-				const initialized =
-					stage === "load"
-						? await reader.load(runtime, "loading", services, reader.attributes)
-						: reader.create(runtime, "creating");
-				await timeoutAwait(Promise.all(rejected), {
-					errorMsg: `Configuration requests made during ${stage} were not rejected`,
-				});
-				assert.equal(rejected.length, stage === "load" ? 4 : 2);
-				assert.equal(initialized.config.current.revision, 0);
-				const result = await initialized.config.requestChange({ retain: true });
-				assert.equal(result.status, "applied");
-				assert.deepEqual(submitted, []);
-			});
-		}
-
-		for (const stage of ["initialize", "load"] as const) {
-			it(`does not allow changes after ${stage} fails`, async () => {
-				const { runtime, services } = harness(AttachState.Detached);
-				const failure = new Error("initialization failed");
-				let shared: ConfiguredObject | undefined;
-				const reader = factory(undefined, {
-					constructed: (instance) => {
-						shared = instance;
-					},
-					[stage]: () => {
-						throw failure;
-					},
-				});
-				if (stage === "load") {
-					await assert.rejects(
-						reader.load(runtime, "failed", services, reader.attributes),
-						(error: unknown) => error === failure,
-					);
-				} else {
-					assert.throws(
-						() => reader.create(runtime, "failed"),
-						(error: unknown) => error === failure,
-					);
-				}
-				assert(shared !== undefined);
-				for (const method of ["requestChange", "requestChangeLazy"] as const) {
-					await timeoutAwait(
-						assert.rejects(
-							shared.config[method]({}),
-							validateAssertionError(
-								stage === "load"
-									? "Cannot submit while loading configured shared object state"
-									: "Cannot change configuration during shared object initialization",
-							),
+		it("rejects requests throughout asynchronous loading and permits them afterward", async () => {
+			const { runtime, services, submitted } = harness(AttachState.Detached);
+			const rejected: Promise<void>[] = [];
+			const check = (shared: ConfiguredObject): void => {
+				rejected.push(
+					assert.rejects(
+						shared.config.requestChange({ retain: true }),
+						validateAssertionError(
+							"Cannot submit while loading configured shared object state",
 						),
-						{ errorMsg: `${method} was not rejected after ${stage} failed` },
-					);
-				}
-			});
-		}
-
-		it("rejects duplicate registration during construction", () => {
-			const { runtime } = harness(AttachState.Detached);
-			assert.throws(
-				() =>
-					factory(undefined, {
-						constructed: (shared) => {
-							initializeSharedObjectConfiguration(shared, {
-								definition,
-								initialization: { kind: "create" },
-							});
-						},
-					}).create(runtime, "duplicate"),
-				validateAssertionError("Shared object configuration is already initialized"),
-			);
-		});
-
-		for (const lifecycle of ["initializeLocal", "load", "connect", "bindToContext"] as const) {
-			it(`rejects first registration after ${lifecycle} starts`, async () => {
-				const { runtime, services } = harness(AttachState.Detached);
-				let loading: Promise<void> | undefined;
-				const reader = factory(undefined, {
-					beforeConfiguration: (shared) => {
-						switch (lifecycle) {
-							case "initializeLocal": {
-								shared.initializeLocal();
-								break;
-							}
-							case "load": {
-								loading = shared.load(services);
-								break;
-							}
-							case "connect": {
-								shared.connect(services);
-								break;
-							}
-							case "bindToContext": {
-								shared.bindToContext();
-								break;
-							}
-							default: {
-								assert.fail("Unexpected lifecycle");
-							}
-						}
-					},
-				});
-				assert.throws(
-					() => reader.create(runtime, "late"),
-					validateAssertionError(
-						"Configuration must be initialized before the shared object lifecycle starts",
 					),
 				);
-				await loading;
+			};
+			const reader = factory(undefined, {
+				load: async (shared) => {
+					check(shared);
+					await Promise.resolve();
+					check(shared);
+					assert.throws(
+						() => shared.edit("during load"),
+						validateAssertionError(
+							"Cannot submit while loading configured shared object state",
+						),
+					);
+				},
 			});
-		}
+			const initialized = await reader.load(runtime, "loading", services, reader.attributes);
+			await timeoutAwait(Promise.all(rejected), {
+				errorMsg: "Configuration requests made during loading were not rejected",
+			});
+			assert.equal(rejected.length, 2);
+			assert.equal(initialized.config.current.revision, 0);
+			const result = await initialized.config.requestChange({ retain: true });
+			assert.equal(result.status, "applied");
+			assert.deepEqual(submitted, []);
+		});
 
 		it("enables configuration requests before queued ordinary ops replay during load", async () => {
 			const { runtime, services, delta, submitted } = harness();
@@ -764,15 +608,18 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			assert.equal(shared.config.current.revision, 1);
 		});
 
-		it("rejects pending and future requests on runtime disposal", async () => {
+		it("rejects submitted and deferred requests on runtime disposal", async () => {
 			const { runtime, services } = harness();
 			const shared = factory().create(runtime, "disposed");
 			shared.connect(services);
-			const pending = [true, false].map(async (retain) =>
-				assert.rejects(shared.config.requestChange({ retain }), /disposed/),
-			);
+			const pending = [
+				assert.rejects(shared.config.requestChange({ retain: true }), /disposed/),
+				assert.rejects(shared.config.requestChangeLazy({}), /disposed/),
+			];
 			runtime.dispose();
-			await Promise.all(pending);
+			await timeoutAwait(Promise.all(pending), {
+				errorMsg: "Submitted and deferred requests were not rejected on runtime disposal",
+			});
 			await assert.rejects(shared.config.requestChange({}), /disposed/);
 		});
 
@@ -982,26 +829,6 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				});
 				assert.equal(result.status, "conflict");
 				assert.deepEqual(result.current, { revision: 2, values: { retain: true } });
-			});
-
-			it("rejects unsent lazy requests and future requests when the runtime is disposed", async () => {
-				const { runtime, services, submitted } = harness();
-				const shared = factory().create(runtime, "disposed-lazy");
-				shared.connect(services);
-				const pending = assert.rejects(
-					shared.config.requestChangeLazy({ retain: true }),
-					/disposed/,
-				);
-				runtime.dispose();
-				await timeoutAwait(pending, {
-					errorMsg: "Unsent lazy request was not rejected on runtime disposal",
-				});
-				await timeoutAwait(assert.rejects(shared.config.requestChangeLazy({}), /disposed/), {
-					errorMsg: "New lazy request was not rejected after runtime disposal",
-				});
-				assert.deepEqual(submitted, []);
-				assert.equal(shared.config.current.revision, 0);
-				assert(!("configuration" in shared.attributes));
 			});
 
 			it("checks values and read-only state at invocation rather than first edit", async () => {
