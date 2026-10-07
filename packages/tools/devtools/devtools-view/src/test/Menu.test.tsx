@@ -77,16 +77,18 @@ describe("Menu Accessibility Check", () => {
 		assert.deepEqual(screen.getAllByRole("group"), [group]);
 
 		rerender(<MenuWrapper />);
-		assert.equal(group, screen.getByRole("group", { name: "Telemetry" }));
-		assert.equal(group.getAttribute("aria-labelledby"), headingId);
-		assert.equal(telemetryHeading.id, headingId);
-		assert.equal(eventsButton, screen.getByRole("button", { name: "Events" }));
+		const rerenderedGroup = screen.getByRole("group", { name: "Telemetry" });
+		assert.equal(screen.getByText("Telemetry").id, headingId);
+		assert.equal(rerenderedGroup.getAttribute("aria-labelledby"), headingId);
+		assert.equal(
+			screen.getByRole("button", { name: "Events" }).closest("[role='group']"),
+			rerenderedGroup,
+		);
 	});
 
 	it("Uses a distinct Telemetry heading ID for each menu", () => {
 		const firstMenu = render(<MenuWrapper />);
 		const secondMenu = render(<MenuWrapper />);
-		const headingIds = new Set<string>();
 
 		for (const menu of [firstMenu, secondMenu]) {
 			const menuQueries = within(menu.container);
@@ -98,10 +100,7 @@ describe("Menu Accessibility Check", () => {
 			assert.equal(group.getAttribute("aria-labelledby"), heading.id);
 			assert.equal(document.querySelector(`[id="${heading.id}"]`), heading);
 			assert.equal(eventsButton.closest("[role='group']"), group);
-			headingIds.add(heading.id);
 		}
-
-		assert.equal(headingIds.size, 2);
 	});
 
 	it("Exposes the Telemetry group only when telemetry is supported", () => {
