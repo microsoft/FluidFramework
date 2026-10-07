@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions/internal";
-import { configuredSharedString, type SharedString } from "@fluidframework/sequence/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	DataObjectFactoryType,
 	type ITestContainerConfig,
@@ -68,6 +68,7 @@ function assertSummaryFormat(
 
 describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	const { configuredSharedString } = apis.dataRuntime.packages.sequence;
 	let provider: ITestObjectProvider;
 
 	beforeEach("getTestObjectProvider", function () {

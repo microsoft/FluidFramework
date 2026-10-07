@@ -24,6 +24,7 @@ import { assertSnapshotFormat, getSnapshotFormat } from "../snapshotFormatUtils.
 import {
 	baseSharedStringModel,
 	defaultFuzzOptions,
+	makeReducer,
 	SharedStringFuzzFactory,
 	type Operation,
 } from "./fuzzUtils.js";
@@ -90,6 +91,7 @@ for (const initialFormat of [false, true]) {
 			const model: DDSFuzzModel<SharedStringFactory, Operation, SnapshotFormatFuzzState> = {
 				...baseSharedStringModel,
 				workloadName,
+				reducer: makeReducer<SnapshotFormatFuzzState>(),
 				factory: {
 					generateClientConfiguration: (random, { clientId, isSummarizer }) => {
 						if (clientId === "A") {
@@ -100,7 +102,7 @@ for (const initialFormat of [false, true]) {
 								? {}
 								: { newMergeTreeSnapshotFormat: loadedFormat };
 						}
-						return random.pick([
+						return random.pick<SharedStringOptions>([
 							{},
 							{ newMergeTreeSnapshotFormat: true },
 							{ newMergeTreeSnapshotFormat: false },
@@ -110,17 +112,14 @@ for (const initialFormat of [false, true]) {
 						new SnapshotFormatFuzzFactory(clientConfiguration),
 				},
 			};
-			createDDSFuzzSuite(
-				model,
-				{
-					...defaultFuzzOptions,
-					clientJoinOptions: {
-						maxNumberOfClients: 6,
-						clientAddProbability: 0.1,
-						stashableClientProbability: 0.2,
-					},
+			createDDSFuzzSuite(model, {
+				...defaultFuzzOptions,
+				clientJoinOptions: {
+					maxNumberOfClients: 6,
+					clientAddProbability: 0.1,
+					stashableClientProbability: 0.2,
 				},
-			);
+			});
 		});
 	}
 }

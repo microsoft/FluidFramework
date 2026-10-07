@@ -102,10 +102,10 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
  * Creates a SharedString kind with factory-level options.
  *
  * @param options - Options applied to SharedStrings created or loaded by the returned kind's factory.
- * @returns A SharedString kind to register in place of {@link SharedString}.
+ * @returns A SharedString kind to register in place of the default `SharedString`.
  *
  * @remarks
- * The kind uses the same DDS type and summary formats as {@link SharedString}.
+ * The kind uses the same DDS type and summary formats as `SharedString`.
  * The options are captured when this function is called.
  * Each registered factory applies its configuration independently of other clients' factories.
  *

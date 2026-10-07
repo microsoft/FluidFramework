@@ -17,7 +17,11 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { configuredSharedString, SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import {
+	configuredSharedString,
+	SharedString,
+	SharedStringFactory,
+} from "../sequenceFactory.js";
 import type { ISharedString } from "../sharedString.js";
 
 import { assertSnapshotFormat } from "./snapshotFormatUtils.js";
