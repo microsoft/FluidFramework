@@ -61,7 +61,7 @@ export type CommonRouteParams = [
 
 export type SummaryOperation = "get" | "post" | "delete";
 export type SummaryRouteType = "latest" | "sha" | "notApplicable";
-export type SummaryOwnershipOutcome =
+type SummaryOwnershipOutcome =
 	| "allowed"
 	| "notFound"
 	| "identityMismatch"
@@ -85,12 +85,7 @@ export interface IValidateSummaryDocumentArgs {
 	ignoreEphemeralFlag?: boolean;
 	reuseCustomerAccessToken?: boolean;
 	telemetryDetails?: ISummaryOwnershipTelemetryDetails;
-}
-
-export interface IValidatedSummaryDocument {
-	accessToken: string;
-	documentId: string;
-	document: IDocument;
+	logAllowedOutcome?: boolean;
 }
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
@@ -280,7 +275,7 @@ async function checkAndCacheIsEphemeral({
 const ownershipEventName = "HistorianSummaryDocumentOwnershipValidation";
 const documentUnavailableMessage = "Document is deleted and cannot be accessed.";
 
-export function getSummaryDocumentIdentity(
+export function getTokenDocumentIdentity(
 	tenantId: string,
 	authorization: string | undefined,
 ): { accessToken: string; documentId: string } {
@@ -299,10 +294,10 @@ export function getSummaryDocumentIdentity(
 }
 
 function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
-	return getSummaryDocumentIdentity(tenantId, authorization).documentId;
+	return getTokenDocumentIdentity(tenantId, authorization).documentId;
 }
 
-export function logSummaryOwnershipOutcome(
+export function logOwnershipOutcome(
 	tenantId: string,
 	documentId: string,
 	operation: SummaryOperation,
@@ -341,7 +336,7 @@ export function logSummaryOwnershipOutcome(
 	}
 }
 
-export function denySummaryDocumentAccess(
+export function denyDocumentAccess(
 	tenantId: string,
 	documentId: string,
 	operation: SummaryOperation,
@@ -349,15 +344,7 @@ export function denySummaryDocumentAccess(
 	outcome: Exclude<SummaryOwnershipOutcome, "allowed" | "dependencyError">,
 	details?: ISummaryOwnershipTelemetryDetails,
 ): never {
-	logSummaryOwnershipOutcome(
-		tenantId,
-		documentId,
-		operation,
-		routeType,
-		outcome,
-		undefined,
-		details,
-	);
+	logOwnershipOutcome(tenantId, documentId, operation, routeType, outcome, undefined, details);
 	throw new NetworkError(404, documentUnavailableMessage);
 }
 
@@ -382,7 +369,7 @@ function validateAlfredDocumentResponse(
 		(document.storageName != null && typeof document.storageName !== "string")
 	) {
 		const error = new NetworkError(502, "Invalid document response from Alfred.");
-		logSummaryOwnershipOutcome(
+		logOwnershipOutcome(
 			tenantId,
 			documentId,
 			operation,
@@ -395,7 +382,7 @@ function validateAlfredDocumentResponse(
 	}
 }
 
-export async function readAndValidateSummaryDocument({
+export async function validateSummaryDocument({
 	tenantId,
 	authorization,
 	documentManager,
@@ -405,8 +392,9 @@ export async function readAndValidateSummaryDocument({
 	ignoreEphemeralFlag = false,
 	reuseCustomerAccessToken = false,
 	telemetryDetails,
-}: IValidateSummaryDocumentArgs): Promise<IValidatedSummaryDocument> {
-	const { accessToken, documentId } = getSummaryDocumentIdentity(tenantId, authorization);
+	logAllowedOutcome = true,
+}: IValidateSummaryDocumentArgs): Promise<IDocument> {
+	const { accessToken, documentId } = getTokenDocumentIdentity(tenantId, authorization);
 	const readDocument = reuseCustomerAccessToken
 		? async () =>
 				documentManager.readDocument(tenantId, documentId, {
@@ -426,7 +414,7 @@ export async function readAndValidateSummaryDocument({
 		);
 	} catch (error) {
 		if (error instanceof NetworkError && error.code === 404) {
-			return denySummaryDocumentAccess(
+			return denyDocumentAccess(
 				tenantId,
 				documentId,
 				operation,
@@ -435,7 +423,7 @@ export async function readAndValidateSummaryDocument({
 				telemetryDetails,
 			);
 		}
-		logSummaryOwnershipOutcome(
+		logOwnershipOutcome(
 			tenantId,
 			documentId,
 			operation,
@@ -448,7 +436,7 @@ export async function readAndValidateSummaryDocument({
 	}
 
 	if (document === null) {
-		return denySummaryDocumentAccess(
+		return denyDocumentAccess(
 			tenantId,
 			documentId,
 			operation,
@@ -466,7 +454,7 @@ export async function readAndValidateSummaryDocument({
 		telemetryDetails,
 	);
 	if (document.tenantId !== tenantId || document.documentId !== documentId) {
-		return denySummaryDocumentAccess(
+		return denyDocumentAccess(
 			tenantId,
 			documentId,
 			operation,
@@ -476,7 +464,7 @@ export async function readAndValidateSummaryDocument({
 		);
 	}
 	if (document.scheduledDeletionTime !== undefined) {
-		return denySummaryDocumentAccess(
+		return denyDocumentAccess(
 			tenantId,
 			documentId,
 			operation,
@@ -490,7 +478,7 @@ export async function readAndValidateSummaryDocument({
 		document.isEphemeralContainer === true &&
 		Date.now() > document.createTime + ephemeralDocumentTTLSec * 1000
 	) {
-		return denySummaryDocumentAccess(
+		return denyDocumentAccess(
 			tenantId,
 			documentId,
 			operation,
@@ -500,22 +488,17 @@ export async function readAndValidateSummaryDocument({
 		);
 	}
 
-	return { accessToken, documentId, document };
-}
-
-export async function validateSummaryDocument(
-	args: IValidateSummaryDocumentArgs,
-): Promise<IDocument> {
-	const { document } = await readAndValidateSummaryDocument(args);
-	logSummaryOwnershipOutcome(
-		document.tenantId,
-		document.documentId,
-		args.operation,
-		args.routeType,
-		"allowed",
-		undefined,
-		{ source: "alfred" },
-	);
+	if (logAllowedOutcome) {
+		logOwnershipOutcome(
+			document.tenantId,
+			document.documentId,
+			operation,
+			routeType,
+			"allowed",
+			undefined,
+			telemetryDetails ?? { source: "alfred" },
+		);
+	}
 	return document;
 }
 

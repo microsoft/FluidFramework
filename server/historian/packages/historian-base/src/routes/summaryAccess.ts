@@ -14,12 +14,12 @@ import {
 	MalformedEphemeralSummaryAccessRecordError,
 } from "../services";
 import {
-	denySummaryDocumentAccess,
-	getSummaryDocumentIdentity,
+	denyDocumentAccess,
+	getTokenDocumentIdentity,
 	type ISummaryOwnershipTelemetryDetails,
 	type IValidateSummaryDocumentArgs,
-	logSummaryOwnershipOutcome,
-	readAndValidateSummaryDocument,
+	logOwnershipOutcome,
+	validateSummaryDocument,
 } from "./utils";
 
 export interface IResolveSummaryAccessArgs extends IValidateSummaryDocumentArgs {
@@ -47,7 +47,7 @@ function logAllowed(
 	source: ISummaryAccessContext["source"],
 	details: Omit<ISummaryOwnershipTelemetryDetails, "source"> = {},
 ): void {
-	logSummaryOwnershipOutcome(
+	logOwnershipOutcome(
 		args.tenantId,
 		documentId,
 		args.operation,
@@ -61,7 +61,7 @@ function logAllowed(
 export async function resolveSummaryAccess(
 	args: IResolveSummaryAccessArgs,
 ): Promise<ISummaryAccessContext> {
-	const identity = getSummaryDocumentIdentity(args.tenantId, args.authorization);
+	const identity = getTokenDocumentIdentity(args.tenantId, args.authorization);
 	const expiresAtFor = (createTime: number): number =>
 		createTime + args.ephemeralDocumentTTLSec * 1000;
 
@@ -75,7 +75,7 @@ export async function resolveSummaryAccess(
 				error instanceof MalformedEphemeralSummaryAccessRecordError
 					? "malformed"
 					: "dependencyError";
-			logSummaryOwnershipOutcome(
+			logOwnershipOutcome(
 				args.tenantId,
 				identity.documentId,
 				args.operation,
@@ -91,7 +91,7 @@ export async function resolveSummaryAccess(
 		}
 
 		if (record?.state === "deleted") {
-			return denySummaryDocumentAccess(
+			return denyDocumentAccess(
 				args.tenantId,
 				identity.documentId,
 				args.operation,
@@ -105,7 +105,7 @@ export async function resolveSummaryAccess(
 		}
 		if (record?.state === "active") {
 			if (Date.now() >= expiresAtFor(record.createTime)) {
-				return denySummaryDocumentAccess(
+				return denyDocumentAccess(
 					args.tenantId,
 					identity.documentId,
 					args.operation,
@@ -135,17 +135,14 @@ export async function resolveSummaryAccess(
 			fallbackReason:
 				localFailureOutcome === undefined ? "cleanMiss" : "localDependencyError",
 		};
-		const validated = await readAndValidateSummaryDocument({
+		const document = await validateSummaryDocument({
 			...args,
 			telemetryDetails: { source: "alfred", ...fallbackDetails },
+			logAllowedOutcome: false,
 		});
-		if (validated.document.isEphemeralContainer !== true) {
+		if (document.isEphemeralContainer !== true) {
 			logAllowed(args, identity.documentId, "alfred", fallbackDetails);
-			return contextFromDocument(
-				validated.document,
-				"alfred",
-				args.ignoreEphemeralFlag ?? false,
-			);
+			return contextFromDocument(document, "alfred", args.ignoreEphemeralFlag ?? false);
 		}
 		if (localFailureOutcome !== undefined) {
 			throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
@@ -156,12 +153,12 @@ export async function resolveSummaryAccess(
 			activation = await args.accessStore.activateSummaryAccessIfNotDeleted(
 				args.tenantId,
 				identity.documentId,
-				validated.document.createTime,
-				expiresAtFor(validated.document.createTime),
+				document.createTime,
+				expiresAtFor(document.createTime),
 			);
 		} catch (error) {
 			if (error instanceof MalformedEphemeralSummaryAccessRecordError) {
-				logSummaryOwnershipOutcome(
+				logOwnershipOutcome(
 					args.tenantId,
 					identity.documentId,
 					args.operation,
@@ -177,7 +174,7 @@ export async function resolveSummaryAccess(
 				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
 			}
 			activation = "writeError";
-			logSummaryOwnershipOutcome(
+			logOwnershipOutcome(
 				args.tenantId,
 				identity.documentId,
 				args.operation,
@@ -192,7 +189,7 @@ export async function resolveSummaryAccess(
 			);
 		}
 		if (activation === "deleted") {
-			return denySummaryDocumentAccess(
+			return denyDocumentAccess(
 				args.tenantId,
 				identity.documentId,
 				args.operation,
@@ -210,13 +207,14 @@ export async function resolveSummaryAccess(
 			...fallbackDetails,
 			activationOutcome: activation,
 		});
-		return contextFromDocument(validated.document, "alfred", args.ignoreEphemeralFlag ?? false);
+		return contextFromDocument(document, "alfred", args.ignoreEphemeralFlag ?? false);
 	}
 
-	const validated = await readAndValidateSummaryDocument({
+	const document = await validateSummaryDocument({
 		...args,
 		telemetryDetails: { source: "alfred" },
+		logAllowedOutcome: false,
 	});
 	logAllowed(args, identity.documentId, "alfred");
-	return contextFromDocument(validated.document, "alfred", args.ignoreEphemeralFlag ?? false);
+	return contextFromDocument(document, "alfred", args.ignoreEphemeralFlag ?? false);
 }

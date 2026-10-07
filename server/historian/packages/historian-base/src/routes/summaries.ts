@@ -239,7 +239,7 @@ export function create(
 					access.createTime + (ephemeralDocumentTTLSec ?? 24 * 60 * 60) * 1000,
 				);
 			} catch (error) {
-				utils.logSummaryOwnershipOutcome(
+				utils.logOwnershipOutcome(
 					access.tenantId,
 					access.documentId,
 					"delete",
