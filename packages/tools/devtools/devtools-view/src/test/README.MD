@@ -25,19 +25,6 @@ Navigate to the relevant package directory and run all the unit and accessibilit
 pnpm run test
 ```
 
-### Checking Popover Placement
-
-The [Devtools test app](../../../devtools-test-app) contains browser tests for the Status information popover.
-These tests check its position relative to the heading and trigger at different viewport sizes.
-They also check text wrapping, keyboard access to the link, and focus restoration after Escape.
-Use browser tests for these checks because jsdom does not calculate element positions.
-
-After you build the test app, run this command from the repository root:
-
-```bash
-pnpm --filter @fluid-private/devtools-test-app exec playwright test --grep "Status information"
-```
-
 ### Reading Accessibility Tests
 
 Accessibility tests are structured similarly to regular unit tests, with an added focus on verifying that components meet accessibility standards. Here's an overview of how these tests are organized:

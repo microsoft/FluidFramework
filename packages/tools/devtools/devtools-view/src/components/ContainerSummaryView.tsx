@@ -117,6 +117,14 @@ interface DataRowProps {
 	columnProps: unknown;
 }
 
+const useDataRowStyles = makeStyles({
+	information: {
+		// Fluent resets inline widths when it calculates the available space.
+		width: "max-content",
+		whiteSpace: "normal",
+	},
+});
+
 /**
  * Displays a row with basic stats about the Container.
  *
@@ -124,6 +132,7 @@ interface DataRowProps {
  */
 function DataRow(props: DataRowProps): ReactElement {
 	const { label, infoTooltipContent, infoTooltipPositioning, value, columnProps } = props;
+	const styles = useDataRowStyles();
 
 	return (
 		<TableRow>
@@ -139,7 +148,7 @@ function DataRow(props: DataRowProps): ReactElement {
 					<InfoLabel
 						info={{
 							children: infoTooltipContent,
-							style: { width: "max-content", whiteSpace: "normal", overflowY: "auto" },
+							className: styles.information,
 						}}
 						infoButton={
 							infoTooltipPositioning === undefined

@@ -49,6 +49,7 @@ function DevtoolsView(): ReactElement {
 	}, []);
 	return (
 		<Resizable
+			data-testid="devtools-panel"
 			style={{
 				position: "absolute",
 				top: "0px",
@@ -58,6 +59,7 @@ function DevtoolsView(): ReactElement {
 				backgroundColor: "lightgray", // TODO: remove
 			}}
 			enable={{ left: true }} // Only allow re-sizing from the left.
+			handleClasses={{ left: "devtools-resize-handle" }}
 			defaultSize={{ width: 500, height: "100%" }}
 		>
 			<DevtoolsPanel messageRelay={new WindowMessageRelay("fluid-framwork-devtools-inline")} />
