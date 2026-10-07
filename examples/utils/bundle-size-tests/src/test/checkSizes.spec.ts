@@ -77,7 +77,7 @@ describe("checkSizes", () => {
 	it("isolates SharedTree forest providers", () => {
 		// This test must be run after webpack.
 		const stats = JSON.parse(
-			readFileSync("./bundleAnalysis/report.json", "utf-8"),
+			readFileSync("./build/forest-provider-probes/stats.json", "utf-8"),
 		) as WebpackStats;
 		const chunkedForest =
 			"/packages/dds/tree/lib/feature-libraries/chunked-forest/chunkedForest.js";
