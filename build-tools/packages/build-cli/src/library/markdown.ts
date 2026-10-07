@@ -4,7 +4,7 @@
  */
 
 import GithubSlugger from "github-slugger";
-import type { Heading, Html, Link, Root } from "mdast";
+import type { Blockquote, Heading, Html, Link, Root, Text } from "mdast";
 import { headingRange } from "mdast-util-heading-range";
 import { toString } from "mdast-util-to-string";
 import type { Node, Parent } from "unist";
@@ -49,20 +49,17 @@ export function addHeadingLinks(): (tree: Node) => void {
 }
 
 /**
- * A regular expression that extracts an admonition title from a string UNLESS the admonition title is the only thing on
- * the line.
+ * A regular expression that matches a supported GitHub alert marker when it occupies the first line of a text node.
  *
  * Capture group 1 is the admonition type/title (from the leading `[!` all the way to the trailing `]`).
  *
  * @remarks
  *
- * Description of the regular expression:
- *
- * This regular expression matches patterns in the form of `[!WORD]` where WORD can be CAUTION, IMPORTANT, NOTE, TIP, or
- * WARNING. It ensures that the pattern is not followed by only whitespace characters until the end of the line.
- * Additionally, it captures any whitespace characters that follow the matched pattern.
+ * GitHub requires the marker to be followed only by optional whitespace before the line break. The line break is part
+ * of the match so it can be preserved while other soft breaks are removed. Marker matching is case-insensitive to match
+ * GitHub's renderer.
  */
-const ADMONITION_REGEX = /(\[!(?:CAUTION|IMPORTANT|NOTE|TIP|WARNING)])(?!\s*$)\s*/gm;
+const ADMONITION_REGEX = /^(\[!(?:caution|important|note|tip|warning)])[^\S\n]*\n/i;
 
 /**
  * A regular expression to remove single line breaks from text. This is used to remove extraneous line breaks in text
@@ -86,17 +83,43 @@ const SOFT_BREAK_REGEX = /$[^$]/gms;
  */
 export function stripSoftBreaks(): (tree: Node) => void {
 	return (tree: Node): void => {
-		// strip soft breaks
-		visit(tree, "text", (node: { value: string }) => {
-			node.value = node.value.replace(SOFT_BREAK_REGEX, " ");
-		});
+		const admonitionTitles = new Map<Text, RegExpExecArray>();
 
-		// preserve GitHub admonitions; without this the line breaks in the alert are lost and it doesn't render correctly.
-		visit(tree, "blockquote", (node: Node) => {
-			visit(node, "text", (innerNode: { value: string }) => {
-				// If the text is an admonition title, split
-				innerNode.value = innerNode.value.replace(ADMONITION_REGEX, "$1\n");
-			});
+		visit(
+			tree,
+			"blockquote",
+			(node: Blockquote, _index: number | undefined, parent: Parent | undefined) => {
+				if (parent?.type !== "root") {
+					return;
+				}
+
+				const firstBlock = node.children[0];
+				if (firstBlock?.type !== "paragraph") {
+					return;
+				}
+
+				const firstInline = firstBlock.children[0];
+				if (firstInline?.type !== "text") {
+					return;
+				}
+
+				const match = ADMONITION_REGEX.exec(firstInline.value);
+				if (match !== null) {
+					admonitionTitles.set(firstInline, match);
+				}
+			},
+		);
+
+		visit(tree, "text", (node: Text) => {
+			const match = admonitionTitles.get(node);
+			if (match === undefined) {
+				node.value = node.value.replace(SOFT_BREAK_REGEX, " ");
+				return;
+			}
+
+			const title = match[1];
+			const body = node.value.slice(match[0].length).replace(SOFT_BREAK_REGEX, " ");
+			node.value = `${title}\n${body}`;
 		});
 	};
 }
