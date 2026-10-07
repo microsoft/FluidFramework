@@ -926,6 +926,29 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.strictEqual(blobManager.unsharedBlobCount, 2);
 			});
 
+			it("Reports restored blobs to a subscriber that attaches after construction", async () => {
+				const { blobManager } = createTestMaterial({
+					pendingBlobs: await twoPendingBlobs(),
+					createBlobPayloadPending,
+				});
+
+				// A consumer can only subscribe once it holds the BlobManager, by which point the restored
+				// blobs are already counted. The event carries no initial state, so the current value must be
+				// readable directly - otherwise a consumer would start out believing there is no work.
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
+
+				assert.strictEqual(
+					blobManager.hasOutstandingBlobWork,
+					true,
+					"Restored blobs must be readable as outstanding work at subscription time",
+				);
+				assert.deepStrictEqual(
+					outstandingWorkTransitions,
+					[],
+					"Initial state must not be replayed as a transition to a late subscriber",
+				);
+			});
+
 			it("Stops counting restored blobs once sharing completes", async () => {
 				const { blobManager } = createTestMaterial({
 					pendingBlobs: await twoPendingBlobs(),
@@ -960,6 +983,37 @@ for (const createBlobPayloadPending of [false, true]) {
 				// The (now no-op) share call must not resurrect them.
 				await blobManager.sharePendingBlobs();
 				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+			});
+
+			it("Resolves a restored blob's storage ID before reporting it as fully shared", async () => {
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs: await twoPendingBlobs(),
+					createBlobPayloadPending,
+				});
+
+				// Capture the lookup at exactly the moment the aggregate clears, not afterwards. A host told
+				// that its blob work is durable must be able to resolve the blob right then, so any window
+				// where the two disagree is the regression under test.
+				let observedSharedSignal = false;
+				let storageIdWhenShared: string | undefined;
+				blobManager.events.on("outstandingBlobWorkChanged", () => {
+					if (!blobManager.hasOutstandingBlobWork) {
+						observedSharedSignal = true;
+						storageIdWhenShared = blobManager.lookupTemporaryBlobStorageId("blob2");
+					}
+				});
+
+				// A prior client's BlobAttach ops make these durable without this client doing any work, so
+				// the aggregate clears purely from op processing, with no local upload flow involved.
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob1", "remoteBlob1");
+				mockOrderingService.sendBlobAttachMessage("priorClientId", "blob2", "remoteBlob2");
+
+				assert(observedSharedSignal, "Expected the outstanding work signal to clear");
+				assert.strictEqual(
+					storageIdWhenShared,
+					"remoteBlob2",
+					"Blob must resolve to its storage ID at the moment it is reported as shared",
+				);
 			});
 
 			it("Keeps counting a blob that is round-tripped back out to pending state", async () => {

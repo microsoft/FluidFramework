@@ -607,19 +607,15 @@ export const ensureBlobsShared = async (handles: IFluidHandle[]): Promise<void[]
 };
 
 /**
- * Records each transition of the BlobManager's aggregate outstanding-work state, seeded with the state
- * at the time of the call. An expected `[true, false]` means one continuous span of outstanding work,
- * and any flicker shows up as extra entries.
+ * Records every `outstandingBlobWorkChanged` emission, as the value of `hasOutstandingBlobWork` at that
+ * moment. Deliberately does not de-duplicate: the event is specified to fire only when the aggregate
+ * actually flips, so a repeated value in the recorded sequence is a bug and should fail the test asserting
+ * on it.
  */
 export const recordOutstandingBlobWork = (blobManager: BlobManager): boolean[] => {
 	const transitions: boolean[] = [];
-	let last = blobManager.hasOutstandingBlobWork;
 	blobManager.events.on("outstandingBlobWorkChanged", () => {
-		const current = blobManager.hasOutstandingBlobWork;
-		if (current !== last) {
-			last = current;
-			transitions.push(current);
-		}
+		transitions.push(blobManager.hasOutstandingBlobWork);
 	});
 	return transitions;
 };

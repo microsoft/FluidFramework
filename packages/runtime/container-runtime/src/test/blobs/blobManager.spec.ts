@@ -16,6 +16,7 @@ import {
 	toFluidHandleInternal,
 } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
+import { useFakeTimers } from "sinon";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { BlobHandle } from "../../blobManager/blobManager.js";
@@ -906,6 +907,47 @@ for (const createBlobPayloadPending of [false, true]) {
 				);
 			});
 
+			it("Resolves the blob's storage ID before reporting it as fully shared", async () => {
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				// Only the ordering service is held, so the BlobAttach ack can be delivered on demand. The
+				// aggregate transition is published synchronously from that op processing, which is how a
+				// host observes it.
+				mockOrderingService.pause();
+
+				const { handleP } = await createAndStartSharing(blobManager, "hello");
+				await mockOrderingService.waitMessageAvailable();
+				const attachMessage = mockOrderingService.unprocessedMessages[0];
+				assert(attachMessage !== undefined, "Expected a BlobAttach op awaiting sequencing");
+				const { localId, blobId: storageId } = attachMessage.metadata;
+
+				// Capture the lookup at exactly the moment the aggregate clears, not afterwards. A host told
+				// that its blob work is durable must be able to resolve the blob right then, so any window
+				// where the two disagree is the regression under test.
+				let observedSharedSignal = false;
+				let storageIdWhenShared: string | undefined;
+				blobManager.events.on("outstandingBlobWorkChanged", () => {
+					if (!blobManager.hasOutstandingBlobWork) {
+						observedSharedSignal = true;
+						storageIdWhenShared = blobManager.lookupTemporaryBlobStorageId(localId);
+					}
+				});
+
+				mockOrderingService.sequenceOne();
+
+				assert(observedSharedSignal, "Expected the outstanding work signal to clear");
+				assert.strictEqual(
+					storageIdWhenShared,
+					storageId,
+					"Blob must resolve to its storage ID at the moment it is reported as shared",
+				);
+
+				mockOrderingService.unpause();
+				const handle = await handleP;
+				await waitHandlePayloadShared(handle);
+			});
+
 			it("Counts a blob whose payload sharing starts before its handle is attached", async function () {
 				if (!createBlobPayloadPending) {
 					this.skip();
@@ -1089,6 +1131,37 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.deepStrictEqual(outstandingWorkTransitions, [true, false]);
 			});
 
+			it("Stops counting a blob that is aborted after its BlobAttach op is sent", async () => {
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				// Holding the ordering service parks the blob in the attaching stage, so the abort lands
+				// while awaiting the ack rather than during the upload.
+				mockOrderingService.pause();
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
+
+				const ac = new AbortController();
+				const createP = blobManager.createBlob(textToBlob("hello"), ac.signal);
+				if (createBlobPayloadPending) {
+					attachHandle(await createP);
+				}
+				await mockOrderingService.waitMessageAvailable();
+				assert.strictEqual(
+					blobManager.unsharedBlobCount,
+					1,
+					"Uploaded but not yet ack'd, so still outstanding",
+				);
+
+				ac.abort("abort test");
+				await assert.rejects(
+					createBlobPayloadPending ? ensureBlobsShared([await createP]) : createP,
+					{ message: "uploadBlob aborted" },
+				);
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(outstandingWorkTransitions, [true, false]);
+			});
+
 			it("Keeps counting a blob across a TTL-driven re-upload", async () => {
 				const { mockBlobStorage, blobManager } = createTestMaterial({
 					createBlobPayloadPending,
@@ -1148,6 +1221,61 @@ for (const createBlobPayloadPending of [false, true]) {
 					outstandingWorkTransitions,
 					[true, false],
 					"Resubmit must not churn outstanding-work state",
+				);
+			});
+
+			it("Keeps counting a blob when a resubmit finds the TTL expired", async () => {
+				const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+				mockOrderingService.pause();
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
+
+				// Both TTL checks run the same comparison against the same record, so elapsed time is the
+				// only thing that can distinguish the one before the op is sent from the one inside
+				// reSubmit. Only Date is faked; the real timer queue is left alone so the upload and
+				// attach promises still settle normally.
+				const clock = useFakeTimers({ now: Date.now(), toFake: ["Date"] });
+				try {
+					const { handleP } = await createAndStartSharing(blobManager, "hello");
+					assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+					// A 100s TTL leaves the pre-send check satisfied, so the BlobAttach op does go out and
+					// the blob reaches attaching state.
+					await mockBlobStorage.waitCreateOne({ minTTLOverride: 100 });
+					await mockOrderingService.waitMessageAvailable();
+					assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+					// Past the half-TTL heuristic, so by the time the dropped message is resubmitted the
+					// blob is assumed gone from storage and has to go back for a re-upload.
+					clock.tick(60_000);
+					mockBlobStorage.unpause();
+					mockOrderingService.dropOne();
+
+					assert.strictEqual(
+						blobManager.unsharedBlobCount,
+						1,
+						"A blob sent back for re-upload is still non-durable, so it stays outstanding",
+					);
+
+					await mockOrderingService.waitSequenceOne();
+					assert.strictEqual(blobManager.unsharedBlobCount, 0);
+					const handle = await handleP;
+					await waitHandlePayloadShared(handle);
+				} finally {
+					clock.restore();
+				}
+
+				assert.strictEqual(
+					mockBlobStorage.blobsCreated,
+					2,
+					"Expiry found during resubmit must send the blob back for a re-upload",
+				);
+				assert.deepStrictEqual(
+					outstandingWorkTransitions,
+					[true, false],
+					"Re-upload driven by a resubmit must not churn outstanding-work state",
 				);
 			});
 
