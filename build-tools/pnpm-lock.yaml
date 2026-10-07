@@ -207,9 +207,6 @@ importers:
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
-      globby:
-        specifier: ^11.1.0
-        version: 11.1.0
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -240,9 +237,6 @@ importers:
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
-      minimatch:
-        specifier: ^10.2.4
-        version: 10.2.4
       npm-check-updates:
         specifier: ^17.1.18
         version: 17.1.18
@@ -252,6 +246,9 @@ importers:
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
+      picomatch:
+        specifier: ^4.0.4
+        version: 4.0.4
       prettier:
         specifier: ~3.2.5
         version: 3.2.5
@@ -300,6 +297,9 @@ importers:
       table:
         specifier: ^6.9.0
         version: 6.9.0
+      tinyglobby:
+        specifier: ^0.2.15
+        version: 0.2.15
       ts-morph:
         specifier: ^27.0.2
         version: 27.0.2
@@ -355,6 +355,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/picomatch':
+        specifier: ^4.0.2
+        version: 4.0.3
       '@types/prettier':
         specifier: ^2.7.3
         version: 2.7.3
