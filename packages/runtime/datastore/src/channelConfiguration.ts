@@ -5,8 +5,7 @@
 
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
-	ChannelConfigurationChannel,
-	ChannelConfigurationFactory,
+	ChannelSupportingConfiguration,
 	ConfiguredChannelAttributes,
 	IChannel,
 	IChannelAttributes,
@@ -47,7 +46,7 @@ export function validateChannelConfiguration(
 	}
 	if (
 		factory !== undefined &&
-		(factory as IChannelFactory & ChannelConfigurationFactory)
+		(factory as IChannelFactory & ChannelSupportingConfiguration)
 			.channelConfigurationProtocolVersion !== 1
 	) {
 		throw new DataCorruptionError(
@@ -62,7 +61,7 @@ export function validateChannelConfiguration(
  * Checks that a marked instance installed the shared protocol rather than legacy dispatch.
  */
 export function requireChannelConfigurationController(channel: IChannel): void {
-	const configured = channel as IChannel & ChannelConfigurationChannel;
+	const configured = channel as IChannel & ChannelSupportingConfiguration;
 	assert(
 		configured.channelConfigurationProtocolVersion === 1,
 		"Configured channel did not register its controller",

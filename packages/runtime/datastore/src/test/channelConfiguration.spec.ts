@@ -13,7 +13,7 @@ import {
 	ContainerErrorTypes,
 } from "@fluidframework/container-definitions/internal";
 import type {
-	ChannelConfigurationChannel,
+	ChannelSupportingConfiguration,
 	ConfiguredChannelAttributes,
 	IChannel,
 	IChannelAttributes,
@@ -50,12 +50,12 @@ describe("Channel configuration compatibility", () => {
 		attachState: AttachState.Attached,
 	} as unknown as IFluidDataStoreRuntime;
 
-	function channel(): IChannel & ChannelConfigurationChannel {
+	function channel(): IChannel & ChannelSupportingConfiguration {
 		return {
 			attributes: { ...attributes, configuration: snapshot },
 			channelConfigurationProtocolVersion: 1,
 			getAttachSummary: () => new SummaryTreeBuilder().getSummaryTree(),
-		} as unknown as IChannel & ChannelConfigurationChannel;
+		} as unknown as IChannel & ChannelSupportingConfiguration;
 	}
 
 	it("loads legacy instances unchanged through a configuration-capable factory", async () => {
