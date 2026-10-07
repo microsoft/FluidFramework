@@ -30,7 +30,8 @@
 		"./internal": {
 			"types": "./lib/index.d.ts",
 			"default": "./lib/index.js"
-		}
+		},
+		"./internal/timeoutUtils": "./lib/timeoutUtils.js"
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",
