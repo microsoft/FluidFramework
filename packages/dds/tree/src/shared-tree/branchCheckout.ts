@@ -5,30 +5,29 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
-	UsageError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	ChangeFamily,
 	DetachedFieldIndex,
+	GraphCommit,
 	IEditableForest,
 	RevisionTag,
 	RevisionTagCodec,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
+import type { FormatValidator } from "../codec/index.js";
 import type { SharedTreeBranch } from "../shared-tree-core/index.js";
 import type {
 	ImplicitFieldSchema,
-	TreeBranchAlpha,
+	UntypedTreeViewAlpha,
 	TreeViewAlpha,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
-import type { Breakable } from "../util/index.js";
 import { disposeSymbol } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { TreeCheckout } from "./treeCheckout.js";
@@ -46,7 +45,7 @@ import { TreeCheckout } from "./treeCheckout.js";
  * removes it so {@link getBranchCheckout} never returns a disposed instance.
  */
 const branchCheckoutMap = new WeakMap<
-	SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+	SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeProcessingContext>,
 	WeakRef<BranchCheckout>
 >();
 
@@ -67,7 +66,7 @@ const branchCheckoutMap = new WeakMap<
  * once *every* caller drops it.
  */
 const lazyBranchForViewMap = new WeakMap<
-	SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+	SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeProcessingContext>,
 	WeakRef<BranchCheckout>
 >();
 
@@ -162,7 +161,11 @@ export function setBranchCheckoutFinalizationCallback(
  * the `BranchCheckout` has been garbage-collected after losing all external references).
  */
 export function getBranchCheckout(
-	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+	branch: SharedTreeBranch<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>,
 ): BranchCheckout | undefined {
 	return branchCheckoutMap.get(branch)?.deref();
 }
@@ -183,7 +186,11 @@ export function getBranchCheckout(
  */
 export class BranchCheckout extends TreeCheckout {
 	public constructor(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 		isSharedBranch: boolean,
 		changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		storedSchema: TreeStoredSchemaRepository,
@@ -191,10 +198,10 @@ export class BranchCheckout extends TreeCheckout {
 		mintRevisionTag: () => RevisionTag,
 		revisionTagCodec: RevisionTagCodec,
 		idCompressor: IIdCompressor,
+		jsonValidator: FormatValidator,
 		removedRoots?: DetachedFieldIndex,
-		logger?: ITelemetryLoggerExt,
-		breaker?: Breakable,
 		disposeForksAfterTransaction?: boolean,
+		getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
 	) {
 		// `isSharedBranch` is required by the base constructor signature (and by `forkWith`'s checkoutConstructor type),
 		// so we accept it positionally and reject the only invalid value here.
@@ -208,10 +215,10 @@ export class BranchCheckout extends TreeCheckout {
 			mintRevisionTag,
 			revisionTagCodec,
 			idCompressor,
+			jsonValidator,
 			removedRoots,
-			logger,
-			breaker,
 			disposeForksAfterTransaction,
+			getFinalizedCommitOverride,
 		);
 		// A BranchCheckout is local-only (asserted above) and its lifetime is bounded by the holder,
 		// not by the SharedTree. Detach from the long-lived branchTrimmer: the trimmer's
@@ -269,7 +276,11 @@ export class BranchCheckout extends TreeCheckout {
 	 * is type-safe, and the call still fails fast at runtime with a `UsageError`.
 	 */
 	public override switchBranch(
-		_branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		_branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 	): never {
 		throw new UsageError("switchBranch is not supported on BranchCheckout");
 	}
@@ -314,7 +325,7 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
  * Returns the branch currently bound to the given view.
  *
  * @remarks
- * Repeated calls with the same view typically return the same {@link TreeBranchAlpha} instance,
+ * Repeated calls with the same view typically return the same {@link UntypedTreeViewAlpha} instance,
  * but this is not guaranteed: for example, while the view is participating in a transaction
  * its underlying branch may differ from the one observed outside the transaction, and a future
  * change that retargets a view to another branch would likewise cause a different instance to be
@@ -343,11 +354,11 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
  * before this graduates from `@alpha`.
  *
  * @throws A `UsageError` if `view` was not produced by the Fluid Framework (e.g. an external
- * implementation of `TreeBranchAlpha`).
+ * implementation of `UntypedTreeViewAlpha`).
  *
  * @alpha
  */
-export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha {
+export function getBranch(view: UntypedTreeViewAlpha): UntypedTreeViewAlpha {
 	if (!(view instanceof SchematizingSimpleTreeView)) {
 		throw new UsageError(
 			"The `view` argument to `getBranch` must be a view returned by the Fluid Framework — external implementations are not supported.",
@@ -382,12 +393,12 @@ export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha {
  * @alpha
  */
 export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(
-	branch: TreeBranchAlpha,
+	branch: UntypedTreeViewAlpha,
 	config: TreeViewConfiguration<TSchema>,
 ): TreeViewAlpha<TSchema> {
 	if (!(branch instanceof BranchCheckout)) {
 		throw new UsageError(
-			"The `branch` argument to `getViewOfBranch` must be a `TreeBranchAlpha` returned by `getBranch`.",
+			"The `branch` argument to `getViewOfBranch` must be a `UntypedTreeViewAlpha` returned by `getBranch`.",
 		);
 	}
 	return branch.viewWith(config);

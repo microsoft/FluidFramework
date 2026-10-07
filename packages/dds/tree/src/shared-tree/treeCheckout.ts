@@ -1502,7 +1502,11 @@ export class TreeCheckout implements ITreeCheckout {
 	@throwIfBroken
 	public forkWith<T extends TreeCheckout>(
 		checkoutConstructor: new (
-			branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+			branch: SharedTreeBranch<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>,
 			isSharedBranch: boolean,
 			changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 			storedSchema: TreeStoredSchemaRepository,
@@ -1510,14 +1514,18 @@ export class TreeCheckout implements ITreeCheckout {
 			mintRevisionTag: () => RevisionTag,
 			revisionTagCodec: RevisionTagCodec,
 			idCompressor: IIdCompressor,
+			jsonValidator: FormatValidator,
 			removedRoots?: DetachedFieldIndex,
-			logger?: ITelemetryLoggerExt,
-			breaker?: Breakable,
 			disposeForksAfterTransaction?: boolean,
+			getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
 		) => T,
 		options?: {
 			// The branch to use for the forked checkout. If not provided, the branch used by the current checkout will be forked.
-			branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
+			branch: SharedTreeBranch<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>;
 		},
 	): T {
 		this.checkNotDisposed(

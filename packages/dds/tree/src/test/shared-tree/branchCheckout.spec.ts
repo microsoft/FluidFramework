@@ -75,6 +75,7 @@ describe("BranchCheckout", () => {
 						undefined as never,
 						undefined as never,
 						undefined as never,
+						undefined as never,
 					),
 				/BranchCheckout cannot represent a shared branch/,
 			);

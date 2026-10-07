@@ -797,7 +797,7 @@ export type FormatVersion = number | string | undefined;
 export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSchema;
 
 // @alpha
-export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha;
+export function getBranch(view: UntypedTreeViewAlpha): UntypedTreeViewAlpha;
 
 // @alpha
 export function getJsonSchema(schema: ImplicitAllowedTypes, options: Required<TreeSchemaEncodingOptions>): JsonTreeSchema;
@@ -812,7 +812,7 @@ export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithN
 export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<SchemaType.View>;
 
 // @alpha
-export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(branch: TreeBranchAlpha, config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
+export function getViewOfBranch<TSchema extends ImplicitFieldSchema>(branch: UntypedTreeViewAlpha, config: TreeViewConfiguration<TSchema>): TreeViewAlpha<TSchema>;
 
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;

@@ -1025,36 +1025,22 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
-		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
+		it('forks cannot be created during the "changed" event resulting from a committed transaction', () => {
 			const provider = new TestTreeProviderLite(1);
 			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
 			const view = provider.trees[0].kernel.viewWith(config);
 			view.initialize([]);
 
-			const forks: (typeof view)[] = [];
-			view.events.on("changed", () => {
-				forks.push(view.fork());
-			});
-
-			view.runTransaction(() => {
-				view.root.insertAtEnd("A");
-				view.root.insertAtEnd("B");
-			});
-
-			// Verify that the fork was created
-			assert.equal(forks.length, 1);
-			const fork = forks[0];
-			assert.deepEqual(fork.disposed, false);
-			assert.deepEqual(fork.root, ["A", "B"]);
-
-			// Verify that the fork can be modified independently of the parent view
-			fork.root.insertAtEnd("C");
-			assert.deepEqual(fork.root, ["A", "B", "C"]);
-			assert.deepEqual(view.root, ["A", "B"]);
-
-			// Verify that the fork can be merged back into the parent view
-			view.merge(fork);
-			assert.deepEqual(view.root, ["A", "B", "C"]);
+			const unsubscribe = view.events.on("changed", () => view.fork());
+			assert.throws(
+				() =>
+					view.runTransaction(() => {
+						view.root.insertAtEnd("A");
+						view.root.insertAtEnd("B");
+					}),
+				validateUsageError("Branching is forbidden during a change event callback"),
+			);
+			unsubscribe();
 		});
 
 		/**
@@ -2914,15 +2900,15 @@ function itView<
 			name: "reference forked view (BranchCheckout)",
 			setup: () => {
 				const logger = createMockLoggerExt();
+				const breaker = new Breakable("createTreeCheckout", logger);
 				const schema = new TreeStoredSchemaRepository();
 				const referenceCheckout = createTreeCheckout(
 					testIdCompressor,
 					mintRevisionTag,
 					testRevisionTagCodec,
 					{
-						forest: buildTestForest({ additionalAsserts: true, schema }),
+						forest: buildTestForest({ additionalAsserts: true, schema, breaker }),
 						schema,
-						logger,
 					},
 				);
 				const branch = forkAsBranchCheckout(referenceCheckout);
