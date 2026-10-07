@@ -62,7 +62,6 @@
 		"@types/mocha": "~10.0.10",
 		"@types/node": "~22.19.17",
 		"@types/sort-json": "^2.0.3",
-		"concurrently": "^10.0.3",
 		"cross-env": "^7.0.3",
 		"eslint": "~9.39.1",
 		"eslint8": "npm:eslint@~8.57.1",
