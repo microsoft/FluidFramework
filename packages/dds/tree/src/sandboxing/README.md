@@ -304,7 +304,7 @@ The design targets the following threat model and requirements:
      Telemetry fields must not contain user data or Guest-controlled data unless the data is tagged with the appropriate `TelemetryDataTag`.
 
    - **Errors:** The Host can throw errors that contain information derived from Guest input.
-     If an error is logged through `TelemetryLoggerExt.sendErrorEvent`, its must result in telemetry which  complies with the telemetry requirements above.
+     If an error is logged through `TelemetryLoggerExt.sendErrorEvent`, it must result in telemetry that complies with the telemetry requirements above.
 
    - **SharedTree changes:** The Guest can modify the branch in any valid way, as defined in [Valid Branch Changes](#valid-branch-changes).
 
@@ -334,7 +334,7 @@ Applications must therefore account for these risks even when they do not use sa
 Additional Host-side validation could restrict Guests more than ordinary Fluid peers and reduce the harm that a Guest can cause.
 The design and scope of that validation have not yet been finalized.
 
-One proposed fault-isolation boundary is to ensure that a Guest cannot make a change that prevents the application from using the SharedTree Timeline APIs to restore an earlier working state.
+One proposed fault-isolation boundary is to ensure that a Guest cannot make a change that prevents the application from using the SharedTree history APIs to restore an earlier working state.
 Implementing this boundary can require additional Host-side validation, hardening of Timeline or the rebaser, and careful application integration.
 The application must remain functional enough to perform the restoration after it receives invalid content.
 
