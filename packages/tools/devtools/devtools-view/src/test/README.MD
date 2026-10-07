@@ -70,23 +70,3 @@ This tool provides step-by-step guidance to test all aspects of accessibility.
 
 - Fix Issues:
 Based on the results from Accessibility Insights for Web, make the necessary changes to your components to ensure they are fully accessible.
-
-### Verify Telemetry Context with a Screen Reader
-
-The menu tests check that the Events button belongs to a group with the accessible name "Telemetry".
-They also check unique header IDs and keyboard focus order.
-These tests do not verify spoken output.
-
-1. Build and load the [local browser extension](../../../devtools-browser-extension/README.md#local-extension-testing).
-2. Open an application with Fluid Devtools and telemetry support.
-3. Start a screen reader, such as Narrator or NVDA.
-4. Open the browser developer tools and select Fluid Devtools.
-5. Use Tab to move from a container control to the Events button.
-6. Confirm that the announcement includes the Telemetry context and identifies Events as a button.
-7. Move to the next control, then use Shift+Tab to return to Events.
-8. Confirm that the announcement includes the Telemetry context on re-entry.
-9. Press Enter or Space to open the telemetry events view.
-
-The exact words and their order depend on the screen reader and its settings.
-The Telemetry label and group must not add stops to the Tab sequence.
-An accessibility tester must verify spoken output before the accessibility bug closes.
