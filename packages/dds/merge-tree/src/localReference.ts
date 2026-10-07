@@ -328,6 +328,13 @@ export class LocalReferenceCollection {
 	}
 
 	/**
+	 * The number of references stored in this collection.
+	 */
+	public get size(): number {
+		return this.refCount;
+	}
+
+	/**
 	 * Creates a new local reference.
 	 * @remarks This method should only be called by mergeTree.
 	 */
