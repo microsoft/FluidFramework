@@ -4,7 +4,6 @@
  */
 
 import type {
-	PositioningShorthand,
 	TableColumnDefinition,
 	TableColumnSizingOptions,
 } from "@fluentui/react-components";
@@ -37,11 +36,11 @@ import {
 	userIdTooltipText,
 } from "./TooltipTexts.js";
 import { Waiting } from "./Waiting.js";
+import { InformationLabel } from "./utility-components/index.js";
 
 const {
 	Badge,
 	Button,
-	InfoLabel,
 	Table,
 	TableBody,
 	TableCell,
@@ -100,11 +99,6 @@ interface DataRowProps {
 	infoTooltipContent: ReactElement | string | undefined;
 
 	/**
-	 * Placement of the information popover.
-	 */
-	infoTooltipPositioning?: PositioningShorthand;
-
-	/**
 	 * The value text associated with the label (second column).
 	 */
 	value: ReactElement | string | undefined;
@@ -117,22 +111,13 @@ interface DataRowProps {
 	columnProps: unknown;
 }
 
-const useDataRowStyles = makeStyles({
-	information: {
-		// Fluent resets inline widths when it calculates the available space.
-		width: "max-content",
-		whiteSpace: "normal",
-	},
-});
-
 /**
  * Displays a row with basic stats about the Container.
  *
  * @remarks {@link DataRowProps.value} will be wrapped in a <TableCell /> so it shouldn't have one itself.
  */
 function DataRow(props: DataRowProps): ReactElement {
-	const { label, infoTooltipContent, infoTooltipPositioning, value, columnProps } = props;
-	const styles = useDataRowStyles();
+	const { label, infoTooltipContent, value, columnProps } = props;
 
 	return (
 		<TableRow>
@@ -145,20 +130,9 @@ function DataRow(props: DataRowProps): ReactElement {
 				{infoTooltipContent === undefined ? (
 					<b>{label}</b>
 				) : (
-					<InfoLabel
-						info={{
-							children: infoTooltipContent,
-							className: styles.information,
-						}}
-						infoButton={
-							infoTooltipPositioning === undefined
-								? undefined
-								: { popover: { positioning: infoTooltipPositioning } }
-						}
-						style={{ whiteSpace: "nowrap" }}
-					>
+					<InformationLabel info={infoTooltipContent} style={{ whiteSpace: "nowrap" }}>
 						<b>{label}</b>
-					</InfoLabel>
+					</InformationLabel>
 				)}
 			</TableCell>
 			<TableCell>{value}</TableCell>
@@ -393,13 +367,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): ReactEle
 						<DataRow
 							label="Status"
 							infoTooltipContent={containerStatusTooltipText}
-							infoTooltipPositioning={{
-								position: "below",
-								align: "start",
-								// Prevent a fallback above the button from covering the heading.
-								pinned: true,
-								autoSize: true,
-							}}
 							value={containerStatusValueCell(statusComponents)}
 							columnProps={columnSizing_unstable}
 						/>

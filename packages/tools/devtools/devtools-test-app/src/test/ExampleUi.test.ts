@@ -4,7 +4,7 @@
  */
 
 import { retryWithEventualValue } from "@fluidframework/test-utils/internal";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 test.describe("End to end tests", () => {
 	/**
@@ -62,6 +62,35 @@ test.describe("End to end tests", () => {
 			await expect(panel).toHaveCSS("width", `${width}px`);
 		}
 
+		async function expectInformationBelowHeading(page: Page, button: Locator): Promise<void> {
+			const heading = page.getByRole("heading", { name: "Shared Container", level: 2 });
+			const information = page.getByRole("note");
+			const viewport = await page.evaluate(() => ({
+				width: window.innerWidth,
+				height: window.innerHeight,
+			}));
+			await expect
+				.poll(async () => {
+					const headingBounds = await heading.boundingBox();
+					const buttonBounds = await button.boundingBox();
+					const informationBounds = await information.boundingBox();
+					expect(headingBounds).not.toBeNull();
+					expect(buttonBounds).not.toBeNull();
+					expect(informationBounds).not.toBeNull();
+					return (
+						headingBounds !== null &&
+						buttonBounds !== null &&
+						informationBounds !== null &&
+						informationBounds.y >= headingBounds.y + headingBounds.height &&
+						informationBounds.y >= buttonBounds.y + buttonBounds.height &&
+						informationBounds.x >= 0 &&
+						informationBounds.x + informationBounds.width <= viewport.width + 1 &&
+						informationBounds.y + informationBounds.height <= viewport.height + 1
+					);
+				})
+				.toBe(true);
+		}
+
 		for (const { viewport, panelWidth } of [
 			{ viewport: { width: 1280, height: 720 }, panelWidth: 500 },
 			{ viewport: { width: 1280, height: 720 }, panelWidth: 320 },
@@ -85,36 +114,16 @@ test.describe("End to end tests", () => {
 					)
 					.toBe(true);
 
-				const heading = page.getByRole("heading", { name: "Shared Container", level: 2 });
 				const statusButton = page.getByRole("button", { name: "Status information" });
 				await statusButton.focus();
 				await page.keyboard.press("Enter");
 
 				const information = page.getByRole("note");
 				await expect(information).toBeVisible();
-				await expect(information).toHaveCSS("white-space", "normal");
-				await expect
-					.poll(async () => {
-						const headingBounds = await heading.boundingBox();
-						const buttonBounds = await statusButton.boundingBox();
-						const informationBounds = await information.boundingBox();
-						expect(headingBounds).not.toBeNull();
-						expect(buttonBounds).not.toBeNull();
-						expect(informationBounds).not.toBeNull();
-						return (
-							headingBounds !== null &&
-							buttonBounds !== null &&
-							informationBounds !== null &&
-							informationBounds.y >= headingBounds.y + headingBounds.height &&
-							informationBounds.y >= buttonBounds.y + buttonBounds.height &&
-							informationBounds.x >= 0 &&
-							informationBounds.x + informationBounds.width <= viewport.width + 1 &&
-							informationBounds.y + informationBounds.height <= viewport.height + 1
-						);
-					})
-					.toBe(true);
+				await expectInformationBelowHeading(page, statusButton);
 
 				if (isDefaultLayout) {
+					await expect(information).toHaveCSS("white-space", "normal");
 					await expect
 						.poll(async () =>
 							information.evaluate((element) => element.getBoundingClientRect().width),
@@ -134,11 +143,11 @@ test.describe("End to end tests", () => {
 				).toBe(true);
 				if (viewport.height === 160) {
 					await expect(information).toHaveCSS("overflow-y", "auto");
-					expect(
-						await information.evaluate(
-							(element) => element.scrollHeight > element.clientHeight,
-						),
-					).toBe(true);
+					await expect
+						.poll(async () =>
+							information.evaluate((element) => element.scrollHeight > element.clientHeight),
+						)
+						.toBe(true);
 				}
 				await page.keyboard.press("Tab");
 				await expect(information.getByRole("link")).toBeFocused();
@@ -162,7 +171,7 @@ test.describe("End to end tests", () => {
 				{ label: "Client ID", content: /ID assigned by the Fluid/ },
 				{ label: "User ID", content: /Represents the application-specific user identifier/ },
 			]) {
-				test(`${label} information has no scrollbars with a ${panelWidth}px panel`, async ({
+				test(`${label} information stays below the heading without scrollbars with a ${panelWidth}px panel`, async ({
 					page,
 				}) => {
 					await resizeDevtoolsPanel(page, panelWidth);
@@ -172,32 +181,34 @@ test.describe("End to end tests", () => {
 
 					const information = page.getByRole("note");
 					await expect(information).toBeVisible();
+					await expectInformationBelowHeading(page, button);
 					await expect(information).toContainText(content);
-					await expect(information).toHaveCSS("white-space", "normal");
-					await expect(information).toHaveCSS("overflow-x", "visible");
-					await expect(information).toHaveCSS("overflow-y", "visible");
-					expect(
-						await information.evaluate((element) => {
-							const bounds = element.getBoundingClientRect();
-							const textBounds = [...element.childNodes]
-								.filter((node) => node.nodeType === Node.TEXT_NODE)
-								.flatMap((node) => {
-									const range = document.createRange();
-									range.selectNodeContents(node);
-									return [...range.getClientRects()];
-								});
-							return (
-								textBounds.length > 0 &&
-								textBounds.every(
-									(text) =>
-										text.left >= bounds.left &&
-										text.top >= bounds.top &&
-										text.right <= bounds.right &&
-										text.bottom <= bounds.bottom,
-								)
-							);
-						}),
-					).toBe(true);
+					await expect
+						.poll(async () =>
+							information.evaluate((element) => {
+								const bounds = element.getBoundingClientRect();
+								const textBounds = [...element.childNodes]
+									.filter((node) => node.nodeType === Node.TEXT_NODE)
+									.flatMap((node) => {
+										const range = document.createRange();
+										range.selectNodeContents(node);
+										return [...range.getClientRects()];
+									});
+								return (
+									element.scrollWidth <= element.clientWidth &&
+									element.scrollHeight <= element.clientHeight &&
+									textBounds.length > 0 &&
+									textBounds.every(
+										(text) =>
+											text.left >= bounds.left &&
+											text.top >= bounds.top &&
+											text.right <= bounds.right &&
+											text.bottom <= bounds.bottom,
+									)
+								);
+							}),
+						)
+						.toBe(true);
 					await information.hover();
 					await expect(information).toBeVisible();
 					await page.keyboard.press("Escape");
@@ -205,6 +216,45 @@ test.describe("End to end tests", () => {
 					await expect(button).toBeFocused();
 				});
 			}
+		}
+
+		for (const height of [720, 400]) {
+			test(`Audience information opens downward at 1280x${height}`, async ({ page }) => {
+				await resizeDevtoolsPanel(page, 1000);
+				await page.setViewportSize({ width: 1280, height });
+				await page.getByRole("tab", { name: "Audience", exact: true }).click();
+
+				for (const { table, labels } of [
+					{
+						table: "Audience state table",
+						labels: height === 400 ? ["Mode"] : ["Mode", "Scopes", "Client ID", "User ID"],
+					},
+					{ table: "Audience history table", labels: ["Client ID"] },
+				]) {
+					for (const label of labels) {
+						const button = page
+							.getByRole("table", { name: table, exact: true })
+							.getByRole("button", { name: `${label} information`, exact: true });
+						await button.focus();
+						await page.keyboard.press("Enter");
+
+						const information = page.getByRole("note");
+						await expect(information).toBeVisible();
+						await expect(information).toHaveAttribute("data-popper-placement", "bottom-start");
+						await expectInformationBelowHeading(page, button);
+						await expect
+							.poll(async () =>
+								information.evaluate((element) => element.scrollWidth <= element.clientWidth),
+							)
+							.toBe(true);
+						await information.hover();
+						await expect(information).toBeVisible();
+						await page.keyboard.press("Escape");
+						await expect(information).toBeHidden();
+						await expect(button).toBeFocused();
+					}
+				}
+			});
 		}
 	});
 });

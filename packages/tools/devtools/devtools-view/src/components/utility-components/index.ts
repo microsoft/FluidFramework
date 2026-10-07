@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export type { InformationLabelProps } from "./InformationLabel.js";
+export { InformationLabel, informationPositioning } from "./InformationLabel.js";
 export type { LabelCellLayoutProps } from "./LabelCellLayout.js";
 export { LabelCellLayout } from "./LabelCellLayout.js";
 export type { ScreenReaderAnnouncementProps } from "./ScreenReaderAnnouncement.js";

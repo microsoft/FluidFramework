@@ -8,6 +8,7 @@ import { type ReactElement, useContext } from "react";
 
 import { FluentReactComponents, FluentReactIcons } from "../../FluentUi.cjs";
 import { ThemeContext, ThemeOption } from "../../ThemeHelper.js";
+import { informationPositioning } from "../utility-components/index.js";
 
 import type { HasLabel } from "./CommonInterfaces.js";
 import { ToolTipContentsView } from "./ToolTipContentsView.js";
@@ -95,6 +96,7 @@ export function TreeHeader(props: TreeHeaderProps): ReactElement {
 						className: styles.tooltip,
 					}}
 					relationship="description"
+					positioning={informationPositioning}
 				>
 					<Info20Regular className={styles.iconContainer} />
 				</Tooltip>

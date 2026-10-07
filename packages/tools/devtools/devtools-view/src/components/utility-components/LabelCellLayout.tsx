@@ -7,7 +7,9 @@ import type { PropsWithChildren, ReactElement } from "react";
 
 import { FluentReactComponents } from "../../FluentUi.cjs";
 
-const { InfoLabel, Label, TableCellLayout } = FluentReactComponents;
+import { InformationLabel } from "./InformationLabel.js";
+
+const { Label, TableCellLayout } = FluentReactComponents;
 
 /**
  * {@link LabelCellLayout} input props.
@@ -40,7 +42,7 @@ export function LabelCellLayout(props: LabelCellLayoutProps): ReactElement {
 			{infoTooltipContent === undefined ? (
 				<Label>{children}</Label>
 			) : (
-				<InfoLabel info={infoTooltipContent}>{children}</InfoLabel>
+				<InformationLabel info={infoTooltipContent}>{children}</InformationLabel>
 			)}
 		</TableCellLayout>
 	);
