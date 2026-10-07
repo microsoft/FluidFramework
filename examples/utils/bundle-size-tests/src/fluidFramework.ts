@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { SharedTree } from "fluid-framework";
+// Canary-only: drop SharedTree to shrink the fluidFramework.js bundle and
+// demonstrate the workflow's green indicator.
 // eslint-disable-next-line import-x/no-internal-modules
 import { SharedMap } from "fluid-framework/legacy";
 
 export function apisToBundle(): {
 	SharedMap: typeof SharedMap;
-	SharedTree: typeof SharedTree;
 } {
 	return {
 		SharedMap,
-		SharedTree,
 	};
 }
