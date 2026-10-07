@@ -306,6 +306,10 @@ export interface MenuSectionButtonHeaderProps extends MenuSectionLabelHeaderProp
 	isActive: boolean;
 }
 
+/**
+ * Forced colors can hide the background difference between selected and unselected navigation items.
+ * The shared marker identifies the selection after keyboard focus moves away.
+ */
 const useMenuSelectionStyles = makeStyles({
 	root: {
 		"@media (forced-colors: active)": {

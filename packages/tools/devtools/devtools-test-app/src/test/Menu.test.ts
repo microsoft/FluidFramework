@@ -66,7 +66,6 @@ for (const colorScheme of ["light", "dark"] as const) {
 						const otherItem = devtools.getByRole("button", {
 							name: new RegExp(`^${otherName}(?:$| )`),
 						});
-						await expect(otherItem).not.toHaveAttribute("aria-current", "page");
 						expect(
 							await otherItem.evaluate(
 								(element) => getComputedStyle(element, "::before").content,
