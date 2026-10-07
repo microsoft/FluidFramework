@@ -14,22 +14,10 @@ import { promisify } from "node:util";
 // When available (typescript 5.8+), update dynamic parsing to static import
 // import typescriptHostPackageJson from "@fluid-example/typescript-versions-host/package.json"; : with { type: "json" };
 
-/**
- * Minimal shape of the parts of package.json this test reads.
- *
- * @remarks
- * Declared locally rather than imported from `@fluidframework/build-tools` because that package is
- * ESM-only: its CommonJS `exports` condition resolves to a stub that does not include
- * `PackageJson`, and this file is also compiled as CommonJS.
- *
- * TODO: AB#80348: once this test's CommonJS compilation is able to import ESM, remove this
- * interface and restore `import type { PackageJson } from "@fluidframework/build-tools"`. That
- * requires both a `module-sync` export condition in build-tools and a TypeScript upgrade:
- * 5.4.5 fails under `node16` and `nodenext` alike, while 5.9 resolves it under `nodenext`.
- */
-interface PackageJsonDevDependencies {
-	readonly devDependencies: Readonly<Record<string, string>>;
-}
+// biome-ignore syntax/correctness/noTypeOnlyImportAttributes: Needed to resolve the ESM type export from build-tools in this CJS test file.
+import type { PackageJson } from "@fluidframework/build-tools" with {
+	"resolution-mode": "import",
+};
 
 // Resolve the typescript-versions-host package which hosts the aliased TypeScript versions.
 // Use process.cwd() as the base for createRequire so this works in both ESM
@@ -44,12 +32,12 @@ const typescriptHostDir = path.dirname(
 
 const typescriptHostPackageJson = JSON.parse(
 	readFileSync(path.join(typescriptHostDir, "package.json"), "utf8"),
-) as PackageJsonDevDependencies;
+) as PackageJson;
 
 // All are expected to match, but be cautious.
-const typescriptVersions = Object.entries(typescriptHostPackageJson.devDependencies).filter(
-	([name]) => name.startsWith("typescript-"),
-);
+const typescriptVersions = Object.entries(
+	typescriptHostPackageJson.devDependencies ?? {},
+).filter(([name]) => name.startsWith("typescript-"));
 
 const execFileAsync = promisify(execFile);
 
