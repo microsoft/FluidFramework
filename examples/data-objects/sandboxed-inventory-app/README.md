@@ -2,10 +2,10 @@
 
 An example of using the SharedTree sandboxing APIs to edit one inventory from a Host page and an isolated Guest iframe.
 
-> **Implementation status: editable Host inventory.**
-> The Host loads a Fluid container and displays inventory controls beside the isolated Guest iframe.
-> Loading and startup errors are displayed, but the Guest remains a placeholder.
-> Sandbox synchronization, Guest session status, and restart are not implemented yet.
+> **Implementation status: synchronized Host and Guest inventories.**
+> The Host loads a Fluid container and synchronizes edits with an independent Guest tree in an isolated iframe.
+> Bootstrap validation, connection status, startup deadlines, and initialization error cleanup are implemented.
+> Restart Guest and the remaining recovery controls are not implemented yet.
 > The intended behavior and acceptance criteria below remain implementation guidance.
 
 ## Run the example
@@ -28,10 +28,11 @@ pnpm start
 Open <http://localhost:8080>.
 You should see Host and Guest panes side by side.
 The Host starts with `nut` and `bolt`, each with quantity `0`.
-Use its controls to change quantities and add or remove parts.
+You can edit the Host inventory as soon as it appears, even while the Guest connection status is **Connecting**.
+When the Guest status shows **Connected**, you can also edit the Guest inventory.
+Edits in each pane reach the other asynchronously.
 Decrement is disabled at zero.
 The Guest heading inside the iframe is rendered by its separate bundle, not by the Host.
-Both pages explicitly state that tree synchronization is not implemented yet.
 No separate Fluid service is needed with the default session-storage-backed service.
 The Host stores the container ID in the URL hash so reloading the page loads the same document.
 
@@ -79,8 +80,10 @@ After source or unit-test changes, rebuild with `pnpm build:esm` followed by `pn
 Playwright starts and stops its own development server.
 The current Mocha tests cover inventory controls and tree observations in both React Strict Mode settings, Host loading/error rendering, and in-process container creation and loading.
 They also create a real sandbox Host to verify V3 compatibility and check that disposing it leaves the application-owned view usable.
-The browser tests cover session-backed creation, reload, and editing, as well as actual iframe isolation.
-They do not yet cover tree synchronization or lifecycle controls.
+Bootstrap tests validate message shapes, expected senders and origins, session identifiers, port counts, initialization order, timeouts, and cleanup after partial failure or late completion.
+In-process tests use real sandbox endpoints and message channels for representative edits.
+The two browser tests cover session-backed creation and reload, bidirectional editing through the transferred port, and actual iframe isolation.
+They do not yet cover restart controls.
 
 The source compiler configuration follows `inventory-app` by disabling `exactOptionalPropertyTypes`.
 Some existing Fluid dependency declarations are incompatible with that option; other strict checks and dependency declaration checking remain enabled.
@@ -105,8 +108,8 @@ You will use two editable inventory views displayed side by side:
 - **Guest:** An independent tree view inside an iframe, synchronized with the Host through a `MessagePort`.
 
 The example adapts the schema and interactions from [inventory-app](../inventory-app/README.md) without changing that example.
-Both pages will compile the same schema and React components into separate JavaScript contexts.
-The Guest will not load a Fluid container or connect to Fluid services.
+Both pages compile the same schema and React components into separate JavaScript contexts.
+The Guest does not load a Fluid container or connect to Fluid services.
 
 This example will focus on initialization, editing, errors, and session replacement.
 It will not include blob handling, undo/redo controls, or a protocol-message log.
@@ -127,23 +130,21 @@ The Host uses the existing example service-selection and container-loading conve
 The Host explicitly configures `oldestSupportedClient: "3.4.0"`.
 Sandboxing requires the ID compressor's V3 serialization format.
 This example does not change the shared example helper's default compatibility setting.
-The Host and Guest will use the same version of the tree package.
+The Host and Guest use the same version of the tree package.
 
 ### Editing walkthrough
 
-Once the application is implemented:
-
 1. Open the Host page.
    A new document starts with `nut` and `bolt`, each with quantity `0`.
-2. Wait for the Guest status to change from **Connecting** to **Connected**.
-   Both panes should display the same inventory.
-3. Increment a quantity in the Host pane.
-   The Host changes immediately, and the Guest receives the change asynchronously.
+2. Increment a quantity in the Host pane without waiting for the Guest.
+   The Host changes immediately, even while the Guest is loading.
+3. Wait for the Guest status to change from **Connecting** to **Connected** before editing the Guest.
+   It receives the current Host inventory, including edits made while it was starting.
 4. Edit a quantity in the Guest pane.
    The Guest changes immediately, and the Host receives the change asynchronously.
 5. Add and remove parts from either pane.
    Both views should converge after their messages are processed.
-6. Select **Restart Guest**.
+6. **Planned:** Select **Restart Guest**.
    The Host view and container remain in place while a new Guest loads the current Host state.
 
 Display this warning beside the restart control:
@@ -183,31 +184,60 @@ Neither page reads the other's DOM or passes live tree objects across the bounda
 The Host loads or creates its container once per page startup, outside React rendering and effects.
 Show the existing example loading view until its inventory view is ready.
 Retain the container, including its application-owned view, in the ready state rather than returning only the inventory root.
+Enable Host editing as soon as this view is available, independently of Guest loading, initialization, or rendering.
+The Guest's `connected` message updates only the Guest connection status; it does not enable the Host controls.
 Show and log startup failures instead of rendering an editable inventory or loading the Guest iframe.
-At this implementation stage, the Guest remains a placeholder and does not receive inventory data.
+After Host startup, mount one Guest session using the retained application view.
+React effect cleanup removes that session before another setup can run, including in React Strict Mode.
 
 ### Bootstrap contract
 
 Application bootstrap messages and tree synchronization messages have separate responsibilities:
 
-1. The Host installs its bootstrap listener before loading the iframe and assigns a fresh identifier to the session attempt.
-2. The Guest reports readiness through `window.postMessage`.
-   The Host validates the message shape, current iframe window, origin, and session identifier.
-3. The Host creates a `MessageChannel` and calls `Sandboxing.createHost` with its application-owned view and one port.
+1. The Host installs its iframe `load` handler and bootstrap message listener before navigating the iframe and assigns a fresh identifier to the session attempt.
+2. The Guest installs its message listener synchronously during entry-point execution, before returning or awaiting any work.
+   This lets it receive the port when the iframe finishes loading, without a readiness message.
+3. On the iframe's first `load` event, the Host creates a `MessageChannel` and calls `Sandboxing.createHost` with its application-owned view and one port.
 4. The Host transfers the other port to the current Guest window.
    An opaque-origin recipient requires `"*"` as the target origin.
    Do not use this requirement as a reason to accept arbitrary senders.
 5. The Guest validates the expected parent window, parent origin, session identifier, and transferred port.
    It calls `Sandboxing.createGuest` with `FormatValidatorBasic`, creates a view with the inventory configuration, and renders it.
-6. The Guest reports successful initialization.
-   The Host displays **Connected** only after the Guest view is ready.
+6. The Guest reports successful initialization through `window.postMessage`.
+   The Host validates the message shape, current iframe window, origin, and session identifier before displaying **Connected**.
+   This status describes the Guest only; Host editing does not wait for it.
 
 The `"null"` origin reported by an opaque-origin Guest does not uniquely identify that Guest.
 Only validated messages from the expected window and current session may advance initialization or change its status.
 Duplicate initialization, unexpected ports, and stale messages must not create extra endpoints or replace a newer session.
 Close unused transferred ports.
 
-Keep readiness, port transfer, and status messages outside the port owned by the tree protocol.
+The application bootstrap envelope contains a protocol identifier, session identifier, and one of `initialize`, `connected`, or `error`.
+Only `initialize` carries a port, and it must carry exactly one.
+The Host puts the session identifier and its HTTP(S) origin in the Guest URL fragment.
+The Guest reads those values without accessing the parent document or storage.
+It accepts initialization only once from its expected parent window and origin.
+Invalid or out-of-order bootstrap messages are logged and ignored, and their unused ports are closed.
+
+The Guest entry point must not defer listener installation to an asynchronous task or a React effect.
+The iframe's `load` event is a document-loading notification, not a guarantee that arbitrary asynchronous application work has finished.
+It can also fire when content or scripts fail to load, so it must not mark the Guest as connected.
+Repeated `load` events do not create additional endpoints or transfer another port.
+
+Both pages use a 30-second startup deadline.
+The Host deadline includes script loading, port transfer, and Guest rendering.
+It remains active after `load` until a validated `connected` message arrives, and catches loading failures that the browser does not report as iframe errors.
+The Guest reports `connected` only after its typed view and inventory UI have been committed to the DOM.
+The Guest entry point uses React's `flushSync` only for bootstrap state transitions so this report cannot precede rendering.
+Initialization failure or timeout closes owned ports and removes the failed iframe before the Host endpoint is disposed.
+The application-owned Host view remains editable.
+Until the restart control is implemented, reload the Host page to start a new session after failure.
+
+[src/bootstrap.ts](./src/bootstrap.ts) defines the application messages.
+[src/hostSession.ts](./src/hostSession.ts) owns the iframe and Host endpoint, while [src/guestSession.ts](./src/guestSession.ts) owns Guest initialization.
+The React [Guest frame component](./src/guestFrame.tsx) mounts and cleans up the session without owning the container.
+
+Keep port transfer and status messages outside the port owned by the tree protocol.
 Do not extend or wrap tree protocol messages to add application controls.
 
 ### Status and failure contract

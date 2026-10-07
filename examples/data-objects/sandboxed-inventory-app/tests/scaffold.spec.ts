@@ -15,7 +15,8 @@ test("loads the separate Guest bundle in an opaque-origin iframe", async ({ page
 	await expect(iframe).toHaveAttribute("sandbox", "allow-scripts");
 	const guest = page.frameLocator('iframe[title="Guest inventory"]');
 	await expect(guest.getByRole("heading", { name: "Guest", exact: true })).toBeVisible();
-	await expect(guest.getByText("Tree synchronization is not implemented yet.")).toBeVisible();
+	await expect(guest.getByLabel("nut quantity", { exact: true })).toHaveText("0");
+	await expect(page.getByRole("status", { name: "Guest connection" })).toHaveText("Connected");
 
 	const isolation = await guest.locator("body").evaluate(() => {
 		const denied = (read: () => unknown): boolean => {
@@ -40,7 +41,7 @@ test("loads the separate Guest bundle in an opaque-origin iframe", async ({ page
 	expect(pageErrors).toEqual([]);
 });
 
-test("creates, reloads, and edits the Host inventory while the Guest remains a placeholder", async ({
+test("creates, reloads, and synchronizes inventory edits across the iframe", async ({
 	page,
 }) => {
 	await page.goto("/");
@@ -49,13 +50,38 @@ test("creates, reloads, and edits the Host inventory while the Guest remains a p
 	await expect(page).toHaveURL(/#[^#]+$/);
 	const documentURL = page.url();
 
-	await page.reload();
-	await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("0");
-	await expect(page).toHaveURL(documentURL);
-	await host.getByRole("button", { name: "Increase nut quantity" }).click();
-	await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("1");
+	let resumeGuest: () => void = () => {};
+	const guestCanLoad = new Promise<void>((resolve) => {
+		resumeGuest = resolve;
+	});
+	await page.route("**/guest.bundle.js", async (route) => {
+		await guestCanLoad;
+		await route.continue();
+	});
+	try {
+		// Hold the Guest script so Host usability does not depend on a fast iframe startup.
+		await page.reload({ waitUntil: "domcontentloaded" });
+		await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("0");
+		await expect(page).toHaveURL(documentURL);
+		await expect(page.getByRole("status", { name: "Guest connection" })).toHaveText(
+			"Connecting",
+		);
+		await host.getByRole("button", { name: "Increase nut quantity" }).click();
+		await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("1");
+		await expect(page.getByRole("status", { name: "Guest connection" })).toHaveText(
+			"Connecting",
+		);
+	} finally {
+		resumeGuest();
+	}
 
 	const guest = page.frameLocator('iframe[title="Guest inventory"]');
-	await expect(guest.getByText("Tree synchronization is not implemented yet.")).toBeVisible();
-	await expect(guest.getByRole("button", { name: "Add Part" })).toHaveCount(0);
+	await expect(page.getByRole("status", { name: "Guest connection" })).toHaveText("Connected");
+	await expect(guest.getByLabel("nut quantity", { exact: true })).toHaveText("1");
+	await guest.getByRole("button", { name: "Increase nut quantity" }).click();
+	await expect(host.getByLabel("nut quantity", { exact: true })).toHaveText("2");
+	await guest.getByRole("button", { name: "Add Part" }).click();
+	await expect(host.getByRole("heading", { name: "New Part", exact: true })).toBeVisible();
+	await host.getByRole("button", { name: "Remove New Part" }).click();
+	await expect(guest.getByRole("heading", { name: "New Part", exact: true })).toHaveCount(0);
 });

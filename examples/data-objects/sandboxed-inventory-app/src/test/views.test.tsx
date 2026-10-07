@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { cleanupEphemeralService } from "@fluidframework/local-driver/alpha";
-import { cleanup, render } from "@testing-library/react";
+import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 
 import { GuestView } from "../guestView.js";
@@ -53,19 +53,60 @@ describe("Sandboxed inventory pages", () => {
 				});
 				const iframe = view.getByTitle("Guest inventory");
 				assert.equal(iframe.tagName, "IFRAME");
-				assert.equal(iframe.getAttribute("src"), "./guest.html");
+				const src = iframe.getAttribute("src");
+				assert(src !== null);
+				assert.equal(new URL(src).pathname, "/guest.html");
 				assert.equal(iframe.getAttribute("sandbox"), "allow-scripts");
 			});
 
-			it("does not claim Guest synchronization is connected", () => {
+			it("keeps the Host editable while the Guest is still connecting", () => {
 				const view = render(<HostView state={{ status: "ready", container }} />, {
 					reactStrictMode,
 				});
+				const nut = container.data.root.parts[0];
+				assert(nut !== undefined);
+				const initialQuantity = nut.quantity;
 				assert.equal(
-					view.getByText("Tree synchronization is not implemented yet.").textContent,
-					"Tree synchronization is not implemented yet.",
+					view.getByRole("status", { name: "Guest connection" }).textContent,
+					"Connecting",
 				);
 				assert.equal(view.queryAllByText("Connected", { exact: true }).length, 0);
+				try {
+					fireEvent.click(view.getByRole("button", { name: "Increase nut quantity" }));
+					assert.equal(nut.quantity, initialQuantity + 1);
+					assert.equal(
+						view.getByLabelText("nut quantity").textContent,
+						String(initialQuantity + 1),
+					);
+					assert.equal(
+						view.getByRole("status", { name: "Guest connection" }).textContent,
+						"Connecting",
+					);
+				} finally {
+					act(() => {
+						nut.quantity = initialQuantity;
+					});
+				}
+			});
+
+			it("shows Guest setup failures while keeping the Host inventory editable", () => {
+				const originalRandomUUID = crypto.randomUUID;
+				crypto.randomUUID = () => {
+					throw new Error("Session identifier unavailable");
+				};
+				try {
+					const view = render(<HostView state={{ status: "ready", container }} />, {
+						reactStrictMode,
+					});
+					assert.match(
+						view.getByRole("alert").textContent ?? "",
+						/Session identifier unavailable/,
+					);
+					assert.equal(view.getByRole("button", { name: "Add Part" }).textContent, "Add Part");
+					assert.equal(view.container.querySelectorAll("iframe").length, 0);
+				} finally {
+					crypto.randomUUID = originalRandomUUID;
+				}
 			});
 
 			it("shows loading guidance before mounting the Guest", () => {
@@ -87,13 +128,24 @@ describe("Sandboxed inventory pages", () => {
 			});
 
 			it("renders the Guest independently without a nested iframe", () => {
-				const view = render(<GuestView />, { reactStrictMode });
+				const view = render(<GuestView state={{ status: "connecting" }} />, {
+					reactStrictMode,
+				});
 				assert.equal(view.getByRole("heading", { name: "Guest" }).textContent, "Guest");
-				assert.equal(
-					view.getByText("Tree synchronization is not implemented yet.").textContent,
-					"Tree synchronization is not implemented yet.",
-				);
+				assert.equal(view.getByRole("status").textContent, "Connecting to Host...");
 				assert.equal(view.container.querySelectorAll("iframe").length, 0);
+			});
+
+			it("renders Guest inventory and removes its controls on failure", () => {
+				const view = render(<GuestView state={{ status: "ready", view: container.data }} />, {
+					reactStrictMode,
+				});
+				assert.equal(view.getByLabelText("nut quantity").textContent, "0");
+				view.rerender(
+					<GuestView state={{ status: "error", error: new Error("Guest failed") }} />,
+				);
+				assert.match(view.getByRole("alert").textContent ?? "", /Guest failed/);
+				assert.equal(view.queryAllByRole("button").length, 0);
 			});
 		});
 	}
