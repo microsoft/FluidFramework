@@ -392,9 +392,9 @@ export function unifyAliases(
 	const normalizedAlias1 = normalizeNodeId(alias1, nodeAliases);
 	const normalizedAlias2 = normalizeNodeId(alias2, nodeAliases);
 	if (!areEqualChangeAtomIds(normalizedAlias1, normalizedAlias2)) {
-		nodeAliases.set([normalizedAlias1.revision, normalizedAlias1.localId], normalizedAlias2);
+		nodeAliases.set([normalizedAlias2.revision, normalizedAlias2.localId], normalizedAlias1);
 	}
-	return normalizedAlias2;
+	return normalizedAlias1;
 }
 
 export function makeChangesetInversions(
