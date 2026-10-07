@@ -230,28 +230,28 @@ export class DeliLambdaFactory
 					closeType === LambdaCloseType.Error
 				) {
 					if (document?.isEphemeralContainer) {
-						if (this.isEphemeralDocumentWithinTtl(document)) {
-							const softDelete =
-								!this.serviceConfiguration.deli
-									.enableEphemeralContainerSummaryCleanup;
-							await requestWithRetry(
-								async () => gitManager.deleteSummary(softDelete),
-								"deliLambda_onClose" /* callName */,
-								baseLumberjackProperties /* telemetryProperties */,
-								undefined /* shouldRetry */, // The default retry function will ensure NetworkErrors are retried only if canRetry is true and isFatal is false
-								3 /* maxRetries */,
-							);
-						} else {
-							Lumberjack.info(
-								"Ephemeral container TTL has expired, not calling deleteSummary",
-								{
-									...baseLumberjackProperties,
-									documentCreationTime: document.createTime,
-									documentExpirationTime:
-										document.createTime +
-										(this.ephemeralDocumentTTLSec ?? 0) * 1000,
-								},
-							);
+						if (this.serviceConfiguration.deli.enableEphemeralContainerSummaryCleanup) {
+							if (this.isEphemeralDocumentWithinTtl(document)) {
+								// Call to historian to delete summaries
+								await requestWithRetry(
+									async () => gitManager.deleteSummary(false),
+									"deliLambda_onClose" /* callName */,
+									baseLumberjackProperties /* telemetryProperties */,
+									undefined /* shouldRetry */, // The default retry function will ensure NetworkErrors are retried only if canRetry is true and isFatal is false
+									3 /* maxRetries */,
+								);
+							} else {
+								Lumberjack.info(
+									"Ephemeral container TTL has expired, not calling deleteSummary",
+									{
+										...baseLumberjackProperties,
+										documentCreationTime: document.createTime,
+										documentExpirationTime:
+											document.createTime +
+											(this.ephemeralDocumentTTLSec ?? 0) * 1000,
+									},
+								);
+							}
 						}
 
 						// Delete the document metadata, soft or hard depending on the configuration
