@@ -188,16 +188,14 @@ export async function loadChannelFactoryAndAttributes(
 			}),
 		);
 	}
-	// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
-	// from the factory.
-	if (attributes === undefined) {
-		// Factory defaults must not opt old attach messages into a new channel protocol.
-		const { configuration: _configuration, ...legacyAttributes } =
-			factory.attributes as IChannelAttributes & {
-				readonly configuration?: unknown;
-			};
-		attributes = legacyAttributes;
-	}
+	assert(
+		!("configuration" in factory.attributes),
+		"Channel factory attributes must not contain per-instance configuration",
+	);
+	// This is a backward compatibility case where the attach message doesn't include attributes.
+	// (note that such attach messages can be persisted as data at rest in the form of trailing ops).
+	// Get the attributes from the factory in this case.
+	attributes = attributes ?? factory.attributes;
 	return { factory, attributes };
 }
 

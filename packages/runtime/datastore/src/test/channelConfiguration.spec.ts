@@ -100,7 +100,7 @@ describe("Channel configuration compatibility", () => {
 			runtime,
 			attributes,
 			{
-				attributes: channel().attributes,
+				attributes,
 				channelConfigurationProtocolVersion: 1,
 				load: async (
 					_runtime: unknown,
@@ -119,19 +119,27 @@ describe("Channel configuration compatibility", () => {
 		assert.equal(loaded, legacy);
 	});
 
-	it("does not take configuration defaults from a factory for old attach messages", async () => {
+	it("uses factory attributes unchanged for old attach messages", async () => {
+		const factory = {
+			attributes,
+			channelConfigurationProtocolVersion: 1,
+		} as unknown as IChannelFactory;
 		const result = await loadChannelFactoryAndAttributes(
 			new MockFluidDataStoreContext(),
 			{ objectStorage: { contains: async () => false } } as unknown as ChannelServiceEndpoints,
 			"dds",
-			{ get: () => ({ attributes: channel().attributes }) as IChannelFactory },
+			{ get: () => factory },
 			attributes.type,
 		);
 		assert.equal("configuration" in result.attributes, false);
-		assert.deepEqual(result.attributes, attributes);
+		assert.equal(result.attributes, factory.attributes);
 	});
 
-	it("keeps a missing configuration marker from an older summary even with configured factory defaults", async () => {
+	it("keeps a missing configuration marker from an older summary with a configuration-capable factory", async () => {
+		const factory = {
+			attributes,
+			channelConfigurationProtocolVersion: 1,
+		} as unknown as IChannelFactory;
 		const result = await loadChannelFactoryAndAttributes(
 			new MockFluidDataStoreContext(),
 			{
@@ -141,11 +149,34 @@ describe("Channel configuration compatibility", () => {
 				},
 			} as unknown as ChannelServiceEndpoints,
 			"dds",
-			{ get: () => ({ attributes: channel().attributes }) as IChannelFactory },
+			{ get: () => factory },
 		);
 		assert.deepEqual(result.attributes, attributes);
 		assert.equal("configuration" in result.attributes, false);
 	});
+
+	for (const hasPersistedAttributes of [false, true]) {
+		it(`rejects configuration on factory attributes ${hasPersistedAttributes ? "with" : "without"} persisted attributes`, async () => {
+			await assert.rejects(
+				loadChannelFactoryAndAttributes(
+					new MockFluidDataStoreContext(),
+					{
+						objectStorage: {
+							contains: async () => hasPersistedAttributes,
+							readBlob: async () =>
+								stringToBuffer(JSON.stringify(channel().attributes), "utf8"),
+						},
+					} as unknown as ChannelServiceEndpoints,
+					"dds",
+					{ get: () => ({ attributes: channel().attributes }) as IChannelFactory },
+					attributes.type,
+				),
+				validateAssertionError(
+					"Channel factory attributes must not contain per-instance configuration",
+				),
+			);
+		});
+	}
 
 	for (const configuration of [
 		undefined,
@@ -318,7 +349,7 @@ describe("Channel configuration compatibility", () => {
 			configuration: { version: 1, revision: 4, values: { enabled: false } },
 		};
 		const factory = {
-			attributes: channel().attributes,
+			attributes,
 			channelConfigurationProtocolVersion: 1,
 			load: async (
 				_runtime: IFluidDataStoreRuntime,
