@@ -41,7 +41,7 @@ export interface ConfiguredChannelAttributes extends IChannelAttributes {
  * Declares configuration protocol support for a channel or its factory.
  * Reader support is separate from per-instance activation. A supporting factory uses its
  * default configuration for unmarked channels and can process their first configuration op.
- * A factory's attributes must not contain per-instance configuration.
+ * Configuration in a factory's attributes need not apply to existing unconfigured channels.
  *
  * On a channel instance, this declares that it has initialized the configuration protocol.
  * The runtime checks this before connecting the channel or replaying ops, so a reader cannot

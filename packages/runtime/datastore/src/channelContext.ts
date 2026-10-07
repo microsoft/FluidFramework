@@ -188,14 +188,19 @@ export async function loadChannelFactoryAndAttributes(
 			}),
 		);
 	}
-	assert(
-		!("configuration" in factory.attributes),
-		"Channel factory attributes must not contain per-instance configuration",
-	);
 	// This is a backward compatibility case where the attach message doesn't include attributes.
 	// (note that such attach messages can be persisted as data at rest in the form of trailing ops).
 	// Get the attributes from the factory in this case.
-	attributes = attributes ?? factory.attributes;
+	if (attributes === undefined) {
+		attributes = factory.attributes;
+		// If the factory includes configuration in its attributes, that configuration only necessarily applies to newly created instances.
+		// It must already support transitioning from an unconfigured channel to a configured one,
+		// so omitting configuration from load here reduces the problem to that case.
+		if ("configuration" in attributes) {
+			const { configuration: _configuration, ...legacyAttributes } = attributes;
+			attributes = legacyAttributes;
+		}
+	}
 	return { factory, attributes };
 }
 

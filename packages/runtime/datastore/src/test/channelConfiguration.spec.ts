@@ -137,7 +137,7 @@ describe("Channel configuration compatibility", () => {
 
 	it("keeps a missing configuration marker from an older summary with a configuration-capable factory", async () => {
 		const factory = {
-			attributes,
+			attributes: channel().attributes,
 			channelConfigurationProtocolVersion: 1,
 		} as unknown as IChannelFactory;
 		const result = await loadChannelFactoryAndAttributes(
@@ -156,25 +156,44 @@ describe("Channel configuration compatibility", () => {
 	});
 
 	for (const hasPersistedAttributes of [false, true]) {
-		it(`rejects configuration on factory attributes ${hasPersistedAttributes ? "with" : "without"} persisted attributes`, async () => {
-			await assert.rejects(
-				loadChannelFactoryAndAttributes(
-					new MockFluidDataStoreContext(),
-					{
-						objectStorage: {
-							contains: async () => hasPersistedAttributes,
-							readBlob: async () =>
-								stringToBuffer(JSON.stringify(channel().attributes), "utf8"),
-						},
-					} as unknown as ChannelServiceEndpoints,
-					"dds",
-					{ get: () => ({ attributes: channel().attributes }) as IChannelFactory },
-					attributes.type,
-				),
-				validateAssertionError(
-					"Channel factory attributes must not contain per-instance configuration",
-				),
+		it(`ignores factory configuration ${hasPersistedAttributes ? "with" : "without"} persisted attributes`, async () => {
+			const saved = {
+				...attributes,
+				configuration: { ...snapshot, revision: 4, values: { enabled: false } },
+			};
+			const factory = {
+				attributes: channel().attributes,
+				channelConfigurationProtocolVersion: 1,
+				load: async (
+					_runtime: IFluidDataStoreRuntime,
+					_id: string,
+					_services: ChannelServiceEndpoints,
+					loadedAttributes: IChannelAttributes,
+				) => ({ ...channel(), attributes: loadedAttributes }),
+			} as unknown as IChannelFactory;
+			const result = await loadChannelFactoryAndAttributes(
+				new MockFluidDataStoreContext(),
+				{
+					objectStorage: {
+						contains: async () => hasPersistedAttributes,
+						readBlob: async () => stringToBuffer(JSON.stringify(saved), "utf8"),
+					},
+				} as unknown as ChannelServiceEndpoints,
+				"dds",
+				{ get: () => factory },
+				attributes.type,
 			);
+			assert.deepEqual(result.attributes, hasPersistedAttributes ? saved : attributes);
+			assert.deepEqual(factory.attributes, channel().attributes);
+			const loaded = await loadChannel(
+				runtime,
+				result.attributes,
+				result.factory,
+				{} as ChannelServiceEndpoints,
+				createMockLoggerExt(),
+				"dds",
+			);
+			assert.equal(loaded.attributes, result.attributes);
 		});
 	}
 
