@@ -7,12 +7,12 @@ import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils/
 
 import { Breakable } from "../util/index.js";
 import {
-	createSessionFailureMessage,
 	getSandboxFailureCode,
 	normalizeProtocolError,
 	sandboxFailureDescriptions,
 	type SandboxFailureCode,
 	SandboxProtocolError,
+	type SessionFailureMessage,
 } from "./common.js";
 
 /** A terminal session error that preserves tagged diagnostics and its original cause. */
@@ -131,9 +131,15 @@ export class SandboxSessionEndpoint {
 					try {
 						// Fixed control message: failure reporting must not depend on the failed codec.
 						const message: object = Object.create(null);
+						const sessionFailure: SessionFailureMessage = {
+							code: getSandboxFailureCode(cause),
+							...(cause instanceof SandboxProtocolError
+								? { protocolMessage: cause.message }
+								: undefined),
+						};
 						this.port.postMessage(
 							Object.assign(message, {
-								sessionFailure: createSessionFailureMessage(cause),
+								sessionFailure,
 							}),
 						);
 					} catch (notificationError) {

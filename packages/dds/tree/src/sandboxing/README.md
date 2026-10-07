@@ -268,15 +268,14 @@ A received `sessionFailure` is not echoed.
 Its `code` must be one of the closed `SandboxFailureCode` values.
 The receiver uses a local description for that code and treats it as a peer-reported diagnosis, not a verified cause.
 Both endpoints construct received failures with `SandboxProtocolError.fromPeerMessage`, passing the sending endpoint as `peer`.
-The optional `protocolMessage` comes from a `SandboxProtocolError`'s safe message.
-That message must not include Guest-controlled information, schema information, or other sensitive data.
-Other error types are not assumed to have safe messages.
-The Host tags a Guest's `protocolMessage` as `SandboxGuestData`.
-The optional `sensitiveMessage` comes from a protocol error's nested cause or another error's message.
-It can contain schema information or document contents, so receivers tag it as `UserData`.
-Both endpoints can send sensitive diagnostics.
-This is safe from the Host to the Guest because the Guest already has access to document data, and it ensures that any Guest-provided diagnostics entering Host telemetry are explicitly tagged.
+The optional `protocolMessage` contains a `SandboxProtocolError`'s telemetry-safe message.
+The optional `sensitiveMessage` can contain document content that the Guest is authorized to access, but it must not contain credentials or other sensitive Host data outside that authorization.
+The current implementation does not populate `sensitiveMessage` from local errors.
+Nested causes and other error messages remain local.
 Neither diagnostic field is concatenated into the receiving endpoint's telemetry-safe error message.
+When the Host receives a Guest failure, it records the bounded `code` directly, tags `protocolMessage` as `SandboxGuestData`, and tags `sensitiveMessage` as `UserData`.
+It applies these tags regardless of the code or which fields the Guest populates.
+See [Threat Model and Security and Privacy Requirements](#threat-model-and-security-and-privacy-requirements) for the trust and telemetry-tagging rules for these fields.
 Failure reporting runs outside tree event dispatch so it cannot interrupt the main-tree edit that triggered the failure.
 
 The application must stop or fence the Guest, dispose both endpoints, and create a new pair.
@@ -293,7 +292,8 @@ If initialization fails after shard creation, the Host reclaims the shard that t
 
 The local endpoint wraps the first terminal failure in a session error and retains the original `Error` as its cause.
 This preserves the local distinction between invariant failures, application usage errors, and protocol errors.
-The peer receives only the diagnostic message in `sessionFailure`, not the original error object or classification.
+The peer receives only a bounded `SandboxFailureCode` and the optional diagnostic strings in `sessionFailure`.
+It does not receive the original error object, stack, local error type, or telemetry properties.
 
 ## Threat Model and Security and Privacy Requirements
 
@@ -410,6 +410,7 @@ Do not continue editing a Guest after session failure.
 ## Testing
 
 [transport.spec.ts](../test/shared-tree/sandboxing/transport.spec.ts) covers transport values, handles, blobs, markers, and malformed messages.
+[common.spec.ts](../test/shared-tree/sandboxing/common.spec.ts) covers sandbox failure classification, diagnostic separation, and telemetry tagging.
 [sandboxing.spec.ts](../test/shared-tree/sandboxing/sandboxing.spec.ts) covers initialization, synchronization, ID progress, rebasing, undo and redo, session failure, and replacement.
 [demo.integration.ts](../test/shared-tree/sandboxing/demo.integration.ts) covers ServiceClient integration with a V3 ID compressor.
 

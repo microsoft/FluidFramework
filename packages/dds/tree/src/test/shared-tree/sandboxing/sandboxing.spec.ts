@@ -408,7 +408,6 @@ describe("Host and Guest message protocol", () => {
 						...(expectedProtocolMessage === undefined
 							? undefined
 							: { protocolMessage: expectedProtocolMessage }),
-						sensitiveMessage: secret,
 					},
 				});
 				assert(guestToHostMessageValidator.check(notification));

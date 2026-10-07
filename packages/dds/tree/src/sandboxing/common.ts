@@ -585,7 +585,12 @@ const SessionFailureMessage = Type.Object(
 		 * The Host treats this as `SandboxGuestData`, regardless of the reported code.
 		 */
 		protocolMessage: Type.Optional(Type.String()),
-		/** Potentially sensitive diagnostics. Receivers must tag this as `UserData`. */
+		/**
+		 * Potentially sensitive diagnostics.
+		 * May contain document content that the Guest is authorized to access, but must not contain
+		 * credentials or other sensitive Host data outside that authorization.
+		 * Receivers must tag this as `UserData`.
+		 */
 		sensitiveMessage: Type.Optional(Type.String()),
 	},
 	{ additionalProperties: false },
@@ -764,29 +769,6 @@ export function getSandboxFailureCode(error: Error): SandboxFailureCode {
 		: error instanceof UsageError
 			? SandboxFailureCode.ApplicationUsageError
 			: SandboxFailureCode.ProcessingFailure;
-}
-
-/**
- * Creates a failure notification without invoking a tree or transport codec.
- * Only SandboxProtocolError messages are promoted to the protocol-only field.
- * Their constructor requires messages without Guest-controlled or sensitive data.
- * Nested causes remain potentially sensitive, regardless of their error type.
- * Receivers tag sensitive diagnostics as `UserData`.
- */
-export function createSessionFailureMessage(error: Error): SessionFailureMessage {
-	const code = getSandboxFailureCode(error);
-	const protocolMessage = error instanceof SandboxProtocolError ? error.message : undefined;
-	const sensitiveMessage =
-		error instanceof SandboxProtocolError
-			? error.cause === undefined
-				? undefined
-				: normalizeProtocolError(error.cause).message
-			: error.message;
-	return {
-		code,
-		...(protocolMessage === undefined ? undefined : { protocolMessage }),
-		...(sensitiveMessage === undefined ? undefined : { sensitiveMessage }),
-	};
 }
 
 /**

@@ -10,7 +10,6 @@ export {
 	type BlobRequestId,
 	type BlobRequestMessage,
 	createBufferPlaceholder,
-	createSessionFailureMessage,
 	type GuestChangeMessage,
 	type GuestToHostMessage,
 	getTransportBuffer,
