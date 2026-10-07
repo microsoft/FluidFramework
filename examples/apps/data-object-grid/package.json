@@ -53,12 +53,10 @@
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"prop-types": "^15.8.1",
 		"react": "^18.3.1",
 		"react-collapsible": "^2.7.0",
 		"react-dom": "^18.3.1",
 		"react-grid-layout": "^1.5.1",
-		"scheduler": "^0.20.0",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {

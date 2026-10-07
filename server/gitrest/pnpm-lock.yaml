@@ -139,33 +139,6 @@ importers:
       '@fluidframework/server-services-utils':
         specifier: 8.0.0-396786
         version: 8.0.0-396786(supports-color@10.2.2)
-      body-parser:
-        specifier: ^1.20.3
-        version: 1.20.3(supports-color@10.2.2)
-      compression:
-        specifier: ^1.7.3
-        version: 1.7.4(supports-color@10.2.2)
-      cors:
-        specifier: ^2.8.5
-        version: 2.8.5
-      debug:
-        specifier: ^4.3.4
-        version: 4.4.3(supports-color@8.1.1)
-      express:
-        specifier: ^4.22.1
-        version: 4.22.1(supports-color@10.2.2)
-      isomorphic-git:
-        specifier: ^1.25.10
-        version: 1.25.10
-      json-stringify-safe:
-        specifier: ^5.0.1
-        version: 5.0.1
-      nconf:
-        specifier: ^0.11.4
-        version: 0.11.4
-      uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
       winston:
         specifier: ^3.6.0
         version: 3.8.2
@@ -272,9 +245,6 @@ importers:
       cors:
         specifier: ^2.8.5
         version: 2.8.5
-      debug:
-        specifier: ^4.3.4
-        version: 4.4.3(supports-color@8.1.1)
       express:
         specifier: ^4.22.1
         version: 4.22.1(supports-color@10.2.2)
@@ -284,9 +254,6 @@ importers:
       isomorphic-git:
         specifier: ^1.25.10
         version: 1.25.10
-      json-stringify-safe:
-        specifier: ^5.0.1
-        version: 5.0.1
       memfs:
         specifier: ^3.4.12
         version: 3.4.13
@@ -299,15 +266,9 @@ importers:
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
-      split:
-        specifier: ^1.0.0
-        version: 1.0.1
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
-      winston:
-        specifier: ^3.6.0
-        version: 3.8.2
     devDependencies:
       '@fluidframework/build-common':
         specifier: ^2.0.3

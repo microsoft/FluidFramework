@@ -72,11 +72,9 @@
 	"dependencies": {
 		"@fluid-experimental/property-changeset": "workspace:~",
 		"@fluid-experimental/property-common": "workspace:~",
-		"ajv": "^8.17.1",
 		"async": "^3.2.2",
 		"lodash": "^4.18.1",
 		"semver": "^7.7.1",
-		"traverse": "0.6.6",
 		"underscore": "^1.13.6"
 	},
 	"devDependencies": {

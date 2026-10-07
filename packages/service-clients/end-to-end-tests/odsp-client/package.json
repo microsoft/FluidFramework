@@ -68,9 +68,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"mocha": "^11.7.5",
-		"mocha-multi-reporters": "^1.5.1",
-		"sinon": "^18.0.1",
-		"uuid": "^11.1.0"
+		"mocha-multi-reporters": "^1.5.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
