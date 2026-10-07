@@ -22,6 +22,7 @@ import {
 	detachedFieldIndexCodecBuilder,
 	DetachedFieldIndexFormatVersion,
 } from "./core/index.js";
+// This leaf import prevents configurable factories from importing optional forest provider modules.
 import {
 	SharedTreeKernel,
 	type ITreePrivate,
@@ -29,7 +30,7 @@ import {
 	type SharedTreeOptionsBeta,
 	type SharedTreeOptionsInternal,
 	type SharedTreeKernelView,
-} from "./shared-tree/index.js";
+} from "./shared-tree/sharedTree.js"; // eslint-disable-line import-x/no-internal-modules
 import {
 	editManagerCodecName,
 	EditManagerFormatVersion,

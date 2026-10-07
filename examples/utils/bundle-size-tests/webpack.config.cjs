@@ -84,6 +84,9 @@ module.exports = {
 		sharedString: "./src/sharedString",
 		sharedTree: "./src/sharedTree",
 		sharedTreeAttributes: "./src/sharedTreeAttributes",
+		sharedTreeExpensiveDebugForest: "./src/sharedTreeExpensiveDebugForest",
+		sharedTreeOptimizedForest: "./src/sharedTreeOptimizedForest",
+		sharedTreeReferenceForest: "./src/sharedTreeReferenceForest",
 	},
 	mode: "production",
 	module: {
