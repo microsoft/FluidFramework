@@ -348,7 +348,7 @@ The remaining limitations are:
 - The protocol does not enforce limits for message size, nesting depth, pending requests, or blob data.
 - Failures during main-tree merge are not fully isolated.
 - Retained Guest references cannot always be invalidated after a broken tree operation.
-- Cross-realm integration coverage uses `MessagePort`, but does not yet include an isolated iframe.
+- Cross-realm integration coverage uses `MessagePort` but does not yet include an isolated iframe.
 - History retention, trunk trimming, and timeline behavior do not yet have a complete product contract for every configuration.
 
 Use application-level coordination when the port cannot deliver a failure notification.
