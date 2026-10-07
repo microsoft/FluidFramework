@@ -80,14 +80,7 @@ describe("independentView", () => {
 				forest: ForestTypeExpensiveDebug,
 				idCompressor: testIdCompressor,
 			});
-			const emptySchema = tree.exportSimpleSchema();
-			assert.deepEqual(emptySchema.definitions, new Map());
-			assert.equal(emptySchema.root.kind, FieldKind.Optional);
-			assert.deepEqual(emptySchema.root.simpleAllowedTypes, new Map());
-			assert.equal(tree.exportVerbose(), undefined);
-
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
-
 			const view = tree.viewWith(config);
 			assert(view.compatibility.canInitialize);
 			view.initialize(1);

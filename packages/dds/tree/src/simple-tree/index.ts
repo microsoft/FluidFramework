@@ -71,6 +71,7 @@ export {
 	type ITree,
 	type TreeView,
 	type ViewableTree,
+	type ViewableTreeAlpha,
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,

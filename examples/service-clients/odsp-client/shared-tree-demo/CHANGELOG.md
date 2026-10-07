@@ -1,5 +1,9 @@
 # @fluid-example/shared-tree-demo
 
+## 3.4.0
+
+Dependency updates only.
+
 ## 3.3.0
 
 Dependency updates only.

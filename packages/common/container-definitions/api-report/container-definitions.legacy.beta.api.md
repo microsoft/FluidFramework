@@ -344,6 +344,7 @@ export interface IErrorBase extends Partial<Error> {
 
 // @beta @legacy
 export interface IFluidBrowserPackage extends IFluidPackage {
+    // (undocumented)
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
         [environment: string]: IFluidPackageEnvironment;
@@ -507,6 +508,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 
 // @beta @legacy
 export interface IThrottlingWarning extends IErrorBase {
+    // (undocumented)
     readonly errorType: typeof FluidErrorTypes.throttlingError;
     // (undocumented)
     readonly retryAfterSeconds: number;

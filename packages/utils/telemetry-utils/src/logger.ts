@@ -362,61 +362,6 @@ export abstract class TelemetryLogger implements TelemetryLoggerExt {
 	}
 }
 
-/**
- * @deprecated 0.56, remove TaggedLoggerAdapter once its usage is removed from
- * container-runtime. Issue: #8191
- * TaggedLoggerAdapter class can add tag handling to your logger.
- *
- * @internal
- */
-export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
-	public constructor(private readonly logger: ITelemetryBaseLogger) {}
-
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
-	 */
-	public send(eventWithTagsMaybe: ITelemetryBaseEvent, logLevel: LogLevel): void {
-		const newEvent: ITelemetryBaseEvent = {
-			category: eventWithTagsMaybe.category,
-			eventName: eventWithTagsMaybe.eventName,
-		};
-		for (const [key, taggableProp] of Object.entries(eventWithTagsMaybe)) {
-			const { value, tag } =
-				typeof taggableProp === "object"
-					? taggableProp
-					: { value: taggableProp, tag: undefined };
-			switch (tag) {
-				case undefined: {
-					// No tag means we can log plainly
-					newEvent[key] = value;
-					break;
-				}
-				case "PackageData": // For back-compat
-				case TelemetryDataTag.CodeArtifact:
-				case TelemetryDataTag.SchemaArtifact: {
-					// For Microsoft applications, CodeArtifact and SchemaArtifact are safe for now
-					// (we don't load 3P code or schema in 1P apps)
-					newEvent[key] = value;
-					break;
-				}
-				case TelemetryDataTag.UserData: {
-					// Strip out anything tagged explicitly as UserData.
-					// Alternate strategy would be to hash these props
-					newEvent[key] = "REDACTED (UserData)";
-					break;
-				}
-				default: {
-					// If we encounter a tag we don't recognize
-					// then we must assume we should scrub.
-					newEvent[key] = "REDACTED (unknown tag)";
-					break;
-				}
-			}
-		}
-		this.logger.send(newEvent, logLevel);
-	}
-}
-
 function toEitherTelemetryLoggerExt(
 	logger: TelemetryLoggerExt,
 ): TelemetryLoggerExt & ITelemetryLoggerExt {
