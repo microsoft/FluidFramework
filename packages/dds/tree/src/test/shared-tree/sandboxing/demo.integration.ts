@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
+
 import { disposeActiveSessions, setup } from "./sandboxingTestUtils.js";
 import {
 	cleanupEphemeralService,
@@ -20,15 +22,13 @@ import {
 	type ITree,
 	type ViewableTree,
 } from "../../../simple-tree/index.js";
-import { createHost } from "./host.js";
+import { Sandboxing } from "../../../index.js";
 import { SharedTreeAlpha } from "../../../treeFactory.js";
 import type { SharedObjectCreator } from "@fluidframework/shared-object-base/internal";
 import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { asBeta } from "../../../api.js";
-import { getCheckout } from "./synchronizationUtils.js";
-import { createGuest } from "./guest.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
+import { getCheckout, sandboxFormatValidator } from "../../../sandboxing/index.js";
 
 describe("End to End Host and Guest integrations", () => {
 	afterEach(async function () {
@@ -39,6 +39,19 @@ describe("End to End Host and Guest integrations", () => {
 	// Demos which look more like real end user use.
 	// Currently shows limitations which need fixing.
 	describe("User Facing APIs", () => {
+		let channel: MessageChannel | undefined;
+		let host: Sandboxing.Host | undefined;
+		let guest: Sandboxing.Guest | undefined;
+
+		afterEach(() => {
+			channel?.port2.close();
+			guest?.dispose();
+			host?.dispose();
+			channel = undefined;
+			guest = undefined;
+			host = undefined;
+		});
+
 		// TODO: would be nice to make this use case possible with the simpler defineTreeDataStore.
 		// defineTreeDataStore should get an overload or alternative which omits the config and does not crate the view for you.
 		const TestDataStore = defineDataStore<ViewableTree, ITree>({
@@ -54,12 +67,15 @@ describe("End to End Host and Guest integrations", () => {
 
 		const config = new TreeViewConfiguration({ schema: SchemaFactory.string });
 
-		it("ServiceClient end to end, with guest modification", async () => {
-			const client = startEphemeralService().defaultClient;
+		it("synchronizes a Guest edit through ServiceClient", async () => {
+			const client = startEphemeralService().newClient({
+				// At least `3.4.0` is required for id-compressor's V3 serialization format, which is required for ID space sharding.
+				oldestSupportedClient: "3.4.0",
+			});
 			const container = await client.createAttachedContainer(TestDataStore);
 			const tree = container.data;
 			// TODO: ideally we wouldn't require the host to create a view.
-			// See existing TODO on `HostOptions.main` for details.
+			// See existing TODO on `Sandboxing.HostOptions.main` for details.
 			const viewHost = asBeta(tree.viewWith(config));
 
 			const log: string[] = [];
@@ -71,40 +87,34 @@ describe("End to End Host and Guest integrations", () => {
 				},
 			});
 
-			const channel = new MessageChannel();
+			channel = new MessageChannel();
 
-			// TODO: we need to expose a better way to do this.
+			// TODO: we need to expose a better way to inspect the compressor's shard state.
 			// eslint-disable-next-line @typescript-eslint/dot-notation -- needed to access private field
 			const idCompressor = getCheckout(viewHost)["idCompressor"];
+			const rootCompressor = toIdCompressorWithCore(idCompressor);
 
-			// TODO: we should not have to initialize first:
-			viewHost.initialize("A");
-			// TODO: This should not be required.
-			await client.service.synchronize();
-
-			const host = createHost({
+			host = Sandboxing.createHost({
+				logger,
 				main: viewHost,
 				port: channel.port1,
 			});
-			const guest = await createGuest({
+			guest = await Sandboxing.createGuest({
 				logger,
 				port: channel.port2,
-				idCompressor,
-				treeOptions: { jsonValidator: FormatValidatorBasic },
+				treeOptions: { jsonValidator: sandboxFormatValidator },
 			});
 			const viewGuest = guest.tree.viewWith(config);
 
-			// TODO: we should be able to initialize here
-			// viewGuest.initialize("B");
-			viewGuest.root = "B";
-
-			// TODO: how do we synchronize?
-			// This happens to work, but its really just a complex wait to yield,
-			// not actually waiting on the message port.
-			await client.service.synchronize();
+			viewGuest.initialize("B");
+			await (guest.updateHostPromise ?? assert.fail("Expected Guest initialization update"));
 
 			assert.equal(viewHost.root, "B");
 			assert.equal(host.error, undefined);
+			assert.equal(guest.error, undefined);
+			guest.dispose();
+			host.dispose();
+			assert.equal(rootCompressor.getShardSyncToken(), undefined);
 		});
 	});
 

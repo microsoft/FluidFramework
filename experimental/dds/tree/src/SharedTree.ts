@@ -227,23 +227,14 @@ export class SharedTreeFactory implements IChannelFactory {
 		this.args = args;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
-	 */
 	public get type(): string {
 		return SharedTreeFactory.Type;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
-	 */
 	public get attributes(): IChannelAttributes {
 		return SharedTreeFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -741,16 +732,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.editLog as unknown as OrderedEditSet<InternalizedChange>;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 */
 	public summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		return createSingleBlobSummary(snapshotFileName, this.saveSerializedSummary({ serializer }));
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 */
 	public override getAttachSummary(
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
@@ -987,9 +972,6 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		return this.editLog.equals(sharedTree.editLog);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const summaryLoadPerformanceEvent = PerformanceEvent.start(this.logger, {
 			eventName: 'SummaryLoad',
@@ -1058,16 +1040,10 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.registerCore}
-	 */
 	protected registerCore(): void {
 		// Do nothing
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 */
 	protected onDisconnect(): void {
 		// Do nothing
 	}

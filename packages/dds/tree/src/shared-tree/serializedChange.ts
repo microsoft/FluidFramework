@@ -148,11 +148,11 @@ function getLatestSharedTreeChangeFormatVersion(
 	let latest: number | undefined;
 	for (const format of supportedFormats) {
 		if (typeof format !== "number") {
-			fail("SharedTree change format versions must be numbers");
+			fail(0xd68 /* SharedTree change format versions must be numbers */);
 		}
 		latest = latest === undefined ? format : Math.max(latest, format);
 	}
-	return latest ?? fail("SharedTree change codec family has no supported formats");
+	return latest ?? fail(0xd69 /* SharedTree change codec family has no supported formats */);
 }
 
 /**
@@ -185,7 +185,8 @@ export function makeSerializedChangeCodec(
 		getLatestSharedTreeChangeFormatVersion(changeFamily.codecs.getSupportedFormats()),
 	);
 	const schema = createSerializedChangeSchema(
-		changeCodec.encodedSchema ?? fail("Serialized change codec requires an encoded schema"),
+		changeCodec.encodedSchema ??
+			fail(0xd6a /* Serialized change codec requires an encoded schema */),
 	);
 
 	const codec: SerializedChangeCodec = {

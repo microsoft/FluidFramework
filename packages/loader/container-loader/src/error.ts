@@ -20,9 +20,6 @@ export class ThrottlingWarning
 	extends LoggingError
 	implements IThrottlingWarning, IFluidErrorBase
 {
-	/**
-	 * {@inheritDoc @fluidframework/telemetry-utils#IFluidErrorBase.errorType}
-	 */
 	public readonly errorType = ContainerErrorTypes.throttlingError;
 
 	private constructor(
