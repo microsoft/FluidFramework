@@ -306,9 +306,6 @@ export class FluidDevtools implements IFluidDevtools {
 		return FluidDevtools.I;
 	}
 
-	/**
-	 * {@inheritDoc IFluidDevtools.registerContainerDevtools}
-	 */
 	public registerContainerDevtools(
 		props: ContainerDevtoolsProps | FluidContainerDevtoolsProps,
 	): void {
@@ -396,9 +393,6 @@ export class FluidDevtools implements IFluidDevtools {
 		return undefined;
 	}
 
-	/**
-	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
-	 */
 	public closeContainerDevtools(containerKey: ContainerKey): void {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
@@ -436,16 +430,10 @@ export class FluidDevtools implements IFluidDevtools {
 		return [...this.containers.values()];
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
-	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
-	 */
 	public dispose(): void {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);

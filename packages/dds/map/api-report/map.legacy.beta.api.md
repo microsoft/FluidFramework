@@ -7,10 +7,14 @@
 // @beta @sealed @legacy
 export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     static readonly Attributes: IChannelAttributes;
+    // (undocumented)
     get attributes(): IChannelAttributes;
+    // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedDirectory;
+    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedDirectory>;
     static readonly Type = "https://graph.microsoft.com/types/directory";
+    // (undocumented)
     get type(): string;
 }
 
@@ -122,10 +126,14 @@ export interface IValueChanged {
 // @beta @sealed @legacy
 export class MapFactory implements IChannelFactory<ISharedMap> {
     static readonly Attributes: IChannelAttributes;
+    // (undocumented)
     get attributes(): IChannelAttributes;
+    // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
+    // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
     static readonly Type = "https://graph.microsoft.com/types/map";
+    // (undocumented)
     get type(): string;
 }
 

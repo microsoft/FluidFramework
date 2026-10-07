@@ -76,9 +76,10 @@ export class SandboxSessionEndpoint {
 						const message: object = Object.create(null);
 						this.port.postMessage(
 							Object.assign(message, {
-								type: "sessionFailure",
-								error: cause.message,
-							} satisfies SessionFailureMessage),
+								sessionFailure: {
+									error: cause.message,
+								} satisfies SessionFailureMessage,
+							}),
 						);
 					} catch (notificationError) {
 						failure.message += ` Peer notification failed: ${normalizeProtocolError(notificationError).message}`;

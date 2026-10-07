@@ -26,16 +26,10 @@ export class LastEditedTracker implements IFluidLastEditedTracker {
 		return this;
 	}
 
-	/**
-	 * {@inheritDoc (IFluidLastEditedTracker:interface).getLastEditDetails}
-	 */
 	public getLastEditDetails(): ILastEditDetails | undefined {
 		return this.sharedSummaryBlock.get<ILastEditDetails>(this.lastEditedDetailsKey);
 	}
 
-	/**
-	 * {@inheritDoc (IFluidLastEditedTracker:interface).updateLastEditDetails}
-	 */
 	public updateLastEditDetails(lastEditDetails: ILastEditDetails): void {
 		this.sharedSummaryBlock.set(this.lastEditedDetailsKey, lastEditDetails);
 	}

@@ -44,9 +44,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const inventoryList = await runtime.createDataStore(
 			InventoryListInstantiationFactory.type,
@@ -58,9 +55,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		await migrationTool.trySetAlias(migrationToolId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
-	 */
 	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
 		console.info("Using runtime factory version two");
 		// Force the MigrationTool to instantiate in all cases.  The Quorum it uses must be loaded and running in
@@ -69,9 +63,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		await getDataStoreEntryPoint(runtime, migrationToolId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
 	protected async createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,
