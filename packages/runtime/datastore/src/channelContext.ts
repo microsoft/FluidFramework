@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -29,6 +30,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import {
+	requireChannelConfigurationController,
+	hasChannelConfiguration,
+} from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
@@ -180,9 +185,19 @@ export async function loadChannelFactoryAndAttributes(
 			}),
 		);
 	}
-	// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
-	// from the factory.
-	attributes = attributes ?? factory.attributes;
+	// This is a backward compatibility case where the attach message doesn't include attributes.
+	// (note that such attach messages can be persisted as data at rest in the form of trailing ops).
+	// Get the attributes from the factory in this case.
+	if (attributes === undefined) {
+		attributes = factory.attributes;
+		// If the factory includes configuration in its attributes, that configuration only necessarily applies to newly created instances.
+		// It must already support transitioning from an unconfigured channel to a configured one,
+		// so omitting configuration from load here reduces the problem to that case.
+		if (hasChannelConfiguration(attributes)) {
+			const { configuration: _configuration, ...legacyAttributes } = attributes;
+			attributes = legacyAttributes;
+		}
+	}
 	return { factory, attributes };
 }
 
@@ -194,6 +209,7 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
+	const configured = hasChannelConfiguration(attributes);
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
@@ -209,5 +225,22 @@ export async function loadChannel(
 		});
 	}
 
-	return factory.load(dataStoreRuntime, channelId, services, attributes);
+	const channel = await factory.load(dataStoreRuntime, channelId, services, attributes);
+	if (configured) {
+		requireChannelConfigurationController(channel);
+		assert(
+			hasChannelConfiguration(channel.attributes),
+			"Configured channel lost its persisted attributes",
+		);
+	} else {
+		// Having a factory immediately transition to some "default" configuration under its
+		// attributes on load is problematic for cross-client compatibility, as we are strict
+		// about enforcing only channels that declare support for configuration are allowed to load
+		// persisted summaries that have configuration.
+		assert(
+			!hasChannelConfiguration(channel.attributes),
+			"Factory should not opt a legacy channel into configuration",
+		);
+	}
+	return channel;
 }
