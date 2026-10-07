@@ -1705,7 +1705,9 @@ describe("Host and Guest correctness", () => {
 			assert.match(host.error?.message ?? "", /The Guest reported a sandbox session failure/);
 			assert(guest.error?.cause instanceof UsageError);
 			assert(host.error?.cause instanceof SandboxProtocolError);
-			assert.deepEqual(host.error.cause.getTelemetryProperties().fromGuestSensitive, {
+			assert.equal(host.error.cause.getTelemetryProperties().fromGuestSensitive, undefined);
+			assert(guest.error instanceof LoggingError);
+			assert.deepEqual(guest.error.getTelemetryProperties().originalErrorMessage, {
 				value: guest.error.cause.message,
 				tag: TelemetryDataTag.UserData,
 			});
