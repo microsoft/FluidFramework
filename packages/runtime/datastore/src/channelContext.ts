@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -29,6 +30,11 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
+import {
+	requireChannelConfigurationController,
+	validateChannelConfiguration,
+	verifyChannelConfigurationController,
+} from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
@@ -111,6 +117,7 @@ export function summarizeChannel(
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
+	verifyChannelConfigurationController(channel);
 	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
 	// Add the channel attributes to the returned result.
@@ -125,6 +132,7 @@ export async function summarizeChannelAsync(
 	telemetryContext?: ITelemetryContext,
 	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ): Promise<ISummaryTreeWithStats> {
+	verifyChannelConfigurationController(channel);
 	const summarizeResult = await channel.summarize(
 		fullTree,
 		trackState,
@@ -182,7 +190,14 @@ export async function loadChannelFactoryAndAttributes(
 	}
 	// This is a backward compatibility case where the attach message doesn't include attributes. Get the attributes
 	// from the factory.
-	attributes = attributes ?? factory.attributes;
+	if (attributes === undefined) {
+		// Factory defaults must not opt old attach messages into a new channel protocol.
+		const { configuration: _configuration, ...legacyAttributes } =
+			factory.attributes as IChannelAttributes & {
+				readonly configuration?: unknown;
+			};
+		attributes = legacyAttributes;
+	}
 	return { factory, attributes };
 }
 
@@ -194,6 +209,7 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
+	const configured = validateChannelConfiguration(attributes, factory);
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
@@ -209,5 +225,18 @@ export async function loadChannel(
 		});
 	}
 
-	return factory.load(dataStoreRuntime, channelId, services, attributes);
+	const channel = await factory.load(dataStoreRuntime, channelId, services, attributes);
+	if (configured) {
+		requireChannelConfigurationController(channel);
+		assert(
+			validateChannelConfiguration(channel.attributes),
+			"Configured channel lost its persisted attributes",
+		);
+	} else {
+		assert(
+			channel.attributes === undefined || !("configuration" in channel.attributes),
+			"Factory cannot opt a legacy channel into configuration",
+		);
+	}
+	return channel;
 }
