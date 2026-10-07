@@ -488,7 +488,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap;
-	private useFlatSnapshotFormat = false;
+	private newMergeTreeSnapshotFormat = false;
 	private readonly sequenceOptions: Readonly<Partial<SequenceOptions>>;
 	constructor(
 		dataStoreRuntime: IFluidDataStoreRuntime,
@@ -525,7 +525,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				newMergeTreeSnapshotFormat: (c, n) =>
 					c.getBoolean(n) ??
 					runtimeOptions.newMergeTreeSnapshotFormat ??
-					this.useFlatSnapshotFormat,
+					this.newMergeTreeSnapshotFormat,
 			},
 			dataStoreRuntime.options,
 		);
@@ -733,7 +733,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
 
 		const summary = builder.getSummaryTree();
-		this.useFlatSnapshotFormat = this.sequenceOptions.newMergeTreeSnapshotFormat === true;
+		this.newMergeTreeSnapshotFormat = this.sequenceOptions.newMergeTreeSnapshotFormat === true;
 		return summary;
 	}
 
@@ -841,7 +841,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				new ObjectStoragePartition(storage, contentPath),
 				this.serializer,
 			);
-			this.useFlatSnapshotFormat = snapshotVersion === "1";
+			this.newMergeTreeSnapshotFormat = snapshotVersion === "1";
 
 			// process the catch up ops, and finishing the loading process
 			for (const m of await catchupOpsP) {
