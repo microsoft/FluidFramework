@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// This bundle probe intentionally targets the emitted alpha entrypoint.
-// eslint-disable-next-line import-x/no-internal-modules
-import { configuredSharedTree, ForestTypeExpensiveDebug } from "fluid-framework/alpha";
+import { configuredSharedTreeBeta, ForestTypeExpensiveDebug } from "fluid-framework/beta";
 
-export const SharedTree = configuredSharedTree({
+export const SharedTree = configuredSharedTreeBeta({
 	forest: ForestTypeExpensiveDebug,
 });

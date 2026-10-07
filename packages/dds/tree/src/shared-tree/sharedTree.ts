@@ -100,6 +100,7 @@ import {
 
 import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { buildConfiguredForest, type ForestType } from "./forestType.js";
+import type { ForestTypeOptimized } from "./forestTypeOptimized.js";
 import { ForestTypeReference } from "./forestTypeReference.js";
 import {
 	getCodecTreeForChangeFormat,
@@ -678,7 +679,7 @@ export interface SharedTreeOptions
 	 *
 	 * @remarks
 	 * This validation is more expensive than {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission} because it is likely to be performed more often.
-	 * We recommend configuring SharedTree with the optimized forest implementation to reduce its performance impact.
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce its performance impact.
 	 */
 	readonly validateCommitsOnFirstSubmission?: boolean;
 
@@ -692,7 +693,7 @@ export interface SharedTreeOptions
 	 * @defaultValue `false`
 	 *
 	 * @remarks
-	 * We recommend configuring SharedTree with the optimized forest implementation to reduce the performance impact of this validation.
+	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce the performance impact of this validation.
 	 */
 	readonly validateRebasedCommitsBeforeResubmission?: boolean;
 }
