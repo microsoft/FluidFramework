@@ -27,10 +27,16 @@ export const rollback = Symbol("SharedTree Transaction Rollback");
 export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
 
 /**
+ * Type for beta version {@link TransactionConstraint | constraint}s.
+ * @sealed @beta
+ */
+export type TransactionConstraintBeta = TransactionConstraint | NoChangeConstraint;
+
+/**
  * Type for alpha version {@link TransactionConstraint | constraint}s
  * @sealed @alpha
  */
-export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint; // TODO: Add more constraint types here
+export type TransactionConstraintAlpha = TransactionConstraintBeta; // TODO: Add more constraint types here
 
 /**
  * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
@@ -43,9 +49,9 @@ export interface NodeInDocumentConstraint {
 }
 
 /**
- * A {@link TransactionConstraintAlpha | constraint} which requires that, for this transaction to apply, the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored.
+ * A {@link TransactionConstraintBeta | constraint} which requires that, for this transaction to apply, the document must be in the same state immediately before the transaction is applied as it was before the transaction was authored.
  * When used as a revert precondition it requires that, for the revert to apply, the document must be in the same state immediately before the revert is applied as it was after the transaction was applied.
- * @alpha
+ * @beta
  */
 export interface NoChangeConstraint {
 	readonly type: "noChange";
@@ -66,7 +72,7 @@ export interface WithValue<TValue> {
  * @input
  * @beta
  */
-export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (
 	| (WithValue<TSuccessValue> & {
 			/** Indicates that the transaction callback ran successfully. */
 			readonly rollback?: false;
@@ -74,7 +80,17 @@ export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
 	| (WithValue<TFailureValue> & {
 			/** Indicates that the transaction callback failed and the transaction should be rolled back. */
 			readonly rollback: true;
-	  });
+	  })
+) & {
+	/**
+	 * An optional list of {@link TransactionConstraintBeta | constraints} that will be checked when the commit corresponding
+	 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
+	 * locally or on remote clients, the revert will be ignored.
+	 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
+	 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
+	 */
+	readonly preconditionsOnRevert?: readonly TransactionConstraintBeta[];
+};
 
 /**
  * The result of a {@link UntypedTreeView.(runTransaction:2) | transaction} that doesn't return a value.
@@ -87,21 +103,12 @@ export type VoidTransactionCallbackStatusBeta = Omit<
 >;
 
 /**
- * {@link TransactionCallbackStatusBeta} extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
+ * Alpha version of {@link TransactionCallbackStatusBeta}.
  * @input
  * @alpha
  */
 export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
-	TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
-		/**
-		 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
-		 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
-		 * locally or on remote clients, the revert will be ignored.
-		 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
-		 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
-		 */
-		readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
-	};
+	TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>;
 
 /**
  * The result of a {@link UntypedTreeViewAlpha.(runTransaction:2) | transaction} that doesn't return a value.
@@ -187,22 +194,22 @@ export interface RunTransactionParamsBeta {
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
 	readonly label?: unknown;
-}
 
-/**
- * The parameters for the {@link RunTransaction | RunTransaction} API, extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
- * @input
- * @alpha
- */
-export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	/**
-	 * An optional list of {@link TransactionConstraintAlpha | constraints} that are checked just before the transaction begins.
+	 * An optional list of {@link TransactionConstraintBeta | constraints} that are checked just before the transaction begins.
 	 * @remarks
 	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 */
-	readonly preconditions?: readonly TransactionConstraintAlpha[];
+	readonly preconditions?: readonly TransactionConstraintBeta[];
+}
 
+/**
+ * The parameters for the {@link RunTransaction | RunTransaction} API, extended with alpha-only options.
+ * @input
+ * @alpha
+ */
+export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	/**
 	 * An optional {@link TransactionPostProcessor | post-processor} applied to
 	 * the change produced when this transaction is committed.
