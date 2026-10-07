@@ -751,16 +751,6 @@ export function normalizeProtocolError(error: unknown): Error {
 }
 
 /**
- * Returns an error message that is safe to send across the sandbox boundary.
- */
-export function getTelemetrySafeProtocolErrorMessage(error: unknown): string {
-	const normalized = normalizeProtocolError(error);
-	return LoggingError.typeCheck(normalized)
-		? normalized.message
-		: "Host and Guest protocol processing failed.";
-}
-
-/**
  * Classifies a local error without inspecting its diagnostic text.
  */
 export function getSandboxFailureCode(error: Error): SandboxFailureCode {

@@ -11,7 +11,10 @@ import {
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { DiscriminatedUnionDispatcher, FluidClientVersion } from "../codec/index.js";
 import { castCursorToSynchronous, findAncestor, moveToDetachedField } from "../core/index.js";
@@ -35,7 +38,6 @@ import {
 	type HostIdRangeId,
 	type HostInitializationMessage,
 	hostToGuestMessageValidator,
-	getTelemetrySafeProtocolErrorMessage,
 	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
@@ -68,6 +70,7 @@ export class HostImplementation implements Sandboxing.Host {
 	 */
 	private readonly port: InstanceType<typeof MessagePort>;
 
+	private readonly logger: TelemetryLoggerExt;
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
 	/**
 	 * Last accepted progress token from the Guest's ID space shard.
@@ -141,7 +144,7 @@ export class HostImplementation implements Sandboxing.Host {
 			},
 			handleProtocolError,
 		);
-		const hostLogger = createChildLogger({
+		this.logger = createChildLogger({
 			logger: logger ?? this.mainCheckout.breaker.logger,
 			namespace: "Host",
 		});
@@ -150,7 +153,7 @@ export class HostImplementation implements Sandboxing.Host {
 			(message) => this.postMessage(message),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
-			hostLogger,
+			this.logger,
 			(token) => this.synchronizeGuestIdSpaceShard(token),
 			() => this.getParentIdSpaceShardSyncToken(),
 		);
@@ -209,11 +212,12 @@ export class HostImplementation implements Sandboxing.Host {
 		try {
 			blob = await resolution;
 		} catch (error) {
+			this.logger.sendErrorEvent({ eventName: "BlobResolutionFailed" }, error);
 			if (this.session.active) {
 				this.postMessage({
 					blobResponseError: {
 						requestId: message.requestId,
-						error: getTelemetrySafeProtocolErrorMessage(error),
+						error: "The service failed to resolve the handle.",
 					},
 				});
 			}

@@ -11,3 +11,4 @@ The Host tags protocol-only text received from the Guest as `SandboxGuestData`, 
 Applications that use the Guest as a security boundary must treat this tag as untrusted, potentially sensitive data.
 The Host does not send sensitive diagnostics to the Guest.
 Unknown error messages are not included in the telemetry-safe session error message.
+Blob-resolution errors are logged on the Host, while the Guest receives a fixed message that the service failed to resolve the handle.

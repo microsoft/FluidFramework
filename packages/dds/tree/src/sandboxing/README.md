@@ -247,6 +247,7 @@ Only the Host binds handles and performs Fluid attachment.
 A Guest proxy sends a `blobRequest`, and the Host replies with either `blobResponse` or `blobResponseError`.
 The request ID matches a response to its pending request and is distinct from the handle token.
 Blob-resolution failures reject only the proxy's `get()` operation.
+The Host logs the original error and sends the Guest a fixed message that the service failed to resolve the handle.
 
 Equivalent Host handle paths reuse one token, and the Guest reuses one proxy for each token.
 Each proxy caches one `get()` promise, including rejection.

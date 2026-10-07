@@ -1584,7 +1584,7 @@ describe("Host and Guest correctness", () => {
 		assert.deepEqual(await proxy.get(), new ArrayBuffer(2));
 	});
 
-	it("clearly rejects resolution of handles to Fluid objects", async () => {
+	it("rejects resolution of handles to Fluid objects without terminating the session", async () => {
 		const { host, main, guest, guestView, provider } = await setupCustom(
 			[],
 			handleArrayConfig,
@@ -1594,36 +1594,63 @@ describe("Host and Guest correctness", () => {
 		await host.updateGuestPromise;
 		await assert.rejects(guestView.root[0].get(), {
 			name: "Error",
-			message:
-				"Cannot resolve this handle in the Guest: only blob handles resolving to an ArrayBuffer are supported. Handles to Fluid objects are not supported.",
+			message: "The service failed to resolve the handle.",
 		});
 		assert.equal(host.error, undefined);
 		assert.equal(guest.error, undefined);
 	});
 
-	it("sanitizes unknown Host resolution failures sent through the port", async () => {
-		const { host, main, guest, guestView } = await setupCustom(
-			[],
-			handleArrayConfig,
-			buildDirectSessionPorts,
-		);
-		const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
-			get: async () => {
-				throw new Error("Blob retrieval failed");
-			},
+	for (const [kind, error] of [
+		["Error", new Error("Blob retrieval failed")],
+		[
+			"LoggingError",
+			new LoggingError("Blob retrieval failed", {
+				diagnostic: { value: "Host-only diagnostic", tag: TelemetryDataTag.UserData },
+			}),
+		],
+	] as const) {
+		it(`logs Host resolution failures and sends a fixed message to the Guest (${kind})`, async () => {
+			const logger = new MockLogger();
+			const { host, main, guest, guestView } = await setupCustom(
+				[],
+				handleArrayConfig,
+				buildDirectSessionPorts,
+				false,
+				undefined,
+				logger.toTelemetryLogger(),
+			);
+			const handle = Object.assign(new MockHandle(new ArrayBuffer(0)), {
+				get: async () => {
+					throw error;
+				},
+			});
+			main.root.push(handle);
+			await host.updateGuestPromise;
+			await assert.rejects(guestView.root[0].get(), {
+				name: "Error",
+				message: "The service failed to resolve the handle.",
+			});
+			const events = logger.events.filter(
+				(event) => event.eventName === "Host:BlobResolutionFailed",
+			);
+			assert.equal(events.length, 1);
+			assert.equal(events[0].category, "error");
+			assert.equal(events[0].error, error.message);
+			assert.equal(typeof events[0].stack, "string");
+			if (error instanceof LoggingError) {
+				assert.equal(events[0].errorInstanceId, error.errorInstanceId);
+				assert.deepEqual(events[0].diagnostic, {
+					value: "Host-only diagnostic",
+					tag: TelemetryDataTag.UserData,
+				});
+			}
+			guestView.root.push(guestView.root[0]);
+			await guest.updateHostPromise;
+			assert.equal(main.root.length, 2);
+			assert.equal(host.error, undefined);
+			assert.equal(guest.error, undefined);
 		});
-		main.root.push(handle);
-		await host.updateGuestPromise;
-		await assert.rejects(guestView.root[0].get(), {
-			name: "Error",
-			message: "Host and Guest protocol processing failed.",
-		});
-		guestView.root.push(guestView.root[0]);
-		await guest.updateHostPromise;
-		assert.equal(main.root.length, 2);
-		assert.equal(host.error, undefined);
-		assert.equal(guest.error, undefined);
-	});
+	}
 
 	for (const transaction of [false, true]) {
 		it(`fails both endpoints on a foreign Guest handle and allows application-managed replacement (transaction: ${transaction})`, async () => {
