@@ -343,7 +343,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 			}
 		}
 		if (!lazy) {
-			this.#flushLazyRequests();
+			this.flushLazyRequests();
 		}
 		return new Promise<ConfigurationChangeResult<TConfig>>((resolve, reject) => {
 			const metadata = {};
@@ -361,12 +361,7 @@ export class ChannelConfigurationController<TConfig extends ChannelConfiguration
 	 * Reentrant submission during the flush is prohibited so a nested edit cannot overtake
 	 * the triggering op. Replay must not flush new intent into pending-op capture.
 	 */
-	public submitOrdinaryMessage(submit: () => void): void {
-		this.#flushLazyRequests();
-		submit();
-	}
-
-	#flushLazyRequests(): void {
+	public flushLazyRequests(): void {
 		this.verifyCanSubmit();
 		this.#verifyNotFlushingLazy();
 		this.#flushingLazy = true;

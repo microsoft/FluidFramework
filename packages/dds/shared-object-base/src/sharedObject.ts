@@ -59,18 +59,16 @@ import {
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
-import {
-	ChannelConfigurationController,
-	type ChannelConfiguration,
-	type ChannelConfigurationFacet,
+import type {
+	ChannelConfiguration,
+	ChannelConfigurationFacet,
 } from "./channelConfiguration.js";
 import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
-import { ConfiguredSharedObjectProtocol } from "./configuredSharedObjectProtocol.js";
+import { ConfiguredSharedObject } from "./configuredSharedObject.js";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
 import type { SharedObjectConfigurationOptions } from "./sharedObjectConfiguration.js";
-import { getSharedObjectProtocol, sharedObjectProtocols } from "./sharedObjectProtocol.js";
 import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
@@ -171,9 +169,36 @@ export abstract class SharedObjectCore<
 	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
 
 	#configurationRegistrationClosed = false;
-	#configurationLifecycle:
-		| { readonly kind: "create" | "load"; initialized: boolean }
+	#configuration:
+		| Pick<
+				ConfiguredSharedObject<ChannelConfiguration>,
+				"beginInitialization" | "completeInitialization" | "close"
+		  >
 		| undefined;
+
+	// Adapt protected DDS hooks once. Configuration routing composes this ordinary endpoint.
+	#deltaHandler: Required<IDeltaHandler> = {
+		processMessages: (messages) => this.processMessages(messages),
+		setConnectionState: (connected) => this.setConnectionState(connected),
+		reSubmit: (content: unknown, metadata, squash = false) =>
+			this.reSubmit(content, metadata, squash),
+		applyStashedOp: (content: unknown) => {
+			verifyOrdinaryChannelMessage(content);
+			this.applyStashedOp(parseHandles(content, this.serializer));
+		},
+		rollback: (content: unknown, metadata) => {
+			verifyOrdinaryChannelMessage(content);
+			this.rollback(content, metadata);
+		},
+	};
+
+	#submitOrdinaryMessage = (content: unknown, metadata: unknown): void => {
+		this.verifyNotClosed();
+		verifyOrdinaryChannelMessage(content);
+		if (this.isAttached()) {
+			this.#submitMessage(this.#prepareMessage(content), metadata);
+		}
+	};
 
 	static {
 		initializeConfiguration = (sharedObject, options) =>
@@ -229,120 +254,46 @@ export abstract class SharedObjectCore<
 		this.callbacksHelper = callbacksHelper;
 	}
 
-	#initializeConfiguration<TConfig extends ChannelConfiguration>({
-		definition,
-		initialization,
-	}: SharedObjectConfigurationOptions<TConfig>): ChannelConfigurationFacet<TConfig> {
+	#initializeConfiguration<TConfig extends ChannelConfiguration>(
+		options: SharedObjectConfigurationOptions<TConfig>,
+	): ChannelConfigurationFacet<TConfig> {
 		assert(
 			!this.#configurationRegistrationClosed,
 			"Configuration must be initialized before the shared object lifecycle starts",
 		);
 		assert(
-			this.#configurationLifecycle === undefined,
+			this.#configuration === undefined,
 			"Shared object configuration is already initialized",
 		);
-		const lifecycle = { kind: initialization.kind, initialized: false };
-		this.#configurationLifecycle = lifecycle;
-		const hasConfiguration =
-			initialization.kind === "load"
-				? "configuration" in this.attributes
-				: initialization.initialConfiguration !== undefined;
-		const controller = new ChannelConfigurationController({
-			definition,
-			snapshot:
-				initialization.kind === "load" && "configuration" in this.attributes
-					? this.attributes.configuration
-					: {
-							version: 1,
-							revision: 0,
-							values:
-								initialization.kind === "create"
-									? (initialization.initialConfiguration ?? definition.defaultConfiguration)
-									: definition.defaultConfiguration,
-						},
-			isAttached: () => this.isAttached(),
-			verifyCanChange: () => {
-				verifyCanSubmit();
-				assert(
-					lifecycle.initialized,
-					"Cannot change configuration during shared object initialization",
-				);
-				assert(
-					!this.runtime.isReadOnly(),
-					"Cannot change configuration on a read-only runtime",
-				);
+		const configuration = new ConfiguredSharedObject(
+			options,
+			this.#deltaHandler,
+			{
+				isAttached: () => this.isAttached(),
+				verifyNotClosed: () => this.verifyNotClosed(),
+				prepareMessage: (content) => this.#prepareMessage(content),
+				submitMessage: (content, metadata) => this.#submitMessage(content, metadata),
 			},
-			submit: (message, metadata) => protocol.submitControl(message, metadata),
-		});
-		const verifyCanSubmit = (): void => {
-			this.verifyNotClosed();
-			assert(!this.runtime.disposed, "Cannot submit to a disposed configured channel");
-			assert(
-				lifecycle.kind !== "load" || lifecycle.initialized,
-				"Cannot submit while loading configured shared object state",
-			);
-			controller.verifyCanSubmit();
-		};
-		const protocol = new ConfiguredSharedObjectProtocol(
-			controller,
-			(content, metadata) => this.submitLocalMessage(content, metadata),
-			verifyCanSubmit,
-			(result) =>
-				extractTelemetryLoggerExt(this.logger).sendTelemetryEvent({
-					eventName: "ChannelConfiguration",
-					status: result.status,
-					source: result.source,
-					protocolVersion: 1,
-					configurationRevision: result.current.revision,
-					...(result.source === "sequenced"
-						? {
-								sequenceNumber: result.sequenceNumber,
-								clientSequenceNumber: result.clientSequenceNumber,
-								messageIndex: result.messageIndex,
-								local: result.local,
-							}
-						: {}),
-				}),
+			{
+				attributes: this.attributes,
+				logger: extractTelemetryLoggerExt(this.logger),
+				isDisposed: () => this.runtime.disposed,
+				isReadOnly: () => this.runtime.isReadOnly(),
+				onDispose: (listener) => this.runtime.once("dispose", listener),
+			},
 		);
-		sharedObjectProtocols.set(this, protocol);
-		// Configuration-capable channels can add an instance-specific getter.
-		// Copy first so this does not change factory attributes or another channel's snapshot.
-		Object.defineProperty(this, "attributes", { value: { ...this.attributes } });
+		this.#configuration = configuration;
+		this.#deltaHandler = configuration;
+		this.#submitOrdinaryMessage = (content, metadata) =>
+			configuration.submitOrdinaryMessage(content, metadata);
+		Object.defineProperty(this, "attributes", { value: configuration.attributes });
 		Object.defineProperty(this, "channelConfigurationProtocolVersion", { value: 1 });
-		const persistConfiguration = (): void => {
-			Object.defineProperty(this.attributes, "configuration", {
-				enumerable: true,
-				get: () => ({ version: 1, ...controller.current }),
-			});
-			controller.off("changed", persistConfiguration);
-		};
-		if (hasConfiguration) {
-			persistConfiguration();
-		} else {
-			// Register before the DDS so its first changed callback sees persisted attributes.
-			controller.on("changed", persistConfiguration);
-		}
-		this.runtime.once("dispose", () =>
-			protocol.close(new Error("Runtime disposed with pending configuration changes")),
-		);
-		return controller;
+		return configuration.controller;
 	}
 
 	#beginInitialization(kind: "create" | "load"): void {
 		this.#configurationRegistrationClosed = true;
-		if (this.#configurationLifecycle !== undefined) {
-			assert(
-				this.#configurationLifecycle.kind === kind &&
-					!this.#configurationLifecycle.initialized,
-				"Shared object configuration initialization mode does not match its lifecycle",
-			);
-		}
-	}
-
-	#completeInitialization(): void {
-		if (this.#configurationLifecycle !== undefined) {
-			this.#configurationLifecycle.initialized = true;
-		}
+		this.#configuration?.beginInitialization(kind);
 	}
 
 	/**
@@ -406,7 +357,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
-			getSharedObjectProtocol(this).close(error);
+			this.#configuration?.close(error);
 		}
 	}
 
@@ -471,7 +422,7 @@ export abstract class SharedObjectCore<
 		// for attached runtimes when load core is running
 		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
-		this.#completeInitialization();
+		this.#configuration?.completeInitialization();
 		this.attachDeltaHandler();
 		this.setBoundAndHandleAttach();
 	}
@@ -483,7 +434,7 @@ export abstract class SharedObjectCore<
 	public initializeLocal(): void {
 		this.#beginInitialization("create");
 		this.initializeLocalCore();
-		this.#completeInitialization();
+		this.#configuration?.completeInitialization();
 	}
 
 	public bindToContext(): void {
@@ -584,26 +535,23 @@ export abstract class SharedObjectCore<
 	 * also sent if we are asked to resubmit the message.
 	 */
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
-		this.verifyNotClosed();
-		const protocol = getSharedObjectProtocol(this);
-		const preparedContent = protocol.prepareLocalMessage(content);
-		if (this.isAttached()) {
-			// NOTE: We may also be encoding in the ContainerRuntime layer.
-			// Once the layer-compat window passes we can remove the encoding codepath here altogether
-			const onlyBind =
-				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
-					.submitMessagesWithoutEncodingHandles === true;
-			const contentToSubmit = onlyBind
-				? bindHandles(preparedContent, this.handle)
-				: makeHandlesSerializable(preparedContent, this.serializer, this.handle);
+		this.#submitOrdinaryMessage(content, localOpMetadata);
+	}
 
-			protocol.submitLocalMessage(preparedContent, () => {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
-			});
-		} else {
-			protocol.submitWhileDetached(preparedContent, localOpMetadata);
-		}
+	#prepareMessage(content: unknown): unknown {
+		// NOTE: We may also be encoding in the ContainerRuntime layer.
+		// Once the layer-compat window passes we can remove the encoding codepath here altogether
+		const onlyBind =
+			(this.runtime as IFluidDataStoreRuntimeInternalConfig)
+				.submitMessagesWithoutEncodingHandles === true;
+		return onlyBind
+			? bindHandles(content, this.handle)
+			: makeHandlesSerializable(content, this.serializer, this.handle);
+	}
+
+	#submitMessage(content: unknown, localOpMetadata: unknown): void {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.services!.deltaConnection.submit(content, localOpMetadata);
 	}
 
 	/**
@@ -697,33 +645,7 @@ export abstract class SharedObjectCore<
 			0x07a /* "Services should be there to attach delta handler" */,
 		);
 		// attachDeltaHandler is only called after services is assigned
-		this.services.deltaConnection.attach({
-			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
-				this.processMessages(messagesCollection);
-			},
-			setConnectionState: (connected: boolean) => {
-				this.setConnectionState(connected);
-			},
-			reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
-				this.reSubmit(content, localOpMetadata, squash);
-			},
-			applyStashedOp: (content: unknown): void => {
-				getSharedObjectProtocol(this).applyStashedOp(content, (ordinaryContent) => {
-					verifyOrdinaryChannelMessage(ordinaryContent);
-					this.applyStashedOp(parseHandles(ordinaryContent, this.serializer));
-				});
-			},
-			rollback: (content: unknown, localOpMetadata: unknown) => {
-				getSharedObjectProtocol(this).rollback(
-					content,
-					localOpMetadata,
-					(ordinaryContent, metadata) => {
-						verifyOrdinaryChannelMessage(ordinaryContent);
-						this.rollback(ordinaryContent, metadata);
-					},
-				);
-			},
-		} satisfies IDeltaHandler);
+		this.services.deltaConnection.attach(this.#deltaHandler);
 	}
 
 	/**
@@ -772,12 +694,6 @@ export abstract class SharedObjectCore<
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
 
-		getSharedObjectProtocol(this).processMessages(messagesCollection, (messages) =>
-			this.#processOrdinaryMessages(messages),
-		);
-	}
-
-	#processOrdinaryMessages(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 
 		// Decode any handles in the contents before processing the messages.
@@ -834,15 +750,12 @@ export abstract class SharedObjectCore<
 	 * the legacy behavior (no squashing) will be used.
 	 */
 	private reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
-		const submit = (ordinaryContent: unknown, metadata: unknown): void => {
-			verifyOrdinaryChannelMessage(ordinaryContent);
-			if (squash) {
-				this.reSubmitSquashed(ordinaryContent, metadata);
-			} else {
-				this.reSubmitCore(ordinaryContent, metadata);
-			}
-		};
-		getSharedObjectProtocol(this).reSubmit(content, localOpMetadata, submit);
+		verifyOrdinaryChannelMessage(content);
+		if (squash) {
+			this.reSubmitSquashed(content, localOpMetadata);
+		} else {
+			this.reSubmitCore(content, localOpMetadata);
+		}
 	}
 
 	/**

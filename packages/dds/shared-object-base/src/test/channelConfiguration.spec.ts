@@ -97,12 +97,12 @@ describe("ChannelConfigurationController", () => {
 			assert.deepEqual(changes, []);
 			controller.process(proposal(0, {}), context(false));
 			assert.equal(submitted.length, 0);
-			controller.submitOrdinaryMessage(() => {});
+			controller.flushLazyRequests();
 			const sent = submitted.at(0);
 			assert(sent !== undefined);
 			assert.equal(sent.message.expectedRevision, 0);
 			assert.equal(sent.message.values, values);
-			controller.submitOrdinaryMessage(() => {});
+			controller.flushLazyRequests();
 			assert.equal(submitted.length, 1);
 			controller.process(sent.message, context(), sent.metadata);
 			assert.equal(
@@ -123,7 +123,8 @@ describe("ChannelConfigurationController", () => {
 			const first = controller.requestChangeLazy({ enabled: false });
 			const second = controller.requestChangeLazy({});
 			assert.equal(submitted.length, 0);
-			controller.submitOrdinaryMessage(() => assert.equal(submitted.length, 2));
+			controller.flushLazyRequests();
+			assert.equal(submitted.length, 2);
 			assert.deepEqual(
 				submitted.map(({ message }) => message),
 				[proposal(0, { enabled: false }), proposal(0, {})],
@@ -186,7 +187,7 @@ describe("ChannelConfigurationController", () => {
 				"conflict",
 			);
 			assert.deepEqual(controller.current, { revision: 1, values: {} });
-			controller.submitOrdinaryMessage(() => {});
+			controller.flushLazyRequests();
 			assert.equal(submitted.length, 2);
 		});
 
@@ -219,7 +220,7 @@ describe("ChannelConfigurationController", () => {
 				{ errorMsg: "Unsupported eager configuration was not rejected before the lazy flush" },
 			);
 			assert.equal(submitted.length, 0);
-			controller.submitOrdinaryMessage(() => {});
+			controller.flushLazyRequests();
 			assert.equal(submitted.length, 1);
 			const sent = submitted.at(0);
 			assert(sent !== undefined);
@@ -251,7 +252,7 @@ describe("ChannelConfigurationController", () => {
 				).source,
 				"local",
 			);
-			controller.submitOrdinaryMessage(() => {});
+			controller.flushLazyRequests();
 			assert.deepEqual(submitted, []);
 		});
 
@@ -267,13 +268,13 @@ describe("ChannelConfigurationController", () => {
 			allowed = true;
 			const queued = assert.rejects(controller.requestChangeLazy({}), /Submission prohibited/);
 			allowed = false;
-			assert.throws(() => controller.submitOrdinaryMessage(() => {}), /Submission prohibited/);
+			assert.throws(() => controller.flushLazyRequests(), /Submission prohibited/);
 			await timeoutAwait(queued, {
 				errorMsg: "Queued lazy request was not rejected when the flush lifecycle check failed",
 			});
 			assert.deepEqual(submitted, []);
 			allowed = true;
-			assert.throws(() => controller.submitOrdinaryMessage(() => {}), /Submission prohibited/);
+			assert.throws(() => controller.flushLazyRequests(), /Submission prohibited/);
 			assert.deepEqual(submitted, []);
 		});
 
@@ -303,7 +304,7 @@ describe("ChannelConfigurationController", () => {
 				(error) => error === failure,
 			);
 			assert.throws(
-				() => controller.submitOrdinaryMessage(() => assert.fail("Triggering op sent")),
+				() => controller.flushLazyRequests(),
 				(error) => error === failure,
 			);
 			await timeoutAwait(Promise.all([pending, rejected, queued]), {
@@ -314,20 +315,20 @@ describe("ChannelConfigurationController", () => {
 			assert.equal(sent.length, 1);
 			fail = false;
 			assert.throws(
-				() => controller.submitOrdinaryMessage(() => assert.fail("Op sent after disposal")),
+				() => controller.flushLazyRequests(),
 				(error) => error === failure,
 			);
 			assert.equal(sent.length, 1);
 		});
 
-		it("asserts on reentrant ordinary and configuration submissions during a lazy flush", async () => {
+		it("asserts on reentrant flushes and configuration submissions during a lazy flush", async () => {
 			const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
 			const rejected: Promise<void>[] = [];
 			const { controller } = harness({
 				submit: (message, metadata) => {
 					sent.push({ message, metadata });
 					assert.throws(
-						() => controller.submitOrdinaryMessage(() => assert.fail("Reentrant op sent")),
+						() => controller.flushLazyRequests(),
 						/reentrantly while flushing lazy configuration/,
 					);
 					for (const method of ["requestChange", "requestChangeLazy"] as const) {
@@ -344,7 +345,7 @@ describe("ChannelConfigurationController", () => {
 				controller.requestChangeLazy({ enabled: false }),
 				controller.requestChangeLazy({}),
 			];
-			controller.submitOrdinaryMessage(() => assert.equal(sent.length, 2));
+			controller.flushLazyRequests();
 			await timeoutAwait(Promise.all(rejected), {
 				errorMsg: "Reentrant configuration requests were not rejected during the lazy flush",
 			});
@@ -376,7 +377,7 @@ describe("ChannelConfigurationController", () => {
 					"Deferred and submitted configuration requests were not rejected on disposal",
 			});
 			assert.throws(
-				() => controller.submitOrdinaryMessage(() => {}),
+				() => controller.flushLazyRequests(),
 				(error) => error === failure,
 			);
 		});
@@ -384,7 +385,7 @@ describe("ChannelConfigurationController", () => {
 		it("uses ordinary control resubmission, rollback, and stash after materialization", async () => {
 			const { controller, submitted } = harness();
 			const rolledBack = assert.rejects(controller.requestChangeLazy({}), /rolled back/);
-			controller.submitOrdinaryMessage(() => {});
+			controller.flushLazyRequests();
 			const first = submitted.at(0);
 			assert(first !== undefined);
 			controller.reSubmit(first.message, first.metadata);

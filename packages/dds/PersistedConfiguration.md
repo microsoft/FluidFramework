@@ -56,7 +56,8 @@ desired/session distinction, and one-proposal-per-session policy are not the req
 
 Put a reusable `ChannelConfigurationController` in `shared-object-base`. It owns configuration
 state, CAS decisions, and configuration-request completion tracking.
-An internal protocol adapter integrates it with `SharedObjectCore`'s lifecycle.
+A configuration-specific message layer, `ConfiguredSharedObject`, composes an ordinary DDS endpoint with the channel transport and lifecycle signals.
+It owns configuration routing, initialization, attribute persistence, and disposal.
 Both inheritance-based DDSes and kernel factories use the same internal `initializeSharedObjectConfiguration` helper.
 Kernel implementations receive its typed facet in `KernelArgs`, before the kernel factory constructs or loads the kernel.
 They do not need to extend `SharedObject`.
@@ -100,7 +101,7 @@ this.configuration.on("changed", (change) => {
 Load reads the instance's channel attributes, never the factory's creation settings.
 Registration is allowed once, before initialization, loading, connection, or binding starts.
 The facet is readable immediately, but requests cannot change configuration until `initializeLocalCore` or `loadCore` completes.
-The same controller, protocol dispatch, disposal, and attribute persistence serve inheritance-based and kernel-based DDSes.
+The same controller, message layer, disposal, and attribute persistence serve inheritance-based and kernel-based DDSes.
 Custom asynchronous summaries still store configuration in the channel attributes written by the datastore.
 
 ## Persisted state
@@ -404,7 +405,7 @@ using existing pending local-op metadata; completion metadata is not part of the
 The facet is initialized once, before kernel construction or during an inheritance-based DDS's constructor.
 For load it exposes the snapshot's validated configuration, or the definition's defaults when unmarked, not the latest configuration from buffered ops.
 Reading that initial snapshot is not a configuration-change notification.
-The shared core distinguishes creation settings from configuration read from channel attributes on load.
+The configuration layer distinguishes creation settings from configuration read from channel attributes on load.
 Factory support is separate from these lifecycle states.
 The controller validates defaults, creation values, and loaded snapshots in the same way.
 It calls `validateTransition` with `previous === undefined` for each of these initial configurations.
@@ -483,20 +484,45 @@ CAS remains entirely in the shared configuration mechanism.
 
 ### Shared wrapper integration
 
-Shared objects without a registered protocol use one stateless default protocol.
-It forwards ordinary messages and DDS hooks unchanged.
-It does nothing for detached submissions or protocol cleanup.
-The configured protocol uses the same dispatch interface.
+`SharedObjectCore` adapts its protected ordinary processing, stash, resubmission, rollback, and connection hooks once into an `IDeltaHandler`.
+Without configuration, the runtime connects directly to that endpoint and ordinary submissions go directly to transport preparation and submission.
+There is no default protocol object, per-call protocol lookup, or generic interception interface.
 
-The protocol adapter separates configuration-control traffic from ordinary DDS traffic, forwarding
-ordinary message collections to `SharedKernel.processMessagesCore` without added metadata.
-It handles configuration requests during resubmission, stashed-op restoration, and rollback,
-but delegates ordinary payloads to the DDS's existing hooks.
+Configuration registration composes that endpoint with `ConfiguredSharedObject` before initialization or service connection.
+The runtime connects to the configuration layer, which routes control ops to the controller and ordinary collections to the original endpoint.
+It splits ordinary runs around control ops, preserving the original envelope, message metadata, and synchronous ordering.
+Both legacy subclass hooks and kernel hooks remain downstream of ordinary handle decoding and DDS events.
+The layer routes configuration requests during resubmission, stashed-op restoration, and rollback,
+but delegates ordinary payloads to the stable DDS endpoint.
 `submitLocalMessage` remains the ordinary submission entry point.
 SharedObject guards ordinary submission, receive, stash, resubmit, and rollback against an own top-level `isChannelConfigurationOp` property.
 It throws `DataProcessingError` for any value of this reserved property, even on unconfigured channels, to prevent future collisions.
-The configuration controller has a scoped submission bypass only for its genuine proposals.
 The guard does not inspect nested application data or impose a DDS payload schema.
+
+The layer has distinct ordinary and control submission entries.
+Controller proposals go directly to the control entry, never through `submitLocalMessage` or a subclass override of it.
+Both entries share the core's lower-level transport, which separates preparation from submission.
+For an attached ordinary op, marker validation precedes handle binding or encoding.
+Only after preparation succeeds does the layer flush deferred configuration requests, then submit the prepared ordinary op.
+The control entry uses the same transport without ordinary marker validation or a recursive bypass flag.
+The final submission still reaches the original delta connection, so real stashed-op capture and pending metadata remain intact.
+
+Replay still needs scoped state: a DDS stash, resubmission, squash, or rollback hook can submit ordinary ops.
+The layer suppresses lazy flushing through these calls, including incoming delivery or DDS callbacks nested inside replay.
+Nested replay scopes restore the previous state, so a nested call cannot enable flushing in an outer replay.
+Incoming delivery alone does not flush deferred requests, but a fresh edit from an ordinary `pre-op` or `op` callback outside replay still does.
+This is not a queue for detached edits; existing DDS state is included in the attach summary without trailing replay.
+
+The core retains a narrow private installation helper, lifecycle notifications, and the ordinary protected-hook adapters.
+The configuration layer receives attachment and closed-state checks, transport preparation and submission, runtime disposal and read-only state, a disposal subscription, attributes, and a logger.
+It does not receive the entire runtime or protected subclass API.
+It prepares the readable facet and per-instance attributes before `initializeLocalCore`, `loadCore`, or kernel construction.
+The core records its first close error before notifying the layer to reject requests.
+The public channel object and its Fluid handle identity do not change.
+
+An `IDeltaConnection` decorator alone would be too late for outbound validation and handle preparation, and would miss detached edits before services exist.
+A kernel-only wrapper would also be too late for inbound handle decoding and events, and would exclude inheritance-based DDSes.
+The composed message layer spans those boundaries without proxying the public channel object.
 
 Integrate at the `SharedObjectCore` dispatch boundary: configured dispatch identifies configuration ops before
 handle decoding and DDS `pre-op`/`op` events.

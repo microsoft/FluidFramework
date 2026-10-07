@@ -41,11 +41,6 @@ import type {
 import type { ChannelConfigurationMessageV1 } from "../channelConfigurationFormat.js";
 import type { ISharedObjectKind, SharedObjectKindAlpha } from "../sharedObject.js";
 import {
-	defaultSharedObjectProtocol,
-	getSharedObjectProtocol,
-	sharedObjectProtocols,
-} from "../sharedObjectProtocol.js";
-import {
 	makeSharedObjectKind,
 	type FactoryOut,
 	type KernelArgs,
@@ -883,7 +878,7 @@ describe("configured kernel composition", () => {
 		await assert.rejects(config.requestChange({}), /disposed/);
 	});
 
-	it("keeps DDSes without a configuration definition on the existing protocol", async () => {
+	it("keeps DDSes without a configuration definition on ordinary dispatch", async () => {
 		const { runtime, services } = harness(AttachState.Detached);
 		const factory = makeKind(undefined, false).getFactory();
 		const shared = factory.create(runtime, "unconfigured");
@@ -893,8 +888,6 @@ describe("configured kernel composition", () => {
 		assert.equal(Object.isFrozen(factory.attributes), false);
 		const loaded = await factory.load(runtime, "loaded", services, factory.attributes);
 		for (const instance of [shared, loaded]) {
-			assert.equal(sharedObjectProtocols.has(instance), false);
-			assert.equal(getSharedObjectProtocol(instance), defaultSharedObjectProtocol);
 			assert(!("channelConfigurationProtocolVersion" in instance));
 			assert(!("configuration" in instance.attributes));
 			assert.equal(instance.config, undefined);
@@ -911,8 +904,7 @@ describe("configured kernel composition", () => {
 		}).getFactory();
 		const first = factory.create(runtime, "first");
 		const second = factory.create(runtime, "second");
-		assert.equal(sharedObjectProtocols.has(first), true);
-		assert.notEqual(getSharedObjectProtocol(first), defaultSharedObjectProtocol);
+		assert("channelConfigurationProtocolVersion" in first);
 		const config = requireConfig(first);
 		assert.deepEqual(config.current, { revision: 0, values: { retain: false } });
 		assert.deepEqual(first.observed, [["initial", config.current]]);

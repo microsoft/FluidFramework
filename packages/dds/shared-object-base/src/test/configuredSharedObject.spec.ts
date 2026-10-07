@@ -37,6 +37,7 @@ import {
 import { timeoutAwait } from "@fluidframework/test-runtime-utils/internal/timeoutUtils";
 
 import type { ChannelConfigurationMessageV1 } from "../channelConfigurationFormat.js";
+import { ConfiguredSharedObject as ConfigurationLayer } from "../configuredSharedObject.js";
 import {
 	type ChannelConfigurationDefinition,
 	type ChannelConfigurationFacet,
@@ -626,6 +627,21 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 		it("rejects pending requests with the channel's ordinary event-listener error", async () => {
 			const { runtime, services, delta } = harness();
 			const shared = factory().create(runtime, "closed");
+			const attach = delta.attach.bind(delta);
+			let cleanupError: unknown;
+			delta.attach = (handler) => {
+				assert(handler instanceof ConfigurationLayer);
+				const close = handler.close.bind(handler);
+				handler.close = (error) => {
+					cleanupError = error;
+					assert.throws(
+						() => shared.edit("during cleanup"),
+						(thrown) => thrown === error,
+					);
+					close(error);
+				};
+				attach(handler);
+			};
 			shared.connect(services);
 			const pending = Promise.allSettled([
 				shared.config.requestChange({ retain: true }),
@@ -643,6 +659,7 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 					return true;
 				},
 			);
+			assert.equal(cleanupError, closedError);
 			for (const result of await pending) {
 				assert.equal(result.status, "rejected");
 				assert(result.status === "rejected");
@@ -655,6 +672,79 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 		});
 
 		describe("lazy configuration changes", () => {
+			for (const event of ["pre-op", "op"] as const) {
+				it(`flushes deferred intent for fresh edits from ${event} callbacks`, async () => {
+					const { runtime, services, delta, submitted } = harness();
+					const shared = factory().create(runtime, "incoming-fresh");
+					shared.connect(services);
+					const request = shared.config.requestChangeLazy({ retain: true });
+					shared.once(event, () => {
+						delta.reSubmit("replayed", undefined, false);
+						shared.edit("response");
+					});
+					delta.processMessages(collection(["incoming"]));
+					assert.deepEqual(
+						submitted.map(({ contents }) => contents),
+						["replayed", barrier(0, true), "response"],
+					);
+					assert(!("configuration" in shared.attributes));
+					delta.processMessages(
+						collection(
+							submitted.map(({ contents }) => contents),
+							true,
+							submitted.map(({ metadata }) => metadata),
+						),
+					);
+					const result = await timeoutAwait(request, {
+						errorMsg: "Lazy request did not resolve after a fresh incoming-callback edit",
+					});
+					assert.equal(result.status, "applied");
+				});
+			}
+
+			it("preserves deferred intent across nested replay and edits from incoming callbacks", async () => {
+				const { runtime, services, delta, submitted } = harness();
+				const shared = factory().create(runtime, "incoming");
+				shared.connect(services);
+				const request = shared.config.requestChangeLazy({ retain: true });
+				const submit = delta.submit.bind(delta);
+				let deliverDuringSubmission = true;
+				delta.submit = (contents, metadata) => {
+					const clientSequenceNumber = submit(contents, metadata);
+					if (deliverDuringSubmission) {
+						deliverDuringSubmission = false;
+						delta.processMessages(collection(["incoming"]));
+					}
+					return clientSequenceNumber;
+				};
+				shared.once("op", () => {
+					delta.reSubmit("nested", undefined, false);
+					shared.edit("response");
+				});
+				delta.reSubmit("outer", undefined, false);
+				assert.deepEqual(
+					submitted.map(({ contents }) => contents),
+					["outer", "nested", "response"],
+				);
+				assert(!("configuration" in shared.attributes));
+				shared.edit("fresh");
+				assert.deepEqual(
+					submitted.map(({ contents }) => contents),
+					["outer", "nested", "response", barrier(0, true), "fresh"],
+				);
+				delta.processMessages(
+					collection(
+						submitted.map(({ contents }) => contents),
+						true,
+						submitted.map(({ metadata }) => metadata),
+					),
+				);
+				const result = await timeoutAwait(request, {
+					errorMsg: "Lazy request did not resolve after the outer replay scope ended",
+				});
+				assert.equal(result.status, "applied");
+			});
+
 			it("does not persist, dirty, or flush idle requests during summaries, incoming ops, or other channel edits", async () => {
 				const test = harness();
 				const reader = factory();
@@ -955,3 +1045,54 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 		});
 	});
 }
+
+describe("SharedObject configuration wrapper", () => {
+	it("submits control ops without reentering the ordinary subclass submission hook", async () => {
+		class SubmissionProbe extends ConfiguredSharedObject {
+			public readonly authored: unknown[] = [];
+
+			protected override submitLocalMessage(
+				content: unknown,
+				localOpMetadata?: unknown,
+			): void {
+				this.authored.push(content);
+				super.submitLocalMessage(content, localOpMetadata);
+			}
+		}
+		const { runtime, services, delta, submitted } = harness();
+		const shared = new SubmissionProbe(
+			runtime,
+			"composed",
+			{ type: "configured-test", snapshotFormatVersion: "1" },
+			{ definition, initialization: { kind: "create" } },
+		);
+		shared.initializeLocal();
+		shared.connect(services);
+		assert.equal(shared.IFluidLoadable, shared);
+		assert.equal(await shared.handle.get(), shared);
+		const eager = shared.config.requestChange({ retain: true });
+		const lazy = shared.config.requestChangeLazy({});
+		const ordinary = { edit: true };
+		const metadata = { local: true };
+		shared.edit(ordinary, metadata);
+		assert.deepEqual(shared.authored, [ordinary]);
+		assert.equal(submitted.length, 3);
+		assert.deepEqual(submitted[0]?.contents, barrier(0, true));
+		assert.deepEqual(submitted[2], { contents: ordinary, metadata });
+		delta.processMessages(
+			collection(
+				submitted.map(({ contents }) => contents),
+				true,
+				submitted.map(({ metadata: localMetadata }) => localMetadata),
+			),
+		);
+		const results = await timeoutAwait(Promise.all([eager, lazy]), {
+			errorMsg: "Separate control submissions did not complete after sequencing",
+		});
+		assert.deepEqual(
+			results.map(({ status }) => status),
+			["applied", "conflict"],
+		);
+		runtime.dispose();
+	});
+});

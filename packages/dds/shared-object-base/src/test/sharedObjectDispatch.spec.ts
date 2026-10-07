@@ -19,11 +19,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { SharedObject } from "../sharedObject.js";
-import {
-	defaultSharedObjectProtocol,
-	getSharedObjectProtocol,
-	sharedObjectProtocols,
-} from "../sharedObjectProtocol.js";
 import { createSingleBlobSummary } from "../utils.js";
 
 function collection(contents: unknown, metadata: unknown): IRuntimeMessageCollection {
@@ -83,12 +78,11 @@ class LegacySharedObject extends SharedObject {
 	}
 }
 
-describe("SharedObject protocol dispatch", () => {
-	it("does not register a configuration protocol for legacy subclasses during creation or load", async () => {
+describe("SharedObject ordinary dispatch", () => {
+	it("does not install configuration for legacy subclasses during creation or load", async () => {
 		for (const initialize of ["create", "load"] as const) {
 			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
 			const shared = new LegacySharedObject(runtime);
-			assert.equal(sharedObjectProtocols.has(shared), false);
 			const attributes = shared.attributes;
 			if (initialize === "create") {
 				shared.initializeLocal();
@@ -101,8 +95,6 @@ describe("SharedObject protocol dispatch", () => {
 					objectStorage: new MockStorage(),
 				});
 			}
-			assert.equal(sharedObjectProtocols.has(shared), false);
-			assert.equal(getSharedObjectProtocol(shared), defaultSharedObjectProtocol);
 			assert(!("channelConfigurationProtocolVersion" in shared));
 			assert.equal(shared.attributes, attributes);
 			assert(!("configuration" in shared.attributes));
@@ -121,7 +113,13 @@ describe("SharedObject protocol dispatch", () => {
 			);
 			await shared.load({ deltaConnection: delta, objectStorage: new MockStorage() });
 			assert.throws(
-				() => shared.submit({ isChannelConfigurationOp: false }),
+				() =>
+					shared.submit({
+						isChannelConfigurationOp: false,
+						get payload(): never {
+							return assert.fail("Reserved marker must be rejected before handle preparation");
+						},
+					}),
 				DataProcessingError,
 			);
 			assert.equal(submitted.length, 0);
@@ -154,26 +152,6 @@ describe("SharedObject protocol dispatch", () => {
 		assert.deepEqual(shared.calls, []);
 		assert.deepEqual(shared.messages, []);
 		runtime.dispose();
-	});
-
-	it("shares the stateless default and resolves registered protocols", () => {
-		const first = {};
-		const second = {};
-		assert.equal(getSharedObjectProtocol(first), defaultSharedObjectProtocol);
-		assert.equal(getSharedObjectProtocol(second), defaultSharedObjectProtocol);
-		const registered = {
-			prepareLocalMessage: (content: unknown) => ({ content }),
-			submitLocalMessage: defaultSharedObjectProtocol.submitLocalMessage,
-			submitWhileDetached: defaultSharedObjectProtocol.submitWhileDetached,
-			processMessages: defaultSharedObjectProtocol.processMessages,
-			applyStashedOp: defaultSharedObjectProtocol.applyStashedOp,
-			reSubmit: defaultSharedObjectProtocol.reSubmit,
-			rollback: defaultSharedObjectProtocol.rollback,
-			close: defaultSharedObjectProtocol.close,
-		};
-		sharedObjectProtocols.set(first, registered);
-		assert.equal(getSharedObjectProtocol(first), registered);
-		assert.equal(getSharedObjectProtocol(second), defaultSharedObjectProtocol);
 	});
 
 	it("retains legacy DDS events and stash, resubmit, squash and rollback hooks", async () => {
