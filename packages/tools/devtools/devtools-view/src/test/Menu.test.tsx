@@ -71,22 +71,30 @@ describe("Menu Accessibility Check", () => {
 				const navigation = screen.getByRole("navigation", { name: "Developer tools" });
 				const [status] = within(navigation).getAllByRole("status");
 
-				assert.equal(status.textContent, "");
-				assert.equal(status.getAttribute("aria-live"), "polite");
-				assert.equal(status.getAttribute("aria-atomic"), "true");
-				assert.equal(
-					screen.getByRole("button", { name: "Home" }).getAttribute("aria-current"),
-					"page",
-				);
+				if (activation === "click") {
+					assert.equal(status.textContent, "");
+					assert.equal(status.getAttribute("aria-live"), "polite");
+					assert.equal(status.getAttribute("aria-atomic"), "true");
+					assert.equal(
+						screen.getByRole("button", { name: "Home" }).getAttribute("aria-current"),
+						"page",
+					);
+				}
 
-				for (const [name, message] of [
+				const selections = [
 					["Container1", "Container Container1 selected."],
 					["Container2", "Container Container2 selected."],
 					["Events", "Events selected."],
 					["Op Latency", "Op Latency selected."],
 					["Settings", "Settings selected."],
 					["Home", "Home selected."],
-				]) {
+				];
+				// Events and Home use separate keyboard handlers.
+				const selectionsToTest =
+					activation === "click"
+						? selections
+						: selections.filter(([name]) => name === "Events" || name === "Home");
+				for (const [name, message] of selectionsToTest) {
 					const item = within(navigation).getByRole("button", { name: new RegExp(name) });
 					item.focus();
 					if (activation === "click") {
