@@ -338,16 +338,27 @@ describe("Host and Guest message protocol", () => {
 			},
 			{ guestChangeAck: {} },
 			{ guestClose: { idSpaceShardToken: createTestIdSpaceShardToken() } },
+			// A failure notification must include a classification code.
 			{ sessionFailure: {} },
+			// The legacy error field is no longer supported and does not replace the required code.
 			{ sessionFailure: { error: "legacy failure" } },
+			// Failure codes are string enum values, not numeric indices.
 			{ sessionFailure: { code: 0 } },
+			// The enum member name is not its case-sensitive wire value.
 			{ sessionFailure: { code: "ProtocolViolation" } },
+			// Arbitrary strings are not members of the closed set of failure codes.
 			{ sessionFailure: { code: "unknownFailure" } },
+			// The prototype accessor name must not be accepted as a failure code.
 			{ sessionFailure: { code: "__proto__" } },
+			// The inherited constructor property must not be accepted as a failure code.
 			{ sessionFailure: { code: "constructor" } },
+			// Inherited method names must not be accepted as failure codes.
 			{ sessionFailure: { code: "toString" } },
+			// A valid code does not permit additional fields.
 			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, extra: true } },
+			// Protocol diagnostics must be strings when present.
 			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, protocolMessage: 0 } },
+			// Sensitive diagnostics must be strings when present.
 			{ sessionFailure: { code: SandboxFailureCode.ProtocolViolation, sensitiveMessage: {} } },
 		];
 
