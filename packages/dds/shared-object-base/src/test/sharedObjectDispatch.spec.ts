@@ -41,13 +41,13 @@ function collection(contents: unknown, metadata: unknown): IRuntimeMessageCollec
 	};
 }
 
-class LegacySharedObject extends SharedObject {
+class MockSharedObject extends SharedObject {
 	public readonly calls: unknown[][] = [];
 	public readonly messages: IRuntimeMessageCollection[] = [];
 	public readonly connectionStates: boolean[] = [];
 
 	public constructor(runtime: MockFluidDataStoreRuntime) {
-		super("legacy", runtime, { type: "legacy", snapshotFormatVersion: "1" }, "legacy");
+		super("mock", runtime, { type: "mock", snapshotFormatVersion: "1" }, "mock");
 	}
 
 	public submit(contents: unknown, metadata?: unknown): void {
@@ -97,14 +97,14 @@ describe("SharedObject ordinary dispatch", () => {
 
 	function createFixture(attachState: AttachState): {
 		runtime: MockFluidDataStoreRuntime;
-		shared: LegacySharedObject;
+		sharedObject: MockSharedObject;
 		delta: MockDeltaConnection;
 		services: IChannelServices;
 		submitted: [unknown, unknown][];
 	} {
 		const runtime = new MockFluidDataStoreRuntime({ attachState });
 		runtimes.push(runtime);
-		const shared = new LegacySharedObject(runtime);
+		const sharedObject = new MockSharedObject(runtime);
 		const submitted: [unknown, unknown][] = [];
 		const delta = new MockDeltaConnection(
 			(contents: unknown, metadata) => submitted.push([contents, metadata]),
@@ -112,7 +112,7 @@ describe("SharedObject ordinary dispatch", () => {
 		);
 		return {
 			runtime,
-			shared,
+			sharedObject,
 			delta,
 			services: { deltaConnection: delta, objectStorage: new MockStorage() },
 			submitted,
@@ -128,12 +128,12 @@ describe("SharedObject ordinary dispatch", () => {
 
 	for (const initialize of ["create", "load"] as const) {
 		it(`retains ordinary payloads, events and replay hooks after ${initialize}`, async () => {
-			const { shared, delta, services, submitted } = createFixture(AttachState.Attached);
+			const { sharedObject, delta, services, submitted } = createFixture(AttachState.Attached);
 			if (initialize === "create") {
-				shared.initializeLocal();
-				shared.connect(services);
+				sharedObject.initializeLocal();
+				sharedObject.connect(services);
 			} else {
-				await shared.load(services);
+				await sharedObject.load(services);
 			}
 			const content = {
 				kind: "configuration",
@@ -143,21 +143,21 @@ describe("SharedObject ordinary dispatch", () => {
 				values: {},
 			};
 			const metadata = { origin: "local" };
-			shared.on("pre-op", () => shared.calls.push(["pre-op"]));
-			shared.on("op", () => shared.calls.push(["op"]));
-			shared.submit(content, metadata);
+			sharedObject.on("pre-op", () => sharedObject.calls.push(["pre-op"]));
+			sharedObject.on("op", () => sharedObject.calls.push(["op"]));
+			sharedObject.submit(content, metadata);
 			const messages = collection(content, metadata);
 			delta.processMessages(messages);
-			assert.equal(shared.messages[0]?.envelope, messages.envelope);
-			assert.equal(shared.messages[0]?.local, true);
-			assert.deepEqual(shared.messages[0]?.messagesContent, messages.messagesContent);
-			assert.equal(shared.messages[0]?.messagesContent[0]?.contents, content);
-			assert.equal(shared.messages[0]?.messagesContent[0]?.localOpMetadata, metadata);
+			assert.equal(sharedObject.messages[0]?.envelope, messages.envelope);
+			assert.equal(sharedObject.messages[0]?.local, true);
+			assert.deepEqual(sharedObject.messages[0]?.messagesContent, messages.messagesContent);
+			assert.equal(sharedObject.messages[0]?.messagesContent[0]?.contents, content);
+			assert.equal(sharedObject.messages[0]?.messagesContent[0]?.localOpMetadata, metadata);
 			assert.equal(delta.applyStashedOp(content), undefined);
 			delta.reSubmit(content, metadata, false);
 			delta.reSubmit(content, metadata, true);
 			delta.rollback?.(content, metadata);
-			assert.deepEqual(shared.calls, [
+			assert.deepEqual(sharedObject.calls, [
 				["pre-op"],
 				["process"],
 				["op"],
@@ -176,8 +176,8 @@ describe("SharedObject ordinary dispatch", () => {
 	}
 
 	it("decodes Fluid handles before batch events, processing and stashed-op replay", async () => {
-		const { shared, delta, services } = createFixture(AttachState.Attached);
-		await shared.load(services);
+		const { sharedObject, delta, services } = createFixture(AttachState.Attached);
+		await sharedObject.load(services);
 		const encodedHandle = { type: "__fluid_handle__", url: "/referenced" };
 		const metadata = { origin: "local" };
 		const firstMessage = collection(encodedHandle, metadata);
@@ -193,22 +193,22 @@ describe("SharedObject ordinary dispatch", () => {
 			],
 		};
 		const events: ISequencedDocumentMessage[] = [];
-		shared.on("pre-op", (message, local) => {
+		sharedObject.on("pre-op", (message, local) => {
 			assert.equal(local, true);
 			events.push(message);
-			shared.calls.push(["pre-op", message.clientSequenceNumber]);
+			sharedObject.calls.push(["pre-op", message.clientSequenceNumber]);
 		});
-		shared.on("op", (message) => {
+		sharedObject.on("op", (message) => {
 			events.push(message);
-			shared.calls.push(["op", message.clientSequenceNumber]);
+			sharedObject.calls.push(["op", message.clientSequenceNumber]);
 		});
 		delta.processMessages(messages);
-		const decoded = shared.messages[0]?.messagesContent[0]?.contents;
+		const decoded = sharedObject.messages[0]?.messagesContent[0]?.contents;
 		assert(isFluidHandle(decoded));
-		assert.equal(shared.messages[0]?.messagesContent[0]?.localOpMetadata, metadata);
+		assert.equal(sharedObject.messages[0]?.messagesContent[0]?.localOpMetadata, metadata);
 		assert.equal(events[0]?.contents, decoded);
 		assert.equal(events[2]?.contents, decoded);
-		assert.deepEqual(shared.calls, [
+		assert.deepEqual(sharedObject.calls, [
 			["pre-op", 1],
 			["pre-op", 2],
 			["process"],
@@ -216,18 +216,18 @@ describe("SharedObject ordinary dispatch", () => {
 			["op", 2],
 		]);
 		delta.applyStashedOp(encodedHandle);
-		assert(isFluidHandle(shared.calls.at(-1)?.[1]));
+		assert(isFluidHandle(sharedObject.calls.at(-1)?.[1]));
 		assert.equal(messages.messagesContent[0]?.contents, encodedHandle);
 	});
 
 	for (const onlyBind of [false, true]) {
 		it(`binds Fluid handles before transmission and reSubmit (onlyBind: ${onlyBind})`, async () => {
-			const { runtime, shared, delta, services, submitted } = createFixture(
+			const { runtime, sharedObject, delta, services, submitted } = createFixture(
 				AttachState.Attached,
 			);
 			Object.assign(runtime, { submitMessagesWithoutEncodingHandles: onlyBind });
-			await shared.load(services);
-			shared.handle.attachGraph();
+			await sharedObject.load(services);
+			sharedObject.handle.attachGraph();
 			const handle = new MockHandle("referenced");
 			const metadata = {};
 			const observed: unknown[] = [];
@@ -239,7 +239,7 @@ describe("SharedObject ordinary dispatch", () => {
 				},
 				() => {},
 			);
-			shared.submit(handle, metadata);
+			sharedObject.submit(handle, metadata);
 			delta.reSubmit(handle, metadata, false);
 			delta.reSubmit(handle, metadata, true);
 			assert.equal(submitted.length, 0);
@@ -254,33 +254,48 @@ describe("SharedObject ordinary dispatch", () => {
 			}
 		});
 
-		it(`skips detached preparation and finishes preparation before transmission (onlyBind: ${onlyBind})`, () => {
-			const { runtime, shared, services, submitted } = createFixture(AttachState.Detached);
+		it(`does not prepare or submit messages while detached (onlyBind: ${onlyBind})`, () => {
+			const { runtime, sharedObject, services, submitted } = createFixture(
+				AttachState.Detached,
+			);
 			Object.assign(runtime, { submitMessagesWithoutEncodingHandles: onlyBind });
+			const content = {
+				get payload(): never {
+					return assert.fail("Detached submissions must not prepare messages");
+				},
+			};
+			sharedObject.submit(content);
+			sharedObject.connect(services);
+			sharedObject.submit(content);
+			runtime.setAttachState(AttachState.Attaching);
+			assert.equal(submitted.length, 0);
+		});
+
+		it(`does not submit a message when preparation throws (onlyBind: ${onlyBind})`, async () => {
+			const { runtime, sharedObject, services, submitted } = createFixture(
+				AttachState.Attached,
+			);
+			Object.assign(runtime, { submitMessagesWithoutEncodingHandles: onlyBind });
+			await sharedObject.load(services);
 			const error = new Error("Message preparation failed");
 			const content = {
 				get payload(): never {
 					throw error;
 				},
 			};
-			shared.submit(content);
-			shared.connect(services);
-			shared.submit(content);
-			runtime.setAttachState(AttachState.Attaching);
-			assert.equal(submitted.length, 0);
 			assert.throws(
-				() => shared.submit(content),
+				() => sharedObject.submit(content),
 				(caught: unknown) => caught === error,
 			);
 			assert.equal(submitted.length, 0);
-			shared.submit("attached");
+			sharedObject.submit("attached");
 			assert.deepEqual(submitted, [["attached", undefined]]);
 		});
 	}
 
 	it("selects the delta connection after message preparation", async () => {
-		const { shared, services, submitted } = createFixture(AttachState.Attached);
-		await shared.load(services);
+		const { sharedObject, services, submitted } = createFixture(AttachState.Attached);
+		await sharedObject.load(services);
 		const replacementSubmissions: unknown[] = [];
 		const replacement = new MockDeltaConnection(
 			(contents: unknown) => replacementSubmissions.push(contents),
@@ -292,32 +307,32 @@ describe("SharedObject ordinary dispatch", () => {
 				return "prepared";
 			},
 		};
-		shared.submit(content);
+		sharedObject.submit(content);
 		assert.equal(submitted.length, 0);
 		assert.equal(replacementSubmissions[0], content);
 	});
 
-	it("continues submitting attached edits while disconnected", async () => {
-		const { shared, delta, services, submitted } = createFixture(AttachState.Attached);
-		await shared.load(services);
+	it("continues submitting edits while attached and disconnected", async () => {
+		const { sharedObject, delta, services, submitted } = createFixture(AttachState.Attached);
+		await sharedObject.load(services);
 		delta.setConnectionState(false);
-		assert.equal(shared.connected, false);
-		assert.deepEqual(shared.connectionStates, [true, false]);
+		assert.equal(sharedObject.connected, false);
+		assert.deepEqual(sharedObject.connectionStates, [true, false]);
 		const content = { offline: true };
 		const metadata = { pending: true };
-		shared.submit(content, metadata);
+		sharedObject.submit(content, metadata);
 		assert.deepEqual(submitted, [[content, metadata]]);
 		assert.equal(submitted[0]?.[1], metadata);
 		delta.setConnectionState(true);
-		assert.equal(shared.connected, true);
-		assert.deepEqual(shared.connectionStates, [true, false, true]);
+		assert.equal(sharedObject.connected, true);
+		assert.deepEqual(sharedObject.connectionStates, [true, false, true]);
 	});
 
 	it("retains the first close error before subsequent preparation or processing", async () => {
-		const { shared, delta, services, submitted } = createFixture(AttachState.Attached);
-		await shared.load(services);
+		const { sharedObject, delta, services, submitted } = createFixture(AttachState.Attached);
+		await sharedObject.load(services);
 		let listenerError = new Error("First listener error");
-		shared.on("pre-op", () => {
+		sharedObject.on("pre-op", () => {
 			throw listenerError;
 		});
 		let closeError: unknown;
@@ -329,21 +344,21 @@ describe("SharedObject ordinary dispatch", () => {
 			},
 		);
 		listenerError = new Error("Second listener error");
-		assert.throws(() => shared.emit("pre-op"));
+		assert.throws(() => sharedObject.emit("pre-op"));
 		const content = {
 			get payload(): never {
 				return assert.fail("Closed objects must not prepare messages");
 			},
 		};
 		assert.throws(
-			() => shared.submit(content),
+			() => sharedObject.submit(content),
 			(error: unknown) => error === closeError,
 		);
 		assert.throws(
 			() => delta.processMessages(collection(content, undefined)),
 			(error: unknown) => error === closeError,
 		);
-		assert.deepEqual(shared.calls, []);
+		assert.deepEqual(sharedObject.calls, []);
 		assert.deepEqual(submitted, []);
 	});
 });
