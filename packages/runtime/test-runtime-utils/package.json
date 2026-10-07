@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "3.4.0",
+	"version": "3.5.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -30,7 +30,8 @@
 		"./internal": {
 			"types": "./lib/index.d.ts",
 			"default": "./lib/index.js"
-		}
+		},
+		"./internal/timeoutUtils": "./lib/timeoutUtils.js"
 	},
 	"scripts": {
 		"build": "fluid-build . --task build",

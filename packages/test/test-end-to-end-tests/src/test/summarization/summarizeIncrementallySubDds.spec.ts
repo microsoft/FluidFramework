@@ -79,9 +79,6 @@ class TestBlobDDSFactory implements IChannelFactory {
 		return sharedObject;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(document: IFluidDataStoreRuntime, id: string): TestIncrementalSummaryBlobDDS {
 		return new TestIncrementalSummaryBlobDDS(id, document, this.attributes, "TestBlobDDS");
 	}
@@ -226,9 +223,6 @@ class TestTreeDDSFactory implements IChannelFactory<TestIncrementalSummaryTreeDD
 		return sharedObject;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(document: IFluidDataStoreRuntime, id: string): TestIncrementalSummaryTreeDDS {
 		return new TestIncrementalSummaryTreeDDSClass(
 			id,

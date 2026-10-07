@@ -54,7 +54,8 @@ export function initialize(
 		const rootKind = rootSchema.kind;
 		if (
 			rootKind === FieldKinds.sequence.identifier ||
-			rootKind === FieldKinds.optional.identifier
+			rootKind === FieldKinds.optional.identifier ||
+			rootKind === FieldKinds.forbidden.identifier
 		) {
 			// These kinds are known to tolerate empty, so use the schema as is:
 			intermediateSchema = newSchema;
@@ -112,6 +113,14 @@ function initializeFromChunk(
 	},
 	contentChunk: TreeChunk,
 ): void {
+	if (checkout.storedSchema.rootFieldSchema.kind === FieldKinds.forbidden.identifier) {
+		assert(
+			contentChunk.topLevelLength === 0,
+			0xd67 /* Cannot initialize a forbidden root with content */,
+		);
+		return;
+		// No further initialization needed for forbidden root.
+	}
 	const field = { field: rootFieldKey, parent: undefined };
 	assert(
 		checkout.storedSchema.rootFieldSchema.kind === FieldKinds.optional.identifier,
