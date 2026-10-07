@@ -190,7 +190,6 @@ describe("Channel configuration compatibility", () => {
 		{ ...snapshot, revision: undefined },
 		{ ...snapshot, revision: "0" },
 		{ ...snapshot, revision: -1 },
-		{ ...snapshot, revision: -0 },
 		{ ...snapshot, revision: 0.5 },
 		{ ...snapshot, revision: Number.NaN },
 		{ ...snapshot, revision: Number.POSITIVE_INFINITY },
@@ -200,7 +199,6 @@ describe("Channel configuration compatibility", () => {
 		{ ...snapshot, values: null },
 		{ ...snapshot, values: [] },
 		{ ...snapshot, values: true },
-		{ ...snapshot, extra: true },
 	]) {
 		it(`rejects malformed configuration ${JSON.stringify(configuration)}`, async () => {
 			let loaded = false;
@@ -224,6 +222,46 @@ describe("Channel configuration compatibility", () => {
 				{ errorType: ContainerErrorTypes.dataCorruptionError },
 			);
 			assert.equal(loaded, false);
+		});
+	}
+
+	for (const [name, configuration] of [
+		["extra fields", { ...snapshot, extra: true }],
+		["a negative-zero revision", { ...snapshot, revision: -0 }],
+	] as const) {
+		it(`loads and summarizes configuration with ${name}`, async () => {
+			const configured = {
+				...channel(),
+				attributes: { ...attributes, configuration },
+				summarize: async () => new SummaryTreeBuilder().getSummaryTree(),
+			};
+			const factory: IChannelFactory & ChannelConfigurationSupport = {
+				type: attributes.type,
+				attributes,
+				channelConfigurationProtocolVersion: 1,
+				create: () => configured,
+				load: async (_runtime, _id, _services, saved) => {
+					assert.equal(saved, configured.attributes);
+					return configured;
+				},
+			};
+			const loaded = await loadChannel(
+				runtime,
+				configured.attributes,
+				factory,
+				{} as ChannelServiceEndpoints,
+				createMockLoggerExt(),
+				"dds",
+			);
+			assert.equal(loaded, configured);
+			for (const { summary } of [
+				summarizeChannel(loaded),
+				await summarizeChannelAsync(loaded),
+			]) {
+				const serialized = summary.tree[".attributes"];
+				assert(serialized?.type === SummaryType.Blob);
+				assert.equal(serialized.content, JSON.stringify(configured.attributes));
+			}
 		});
 	}
 

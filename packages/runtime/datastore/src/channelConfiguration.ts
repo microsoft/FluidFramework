@@ -31,9 +31,10 @@ export function supportsChannelConfiguration(
 }
 
 /**
- * Validates the persisted protocol before handing any state to the DDS factory.
+ * Returns whether the attributes contain channel configuration.
+ * Validates that configured snapshots are well-formed and that the supplied factory supports the protocol.
  */
-export function validateChannelConfiguration(
+export function hasChannelConfiguration(
 	attributes: IChannelAttributes,
 	factory?: IChannelFactory,
 ): attributes is ConfiguredChannelAttributes {
@@ -43,14 +44,12 @@ export function validateChannelConfiguration(
 	const configuration = attributes.configuration;
 	if (
 		!isObject(configuration) ||
-		Object.keys(configuration).length !== 3 ||
 		!("version" in configuration) ||
 		configuration.version !== 1 ||
 		!("revision" in configuration) ||
 		typeof configuration.revision !== "number" ||
 		!Number.isSafeInteger(configuration.revision) ||
 		configuration.revision < 0 ||
-		Object.is(configuration.revision, -0) ||
 		!("values" in configuration) ||
 		!isObject(configuration.values) ||
 		Array.isArray(configuration.values)
@@ -80,7 +79,7 @@ export function requireChannelConfigurationController(channel: IChannel): void {
  * Checks that a marked channel has valid attributes and a registered controller.
  */
 export function verifyChannelConfigurationController(channel: IChannel): void {
-	if (!validateChannelConfiguration(channel.attributes)) {
+	if (!hasChannelConfiguration(channel.attributes)) {
 		return;
 	}
 	requireChannelConfigurationController(channel);

@@ -32,7 +32,7 @@ import {
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
 import {
 	requireChannelConfigurationController,
-	validateChannelConfiguration,
+	hasChannelConfiguration,
 	verifyChannelConfigurationController,
 } from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
@@ -207,7 +207,7 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
-	const configured = validateChannelConfiguration(attributes, factory);
+	const configured = hasChannelConfiguration(attributes, factory);
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
@@ -227,7 +227,7 @@ export async function loadChannel(
 	if (configured) {
 		requireChannelConfigurationController(channel);
 		assert(
-			validateChannelConfiguration(channel.attributes),
+			hasChannelConfiguration(channel.attributes),
 			"Configured channel lost its persisted attributes",
 		);
 	} else {
