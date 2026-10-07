@@ -61,6 +61,7 @@ export interface IDeltaHandler {
     applyStashedOp(message: any): void;
     processMessages: (messageCollection: IRuntimeMessageCollection) => void;
     reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmitMessages?(collection: IRuntimeResubmitMessageCollection): void;
     rollback?(message: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean): void;
 }
