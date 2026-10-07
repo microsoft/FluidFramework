@@ -5,7 +5,6 @@
 
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
-	ChannelSupportingConfiguration,
 	ConfiguredChannelAttributes,
 	IChannel,
 	IChannelAttributes,
@@ -15,6 +14,20 @@ import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 
 function invalidConfiguration(): never {
 	throw new DataCorruptionError("Invalid or unsupported channel configuration", {});
+}
+
+/**
+ * Returns whether a channel or its factory declares support for the configuration protocol.
+ * This checks reader support, not whether configuration is active for a channel instance.
+ * @internal
+ */
+export function supportsChannelConfiguration(
+	channelOrFactory: IChannel | IChannelFactory,
+): boolean {
+	return (
+		"channelConfigurationProtocolVersion" in channelOrFactory &&
+		channelOrFactory.channelConfigurationProtocolVersion === 1
+	);
 }
 
 /**
@@ -44,11 +57,7 @@ export function validateChannelConfiguration(
 	) {
 		invalidConfiguration();
 	}
-	if (
-		factory !== undefined &&
-		(factory as IChannelFactory & ChannelSupportingConfiguration)
-			.channelConfigurationProtocolVersion !== 1
-	) {
+	if (factory !== undefined && !supportsChannelConfiguration(factory)) {
 		throw new DataCorruptionError(
 			"Channel factory does not support configuration protocol",
 			{},
@@ -61,9 +70,8 @@ export function validateChannelConfiguration(
  * Checks that a marked instance installed the shared protocol rather than legacy dispatch.
  */
 export function requireChannelConfigurationController(channel: IChannel): void {
-	const configured = channel as IChannel & ChannelSupportingConfiguration;
 	assert(
-		configured.channelConfigurationProtocolVersion === 1,
+		supportsChannelConfiguration(channel),
 		"Configured channel did not register its controller",
 	);
 }

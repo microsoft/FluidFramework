@@ -47,6 +47,6 @@ export interface ConfiguredChannelAttributes extends IChannelAttributes {
  * silently load a configured instance without its configuration controller.
  * @internal
  */
-export interface ChannelSupportingConfiguration {
+export interface ChannelConfigurationSupport {
 	readonly channelConfigurationProtocolVersion?: 1;
 }

@@ -13,7 +13,7 @@ import {
 	ContainerErrorTypes,
 } from "@fluidframework/container-definitions/internal";
 import type {
-	ChannelSupportingConfiguration,
+	ChannelConfigurationSupport,
 	ConfiguredChannelAttributes,
 	IChannel,
 	IChannelAttributes,
@@ -40,6 +40,7 @@ import {
 	summarizeChannelAsync,
 	type ChannelServiceEndpoints,
 } from "../channelContext.js";
+import { supportsChannelConfiguration } from "../index.js";
 import { LocalChannelContext, RehydratedLocalChannelContext } from "../localChannelContext.js";
 import { RemoteChannelContext } from "../remoteChannelContext.js";
 
@@ -50,12 +51,47 @@ describe("Channel configuration compatibility", () => {
 		attachState: AttachState.Attached,
 	} as unknown as IFluidDataStoreRuntime;
 
-	function channel(): IChannel & ChannelSupportingConfiguration {
+	function channel(): IChannel & ChannelConfigurationSupport {
 		return {
 			attributes: { ...attributes, configuration: snapshot },
 			channelConfigurationProtocolVersion: 1,
 			getAttachSummary: () => new SummaryTreeBuilder().getSummaryTree(),
-		} as unknown as IChannel & ChannelSupportingConfiguration;
+		} as unknown as IChannel & ChannelConfigurationSupport;
+	}
+
+	it("reports configuration support for both channels and factories", () => {
+		const configured = channel();
+		const factory: IChannelFactory & ChannelConfigurationSupport = {
+			type: attributes.type,
+			attributes,
+			channelConfigurationProtocolVersion: 1,
+			create: () => configured,
+			load: async () => configured,
+		};
+		assert.equal(supportsChannelConfiguration(configured), true);
+		assert.equal(supportsChannelConfiguration(factory), true);
+		assert.equal(
+			supportsChannelConfiguration({ ...configured, attributes }),
+			true,
+			"Reader support must not depend on per-instance activation",
+		);
+	});
+
+	it("does not infer reader support from configured attributes", () => {
+		assert.equal(
+			supportsChannelConfiguration({ attributes: channel().attributes } as IChannel),
+			false,
+		);
+	});
+
+	for (const version of [undefined, 0, 2, "1", true]) {
+		it(`rejects unsupported reader version ${String(version)}`, () => {
+			const candidate = {
+				...channel(),
+				channelConfigurationProtocolVersion: version,
+			};
+			assert.equal(supportsChannelConfiguration(candidate), false);
+		});
 	}
 
 	it("loads legacy instances unchanged through a configuration-capable factory", async () => {

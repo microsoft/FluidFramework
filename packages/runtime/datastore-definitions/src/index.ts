@@ -36,5 +36,5 @@ export type {
 	ChannelConfiguration,
 	ChannelConfigurationSnapshotV1,
 	ConfiguredChannelAttributes,
-	ChannelSupportingConfiguration,
+	ChannelConfigurationSupport,
 } from "./channelConfiguration.js";
