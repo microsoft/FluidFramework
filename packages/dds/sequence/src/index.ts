@@ -60,7 +60,11 @@ export type {
 	SequenceEvent,
 	SequenceMaintenanceEvent,
 } from "./sequenceDeltaEvent.js";
-export { SharedString } from "./sequenceFactory.js";
+export {
+	configuredSharedString,
+	SharedString,
+	type SharedStringOptions,
+} from "./sequenceFactory.js";
 export {
 	getTextAndMarkers,
 	type ISharedString,

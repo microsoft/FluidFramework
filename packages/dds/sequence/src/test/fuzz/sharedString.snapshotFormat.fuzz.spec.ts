@@ -6,7 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString } from "@fluid-internal/client-utils";
-import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
+import {
+	createDDSFuzzSuite,
+	type DDSFuzzModel,
+	type DDSFuzzTestState,
+} from "@fluid-private/test-dds-utils";
 import type {
 	IChannelAttributes,
 	IChannelServices,
@@ -14,17 +18,22 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 
 import type { SharedStringClass } from "../../sharedString.js";
+import type { SharedStringFactory, SharedStringOptions } from "../../sequenceFactory.js";
 import { assertSnapshotFormat, getSnapshotFormat } from "../snapshotFormatUtils.js";
 
 import {
 	baseSharedStringModel,
 	defaultFuzzOptions,
 	SharedStringFuzzFactory,
+	type Operation,
 } from "./fuzzUtils.js";
+
+type SnapshotFormatFuzzState = DDSFuzzTestState<SharedStringFactory, SharedStringOptions>;
 
 function observeSnapshots(
 	channel: SharedStringClass,
 	runtime: IFluidDataStoreRuntime,
+	factoryFormat: boolean | undefined,
 	loadedFormat = false,
 ): SharedStringClass {
 	let rememberedFormat = loadedFormat;
@@ -32,7 +41,7 @@ function observeSnapshots(
 	channel.getAttachSummary = (...args) => {
 		const explicitFlag: unknown = runtime.options.newMergeTreeSnapshotFormat;
 		assert(explicitFlag === undefined || typeof explicitFlag === "boolean");
-		const expectedFormat = explicitFlag ?? rememberedFormat;
+		const expectedFormat = factoryFormat ?? explicitFlag ?? rememberedFormat;
 		const result = summarize(...args);
 		assertSnapshotFormat(channel, result.summary, expectedFormat);
 		rememberedFormat = expectedFormat;
@@ -42,16 +51,16 @@ function observeSnapshots(
 }
 
 class SnapshotFormatFuzzFactory extends SharedStringFuzzFactory {
-	public constructor(
-		private readonly initialFormat: boolean,
-		private readonly loadedFormat: boolean | undefined,
-	) {
-		super();
+	public constructor(private readonly snapshotOptions: SharedStringOptions) {
+		super(snapshotOptions);
 	}
 
 	public override create(runtime: IFluidDataStoreRuntime, id: string): SharedStringClass {
-		runtime.options.newMergeTreeSnapshotFormat = this.initialFormat;
-		return observeSnapshots(super.create(runtime, id), runtime);
+		return observeSnapshots(
+			super.create(runtime, id),
+			runtime,
+			this.snapshotOptions.newMergeTreeSnapshotFormat,
+		);
 	}
 
 	public override async load(
@@ -62,12 +71,13 @@ class SnapshotFormatFuzzFactory extends SharedStringFuzzFactory {
 	): Promise<SharedStringClass> {
 		const header = await services.objectStorage.readBlob("content/header");
 		const loadedSnapshotFormat = getSnapshotFormat(bufferToString(header, "utf8"));
-		if (this.loadedFormat === undefined) {
-			assert.equal(loadedSnapshotFormat, this.initialFormat);
-		}
-		runtime.options.newMergeTreeSnapshotFormat = this.loadedFormat;
 		const channel = await super.load(runtime, id, services, attributes);
-		return observeSnapshots(channel, runtime, loadedSnapshotFormat);
+		return observeSnapshots(
+			channel,
+			runtime,
+			this.snapshotOptions.newMergeTreeSnapshotFormat,
+			loadedSnapshotFormat,
+		);
 	}
 }
 
@@ -77,12 +87,31 @@ for (const initialFormat of [false, true]) {
 		const selectionName = loadedFormat === undefined ? "inherited" : "overridden";
 		const workloadName = `SharedString snapshot format ${formatName} ${selectionName}`;
 		describe(workloadName, () => {
-			createDDSFuzzSuite(
-				{
-					...baseSharedStringModel,
-					workloadName,
-					factory: new SnapshotFormatFuzzFactory(initialFormat, loadedFormat),
+			const model: DDSFuzzModel<SharedStringFactory, Operation, SnapshotFormatFuzzState> = {
+				...baseSharedStringModel,
+				workloadName,
+				factory: {
+					generateClientConfiguration: (random, { clientId, isSummarizer }) => {
+						if (clientId === "A") {
+							return { newMergeTreeSnapshotFormat: initialFormat };
+						}
+						if (isSummarizer) {
+							return loadedFormat === undefined
+								? {}
+								: { newMergeTreeSnapshotFormat: loadedFormat };
+						}
+						return random.pick([
+							{},
+							{ newMergeTreeSnapshotFormat: true },
+							{ newMergeTreeSnapshotFormat: false },
+						]);
+					},
+					getFactory: (clientConfiguration) =>
+						new SnapshotFormatFuzzFactory(clientConfiguration),
 				},
+			};
+			createDDSFuzzSuite(
+				model,
 				{
 					...defaultFuzzOptions,
 					clientJoinOptions: {

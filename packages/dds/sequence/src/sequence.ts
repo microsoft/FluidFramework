@@ -495,6 +495,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		public id: string,
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
+		newMergeTreeSnapshotFormat?: boolean,
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
@@ -524,6 +525,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				mergeTreeEnableAnnotateAdjust: (c, n) => c.getBoolean(n),
 				newMergeTreeSnapshotFormat: (c, n) =>
 					c.getBoolean(n) ??
+					newMergeTreeSnapshotFormat ??
 					runtimeOptions.newMergeTreeSnapshotFormat ??
 					this.newMergeTreeSnapshotFormat,
 			},

@@ -216,6 +216,7 @@ export type {
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
 	SequenceIntervalIndex,
+	SharedStringOptions,
 } from "@fluidframework/sequence/internal";
 
 export type {
@@ -226,7 +227,7 @@ export type {
 	SequenceMaintenanceEvent,
 } from "@fluidframework/sequence/internal";
 
-export { SharedString } from "@fluidframework/sequence/internal";
+export { configuredSharedString, SharedString } from "@fluidframework/sequence/internal";
 
 export type {
 	ISharedObject,

@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions/internal";
-import type { SharedString } from "@fluidframework/sequence/internal";
+import { configuredSharedString, type SharedString } from "@fluidframework/sequence/internal";
 import {
 	DataObjectFactoryType,
 	type ITestContainerConfig,
@@ -77,10 +77,22 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 		}
 	});
 
-	function createConfig(flag: boolean | undefined): ITestContainerConfig {
+	function createConfig(
+		flag: boolean | undefined,
+		factoryFlag?: boolean,
+	): ITestContainerConfig {
 		return {
 			fluidDataObjectType: DataObjectFactoryType.Test,
-			registry: [[stringId, SharedString.getFactory()]],
+			registry: [
+				[
+					stringId,
+					factoryFlag === undefined
+						? SharedString.getFactory()
+						: configuredSharedString({
+								newMergeTreeSnapshotFormat: factoryFlag,
+							}).getFactory(),
+				],
+			],
 			loaderProps: {
 				configProvider: createTestConfigProvider({ [snapshotFormatConfig]: flag }),
 			},
@@ -92,7 +104,7 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 
 	for (const initialFlag of [false, true]) {
 		it(`retains ${initialFlag ? "flat" : "legacy"} selection and explicit overrides through summary reloads`, async () => {
-			let container = await provider.makeTestContainer(createConfig(initialFlag));
+			let container = await provider.makeTestContainer(createConfig(undefined, initialFlag));
 			await waitForContainerConnection(container);
 			let dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			let sharedString = await dataObject.getSharedObject<SharedString>(stringId);
@@ -100,16 +112,19 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 			let previousFormat = initialFlag;
 			let expectedText = "";
 
-			for (const [index, explicitFlag] of [
-				initialFlag,
-				undefined,
-				!initialFlag,
-				undefined,
-			].entries()) {
+			const steps: { configuration?: boolean; factory?: boolean }[] = [
+				{ factory: initialFlag },
+				{},
+				{ factory: !initialFlag },
+				{},
+				{ configuration: !initialFlag, factory: initialFlag },
+				{},
+			];
+			for (const [index, step] of steps.entries()) {
 				const { summarizer } = await createSummarizer(
 					provider,
 					container,
-					{ ...createConfig(explicitFlag), runtimeOptions: undefined },
+					{ ...createConfig(step.configuration, step.factory), runtimeOptions: undefined },
 					summaryVersion,
 				);
 				const text = `${index}`;
@@ -118,7 +133,7 @@ describeCompat("SharedString snapshot format", "NoCompat", (getTestObjectProvide
 				await provider.ensureSynchronized();
 
 				const summary = await summarizeNow(summarizer);
-				const expectedFlag = explicitFlag ?? previousFormat;
+				const expectedFlag = step.configuration ?? step.factory ?? previousFormat;
 				assertSummaryFormat(
 					summary.summaryTree,
 					dataObject.context.id,

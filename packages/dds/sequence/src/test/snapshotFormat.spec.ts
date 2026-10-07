@@ -17,8 +17,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedStringFactory } from "../sequenceFactory.js";
-import { SharedStringClass } from "../sharedString.js";
+import { configuredSharedString, SharedString, SharedStringFactory } from "../sequenceFactory.js";
+import type { ISharedString } from "../sharedString.js";
 
 import { assertSnapshotFormat } from "./snapshotFormatUtils.js";
 
@@ -26,6 +26,7 @@ const snapshotFormatConfig = "Fluid.Sequence.newMergeTreeSnapshotFormat";
 
 interface SnapshotFormatFlags {
 	configuration?: boolean;
+	factory?: boolean;
 	runtime?: boolean;
 }
 
@@ -38,12 +39,22 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
 		});
 
+		function getFactory(flags: SnapshotFormatFlags) {
+			return configuredSharedString(
+				flags.factory === undefined ? {} : { newMergeTreeSnapshotFormat: flags.factory },
+			).getFactory();
+		}
+
 		function createRuntime(flags: SnapshotFormatFlags): MockFluidDataStoreRuntime {
 			const logger = mixinMonitoringContext(createChildLogger({}), {
 				getRawConfig: (name) =>
 					name === snapshotFormatConfig ? flags.configuration : undefined,
 			}).logger;
-			const runtime = new MockFluidDataStoreRuntime({ attachState, logger });
+			const runtime = new MockFluidDataStoreRuntime({
+				attachState,
+				logger,
+				registry: [getFactory(flags)],
+			});
 			runtime.options = {
 				newMergeTreeSnapshotFormat: flags.runtime,
 				mergeTreeSnapshotChunkSize: 5,
@@ -61,9 +72,9 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 		function createString(
 			flags: SnapshotFormatFlags,
 			runtime = createRuntime(flags),
-		): SharedStringClass {
-			const sharedString = new SharedStringClass(runtime, "shared-string", factory.attributes);
-			sharedString.initializeLocal();
+			selectedFactory = getFactory(flags),
+		): ISharedString {
+			const sharedString = selectedFactory.create(runtime, "shared-string");
 			sharedString.insertText(0, "before");
 			if (attachState === AttachState.Attached) {
 				sharedString.connect({
@@ -78,52 +89,91 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 		async function loadString(
 			summary: ISummaryTree,
 			flags: SnapshotFormatFlags,
-		): Promise<SharedStringClass> {
+		): Promise<ISharedString> {
 			const runtime = createRuntime(flags);
-			const sharedString = await factory.load(
+			const selectedFactory = getFactory(flags);
+			const sharedString = await selectedFactory.load(
 				runtime,
 				"shared-string",
 				{
 					deltaConnection: runtime.createDeltaConnection(),
 					objectStorage: MockStorage.createFromSummary(summary),
 				},
-				factory.attributes,
+				selectedFactory.attributes,
 			);
 			assert.equal(sharedString.isAttached(), attachState === AttachState.Attached);
 			return sharedString;
 		}
 
 		for (const configuration of [undefined, false, true]) {
-			for (const runtime of [undefined, false, true]) {
-				for (const loadedFormat of [undefined, false, true]) {
-					it(`uses configuration=${configuration}, runtime=${runtime}, loadedFormat=${loadedFormat}`, async () => {
-						const flags = { configuration, runtime };
-						let sharedString: SharedStringClass;
-						if (loadedFormat === undefined) {
-							sharedString = createString(flags);
-						} else {
-							const source = createString({ runtime: loadedFormat });
-							sharedString = await loadString(source.getAttachSummary().summary, flags);
-						}
-						sharedString.insertText(sharedString.getLength(), " after");
-						containerRuntimeFactory.processAllMessages();
-						const expectedFormat = configuration ?? runtime ?? loadedFormat ?? false;
+			for (const factorySetting of [undefined, false, true]) {
+				for (const runtime of [undefined, false, true]) {
+					for (const loadedFormat of [undefined, false, true]) {
+						it(`uses configuration=${configuration}, factory=${factorySetting}, runtime=${runtime}, loadedFormat=${loadedFormat}`, async () => {
+							const flags = { configuration, factory: factorySetting, runtime };
+							let sharedString: ISharedString;
+							if (loadedFormat === undefined) {
+								sharedString = createString(flags);
+							} else {
+								const source = createString({ factory: loadedFormat });
+								sharedString = await loadString(source.getAttachSummary().summary, flags);
+							}
+							sharedString.insertText(sharedString.getLength(), " after");
+							containerRuntimeFactory.processAllMessages();
+							const expectedFormat =
+								configuration ?? factorySetting ?? runtime ?? loadedFormat ?? false;
 
-						assertSnapshotFormat(
-							sharedString,
-							sharedString.getAttachSummary().summary,
-							expectedFormat,
-						);
-						const summary = await sharedString.summarize();
-						assertSnapshotFormat(sharedString, summary.summary, expectedFormat);
-						const loaded = await loadString(summary.summary, {});
-						assert.equal(loaded.getText(), "before after");
-						const loadedSummary = await loaded.summarize();
-						assertSnapshotFormat(loaded, loadedSummary.summary, expectedFormat);
-					});
+							assertSnapshotFormat(
+								sharedString,
+								sharedString.getAttachSummary().summary,
+								expectedFormat,
+							);
+							const summary = await sharedString.summarize();
+							assertSnapshotFormat(sharedString, summary.summary, expectedFormat);
+							const loaded = await loadString(summary.summary, {});
+							assert.equal(loaded.getText(), "before after");
+							const loadedSummary = await loaded.summarize();
+							assertSnapshotFormat(loaded, loadedSummary.summary, expectedFormat);
+						});
+					}
 				}
 			}
 		}
+
+		it("creates the configured kind through a registered factory with the same DDS identity", async () => {
+			const kind = configuredSharedString({ newMergeTreeSnapshotFormat: true });
+			const runtime = createRuntime({ factory: true, runtime: false });
+			const sharedString = kind.create(runtime, "configured");
+			if (attachState === AttachState.Attached) {
+				sharedString.connect({
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: new MockStorage(),
+				});
+			}
+			assert(kind.is(sharedString));
+			assert(SharedString.is(sharedString));
+			assert.equal(kind.getFactory().type, SharedStringFactory.Type);
+			assert.deepEqual(kind.getFactory().attributes, SharedStringFactory.Attributes);
+			const summary = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, summary.summary, true);
+			assert.equal(runtime.options.newMergeTreeSnapshotFormat, false);
+		});
+
+		it("captures factory options without sharing mutable input or other kinds' configuration", async () => {
+			const options = { newMergeTreeSnapshotFormat: true };
+			const kind = configuredSharedString(options);
+			options.newMergeTreeSnapshotFormat = false;
+			const runtime = createRuntime({ runtime: false });
+			const sharedString = createString({ runtime: false }, runtime, kind.getFactory());
+			const summary = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, summary.summary, true);
+
+			const legacyString = createString({ factory: false, runtime: true });
+			const legacySummary = await legacyString.summarize();
+			assertSnapshotFormat(legacyString, legacySummary.summary, false);
+			const nextSummary = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, nextSummary.summary, true);
+		});
 
 		for (const useFlatFormat of [false, true]) {
 			it(`retains ${useFlatFormat ? "flat" : "legacy"} selection after reload and edits without an explicit flag`, async () => {
