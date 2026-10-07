@@ -153,7 +153,6 @@ export class GuestImplementation implements Sandboxing.Guest {
 				this.initialized.rejecter(error);
 			},
 			handleProtocolError,
-			"Guest",
 		);
 		this.codec = new GuestTransportCodec((message) =>
 			this.session.run(() => this.postMessage(message)),

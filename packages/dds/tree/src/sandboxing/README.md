@@ -258,8 +258,9 @@ That message must not include Guest-controlled information, schema information, 
 Other error types are not assumed to have safe messages.
 The Host tags a Guest's `protocolMessage` as `SandboxGuestData`.
 The optional `sensitiveMessage` comes from a protocol error's nested cause or another error's message.
-It can contain schema information or document contents and is tagged as `UserData`.
-Sensitive diagnostics are sent only from the Guest to the Host, never from the Host to the Guest.
+It can contain schema information or document contents, so receivers tag it as `UserData`.
+Both endpoints can send sensitive diagnostics.
+This is safe from the Host to the Guest because the Guest already has access to document data, and it ensures that any Guest-provided diagnostics entering Host telemetry are explicitly tagged.
 Neither diagnostic field is concatenated into the receiving endpoint's telemetry-safe error message.
 Failure reporting runs outside tree event dispatch so it cannot interrupt the main-tree edit that triggered the failure.
 

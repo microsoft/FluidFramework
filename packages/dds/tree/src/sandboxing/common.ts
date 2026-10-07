@@ -28,9 +28,9 @@ import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../u
 /**
  * Kind of failure reported across the sandbox boundary.
  * @remarks
- * This is a fixed set of options instead of free form strings so these values from the guest
+ * This is a fixed set of options instead of free form strings so these values from the Guest
  * can be included in host telemetry without risk of exposing sensitive data
- * which a compromised guest could have included.
+ * which a compromised Guest could have included.
  *
  * Currently these are just a few rough categories of errors,
  * but the set can be extended to provide finer grained reporting.
@@ -45,7 +45,13 @@ export enum SandboxFailureCode {
 }
 
 /**
- * Local descriptions for validated failure codes. These contain no peer-provided text.
+ * Descriptions for {@link SandboxFailureCode} values.
+ * @remarks
+ * For privacy reasons, we have a fixed set of {@link SandboxFailureCode} values instead of free form strings.
+ *
+ * As {@link SandboxFailureCode}'s exist for telemetry compatibility, it is nice to use short stable searchable strings for them.
+ * We also provide human-readable descriptions for each code for use in the error message prose.
+ * These descriptions provide that.
  */
 export const sandboxFailureDescriptions: Readonly<Record<SandboxFailureCode, string>> = {
 	[SandboxFailureCode.ProtocolViolation]: "Sandbox protocol violation.",
@@ -71,7 +77,7 @@ export class SandboxProtocolError extends LoggingError {
 		/**
 		 * A message that is safe to include in telemetry and logs.
 		 * @remarks
-		 * Must not contain guest controlled information,
+		 * Must not contain {@link TelemetryDataTag.SandboxGuestData | Guest-controlled information},
 		 * nor any other sensitive data which needs tagging.
 		 */
 		safeMessage: string,
@@ -765,12 +771,9 @@ export function getSandboxFailureCode(error: Error): SandboxFailureCode {
  * Only SandboxProtocolError messages are promoted to the protocol-only field.
  * Their constructor requires messages without Guest-controlled or sensitive data.
  * Nested causes remain potentially sensitive, regardless of their error type.
- * Sensitive diagnostics are sent only from the Guest to the Host.
+ * Receivers tag sensitive diagnostics as `UserData`.
  */
-export function createSessionFailureMessage(
-	error: Error,
-	endpoint: "Host" | "Guest",
-): SessionFailureMessage {
+export function createSessionFailureMessage(error: Error): SessionFailureMessage {
 	const code = getSandboxFailureCode(error);
 	const protocolMessage = error instanceof SandboxProtocolError ? error.message : undefined;
 	const sensitiveMessage =
@@ -782,9 +785,7 @@ export function createSessionFailureMessage(
 	return {
 		code,
 		...(protocolMessage === undefined ? undefined : { protocolMessage }),
-		...(endpoint === "Guest" && sensitiveMessage !== undefined
-			? { sensitiveMessage }
-			: undefined),
+		...(sensitiveMessage === undefined ? undefined : { sensitiveMessage }),
 	};
 }
 

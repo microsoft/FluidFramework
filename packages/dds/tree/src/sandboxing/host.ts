@@ -140,7 +140,6 @@ export class HostImplementation implements Sandboxing.Host {
 				this.codec.dispose();
 			},
 			handleProtocolError,
-			"Host",
 		);
 		const hostLogger = createChildLogger({
 			logger: logger ?? this.mainCheckout.breaker.logger,

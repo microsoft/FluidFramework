@@ -79,8 +79,6 @@ export class SandboxSessionEndpoint {
 		private readonly stop: (error: Error) => void,
 		/** Reports the first terminal error to the application, outside tree event dispatch. */
 		private readonly report: (error: Error) => void,
-		/** Only the Guest may send sensitive diagnostic text to its peer. */
-		private readonly endpoint: "Host" | "Guest" = "Host",
 	) {}
 
 	/** The first terminal failure, with the original error and its classification in `cause`. Remains available after disposal. */
@@ -135,7 +133,7 @@ export class SandboxSessionEndpoint {
 						const message: object = Object.create(null);
 						this.port.postMessage(
 							Object.assign(message, {
-								sessionFailure: createSessionFailureMessage(cause, this.endpoint),
+								sessionFailure: createSessionFailureMessage(cause),
 							}),
 						);
 					} catch (notificationError) {

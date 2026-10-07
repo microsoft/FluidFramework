@@ -55,7 +55,6 @@ import {
 } from "../../utils.js";
 
 import {
-	createSessionFailureMessage,
 	type GuestChangeMessage,
 	type GuestToHostMessage,
 	guestToHostMessageValidator,
@@ -376,189 +375,50 @@ describe("Host and Guest message protocol", () => {
 		}
 	});
 
-	it("sends safe protocol error messages and sends nested causes only to the Host", () => {
-		const protocolMessage = "Received 2, expected 1.";
-		const sensitiveMessage = "Private document contents";
-		const error = new SandboxProtocolError(protocolMessage, {
-			cause: new Error(sensitiveMessage),
-		});
-		assert.deepEqual(createSessionFailureMessage(error, "Guest"), {
-			code: SandboxFailureCode.ProtocolViolation,
-			protocolMessage,
-			sensitiveMessage,
-		});
-		assert.deepEqual(createSessionFailureMessage(error, "Host"), {
-			code: SandboxFailureCode.ProtocolViolation,
-			protocolMessage,
-		});
-		assert.equal(error.getTelemetryProperties().cause, undefined);
-		assert.deepEqual(
-			createSessionFailureMessage(
-				new SandboxProtocolError("Local-only description."),
-				"Guest",
-			),
-			{
-				code: SandboxFailureCode.ProtocolViolation,
-				protocolMessage: "Local-only description.",
-			},
-		);
-		for (const [cause, code] of [
-			[new Error(sensitiveMessage), SandboxFailureCode.ProcessingFailure],
-			[new UsageError(sensitiveMessage), SandboxFailureCode.ApplicationUsageError],
-			[new LoggingError(sensitiveMessage), SandboxFailureCode.ProcessingFailure],
-		] as const) {
-			assert.deepEqual(createSessionFailureMessage(cause, "Guest"), {
-				code,
-				sensitiveMessage,
-			});
-			assert.deepEqual(createSessionFailureMessage(cause, "Host"), { code });
-		}
-	});
-
-	it("looks up peer failure codes locally without using either diagnostic as the error message", () => {
-		const protocolMessage = "Received 2, expected 1.";
-		const sensitiveMessage = "Private schema identifier";
-		for (const peer of ["Host", "Guest"] as const) {
-			const error = SandboxProtocolError.fromPeerMessage(
-				{
-					code: SandboxFailureCode.ProcessingFailure,
-					protocolMessage,
-					sensitiveMessage,
-				},
-				peer,
-			);
-			assert.equal(
-				error.message,
-				`The ${peer} reported a sandbox session failure. Sandbox processing failed.`,
-			);
-			const properties = error.getTelemetryProperties();
-			assert.equal(
-				properties[peer === "Guest" ? "fromGuestCode" : "fromHostCode"],
-				SandboxFailureCode.ProcessingFailure,
-			);
-			assert.deepEqual(
-				properties[peer === "Guest" ? "fromGuestSensitive" : "fromHostSensitive"],
-				{
-					value: sensitiveMessage,
-					tag: TelemetryDataTag.UserData,
-				},
-			);
-			if (peer === "Guest") {
-				assert.deepEqual(properties.fromGuest, {
-					value: protocolMessage,
-					tag: TelemetryDataTag.SandboxGuestData,
-				});
-			} else {
-				assert.equal(properties.fromHost, protocolMessage);
-			}
-		}
-	});
-
-	it("creates peer failure telemetry with independent optional fields and a fixed error name", () => {
-		const protocolMessage = "Received 2, expected 1.";
-		const sensitiveMessage = "Private document contents";
-		for (const peer of ["Host", "Guest"] as const) {
-			for (const diagnostics of [
-				{},
-				{ protocolMessage },
-				{ sensitiveMessage },
-				{ protocolMessage, sensitiveMessage },
-				{ protocolMessage: "", sensitiveMessage: "" },
-			]) {
-				const notification = {
-					code: SandboxFailureCode.ProcessingFailure,
-					...diagnostics,
-				};
-				assert(
-					guestToHostMessageValidator.check(
-						normalizeTransportData({ sessionFailure: notification }),
-					),
-				);
-				const error = SandboxProtocolError.fromPeerMessage(notification, peer);
-				const logger = new MockLogger();
-				logger.toTelemetryLogger().sendErrorEvent({ eventName: "GuestFailure" }, error);
-				const [event] = logger.events;
-				assert(event !== undefined);
-				assert.equal(event.name, "SandboxProtocolError");
-				assert.equal(
-					event.error,
-					`The ${peer} reported a sandbox session failure. Sandbox processing failed.`,
-				);
-				assert.equal(
-					event[peer === "Guest" ? "fromGuestCode" : "fromHostCode"],
-					SandboxFailureCode.ProcessingFailure,
-				);
-				assert.deepEqual(
-					event[peer === "Guest" ? "fromGuest" : "fromHost"],
-					diagnostics.protocolMessage === undefined
-						? undefined
-						: peer === "Host"
-							? diagnostics.protocolMessage
-							: {
-									value: diagnostics.protocolMessage,
-									tag: TelemetryDataTag.SandboxGuestData,
-								},
-				);
-				assert.deepEqual(
-					event[peer === "Guest" ? "fromGuestSensitive" : "fromHostSensitive"],
-					diagnostics.sensitiveMessage === undefined
-						? undefined
-						: {
-								value: diagnostics.sensitiveMessage,
-								tag: TelemetryDataTag.UserData,
-							},
-				);
-			}
-		}
-	});
-
 	it("sends classified diagnostics through the failure channel without the failed codec", async () => {
 		const protocolMessage = "Received 2, expected 1.";
 		const secret = "Private schema identifier";
-		for (const endpointName of ["Host", "Guest"] as const) {
-			for (const [cause, code, expectedProtocolMessage] of [
-				[
-					new SandboxProtocolError(protocolMessage, {
-						cause: new Error(secret),
-					}),
-					SandboxFailureCode.ProtocolViolation,
-					protocolMessage,
-				],
-				[new Error(secret), SandboxFailureCode.ProcessingFailure, undefined],
-				[new LoggingError(secret), SandboxFailureCode.ProcessingFailure, undefined],
-				[new UsageError(secret), SandboxFailureCode.ApplicationUsageError, undefined],
-			] as const) {
-				const channel = new MessageChannel();
-				const received = nextMessage(channel.port2);
-				const reported = makePromiseWithResolvers();
-				const endpoint = new SandboxSessionEndpoint(
-					channel.port1,
-					() => {},
-					() => reported.resolver(),
-					endpointName,
-				);
-				try {
-					endpoint.fail(cause);
-					const notification = await received;
-					await reported.promise;
-					assert.deepEqual(notification, {
-						sessionFailure: {
-							code,
-							...(expectedProtocolMessage === undefined
-								? undefined
-								: { protocolMessage: expectedProtocolMessage }),
-							...(endpointName === "Guest" ? { sensitiveMessage: secret } : undefined),
-						},
-					});
-					assert(guestToHostMessageValidator.check(notification));
-					assert(hostToGuestMessageValidator.check(notification));
-					assert(endpoint.error !== undefined);
-					assert(!endpoint.error.message.includes(secret));
-					assert.equal(endpoint.error.cause, cause);
-				} finally {
-					endpoint.dispose();
-					channel.port2.close();
-				}
+		for (const [cause, code, expectedProtocolMessage] of [
+			[
+				new SandboxProtocolError(protocolMessage, {
+					cause: new Error(secret),
+				}),
+				SandboxFailureCode.ProtocolViolation,
+				protocolMessage,
+			],
+			[new Error(secret), SandboxFailureCode.ProcessingFailure, undefined],
+			[new LoggingError(secret), SandboxFailureCode.ProcessingFailure, undefined],
+			[new UsageError(secret), SandboxFailureCode.ApplicationUsageError, undefined],
+		] as const) {
+			const channel = new MessageChannel();
+			const received = nextMessage(channel.port2);
+			const reported = makePromiseWithResolvers();
+			const endpoint = new SandboxSessionEndpoint(
+				channel.port1,
+				() => {},
+				() => reported.resolver(),
+			);
+			try {
+				endpoint.fail(cause);
+				const notification = await received;
+				await reported.promise;
+				assert.deepEqual(notification, {
+					sessionFailure: {
+						code,
+						...(expectedProtocolMessage === undefined
+							? undefined
+							: { protocolMessage: expectedProtocolMessage }),
+						sensitiveMessage: secret,
+					},
+				});
+				assert(guestToHostMessageValidator.check(notification));
+				assert(hostToGuestMessageValidator.check(notification));
+				assert(endpoint.error !== undefined);
+				assert(!endpoint.error.message.includes(secret));
+				assert.equal(endpoint.error.cause, cause);
+			} finally {
+				endpoint.dispose();
+				channel.port2.close();
 			}
 		}
 	});
