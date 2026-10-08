@@ -96,7 +96,8 @@ let initializeConfiguration: <TConfig extends ChannelConfiguration>(
  * after initializeLocalCore or loadCore completes. Loading reads the instance's attributes;
  * unmarked instances use the definition's defaults without activating persistence.
  *
- * The channel factory must separately advertise channelConfigurationProtocolVersion: 1.
+ * Registration declares channelConfigurationProtocolVersion: 1 on the instance, including when unmarked.
+ * The factory may also advertise support, but loading does not require a factory declaration.
  * @internal
  */
 export function initializeSharedObjectConfiguration<TConfig extends ChannelConfiguration>(
@@ -701,7 +702,6 @@ export abstract class SharedObjectCore<
 		for (const messageContent of messagesContent) {
 			verifyOrdinaryChannelMessage(messageContent.contents);
 			const decodedMessageContent: IRuntimeMessagesContent = {
-				...messageContent,
 				contents: parseHandles(messageContent.contents, this.serializer),
 				localOpMetadata: messageContent.localOpMetadata,
 				clientSequenceNumber: messageContent.clientSequenceNumber,

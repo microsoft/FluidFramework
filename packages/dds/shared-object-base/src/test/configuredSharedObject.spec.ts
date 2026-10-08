@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import {
+	FluidDataStoreRuntime,
+	supportsChannelConfiguration,
+} from "@fluidframework/datastore/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -276,9 +279,7 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 		function factory(
 			initialConfiguration?: Config,
 			hooks: Hooks = {},
-		): IChannelFactory<ConfiguredObject> & {
-			readonly channelConfigurationProtocolVersion: 1;
-		} {
+		): IChannelFactory<ConfiguredObject> {
 			const attributes: IChannelAttributes = {
 				type: "configured-inheritance-test",
 				snapshotFormatVersion: "1",
@@ -287,7 +288,6 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			return {
 				type: attributes.type,
 				attributes,
-				channelConfigurationProtocolVersion: 1,
 				create: (runtime, id) => {
 					const initialization: SharedObjectConfigurationInitialization<Config> = {
 						kind: "create",
@@ -327,11 +327,8 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 				["constructor", current],
 				["initialize", current],
 			]);
-			assert.equal(
-				(shared as ConfiguredObject & { channelConfigurationProtocolVersion: number })
-					.channelConfigurationProtocolVersion,
-				1,
-			);
+			assert(supportsChannelConfiguration(shared));
+			assert(!supportsChannelConfiguration(reader));
 			assert(!("configuration" in shared));
 			assert.notEqual(shared.attributes, reader.attributes);
 			assert.deepEqual(shared.attributes, reader.attributes);
@@ -979,70 +976,89 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			});
 		});
 
-		it("loads and summarizes lazy configuration replay through the real datastore runtime", async () => {
-			const reader = factory();
-			const attributes = JSON.stringify(reader.attributes);
-			const context = new MockFluidDataStoreContext("store", true);
-			context.isLocalDataStore = false;
-			context.attachState = AttachState.Attached;
-			context.baseSnapshot = {
-				blobs: {},
-				trees: { dds: { blobs: { ".attributes": "attributes" }, trees: {} } },
-			};
-			const storage: Pick<IRuntimeStorageService, "readBlob"> = {
-				readBlob: async (id) => {
-					assert.equal(id, "attributes");
-					return stringToBuffer(attributes, "utf8");
-				},
-			};
-			context.storage = storage as IRuntimeStorageService;
-			context.getCreateChildSummarizerNodeFn = () => (summarize) => {
-				const node: Pick<ISummarizerNodeWithGC, "invalidate" | "summarize"> = {
-					invalidate: () => {},
-					summarize: async (fullTree, trackState, telemetryContext) =>
-						summarize(fullTree, trackState ?? true, telemetryContext),
+		for (const configured of [false, true]) {
+			it(`loads and summarizes lazy configuration replay without a factory marker (configured=${configured})`, async () => {
+				const reader = factory({ retain: true });
+				assert(!supportsChannelConfiguration(reader));
+				// JSON.stringify normalizes -0, so restore it to exercise the persisted reader.
+				const attributes = configured
+					? JSON.stringify({
+							...reader.attributes,
+							configuration: {
+								version: 1,
+								revision: 0,
+								values: { retain: false },
+								extra: true,
+							},
+						}).replace('"revision":0', '"revision":-0')
+					: JSON.stringify(reader.attributes);
+				const context = new MockFluidDataStoreContext("store", true);
+				context.isLocalDataStore = false;
+				context.attachState = AttachState.Attached;
+				context.baseSnapshot = {
+					blobs: {},
+					trees: { dds: { blobs: { ".attributes": "attributes" }, trees: {} } },
 				};
-				return node as ISummarizerNodeWithGC;
-			};
-			let lookups = 0;
-			const runtime = new FluidDataStoreRuntime(
-				context,
-				{
-					get: () => {
-						lookups++;
-						return reader;
+				const storage: Pick<IRuntimeStorageService, "readBlob"> = {
+					readBlob: async (id) => {
+						assert.equal(id, "attributes");
+						return stringToBuffer(attributes, "utf8");
 					},
-				},
-				true,
-				async () => ({}),
-			);
-			runtime.processMessages(
-				collection(
-					["before", barrier(0, true), "after"].map((contents) => ({
-						address: "dds",
-						contents,
-					})),
-				),
-			);
-			assert.equal(lookups, 0);
-			const summary = await runtime.summarize(true, false);
-			const channel = summary.summary.tree.dds;
-			assert(channel?.type === SummaryType.Tree);
-			const attributeBlob = channel.tree[".attributes"];
-			assert(attributeBlob?.type === SummaryType.Blob);
-			assert.equal(
-				attributeBlob.content,
-				JSON.stringify({
-					...reader.attributes,
-					configuration: { version: 1, revision: 1, values: { retain: true } },
-				}),
-			);
-			const shared = (await runtime.getChannel("dds")) as ConfiguredObject;
-			assert.equal(lookups, 1);
-			assert.deepEqual(shared.config.current, { revision: 1, values: { retain: true } });
-			assert(!("configuration" in reader.attributes));
-			runtime.dispose();
-		});
+				};
+				context.storage = storage as IRuntimeStorageService;
+				context.getCreateChildSummarizerNodeFn = () => (summarize) => {
+					const node: Pick<ISummarizerNodeWithGC, "invalidate" | "summarize"> = {
+						invalidate: () => {},
+						summarize: async (fullTree, trackState, telemetryContext) =>
+							summarize(fullTree, trackState ?? true, telemetryContext),
+					};
+					return node as ISummarizerNodeWithGC;
+				};
+				let lookups = 0;
+				const runtime = new FluidDataStoreRuntime(
+					context,
+					{
+						get: () => {
+							lookups++;
+							return reader;
+						},
+					},
+					true,
+					async () => ({}),
+				);
+				runtime.processMessages(
+					collection(
+						["before", barrier(0, true), "after"].map((contents) => ({
+							address: "dds",
+							contents,
+						})),
+					),
+				);
+				assert.equal(lookups, 0);
+				const summary = await runtime.summarize(true, false);
+				const channel = summary.summary.tree.dds;
+				assert(channel?.type === SummaryType.Tree);
+				const attributeBlob = channel.tree[".attributes"];
+				assert(attributeBlob?.type === SummaryType.Blob);
+				assert.equal(
+					attributeBlob.content,
+					JSON.stringify({
+						...reader.attributes,
+						configuration: { version: 1, revision: 1, values: { retain: true } },
+					}),
+				);
+				const shared = (await runtime.getChannel("dds")) as ConfiguredObject;
+				assert.equal(lookups, 1);
+				assert(supportsChannelConfiguration(shared));
+				assert.deepEqual(shared.observed[1], [
+					"load",
+					{ revision: configured ? -0 : 0, values: { retain: false } },
+				]);
+				assert.deepEqual(shared.config.current, { revision: 1, values: { retain: true } });
+				assert(!("configuration" in reader.attributes));
+				runtime.dispose();
+			});
+		}
 	});
 }
 

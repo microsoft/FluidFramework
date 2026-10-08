@@ -70,7 +70,7 @@ in-flight ops, the DDS author must separately design that policy, any reconcilia
 state, and associated events. The common wrapper supplies neither ordinary-op revision metadata nor that policy.
 
 The datastore runtime continues to own channel routing, summary scheduling, and factory loading.
-It validates protocol support before loading a configured channel.
+It validates persisted configuration before loading a configured channel and checks instance support before buffered replay or connection.
 The shared controller validates the configuration format and the local DDS definition's reader support.
 
 Version 1 supports DDSes using `makeSharedObjectKind` or extending `SharedObjectCore`, including through `SharedObject`.
@@ -83,7 +83,9 @@ Production DDS adoption and enforcement of mixed-version compatibility are also 
 
 ### Inheritance-based DDSes
 
-A participating factory advertises `channelConfigurationProtocolVersion: 1` and supplies an explicit creation or load mode to the DDS constructor.
+A participating factory supplies an explicit creation or load mode to the DDS constructor.
+The initializer declares `channelConfigurationProtocolVersion: 1` on the instance, even before configuration is persisted.
+A factory can also declare support, but loading does not require a factory marker.
 After `super()`, the constructor registers its definition before configuration-dependent setup:
 
 ```typescript
@@ -130,6 +132,9 @@ For a DDS without a configuration definition, absence keeps its existing protoco
 its summary format. `revision` is a non-negative safe integer scoped to this channel. New
 configured channels start at zero; each successful barrier increments it by one.
 Replacements never reset it, including when values return to an earlier configuration.
+Readers accept extra snapshot fields and treat `-0` as revision zero.
+The controller still requires version 1, a non-negative safe-integer revision, an object value bag, and values supported by the DDS definition.
+This does not relax configuration-op field or marker validation; the shared revision predicate also accepts numeric `-0` in an op.
 
 Use a revision counter rather than copying `DocumentSchema.refSeq` literally. Several logical
 messages in a grouped runtime message can share an envelope sequence number. A per-channel
@@ -498,6 +503,7 @@ but delegates ordinary payloads to the stable DDS endpoint.
 SharedObject guards ordinary submission, receive, stash, resubmit, and rollback against an own top-level `isChannelConfigurationOp` property.
 It throws `DataProcessingError` for any value of this reserved property, even on unconfigured channels, to prevent future collisions.
 The guard does not inspect nested application data or impose a DDS payload schema.
+This reserved-key policy is part of the full configuration feature, not the behavior-preserving endpoint extraction alone.
 
 The layer has distinct ordinary and control submission entries.
 Controller proposals go directly to the control entry, never through `submitLocalMessage` or a subclass override of it.
@@ -543,6 +549,8 @@ Existing DDS event-listener error handling is unchanged.
 
 At creation the wrapper uses `SharedObjectOptions.initialConfiguration`, when provided.
 Otherwise, a supporting factory uses its stable `defaultConfiguration`.
+Explicit initial values activate persistence immediately, even when they equal the defaults.
+The DDS author owns rollout policy; choosing explicit activation can sacrifice compatibility with older clients.
 Loading uses persisted configuration when present and the same stable defaults when absent.
 It never uses `initialConfiguration` to replace loaded state.
 Reading defaults does not add an attributes marker; the first accepted replacement adds it, including a replacement with identical values.
@@ -563,7 +571,8 @@ does not introduce a separate local-commit handler or result for ordinary edits.
 A bound channel in an attaching or attached datastore submits configuration ops, including while disconnected.
 An unbound channel or a channel in a detached datastore applies configuration changes locally.
 There is no separate publication flag, callback, or submission queue.
-The runtime validates configured attributes and controller registration before it emits an attach snapshot.
+The central SharedObject initializer installs configuration routing and declares instance support together.
+Summary and local connection paths do not repeat that check.
 This change does not address the existing attach re-entrancy issue caused by synchronous DDS edits from dirty callbacks during incomplete binding.
 
 Detached serialization does not attach the channel.
@@ -573,14 +582,21 @@ Interrupted attachment uses the existing runtime pending attachment machinery.
 
 For loading an attached channel:
 
-1. Read the instance's channel attributes and validate the persisted configuration version, shared protocol marker, and revision.
-2. Check factory support, construct the controller and DDS, and validate configuration against the local reader's definition.
+1. Read the instance's channel attributes and validate the persisted configuration's required properties, version, revision, and object value bag.
+2. Construct the controller and DDS, and validate configuration against the local reader's definition.
    If configuration is absent, use `definition.defaultConfiguration` at revision zero without adding a marker.
 3. Initialize configuration-dependent components, then load DDS state from the same snapshot.
-4. Replay buffered messages through the controller in original order, including intermediate
+4. Check that a configured result declares instance support and still has valid configured attributes.
+   An unmarked input must remain unmarked after load; factory creation settings must not activate it.
+5. Replay buffered messages through the controller in original order, including intermediate
    configuration callbacks and normal delivery of ordinary ops without added metadata.
-5. Expose the channel only after replay finishes. Also prevent DDS load hooks from submitting
+6. Expose the channel only after replay finishes. Also prevent DDS load hooks from submitting
    ops against a partially replayed configuration.
+
+When an old attach message has no attributes, the runtime uses the factory attributes.
+If those attributes contain configuration, it validates them and removes configuration from the load fallback without changing the factory object.
+Unmarked factory attributes retain their object identity.
+Explicit persisted attributes always take precedence.
 
 Do not pre-apply the latest configuration and then replay old DDS ops. Those ops may need earlier
 configurations to be decoded or applied correctly. Likewise, do not collapse multiple barriers to
@@ -655,10 +671,10 @@ The shared controller still validates the configuration format, protocol version
 It validates accepted replacements and transitions through the DDS's definition.
 Those local checks do not establish support on other clients or prevent an older summarizer from losing attributes.
 
-Factory capability:
+Channel or factory capability:
 
 ```typescript
-export interface ChannelConfigurationFactory {
+export interface ChannelConfigurationSupport {
     readonly channelConfigurationProtocolVersion?: 1;
 }
 ```
@@ -666,9 +682,12 @@ export interface ChannelConfigurationFactory {
 Marker value `1` advertises support, not initial values. The shared wrapper checks support for the
 actual DDS configuration before reading DDS state. The marker is a contract for factory-created
 instances, not evidence that every configuration value is supported.
-The runtime checks this marker before `factory.load`.
-The runtime also requires the returned configured instance to have registered its shared controller
-before connecting/replaying it; a factory marker alone must not enable a legacy dispatch path.
+`supportsChannelConfiguration`, exported from `datastore/internal`, checks the marker on a channel or factory.
+The runtime does not require a factory marker before `factory.load`.
+It requires a returned configured instance to declare support before connecting/replaying it.
+The central SharedObject initializer installs the controller and declares that support together.
+These checks apply only in runtimes that contain the reader safeguards, and a channel can be loaded lazily.
+They do not establish peer readiness or provide an automatic saturation gate before configuration-op submission.
 
 Supporting factories expose stable defaults on unmarked instances without changing their summaries.
 The first accepted configuration replacement activates persistence.

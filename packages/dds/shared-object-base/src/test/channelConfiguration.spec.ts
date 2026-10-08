@@ -598,6 +598,64 @@ describe("ChannelConfigurationController", () => {
 		}
 	});
 
+	it("treats a failed submission as fatal and rejects all outstanding requests", async () => {
+		const failure = new Error("Transport failed");
+		let fail = false;
+		const sent: { message: ChannelConfigurationMessageV1; metadata: unknown }[] = [];
+		const { controller, changes } = harness({
+			submit: (message, metadata) => {
+				if (fail) {
+					throw failure;
+				}
+				sent.push({ message, metadata });
+			},
+		});
+		const pending = assert.rejects(controller.requestChange({}), (error) => error === failure);
+		fail = true;
+		const rejected = assert.rejects(
+			controller.requestChange({ enabled: false }),
+			(error) => error === failure,
+		);
+		await Promise.all([pending, rejected]);
+		assert.equal(controller.current.revision, 0);
+		assert.equal(changes.length, 0);
+		assert.equal(sent.length, 1);
+		fail = false;
+		await assert.rejects(controller.requestChange({}), (error) => error === failure);
+		assert.equal(sent.length, 1);
+	});
+
+	it("rejects submitted requests on disposal and preserves the original close error", async () => {
+		const { controller, submitted, changes } = harness();
+		const failure = new Error("Runtime closed");
+		const pending = [
+			assert.rejects(controller.requestChange({}), (error) => error === failure),
+			assert.rejects(
+				controller.requestChange({ enabled: false }),
+				(error) => error === failure,
+			),
+		];
+		controller.dispose(failure);
+		controller.dispose(new Error("Later close"));
+		await Promise.all(pending);
+		await assert.rejects(controller.requestChange({}), (error) => error === failure);
+		assert.throws(
+			() => controller.process(proposal(0, {}), context(false)),
+			(error) => error === failure,
+		);
+		assert.equal(controller.current.revision, 0);
+		assert.equal(changes.length, 0);
+		assert.equal(submitted.length, 2);
+	});
+
+	it("rejects requests with a default error when disposed without a reason", async () => {
+		const { controller } = harness();
+		const pending = assert.rejects(controller.requestChange({}), /controller disposed/);
+		controller.dispose();
+		await pending;
+		await assert.rejects(controller.requestChange({}), /controller disposed/);
+	});
+
 	it("prohibits reentrant requests and ordinary submission during callbacks", async () => {
 		const { controller } = harness({ isAttached: () => false });
 		let nested: Promise<unknown> | undefined;
@@ -818,6 +876,16 @@ describe("channel configuration format", () => {
 		assert.deepEqual(parseChannelConfigurationMessage(message), message);
 	});
 
+	it("accepts extra snapshot fields and treats negative zero as revision zero", () => {
+		const snapshot = { version: 1, revision: -0, values: {}, extra: true };
+		assert.equal(parseChannelConfigurationSnapshot(snapshot), snapshot);
+		const message = proposal(-0, {});
+		assert.equal(parseChannelConfigurationMessage(message), message);
+		const { controller } = harness({ snapshot });
+		controller.process(message, context(false));
+		assert.equal(controller.current.revision, 1);
+	});
+
 	it("recognizes only the reserved top-level key without interpreting ordinary payloads", () => {
 		for (const contents of [
 			undefined,
@@ -837,7 +905,6 @@ describe("channel configuration format", () => {
 
 	for (const revision of [
 		-1,
-		-0,
 		0.5,
 		Number.NaN,
 		Infinity,
@@ -860,7 +927,7 @@ describe("channel configuration format", () => {
 		});
 	}
 
-	it("rejects unknown versions, missing fields, extra fields, and invalid markers", () => {
+	it("rejects unknown versions, missing fields, extra op fields, and invalid markers", () => {
 		for (const message of [
 			{},
 			{ version: 2, isChannelConfigurationOp: true, expectedRevision: 0, values: {} },
@@ -882,7 +949,7 @@ describe("channel configuration format", () => {
 		for (const snapshot of [
 			{ version: 2, revision: 0, values: {} },
 			{ version: 1, revision: 0 },
-			{ version: 1, revision: 0, values: {}, extra: true },
+			{ version: 1, revision: 0, values: [] },
 		]) {
 			assert.throws(() => parseChannelConfigurationSnapshot(snapshot));
 		}

@@ -8,7 +8,10 @@ import { EventEmitter } from "node:events";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
+import {
+	FluidDataStoreRuntime,
+	supportsChannelConfiguration,
+} from "@fluidframework/datastore/internal";
 import type {
 	IChannel,
 	IChannelAttributes,
@@ -199,14 +202,17 @@ function requireConfig(view: View): ChannelConfigurationFacet<Config> {
 	return view.config;
 }
 
-function datastoreHarness(factory: ReturnType<ReturnType<typeof makeKind>["getFactory"]>): {
+function datastoreHarness(
+	factory: ReturnType<ReturnType<typeof makeKind>["getFactory"]>,
+	persistedAttributes?: string,
+): {
 	runtime: FluidDataStoreRuntime;
 	errors: unknown[];
 	readonly shared: IChannel & View;
 	process: (contents: unknown) => void;
 } {
 	const baseline = factory.create(harness(AttachState.Detached).runtime, "baseline");
-	const attributes = JSON.stringify(baseline.attributes);
+	const attributes = persistedAttributes ?? JSON.stringify(baseline.attributes);
 	const context = new MockFluidDataStoreContext("store", true);
 	context.isLocalDataStore = false;
 	context.attachState = AttachState.Attached;
@@ -265,6 +271,26 @@ function datastoreHarness(factory: ReturnType<ReturnType<typeof makeKind>["getFa
 }
 
 describe("configured kernel composition", () => {
+	it("loads reader-supported snapshot extensions and negative zero through the real runtime", async () => {
+		const factory = makeKind({ retain: true }).getFactory();
+		// JSON.stringify normalizes -0, so restore it to exercise the persisted reader.
+		const attributes = JSON.stringify({
+			...factory.attributes,
+			configuration: { version: 1, revision: 0, values: { retain: false }, extra: true },
+		}).replace('"revision":0', '"revision":-0');
+		const test = datastoreHarness(factory, attributes);
+		await test.runtime.getChannel("dds");
+		assert(supportsChannelConfiguration(test.shared));
+		const config = requireConfig(test.shared);
+		assert.deepEqual(config.current, { revision: -0, values: { retain: false } });
+		assert.deepEqual(test.shared.observed, [["initial", config.current]]);
+		test.process(barrier(0, true));
+		assert.deepEqual(config.current, { revision: 1, values: { retain: true } });
+		assert(!("configuration" in factory.attributes));
+		assert.deepEqual(test.errors, []);
+		test.runtime.dispose();
+	});
+
 	describe("lazy configuration", () => {
 		it("asserts on dirty-listener reentry while submitting lazy controls before the ordinary op", async () => {
 			const events = new EventEmitter();
