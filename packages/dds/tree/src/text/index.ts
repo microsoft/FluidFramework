@@ -5,5 +5,4 @@
 
 export { PlainText } from "./textDomain.js";
 export { FormattedText } from "./textDomainFormatted.js";
-export { FormattedTextDefault } from "./textDomainFormattedDefault.js";
 export { codePointCount, utf16LengthForCodePoints } from "./codePointUtils.js";

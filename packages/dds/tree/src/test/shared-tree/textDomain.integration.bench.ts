@@ -51,11 +51,13 @@ import {
 	type TreeView,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { FormattedTextDefault, PlainText } from "../../text/index.js";
+import { PlainText } from "../../text/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { iterationSettings } from "../memory/utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FormattedTextDefault } from "../text/formattedTextDefault.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 import {

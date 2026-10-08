@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	type IdCreationRange,
@@ -11,9 +11,12 @@ import {
 	type ShardSynchronizationToken,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { FluidClientVersion } from "../codec/index.js";
+import { DiscriminatedUnionDispatcher, FluidClientVersion } from "../codec/index.js";
 import { castCursorToSynchronous, findAncestor, moveToDetachedField } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
@@ -27,13 +30,14 @@ import { brand } from "../util/index.js";
 
 import {
 	type BlobRequestMessage,
-	type BlobResponseMessage,
+	createBufferPlaceholder,
 	type GuestChangeMessage,
-	type HostGuestMessage,
+	type GuestToHostMessage,
+	guestToHostMessageValidator,
+	type HostToGuestMessage,
 	type HostIdRangeId,
 	type HostInitializationMessage,
-	normalizeProtocolError,
-	parseHostGuestMessage,
+	hostToGuestMessageValidator,
 	sandboxFormatValidator,
 	SandboxProtocolError,
 	throwProtocolError,
@@ -66,6 +70,7 @@ export class HostImplementation implements Sandboxing.Host {
 	 */
 	private readonly port: InstanceType<typeof MessagePort>;
 
+	private readonly logger: TelemetryLoggerExt;
 	private readonly idCompressor: ReturnType<typeof toIdCompressorWithCore>;
 	/**
 	 * Last accepted progress token from the Guest's ID space shard.
@@ -82,42 +87,35 @@ export class HostImplementation implements Sandboxing.Host {
 	private readonly offRangeFinalized: (() => void) | undefined;
 	private disposed = false;
 
+	private readonly messageDispatcher = new DiscriminatedUnionDispatcher<
+		GuestToHostMessage,
+		[],
+		void
+	>({
+		guestChange: (message) => {
+			this.synchronization.receiveChangeFromGuest(message);
+		},
+		hostUpdateAck: (message) => {
+			this.synchronization.receiveUpdateAck(message);
+		},
+		blobRequest: (message) => {
+			this.receiveBlobRequest(message).catch((error: unknown) => {
+				this.session.fail(error);
+			});
+		},
+		sessionFailure: (message) => {
+			this.session.fail(SandboxProtocolError.fromPeerMessage(message, "Guest"), false);
+		},
+	});
+
 	/** Receives and routes protocol messages from the Guest. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		this.session.run(() => {
-			const message = parseHostGuestMessage(this.codec.decode(event.data));
-			switch (message.type) {
-				case "guestChange": {
-					this.synchronization.receiveChangeFromGuest(message);
-					break;
-				}
-				case "hostUpdateAck": {
-					this.synchronization.receiveUpdateAck(message);
-					break;
-				}
-				case "blobRequest": {
-					this.receiveBlobRequest(message).catch((error: unknown) => {
-						this.session.fail(error);
-					});
-					break;
-				}
-				case "blobResponse":
-				case "hostIdRange":
-				case "hostUpdate":
-				case "hostInitialization":
-				case "guestChangeAck": {
-					throw new SandboxProtocolError(
-						`Host received a message with type ${JSON.stringify(message.type)}.`,
-					);
-				}
-				case "sessionFailure": {
-					this.session.fail(new Error(message.error), false);
-					break;
-				}
-				default: {
-					unreachableCase(message);
-				}
+			const normalized = this.codec.decode(event.data);
+			if (!guestToHostMessageValidator.check(normalized)) {
+				throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 			}
+			this.messageDispatcher.dispatch(normalized);
 		});
 	};
 
@@ -146,7 +144,7 @@ export class HostImplementation implements Sandboxing.Host {
 			},
 			handleProtocolError,
 		);
-		const hostLogger = createChildLogger({
+		this.logger = createChildLogger({
 			logger: logger ?? this.mainCheckout.breaker.logger,
 			namespace: "Host",
 		});
@@ -155,7 +153,7 @@ export class HostImplementation implements Sandboxing.Host {
 			(message) => this.postMessage(message),
 			(action) => this.session.run(action),
 			(error) => this.session.fail(error),
-			hostLogger,
+			this.logger,
 			(token) => this.synchronizeGuestIdSpaceShard(token),
 			() => this.getParentIdSpaceShardSyncToken(),
 		);
@@ -163,7 +161,9 @@ export class HostImplementation implements Sandboxing.Host {
 		this.port.addEventListener("messageerror", this.onMessageError);
 		this.port.start();
 		try {
-			this.postMessage(this.createInitializationMessage(this.idCompressor));
+			this.postMessage({
+				hostInitialization: this.createInitializationMessage(this.idCompressor),
+			});
 		} catch (error) {
 			this.dispose();
 			throw error;
@@ -207,27 +207,39 @@ export class HostImplementation implements Sandboxing.Host {
 	}
 
 	private async receiveBlobRequest(message: BlobRequestMessage): Promise<void> {
-		this.codec.assertAuthorizedToken(message.token);
-		let response: BlobResponseMessage;
+		const resolution = this.codec.resolveBlob(message.token);
+		let blob: ArrayBuffer;
 		try {
-			const blob = await this.codec.resolveBlob(message.token);
-			response = { type: "blobResponse", requestId: message.requestId, blob };
+			blob = await resolution;
 		} catch (error) {
-			response = {
-				type: "blobResponse",
-				requestId: message.requestId,
-				error: normalizeProtocolError(error).message,
-			};
+			this.logger.sendErrorEvent({ eventName: "BlobResolutionFailed" }, error);
+			if (this.session.active) {
+				this.postMessage({
+					blobResponseError: {
+						requestId: message.requestId,
+						error: "The service failed to resolve the handle.",
+					},
+				});
+			}
+			return;
 		}
+
 		if (this.session.active) {
 			// Do not transfer: detaching the Host's buffer could break other consumers.
-			this.postMessage(response);
+			this.postMessage({
+				blobResponse: {
+					requestId: message.requestId,
+					blob: createBufferPlaceholder(blob),
+				},
+			});
 		}
 	}
 
-	private postMessage(message: HostGuestMessage): void {
+	private postMessage(message: HostToGuestMessage): void {
 		const normalized = normalizeTransportData(message);
-		parseHostGuestMessage(normalized);
+		if (!hostToGuestMessageValidator.check(normalized)) {
+			throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
+		}
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 
@@ -305,10 +317,11 @@ export class HostImplementation implements Sandboxing.Host {
 		}
 		assert(range.ids !== undefined, 0xd60 /* Finalized ID range must contain IDs */);
 		this.postMessage({
-			type: "hostIdRange",
-			rangeId: brand<HostIdRangeId>(this.nextIdRangeId++),
-			parentIdSpaceShardSyncToken: this.getParentIdSpaceShardSyncToken(),
-			range: { ...range, ids: range.ids },
+			hostIdRange: {
+				rangeId: brand<HostIdRangeId>(this.nextIdRangeId++),
+				parentIdSpaceShardSyncToken: this.getParentIdSpaceShardSyncToken(),
+				range: { ...range, ids: range.ids },
+			},
 		});
 	}
 
@@ -357,7 +370,6 @@ export class HostImplementation implements Sandboxing.Host {
 				this.guestIdSpaceShardToken = syncToken;
 
 				return {
-					type: "hostInitialization",
 					...initialization,
 					tree: normalizedTree as JsonCompatibleReadOnly,
 					schema: normalizedSchema as JsonCompatibleReadOnly,

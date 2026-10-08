@@ -16,9 +16,8 @@ import { brand } from "../util/index.js";
 import {
 	type GuestChangeAckMessage,
 	type GuestChangeId,
-	type GuestChangeMessage,
+	type GuestToHostMessage,
 	getRevision,
-	type HostUpdateAckMessage,
 	type HostUpdateMessage,
 	type HostIdRangeMessage,
 	makePromiseWithResolvers,
@@ -114,7 +113,7 @@ export class GuestSynchronization {
 		/** The independent child compressor owned by this class and used by both Guest views. */
 		private readonly idCompressor: IIdCompressorCore,
 		/** Sends a synchronization protocol message to the Host. */
-		private readonly send: (message: GuestChangeMessage | HostUpdateAckMessage) => void,
+		private readonly send: (message: GuestToHostMessage) => void,
 		/** Runs an action within the Guest session's error-handling boundary. */
 		private readonly run: (action: () => void) => void,
 		/** Reports an asynchronous synchronization failure to the Guest session. */
@@ -159,12 +158,13 @@ export class GuestSynchronization {
 						`Sending change ${changeId} [${getRevision(change)}] based on main ${this.mainRevision}`,
 					);
 					this.send({
-						type: "guestChange",
-						changeId,
-						mainRevision: this.mainRevision,
-						trunkRevision: this.trunkRevision,
-						change,
-						idSpaceShardToken: { ...idSpaceShardToken, disposed: false },
+						guestChange: {
+							changeId,
+							mainRevision: this.mainRevision,
+							trunkRevision: this.trunkRevision,
+							change,
+							idSpaceShardToken: { ...idSpaceShardToken, disposed: false },
+						},
 					});
 				});
 			},
@@ -182,9 +182,12 @@ export class GuestSynchronization {
 	 */
 	public receiveHostUpdate(message: HostUpdateMessage): void {
 		if (message.updateId !== this.nextHostUpdateId) {
-			throw new SandboxProtocolError(
-				`Host update identifier order mismatch: received ${message.updateId}, expected ${this.nextHostUpdateId}.`,
-			);
+			throw new SandboxProtocolError("Host update identifier order mismatch.", {
+				telemetryProperties: {
+					receivedUpdateId: message.updateId,
+					expectedUpdateId: this.nextHostUpdateId,
+				},
+			});
 		}
 		this.nextHostUpdateId++;
 		this.applyParentIdSpaceShardSyncToken(message.parentIdSpaceShardSyncToken);
@@ -195,7 +198,7 @@ export class GuestSynchronization {
 		this.mainRevision = message.mainRevision;
 		this.trunkRevision = message.trunkRevision;
 		this.checkout.rebaseOnto(this.hostCheckout);
-		this.send({ type: "hostUpdateAck", updateId: message.updateId });
+		this.send({ hostUpdateAck: { updateId: message.updateId } });
 	}
 
 	/**
@@ -220,7 +223,9 @@ export class GuestSynchronization {
 		try {
 			this.idCompressor.finalizeCreationRange(message.range);
 		} catch (error) {
-			throw new SandboxProtocolError("Invalid finalized Host ID range.", { cause: error });
+			throw new SandboxProtocolError("Invalid finalized Host ID range.", {
+				cause: error,
+			});
 		}
 		this.nextHostIdRangeId++;
 	}
@@ -252,7 +257,9 @@ export class GuestSynchronization {
 		try {
 			this.idCompressor.synchronizeWithParent(parentToken);
 		} catch (error) {
-			throw new SandboxProtocolError("Invalid Host synchronization token.", { cause: error });
+			throw new SandboxProtocolError("Invalid Host synchronization token.", {
+				cause: error,
+			});
 		}
 		this.lastParentGenerationCount = parentToken.localGenCount;
 	}

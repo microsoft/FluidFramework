@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	deserializeIdCompressor,
 	SerializationVersion,
@@ -14,7 +14,7 @@ import {
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { ICodecOptions } from "../codec/index.js";
+import { DiscriminatedUnionDispatcher, type ICodecOptions } from "../codec/index.js";
 import type { ForestOptions, ViewContent } from "../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- The sandbox Guest requires its independent tree's checkout.
 import { createIndependentTreeCheckout } from "../shared-tree/independentView.js";
@@ -27,10 +27,13 @@ import type {
 } from "../simple-tree/index.js";
 
 import {
-	type HostGuestMessage,
+	type GuestToHostMessage,
+	getTransportBuffer,
+	guestToHostMessageValidator,
 	type HostInitializationMessage,
+	type HostToGuestMessage,
+	hostToGuestMessageValidator,
 	makePromiseWithResolvers,
-	parseHostGuestMessage,
 	SandboxProtocolError,
 	throwProtocolError,
 } from "./common.js";
@@ -63,6 +66,38 @@ export class GuestImplementation implements Sandboxing.Guest {
 	private readonly initialized = makePromiseWithResolvers();
 	private disposed = false;
 
+	private readonly messageDispatcher = new DiscriminatedUnionDispatcher<
+		HostToGuestMessage,
+		[],
+		void
+	>({
+		hostInitialization: (message) => {
+			this.initialize(message);
+		},
+		hostUpdate: (message) => {
+			this.getSynchronizationForMessage("Host update").receiveHostUpdate(message);
+		},
+		hostIdRange: (message) => {
+			this.getSynchronizationForMessage("Host ID range").receiveHostIdRange(message);
+		},
+		guestChangeAck: (message) => {
+			this.getSynchronizationForMessage("change acknowledgment").receiveChangeAck(message);
+		},
+		blobResponse: (message) => {
+			this.getSynchronizationForMessage("blob response");
+			const blob = getTransportBuffer(message.blob);
+			assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
+			this.codec.receiveBlobResponse(message.requestId, blob);
+		},
+		blobResponseError: (message) => {
+			this.getSynchronizationForMessage("blob response error");
+			this.codec.receiveBlobResponseError(message.requestId, message.error);
+		},
+		sessionFailure: (message) => {
+			this.session.fail(SandboxProtocolError.fromPeerMessage(message, "Host"), false);
+		},
+	});
+
 	/** Internal synchronization state exposed for testing. */
 	public get synchronization(): GuestSynchronization {
 		return this.#synchronization ?? fail(0xd59 /* Guest accessed before initialization */);
@@ -75,46 +110,22 @@ export class GuestImplementation implements Sandboxing.Guest {
 	/** Receives and routes protocol messages from the Host. */
 	private readonly onMessage = (event: MessageEvent<unknown>): void => {
 		this.session.run(() => {
-			const message = parseHostGuestMessage(this.codec.decode(event.data));
-			if (message.type === "hostInitialization") {
-				this.initialize(message);
-				return;
+			const normalized = this.codec.decode(event.data);
+			if (!hostToGuestMessageValidator.check(normalized)) {
+				throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 			}
-			if (message.type === "sessionFailure") {
-				this.session.fail(new Error(message.error), false);
-				return;
-			}
-			if (this.#synchronization === undefined) {
-				throw new SandboxProtocolError(
-					`Guest received a message with type ${JSON.stringify(message.type)} before initialization.`,
-				);
-			}
-			switch (message.type) {
-				case "hostUpdate": {
-					return this.#synchronization.receiveHostUpdate(message);
-				}
-				case "hostIdRange": {
-					return this.#synchronization.receiveHostIdRange(message);
-				}
-				case "guestChangeAck": {
-					return this.#synchronization.receiveChangeAck(message);
-				}
-				case "blobResponse": {
-					return this.codec.receiveBlobResponse(message);
-				}
-				case "blobRequest":
-				case "guestChange":
-				case "hostUpdateAck": {
-					throw new SandboxProtocolError(
-						`Guest received a message with type ${JSON.stringify(message.type)}.`,
-					);
-				}
-				default: {
-					unreachableCase(message);
-				}
-			}
+			this.messageDispatcher.dispatch(normalized);
 		});
 	};
+
+	private getSynchronizationForMessage(messageName: string): GuestSynchronization {
+		if (this.#synchronization === undefined) {
+			throw new SandboxProtocolError(
+				`The Guest received a ${messageName} before initialization.`,
+			);
+		}
+		return this.#synchronization;
+	}
 
 	/** Reports a protocol message that the platform cannot deserialize. */
 	private readonly onMessageError = (): void => {
@@ -243,9 +254,11 @@ export class GuestImplementation implements Sandboxing.Guest {
 		return this.session.error;
 	}
 
-	private postMessage(message: HostGuestMessage): void {
+	private postMessage(message: GuestToHostMessage): void {
 		const normalized = normalizeTransportData(message);
-		parseHostGuestMessage(normalized);
+		if (!guestToHostMessageValidator.check(normalized)) {
+			throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
+		}
 		this.port.postMessage(this.codec.encode(normalized));
 	}
 

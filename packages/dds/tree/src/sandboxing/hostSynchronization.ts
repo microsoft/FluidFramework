@@ -6,7 +6,10 @@
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ParentShardSynchronizationToken } from "@fluidframework/id-compressor/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	TelemetryDataTag,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import {
 	findAncestor,
@@ -23,12 +26,11 @@ import {
 import { brand } from "../util/index.js";
 
 import {
-	type GuestChangeAckMessage,
 	type GuestChangeMessage,
 	type HostInitializationMessage,
+	type HostToGuestMessage,
 	type HostUpdateAckMessage,
 	type HostUpdateId,
-	type HostUpdateMessage,
 	makePromiseWithResolvers,
 	type PromiseWithResolvers,
 	sandboxFormatValidator,
@@ -51,7 +53,7 @@ const throwInvalidGuestChange = (): never => {
  */
 export type GuestBranchInitialization = Omit<
 	HostInitializationMessage,
-	"type" | "tree" | "schema" | "idCompressor"
+	"tree" | "schema" | "idCompressor"
 >;
 
 /** A Host update awaiting the Guest's acknowledgment. */
@@ -108,7 +110,7 @@ export class HostSynchronization {
 		/**
 		 * Sends a synchronization protocol message to the Guest.
 		 */
-		private readonly send: (message: HostUpdateMessage | GuestChangeAckMessage) => void,
+		private readonly send: (message: HostToGuestMessage) => void,
 		/**
 		 * Runs an action within the Host session's error-handling boundary.
 		 */
@@ -167,9 +169,15 @@ export class HostSynchronization {
 	 */
 	public receiveChangeFromGuest(message: GuestChangeMessage): void {
 		if (message.changeId !== this.nextGuestChangeId) {
-			throw new SandboxProtocolError(
-				`Guest change identifier order mismatch: received ${message.changeId}, expected ${this.nextGuestChangeId}.`,
-			);
+			throw new SandboxProtocolError("Guest change identifier order mismatch.", {
+				telemetryProperties: {
+					receivedChangeId: {
+						value: message.changeId,
+						tag: TelemetryDataTag.SandboxGuestData,
+					},
+					expectedChangeId: this.nextGuestChangeId,
+				},
+			});
 		}
 		this.nextGuestChangeId++;
 		if (message.mainRevision !== this.guestMainRevision) {
@@ -194,7 +202,7 @@ export class HostSynchronization {
 		);
 		// Merge rebases a copy, leaving local at the state used to author the next Guest change.
 		this.mainCheckout.merge(this.localCheckout, false);
-		this.send({ type: "guestChangeAck", changeId: message.changeId });
+		this.send({ guestChangeAck: { changeId: message.changeId } });
 	}
 
 	/**
@@ -294,13 +302,14 @@ export class HostSynchronization {
 		);
 		const parentIdSpaceShardSyncToken = this.getParentIdSpaceShardSyncToken();
 		this.send({
-			type: "hostUpdate",
-			updateId,
-			baseRevision: base.revision,
-			mainRevision: head.revision,
-			trunkRevision,
-			commits: serializedCommits,
-			parentIdSpaceShardSyncToken,
+			hostUpdate: {
+				updateId,
+				baseRevision: base.revision,
+				mainRevision: head.revision,
+				trunkRevision,
+				commits: serializedCommits,
+				parentIdSpaceShardSyncToken,
+			},
 		});
 	}
 

@@ -188,6 +188,14 @@ export enum AttachState {
 // @alpha @sealed
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
+// @beta @sealed
+export type ChangeMetadataBeta = CommitMetadata & ({
+    readonly isLocal: true;
+    readonly events: Listenable<LocalCommitEvents>;
+} | {
+    readonly isLocal: false;
+});
+
 // @alpha
 export function checkCompatibility(documentViewConfiguration: TreeViewConfiguration, clientViewConfiguration: TreeViewConfiguration): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
@@ -227,7 +235,7 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
-// @alpha
+// @beta
 export enum CommitOutcome {
     FullyApplied = 0,
     FullyDropped = 1,
@@ -1420,16 +1428,16 @@ export type Listeners<T extends object> = {
 };
 
 // @alpha @sealed
-export interface LocalChangeMetadata extends CommitMetadata {
-    readonly events: Listenable<LocalCommitEvents>;
+export interface LocalChangeMetadata extends Extract<ChangeMetadataBeta, {
+    readonly isLocal: true;
+}> {
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
-    readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
 }
 
-// @alpha @sealed
+// @beta @sealed
 export interface LocalCommitEvents {
     settled(outcome: CommitOutcome): void;
 }
@@ -1495,7 +1503,7 @@ export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
 
-// @alpha
+// @beta
 export interface NoChangeConstraint {
     // (undocumented)
     readonly type: "noChange";
@@ -1700,10 +1708,11 @@ export interface RegistryKey<TOut, TIn = unknown> {
 }
 
 // @alpha @sealed
-export interface RemoteChangeMetadata extends CommitMetadata {
+export interface RemoteChangeMetadata extends Extract<ChangeMetadataBeta, {
+    readonly isLocal: false;
+}> {
     readonly getChange?: undefined;
     readonly getRevertible?: undefined;
-    readonly isLocal: false;
     readonly label?: undefined;
     readonly labels: TransactionLabels;
 }
@@ -1799,12 +1808,12 @@ export interface RunTransaction {
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
     readonly customMetadata?: JsonCompatibleReadOnlyObject;
     readonly postProcessor?: TransactionPostProcessor;
-    readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+    readonly preconditions?: readonly TransactionConstraintBeta[];
 }
 
 // @alpha
@@ -2459,22 +2468,25 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
 // @alpha @input
-export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
-    readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
-};
+export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>;
 
 // @beta @input
-export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = ((WithValue<TSuccessValue> & {
     readonly rollback?: false;
 }) | (WithValue<TFailureValue> & {
     readonly rollback: true;
-});
+})) & {
+    readonly preconditionsOnRevert?: readonly TransactionConstraintBeta[];
+};
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @alpha @sealed
-export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstraint;
+export type TransactionConstraintAlpha = TransactionConstraintBeta;
+
+// @beta @sealed
+export type TransactionConstraintBeta = TransactionConstraint | NoChangeConstraint;
 
 // @alpha @sealed
 export type TransactionLabels = Set<unknown> & {
@@ -2611,8 +2623,13 @@ export interface TreeBranchCommitMetadata {
 }
 
 // @alpha @sealed
-export interface TreeBranchEvents {
+export interface TreeBranchEvents extends TreeBranchEventsBeta {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+}
+
+// @beta @sealed
+export interface TreeBranchEventsBeta {
+    changed(data: ChangeMetadataBeta): void;
 }
 
 // @alpha @sealed
@@ -2837,7 +2854,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
-    fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewAlpha<TSchema>;
+    fork(): TreeViewAlpha<TSchema> & ReturnType<UntypedTreeView["fork"]>;
     initialize(content: InsertableField<TSchema>): void;
     isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus;
     // (undocumented)
@@ -2849,6 +2866,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
     // (undocumented)
     readonly compatibility: SchemaCompatibilityStatusBeta;
+    readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }
@@ -2919,6 +2937,7 @@ export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 // @beta @sealed
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
     dispose(error?: Error): void;
+    readonly events: Listenable<TreeBranchEventsBeta>;
     fork(): UntypedTreeView;
     merge(view: UntypedTreeView, disposeMerged?: boolean): void;
     rebaseOnto(view: UntypedTreeView): void;
