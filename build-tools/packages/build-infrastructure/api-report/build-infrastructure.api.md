@@ -194,24 +194,34 @@ export abstract class PackageBase<J extends PackageJson = PackageJson, TAddProps
     isWorkspaceRoot: boolean,
     releaseGroup: ReleaseGroupName,
     isReleaseGroupRoot: boolean, additionalProperties?: TAddProps);
+    // (undocumented)
     checkInstall(): Promise<true | string[]>;
+    // (undocumented)
     get combinedDependencies(): Generator<PackageDependency, void>;
+    // (undocumented)
     get directory(): string;
+    // (undocumented)
     getScript(name: string): string | undefined;
     install(updateLockfile: boolean): Promise<boolean>;
     isReleaseGroupRoot: boolean;
     readonly isWorkspaceRoot: boolean;
+    // (undocumented)
     get name(): PackageName;
+    // (undocumented)
     get nameColored(): string;
+    // (undocumented)
     get packageJson(): J;
     readonly packageJsonFilePath: string;
     readonly packageManager: IPackageManager;
+    // (undocumented)
     get private(): boolean;
     readonly releaseGroup: ReleaseGroupName;
     reload(): void;
+    // (undocumented)
     savePackageJson(): Promise<void>;
     // (undocumented)
     toString(): string;
+    // (undocumented)
     get version(): string;
     readonly workspace: IWorkspace;
 }
