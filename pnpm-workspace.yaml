@@ -88,9 +88,9 @@ overrides:
   # resolvers decode them as octal, allowing SSRF/trust-boundary bypass). Fixed in 10.3.1.
   ip-address@>=9 <10: ^10.3.1
   # js-yaml CVE-2026-59869 (quadratic CPU DoS via merge-key chains). Fixed in 3.15.0 and 4.3.0.
-  # Exact pins: newer .1 patches are not yet mirrored in the internal artifact feed used by CI.
+  # Exact pins ensure vulnerable transitive versions are not selected.
   js-yaml@>=3 <4: 3.15.0
-  js-yaml@>=4 <5: 4.3.0
+  js-yaml@>=4 <5: 4.3.2
   keyv@>=4 <5: ^5.5.3
   launch-editor@>=2 <3: ^2.14.1
   # nanoid CVE-2026-67213 (infinite loop when size=0) and CVE-2026-67214 (infinite loop
@@ -162,9 +162,8 @@ overrides:
   # express is overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
   express@>=4 <5: ^4.22.1
 
-  # Resolve a known security vulnerability.
-  # CVE-2026-16221 fixed in fast-uri 4.1.1 and CVE-2026-18446 fixed in 4.1.2.
-  fast-uri: ^4.1.2
+  # fast-uri CVE-2026-75899 (SSRF via repeated hostname decoding). Fixed in 4.1.3.
+  fast-uri: ^4.1.3
 
   # Resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow).
   # Stays within @langchain/anthropic's declared ^4.4.1 range.

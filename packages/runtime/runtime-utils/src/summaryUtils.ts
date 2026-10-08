@@ -500,16 +500,10 @@ export function processAttachMessageGCData(
 export class TelemetryContext implements ITelemetryContext, ITelemetryContextExt {
 	private readonly telemetry = new Map<string, TelemetryEventPropertyTypeExt>();
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.set}
-	 */
 	public set(prefix: string, property: string, value: TelemetryEventPropertyTypeExt): void {
 		this.telemetry.set(`${prefix}${property}`, value);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.setMultiple}
-	 */
 	public setMultiple(
 		prefix: string,
 		property: string,

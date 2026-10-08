@@ -43,7 +43,7 @@ import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
  * Kind of a field on an {@link TreeObjectNode}.
  * @remarks
  * More kinds may be added over time, so do not assume this is an exhaustive set.
- * See {@link FieldSchema} for where these are used, and {@link SchemaFactory} for how to create schema which use them.
+ * See {@link FieldSchema} for where these are used, and {@link SchemaFactory} for how to create schemas which use them.
  * @public
  */
 export enum FieldKind {
@@ -177,6 +177,19 @@ export interface FieldProps<TCustomMetadata = unknown> {
  */
 export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	extends FieldProps<TCustomMetadata> {
+	/**
+	 * Whether this field is an incremental-summary boundary.
+	 *
+	 * @remarks
+	 * During incremental summarization, an unchanged field with this option enabled can reuse its
+	 * previously generated summary instead of being re-encoded and uploaded again.
+	 *
+	 * @defaultValue `false`, unless the legacy
+	 * {@link @fluidframework/tree#incrementalSummaryHint | incremental-summary hint} is present,
+	 * in which case the hint is respected.
+	 */
+	readonly summarizeIncrementally?: boolean;
+
 	/**
 	 * The persisted metadata for a field schema.
 	 * @remarks
@@ -605,9 +618,9 @@ export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
 /**
  * Converts an `ImplicitFieldSchema` to a property type suitable for reading a field with this that schema.
  *
- * @typeparam TSchema - When non-exact schema are provided this errors on the side of returning too general of a type (a conservative union of all possibilities).
+ * @typeparam TSchema - When non-exact schemas are provided this errors on the side of returning too general of a type (a conservative union of all possibilities).
  * This is ideal for "output APIs" - i.e. it converts the schema type to the runtime type that a user will _read_ from the tree.
- * Examples of such "non-exact" schema include `ImplicitFieldSchema`, `ImplicitAllowedTypes`, and  TypeScript unions of schema types.
+ * Examples of such "non-exact" schemas include `ImplicitFieldSchema`, `ImplicitAllowedTypes`, and  TypeScript unions of schema types.
  * @public
  */
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> =

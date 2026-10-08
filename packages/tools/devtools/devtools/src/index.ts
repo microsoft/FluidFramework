@@ -117,31 +117,19 @@ class Devtools implements IDevtools {
 		private readonly _devtools: IDevtoolsBase,
 	) {}
 
-	/**
-	 * {@inheritDoc IDevtools.registerContainerDevtools}
-	 */
 	public registerContainerDevtools(props: ContainerDevtoolsProps): void {
 		const mappedProps = mapContainerProps(props);
 		this._devtools.registerContainerDevtools(mappedProps);
 	}
 
-	/**
-	 * {@inheritDoc IDevtools.closeContainerDevtools}
-	 */
 	public closeContainerDevtools(id: string): void {
 		this._devtools.closeContainerDevtools(id);
 	}
 
-	/**
-	 * {@inheritDoc IDevtools.disposed}
-	 */
 	public get disposed(): boolean {
 		return this._devtools.disposed;
 	}
 
-	/**
-	 * {@inheritDoc IDevtools.dispose}
-	 */
 	public dispose(): void {
 		this._devtools.dispose();
 	}

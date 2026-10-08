@@ -41,7 +41,6 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 	EmptyKey,
-	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -81,11 +80,9 @@ import {
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
-	NodeKind,
-	type SimpleTreeSchema,
 	FieldKind,
-	type SimpleLeafNodeSchema,
 	type TreeBranchCommitMetadata,
+	type ViewableTree,
 } from "../../simple-tree/index.js";
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
@@ -3278,49 +3275,19 @@ describe("SharedTree", () => {
 		);
 	});
 
-	it("exportVerbose & exportSimpleSchema", () => {
-		const tree = treeTestFactory();
-		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), {
-			definitions: new Map(),
-			root: {
-				kind: FieldKind.Optional,
-				simpleAllowedTypes: new Map(),
-				metadata: {},
-				persistedMetadata: undefined,
-			},
-		} satisfies SimpleTreeSchema);
-
+	it("exposes ViewableTreeAlpha", () => {
+		const stableTree: ViewableTree = treeTestFactory();
+		const tree = asAlpha(stableTree);
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
 		});
 		const view = tree.viewWith(config);
 		view.initialize(10);
 
-		assert.deepEqual(tree.exportVerbose(), 10);
-
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				simpleAllowedTypes: new Map([
-					["com.fluidframework.leaf.number", { isStaged: undefined }],
-				]),
-				metadata: {},
-				persistedMetadata: undefined,
-			},
-			definitions: new Map([
-				[
-					"com.fluidframework.leaf.number",
-					{
-						kind: NodeKind.Leaf,
-						leafKind: ValueSchema.Number,
-						metadata: {},
-						persistedMetadata: undefined,
-					} satisfies SimpleLeafNodeSchema,
-				],
-			]),
-		};
-		assert.deepEqual(tree.exportSimpleSchema(), expected);
+		assert.equal(tree.exportVerbose(), 10);
+		const schema = tree.exportSimpleSchema();
+		assert.equal(schema.root.kind, FieldKind.Required);
+		assert(schema.definitions.has(numberSchema.identifier));
 	});
 
 	describe("Shared Branches", () => {

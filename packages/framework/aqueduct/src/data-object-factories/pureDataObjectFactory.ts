@@ -207,9 +207,6 @@ export class PureDataObjectFactory<
 	private readonly registry: IFluidDataStoreRegistry | undefined;
 	private readonly createProps: Omit<CreateDataObjectProps<TObj, I>, "existing" | "context">;
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
-	 */
 	public readonly type: string;
 
 	/**
@@ -266,9 +263,6 @@ export class PureDataObjectFactory<
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreFactory.IFluidDataStoreFactory}
-	 */
 	public get IFluidDataStoreFactory(): this {
 		return this;
 	}
@@ -290,9 +284,6 @@ export class PureDataObjectFactory<
 		return [this.type, Promise.resolve(this)];
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory.instantiateDataStore}
-	 */
 	public async instantiateDataStore(
 		context: IFluidDataStoreContext,
 		existing: boolean,

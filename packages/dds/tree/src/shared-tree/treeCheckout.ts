@@ -21,6 +21,8 @@ import {
 	FluidClientVersion,
 	FormatValidatorNoOp,
 	type CodecWriteOptions,
+	type DecodeErrorHandler,
+	type FormatValidator,
 } from "../codec/index.js";
 import {
 	type Anchor,
@@ -140,7 +142,7 @@ import {
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
-import { SerializedChange } from "./serializedChange.js";
+import { makeSerializedChangeCodec, type SerializedChangeCodec } from "./serializedChange.js";
 
 /**
  * Returns a defensive copy of the given metadata, validating that it can be persisted.
@@ -385,6 +387,12 @@ export function createTreeCheckout(
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		codecOptions?: Partial<CodecWriteOptions>;
+		/**
+		 * Supplies the finalized-history boundary returned by {@link TreeCheckout.getFinalizedCommit}.
+		 * Defaults to the current root of the checkout's commit graph.
+		 * Providing a newer finalized ancestor can enable optimizations that depend on finalized history.
+		 */
+		getFinalizedCommit?: () => GraphCommit<SharedTreeChange>;
 	},
 ): TreeCheckout {
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
@@ -428,7 +436,10 @@ export function createTreeCheckout(
 		mintRevisionTag,
 		revisionTagCodec,
 		idCompressor,
+		codecOptions.jsonValidator,
 		args?.removedRoots,
+		true,
+		args?.getFinalizedCommit,
 	);
 }
 
@@ -466,7 +477,7 @@ function getCheckout(context: UntypedTreeView): TreeCheckout {
  * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
  * @param constraints - The constraints to add to the transaction.
  *
- * @see {@link RunTransactionParamsAlpha.preconditions}.
+ * @see {@link RunTransactionParamsBeta.preconditions}.
  */
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
@@ -582,6 +593,7 @@ export class TreeCheckout implements ITreeCheckout {
 	private mostRecentlyClosedLabelNode: LabelTree | undefined;
 
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
+	private readonly serializedChangeCodec: SerializedChangeCodec;
 
 	/**
 	 * Event emitters for local commits.
@@ -643,9 +655,16 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
+		private readonly jsonValidator: FormatValidator,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
+		/** Supplies the boundary for {@link TreeCheckout.getFinalizedCommit}, instead of the current graph root. */
+		private readonly getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
 	) {
+		this.serializedChangeCodec = makeSerializedChangeCodec(
+			this.changeFamily,
+			this.jsonValidator,
+		);
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
@@ -654,6 +673,24 @@ export class TreeCheckout implements ITreeCheckout {
 	public get branchHistory(): DefaultTreeBranchHistory {
 		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
 		return this._branchHistory;
+	}
+
+	/**
+	 * Gets a commit in this checkout's ancestry marking a finalized prefix of history.
+	 * @remarks
+	 * History through this commit will not be rebased or replaced by future edits or synchronization.
+	 * Subsequent edits, including undo, can still change the document.
+	 * The boundary may precede the newest finalized commit, which can prevent optimizations based on finalized history.
+	 *
+	 * Without a supplied boundary, returns the current root of the commit graph.
+	 * Before any commits are made, this is the initial base sentinel.
+	 * After history is loaded or trimmed, it represents the baseline before the retained commits.
+	 * Finalization does not prevent trimming or guarantee that the returned commit remains accessible.
+	 */
+	public getFinalizedCommit(): GraphCommit<SharedTreeChange> {
+		return this.getFinalizedCommitOverride === undefined
+			? findAncestor(this.branch.getHead())
+			: this.getFinalizedCommitOverride();
 	}
 
 	/**
@@ -931,11 +968,12 @@ export class TreeCheckout implements ITreeCheckout {
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
 						);
-						return SerializedChange.V1.encode(
-							this.idCompressor,
-							this.changeFamily,
-							change,
-							revision,
+						return this.serializedChangeCodec.encode(
+							{
+								change: { change, revision },
+								customMetadata: commit.customMetadata,
+							},
+							{ idCompressor: this.idCompressor },
 						);
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
@@ -1016,23 +1054,50 @@ export class TreeCheckout implements ITreeCheckout {
 
 	/**
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
+	 *
+	 * @param serializedChange - The serialized change to apply.
+	 * @param codec - The codec used to decode the change.
+	 * @param onError - A callback that receives a description of invalid serialized data and throws a custom error.
 	 */
 	@throwIfBroken
-	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
-		const change = SerializedChange.V1.decode(
-			this.idCompressor,
-			this.changeFamily,
+	public applySerializedChange(
+		serializedChange: JsonCompatibleReadOnly,
+		codec: SerializedChangeCodec = this.serializedChangeCodec,
+		onError?: DecodeErrorHandler,
+	): void {
+		const { change, customMetadata } = codec.decode(
 			serializedChange,
+			{
+				idCompressor: this.idCompressor,
+			},
+			onError,
 		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(change, CommitKind.Default, undefined);
+		this.#transaction.branch.apply(change, CommitKind.Default, customMetadata);
+	}
+
+	/**
+	 * Serializes an existing commit so it can be applied to another checkout in the same ID-compressor session.
+	 */
+	public serializeCommit(commit: GraphCommit<SharedTreeChange>): JsonCompatibleReadOnly {
+		return this.serializedChangeCodec.encode(
+			{
+				change: { change: commit.change, revision: commit.revision },
+				customMetadata: commit.customMetadata,
+			},
+			{ idCompressor: this.idCompressor },
+		);
 	}
 
 	// #region UntypedTreeViewAlpha
 
 	@throwIfBroken
 	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.applySerializedChange(change);
+		this.applySerializedChange(change, this.serializedChangeCodec, (message) => {
+			throw new UsageError(
+				message ?? "Cannot apply change. Invalid serialized change format.",
+			);
+		});
 	}
 
 	public isBranch(): this is UntypedTreeViewAlpha {
@@ -1343,9 +1408,24 @@ export class TreeCheckout implements ITreeCheckout {
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot>;
 
-	@throwIfBroken
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> {
+		return this.viewWithInternal(config);
+	}
+
+	/**
+	 * Creates a schematized view of this checkout.
+	 * @param config - The schema and behavior configuration for the view.
+	 * @param disposeCheckoutOnViewDispose - Whether disposing the view also disposes this checkout.
+	 * Defaults to true for checkouts that are not shared branches.
+	 * @remarks
+	 * Extends {@link ViewTree.viewWith} to include `disposeCheckoutOnViewDispose` parameter.
+	 */
+	@throwIfBroken
+	public viewWithInternal<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+		disposeCheckoutOnViewDispose?: boolean,
 	): SchematizingSimpleTreeView<TRoot> {
 		const view = new SchematizingSimpleTreeView(
 			this,
@@ -1354,6 +1434,7 @@ export class TreeCheckout implements ITreeCheckout {
 			() => {
 				this.views.delete(view);
 			},
+			disposeCheckoutOnViewDispose,
 		);
 		this.views.add(view);
 		return view;
@@ -1415,6 +1496,7 @@ export class TreeCheckout implements ITreeCheckout {
 			this.mintRevisionTag,
 			this.revisionTagCodec,
 			this.idCompressor,
+			this.jsonValidator,
 			this._removedRoots.clone(),
 		);
 		this.#events.emit("fork", checkout);
@@ -1591,12 +1673,9 @@ export class TreeCheckout implements ITreeCheckout {
 			return undefined;
 		}
 		const revision = this.mintRevisionTag();
-		return SerializedChange.V1.encode(
-			this.idCompressor,
-			this.changeFamily,
-			rebased.sourceChange,
-			revision,
-			undefined,
+		return this.serializedChangeCodec.encode(
+			{ change: { change: rebased.sourceChange, revision } },
+			{ idCompressor: this.idCompressor },
 		);
 	}
 
