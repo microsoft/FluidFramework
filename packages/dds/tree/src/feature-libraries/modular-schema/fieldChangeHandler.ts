@@ -183,16 +183,33 @@ export type FilterAttachFunc = (
 	 */
 	attachId: ChangeAtomId,
 	count: number,
-) => RangeQueryResult<EditFilterStatus>;
+) => RangeQueryResult<FilterAttachResult>;
 
 export interface FilterDetachResult {
 	readonly action: EditFilterStatus;
 
 	/**
 	 * If true, the filtered change should also remove any child changes for the detached nodes.
-	 * This will only be set when `action` is `EditFilterStatus.Remove`.
+	 * This can only be set when `action` is `EditFilterStatus.Remove`.
+	 *
+	 * This is needed to support change minimization's use of edit filtering
+	 * as a form of change decomposition.
 	 */
 	readonly shouldRemoveChild?: boolean;
+}
+
+export interface FilterAttachResult {
+	readonly action: EditFilterStatus;
+
+	/**
+	 * If true, the attach previously represented a move from another location,
+	 * but in the filtered change should be treated as a revive of a node at the attach location.
+	 * This can only be set when `action` is `EditFilterStatus.Preserve`.
+	 *
+	 * This is needed to support change minimization's use of edit filtering
+	 * as a form of change decomposition.
+	 */
+	readonly convertFromMove?: boolean;
 }
 
 /**

@@ -30,6 +30,7 @@ import { NodeMoveType } from "./crossFieldQueries.js";
 import {
 	EditFilterStatus,
 	NodeAttachState,
+	type FilterAttachResult,
 	type FilterDetachResult,
 } from "./fieldChangeHandler.js";
 
@@ -393,7 +394,7 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		id: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<EditFilterStatus> {
+	): RangeQueryResult<FilterAttachResult> {
 		let countProcessed = count;
 		const moveEndpointEntry = getDetachFieldForAttach(
 			this.change.crossFieldKeys,
@@ -416,11 +417,11 @@ class ModularChangeMinimizer {
 		countProcessed = shouldSquashEntry.length;
 
 		if (!shouldSquashEntry.value) {
-			return { value: EditFilterStatus.Remove, length: countProcessed };
+			return { value: { action: EditFilterStatus.Remove }, length: countProcessed };
 		}
 
 		return {
-			value: EditFilterStatus.Preserve,
+			value: { action: EditFilterStatus.Preserve },
 			length: countProcessed,
 		};
 	}
@@ -548,7 +549,7 @@ class ModularChangeMinimizer {
 		fieldId: FieldId,
 		id: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<EditFilterStatus> {
+	): RangeQueryResult<FilterAttachResult> {
 		let countProcessed = count;
 		const moveEndpointEntry = getDetachFieldForAttach(
 			this.change.crossFieldKeys,
@@ -573,7 +574,7 @@ class ModularChangeMinimizer {
 
 		if (shouldDropEntry.value) {
 			return {
-				value: EditFilterStatus.Remove,
+				value: { action: EditFilterStatus.Remove },
 				length: countProcessed,
 			};
 		}
@@ -588,14 +589,14 @@ class ModularChangeMinimizer {
 			countProcessed = willDropEndpointEntry.length;
 			if (willDropEndpointEntry.value) {
 				return {
-					value: EditFilterStatus.Preserve,
+					value: { action: EditFilterStatus.Preserve, convertFromMove: true },
 					length: countProcessed,
 				};
 			}
 		}
 
 		return {
-			value: EditFilterStatus.Preserve,
+			value: { action: EditFilterStatus.Preserve },
 			length: countProcessed,
 		};
 	}

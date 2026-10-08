@@ -614,7 +614,7 @@ function filterEdits(
 
 		if (detachResult?.action === EditFilterStatus.Remove) {
 			assert(
-				attachId === undefined || attachResult === EditFilterStatus.Remove,
+				attachId === undefined || attachResult?.action === EditFilterStatus.Remove,
 				0xd0e /* Cannot remove detach without also removing attach */,
 			);
 
@@ -622,7 +622,7 @@ function filterEdits(
 			if (detachResult.shouldRemoveChild === true) {
 				delete filtered.childChange;
 			}
-		} else if (attachResult === EditFilterStatus.Remove) {
+		} else if (attachResult?.action === EditFilterStatus.Remove) {
 			filtered.valueReplace = { ...change.valueReplace };
 			delete (filtered.valueReplace as Mutable<Replace>).src;
 		}

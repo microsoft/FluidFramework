@@ -12,7 +12,11 @@ import {
 } from "../../core/index.js";
 import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import { setInChangeAtomIdMap, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
-import { EditFilterStatus, type FilterDetachResult } from "./fieldChangeHandler.js";
+import {
+	EditFilterStatus,
+	type FilterAttachResult,
+	type FilterDetachResult,
+} from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import type {
 	FieldChange,
@@ -39,8 +43,8 @@ export function removeAllDetachesFilter(
 export function removeAllAttachesFilter(
 	_id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<EditFilterStatus> {
-	return { value: EditFilterStatus.Remove, length: count };
+): RangeQueryResult<FilterAttachResult> {
+	return { value: { action: EditFilterStatus.Remove }, length: count };
 }
 
 /**
