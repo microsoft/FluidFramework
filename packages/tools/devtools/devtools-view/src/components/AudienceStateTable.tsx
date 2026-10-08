@@ -17,8 +17,16 @@ import {
 } from "./TooltipTexts.js";
 import { LabelCellLayout } from "./utility-components/index.js";
 
-const { Table, TableBody, TableCell, TableHeader, TableRow, makeStyles, tokens } =
-	FluentReactComponents;
+const {
+	Table,
+	TableBody,
+	TableCell,
+	TableHeader,
+	TableHeaderCell,
+	TableRow,
+	makeStyles,
+	tokens,
+} = FluentReactComponents;
 const { EditRegular, Person12Regular, Search12Regular } = FluentReactIcons;
 
 const audienceStateStyle = makeStyles({
@@ -70,8 +78,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): ReactElement
 			<TableHeader>
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
-						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
-						<TableCell key={columnIndex}>
+						<TableHeaderCell key={columnIndex} scope="col">
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}
@@ -108,7 +115,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): ReactElement
 									{column.label}
 								</LabelCellLayout>
 							)}
-						</TableCell>
+						</TableHeaderCell>
 					))}
 				</TableRow>
 			</TableHeader>
