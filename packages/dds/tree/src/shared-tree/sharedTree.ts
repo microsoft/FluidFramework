@@ -100,7 +100,10 @@ import {
 
 import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { buildConfiguredForest, type ForestType } from "./forestType.js";
-import type { ForestTypeOptimized } from "./forestTypeOptimized.js";
+import type {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	ForestTypeOptimized,
+} from "./forestTypeOptimized.js";
 import { ForestTypeReference } from "./forestTypeReference.js";
 import {
 	getCodecTreeForChangeFormat,
