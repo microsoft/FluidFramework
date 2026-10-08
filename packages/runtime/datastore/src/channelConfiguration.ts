@@ -50,6 +50,10 @@ export function hasChannelConfiguration(
 			Number.isSafeInteger(configuration.revision),
 		"Invalid revision",
 	);
+	assert(
+		isObject(configuration.values) && !Array.isArray(configuration.values),
+		"Configuration values must be an object",
+	);
 	return true;
 }
 
