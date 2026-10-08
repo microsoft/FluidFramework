@@ -939,11 +939,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		);
 	});
 
-	it("Newly connected container synchronizes from summary", async function () {
-		// TODO: This test is consistently failing when ran against AFR. See ADO:7931
-		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
-			this.skip();
-		}
+	it("Newly connected container synchronizes from summary", async () => {
 		const container = await createContainer(enabledConfig);
 		const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		const idCompressor: IIdCompressor = (defaultDataStore._root as any).runtime.idCompressor;
