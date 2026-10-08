@@ -12,11 +12,10 @@ import {
 } from "@fluidframework/react/internal";
 import {
 	codePointCount,
-	FormattedTextDefault,
 	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
-} from "@fluidframework/tree/internal";
+} from "@fluidframework/tree/alpha";
 import Quill, { type EmitterSource } from "quill-next";
 import type { Op as QuillDeltaOp } from "@quill-next/delta-es";
 import {
@@ -31,6 +30,7 @@ import * as ReactDOM from "react-dom";
 
 import { runGuarded } from "../shared/index.js";
 
+import { FormattedTextDefault } from "./formattedTextDefault.js";
 import {
 	clipboardFormatMatcher,
 	Delta,
@@ -68,7 +68,7 @@ export type FormattedEditorHandle = Pick<UndoRedo, "undo" | "redo">;
 /**
  * A React component for formatted text editing.
  * @remarks
- * Uses {@link @fluidframework/tree#FormattedText.Tree} for the data-model and Quill for the rich text editor UI.
+ * Uses {@link FormattedTextDefault.Tree} for the data-model and Quill for the rich text editor UI.
  * @internal
  */
 export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMainViewProps>(
@@ -259,7 +259,7 @@ function contentOpsToQuillDelta(
 }
 
 /**
- * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link @fluidframework/tree#FormattedText.Tree}.
+ * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link FormattedTextDefault.Tree}.
  *
  * @remarks
  * This is the inverse of {@link contentOpsToQuillDelta}: Quill produces a Delta of `retain`/`insert`/`delete`
