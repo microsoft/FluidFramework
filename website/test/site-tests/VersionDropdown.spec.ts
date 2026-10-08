@@ -72,6 +72,95 @@ test.describe("Version dropdown keyboard navigation", () => {
 		await expect(firstItem).toBeFocused();
 	});
 
+	for (const openingMode of ["keyboard", "hover", "keyboard and hover"]) {
+		for (const focusTarget of ["trigger", "version item"]) {
+			test(`Escape dismisses a ${openingMode} menu from the ${focusTarget}`, async ({
+				page,
+			}) => {
+				const trigger = page.getByRole("button", { name: "Select documentation version" });
+				const firstItem = page.locator(".version-dropdown__item").first();
+				const destination = page.url();
+
+				await page.evaluate(() => window.scrollTo({ top: 400, behavior: "instant" }));
+				const scrollPosition = await page.evaluate(() => window.scrollY);
+				expect(scrollPosition).toBeGreaterThan(0);
+				await trigger.focus();
+				if (openingMode.includes("keyboard")) {
+					await page.keyboard.press("Enter");
+				}
+				if (openingMode.includes("hover")) {
+					await trigger.hover();
+				}
+				await expect(firstItem).toBeVisible();
+				if (focusTarget === "version item") {
+					await page.keyboard.press("ArrowDown");
+					await expect(firstItem).toBeFocused();
+				}
+
+				// Leave the pointer in place to check that hover does not defeat Escape.
+				await page.keyboard.press("Escape");
+				await expect(trigger).toHaveAttribute("aria-expanded", "false");
+				await expect(firstItem).toBeHidden();
+				await expect(trigger).toBeFocused();
+				await expect(page).toHaveURL(destination);
+				expect(await page.evaluate(() => window.scrollY)).toBe(scrollPosition);
+
+				for (const openingKey of ["Enter", "Space"]) {
+					await page.keyboard.press(openingKey);
+					await expect(trigger).toHaveAttribute("aria-expanded", "true");
+					await expect(firstItem).toBeVisible();
+					await page.keyboard.press("ArrowDown");
+					await expect(firstItem).toBeFocused();
+					await page.keyboard.press("Escape");
+					await expect(firstItem).toBeHidden();
+					await expect(trigger).toBeFocused();
+				}
+
+				await page.mouse.move(0, 0);
+				await trigger.hover();
+				await expect(firstItem).toBeVisible();
+			});
+		}
+	}
+
+	test("Escape immediately after Enter and ArrowDown preserves trigger focus", async ({
+		page,
+	}) => {
+		const trigger = page.getByRole("button", { name: "Select documentation version" });
+		const firstItem = page.locator(".version-dropdown__item").first();
+
+		await trigger.focus();
+		// Do not wait for visibility between these keys. Check the transition race.
+		await page.keyboard.press("Enter");
+		await page.keyboard.press("ArrowDown");
+		await page.keyboard.press("Escape");
+		await expect(trigger).toHaveAttribute("aria-expanded", "false");
+		await expect(firstItem).toBeHidden();
+		await expect(trigger).toBeFocused();
+	});
+
+	for (const nextKey of ["ArrowDown", "Tab"]) {
+		test(`${nextKey} immediately after Escape respects hover dismissal`, async ({ page }) => {
+			const trigger = page.getByRole("button", { name: "Select documentation version" });
+			const firstItem = page.locator(".version-dropdown__item").first();
+			const docsLink = page
+				.locator(".navbar")
+				.getByRole("link", { name: "Docs", exact: true });
+
+			await trigger.focus();
+			await page.keyboard.press("Enter");
+			await trigger.hover();
+			await expect(firstItem).toBeVisible();
+			await page.keyboard.press("ArrowDown");
+			await expect(firstItem).toBeFocused();
+			await page.keyboard.press("Escape");
+			await page.keyboard.press(nextKey);
+			await expect(trigger).toHaveAttribute("aria-expanded", "false");
+			await expect(firstItem).toBeHidden();
+			await expect(nextKey === "Tab" ? docsLink : trigger).toBeFocused();
+		});
+	}
+
 	test("Tab immediately after ArrowUp leaves the menu without delayed focus", async ({
 		page,
 	}) => {
@@ -98,6 +187,7 @@ test.describe("Version dropdown keyboard navigation", () => {
 		await expect(firstItem).toBeVisible();
 		await page.keyboard.press("ArrowDown");
 		await page.keyboard.press("Shift+Tab");
+		await expect(trigger).toBeFocused();
 		await page.keyboard.press("Enter");
 		await expect(trigger).toHaveAttribute("aria-expanded", "false");
 		await expect(firstItem).toBeHidden();
