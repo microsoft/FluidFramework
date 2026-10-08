@@ -5,13 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	BenchmarkMode,
-	BenchmarkType,
-	benchmarkDuration,
-	benchmarkIt,
-	currentBenchmarkMode,
-} from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt, type BenchmarkType } from "@fluid-tools/benchmark";
 
 import type { TreeIndex } from "../../feature-libraries/index.js";
 
@@ -26,7 +20,9 @@ export interface IndexBenchmarkScenario<TKey, TValue> {
 
 	/**
 	 * Creates a fresh TreeView and index for this scenario.
-	 * Called once per benchmark iteration batch to ensure fresh state.
+	 *
+	 * @remarks Should be called once per iteration in a batch to ensure fresh state between
+	 * iterations.
 	 */
 	setup(): IndexBenchmarkSetup<TKey, TValue>;
 }
@@ -41,12 +37,17 @@ export interface IndexBenchmarkSetup<TKey, TValue> {
 	readonly index: TreeIndex<TKey, TValue>;
 
 	/**
-	 * Keys that are known to exist in the index for lookup benchmarks.
+	 * Keys that are known to exist in the index for lookup benchmarks. Every supplied key is
+	 * looked up sequentially in each timed iteration, so the measurement covers the full list.
+	 * Supply one representative key to measure single-lookup latency, or multiple keys to
+	 * benchmark an aggregate lookup workload.
 	 */
 	readonly existingKeys: readonly TKey[];
 
 	/**
-	 * Keys that are known NOT to exist in the index for miss benchmarks.
+	 * Keys that are known not to exist in the index for miss benchmarks. As with
+	 * {@link IndexBenchmarkSetup.existingKeys}, every supplied key is looked up in each timed
+	 * iteration.
 	 */
 	readonly missingKeys: readonly TKey[];
 
@@ -70,48 +71,24 @@ export interface IndexBenchmarkSetup<TKey, TValue> {
  */
 export interface IndexBenchmarkSuiteConfig<TKey, TValue> {
 	/**
-	 * The name of the index being benchmarked (used in test titles).
+	 * The name of the index being benchmarked. It is used as the prefix of each test title, for
+	 * example `${indexName}: create index with ${nodeCount} nodes`.
 	 */
 	readonly indexName: string;
 
 	/**
-	 * Scenarios at different sizes. Each entry is [nodeCount, BenchmarkType].
+	 * The node counts and benchmark types to test. The suite creates one benchmark of each
+	 * supported operation for every `[nodeCount, benchmarkType]` entry.
 	 */
 	readonly sizes: readonly (readonly [number, BenchmarkType])[];
 
 	/**
-	 * Factory that creates a benchmark scenario for a given node count.
+	 * Factory that creates a benchmark scenario for a node count from {@link sizes}. The
+	 * scenario is expected to contain exactly that many indexed nodes; the harness does not
+	 * validate the count.
 	 */
 	createScenario(nodeCount: number): IndexBenchmarkScenario<TKey, TValue>;
 }
-
-/**
- * Default node counts for index benchmarks.
- * Uses small count for regular test runs and larger counts for full performance mode.
- */
-export const defaultIndexBenchmarkSizes: [number, BenchmarkType][] = [
-	[10, BenchmarkType.Measurement],
-	...(currentBenchmarkMode === BenchmarkMode.Performance
-		? [
-				[100, BenchmarkType.Perspective] as [number, BenchmarkType],
-				[1000, BenchmarkType.Perspective] as [number, BenchmarkType],
-				[10_000, BenchmarkType.Measurement] as [number, BenchmarkType],
-			]
-		: []),
-];
-
-/**
- * Smaller node counts for deep (tall) trees that hit call-stack limits at high depths.
- */
-export const deepTreeBenchmarkSizes: [number, BenchmarkType][] = [
-	[10, BenchmarkType.Measurement],
-	...(currentBenchmarkMode === BenchmarkMode.Performance
-		? [
-				[100, BenchmarkType.Perspective] as [number, BenchmarkType],
-				[500, BenchmarkType.Measurement] as [number, BenchmarkType],
-			]
-		: []),
-];
 
 /**
  * Generates a complete benchmark suite for a tree index.

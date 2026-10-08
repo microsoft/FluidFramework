@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { BenchmarkMode, BenchmarkType, currentBenchmarkMode } from "@fluid-tools/benchmark";
+
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -15,14 +17,33 @@ import {
 import { getView, configureBenchmarkHooks } from "../utils.js";
 
 import {
-	defaultIndexBenchmarkSizes,
-	deepTreeBenchmarkSizes,
 	generateIndexBenchmarkSuite,
 	type IndexBenchmarkScenario,
 	type IndexBenchmarkSetup,
 } from "./indexBenchmarkUtilities.js";
 
 const schemaFactory = new SchemaFactory("identifierIndex.bench");
+
+const defaultIndexBenchmarkSizes: [number, BenchmarkType][] = [
+	[10, BenchmarkType.Measurement],
+	...(currentBenchmarkMode === BenchmarkMode.Performance
+		? [
+				[100, BenchmarkType.Perspective] as [number, BenchmarkType],
+				[1000, BenchmarkType.Perspective] as [number, BenchmarkType],
+				[10_000, BenchmarkType.Measurement] as [number, BenchmarkType],
+			]
+		: []),
+];
+
+const deepTreeBenchmarkSizes: [number, BenchmarkType][] = [
+	[10, BenchmarkType.Measurement],
+	...(currentBenchmarkMode === BenchmarkMode.Performance
+		? [
+				[100, BenchmarkType.Perspective] as [number, BenchmarkType],
+				[500, BenchmarkType.Measurement] as [number, BenchmarkType],
+			]
+		: []),
+];
 
 // -- Wide (flat) tree: one root with N leaf children in an array --
 
