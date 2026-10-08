@@ -107,7 +107,7 @@ export function encodeHandleForSerialization(handle: IFluidHandleInternal): ISer
  * This setting mostly exists as a way to easily find any code that only exists to provide this compatibility and clarify how to remove that compatibility.
  * At some point this might be removed or turned into an actual configuration option, but for now its really just documentation.
  */
-const enableBackwardsCompatibility = true;
+const enableBackwardsCompatibility = false;
 
 /**
  * Check if a value is an {@link @fluidframework/core-interfaces#IFluidHandle}.
