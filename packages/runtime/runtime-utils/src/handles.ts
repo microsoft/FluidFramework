@@ -16,6 +16,8 @@ import type {
 	ILocalFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
 
+import { waitForEvent } from "./waitForEvent.js";
+
 /**
  * JSON serialized form of an IFluidHandle
  * @internal
@@ -57,7 +59,19 @@ export const isFluidHandleInternalPayloadPending = (
 	"payloadPending" in fluidHandleInternal && fluidHandleInternal.payloadPending === true;
 
 /**
- * Check if the handle is an IFluidHandlePayloadPending.
+ * Check whether a handle is an {@link @fluidframework/core-interfaces#IFluidHandlePayloadPending} - that is,
+ * whether it exposes payload sharing state (a `payloadState` and its associated events).
+ *
+ * @remarks
+ * This tests the handle's _capability_, not its current state. Despite the name, it does not test whether
+ * the payload is currently pending: it returns `true` for any handle that surfaces payload sharing state,
+ * whether that state is currently "pending" or already "shared" - including a handle that was created with a
+ * pending payload and has since become shared. It returns `false` only for handles that do not surface this
+ * state at all.
+ *
+ * To test the _current_ state, inspect
+ * {@link @fluidframework/core-interfaces#IFluidHandlePayloadPending.payloadState} after narrowing - for
+ * example, `isFluidHandlePayloadPending(handle) && handle.payloadState === "pending"`.
  * @privateRemarks
  * This should be true for locally-created BlobHandles currently. When IFluidHandlePayloadPending is merged
  * to IFluidHandle, this type guard will no longer be necessary.
@@ -77,6 +91,48 @@ export const isLocalFluidHandle = <T>(
 	handle: IFluidHandle<T>,
 ): handle is ILocalFluidHandle<T> =>
 	isFluidHandlePayloadPending(handle) && "payloadShareError" in handle;
+
+/**
+ * Wait for a locally-created pending-payload handle to finish uploading its payload to storage, without
+ * hanging if the upload never completes (for example, because the container was disposed).
+ *
+ * @param handle - The handle whose payload upload to wait for. If it is not a locally-created
+ * pending-payload handle (see {@link @fluidframework/core-interfaces#ILocalFluidHandleEvents}), or its
+ * payload is already shared, the returned promise resolves immediately - in either case the payload has
+ * necessarily already been uploaded.
+ * @param abortSignal - Optional signal used to abandon the wait. When it aborts, the returned promise
+ * rejects with the signal's reason. To tie the wait to a container's disposal without leaking a `"disposed"`
+ * listener, prefer composing with {@link withDisposalAbort}, which removes its subscription once the wait
+ * settles:
+ * ```ts
+ * await withDisposalAbort(container, (signal) => waitForPayloadUploaded(handle, signal));
+ * ```
+ *
+ * @remarks
+ * Resolves when the handle emits {@link @fluidframework/core-interfaces#ILocalFluidHandleEvents.payloadUploaded}
+ * (or transitions straight to shared), and rejects if it emits
+ * {@link @fluidframework/core-interfaces#ILocalFluidHandleEvents.payloadShareFailed}.
+ *
+ * There is no queryable "uploaded" state, so this observes the _next_ upload completion. Call it before the
+ * payload can finish uploading - for example, immediately after creating the handle and before storing it
+ * in a DDS (which begins the upload) - otherwise the `payloadUploaded` event may already have fired, and if
+ * the container is not yet connected `payloadShared` will not fire either, leaving the wait pending until it
+ * is aborted.
+ * @legacy @beta
+ */
+export async function waitForPayloadUploaded(
+	handle: IFluidHandle,
+	abortSignal?: AbortSignal,
+): Promise<void> {
+	if (!isLocalFluidHandle(handle) || handle.payloadState === "shared") {
+		return;
+	}
+	await waitForEvent(handle.events, ["payloadUploaded", "payloadShared"], {
+		abortSignal,
+		rejectOn: ["payloadShareFailed"],
+	});
+}
+
 /**
  * Encodes the given IFluidHandle into a JSON-serializable form,
  * @param handle - The IFluidHandle to serialize.
