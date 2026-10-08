@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import {
 	LoggingError,
 	TelemetryDataTag,
@@ -20,7 +19,12 @@ import { TypeSystem } from "@sinclair/typebox/system";
 import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
-import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
+import {
+	type Brand,
+	brandedNumberType,
+	type JsonCompatibleReadOnly,
+	TreeValueSchema,
+} from "../util/index.js";
 
 /**
  * Kind of failure reported across the sandbox boundary.
@@ -262,12 +266,6 @@ const RegisteredBufferPlaceholder = TypeSystem.Type<BufferPlaceholder>(
 )();
 
 /**
- * Treats Fluid handles as opaque leaves during {@link TreePayloadVocabulary} validation.
- */
-const LocalHandle = TypeSystem.Type<IFluidHandle>("Sandbox.LocalHandle", (_schema, value) =>
-	isFluidHandle(value),
-)();
-/**
  * Restricts payload records to null prototypes and excludes registered {@link BufferPlaceholder} identities.
  * {@link TreePayloadVocabulary} separately validates property values.
  */
@@ -284,16 +282,12 @@ const NullPrototypeRecord = TypeSystem.Type<Record<string, unknown>>(
 
 /**
  * The value vocabulary of decoded tree payloads, not their codec-specific structure.
- * {@link LocalHandle} must precede {@link NullPrototypeRecord} so validation treats handles as opaque leaves.
+ * {@link TreeValueSchema} must precede {@link NullPrototypeRecord} so validation treats handles as opaque leaves.
  */
 const TreePayloadVocabulary = Type.Recursive((Self) =>
 	Type.Union([
-		LocalHandle,
-		Type.Null(),
+		TreeValueSchema,
 		Type.Undefined(),
-		Type.Boolean(),
-		Type.Number(),
-		Type.String(),
 		Type.Array(Self),
 		Type.Intersect([NullPrototypeRecord, Type.Record(Type.String(), Self)]),
 	]),

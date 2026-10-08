@@ -12,6 +12,8 @@ import { currentVersion, type CodecWriteOptions } from "../../codec/index.js";
 import { TreeStoredSchemaRepository, type ChangeEncodingContext } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
+import { markFieldBatchCodecJsonCompatible } from "../../feature-libraries/chunked-forest/codec/codecs.js";
+// eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { uncompressedEncodeV1 } from "../../feature-libraries/chunked-forest/codec/uncompressedEncode.js";
@@ -52,11 +54,11 @@ describe("sharedTreeChangeCodec", () => {
 	useSnapshotDirectory("sharedTreeChangeCodec");
 
 	// Dummy FieldBatchCodec codec which asserts when encoding or decoding.
-	const failFieldBatchCodec: FieldBatchCodec = {
+	const failFieldBatchCodec: FieldBatchCodec = markFieldBatchCodecJsonCompatible({
 		encode: (): EncodedFieldBatchV1OrV2 => assert.fail(),
 		decode: (): FieldBatch => assert.fail(),
 		writeVersion: FieldBatchFormatVersion.v2,
-	};
+	});
 
 	it("codec schema snapshot", () => {
 		const modularChangeCodecs = makeModularChangeCodecFamily(
@@ -107,7 +109,7 @@ describe("sharedTreeChangeCodec", () => {
 	});
 
 	it("passes down the context's schema to the fieldBatchCodec", () => {
-		const dummyFieldBatchCodec: FieldBatchCodec = {
+		const dummyFieldBatchCodec: FieldBatchCodec = markFieldBatchCodecJsonCompatible({
 			encode: (
 				data: FieldBatch,
 				context: FieldBatchEncodingContext,
@@ -125,7 +127,7 @@ describe("sharedTreeChangeCodec", () => {
 				);
 			},
 			writeVersion: FieldBatchFormatVersion.v2,
-		};
+		});
 		const modularChangeCodecs = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
 			testRevisionTagCodec,

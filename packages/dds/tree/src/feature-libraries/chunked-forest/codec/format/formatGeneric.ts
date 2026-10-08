@@ -6,6 +6,7 @@
 import * as Type from "@sinclair/typebox";
 import type { Static, TSchema } from "@sinclair/typebox";
 
+import { FluidSerializableReadOnlySchema } from "../../../../util/index.js";
 import type { FieldBatchFormatVersion } from "./versions.js";
 
 /**
@@ -34,7 +35,7 @@ const EncodedFieldBatchBase = Type.Object(
 		 * Top level array is list of field from batch.
 		 * Inner are TreeValues mixed with indexes into "shapes" and nested arrays where lengths are needed.
 		 */
-		data: Type.Array(Type.Array(Type.Any())),
+		data: Type.Array(Type.Array(FluidSerializableReadOnlySchema)),
 	},
 	{ additionalProperties: false },
 );

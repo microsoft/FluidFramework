@@ -7,6 +7,7 @@ import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
+import { TreeValueSchema } from "../../../../util/index.js";
 
 import { Count, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 
@@ -94,7 +95,7 @@ export enum SpecialField {
  */
 export const EncodedValueShape = Type.Union([
 	Type.Boolean(),
-	Type.Array(Type.Any(), { minItems: 1, maxItems: 1 }),
+	Type.Array(TreeValueSchema, { minItems: 1, maxItems: 1 }),
 	Type.Enum(SpecialField),
 	// TODO: support delta encoding and/or special node identifier handling
 	// EncodedCounter,
