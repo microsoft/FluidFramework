@@ -403,7 +403,6 @@ export { asAlpha, asBeta } from "./api.js";
 export {
 	PlainText,
 	FormattedText,
-	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";
