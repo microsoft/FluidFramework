@@ -565,9 +565,11 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	const calculatedStorageName =
 		initialUpload && storageName
 			? storageName
-			: summaryAccessContext !== undefined
+			: summaryAccessContext?.isEphemeralContainer === true
 			? summaryAccessContext.storageName
-			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
+			: summaryAccessContext?.storageName ??
+			  (await storageNameRetriever?.get(tenantId, documentId)) ??
+			  customData?.storageName;
 	return new RestGitService(
 		details.storage,
 		writeToExternalStorage,

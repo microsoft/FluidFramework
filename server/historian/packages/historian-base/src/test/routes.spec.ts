@@ -35,8 +35,16 @@ const defaultCache = new TestCache();
 const createTestProvider = (
 	reuseCustomerAccessTokenForSummaryOwnership = false,
 	ignoreEphemeralFlag = true,
-): nconf.Provider =>
-	new nconf.Provider({}).defaults({
+	enforceServerGeneratedDocumentId = false,
+): nconf.Provider => {
+	const provider = new nconf.Provider({}).defaults({
+		...(enforceServerGeneratedDocumentId
+			? {
+					alfred: {
+						enforceServerGeneratedDocumentId: true,
+					},
+			  }
+			: {}),
 		auth: {
 			maxTokenLifetimeSec: 1000000,
 			enableTokenExpiration: true,
@@ -49,6 +57,8 @@ const createTestProvider = (
 			reuseCustomerAccessTokenForSummaryOwnership,
 		},
 	});
+	return provider;
+};
 const defaultProvider = createTestProvider();
 const defaultTenantService = new TestTenantService();
 
@@ -1445,7 +1455,7 @@ describe("summary ownership routes", () => {
 	});
 
 	it("serves repeated EC latest and SHA GETs from local access without Alfred", async () => {
-		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
 		const createTime = Date.now();
 		await cache.activateSummaryAccessIfNotDeleted(
 			tenantId,
@@ -1473,8 +1483,37 @@ describe("summary ownership routes", () => {
 		sinon.assert.calledTwice(getSummary);
 	});
 
-	it("denies deleted EC access before serving a cached latest summary", async () => {
+	it("uses Alfred when document IDs are not guaranteed to be server generated", async () => {
 		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		const createTime = Date.now();
+		await cache.activateSummaryAccessIfNotDeleted(
+			tenantId,
+			documentId,
+			createTime,
+			createTime + 24 * 60 * 60 * 1000,
+		);
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			createTime,
+			isEphemeralContainer: true,
+		});
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.calledOnce(getSummary);
+	});
+
+	it("denies deleted EC access before serving a cached latest summary", async () => {
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
 		await cache.set(`${tenantId}:${documentId}:summary:container`, {
 			id: "cached-deleted-summary",
 			trees: [],
@@ -1514,6 +1553,27 @@ describe("summary ownership routes", () => {
 		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 		sinon.assert.notCalled(readStaticProperties);
 		sinon.assert.notCalled(storageNameRetrieverGet);
+		sinon.assert.calledOnce(getSummary);
+	});
+
+	it("uses trusted storage-name fallback when the Alfred DC has no storage name", async () => {
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			storageName: undefined,
+		});
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.calledOnceWithExactly(storageNameRetrieverGet, tenantId, documentId);
 		sinon.assert.calledOnce(getSummary);
 	});
 
@@ -1559,7 +1619,7 @@ describe("summary ownership routes", () => {
 	});
 
 	it("marks EC access deleted before calling GitRest", async () => {
-		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
 		const events: string[] = [];
 		sandbox.stub(documentManager, "readDocument").resolves({
 			...activeDocument,
@@ -1583,7 +1643,7 @@ describe("summary ownership routes", () => {
 	});
 
 	it("does not call GitRest when deleted-state persistence fails", async () => {
-		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
+		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
 		sandbox.stub(documentManager, "readDocument").resolves({
 			...activeDocument,
 			isEphemeralContainer: true,
