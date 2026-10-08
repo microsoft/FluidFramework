@@ -690,28 +690,30 @@ export class TreeCheckout implements ITreeCheckout {
 						return undefined;
 					}
 					const head = this.#transaction.branch.getHead();
-					const path = this.tryGetRevertPath(revision);
+					const pathResult = this.tryGetRevertPath(revision);
+					if (pathResult.type !== "success") {
+						return undefined;
+					}
+					const path = pathResult.commitsToUndo;
 					let wasUsed = false;
-					return Array.isArray(path)
-						? (options) => {
-								if (wasUsed) {
-									throw new UsageError(
-										"The same `revertTo` method cannot be called more than once. Access it on the commit metadata before each call.",
-									);
-								}
-								wasUsed = true;
-								if (
-									!canRevert() ||
-									this.#transaction.branch.getHead() !== head ||
-									path.some((commit) => commit.wasTrimmed)
-								) {
-									throw new UsageError(
-										"The target branch has changed since `revertTo` was requested. Avoid retaining references directly to the `revertTo` property.",
-									);
-								}
-								this.revertToCommit(revisionString, path, options);
-							}
-						: undefined;
+					return (options) => {
+						if (wasUsed) {
+							throw new UsageError(
+								"The same `revertTo` method cannot be called more than once. Access it on the commit metadata before each call.",
+							);
+						}
+						wasUsed = true;
+						if (
+							!canRevert() ||
+							this.#transaction.branch.getHead() !== head ||
+							path.some((commit) => commit.wasTrimmed)
+						) {
+							throw new UsageError(
+								"The target branch has changed since `revertTo` was requested. Avoid retaining references directly to the `revertTo` property.",
+							);
+						}
+						this.revertToCommit(revisionString, path, options);
+					};
 				},
 			);
 		}
@@ -1625,15 +1627,15 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 		let commitsToUndo = path;
 		if (commitsToUndo === undefined) {
-			const pathOrError = this.tryGetRevertPath(revision);
-			if (typeof pathOrError === "string") {
+			const pathResult = this.tryGetRevertPath(revision);
+			if (pathResult.type === "schemaChange") {
 				throw new UsageError(
-					`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${pathOrError}.`,
+					`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${pathResult.revision}.`,
 				);
-			} else if (pathOrError === undefined) {
+			} else if (pathResult.type === "targetNotFound") {
 				throw new UsageError(`No commit found with revision: ${revisionString}`);
 			}
-			commitsToUndo = pathOrError;
+			commitsToUndo = pathResult.commitsToUndo;
 		}
 		if (!hasSome(commitsToUndo)) {
 			return; // The target commit is already the head of the branch, so there is nothing to revert.
@@ -1653,13 +1655,16 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
-	 * Returns the commits that came after the target commit, from oldest to newest.
-	 * If a schema change is encountered before reaching the target commit, returns the revision id of the commit where the schema changed.
-	 * Otherwise, if the target commit is not found, returns `undefined`.
+	 * Returns a result containing the commits after the target commit, from oldest to newest.
+	 * If a schema change is encountered before reaching the target commit, the result identifies that commit.
+	 * Otherwise, the result indicates that the target commit was not found.
 	 */
 	private tryGetRevertPath(
 		revision: RevisionTag,
-	): GraphCommit<SharedTreeChange>[] | StableId | undefined {
+	):
+		| { readonly type: "success"; readonly commitsToUndo: GraphCommit<SharedTreeChange>[] }
+		| { readonly type: "schemaChange"; readonly revision: StableId }
+		| { readonly type: "targetNotFound" } {
 		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
 		let schemaChangeRevision: StableId | undefined;
 		if (
@@ -1678,9 +1683,11 @@ export class TreeCheckout implements ITreeCheckout {
 				return false;
 			}) === undefined
 		) {
-			return undefined;
+			return { type: "targetNotFound" };
 		}
-		return schemaChangeRevision ?? commitsToUndo;
+		return schemaChangeRevision === undefined
+			? { type: "success", commitsToUndo }
+			: { type: "schemaChange", revision: schemaChangeRevision };
 	}
 
 	private rebase(view: UntypedTreeView): void {

@@ -660,18 +660,25 @@ describe("custom commit metadata", () => {
 	});
 
 	describe("revertTo", () => {
-		it("attaches metadata to the commit it produces", () => {
-			const view = createView();
-			const commit = view.branchHistory.getHead();
-			assert(commit !== undefined);
+		for (const api of ["revision", "commit metadata"] as const) {
+			it(`attaches metadata to the commit it produces through the ${api} API`, () => {
+				const view = createView();
+				const commit = view.branchHistory.getHead();
+				assert(commit !== undefined);
 
-			view.root.insertAtEnd("a");
-			assert(commit.revertTo !== undefined);
-			commit.revertTo({ customMetadata: { tag: "the-revert" } });
+				view.root.insertAtEnd("a");
+				const options = { customMetadata: { tag: "the-revert" } };
+				if (api === "revision") {
+					view.revertTo(commit.revision, options);
+				} else {
+					assert(commit.revertTo !== undefined);
+					commit.revertTo(options);
+				}
 
-			assert.deepEqual([...view.root], []);
-			assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
-		});
+				assert.deepEqual([...view.root], []);
+				assert.deepEqual(headMetadata(view.branchHistory), { tag: "the-revert" });
+			});
+		}
 	});
 
 	describe("Persistence", () => {

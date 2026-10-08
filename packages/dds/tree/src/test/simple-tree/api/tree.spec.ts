@@ -939,6 +939,27 @@ describe("simple-tree tree", () => {
 			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
 		});
 
+		it("rejects a saved revert method after an ordinary edit while allowing a fresh method", () => {
+			const view = getView(new TreeViewConfiguration({ schema: schema.number }));
+			view.initialize(1);
+			const commit = view.branchHistory.getHead();
+			assert(commit !== undefined);
+			const revertTo = commit.revertTo;
+			assert(revertTo !== undefined);
+
+			view.root = 2;
+
+			const freshRevertTo = commit.revertTo;
+			assert(freshRevertTo !== undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
+			assert.equal(view.root, 2);
+			assert.equal(view.branchHistory.length, 2);
+
+			freshRevertTo();
+			assert.equal(view.root, 1);
+			assert.equal(view.branchHistory.length, 3);
+		});
+
 		it("temporarily disallows reverting during a transaction", () => {
 			const view = getView(new TreeViewConfiguration({ schema: schema.number }));
 			view.initialize(1);
