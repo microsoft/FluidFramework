@@ -145,10 +145,10 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
 }
 
 /**
- * Utility function to add extra context to debug assertions messages.
+ * Utility function to add extra context to debug assertion messages.
  * @param prefixString - The prefix to add to the debug assertion message.
- * @param predicateOutput - The output of the predicate function, either true, a string, or an object with a toString method describing the failure.
- * @returns The debug assertion message with the added prefix.
+ * @param predicateOutput - The output of the predicate function: either `true` or an object describing the failure.
+ * @returns `true` when `predicateOutput` is `true`; otherwise, the failure description with the added prefix.
  * @example
  * ```ts
  * function computeBaz(foo: Thing, bar: Thing) {
