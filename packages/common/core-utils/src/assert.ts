@@ -145,6 +145,33 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
 }
 
 /**
+ * Utility function to add extra context to debug assertions messages.
+ * @param prefixString - The prefix to add to the debug assertion message.
+ * @param predicateOutput - The output of the predicate function, either true, a string, or an object with a toString method describing the failure.
+ * @returns The debug assertion message with the added prefix.
+ * @example
+ * ```ts
+ * function computeBaz(foo: Thing, bar: Thing) {
+ *     debugAssert(() => prefix("Malformed foo in computeBaz:", validateThing(foo)));
+ *     debugAssert(() => prefix("Malformed bar in computeBaz:", validateThing(bar)));
+ *     // ...
+ * }
+ * ```
+ * @internal
+ */
+export function prefix(
+	prefixString: string,
+	predicateOutput: true | { toString(): string },
+): true | string {
+	const result = predicateOutput;
+	if (result === true) {
+		return true;
+	}
+	const innerMessage = result.toString();
+	return `${prefixString} ${innerMessage}`;
+}
+
+/**
  * Asserts that can be conditionally enabled in debug/development builds but will be optimized out of production builds.
  *
  * Enabled when {@link nonProductionConditionalsIncluded} is true.
@@ -163,6 +190,8 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
  *
  * Apps (or other performance sensitive scenarios) packaged in a way that does not {@link nonProductionConditionalsIncluded|skip non-production code}
  * can use the same approaches to disable these asserts to reduce performance overhead.
+ *
+ * See {@link prefix} for adding extra context to debug assertion messages.
  *
  * @privateRemarks
  * This design was chosen to accomplish two main goals:
