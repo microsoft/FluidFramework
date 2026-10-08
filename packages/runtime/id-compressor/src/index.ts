@@ -13,6 +13,7 @@ export {
 	serializeIdCompressor,
 	toIdCompressorWithCore,
 } from "./idCompressor.js";
+export { SerializationVersion } from "./types/index.js";
 export { type FinalCompressedId, isFinalId } from "./identifiers.js";
 export {
 	createSessionId,
@@ -21,14 +22,19 @@ export {
 	isStableId,
 } from "./utilities.js";
 export type {
-	IIdCompressorCore,
-	IIdCompressor,
-	SerializedIdCompressor,
-	SerializedIdCompressorWithOngoingSession,
-	SerializedIdCompressorWithNoSession,
-	SessionSpaceCompressedId,
-	OpSpaceCompressedId,
-	SessionId,
-	StableId,
 	IdCreationRange,
+	IIdCompressor,
+	IIdCompressorCore,
+	IdCompressorEvents,
+	OpSpaceCompressedId,
+	ParentShardSynchronizationToken,
+	SerializedIdCompressor,
+	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
+	SerializedIdCompressorShard,
+	SessionId,
+	SessionSpaceCompressedId,
+	ShardSynchronizationToken,
+	ShardToken,
+	StableId,
 } from "./types/index.js";

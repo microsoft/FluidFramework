@@ -653,9 +653,6 @@ export class SharedDirectory
 		return currentSubDir;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 */
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
@@ -676,14 +673,8 @@ export class SharedDirectory
 		this.submitLocalMessage(op, localOpMetadata);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 */
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
-	 */
 	protected override reSubmitCore(
 		content: unknown,
 		localOpMetadata: DirectoryLocalOpMetadata,
@@ -694,9 +685,6 @@ export class SharedDirectory
 		handler.resubmit(message, localOpMetadata);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const data = await readAndParse(storage, snapshotFileName);
 		const newFormat = data as IDirectoryNewStorageFormat;
@@ -819,9 +807,6 @@ export class SharedDirectory
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
-	 */
 	protected override rollback(
 		content: unknown,
 		localOpMetadata: DirectoryLocalOpMetadata,
@@ -979,9 +964,6 @@ export class SharedDirectory
 		});
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-	 */
 	protected applyStashedOp(op: unknown): void {
 		const directoryOp = op as IDirectoryOperation;
 		const dir = this.getWorkingDirectory(directoryOp.path);
@@ -1194,16 +1176,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return this.optimisticallyHas(key);
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.get}
-	 */
 	public get<T = unknown>(key: string): T | undefined {
 		return this.getOptimisticValue(key) as T | undefined;
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.set}
-	 */
 	public set<T = unknown>(key: string, value: T): this {
 		this.throwIfDisposed();
 		// Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
@@ -1281,16 +1257,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return this;
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.countSubDirectory}
-	 */
 	public countSubDirectory(): number {
 		return [...this.subdirectories()].length;
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.createSubDirectory}
-	 */
 	public createSubDirectory(subdirName: string): IDirectory {
 		this.throwIfDisposed();
 		// Undefined/null subdirectory names can't be serialized to JSON in the manner we currently snapshot.
@@ -1373,25 +1343,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			: { seq: 0, clientSeq: ++this.localCreationSeq };
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.getSubDirectory}
-	 */
 	public getSubDirectory(subdirName: string): IDirectory | undefined {
 		this.throwIfDisposed();
 		return this.getOptimisticSubDirectory(subdirName);
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.hasSubDirectory}
-	 */
 	public hasSubDirectory(subdirName: string): boolean {
 		this.throwIfDisposed();
 		return this.getOptimisticSubDirectory(subdirName) !== undefined;
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.deleteSubDirectory}
-	 */
 	public deleteSubDirectory(subdirName: string): boolean {
 		this.throwIfDisposed();
 
@@ -1431,9 +1392,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return true;
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.subdirectories}
-	 */
 	public subdirectories(): IterableIterator<[string, IDirectory]> {
 		this.throwIfDisposed();
 
@@ -1472,9 +1430,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return orderedSubdirs[Symbol.iterator]();
 	}
 
-	/**
-	 * {@inheritDoc IDirectory.getWorkingDirectory}
-	 */
 	public getWorkingDirectory(relativePath: string): IDirectory | undefined {
 		this.throwIfDisposed();
 		return this.directory.getWorkingDirectory(this.makeAbsolute(relativePath));

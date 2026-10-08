@@ -212,16 +212,10 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		);
 	}
 
-	/**
-	 * {@inheritDoc ISerializableInterval.getIntervalId}
-	 */
 	public getIntervalId(): string {
 		return this.#id;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.compare}
-	 */
 	public compare(b: SequenceInterval) {
 		const startResult = this.compareStart(b);
 		if (startResult === 0) {
@@ -244,9 +238,6 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		}
 	}
 
-	/**
-	 * {@inheritDoc IInterval.compareStart}
-	 */
 	public compareStart(b: SequenceInterval) {
 		this.verifyNotDispose();
 
@@ -259,9 +250,6 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		return dist;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.compareEnd}
-	 */
 	public compareEnd(b: SequenceInterval): number {
 		this.verifyNotDispose();
 
@@ -274,9 +262,6 @@ export class BaseSequenceInterval implements SequenceInterval, ISerializableInte
 		return dist;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.overlaps}
-	 */
 	public overlaps(b: SequenceInterval) {
 		this.verifyNotDispose();
 
@@ -311,9 +296,6 @@ export class SequenceIntervalClass
 		properties: PropertySet;
 	} = { properties: createMap<any>() };
 
-	/**
-	 * {@inheritDoc ISerializableInterval.properties}
-	 */
 	public override get properties(): Readonly<PropertySet> {
 		this.verifyNotDispose();
 		return this.#props.properties;
@@ -410,9 +392,6 @@ export class SequenceIntervalClass
 		}
 	}
 
-	/**
-	 * {@inheritDoc ISerializableInterval.serialize}
-	 */
 	public serialize(): ISerializedInterval {
 		this.verifyNotDispose();
 
@@ -456,9 +435,6 @@ export class SequenceIntervalClass
 		} satisfies SerializedIntervalDelta;
 	}
 
-	/**
-	 * {@inheritDoc IInterval.clone}
-	 */
 	public clone(): SequenceIntervalClass {
 		this.verifyNotDispose();
 

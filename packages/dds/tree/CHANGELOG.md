@@ -1,5 +1,106 @@
 # @fluidframework/tree
 
+## 3.4.0
+
+### Minor Changes
+
+- Add experimental SharedTree sandboxing APIs ([#28382](https://github.com/microsoft/FluidFramework/pull/28382)) [e41dc04d41](https://github.com/microsoft/FluidFramework/commit/e41dc04d41d1cb21ccd48a2a1b44d817f1a33c0c)
+
+  The new alpha `Sandboxing.createHost` and `Sandboxing.createGuest` APIs synchronize a SharedTree [`ViewableTree`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface) across a `MessagePort`.
+  The Host remains connected to Fluid services while the Guest exposes a normal schema-aware tree view on the other side of the message channel.
+
+  > [!IMPORTANT]
+  > To use Sandboxing, you must set the container runtime's [`oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature) option to `"3.4.0"` or later.
+
+  ```typescript
+  import { asBeta } from "@fluidframework/tree/beta";
+  import { FormatValidatorBasic, Sandboxing } from "@fluidframework/tree/alpha";
+
+  // Create the application-owned view that remains connected to Fluid services.
+  const hostView = asBeta(tree.viewWith(config));
+
+  // Create the message channel that crosses the sandbox boundary.
+  const channel = new MessageChannel();
+
+  // Connect the Host endpoint to the collaborative tree.
+  const host = Sandboxing.createHost({ main: hostView, port: channel.port1 });
+
+  // Create the independent Guest tree on the other side of the channel.
+  const guest = await Sandboxing.createGuest({
+    port: channel.port2,
+    treeOptions: { jsonValidator: FormatValidatorBasic },
+  });
+
+  // Open a schema-aware view for application code running in the sandbox.
+  const guestView = guest.tree.viewWith(config);
+  ```
+
+- Add an alpha incremental-summary field property ([#28285](https://github.com/microsoft/FluidFramework/pull/28285)) [5d1392bb81](https://github.com/microsoft/FluidFramework/commit/5d1392bb8170cb3dbdc6745b8e01227a20a4d75f)
+
+  The new alpha `summarizeIncrementally` property on [`FieldPropsAlpha`](https://fluidframework.com/docs/api/tree/fieldpropsalpha-interface) marks a field as an incremental-summary boundary without requiring direct use of allowed-types metadata or the [`incrementalSummaryHint`](https://fluidframework.com/docs/api/tree/#incrementalsummaryhint-variable) symbol.
+  This property is the preferred way to configure incremental summarization.
+  [`SchemaFactoryAlpha.requiredRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#requiredrecursive-property) and [`optionalRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#optionalrecursive-property) provide the same field configuration for recursive allowed types with relaxed compile-time constraints.
+  The [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property) and [`stagedOptionalRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptionalrecursive-property) field constructors also accept this option.
+
+  ```typescript
+  const sf = new SchemaFactoryAlpha("example");
+
+  class Document extends sf.objectAlpha("Document", {
+    sections: sf.required(sf.map(Section), { summarizeIncrementally: true }),
+  }) {}
+  ```
+
+## 3.3.0
+
+### Minor Changes
+
+- Bug fix: revert preconditions no longer cause document corruption and other errors ([#28317](https://github.com/microsoft/FluidFramework/pull/28317)) [b4384d78657](https://github.com/microsoft/FluidFramework/commit/b4384d786575a2588b43df420d935ab749008a95)
+
+  Before this release, when a SharedTree client specified a [constraint](https://fluidframework.com/docs/data-structures/tree/transactions#constraints) as a [precondition for a revert](https://fluidframework.com/docs/api/fluid-framework/transactioncallbackstatusalpha-typealias) and (whether or not a revert was performed) such a constraint was violated,
+  that client could later error during the rebasing of its shared branches (when processing peer changes) or local branches
+  and was liable to generate invalid edits that would cause document corruption in the meantime.
+
+- Preserve custom commit metadata when applying serialized changes ([#28330](https://github.com/microsoft/FluidFramework/pull/28330)) [89dc7355be6](https://github.com/microsoft/FluidFramework/commit/89dc7355be6e83d18d1a02a061e9aa0987844b7a)
+
+  Changes returned by `LocalChangeMetadata.getChange()` now include the commit's custom metadata, including metadata from nested transactions.
+  Applying these changes to another view preserves that metadata in its branch history.
+
+- Reject reverts across schema changes ([#28320](https://github.com/microsoft/FluidFramework/pull/28320)) [ca6f67c1218](https://github.com/microsoft/FluidFramework/commit/ca6f67c12187c5ee423cbc2387b18e142869f015)
+
+  [`UntypedTreeViewAlpha.revertTo()`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface#revertto-methodsignature) now throws a usage error if any commit being reverted contains a schema change.
+  The operation leaves the document unchanged, preserving transaction atomicity for commits that contain both schema and data changes.
+  You can still revert data changes made after a schema upgrade by targeting the revision of that upgrade or a later revision.
+
+- createIndependentTreeAlpha no longer has the unused TSchema type parameter ([#28349](https://github.com/microsoft/FluidFramework/pull/28349)) [071fa2a9008](https://github.com/microsoft/FluidFramework/commit/071fa2a90080b9e8996a6dbe86c183dea6815aeb)
+
+  The unused `TSchema` type parameter has been removed from `createIndependentTreeAlpha`.
+  Calls that explicitly supply a type argument to `createIndependentTreeAlpha` must remove it.
+
+  `createIndependentTreeBeta` keeps its deprecated type parameter temporarily for compatibility, but the type parameter continues to have no effect.
+  Callers should omit it.
+
+- Record node property read types now include undefined ([#28163](https://github.com/microsoft/FluidFramework/pull/28163)) [2de794b4a74](https://github.com/microsoft/FluidFramework/commit/2de794b4a74774f3686c65e64b8fee7d7e14e481)
+
+  Reading a property from a record node is now typed as `T | undefined` instead of `T`, matching the existing runtime behavior when the key is absent.
+  Consumers must narrow the result before using it as `T`.
+
+  ```typescript
+  const value = record.foo;
+  if (value !== undefined) {
+    // Use value as T.
+  }
+  ```
+
+  This is a bug fix to the `@beta` record node APIs: the previous typing incorrectly claimed that reading any key would produce a value, which could result in unexpected `undefined` values at runtime.
+
+  Note that this does not change what a record node can store; entries are still always defined.
+  Assigning `undefined` to a key continues to remove that entry, as before.
+
+- Optimize memory use of arrays when using ForestTypeOptimized ([#27386](https://github.com/microsoft/FluidFramework/pull/27386)) [0735ff53d5c](https://github.com/microsoft/FluidFramework/commit/0735ff53d5cf384ce61aef039ab3c9414871fd73)
+
+  [`ForestTypeOptimized`](https://fluidframework.com/docs/api/fluid-framework#foresttypeoptimized-variable) now more efficiently deduplicates structural information for adjacent children in [array nodes](https://fluidframework.com/docs/api/tree/treearraynode-interface) after edits.
+  For arrays of small, uniformly shaped subtrees, such as [`PlainText`](https://fluidframework.com/docs/api/fluid-framework/plaintext-namespace), this reduces fragmentation and can reduce memory use by approximately 60%.
+
 ## 3.2.0
 
 ### Minor Changes

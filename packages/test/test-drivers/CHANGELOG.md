@@ -1,5 +1,13 @@
 # @fluid-private/test-drivers
 
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+Dependency updates only.
+
 ## 3.2.0
 
 Dependency updates only.

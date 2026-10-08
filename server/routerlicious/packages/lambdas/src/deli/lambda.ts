@@ -427,9 +427,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		}
 	}
 
-	/**
-	 * {@inheritDoc IPartitionLambda.handler}
-	 */
 	public handler(rawMessage: IQueuedMessage): undefined {
 		// In cases where we are reprocessing messages we have already checkpointed exit early
 		if (this.logOffset !== undefined && rawMessage.offset <= this.logOffset) {

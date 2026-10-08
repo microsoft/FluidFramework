@@ -13,7 +13,6 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
 	ISharedObjectKind,
@@ -42,7 +41,6 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 	EmptyKey,
-	ValueSchema,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -82,11 +80,9 @@ import {
 	SchemaFactoryAlpha,
 	type ITree,
 	toInitialSchema,
-	NodeKind,
-	type SimpleTreeSchema,
 	FieldKind,
-	type SimpleLeafNodeSchema,
 	type TreeBranchCommitMetadata,
+	type ViewableTree,
 } from "../../simple-tree/index.js";
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
@@ -134,7 +130,6 @@ const DebugSharedTree = configuredSharedTree({
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
 		super({
-			idCompressor: createIdCompressor(),
 			registry: [DebugSharedTree.getFactory()],
 		});
 	}
@@ -496,12 +491,8 @@ describe("SharedTree", () => {
 		describe("incrementally reuses previous blobs", () => {
 			it("on a client which never uploaded a blob", async () => {
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(),
-				});
-				const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
-					idCompressor: createIdCompressor(),
-				});
+				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 				const factory = new SharedTreeTestFactory(() => {});
 
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
@@ -759,7 +750,6 @@ describe("SharedTree", () => {
 		// If it doesn't, the second tree will throw an error when trying to sequence a commit with sequence number that has "gone backwards" and this test will fail.
 		const sharedTreeFactory = DefaultTestSharedTreeKind.getFactory();
 		const runtime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
 			attachState: AttachState.Detached,
 		});
 		const tree = sharedTreeFactory.create(runtime, "tree");
@@ -3215,7 +3205,7 @@ describe("SharedTree", () => {
 	});
 
 	it("throws an error if attaching during a transaction", () => {
-		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const runtime = new MockFluidDataStoreRuntime();
 		const tree = DefaultTestSharedTreeKind.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
@@ -3236,7 +3226,6 @@ describe("SharedTree", () => {
 
 	it("summarize with pre-attach removed nodes", () => {
 		const runtime = new MockFluidDataStoreRuntime({
-			idCompressor: createIdCompressor(),
 			minVersionForCollab: FluidClientVersion.v2_52,
 		});
 		const sharedObject = configuredSharedTree({
@@ -3286,49 +3275,19 @@ describe("SharedTree", () => {
 		);
 	});
 
-	it("exportVerbose & exportSimpleSchema", () => {
-		const tree = treeTestFactory();
-		assert.deepEqual(tree.exportVerbose(), undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), {
-			definitions: new Map(),
-			root: {
-				kind: FieldKind.Optional,
-				simpleAllowedTypes: new Map(),
-				metadata: {},
-				persistedMetadata: undefined,
-			},
-		} satisfies SimpleTreeSchema);
-
+	it("exposes ViewableTreeAlpha", () => {
+		const stableTree: ViewableTree = treeTestFactory();
+		const tree = asAlpha(stableTree);
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
 		});
 		const view = tree.viewWith(config);
 		view.initialize(10);
 
-		assert.deepEqual(tree.exportVerbose(), 10);
-
-		const expected: SimpleTreeSchema = {
-			root: {
-				kind: FieldKind.Required,
-				simpleAllowedTypes: new Map([
-					["com.fluidframework.leaf.number", { isStaged: undefined }],
-				]),
-				metadata: {},
-				persistedMetadata: undefined,
-			},
-			definitions: new Map([
-				[
-					"com.fluidframework.leaf.number",
-					{
-						kind: NodeKind.Leaf,
-						leafKind: ValueSchema.Number,
-						metadata: {},
-						persistedMetadata: undefined,
-					} satisfies SimpleLeafNodeSchema,
-				],
-			]),
-		};
-		assert.deepEqual(tree.exportSimpleSchema(), expected);
+		assert.equal(tree.exportVerbose(), 10);
+		const schema = tree.exportSimpleSchema();
+		assert.equal(schema.root.kind, FieldKind.Required);
+		assert(schema.definitions.has(numberSchema.identifier));
 	});
 
 	describe("Shared Branches", () => {

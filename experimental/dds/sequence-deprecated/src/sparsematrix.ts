@@ -390,9 +390,6 @@ export class SparseMatrixFactory implements IChannelFactory<SparseMatrix> {
 		return SparseMatrixFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
