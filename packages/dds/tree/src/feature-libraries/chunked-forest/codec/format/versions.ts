@@ -32,6 +32,10 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	v2: 2,
 	/**
 	 * Experimental codec with optimizations for text.
+	 * @remarks
+	 * Uses a non-numeric ("text") version on purpose: this format is still experimental and must
+	 * not claim a permanent numbered slot until it is finalized (a numbered version must be
+	 * supported/loadable forever and never tweaked).
 	 */
 	vTextExperimental: "text",
 });
@@ -91,6 +95,16 @@ export const EncodedFieldBatchVTextExperimental = EncodedFieldBatchGeneric(
  * Used instead of just V2 for clarity.
  */
 export type EncodedFieldBatchV1OrV2 = EncodedFieldBatchV1 | EncodedFieldBatchV2;
+
+/**
+ * Encoded {@link FieldBatch} in any supported {@link FieldBatchFormatVersion}.
+ * @remarks
+ * New format versions should add their batch type to this union.
+ */
+export type EncodedFieldBatchAnyVersion =
+	| EncodedFieldBatchV1
+	| EncodedFieldBatchV2
+	| EncodedFieldBatchVTextExperimental;
 
 /**
  * Encoded data, compatible with both V1 and V2 formats.

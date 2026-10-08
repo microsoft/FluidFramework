@@ -55,9 +55,7 @@ import {
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 import {
 	type EncodedChunkShapeV1,
-	EncodedFieldBatchV1,
-	EncodedFieldBatchV2,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedValueShape,
 	FieldBatchFormatVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -114,19 +112,39 @@ function makeFieldBatchCodec(
 	FieldBatchEncodingContext,
 	FieldBatchDecodingContext
 > {
+	const isExperimental = typeof version === "string";
+	const codec = {
+		encode: (
+			data: FieldBatch,
+			context: FieldBatchEncodingContext,
+		): EncodedFieldBatchAnyVersion => {
+			return compressedEncode(data, encoderContext);
+		},
+		decode: (
+			data: EncodedFieldBatchAnyVersion,
+			fieldBatchContext: FieldBatchDecodingContext,
+		): FieldBatch => {
+			// TODO: consider checking data is in schema.
+			return decode(data, fieldBatchContext.idDecodingContext).map((chunk) => chunk.cursor());
+		},
+		schema: format,
+	};
 	const builder = VersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", [
 		{
+			// VersionDispatchingCodecBuilder requires an entry for lowestMinVersionForCollab.
+			// For experimental (string) versions, provide a stable floor entry to satisfy this
+			// while the experimental entry itself uses minVersionForCollab: undefined.
 			minVersionForCollab: lowestMinVersionForCollab,
-			formatVersion: version,
+			formatVersion: isExperimental ? FieldBatchFormatVersion.v1 : version,
 			codec: {
 				encode: (
 					data: FieldBatch,
 					context: FieldBatchEncodingContext,
-				): EncodedFieldBatchV1OrV2 => {
+				): EncodedFieldBatchAnyVersion => {
 					return compressedEncode(data, encoderContext);
 				},
 				decode: (
-					data: EncodedFieldBatchV1OrV2,
+					data: EncodedFieldBatchAnyVersion,
 					fieldBatchContext: FieldBatchDecodingContext,
 				): FieldBatch => {
 					// TODO: consider checking data is in schema.
@@ -137,8 +155,20 @@ function makeFieldBatchCodec(
 				schema: format,
 			},
 		},
+		...(isExperimental
+			? [{ minVersionForCollab: undefined, formatVersion: version, codec }]
+			: []),
 	]);
-	return builder.build({ ...options, minVersionForCollab: lowestMinVersionForCollab });
+	return builder.build({
+		...options,
+		minVersionForCollab: lowestMinVersionForCollab,
+		...(isExperimental
+			? {
+					writeVersionOverrides: new Map([["TestCompressedFieldBatch", version]]),
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+				}
+			: {}),
+	});
 }
 
 const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);
@@ -146,7 +176,9 @@ const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion
 describe("compressedEncode", () => {
 	// This is a good smoke test for compressedEncode,
 	// but also provides good coverage of anyNodeEncoder, anyFieldEncoder as well as AnyShape which they are built on.
-	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
+	for (const entry of fieldBatchCodecBuilder.registry) {
+		const version = entry.formatVersion;
+		const { schema } = entry.codec({ jsonValidator: FormatValidatorBasic });
 		describe(`schemaless test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-compressed-schemaless/V${version}`);
 			for (const [name, jsonable] of schemalessTestTrees) {
@@ -168,7 +200,7 @@ describe("compressedEncode", () => {
 					const codec = makeFieldBatchCodec(
 						{ jsonValidator: FormatValidatorBasic },
 						context,
-						[EncodedFieldBatchV1, EncodedFieldBatchV2][version - 1],
+						schema,
 						version,
 					);
 					const { encode, decode: decodeContext } = makeTestFieldBatchContexts({
