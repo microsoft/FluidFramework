@@ -94,7 +94,7 @@ export class GuestImplementation implements Sandboxing.Guest {
 			this.codec.receiveBlobResponseError(message.requestId, message.error);
 		},
 		sessionFailure: (message) => {
-			this.session.fail(new Error(message.error), false);
+			this.session.fail(SandboxProtocolError.fromPeerMessage(message, "Host"), false);
 		},
 	});
 
