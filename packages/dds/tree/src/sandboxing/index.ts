@@ -25,6 +25,7 @@ export {
 	makePromiseWithResolvers,
 	normalizeProtocolError,
 	SandboxProtocolError,
+	SandboxFailureCode,
 	sandboxFormatValidator,
 	throwProtocolError,
 	validateTreePayloadVocabulary,
