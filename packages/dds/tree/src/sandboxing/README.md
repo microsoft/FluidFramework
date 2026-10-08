@@ -141,7 +141,7 @@ Ordered delivery places a range before an update that uses its IDs.
 The Fluid runtime, not the sandbox, submits creation ranges for finalization.
 
 Guest disposal does not notify the Host.
-After the application stops or fences the Guest, Host disposal reclaims the child shard from the last accepted Guest progress.
+Host disposal stops receiving Guest messages and reclaims the child shard from the last accepted Guest progress.
 
 ### Message Conversion and Validation
 
@@ -263,38 +263,9 @@ The transport codecs do not implement `IFluidSerializer` or JSON stringification
 
 ### Failure and Lifecycle
 
-[SandboxSessionEndpoint](./session.ts) treats protocol and synchronization failures as terminal.
-It stops local synchronization, rejects pending work, reports the first failure to the application, and notifies the peer when the transport still works.
-A received `sessionFailure` is not echoed.
-Its `code` must be one of the closed `SandboxFailureCode` values.
-The receiver uses a local description for that code and treats it as a peer-reported diagnosis, not a verified cause.
-Both endpoints construct received failures with `SandboxProtocolError.fromPeerMessage`, passing the sending endpoint as `peer`.
-The optional `protocolMessage` contains a `SandboxProtocolError`'s telemetry-safe message.
-The optional `sensitiveMessage` can contain document content that the Guest is authorized to access, but it must not contain credentials or other sensitive Host data outside that authorization.
-The current implementation does not populate `sensitiveMessage` from local errors.
-Nested causes and other error messages remain local.
-Neither diagnostic field is concatenated into the receiving endpoint's telemetry-safe error message.
-When the Host receives a Guest failure, it records the bounded `code` directly, tags `protocolMessage` as `SandboxGuestData`, and tags `sensitiveMessage` as `UserData`.
-It applies these tags regardless of the code or which fields the Guest populates.
-See [Threat Model and Security and Privacy Requirements](#threat-model-and-security-and-privacy-requirements) for the trust and telemetry-tagging rules for these fields.
-Failure reporting runs outside tree event dispatch so it cannot interrupt the main-tree edit that triggered the failure.
-
-The application must stop or fence the Guest, dispose both endpoints, and create a new pair.
-A peer failure notification does not prove that the remote sandbox has been fenced.
-Recovery uses fresh session objects; failed breakers are not reset.
-Host disposal preserves the application-owned main view and changes that the Host already merged.
-Pending Guest edits and unacknowledged Host updates can be lost.
-
-`Guest.dispose()` synchronously stops Guest edits, invalidates its views, releases its checkouts, and disposes its local shard.
-After failure, the authoring checkout can remain available for inspection until disposal, but the application must not edit it.
-Disposing only the Guest does not stop Host updates or release unacknowledged Host snapshots.
-The application must fence an old Guest before Host disposal so an old iframe cannot continue sending messages or restart from its serialized shard.
-If initialization fails after shard creation, the Host reclaims the shard that the Guest did not receive.
-
-The local endpoint wraps the first terminal failure in a session error and retains the original `Error` as its cause.
-This preserves the local distinction between invariant failures, application usage errors, and protocol errors.
-The peer receives only a bounded `SandboxFailureCode` and the optional diagnostic strings in `sessionFailure`.
-It does not receive the original error object, stack, local error type, or telemetry properties.
+[Sandbox sessions](./session.ts) fail (and invoke their `handleProtocolError` callback) when they encounter protocol or synchronization errors.
+To end a session, dispose both endpoints; this cleanup is still required after a failure.
+Recovery requires a new session.
 
 ## Threat Model and Security and Privacy Requirements
 
