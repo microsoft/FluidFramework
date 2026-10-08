@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 // `null` signifies "self". Using undefined doesn't actually JSON round-trip conveniently, since
 // undefined is converted to null when inside an array (which happens in e.g. the moves array).

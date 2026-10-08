@@ -15,7 +15,7 @@ import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommo
 import { StableOrFinalRevisionTag } from "./detachedFieldIndexFormatV2.js";
 import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 
-class MajorCodec implements IJsonCodec<Major> {
+class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag | StableId> {
 	public constructor(
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
@@ -62,9 +62,9 @@ export function makeDetachedNodeToFieldCodecV2(
 	idCompressor: IIdCompressor,
 ): CodecAndSchema<DetachedFieldSummaryData> {
 	const majorCodec = new MajorCodec(revisionTagCodec, idCompressor);
-	return makeDetachedFieldIndexCodecFromMajorCodec(
-		majorCodec,
-		DetachedFieldIndexFormatVersion.v2,
-		StableOrFinalRevisionTag,
-	);
+	return makeDetachedFieldIndexCodecFromMajorCodec<
+		EncodedRevisionTag | StableId,
+		typeof StableOrFinalRevisionTag,
+		typeof DetachedFieldIndexFormatVersion.v2
+	>(majorCodec, DetachedFieldIndexFormatVersion.v2, StableOrFinalRevisionTag);
 }

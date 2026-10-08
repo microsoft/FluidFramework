@@ -1,5 +1,17 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [15.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v15.0.0)
+
+### Update the TypeBox import restriction for TypeBox 1
+
+The TypeBox import restriction now applies to the `typebox` package instead of the retired `@sinclair/typebox` package.
+Both the default and named `Type` aggregates are disallowed because they defeat tree-shaking.
+Import the namespace instead:
+
+```typescript
+import * as Type from "typebox";
+```
+
 ## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
 
 The custom Fluid ESLint rules are now maintained and published as part of this package. Rule names remain unchanged

@@ -12,10 +12,9 @@ import {
 	TelemetryDataTag,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { Static } from "typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
-import { TypeSystem } from "@sinclair/typebox/system";
 
 import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
@@ -255,48 +254,53 @@ export function getTransportBuffer(value: object): ArrayBuffer | undefined {
 /**
  * Recognizes {@link BufferPlaceholder} identities registered in {@link transportBuffers}, rejecting shape lookalikes and raw buffers.
  */
-const RegisteredBufferPlaceholder = TypeSystem.Type<BufferPlaceholder>(
-	"Sandbox.RegisteredBufferPlaceholder",
-	(_schema, value) =>
-		typeof value === "object" && value !== null && transportBuffers.has(value),
-)();
+const RegisteredBufferPlaceholder = Type.Refine(
+	Type.Unsafe<BufferPlaceholder>({ type: "object" }),
+	(value) => typeof value === "object" && value !== null && transportBuffers.has(value),
+);
 
 /**
  * Treats Fluid handles as opaque leaves during {@link TreePayloadVocabulary} validation.
  */
-const LocalHandle = TypeSystem.Type<IFluidHandle>("Sandbox.LocalHandle", (_schema, value) =>
+const LocalHandle = Type.Refine(Type.Unsafe<IFluidHandle>({ type: "object" }), (value) =>
 	isFluidHandle(value),
-)();
+);
 /**
  * Restricts payload records to null prototypes and excludes registered {@link BufferPlaceholder} identities.
  * {@link TreePayloadVocabulary} separately validates property values.
  */
-const NullPrototypeRecord = TypeSystem.Type<Record<string, unknown>>(
-	"Sandbox.NullPrototypeRecord",
-	(_schema, value) => {
+const NullPrototypeRecord = Type.Refine(
+	Type.Unsafe<Record<string, unknown>>({ type: "object" }),
+	(value) => {
 		if (typeof value !== "object" || value === null) {
 			return false;
 		}
 		const prototype: unknown = Object.getPrototypeOf(value);
 		return prototype === null && !transportBuffers.has(value);
 	},
-)();
+);
 
 /**
  * The value vocabulary of decoded tree payloads, not their codec-specific structure.
  * {@link LocalHandle} must precede {@link NullPrototypeRecord} so validation treats handles as opaque leaves.
  */
-const TreePayloadVocabulary = Type.Recursive((Self) =>
-	Type.Union([
-		LocalHandle,
-		Type.Null(),
-		Type.Undefined(),
-		Type.Boolean(),
-		Type.Number(),
-		Type.String(),
-		Type.Array(Self),
-		Type.Intersect([NullPrototypeRecord, Type.Record(Type.String(), Self)]),
-	]),
+const TreePayloadVocabulary = Type.Cyclic(
+	{
+		TreePayloadVocabulary: Type.Union([
+			LocalHandle,
+			Type.Null(),
+			Type.Undefined(),
+			Type.Boolean(),
+			Type.Number(),
+			Type.String(),
+			Type.Array(Type.Ref("TreePayloadVocabulary")),
+			Type.Intersect([
+				NullPrototypeRecord,
+				Type.Record(Type.String(), Type.Ref("TreePayloadVocabulary")),
+			]),
+		]),
+	},
+	"TreePayloadVocabulary",
 );
 // TODO: Verify that existing tree codecs reject restored handles in structural-record positions,
 // including record-node data, without traversing handle internals or invoking getters.
@@ -363,10 +367,10 @@ const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
  * This check does not show that the ID space shard belongs to this Host session.
  * The Host checks that separately before it uses the token.
  */
-const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
-	"Sandbox.IdSpaceShardSessionId",
-	(_schema, value) => typeof value === "string" && isStableId(value),
-)();
+const IdSpaceShardSessionId = Type.Refine(
+	Type.Unsafe<SessionId>({ type: "string" }),
+	(value) => typeof value === "string" && isStableId(value),
+);
 
 /**
  * Validates the ID space shard token that the Guest sends with each change.

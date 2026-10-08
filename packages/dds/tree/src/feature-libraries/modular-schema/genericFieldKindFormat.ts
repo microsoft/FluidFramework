@@ -6,14 +6,14 @@
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-import * as Type from "@sinclair/typebox";
-import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { Static, TSchema } from "typebox";
 
 export const EncodedGenericChange = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,
 ) => Type.Tuple([Type.Number({ minimum: 0, multipleOf: 1 }), tNodeChangeset]);
 
-export type EncodedGenericChange<Schema extends TSchema = TAnySchema> = Static<
+export type EncodedGenericChange<Schema extends TSchema> = Static<
 	ReturnType<typeof EncodedGenericChange<Schema>>
 >;
 
@@ -21,6 +21,6 @@ export const EncodedGenericChangeset = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,
 ) => Type.Array(EncodedGenericChange(tNodeChangeset));
 
-export type EncodedGenericChangeset<Schema extends TSchema = TAnySchema> = Static<
+export type EncodedGenericChangeset<Schema extends TSchema> = Static<
 	ReturnType<typeof EncodedGenericChangeset<Schema>>
 >;

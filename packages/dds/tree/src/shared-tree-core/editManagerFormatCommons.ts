@@ -4,8 +4,8 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import {
 	type CustomMetadataTree,
@@ -42,23 +42,16 @@ export type EncodedCommit<TChangeset> = {
 	readonly customMetadata?: EncodedCustomMetadataTree;
 };
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 // Many of the return types in this module are intentionally derived, rather than explicitly specified.
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
-const CommitBase = <ChangeSchema extends TSchema>(
-	tChange: ChangeSchema,
-	includeCustomMetadata: boolean,
-) =>
-	Type.Object({
-		revision: RevisionTagSchema,
-		change: tChange,
-		sessionId: SessionIdSchema,
-		...(includeCustomMetadata
-			? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
-			: {}),
-	});
+const commitProperties = <ChangeSchema extends TSchema>(tChange: ChangeSchema) => ({
+	revision: RevisionTagSchema,
+	change: tChange,
+	sessionId: SessionIdSchema,
+});
 
 /**
  * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
@@ -67,15 +60,25 @@ const CommitBase = <ChangeSchema extends TSchema>(
 const Commit = <ChangeSchema extends TSchema>(
 	tChange: ChangeSchema,
 	includeCustomMetadata: boolean,
-) => Type.Composite([CommitBase(tChange, includeCustomMetadata)], noAdditionalProps);
+) =>
+	includeCustomMetadata
+		? Type.Object(
+				{
+					...commitProperties(tChange),
+					customMetadata: Type.Optional(EncodedCustomMetadataTree),
+				},
+				noAdditionalProps,
+			)
+		: Type.Object(commitProperties(tChange), noAdditionalProps);
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
 const SeqNumber = brandedNumberType<SeqNumber>({ multipleOf: 1 });
 
-const SequenceId = Type.Object({
+const sequenceIdProperties = {
 	sequenceNumber: SeqNumber,
 	indexInBatch: Type.Optional(Type.Number({ multipleOf: 1, minimum: 0 })),
-});
+};
+const SequenceId = Type.Object(sequenceIdProperties);
 
 export type SequenceId = Static<typeof SequenceId>;
 
@@ -91,7 +94,19 @@ export const SequencedCommit = <ChangeSchema extends TSchema>(
 	tChange: ChangeSchema,
 	includeCustomMetadata: boolean,
 ) =>
-	Type.Composite([CommitBase(tChange, includeCustomMetadata), SequenceId], noAdditionalProps);
+	includeCustomMetadata
+		? Type.Object(
+				{
+					...commitProperties(tChange),
+					...sequenceIdProperties,
+					customMetadata: Type.Optional(EncodedCustomMetadataTree),
+				},
+				noAdditionalProps,
+			)
+		: Type.Object(
+				{ ...commitProperties(tChange), ...sequenceIdProperties },
+				noAdditionalProps,
+			);
 
 /**
  * A branch off of the trunk for use in summaries.

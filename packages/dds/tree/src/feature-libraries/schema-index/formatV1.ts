@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { TObjectOptions, Static } from "typebox";
 
 import { SchemaFormatVersion, schemaFormatV1 } from "../../core/index.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 /**
  * Format for encoding as json.

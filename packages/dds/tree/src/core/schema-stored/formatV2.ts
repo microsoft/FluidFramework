@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { ObjectOptions, Static } from "@sinclair/typebox";
-import * as Type from "@sinclair/typebox";
+import type { TObjectOptions, Static } from "typebox";
+import * as Type from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
@@ -29,10 +29,14 @@ const FieldSchemaFormatBase = Type.Object({
 	metadata: PersistedMetadataFormat,
 });
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+export const FieldSchemaFormat = Type.Interface(
+	[FieldSchemaFormatBase],
+	{},
+	noAdditionalProps,
+);
 
 /**
  * Format for the content of a {@link TreeNodeStoredSchema}.

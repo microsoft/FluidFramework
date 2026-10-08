@@ -6,8 +6,8 @@
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import { fail } from "@fluidframework/core-utils/internal";
-import * as Type from "@sinclair/typebox";
-import type { Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { Static, TSchema } from "typebox";
 
 import {
 	type DecodeErrorHandler,

@@ -7,7 +7,7 @@ import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
-import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
+import type { Static, TSchema } from "typebox";
 
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
@@ -234,7 +234,7 @@ export interface IJsonCodec<
 	TDecodeContext = TEncodeContext,
 > extends IEncoder<TDecoded, TEncoded, TEncodeContext>,
 		IDecoder<TDecoded, TValidate, TDecodeContext> {
-	encodedSchema?: TAnySchema;
+	encodedSchema?: TSchema;
 }
 
 /**
@@ -248,7 +248,7 @@ export interface IJsonCodec<
  */
 export interface JsonCodecPart<
 	TDecoded,
-	TEncodedSchema extends TAnySchema,
+	TEncodedSchema extends TSchema,
 	TEncodeContext = void,
 	TDecodeContext = TEncodeContext,
 > extends IEncoder<TDecoded, Static<TEncodedSchema>, TEncodeContext>,

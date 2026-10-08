@@ -8,6 +8,8 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import fs from "node:fs";
 import path from "node:path";
 
+import type { TSchema } from "typebox";
+
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
@@ -25,7 +27,10 @@ import { testSrcPath } from "../testSrcPath.cjs";
  */
 export const regenerateSnapshots = process.argv.includes("--snapshot");
 
-export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = ""): void {
+export function takeJsonSnapshot(
+	data: JsonCompatibleReadOnly | TSchema,
+	suffix: string = "",
+): void {
 	const dataStr = JSON.stringify(data, undefined, 2);
 	return takeSnapshot(dataStr, `${suffix}.json`, jsonCompare);
 }

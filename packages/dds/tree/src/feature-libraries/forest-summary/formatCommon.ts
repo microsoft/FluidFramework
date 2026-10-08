@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { Static } from "typebox";
 
 import { versionField } from "../../codec/index.js";
 import { schemaFormatV1 } from "../../core/index.js";

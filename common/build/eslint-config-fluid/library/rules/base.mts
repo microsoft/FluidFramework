@@ -393,20 +393,23 @@ export const baseRules = {
 				"Exporting * is not permitted. You should export only named items you intend to export.",
 		},
 		"ForInStatement",
-		// Enforce the granular TypeBox import pattern. The named `Type` export of
-		// `@sinclair/typebox` is the monolithic `TypeBuilder` aggregate; importing
-		// it (`import { Type } from "@sinclair/typebox"`) pulls in every builder
-		// and defeats tree-shaking. Instead, bind the namespace with
-		// `import * as Type from "@sinclair/typebox"` so member access like
-		// `Type.Object(...)` lets the bundler prune unused builders. This can't be
-		// expressed with `no-restricted-imports`/`importNames`, since that also
-		// reports the desired `import * as Type` namespace form; a syntax selector
-		// targets only the named specifier.
+		// Enforce the granular TypeBox import pattern. The named and default `Type`
+		// exports are monolithic aggregates, so importing either pulls in every
+		// builder and defeats tree-shaking. Instead, bind the namespace with
+		// `import * as Type from "typebox"` so member access like `Type.Object(...)`
+		// lets the bundler prune unused builders. This can't be expressed with
+		// `no-restricted-imports`/`importNames`, since that also reports the desired
+		// namespace import form; syntax selectors target only the aggregate forms.
 		{
 			selector:
-				'ImportDeclaration[source.value="@sinclair/typebox"] > ImportSpecifier[imported.name="Type"]',
+				'ImportDeclaration[source.value="typebox"] > ImportSpecifier[imported.name="Type"]',
 			message:
-				'Import the TypeBox `Type` namespace via `import * as Type from "@sinclair/typebox"` instead of the named `Type` value export, which pulls in the entire builder and defeats tree-shaking.',
+				'Import the TypeBox namespace via `import * as Type from "typebox"` instead of the named `Type` aggregate, which defeats tree-shaking.',
+		},
+		{
+			selector: 'ImportDeclaration[source.value="typebox"] > ImportDefaultSpecifier',
+			message:
+				'Import the TypeBox namespace via `import * as Type from "typebox"` instead of the default aggregate, which defeats tree-shaking.',
 		},
 	],
 	"no-sequences": "error",

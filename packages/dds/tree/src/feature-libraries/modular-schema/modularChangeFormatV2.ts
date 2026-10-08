@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { TObjectOptions, Static } from "typebox";
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 const EncodedNoChangeConstraint = Type.Object(
 	{
@@ -18,7 +18,7 @@ const EncodedNoChangeConstraint = Type.Object(
 );
 export type EncodedNoChangeConstraint = Static<typeof EncodedNoChangeConstraint>;
 
-export const EncodedModularChangesetV2 = Type.Composite(
+export const EncodedModularChangesetV2 = Type.Interface(
 	[
 		EncodedModularChangesetV1,
 		Type.Object(
@@ -29,6 +29,7 @@ export const EncodedModularChangesetV2 = Type.Composite(
 			noAdditionalProps,
 		),
 	],
+	{},
 	noAdditionalProps,
 );
 

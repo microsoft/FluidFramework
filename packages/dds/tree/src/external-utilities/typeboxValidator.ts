@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { Static, TSchema } from "@sinclair/typebox";
+import type { Static, TSchema } from "typebox";
 // This export is documented as supported in typebox's documentation.
 // eslint-disable-next-line import-x/no-internal-modules
-import { TypeCompiler } from "@sinclair/typebox/compiler";
+import { Compile } from "typebox/compile";
 
 import { toFormatValidator, type JsonValidator } from "../codec/index.js";
 
@@ -21,7 +21,7 @@ import { toFormatValidator, type JsonValidator } from "../codec/index.js";
  */
 const typeboxValidator: JsonValidator = {
 	compile: <Schema extends TSchema>(schema: Schema) => {
-		const compiledFormat = TypeCompiler.Compile(schema);
+		const compiledFormat = Compile(schema);
 		return {
 			check: (data): data is Static<Schema> => compiledFormat.Check(data),
 		};

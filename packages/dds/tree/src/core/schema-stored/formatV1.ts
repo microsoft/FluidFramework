@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { TObjectOptions, Static } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { type Brand, brandedStringType } from "../../util/index.js";
@@ -51,10 +51,14 @@ const FieldSchemaFormatBase = Type.Object({
 	types: Type.Array(TreeNodeSchemaIdentifierSchema),
 });
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+export const FieldSchemaFormat = Type.Interface(
+	[FieldSchemaFormatBase],
+	{},
+	noAdditionalProps,
+);
 
 /**
  * Persisted version of {@link ValueSchema}.

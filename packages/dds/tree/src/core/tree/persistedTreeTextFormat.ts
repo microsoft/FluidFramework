@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { Static, TSchema } from "typebox";
 
 import { schemaFormatV1 } from "../schema-stored/index.js";
 
@@ -84,9 +84,11 @@ interface EncodedGenericTreeNode<TChild>
 	extends EncodedGenericFieldsNode<TChild>,
 		EncodedNodeData {}
 const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
-	Type.Composite([EncodedGenericFieldsNode(tChild), EncodedNodeData], {
-		additionalProperties: false,
-	});
+	Type.Interface(
+		[EncodedGenericFieldsNode(tChild), EncodedNodeData],
+		{},
+		{ additionalProperties: false },
+	);
 
 /**
  * A tree represented using plain JavaScript objects.
@@ -95,6 +97,11 @@ const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
  * JsonableTrees must not store empty fields.
  */
 export interface EncodedJsonableTree extends EncodedGenericTreeNode<EncodedJsonableTree> {}
-export const EncodedJsonableTree = Type.Recursive((Self) => EncodedGenericTreeNode(Self));
+export const EncodedJsonableTree = Type.Cyclic(
+	{
+		EncodedJsonableTree: EncodedGenericTreeNode(Type.Ref("EncodedJsonableTree")),
+	},
+	"EncodedJsonableTree",
+);
 
 /* eslint-enable @typescript-eslint/explicit-function-return-type */

@@ -11,10 +11,10 @@
  * It may not include some details which impact maintenance of application enforced invariants (like persisted metadata or logic in view schema).
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox";
+import type { TObjectOptions, Static } from "typebox";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 /**
  * The format version for the schema.
