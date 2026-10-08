@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/text-editor",
-	"version": "3.4.0",
+	"version": "3.5.0",
 	"private": true,
 	"description": "Minimal sample of SharedTree/React text editor integration.",
 	"homepage": "https://fluidframework.com",
@@ -45,7 +45,6 @@
 		"@fluidframework/devtools-core": "workspace:~",
 		"@fluidframework/quill-react": "workspace:~",
 		"@fluidframework/react": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"quill-next": "^2.2.6",
 		"react": "^18.3.1",

@@ -55,25 +55,16 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 		super(id, runtime, attributes, "fluid_sharedSummaryBlock_");
 	}
 
-	/**
-	 * {@inheritDoc ISharedSummaryBlock.get}
-	 */
 	public get<T>(key: string): Jsonable<T> {
 		return this.data.get(key) as Jsonable<T>;
 	}
 
-	/**
-	 * {@inheritDoc ISharedSummaryBlock.set}
-	 */
 	public set<T>(key: string, value: Jsonable<T>): void {
 		this.data.set(key, value);
 		// Set this object as dirty so that it is part of the next summary.
 		this.dirty();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const contentsBlob: ISharedSummaryBlockDataSerializable = {};
 		for (const [key, value] of this.data.entries()) {
@@ -82,9 +73,6 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(contentsBlob));
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const contents = await readAndParse<ISharedSummaryBlockDataSerializable>(
 			storage,
@@ -95,9 +83,6 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 */
 	protected onDisconnect(): void {}
 
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {

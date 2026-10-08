@@ -27,7 +27,7 @@ import {
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
-import { FormattedTextDefault } from "../../text/index.js";
+import { FormattedTextDefault } from "./formattedTextDefault.js";
 import { oneFromIterable } from "../../util/index.js";
 
 // Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.

@@ -1,5 +1,55 @@
 # fluid-framework
 
+## 3.4.0
+
+### Minor Changes
+
+- Add experimental SharedTree sandboxing APIs ([#28382](https://github.com/microsoft/FluidFramework/pull/28382)) [e41dc04d41](https://github.com/microsoft/FluidFramework/commit/e41dc04d41d1cb21ccd48a2a1b44d817f1a33c0c)
+
+  The new alpha `Sandboxing.createHost` and `Sandboxing.createGuest` APIs synchronize a SharedTree [`ViewableTree`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface) across a `MessagePort`.
+  The Host remains connected to Fluid services while the Guest exposes a normal schema-aware tree view on the other side of the message channel.
+
+  > [!IMPORTANT]
+  > To use Sandboxing, you must set the container runtime's [`oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature) option to `"3.4.0"` or later.
+
+  ```typescript
+  import { asBeta } from "@fluidframework/tree/beta";
+  import { FormatValidatorBasic, Sandboxing } from "@fluidframework/tree/alpha";
+
+  // Create the application-owned view that remains connected to Fluid services.
+  const hostView = asBeta(tree.viewWith(config));
+
+  // Create the message channel that crosses the sandbox boundary.
+  const channel = new MessageChannel();
+
+  // Connect the Host endpoint to the collaborative tree.
+  const host = Sandboxing.createHost({ main: hostView, port: channel.port1 });
+
+  // Create the independent Guest tree on the other side of the channel.
+  const guest = await Sandboxing.createGuest({
+    port: channel.port2,
+    treeOptions: { jsonValidator: FormatValidatorBasic },
+  });
+
+  // Open a schema-aware view for application code running in the sandbox.
+  const guestView = guest.tree.viewWith(config);
+  ```
+
+- Add an alpha incremental-summary field property ([#28285](https://github.com/microsoft/FluidFramework/pull/28285)) [5d1392bb81](https://github.com/microsoft/FluidFramework/commit/5d1392bb8170cb3dbdc6745b8e01227a20a4d75f)
+
+  The new alpha `summarizeIncrementally` property on [`FieldPropsAlpha`](https://fluidframework.com/docs/api/tree/fieldpropsalpha-interface) marks a field as an incremental-summary boundary without requiring direct use of allowed-types metadata or the [`incrementalSummaryHint`](https://fluidframework.com/docs/api/tree/#incrementalsummaryhint-variable) symbol.
+  This property is the preferred way to configure incremental summarization.
+  [`SchemaFactoryAlpha.requiredRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#requiredrecursive-property) and [`optionalRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#optionalrecursive-property) provide the same field configuration for recursive allowed types with relaxed compile-time constraints.
+  The [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property) and [`stagedOptionalRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptionalrecursive-property) field constructors also accept this option.
+
+  ```typescript
+  const sf = new SchemaFactoryAlpha("example");
+
+  class Document extends sf.objectAlpha("Document", {
+    sections: sf.required(sf.map(Section), { summarizeIncrementally: true }),
+  }) {}
+  ```
+
 ## 3.3.0
 
 ### Minor Changes

@@ -3,92 +3,170 @@
  * Licensed under the MIT License.
  */
 
-import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { isStableId, type SessionId } from "@fluidframework/id-compressor/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import {
+	LoggingError,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { Static } from "@sinclair/typebox";
 // eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
 import { TypeSystem } from "@sinclair/typebox/system";
 
-import { extractJsonValidator } from "../../../codec/index.js";
-import type { RevisionTag } from "../../../core/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import {
-	type Brand,
-	brandedNumberType,
-	type JsonCompatibleReadOnly,
-} from "../../../util/index.js";
+import { extractJsonValidator, unionOptions } from "../codec/index.js";
+import type { RevisionTag } from "../core/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
+import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
- * Session options shared by the Host and Guest endpoints.
+ * Kind of failure reported across the sandbox boundary.
+ * @remarks
+ * This is a fixed set of options instead of free form strings so these values from the Guest
+ * can be included in host telemetry without risk of exposing sensitive data
+ * which a compromised Guest could have included.
+ *
+ * Currently these are just a few rough categories of errors,
+ * but the set can be extended to provide finer grained reporting.
+ *
+ * Each of these has an extended message in {@link sandboxFailureDescriptions}
+ * which can serve as documentation for it.
  */
-export interface SandboxEndpointOptions {
-	/** This endpoint's port in the Host and Guest message channel. */
-	readonly port: MessagePort;
-	/** The endpoint-scoped logger for diagnostic telemetry. */
-	readonly logger?: TelemetryLoggerExt;
-	// TODO: Replace this callback with a `Listenable` event API for session errors and closure.
-	/**
-	 * Reports terminal session failure asynchronously.
-	 * By default, the error is thrown. After a failure, the application must recreate the Host and Guest pair.
-	 */
-	readonly handleProtocolError?: (error: Error) => void;
+export enum SandboxFailureCode {
+	ProtocolViolation = "protocolViolation",
+	ApplicationUsageError = "applicationUsageError",
+	ProcessingFailure = "processingFailure",
 }
+
+/**
+ * Descriptions for {@link SandboxFailureCode} values.
+ */
+export const sandboxFailureDescriptions: Readonly<Record<SandboxFailureCode, string>> = {
+	[SandboxFailureCode.ProtocolViolation]: "Sandbox protocol violation.",
+	[SandboxFailureCode.ApplicationUsageError]: "Invalid sandbox application use.",
+	[SandboxFailureCode.ProcessingFailure]: "Sandbox processing failed.",
+};
 
 /**
  * A violation of the sandbox protocol's data or state requirements.
+ * @remarks
  * Used by either endpoint, including shared validation on send and receive.
  * This identifies the failed contract, not which participant is at fault.
+ * Includes failures reported by a peer that terminate the local session;
+ * see {@link SandboxProtocolError.fromPeerMessage} for constructing such errors.
  *
- * TODO: Ensure we have an established pattern for communicating a telemetry safe portion of the message,
- * and a separate one which might include document contents directly.
+ * On the Host, tag otherwise-unclassified Guest protocol properties as `SandboxGuestData`.
+ * Guest properties that may contain schema or sensitive data require `UserData` tagging.
  */
-export class SandboxProtocolError extends Error {
+export class SandboxProtocolError extends LoggingError {
 	public override readonly name = "SandboxProtocolError";
+
+	public constructor(
+		/**
+		 * A message that is safe to include in telemetry and logs.
+		 * @remarks
+		 * Must not contain {@link TelemetryDataTag.SandboxGuestData | Guest-controlled information},
+		 * nor any other sensitive data which needs tagging.
+		 */
+		safeMessage: string,
+		options?: {
+			readonly telemetryProperties?: ITelemetryBaseProperties;
+			readonly cause?: unknown;
+		},
+	) {
+		super(safeMessage, options?.telemetryProperties);
+		this.cause = options?.cause;
+	}
+
+	/**
+	 * Constructs a local error from a schema-validated peer failure notification.
+	 * Peer-provided diagnostic strings are never used as the local error's message.
+	 *
+	 * @param message - The validated failure notification.
+	 * @param peer - The endpoint that sent the notification, not the receiving endpoint.
+	 */
+	public static fromPeerMessage(
+		message: SessionFailureMessage,
+		peer: "Host" | "Guest",
+	): SandboxProtocolError {
+		const prefix = peer === "Guest" ? "fromGuest" : "fromHost";
+		// The validated code is safe to log, but remains a peer-reported diagnosis.
+		const telemetryProperties: ITelemetryBaseProperties = {
+			[`${prefix}Code`]: message.code,
+		};
+		if (message.protocolMessage !== undefined) {
+			telemetryProperties[prefix] =
+				peer === "Guest"
+					? {
+							tag: TelemetryDataTag.SandboxGuestData,
+							value: message.protocolMessage,
+						}
+					: message.protocolMessage;
+		}
+		if (message.sensitiveMessage !== undefined) {
+			telemetryProperties[`${prefix}Sensitive`] = {
+				tag: TelemetryDataTag.UserData,
+				value: message.sensitiveMessage,
+			};
+		}
+		return new SandboxProtocolError(
+			`The ${peer} reported a sandbox session failure. ${sandboxFailureDescriptions[message.code]}`,
+			{
+				telemetryProperties,
+			},
+		);
+	}
 }
+
+/** Shared wire bounds for nonnegative safe integers. */
+const nonNegativeSafeIntegerOptions = {
+	minimum: 0,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+} as const;
+
+/** An integer from zero through the largest integer JavaScript can represent exactly. */
+const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
+
+/** Shared wire bounds for positive safe integers. */
+const PositiveSafeInteger = Type.Number({
+	minimum: 1,
+	maximum: Number.MAX_SAFE_INTEGER,
+	multipleOf: 1,
+});
 
 /**
  * An index into the Host's table of handles authorized for one Guest.
  * Valid only within the owning session; the brand does not establish runtime authorization.
  */
 export type HandleToken = Brand<number, "sandbox.HandleToken">;
-const HandleToken = brandedNumberType<HandleToken>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const HandleToken = brandedNumberType<HandleToken>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one pending {@link BlobRequestMessage}, independently of its {@link HandleToken}.
  * Allocated by the Guest and echoed by the Host to match a response to its request.
  */
 export type BlobRequestId = Brand<number, "sandbox.BlobRequestId">;
-const BlobRequestId = brandedNumberType<BlobRequestId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const BlobRequestId = brandedNumberType<BlobRequestId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Host branch update and its acknowledgment.
  */
 export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
-const HostUpdateId = brandedNumberType<HostUpdateId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const HostUpdateId = brandedNumberType<HostUpdateId>(nonNegativeSafeIntegerOptions);
+
+/** Identifies a finalized ID creation range sent from the Host to the Guest. */
+export type HostIdRangeId = Brand<number, "sandbox.HostIdRangeId">;
+const HostIdRangeId = brandedNumberType<HostIdRangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Guest change and its acknowledgment.
  */
 export type GuestChangeId = Brand<number, "sandbox.GuestChangeId">;
-const GuestChangeId = brandedNumberType<GuestChangeId>({
-	minimum: 0,
-	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
-});
+const GuestChangeId = brandedNumberType<GuestChangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Wire discriminator for {@link SerializedHandle}. Ordinary records with this value must be escaped.
@@ -130,16 +208,6 @@ const EscapedObject = Type.Object(
 );
 
 /**
- * Recognizes local {@link IFluidHandle} values by {@link fluidHandleSymbol}, without accepting cloneable legacy lookalikes.
- * Only trusted token restoration introduces handles into received data.
- */
-export function isLocalHandle(value: unknown): value is IFluidHandle {
-	// TODO: Remove isFluidHandle's legacy string-property fallback (including test-setup dependencies),
-	// then use it here. That fallback accepts ordinary data that can cross structured clone.
-	return typeof value === "object" && value !== null && fluidHandleSymbol in value;
-}
-
-/**
  * Local placeholder that keeps an {@link ArrayBuffer} out of general schema validation.
  * @remarks
  * Created as a frozen null-prototype record by {@link createBufferPlaceholder}.
@@ -147,9 +215,9 @@ export function isLocalHandle(value: unknown): value is IFluidHandle {
  * Ordinary data with the same property remains ordinary data.
  *
  * Placeholders are not sent over the wire: encoding replaces them with buffers, and receiving creates new placeholders.
- * {@link validateTreePayloadVocabulary} rejects registered placeholders; {@link parseHostGuestMessage} unwraps only validated blob-response fields for application use.
+ * {@link validateTreePayloadVocabulary} rejects registered placeholders; the Guest unwraps only a validated blob-response field for application use.
  */
-interface BufferPlaceholder {
+export interface BufferPlaceholder {
 	/** Describes the placeholder shape; this property alone does not establish buffer identity. */
 	readonly arrayBufferMarker: true;
 }
@@ -163,6 +231,12 @@ const transportBuffers = new WeakMap<object, ArrayBuffer>();
  * Hides a copied transport buffer from schema validation behind an identity-checked {@link BufferPlaceholder}.
  */
 export function createBufferPlaceholder(buffer: ArrayBuffer): BufferPlaceholder {
+	if (Object.getPrototypeOf(buffer) !== ArrayBuffer.prototype) {
+		throw new SandboxProtocolError("Unsupported sandbox transport object.");
+	}
+	if (Reflect.ownKeys(buffer).length > 0) {
+		throw new SandboxProtocolError("Sandbox buffers cannot have custom properties.");
+	}
 	const record: object = Object.create(null);
 	const placeholder = Object.freeze(
 		Object.assign(record, { arrayBufferMarker: true as const }),
@@ -188,10 +262,10 @@ const RegisteredBufferPlaceholder = TypeSystem.Type<BufferPlaceholder>(
 )();
 
 /**
- * Treats handles recognized by {@link isLocalHandle} as opaque leaves during {@link TreePayloadVocabulary} validation.
+ * Treats Fluid handles as opaque leaves during {@link TreePayloadVocabulary} validation.
  */
 const LocalHandle = TypeSystem.Type<IFluidHandle>("Sandbox.LocalHandle", (_schema, value) =>
-	isLocalHandle(value),
+	isFluidHandle(value),
 )();
 /**
  * Restricts payload records to null prototypes and excludes registered {@link BufferPlaceholder} identities.
@@ -230,29 +304,15 @@ const TreePayloadVocabulary = Type.Recursive((Self) =>
 /**
  * TypeBox-backed format validator used by sandbox protocol codecs and trees.
  * @remarks
- * Sandbox validation must not implicitly inherit a SharedTree's configured validator because it may
- * be a no-op and is not configured to enforce the sandbox protocol boundary.
- *
- * This reexporting alias exists to centralize the policy of which format validator is used within the sandbox.
- * Technically, we probably don't need to use this inside the guest, or for validating output from the host,
- * but for now we use it for everything in both.
+ * The sandbox uses the same validator for protocol schemas and tree codecs.
+ * It does not inherit the Host SharedTree's configured validator because that validator can be a no-op
+ * and is not configured to enforce the sandbox protocol boundary.
  */
 export const sandboxFormatValidator = FormatValidatorBasic;
 
 /**
- * The sandbox always enables format validation for handle records and blob messages.
- * @remarks
- * These messages may cross a security boundary,
- * and the validation is an important part of making that robust.
- * To mitigate the risk of accidental omission,
- * the sandbox always enables format validation for these messages.
- * This has a bundle size and performance cost for cases which do not require it.
- * That is an intentional tradeoff.
- *
- * In the future, we could require callers to provide a validator explicitly,
- * allowing alternative implementations or an explicit opt-out for trusted scenarios.
- * Do not implicitly inherit the Host SharedTree's validator:
- * it may be a no-op and is not configured to enforce this security boundary.
+ * The sandbox always validates protocol data, including handle and blob messages.
+ * This policy accepts the bundle-size and runtime cost to prevent accidental omission at the boundary.
  */
 const validator = extractJsonValidator(sandboxFormatValidator);
 const handleTokenValidator = validator.compile(HandleToken);
@@ -297,13 +357,91 @@ const SerializedTreeCommits = Type.Unsafe<readonly JsonCompatibleReadOnly[]>(
 );
 
 /**
+ * Checks the ID format of an ID space shard token received through the port.
+ *
+ * @remarks
+ * This check does not show that the ID space shard belongs to this Host session.
+ * The Host checks that separately before it uses the token.
+ */
+const IdSpaceShardSessionId = TypeSystem.Type<SessionId>(
+	"Sandbox.IdSpaceShardSessionId",
+	(_schema, value) => typeof value === "string" && isStableId(value),
+)();
+
+/**
+ * Validates the ID space shard token that the Guest sends with each change.
+ *
+ * @remarks
+ * The Host uses this token to learn about new Guest IDs before it decodes the change.
+ * A change does not close the Guest session. The Guest can create more IDs after it sends the change.
+ * Therefore, this schema requires `disposed: false`.
+ */
+const GuestIdSpaceShardToken = Type.Object(
+	{
+		/** Identifies the child shard created for this Host and Guest session. */
+		shardId: IdSpaceShardSessionId,
+		/** The child's allocation progress after it encodes the Guest change. */
+		localGenCount: NonNegativeSafeInteger,
+		/** A change cannot request reclamation while the Guest can still create IDs. */
+		disposed: Type.Literal(false),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * Wire representation of {@link @fluidframework/id-compressor/internal#ParentShardSynchronizationToken}.
+ *
+ * @remarks
+ * The Host sends this ID space shard token to the Guest in {@link HostUpdateMessage} and
+ * {@link HostIdRangeMessage}. The Guest applies it to its child compressor before
+ * decoding Host branch commits or finalizing an ID creation range.
+ */
+const ParentIdSpaceShardSyncToken = Type.Object(
+	{
+		/** Distinguishes parent-to-child synchronization from child-to-parent synchronization. */
+		type: Type.Literal("parentIdSpaceShardSyncToken"),
+		/** Identifies the child ID space shard that can apply this token. */
+		shardId: IdSpaceShardSessionId,
+		/** Current parent generation count before a dependent range or change is decoded. */
+		localGenCount: NonNegativeSafeInteger,
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * An {@link @fluidframework/id-compressor/internal#IdCreationRange} already finalized by the Host runtime.
+ *
+ * @remarks
+ * This schema requires a nonempty range; it is not a request to finalize one.
+ */
+const FinalizedIdRange = Type.Object(
+	{
+		/** Identifies the client session that created the range. */
+		sessionId: IdSpaceShardSessionId,
+		/** Creation range already finalized by the Host runtime. */
+		ids: Type.Object(
+			{
+				/** The generation count of the range's first ID. */
+				firstGenCount: PositiveSafeInteger,
+				/** The number of IDs created in the range. */
+				count: PositiveSafeInteger,
+				/** Capacity requested if the range needs a new cluster. */
+				requestedClusterSize: PositiveSafeInteger,
+				/** Pairs of starting generation count and number of local IDs. */
+				localIdRanges: Type.Array(Type.Tuple([PositiveSafeInteger, PositiveSafeInteger])),
+			},
+			{ additionalProperties: false },
+		),
+	},
+	{ additionalProperties: false },
+);
+
+/**
  * Initializes the Guest's copy of the Host main branch.
  */
 export type HostInitializationMessage = Static<typeof HostInitializationMessage>;
 const HostInitializationMessage = Type.Object(
 	{
-		/** Identifies this message as the initial Host branch state. */
-		type: Type.Readonly(Type.Literal("hostInitialization")),
 		/** Identifies the commit represented by the snapshot. */
 		baseRevision: Type.Readonly(SessionRevisionTag),
 		/** Identifies the Host main-branch head produced by replaying `commits`. */
@@ -316,18 +454,25 @@ const HostInitializationMessage = Type.Object(
 		schema: Type.Readonly(SerializedTreePayload),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
+		/**
+		 * Wire string for a {@link @fluidframework/id-compressor/internal#SerializedIdCompressorWithOngoingSession}.
+		 * @remarks
+		 * Envelope validation checks only the string shape. Guest deserialization validates
+		 * the compressor format and confirms it is a child ID space shard.
+		 */
+		idCompressor: Type.Readonly(Type.String()),
 	},
 	{ additionalProperties: false },
 );
 
 /**
- * Advances the Guest's copy of the Host main branch.
+ * A Host-to-Guest transition of the Host's main branch.
+ *
+ * @remarks This can include Host edits, peer edits, and Guest edits merged by the Host.
  */
 export type HostUpdateMessage = Static<typeof HostUpdateMessage>;
 const HostUpdateMessage = Type.Object(
 	{
-		/** Identifies this message as a Host branch update. */
-		type: Type.Readonly(Type.Literal("hostUpdate")),
 		/** Identifies this update and the acknowledgment that completes it. */
 		updateId: Type.Readonly(HostUpdateId),
 		/** Identifies the retained commit after which `commits` replaces the Guest's Host branch. */
@@ -338,6 +483,27 @@ const HostUpdateMessage = Type.Object(
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** Serialized commits after `baseRevision`, in application order. */
 		commits: Type.Readonly(SerializedTreeCommits),
+		/** Parent ID space shard token needed before the Guest decodes commits or revisions. */
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
+	},
+	{ additionalProperties: false },
+);
+
+/**
+ * Sends a newly finalized creation range from the Host to the Guest.
+ *
+ * @remarks The Guest applies it before a dependent {@link HostUpdateMessage}.
+ * The range may have originated with the Host or another client.
+ */
+export type HostIdRangeMessage = Static<typeof HostIdRangeMessage>;
+const HostIdRangeMessage = Type.Object(
+	{
+		/** Sequence number for ranges sent to this Guest. */
+		rangeId: Type.Readonly(HostIdRangeId),
+		/** Synchronizes the Guest's child ID space shard before it finalizes the range. */
+		parentIdSpaceShardSyncToken: Type.Readonly(ParentIdSpaceShardSyncToken),
+		/** The finalized range to apply before dependent Host updates. */
+		range: Type.Readonly(FinalizedIdRange),
 	},
 	{ additionalProperties: false },
 );
@@ -348,8 +514,6 @@ const HostUpdateMessage = Type.Object(
 export type HostUpdateAckMessage = Static<typeof HostUpdateAckMessage>;
 const HostUpdateAckMessage = Type.Object(
 	{
-		/** Identifies this message as a Host update acknowledgment. */
-		type: Type.Readonly(Type.Literal("hostUpdateAck")),
 		/** Identifies the applied Host update. */
 		updateId: Type.Readonly(HostUpdateId),
 	},
@@ -362,8 +526,6 @@ const HostUpdateAckMessage = Type.Object(
 export type GuestChangeMessage = Static<typeof GuestChangeMessage>;
 const GuestChangeMessage = Type.Object(
 	{
-		/** Identifies this message as a Guest-authored change. */
-		type: Type.Readonly(Type.Literal("guestChange")),
 		/** Identifies this change and the acknowledgment that completes it. */
 		changeId: Type.Readonly(GuestChangeId),
 		/** Identifies the Host main-branch head that the Guest had acknowledged when it authored the change. */
@@ -372,6 +534,8 @@ const GuestChangeMessage = Type.Object(
 		trunkRevision: Type.Readonly(SessionRevisionTag),
 		/** The serialized Guest-authored SharedTree change. */
 		change: Type.Readonly(SerializedTreePayload),
+		/** Child ID space shard progress needed by the Host before it can decode the change. */
+		idSpaceShardToken: Type.Readonly(GuestIdSpaceShardToken),
 	},
 	{ additionalProperties: false },
 );
@@ -382,26 +546,11 @@ const GuestChangeMessage = Type.Object(
 export type GuestChangeAckMessage = Static<typeof GuestChangeAckMessage>;
 const GuestChangeAckMessage = Type.Object(
 	{
-		/** Identifies this message as a Guest change acknowledgment. */
-		type: Type.Readonly(Type.Literal("guestChangeAck")),
 		/** Identifies the applied Guest change. */
 		changeId: Type.Readonly(GuestChangeId),
 	},
 	{ additionalProperties: false },
 );
-
-/**
- * A message that the Host and the Guest can send through their shared protocol.
- */
-export type HostGuestMessage =
-	| HostInitializationMessage
-	| HostUpdateMessage
-	| HostUpdateAckMessage
-	| GuestChangeMessage
-	| GuestChangeAckMessage
-	| BlobRequestMessage
-	| BlobResponseMessage
-	| SessionFailureMessage;
 
 /**
  * Terminal notification in either direction. The application must recreate the Host/Guest pair.
@@ -410,22 +559,32 @@ export type HostGuestMessage =
 export type SessionFailureMessage = Static<typeof SessionFailureMessage>;
 const SessionFailureMessage = Type.Object(
 	{
-		type: Type.Literal("sessionFailure"),
-		/** A diagnostic description, not an error object or stack trace. */
-		error: Type.String(),
+		/** A bounded, peer-reported classification. Receivers use their own description. */
+		code: Type.Enum(SandboxFailureCode),
+		/**
+		 * Protocol-only diagnostics. An uncompromised sender must not put schema or sensitive data here.
+		 * The Host treats this as `SandboxGuestData`, regardless of the reported code.
+		 */
+		protocolMessage: Type.Optional(Type.String()),
+		/**
+		 * Potentially sensitive diagnostics.
+		 * May contain document content that the Guest is authorized to access, but must not contain
+		 * credentials or other sensitive Host data outside that authorization.
+		 * Receivers must tag this as `UserData`.
+		 */
+		sensitiveMessage: Type.Optional(Type.String()),
 	},
 	{ additionalProperties: false },
 );
-const sessionFailureValidator = validator.compile(SessionFailureMessage);
 
 /**
  * Guest-to-Host request to resolve an authorized {@link HandleToken} as a blob.
- * The Host returns a {@link BlobResponseMessage} with the same {@link BlobRequestId}.
+ * The Host returns a `blobResponse` or `blobResponseError` member with the same
+ * {@link BlobRequestId}.
  */
 export type BlobRequestMessage = Static<typeof BlobRequestMessage>;
 const BlobRequestMessage = Type.Object(
 	{
-		type: Type.Readonly(Type.Literal("blobRequest")),
 		/** Identifies this pending resolution, independently of the handle token. */
 		requestId: Type.Readonly(BlobRequestId),
 		/** Identifies the handle to resolve in the Host's session-local table. */
@@ -436,14 +595,13 @@ const BlobRequestMessage = Type.Object(
 
 /**
  * Validation representation of a successful Host-to-Guest blob response.
- * Its blob is a registered {@link BufferPlaceholder}, unlike the {@link ArrayBuffer} exposed by {@link BlobResponseMessage}.
+ * Its blob is a registered {@link BufferPlaceholder}.
  */
 const BlobSuccessMessage = Type.Object(
 	{
-		type: Type.Readonly(Type.Literal("blobResponse")),
 		/** Matches the outstanding Guest request. */
 		requestId: Type.Readonly(BlobRequestId),
-		/** Unwrapped by {@link parseHostGuestMessage} only after the response passes validation. */
+		/** Unwrapped by the Guest only after the response passes validation. */
 		blob: Type.Readonly(RegisteredBufferPlaceholder),
 	},
 	{ additionalProperties: false },
@@ -453,7 +611,6 @@ const BlobSuccessMessage = Type.Object(
  */
 const BlobErrorMessage = Type.Object(
 	{
-		type: Type.Readonly(Type.Literal("blobResponse")),
 		/** Matches the outstanding Guest request. */
 		requestId: Type.Readonly(BlobRequestId),
 		/** Error message used to reject the Guest proxy's cached resolution promise. */
@@ -461,92 +618,66 @@ const BlobErrorMessage = Type.Object(
 	},
 	{ additionalProperties: false },
 );
-const blobRequestValidator = validator.compile(BlobRequestMessage);
-const blobResponseValidator = validator.compile(
-	Type.Union([BlobSuccessMessage, BlobErrorMessage]),
+/**
+ * A normalized Host-to-Guest protocol message.
+ *
+ * @remarks
+ * A successful blob response still contains its registered {@link BufferPlaceholder}.
+ * The Guest unwraps that field before passing the response to application-facing logic.
+ */
+export type HostToGuestMessage = Static<typeof hostToGuestMessageSchema>;
+const hostToGuestMessageSchema = Type.Object(
+	{
+		/** Initializes the Guest with a {@link HostInitializationMessage}. */
+		hostInitialization: Type.Optional(HostInitializationMessage),
+		/** Updates the Guest's copy of the Host branch with a {@link HostUpdateMessage}. */
+		hostUpdate: Type.Optional(HostUpdateMessage),
+		/** Sends the Guest a finalized ID range in a {@link HostIdRangeMessage}. */
+		hostIdRange: Type.Optional(HostIdRangeMessage),
+		/** Acknowledges a {@link GuestChangeMessage} with a {@link GuestChangeAckMessage}. */
+		guestChangeAck: Type.Optional(GuestChangeAckMessage),
+		/** Returns the resolved buffer for a {@link BlobRequestMessage}. */
+		blobResponse: Type.Optional(BlobSuccessMessage),
+		/** Reports that the Host could not resolve a {@link BlobRequestMessage}. */
+		blobResponseError: Type.Optional(BlobErrorMessage),
+		/**
+		 * Reports a terminal Host failure to the Guest.
+		 * The Guest stops the session without sending another failure notification.
+		 */
+		sessionFailure: Type.Optional(SessionFailureMessage),
+	},
+	unionOptions,
 );
-const hostInitializationValidator = validator.compile(HostInitializationMessage);
-const hostUpdateValidator = validator.compile(HostUpdateMessage);
-const hostUpdateAckValidator = validator.compile(HostUpdateAckMessage);
-const guestChangeValidator = validator.compile(GuestChangeMessage);
-const guestChangeAckValidator = validator.compile(GuestChangeAckMessage);
 
 /**
- * Application representation of a Host-to-Guest blob response, containing a buffer or an error.
- * The sender supplies an {@link ArrayBuffer}; the receiver obtains one through {@link parseHostGuestMessage} after placeholder validation and unwrapping.
- * The Guest must also match the request ID against its outstanding requests.
+ * A normalized Guest-to-Host protocol message.
  */
-export type BlobResponseMessage =
-	| (Omit<Static<typeof BlobSuccessMessage>, "blob"> & { readonly blob: ArrayBuffer })
-	| Static<typeof BlobErrorMessage>;
+export type GuestToHostMessage = Static<typeof guestToHostMessageSchema>;
+const guestToHostMessageSchema = Type.Object(
+	{
+		/** Acknowledges a {@link HostUpdateMessage} with a {@link HostUpdateAckMessage}. */
+		hostUpdateAck: Type.Optional(HostUpdateAckMessage),
+		/** Sends a Guest-authored change in a {@link GuestChangeMessage}. */
+		guestChange: Type.Optional(GuestChangeMessage),
+		/** Requests that the Host resolve an authorized blob with a {@link BlobRequestMessage}. */
+		blobRequest: Type.Optional(BlobRequestMessage),
+		/**
+		 * Reports a terminal Guest failure to the Host.
+		 * The Host stops the session without sending another failure notification.
+		 */
+		sessionFailure: Type.Optional(SessionFailureMessage),
+	},
+	unionOptions,
+);
+
+export const hostToGuestMessageValidator = validator.compile(hostToGuestMessageSchema);
+export const guestToHostMessageValidator = validator.compile(guestToHostMessageSchema);
 
 /**
  * Checks the numeric format of a {@link HandleToken}, not its authorization.
  */
 export function isHandleToken(value: unknown): value is HandleToken {
 	return handleTokenValidator.check(value);
-}
-
-/**
- * Validates data from a Host and Guest message channel.
- *
- * @param data - Normalized or decoded message data, with registered {@link BufferPlaceholder} placeholders.
- * @returns The validated protocol message.
- * @throws {@link SandboxProtocolError} if the data is not a valid protocol message envelope.
- */
-export function parseHostGuestMessage(data: unknown): HostGuestMessage {
-	if (
-		typeof data !== "object" ||
-		data === null ||
-		Object.getPrototypeOf(data) !== null ||
-		!Object.hasOwn(data, "type") ||
-		!("type" in data)
-	) {
-		throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
-	}
-
-	if (data.type === "hostUpdate" && hostUpdateValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "hostInitialization" && hostInitializationValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "hostUpdateAck" && hostUpdateAckValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "guestChange" && guestChangeValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "guestChangeAck" && guestChangeAckValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "sessionFailure" && sessionFailureValidator.check(data)) {
-		return data;
-	}
-
-	if (data.type === "blobRequest" && blobRequestValidator.check(data)) {
-		return data;
-	}
-	if (data.type === "blobResponse" && blobResponseValidator.check(data)) {
-		if ("error" in data) {
-			return data;
-		}
-		const blob = getTransportBuffer(data.blob);
-		assert(blob !== undefined, "Validated blob placeholder must have a registered buffer");
-		const response: object = Object.create(null);
-		return Object.assign(response, {
-			type: "blobResponse" as const,
-			requestId: data.requestId,
-			blob,
-		});
-	}
-
-	throw new SandboxProtocolError("Invalid Host and Guest protocol message.");
 }
 
 /**
@@ -573,8 +704,8 @@ export function makePromiseWithResolvers(): PromiseWithResolvers {
 		resolver = resolve;
 		rejecter = reject;
 	});
-	assert(resolver !== undefined, "Resolve function should have been assigned");
-	assert(rejecter !== undefined, "Reject function should have been assigned");
+	assert(resolver !== undefined, 0xd57 /* Resolve function should have been assigned */);
+	assert(rejecter !== undefined, 0xd58 /* Reject function should have been assigned */);
 	return { promise, resolver, rejecter };
 }
 
@@ -598,6 +729,17 @@ export function normalizeProtocolError(error: unknown): Error {
 	return error instanceof Error
 		? error
 		: new Error("Host and Guest protocol processing failed.", { cause: error });
+}
+
+/**
+ * Classifies a local error without inspecting its diagnostic text.
+ */
+export function getSandboxFailureCode(error: Error): SandboxFailureCode {
+	return error instanceof SandboxProtocolError
+		? SandboxFailureCode.ProtocolViolation
+		: error instanceof UsageError
+			? SandboxFailureCode.ApplicationUsageError
+			: SandboxFailureCode.ProcessingFailure;
 }
 
 /**
