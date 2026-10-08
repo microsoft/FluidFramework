@@ -10,11 +10,6 @@ import type {
 	IChannelAttributes,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
-import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
-
-function invalidConfiguration(): never {
-	throw new DataCorruptionError("Invalid or unsupported channel configuration", {});
-}
 
 /**
  * Returns whether a channel or its factory declares support for the configuration protocol.
@@ -32,36 +27,29 @@ export function supportsChannelConfiguration(
 
 /**
  * Returns whether the attributes contain channel configuration.
- * Validates that configured snapshots are well-formed and that the supplied factory supports the protocol.
+ * Validates the persisted configuration's required properties, version, and revision.
  */
 export function hasChannelConfiguration(
 	attributes: IChannelAttributes,
-	factory?: IChannelFactory,
 ): attributes is ConfiguredChannelAttributes {
 	if (!("configuration" in attributes)) {
 		return false;
 	}
 	const configuration = attributes.configuration;
-	if (
-		!isObject(configuration) ||
-		!("version" in configuration) ||
-		configuration.version !== 1 ||
-		!("revision" in configuration) ||
-		typeof configuration.revision !== "number" ||
-		!Number.isSafeInteger(configuration.revision) ||
-		configuration.revision < 0 ||
-		!("values" in configuration) ||
-		!isObject(configuration.values) ||
-		Array.isArray(configuration.values)
-	) {
-		invalidConfiguration();
-	}
-	if (factory !== undefined && !supportsChannelConfiguration(factory)) {
-		throw new DataCorruptionError(
-			"Channel factory does not support configuration protocol",
-			{},
-		);
-	}
+	assert(
+		isObject(configuration) &&
+			"version" in configuration &&
+			"revision" in configuration &&
+			"values" in configuration,
+		"Configuration is missing properties",
+	);
+	assert(configuration.version === 1, "Unsupported persisted configuration version");
+	assert(
+		typeof configuration.revision === "number" &&
+			0 <= configuration.revision &&
+			Number.isSafeInteger(configuration.revision),
+		"Invalid revision",
+	);
 	return true;
 }
 
@@ -71,16 +59,6 @@ export function hasChannelConfiguration(
 export function requireChannelConfigurationController(channel: IChannel): void {
 	assert(
 		supportsChannelConfiguration(channel),
-		"Configured channel did not register its controller",
+		"Configured channel did not declare configuration support",
 	);
-}
-
-/**
- * Checks that a marked channel has valid attributes and a registered controller.
- */
-export function verifyChannelConfigurationController(channel: IChannel): void {
-	if (!hasChannelConfiguration(channel.attributes)) {
-		return;
-	}
-	requireChannelConfigurationController(channel);
 }

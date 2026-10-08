@@ -33,7 +33,6 @@ import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
 import {
 	requireChannelConfigurationController,
 	hasChannelConfiguration,
-	verifyChannelConfigurationController,
 } from "./channelConfiguration.js";
 import { ChannelStorageService } from "./channelStorageService.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
@@ -117,7 +116,6 @@ export function summarizeChannel(
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
 ): ISummaryTreeWithStats {
-	verifyChannelConfigurationController(channel);
 	const summarizeResult = channel.getAttachSummary(fullTree, trackState, telemetryContext);
 
 	// Add the channel attributes to the returned result.
@@ -132,7 +130,6 @@ export async function summarizeChannelAsync(
 	telemetryContext?: ITelemetryContext,
 	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ): Promise<ISummaryTreeWithStats> {
-	verifyChannelConfigurationController(channel);
 	const summarizeResult = await channel.summarize(
 		fullTree,
 		trackState,
@@ -212,7 +209,7 @@ export async function loadChannel(
 	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
-	const configured = hasChannelConfiguration(attributes, factory);
+	const configured = hasChannelConfiguration(attributes);
 	// Compare snapshot version to collaborative object version
 	if (
 		attributes.snapshotFormatVersion !== undefined &&
@@ -236,9 +233,13 @@ export async function loadChannel(
 			"Configured channel lost its persisted attributes",
 		);
 	} else {
+		// Having a factory immediately transition to some "default" configuration under its
+		// attributes on load is problematic for cross-client compatibility, as we are strict
+		// about enforcing only channels that declare support for configuration are allowed to load
+		// persisted summaries that have configuration.
 		assert(
-			channel.attributes === undefined || !("configuration" in channel.attributes),
-			"Factory cannot opt a legacy channel into configuration",
+			!hasChannelConfiguration(channel.attributes),
+			"Factory should not opt a legacy channel into configuration",
 		);
 	}
 	return channel;

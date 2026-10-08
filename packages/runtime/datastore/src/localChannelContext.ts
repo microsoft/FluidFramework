@@ -37,7 +37,6 @@ import {
 	summarizeChannelAsync,
 } from "./channelContext.js";
 import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
-import { verifyChannelConfigurationController } from "./channelConfiguration.js";
 
 /**
  * Channel context for a locally created channel
@@ -186,7 +185,6 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 
 		if (this.isLoaded) {
 			assert(!!this._channel, 0x192 /* "Channel should be there if loaded!!" */);
-			verifyChannelConfigurationController(this._channel);
 			this._channel.connect(this.services.value);
 		}
 		this.globallyVisible = true;

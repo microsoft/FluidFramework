@@ -197,51 +197,64 @@ describe("Channel configuration compatibility", () => {
 		});
 	}
 
-	for (const configuration of [
-		undefined,
-		// eslint-disable-next-line unicorn/no-null -- Persisted JSON can contain null.
-		null,
-		true,
-		[],
-		{},
-		{ ...snapshot, version: 2 },
-		{ ...snapshot, version: "1" },
-		{ ...snapshot, revision: undefined },
-		{ ...snapshot, revision: "0" },
-		{ ...snapshot, revision: -1 },
-		{ ...snapshot, revision: 0.5 },
-		{ ...snapshot, revision: Number.NaN },
-		{ ...snapshot, revision: Number.POSITIVE_INFINITY },
-		{ ...snapshot, revision: Number.MAX_SAFE_INTEGER + 1 },
-		{ ...snapshot, values: undefined },
-		// eslint-disable-next-line unicorn/no-null -- Persisted JSON can contain null.
-		{ ...snapshot, values: null },
-		{ ...snapshot, values: [] },
-		{ ...snapshot, values: true },
-	]) {
-		it(`rejects malformed configuration ${JSON.stringify(configuration)}`, async () => {
-			let loaded = false;
-			const factory = {
-				attributes,
-				channelConfigurationProtocolVersion: 1,
-				load: async () => {
-					loaded = true;
-					return channel();
-				},
-			} as unknown as IChannelFactory;
-			await assert.rejects(
-				loadChannel(
-					runtime,
-					{ ...attributes, configuration } as IChannelAttributes,
-					factory,
-					{} as ChannelServiceEndpoints,
-					createMockLoggerExt(),
-					"dds",
-				),
-				{ errorType: ContainerErrorTypes.dataCorruptionError },
-			);
-			assert.equal(loaded, false);
-		});
+	for (const [message, configurations] of [
+		[
+			"Configuration is missing properties",
+			[
+				undefined,
+				// eslint-disable-next-line unicorn/no-null -- Persisted JSON can contain null.
+				null,
+				true,
+				[],
+				{},
+				{ version: 1, revision: 0 },
+			],
+		],
+		[
+			"Unsupported persisted configuration version",
+			[
+				{ ...snapshot, version: 2 },
+				{ ...snapshot, version: "1" },
+			],
+		],
+		[
+			"Invalid revision",
+			[
+				{ ...snapshot, revision: undefined },
+				{ ...snapshot, revision: "0" },
+				{ ...snapshot, revision: -1 },
+				{ ...snapshot, revision: 0.5 },
+				{ ...snapshot, revision: Number.NaN },
+				{ ...snapshot, revision: Number.POSITIVE_INFINITY },
+				{ ...snapshot, revision: Number.MAX_SAFE_INTEGER + 1 },
+			],
+		],
+	] as const) {
+		for (const configuration of configurations) {
+			it(`rejects malformed configuration ${JSON.stringify(configuration)}`, async () => {
+				let loaded = false;
+				const factory = {
+					attributes,
+					channelConfigurationProtocolVersion: 1,
+					load: async () => {
+						loaded = true;
+						return channel();
+					},
+				} as unknown as IChannelFactory;
+				await assert.rejects(
+					loadChannel(
+						runtime,
+						{ ...attributes, configuration } as IChannelAttributes,
+						factory,
+						{} as ChannelServiceEndpoints,
+						createMockLoggerExt(),
+						"dds",
+					),
+					validateAssertionError(message),
+				);
+				assert.equal(loaded, false);
+			});
+		}
 	}
 
 	for (const [name, configuration] of [
@@ -284,29 +297,23 @@ describe("Channel configuration compatibility", () => {
 		});
 	}
 
-	it("rejects old factories before invoking load", async () => {
-		let loaded = false;
-		await assert.rejects(
-			loadChannel(
-				runtime,
-				channel().attributes,
-				{
-					attributes,
-					load: async () => {
-						loaded = true;
-						return channel();
-					},
-				} as unknown as IChannelFactory,
-				{} as ChannelServiceEndpoints,
-				createMockLoggerExt(),
-				"dds",
-			),
-			/factory does not support/,
+	it("loads a supporting channel without a factory support declaration", async () => {
+		const configured = channel();
+		const loaded = await loadChannel(
+			runtime,
+			configured.attributes,
+			{
+				attributes,
+				load: async () => configured,
+			} as unknown as IChannelFactory,
+			{} as ChannelServiceEndpoints,
+			createMockLoggerExt(),
+			"dds",
 		);
-		assert.equal(loaded, false);
+		assert.equal(loaded, configured);
 	});
 
-	it("requires a registered controller from a supporting factory", async () => {
+	it("requires configuration support on the loaded instance", async () => {
 		await assert.rejects(
 			loadChannel(
 				runtime,
@@ -320,7 +327,7 @@ describe("Channel configuration compatibility", () => {
 				createMockLoggerExt(),
 				"dds",
 			),
-			validateAssertionError("Configured channel did not register its controller"),
+			validateAssertionError("Configured channel did not declare configuration support"),
 		);
 	});
 
@@ -356,48 +363,8 @@ describe("Channel configuration compatibility", () => {
 				createMockLoggerExt(),
 				"dds",
 			),
-			validateAssertionError("Factory cannot opt a legacy channel into configuration"),
+			validateAssertionError("Factory should not opt a legacy channel into configuration"),
 		);
-	});
-
-	it("requires a controller before capturing an asynchronous new-protocol snapshot", async () => {
-		let captured = false;
-		const configured = channel();
-		Object.assign(configured, {
-			channelConfigurationProtocolVersion: undefined,
-			summarize: async () => {
-				captured = true;
-				return new SummaryTreeBuilder().getSummaryTree();
-			},
-		});
-		await assert.rejects(
-			summarizeChannelAsync(configured),
-			validateAssertionError("Configured channel did not register its controller"),
-		);
-		assert.equal(captured, false);
-	});
-
-	it("rejects invalid configuration before capturing either kind of summary", async () => {
-		let captured = false;
-		const configured = channel();
-		Object.assign(configured, {
-			attributes: { ...attributes, configuration: { ...snapshot, revision: -1 } },
-			getAttachSummary: () => {
-				captured = true;
-				return new SummaryTreeBuilder().getSummaryTree();
-			},
-			summarize: async () => {
-				captured = true;
-				return new SummaryTreeBuilder().getSummaryTree();
-			},
-		});
-		assert.throws(() => summarizeChannel(configured), {
-			errorType: ContainerErrorTypes.dataCorruptionError,
-		});
-		await assert.rejects(summarizeChannelAsync(configured), {
-			errorType: ContainerErrorTypes.dataCorruptionError,
-		});
-		assert.equal(captured, false);
 	});
 
 	it("loads persisted instance attributes instead of factory defaults", async () => {
@@ -506,7 +473,7 @@ describe("Channel configuration compatibility", () => {
 		assert.deepEqual(order, ["connected"]);
 	});
 
-	it("requires a controller before attach summaries and connection while detached", () => {
+	it("does not require a support declaration for locally created channels", async () => {
 		const dataStoreContext = new MockFluidDataStoreContext();
 		const localRuntime = {
 			attachState: AttachState.Detached,
@@ -518,6 +485,10 @@ describe("Channel configuration compatibility", () => {
 			id: "dds",
 			channelConfigurationProtocolVersion: undefined,
 			getAttachSummary: () => {
+				captured = true;
+				return new SummaryTreeBuilder().getSummaryTree();
+			},
+			summarize: async () => {
 				captured = true;
 				return new SummaryTreeBuilder().getSummaryTree();
 			},
@@ -534,16 +505,13 @@ describe("Channel configuration compatibility", () => {
 			() => {},
 			() => {},
 		);
-		assert.throws(
-			() => context.getAttachSummary(),
-			validateAssertionError("Configured channel did not register its controller"),
-		);
-		assert.throws(
-			() => context.makeVisible(),
-			validateAssertionError("Configured channel did not register its controller"),
-		);
-		assert.equal(captured, false);
-		assert.equal(connected, false);
+		context.getAttachSummary();
+		assert.equal(captured, true);
+		captured = false;
+		await context.summarize();
+		assert.equal(captured, true);
+		context.makeVisible();
+		assert.equal(connected, true);
 	});
 
 	it("loads configured rehydrated channels lazily and replays queued messages", async () => {
@@ -677,7 +645,7 @@ describe("Channel configuration compatibility", () => {
 			assert.deepEqual(order, []);
 			await assert.rejects(context.getChannel(), {
 				errorType: ContainerErrorTypes.dataProcessingError,
-				message: "Configured channel did not register its controller",
+				message: "Configured channel did not declare configuration support",
 			});
 			assert.deepEqual(order, ["loaded"]);
 		});
