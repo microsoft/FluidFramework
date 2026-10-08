@@ -46,12 +46,6 @@ export enum SandboxFailureCode {
 
 /**
  * Descriptions for {@link SandboxFailureCode} values.
- * @remarks
- * For privacy reasons, we have a fixed set of {@link SandboxFailureCode} values instead of free form strings.
- *
- * As {@link SandboxFailureCode}'s exist for telemetry compatibility, it is nice to use short stable searchable strings for them.
- * We also provide human-readable descriptions for each code for use in the error message prose.
- * These descriptions provide that.
  */
 export const sandboxFailureDescriptions: Readonly<Record<SandboxFailureCode, string>> = {
 	[SandboxFailureCode.ProtocolViolation]: "Sandbox protocol violation.",
