@@ -193,7 +193,7 @@ export async function loadChannelFactoryAndAttributes(
 		// If the factory includes configuration in its attributes, that configuration only necessarily applies to newly created instances.
 		// It must already support transitioning from an unconfigured channel to a configured one,
 		// so omitting configuration from load here reduces the problem to that case.
-		if ("configuration" in attributes) {
+		if (hasChannelConfiguration(attributes)) {
 			const { configuration: _configuration, ...legacyAttributes } = attributes;
 			attributes = legacyAttributes;
 		}
