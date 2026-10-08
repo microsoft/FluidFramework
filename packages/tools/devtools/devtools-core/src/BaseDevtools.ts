@@ -49,9 +49,6 @@ import {
 export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 	implements IContainerDevtools, HasContainerKey
 {
-	/**
-	 * {@inheritDoc HasContainerKey.containerKey}
-	 */
 	public readonly containerKey: ContainerKey;
 
 	/**
@@ -480,25 +477,16 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
 	}
 
-	/**
-	 * {@inheritDoc IContainerDevtools.getContainerConnectionLog}
-	 */
 	public getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes
 		return this._connectionStateLog.map((value) => value);
 	}
 
-	/**
-	 * {@inheritDoc IContainerDevtools.getAudienceHistory}
-	 */
 	public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes
 		return this._audienceChangeLog.map((value) => value);
 	}
 
-	/**
-	 * {@inheritDoc IContainerDevtools.dispose}
-	 */
 	public dispose(): void {
 		// Unbind container and audience events
 		this.unbindContainerEvents();
@@ -515,9 +503,6 @@ export abstract class BaseDevtools<TContainer extends DecomposedContainer>
 		this._disposed = true;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
-	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}

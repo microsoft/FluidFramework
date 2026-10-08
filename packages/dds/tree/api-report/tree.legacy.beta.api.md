@@ -122,6 +122,14 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 // @beta
 export function asBeta<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): TreeViewBeta<TSchema>;
 
+// @beta @sealed
+export type ChangeMetadataBeta = CommitMetadata & ({
+    readonly isLocal: true;
+    readonly events: Listenable<LocalCommitEvents>;
+} | {
+    readonly isLocal: false;
+});
+
 // @beta @input
 export interface CodecWriteOptionsBeta {
     readonly minVersionForCollab: OldestSupportedClientVersion;
@@ -138,6 +146,13 @@ export enum CommitKind {
 export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
+}
+
+// @beta
+export enum CommitOutcome {
+    FullyApplied = 0,
+    FullyDropped = 1,
+    NewContentOnly = 2
 }
 
 // @beta
@@ -400,12 +415,23 @@ export type LazyItem<Item = unknown> = Item | (() => Item);
 export interface LeafSchema<Name extends string, T extends TreeLeafValue> extends TreeNodeSchemaNonClass<`com.fluidframework.leaf.${Name}`, NodeKind.Leaf, T, T, true> {
 }
 
+// @beta @sealed
+export interface LocalCommitEvents {
+    settled(outcome: CommitOutcome): void;
+}
+
 // @public @sealed
 export interface MakeNominal {
 }
 
 // @public @system
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]> | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+
+// @beta
+export interface NoChangeConstraint {
+    // (undocumented)
+    readonly type: "noChange";
+}
 
 // @public @system
 type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> = T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild> ? TBuild : never;
@@ -539,6 +565,7 @@ export interface RunTransaction {
 // @beta @input
 export interface RunTransactionParamsBeta {
     readonly label?: unknown;
+    readonly preconditions?: readonly TransactionConstraintBeta[];
 }
 
 // @public @sealed
@@ -799,8 +826,11 @@ export namespace System_Unsafe {
     export type FieldHasDefaultUnsafe<T extends ImplicitFieldSchemaUnsafe> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, ImplicitAllowedTypesUnsafe> ? true : false;
     // @sealed @system
     export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown> extends FieldSchema<Kind, any, TCustomMetadata> {
+        // (undocumented)
         readonly allowedTypes: Types;
+        // (undocumented)
         readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
+        // (undocumented)
         readonly kind: Kind;
     }
     // @system
@@ -942,14 +972,19 @@ export namespace TableSchema {
 }
 
 // @beta @input
-export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = ((WithValue<TSuccessValue> & {
     readonly rollback?: false;
 }) | (WithValue<TFailureValue> & {
     readonly rollback: true;
-});
+})) & {
+    readonly preconditionsOnRevert?: readonly TransactionConstraintBeta[];
+};
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @beta @sealed
+export type TransactionConstraintBeta = TransactionConstraint | NoChangeConstraint;
 
 // @beta @sealed
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
@@ -1020,6 +1055,11 @@ export const TreeBeta: TreeBeta;
 
 // @beta @deprecated
 export type TreeBranch = UntypedTreeView;
+
+// @beta @sealed
+export interface TreeBranchEventsBeta {
+    changed(data: ChangeMetadataBeta): void;
+}
 
 // @public @sealed
 export interface TreeChangeEvents {
@@ -1171,7 +1211,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 
 // @beta @sealed
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, UntypedTreeView {
+    // (undocumented)
     readonly compatibility: SchemaCompatibilityStatusBeta;
+    readonly events: Listenable<TreeViewEvents & TreeBranchEventsBeta>;
     // (undocumented)
     fork(): ReturnType<UntypedTreeView["fork"]> & TreeViewBeta<TSchema>;
 }
@@ -1226,6 +1268,7 @@ export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union
 // @beta @sealed
 export interface UntypedTreeView extends IDisposable, TreeContextBeta {
     dispose(error?: Error): void;
+    readonly events: Listenable<TreeBranchEventsBeta>;
     fork(): UntypedTreeView;
     merge(view: UntypedTreeView, disposeMerged?: boolean): void;
     rebaseOnto(view: UntypedTreeView): void;

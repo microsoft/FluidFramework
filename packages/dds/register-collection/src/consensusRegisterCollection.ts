@@ -255,9 +255,6 @@ export class ConsensusRegisterCollection<T>
 		return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const blob = await storage.readBlob(snapshotFileName);
 		const header = bufferToString(blob, "utf8");
