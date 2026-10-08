@@ -1261,8 +1261,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/tree
       typebox:
-        specifier: ^1.3.36
-        version: 1.3.36
+        specifier: ^1.3.34
+        version: 1.3.34
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -8632,8 +8632,8 @@ importers:
         specifier: ^2.8.1
         version: 2.8.1
       typebox:
-        specifier: ^1.3.36
-        version: 1.3.36
+        specifier: ^1.3.34
+        version: 1.3.34
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -25750,7 +25750,7 @@ packages:
     resolution: {integrity: sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==}
     engines: {node: '>= 0.6'}
 
-  typebox@1.3.36:
+  typebox@1.3.34:
     resolution: {integrity: sha512-bu2Ec2Ti9B4IFSFj1FcZbtLNB/W7igQwxocMGJLAG2NTv1nI+ImtIA34YgHW4CVyGVlJqNXR1GJyLmdWgV3DuA==}
 
   typed-array-buffer@1.0.3:
@@ -40833,7 +40833,7 @@ snapshots:
       media-typer: 0.3.0
       mime-types: 2.1.35
 
-  typebox@1.3.36: {}
+  typebox@1.3.34: {}
 
   typed-array-buffer@1.0.3:
     dependencies:
