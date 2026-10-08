@@ -23,3 +23,6 @@ If the commit is no longer reachable on its original branch, the original branch
 In any of these cases, the `revertTo()` method will be absent (`undefined`) from the commit metadata object.
 The method is also unavailable while a transaction is in progress or during change events.
 Read `revertTo` from the commit metadata before each call rather than retaining the function; each obtained function can be called only once.
+
+Custom metadata supplied to transactions and reverts is read and serialized while edits to the target checkout are disallowed.
+Getters and serialization hooks that attempt to edit that tree throw an error before the edit is applied.

@@ -703,6 +703,7 @@ export class TreeCheckout implements ITreeCheckout {
 							);
 						}
 						wasUsed = true;
+						const customMetadata = this.snapshotCustomMetadata(options);
 						if (
 							!canRevert() ||
 							this.#transaction.branch.getHead() !== head ||
@@ -712,7 +713,7 @@ export class TreeCheckout implements ITreeCheckout {
 								"The target branch has changed since `revertTo` was requested. Avoid retaining references directly to the `revertTo` property.",
 							);
 						}
-						this.revertToCommit(revisionString, path, options);
+						this.revertToCommit(revisionString, path, customMetadata);
 					};
 				},
 			);
@@ -1110,6 +1111,7 @@ export class TreeCheckout implements ITreeCheckout {
 		codec: SerializedChangeCodec = this.serializedChangeCodec,
 		onError?: DecodeErrorHandler,
 	): void {
+		this.editLock.checkUnlocked("Applying a change");
 		const { change, customMetadata } = codec.decode(
 			serializedChange,
 			{
@@ -1226,7 +1228,7 @@ export class TreeCheckout implements ITreeCheckout {
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
 			// Like the validation described above, rejecting malformed metadata breaks the checkout rather
 			// than being recoverable. Tracked by https://github.com/microsoft/FluidFramework/issues/28085.
-			customMetadata: snapshotCustomMetadata(params?.customMetadata),
+			customMetadata: this.snapshotCustomMetadata(params),
 		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
@@ -1350,6 +1352,27 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
+	 * Reads and snapshots metadata under the edit lock, since getters and serialization hooks can run application code.
+	 */
+	private snapshotCustomMetadata(
+		options: { readonly customMetadata?: JsonCompatibleReadOnlyObject } | undefined,
+	): JsonCompatibleReadOnlyObject | undefined {
+		const editLock = this.editLock;
+		const wasLocked = editLock.isLocked;
+		if (!wasLocked) {
+			editLock.lock("custom metadata evaluation");
+		}
+		try {
+			return snapshotCustomMetadata(options?.customMetadata);
+		} finally {
+			// Preserve an outer lock, including its original error reason.
+			if (!wasLocked) {
+				editLock.unlock();
+			}
+		}
+	}
+
+	/**
 	 * Creates a {@link RevertibleAlpha} object that can undo a specific change in the tree's history.
 	 * Revision must exist in the given {@link TreeCheckout}'s branch.
 	 *
@@ -1390,7 +1413,7 @@ export class TreeCheckout implements ITreeCheckout {
 					revision,
 					kind,
 					labelTree,
-					snapshotCustomMetadata(options.customMetadata),
+					checkout.snapshotCustomMetadata(options),
 				);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
@@ -1555,6 +1578,7 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChangeProcessingContext
 		>,
 	): void {
+		this.editLock.checkUnlocked("Switching branches");
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
@@ -1605,13 +1629,14 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {
-		this.revertToCommit(revisionString, undefined, options);
+		const customMetadata = this.snapshotCustomMetadata(options);
+		this.revertToCommit(revisionString, undefined, customMetadata);
 	}
 
 	private revertToCommit(
 		revisionString: string,
 		path: GraphCommit<SharedTreeChange>[] | undefined,
-		options?: RevertToOptionsAlpha,
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
 	): void {
 		this.checkNotDisposed(
 			"The branch has already been disposed and prior revisions cannot be reverted to.",
@@ -1620,7 +1645,6 @@ export class TreeCheckout implements ITreeCheckout {
 		if (this.#transaction.size > 0) {
 			throw new UsageError("Reverting to a revision is not supported during transactions.");
 		}
-		const customMetadata = snapshotCustomMetadata(options?.customMetadata);
 		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
@@ -1785,6 +1809,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void {
 		this.checkNotDisposed();
+		this.editLock.checkUnlocked("Updating the schema");
 		if (allowNonSupersetSchema !== true) {
 			assert(
 				allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema.clone(), newSchema),
