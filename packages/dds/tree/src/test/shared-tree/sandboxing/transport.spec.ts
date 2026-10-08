@@ -643,10 +643,7 @@ describe("Host and Guest round-trip integration tests", () => {
 	it("treats legacy string-property handle lookalikes as ordinary data", () => {
 		const { host, guest, requests } = setupTransportCodecs();
 		const value = { IFluidHandle: { IFluidHandle: true }, type: "__sandbox_handle__" };
-		assert(
-			isFluidHandle(value),
-			"The legacy fallback is the reason for the strict local check",
-		);
+		assert(!isFluidHandle(value));
 		assert(!isLocalHandle(value));
 		const decoded = guest.decode(structuredClone(host.encode(value)));
 		assert.deepEqual(decoded, normalizeTransportData(value));
