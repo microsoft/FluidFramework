@@ -37,8 +37,8 @@ describe("TimeoutPromise", () => {
 			try {
 				await timeoutPromise(() => {}, { durationMs: 1 });
 				assert.fail("should have timed out");
-			} catch (e: any) {
-				assert.equal(e.message, "Timed out (1ms)");
+			} catch (error: any) {
+				assert.equal(error.message, "Timed out (1ms)");
 			}
 		});
 
@@ -52,8 +52,8 @@ describe("TimeoutPromise", () => {
 					},
 					{ durationMs: 0 },
 				);
-			} catch (e: any) {
-				assert.fail(`should not have timed out: ${e.message}`);
+			} catch (error: any) {
+				assert.fail(`should not have timed out: ${error.message}`);
 			}
 		}).timeout(25);
 
@@ -63,8 +63,8 @@ describe("TimeoutPromise", () => {
 					reject(new Error("blah"));
 				});
 				assert.fail("should have thrown");
-			} catch (e: any) {
-				assert.equal(e.message, "blah");
+			} catch (error: any) {
+				assert.equal(error.message, "blah");
 			}
 		});
 
@@ -76,8 +76,8 @@ describe("TimeoutPromise", () => {
 					value: 1,
 				});
 				assert.equal(value, 1, "Timeout should have returned the value given in options");
-			} catch (e: any) {
-				assert.fail(`should not have timed out: ${e.message}`);
+			} catch (error: any) {
+				assert.fail(`should not have timed out: ${error.message}`);
 			}
 		});
 
@@ -88,9 +88,9 @@ describe("TimeoutPromise", () => {
 					errorMsg: "hello",
 				});
 				assert.fail("should have timed out");
-			} catch (e: any) {
+			} catch (error: any) {
 				assert.equal(
-					e.message,
+					error.message,
 					"hello (1ms)",
 					"Error message should have been the one given in options",
 				);
@@ -103,8 +103,8 @@ describe("TimeoutPromise", () => {
 			try {
 				await timeoutPromise(() => {});
 				assert.fail("should have timed out");
-			} catch (e: any) {
-				assert.equal(e.message, "Forcing timeout before test does (10ms)");
+			} catch (error: any) {
+				assert.equal(error.message, "Forcing timeout before test does (10ms)");
 			}
 		}).timeout(25);
 
@@ -112,8 +112,8 @@ describe("TimeoutPromise", () => {
 			try {
 				await timeoutPromise(() => {}, {});
 				assert.fail("should have timed out");
-			} catch (e: any) {
-				assert.equal(e.message, "Forcing timeout before test does (10ms)");
+			} catch (error: any) {
+				assert.equal(error.message, "Forcing timeout before test does (10ms)");
 			}
 		}).timeout(25);
 
@@ -121,8 +121,8 @@ describe("TimeoutPromise", () => {
 			try {
 				await timeoutPromise(() => {}, { durationMs: 100 });
 				assert.fail("should have timed out");
-			} catch (e: any) {
-				assert.equal(e.message, "Forcing timeout before test does (10ms)");
+			} catch (error: any) {
+				assert.equal(error.message, "Forcing timeout before test does (10ms)");
 			}
 		}).timeout(25);
 
@@ -144,8 +144,8 @@ describe("TimeoutPromise", () => {
 					{ errorMsg: "Second call" },
 				);
 				assert.fail("should have timed out");
-			} catch (e: any) {
-				assert.equal(e.message, "Second call (35ms)");
+			} catch (error: any) {
+				assert.equal(error.message, "Second call (35ms)");
 			}
 		}).timeout(50);
 
@@ -180,8 +180,8 @@ describe("TimeoutPromise", () => {
 						// based on the original test timeout.
 						setTimeout(resolve, 30);
 					});
-				} catch (e: any) {
-					assert.fail(`should not have timed out: ${e.message}`);
+				} catch (error: any) {
+					assert.fail(`should not have timed out: ${error.message}`);
 				}
 			}).timeout(15);
 
@@ -195,8 +195,8 @@ describe("TimeoutPromise", () => {
 						setTimeout(resolve, updatedTimeout - 10);
 					});
 					assert.fail("should have timed out");
-				} catch (e: any) {
-					assert.equal(e.message, "Forcing timeout before test does (35ms)");
+				} catch (error: any) {
+					assert.equal(error.message, "Forcing timeout before test does (35ms)");
 				}
 			}).timeout(15);
 
@@ -210,8 +210,8 @@ describe("TimeoutPromise", () => {
 						{ durationMs: 1 },
 					);
 					assert.fail("should have timed out");
-				} catch (e: any) {
-					assert.equal(e.message, "Timed out (1ms)");
+				} catch (error: any) {
+					assert.equal(error.message, "Timed out (1ms)");
 				}
 			}).timeout(25);
 		});
@@ -226,8 +226,8 @@ describe("TimeoutPromise", () => {
 						setTimeout(resolve, 50);
 					});
 					assert.fail("should have timed out");
-				} catch (e: any) {
-					assert.equal(e.message, "Forcing timeout before test does (10ms)");
+				} catch (error: any) {
+					assert.equal(error.message, "Forcing timeout before test does (10ms)");
 				}
 			}
 			before(hookValidationFunction);

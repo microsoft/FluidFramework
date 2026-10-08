@@ -554,23 +554,14 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 		this.emit("taskListCollectionChanged");
 	};
 
-	/**
-	 * {@inheritDoc IBaseDocument.getTaskList}
-	 */
 	public readonly getTaskList = (id: string): ITaskList | undefined => {
 		return this.taskListCollection.get(id);
 	};
 
-	/**
-	 * {@inheritDoc IBaseDocument.getLeader}
-	 */
 	public readonly getLeader = (): string | undefined => {
 		return this.root.get(this.leaderKey);
 	};
 
-	/**
-	 * {@inheritDoc IBaseDocument.setLeader}
-	 */
 	public readonly setLeader = (newLeader: string): void => {
 		this.root.set(this.leaderKey, newLeader);
 	};

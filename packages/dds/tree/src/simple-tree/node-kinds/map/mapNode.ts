@@ -25,7 +25,7 @@ import {
 import type {
 	NodeSchemaOptionsAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by TSDoc {@link} in this file.
-	RunTransactionParamsAlpha,
+	RunTransactionParamsBeta,
 } from "../../api/index.js";
 import {
 	CompatibilityLevel,
@@ -209,7 +209,7 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 *
 	 * These last two points mean that, upon sequencing of an edit made with this API,
 	 * there is no guarantee that the entry for the given key will be the current one (if any) or the fallback one.
-	 * If such a guarantee is important, then consider using {@link RunTransactionParamsAlpha.preconditions}
+	 * If such a guarantee is important, then consider using {@link RunTransactionParamsBeta.preconditions}
 	 * to ensure the edit only applies when appropriate.
 	 *
 	 * This API is **not** equivalent to the following alternative:

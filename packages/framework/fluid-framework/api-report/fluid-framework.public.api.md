@@ -845,8 +845,11 @@ export namespace System_Unsafe {
     export type FieldHasDefaultUnsafe<T extends ImplicitFieldSchemaUnsafe> = T extends FieldSchemaUnsafe<FieldKind.Optional | FieldKind.Identifier, ImplicitAllowedTypesUnsafe> ? true : false;
     // @sealed @system
     export interface FieldSchemaUnsafe<out Kind extends FieldKind, out Types extends ImplicitAllowedTypesUnsafe, out TCustomMetadata = unknown> extends FieldSchema<Kind, any, TCustomMetadata> {
+        // (undocumented)
         readonly allowedTypes: Types;
+        // (undocumented)
         readonly allowedTypeSet: ReadonlySet<TreeNodeSchema>;
+        // (undocumented)
         readonly kind: Kind;
     }
     // @system
