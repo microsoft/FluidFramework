@@ -40,7 +40,6 @@ import {
 	HostTransportCodec,
 	type HostUpdateMessage,
 	isHandleToken,
-	isLocalHandle,
 	isSerializedHandle,
 	normalizeTransportData,
 	SandboxProtocolError,
@@ -85,7 +84,7 @@ type _IdWireShapes =
  * built-in prototypes.
  */
 function assertNullPrototypeRecords(value: unknown): void {
-	if (typeof value !== "object" || value === null || isLocalHandle(value)) {
+	if (typeof value !== "object" || value === null || isFluidHandle(value)) {
 		return;
 	}
 	if (value instanceof ArrayBuffer) {
@@ -601,8 +600,8 @@ describe("Host and Guest round-trip integration tests", () => {
 			assert.deepEqual(onGuest, normalizeTransportData(value));
 			const onHost = host.decode(structuredClone(guest.encode(onGuest)));
 			assert.deepEqual(onHost, normalizeTransportData(value));
-			assert(!isLocalHandle(onGuest));
-			assert(!isLocalHandle(onHost));
+			assert(!isFluidHandle(onGuest));
+			assert(!isFluidHandle(onHost));
 		}
 	});
 
@@ -643,11 +642,7 @@ describe("Host and Guest round-trip integration tests", () => {
 	it("treats legacy string-property handle lookalikes as ordinary data", () => {
 		const { host, guest, requests } = setupTransportCodecs();
 		const value = { IFluidHandle: { IFluidHandle: true }, type: "__sandbox_handle__" };
-		assert(
-			isFluidHandle(value),
-			"The legacy fallback is the reason for the strict local check",
-		);
-		assert(!isLocalHandle(value));
+		assert(!isFluidHandle(value));
 		const decoded = guest.decode(structuredClone(host.encode(value)));
 		assert.deepEqual(decoded, normalizeTransportData(value));
 		validateTreePayloadVocabulary(decoded);
@@ -663,7 +658,7 @@ describe("Host and Guest round-trip integration tests", () => {
 		const handle = new MockHandle(new ArrayBuffer(0));
 		const decoded = guest.decode(structuredClone(host.encode([handle])));
 		assert(Array.isArray(decoded));
-		assert(isLocalHandle(decoded[0]));
+		assert(isFluidHandle(decoded[0]));
 		assert(fluidHandleSymbol in decoded[0]);
 		validateTreePayloadVocabulary(decoded);
 		assert(
