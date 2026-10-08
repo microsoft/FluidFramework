@@ -477,7 +477,7 @@ function getCheckout(context: UntypedTreeView): TreeCheckout {
  * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
  * @param constraints - The constraints to add to the transaction.
  *
- * @see {@link RunTransactionParamsAlpha.preconditions}.
+ * @see {@link RunTransactionParamsBeta.preconditions}.
  */
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,

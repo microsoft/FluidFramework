@@ -102,9 +102,6 @@ export class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper
 	implements IProvideFluidDataStoreRegistry
 {
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
-	 */
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this.registry;
 	}
