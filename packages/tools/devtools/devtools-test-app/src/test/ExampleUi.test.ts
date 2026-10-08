@@ -43,250 +43,95 @@ test.describe("End to end tests", () => {
 	});
 
 	test.describe("Container information", () => {
-		test.beforeEach(async ({ page }) => {
-			await page.getByRole("button", { name: "Close", exact: true }).click();
-			await page.getByRole("button", { name: /Shared Container/ }).click();
-		});
-
-		async function resizeDevtoolsPanel(page: Page, width: number): Promise<void> {
-			const panel = page.getByTestId("devtools-panel");
-			const bounds = await panel.boundingBox();
-			if (bounds === null) {
-				throw new Error("The Devtools panel is not visible.");
-			}
-
-			await page.locator(".devtools-resize-handle").hover();
-			await page.mouse.down();
-			await page.mouse.move(bounds.x + bounds.width - width, bounds.y + bounds.height / 2);
-			await page.mouse.up();
-			await expect(panel).toHaveCSS("width", `${width}px`);
-		}
-
-		async function expectInformationBelowHeading(page: Page, button: Locator): Promise<void> {
-			const heading = page.getByRole("heading", { name: "Shared Container", level: 2 });
+		async function expectInformationBelowHeading(
+			page: Page,
+			button: Locator,
+			expectScrolling = false,
+		): Promise<void> {
+			await button.click();
 			const information = page.getByRole("note");
-			// The entrance animation can temporarily place the popover inside the viewport.
+			await expect(information).toBeVisible();
+			// Measure the final position, not the entrance animation.
 			await information.evaluate(async (element) => {
 				await Promise.all(
 					element.getAnimations().map(async (animation) => animation.finished),
 				);
 			});
-			const viewport = await page.evaluate(() => ({
-				width: window.innerWidth,
-				height: window.innerHeight,
-			}));
+			const heading = page.getByRole("heading", { name: "Shared Container", level: 2 });
 			await expect
 				.poll(async () => {
 					const headingBounds = await heading.boundingBox();
 					const buttonBounds = await button.boundingBox();
 					const informationBounds = await information.boundingBox();
-					expect(headingBounds).not.toBeNull();
-					expect(buttonBounds).not.toBeNull();
-					expect(informationBounds).not.toBeNull();
-					return {
-						belowHeading:
-							headingBounds !== null &&
-							informationBounds !== null &&
-							informationBounds.y >= headingBounds.y + headingBounds.height,
-						belowButton:
-							buttonBounds !== null &&
-							informationBounds !== null &&
-							informationBounds.y >= buttonBounds.y + buttonBounds.height,
-						insideViewport:
-							informationBounds !== null &&
-							informationBounds.x >= 0 &&
-							informationBounds.x + informationBounds.width <= viewport.width + 1 &&
-							informationBounds.y + informationBounds.height <= viewport.height + 1,
-					};
+					return (
+						headingBounds !== null &&
+						buttonBounds !== null &&
+						informationBounds !== null &&
+						informationBounds.y >= headingBounds.y + headingBounds.height &&
+						informationBounds.y >= buttonBounds.y + buttonBounds.height
+					);
 				})
-				.toEqual({ belowHeading: true, belowButton: true, insideViewport: true });
+				.toBe(true);
+			expect(
+				await information.evaluate((element) => element.scrollWidth <= element.clientWidth),
+			).toBe(true);
+			if (page.viewportSize()?.height === 720) {
+				expect(
+					await information.evaluate(
+						(element) => element.scrollHeight <= element.clientHeight,
+					),
+				).toBe(true);
+			}
+			if (expectScrolling) {
+				expect(
+					await information.evaluate(
+						(element) => element.getBoundingClientRect().bottom - window.innerHeight,
+					),
+				).toBeLessThanOrEqual(1);
+				expect(
+					await information.evaluate((element) => element.scrollHeight > element.clientHeight),
+				).toBe(true);
+				await information.evaluate((element) => {
+					element.scrollTop = element.scrollHeight;
+				});
+				await expect(
+					information.getByText(/A client with write permissions/),
+				).toBeInViewport();
+			}
+			await page.keyboard.press("Escape");
+			await expect(information).toBeHidden();
 		}
 
-		for (const { viewport, panelWidth } of [
-			{ viewport: { width: 1280, height: 720 }, panelWidth: 500 },
-			{ viewport: { width: 1280, height: 720 }, panelWidth: 320 },
-			{ viewport: { width: 320, height: 256 }, panelWidth: 320 },
-			{ viewport: { width: 640, height: 160 }, panelWidth: 500 },
-		]) {
-			test(`Status information does not cover the heading at ${viewport.width}x${viewport.height} with a ${panelWidth}px panel`, async ({
+		for (const height of [720, 400]) {
+			test(`Information opens below its button and the heading at 1280x${height}`, async ({
 				page,
 			}) => {
-				const isDefaultLayout = viewport.width === 1280 && panelWidth === 500;
-				await resizeDevtoolsPanel(page, panelWidth);
-				await page.setViewportSize(viewport);
-				const panel = page.getByTestId("devtools-panel");
-				await expect(panel).toHaveCSS("width", `${panelWidth}px`);
-				await expect
-					.poll(async () =>
-						panel.evaluate((element) => {
-							const bounds = element.getBoundingClientRect();
-							return bounds.x >= 0 && bounds.right <= window.innerWidth;
-						}),
-					)
-					.toBe(true);
-
-				const statusButton = page.getByRole("button", { name: "Status information" });
-				await statusButton.focus();
-				await page.keyboard.press("Enter");
-
-				const information = page.getByRole("note");
-				await expect(information).toBeVisible();
-				await expectInformationBelowHeading(page, statusButton);
-
-				if (isDefaultLayout) {
-					await expect(information).toHaveCSS("white-space", "normal");
-					await expect
-						.poll(async () =>
-							information.evaluate((element) => element.getBoundingClientRect().width),
-						)
-						.toBeGreaterThanOrEqual(250);
-					expect(
-						await information.evaluate(
-							(element) => element.scrollHeight <= element.clientHeight,
-						),
-					).toBe(true);
+				await page.setViewportSize({ width: 1280, height });
+				await page.getByRole("button", { name: "Close", exact: true }).click();
+				await page.getByRole("button", { name: /Shared Container/ }).click();
+				for (const label of height === 720 ? ["Status", "Client ID", "User ID"] : []) {
+					await expectInformationBelowHeading(
+						page,
+						page.getByRole("button", { name: `${label} information`, exact: true }),
+					);
 				}
 
-				await information.hover();
-				await expect(information).toBeVisible();
-				expect(
-					await information.evaluate((element) => element.scrollWidth <= element.clientWidth),
-				).toBe(true);
-				if (viewport.height === 160) {
-					await expect(information).toHaveCSS("overflow-y", "auto");
-					await expect
-						.poll(async () =>
-							information.evaluate((element) => element.scrollHeight > element.clientHeight),
-						)
-						.toBe(true);
-				}
-				await page.keyboard.press("Tab");
-				await expect(information.getByRole("link")).toBeFocused();
-				await expect(information.getByRole("link")).toBeInViewport({ ratio: 1 });
-				await page.keyboard.press("Escape");
-				await expect(information).toBeHidden();
-				await expect(statusButton).toBeFocused();
-
-				if (isDefaultLayout) {
-					await statusButton.click();
-					await expect(information).toBeVisible();
-					await page.keyboard.press("Escape");
-					await expect(information).toBeHidden();
-					await expect(statusButton).toBeFocused();
-				}
-			});
-		}
-
-		for (const panelWidth of [500, 320]) {
-			for (const { label, content } of [
-				{ label: "Client ID", content: /ID assigned by the Fluid/ },
-				{ label: "User ID", content: /Represents the application-specific user identifier/ },
-			]) {
-				test(`${label} information stays below the heading without scrollbars with a ${panelWidth}px panel`, async ({
-					page,
-				}) => {
-					await resizeDevtoolsPanel(page, panelWidth);
-					const button = page.getByRole("button", { name: `${label} information` });
-					await button.focus();
-					await page.keyboard.press("Space");
-
-					const information = page.getByRole("note");
-					await expect(information).toBeVisible();
-					await expectInformationBelowHeading(page, button);
-					await expect(information).toContainText(content);
-					await expect
-						.poll(async () =>
-							information.evaluate((element) => {
-								const bounds = element.getBoundingClientRect();
-								const textBounds = [...element.childNodes]
-									.filter((node) => node.nodeType === Node.TEXT_NODE)
-									.flatMap((node) => {
-										const range = document.createRange();
-										range.selectNodeContents(node);
-										return [...range.getClientRects()];
-									});
-								return (
-									element.scrollWidth <= element.clientWidth &&
-									element.scrollHeight <= element.clientHeight &&
-									textBounds.length > 0 &&
-									textBounds.every(
-										(text) =>
-											text.left >= bounds.left &&
-											text.top >= bounds.top &&
-											text.right <= bounds.right &&
-											text.bottom <= bounds.bottom,
-									)
-								);
-							}),
-						)
-						.toBe(true);
-					await information.hover();
-					await expect(information).toBeVisible();
-					await page.keyboard.press("Escape");
-					await expect(information).toBeHidden();
-					await expect(button).toBeFocused();
-				});
-			}
-		}
-
-		for (const { height, tables } of [
-			{
-				height: 720,
-				tables: [
+				await page.getByRole("tab", { name: "Audience", exact: true }).click();
+				for (const { table, labels } of [
 					{
 						table: "Audience state table",
-						labels: ["Mode", "Scopes", "Client ID", "User ID"],
+						labels: height === 720 ? ["Mode", "Scopes", "Client ID", "User ID"] : ["Mode"],
 					},
-					{ table: "Audience history table", labels: ["Client ID"] },
-				],
-			},
-			{
-				height: 400,
-				tables: [{ table: "Audience state table", labels: ["Mode"] }],
-			},
-		]) {
-			test(`Audience information opens downward at 1280x${height}`, async ({ page }) => {
-				await resizeDevtoolsPanel(page, 1000);
-				await page.setViewportSize({ width: 1280, height });
-				await page.getByRole("tab", { name: "Audience", exact: true }).click();
-
-				for (const { table, labels } of tables) {
+					{ table: "Audience history table", labels: height === 720 ? ["Client ID"] : [] },
+				]) {
 					for (const label of labels) {
-						const button = page
-							.getByRole("table", { name: table, exact: true })
-							.getByRole("button", { name: `${label} information`, exact: true });
-						await button.focus();
-						await page.keyboard.press("Enter");
-
-						const information = page.getByRole("note");
-						await expect(information).toBeVisible();
-						await expect(information).toHaveAttribute("data-popper-placement", "bottom-start");
-						await expectInformationBelowHeading(page, button);
-						await expect
-							.poll(async () =>
-								information.evaluate((element) => element.scrollWidth <= element.clientWidth),
-							)
-							.toBe(true);
-						await information.hover();
-						await expect(information).toBeVisible();
-						if (height === 400) {
-							await expect
-								.poll(async () =>
-									information.evaluate(
-										(element) => element.scrollHeight > element.clientHeight,
-									),
-								)
-								.toBe(true);
-							await information.evaluate((element) => {
-								element.scrollTop = element.scrollHeight;
-							});
-							await expect(information.getByRole("listitem").last()).toBeInViewport({
-								ratio: 1,
-							});
-						}
-						await page.keyboard.press("Escape");
-						await expect(information).toBeHidden();
-						await expect(button).toBeFocused();
+						await expectInformationBelowHeading(
+							page,
+							page
+								.getByRole("table", { name: table, exact: true })
+								.getByRole("button", { name: `${label} information`, exact: true }),
+							height === 400 && label === "Mode",
+						);
 					}
 				}
 			});

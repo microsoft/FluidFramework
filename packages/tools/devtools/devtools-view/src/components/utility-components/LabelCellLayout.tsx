@@ -7,9 +7,14 @@ import type { PropsWithChildren, ReactElement } from "react";
 
 import { FluentReactComponents } from "../../FluentUi.cjs";
 
-import { InformationLabel } from "./InformationLabel.js";
+const { InfoLabel, Label, TableCellLayout, makeStyles } = FluentReactComponents;
 
-const { Label, TableCellLayout } = FluentReactComponents;
+const useStyles = makeStyles({
+	info: {
+		width: "max-content",
+		whiteSpace: "normal",
+	},
+});
 
 /**
  * {@link LabelCellLayout} input props.
@@ -36,13 +41,23 @@ export type LabelCellLayoutProps = PropsWithChildren<{
  */
 export function LabelCellLayout(props: LabelCellLayoutProps): ReactElement {
 	const { children, icon, infoTooltipContent } = props;
+	const styles = useStyles();
 
 	return (
 		<TableCellLayout media={icon}>
 			{infoTooltipContent === undefined ? (
 				<Label>{children}</Label>
 			) : (
-				<InformationLabel info={infoTooltipContent}>{children}</InformationLabel>
+				<InfoLabel
+					info={{ children: infoTooltipContent, className: styles.info }}
+					infoButton={{
+						popover: {
+							positioning: { position: "below", align: "start", pinned: true, autoSize: true },
+						},
+					}}
+				>
+					{children}
+				</InfoLabel>
 			)}
 		</TableCellLayout>
 	);
