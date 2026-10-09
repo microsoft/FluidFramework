@@ -20,7 +20,6 @@ export {
 	hostToGuestMessageValidator,
 	type HostUpdateMessage,
 	isHandleToken,
-	isLocalHandle,
 	isSerializedHandle,
 	makePromiseWithResolvers,
 	normalizeProtocolError,
