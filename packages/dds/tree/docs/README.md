@@ -19,3 +19,4 @@ List of technical/design documents (to be organized into appropriate sections at
 -   [Undo](./main/undo.md)
 -   [V1 Undo](./main/v1-undo.md)
 -   [Detached Trees](./main/detached-trees.md)
+-   [TypeBox 1.3.34 Migration: Performance and Packaging Findings](./wip/typebox-1-upgrade-blockers.md)

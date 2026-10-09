@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
+import { typeboxOptional } from "../../../../util/index.js";
 
 import { shapesV1 } from "./formatV1.js";
 
@@ -24,7 +25,7 @@ export const EncodedIncrementalChunkShape = Type.Literal(0);
  */
 export const shapesV2 = {
 	...shapesV1,
-	e: Type.Optional(EncodedIncrementalChunkShape),
+	e: typeboxOptional(EncodedIncrementalChunkShape),
 } as const;
 
 /**

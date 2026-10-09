@@ -3,18 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static, TSchema } from "typebox";
+
+import { typeboxInterface } from "../../../../util/index.js";
 
 import type { FieldBatchFormatVersion } from "./versions.js";
 
 /**
  * Identifier OR Index of an identifier in the identifier list.
  */
-export const IdentifierOrIndex = Type.Union([
-	Type.String(),
-	Type.Number({ multipleOf: 1, minimum: 0 }),
-]);
+export const IdentifierOrIndex = Type.Union([Type.String(), Type.Integer({ minimum: 0 })]);
 export type IdentifierOrIndex = Static<typeof IdentifierOrIndex>;
 
 /**
@@ -22,10 +21,10 @@ export type IdentifierOrIndex = Static<typeof IdentifierOrIndex>;
  *
  * Shapes use a dictionary encoding where they are referenced by their index in a shape array.
  */
-export const ShapeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
+export const ShapeIndex = Type.Integer({ minimum: 0 });
 export type ShapeIndex = Static<typeof ShapeIndex>;
 
-export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
+export const Count = Type.Integer({ minimum: 0 });
 
 const EncodedFieldBatchBase = Type.Object(
 	{
@@ -53,7 +52,7 @@ export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
-	Type.Composite(
+	typeboxInterface(
 		[
 			EncodedFieldBatchBase,
 			Type.Object({
@@ -61,6 +60,7 @@ export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
 				shapes: Type.Array(shape),
 			}),
 		],
+		{},
 		{ additionalProperties: false },
 	);
 

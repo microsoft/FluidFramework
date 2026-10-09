@@ -3,8 +3,13 @@
     "version": 1,
     "minVersionForCollab": "2.0.0",
     "schema": {
-      "additionalProperties": false,
       "type": "object",
+      "required": [
+        "identifiers",
+        "data",
+        "version",
+        "shapes"
+      ],
       "properties": {
         "identifiers": {
           "type": "array",
@@ -20,44 +25,37 @@
           }
         },
         "version": {
-          "const": 1,
-          "type": "number"
+          "type": "number",
+          "const": 1
         },
         "shapes": {
           "type": "array",
           "items": {
-            "additionalProperties": false,
-            "minProperties": 1,
-            "maxProperties": 1,
             "type": "object",
             "properties": {
               "a": {
-                "multipleOf": 1,
-                "minimum": 0,
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "b": {
-                "additionalProperties": false,
                 "type": "object",
-                "properties": {
-                  "length": {
-                    "multipleOf": 1,
-                    "minimum": 0,
-                    "type": "number"
-                  },
-                  "shape": {
-                    "multipleOf": 1,
-                    "minimum": 0,
-                    "type": "number"
-                  }
-                },
                 "required": [
                   "length",
                   "shape"
-                ]
+                ],
+                "properties": {
+                  "length": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "shape": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
               },
               "c": {
-                "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "type": {
@@ -66,9 +64,8 @@
                         "type": "string"
                       },
                       {
-                        "multipleOf": 1,
-                        "minimum": 0,
-                        "type": "number"
+                        "type": "integer",
+                        "minimum": 0
                       }
                     ]
                   },
@@ -78,14 +75,15 @@
                         "type": "boolean"
                       },
                       {
-                        "minItems": 1,
-                        "maxItems": 1,
                         "type": "array",
-                        "items": {}
+                        "items": {},
+                        "minItems": 1,
+                        "maxItems": 1
                       },
                       {
-                        "const": 0,
-                        "type": "number"
+                        "enum": [
+                          0
+                        ]
                       }
                     ]
                   },
@@ -93,6 +91,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
+                      "additionalItems": false,
                       "items": [
                         {
                           "anyOf": [
@@ -100,55 +99,54 @@
                               "type": "string"
                             },
                             {
-                              "multipleOf": 1,
-                              "minimum": 0,
-                              "type": "number"
+                              "type": "integer",
+                              "minimum": 0
                             }
                           ]
                         },
                         {
-                          "multipleOf": 1,
-                          "minimum": 0,
-                          "type": "number"
+                          "type": "integer",
+                          "minimum": 0
                         }
                       ],
-                      "additionalItems": false,
-                      "minItems": 2,
-                      "maxItems": 2
+                      "minItems": 2
                     }
                   },
                   "extraFields": {
-                    "multipleOf": 1,
-                    "minimum": 0,
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   }
-                }
+                },
+                "additionalProperties": false
               },
               "d": {
-                "const": 0,
-                "type": "number"
+                "type": "number",
+                "const": 0
               },
               "e": {
                 "not": {}
               }
-            }
+            },
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1
           }
         }
       },
-      "required": [
-        "identifiers",
-        "data",
-        "version",
-        "shapes"
-      ]
+      "additionalProperties": false
     }
   },
   {
     "version": 2,
     "minVersionForCollab": "2.73.0",
     "schema": {
-      "additionalProperties": false,
       "type": "object",
+      "required": [
+        "identifiers",
+        "data",
+        "version",
+        "shapes"
+      ],
       "properties": {
         "identifiers": {
           "type": "array",
@@ -164,44 +162,37 @@
           }
         },
         "version": {
-          "const": 2,
-          "type": "number"
+          "type": "number",
+          "const": 2
         },
         "shapes": {
           "type": "array",
           "items": {
-            "additionalProperties": false,
-            "minProperties": 1,
-            "maxProperties": 1,
             "type": "object",
             "properties": {
               "a": {
-                "multipleOf": 1,
-                "minimum": 0,
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               },
               "b": {
-                "additionalProperties": false,
                 "type": "object",
-                "properties": {
-                  "length": {
-                    "multipleOf": 1,
-                    "minimum": 0,
-                    "type": "number"
-                  },
-                  "shape": {
-                    "multipleOf": 1,
-                    "minimum": 0,
-                    "type": "number"
-                  }
-                },
                 "required": [
                   "length",
                   "shape"
-                ]
+                ],
+                "properties": {
+                  "length": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "shape": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false
               },
               "c": {
-                "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "type": {
@@ -210,9 +201,8 @@
                         "type": "string"
                       },
                       {
-                        "multipleOf": 1,
-                        "minimum": 0,
-                        "type": "number"
+                        "type": "integer",
+                        "minimum": 0
                       }
                     ]
                   },
@@ -222,14 +212,15 @@
                         "type": "boolean"
                       },
                       {
-                        "minItems": 1,
-                        "maxItems": 1,
                         "type": "array",
-                        "items": {}
+                        "items": {},
+                        "minItems": 1,
+                        "maxItems": 1
                       },
                       {
-                        "const": 0,
-                        "type": "number"
+                        "enum": [
+                          0
+                        ]
                       }
                     ]
                   },
@@ -237,6 +228,7 @@
                     "type": "array",
                     "items": {
                       "type": "array",
+                      "additionalItems": false,
                       "items": [
                         {
                           "anyOf": [
@@ -244,48 +236,42 @@
                               "type": "string"
                             },
                             {
-                              "multipleOf": 1,
-                              "minimum": 0,
-                              "type": "number"
+                              "type": "integer",
+                              "minimum": 0
                             }
                           ]
                         },
                         {
-                          "multipleOf": 1,
-                          "minimum": 0,
-                          "type": "number"
+                          "type": "integer",
+                          "minimum": 0
                         }
                       ],
-                      "additionalItems": false,
-                      "minItems": 2,
-                      "maxItems": 2
+                      "minItems": 2
                     }
                   },
                   "extraFields": {
-                    "multipleOf": 1,
-                    "minimum": 0,
-                    "type": "number"
+                    "type": "integer",
+                    "minimum": 0
                   }
-                }
+                },
+                "additionalProperties": false
               },
               "d": {
-                "const": 0,
-                "type": "number"
+                "type": "number",
+                "const": 0
               },
               "e": {
-                "const": 0,
-                "type": "number"
+                "type": "number",
+                "const": 0
               }
-            }
+            },
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1
           }
         }
       },
-      "required": [
-        "identifiers",
-        "data",
-        "version",
-        "shapes"
-      ]
+      "additionalProperties": false
     }
   }
 ]

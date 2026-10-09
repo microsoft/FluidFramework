@@ -32,7 +32,7 @@ Longer term there are many options (these are not all planned, and is not an exh
 -   Schema importers: We will likely want at least one tool that takes input schema files and generates the types used by the schema libraries.
     Some options are listed here, but little thought has gone into this list:
 
-    -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/@sinclair/typebox)) that supports runtime and compile time typing without code gen.
+    -   typescript DSL (like [TypeBox](https://www.npmjs.com/package/typebox)) that supports runtime and compile time typing without code gen.
     -   [json schema](https://json-schema.org/)
     -   graphQL
 

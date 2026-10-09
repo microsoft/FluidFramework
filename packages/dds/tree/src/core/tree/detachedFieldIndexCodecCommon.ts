@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { Static, TSchema } from "@sinclair/typebox";
+import type { Static, TSchema } from "typebox";
+import * as Type from "typebox/type";
 
 import type { IJsonCodec } from "../../codec/index.js";
 import { hasSingle } from "../../util/index.js";
@@ -31,11 +32,13 @@ export function makeDetachedFieldIndexCodecFromMajorCodec<
 	version: TVersion,
 	encodedRevisionTagSchema: TEncodedRevisionTagSchema,
 ) {
-	const formatSchema = Format(version, encodedRevisionTagSchema);
+	// A concrete revision schema lets TypeBox resolve tuple modifiers for the generic revision type.
+	const revisionTagSchema = Type.Unsafe<TEncodedRevisionTag>(encodedRevisionTagSchema);
+	const formatSchema = Format(version, revisionTagSchema);
 	return {
 		schema: formatSchema,
 		encode: (data: DetachedFieldSummaryData): Static<typeof formatSchema> => {
-			const rootsForRevisions: EncodedRootsForRevision[] = [];
+			const rootsForRevisions: EncodedRootsForRevision<typeof revisionTagSchema>[] = [];
 			for (const [major, innerMap] of data.data) {
 				const encodedRevision = majorCodec.encode(major);
 				const rootRanges: RootRanges = [];
@@ -44,14 +47,17 @@ export function makeDetachedFieldIndexCodecFromMajorCodec<
 				}
 				if (hasSingle(rootRanges)) {
 					const firstRootRange = rootRanges[0];
-					const rootsForRevision: EncodedRootsForRevision = [
+					const rootsForRevision: EncodedRootsForRevision<typeof revisionTagSchema> = [
 						encodedRevision,
 						firstRootRange[0],
 						firstRootRange[1],
 					];
 					rootsForRevisions.push(rootsForRevision);
 				} else {
-					const rootsForRevision: EncodedRootsForRevision = [encodedRevision, rootRanges];
+					const rootsForRevision: EncodedRootsForRevision<typeof revisionTagSchema> = [
+						encodedRevision,
+						rootRanges,
+					];
 					rootsForRevisions.push(rootsForRevision);
 				}
 			}
@@ -73,7 +79,7 @@ export function makeDetachedFieldIndexCodecFromMajorCodec<
 				} else {
 					innerMap.set(rootsForRevision[1], { root: rootsForRevision[2] });
 				}
-				const revision = rootsForRevision[0] as TEncodedRevisionTag;
+				const revision = rootsForRevision[0];
 				map.set(majorCodec.decode(revision), innerMap);
 			}
 			return {

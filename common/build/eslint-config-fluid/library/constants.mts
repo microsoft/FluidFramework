@@ -36,6 +36,16 @@ export const permittedImports = [
 	// Internal packages may structure their exports arbitrarily, so allow any imports from them.
 	"@fluid-internal/**",
 
+	// TypeBox documents these package exports as its public module entrypoints.
+	"typebox/compile",
+	"typebox/error",
+	"typebox/format",
+	"typebox/guard",
+	"typebox/schema",
+	"typebox/system",
+	"typebox/type",
+	"typebox/value",
+
 	// Allow imports from sibling and ancestral sibling directories,
 	// but not from cousin directories. Parent is allowed but only
 	// because there isn't a known way to deny it.

@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions, Static } from "typebox";
+
+import { typeboxInterface, typeboxOptional } from "../../util/index.js";
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 const EncodedNoChangeConstraint = Type.Object(
 	{
@@ -18,17 +20,18 @@ const EncodedNoChangeConstraint = Type.Object(
 );
 export type EncodedNoChangeConstraint = Static<typeof EncodedNoChangeConstraint>;
 
-export const EncodedModularChangesetV2 = Type.Composite(
+export const EncodedModularChangesetV2 = typeboxInterface(
 	[
 		EncodedModularChangesetV1,
 		Type.Object(
 			{
 				/** Global no change constraint that gets violated whenever the changeset is rebased */
-				noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
+				noChangeConstraint: typeboxOptional(EncodedNoChangeConstraint),
 			},
 			noAdditionalProps,
 		),
 	],
+	{},
 	noAdditionalProps,
 );
 

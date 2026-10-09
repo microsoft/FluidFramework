@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { Static, TSchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static, TSchema } from "typebox";
 
-import { brandedNumberType, strictEnum, type Values } from "../../util/index.js";
+import { brandedIntegerType, strictEnum, type Values } from "../../util/index.js";
 
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 
@@ -23,15 +23,14 @@ export type DetachedFieldIndexFormatVersion = Values<typeof DetachedFieldIndexFo
  * The ID of a detached node. Is not globally unique on.
  * A `RevisionTag` + `DetachId` pair is globally unique and eventually consistent across clients.
  */
-export const DetachId = Type.Number({ multipleOf: 1 });
+export const DetachId = Type.Integer();
 
 /**
  * The ID of a root node in the forest associated with the owning checkout. Is unique for that forest.
  * Is not consistent across clients.
  */
-export const ForestRootIdSchema = brandedNumberType<ForestRootId>({
+export const ForestRootIdSchema = brandedIntegerType<ForestRootId>({
 	minimum: -1,
-	multipleOf: 1,
 });
 
 /**
@@ -62,7 +61,9 @@ export const EncodedRootsForRevision = <Schema extends TSchema>(tRevisionTag: Sc
 		// Used to represent a revision in which a single node was detached
 		Type.Tuple([tRevisionTag, DetachId, ForestRootIdSchema]),
 	]);
-export type EncodedRootsForRevision = Static<ReturnType<typeof EncodedRootsForRevision>>;
+export type EncodedRootsForRevision<Schema extends TSchema> = Static<
+	ReturnType<typeof EncodedRootsForRevision<Schema>>
+>;
 
 export const Format = <
 	TVersion extends DetachedFieldIndexFormatVersion,
@@ -82,4 +83,7 @@ export const Format = <
 		{ additionalProperties: false },
 	);
 
-export type Format = Static<ReturnType<typeof Format>>;
+export type Format<
+	TVersion extends DetachedFieldIndexFormatVersion,
+	TRevisionTagSchema extends TSchema,
+> = Static<ReturnType<typeof Format<TVersion, TRevisionTagSchema>>>;
