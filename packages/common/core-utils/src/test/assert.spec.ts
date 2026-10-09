@@ -13,7 +13,7 @@ import {
 	emulateProductionBuild,
 	nonProductionConditionalsIncluded,
 	onAssertionFailure,
-	prefix,
+	prefixPredicate,
 } from "../assert.js";
 
 describe("assert", () => {
@@ -151,9 +151,9 @@ describe("assert", () => {
 		strict.deepEqual(log, ["A", "B", "B", "C"]);
 	});
 
-	it("prefix", () => {
-		strict.equal(prefix("Prefix", true), true);
-		strict.equal(prefix("Prefix", "details"), "Prefix details");
-		strict.equal(prefix("Prefix", { toString: () => "details" }), "Prefix details");
+	it("prefixPredicate", () => {
+		strict.equal(prefixPredicate("Prefix", true), true);
+		strict.equal(prefixPredicate("Prefix", "details"), "Prefix: details");
+		strict.equal(prefixPredicate("Prefix", { toString: () => "details" }), "Prefix: details");
 	});
 });

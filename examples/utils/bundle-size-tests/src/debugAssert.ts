@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { debugAssert, assert, prefix } from "@fluidframework/core-utils/internal";
+import { debugAssert, assert, prefixPredicate } from "@fluidframework/core-utils/internal";
 
 // TODO: ideally there would be a unit test which actually checks that this is omitted from production builds.
 // For now it can be manually verified in ../build/debugAssert.js,
 // and any regression breaking it will show up as a bundle size regression.
 debugAssert(() => "This should be removed in production 1");
 debugAssert(() =>
-	prefix("This should be removed in production 2", "This should be removed in production 3"),
+	prefixPredicate(
+		"This should be removed in production 2",
+		"This should be removed in production 3",
+	),
 );
 assert(true, "This should be kept 1");
 assert(true, "This should be kept 2", () => "This should be removed in production 4");
