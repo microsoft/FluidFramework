@@ -11,11 +11,12 @@ Interpreted validation is slower than compiled validation, so applications witho
 SharedTree sandbox protocol validation now uses the interpreted validator so it also works in these restricted environments.
 
 ```typescript
-import { FormatValidatorInterpreted } from "@fluidframework/tree/alpha";
+import {
+	FormatValidatorInterpreted,
+	configuredSharedTreeAlpha,
+} from "@fluidframework/tree/alpha";
 
-const options = {
-	treeOptions: {
-		jsonValidator: FormatValidatorInterpreted,
-	},
-};
+const SharedTree = configuredSharedTreeAlpha({
+	jsonValidator: FormatValidatorInterpreted,
+});
 ```
