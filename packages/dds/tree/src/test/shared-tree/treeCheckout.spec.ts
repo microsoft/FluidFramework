@@ -1025,21 +1025,33 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
-		it('forks cannot be created during the "changed" event resulting from a committed transaction', () => {
+		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
 			const provider = new TestTreeProviderLite(1);
 			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
 			const view = provider.trees[0].kernel.viewWith(config);
 			view.initialize([]);
 
-			const unsubscribe = view.events.on("changed", () => view.fork());
-			assert.throws(
-				() =>
-					view.runTransaction(() => {
-						view.root.insertAtEnd("A");
-						view.root.insertAtEnd("B");
-					}),
-				validateUsageError("Branching is forbidden during a change event callback"),
-			);
+			const forks: (typeof view)[] = [];
+			const unsubscribe = view.events.on("changed", () => {
+				forks.push(view.fork());
+			});
+
+			view.runTransaction(() => {
+				view.root.insertAtEnd("A");
+				view.root.insertAtEnd("B");
+			});
+
+			assert.equal(forks.length, 1);
+			const fork = forks[0];
+			assert.equal(fork.disposed, false);
+			assert.deepEqual(fork.root, ["A", "B"]);
+
+			fork.root.insertAtEnd("C");
+			assert.deepEqual(fork.root, ["A", "B", "C"]);
+			assert.deepEqual(view.root, ["A", "B"]);
+
+			view.merge(fork);
+			assert.deepEqual(view.root, ["A", "B", "C"]);
 			unsubscribe();
 		});
 

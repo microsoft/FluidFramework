@@ -322,14 +322,23 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
 }
 
 /**
- * Returns the branch currently bound to the given view.
+ * Returns the branch checkout associated with the given view.
  *
  * @remarks
+ * If the view is not already backed by a `BranchCheckout`, this function creates an
+ * independent fork of the view's checkout. Changes to that fork do not affect the view unless
+ * you explicitly merge the fork back. If the view is already backed by a `BranchCheckout`, that
+ * checkout is returned instead.
+ *
  * Repeated calls with the same view typically return the same {@link UntypedTreeViewAlpha} instance,
  * but this is not guaranteed: for example, while the view is participating in a transaction
  * its underlying branch may differ from the one observed outside the transaction, and a future
  * change that retargets a view to another branch would likewise cause a different instance to be
  * returned.
+ *
+ * A returned checkout can keep resources in use after the source view is disposed. Dispose of it
+ * when it is no longer needed. Since repeated calls can return the same instance, coordinate its
+ * disposal with any other code that uses it.
  *
  * @param view - A {@link TreeViewAlpha} returned by the Fluid Framework. External implementations
  * are not supported and will cause a `UsageError` to be thrown.

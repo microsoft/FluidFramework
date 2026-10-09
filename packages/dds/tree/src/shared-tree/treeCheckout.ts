@@ -1536,8 +1536,7 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		this.editLock.checkUnlocked("Branching");
-		const branch = options?.branch ?? this.#transaction.activeBranch.fork();
+		const branch = options?.branch ?? this.#transaction.branch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
