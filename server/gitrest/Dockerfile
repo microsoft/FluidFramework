@@ -105,11 +105,10 @@ COPY --from=base $GITREST_ROOT/packages ./packages
 EXPOSE 3000
 
 # GITHUB#162
-# To allow for ssh access to the repo (to clone locally) we share the volume within a k8s pod with a ssh service.
-# Mounted volumes with non-root users get tricky in this case. For now simply running as root for simplicity but
-# ideally the node user could gain write permissions to this volume.
-# Switch to the node user for security
-# USER node
+# Some existing repositories on mounted volumes may have been created as root by a previous
+# process or persistent volume setup. Keep the service running as root so it remains compatible
+# with those repositories until they are normalized. If that compatibility concern is no longer
+# required, revisit switching back to `USER node` for a tighter security posture.
 
 # Node wasn't designed to be run as PID 1. Tini is a tiny init wrapper. You can also set --init on docker later than
 # 1.13 but Kubernetes is at 1.12 so we prefer tini for now.
