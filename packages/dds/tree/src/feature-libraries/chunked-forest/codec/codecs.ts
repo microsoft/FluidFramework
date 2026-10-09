@@ -11,6 +11,7 @@ import type { TSchema } from "@sinclair/typebox";
 import {
 	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
+	type IJsonCodec,
 	type VersionDispatchingCodec,
 	FluidClientVersion,
 } from "../../../codec/index.js";
@@ -28,6 +29,8 @@ import {
 	type Brand,
 	type IdDecoderOptionsOriginatorless,
 	type IdDecoderOptionsWithOriginator,
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
@@ -225,6 +228,42 @@ export type FieldBatchCodec = VersionDispatchingCodec<
 	FieldBatchDecodingContext
 >;
 
+type FluidFieldBatchCodec = IJsonCodec<
+	FieldBatch,
+	EncodedFieldBatchV1OrV2,
+	EncodedFieldBatchV1OrV2,
+	FieldBatchEncodingContext,
+	FieldBatchDecodingContext
+>;
+
+type JsonCompatibleEncodedFieldBatch = JsonCompatibleReadOnlyObject &
+	Pick<EncodedFieldBatchV1OrV2, "version">;
+
+/**
+ * Adapts accurate field-batch codec types to the legacy JSON-compatible codec types.
+ * @remarks
+ * Field batches may contain handles before Fluid serialization, but the versioned codec APIs currently require JSON-compatible data.
+ */
+export function markFieldBatchCodecJsonCompatible<TCodec extends FluidFieldBatchCodec>(
+	codec: TCodec,
+): Omit<TCodec, keyof FluidFieldBatchCodec> &
+	IJsonCodec<
+		FieldBatch,
+		JsonCompatibleEncodedFieldBatch,
+		JsonCompatibleReadOnly,
+		FieldBatchEncodingContext,
+		FieldBatchDecodingContext
+	> {
+	return codec as unknown as Omit<TCodec, keyof FluidFieldBatchCodec> &
+		IJsonCodec<
+			FieldBatch,
+			JsonCompatibleEncodedFieldBatch,
+			JsonCompatibleReadOnly,
+			FieldBatchEncodingContext,
+			FieldBatchDecodingContext
+		>;
+}
+
 /**
  * Creates the encode/decode functions for a specific FieldBatch format version.
  */
@@ -241,7 +280,13 @@ function makeFieldBatchCodecForVersion(
 	) => EncodedFieldBatchV1OrV2,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext, FieldBatchDecodingContext> {
-	return {
+	const codec: IJsonCodec<
+		FieldBatch,
+		EncodedFieldBatchV1OrV2,
+		EncodedFieldBatchV1OrV2,
+		FieldBatchEncodingContext,
+		FieldBatchDecodingContext
+	> & { readonly schema: TSchema } = {
 		encode: (
 			data: FieldBatch,
 			context: FieldBatchEncodingContext,
@@ -305,6 +350,7 @@ function makeFieldBatchCodecForVersion(
 		},
 		schema: encodedFieldBatchType,
 	};
+	return markFieldBatchCodecJsonCompatible(codec);
 }
 
 /**

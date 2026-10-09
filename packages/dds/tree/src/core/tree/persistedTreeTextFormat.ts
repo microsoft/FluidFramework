@@ -6,6 +6,7 @@
 import * as Type from "@sinclair/typebox";
 import type { Static, TSchema } from "@sinclair/typebox";
 
+import { TreeValueSchema } from "../../util/index.js";
 import { schemaFormatV1 } from "../schema-stored/index.js";
 
 /**
@@ -58,7 +59,7 @@ const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
 
 type EncodedNodeData = Static<typeof EncodedNodeData>;
 const EncodedNodeData = Type.Object({
-	value: Type.Optional(Type.Any()),
+	value: Type.Optional(TreeValueSchema),
 	type: Type.Readonly(schemaFormatV1.TreeNodeSchemaIdentifierSchema),
 });
 

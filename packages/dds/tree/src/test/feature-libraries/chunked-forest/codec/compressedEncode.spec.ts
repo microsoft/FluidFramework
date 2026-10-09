@@ -35,6 +35,8 @@ import {
 	updateShapesAndIdentifiersEncoding,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { markFieldBatchCodecJsonCompatible } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
@@ -118,7 +120,7 @@ function makeFieldBatchCodec(
 		{
 			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: version,
-			codec: {
+			codec: markFieldBatchCodecJsonCompatible({
 				encode: (
 					data: FieldBatch,
 					context: FieldBatchEncodingContext,
@@ -135,7 +137,7 @@ function makeFieldBatchCodec(
 					);
 				},
 				schema: format,
-			},
+			}),
 		},
 	]);
 	return builder.build({ ...options, minVersionForCollab: lowestMinVersionForCollab });

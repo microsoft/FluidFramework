@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { type TreeValue, type Value, ValueSchema } from "../core/index.js";
+import type { FluidSerializableReadOnly } from "../util/index.js";
+
+export type { FluidSerializableReadOnly } from "../util/index.js";
 
 export function allowsValue(schema: ValueSchema | undefined, nodeValue: Value): boolean {
 	if (schema === undefined) {
@@ -41,24 +43,6 @@ export function valueSchemaAllows<TSchema extends ValueSchema>(
 		}
 	}
 }
-
-/**
- * Use for readonly view of Json compatible data that can also contain IFluidHandles.
- *
- * Note that this does not robustly forbid non json comparable data via type checking,
- * but instead mostly restricts access to it.
- */
-export type FluidSerializableReadOnly =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| readonly FluidSerializableReadOnly[]
-	| {
-			readonly [P in string]?: FluidSerializableReadOnly;
-	  };
 
 export function assertAllowedValue(
 	value: undefined | FluidSerializableReadOnly,

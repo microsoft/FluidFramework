@@ -25,6 +25,13 @@ export {
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
+	FluidHandleSchema,
+	type FluidSerializableReadOnly,
+	type FluidSerializableReadOnlyObject,
+	FluidSerializableReadOnlySchema,
+	TreeValueSchema,
+} from "./fluidSerializableSchemas.js";
+export {
 	brandOpaque,
 	extractFromOpaque,
 	type ExtractFromOpaque,

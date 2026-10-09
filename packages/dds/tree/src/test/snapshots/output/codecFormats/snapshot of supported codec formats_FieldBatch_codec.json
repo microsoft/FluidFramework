@@ -16,7 +16,44 @@
           "type": "array",
           "items": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$id": "T0",
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "T0"
+                  }
+                },
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {
+                      "$ref": "T0"
+                    }
+                  }
+                }
+              ]
+            }
           }
         },
         "version": {
@@ -81,7 +118,25 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": {}
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        }
                       },
                       {
                         "const": 0,
@@ -160,7 +215,44 @@
           "type": "array",
           "items": {
             "type": "array",
-            "items": {}
+            "items": {
+              "$id": "T0",
+              "anyOf": [
+                {
+                  "anyOf": [
+                    {
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "T0"
+                  }
+                },
+                {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {
+                      "$ref": "T0"
+                    }
+                  }
+                }
+              ]
+            }
           }
         },
         "version": {
@@ -225,7 +317,25 @@
                         "minItems": 1,
                         "maxItems": 1,
                         "type": "array",
-                        "items": {}
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object"
+                            },
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "boolean"
+                            },
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        }
                       },
                       {
                         "const": 0,
