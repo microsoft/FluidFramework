@@ -104,7 +104,6 @@ pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': 949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa
-  typebox@1.3.34: 1068a7c8b6491c1dab8c5c945e8ab387b3355d64a3d554538d30e012f7871f62
 
 importers:
 
@@ -1263,7 +1262,7 @@ importers:
         version: link:../../../packages/dds/tree
       typebox:
         specifier: ^1.3.34
-        version: 1.3.34(patch_hash=1068a7c8b6491c1dab8c5c945e8ab387b3355d64a3d554538d30e012f7871f62)
+        version: 1.3.34
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -8634,7 +8633,7 @@ importers:
         version: 2.8.1
       typebox:
         specifier: ^1.3.34
-        version: 1.3.34(patch_hash=1068a7c8b6491c1dab8c5c945e8ab387b3355d64a3d554538d30e012f7871f62)
+        version: 1.3.34
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -40834,7 +40833,7 @@ snapshots:
       media-typer: 0.3.0
       mime-types: 2.1.35
 
-  typebox@1.3.34(patch_hash=1068a7c8b6491c1dab8c5c945e8ab387b3355d64a3d554538d30e012f7871f62): {}
+  typebox@1.3.34: {}
 
   typed-array-buffer@1.0.3:
     dependencies:

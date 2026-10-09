@@ -277,7 +277,6 @@ packages:
 
 patchedDependencies:
   '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
-  typebox@1.3.34: patches/typebox@1.3.34.patch
 
 peerDependencyRules:
   # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't
