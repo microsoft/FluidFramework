@@ -13,6 +13,7 @@ import {
 	createIdCompressor,
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { MockHandle } from "../mockHandle.js";
@@ -22,8 +23,73 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 } from "../mocks.js";
+import { MockContainerRuntimeFactoryForReconnection } from "../mocksForReconnection.js";
 
 describe("MockContainerRuntime", () => {
+	for (const flushMode of [FlushMode.Immediate, FlushMode.TurnBased]) {
+		it(`encodes handles before freezing wire messages (flushMode: ${flushMode})`, () => {
+			const factory = new MockContainerRuntimeFactoryForReconnection({ flushMode });
+			const dataStore = new MockFluidDataStoreRuntime();
+			const runtime = factory.createContainerRuntime(dataStore);
+			const remoteRuntime = factory.createContainerRuntime(new MockFluidDataStoreRuntime());
+			// The referenced runtime contains cycles, just like a fuzz handle's routing context.
+			const handle = new MockHandle(dataStore);
+			const encodedHandle = { type: "__fluid_handle__", url: handle.absolutePath };
+			const content = { nested: [handle], encodedHandle };
+			const metadata = { handle };
+			const resubmitted: unknown[] = [];
+			dataStore.reSubmit = (pendingContent: unknown, localMetadata: unknown): void => {
+				assert.equal(pendingContent, content);
+				assert.equal(localMetadata, metadata);
+				resubmitted.push(pendingContent);
+				runtime.submit(pendingContent, localMetadata);
+			};
+
+			runtime.submit(content, metadata);
+			runtime.flush();
+			assert.equal(content.nested[0], handle);
+			assert.equal(Object.isFrozen(handle), false);
+			assert.equal(Object.isFrozen(dataStore), false);
+			handle.attachGraph();
+			assert.equal(handle.isAttached, true);
+
+			runtime.connected = false;
+			runtime.connected = true;
+			assert.equal(resubmitted.length, 1);
+			runtime.flush();
+			factory.processAllMessages();
+			assert.deepEqual(remoteRuntime.deltaManager.lastMessage?.contents, {
+				nested: [encodedHandle],
+				encodedHandle,
+			});
+		});
+
+		for (const connected of [false, true]) {
+			it(`encodes pending handles when stashing (flushMode: ${flushMode}, connected: ${connected})`, async () => {
+				const factory = new MockContainerRuntimeFactoryForReconnection({ flushMode });
+				const dataStore = new MockFluidDataStoreRuntime({ clientId: "client" });
+				const runtime = factory.createContainerRuntime(dataStore, { trackRemoteOps: true });
+				const handle = new MockHandle(dataStore);
+				runtime.connected = connected;
+				runtime.submit({ handle }, undefined);
+				runtime.flush();
+
+				const reloadedDataStore = new MockFluidDataStoreRuntime({ clientId: "client" });
+				const reloadedRuntime = factory.createContainerRuntime(reloadedDataStore);
+				const stashed: unknown[] = [];
+				reloadedDataStore.applyStashedOp = async (content: unknown): Promise<void> => {
+					stashed.push(content);
+				};
+
+				await reloadedRuntime.initializeWithStashedOps(runtime);
+				assert.deepEqual(stashed, [
+					{ handle: { type: "__fluid_handle__", url: handle.absolutePath } },
+				]);
+				assert.equal(Object.isFrozen(handle), false);
+			});
+		}
+	}
+
 	it("inherits its id from the datastore when set", () => {
 		const id = "example test id";
 		const factory = new MockContainerRuntimeFactory();
