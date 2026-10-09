@@ -21,7 +21,7 @@ import {
 } from "../channelConfiguration.js";
 import {
 	parseChannelConfigurationSnapshot,
-	hasChannelConfigurationMarker,
+	isChannelConfigurationOp,
 	parseChannelConfigurationMessage,
 	type ChannelConfigurationMessageV1,
 	type ChannelConfigurationValuesV1,
@@ -556,6 +556,12 @@ describe("channel configuration format", () => {
 		assert.equal(parseChannelConfigurationSnapshot(input), input);
 	});
 
+	it("accepts additional configuration op fields", () => {
+		const message = { ...proposal(0, {}), extra: 1 };
+		assert.equal(isChannelConfigurationOp(message), true);
+		assert.equal(parseChannelConfigurationMessage(message), message);
+	});
+
 	it("accepts negative zero revisions in snapshots and configuration ops", () => {
 		const input = { version: 1, revision: -0, values: {} };
 		assert.equal(parseChannelConfigurationSnapshot(input), input);
@@ -563,7 +569,7 @@ describe("channel configuration format", () => {
 		assert.equal(parseChannelConfigurationMessage(message), message);
 	});
 
-	it("recognizes only the reserved top-level key without interpreting ordinary payloads", () => {
+	it("recognizes only a true top-level configuration marker without interpreting ordinary payloads", () => {
 		for (const contents of [
 			undefined,
 			null,
@@ -574,10 +580,20 @@ describe("channel configuration format", () => {
 			[1, { isChannelConfigurationOp: true }],
 			{ kind: "configuration", version: 1, revision: 5, contents: {} },
 			{ value: { isChannelConfigurationOp: true } },
+			{ isChannelConfigurationOp: false },
 		]) {
-			assert.equal(hasChannelConfigurationMarker(contents), false);
+			assert.equal(isChannelConfigurationOp(contents), false);
 		}
-		assert.equal(hasChannelConfigurationMarker({ isChannelConfigurationOp: false }), true);
+		assert.equal(isChannelConfigurationOp({ isChannelConfigurationOp: true }), true);
+	});
+
+	it("validates declared configuration ops when parsing rather than detecting them", () => {
+		const message = { isChannelConfigurationOp: true };
+		assert.equal(isChannelConfigurationOp(message), true);
+		assert.throws(
+			() => parseChannelConfigurationMessage(message),
+			validateAssertionError("Unsupported channel configuration protocol version"),
+		);
 	});
 
 	for (const revision of [
@@ -604,18 +620,11 @@ describe("channel configuration format", () => {
 		});
 	}
 
-	it("rejects unknown versions, missing fields, extra message fields, and invalid markers", () => {
+	it("rejects unknown versions, missing fields, and invalid markers", () => {
 		for (const message of [
 			{},
 			{ version: 2, isChannelConfigurationOp: true, expectedRevision: 0, values: {} },
 			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0 },
-			{
-				version: 1,
-				isChannelConfigurationOp: true,
-				expectedRevision: 0,
-				values: {},
-				extra: 1,
-			},
 			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: [] },
 			{ version: 1, isChannelConfigurationOp: true, expectedRevision: 0, values: null },
 			{ version: 1, isChannelConfigurationOp: false, expectedRevision: 0, values: {} },

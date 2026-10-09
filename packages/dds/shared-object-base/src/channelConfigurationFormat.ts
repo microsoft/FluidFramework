@@ -64,8 +64,12 @@ export interface ChannelConfigurationMessageV1 {
  * Detects the reserved top-level key without interpreting ordinary DDS payloads.
  * A present but invalid marker must fail validation, not fall through to the DDS.
  */
-export function hasChannelConfigurationMarker(value: unknown): boolean {
-	return isObject(value) && Object.hasOwn(value, "isChannelConfigurationOp");
+export function isChannelConfigurationOp(value: unknown): value is ChannelConfigurationMessageV1 {
+	return isObject(value) && Object.hasOwn(value, "isChannelConfigurationOp") && (value as ChannelConfigurationMessageV1).isChannelConfigurationOp === true;
+}
+
+function isNonArrayObject(value: unknown): value is Record<string, unknown> {
+	return isObject(value) && !Array.isArray(value);
 }
 
 /**
@@ -74,20 +78,16 @@ export function hasChannelConfigurationMarker(value: unknown): boolean {
  */
 export function validateConfigurationRevision(revision: unknown): asserts revision is number {
 	assert(
-		typeof revision === "number" && Number.isSafeInteger(revision) && revision >= 0,
+		typeof revision === "number" && revision >= 0 && Number.isSafeInteger(revision),
 		"Channel configuration revision must be a non-negative safe integer",
 	);
 }
 
-/**
- * Checks the top-level shape without copying or inspecting configuration values.
- */
-function readRecord(value: unknown): Record<string, unknown> {
+function assertHasValidConfigurationValues(hasValues: Record<string, unknown> | ChannelConfigurationMessageV1): asserts hasValues is { values: ChannelConfigurationValuesV1 } {
 	assert(
-		isObject(value) && !Array.isArray(value),
-		"Channel configuration must use a JSON object",
+		Object.hasOwn(hasValues, "values") && isNonArrayObject(hasValues.values),
+		"Invalid configuration values",
 	);
-	return value as Record<string, unknown>;
 }
 
 /**
@@ -95,20 +95,13 @@ function readRecord(value: unknown): Record<string, unknown> {
  * @internal
  */
 export function parseChannelConfigurationMessage(
-	value: unknown,
+	op: unknown,
 ): ChannelConfigurationMessageV1 {
-	const record = readRecord(value);
-	assert(record.version === 1, "Unsupported channel configuration protocol version");
-	validateConfigurationRevision(record.expectedRevision);
-	assert(
-		record.isChannelConfigurationOp === true &&
-			Object.keys(record).length === 4 &&
-			Object.hasOwn(record, "values") &&
-			isObject(record.values) &&
-			!Array.isArray(record.values),
-		"Invalid channel configuration message",
-	);
-	return value as ChannelConfigurationMessageV1;
+	assert(isChannelConfigurationOp(op), "Not a channel configuration operation");
+	assert(op.version === 1, "Unsupported channel configuration protocol version");
+	validateConfigurationRevision(op.expectedRevision);
+	assertHasValidConfigurationValues(op);
+	return op;
 }
 
 /**
@@ -116,11 +109,11 @@ export function parseChannelConfigurationMessage(
  * @internal
  */
 export function parseChannelConfigurationSnapshot(
-	value: unknown,
+	snapshot: unknown,
 ): ChannelConfigurationSnapshotV1 {
-	const record = readRecord(value);
-	assert(record.version === 1, "Invalid channel configuration snapshot version");
-	validateConfigurationRevision(record.revision);
-	readRecord(record.values);
-	return value as ChannelConfigurationSnapshotV1;
+	assert(isNonArrayObject(snapshot), "Invalid channel configuration snapshot");
+	assert(snapshot.version === 1, "Invalid channel configuration snapshot version");
+	validateConfigurationRevision(snapshot.revision);
+	assertHasValidConfigurationValues(snapshot);
+	return snapshot as ChannelConfigurationSnapshotV1;
 }
