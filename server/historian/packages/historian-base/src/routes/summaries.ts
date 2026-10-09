@@ -75,6 +75,8 @@ export function create(
 	// Alfred prevents caller-selected document IDs from being reused.
 	const ephemeralSummaryAccessEnabled =
 		config.get("alfred:enforceServerGeneratedDocumentId") === true;
+	const accessStore =
+		ephemeralSummaryAccessEnabled && isEphemeralSummaryAccessStore(cache) ? cache : undefined;
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -120,10 +122,6 @@ export function create(
 		allowDisabledTenant = false,
 		query?: Query,
 	): Promise<{ service: RestGitService; access: ISummaryAccessContext }> {
-		const accessStore =
-			ephemeralSummaryAccessEnabled && isEphemeralSummaryAccessStore(cache)
-				? cache
-				: undefined;
 		const access = await resolveSummaryAccess({
 			tenantId,
 			authorization,
@@ -236,10 +234,9 @@ export function create(
 			"notApplicable",
 			true,
 		);
-		const accessStore =
-			ephemeralSummaryAccessEnabled && isEphemeralSummaryAccessStore(cache)
-				? cache
-				: undefined;
+		// The Redis tombstone and GitRest deletion are not atomic. Marking access deleted first
+		// may briefly deny an existing summary if GitRest fails, but avoids leaving an active
+		// authorization record during or after deletion.
 		if (access.isEphemeralContainer && accessStore !== undefined) {
 			try {
 				await accessStore.markSummaryAccessDeleted(

@@ -173,6 +173,9 @@ export async function resolveSummaryAccess(
 				);
 				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
 			}
+			// Alfred has already authoritatively authorized this request. Activation only enables
+			// the future fast path, so a generic write failure allows this request; the next request
+			// falls back to Alfred.
 			activation = "writeError";
 			logOwnershipOutcome(
 				args.tenantId,
