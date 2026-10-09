@@ -64,6 +64,7 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
+	JsonDeserialized,
 	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
@@ -233,6 +234,7 @@ import {
 	type OutboundContainerRuntimeDocumentSchemaMessage,
 	type ContainerRuntimeGCMessage,
 	type ContainerRuntimeIdAllocationMessage,
+	type ExtensionOpContents,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeAttachMessage,
@@ -2294,6 +2296,7 @@ export class ContainerRuntime
 					staged: false,
 				};
 			},
+			generateExtensionOpMessages: () => this.generateExtensionOpMessages(),
 		});
 
 		this._quorum = quorum;
@@ -3104,6 +3107,11 @@ export class ContainerRuntime
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
 			}
+			case ContainerMessageType.ExtensionOp: {
+				// Extension ops are re-derived from current state on reconnect/resubmit by the
+				// extension itself; nothing to do when applying stashed state.
+				return;
+			}
 			default: {
 				const error = getUnknownMessageTypeError(
 					opContents.type,
@@ -3754,6 +3762,12 @@ export class ContainerRuntime
 				);
 				break;
 			}
+			case ContainerMessageType.ExtensionOp: {
+				for (const content of contents as ExtensionOpContents[]) {
+					this.processExtensionOp(content, local);
+				}
+				break;
+			}
 			default: {
 				const error = getUnknownMessageTypeError(
 					message.type,
@@ -3793,6 +3807,19 @@ export class ContainerRuntime
 				}
 			}
 		}
+	}
+
+	private processExtensionOp(content: ExtensionOpContents, local: boolean): void {
+		const entry = this.extensions.get(content.extensionId);
+		// An extension op may arrive for an extension that this client has not yet acquired
+		// (e.g. it was added by a newer client, or acquired lazily). There's nothing to route
+		// it to in that case; the op is simply ignored by this client, same as an unknown
+		// signal address would be.
+		entry?.extension.processOpMessage?.(
+			content.addressChain,
+			content.contents as JsonDeserialized<unknown>,
+			local,
+		);
 	}
 
 	public processSignal(
@@ -5547,6 +5574,12 @@ export class ContainerRuntime
 				this.documentsSchemaController.pendingOpNotAcked();
 				break;
 			}
+			case ContainerMessageType.ExtensionOp: {
+				// Extension ops carry their full content in `contents` (not metadata), so they are
+				// safe to resubmit verbatim, same as GC ops.
+				this.submit(message);
+				break;
+			}
 			default: {
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
@@ -5898,6 +5931,49 @@ export class ContainerRuntime
 		message: OutboundExtensionMessage<TMessage>,
 	) => void;
 
+	/**
+	 * Submits a persisted, sequenced op on behalf of a registered extension.
+	 * @param id - Identifier of the extension submitting the op.
+	 * @param addressChain - Address chain within the extension, mirroring signal addressing.
+	 * @param contents - Extension-defined op contents. Opaque to the container runtime.
+	 */
+	private submitExtensionOp(
+		id: ContainerExtensionId,
+		addressChain: string[],
+		contents: unknown,
+	): void {
+		const message: LocalContainerRuntimeMessage = {
+			type: ContainerMessageType.ExtensionOp,
+			contents: { extensionId: id, addressChain, contents },
+		};
+		this.submit(message);
+	}
+
+	/**
+	 * Called by the outbox just before a batch is flushed. Gives every acquired extension a
+	 * chance to have a pending op included first in that batch, via
+	 * {@link @fluidframework/container-runtime-definitions#ContainerExtension.getPendingOpMessage}.
+	 */
+	private generateExtensionOpMessages(): LocalBatchMessage[] {
+		const messages: LocalBatchMessage[] = [];
+		for (const [id, entry] of this.extensions) {
+			const contents = entry.extension.getPendingOpMessage?.();
+			if (contents === undefined) {
+				continue;
+			}
+			const opMessage: LocalContainerRuntimeMessage = {
+				type: ContainerMessageType.ExtensionOp,
+				contents: { extensionId: id, addressChain: [], contents },
+			};
+			messages.push({
+				runtimeOp: opMessage,
+				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				staged: false,
+			});
+		}
+		return messages;
+	}
+
 	public acquireExtension<
 		T,
 		TRuntimeProperties extends ExtensionRuntimeProperties,
@@ -5979,6 +6055,9 @@ export class ContainerRuntime
 					message: OutboundExtensionMessage<TRuntimeProperties["SignalMessages"]>,
 				) => {
 					this.submitExtensionSignal(id, addressChain, message);
+				},
+				submitAddressedOpMessage: (addressChain: string[], message: unknown) => {
+					this.submitExtensionOp(id, addressChain, message);
 				},
 				getQuorum: this.getQuorum.bind(this),
 				getAudience: audience ? () => audience : this.getAudience.bind(this),
