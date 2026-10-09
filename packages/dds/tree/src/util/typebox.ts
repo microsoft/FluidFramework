@@ -4,14 +4,13 @@
  */
 
 import type {
-	Static,
 	TInterface,
 	TObjectOptions,
 	TOptional,
 	TProperties,
 	TReadonly,
+	TRecord,
 	TSchema,
-	TUnsafe,
 } from "typebox";
 import { Memory } from "typebox/system";
 import * as Type from "typebox/type";
@@ -56,16 +55,20 @@ export function typeboxInterface<
 
 /**
  * Creates a schema for an object with arbitrary string keys.
- *
+ * @remarks
  * Unlike TypeBox's general-purpose `Record` builder, this does not load its template-literal parser.
+ * Preserves the value schema so references resolve in the enclosing schema's context.
  */
 export function stringKeyRecord<Value extends TSchema>(
 	value: Value,
 	options: TObjectOptions = {},
-): TUnsafe<Record<string, Static<Value>>> {
-	return Type.Unsafe<Record<string, Static<Value>>>({
-		type: "object",
-		patternProperties: { "^.*$": value },
-		...options,
-	});
+): TRecord<"^.*$", Value> {
+	return Memory.Create(
+		{ "~kind": "Record" },
+		{
+			type: "object",
+			patternProperties: { "^.*$": value },
+		},
+		options,
+	) as TRecord<"^.*$", Value>;
 }

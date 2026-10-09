@@ -10,7 +10,7 @@ import path from "node:path";
 
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
-import type { TSchema } from "typebox";
+import type { TObject } from "typebox";
 
 import type { VersionDispatchingCodecBuilder, ICodecOptions } from "../../codec/index.js";
 import {
@@ -26,8 +26,16 @@ import { testSrcPath } from "../testSrcPath.cjs";
  */
 export const regenerateSnapshots = process.argv.includes("--snapshot");
 
+/**
+ * {@link takeSnapshot}, but automatically handles JSON serialization and comparison.
+ * @remarks
+ * The input can either be JSON compatible data or a TypeBox schema object, which will be serialized to JSON for snapshot comparison.
+ * @privateRemarks
+ * `TSchema` is empty in TypeBox 1 and would also admit non-JSON values, so we limit this to TObject.
+ * If non object schema need to be included, the typing can be tweaked, or a separate schema snapshotting API can be added.
+ */
 export function takeJsonSnapshot(
-	data: JsonCompatibleReadOnly | TSchema,
+	data: JsonCompatibleReadOnly | TObject,
 	suffix: string = "",
 ): void {
 	const dataStr = JSON.stringify(data, undefined, 2);

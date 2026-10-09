@@ -84,4 +84,7 @@ export const Format = <
 		{ additionalProperties: false },
 	);
 
-export type Format = Static<ReturnType<typeof Format>>;
+export type Format<
+	TVersion extends DetachedFieldIndexFormatVersion,
+	TRevisionTagSchema extends TSchema,
+> = Static<ReturnType<typeof Format<TVersion, TRevisionTagSchema>>>;

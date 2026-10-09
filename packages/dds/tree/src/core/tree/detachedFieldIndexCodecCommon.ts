@@ -3,55 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import type { TSchema } from "typebox";
+import type { Static, TSchema } from "typebox";
+import * as Type from "typebox/type";
 
-import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
-import {
-	hasSingle,
-	type JsonCompatibleReadOnly,
-	type JsonCompatibleReadOnlyObject,
-} from "../../util/index.js";
+import type { IJsonCodec } from "../../codec/index.js";
+import { hasSingle } from "../../util/index.js";
 
 import {
 	Format,
 	type DetachedFieldIndexFormatVersion,
+	type EncodedRootsForRevision,
 	type RootRanges,
 } from "./detachedFieldIndexFormatCommon.js";
 import type {
 	DetachedField,
 	DetachedFieldSummaryData,
-	ForestRootId,
 	Major,
 } from "./detachedFieldIndexTypes.js";
 
-type EncodedRootsForRevision<TEncodedRevisionTag extends JsonCompatibleReadOnly> =
-	| [TEncodedRevisionTag, RootRanges]
-	| [TEncodedRevisionTag, number, ForestRootId];
-
-type EncodedFormat<
-	TEncodedRevisionTag extends JsonCompatibleReadOnly,
-	TVersion extends DetachedFieldIndexFormatVersion,
-> = JsonCompatibleReadOnlyObject & {
-	readonly version: TVersion;
-	readonly data: EncodedRootsForRevision<TEncodedRevisionTag>[];
-	readonly maxId: ForestRootId;
-};
-
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function makeDetachedFieldIndexCodecFromMajorCodec<
-	TEncodedRevisionTag extends JsonCompatibleReadOnly,
+	TEncodedRevisionTag,
 	TEncodedRevisionTagSchema extends TSchema,
 	TVersion extends DetachedFieldIndexFormatVersion,
 >(
 	majorCodec: IJsonCodec<Major, TEncodedRevisionTag>,
 	version: TVersion,
 	encodedRevisionTagSchema: TEncodedRevisionTagSchema,
-): CodecAndSchema<DetachedFieldSummaryData> {
-	const formatSchema = Format(version, encodedRevisionTagSchema);
-	type Format = EncodedFormat<TEncodedRevisionTag, TVersion>;
+) {
+	// A concrete revision schema lets TypeBox resolve tuple modifiers for the generic revision type.
+	const revisionTagSchema = Type.Unsafe<TEncodedRevisionTag>(encodedRevisionTagSchema);
+	const formatSchema = Format(version, revisionTagSchema);
 	return {
 		schema: formatSchema,
-		encode: (data: DetachedFieldSummaryData): Format => {
-			const rootsForRevisions: EncodedRootsForRevision<TEncodedRevisionTag>[] = [];
+		encode: (data: DetachedFieldSummaryData): Static<typeof formatSchema> => {
+			const rootsForRevisions: EncodedRootsForRevision<typeof revisionTagSchema>[] = [];
 			for (const [major, innerMap] of data.data) {
 				const encodedRevision = majorCodec.encode(major);
 				const rootRanges: RootRanges = [];
@@ -60,30 +47,28 @@ export function makeDetachedFieldIndexCodecFromMajorCodec<
 				}
 				if (hasSingle(rootRanges)) {
 					const firstRootRange = rootRanges[0];
-					const rootsForRevision: EncodedRootsForRevision<TEncodedRevisionTag> = [
+					const rootsForRevision: EncodedRootsForRevision<typeof revisionTagSchema> = [
 						encodedRevision,
 						firstRootRange[0],
 						firstRootRange[1],
 					];
 					rootsForRevisions.push(rootsForRevision);
 				} else {
-					const rootsForRevision: EncodedRootsForRevision<TEncodedRevisionTag> = [
+					const rootsForRevision: EncodedRootsForRevision<typeof revisionTagSchema> = [
 						encodedRevision,
 						rootRanges,
 					];
 					rootsForRevisions.push(rootsForRevision);
 				}
 			}
-			const encoded: Format = {
+			const encoded: Static<typeof formatSchema> = {
 				version,
 				data: rootsForRevisions,
 				maxId: data.maxId,
 			};
 			return encoded;
 		},
-		decode: (data: JsonCompatibleReadOnly): DetachedFieldSummaryData => {
-			// CodecAndSchema invokes decode only after validating data against formatSchema.
-			const parsed = data as Format;
+		decode: (parsed: Static<typeof formatSchema>): DetachedFieldSummaryData => {
 			const map = new Map();
 			for (const rootsForRevision of parsed.data) {
 				const innerMap = new Map<number, DetachedField>();
@@ -94,7 +79,8 @@ export function makeDetachedFieldIndexCodecFromMajorCodec<
 				} else {
 					innerMap.set(rootsForRevision[1], { root: rootsForRevision[2] });
 				}
-				map.set(majorCodec.decode(rootsForRevision[0]), innerMap);
+				const revision = rootsForRevision[0];
+				map.set(majorCodec.decode(revision), innerMap);
 			}
 			return {
 				data: map,

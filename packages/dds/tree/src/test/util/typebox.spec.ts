@@ -9,12 +9,15 @@ import type { Static } from "typebox";
 import * as Type from "typebox/type";
 
 import { extractJsonValidator } from "../../codec/index.js";
+import { EncodedJsonableTree } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	stringKeyRecord,
 	typeboxInterface,
 	typeboxOptional,
 	typeboxReadonly,
+	type areSafelyAssignable,
+	type requireTrue,
 } from "../../util/index.js";
 
 describe("TypeBox helpers", () => {
@@ -81,5 +84,27 @@ describe("TypeBox helpers", () => {
 		});
 		assert.equal(validator.check({ a: "x", "": "y" }), true);
 		assert.equal(validator.check({ a: 1 }), false);
+	});
+
+	it("preserves referenced record value types", () => {
+		const schema = Type.Cyclic(
+			{
+				Value: Type.Object({ value: Type.String() }),
+				Records: stringKeyRecord(Type.Ref("Value")),
+			},
+			"Records",
+		);
+		type _RecordType = requireTrue<
+			areSafelyAssignable<Static<typeof schema>, Record<string, { value: string }>>
+		>;
+		const validator = extractJsonValidator(FormatValidatorBasic).compile(schema);
+		assert.equal(validator.check({ entry: { value: "text" } }), true);
+		assert.equal(validator.check({ entry: { value: 1 } }), false);
+	});
+
+	it("preserves recursive persisted-tree types", () => {
+		type _TreeType = requireTrue<
+			areSafelyAssignable<Static<typeof EncodedJsonableTree>, EncodedJsonableTree>
+		>;
 	});
 });

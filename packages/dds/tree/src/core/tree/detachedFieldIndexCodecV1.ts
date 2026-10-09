@@ -73,9 +73,9 @@ export function makeDetachedNodeToFieldCodecV1(
 	idCompressor: IIdCompressor,
 ): CodecAndSchema<DetachedFieldSummaryData> {
 	const majorCodec = new MajorCodec(revisionTagCodec, idCompressor);
-	return makeDetachedFieldIndexCodecFromMajorCodec<
-		EncodedRevisionTag,
-		typeof RevisionTagSchema,
-		DetachedFieldIndexFormatVersion
-	>(majorCodec, brand(DetachedFieldIndexFormatVersion.v1), RevisionTagSchema);
+	return makeDetachedFieldIndexCodecFromMajorCodec(
+		majorCodec,
+		brand(DetachedFieldIndexFormatVersion.v1),
+		RevisionTagSchema,
+	);
 }
