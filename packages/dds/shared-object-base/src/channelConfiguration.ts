@@ -25,7 +25,7 @@ import {
  * lead to apparent data loss from the user perspective.
  *
  * As this data gets persisted, DDS authors should consider including versioning information to handle changes in the configuration schema gracefully.
- * {@link ChannelConfigurationDefinition.validateTransition} may be used to fail fast on unexpect configurations.
+ * {@link ChannelConfigurationDefinition.validateTransition} may be used to fail fast on unexpected configurations.
  * @internal
  */
 export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<never>>>;
