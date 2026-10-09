@@ -77,19 +77,18 @@ const config: Linter.Config[] = [
 				},
 				{
 					selector: 'ImportDeclaration[source.value="typebox/type"] > ImportDefaultSpecifier',
-					message:
-						"Import the TypeBox runtime with `import * as Type from \"typebox/type\"`.",
+					message: 'Import the TypeBox runtime with `import * as Type from "typebox/type"`.',
 				},
 				{
 					selector: 'ImportDeclaration[source.value="typebox/type"] > ImportSpecifier',
 					message:
-						"Import the TypeBox runtime with `import * as Type from \"typebox/type\"`; import types by name from `typebox`.",
+						'Import the TypeBox runtime with `import * as Type from "typebox/type"`; import types by name from `typebox`.',
 				},
 				{
 					selector:
 						'ImportDeclaration[source.value="typebox"]:not([importKind="type"]) > ImportSpecifier:not([importKind="type"])',
 					message:
-						"Runtime TypeBox imports must use `import * as Type from \"typebox/type\"`; only type imports may come from `typebox`.",
+						'Runtime TypeBox imports must use `import * as Type from "typebox/type"`; only type imports may come from `typebox`.',
 				},
 				{
 					// The import policy above reserves `Type` for the TypeBox runtime namespace.
