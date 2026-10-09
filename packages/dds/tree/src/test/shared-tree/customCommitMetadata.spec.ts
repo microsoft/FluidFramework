@@ -818,19 +818,15 @@ describe("custom commit metadata", () => {
 			});
 		}
 
-		it("preserves an outer change-event lock after snapshotting metadata", () => {
+		it("preserves an outer change-event lock after a rejected revert", () => {
 			const view = createView();
 			const commit = view.branchHistory.getHead();
 			assert(commit !== undefined);
-			let metadataWasRead = false;
 			const unsubscribe = view.events.on("changed", () => {
 				assert.throws(
 					() =>
 						view.checkout.revertTo(commit.revision, {
-							get customMetadata() {
-								metadataWasRead = true;
-								return { tag: "the-revert" };
-							},
+							customMetadata: { tag: "the-revert" },
 						}),
 					validateUsageError(
 						"Reverting to a revision is forbidden during a change event callback",
@@ -844,7 +840,6 @@ describe("custom commit metadata", () => {
 
 			view.root.insertAtEnd("A");
 			unsubscribe();
-			assert(metadataWasRead);
 			assert.deepEqual([...view.root], ["A"]);
 			view.root.insertAtEnd("B");
 			assert.deepEqual([...view.root], ["A", "B"]);

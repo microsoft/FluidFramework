@@ -2004,30 +2004,27 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		for (const { action, duringEdit, error } of [
-			{
-				action: "apply a serialized change",
-				duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) =>
+		it("apply a serialized change", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) =>
 					view.applyChange(view.checkout.serializeCommit(view.checkout.mainBranch.getHead())),
 				error: "Applying a change is forbidden during a change event callback",
-			},
-			{
-				action: "switch branches",
-				duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) =>
-					view.checkout.switchBranch(view.checkout.mainBranch),
-				error: "Switching branches is forbidden during a change event callback",
-			},
-			{
-				action: "update the schema",
-				duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) =>
-					view.checkout.updateSchema(view.checkout.storedSchema.clone()),
-				error: "Updating the schema is forbidden during a change event callback",
-			},
-		]) {
-			it(action, () => {
-				expectErrorDuringEdit({ duringEdit, error });
 			});
-		}
+		});
+
+		it("switch branches", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.switchBranch(view.checkout.mainBranch),
+				error: "Switching branches is forbidden during a change event callback",
+			});
+		});
+
+		it("update the schema", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.checkout.updateSchema(view.checkout.storedSchema.clone()),
+				error: "Updating the schema is forbidden during a change event callback",
+			});
+		});
 
 		it("rebase a branch", () => {
 			expectErrorDuringEdit({
