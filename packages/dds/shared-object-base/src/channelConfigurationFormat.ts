@@ -64,8 +64,14 @@ export interface ChannelConfigurationMessageV1 {
  * Detects the reserved top-level key without interpreting ordinary DDS payloads.
  * A present but invalid marker must fail validation, not fall through to the DDS.
  */
-export function isChannelConfigurationOp(value: unknown): value is ChannelConfigurationMessageV1 {
-	return isObject(value) && Object.hasOwn(value, "isChannelConfigurationOp") && (value as ChannelConfigurationMessageV1).isChannelConfigurationOp === true;
+export function isChannelConfigurationOp(
+	value: unknown,
+): value is ChannelConfigurationMessageV1 {
+	return (
+		isObject(value) &&
+		Object.hasOwn(value, "isChannelConfigurationOp") &&
+		(value as ChannelConfigurationMessageV1).isChannelConfigurationOp === true
+	);
 }
 
 function isNonArrayObject(value: unknown): value is Record<string, unknown> {
@@ -83,7 +89,9 @@ export function validateConfigurationRevision(revision: unknown): asserts revisi
 	);
 }
 
-function assertHasValidConfigurationValues(hasValues: Record<string, unknown> | ChannelConfigurationMessageV1): asserts hasValues is { values: ChannelConfigurationValuesV1 } {
+function assertHasValidConfigurationValues(
+	hasValues: Record<string, unknown> | ChannelConfigurationMessageV1,
+): asserts hasValues is { values: ChannelConfigurationValuesV1 } {
 	assert(
 		Object.hasOwn(hasValues, "values") && isNonArrayObject(hasValues.values),
 		"Invalid configuration values",
@@ -94,9 +102,7 @@ function assertHasValidConfigurationValues(hasValues: Record<string, unknown> | 
  * Validates a marked configuration op without interpreting obsolete configuration values.
  * @internal
  */
-export function parseChannelConfigurationMessage(
-	op: unknown,
-): ChannelConfigurationMessageV1 {
+export function parseChannelConfigurationMessage(op: unknown): ChannelConfigurationMessageV1 {
 	assert(isChannelConfigurationOp(op), "Not a channel configuration operation");
 	assert(op.version === 1, "Unsupported channel configuration protocol version");
 	validateConfigurationRevision(op.expectedRevision);
