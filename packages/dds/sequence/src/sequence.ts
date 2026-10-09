@@ -488,11 +488,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap;
+	private newMergeTreeSnapshotFormat = false;
+	private readonly sequenceOptions: Readonly<Partial<SequenceOptions>>;
 	constructor(
 		dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
 		public readonly segmentFromSpec: (spec: IJSONSegment) => ISegment,
+		newMergeTreeSnapshotFormat?: boolean,
 	) {
 		super(id, dataStoreRuntime, attributes, "fluid_sequence_");
 
@@ -510,6 +513,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 						}
 					});
 
+		const runtimeOptions: Partial<SequenceOptions> = dataStoreRuntime.options;
 		const options = createConfigBasedOptionsProxy<SequenceOptions>(
 			loggerToMonitoringContext(this.logger).config,
 			"Fluid.Sequence",
@@ -519,9 +523,15 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
 				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
 				mergeTreeEnableAnnotateAdjust: (c, n) => c.getBoolean(n),
+				newMergeTreeSnapshotFormat: (c, n) =>
+					c.getBoolean(n) ??
+					newMergeTreeSnapshotFormat ??
+					runtimeOptions.newMergeTreeSnapshotFormat ??
+					this.newMergeTreeSnapshotFormat,
 			},
 			dataStoreRuntime.options,
 		);
+		this.sequenceOptions = options;
 
 		this.client = new Client(
 			segmentFromSpec,
@@ -721,7 +731,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
 
-		return builder.getSummaryTree();
+		const summary = builder.getSummaryTree();
+		this.newMergeTreeSnapshotFormat = this.sequenceOptions.newMergeTreeSnapshotFormat === true;
+		return summary;
 	}
 
 	/**
@@ -811,11 +823,12 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			// this will load the header, and return a promise
 			// that will resolve when the body is loaded
 			// and the catchup ops are available.
-			const { catchupOpsP } = await this.client.load(
+			const { catchupOpsP, snapshotVersion } = await this.client.load(
 				this.runtime,
 				new ObjectStoragePartition(storage, contentPath),
 				this.serializer,
 			);
+			this.newMergeTreeSnapshotFormat = snapshotVersion === "1";
 
 			// process the catch up ops, and finishing the loading process
 			for (const m of await catchupOpsP) {
@@ -945,19 +958,20 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param message - Message with decoded and hydrated handles
 	 */
 	private processMergeTreeMsg(message: ISequencedDocumentMessage, local?: boolean) {
+		const useNewSnapshotFormat = this.sequenceOptions.newMergeTreeSnapshotFormat === true;
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {
 			ops.push(...SharedSegmentSequence.createOpsFromDelta(event));
 		}
 		const needsTransformation = message.referenceSequenceNumber !== message.sequenceNumber - 1;
 		let stashMessage: Readonly<ISequencedDocumentMessage> = message;
-		if (this.runtime.options.newMergeTreeSnapshotFormat !== true && needsTransformation) {
+		if (!useNewSnapshotFormat && needsTransformation) {
 			this.on("sequenceDelta", transformOps);
 		}
 
 		this.client.applyMsg(message, local);
 
-		if (this.runtime.options.newMergeTreeSnapshotFormat !== true) {
+		if (!useNewSnapshotFormat) {
 			if (needsTransformation) {
 				this.removeListener("sequenceDelta", transformOps);
 				// shallow clone the message as we only overwrite top level properties,

@@ -18,7 +18,7 @@ import type {
 import { Marker, TextSegment, refHasTileLabel } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
-import { SharedStringFactory } from "./sequenceFactory.js";
+import { SharedStringFactory, type SharedStringOptions } from "./sequenceFactory.js";
 
 /**
  * Fluid object interface describing access methods on a SharedString
@@ -150,8 +150,15 @@ export class SharedStringClass
 		document: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
+		options: SharedStringOptions = {},
 	) {
-		super(document, id, attributes, SharedStringFactory.segmentFromSpec as any);
+		super(
+			document,
+			id,
+			attributes,
+			SharedStringFactory.segmentFromSpec as any,
+			options.newMergeTreeSnapshotFormat,
+		);
 		this.mergeTreeTextHelper = this.client.createTextHelper();
 	}
 
