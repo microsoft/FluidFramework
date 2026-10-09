@@ -24,7 +24,7 @@ import type { NodeData } from "./types.js";
  * There is currently no guarantee that data serialized with this library will
  * be loadable with a different version of this library.
  *
- * TODO: stabilize this format (probably after schema are more stable).
+ * TODO: stabilize this format (probably after schemas are more stable).
  *
  * This format does not include schema: typically schema would be stored alongside data in this format.
  *

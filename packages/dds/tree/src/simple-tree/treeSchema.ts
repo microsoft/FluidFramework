@@ -46,14 +46,8 @@ export interface TreeSchema extends SimpleTreeSchema<SchemaType.View> {
 	 */
 	readonly schemaVersion?: SchemaVersionMap;
 
-	/**
-	 * {@inheritDoc SimpleTreeSchema.root}
-	 */
 	readonly root: FieldSchemaAlpha;
 
-	/**
-	 * {@inheritDoc SimpleTreeSchema.definitions}
-	 */
 	readonly definitions: ReadonlyMap<
 		string,
 		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema

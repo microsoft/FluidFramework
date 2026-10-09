@@ -51,7 +51,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluid-internal/client-utils](/packages/common/client-utils)</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Core-Utils](#Core-Utils) |
+| - [@fluid-internal/client-utils](/packages/common/client-utils) | - [Core-Interfaces](#Core-Interfaces) |
 
 ### Protocol-Utils
 
@@ -75,13 +75,13 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/odsp-doclib-utils](/packages/utils/odsp-doclib-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils) |
+| - [@fluidframework/odsp-doclib-utils](/packages/utils/odsp-doclib-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils) |
 
 ### Tool-Utils
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/tool-utils](/packages/utils/tool-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Driver-Definitions](#Driver-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils) |
+| - [@fluidframework/tool-utils](/packages/utils/tool-utils)</br>&nbsp;</br>&nbsp; | - [Driver-Definitions](#Driver-Definitions)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils) |
 
 ### Driver
 
@@ -147,7 +147,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [tinylicious](/server/routerlicious/packages/tinylicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Protocol-Utils](#Protocol-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
+| - [tinylicious](/server/routerlicious/packages/tinylicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
 
 ### Azure-Service
 
@@ -201,7 +201,7 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/azure-end-to-end-tests](/packages/service-clients/end-to-end-tests/azure-client)</br>- [@fluid-experimental/odsp-end-to-end-tests](/packages/service-clients/end-to-end-tests/odsp-client)</br>- [@fluid-internal/functional-tests](/packages/test/functional-tests) (private)</br>- [@fluid-internal/local-server-stress-tests](/packages/test/local-server-stress-tests) (private)</br>- [@fluid-internal/local-server-tests](/packages/test/local-server-tests) (private)</br>- [@fluid-internal/mocha-test-setup](/packages/test/mocha-test-setup)</br>- [@fluid-internal/test-snapshots](/packages/test/snapshots) (private)</br>- [@fluid-private/test-end-to-end-tests](/packages/test/test-end-to-end-tests)</br>- [@fluid-internal/test-service-load](/packages/test/test-service-load)</br>- [@fluidframework/test-utils](/packages/test/test-utils)</br>- [@fluid-private/test-version-utils](/packages/test/test-version-utils)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils)</br>- [Tool-Utils](#Tool-Utils)</br>- [Driver](#Driver)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime)</br>- [Framework](#Framework)</br>- [Build](#Build)</br>- [UberPackage](#UberPackage)</br>- [Server-Libs](#Server-Libs)</br>- [Server-Tools](#Server-Tools)</br>- [Routerlicious-Driver](#Routerlicious-Driver)</br>- [ServiceClients](#ServiceClients)</br>- [Test-Utils](#Test-Utils)</br>- [Tools](#Tools) |
+| - [@fluidframework/azure-end-to-end-tests](/packages/service-clients/end-to-end-tests/azure-client)</br>- [@fluid-experimental/odsp-end-to-end-tests](/packages/service-clients/end-to-end-tests/odsp-client)</br>- [@fluid-internal/functional-tests](/packages/test/functional-tests) (private)</br>- [@fluid-internal/local-server-stress-tests](/packages/test/local-server-stress-tests) (private)</br>- [@fluid-internal/local-server-tests](/packages/test/local-server-tests) (private)</br>- [@fluid-internal/mocha-test-setup](/packages/test/mocha-test-setup)</br>- [@fluid-internal/test-snapshots](/packages/test/snapshots) (private)</br>- [@fluid-private/test-end-to-end-tests](/packages/test/test-end-to-end-tests)</br>- [@fluid-internal/test-service-load](/packages/test/test-service-load)</br>- [@fluidframework/test-utils](/packages/test/test-utils)</br>- [@fluid-private/test-version-utils](/packages/test/test-version-utils)</br>- [@fluid-internal/version-compat-tests](/packages/test/version-compat-tests) (private)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Core-Interfaces](#Core-Interfaces)</br>- [Driver-Definitions](#Driver-Definitions)</br>- [Container-Definitions](#Container-Definitions)</br>- [Core-Utils](#Core-Utils)</br>- [Client-Utils](#Client-Utils)</br>- [Telemetry-Utils](#Telemetry-Utils)</br>- [Driver-Utils](#Driver-Utils)</br>- [Other-Utils](#Other-Utils)</br>- [Tool-Utils](#Tool-Utils)</br>- [Driver](#Driver)</br>- [Loader](#Loader)</br>- [Runtime](#Runtime)</br>- [Framework](#Framework)</br>- [Build](#Build)</br>- [UberPackage](#UberPackage)</br>- [Server-Libs](#Server-Libs)</br>- [Server-Tools](#Server-Tools)</br>- [Routerlicious-Driver](#Routerlicious-Driver)</br>- [ServiceClients](#ServiceClients)</br>- [Test-Utils](#Test-Utils)</br>- [Tools](#Tools) |
 
 ### Azure-Examples
 
@@ -213,5 +213,5 @@ The dependencies between layers are enforced by the layer-check command._
 
 | Packages | Layer Dependencies |
 | --- | --- |
-| - [@fluidframework/server-routerlicious](/server/routerlicious/packages/routerlicious)</br>&nbsp;</br>&nbsp;</br>&nbsp;</br>&nbsp; | - [Common-Definitions](#Common-Definitions)</br>- [Protocol-Definitions](#Protocol-Definitions)</br>- [Common-Utils](#Common-Utils)</br>- [Server-Shared-Utils](#Server-Shared-Utils)</br>- [Server-Libs](#Server-Libs) |
+| - [@fluidframework/server-routerlicious](/server/routerlicious/packages/routerlicious) | - [Server-Libs](#Server-Libs) |
 

@@ -50,9 +50,6 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 		return SharedStringFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -64,9 +61,6 @@ export class SharedStringFactory implements IChannelFactory<ISharedString> {
 		return sharedString;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(document: IFluidDataStoreRuntime, id: string): SharedStringClass {
 		const sharedString = new SharedStringClass(document, id, this.attributes);
 		sharedString.initializeLocal();

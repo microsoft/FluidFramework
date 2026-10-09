@@ -20,7 +20,10 @@ import {
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -48,11 +51,13 @@ import {
 	type TreeView,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { FormattedTextDefault, PlainText } from "../../text/index.js";
+import { PlainText } from "../../text/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { iterationSettings } from "../memory/utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FormattedTextDefault } from "../text/formattedTextDefault.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 import {
@@ -651,7 +656,7 @@ describe("TextDomain benchmarks", () => {
 			readonly summary: ISummaryTree;
 			readonly idCompressor: ReturnType<typeof createIdCompressor>;
 		} {
-			const idCompressor = createIdCompressor();
+			const idCompressor = createIdCompressor(SerializationVersion.V3);
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			containerRuntimeFactory.createContainerRuntime(runtime);

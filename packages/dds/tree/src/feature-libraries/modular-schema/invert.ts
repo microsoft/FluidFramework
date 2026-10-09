@@ -70,8 +70,10 @@ export function invertModularChange(
 		? [{ revision: revisionForInvert, rollbackOf: change.revision }]
 		: [{ revision: revisionForInvert }];
 
-	const noChangeConstraint = change.change.noChangeConstraintOnRevert;
-	const noChangeConstraintOnRevert = change.change.noChangeConstraint;
+	const [noChangeConstraint, noChangeConstraintOnRevert] = isRollback
+		? // Rollbacks are not subject to constraints
+			[undefined, undefined]
+		: [change.change.noChangeConstraintOnRevert, change.change.noChangeConstraint];
 
 	if (hasConflicts(change.change)) {
 		return makeModularChangeset({
@@ -156,14 +158,17 @@ export function invertModularChange(
 	);
 
 	const constraintState = newConstraintState(0);
-	updateConstraintsForFields(
-		invertedFields,
-		NodeAttachState.Attached,
-		constraintState,
-		invertedNodes,
-		change.change.nodeAliases,
-		fieldKinds,
-	);
+	// Rollbacks are not subject to constraints
+	if (!isRollback) {
+		updateConstraintsForFields(
+			invertedFields,
+			NodeAttachState.Attached,
+			constraintState,
+			invertedNodes,
+			change.change.nodeAliases,
+			fieldKinds,
+		);
+	}
 
 	const inverse = makeModularChangeset({
 		fieldChanges: invertedFields,
@@ -236,17 +241,20 @@ function invertNodeChange(
 ): NodeChangeset {
 	const inverse: NodeChangeset = {};
 
-	// If the node has a constraint, it should be inverted to a node-exist-on-revert constraint. This ensure that if
-	// the inverse is inverted again, the original input constraint will be restored.
-	if (change.nodeExistsConstraint !== undefined) {
-		inverse.nodeExistsConstraintOnRevert = change.nodeExistsConstraint;
-	}
+	// Rollbacks are not subject to constraints
+	if (!isRollback) {
+		// If the node has a constraint, it should be inverted to a node-exist-on-revert constraint. This ensure that if
+		// the inverse is inverted again, the original input constraint will be restored.
+		if (change.nodeExistsConstraint !== undefined) {
+			inverse.nodeExistsConstraintOnRevert = change.nodeExistsConstraint;
+		}
 
-	// The node-exist-on-revert constraint of a node is the constraint that should apply when the a change is reverted.
-	// So, it should become the constraint in the inverse. If this constraint is violated when applying the inverse,
-	// it will be discarded.
-	if (change.nodeExistsConstraintOnRevert !== undefined) {
-		inverse.nodeExistsConstraint = change.nodeExistsConstraintOnRevert;
+		// The node-exist-on-revert constraint of a node is the constraint that should apply when the a change is reverted.
+		// So, it should become the constraint in the inverse. If this constraint is violated when applying the inverse,
+		// it will be discarded.
+		if (change.nodeExistsConstraintOnRevert !== undefined) {
+			inverse.nodeExistsConstraint = change.nodeExistsConstraintOnRevert;
+		}
 	}
 
 	if (change.fieldChanges !== undefined) {

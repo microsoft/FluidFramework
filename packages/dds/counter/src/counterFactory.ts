@@ -38,23 +38,14 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
 		packageVersion: pkgVersion,
 	};
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
 	public get type(): string {
 		return CounterFactory.Type;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
 	public get attributes(): IChannelAttributes {
 		return CounterFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -66,9 +57,6 @@ export class CounterFactory implements IChannelFactory<ISharedCounter> {
 		return counter;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedCounter {
 		const counter = new SharedCounterClass(id, document, this.attributes);
 		counter.initializeLocal();

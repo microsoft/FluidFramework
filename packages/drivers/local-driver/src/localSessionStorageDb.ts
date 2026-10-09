@@ -98,9 +98,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		return filteredCollection;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/server-services-core#ICollection.findAll}
-	 */
 	public async findAll(): Promise<any[]> {
 		return this.getAllInternal();
 	}
@@ -198,9 +195,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		this.insertInternal(...values);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteOne}
-	 */
 	public async deleteOne(query: any): Promise<any> {
 		const value = this.findOneInternal(query);
 		if (value !== null) {
@@ -209,9 +203,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		return value;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/server-services-core#ICollection.deleteMany}
-	 */
 	public async deleteMany(query: any): Promise<any> {
 		const values = await this.find(query, undefined);
 		for (const value of values) {
@@ -220,9 +211,6 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 		return values;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/server-services-core#ICollection.createIndex}
-	 */
 	public async createIndex(index: any, unique: boolean): Promise<void> {
 		throw new Error("Method not implemented.");
 	}

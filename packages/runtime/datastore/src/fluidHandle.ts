@@ -17,14 +17,8 @@ import {
 export class FluidObjectHandle<
 	T extends FluidObject = FluidObject,
 > extends FluidHandleBase<T> {
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.absolutePath}
-	 */
 	public readonly absolutePath: string;
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.isAttached}
-	 */
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached;
 	}
@@ -57,9 +51,6 @@ export class FluidObjectHandle<
 		return this.value;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.attachGraph }
-	 */
 	public attachGraph(): void {
 		this.routeContext.attachGraph();
 	}

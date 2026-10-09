@@ -707,9 +707,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.intervalCollections.keys();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 */
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
@@ -762,22 +759,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onConnect}
-	 */
 	protected onConnect() {
 		// Update merge tree collaboration information with new client ID and then resend pending ops
 		this.client.startOrUpdateCollaboration(this.runtime.clientId);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 */
 	protected onDisconnect() {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
-	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown, squash: boolean = false) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
@@ -812,9 +800,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService) {
 		if (await storage.contains(snapshotFileName)) {
 			const blob = await storage.readBlob(snapshotFileName);
@@ -918,9 +903,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.didAttach}
-	 */
 	protected didAttach() {
 		// If we are not local, and we've attached we need to start generating and sending ops
 		// so start collaboration and provide a default client id incase we are not connected
@@ -929,17 +911,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.initializeLocalCore}
-	 */
 	protected initializeLocalCore() {
 		super.initializeLocalCore();
 		this.initializeIntervalCollections();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-	 */
 	protected applyStashedOp(content: any): void {
 		if (!this.intervalCollections.tryApplyStashedOp(content)) {
 			this.client.applyStashedOp(content);

@@ -928,9 +928,6 @@ export class SharedMatrix<T = any>
 
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		try {
 			await this.rows.load(
@@ -1242,9 +1239,6 @@ export class SharedMatrix<T = any>
 		return `${s}\n`;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-	 */
 	protected applyStashedOp(_content: unknown): void {
 		const content = _content as MatrixSetOrVectorOp<T>;
 		if (content.type === MatrixOp.set && content.target === undefined) {

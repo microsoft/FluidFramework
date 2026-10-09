@@ -5,12 +5,20 @@
 
 import { strict as assert } from "assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	MessageType,
+	type ISequencedDocumentMessage,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { MockHandle } from "../mockHandle.js";
 import {
 	createSnapshotTreeFromContents,
+	MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 } from "../mocks.js";
@@ -25,8 +33,8 @@ describe("MockContainerRuntime", () => {
 	});
 
 	it("generates and finalizes IdCreationRanges when generating an op", () => {
-		const firstIdCompressor = createIdCompressor();
-		const secondIdCompressor = createIdCompressor();
+		const firstIdCompressor = createIdCompressor(SerializationVersion.V3);
+		const secondIdCompressor = createIdCompressor(SerializationVersion.V3);
 		const factory = new MockContainerRuntimeFactory();
 		const firstDataStoreRuntime = new MockFluidDataStoreRuntime({
 			idCompressor: firstIdCompressor,
@@ -66,6 +74,46 @@ describe("MockContainerRuntime", () => {
 			secondNormalizedId,
 			513,
 			"Should have finalized the ID in both containers.",
+		);
+	});
+
+	it("lets derived runtimes finalize ID ranges through allocation messages", () => {
+		class RuntimeWithCustomProcessing extends MockContainerRuntime {
+			public processAllocationMessage(message: ISequencedDocumentMessage): boolean {
+				return this.maybeProcessIdAllocationMessage(message);
+			}
+		}
+
+		const source = createIdCompressor(SerializationVersion.V3);
+		const receiver = createIdCompressor(SerializationVersion.V3);
+		const runtime = new RuntimeWithCustomProcessing(
+			new MockFluidDataStoreRuntime({ idCompressor: receiver }),
+			new MockContainerRuntimeFactory(),
+		);
+		const id = source.generateCompressedId();
+		const opSpaceId = source.normalizeToOpSpace(id);
+		const allocationMessage: ISequencedDocumentMessage = {
+			clientId: "source",
+			clientSequenceNumber: 1,
+			minimumSequenceNumber: 0,
+			referenceSequenceNumber: 0,
+			sequenceNumber: 1,
+			timestamp: 0,
+			type: MessageType.Operation,
+			contents: {
+				type: "idAllocation",
+				contents: source.takeNextCreationRange(),
+			},
+		};
+
+		assert.equal(runtime.processAllocationMessage(allocationMessage), true);
+		assert.equal(
+			receiver.decompress(receiver.normalizeToSessionSpace(opSpaceId, source.localSessionId)),
+			source.decompress(id),
+		);
+		assert.equal(
+			runtime.processAllocationMessage({ ...allocationMessage, contents: {} }),
+			false,
 		);
 	});
 

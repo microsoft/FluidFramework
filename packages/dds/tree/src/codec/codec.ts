@@ -29,8 +29,41 @@ export interface IEncoder<TDecoded, TEncoded, TContext> {
 export interface IDecoder<TDecoded, TEncoded, TContext> {
 	/**
 	 * Decodes `obj` from some encoded format.
+	 *
+	 * @param obj - The encoded data to decode.
+	 * @param context - The context required to decode the data.
+	 * @param onError - A callback that receives a description of the invalid data and throws a custom error.
 	 */
-	decode(obj: TEncoded, context: TContext): TDecoded;
+	decode(obj: TEncoded, context: TContext, onError?: DecodeErrorHandler): TDecoded;
+}
+
+/**
+ * Throws a custom error when encoded data cannot be decoded because it is invalid.
+ *
+ * @remarks
+ * Codecs invoke this callback only for recognized invalid input.
+ * Unexpected errors are not passed to this callback.
+ *
+ * When not specified, the default behavior is to assert.
+ * Use with {@link throwDecodeError}.
+ */
+export type DecodeErrorHandler = (message?: string) => never;
+
+/**
+ * Throws an error when encoded data cannot be decoded because it is invalid.
+ *
+ * @remarks
+ * When `onError` is not specified, the default behavior is to assert.
+ *
+ * @param onError - A callback that receives a description of the invalid data and throws a custom error.
+ * @param message - A description of the invalid data.
+ */
+export function throwDecodeError(onError?: DecodeErrorHandler, message?: string): never {
+	onError?.(message);
+	fail(
+		0xac1 /* Data being decoded should validate */,
+		message === undefined ? undefined : () => message,
+	);
 }
 
 /**
@@ -461,11 +494,15 @@ export function withSchemaValidation<
 			}
 			return encoded;
 		},
-		decode: (encoded: TValidate, context: TDecodeContext): TInMemoryFormat => {
+		decode: (
+			encoded: TValidate,
+			context: TDecodeContext,
+			onError?: DecodeErrorHandler,
+		): TInMemoryFormat => {
 			if (!compiledFormat.check(encoded)) {
-				fail(0xac1 /* Data being decoded should validate */);
+				throwDecodeError(onError, "Encoded data does not match the expected schema.");
 			}
-			return codec.decode(encoded, context);
+			return codec.decode(encoded, context, onError);
 		},
 		encodedSchema: schema,
 	};

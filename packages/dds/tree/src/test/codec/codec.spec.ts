@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+import {
+	validateAssertionError,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "@sinclair/typebox";
 
 import { type IJsonCodec, withSchemaValidation } from "../../codec/index.js";
@@ -27,6 +31,20 @@ describe("Codec APIs", () => {
 			});
 
 			it("on decode", () => {
+				assert.throws(
+					() => codec.decode("bad data" as unknown as number),
+					validateAssertionError(/Data being decoded should validate/),
+				);
+			});
+
+			it("using a per-call custom error handler", () => {
+				assert.throws(
+					() =>
+						codec.decode("bad data" as unknown as number, undefined, (message) => {
+							throw new UsageError(message ?? "Invalid input");
+						}),
+					validateUsageError("Encoded data does not match the expected schema."),
+				);
 				assert.throws(
 					() => codec.decode("bad data" as unknown as number),
 					validateAssertionError(/Data being decoded should validate/),

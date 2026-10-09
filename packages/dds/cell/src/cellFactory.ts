@@ -40,23 +40,14 @@ export class CellFactory implements IChannelFactory<ISharedCell> {
 		packageVersion: pkgVersion,
 	};
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
 	public get type(): string {
 		return CellFactory.Type;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
 	public get attributes(): IChannelAttributes {
 		return CellFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -68,9 +59,6 @@ export class CellFactory implements IChannelFactory<ISharedCell> {
 		return cell;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
 	public create(document: IFluidDataStoreRuntime, id: string): ISharedCell {
 		const cell = new SharedCellClass(id, document, this.attributes);
 		cell.initializeLocal();

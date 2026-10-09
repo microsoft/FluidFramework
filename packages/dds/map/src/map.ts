@@ -146,9 +146,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		return this.kernel.has(key);
 	}
 
-	/**
-	 * {@inheritDoc ISharedMap.set}
-	 */
 	public set(key: string, value: unknown): this {
 		this.kernel.set(key, value);
 		return this;
@@ -170,9 +167,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		this.kernel.clear();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
-	 */
 	protected summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
@@ -245,9 +239,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		return builder.getSummaryTree();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const json = await readAndParse<object>(storage, snapshotFileName);
 		const newFormat = json as IMapSerializationFormat;
@@ -266,21 +257,12 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
-	 */
 	protected onDisconnect(): void {}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
-	 */
 	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.tryResubmitMessage(content as IMapOperation, localOpMetadata);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
-	 */
 	protected applyStashedOp(content: unknown): void {
 		this.kernel.tryApplyStashedOp(content as IMapOperation);
 	}
@@ -310,9 +292,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
-	 */
 	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.rollback(content, localOpMetadata);
 	}

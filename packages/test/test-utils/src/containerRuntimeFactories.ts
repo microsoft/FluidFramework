@@ -96,9 +96,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 {
 	public static readonly defaultDataStoreId = defaultDataStoreId;
 
-	/**
-	 * {@inheritDoc @fluidframework/runtime-definitions#IProvideFluidDataStoreRegistry.IFluidDataStoreRegistry}
-	 */
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this.registry;
 	}

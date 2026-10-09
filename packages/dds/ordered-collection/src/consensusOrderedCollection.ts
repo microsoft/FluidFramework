@@ -276,9 +276,6 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
-	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		assert(
 			this.jobTracking.size === 0,

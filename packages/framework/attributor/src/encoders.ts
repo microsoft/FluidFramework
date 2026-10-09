@@ -62,9 +62,6 @@ export class AttributorSerializer implements IAttributorSerializer {
 		private readonly timestampEncoder: TimestampEncoder,
 	) {}
 
-	/**
-	 * {@inheritDoc Encoder.encode}
-	 */
 	public encode(attributor: IAttributor): SerializedAttributor {
 		const interner = new MutableStringInterner();
 		const seqs: number[] = [];
@@ -87,9 +84,6 @@ export class AttributorSerializer implements IAttributorSerializer {
 		return serialized;
 	}
 
-	/**
-	 * {@inheritDoc Encoder.decode}
-	 */
 	public decode(encoded: SerializedAttributor): IAttributor {
 		const interner = new MutableStringInterner(encoded.interner);
 		const { seqs, timestamps: encodedTimestamps, attributionRefs } = encoded;

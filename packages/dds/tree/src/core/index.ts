@@ -192,6 +192,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type ChangeMetadataBeta,
 	type LabelTree,
 	type CustomMetadataTree,
 	type TransactionLabels,

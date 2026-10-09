@@ -4,10 +4,6 @@ Examples for integrating content powered by the Fluid Framework into [React](htt
 
 This package provides Quill-based views for both plain and formatted text editing backed by SharedTree.
 
-## Known Issues and Limitations
-
-Applications utilizing Quill require DOM access at import time. This package contains all integrations of Fluid Framework with Quill/React. This package should only be imported in browser environments or test environments with JSDOM set up before import.
-
 <!-- markdown-magic:begin {"transform":"library-readme-header","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

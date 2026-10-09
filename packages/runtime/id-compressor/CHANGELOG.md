@@ -1,5 +1,24 @@
 # @fluidframework/id-compressor
 
+## 3.4.0
+
+Dependency updates only.
+
+## 3.3.0
+
+### Minor Changes
+
+- Remove legacy direct ID compressor lifecycle APIs ([#27559](https://github.com/microsoft/FluidFramework/pull/27559)) [bee7b1ad621](https://github.com/microsoft/FluidFramework/commit/bee7b1ad621413db8ce9bcb7424dec1ebbfb199f)
+
+  The legacy-beta entrypoint no longer exports `createIdCompressor`, `deserializeIdCompressor`,
+  `serializeIdCompressor`, `createSessionId`, `IdCreationRange`, or the
+  `SerializedIdCompressor*` types. These APIs expose Fluid runtime implementation and persistence
+  details and are now internal. `IIdCompressor` and its compressed ID types remain available.
+
+## 3.2.0
+
+Dependency updates only.
+
 ## 3.1.0
 
 Dependency updates only.

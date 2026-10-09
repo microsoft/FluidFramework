@@ -121,7 +121,7 @@ export class StringTextAtomNode
  * This is generic over formatting an embedded object/atom types.
  *
  * @privateRemarks
- * See {@link FormattedTextDefault} for an example parameterization.
+ * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization.
  *
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
@@ -145,7 +145,7 @@ export namespace FormattedText {
 	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedText.Members} and whose statics implement {@link FormattedText.Statics}.
 	 *
 	 * @privateRemarks
-	 * See {@link FormattedTextDefault} for an example parameterization of this factory.
+	 * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization of this factory.
 	 *
 	 * TODO: The choice to always include the built-in {@link FormattedText.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */

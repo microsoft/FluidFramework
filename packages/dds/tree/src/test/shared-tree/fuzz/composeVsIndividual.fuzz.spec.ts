@@ -18,7 +18,12 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateViewConsistency,
+	validateTree,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -76,7 +81,9 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 		return state;
 	},
 	schemaChange: (state, operation) => {
-		return state;
+		assert.fail(
+			"Mid-transaction schema view replacement is not supported by this fuzz harness.",
+		);
 	},
 	constraint: (state, operation) => {
 		applyConstraint(state, operation);
@@ -154,8 +161,10 @@ describe("Fuzz - composed vs individual changes", () => {
 			const childTreeView = toJsonableTree(finalState.branch.checkout);
 			finalState.branch.checkout.transaction.commit();
 			const tree = finalState.main ?? assert.fail();
-			tree.checkout.merge(finalState.branch.checkout);
+			tree.checkout.merge(finalState.branch.checkout, /* disposeMerged */ false);
 			validateTree(tree.checkout, childTreeView);
+			validateViewConsistency(tree.checkout, finalState.branch.checkout);
+			finalState.branch.dispose();
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,
