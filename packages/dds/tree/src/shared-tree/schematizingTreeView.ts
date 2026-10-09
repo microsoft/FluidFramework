@@ -319,7 +319,9 @@ export class SchematizingSimpleTreeView<
 			this.schemaVersion,
 		);
 		const storedSchema = this.checkout.storedSchema.clone();
-		const isMonotonicUpgrade = allowsRepoSuperset(
+		// Select whether to retain updateSchema's additive-only assertion. Version-enabled upgrades
+		// can pass canUpgrade below without satisfying that assertion.
+		const isAdditiveSchemaUpgrade = allowsRepoSuperset(
 			defaultSchemaPolicy,
 			storedSchema,
 			newSchema,
@@ -335,7 +337,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() =>
-			this.checkout.updateSchema(newSchema, isMonotonicUpgrade ? undefined : true),
+			this.checkout.updateSchema(newSchema, isAdditiveSchemaUpgrade ? undefined : true),
 		);
 	}
 

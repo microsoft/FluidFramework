@@ -202,6 +202,17 @@ export interface ITreeViewConfigurationAlpha<
 	 * Required string and identifier fields accept the same stored values, so changing between them keeps existing documents valid.
 	 * Increasing the application version establishes which schema is newer and allows the change without older applications changing it back.
 	 *
+	 * Persisting application-defined schema versions requires opting into the experimental stored schema format:
+	 *
+	 * ```typescript
+	 * const SharedTree = configuredSharedTreeAlpha({
+	 * 	allowPossiblyIncompatibleWriteVersionOverrides: true,
+	 * 	writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+	 * });
+	 * ```
+	 *
+	 * All clients that load or collaborate on the document must support this format.
+	 *
 	 * ```typescript
 	 * const schemaFactory = new SchemaFactory("com.example");
 	 * const libraryId = "com.example" as LibraryId;

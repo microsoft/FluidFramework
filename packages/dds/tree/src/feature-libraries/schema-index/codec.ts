@@ -6,11 +6,7 @@
 import { fail } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
-	VersionDispatchingCodecBuilder,
-	FluidClientVersion,
-	makeExperimentalCodecVersion,
-} from "../../codec/index.js";
+import { VersionDispatchingCodecBuilder, FluidClientVersion } from "../../codec/index.js";
 import {
 	SchemaFormatVersion,
 	type TreeNodeSchemaIdentifier,
@@ -50,14 +46,18 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 }
 
 function encodeRepoV3(repo: TreeStoredSchema): FormatV3 {
-	const schemaVersion =
-		repo.schemaVersion ?? fail("The experimental schema format requires schema versions.");
 	const { nodes, root } = encodeRepoV2(repo);
 	return {
 		version: SchemaFormatVersion.v3Experimental,
 		nodes,
 		root,
-		schemaVersion: Object.entries(schemaVersion).sort(([a], [b]) => compareStrings(a, b)),
+		...(repo.schemaVersion === undefined
+			? {}
+			: {
+					schemaVersion: Object.entries(repo.schemaVersion).sort(([a], [b]) =>
+						compareStrings(a, b),
+					),
+				}),
 	};
 }
 
@@ -114,6 +114,9 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
 }
 
 function decodeV3(f: FormatV3): TreeStoredSchema {
+	if (f.schemaVersion === undefined) {
+		return decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root });
+	}
 	let previous: string | undefined;
 	const entries: [LibraryId, number][] = [];
 	for (const [libraryId, version] of f.schemaVersion) {
@@ -137,35 +140,32 @@ function decodeV3(f: FormatV3): TreeStoredSchema {
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
  */
-export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build(
-	"Schema",
-	[
-		{
-			minVersionForCollab: lowestMinVersionForCollab,
-			formatVersion: SchemaFormatVersion.v1,
-			codec: {
-				encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-				decode: (data: FormatV1) => decodeV1(data),
-				schema: FormatV1,
-			},
+export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build("Schema", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
+		formatVersion: SchemaFormatVersion.v1,
+		codec: {
+			encode: (data: TreeStoredSchema) => encodeRepoV1(data),
+			decode: (data: FormatV1) => decodeV1(data),
+			schema: FormatV1,
 		},
-		{
-			minVersionForCollab: FluidClientVersion.v2_43,
-			formatVersion: SchemaFormatVersion.v2,
-			codec: {
-				encode: (data: TreeStoredSchema) => encodeRepoV2(data),
-				decode: (data: FormatV2) => decodeV2(data),
-				schema: FormatV2,
-			},
+	},
+	{
+		minVersionForCollab: FluidClientVersion.v2_43,
+		formatVersion: SchemaFormatVersion.v2,
+		codec: {
+			encode: (data: TreeStoredSchema) => encodeRepoV2(data),
+			decode: (data: FormatV2) => decodeV2(data),
+			schema: FormatV2,
 		},
-		makeExperimentalCodecVersion(SchemaFormatVersion.v3Experimental, {
+	},
+	{
+		minVersionForCollab: undefined,
+		formatVersion: SchemaFormatVersion.v3Experimental,
+		codec: {
 			encode: (data: TreeStoredSchema) => encodeRepoV3(data),
 			decode: (data: FormatV3) => decodeV3(data),
 			schema: FormatV3,
-		}),
-	],
-	{
-		selectWriteFormatVersion: (data, defaultVersion) =>
-			data.schemaVersion === undefined ? defaultVersion : SchemaFormatVersion.v3Experimental,
+		},
 	},
-);
+]);

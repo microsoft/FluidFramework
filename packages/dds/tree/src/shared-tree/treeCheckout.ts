@@ -1996,6 +1996,12 @@ function getSchemaChangeTelemetryMetrics(
 	};
 }
 
+/**
+ * Returns whether the schema matches the initial state of a new stored schema repository.
+ * Used to classify schema-change telemetry as initialization rather than an upgrade or restriction.
+ * An empty node-schema collection alone is not sufficient: root-field changes, metadata, or
+ * application-defined versions distinguish the schema from the initial state.
+ */
 function isInitialStoredSchema(schema: TreeStoredSchema): boolean {
 	const root = schema.rootFieldSchema;
 	return (

@@ -432,8 +432,7 @@
       "required": [
         "version",
         "nodes",
-        "root",
-        "schemaVersion"
+        "root"
       ]
     }
   }

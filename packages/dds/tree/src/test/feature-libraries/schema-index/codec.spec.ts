@@ -38,6 +38,13 @@ const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: currentVersion,
 };
+const versionedCodecOptions: CodecWriteOptions = {
+	...codecOptions,
+	allowPossiblyIncompatibleWriteVersionOverrides: true,
+	writeVersionOverrides: new Map([
+		[schemaCodecBuilder.name, SchemaFormatVersion.v3Experimental],
+	]),
+};
 
 const schemaCodecs = makeCodecFamily(
 	schemaCodecBuilder.applyOptions(codecOptions).map((codec) => {
@@ -87,7 +94,7 @@ describe("SchemaIndex", () => {
 	});
 
 	it("encodes and decodes application schema versions in sorted order", () => {
-		const codec = schemaCodecBuilder.build(codecOptions);
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 		const schema: TreeStoredSchema = {
 			...schema2,
 			schemaVersion: {
@@ -106,6 +113,18 @@ describe("SchemaIndex", () => {
 			["test.z", 2],
 		]);
 		assert.deepEqual(codec.decode(encoded).schemaVersion, schema.schemaVersion);
+	});
+
+	it("encodes unversioned schemas with the experimental format", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+
+		const encoded = codec.encode(schema2);
+		assert.equal(
+			(encoded as { version: unknown }).version,
+			SchemaFormatVersion.v3Experimental,
+		);
+		assert.equal((encoded as FormatV3).schemaVersion, undefined);
+		assert.deepEqual(codec.decode(encoded), schema2);
 	});
 
 	it("rejects unsorted application schema versions", () => {
@@ -144,30 +163,21 @@ describe("SchemaIndex", () => {
 		assert.throws(() => codec.decode(encoded), /non-negative safe integers/);
 	});
 
-	it("rejects formats which cannot encode application schema versions", () => {
-		const codec = schemaCodecBuilder.build({
-			...codecOptions,
-			writeVersionOverrides: new Map([[schemaCodecBuilder.name, SchemaFormatVersion.v1]]),
-		});
+	it("omits application schema versions in stable formats", () => {
 		const schema: TreeStoredSchema = {
 			...schema2,
 			schemaVersion: { ["test" as LibraryId]: 1 },
 		};
 
-		assert.throws(
-			() => codec.encode(schema),
-			/cannot encode this data using explicitly selected format version 1/,
-		);
+		for (const codec of [codecV1, codecV2]) {
+			const encoded = codec.encode(schema);
+			assert.deepEqual(encoded, codec.encode(schema2));
+			assert.equal(codec.decode(encoded).schemaVersion, undefined);
+		}
 	});
 
 	it("accepts an explicit override to the experimental schema format", () => {
-		const codec = schemaCodecBuilder.build({
-			...codecOptions,
-			allowPossiblyIncompatibleWriteVersionOverrides: true,
-			writeVersionOverrides: new Map([
-				[schemaCodecBuilder.name, SchemaFormatVersion.v3Experimental],
-			]),
-		});
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 		const schema: TreeStoredSchema = {
 			...schema2,
 			schemaVersion: { ["test" as LibraryId]: 1 },

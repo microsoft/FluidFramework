@@ -18,7 +18,9 @@ export const Format = Type.Object(
 		version: Type.Literal(SchemaFormatVersion.v3Experimental),
 		nodes: Type.Record(Type.String(), schemaFormatV2.TreeNodeSchemaDataFormat),
 		root: schemaFormatV2.FieldSchemaFormat,
-		schemaVersion: Type.Array(Type.Tuple([Type.String(), Type.Integer({ minimum: 0 })])),
+		schemaVersion: Type.Optional(
+			Type.Array(Type.Tuple([Type.String(), Type.Integer({ minimum: 0 })])),
+		),
 	},
 	noAdditionalProps,
 );

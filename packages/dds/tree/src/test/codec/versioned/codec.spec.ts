@@ -16,7 +16,6 @@ import { FluidClientVersion, Versioned } from "../../../codec/index.js";
 import {
 	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
-	makeExperimentalCodecVersion,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../codec/versioned/codec.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -63,7 +62,11 @@ describe("versioned Codecs", () => {
 				formatVersion: 2,
 				codec: () => codecV2,
 			},
-			makeExperimentalCodecVersion("X", codecVX),
+			{
+				minVersionForCollab: undefined,
+				formatVersion: "X",
+				codec: codecVX,
+			},
 		]);
 
 		it("round trip", () => {
@@ -110,93 +113,6 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.equal(codecX.decode(v2), 42);
 			assert.equal(codec2.decode(vx), 42);
 			assert.equal(codec2.decode(v2), 42);
-		});
-
-		it("selects write versions per value", () => {
-			const perValueBuilder = VersionDispatchingCodecBuilder.build(
-				"PerValue",
-				[
-					{
-						minVersionForCollab: lowestMinVersionForCollab,
-						formatVersion: 1,
-						codec: codecV1,
-					},
-					makeExperimentalCodecVersion("X", codecVX),
-				],
-				{
-					selectWriteFormatVersion: (data, defaultVersion) =>
-						data < 0 ? "X" : defaultVersion,
-				},
-			);
-			const codec = perValueBuilder.build({
-				minVersionForCollab: "2.0.0",
-				jsonValidator: FormatValidatorBasic,
-			});
-
-			assert.deepEqual(codec.encode(42), { version: 1, value1: 42 });
-			assert.deepEqual(codec.encode(-1), { version: "X", valueX: -1 });
-		});
-
-		it("rejects per-value formats that conflict with an explicit override", () => {
-			const perValueBuilder = VersionDispatchingCodecBuilder.build(
-				"PerValue",
-				[
-					{
-						minVersionForCollab: lowestMinVersionForCollab,
-						formatVersion: 1,
-						codec: codecV1,
-					},
-					makeExperimentalCodecVersion("X", codecVX),
-				],
-				{
-					selectWriteFormatVersion: (data, defaultVersion) =>
-						data < 0 ? "X" : defaultVersion,
-				},
-			);
-			const codec = perValueBuilder.build({
-				minVersionForCollab: "2.0.0",
-				jsonValidator: FormatValidatorBasic,
-				writeVersionOverrides: new Map([["PerValue", 1]]),
-			});
-
-			assert.throws(
-				() => codec.encode(-1),
-				validateUsageError(
-					'Codec "PerValue" cannot encode this data using explicitly selected format version 1. The data requires format version "X".',
-				),
-			);
-		});
-
-		it("rejects per-value stable formats incompatible with minVersionForCollab", () => {
-			const perValueBuilder = VersionDispatchingCodecBuilder.build(
-				"PerValue",
-				[
-					{
-						minVersionForCollab: lowestMinVersionForCollab,
-						formatVersion: 1,
-						codec: codecV1,
-					},
-					{
-						minVersionForCollab: FluidClientVersion.v2_43,
-						formatVersion: 2,
-						codec: codecV2,
-					},
-				],
-				{
-					selectWriteFormatVersion: (data, defaultVersion) => (data < 0 ? 2 : defaultVersion),
-				},
-			);
-			const codec = perValueBuilder.build({
-				minVersionForCollab: "2.0.0",
-				jsonValidator: FormatValidatorBasic,
-			});
-
-			assert.throws(
-				() => codec.encode(-1),
-				validateUsageError(
-					'Codec "PerValue" selected format version 2 for this data, but that format is only compatible back to client version 2.43.0 and the requested oldest compatible client was 2.0.0.',
-				),
-			);
 		});
 
 		it("bad override", () => {
@@ -316,7 +232,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 							},
 						]),
 					validateAssertionError(
-						"Debug assert failed: codec format 1 in Test must specify why it has no minVersionForCollab",
+						"Debug assert failed: Codec Test is missing entry for lowestMinVersionForCollab",
 					),
 				);
 

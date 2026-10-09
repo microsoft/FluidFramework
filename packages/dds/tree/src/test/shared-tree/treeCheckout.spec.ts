@@ -65,6 +65,7 @@ import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { brand, Breakable } from "../../util/index.js";
 import {
 	StringArray,
+	SharedTreeTestFactory,
 	TestTreeProviderLite,
 	buildTestForest,
 	chunkFromJsonableTrees,
@@ -1720,37 +1721,43 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		itView(
-			"does not classify a version-only schema change as initialization",
-			({ view, logger }) => {
-				const schema: TreeStoredSchema = {
-					rootFieldSchema: {
-						kind: FieldKinds.optional.identifier,
-						types: new Set(),
-						persistedMetadata: undefined,
-					},
-					nodeSchema: new Map(),
-				};
-				view.checkout.updateSchema(schema, true);
-				view.checkout.updateSchema({
-					rootFieldSchema: schema.rootFieldSchema,
-					nodeSchema: schema.nodeSchema,
-					schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
-				});
+		it("does not classify a version-only schema change as initialization", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				new SharedTreeTestFactory(() => {}, undefined, {
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+					writeVersionOverrides: new Map([["Schema", "schemaVersion"]]),
+				}),
+			);
+			const [tree] = provider.trees;
+			const view = tree.kernel.viewWith(
+				new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation }),
+			);
+			view.initialize([]);
+			const schema: TreeStoredSchema = {
+				rootFieldSchema: {
+					kind: FieldKinds.optional.identifier,
+					types: new Set(),
+					persistedMetadata: undefined,
+				},
+				nodeSchema: new Map(),
+			};
+			view.checkout.updateSchema(schema, true);
+			view.checkout.updateSchema({
+				rootFieldSchema: schema.rootFieldSchema,
+				nodeSchema: schema.nodeSchema,
+				schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
+			});
 
-				const schemaChangeEvents = logger
-					.events()
-					.filter((event) =>
-						event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
-					);
-				const versionChangeEvent = schemaChangeEvents.at(-1);
-				assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
-				assert.equal(
-					parseCodeArtifactDetails(versionChangeEvent.details).changeKind,
-					"upgrade",
+			const schemaChangeEvents = provider.logger
+				.events()
+				.filter((event) =>
+					event.eventName.endsWith(TreeCheckout.schemaChangeTelemetryEventName),
 				);
-			},
-		);
+			const versionChangeEvent = schemaChangeEvents.at(-1);
+			assert(versionChangeEvent !== undefined, "Expected schema change telemetry.");
+			assert.equal(parseCodeArtifactDetails(versionChangeEvent.details).changeKind, "upgrade");
+		});
 	});
 
 	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
