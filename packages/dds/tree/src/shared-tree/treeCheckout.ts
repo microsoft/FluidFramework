@@ -637,6 +637,21 @@ export class TreeCheckout implements ITreeCheckout {
 	public events: Listenable<CheckoutEvents> = this.#events;
 	private _branchHistory?: DefaultTreeBranchHistory;
 
+	/**
+	 * Whether this checkout should be disposed automatically when its (last) view is disposed.
+	 *
+	 * @remarks
+	 * Default behavior: non-shared branches are 1:1 with views, so disposing the view also disposes the checkout.
+	 * Shared branches must persist past any view, so they opt out.
+	 *
+	 * Subclasses may override to opt out — e.g. {@link BranchCheckout}, which is permanently bound to its branch
+	 * and may have multiple views created via `viewWith` over its lifetime, returns `false` so that disposing one
+	 * view does not invalidate the branch for other callers.
+	 */
+	public get disposeWithView(): boolean {
+		return !this.isSharedBranch;
+	}
+
 	public constructor(
 		private branch: SharedTreeBranch<
 			SharedTreeEditBuilder,
@@ -1473,8 +1488,46 @@ export class TreeCheckout implements ITreeCheckout {
 		SharedTreeChangeProcessingContext
 	>;
 
-	@throwIfBroken
 	public fork(): TreeCheckout {
+		return this.forkWith(TreeCheckout);
+	}
+
+	/**
+	 * Forks this checkout, constructing the resulting checkout via {@link checkoutConstructor}.
+	 * @remarks
+	 * Allows subclasses (e.g. `BranchCheckout`) to participate in forking without duplicating the fork machinery.
+	 * The `@throwIfBroken` decorator is intentionally on this method (not on {@link TreeCheckout.fork}) so every
+	 * entry point — including subclass overrides that call `forkWith` directly — gets the broken-state guard.
+	 */
+	@throwIfBroken
+	public forkWith<T extends TreeCheckout>(
+		checkoutConstructor: new (
+			branch: SharedTreeBranch<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>,
+			isSharedBranch: boolean,
+			changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+			storedSchema: TreeStoredSchemaRepository,
+			forest: IEditableForest,
+			mintRevisionTag: () => RevisionTag,
+			revisionTagCodec: RevisionTagCodec,
+			idCompressor: IIdCompressor,
+			jsonValidator: FormatValidator,
+			removedRoots?: DetachedFieldIndex,
+			disposeForksAfterTransaction?: boolean,
+			getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
+		) => T,
+		options?: {
+			// The branch to use for the forked checkout. If not provided, the branch used by the current checkout will be forked.
+			branch: SharedTreeBranch<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>;
+		},
+	): T {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
@@ -1483,11 +1536,11 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		const branch = this.#transaction.branch.fork();
+		const branch = options?.branch ?? this.#transaction.branch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
-		const checkout = new TreeCheckout(
+		const checkout = new checkoutConstructor(
 			branch,
 			false,
 			this.changeFamily,
@@ -1727,6 +1780,22 @@ export class TreeCheckout implements ITreeCheckout {
 		this.checkNotDisposed(
 			"The branch has already been disposed and cannot be disposed again.",
 		);
+		this.disposeOnce();
+	}
+
+	/**
+	 * Silent-idempotent disposal: performs the actual cleanup work without throwing on repeat
+	 * calls. Intended for contexts (such as `FinalizationRegistry` callbacks) where throwing is
+	 * undesirable. Subsequent calls are no-ops.
+	 *
+	 * @remarks
+	 * Public `dispose()` / `[disposeSymbol]()` keep their throw-on-double-dispose semantics by routing
+	 * through {@link checkNotDisposed} before invoking this method.
+	 */
+	protected disposeOnce(): void {
+		if (this.disposed) {
+			return;
+		}
 		this.disposed = true;
 		this.#transaction.branch.dispose();
 		this.#transaction.dispose();
