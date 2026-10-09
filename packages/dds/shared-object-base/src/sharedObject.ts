@@ -64,7 +64,7 @@ import type {
 	ChannelConfigurationFacet,
 } from "./channelConfiguration.js";
 import { verifyOrdinaryChannelMessage } from "./channelConfigurationFormat.js";
-import { ConfiguredSharedObject } from "./configuredSharedObject.js";
+import { ChannelConfigurationDeltaHandler } from "./channelConfigurationDeltaHandler.js";
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
 import { FluidSerializer, type IFluidSerializer } from "./serializer.js";
@@ -170,9 +170,9 @@ export abstract class SharedObjectCore<
 	private closeError?: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>;
 
 	#configurationRegistrationClosed = false;
-	#configuration:
+	#configurationLifecycle:
 		| Pick<
-				ConfiguredSharedObject<ChannelConfiguration>,
+				ChannelConfigurationDeltaHandler<ChannelConfiguration>,
 				"beginInitialization" | "completeInitialization" | "close"
 		  >
 		| undefined;
@@ -263,10 +263,10 @@ export abstract class SharedObjectCore<
 			"Configuration must be initialized before the shared object lifecycle starts",
 		);
 		assert(
-			this.#configuration === undefined,
+			this.#configurationLifecycle === undefined,
 			"Shared object configuration is already initialized",
 		);
-		const configuration = new ConfiguredSharedObject(
+		const configuration = new ChannelConfigurationDeltaHandler(
 			options,
 			this.#deltaHandler,
 			{
@@ -283,7 +283,7 @@ export abstract class SharedObjectCore<
 				onDispose: (listener) => this.runtime.once("dispose", listener),
 			},
 		);
-		this.#configuration = configuration;
+		this.#configurationLifecycle = configuration;
 		this.#deltaHandler = configuration;
 		this.#submitOrdinaryMessage = (content, metadata) =>
 			configuration.submitOrdinaryMessage(content, metadata);
@@ -294,7 +294,7 @@ export abstract class SharedObjectCore<
 
 	#beginInitialization(kind: "create" | "load"): void {
 		this.#configurationRegistrationClosed = true;
-		this.#configuration?.beginInitialization(kind);
+		this.#configurationLifecycle?.beginInitialization(kind);
 	}
 
 	/**
@@ -358,7 +358,7 @@ export abstract class SharedObjectCore<
 		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.closeError === undefined) {
 			this.closeError = error;
-			this.#configuration?.close(error);
+			this.#configurationLifecycle?.close(error);
 		}
 	}
 
@@ -423,7 +423,7 @@ export abstract class SharedObjectCore<
 		// for attached runtimes when load core is running
 		this._isBoundToContext = true;
 		await this.loadCore(services.objectStorage);
-		this.#configuration?.completeInitialization();
+		this.#configurationLifecycle?.completeInitialization();
 		this.attachDeltaHandler();
 		this.setBoundAndHandleAttach();
 	}
@@ -435,7 +435,7 @@ export abstract class SharedObjectCore<
 	public initializeLocal(): void {
 		this.#beginInitialization("create");
 		this.initializeLocalCore();
-		this.#configuration?.completeInitialization();
+		this.#configurationLifecycle?.completeInitialization();
 	}
 
 	public bindToContext(): void {

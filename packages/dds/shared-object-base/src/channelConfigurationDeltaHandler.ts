@@ -51,7 +51,7 @@ export interface ChannelConfigurationHost {
  * The ordinary endpoint is downstream of configuration routing, before handle decoding and DDS events.
  * This layer owns initialization, persistence, and disposal; the controller owns CAS state and requests.
  */
-export class ConfiguredSharedObject<TConfig extends ChannelConfiguration>
+export class ChannelConfigurationDeltaHandler<TConfig extends ChannelConfiguration>
 	implements IDeltaHandler
 {
 	#suppressLazySubmission = false;

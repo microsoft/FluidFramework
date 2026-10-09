@@ -40,7 +40,7 @@ import {
 import { timeoutAwait } from "@fluidframework/test-runtime-utils/internal/timeoutUtils";
 
 import type { ChannelConfigurationMessageV1 } from "../channelConfigurationFormat.js";
-import { ConfiguredSharedObject as ConfigurationLayer } from "../configuredSharedObject.js";
+import { ChannelConfigurationDeltaHandler } from "../channelConfigurationDeltaHandler.js";
 import {
 	type ChannelConfigurationDefinition,
 	type ChannelConfigurationFacet,
@@ -627,7 +627,7 @@ for (const Class of [ConfiguredSharedObject, ConfiguredSharedObjectCore]) {
 			const attach = delta.attach.bind(delta);
 			let cleanupError: unknown;
 			delta.attach = (handler) => {
-				assert(handler instanceof ConfigurationLayer);
+				assert(handler instanceof ChannelConfigurationDeltaHandler);
 				const close = handler.close.bind(handler);
 				handler.close = (error) => {
 					cleanupError = error;

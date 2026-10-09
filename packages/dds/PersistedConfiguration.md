@@ -56,7 +56,7 @@ desired/session distinction, and one-proposal-per-session policy are not the req
 
 Put a reusable `ChannelConfigurationController` in `shared-object-base`. It owns configuration
 state, CAS decisions, and configuration-request completion tracking.
-A configuration-specific message layer, `ConfiguredSharedObject`, composes an ordinary DDS endpoint with the channel transport and lifecycle signals.
+A configuration-specific message layer, `ChannelConfigurationDeltaHandler`, composes an ordinary DDS endpoint with the channel transport and lifecycle signals.
 It owns configuration routing, initialization, attribute persistence, and disposal.
 Both inheritance-based DDSes and kernel factories use the same internal `initializeSharedObjectConfiguration` helper.
 Kernel implementations receive its typed facet in `KernelArgs`, before the kernel factory constructs or loads the kernel.
@@ -493,7 +493,7 @@ CAS remains entirely in the shared configuration mechanism.
 Without configuration, the runtime connects directly to that endpoint and ordinary submissions go directly to transport preparation and submission.
 There is no default protocol object, per-call protocol lookup, or generic interception interface.
 
-Configuration registration composes that endpoint with `ConfiguredSharedObject` before initialization or service connection.
+Configuration registration composes that endpoint with `ChannelConfigurationDeltaHandler` before initialization or service connection.
 The runtime connects to the configuration layer, which routes control ops to the controller and ordinary collections to the original endpoint.
 It splits ordinary runs around control ops, preserving the original envelope, message metadata, and synchronous ordering.
 Both legacy subclass hooks and kernel hooks remain downstream of ordinary handle decoding and DDS events.
