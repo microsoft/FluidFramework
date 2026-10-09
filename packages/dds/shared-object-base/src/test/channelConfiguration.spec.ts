@@ -551,6 +551,18 @@ describe("channel configuration format", () => {
 		assert.deepEqual(parseChannelConfigurationMessage(message), message);
 	});
 
+	it("accepts additional snapshot fields", () => {
+		const input = { version: 1, revision: 0, values: {}, extra: true };
+		assert.equal(parseChannelConfigurationSnapshot(input), input);
+	});
+
+	it("accepts negative zero revisions in snapshots and configuration ops", () => {
+		const input = { version: 1, revision: -0, values: {} };
+		assert.equal(parseChannelConfigurationSnapshot(input), input);
+		const message = proposal(-0, input.values);
+		assert.equal(parseChannelConfigurationMessage(message), message);
+	});
+
 	it("recognizes only the reserved top-level key without interpreting ordinary payloads", () => {
 		for (const contents of [
 			undefined,
@@ -570,7 +582,6 @@ describe("channel configuration format", () => {
 
 	for (const revision of [
 		-1,
-		-0,
 		0.5,
 		Number.NaN,
 		Infinity,
@@ -593,7 +604,7 @@ describe("channel configuration format", () => {
 		});
 	}
 
-	it("rejects unknown versions, missing fields, extra fields, and invalid markers", () => {
+	it("rejects unknown versions, missing fields, extra message fields, and invalid markers", () => {
 		for (const message of [
 			{},
 			{ version: 2, isChannelConfigurationOp: true, expectedRevision: 0, values: {} },
@@ -615,7 +626,6 @@ describe("channel configuration format", () => {
 		for (const snapshot of [
 			{ version: 2, revision: 0, values: {} },
 			{ version: 1, revision: 0 },
-			{ version: 1, revision: 0, values: {}, extra: true },
 		]) {
 			assert.throws(() => parseChannelConfigurationSnapshot(snapshot));
 		}

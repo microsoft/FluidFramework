@@ -74,10 +74,7 @@ export function hasChannelConfigurationMarker(value: unknown): boolean {
  */
 export function validateConfigurationRevision(revision: unknown): asserts revision is number {
 	assert(
-		typeof revision === "number" &&
-			Number.isSafeInteger(revision) &&
-			revision >= 0 &&
-			!Object.is(revision, -0),
+		typeof revision === "number" && Number.isSafeInteger(revision) && revision >= 0,
 		"Channel configuration revision must be a non-negative safe integer",
 	);
 }
@@ -115,17 +112,14 @@ export function parseChannelConfigurationMessage(
 }
 
 /**
- * Reads a version 1 snapshot. Reader-specific validation is separate.
+ * Reads a version 1 snapshot, allowing additional fields. Reader-specific validation is separate.
  * @internal
  */
 export function parseChannelConfigurationSnapshot(
 	value: unknown,
 ): ChannelConfigurationSnapshotV1 {
 	const record = readRecord(value);
-	assert(
-		record.version === 1 && Object.keys(record).length === 3,
-		"Invalid channel configuration snapshot version or fields",
-	);
+	assert(record.version === 1, "Invalid channel configuration snapshot version");
 	validateConfigurationRevision(record.revision);
 	readRecord(record.values);
 	return value as ChannelConfigurationSnapshotV1;
