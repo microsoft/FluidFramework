@@ -17,6 +17,7 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type ChangeMetadataBeta,
 	type LabelTree,
 	type CustomMetadataTree,
 	type TransactionLabels,
@@ -251,6 +252,7 @@ export {
 	type TreeBranchAlpha,
 	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
+	type TreeBranchEventsBeta,
 	type TreeBranchCommitMetadata,
 	type TreeBranchHistory,
 	type TreeContextBeta,
@@ -267,6 +269,7 @@ export {
 	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
+	type TransactionConstraintBeta,
 	type TransactionPostProcessor,
 	type TransactionResultFailed,
 	type TransactionResultSuccess,
@@ -400,7 +403,6 @@ export { asAlpha, asBeta } from "./api.js";
 export {
 	PlainText,
 	FormattedText,
-	FormattedTextDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";

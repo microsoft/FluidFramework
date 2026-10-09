@@ -1,12 +1,27 @@
-# SharedTree Sandboxing Architecture
+# SharedTree Sandboxing
 
-This document describes the experimental architecture for using a SharedTree view in a sandbox.
-The Host remains connected to Fluid services and synchronizes an independent Guest tree through a `MessagePort`.
-The Guest uses the normal SharedTree view APIs and conflict-resolution behavior.
+This document describes the `@alpha` `Sandboxing` library, which exposes a [ViewableTree](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface) inside a sandbox.
+The Host remains connected to a Fluid service and synchronizes one of its branches with the Guest over a [`MessagePort`](https://developer.mozilla.org/en-US/docs/Web/API/MessagePort).
+Within the Guest, applications use the standard synchronous SharedTree view APIs.
+Behind the scenes, SharedTree's existing merge and rebase logic asynchronously reconciles changes between the Host and Guest, much like the synchronization between Fluid clients.
+
+Although the library is designed for sandboxing, the same APIs can support other scenarios that separate a SharedTree from its view.
+For example, a remote user or service could edit a specific branch, or a shared worker could provide local collaboration across browser tabs.
+The current implementation focuses on running the view in a restricted [iframe](https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/iframe).
+Other scenarios can be more difficult for applications to deploy because the protocol is not stable: the Host and Guest must use exactly matching versions of the SharedTree code.
+Keeping those versions aligned is typically easier in the sandboxing scenario, where the application controls the code loaded on both sides.
 
 > [!WARNING]
 > This implementation is alpha and is not yet a complete security boundary for an untrusted participant.
 > See [Security Boundary and Known Limitations](#security-boundary-and-known-limitations) before using it outside tests or controlled environments.
+
+## Intended Audiences
+
+This document has three intended audiences:
+
+1. Contributors and coding agents that implement and maintain this feature.
+2. Early adopters who want to build prototypes and provide feedback.
+3. Security and privacy reviewers, and the developers who work with them to evaluate the design, implementation status, and remaining work.
 
 ## Core Concepts
 
@@ -126,7 +141,7 @@ Ordered delivery places a range before an update that uses its IDs.
 The Fluid runtime, not the sandbox, submits creation ranges for finalization.
 
 Guest disposal does not notify the Host.
-After the application stops or fences the Guest, Host disposal reclaims the child shard from the last accepted Guest progress.
+Host disposal stops receiving Guest messages and reclaims the child shard from the last accepted Guest progress.
 
 ### Message Conversion and Validation
 
@@ -232,6 +247,7 @@ Only the Host binds handles and performs Fluid attachment.
 A Guest proxy sends a `blobRequest`, and the Host replies with either `blobResponse` or `blobResponseError`.
 The request ID matches a response to its pending request and is distinct from the handle token.
 Blob-resolution failures reject only the proxy's `get()` operation.
+The Host logs the original error and sends the Guest a fixed message that the service failed to resolve the handle.
 
 Equivalent Host handle paths reuse one token, and the Guest reuses one proxy for each token.
 Each proxy caches one `get()` promise, including rejection.
@@ -247,28 +263,66 @@ The transport codecs do not implement `IFluidSerializer` or JSON stringification
 
 ### Failure and Lifecycle
 
-[SandboxSessionEndpoint](./session.ts) treats protocol and synchronization failures as terminal.
-It stops local synchronization, rejects pending work, reports the first failure to the application, and notifies the peer when the transport still works.
-A received `sessionFailure` is not echoed.
-Failure reporting runs outside tree event dispatch so it cannot interrupt the main-tree edit that triggered the failure.
+[Sandbox sessions](./session.ts) fail (and invoke their `handleProtocolError` callback) when they encounter protocol or synchronization errors.
+To end a session, dispose both endpoints; this cleanup is still required after a failure.
+Recovery requires a new session.
 
-The application must stop or fence the Guest, dispose both endpoints, and create a new pair.
-A peer failure notification does not prove that the remote sandbox has been fenced.
-Recovery uses fresh session objects; failed breakers are not reset.
-Host disposal preserves the application-owned main view and changes that the Host already merged.
-Pending Guest edits and unacknowledged Host updates can be lost.
+## Threat Model and Security and Privacy Requirements
 
-`Guest.dispose()` synchronously stops Guest edits, invalidates its views, releases its checkouts, and disposes its local shard.
-After failure, the authoring checkout can remain available for inspection until disposal, but the application must not edit it.
-Disposing only the Guest does not stop Host updates or release unacknowledged Host snapshots.
-The application must fence an old Guest before Host disposal so an old iframe cannot continue sending messages or restart from its serialized shard.
-If initialization fails after shard creation, the Host reclaims the shard that the Guest did not receive.
+> [!WARNING]
+> The current implementation does not yet satisfy all of these requirements and has not completed a security or privacy review.
 
-The local endpoint wraps the first terminal failure in a session error and retains the original `Error` as its cause.
-This preserves the local distinction between invariant failures, application usage errors, and protocol errors.
-The peer receives only the diagnostic message in `sessionFailure`, not the original error object or classification.
+The design targets the following threat model and requirements:
 
-## Security Boundary and Known Limitations
+1. The Guest can become fully compromised at any time.
+   The Host must safely process or reject any message payload that the `MessagePort` can deliver.
+
+2. The Host must not give the Guest access to data outside the branch that the application explicitly shares with it.
+   The authorized data includes the contents of blobs referenced by Fluid handles in that branch.
+   It does not include the URLs of those handles, unrelated handles, other remotely accessible content, or Host cookies and credentials.
+
+3. Guest-controlled input can affect Host output only through the following mechanisms:
+
+   - **Telemetry:** The application provides the Host with a logger.
+     The Host can emit telemetry events in response to Guest behavior.
+     Telemetry fields must not contain user data or Guest-controlled data unless the data is tagged with the appropriate `TelemetryDataTag`.
+
+   - **Errors:** The Host can throw errors that contain information derived from Guest input.
+     If an error is logged through `TelemetryLoggerExt.sendErrorEvent`, it must result in telemetry that complies with the telemetry requirements above.
+
+   - **SharedTree changes:** The Guest can modify the branch in any valid way, as defined in [Valid Branch Changes](#valid-branch-changes).
+
+   - **Side channels:** The implementation does not attempt to prevent exfiltration through side channels.
+     For example, a compromised Guest could observe information in the shared branch and encode that information in the timing or size of valid edits.
+     An observer might infer the encoded information from the client's network activity, CPU activity, or Fluid service usage.
+
+### Valid Branch Changes
+
+The Guest is intentionally allowed to write any data it can access into the document and to add, remove, or replace content in the shared branch.
+
+The implementation currently permits changes that are syntactically valid but semantically invalid.
+These changes fall into the following categories:
+
+- Changes that directly cause content to violate the schema.
+  Examples include deleting a required field, performing an invalid move between sequences, inserting content of the wrong type, or changing the schema so that it no longer permits the document's content.
+- Changes that can cause content to violate the schema after merging with concurrent edits.
+  For example, a Guest could insert content into an empty optional field as though the field were a sequence.
+- Changes that satisfy the SharedTree schema but violate application invariants.
+  For example, a Guest could set a `__proto__` field on a record node when the application assumes that all field keys are safe to assign with `=`.
+  A Guest could also provide a string that the schema permits but the application does not accept, such as an invalid HTML color.
+- Changes that are sufficiently large or expensive to cause a denial of service for the document, the Host, or other Fluid clients.
+
+A malicious Fluid peer can already produce each of these categories of changes.
+Applications must therefore account for these risks even when they do not use sandboxing.
+
+Additional Host-side validation could restrict Guests more than ordinary Fluid peers and reduce the harm that a Guest can cause.
+The design and scope of that validation have not yet been finalized.
+
+One proposed fault-isolation boundary is to ensure that a Guest cannot make a change that prevents the application from using the SharedTree history APIs to restore an earlier working state.
+Implementing this boundary can require additional Host-side validation, hardening of Timeline or the rebaser, and careful application integration.
+The application must remain functional enough to perform the restoration after it receives invalid content.
+
+### Security Boundary and Known Limitations
 
 The transport and protocol validators provide defense in depth, but the implementation is not yet a complete boundary for an untrusted participant.
 The remaining limitations are:
@@ -278,7 +332,7 @@ The remaining limitations are:
 - The protocol does not enforce limits for message size, nesting depth, pending requests, or blob data.
 - Failures during main-tree merge are not fully isolated.
 - Retained Guest references cannot always be invalidated after a broken tree operation.
-- Cross-realm integration coverage uses `MessagePort`, but does not yet include an isolated iframe.
+- Cross-realm integration coverage uses `MessagePort` but does not yet include an isolated iframe.
 - History retention, trunk trimming, and timeline behavior do not yet have a complete product contract for every configuration.
 
 Use application-level coordination when the port cannot deliver a failure notification.
@@ -328,6 +382,7 @@ Do not continue editing a Guest after session failure.
 ## Testing
 
 [transport.spec.ts](../test/shared-tree/sandboxing/transport.spec.ts) covers transport values, handles, blobs, markers, and malformed messages.
+[common.spec.ts](../test/shared-tree/sandboxing/common.spec.ts) covers sandbox failure classification, diagnostic separation, and telemetry tagging.
 [sandboxing.spec.ts](../test/shared-tree/sandboxing/sandboxing.spec.ts) covers initialization, synchronization, ID progress, rebasing, undo and redo, session failure, and replacement.
 [demo.integration.ts](../test/shared-tree/sandboxing/demo.integration.ts) covers ServiceClient integration with a V3 ID compressor.
 

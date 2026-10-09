@@ -7,16 +7,17 @@ import { strict as assert } from "node:assert";
 
 import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
-import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import {
-	FormattedTextDefault,
 	independentView,
 	PlainText,
-} from "@fluidframework/tree/internal";
+	TreeAlpha,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import Quill from "quill-next";
 
+import { FormattedTextDefault } from "../formatted/index.js";
 import {
 	clipboardFormatMatcher,
 	FormattedMainView,

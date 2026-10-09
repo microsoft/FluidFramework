@@ -4,6 +4,7 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import {
 	type BufferPlaceholder,
@@ -12,7 +13,6 @@ import {
 	escapedObjectType,
 	getTransportBuffer,
 	isEscapedObject,
-	isLocalHandle,
 	isSerializedHandle,
 	SandboxProtocolError,
 	type SerializedHandle,
@@ -224,7 +224,7 @@ function copyTransportData(
 		if (typeof item !== "object") {
 			throw new SandboxProtocolError("Unsupported sandbox transport value.");
 		}
-		if (isLocalHandle(item)) {
+		if (isFluidHandle(item)) {
 			return handle(item);
 		}
 		const registeredBuffer = getTransportBuffer(item);

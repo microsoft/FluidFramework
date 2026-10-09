@@ -44,12 +44,12 @@
 		"typeparam",
 		"unannotate",
 		"unbrand",
+		"uncompromised",
 		"undoable",
 		"unhydrated",
 		"unioned",
 		"unparented",
 	],
-
 	// Enable biome as default formatter, and disable rules that disagree with it
 	"editor.defaultFormatter": "biomejs.biome",
 	"editor.insertSpaces": false,

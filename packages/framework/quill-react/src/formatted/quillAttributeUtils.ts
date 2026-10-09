@@ -4,8 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { FormattedTextDefault } from "@fluidframework/tree/internal";
 import DeltaPackage, { type AttributeMap } from "@quill-next/delta-es";
+
+import { FormattedTextDefault } from "./formattedTextDefault.js";
 
 /** Re-alias of {@link AttributeMap} (Quill's attributes record on delta ops). */
 type QuillAttributeMap = AttributeMap;
