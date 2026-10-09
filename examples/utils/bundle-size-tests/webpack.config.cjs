@@ -199,12 +199,13 @@ const bundleAnalysisConfig = {
 	devtool: "source-map",
 };
 
-// These full alpha-entrypoint probes make the analyzer's raw stats exceed Node's maximum string
+// These full emitted-package probes make the analyzer's raw stats exceed Node's maximum string
 // length when included in the main compilation. Build them separately and retain only the module
 // reachability data needed by forestProviderBundles.spec.ts.
 const forestProviderProbeConfig = {
 	name: "forest-provider-probes",
 	entry: {
+		sharedTreeDefault: "./src/sharedTree",
 		sharedTreeExpensiveDebugForest: "./src/sharedTreeExpensiveDebugForest",
 		sharedTreeOptimizedForest: "./src/sharedTreeOptimizedForest",
 		sharedTreeReferenceForest: "./src/sharedTreeReferenceForest",

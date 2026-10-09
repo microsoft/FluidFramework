@@ -60,12 +60,26 @@ function assertExcludesModule(modules: readonly string[], modulePath: string): v
 	);
 }
 
+function assertUsesEmittedTreeArtifacts(modules: readonly string[]): void {
+	assert(
+		modules.some((module) => module.includes("/packages/dds/tree/lib/")),
+		"Expected bundle to include the emitted @fluidframework/tree package",
+	);
+	assert(
+		modules.every((module) => !module.includes("/packages/dds/tree/src/")),
+		"Expected bundle to exclude @fluidframework/tree source files",
+	);
+}
+
 describe("SharedTree forest provider bundles", () => {
 	it("isolates forest providers", () => {
 		// This test must be run after webpack.
 		const stats = JSON.parse(
 			readFileSync("./build/forest-provider-probes/stats.json", "utf-8"),
 		) as WebpackStats;
+		const referenceProvider = "/packages/dds/tree/lib/shared-tree/forestTypeReference.js";
+		const optimizedProvider = "/packages/dds/tree/lib/shared-tree/forestTypeOptimized.js";
+		const debugProvider = "/packages/dds/tree/lib/shared-tree/forestTypeExpensiveDebug.js";
 		const objectForest =
 			"/packages/dds/tree/lib/feature-libraries/object-forest/objectForest.js";
 		const chunkedForest =
@@ -73,16 +87,29 @@ describe("SharedTree forest provider bundles", () => {
 		const comparisonForest =
 			"/packages/dds/tree/lib/feature-libraries/comparison-forest/comparisonForest.js";
 
+		const defaultModules = getEntrypointModules(stats, "sharedTreeDefault");
+		assertUsesEmittedTreeArtifacts(defaultModules);
+		assertIncludesModule(defaultModules, referenceProvider);
+		assertExcludesModule(defaultModules, optimizedProvider);
+		assertExcludesModule(defaultModules, debugProvider);
+		assertIncludesModule(defaultModules, objectForest);
+		assertExcludesModule(defaultModules, chunkedForest);
+		assertExcludesModule(defaultModules, comparisonForest);
+
 		const referenceModules = getEntrypointModules(stats, "sharedTreeReferenceForest");
-		assertIncludesModule(
-			referenceModules,
-			"/packages/dds/tree/lib/shared-tree/forestTypeReference.js",
-		);
+		assertUsesEmittedTreeArtifacts(referenceModules);
+		assertIncludesModule(referenceModules, referenceProvider);
+		assertExcludesModule(referenceModules, optimizedProvider);
+		assertExcludesModule(referenceModules, debugProvider);
 		assertIncludesModule(referenceModules, objectForest);
 		assertExcludesModule(referenceModules, chunkedForest);
 		assertExcludesModule(referenceModules, comparisonForest);
 
 		const optimizedModules = getEntrypointModules(stats, "sharedTreeOptimizedForest");
+		assertUsesEmittedTreeArtifacts(optimizedModules);
+		assertIncludesModule(optimizedModules, referenceProvider);
+		assertIncludesModule(optimizedModules, optimizedProvider);
+		assertExcludesModule(optimizedModules, debugProvider);
 		// ObjectForest remains reachable because existing APIs use it as the default when no
 		// forest is provided. Removing that default requires a separate API change.
 		assertIncludesModule(optimizedModules, objectForest);
@@ -90,6 +117,10 @@ describe("SharedTree forest provider bundles", () => {
 		assertExcludesModule(optimizedModules, comparisonForest);
 
 		const debugModules = getEntrypointModules(stats, "sharedTreeExpensiveDebugForest");
+		assertUsesEmittedTreeArtifacts(debugModules);
+		assertIncludesModule(debugModules, referenceProvider);
+		assertExcludesModule(debugModules, optimizedProvider);
+		assertIncludesModule(debugModules, debugProvider);
 		assertIncludesModule(debugModules, objectForest);
 		assertIncludesModule(debugModules, chunkedForest);
 		assertIncludesModule(debugModules, comparisonForest);
