@@ -1,6 +1,8 @@
 {
 	"extends": "../../common/build/build-common/ts-common-config.json",
 	"compilerOptions": {
+		"module": "Node16",
+		"moduleResolution": "Node16",
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,

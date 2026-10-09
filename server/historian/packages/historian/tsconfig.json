@@ -1,10 +1,12 @@
 {
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
+		"types": ["node"],
 		"target": "es6",
+		"esModuleInterop": true,
 		"declaration": true,
-		"module": "commonjs",
-		"moduleResolution": "node",
+		"module": "Node16",
+		"moduleResolution": "Node16",
 		"noImplicitAny": false,
 		"noUnusedLocals": true,
 		"outDir": "dist",

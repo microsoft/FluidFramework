@@ -4,6 +4,18 @@
 
 This document tracks dependencies that are specially managed for technical reasons.
 
+### TypeScript compiler versions
+
+Build-tools packages compile with TypeScript `~6.0.3`.
+The `typescript-5.4`, `typescript-5.9`, and `typescript-6.0` aliases in `@fluidframework/build-tools` are intentional compatibility dependencies.
+Keep them aligned with their named compiler versions rather than upgrading all aliases to the newest compiler.
+The TSC task integration tests run each compiler to verify incremental build checks against its actual build-info format.
+
+TypeDoc must be at least version `0.28.20` to support the TypeScript 6 compiler dependency.
+Version-tools explicitly uses NodeNext module resolution instead of the deprecated Node10 resolution inherited from the published build-common configuration.
+Its package remains CommonJS, so the compiler continues to emit CommonJS modules.
+NodeNext also supports the Node 22 runtime's ability to require ESM packages, which the Chai test dependency needs.
+
 ### Dependencies Blocked from Major Version Upgrades
 
 The following dependencies are pinned to older major versions because newer versions may be incompatible with the current CommonJS-based codebase. Most of these packages have migrated to ESM-only in their latest versions and compatibility with "module-sync" has not been investigated.

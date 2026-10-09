@@ -48,14 +48,14 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
 /**
  * Convert binary blob to string format
  *
- * @param blob - the binary blob
+ * @param blob - The binary buffer or typed-array view.
  * @param encoding - output string's encoding
  * @returns the blob in string format
  *
  * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
-export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
+export const bufferToString = (blob: ArrayBufferLike | Uint8Array, encoding: string): string =>
 	IsoBuffer.from(blob).toString(encoding);
 
 /**
@@ -152,7 +152,7 @@ export class IsoBuffer extends Uint8Array {
 			case "base64": {
 				const sanitizedString = this.sanitizeBase64(str);
 				const encoded = base64js.toByteArray(sanitizedString);
-				return new IsoBuffer(encoded.buffer);
+				return new IsoBuffer(encoded);
 			}
 			case "utf8":
 			case "utf-8":

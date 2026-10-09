@@ -4,6 +4,7 @@
 		"target": "ESNext",
 		"module": "NodeNext",
 		"strict": true,
+		"types": ["mocha"],
 		"allowImportingTsExtensions": true,
 		"noEmit": true,
 	},
