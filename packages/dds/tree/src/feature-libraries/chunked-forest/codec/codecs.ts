@@ -23,7 +23,7 @@ import {
 	type TreeChunk,
 } from "../../../core/index.js";
 import {
-	brandedNumberType,
+	brandedIntegerType,
 	IdDecodingContext,
 	type Brand,
 	type IdDecoderOptionsOriginatorless,
@@ -48,7 +48,7 @@ import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode
  * Reference ID for a chunk that is incrementally encoded.
  */
 export type ChunkReferenceId = Brand<number, "forest.ChunkReferenceId">;
-const ChunkReferenceId = brandedNumberType<ChunkReferenceId>({ multipleOf: 1, minimum: 0 });
+const ChunkReferenceId = brandedIntegerType<ChunkReferenceId>({ minimum: 0 });
 
 /**
  * Properties for incremental encoding.

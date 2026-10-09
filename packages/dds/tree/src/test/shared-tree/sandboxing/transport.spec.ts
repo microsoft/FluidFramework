@@ -535,6 +535,9 @@ describe("Transport and endpoint unit tests", () => {
 		for (const id of [
 			-1,
 			0.5,
+			1e-11,
+			1 - 1e-11,
+			1 + 1e-11,
 			Number.MAX_SAFE_INTEGER + 1,
 			Number.NaN,
 			Infinity,
