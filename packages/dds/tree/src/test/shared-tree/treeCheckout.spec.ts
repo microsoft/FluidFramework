@@ -195,6 +195,33 @@ describe("sharedTreeView", () => {
 			view.checkout.breaker.clearError();
 			view.dispose();
 		});
+
+		it("disposes the forked branch when checkout subclass construction fails", () => {
+			const view = getView(config);
+			view.initialize([]);
+
+			let forkedBranchDisposed = false;
+			view.checkout.mainBranch.events.on("fork", (branch) => {
+				branch.events.on("dispose", () => {
+					forkedBranchDisposed = true;
+				});
+			});
+
+			const expectedError = new Error("checkout constructor failed");
+			class ThrowingCheckout extends TreeCheckout {
+				public constructor(...args: ConstructorParameters<typeof TreeCheckout>) {
+					super(...args);
+					throw expectedError;
+				}
+			}
+
+			assert.throws(
+				() => view.checkout.forkWith(ThrowingCheckout),
+				(error) => error === expectedError,
+			);
+			assert.equal(forkedBranchDisposed, true);
+			view.dispose();
+		});
 	});
 
 	describe("finalized history", () => {

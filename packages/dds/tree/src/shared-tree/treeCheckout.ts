@@ -1532,18 +1532,24 @@ export class TreeCheckout implements ITreeCheckout {
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
-		const checkout = new checkoutConstructor(
-			branch,
-			false,
-			this.changeFamily,
-			storedSchema,
-			forest,
-			this.mintRevisionTag,
-			this.revisionTagCodec,
-			this.idCompressor,
-			this.jsonValidator,
-			this._removedRoots.clone(),
-		);
+		let checkout: T;
+		try {
+			checkout = new checkoutConstructor(
+				branch,
+				false,
+				this.changeFamily,
+				storedSchema,
+				forest,
+				this.mintRevisionTag,
+				this.revisionTagCodec,
+				this.idCompressor,
+				this.jsonValidator,
+				this._removedRoots.clone(),
+			);
+		} catch (error) {
+			branch.dispose();
+			throw error;
+		}
 		this.#events.emit("fork", checkout);
 		return checkout;
 	}
