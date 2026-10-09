@@ -14,7 +14,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
+import { type Brand, brandedIntegerType, strictEnum, type Values } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
@@ -70,11 +70,11 @@ const Commit = <ChangeSchema extends TSchema>(
 ) => Type.Composite([CommitBase(tChange, includeCustomMetadata)], noAdditionalProps);
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
-const SeqNumber = brandedNumberType<SeqNumber>({ multipleOf: 1 });
+const SeqNumber = brandedIntegerType<SeqNumber>();
 
 const SequenceId = Type.Object({
 	sequenceNumber: SeqNumber,
-	indexInBatch: Type.Optional(Type.Number({ multipleOf: 1, minimum: 0 })),
+	indexInBatch: Type.Optional(Type.Integer({ minimum: 0 })),
 });
 
 export type SequenceId = Static<typeof SequenceId>;

@@ -4,7 +4,7 @@
  */
 
 import * as Type from "@sinclair/typebox";
-import type { NumberOptions, TUnsafe } from "@sinclair/typebox";
+import type { IntegerOptions, NumberOptions, TUnsafe } from "@sinclair/typebox";
 
 /**
  * Create a TypeBox string schema for a branded string type.
@@ -29,4 +29,14 @@ export function brandedNumberType<T extends number>(
 ): TUnsafe<T> {
 	// See comments on `brandedStringType`.
 	return Type.Number(options) as unknown as TUnsafe<T>;
+}
+
+/**
+ * Creates a TypeBox integer schema for a branded number type.
+ * Like {@link brandedNumberType}, this validates the numeric constraints, not the brand's origin.
+ */
+export function brandedIntegerType<T extends number>(
+	options?: IntegerOptions | undefined,
+): TUnsafe<T> {
+	return Type.Unsafe<T>(Type.Integer(options));
 }

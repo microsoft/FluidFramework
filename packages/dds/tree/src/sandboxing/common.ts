@@ -23,7 +23,7 @@ import { TypeSystem } from "@sinclair/typebox/system";
 import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
 import { FormatValidatorInterpreted } from "../external-utilities/index.js";
-import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
+import { type Brand, brandedIntegerType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
  * Kind of failure reported across the sandbox boundary.
@@ -128,17 +128,15 @@ export class SandboxProtocolError extends LoggingError {
 const nonNegativeSafeIntegerOptions = {
 	minimum: 0,
 	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
 } as const;
 
 /** An integer from zero through the largest integer JavaScript can represent exactly. */
-const NonNegativeSafeInteger = Type.Number(nonNegativeSafeIntegerOptions);
+const NonNegativeSafeInteger = Type.Integer(nonNegativeSafeIntegerOptions);
 
 /** Shared wire bounds for positive safe integers. */
-const PositiveSafeInteger = Type.Number({
+const PositiveSafeInteger = Type.Integer({
 	minimum: 1,
 	maximum: Number.MAX_SAFE_INTEGER,
-	multipleOf: 1,
 });
 
 /**
@@ -146,30 +144,30 @@ const PositiveSafeInteger = Type.Number({
  * Valid only within the owning session; the brand does not establish runtime authorization.
  */
 export type HandleToken = Brand<number, "sandbox.HandleToken">;
-const HandleToken = brandedNumberType<HandleToken>(nonNegativeSafeIntegerOptions);
+const HandleToken = brandedIntegerType<HandleToken>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one pending {@link BlobRequestMessage}, independently of its {@link HandleToken}.
  * Allocated by the Guest and echoed by the Host to match a response to its request.
  */
 export type BlobRequestId = Brand<number, "sandbox.BlobRequestId">;
-const BlobRequestId = brandedNumberType<BlobRequestId>(nonNegativeSafeIntegerOptions);
+const BlobRequestId = brandedIntegerType<BlobRequestId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Host branch update and its acknowledgment.
  */
 export type HostUpdateId = Brand<number, "sandbox.HostUpdateId">;
-const HostUpdateId = brandedNumberType<HostUpdateId>(nonNegativeSafeIntegerOptions);
+const HostUpdateId = brandedIntegerType<HostUpdateId>(nonNegativeSafeIntegerOptions);
 
 /** Identifies a finalized ID creation range sent from the Host to the Guest. */
 export type HostIdRangeId = Brand<number, "sandbox.HostIdRangeId">;
-const HostIdRangeId = brandedNumberType<HostIdRangeId>(nonNegativeSafeIntegerOptions);
+const HostIdRangeId = brandedIntegerType<HostIdRangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Identifies one Guest change and its acknowledgment.
  */
 export type GuestChangeId = Brand<number, "sandbox.GuestChangeId">;
-const GuestChangeId = brandedNumberType<GuestChangeId>(nonNegativeSafeIntegerOptions);
+const GuestChangeId = brandedIntegerType<GuestChangeId>(nonNegativeSafeIntegerOptions);
 
 /**
  * Wire discriminator for {@link SerializedHandle}. Ordinary records with this value must be escaped.
@@ -358,7 +356,7 @@ export function isSerializedHandle(value: unknown): value is SerializedHandle {
 
 /** Runtime schema for revision tags used within one sandbox session. */
 const SessionRevisionTag = Type.Unsafe<RevisionTag>(
-	Type.Union([Type.Literal("root"), Type.Number({ multipleOf: 1 })]),
+	Type.Union([Type.Literal("root"), Type.Integer()]),
 );
 
 /** A serialized SharedTree payload validated against the sandbox transport vocabulary. */
