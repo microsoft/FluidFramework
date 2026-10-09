@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": feature
 ---
-Keep SharedString's flat snapshot format after opting in
+SharedString now allows applications to configure which snapshot format it uses.
 
 SharedString now reuses the format of its loaded or most recently generated summary when no explicit setting is provided.
 Explicit settings take precedence over that format, and new SharedStrings use the legacy format by default.
