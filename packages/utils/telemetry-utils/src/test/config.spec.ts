@@ -12,6 +12,7 @@ import {
 	CachedConfigProvider,
 	createConfigBasedOptionsProxy,
 	inMemoryConfigProvider,
+	loggerToMonitoringContext,
 	wrapConfigProviderWithDefaults,
 } from "../config.js";
 import { TelemetryDataTag } from "../logger.js";
@@ -288,6 +289,25 @@ describe("Config", () => {
 	});
 
 	// #endregion SettingsProvider
+
+	it("CachedConfigProvider does not throw 'Converting circular structure to JSON'", () => {
+		// `MonitoringContext.config` is a `CachedConfigProvider` that holds a reference back to
+		// the logger that owns it (`mc.config.logger === mc`). JSON.stringify-ing just the
+		// config provider (as telemetry/test code may do when logging config state) should not
+		// throw because of this circular reference.
+		const logger = new MockLogger();
+		const mc = loggerToMonitoringContext(logger);
+		assert.doesNotThrow(() => JSON.stringify(mc.config));
+	});
+
+	it("CachedConfigProvider.toJSON omits the logger", () => {
+		const logger = new MockLogger();
+		const providerSettings = { foo: "bar" };
+		const config = new CachedConfigProvider(logger, untypedProvider(providerSettings));
+
+		const serialized = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
+		assert.strictEqual(serialized.logger, undefined);
+	});
 });
 
 describe("wrappedConfigProvider", () => {
