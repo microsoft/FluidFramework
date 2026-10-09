@@ -393,28 +393,35 @@ export const baseRules = {
 				"Exporting * is not permitted. You should export only named items you intend to export.",
 		},
 		"ForInStatement",
-		// Keep TypeBox runtime imports on its type-only runtime entry point so
-		// bundlers do not need to traverse the broader root entry point.
+		// TypeBox import policy:
+		// - Import types by name from `typebox` using `import type`.
+		// - Import runtime schema builders as a namespace from `typebox/type`.
+		// Keeping these forms distinct makes runtime imports easy to identify and
+		// gives bundlers the narrowest documented entry point to tree-shake.
 		{
 			selector: 'ImportDeclaration[source.value="typebox"] > ImportNamespaceSpecifier',
 			message:
-				"Import the TypeBox runtime namespace from `typebox/type`; the root entrypoint defeats tree-shaking.",
+				"Import TypeBox types by name with `import type` from `typebox`, and import the runtime namespace from `typebox/type`.",
 		},
 		{
 			selector: 'ImportDeclaration[source.value="typebox"] > ImportDefaultSpecifier',
 			message:
-				"Import the TypeBox runtime namespace from `typebox/type`; default imports defeat tree-shaking.",
+				"Do not use the TypeBox aggregate. Import the runtime namespace from `typebox/type`.",
 		},
 		{
 			selector: 'ImportDeclaration[source.value="typebox/type"] > ImportDefaultSpecifier',
+			message: 'Import the TypeBox runtime with `import * as Type from "typebox/type"`.',
+		},
+		{
+			selector: 'ImportDeclaration[source.value="typebox/type"] > ImportSpecifier',
 			message:
-				"Import the TypeBox runtime namespace from `typebox/type`; default imports defeat tree-shaking.",
+				'Import the TypeBox runtime with `import * as Type from "typebox/type"`; import types by name from `typebox`.',
 		},
 		{
 			selector:
 				'ImportDeclaration[source.value="typebox"]:not([importKind="type"]) > ImportSpecifier:not([importKind="type"])',
 			message:
-				"Import the TypeBox runtime namespace from `typebox/type`; the root entrypoint defeats tree-shaking. Type-only imports may remain on `typebox`.",
+				'Runtime TypeBox imports must use `import * as Type from "typebox/type"`; only type imports may come from `typebox`.',
 		},
 	],
 	"no-sequences": "error",

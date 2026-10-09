@@ -54,6 +54,7 @@ describe("custom Fluid rules", function () {
 				'import { Object as TypeObjectFromRoot } from "typebox";',
 				'import { Object as TypeObject } from "typebox/type";',
 				'import type { Static } from "typebox";',
+				'import type { TSchema } from "typebox/type";',
 				"void Type;",
 				"void TypeBox;",
 				"void TypeNamespace;",
@@ -68,6 +69,6 @@ describe("custom Fluid rules", function () {
 		const violations = result.messages.filter(
 			(message) => message.ruleId === "no-restricted-syntax",
 		);
-		assert.strictEqual(violations.length, 4);
+		assert.strictEqual(violations.length, 6);
 	});
 });

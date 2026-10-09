@@ -5,14 +5,20 @@
 ### Update the TypeBox import restriction for TypeBox 1
 
 The TypeBox import restriction now applies to the `typebox` package instead of the retired `@sinclair/typebox` package.
-Default runtime imports and runtime imports from the root entry point are disallowed because they defeat tree-shaking.
-Import the runtime namespace from `typebox/type` instead:
+Runtime schema builders must use a namespace import from the documented `typebox/type` entry point:
 
 ```typescript
 import * as Type from "typebox/type";
 ```
 
-Type-only imports from the root `typebox` entry point remain supported.
+Type-only imports use named imports from the root `typebox` entry point:
+
+```typescript
+import type { Static, TSchema } from "typebox";
+```
+
+Default imports, runtime imports from `typebox`, and named imports from `typebox/type` are rejected.
+Keeping the runtime and type forms distinct makes runtime dependencies easy to identify and gives bundlers the narrowest documented entry point to tree-shake.
 
 ## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
 
