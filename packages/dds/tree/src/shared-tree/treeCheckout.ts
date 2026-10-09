@@ -637,6 +637,18 @@ export class TreeCheckout implements ITreeCheckout {
 	public events: Listenable<CheckoutEvents> = this.#events;
 	private _branchHistory?: DefaultTreeBranchHistory;
 
+	/**
+	 * Whether disposing a view also disposes this checkout.
+	 *
+	 * @remarks
+	 * Non-shared checkouts default to being owned by their view.
+	 * Shared checkouts persist after view disposal.
+	 * Subclasses can override this policy when the caller owns the checkout independently of its views.
+	 */
+	public get disposeWithView(): boolean {
+		return !this.isSharedBranch;
+	}
+
 	public constructor(
 		private branch: SharedTreeBranch<
 			SharedTreeEditBuilder,
@@ -1418,7 +1430,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Creates a schematized view of this checkout.
 	 * @param config - The schema and behavior configuration for the view.
 	 * @param disposeCheckoutOnViewDispose - Whether disposing the view also disposes this checkout.
-	 * Defaults to true for checkouts that are not shared branches.
+	 * Defaults to this checkout's {@link TreeCheckout.disposeWithView} policy.
 	 * @remarks
 	 * Extends {@link ViewTree.viewWith} to include `disposeCheckoutOnViewDispose` parameter.
 	 */
@@ -1473,8 +1485,41 @@ export class TreeCheckout implements ITreeCheckout {
 		SharedTreeChangeProcessingContext
 	>;
 
-	@throwIfBroken
 	public fork(): TreeCheckout {
+		return this.forkWith(TreeCheckout);
+	}
+
+	/**
+	 * Forks this checkout using the supplied constructor.
+	 *
+	 * @remarks
+	 * Allows subclasses to reuse checkout cloning and validation.
+	 * By default, the fork has its own branch, stored schema, forest, and repair data.
+	 * Broken-state validation applies here so subclass fork entry points cannot bypass it.
+	 *
+	 * @param checkoutConstructor - The constructor to use for the forked checkout.
+	 */
+	@throwIfBroken
+	public forkWith<T extends TreeCheckout>(
+		checkoutConstructor: new (
+			branch: SharedTreeBranch<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>,
+			isSharedBranch: boolean,
+			changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+			storedSchema: TreeStoredSchemaRepository,
+			forest: IEditableForest,
+			mintRevisionTag: () => RevisionTag,
+			revisionTagCodec: RevisionTagCodec,
+			idCompressor: IIdCompressor,
+			jsonValidator: FormatValidator,
+			removedRoots?: DetachedFieldIndex,
+			disposeForksAfterTransaction?: boolean,
+			getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
+		) => T,
+	): T {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
 		);
@@ -1487,18 +1532,24 @@ export class TreeCheckout implements ITreeCheckout {
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
-		const checkout = new TreeCheckout(
-			branch,
-			false,
-			this.changeFamily,
-			storedSchema,
-			forest,
-			this.mintRevisionTag,
-			this.revisionTagCodec,
-			this.idCompressor,
-			this.jsonValidator,
-			this._removedRoots.clone(),
-		);
+		let checkout: T;
+		try {
+			checkout = new checkoutConstructor(
+				branch,
+				false,
+				this.changeFamily,
+				storedSchema,
+				forest,
+				this.mintRevisionTag,
+				this.revisionTagCodec,
+				this.idCompressor,
+				this.jsonValidator,
+				this._removedRoots.clone(),
+			);
+		} catch (error) {
+			branch.dispose();
+			throw error;
+		}
 		this.#events.emit("fork", checkout);
 		return checkout;
 	}

@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createEmitter } from "@fluid-internal/client-utils";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -21,6 +22,8 @@ import {
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { BranchTrimmingEvents } from "../../shared-tree-core/branch.js";
 import {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
@@ -369,6 +372,63 @@ describe("Branches", () => {
 			});
 			branch.fork();
 			assert.equal(forkCount, 2);
+		});
+	});
+
+	describe("trimmer detachment", () => {
+		function createWithTrimmer(): {
+			branch: DefaultBranch;
+			trimmer: ReturnType<typeof createEmitter<BranchTrimmingEvents>>;
+			received: RevisionTag[][];
+		} {
+			const trimmer = createEmitter<BranchTrimmingEvents>();
+			const initCommit: GraphCommit<DefaultChangeset> = {
+				change: defaultChangeFamily.rebaser.compose([]),
+				revision: nullRevisionTag,
+				customMetadata: undefined,
+			};
+			const branch = new SharedTreeBranch(
+				initCommit,
+				defaultChangeFamily,
+				mintRevisionTag,
+				trimmer,
+			);
+			const received: RevisionTag[][] = [];
+			branch.events.on("ancestryTrimmed", (revs) => received.push(revs));
+			return { branch, trimmer, received };
+		}
+
+		it("forwards trimmer events before detaching", () => {
+			const { branch, trimmer, received } = createWithTrimmer();
+			const revision = mintRevisionTag();
+			trimmer.emit("ancestryTrimmed", [revision]);
+			assert.deepEqual(received, [[revision]]);
+			branch.dispose();
+		});
+
+		it("detaches the branch from its trimmer", () => {
+			const { branch, trimmer, received } = createWithTrimmer();
+			branch.detachTrimmer();
+			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
+			assert.equal(received.length, 0);
+			const fork = branch.fork();
+			const forkReceived: RevisionTag[][] = [];
+			fork.events.on("ancestryTrimmed", (revs) => forkReceived.push(revs));
+			const revision = mintRevisionTag();
+			trimmer.emit("ancestryTrimmed", [revision]);
+			assert.deepEqual(received, []);
+			assert.deepEqual(forkReceived, [[revision]]);
+			fork.dispose();
+			branch.dispose();
+		});
+
+		it("detachTrimmer is idempotent", () => {
+			const { branch, trimmer, received } = createWithTrimmer();
+			branch.detachTrimmer();
+			branch.detachTrimmer();
+			branch.dispose();
+			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
+			assert.equal(received.length, 0);
 		});
 	});
 

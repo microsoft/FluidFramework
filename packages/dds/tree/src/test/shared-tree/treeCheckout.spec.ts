@@ -106,6 +106,124 @@ function parseCodeArtifactDetails(details: unknown): Record<string, unknown> {
 }
 
 describe("sharedTreeView", () => {
+	describe("checkout extensibility", () => {
+		class RetainedCheckout extends TreeCheckout {
+			public override get disposeWithView(): boolean {
+				return false;
+			}
+
+			public override fork(): RetainedCheckout {
+				return this.forkWith(RetainedCheckout);
+			}
+		}
+
+		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
+
+		it("constructs independent subclass forks that can be merged back", () => {
+			const view = getView(config);
+			view.initialize(["parent"]);
+			const checkout = view.checkout.forkWith(RetainedCheckout);
+			const fork = checkout.fork();
+			const branchView = checkout.viewWith(config);
+			const forkView = fork.viewWith(config);
+			forkView.root.insertAtEnd("child");
+			assert.deepEqual([...branchView.root], ["parent"]);
+			assert.deepEqual([...view.root], ["parent"]);
+			forkView.dispose();
+			assert.equal(fork.disposed, false);
+			const nextForkView = fork.viewWith(config);
+			assert.deepEqual([...nextForkView.root], ["parent", "child"]);
+			nextForkView.dispose();
+			checkout.merge(fork);
+			assert.equal(fork.disposed, true);
+			assert.deepEqual([...branchView.root], ["parent", "child"]);
+			view.merge(branchView);
+			assert.deepEqual([...view.root], ["parent", "child"]);
+			assert.equal(checkout.disposed, true);
+			view.dispose();
+		});
+
+		it("can dispose and recreate a view without disposing its retained checkout", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(RetainedCheckout);
+			const branchView = checkout.viewWith(config);
+			branchView.root.insertAtEnd("retained");
+			branchView.dispose();
+			assert.equal(checkout.disposed, false);
+			const nextView = checkout.viewWith(config);
+			assert.deepEqual([...nextView.root], ["retained"]);
+			nextView.dispose();
+			checkout.dispose();
+			view.dispose();
+		});
+
+		it("rejects subclass forks during pending transactions", () => {
+			const view = getView(config);
+			view.initialize([]);
+			view.runTransaction(() => {
+				assert.throws(
+					() => view.checkout.forkWith(RetainedCheckout),
+					validateUsageError("A view cannot be forked while it has a pending transaction."),
+				);
+			});
+			view.dispose();
+		});
+
+		it("rejects subclass forks after disposal", () => {
+			const view = getView(config);
+			view.initialize([]);
+			const checkout = view.checkout.forkWith(RetainedCheckout);
+			checkout.dispose();
+			assert.throws(
+				() => checkout.fork(),
+				validateUsageError(
+					"The parent branch has already been disposed and can no longer create new branches.",
+				),
+			);
+			view.dispose();
+		});
+
+		it("rejects subclass forks when the parent is broken", () => {
+			const view = getView(config);
+			view.initialize([]);
+			assert.throws(() => view.checkout.breaker.break(new Error("broken parent")));
+			assert.throws(
+				() => view.checkout.forkWith(RetainedCheckout),
+				validateUsageError(/broken parent/),
+			);
+			view.checkout.breaker.clearError();
+			view.dispose();
+		});
+
+		it("disposes the forked branch when checkout subclass construction fails", () => {
+			const view = getView(config);
+			view.initialize([]);
+
+			let forkedBranchDisposed = false;
+			view.checkout.mainBranch.events.on("fork", (branch) => {
+				branch.events.on("dispose", () => {
+					forkedBranchDisposed = true;
+				});
+			});
+
+			const expectedError = new Error("checkout constructor failed");
+			class ThrowingCheckout extends TreeCheckout {
+				public constructor(...args: ConstructorParameters<typeof TreeCheckout>) {
+					super(...args);
+					throw expectedError;
+				}
+			}
+
+			assert.throws(
+				() => view.checkout.forkWith(ThrowingCheckout),
+				(error) => error === expectedError,
+			);
+			assert.equal(forkedBranchDisposed, true);
+			view.dispose();
+		});
+	});
+
 	describe("finalized history", () => {
 		const config = new TreeViewConfiguration({
 			schema: StringArray,
