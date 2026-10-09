@@ -6,6 +6,7 @@
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	LatestSummaryId,
+	NetworkError,
 	type IWholeFlatSummary,
 	type IWholeSummaryPayload,
 	type IWriteSummaryResponse,
@@ -35,13 +36,16 @@ import winston from "winston";
 
 import type {
 	ICache,
+	ISummaryAccessContext,
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
 	RestGitService,
 } from "../services";
+import { isEphemeralSummaryAccessStore } from "../services";
 import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
 
+import { resolveSummaryAccess } from "./summaryAccess";
 import * as utils from "./utils";
 
 export function create(
@@ -67,6 +71,12 @@ export function create(
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
 	const reuseCustomerAccessTokenForSummaryOwnership: boolean =
 		config.get("restGitService:reuseCustomerAccessTokenForSummaryOwnership") ?? false;
+	// Local records do not carry a document generation, so they are safe only when
+	// Alfred prevents caller-selected document IDs from being reused.
+	const ephemeralSummaryAccessEnabled =
+		config.get("alfred:enforceServerGeneratedDocumentId") === true;
+	const accessStore =
+		ephemeralSummaryAccessEnabled && isEphemeralSummaryAccessStore(cache) ? cache : undefined;
 
 	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
 	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -111,8 +121,8 @@ export function create(
 		routeType: utils.SummaryRouteType,
 		allowDisabledTenant = false,
 		query?: Query,
-	): Promise<RestGitService> {
-		await utils.validateSummaryDocument({
+	): Promise<{ service: RestGitService; access: ISummaryAccessContext }> {
+		const access = await resolveSummaryAccess({
 			tenantId,
 			authorization,
 			documentManager,
@@ -121,8 +131,9 @@ export function create(
 			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
 			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 			reuseCustomerAccessToken: reuseCustomerAccessTokenForSummaryOwnership,
+			accessStore,
 		});
-		return utils.createGitService({
+		const service = await utils.createGitService({
 			config,
 			tenantId,
 			authorization,
@@ -135,7 +146,9 @@ export function create(
 			simplifiedCustomDataRetriever,
 			postEphemeralContainerChecker,
 			query,
+			summaryAccessContext: access,
 		});
+		return { service, access };
 	}
 
 	async function getSummary(
@@ -146,7 +159,7 @@ export function create(
 		query?: Query,
 	): Promise<IWholeFlatSummary> {
 		const routeType: utils.SummaryRouteType = sha === LatestSummaryId ? "latest" : "sha";
-		const service = await createProtectedSummaryService(
+		const { service } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"get",
@@ -197,14 +210,14 @@ export function create(
 				query,
 			});
 		} else {
-			service = await createProtectedSummaryService(
+			({ service } = await createProtectedSummaryService(
 				tenantId,
 				authorization,
 				"post",
 				"notApplicable",
 				false,
 				query,
-			);
+			));
 		}
 		return service.createSummary(params, initial);
 	}
@@ -214,13 +227,37 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await createProtectedSummaryService(
+		const { service, access } = await createProtectedSummaryService(
 			tenantId,
 			authorization,
 			"delete",
 			"notApplicable",
 			true,
 		);
+		// The Redis tombstone and GitRest deletion are not atomic. Marking access deleted first
+		// may briefly deny an existing summary if GitRest fails, but avoids leaving an active
+		// authorization record during or after deletion.
+		if (access.isEphemeralContainer && accessStore !== undefined) {
+			try {
+				await accessStore.markSummaryAccessDeleted(
+					access.tenantId,
+					access.documentId,
+					access.createTime,
+					access.createTime + (ephemeralDocumentTTLSec ?? 24 * 60 * 60) * 1000,
+				);
+			} catch (error) {
+				utils.logOwnershipOutcome(
+					access.tenantId,
+					access.documentId,
+					"delete",
+					"notApplicable",
+					"dependencyError",
+					error,
+					{ source: access.source },
+				);
+				throw new NetworkError(503, "Ephemeral summary access state is unavailable.");
+			}
+		}
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);
