@@ -112,6 +112,7 @@ import { disableStrictLoaderLayerCompatibilityCheckKey } from "../runtimeLayerCo
 import {
 	type ISummaryCancellationToken,
 	type IContainerRuntimeMetadata,
+	type IRefreshSummaryResult,
 	neverCancelledSummaryToken,
 	idCompressorBlobName,
 	metadataBlobName,
@@ -2720,6 +2721,113 @@ describe("Runtime", () => {
 		});
 
 		describe("Snapshots", () => {
+			for (const { snapshotSequenceNumber, shouldClose } of [
+				{ snapshotSequenceNumber: 10, shouldClose: true },
+				{ snapshotSequenceNumber: 0, shouldClose: false },
+			]) {
+				it(`handles a retired summary ACK when the latest snapshot is ${shouldClose ? "accepted" : "older"}`, async () => {
+					const latestVersion: IVersion = { id: "latest", treeId: "latest-tree" };
+					const storage: Partial<IContainerStorageService> = {
+						uploadSummaryWithContext: async () => "hA",
+						getVersions: async () => [latestVersion],
+						getSnapshotTree: async () => ({
+							blobs: {},
+							trees: {
+								".protocol": {
+									blobs: { attributes: "attributesBlob" },
+									trees: {},
+								},
+							},
+						}),
+						readBlob: async () =>
+							stringToBuffer(
+								JSON.stringify({
+									sequenceNumber: snapshotSequenceNumber,
+									minimumSequenceNumber: 0,
+								} satisfies IDocumentAttributes),
+								"utf8",
+							),
+					};
+					const deltaManager = new MockDeltaManager();
+					deltaManager.lastSequenceNumber = 10;
+					deltaManager.lastMessage = {
+						type: MessageType.NoOp,
+						sequenceNumber: 10,
+						timestamp: Date.now(),
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage;
+					let closeCount = 0;
+					const context = {
+						...getMockContext({
+							mockStorage: storage,
+							loadedFromVersion: latestVersion,
+							settings: { "Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs": 0 },
+						}),
+						deltaManager,
+						closeFn: () => {
+							closeCount++;
+						},
+					};
+					const { runtime } = await ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const submitted = await runtime.submitSummary({
+						summaryLogger: createChildLogger(),
+						cancellationToken: neverCancelledSummaryToken,
+						latestSummaryRefSeqNum: 0,
+					});
+					if (submitted.stage !== "submit") {
+						assert.fail(`A failed at ${submitted.stage}: ${submitted.error?.message}`);
+					}
+					assert.strictEqual(submitted.referenceSequenceNumber, 10);
+					runtime.retireSummary(
+						submitted.handle,
+						submitted.referenceSequenceNumber,
+						submitted.clientSequenceNumber,
+					);
+					const nextSubmitted = await runtime.submitSummary({
+						summaryLogger: createChildLogger(),
+						cancellationToken: neverCancelledSummaryToken,
+						latestSummaryRefSeqNum: 0,
+					});
+					assert(nextSubmitted.stage === "submit", "B should be submitted");
+					assert.strictEqual(nextSubmitted.handle, submitted.handle);
+
+					interface RuntimeWithGC {
+						garbageCollector: {
+							refreshLatestSummary: (result: IRefreshSummaryResult) => Promise<void>;
+						};
+						summarizerNode: { pendingSummaries: Map<string, unknown> };
+						lastAckedSummaryContext: ISummaryContext | undefined;
+					}
+					const runtimeState = runtime as unknown as RuntimeWithGC;
+					const gcRefresh = sandbox.spy(runtimeState.garbageCollector, "refreshLatestSummary");
+					const refresh = runtime.refreshLatestSummaryAck({
+						proposalHandle: submitted.handle,
+						ackHandle: "acceptedA",
+						summaryRefSeq: submitted.referenceSequenceNumber,
+						summaryLogger: createChildLogger(),
+						isRetired: true,
+					});
+					await clock.tickAsync(0);
+					await refresh;
+
+					assert.strictEqual(closeCount, shouldClose ? 1 : 0);
+					assert.strictEqual(gcRefresh.callCount, 0, "retired A must not refresh GC state");
+					assert(
+						runtimeState.summarizerNode.pendingSummaries.has(submitted.handle),
+						"B must remain pending when its handle matches retired A",
+					);
+					assert.strictEqual(
+						runtimeState.lastAckedSummaryContext,
+						undefined,
+						"retired A must not become the next upload's parent",
+					);
+				});
+			}
+
 			/**
 			 * This test tests a scenario where a summarizer gets a newer summary ack, but on fetching the latest snapshot,
 			 * it gets a snapshot which is older than the one corresponding to the ack.
