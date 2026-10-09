@@ -15,7 +15,7 @@ We would prefer fixes in TypeBox's public APIs and published package over mainta
 | --- | --- | --- |
 | [Optional/readonly modifiers deep-copy nested schemas](#1-optional-and-readonly-modifiers-deep-copy-nested-schemas) | Source inspection and identity reproduction; shallow copies greatly reduce our schema-construction cost | Offer an efficient shallow-copy path with documented sharing semantics |
 | [Generated names change between identical compilations](#2-identical-compilations-generate-different-source) | Source reproduction; resetting names reduces repeated compilation from 15.4 to 7.9 ms | Make generated names local to each compilation |
-| [Warm validation is slower](#3-warm-validation-is-slower) | Follow-up isolates regex key checks and general numeric checks; schema-only experiments restore baseline speed or better on four fixtures | Optimize fixed-key objects upstream; use integer declarations for integer-only data; evaluate a local `propertyNames` alternative |
+| [Warm validation is slower](#3-warm-validation-is-slower) | Regex key checks roughly double two isolated validator timings, but removing them changes measured connected-workload totals by only a few percent; integer declarations fix a separate issue | Optimize fixed-key objects upstream; retain integer declarations; no demonstrated need for another local workaround |
 | [Tree-shaking metadata improvement](#4-tree-shaking-support-needs-to-ship-in-the-package) | A now-removed local patch saved 389 gzip bytes without validation and 62 with validation | Consider appropriate side-effect metadata upstream; measured savings do not justify a local patch or a migration blocker |
 | [Immutable mode leaves nested schema containers mutable](#5-immutabletypes-does-not-freeze-the-complete-schema-graph) | Direct freezing and mutation reproduction | Clarify the contract; consider graph immutability if this mode is intended to support safe sharing |
 
@@ -198,6 +198,21 @@ The experiment preserves key enumeration and does not permit additional keys.
 General regex support is useful for `patternProperties`, but these closed objects do not need it.
 An upstream specialized literal-key path is preferable to a consumer compiler patch.
 
+**Long-warmup verification after the integer fix:** increasing warmup to 100,000 validations, followed by ten timed batches of 50,000, did not close the gap.
+Two fresh-process comparisons in reversed order produced these ranges of process medians:
+
+| Valid payload | Current regex checks | Literal-key compiler experiment |
+| --- | ---: | ---: |
+| Sequence | 15.16-15.77 microseconds | 7.29-7.38 microseconds |
+| Recursive tree | 6.23-6.31 microseconds | 2.63-2.79 microseconds |
+
+Each fixture therefore received about ten million object visits before timing, followed by fifty million during timing.
+The later batches did not converge toward the literal-key timings.
+A separate, untimed run using V8's `--trace-regexp-tier-up` showed regex tier-up and native code generation during the first 100 validations of each fixture.
+Tracing was disabled for timing runs.
+This supports a steady-state difference in the generated checking strategies on Node.js 24.15.0, not an insufficient regex warmup explanation.
+It does not imply that regexes are generally slow or that every JavaScript engine behaves the same way.
+
 **Schema-only alternative:** replace `additionalProperties: false` with a `propertyNames` enum for an object whose permitted keys are exactly its declared properties:
 
 ```javascript
@@ -295,7 +310,7 @@ Each result is the median of three fresh-process medians, including reversed exe
 Each process used 10,000 warmup checks and seven batches of 10,000 checks, cycling through 16 distinct payloads.
 The follow-up scripts, generated validators, and results were retained in the investigation session, but are not a checked-in repository benchmark suite.
 Compiler experiments used process-local loader substitutions, not edits to installed dependencies.
-No production schema changes were made.
+No production schema changes were made for that experiment; the integer declarations were implemented afterward.
 
 Recommended next steps:
 
@@ -304,6 +319,100 @@ Recommended next steps:
 3. If a local mitigation is needed sooner, evaluate the narrowly scoped `propertyNames` alternative with codec and snapshot tests.
 4. Keep the tuple and non-JSON acceptance differences in the migration compatibility assessment.
 5. Remeasure startup separately after any declaration changes; faster checking does not establish cheaper compilation or smaller bundles.
+
+### Impact on actual SharedTree operations
+
+**The roughly 2x isolated-validator regression does not translate into a roughly 2x SharedTree slowdown in the measured workloads.**
+We followed up with actual edits, operation encoding and decoding, synchronization, rebasing, summary creation, and summary loading.
+These measurements use commit `a1f1f7b03b8`, including the shallow modifiers, schema-identity compilation cache, and integer declarations.
+There is no installed TypeBox patch.
+
+The workloads explicitly enable `FormatValidatorBasic`.
+Connected cases use two attached clients with the repository's mock runtime, not a network service.
+We use Node.js 24.15.0, production emulation to disable debug assertions, no coverage, and serial processes.
+Assertions outside the timed phases check resulting content, client convergence, and loaded summary content.
+These are representative library workloads, not measurements of a complete customer application, browser rendering, or network and storage latency.
+
+#### How much time is spent checking?
+
+The following table times each actual TypeBox `Check` call inside the workload.
+Totals exclude document setup unless stated otherwise; compilation is measured separately.
+Each fresh-document workload has five warmup iterations and 20 measured iterations.
+The long-lived-document cases reuse the same two documents and validators, with 20 warmup batches and 30 measured batches.
+The concurrent array grows across those batches, so its fresh-document and long-lived-document results are not a controlled warmup-only comparison.
+
+| Workload | Timed phases | Total, mean ms | Inside validator calls, ms | Share |
+| --- | --- | ---: | ---: | ---: |
+| Detached 3x3 table: insert three rows and columns, then undo | Edits + undo | 10.55 | 0 | 0% |
+| Connected 50x50 table: 100 cell replacements, fresh documents | Edits + synchronization | 109.35 | 6.07 | 5.6% |
+| Connected array: 1,000 strings in ten insertion batches | Edits + synchronization | 30.70 | 2.33 | 7.6% |
+| Concurrent array: 20 insertions per client into an initial 1,000 strings | Edits + synchronization/rebase | 129.68 | 3.89 | 3.0% |
+| Array of 10,000 strings | Summary creation + load | 49.66 | 0.58 | 1.2% |
+| Connected table, long-lived documents: 100 replacements per batch | Edits + synchronization | 87.53 | 3.40 | 3.9% |
+| Concurrent array, long-lived documents: 40 insertions per batch | Edits + synchronization/rebase | 110.95 | 1.95 | 1.8% |
+
+The percentages are estimates from instrumented runs, not exact accounting.
+Per-call timing perturbs execution and includes timing overhead.
+It does not assign all indirect effects of validation, such as garbage collection, to those calls.
+Individual phases can have higher shares: validation was 16.3% of local concurrent edits on fresh documents, but only 3.0% when synchronization and rebasing were included.
+That local-edit share fell to 5.6% in the long-lived-document run.
+
+The table workload makes 1,400 checks during local edits and 2,800 during synchronization.
+The batched insertion workload makes 80 and 160; the concurrent workload makes 320 and 640.
+Each summary and load makes 23 checks.
+Thus, these runs exercise the real validation paths rather than merely enabling an unused option.
+The detached table is the exception: it makes **zero check calls**, despite enabling the validator and compiling validators during setup.
+
+#### How much does the remaining regex overhead affect total runtime?
+
+Separate runs remove all per-call timing instrumentation and compare:
+
+1. The current validators.
+2. The isolated literal-key compiler experiment from Cause A, retaining all validation.
+3. A diagnostic bypass that skips all `Check` bodies but retains compilation and surrounding codec work.
+
+Each variant runs twice in separate processes, with the variant order reversed on the second pass.
+Values below average the two process means; all totals exclude setup.
+
+| Workload | Current, ms | Literal-key checks, ms | Reduction from literal keys | All check bodies bypassed, ms |
+| --- | ---: | ---: | ---: | ---: |
+| Table: 100 edits + synchronization, fresh documents | 116.18 | 114.61 | 1.4% | 99.90 |
+| Array: 1,000 batched inserts + synchronization | 31.50 | 31.63 | -0.4% | 28.27 |
+| Concurrent array: 40 inserts + synchronization/rebase | 134.23 | 131.08 | 2.3% | 124.62 |
+| Summary creation + load | 50.62 | 48.64 | 3.9% | 48.34 |
+| Table: 100 edits + synchronization, long-lived documents | 89.92 | 87.28 | 2.9% | 81.76 |
+| Concurrent array: 40 inserts + synchronization/rebase, long-lived documents | 112.54 | 109.80 | 2.4% | 107.97 |
+
+**Small differences are not precise causal estimates.**
+For example, the detached workload has no check calls but still varies across processes: current edits plus undo average 11.65 ms, versus 11.15 ms in the literal-key runs.
+The two long-lived concurrent literal-key runs average 107.45 and 112.15 ms, compared with 112.00 and 113.08 ms for current validators.
+We therefore conclude that the measured regex effect is small relative to total runtime, not that every application will improve by a specific percentage.
+These are comparisons within TypeBox 1.3.34 that isolate a proposed optimization, not complete application-level comparisons against 0.34.13.
+
+Bypassing every check reduces connected editing totals by roughly 4-14%, depending on the workload.
+That removes existing validation as well as any regression, and changes optimizer behavior.
+It is not a measure of the TypeBox upgrade's incremental cost.
+It also explains why the instrumented percentages should not be treated as strict upper bounds on application impact.
+
+As a further mechanism check, we captured actual schema/payload pairs and replayed them with warmed validators.
+Replacing regex checks saved about 0.15 ms across the 4,200 table checks, 0.013 ms across the 240 batched-insertion checks, and 0.061 ms across the 960 concurrent-insertion checks.
+Those replay costs were much lower than the in-place profile costs.
+Replay uses cloned payloads and repeated calls outside normal application execution, so it changes object shapes, warmup, allocation, and surrounding work.
+It must not be used to claim that validation occupies only that small fraction of an actual workload.
+
+#### Initialization remains a separate concern
+
+In the instrumented fresh-document runs, detached table setup averaged 18.52 ms, including 11.98 ms in 28 cache-miss validator builds.
+Two-client setup made 56 cache-miss builds, costing roughly 20-22 ms.
+Loading the 10,000-string summary took 35.28 ms, including 10.56 ms in 28 builds, versus only 0.26 ms checking data.
+These are warm-process measurements, not first-import or cold-browser startup measurements.
+The identity cache avoids rebuilding reused schema identities, but newly constructed schema objects still require compilation.
+The original detached CI-style operation pattern does not exercise the regex checking regression; construction and compilation are more relevant there.
+
+**Decision implication:** these workloads support reporting the fixed-key checking issue upstream without adding another local schema workaround solely for throughput.
+They do not establish a SharedTree-wide 2x regression, nor prove that every validation-enabled workload meets a performance budget.
+Initialization, compatibility differences, and any customer-specific latency budget should be assessed separately.
+The harness and raw results are retained in the investigation session, not installed as a permanent benchmark suite.
 
 ## 4. Tree-shaking support needs to ship in the package
 
@@ -487,7 +596,8 @@ In the initial measurements, constructing a tree with validation enabled built c
 
 The name-reset experiment reduced warm initialization to about 11.4 ms; adding experimental shallow copies reduced it to about 10.1 ms.
 Neither restored baseline performance.
-These startup measurements predate the working-tree schema-identity cache; its initialization benefit has not been measured here.
+These startup comparisons predate the schema-identity cache.
+The actual-operation follow-up in section 3 measures remaining compilation costs with that cache, but does not repeat this baseline startup comparison.
 
 By default, SharedTree disables validation (`FormatValidatorNoOp`), but still constructs schemas.
 Those consumers benefit from cheaper modifiers without incurring TypeBox compilation or checking.
@@ -514,5 +624,6 @@ Investigate validation-code optimizations once standalone representative workloa
 **For Fluid:** retain reduced benchmark fixtures; rerun the exact candidate release without local dependency patches; measure full consumer bundles; and run codec, persisted-format compatibility, refinement, snapshot, and coverage tests.
 Isolate each optimization before combining them, and agree on explicit performance and bundle-size budgets for any remaining regression.
 
-Our recommendation is to hold this migration until the customer-impacting issues are fixed in a published dependency or the remaining tradeoffs are explicitly accepted.
+The remaining fixed-key validation overhead alone is not a demonstrated migration blocker in the actual-operation workloads above.
+Before merging, explicitly accept the remaining initialization, compatibility, and packaging tradeoffs against agreed budgets, or address them.
 This is a proposed Fluid merge gate, not a configured pipeline gate or a request for TypeBox to adopt Fluid-specific performance guarantees.
