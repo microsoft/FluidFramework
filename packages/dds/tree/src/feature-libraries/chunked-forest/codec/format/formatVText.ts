@@ -4,10 +4,10 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxOptional } from "../../../../util/index.js";
 import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
+import { typeboxOptional } from "../../../../util/index.js";
 
 import { ShapeIndex } from "./formatGeneric.js";
 import { EncodedFieldShape, EncodedValueShape } from "./formatV1.js";

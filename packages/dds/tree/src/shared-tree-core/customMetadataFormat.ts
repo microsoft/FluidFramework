@@ -4,13 +4,14 @@
  */
 
 import * as Type from "typebox/type";
+import type { Static as TypeStatic } from "typebox";
+
 import {
-	typeboxOptional,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 	stringKeyRecord,
+	typeboxOptional,
 } from "../util/index.js";
-import type { Static as TypeStatic } from "typebox";
 
 /**
  * The persisted form of a {@link CustomMetadataTree}.

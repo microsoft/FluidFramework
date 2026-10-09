@@ -4,9 +4,9 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxOptional } from "../../util/index.js";
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
+import { typeboxOptional } from "../../util/index.js";
 import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };

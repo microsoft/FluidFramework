@@ -4,10 +4,10 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxOptional } from "../../../../util/index.js";
 import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
+import { typeboxOptional } from "../../../../util/index.js";
 
 import { shapesV1 } from "./formatV1.js";
 

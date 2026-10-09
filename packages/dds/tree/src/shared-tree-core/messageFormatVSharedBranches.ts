@@ -5,10 +5,10 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 import * as Type from "typebox/type";
-import { type JsonCompatibleReadOnly, typeboxOptional } from "../util/index.js";
 import type { TSchema } from "typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
+import { type JsonCompatibleReadOnly, typeboxOptional } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";

@@ -4,8 +4,9 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxInterface } from "../../../../util/index.js";
 import type { Static, TSchema } from "typebox";
+
+import { typeboxInterface } from "../../../../util/index.js";
 
 import type { FieldBatchFormatVersion } from "./versions.js";
 

@@ -5,15 +5,15 @@
 
 import type { TObjectOptions, Static } from "typebox";
 import * as Type from "typebox/type";
-import {
-	typeboxInterface,
-	typeboxOptional,
-	type JsonCompatibleReadOnlyObject,
-	JsonCompatibleReadOnlySchema,
-	stringKeyRecord,
-} from "../../util/index.js";
 
 import { unionOptions } from "../../codec/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
+import {
+	JsonCompatibleReadOnlySchema,
+	stringKeyRecord,
+	typeboxInterface,
+	typeboxOptional,
+} from "../../util/index.js";
 
 import {
 	FieldKindIdentifierSchema,

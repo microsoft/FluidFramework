@@ -13,20 +13,19 @@ import {
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import * as Type from "typebox/type";
-import {
-	typeboxOptional,
-	typeboxReadonly,
-	type Brand,
-	brandedNumberType,
-	type JsonCompatibleReadOnly,
-	stringKeyRecord,
-} from "../util/index.js";
 import type { Static } from "typebox";
-// eslint-disable-next-line import-x/no-internal-modules -- Supported TypeBox custom-type API.
 
 import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
+import {
+	type Brand,
+	brandedNumberType,
+	type JsonCompatibleReadOnly,
+	stringKeyRecord,
+	typeboxOptional,
+	typeboxReadonly,
+} from "../util/index.js";
 
 /**
  * Kind of failure reported across the sandbox boundary.

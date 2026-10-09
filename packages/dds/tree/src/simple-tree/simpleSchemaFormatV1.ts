@@ -12,8 +12,9 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxOptional, stringKeyRecord } from "../util/index.js";
 import type { TObjectOptions, Static } from "typebox";
+
+import { stringKeyRecord, typeboxOptional } from "../util/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 

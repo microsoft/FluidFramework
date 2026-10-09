@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+
 import {
 	DiscriminatedUnionDispatcher,
 	type DiscriminatedUnionLibrary,

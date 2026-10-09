@@ -4,10 +4,10 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxOptional, JsonCompatibleReadOnlySchema } from "../util/index.js";
 import type { Static, TSchema } from "typebox";
 
 import type { EncodedSchemaChange } from "../feature-libraries/index.js";
+import { JsonCompatibleReadOnlySchema, typeboxOptional } from "../util/index.js";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function EncodedSharedTreeInnerChange<TEncodedSchema extends TSchema>(

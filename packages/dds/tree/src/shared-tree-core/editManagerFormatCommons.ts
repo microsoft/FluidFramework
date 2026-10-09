@@ -5,13 +5,6 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 import * as Type from "typebox/type";
-import {
-	typeboxOptional,
-	type Brand,
-	brandedNumberType,
-	strictEnum,
-	type Values,
-} from "../util/index.js";
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import {
@@ -21,6 +14,13 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
+import {
+	type Brand,
+	brandedNumberType,
+	strictEnum,
+	type Values,
+	typeboxOptional,
+} from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";

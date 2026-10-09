@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import * as Type from "typebox/type";
-import { typeboxOptional, brand } from "../../../../util/index.js";
 import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
@@ -22,6 +21,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
+import { brand, typeboxOptional } from "../../../../util/index.js";
 
 export const Constant = Type.Literal(0);
 

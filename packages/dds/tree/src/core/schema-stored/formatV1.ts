@@ -4,17 +4,16 @@
  */
 
 import * as Type from "typebox/type";
-import {
-	typeboxInterface,
-	typeboxOptional,
-	type Brand,
-	brandedStringType,
-	stringKeyRecord,
-} from "../../util/index.js";
-
 import type { TObjectOptions, Static } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
+import {
+	type Brand,
+	brandedStringType,
+	stringKeyRecord,
+	typeboxInterface,
+	typeboxOptional,
+} from "../../util/index.js";
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.

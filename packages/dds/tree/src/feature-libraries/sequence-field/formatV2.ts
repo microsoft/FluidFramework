@@ -4,12 +4,11 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxInterface, typeboxOptional } from "../../util/index.js";
-
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
+import { typeboxInterface, typeboxOptional } from "../../util/index.js";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };

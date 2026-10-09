@@ -4,11 +4,10 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxInterface, typeboxOptional } from "../../util/index.js";
-
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
+import { typeboxInterface, typeboxOptional } from "../../util/index.js";
 
 import {
 	CellId,

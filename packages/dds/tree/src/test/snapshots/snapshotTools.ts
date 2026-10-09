@@ -8,10 +8,9 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import fs from "node:fs";
 import path from "node:path";
 
-import type { TSchema } from "typebox";
-
 import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
+import type { TSchema } from "typebox";
 
 import type { VersionDispatchingCodecBuilder, ICodecOptions } from "../../codec/index.js";
 import {

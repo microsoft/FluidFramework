@@ -7,11 +7,6 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import { fail } from "@fluidframework/core-utils/internal";
 import * as Type from "typebox/type";
-import {
-	type JsonCompatibleReadOnly,
-	type JsonCompatibleReadOnlySchema,
-	typeboxOptional,
-} from "../util/index.js";
 import type { Static, TSchema } from "typebox";
 
 import {
@@ -37,6 +32,9 @@ import {
 	type EncodedCustomMetadataTree as EncodedCustomMetadataTreeType,
 	encodeCustomMetadataTree,
 } from "../shared-tree-core/index.js";
+import type { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema } from "../util/index.js";
+import { typeboxOptional } from "../util/index.js";
+
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 

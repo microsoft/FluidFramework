@@ -4,15 +4,14 @@
  */
 
 import * as Type from "typebox/type";
+import type { Static, TSchema } from "typebox";
+
 import {
+	stringKeyRecord,
 	typeboxInterface,
 	typeboxOptional,
 	typeboxReadonly,
-	stringKeyRecord,
 } from "../../util/index.js";
-
-import type { Static, TSchema } from "typebox";
-
 import { schemaFormatV1 } from "../schema-stored/index.js";
 
 /**

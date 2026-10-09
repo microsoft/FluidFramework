@@ -4,16 +4,16 @@
  */
 
 import * as Type from "typebox/type";
-import {
-	typeboxOptional,
-	typeboxReadonly,
-	type JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlySchema,
-	brandedNumberType,
-} from "../../util/index.js";
 import type { TObjectOptions, Static } from "typebox";
 
 import { type ChangesetLocalId, RevisionTagSchema, schemaFormatV1 } from "../../core/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlySchema,
+	brandedNumberType,
+	typeboxOptional,
+	typeboxReadonly,
+} from "../../util/index.js";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 

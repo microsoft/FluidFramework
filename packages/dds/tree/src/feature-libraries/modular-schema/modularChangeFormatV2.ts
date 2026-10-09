@@ -4,9 +4,9 @@
  */
 
 import * as Type from "typebox/type";
-import { typeboxInterface, typeboxOptional } from "../../util/index.js";
-
 import type { TObjectOptions, Static } from "typebox";
+
+import { typeboxInterface, typeboxOptional } from "../../util/index.js";
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 
