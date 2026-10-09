@@ -6,7 +6,12 @@
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import { fail } from "@fluidframework/core-utils/internal";
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import {
+	type JsonCompatibleReadOnly,
+	type JsonCompatibleReadOnlySchema,
+	typeboxOptional,
+} from "../util/index.js";
 import type { Static, TSchema } from "typebox";
 
 import {
@@ -32,8 +37,6 @@ import {
 	type EncodedCustomMetadataTree as EncodedCustomMetadataTreeType,
 	encodeCustomMetadataTree,
 } from "../shared-tree-core/index.js";
-import type { JsonCompatibleReadOnly, JsonCompatibleReadOnlySchema } from "../util/index.js";
-
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
@@ -62,7 +65,7 @@ function createSerializedChangeSchema<TChangeSchema extends TSchema>(
 			/** Identifies the ID-compressor session required to decode the change. */
 			originatorId: SessionIdSchema,
 			/** Application-defined metadata attached to the commit. */
-			customMetadata: Type.Optional(
+			customMetadata: typeboxOptional(
 				Type.Unsafe<EncodedCustomMetadataTreeType>(EncodedCustomMetadataTree),
 			),
 		},

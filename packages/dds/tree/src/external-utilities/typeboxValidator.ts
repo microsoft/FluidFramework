@@ -4,9 +4,7 @@
  */
 
 import type { Static, TSchema } from "typebox";
-// This export is documented as supported in typebox's documentation.
-// eslint-disable-next-line import-x/no-internal-modules
-import { Compile } from "typebox/compile";
+import { Build } from "typebox/schema";
 
 import { toFormatValidator, type JsonValidator } from "../codec/index.js";
 
@@ -21,7 +19,7 @@ import { toFormatValidator, type JsonValidator } from "../codec/index.js";
  */
 const typeboxValidator: JsonValidator = {
 	compile: <Schema extends TSchema>(schema: Schema) => {
-		const compiledFormat = Compile(schema);
+		const compiledFormat = Build(schema).Evaluate();
 		return {
 			check: (data): data is Static<Schema> => compiledFormat.Check(data),
 		};

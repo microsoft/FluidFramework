@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import { typeboxInterface } from "../../../../util/index.js";
 import type { Static, TSchema } from "typebox";
 
 import type { FieldBatchFormatVersion } from "./versions.js";
@@ -53,7 +54,7 @@ export const EncodedFieldBatchGeneric = <TShapeSchema extends TSchema>(
 	// Return type is intentionally derived.
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 ) =>
-	Type.Interface(
+	typeboxInterface(
 		[
 			EncodedFieldBatchBase,
 			Type.Object({

@@ -34,7 +34,62 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
+						"*/index.js",
+					],
+				},
+			],
 			"jsdoc/require-description": "warn",
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector: "ExportAllDeclaration",
+					message:
+						"Exporting * is not permitted. You should export only named items you intend to export.",
+				},
+				"ForInStatement",
+				{
+					selector: 'ImportDeclaration[source.value="typebox"] > ImportNamespaceSpecifier',
+					message:
+						"Import the TypeBox runtime namespace from `typebox/type`; the root entrypoint defeats tree-shaking.",
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox"] > ImportDefaultSpecifier',
+					message:
+						"Import the TypeBox runtime namespace from `typebox/type`; default imports defeat tree-shaking.",
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox/type"] > ImportDefaultSpecifier',
+					message:
+						"Import the TypeBox runtime namespace from `typebox/type`; default imports defeat tree-shaking.",
+				},
+				{
+					selector:
+						'ImportDeclaration[source.value="typebox"]:not([importKind="type"]) > ImportSpecifier:not([importKind="type"])',
+					message:
+						"Import the TypeBox runtime namespace from `typebox/type`; the root entrypoint defeats tree-shaking. Type-only imports may remain on `typebox`.",
+				},
+				{
+					selector:
+						'CallExpression[callee.object.name="Type"][callee.property.name=/^(Interface|Optional|Readonly|Record)$/]',
+					message:
+						"Use the specialized helpers in `src/util/typebox.ts`; these general TypeBox builders load the type-instantiation engine.",
+				},
+			],
 			"unicorn/no-null": "off",
 		},
 	},
@@ -58,6 +113,26 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "warn",
 			// Import namespace validation is also expensive and low-value for test-only imports.
 			"import-x/namespace": "warn",
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluid*/**",
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
+						"*/index.js",
+					],
+				},
+			],
 			// Regex optimization suggestions are not important for test code paths.
 			"unicorn/better-regex": "warn",
 			// #endregion

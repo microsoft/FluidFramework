@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import { typeboxInterface, typeboxOptional } from "../../util/index.js";
+
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
@@ -24,8 +26,8 @@ const Rename = Type.Object(
 	noAdditionalProps,
 );
 
-const MarkEffect = Type.Interface(
-	[MarkEffectV2, Type.Object({ rename: Type.Optional(Rename) })],
+const MarkEffect = typeboxInterface(
+	[MarkEffectV2, Type.Object({ rename: typeboxOptional(Rename) })],
 	{},
 	unionOptions,
 );

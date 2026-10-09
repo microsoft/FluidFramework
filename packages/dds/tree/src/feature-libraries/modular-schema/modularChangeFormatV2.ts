@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import { typeboxInterface, typeboxOptional } from "../../util/index.js";
+
 import type { TObjectOptions, Static } from "typebox";
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
@@ -18,13 +20,13 @@ const EncodedNoChangeConstraint = Type.Object(
 );
 export type EncodedNoChangeConstraint = Static<typeof EncodedNoChangeConstraint>;
 
-export const EncodedModularChangesetV2 = Type.Interface(
+export const EncodedModularChangesetV2 = typeboxInterface(
 	[
 		EncodedModularChangesetV1,
 		Type.Object(
 			{
 				/** Global no change constraint that gets violated whenever the changeset is rebased */
-				noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
+				noChangeConstraint: typeboxOptional(EncodedNoChangeConstraint),
 			},
 			noAdditionalProps,
 		),

@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import {
+	typeboxInterface,
+	typeboxOptional,
+	typeboxReadonly,
+	stringKeyRecord,
+} from "../../util/index.js";
+
 import type { Static, TSchema } from "typebox";
 
 import { schemaFormatV1 } from "../schema-stored/index.js";
@@ -54,12 +61,12 @@ interface EncodedFieldMapObject<TChild> {
 	[key: string]: TChild[];
 }
 const EncodedFieldMapObject = <Schema extends TSchema>(tChild: Schema) =>
-	Type.Record(Type.String(), Type.Array(tChild, { minItems: 1 }));
+	stringKeyRecord(Type.Array(tChild, { minItems: 1 }));
 
 type EncodedNodeData = Static<typeof EncodedNodeData>;
 const EncodedNodeData = Type.Object({
-	value: Type.Optional(Type.Any()),
-	type: Type.Readonly(schemaFormatV1.TreeNodeSchemaIdentifierSchema),
+	value: typeboxOptional(Type.Any()),
+	type: typeboxReadonly(schemaFormatV1.TreeNodeSchemaIdentifierSchema),
 });
 
 /**
@@ -72,8 +79,8 @@ interface EncodedGenericFieldsNode<TChild> {
 }
 const EncodedGenericFieldsNode = <Schema extends TSchema>(tChild: Schema) =>
 	Type.Object({
-		fields: Type.Optional(EncodedFieldMapObject(tChild)),
-		globalFields: Type.Optional(EncodedFieldMapObject(tChild)),
+		fields: typeboxOptional(EncodedFieldMapObject(tChild)),
+		globalFields: typeboxOptional(EncodedFieldMapObject(tChild)),
 	});
 
 /**
@@ -84,7 +91,7 @@ interface EncodedGenericTreeNode<TChild>
 	extends EncodedGenericFieldsNode<TChild>,
 		EncodedNodeData {}
 const EncodedGenericTreeNode = <Schema extends TSchema>(tChild: Schema) =>
-	Type.Interface(
+	typeboxInterface(
 		[EncodedGenericFieldsNode(tChild), EncodedNodeData],
 		{},
 		{ additionalProperties: false },

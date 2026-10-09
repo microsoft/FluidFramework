@@ -5,12 +5,14 @@
 ### Update the TypeBox import restriction for TypeBox 1
 
 The TypeBox import restriction now applies to the `typebox` package instead of the retired `@sinclair/typebox` package.
-Both the default and named `Type` aggregates are disallowed because they defeat tree-shaking.
-Import the namespace instead:
+Default runtime imports and runtime imports from the root entry point are disallowed because they defeat tree-shaking.
+Import the runtime namespace from `typebox/type` instead:
 
 ```typescript
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 ```
+
+Type-only imports from the root `typebox` entry point remain supported.
 
 ## [14.1.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v14.1.0)
 

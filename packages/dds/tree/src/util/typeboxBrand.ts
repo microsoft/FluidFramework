@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 import type { TNumberOptions, TUnsafe } from "typebox";
 
 /**

@@ -4,7 +4,14 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import {
+	typeboxOptional,
+	type Brand,
+	brandedNumberType,
+	strictEnum,
+	type Values,
+} from "../util/index.js";
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import {
@@ -14,7 +21,6 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
@@ -65,7 +71,7 @@ const Commit = <ChangeSchema extends TSchema>(
 		? Type.Object(
 				{
 					...commitProperties(tChange),
-					customMetadata: Type.Optional(EncodedCustomMetadataTree),
+					customMetadata: typeboxOptional(EncodedCustomMetadataTree),
 				},
 				noAdditionalProps,
 			)
@@ -76,7 +82,7 @@ const SeqNumber = brandedNumberType<SeqNumber>({ multipleOf: 1 });
 
 const sequenceIdProperties = {
 	sequenceNumber: SeqNumber,
-	indexInBatch: Type.Optional(Type.Number({ multipleOf: 1, minimum: 0 })),
+	indexInBatch: typeboxOptional(Type.Number({ multipleOf: 1, minimum: 0 })),
 };
 const SequenceId = Type.Object(sequenceIdProperties);
 
@@ -99,7 +105,7 @@ export const SequencedCommit = <ChangeSchema extends TSchema>(
 				{
 					...commitProperties(tChange),
 					...sequenceIdProperties,
-					customMetadata: Type.Optional(EncodedCustomMetadataTree),
+					customMetadata: typeboxOptional(EncodedCustomMetadataTree),
 				},
 				noAdditionalProps,
 			)
@@ -152,11 +158,11 @@ export const EncodedSharedBranch = <ChangeSchema extends TSchema>(
 ) =>
 	Type.Object(
 		{
-			id: Type.Optional(Type.Number()),
-			name: Type.Optional(Type.String()),
-			session: Type.Optional(SessionIdSchema),
-			author: Type.Optional(Type.String()),
-			base: Type.Optional(RevisionTagSchema),
+			id: typeboxOptional(Type.Number()),
+			name: typeboxOptional(Type.String()),
+			session: typeboxOptional(SessionIdSchema),
+			author: typeboxOptional(Type.String()),
+			base: typeboxOptional(RevisionTagSchema),
 			trunk: Type.Array(SequencedCommit(tChange, includeCustomMetadata)),
 			peers: Type.Array(
 				Type.Tuple([SessionIdSchema, SummarySessionBranch(tChange, includeCustomMetadata)]),

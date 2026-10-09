@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 import type { Static } from "typebox";
 
 import { brand } from "../../util/index.js";

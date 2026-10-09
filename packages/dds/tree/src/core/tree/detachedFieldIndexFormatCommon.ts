@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 import type { Static, TSchema } from "typebox";
 
 import { brandedNumberType, strictEnum, type Values } from "../../util/index.js";

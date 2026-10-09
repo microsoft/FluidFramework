@@ -10,7 +10,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 
 import {
 	type Brand,

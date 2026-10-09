@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import { typeboxOptional } from "../../../../util/index.js";
 import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
@@ -52,17 +53,17 @@ export const EncodedSpecializedNodeShape = Type.Object(
 		 * is preserved — this is the stream consumption order at decode time, so encoders
 		 * must serialize per-field tokens in the resulting field order, not in this list's order.
 		 */
-		fields: Type.Optional(Type.Array(EncodedFieldShape)),
+		fields: typeboxOptional(Type.Array(EncodedFieldShape)),
 		/**
 		 * If absent, inherits the resolved base's value shape. If `null`, the resulting shape
 		 * has no value shape (explicit clear). Any other value replaces the base's.
 		 */
-		value: Type.Optional(Type.Union([EncodedValueShape, Type.Null()])),
+		value: typeboxOptional(Type.Union([EncodedValueShape, Type.Null()])),
 		/**
 		 * If absent, inherits the resolved base's extraFields shape. If `null`, the resulting
 		 * shape has no extraFields (explicit clear). Any other value replaces the base's.
 		 */
-		extraFields: Type.Optional(Type.Union([ShapeIndex, Type.Null()])),
+		extraFields: typeboxOptional(Type.Union([ShapeIndex, Type.Null()])),
 	},
 	{ additionalProperties: false },
 );
@@ -78,7 +79,7 @@ export type EncodedChunkShapeVTextExperimental = Static<
 export const EncodedChunkShapeVTextExperimental = Type.Object(
 	{
 		...shapesV2,
-		f: Type.Optional(EncodedSpecializedNodeShape),
+		f: typeboxOptional(EncodedSpecializedNodeShape),
 	},
 	unionOptions,
 );

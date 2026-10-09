@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 import type { TSchema } from "typebox";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";

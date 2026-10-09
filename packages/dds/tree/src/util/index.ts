@@ -25,6 +25,12 @@ export {
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
+	stringKeyRecord,
+	typeboxInterface,
+	typeboxOptional,
+	typeboxReadonly,
+} from "./typebox.js";
+export {
 	brandOpaque,
 	extractFromOpaque,
 	type ExtractFromOpaque,

@@ -4,7 +4,7 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 import type { TObjectOptions, TSchema } from "typebox";
 
 import { SessionIdSchema } from "../core/index.js";

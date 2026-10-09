@@ -50,9 +50,16 @@ describe("custom Fluid rules", function () {
 				'import Type from "typebox";',
 				'import { Type as TypeBox } from "typebox";',
 				'import * as TypeNamespace from "typebox";',
+				'import * as TypeSubpathNamespace from "typebox/type";',
+				'import { Object as TypeObjectFromRoot } from "typebox";',
+				'import { Object as TypeObject } from "typebox/type";',
+				'import type { Static } from "typebox";',
 				"void Type;",
 				"void TypeBox;",
 				"void TypeNamespace;",
+				"void TypeSubpathNamespace;",
+				"void TypeObjectFromRoot;",
+				"void TypeObject;",
 			].join("\n"),
 			{ filePath: fixture },
 		);
@@ -61,6 +68,6 @@ describe("custom Fluid rules", function () {
 		const violations = result.messages.filter(
 			(message) => message.ruleId === "no-restricted-syntax",
 		);
-		assert.strictEqual(violations.length, 2);
+		assert.strictEqual(violations.length, 4);
 	});
 });

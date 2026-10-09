@@ -5,7 +5,13 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import {
+	typeboxOptional,
+	IdDecodingContext,
+	brand,
+	ReferenceCountedBase,
+} from "../../../../util/index.js";
 import type { Static } from "typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
@@ -23,7 +29,7 @@ import {
 	readStreamIdentifier,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
-import { IdDecodingContext } from "../../../../util/index.js";
+
 import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -32,7 +38,7 @@ import {
 	FieldBatchFormatVersion,
 	type TreeChunk,
 } from "../../../../feature-libraries/index.js";
-import { brand, ReferenceCountedBase } from "../../../../util/index.js";
+
 import { testIdCompressor } from "../../../utils.js";
 
 const Constant = Type.Literal(0);
@@ -40,8 +46,8 @@ const StringShape = Type.String();
 
 const EncodedChunkShape = Type.Object(
 	{
-		a: Type.Optional(Constant),
-		b: Type.Optional(StringShape),
+		a: typeboxOptional(Constant),
+		b: typeboxOptional(StringShape),
 	},
 	unionOptions,
 );

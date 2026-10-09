@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import * as Type from "typebox";
+import * as Type from "typebox/type";
 import type { TUnsafe } from "typebox";
 
 /**

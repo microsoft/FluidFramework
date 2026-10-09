@@ -11,7 +11,8 @@
  * It may not include some details which impact maintenance of application enforced invariants (like persisted metadata or logic in view schema).
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import { typeboxOptional, stringKeyRecord } from "../util/index.js";
 import type { TObjectOptions, Static } from "typebox";
 
 const noAdditionalProps: TObjectOptions = { additionalProperties: false };
@@ -29,7 +30,7 @@ export const SimpleSchemaFormatVersion = {
  */
 export const SimpleAllowedTypeAttributesFormat = Type.Object(
 	{
-		isStaged: Type.Optional(Type.Boolean()),
+		isStaged: typeboxOptional(Type.Boolean()),
 	},
 	noAdditionalProps,
 );
@@ -42,10 +43,7 @@ export type SimpleAllowedTypeAttributesFormat = Static<
  * A set of allowed types in the simple schema format.
  * The keys are the type identifiers, and the values are their attributes.
  */
-export const SimpleAllowedTypesFormat = Type.Record(
-	Type.String(),
-	SimpleAllowedTypeAttributesFormat,
-);
+export const SimpleAllowedTypesFormat = stringKeyRecord(SimpleAllowedTypeAttributesFormat);
 export type SimpleAllowedTypesFormat = Static<typeof SimpleAllowedTypesFormat>;
 
 /**
@@ -130,10 +128,7 @@ export type SimpleLeafNodeSchemaFormat = Static<typeof SimpleLeafNodeSchemaForma
 /**
  * Persisted format for the field schemas of an object node in the simple schema format.
  */
-export const SimpleObjectFieldSchemasFormat = Type.Record(
-	Type.String(),
-	SimpleObjectFieldSchemaFormat,
-);
+export const SimpleObjectFieldSchemasFormat = stringKeyRecord(SimpleObjectFieldSchemaFormat);
 export type SimpleObjectFieldSchemasFormat = Static<typeof SimpleObjectFieldSchemasFormat>;
 
 /**
@@ -144,7 +139,7 @@ export const SimpleObjectNodeSchemaFormat = Type.Object(
 	{
 		kind: Type.Integer(),
 		fields: SimpleObjectFieldSchemasFormat,
-		allowUnknownOptionalFields: Type.Optional(Type.Boolean()),
+		allowUnknownOptionalFields: typeboxOptional(Type.Boolean()),
 	},
 	noAdditionalProps,
 );
@@ -156,21 +151,18 @@ export type SimpleObjectNodeSchemaFormat = Static<typeof SimpleObjectNodeSchemaF
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
 export const SimpleNodeSchemaUnionFormat = Type.Object({
-	array: Type.Optional(SimpleArrayNodeSchemaFormat),
-	map: Type.Optional(SimpleMapNodeSchemaFormat),
-	record: Type.Optional(SimpleRecordNodeSchemaFormat),
-	leaf: Type.Optional(SimpleLeafNodeSchemaFormat),
-	object: Type.Optional(SimpleObjectNodeSchemaFormat),
+	array: typeboxOptional(SimpleArrayNodeSchemaFormat),
+	map: typeboxOptional(SimpleMapNodeSchemaFormat),
+	record: typeboxOptional(SimpleRecordNodeSchemaFormat),
+	leaf: typeboxOptional(SimpleLeafNodeSchemaFormat),
+	object: typeboxOptional(SimpleObjectNodeSchemaFormat),
 });
 export type SimpleNodeSchemaUnionFormat = Static<typeof SimpleNodeSchemaUnionFormat>;
 
 /**
  * Helper type for the schema definitions map in the persisted format.
  */
-export const SimpleSchemaDefinitionsFormat = Type.Record(
-	Type.String(),
-	SimpleNodeSchemaUnionFormat,
-);
+export const SimpleSchemaDefinitionsFormat = stringKeyRecord(SimpleNodeSchemaUnionFormat);
 export type SimpleSchemaDefinitionsFormat = Static<typeof SimpleSchemaDefinitionsFormat>;
 
 /**

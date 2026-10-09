@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "typebox";
+import * as Type from "typebox/type";
+import { typeboxInterface, typeboxOptional } from "../../util/index.js";
+
 import type { TObjectOptions, Static, TSchema } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
@@ -47,36 +49,36 @@ const LineageEvent = Type.Tuple([
 	Type.Number({ multipleOf: 1, minimum: 0 }),
 ]);
 
-const HasLineage = Type.Object({ lineage: Type.Optional(Type.Array(LineageEvent)) });
+const HasLineage = Type.Object({ lineage: typeboxOptional(Type.Array(LineageEvent)) });
 
 const IdRange = Type.Tuple([ChangesetLocalIdSchema, CellCount]);
 
-const CellId = Type.Interface(
+const CellId = typeboxInterface(
 	[
 		HasLineage,
 		Type.Object({
 			atom: EncodedChangeAtomId,
-			adjacentCells: Type.Optional(Type.Array(IdRange)),
+			adjacentCells: typeboxOptional(Type.Array(IdRange)),
 		}),
 	],
 	{},
 	noAdditionalProps,
 );
 
-const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
+const HasRevisionTag = Type.Object({ revision: typeboxOptional(RevisionTagSchema) });
 
-const Insert = Type.Interface([HasMoveId, HasRevisionTag], {}, noAdditionalProps);
+const Insert = typeboxInterface([HasMoveId, HasRevisionTag], {}, noAdditionalProps);
 
-const HasMoveFields = Type.Interface(
+const HasMoveFields = typeboxInterface(
 	[
 		HasMoveId,
 		HasRevisionTag,
-		Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
+		Type.Object({ finalEndpoint: typeboxOptional(EncodedChangeAtomId) }),
 	],
 	{},
 );
 
-const MoveIn = Type.Interface([HasMoveFields], {}, noAdditionalProps);
+const MoveIn = typeboxInterface([HasMoveFields], {}, noAdditionalProps);
 
 const DetachIdOverride = Type.Object(
 	{
@@ -87,10 +89,10 @@ const DetachIdOverride = Type.Object(
 );
 
 const DetachFields = Type.Object({
-	idOverride: Type.Optional(DetachIdOverride),
+	idOverride: typeboxOptional(DetachIdOverride),
 });
 
-const Remove = Type.Interface(
+const Remove = typeboxInterface(
 	[
 		Type.Object({
 			id: ChangesetLocalIdSchema,
@@ -102,12 +104,12 @@ const Remove = Type.Interface(
 	noAdditionalProps,
 );
 
-const MoveOut = Type.Interface([HasMoveFields, DetachFields], {}, noAdditionalProps);
+const MoveOut = typeboxInterface([HasMoveFields, DetachFields], {}, noAdditionalProps);
 
 const Attach = Type.Object(
 	{
-		insert: Type.Optional(Insert),
-		moveIn: Type.Optional(MoveIn),
+		insert: typeboxOptional(Insert),
+		moveIn: typeboxOptional(MoveIn),
 	},
 	unionOptions,
 );
@@ -115,8 +117,8 @@ const Attach = Type.Object(
 const Detach = Type.Object(
 	{
 		// TODO:AB6715 rename to `remove`
-		delete: Type.Optional(Remove),
-		moveOut: Type.Optional(MoveOut),
+		delete: typeboxOptional(Remove),
+		moveOut: typeboxOptional(MoveOut),
 	},
 	unionOptions,
 );
@@ -129,12 +131,12 @@ const AttachAndDetach = Type.Object({
 const MarkEffect = Type.Object(
 	{
 		// Note: `noop` is encoded by omitting `effect` from the encoded cell mark, so is not included here.
-		insert: Type.Optional(Insert),
-		moveIn: Type.Optional(MoveIn),
+		insert: typeboxOptional(Insert),
+		moveIn: typeboxOptional(MoveIn),
 		// TODO:AB6715 rename to `remove`
-		delete: Type.Optional(Remove),
-		moveOut: Type.Optional(MoveOut),
-		attachAndDetach: Type.Optional(AttachAndDetach),
+		delete: typeboxOptional(Remove),
+		moveOut: typeboxOptional(MoveOut),
+		attachAndDetach: typeboxOptional(AttachAndDetach),
 	},
 	unionOptions,
 );
@@ -148,9 +150,9 @@ const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(
 	Type.Object(
 		{
 			// If undefined, indicates a Noop mark.
-			effect: Type.Optional(tMark),
-			cellId: Type.Optional(CellId),
-			changes: Type.Optional(tNodeChange),
+			effect: typeboxOptional(tMark),
+			cellId: typeboxOptional(CellId),
+			changes: typeboxOptional(tNodeChange),
 			count: CellCount,
 		},
 		noAdditionalProps,
