@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { Static } from "typebox";
+import { Settings } from "typebox/system";
 import * as Type from "typebox/type";
 
 import { extractJsonValidator } from "../../codec/index.js";
@@ -21,6 +22,94 @@ import {
 } from "../../util/index.js";
 
 describe("TypeBox helpers", () => {
+	for (const [name, modifier, key] of [
+		["optional", typeboxOptional, "~optional"],
+		["readonly", typeboxReadonly, "~readonly"],
+	] as const) {
+		describe(name, () => {
+			it("copies only the outer schema and preserves its metadata", () => {
+				const schema = Type.Object({
+					nested: Type.Array(Type.Object({ value: Type.String() })),
+				});
+				const modified = modifier(schema);
+
+				assert.notEqual(modified, schema);
+				assert.equal(modified.properties, schema.properties);
+				assert.equal(modified.required, schema.required);
+				assert.equal(Object.hasOwn(schema, key), false);
+				for (const property of Reflect.ownKeys(schema)) {
+					assert.deepEqual(
+						Object.getOwnPropertyDescriptor(modified, property),
+						Object.getOwnPropertyDescriptor(schema, property),
+					);
+				}
+			});
+
+			it("preserves refinement validation", () => {
+				const refined = Type.Refine(
+					Type.Object({ value: Type.String() }),
+					(value) => value.value.length > 0,
+				);
+				const schema = Type.Object({ field: modifier(refined) });
+				const validator = extractJsonValidator(FormatValidatorBasic).compile(schema);
+
+				assert.equal(validator.check({ field: { value: "text" } }), true);
+				assert.equal(validator.check({ field: { value: "" } }), false);
+				assert.equal(validator.check({ field: { value: 1 } }), false);
+			});
+
+			for (const immutableTypes of [false, true]) {
+				for (const enumerableKind of [false, true]) {
+					it(`respects immutableTypes=${immutableTypes}, enumerableKind=${enumerableKind}`, () => {
+						const settings = { ...Settings.Get() };
+						try {
+							Settings.Set({ immutableTypes, enumerableKind });
+							const schema = Type.Object({ value: Type.String() });
+							const modified = modifier(schema);
+							const repeated = modifier(modified);
+
+							assert.equal(modified.properties, schema.properties);
+							assert.equal(Object.isFrozen(modified), immutableTypes);
+							assert.equal(Object.isFrozen(repeated), immutableTypes);
+							assert.equal(Object.hasOwn(schema, key), false);
+							assert.deepEqual(Object.getOwnPropertyDescriptor(modified, key), {
+								value: true,
+								enumerable: enumerableKind,
+								writable: !immutableTypes,
+								configurable: !immutableTypes,
+							});
+							assert.deepEqual(repeated, modified);
+						} finally {
+							Settings.Set(settings);
+						}
+					});
+				}
+			}
+		});
+	}
+
+	it("composes optional and readonly modifiers in either order", () => {
+		const field = Type.Object({ value: Type.String() });
+		const optionalReadonly = typeboxOptional(typeboxReadonly(field));
+		const readonlyOptional = typeboxReadonly(typeboxOptional(field));
+		const schema = Type.Object({ field: optionalReadonly });
+		type _Modifiers = requireTrue<
+			areSafelyAssignable<Static<typeof schema>, { readonly field?: { value: string } }>
+		>;
+
+		for (const modified of [optionalReadonly, readonlyOptional]) {
+			assert.equal(modified.properties, field.properties);
+			assert.equal(Object.getOwnPropertyDescriptor(modified, "~optional")?.value, true);
+			assert.equal(Object.getOwnPropertyDescriptor(modified, "~readonly")?.value, true);
+			const validator = extractJsonValidator(FormatValidatorBasic).compile(
+				Type.Object({ field: modified }),
+			);
+			assert.equal(validator.check({}), true);
+			assert.equal(validator.check({ field: { value: "text" } }), true);
+			assert.equal(validator.check({ field: { value: 1 } }), false);
+		}
+	});
+
 	it("creates optional and readonly properties", () => {
 		const schema = Type.Object({
 			optional: typeboxOptional(Type.String()),
