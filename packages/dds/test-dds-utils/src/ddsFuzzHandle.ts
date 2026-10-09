@@ -5,8 +5,10 @@
 
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
+	encodeHandleForSerialization,
 	FluidHandleBase,
 	generateHandleContextPath,
+	type ISerializedHandle,
 } from "@fluidframework/runtime-utils/internal";
 
 import type { IPoisonedHandle } from "./fuzzSerializer.js";
@@ -72,5 +74,16 @@ export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IP
 		if (!this.attached) {
 			this.attached = true;
 		}
+	}
+
+	/**
+	 * Preserves poison metadata when the runtime serializes ops without the DDS serializer.
+	 */
+	public toJSON(): ISerializedHandle & IPoisonedHandle {
+		return {
+			...encodeHandleForSerialization(this),
+			poisoned: true,
+			creatingClientId: this.creatingClientId,
+		};
 	}
 }
