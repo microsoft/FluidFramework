@@ -24,6 +24,7 @@ import {
 	type ReactElement,
 	useEffect,
 	useId,
+	useRef,
 	useState,
 } from "react";
 
@@ -366,6 +367,7 @@ export function MenuSectionButtonHeader(props: MenuSectionButtonHeaderProps): Re
 			onClick={onClick}
 			onKeyDown={handleKeyDown}
 			aria-label={altText}
+			aria-current={isActive ? "page" : undefined}
 			tabIndex={0}
 			role="button"
 		>
@@ -530,6 +532,7 @@ export function MenuItem(props: MenuItemProps): ReactElement {
 					className={mergeClasses(styles.root, style)}
 					onClick={onClick}
 					onKeyDown={handleKeyDown}
+					aria-current={isActive ? "page" : undefined}
 					tabIndex={0}
 				>
 					{stateIcon === undefined && onRemove === undefined ? (
@@ -874,11 +877,32 @@ export function Menu(props: MenuProps): ReactElement {
 	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
+	const [navigationStatus, setNavigationStatus] = useState("");
+	const announcementTimeout = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+	useEffect(() => {
+		return (): void => {
+			clearTimeout(announcementTimeout.current);
+		};
+	}, []);
+
+	function selectMenuItem(selection: MenuSelection, label: string): void {
+		setSelection(selection);
+		clearTimeout(announcementTimeout.current);
+		setNavigationStatus("");
+		// Clear the live region before each update so repeated selections also produce an announcement.
+		announcementTimeout.current = setTimeout(() => {
+			setNavigationStatus(`${label} selected.`);
+		}, 100);
+	}
 
 	const telemetrySectionHeaderId = useId();
 
 	function onContainerClicked(containerKey: ContainerKey): void {
-		setSelection({ type: "containerMenuSelection", containerKey });
+		selectMenuItem(
+			{ type: "containerMenuSelection", containerKey },
+			`Container ${containerKey}`,
+		);
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Container" },
@@ -886,7 +910,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onTelemetryClicked(): void {
-		setSelection({ type: "telemetryMenuSelection" });
+		selectMenuItem({ type: "telemetryMenuSelection" }, "Events");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Telemetry" },
@@ -894,7 +918,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onSettingsClicked(): void {
-		setSelection({ type: "settingsMenuSelection" });
+		selectMenuItem({ type: "settingsMenuSelection" }, "Settings");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Settings" },
@@ -902,7 +926,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onHomeClicked(): void {
-		setSelection({ type: "homeMenuSelection" });
+		selectMenuItem({ type: "homeMenuSelection" }, "Home");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_Home" },
@@ -910,7 +934,7 @@ export function Menu(props: MenuProps): ReactElement {
 	}
 
 	function onOpLatencyClicked(): void {
-		setSelection({ type: "opLatencyMenuSelection" });
+		selectMenuItem({ type: "opLatencyMenuSelection" }, "Op Latency");
 		usageLogger?.sendTelemetryEvent({
 			eventName: "Navigation",
 			details: { target: "Menu_OpLatency" },
@@ -994,6 +1018,9 @@ export function Menu(props: MenuProps): ReactElement {
 	);
 
 	return (
-		<div className={styles.root}>{menuSections.length === 0 ? <Waiting /> : menuSections}</div>
+		<nav className={styles.root} aria-label="Developer tools">
+			<ScreenReaderAnnouncement message={navigationStatus} />
+			{menuSections.length === 0 ? <Waiting /> : menuSections}
+		</nav>
 	);
 }

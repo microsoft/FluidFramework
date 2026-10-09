@@ -9,9 +9,10 @@ import {
 	type DevtoolsFeatureFlags,
 	DevtoolsFeatures,
 } from "@fluidframework/devtools-core/internal";
-import { render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { type FC, useState } from "react";
+import { useFakeTimers } from "sinon";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { Menu, type MenuSelection } from "../components/index.js";
@@ -120,6 +121,146 @@ describe("Menu Accessibility Check", () => {
 		assert.equal(screen.queryByText("Telemetry"), null);
 		assert.equal(screen.queryByRole("button", { name: "Events" }), null);
 		assert.deepEqual(screen.queryAllByRole("group"), []);
+	});
+
+	for (const activation of ["click", "Enter", "Space"] as const) {
+		it(`Announces selections with ${activation} without moving focus`, () => {
+			const clock = useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+			try {
+				render(<MenuWrapper />);
+				const navigation = screen.getByRole("navigation", { name: "Developer tools" });
+				const [status] = within(navigation).getAllByRole("status");
+
+				if (activation === "click") {
+					assert.equal(status.textContent, "");
+					assert.equal(status.getAttribute("aria-live"), "polite");
+					assert.equal(status.getAttribute("aria-atomic"), "true");
+					assert.equal(
+						screen.getByRole("button", { name: "Home" }).getAttribute("aria-current"),
+						"page",
+					);
+				}
+
+				const selections = [
+					["Container1", "Container Container1 selected."],
+					["Container2", "Container Container2 selected."],
+					["Events", "Events selected."],
+					["Op Latency", "Op Latency selected."],
+					["Settings", "Settings selected."],
+					["Home", "Home selected."],
+				];
+				// Events and Home use separate keyboard handlers.
+				const selectionsToTest =
+					activation === "click"
+						? selections
+						: selections.filter(([name]) => name === "Events" || name === "Home");
+				for (const [name, message] of selectionsToTest) {
+					const item = within(navigation).getByRole("button", { name: new RegExp(name) });
+					item.focus();
+					if (activation === "click") {
+						fireEvent.click(item);
+					} else {
+						fireEvent.keyDown(item, { key: activation === "Enter" ? "Enter" : " " });
+					}
+
+					act(() => {
+						clock.tick(100);
+					});
+					assert.equal(status.textContent, message);
+					assert.deepEqual(within(navigation).getAllByRole("button", { current: "page" }), [
+						item,
+					]);
+					assert.equal(document.activeElement, item);
+				}
+			} finally {
+				clock.restore();
+			}
+		});
+	}
+
+	it("Announces repeated activation of the current item", () => {
+		const clock = useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+		try {
+			render(<MenuWrapper />);
+			const home = screen.getByRole("button", { name: "Home" });
+			const [status] = screen.getAllByRole("status");
+			home.focus();
+
+			fireEvent.click(home);
+			act(() => {
+				clock.tick(100);
+			});
+			assert.equal(status.textContent, "Home selected.");
+
+			fireEvent.click(home);
+			assert.equal(status.textContent, "");
+			act(() => {
+				clock.tick(100);
+			});
+			assert.equal(status.textContent, "Home selected.");
+			assert.equal(document.activeElement, home);
+		} finally {
+			clock.restore();
+		}
+	});
+
+	it("Keeps the status region unchanged when the menu rerenders without navigation", () => {
+		const clock = useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+		try {
+			const { rerender } = render(<MenuWrapper />);
+			const [status] = screen.getAllByRole("status");
+
+			fireEvent.click(screen.getByRole("button", { name: "Events" }));
+			act(() => {
+				clock.tick(100);
+			});
+			assert.equal(status.textContent, "Events selected.");
+
+			rerender(<MenuWrapper />);
+			assert.equal(screen.getAllByRole("status")[0], status);
+			assert.equal(status.textContent, "Events selected.");
+		} finally {
+			clock.restore();
+		}
+	});
+
+	it("Cancels an outdated announcement after a rapid selection change", () => {
+		const clock = useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+		try {
+			render(<MenuWrapper />);
+			const [status] = screen.getAllByRole("status");
+
+			fireEvent.click(screen.getByRole("button", { name: /Container1/ }));
+			act(() => {
+				clock.tick(50);
+			});
+			fireEvent.click(screen.getByRole("button", { name: "Events" }));
+			act(() => {
+				clock.tick(50);
+			});
+			assert.equal(status.textContent, "");
+
+			act(() => {
+				clock.tick(50);
+			});
+			assert.equal(status.textContent, "Events selected.");
+		} finally {
+			clock.restore();
+		}
+	});
+
+	it("Cancels a pending announcement when the menu unmounts", () => {
+		const clock = useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+		try {
+			const { unmount } = render(<MenuWrapper />);
+			fireEvent.click(screen.getByRole("button", { name: "Home" }));
+			assert.equal(clock.countTimers(), 1);
+
+			unmount();
+			assert.equal(clock.countTimers(), 0);
+		} finally {
+			clock.restore();
+		}
 	});
 
 	it("Can tab/arrow navigate through the Menu", async () => {
