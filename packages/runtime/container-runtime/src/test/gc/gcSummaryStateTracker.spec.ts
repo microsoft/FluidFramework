@@ -64,6 +64,59 @@ describe("GCSummaryStateTracker tests", () => {
 			assert(summary?.summary.type === SummaryType.Handle, "GC summary should be a handle");
 		});
 
+		// Full tracked summaries capture proposal state even though they cannot reuse handles.
+		it("adopts GC data for the acknowledged proposal instead of the most recent generation", async () => {
+			const firstState: IGarbageCollectionState = {
+				gcNodes: { "/": { outboundRoutes: ["first"] } },
+			};
+			const secondState: IGarbageCollectionState = {
+				gcNodes: { "/": { outboundRoutes: ["second"] } },
+			};
+			const first = summaryStateTracker.summarize(true, firstState, new Set(), [], true);
+			assert.equal(first?.summary.type, SummaryType.Tree);
+			summaryStateTracker.completeSummary("first", 1);
+			summaryStateTracker.summarize(true, secondState, new Set(), [], true);
+			summaryStateTracker.completeSummary("second", 2);
+			// An abandoned retry and a direct untracked summary cannot replace either submitted proposal.
+			summaryStateTracker.summarize(
+				true,
+				initialGCState,
+				initialDeletedNodes,
+				initialTombstones,
+			);
+			summaryStateTracker.clearSummary();
+			summaryStateTracker.summarize(
+				false,
+				initialGCState,
+				initialDeletedNodes,
+				initialTombstones,
+			);
+			await summaryStateTracker.refreshLatestSummary(
+				{ isSummaryTracked: false, isSummaryNewer: true },
+				"remote",
+			);
+			await summaryStateTracker.refreshLatestSummary(
+				{ isSummaryTracked: true, isSummaryNewer: true },
+				"first",
+			);
+			assert.equal(
+				summaryStateTracker.summarize(true, firstState, new Set(), [])?.summary.type,
+				SummaryType.Handle,
+			);
+			assert.equal(
+				summaryStateTracker.summarize(true, secondState, new Set(), [])?.summary.type,
+				SummaryType.Tree,
+			);
+			await summaryStateTracker.refreshLatestSummary(
+				{ isSummaryTracked: true, isSummaryNewer: true },
+				"second",
+			);
+			assert.equal(
+				summaryStateTracker.summarize(true, secondState, new Set(), [])?.summary.type,
+				SummaryType.Handle,
+			);
+		});
+
 		it("does incremental summary when only GC state changes", async () => {
 			// Summarize with the same tombstone state and deleted nodes but different GC state as in the initial.
 			// state. The GC state should be summarized as a summary handle.
@@ -198,10 +251,14 @@ describe("GCSummaryStateTracker tests", () => {
 		// this, updatedDSCountSinceLastSummary should be reset to 0.
 		summaryStateTracker.summarize(true /* trackState */, { gcNodes: {} }, new Set(), []);
 
-		await summaryStateTracker.refreshLatestSummary({
-			isSummaryTracked: true,
-			isSummaryNewer: true,
-		});
+		summaryStateTracker.completeSummary("accepted", 0);
+		await summaryStateTracker.refreshLatestSummary(
+			{
+				isSummaryTracked: true,
+				isSummaryNewer: true,
+			},
+			"accepted",
+		);
 		assert.strictEqual(
 			summaryStateTracker.updatedDSCountSinceLastSummary,
 			0,
