@@ -241,6 +241,14 @@ export class CachedConfigProvider implements IConfigProvider {
 		return this.getCacheEntry(name)?.raw;
 	}
 
+	/**
+	 * Custom JSON serialization that omits `logger`.
+	 * This avoids a circular reference back to the logger that owns this config provider.
+	 */
+	public toJSON(): unknown {
+		return { orderedBaseProviders: this.orderedBaseProviders };
+	}
+
 	private getCacheEntry(name: string): StronglyTypedValue | undefined {
 		if (!this.configCache.has(name)) {
 			for (const provider of this.orderedBaseProviders) {
