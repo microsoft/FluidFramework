@@ -671,7 +671,53 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public get branchHistory(): DefaultTreeBranchHistory {
-		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
+		if (this._branchHistory === undefined) {
+			const branch = this.branch;
+			const canRevert = (): boolean =>
+				branch === this.branch &&
+				!this.disposed &&
+				this.#transaction.size === 0 &&
+				!this.editLock.isLocked;
+			this._branchHistory = new DefaultTreeBranchHistory(
+				branch,
+				this.idCompressor,
+				(revisionString) => {
+					if (!canRevert()) {
+						return undefined;
+					}
+					const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+					if (revision === undefined) {
+						return undefined;
+					}
+					const head = this.#transaction.branch.getHead();
+					const pathResult = this.tryGetRevertPath(revision);
+					if (pathResult.type !== "success") {
+						return undefined;
+					}
+					const path = pathResult.commitsToUndo;
+					let wasUsed = false;
+					return (options) => {
+						if (wasUsed) {
+							throw new UsageError(
+								"The same `revertTo` method cannot be called more than once. Access it on the commit metadata before each call.",
+							);
+						}
+						wasUsed = true;
+						const customMetadata = this.snapshotCustomMetadata(options);
+						if (
+							!canRevert() ||
+							this.#transaction.branch.getHead() !== head ||
+							path.some((commit) => commit.wasTrimmed)
+						) {
+							throw new UsageError(
+								"The target branch has changed since `revertTo` was requested. Avoid retaining references directly to the `revertTo` property.",
+							);
+						}
+						this.revertToCommit(revisionString, path, customMetadata);
+					};
+				},
+			);
+		}
 		return this._branchHistory;
 	}
 
@@ -1065,6 +1111,7 @@ export class TreeCheckout implements ITreeCheckout {
 		codec: SerializedChangeCodec = this.serializedChangeCodec,
 		onError?: DecodeErrorHandler,
 	): void {
+		this.editLock.checkUnlocked("Applying a change");
 		const { change, customMetadata } = codec.decode(
 			serializedChange,
 			{
@@ -1181,7 +1228,7 @@ export class TreeCheckout implements ITreeCheckout {
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
 			// Like the validation described above, rejecting malformed metadata breaks the checkout rather
 			// than being recoverable. Tracked by https://github.com/microsoft/FluidFramework/issues/28085.
-			customMetadata: snapshotCustomMetadata(params?.customMetadata),
+			customMetadata: this.snapshotCustomMetadata(params),
 		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
@@ -1305,6 +1352,27 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	/**
+	 * Reads and snapshots metadata under the edit lock, since getters and serialization hooks can run application code.
+	 */
+	private snapshotCustomMetadata(
+		options: { readonly customMetadata?: JsonCompatibleReadOnlyObject } | undefined,
+	): JsonCompatibleReadOnlyObject | undefined {
+		const editLock = this.editLock;
+		const wasLocked = editLock.isLocked;
+		if (!wasLocked) {
+			editLock.lock("custom metadata evaluation");
+		}
+		try {
+			return snapshotCustomMetadata(options?.customMetadata);
+		} finally {
+			// Preserve an outer lock, including its original error reason.
+			if (!wasLocked) {
+				editLock.unlock();
+			}
+		}
+	}
+
+	/**
 	 * Creates a {@link RevertibleAlpha} object that can undo a specific change in the tree's history.
 	 * Revision must exist in the given {@link TreeCheckout}'s branch.
 	 *
@@ -1345,7 +1413,7 @@ export class TreeCheckout implements ITreeCheckout {
 					revision,
 					kind,
 					labelTree,
-					snapshotCustomMetadata(options.customMetadata),
+					checkout.snapshotCustomMetadata(options),
 				);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
@@ -1510,6 +1578,7 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChangeProcessingContext
 		>,
 	): void {
+		this.editLock.checkUnlocked("Switching branches");
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
@@ -1560,6 +1629,15 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {
+		const customMetadata = this.snapshotCustomMetadata(options);
+		this.revertToCommit(revisionString, undefined, customMetadata);
+	}
+
+	private revertToCommit(
+		revisionString: string,
+		path: GraphCommit<SharedTreeChange>[] | undefined,
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
+	): void {
 		this.checkNotDisposed(
 			"The branch has already been disposed and prior revisions cannot be reverted to.",
 		);
@@ -1567,38 +1645,24 @@ export class TreeCheckout implements ITreeCheckout {
 		if (this.#transaction.size > 0) {
 			throw new UsageError("Reverting to a revision is not supported during transactions.");
 		}
-		const customMetadata = snapshotCustomMetadata(options?.customMetadata);
 		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
 		}
-		// Populated with the commits that came after the target commit, from oldest to newest.
-		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
-		const targetCommit = findAncestor(
-			[this.#transaction.activeBranch.getHead(), commitsToUndo],
-			(commit) => {
-				if (commit.revision === revision) {
-					return true;
-				}
-				if (hasSchemaChange(commit.change)) {
-					assert(
-						commit.revision !== "root",
-						0xd4f /* Unexpected schema change in root commit */,
-					);
-					const schemaRevision = this.idCompressor.decompress(commit.revision);
-					throw new UsageError(
-						`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${schemaRevision}.`,
-					);
-				}
-				return false;
-			},
-		);
-		if (targetCommit === undefined) {
-			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		let commitsToUndo = path;
+		if (commitsToUndo === undefined) {
+			const pathResult = this.tryGetRevertPath(revision);
+			if (pathResult.type === "schemaChange") {
+				throw new UsageError(
+					`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${pathResult.revision}.`,
+				);
+			} else if (pathResult.type === "targetNotFound") {
+				throw new UsageError(`No commit found with revision: ${revisionString}`);
+			}
+			commitsToUndo = pathResult.commitsToUndo;
 		}
 		if (!hasSome(commitsToUndo)) {
-			// The target commit is already the head of the branch, so there is nothing to revert.
-			return;
+			return; // The target commit is already the head of the branch, so there is nothing to revert.
 		}
 		const revisionForInvert = this.mintRevisionTag();
 		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
@@ -1612,6 +1676,42 @@ export class TreeCheckout implements ITreeCheckout {
 			CommitKind.Default,
 			toMetadataTree(customMetadata),
 		);
+	}
+
+	/**
+	 * Returns a result containing the commits after the target commit, from oldest to newest.
+	 * If a schema change is encountered before reaching the target commit, the result identifies that commit.
+	 * Otherwise, the result indicates that the target commit was not found.
+	 */
+	private tryGetRevertPath(
+		revision: RevisionTag,
+	):
+		| { readonly type: "success"; readonly commitsToUndo: GraphCommit<SharedTreeChange>[] }
+		| { readonly type: "schemaChange"; readonly revision: StableId }
+		| { readonly type: "targetNotFound" } {
+		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
+		let schemaChangeRevision: StableId | undefined;
+		if (
+			findAncestor([this.#transaction.branch.getHead(), commitsToUndo], (commit) => {
+				if (commit.revision === revision) {
+					return true;
+				}
+				if (hasSchemaChange(commit.change)) {
+					assert(
+						commit.revision !== "root",
+						0xd4f /* Unexpected schema change in root commit */,
+					);
+					schemaChangeRevision = this.idCompressor.decompress(commit.revision);
+					return true;
+				}
+				return false;
+			}) === undefined
+		) {
+			return { type: "targetNotFound" };
+		}
+		return schemaChangeRevision === undefined
+			? { type: "success", commitsToUndo }
+			: { type: "schemaChange", revision: schemaChangeRevision };
 	}
 
 	private rebase(view: UntypedTreeView): void {
@@ -1709,6 +1809,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void {
 		this.checkNotDisposed();
+		this.editLock.checkUnlocked("Updating the schema");
 		if (allowNonSupersetSchema !== true) {
 			assert(
 				allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema.clone(), newSchema),
@@ -2105,6 +2206,10 @@ class EditLock {
 	private status:
 		| { readonly isLocked: false }
 		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
+
+	public get isLocked(): boolean {
+		return this.status.isLocked;
+	}
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
