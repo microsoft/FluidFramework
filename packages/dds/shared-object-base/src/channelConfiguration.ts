@@ -23,6 +23,9 @@ import {
  * a channel might expose a setting dictating how much history should be retained. It's desirable for that
  * setting to be consistent across multiple collaborators on the document, as flip-flopping the setting could
  * lead to apparent data loss from the user perspective.
+ *
+ * As this data gets persisted, DDS authors should consider including versioning information to handle changes in the configuration schema gracefully.
+ * {@link ChannelConfigurationDefinition.validateTransition} may be used to fail fast on unexpect configurations.
  * @internal
  */
 export type ChannelConfiguration = Readonly<Record<string, ReadonlyJsonTypeWith<never>>>;
@@ -84,6 +87,11 @@ export interface ChannelConfigurationDefinition<TConfig extends ChannelConfigura
 	 *
 	 * @param previous - The current configuration, or `undefined` during creation and loading.
 	 * @param next - The unvalidated configuration. On success, this function asserts that it satisfies `TConfig`.
+	 *
+	 * @remarks
+	 * DDS authors should consider validation they may want to perform for "unknown" configuration properties.
+	 * This can help prevent unexpected behavior when new configuration options are introduced and clients running
+	 * older code collaborate with clients running newer code.
 	 */
 	readonly validateTransition: (
 		previous: TConfig | undefined,
