@@ -562,14 +562,20 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		);
 	}
 
-	const calculatedStorageName =
-		initialUpload && storageName
-			? storageName
-			: summaryAccessContext?.isEphemeralContainer === true
-			? summaryAccessContext.storageName
-			: summaryAccessContext?.storageName ??
-			  (await storageNameRetriever?.get(tenantId, documentId)) ??
-			  customData?.storageName;
+	let calculatedStorageName: string | undefined;
+	if (initialUpload && storageName) {
+		calculatedStorageName = storageName;
+	} else if (summaryAccessContext?.isEphemeralContainer === true) {
+		// FRS EC summaries use RedisFS, selected by the ephemeral flag. Azure Blob storageName
+		// applies only to durable containers. Calling the retriever for a local EC hit would
+		// reintroduce the Alfred/Riddler lookup that the summary access fast path avoids.
+		calculatedStorageName = undefined;
+	} else {
+		calculatedStorageName =
+			summaryAccessContext?.storageName ??
+			(await storageNameRetriever?.get(tenantId, documentId)) ??
+			customData?.storageName;
+	}
 	return new RestGitService(
 		details.storage,
 		writeToExternalStorage,

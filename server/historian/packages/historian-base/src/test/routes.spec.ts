@@ -1454,7 +1454,7 @@ describe("summary ownership routes", () => {
 		);
 	});
 
-	it("serves repeated EC latest and SHA GETs from local access without Alfred", async () => {
+	it("serves repeated local EC GETs without durable storage lookup", async () => {
 		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false, true));
 		const createTime = Date.now();
 		await cache.activateSummaryAccessIfNotDeleted(
@@ -1463,7 +1463,13 @@ describe("summary ownership routes", () => {
 			createTime,
 			createTime + 24 * 60 * 60 * 1000,
 		);
+		const tenant = await defaultTenantService.getTenant(tenantId, accessToken);
+		sandbox.stub(defaultTenantService, "getTenant").resolves({
+			...tenant,
+			customData: { storageName: "durable-custom-data-storage" },
+		});
 		const readDocument = sandbox.spy(documentManager, "readDocument");
+		const info = sandbox.spy(Lumberjack, "info");
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
 			trees: [],
@@ -1480,10 +1486,22 @@ describe("summary ownership routes", () => {
 			.expect(200);
 
 		sinon.assert.notCalled(readDocument);
+		sinon.assert.notCalled(storageNameRetrieverGet);
 		sinon.assert.calledTwice(getSummary);
+		const creationEvents = info
+			.getCalls()
+			.filter(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.strictEqual(creationEvents.length, 2);
+		for (const event of creationEvents) {
+			assert.doesNotMatch(event.args[0], /Storage-Name|durable-custom-data-storage/);
+		}
 	});
 
-	it("uses Alfred when document IDs are not guaranteed to be server generated", async () => {
+	it("uses Alfred authorization without durable storage routing for an EC", async () => {
 		superTest = createSummaryOwnershipSuperTest(createTestProvider(false, false));
 		const createTime = Date.now();
 		await cache.activateSummaryAccessIfNotDeleted(
@@ -1497,6 +1515,7 @@ describe("summary ownership routes", () => {
 			createTime,
 			isEphemeralContainer: true,
 		});
+		const info = sandbox.spy(Lumberjack, "info");
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
 			trees: [],
@@ -1510,6 +1529,15 @@ describe("summary ownership routes", () => {
 
 		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 		sinon.assert.calledOnce(getSummary);
+		const creationEvent = info
+			.getCalls()
+			.find(
+				(call) =>
+					typeof call.args[0] === "string" &&
+					call.args[0].startsWith("Created RestGitService:"),
+			);
+		assert.ok(creationEvent);
+		assert.doesNotMatch(creationEvent.args[0], /Storage-Name/);
 	});
 
 	it("denies deleted EC access before serving a cached latest summary", async () => {
@@ -1556,10 +1584,10 @@ describe("summary ownership routes", () => {
 		sinon.assert.calledOnce(getSummary);
 	});
 
-	it("uses trusted storage-name fallback when the Alfred DC has no storage name", async () => {
+	it("normalizes an Alfred storageName null before trusted fallback", async () => {
 		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
 			...activeDocument,
-			storageName: undefined,
+			storageName: null,
 		});
 		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
 			id: sha,
