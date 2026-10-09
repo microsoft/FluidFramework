@@ -350,7 +350,10 @@ export {
 	type CodecName,
 	type FormatVersion,
 } from "./codec/index.js";
-export { FormatValidatorBasic } from "./external-utilities/index.js";
+export {
+	FormatValidatorBasic,
+	FormatValidatorInterpreted,
+} from "./external-utilities/index.js";
 
 export type {
 	// Type Testing

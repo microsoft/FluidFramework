@@ -4,3 +4,4 @@
  */
 
 export { FormatValidatorBasic } from "./typeboxValidator.js";
+export { FormatValidatorInterpreted } from "./typeboxInterpreterValidator.js";

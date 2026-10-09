@@ -19,7 +19,7 @@ import { TypeSystem } from "@sinclair/typebox/system";
 
 import { extractJsonValidator, unionOptions } from "../codec/index.js";
 import type { RevisionTag } from "../core/index.js";
-import { FormatValidatorBasic } from "../external-utilities/index.js";
+import { FormatValidatorInterpreted } from "../external-utilities/index.js";
 import { type Brand, brandedNumberType, type JsonCompatibleReadOnly } from "../util/index.js";
 
 /**
@@ -308,7 +308,7 @@ const TreePayloadVocabulary = Type.Recursive((Self) =>
  * It does not inherit the Host SharedTree's configured validator because that validator can be a no-op
  * and is not configured to enforce the sandbox protocol boundary.
  */
-export const sandboxFormatValidator = FormatValidatorBasic;
+export const sandboxFormatValidator = FormatValidatorInterpreted;
 
 /**
  * The sandbox always validates protocol data, including handle and blob messages.
