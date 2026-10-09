@@ -145,7 +145,7 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
 }
 
 /**
- * Utility function to add extra context to debug assertion messages.
+ * Utility function to add extra context to {@link debugAssert | debug assertion} messages.
  * @param prefixString - The prefix to add to the debug assertion message. Prepended to the failure description with an additional `": "` delimiter.
  * @param predicateOutput - The output of the predicate function: either `true` or an object describing the failure.
  * @returns `true` when `predicateOutput` is `true`; otherwise, the failure description with the added prefix.
