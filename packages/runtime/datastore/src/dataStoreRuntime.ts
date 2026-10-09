@@ -18,7 +18,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
-	debugAssert,
 	Deferred,
 	LazyPromise,
 	unreachableCase,
@@ -60,7 +59,6 @@ import {
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 	notifiesReadOnlyState,
-	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
 	type OldestSupportedClientVersion,
 	currentSummarizeStepPrefix,
@@ -118,7 +116,6 @@ type PickRequired<T extends Record<never, unknown>, K extends keyof T> = Omit<T,
 	Required<Pick<T, K>>;
 
 interface IFluidDataStoreContextFeaturesToTypes {
-	[encodeHandlesInContainerRuntime]: IFluidDataStoreContext; // No difference in typing with this feature
 	[notifiesReadOnlyState]: PickRequired<IFluidDataStoreContext, "isReadOnly">;
 }
 
@@ -370,15 +367,6 @@ export class FluidDataStoreRuntime
 	public readonly ILayerCompatDetails?: unknown = dataStoreCompatDetailsForRuntime;
 
 	/**
-	 * See IFluidDataStoreRuntimeInternalConfig.submitMessagesWithoutEncodingHandles
-	 *
-	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
-	 * and we keep this property as private, but consumers may optimistically cast
-	 * to the internal interface to access this property.
-	 */
-	private readonly submitMessagesWithoutEncodingHandles: boolean;
-
-	/**
 	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 *
 	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
@@ -441,13 +429,6 @@ export class FluidDataStoreRuntime
 		}
 
 		this.policies = { ...defaultPolicies, ...policies };
-
-		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
-			dataStoreContext,
-			encodeHandlesInContainerRuntime,
-		);
-		// We read this property here to avoid a compiler error (unused private member)
-		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
