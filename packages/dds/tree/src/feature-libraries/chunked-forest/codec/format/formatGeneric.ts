@@ -13,10 +13,7 @@ import type { FieldBatchFormatVersion } from "./versions.js";
 /**
  * Identifier OR Index of an identifier in the identifier list.
  */
-export const IdentifierOrIndex = Type.Union([
-	Type.String(),
-	Type.Number({ multipleOf: 1, minimum: 0 }),
-]);
+export const IdentifierOrIndex = Type.Union([Type.String(), Type.Integer({ minimum: 0 })]);
 export type IdentifierOrIndex = Static<typeof IdentifierOrIndex>;
 
 /**
@@ -24,10 +21,10 @@ export type IdentifierOrIndex = Static<typeof IdentifierOrIndex>;
  *
  * Shapes use a dictionary encoding where they are referenced by their index in a shape array.
  */
-export const ShapeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
+export const ShapeIndex = Type.Integer({ minimum: 0 });
 export type ShapeIndex = Static<typeof ShapeIndex>;
 
-export const Count = Type.Number({ multipleOf: 1, minimum: 0 });
+export const Count = Type.Integer({ minimum: 0 });
 
 const EncodedFieldBatchBase = Type.Object(
 	{

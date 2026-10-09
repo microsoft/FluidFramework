@@ -40,13 +40,11 @@
                       "additionalItems": false,
                       "items": [
                         {
-                          "type": "number",
-                          "multipleOf": 1
+                          "type": "integer"
                         },
                         {
-                          "type": "number",
-                          "minimum": -1,
-                          "multipleOf": 1
+                          "type": "integer",
+                          "minimum": -1
                         }
                       ],
                       "minItems": 2
@@ -71,13 +69,11 @@
                     ]
                   },
                   {
-                    "type": "number",
-                    "multipleOf": 1
+                    "type": "integer"
                   },
                   {
-                    "type": "number",
-                    "minimum": -1,
-                    "multipleOf": 1
+                    "type": "integer",
+                    "minimum": -1
                   }
                 ],
                 "minItems": 3
@@ -86,9 +82,8 @@
           }
         },
         "maxId": {
-          "type": "number",
-          "minimum": -1,
-          "multipleOf": 1
+          "type": "integer",
+          "minimum": -1
         }
       },
       "additionalProperties": false
@@ -142,13 +137,11 @@
                       "additionalItems": false,
                       "items": [
                         {
-                          "type": "number",
-                          "multipleOf": 1
+                          "type": "integer"
                         },
                         {
-                          "type": "number",
-                          "minimum": -1,
-                          "multipleOf": 1
+                          "type": "integer",
+                          "minimum": -1
                         }
                       ],
                       "minItems": 2
@@ -180,13 +173,11 @@
                     ]
                   },
                   {
-                    "type": "number",
-                    "multipleOf": 1
+                    "type": "integer"
                   },
                   {
-                    "type": "number",
-                    "minimum": -1,
-                    "multipleOf": 1
+                    "type": "integer",
+                    "minimum": -1
                   }
                 ],
                 "minItems": 3
@@ -195,9 +186,8 @@
           }
         },
         "maxId": {
-          "type": "number",
-          "minimum": -1,
-          "multipleOf": 1
+          "type": "integer",
+          "minimum": -1
         }
       },
       "additionalProperties": false

@@ -16,7 +16,7 @@ import {
 } from "../core/index.js";
 import {
 	type Brand,
-	brandedNumberType,
+	brandedIntegerType,
 	strictEnum,
 	type Values,
 	typeboxOptional,
@@ -78,11 +78,11 @@ const Commit = <ChangeSchema extends TSchema>(
 		: Type.Object(commitProperties(tChange), noAdditionalProps);
 
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
-const SeqNumber = brandedNumberType<SeqNumber>({ multipleOf: 1 });
+const SeqNumber = brandedIntegerType<SeqNumber>();
 
 const sequenceIdProperties = {
 	sequenceNumber: SeqNumber,
-	indexInBatch: typeboxOptional(Type.Number({ multipleOf: 1, minimum: 0 })),
+	indexInBatch: typeboxOptional(Type.Integer({ minimum: 0 })),
 };
 const SequenceId = Type.Object(sequenceIdProperties);
 

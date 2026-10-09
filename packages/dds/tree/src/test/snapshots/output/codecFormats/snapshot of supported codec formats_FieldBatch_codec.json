@@ -34,8 +34,7 @@
             "type": "object",
             "properties": {
               "a": {
-                "type": "number",
-                "multipleOf": 1,
+                "type": "integer",
                 "minimum": 0
               },
               "b": {
@@ -46,13 +45,11 @@
                 ],
                 "properties": {
                   "length": {
-                    "type": "number",
-                    "multipleOf": 1,
+                    "type": "integer",
                     "minimum": 0
                   },
                   "shape": {
-                    "type": "number",
-                    "multipleOf": 1,
+                    "type": "integer",
                     "minimum": 0
                   }
                 },
@@ -67,8 +64,7 @@
                         "type": "string"
                       },
                       {
-                        "type": "number",
-                        "multipleOf": 1,
+                        "type": "integer",
                         "minimum": 0
                       }
                     ]
@@ -103,15 +99,13 @@
                               "type": "string"
                             },
                             {
-                              "type": "number",
-                              "multipleOf": 1,
+                              "type": "integer",
                               "minimum": 0
                             }
                           ]
                         },
                         {
-                          "type": "number",
-                          "multipleOf": 1,
+                          "type": "integer",
                           "minimum": 0
                         }
                       ],
@@ -119,8 +113,7 @@
                     }
                   },
                   "extraFields": {
-                    "type": "number",
-                    "multipleOf": 1,
+                    "type": "integer",
                     "minimum": 0
                   }
                 },
@@ -178,8 +171,7 @@
             "type": "object",
             "properties": {
               "a": {
-                "type": "number",
-                "multipleOf": 1,
+                "type": "integer",
                 "minimum": 0
               },
               "b": {
@@ -190,13 +182,11 @@
                 ],
                 "properties": {
                   "length": {
-                    "type": "number",
-                    "multipleOf": 1,
+                    "type": "integer",
                     "minimum": 0
                   },
                   "shape": {
-                    "type": "number",
-                    "multipleOf": 1,
+                    "type": "integer",
                     "minimum": 0
                   }
                 },
@@ -211,8 +201,7 @@
                         "type": "string"
                       },
                       {
-                        "type": "number",
-                        "multipleOf": 1,
+                        "type": "integer",
                         "minimum": 0
                       }
                     ]
@@ -247,15 +236,13 @@
                               "type": "string"
                             },
                             {
-                              "type": "number",
-                              "multipleOf": 1,
+                              "type": "integer",
                               "minimum": 0
                             }
                           ]
                         },
                         {
-                          "type": "number",
-                          "multipleOf": 1,
+                          "type": "integer",
                           "minimum": 0
                         }
                       ],
@@ -263,8 +250,7 @@
                     }
                   },
                   "extraFields": {
-                    "type": "number",
-                    "multipleOf": 1,
+                    "type": "integer",
                     "minimum": 0
                   }
                 },

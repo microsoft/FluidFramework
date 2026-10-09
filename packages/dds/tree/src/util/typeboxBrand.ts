@@ -30,3 +30,13 @@ export function brandedNumberType<T extends number>(
 	// See comments on `brandedStringType`.
 	return Type.Number(options) as unknown as TUnsafe<T>;
 }
+
+/**
+ * Creates a TypeBox integer schema for a branded number type.
+ * Like {@link brandedNumberType}, this validates the numeric constraints, not the brand's origin.
+ */
+export function brandedIntegerType<T extends number>(
+	options?: TNumberOptions | undefined,
+): TUnsafe<T> {
+	return Type.Unsafe<T>(Type.Integer(options));
+}

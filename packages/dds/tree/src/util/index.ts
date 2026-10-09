@@ -23,7 +23,7 @@ export {
 	strictEnum,
 	unbrand,
 } from "./brand.js";
-export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
+export { brandedIntegerType, brandedNumberType, brandedStringType } from "./typeboxBrand.js";
 export {
 	stringKeyRecord,
 	typeboxInterface,

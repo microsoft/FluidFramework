@@ -15,11 +15,12 @@ We would prefer fixes in TypeBox's public APIs and published package over mainta
 | --- | --- | --- |
 | [Optional/readonly modifiers deep-copy nested schemas](#1-optional-and-readonly-modifiers-deep-copy-nested-schemas) | Source inspection and identity reproduction; shallow copies greatly reduce our schema-construction cost | Offer an efficient shallow-copy path with documented sharing semantics |
 | [Generated names change between identical compilations](#2-identical-compilations-generate-different-source) | Source reproduction; resetting names reduces repeated compilation from 15.4 to 7.9 ms | Make generated names local to each compilation |
-| [Warm validation is slower](#3-warm-validation-is-slower) | About 1.3-4.0x the previous cost on four representative payloads | Investigate generated-code fast paths; individual causes are not yet isolated |
+| [Warm validation is slower](#3-warm-validation-is-slower) | Follow-up isolates regex key checks and general numeric checks; schema-only experiments restore baseline speed or better on four fixtures | Optimize fixed-key objects upstream; use integer declarations for integer-only data; evaluate a local `propertyNames` alternative |
 | [Tree-shaking metadata improvement](#4-tree-shaking-support-needs-to-ship-in-the-package) | A now-removed local patch saved 389 gzip bytes without validation and 62 with validation | Consider appropriate side-effect metadata upstream; measured savings do not justify a local patch or a migration blocker |
 | [Immutable mode leaves nested schema containers mutable](#5-immutabletypes-does-not-freeze-the-complete-schema-graph) | Direct freezing and mutation reproduction | Clarify the contract; consider graph immutability if this mode is intended to support safe sharing |
 
-**Scope:** These are performance, packaging, and API-contract concerns, not confirmed validation-correctness bugs.
+**Scope:** These are performance, packaging, and API-contract concerns.
+Follow-up probes also found acceptance differences from 0.34.13, including near-integer numbers, sparse tuples, and non-JSON record inputs; see section 3.
 The immutable-mode observation is a limitation relevant to sharing, not a demonstrated regression from 0.34.13.
 All numerical results below are local measurements, not application-wide performance guarantees.
 
@@ -141,42 +142,168 @@ Even after resetting names, the remaining 7.9 ms versus 3.7 ms warrants profilin
 
 ## 3. Warm validation is slower
 
-### Measurements
+### Follow-up measurements
 
-These are times per validation of representative **valid** encoded payloads, without coverage:
+**Most of the measured regression can be avoided without relaxing validation.**
+Two causes stand out: regular expressions for fixed property names, and general `multipleOf` checks for integer-only data.
+Our local builder helpers are not responsible for the generated validation overhead in these fixtures.
 
-| Payload | 0.34.13 | 1.3.34 | Cost ratio |
+The follow-up used actual schemas from the baseline and current Tree builds, with explicitly constructed payloads:
+
+- Sequence: 100 insertion marks, each containing `count` and `effect.insert.id`, using the version 3 changeset schema.
+- Detached index: 100 three-element revision entries, using the version 2 index schema.
+- Stored schema: 100 object-node definitions, each containing one field, using the version 1 schema-index format.
+- Recursive tree: a parent with 100 leaf children, each containing `type` and `value`.
+
+Times are **microseconds per validation**, excluding construction and compilation.
+The last column combines two experimental schema changes described below, with no TypeBox compiler patch.
+
+| Valid payload | 0.34.13 | Current 1.3.34 | Ratio | `propertyNames` + integer declarations |
+| --- | ---: | ---: | ---: | ---: |
+| Sequence | 8.98 | 17.29 | 1.93x | 6.45 |
+| Detached index | 1.26 | 2.40 | 1.90x | 1.05 |
+| Stored schema | 27.12 | 28.89 | 1.07x | 25.49 |
+| Recursive tree | 3.00 | 6.25 | 2.08x | 2.02 |
+
+Invalid fixtures fail in the final item: a zero count, fractional root ID, non-string field kind, or non-string node type, respectively.
+
+| Late-failing invalid payload | 0.34.13 | Current 1.3.34 | Combined schema changes |
 | --- | ---: | ---: | ---: |
-| Sequence change: 100 edit records | 8.7 microseconds | 25.2 microseconds | 2.9x |
-| Detached-content index: 100 revision entries | 0.39 microseconds | 1.55 microseconds | 4.0x |
-| Stored schema: 100 node definitions | 32.6 microseconds | 41.0 microseconds | 1.3x |
-| Recursive tree: 100 children | 2.7 microseconds | 6.1 microseconds | 2.3x |
+| Sequence | 8.94 | 17.46 | 6.46 |
+| Detached index | 1.26 | 2.50 | 1.08 |
+| Stored schema | 27.84 | 29.18 | 25.64 |
+| Recursive tree | 3.07 | 6.30 | 2.06 |
 
-Late-failing invalid payloads also ran more slowly.
-These ratios apply to the validator, not the complete application operation.
-We have not yet reduced these workloads to standalone upstream benchmarks.
+These replace the earlier 1.3-4.0x timing examples for this section.
+The original temporary fixtures were removed; the follow-up uses new, explicit payloads, so differences between the two investigations must not be attributed to the cache or helper changes.
+Payload shape matters, and these are validator costs, not application-wide slowdown factors.
 
-The validators reported `IsAccelerated() === true`; they were not using interpreted fallback.
-The measured schemas did not require unevaluated-property tracking.
-The higher-level `typebox/compile` validator uses the same `Build`/`Evaluate` implementation, so switching to it does not bypass the relevant code generation.
+### Cause A: regex checks for known property names
 
-### Optimization candidates, not established individual causes
+For closed objects with optional fields, 1.3.34's `BuildAdditionalPropertiesStandard` in `build/schema/engine/additionalProperties.mjs` generates a regular expression from the declared keys and tests each own property name.
+The old compiler used literal-key membership checks.
+Both enumerate non-enumerable own string properties with `Object.getOwnPropertyNames`; the enumeration API is not new overhead in this comparison.
 
-Inspection of the generated source found:
+An isolated compiler experiment replaced only the generated regex test with a literal-array `includes` check when there were no pattern properties:
 
-| Area | Observed extra work | Suggested investigation |
+| Valid payload | Current | Literal-key compiler experiment |
+| --- | ---: | ---: |
+| Sequence | 17.29 | 8.91 |
+| Detached index | 2.40 | 2.41 |
+| Stored schema | 28.89 | 26.45 |
+| Recursive tree | 6.25 | 3.07 |
+
+This accounts for nearly all the sequence and recursive-tree regression in these fixtures.
+The experiment preserves key enumeration and does not permit additional keys.
+General regex support is useful for `patternProperties`, but these closed objects do not need it.
+An upstream specialized literal-key path is preferable to a consumer compiler patch.
+
+**Schema-only alternative:** replace `additionalProperties: false` with a `propertyNames` enum for an object whose permitted keys are exactly its declared properties:
+
+```javascript
+import * as Type from "typebox/type";
+
+const properties = {
+  id: Type.Integer(),
+  revision: Type.Optional(Type.String()),
+};
+const schema = Type.Object(properties, {
+  propertyNames: { enum: Object.keys(properties) },
+});
+```
+
+The enum generates direct equality comparisons rather than regex calls.
+In isolation, this reduced sequence validation to 7.18 microseconds and recursive validation to 2.12 microseconds.
+It retains the prohibition on extra keys; simply dropping `additionalProperties: false` without the enum would not.
+
+The experiment was restricted to closed objects with optional properties, no pattern properties, no existing `propertyNames`, and no unevaluated-property tracking.
+It is not a proposed general schema-rewriting pass.
+Diagnostic paths change, and annotation interactions need review before using this technique more broadly.
+Prefer an upstream fixed-key optimization if adding another Fluid schema workaround is not worthwhile.
+
+### Cause B: integer declarations take the general multiple-of path
+
+Several Fluid schemas use `Type.Number({ multipleOf: 1 })` for counts and identifiers.
+In 1.3.34, this generates a finite-number check plus a call to `Guard.IsMultipleOf`.
+`Type.Integer()` generates `Number.isInteger` instead.
+Preserving existing bounds while changing only these integer constraints reduced detached-index validation from 2.40 to 1.09 microseconds.
+It had a smaller effect on sequence validation, from 17.29 to 16.32 microseconds.
+
+This is also a semantic issue, not just a faster spelling:
+
+| Constraint and input | 0.34.13 | 1.3.34 |
 | --- | --- | --- |
-| Fixed tuples | Array iteration and per-item length guards instead of an exact-length check and direct checks | Generate a specialized fixed-tuple path where equivalent |
-| Required properties | Explicit presence checks in addition to value checks | Omit presence checks only when the value schema necessarily rejects absence |
-| Additional properties | Regular-expression checks instead of the old property-name checks | Benchmark small fixed-key objects before selecting a strategy |
-| Numeric constraints | More general helpers instead of some direct arithmetic checks | Specialize common constraints only where numeric semantics are preserved |
+| `multipleOf: 0.1`, value `0.3` | Reject | Accept |
+| `multipleOf: 1`, value `1.00000000001` | Reject | Accept |
+| `multipleOf: 1`, value `0.00000000001` | Reject | Accept |
+| `integer`, value `1.00000000001` | Reject | Reject |
 
-Resetting generated names and adding experimental shallow copies did not materially improve the measured warm validation throughput.
-Construction and compilation fixes should not be assumed to resolve this issue.
+The new helper uses a tolerance of `1e-10`.
+It handles floating-point decimal multiples more permissively, which explains some additional functionality, but also admits near-integer values where Fluid intends integral counts and IDs.
+For those fields, `integer` restores the old rejection behavior rather than weakening it.
+Do not replace general fractional `multipleOf` constraints indiscriminately.
+Branded integer fields also need to preserve their static brands and numeric bounds.
 
-Regression tests should preserve behavior for optional `undefined`, sparse arrays, unions, references, refinements, and permitted non-JSON values.
-Performance tests should include valid inputs and invalid inputs that fail early and late.
-Existing data-format acceptance must not change accidentally.
+**Implemented follow-up:** Fluid's integer-only `multipleOf: 1` declarations now use `Type.Integer`, including sandbox transport fields.
+The `brandedIntegerType` helper preserves branded static types, and regression tests cover near-integer rejection and numeric bounds.
+General number schemas are unchanged.
+The tables above retain the pre-fix measurements so the effect of this change remains visible; the `propertyNames` alternative is still experimental.
+
+### Local helpers are not the cause
+
+In separate processes, we replaced the local optional/readonly helpers with public `Type.Optional` and `Type.Readonly`.
+We then also replaced the interface and record helpers with public `Type.Interface` and `Type.Record`.
+For all four fixtures, both substitutions produced identical:
+
+- Serialized schema JSON.
+- Generated validator source after normalizing temporary variable names.
+- External compiler constants, including regex patterns and flags.
+
+Validation timings remained comparable to the unmodified 1.3.34 validators.
+The helpers change construction cost, not the generated checks for these schemas.
+This is fixture-specific evidence, not proof for every possible use of the helpers.
+
+### Other checks and correctness probes
+
+Removing optional-property presence guards, removing selected redundant required-property guards, or replacing tuple extra-item iteration with a `maxItems` schema constraint did not produce a useful general speedup in the initial isolated runs.
+Some changes slowed the detached-index workload.
+Extra generated code is not necessarily expensive after JIT optimization; those paths should not be prioritized based on source size alone.
+
+The correctness probes found other differences that are not evidence of stronger checking:
+
+- A two-number tuple with values `[1, 2]` and `length` extended to 3, leaving a hole, is rejected by 0.34.13 but accepted by 1.3.34.
+  The new extra-item `every` check skips holes.
+- A string-keyed numeric record rejects `Date` and `Uint8Array` inputs in 0.34.13 but accepts the tested instances in 1.3.34.
+  This also occurs with public builders, not just the local record helper.
+
+These inputs are not ordinary JSON payloads, but should be considered when checking compatibility with in-memory codec inputs.
+They were not changed as part of this investigation.
+
+The follow-up ran 1,176 deterministic mutations of the four real fixtures.
+The current validator's 17 differences from the baseline were near-integer acceptance cases; using integer declarations eliminated those differences in this corpus.
+An additional 5,500 object checks found no acceptance differences between the original closed-object schemas and the `propertyNames` alternative, including unusual, inherited, and non-enumerable keys.
+These checks support further testing; they do not prove equivalence for every JavaScript value, proxy, schema, or global setting.
+
+### Follow-up method and recommendation
+
+The follow-up compared baseline commit `97f7061ed43804399da0479b3995ffb5f3e6c186` with `ada71d30724` plus the working-tree validator cache.
+It used unpatched TypeBox 1.3.34, Node.js 24.15.0, no coverage, and validators compiled before timing.
+The cache cannot remove per-check work; this benchmark deliberately excludes compilation and cache lookup.
+All new validators were accelerated and did not use unevaluated-property tracking.
+
+Each result is the median of three fresh-process medians, including reversed execution orders.
+Each process used 10,000 warmup checks and seven batches of 10,000 checks, cycling through 16 distinct payloads.
+The follow-up scripts, generated validators, and results were retained in the investigation session, but are not a checked-in repository benchmark suite.
+Compiler experiments used process-local loader substitutions, not edits to installed dependencies.
+No production schema changes were made.
+
+Recommended next steps:
+
+1. Prefer integer declarations for integer-only fields, with compatibility tests for near-integers, bounds, and branding.
+2. Propose a specialized fixed-key object path upstream.
+3. If a local mitigation is needed sooner, evaluate the narrowly scoped `propertyNames` alternative with codec and snapshot tests.
+4. Keep the tuple and non-JSON acceptance differences in the migration compatibility assessment.
+5. Remeasure startup separately after any declaration changes; faster checking does not establish cheaper compilation or smaller bundles.
 
 ## 4. Tree-shaking support needs to ship in the package
 
@@ -336,21 +463,22 @@ Migration PR: [microsoft/FluidFramework#28422](https://github.com/microsoft/Flui
 | Initial migration | `706cb4fbb2b71acf8be98af08b5c1779b13eacaa` | TypeBox 1.3.34, local metadata patch, one-copy modifier helpers |
 | Implemented shallow-copy workaround | `2c0f6be801c` | Descriptor-copy modifiers and regression tests; no compiler-name fix |
 
-The application measurements used separately compiled baseline and migration sources with existing workspace dependencies, native Node.js 24.15.0, serial processes, and repeated runs in reversed order.
+The initial application measurements used separately compiled baseline and migration sources with existing workspace dependencies, native Node.js 24.15.0, serial processes, and repeated runs in reversed order.
 Production emulation disabled debug assertions for initialization and microbenchmarks.
 Warm initialization used 10 warmups and 50 samples.
-Valid-input validation used seven batches of 20,000 checks with varied payload objects.
+The initial valid-input validation investigation used seven batches of 20,000 checks with varied payload objects; section 3 documents the separate follow-up protocol.
 Coverage measurements were separate.
 
 Counter resets and the initial shallow-copy comparisons used temporary experimental modifications.
 After implementing the actual helper, compilation, lint, 25 focused tests, and modifier/schema-construction microbenchmarks were rerun.
 **The complete performance matrix has not been rerun against that final helper with copying as the only variable.**
-The temporary runtime-performance harnesses were removed; the timing tables are investigation results, not a checked-in reproducible benchmark suite.
-Retained fixtures and harnesses are follow-up work for Fluid before requesting detailed upstream performance tuning.
+The original temporary runtime-performance harnesses were removed.
+The section 3 follow-up retains its scripts and results in the investigation session, but neither investigation is a checked-in benchmark suite.
+Packaging standalone fixtures and harnesses for upstream use remains follow-up work.
 
 ### Application startup and validation defaults
 
-With validation enabled, constructing a tree builds codecs for supported data-format versions and compiles 88 validators:
+In the initial measurements, constructing a tree with validation enabled built codecs for supported data-format versions and made 88 validator compilation requests:
 
 | Tree initialization, excluding imports and coverage | Baseline | Initial migration |
 | --- | ---: | ---: |
@@ -359,6 +487,7 @@ With validation enabled, constructing a tree builds codecs for supported data-fo
 
 The name-reset experiment reduced warm initialization to about 11.4 ms; adding experimental shallow copies reduced it to about 10.1 ms.
 Neither restored baseline performance.
+These startup measurements predate the working-tree schema-identity cache; its initialization benefit has not been measured here.
 
 By default, SharedTree disables validation (`FormatValidatorNoOp`), but still constructs schemas.
 Those consumers benefit from cheaper modifiers without incurring TypeBox compilation or checking.

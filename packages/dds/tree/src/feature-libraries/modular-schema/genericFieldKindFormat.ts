@@ -11,7 +11,7 @@ import type { Static, TSchema } from "typebox";
 
 export const EncodedGenericChange = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,
-) => Type.Tuple([Type.Number({ minimum: 0, multipleOf: 1 }), tNodeChangeset]);
+) => Type.Tuple([Type.Integer({ minimum: 0 }), tNodeChangeset]);
 
 export type EncodedGenericChange<Schema extends TSchema> = Static<
 	ReturnType<typeof EncodedGenericChange<Schema>>
