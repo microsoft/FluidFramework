@@ -307,6 +307,40 @@ export interface MenuSectionButtonHeaderProps extends MenuSectionLabelHeaderProp
 	isActive: boolean;
 }
 
+/**
+ * Forced colors can hide the background difference between selected and unselected navigation items.
+ * The shared marker identifies the selection after keyboard focus moves away.
+ */
+const useMenuSelectionStyles = makeStyles({
+	root: {
+		"@media (forced-colors: active)": {
+			position: "relative",
+			paddingInlineStart: "8px",
+		},
+	},
+	active: {
+		color: tokens.colorNeutralForeground1Selected,
+		backgroundColor: tokens.colorNeutralBackground1Selected,
+		"@media (forced-colors: active)": {
+			"::before": {
+				content: '""',
+				position: "absolute",
+				insetInlineStart: "0px",
+				top: "2px",
+				bottom: "2px",
+				borderInlineStartWidth: "3px",
+				borderInlineStartStyle: "solid",
+				borderInlineStartColor: "Highlight",
+				pointerEvents: "none",
+			},
+		},
+	},
+	inactive: {
+		color: tokens.colorNeutralForeground1,
+		backgroundColor: tokens.colorNeutralBackground1,
+	},
+});
+
 const useMenuSectionButtonHeaderStyles = makeStyles({
 	root: {
 		alignItems: "center",
@@ -319,14 +353,6 @@ const useMenuSectionButtonHeaderStyles = makeStyles({
 			backgroundColor: tokens.colorNeutralBackground1Hover,
 		},
 	},
-	active: {
-		color: tokens.colorNeutralForeground1Selected,
-		backgroundColor: tokens.colorNeutralBackground1Selected,
-	},
-	inactive: {
-		color: tokens.colorNeutralForeground1,
-		backgroundColor: tokens.colorNeutralBackground1,
-	},
 });
 
 /**
@@ -335,7 +361,12 @@ const useMenuSectionButtonHeaderStyles = makeStyles({
 export function MenuSectionButtonHeader(props: MenuSectionButtonHeaderProps): ReactElement {
 	const { label, icon, onClick, altText, isActive } = props;
 	const styles = useMenuSectionButtonHeaderStyles();
-	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
+	const selectionStyles = useMenuSelectionStyles();
+	const style = mergeClasses(
+		styles.root,
+		selectionStyles.root,
+		isActive ? selectionStyles.active : selectionStyles.inactive,
+	);
 
 	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
 		if ((event.key === "Enter" || event.key === " ") && onClick) {
@@ -406,14 +437,6 @@ const useMenuItemStyles = makeStyles({
 		},
 	},
 
-	active: {
-		color: tokens.colorNeutralForeground1Selected,
-		backgroundColor: tokens.colorNeutralBackground1Selected,
-	},
-	inactive: {
-		color: tokens.colorNeutralForeground1,
-		backgroundColor: tokens.colorNeutralBackground1,
-	},
 	itemContent: {
 		display: "flex",
 		flexDirection: "column",
@@ -502,9 +525,12 @@ export function MenuItem(props: MenuItemProps): ReactElement {
 	};
 
 	const styles = useMenuItemStyles();
-	const baseStyle = isActive ? styles.active : styles.inactive;
-
-	const style = mergeClasses(styles.root, baseStyle);
+	const selectionStyles = useMenuSelectionStyles();
+	const style = mergeClasses(
+		styles.root,
+		selectionStyles.root,
+		isActive ? selectionStyles.active : selectionStyles.inactive,
+	);
 
 	return (
 		<div className={styles.itemContent}>
