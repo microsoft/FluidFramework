@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
@@ -28,7 +28,6 @@ import {
 import {
 	type FieldKey,
 	type GraphCommit,
-	type IEditableForest,
 	type JsonableTree,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -38,7 +37,6 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type TreeStoredSchemaSubscription,
 	type TreeTypeSet,
 	detachedFieldIndexCodecBuilder,
 	makeDetachedFieldIndex,
@@ -51,16 +49,12 @@ import {
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
-	buildChunkedForest,
-	buildForest,
-	ComparisonForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
 	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
-	makeTreeChunker,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
@@ -105,6 +99,12 @@ import {
 } from "../util/index.js";
 
 import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { buildConfiguredForest, type ForestType } from "./forestType.js";
+import type {
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by TSDoc links.
+	ForestTypeOptimized,
+} from "./forestTypeOptimized.js";
+import { ForestTypeReference } from "./forestTypeReference.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -726,115 +726,6 @@ export interface SharedTreeFormatOptions {
 	 * default: TreeCompressionStrategy.Compressed
 	 */
 	treeEncodeType: TreeCompressionStrategy;
-}
-
-/**
- * Used to distinguish between different forest types.
- * @remarks
- * The "Forest" is the internal data structure used to store all the trees (the main tree and any removed ones) for a given view or branch.
- * ForestTypes should all have the same behavior, but may differ in performance and debuggability.
- *
- * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
- * @privateRemarks
- * Implement using {@link toForestType}.
- * Consume using {@link buildConfiguredForest}.
- * @sealed @beta
- */
-export interface ForestType extends ErasedType<"ForestType"> {}
-
-/**
- * Reference implementation of forest.
- * @remarks
- * A simple implementation with minimal complexity and moderate debuggability, validation and performance.
- * @privateRemarks
- * The "ObjectForest" forest type.
- * @beta
- */
-export const ForestTypeReference = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
-		buildForest(breaker, schema),
-);
-
-/**
- * Optimized implementation of forest.
- * @remarks
- * A complex optimized forest implementation, which has minimal validation and debuggability to optimize for performance.
- * Uses an internal representation optimized for size designed to scale to larger datasets with reduced overhead.
- * @privateRemarks
- * The "ChunkedForest" forest type.
- * @beta
- */
-export const ForestTypeOptimized = toForestType(
-	(
-		breaker: Breakable,
-		schema: TreeStoredSchemaSubscription,
-		idCompressor: IIdCompressor,
-		shouldEncodeIncrementally: IncrementalEncodingPolicy,
-	) =>
-		buildChunkedForest(
-			makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
-			undefined,
-			idCompressor,
-			breaker,
-		),
-);
-
-/**
- * Slow implementation of forest intended only for debugging.
- * @remarks
- * Includes validation with scales poorly.
- * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
- * @privateRemarks
- * A {@link ComparisonForest} which uses the "ChunkedForest" forest type as its main forest and validates every delta
- * against a reference "ObjectForest" (with expensive asserts enabled for schema validation).
- * This exercises the optimized forest while asserting that its contents stay consistent with the reference implementation.
- * @beta
- */
-export const ForestTypeExpensiveDebug = toForestType(
-	(
-		breaker: Breakable,
-		schema: TreeStoredSchemaSubscription,
-		idCompressor: IIdCompressor,
-		shouldEncodeIncrementally: IncrementalEncodingPolicy,
-	) =>
-		new ComparisonForest(
-			buildChunkedForest(
-				makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
-				undefined,
-				idCompressor,
-				breaker,
-			),
-			buildForest(breaker, schema, undefined, true),
-		),
-);
-
-type ForestFactory = (
-	breaker: Breakable,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-	shouldEncodeIncrementally: IncrementalEncodingPolicy,
-) => IEditableForest;
-
-function toForestType(factory: ForestFactory): ForestType {
-	return factory as unknown as ForestType;
-}
-
-/**
- * Build and return a forest of the requested type.
- */
-export function buildConfiguredForest(
-	breaker: Breakable,
-	factory: ForestType,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-	shouldEncodeIncrementally: IncrementalEncodingPolicy,
-): IEditableForest {
-	return (factory as unknown as ForestFactory)(
-		breaker,
-		schema,
-		idCompressor,
-		shouldEncodeIncrementally,
-	);
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
