@@ -320,7 +320,11 @@ function ifSchemaVersionsDecrease(
 	const updatedRecord = updated as Readonly<Record<string, number>>;
 	return Object.entries(original).some(([libraryId, version]) => {
 		const updatedVersion = updatedRecord[libraryId];
-		return updatedVersion === undefined || updatedVersion < version;
+		return (
+			!Object.hasOwn(updatedRecord, libraryId) ||
+			updatedVersion === undefined ||
+			updatedVersion < version
+		);
 	});
 }
 
