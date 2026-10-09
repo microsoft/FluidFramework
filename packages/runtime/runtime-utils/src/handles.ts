@@ -18,6 +18,11 @@ import type {
 	IFluidHandlePayloadPending,
 	ILocalFluidHandle,
 } from "@fluidframework/core-interfaces/internal";
+import type {
+	IContainerRuntimeBase,
+	IContainerRuntimeBaseInternal,
+	PackagePath,
+} from "@fluidframework/runtime-definitions/internal";
 
 /**
  * JSON serialized form of an IFluidHandle
@@ -118,6 +123,40 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
 	const aInternal = toFluidHandleInternal(a);
 	const bInternal = toFluidHandleInternal(b);
 	return aInternal.absolutePath === bInternal.absolutePath;
+}
+
+function hasDataStorePackagePath(
+	runtime: IContainerRuntimeBase,
+): runtime is IContainerRuntimeBase &
+	Pick<IContainerRuntimeBaseInternal, "getDataStorePackagePath"> {
+	return (
+		"getDataStorePackagePath" in runtime &&
+		typeof runtime.getDataStorePackagePath === "function"
+	);
+}
+
+/**
+ * Returns the package path of the data store containing the object referenced by a handle.
+ *
+ * @remarks
+ * The handle must belong to the supplied container runtime's container. The runtime must provide the internal
+ * package-path lookup; otherwise, this function throws a TypeError. It does not resolve the handle or check
+ * whether a descendant object exists, and it does not return a DDS package path.
+ *
+ * @param containerRuntime - The runtime of the container containing the handle.
+ * @param handle - A handle to a data store or an object within one.
+ * @returns The containing data store's package path, or undefined if the handle's path is not within a known data store.
+ * @internal
+ */
+export async function getDataStorePackagePath(
+	containerRuntime: IContainerRuntimeBase,
+	handle: IFluidHandle,
+): Promise<PackagePath | undefined> {
+	const nodePath = toFluidHandleInternal(handle).absolutePath;
+	if (!hasDataStorePackagePath(containerRuntime)) {
+		throw new TypeError("Container runtime does not support data store package path lookup");
+	}
+	return containerRuntime.getDataStorePackagePath(nodePath);
 }
 
 /**

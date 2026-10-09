@@ -4546,6 +4546,24 @@ export class ContainerRuntime
 	}
 
 	/**
+	 * {@inheritDoc IContainerRuntimeBaseInternal.getDataStorePackagePath}
+	 */
+	public async getDataStorePackagePath(
+		nodePath: string,
+	): Promise<readonly string[] | undefined> {
+		// This lookup does not depend on GC; its node type taxonomy distinguishes data store paths from other paths.
+		switch (this.getNodeType(nodePath)) {
+			case GCNodeType.DataStore:
+			case GCNodeType.SubDataStore: {
+				return this.channelCollection.getDataStorePackagePath(nodePath);
+			}
+			default: {
+				return undefined;
+			}
+		}
+	}
+
+	/**
 	 * Called by GC to retrieve the package path of the node with the given path. The node should belong to a
 	 * data store or an attachment blob.
 	 */
