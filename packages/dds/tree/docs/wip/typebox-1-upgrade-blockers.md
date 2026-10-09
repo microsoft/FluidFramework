@@ -1,143 +1,99 @@
-# TypeBox 1 upgrade blockers and proposed upstream fixes
+# TypeBox 1.3.34 migration: performance and packaging findings
 
-## Status and scope
+## Summary for TypeBox maintainers
 
-**Recommendation: hold the TypeBox 1 update until the customer-impacting issues below are fixed upstream or explicitly accepted with measured evidence.**
-This document records a proposed merge gate; it does not configure a pipeline gate.
+We are migrating Fluid Framework's SharedTree from **`@sinclair/typebox` 0.34.13 to `typebox` 1.3.34**.
+SharedTree is a collaborative tree data structure.
+It uses TypeBox to describe serialized data and, when validation is enabled, to compile validators for that data.
+Browser bundle size, schema construction, validator compilation, and repeated validation all matter to our consumers.
 
-The investigation on October 9, 2026 compared:
+We found reproducible local performance regressions in three distinct phases.
+We also evaluated a local packaging patch, then removed it because its measured benefit was small and it would not reach consumers of our published packages.
+We would prefer fixes in TypeBox's public APIs and published package over maintaining our own modifier implementations.
 
-- Baseline: `97f7061ed43804399da0479b3995ffb5f3e6c186`, using `@sinclair/typebox` 0.34.13.
-- Upgrade: `706cb4fbb2b71acf8be98af08b5c1779b13eacaa`, using `typebox` 1.3.34.
-- Follow-up working-tree changes: shallow-copy optional and readonly helpers in [typebox.ts](../../src/util/typebox.ts), with [regression tests](../../src/test/util/typebox.spec.ts).
-- Pull request: [microsoft/FluidFramework#28422](https://github.com/microsoft/FluidFramework/pull/28422).
-
-The runtime measurements below are local results, not performance guarantees for every application.
-They separate schema construction, validator compilation, and validation.
-Improvements to one phase must not be assumed to improve the others.
-
-## Issue summary
-
-| Issue | Customer impact | Proposed fix |
+| Finding | Evidence | Request |
 | --- | --- | --- |
-| Tree-shaking relies on a repository-local dependency patch | Our bundle measurements do not necessarily describe customers' installations | Publish correct side-effect metadata in TypeBox; verify an unpatched consumer installation |
-| Optional and readonly modifiers deep-copy nested schemas | More initialization work and allocations, even with validation disabled | Provide lightweight, shallow-copy modifiers with an explicit sharing contract |
-| Generated variable names change between identical compilations | Repeated validator compilation loses JavaScript-engine code-cache reuse | Reset generated-name allocation for each build, preferably using build-local state |
-| Generated validators perform more work | Higher validation cost with `FormatValidatorBasic` | Restore specialized tuple, object, and numeric-check fast paths while preserving semantics |
-| Schema generation and compilation still have overhead after targeted fixes | Startup remains slower after fixing copying and generated names | Profile the remaining work using actual SharedTree schemas and a retained benchmark suite |
-| Local helpers depend on TypeBox's metadata representation | Additional maintenance and compatibility risk | Make the public TypeBox APIs efficient enough to remove our substitutes |
+| [Optional/readonly modifiers deep-copy nested schemas](#1-optional-and-readonly-modifiers-deep-copy-nested-schemas) | Source inspection and identity reproduction; shallow copies greatly reduce our schema-construction cost | Offer an efficient shallow-copy path with documented sharing semantics |
+| [Generated names change between identical compilations](#2-identical-compilations-generate-different-source) | Source reproduction; resetting names reduces repeated compilation from 15.4 to 7.9 ms | Make generated names local to each compilation |
+| [Warm validation is slower](#3-warm-validation-is-slower) | About 1.3-4.0x the previous cost on four representative payloads | Investigate generated-code fast paths; individual causes are not yet isolated |
+| [Tree-shaking metadata improvement](#4-tree-shaking-support-needs-to-ship-in-the-package) | A now-removed local patch saved 389 gzip bytes without validation and 62 with validation | Consider appropriate side-effect metadata upstream; measured savings do not justify a local patch or a migration blocker |
+| [Immutable mode leaves nested schema containers mutable](#5-immutabletypes-does-not-freeze-the-complete-schema-graph) | Direct freezing and mutation reproduction | Clarify the contract; consider graph immutability if this mode is intended to support safe sharing |
 
-The `immutableTypes` setting is not a solution to these issues.
-Its limitations and possible upstream improvements are described below.
+**Scope:** These are performance, packaging, and API-contract concerns, not confirmed validation-correctness bugs.
+The immutable-mode observation is a limitation relevant to sharing, not a demonstrated regression from 0.34.13.
+All numerical results below are local measurements, not application-wide performance guarantees.
 
-## 1. Ship tree-shaking support to customers
+## Reproducing the small examples
 
-### Evidence
+The TypeBox reproductions in sections 1, 2, and 5 are independent.
+Save each as an `.mjs` file in a project with `typebox@1.3.34` installed and run it with Node.js.
+They demonstrate the source/identity/freezing behavior; they do not reproduce the SharedTree benchmark timings.
+The investigation used Node.js 24.15.0.
 
-The [TypeBox dependency patch](../../../../../patches/typebox@1.3.34.patch) adds:
+## 1. Optional and readonly modifiers deep-copy nested schemas
 
-```json
-{
-  "sideEffects": ["./build/format/_registry.mjs"]
-}
-```
+### Observed behavior
 
-The exception preserves built-in format registration.
-The patch is applied by our pnpm workspace configuration.
-It does **not** automatically modify the TypeBox package installed by an application that consumes a published Fluid package.
-
-The existing upstream tracking issue is [sinclairzx81/typebox#1617](https://github.com/sinclairzx81/typebox/issues/1617).
-Its resolution must be verified in a published package, not just in an upstream source branch.
-
-There is an important limit to the earlier bundle-size diagnosis.
-The public optional and readonly APIs have imports into TypeBox's general type-instantiation engine, but that alone does not prove the engine survives tree shaking.
-A production Webpack probe using our patched dependency produced:
-
-| Minimal object schema using optional and readonly fields | Minified bytes | Gzip bytes |
-| --- | ---: | ---: |
-| Public TypeBox modifiers | 2,943 | 1,082 |
-| Local shallow-copy helpers | 1,512 | 739 |
-
-In that configuration, Webpack removed the unused general instantiation machinery.
-These numbers do not establish a large bundle penalty from the public modifiers, nor do they measure a complete customer application.
-They also do not establish behavior without our patch or with other bundlers.
-
-### Suggested upstream fix and acceptance criteria
-
-- Publish accurate side-effect metadata in TypeBox, retaining the format-registry initialization.
-- Keep simple builders and modifiers independent of unrelated runtime initialization where practical.
-- Test public entry points such as `typebox/type` with supported bundlers.
-- Compare an actual Fluid consumer bundle before and after the upgrade, using the published TypeBox package without workspace patches.
-- Verify built-in format validation still works in the optimized bundle.
-
-The local patch is useful for experiments, but is not a customer-facing delivery mechanism for this fix.
-
-## 2. Avoid deep copies for optional and readonly modifiers
-
-### Evidence
-
-In TypeBox 1.3.34, the public modifier paths are:
-
-- `Optional` -> `AddOptional` -> `AddOptionalAction`.
-- `Readonly` -> `AddReadonly` -> `AddReadonlyAction`.
-
-Each action invokes `Memory.Update` twice.
-`Memory.Update` calls `Clone`, which recursively copies nested schema objects.
-The previous TypeBox optional modifier used a shallow copy under its default settings.
-
-The branch initially replaced the public modifiers with helpers that called `Memory.Update` once.
-That avoided some overhead but still deep-copied nested schemas.
-The follow-up [withTypeModifier helper](../../src/util/typebox.ts) instead copies outer property descriptors and shares nested objects.
-This preserves non-enumerable metadata that a plain object spread would lose.
-
-Measured without coverage:
-
-| Workload | Before removing deep copies | Shallow-copy experiment |
-| --- | ---: | ---: |
-| Construct a sequence-field schema | About 104 microseconds | About 7.3 microseconds |
-| Warm Tree creation with `FormatValidatorNoOp` | About 1.94 milliseconds | About 0.80 milliseconds |
-
-For comparison, the pre-upgrade results were about 2.2 microseconds and 0.84 milliseconds, respectively.
-After implementing the actual helper, a separate modifier-only probe dropped from about 104 microseconds to 2.1 microseconds for either modifier on a representative sequence schema.
-The actual helper's sequence-schema construction measured about 8.2 microseconds.
-These are different workloads; the modifier-only speedup is not an application-wide speedup.
-
-### Suggested upstream fix
-
-Provide a lightweight path for optional and readonly modifiers that:
-
-- Copies only the outer schema object.
-- Preserves existing hidden metadata, including refinements and other modifiers.
-- Applies the modifier and options without multiple copies.
-- Does not mutate the input.
-- Clearly documents that nested schemas are shared.
-- Preserves the documented freezing and metadata-enumerability behavior.
-
-Changing `Memory.Update` globally would affect much more than these modifiers.
-A scoped modifier change, or an explicit public shallow-copy API, is safer.
-Changing existing aliasing semantics requires an upstream compatibility decision.
-
-The current local helper is a workaround, not the preferred long-term API.
-Use the [modifier tests](../../src/test/util/typebox.spec.ts) as a starting point for upstream tests, including nested identity, refinement validation, composition, repeated modifiers, and frozen schemas.
-
-## 3. Generate stable source for identical validator compilations
-
-### Evidence
-
-TypeBox 1.3.34's `build/schema/engine/_unique.mjs` keeps a module-global counter:
+Applying a modifier copies nested objects even though the modifier changes only outer schema metadata:
 
 ```javascript
-let index = 0;
-export function Unique() {
-  return `var_${index++}`;
+import * as Type from "typebox/type";
+
+const schema = Type.Object({ child: Type.Object({ value: Type.String() }) });
+for (const modified of [Type.Optional(schema), Type.Readonly(schema)]) {
+  console.log(modified === schema); // false
+  console.log(modified.properties === schema.properties); // false
+  console.log(modified.properties.child === schema.properties.child); // false
 }
 ```
 
-`Build` resets other compiler state but does not reset this counter.
-Compiling the same schema twice therefore generates different source.
-The old compiler produced identical source.
+In the 1.3.34 distribution:
 
-Minimal reproduction using the public API:
+- `build/type/engine/optional/instantiate_add.mjs`: `AddOptionalAction` calls `Memory.Update` around an operation that also calls `Memory.Update`.
+- `build/type/engine/readonly/instantiate_add.mjs`: `AddReadonlyAction` uses the same pattern.
+- `build/system/memory/update.mjs`: `Memory.Update` recursively clones the input before applying changes.
+
+Thus, these paths copy nested schemas twice.
+The previous TypeBox optional modifier used a shallow copy under its default settings.
+
+### Impact and workaround
+
+Our initial migration used custom modifiers with one `Memory.Update` call, so it already avoided one of the public API's copies.
+Replacing that remaining deep copy with an outer descriptor copy substantially reduced initialization cost:
+
+| Workload, without coverage | 0.34.13 baseline | Initial migration: one deep copy | Experimental shallow copy |
+| --- | ---: | ---: | ---: |
+| Construct a sequence-change schema | About 2.2 microseconds | About 104 microseconds | About 7.3 microseconds |
+| Warm tree creation with validation disabled | About 0.84 ms | About 1.94 ms | About 0.80 ms |
+
+These are measurements of our schema-building paths, not a direct public-API benchmark.
+The implemented [local helper](../../src/util/typebox.ts) subsequently measured about 8.2 microseconds for sequence-schema construction.
+A separate modifier-only probe dropped from about 104 to 2.1 microseconds.
+Neither result implies the same speedup for validator compilation or validation.
+
+**The workaround has costs:** it depends on TypeBox's modifier keys and metadata representation, manually reproduces relevant settings behavior, and shares nested mutable objects.
+Mutations through the original or modified schema can affect the other.
+Copying property descriptors preserves hidden metadata that a plain object spread would lose, but does not remove the dependency on TypeBox's representation.
+
+### Suggested change and regression tests
+
+Provide shallow-copy behavior for these modifiers, or an explicit lightweight public API if changing aliasing behavior would be incompatible.
+Apply the modifier and options in one outer copy.
+Avoid changing `Memory.Update` globally without reviewing its other callers.
+
+Tests should cover:
+
+- No input mutation; documented nested-object identity and sharing.
+- Preservation of hidden metadata, refinements, and other modifiers.
+- Optional/readonly composition and repeated application.
+- Frozen inputs, `immutableTypes`, and `enumerableKind`.
+- Options precedence and unchanged inferred static types.
+
+Our [modifier tests](../../src/test/util/typebox.spec.ts) cover the local workaround and provide a starting point.
+
+## 2. Identical compilations generate different source
+
+### Reproduction and likely cause
 
 ```javascript
 import * as Type from "typebox/type";
@@ -153,169 +109,281 @@ const second = Build(schema).Evaluate().Code();
 console.log(first === second); // false in 1.3.34
 ```
 
-The changing identifiers prevent reuse that V8 can perform for identical generated function source.
-A controlled experiment that reset the counter for each build reduced repeated compilation of the same 88 SharedTree schemas from about **15.4 milliseconds to 7.9 milliseconds**.
-The old compiler took about **3.7 milliseconds**.
+`build/schema/engine/_unique.mjs` uses a module-global counter to allocate names such as `var_0`.
+`Build` resets other compiler state but not that counter.
+Repeated builds therefore produce different identifiers.
+The old compiler produced identical source for the same schema.
 
-This is not evidence that Fluid removed an explicit validator cache.
-[withSchemaValidation](../../src/codec/codec.ts) still compiles once when constructing a codec and reuses that validator for encode and decode.
-Both TypeBox versions rebuild validators when asked to compile again.
-The lost reuse is at the JavaScript-engine level.
+### Impact
 
-### Suggested upstream fix
+| Recompile a fixed list of 88 SharedTree schemas, warm median | Time |
+| --- | ---: |
+| 0.34.13 | 3.7 ms |
+| 1.3.34 | 15.4 ms |
+| 1.3.34 with an experimental per-build counter reset | 7.9 ms |
 
-- Make generated names deterministic for a given schema and compilation configuration.
-- Prefer build-local name allocation rather than a process-global mutable counter.
-- Test repeated compilation and, if supported, nested or reentrant compilation.
-- Benchmark repeated compilation as well as the first compilation.
-- Check that external bindings and references still point to the correct objects.
+The result strongly suggests that unstable source prevents V8 from reusing compiled code.
+It does not directly measure cache hits or account for all remaining compilation overhead.
 
-Returning a cached validator solely by schema identity is a separate design decision.
-It requires a contract for schema mutation and relevant global settings.
-It should not be introduced as an unqualified substitute for fixing unstable generated code.
+This is **not** a claim that TypeBox removed an explicit validator cache.
+Fluid compiles once when constructing a codec and reuses the result for validation.
+The repeated-compilation workload arises when constructing more trees and their codecs, not on every edit.
 
-## 4. Reduce the cost of generated validation code
+### Suggested change and regression tests
 
-### Evidence
+Use a build-local name allocator so the same schema and configuration produce stable source.
+Check external bindings, references, and nested or reentrant compilation if supported.
+Benchmark both first compilation and repeated compilation.
 
-The regression is not just initialization.
-Warm validation of representative valid encoded payloads, without coverage, measured:
+Caching validators by schema identity is a separate design choice.
+It requires a contract for schema mutation and global settings; it should not replace fixing unstable generated source.
+Even after resetting names, the remaining 7.9 ms versus 3.7 ms warrants profiling schema traversal, code generation, and function compilation separately.
 
-| Payload | TypeBox 0.34.13 | TypeBox 1.3.34 | Approximate cost ratio |
+## 3. Warm validation is slower
+
+### Measurements
+
+These are times per validation of representative **valid** encoded payloads, without coverage:
+
+| Payload | 0.34.13 | 1.3.34 | Cost ratio |
 | --- | ---: | ---: | ---: |
-| Sequence change with 100 marks | 8.7 microseconds | 25.2 microseconds | 2.9x |
-| Detached index with 100 revisions | 0.39 microseconds | 1.55 microseconds | 4.0x |
-| Stored schema with 100 nodes | 32.6 microseconds | 41.0 microseconds | 1.3x |
-| Recursive tree with 100 children | 2.7 microseconds | 6.1 microseconds | 2.3x |
+| Sequence change: 100 edit records | 8.7 microseconds | 25.2 microseconds | 2.9x |
+| Detached-content index: 100 revision entries | 0.39 microseconds | 1.55 microseconds | 4.0x |
+| Stored schema: 100 node definitions | 32.6 microseconds | 41.0 microseconds | 1.3x |
+| Recursive tree: 100 children | 2.7 microseconds | 6.1 microseconds | 2.3x |
 
 Late-failing invalid payloads also ran more slowly.
-These are isolated validator costs, not whole-operation slowdown factors.
+These ratios apply to the validator, not the complete application operation.
+We have not yet reduced these workloads to standalone upstream benchmarks.
 
-The new validators reported `IsAccelerated() === true`.
-They did not fall back to interpreted checking.
+The validators reported `IsAccelerated() === true`; they were not using interpreted fallback.
 The measured schemas did not require unevaluated-property tracking.
+The higher-level `typebox/compile` validator uses the same `Build`/`Evaluate` implementation, so switching to it does not bypass the relevant code generation.
 
-Inspection of generated source identified extra work:
+### Optimization candidates, not established individual causes
 
-- Fixed tuples use additional array iteration and per-element length guards where the old compiler used an exact-length check and direct element checks.
-- Required object properties receive explicit presence checks even where the value checks may already reject absence.
-- Additional-property checks can use regular expressions instead of the old compiler's property-name checks.
-- Numeric constraints use more general helper functions instead of some of the old direct arithmetic checks.
+Inspection of the generated source found:
 
-These observations identify optimization candidates, not independently measured contributions to each slowdown.
-Resetting generated names and removing deep copies did not materially improve the measured warm validation throughput.
+| Area | Observed extra work | Suggested investigation |
+| --- | --- | --- |
+| Fixed tuples | Array iteration and per-item length guards instead of an exact-length check and direct checks | Generate a specialized fixed-tuple path where equivalent |
+| Required properties | Explicit presence checks in addition to value checks | Omit presence checks only when the value schema necessarily rejects absence |
+| Additional properties | Regular-expression checks instead of the old property-name checks | Benchmark small fixed-key objects before selecting a strategy |
+| Numeric constraints | More general helpers instead of some direct arithmetic checks | Specialize common constraints only where numeric semantics are preserved |
 
-Using `Compile` from `typebox/compile` instead of `Build(...).Evaluate()` is not a fix.
-The higher-level validator uses the same `Build` and `Evaluate` implementation, with additional functionality.
+Resetting generated names and adding experimental shallow copies did not materially improve the measured warm validation throughput.
+Construction and compilation fixes should not be assumed to resolve this issue.
 
-### Suggested upstream fix
+Regression tests should preserve behavior for optional `undefined`, sparse arrays, unions, references, refinements, and permitted non-JSON values.
+Performance tests should include valid inputs and invalid inputs that fail early and late.
+Existing data-format acceptance must not change accidentally.
 
-- Add specialized fixed-tuple code generation that combines length and item constraints where equivalent.
-- Eliminate redundant object presence checks only when the property schema necessarily rejects a missing value.
-- Benchmark small fixed-key objects before choosing regular expressions for additional-property checks.
-- Specialize common integer constraints where this preserves the intended numeric semantics.
-- Retain correct handling of optional `undefined`, sparse arrays, unions, references, refinements, and non-JSON values allowed by Fluid's codec contracts.
-- Benchmark both valid payloads and invalid payloads that fail early or late.
+## 4. Tree-shaking support needs to ship in the package
 
-Optimization must not change persisted-format acceptance accidentally.
-Existing correctness and snapshot tests should accompany performance tests.
+### Packaging concern
 
-## 5. Account for residual startup cost and production defaults
+The local dependency patch evaluated below added this package metadata:
 
-Without coverage, Tree creation with `FormatValidatorBasic` measured:
+```json
+{
+  "sideEffects": ["./build/format/_registry.mjs"]
+}
+```
 
-| Measurement | Baseline | Upgrade before the shallow-copy follow-up |
+The exception preserves built-in format registration.
+The patch was applied by our root pnpm configuration; applications installing a published Fluid package would **not** automatically receive it.
+We have removed the patch so workspace builds use the same unpatched TypeBox package as consumers.
+Its measured savings were small, and the default SharedTree bundle was smaller than the baseline without it.
+The validation-enabled bundle's small gzip regression remains; the patch did not eliminate it.
+The patched measurements below are retained as historical evidence, not the current workspace configuration.
+
+Existing upstream tracking: [sinclairzx81/typebox#1617](https://github.com/sinclairzx81/typebox/issues/1617).
+We have not verified its current resolution status in a published package.
+
+### Measured SharedTree bundle sizes
+
+**These measurements do not show a large bundle-size regression.**
+The default SharedTree bundle became smaller even without the patch.
+Including validation produced a small gzip regression despite a reduction in uncompressed size.
+
+We bundled the existing [SharedTree bundle-size entry](../../../../../examples/utils/bundle-size-tests/src/sharedTree.ts), which exports `SharedTree` from `fluid-framework`.
+A second entry exports both `SharedTree` and `FormatValidatorBasic` to retain the optional validator.
+These are complete bundles of those exports and their runtime dependencies, not isolated TypeBox snippets.
+
+All sizes below are **bytes**.
+The gzip delta compares each result with its scenario's 0.34.13 baseline.
+
+| Exported APIs | TypeBox configuration | Minified JavaScript | Gzip, level 9 | Gzip delta from baseline |
+| --- | --- | ---: | ---: | ---: |
+| SharedTree | 0.34.13 baseline | 411,472 | 117,372 | - |
+| SharedTree | 1.3.34, unpatched | 404,356 | 115,572 | -1,800 (-1.53%) |
+| SharedTree | 1.3.34, patched | 403,475 | 115,183 | -2,189 (-1.87%) |
+| SharedTree + validation | 0.34.13 baseline | 461,453 | 128,051 | - |
+| SharedTree + validation | 1.3.34, unpatched | 454,722 | 128,947 | +896 (+0.70%) |
+| SharedTree + validation | 1.3.34, patched | 454,428 | 128,885 | +834 (+0.65%) |
+
+Isolating the metadata patch, with identical application and TypeBox code:
+
+| Exported APIs | Minified bytes saved by patch | Gzip bytes saved by patch |
 | --- | ---: | ---: |
-| First Tree creation, excluding module imports | 30-31 milliseconds | 55-56 milliseconds |
-| Warm Tree creation, median | 5.2-5.7 milliseconds | 18.1-18.4 milliseconds |
+| SharedTree | 881 (0.22%) | 389 (0.34%) |
+| SharedTree + validation | 294 (0.06%) | 62 (0.05%) |
 
-Both versions compiled 88 validators per Tree in this configuration.
-Codecs for supported format versions are built during initialization; this is not 88 compilations on each edit.
+The patch therefore helps, but does not remove the small gzip regression when validation is included.
+It is not responsible for the overall size reduction in the default bundle.
+The baseline-to-upgrade comparison includes Fluid's migration changes and local modifier helpers; it does not isolate the cost of substituting the TypeBox package alone.
 
-Resetting generated names reduced warm Tree creation to about 11.4 milliseconds.
-Adding the experimental shallow-copy modifier reduced it further to about 10.1 milliseconds.
-That remained above the baseline.
-The combined experiment did not isolate every remaining source of compiler overhead.
+### Methodology and reproducibility
 
-[Default SharedTree options](../../src/shared-tree/sharedTree.ts) use `FormatValidatorNoOp`.
-Default consumers therefore avoid the TypeBox validator compilation and checking costs.
-They still construct codec schemas, so unnecessary copying affects them too.
-Consumers that select `FormatValidatorBasic` incur all three phases.
+Measured on October 9, 2026 with Node.js 24.15.0, TypeScript 6.0.3, Webpack 5.109.0, `terser-webpack-plugin` 5.3.15, and Terser 5.37.0.
 
-### Suggested follow-up
+1. Compile the baseline Tree sources at `97f7061ed43804399da0479b3995ffb5f3e6c186` and the migration sources at `2c0f6be801c` as ES modules.
+   Hold the compiler, generated package version, and all other installed workspace dependencies constant.
+   The migration includes the shallow-copy modifier workaround.
+2. Use the existing SharedTree entry, with its TypeScript annotation erased.
+   For the validation scenario, use this entry:
 
-- Profile schema construction and code generation separately from JavaScript function compilation.
-- Keep benchmarks for actual SharedTree schema families, not just small synthetic objects.
-- Consider safe sharing or caching of immutable schemas and compiled validators as a separate optimization.
-- Do not use a timeout increase as evidence that the startup regression is resolved.
+   ```javascript
+   import { SharedTree } from "fluid-framework";
+   import { FormatValidatorBasic } from "@fluidframework/tree/internal";
 
-## 6. Clarify the immutable-types contract
+   export function apisToBundle() {
+     return { SharedTree, FormatValidatorBasic };
+   }
+   ```
 
-TypeBox's `immutableTypes` setting defaults to `false`.
-SharedTree does not enable it in production code; the new modifier tests exercise both settings for compatibility.
-It controls freezing of schema objects, not readonly application data and not validation acceleration.
+3. Alias Tree's entry points to the appropriate compiled source tree.
+   Use installed `@sinclair/typebox` 0.34.13 for the baseline.
+   For the migration, alias `typebox` and its subpaths to an isolated copy of 1.3.34.
+   Reconstruct unpatched metadata by removing only the `sideEffects` field added by our patch, then restore it for the patched measurement.
+   Do not modify the shared installation.
+4. Use production Webpack browser bundles with the repository's resolver settings, no externals, no source maps, and the same `bundle.js` output name.
+   Use default Terser minification with worker parallelism disabled.
+   Read the emitted JavaScript byte length and compress it using Node's `gzipSync` with `level: 9`.
+   Source maps and separately emitted license files are not included.
+5. Verify the emitted module graph uses the intended Tree and TypeBox versions.
+   Evaluate every bundle and check its exported APIs.
+   In the 1.3.34 validation bundles, compile an email-format schema and check that valid email passes and invalid email fails, both with and without the patch.
 
-In 1.3.34, `Freeze` applies `Object.freeze` to the outer object.
-The setting:
+All these checks passed.
+Repeated patched builds produced identical byte counts and gzip sizes for both scenarios.
 
-- Does not make `Memory.Update` shallow-copy.
-- Does not recursively freeze the complete schema graph.
-- Does not freeze an object schema's `properties` map or `required` array.
-- Does not establish that an input schema was created while the setting was enabled.
+**Limits:** this is a controlled local comparison of representative export bundles, not an install of packed Fluid packages into a fresh customer application.
+It uses the current workspace's other dependencies and Fluid's custom modifiers, not TypeBox's public modifiers throughout.
+Different application exports, dependency versions, bundlers, or compression settings can produce different results.
 
-Consequently, it is not a sufficient safety guarantee for unrestricted structural sharing.
-An upstream immutable-schema mode could support structural sharing, but would need a clear graph-immutability contract.
-That is a possible design improvement, not a prerequisite to selecting an explicit shallow-copy contract for our internal schemas.
+### Relation to the earlier modifier-only experiment
 
-## CI symptoms and measurement limits
+The earlier minimal object-schema probe, using public optional/readonly modifiers and our metadata patch, measured 2,943 minified bytes / 1,082 gzip bytes.
+Using our helpers instead measured 1,512 / 739 bytes.
+Those are different entry points from the SharedTree bundles above and must not be treated as their TypeBox contribution or patch savings.
+Webpack removed unused general type-instantiation machinery in that probe; imports into the machinery do not establish that it survives tree shaking.
 
-[Build 427665](https://dev.azure.com/fluidframework/public/_build/results?buildId=427665&view=ms.vss-test-web.build-test-results-tab) failed three local TableSchema memory benchmarks in the coverage job:
+### Suggested change and verification
 
-| Scenario, all with table size 3 | Failure duration |
-| --- | ---: |
-| Undo insertion of a column and row three times | 2,236 milliseconds |
-| Undo insertion and immediate removal of a column and row three times | 2,260 milliseconds |
-| Undo batch removal of three rows | 2,240 milliseconds |
+Publish accurate side-effect metadata, auditing required initialization rather than marking everything side-effect-free.
+Test public entry points such as `typebox/type` and verify built-in format validation in optimized bundles.
+The measurements support this packaging improvement, but do not justify claiming a large consumer bundle regression or a large benefit from our patch.
+Fluid should still verify representative customer applications using the released package in clean installations without workspace patches.
 
-All exceeded Mocha's 2,000-millisecond timeout.
-The same tests passed on earlier branch build 427619 at 1,397, 1,470, and 1,567 milliseconds.
-Nearby other PRs were faster, but cross-build timing is not a controlled comparison.
+## 5. `immutableTypes` does not freeze the complete schema graph
 
-The local investigation used:
+### Reproduction
 
-- Separately compiled baseline sources and branch sources, with existing workspace dependencies.
-- Node.js 24.15.0 for the controlled production-cost investigation.
-- Serial processes, with repeated runs in reversed order.
-- Production emulation for initialization and microbenchmarks.
-- Warmup followed by 50 initialization samples or multiple microbenchmark batches.
-- Multiple valid input objects rather than a single constant payload.
-- Separate V8-coverage runs to distinguish coverage overhead.
+```javascript
+import * as Type from "typebox/type";
+import { Settings } from "typebox/system";
 
-The exact three tests passed locally without instrumentation at 333/153/111 milliseconds on the baseline and 379/184/145 milliseconds on the branch before the shallow-copy follow-up.
-Coverage increased local costs further.
-The memory benchmark harness also performs explicit garbage collection, making these tests sensitive to the rest of the process heap.
+const previous = Settings.Get();
+try {
+  Settings.Set({ immutableTypes: true });
+  const schema = Type.Object({ value: Type.String() });
+  console.log(Object.isFrozen(schema)); // true
+  console.log(Object.isFrozen(schema.properties)); // false
+  console.log(Object.isFrozen(schema.required)); // false
 
-**The local slowdown was reproduced; the actual two-second CI timeout was not reproduced in isolation.**
-Reduced allocation should reduce garbage-collection pressure, but its isolated contribution was not quantified.
-The measurements are from Node.js, not a browser or a complete production application bundle.
+  schema.properties.extra = Type.Number();
+  schema.required.push("extra");
+  console.log("extra" in schema.properties); // true
+  console.log(schema.required.includes("extra")); // true
+} finally {
+  Settings.Set(previous);
+}
+```
 
-The initial compiler/validation comparisons used the committed upgrade before the shallow-copy follow-up.
-The shallow-copy comparisons used isolated loader experiments, including a generated-name reset.
-After the actual helper edit, compilation, lint, 25 focused tests, and the modifier/schema-construction microbenchmarks were rerun.
-The complete production-cost matrix was not rerun against that final helper with copying as the only variable.
-Temporary measurement harnesses were removed; these numbers are investigation results, not a checked-in benchmark baseline.
+### Why it matters
 
-## Proposed gate for resuming the update
+In 1.3.34, `Freeze` applies `Object.freeze` to the outer result.
+Enabling `immutableTypes` does not change deep-copy behavior in `Memory.Update`, freeze the complete graph, or guarantee that supplied schemas were created with the setting enabled.
+It controls schema objects, not the validated application data or readonly static types.
+Fluid does not enable this setting in production.
 
-1. Publish and select a TypeBox release containing the required fixes.
-2. Verify customer bundle sizes in a clean consumer installation without our TypeBox dependency patch.
-3. Prefer public optional and readonly APIs once they provide acceptable construction cost and a clear sharing contract.
-4. Verify stable generated source and repeat the first-use and repeated-compilation measurements.
-5. Repeat warm validation benchmarks, without coverage, against representative valid and invalid codec payloads.
-6. Repeat the full matrix against the exact candidate code, with each optimization isolated before combining them.
-7. Run codec correctness, persisted-format compatibility, refinement, and snapshot tests.
-8. Rerun the coverage job and distinguish remaining harness variability from product regressions.
-9. Record agreed performance and bundle-size budgets before accepting any remaining regression.
+**Request:** clarify whether shallow freezing is the intended contract.
+If this mode is intended to make structural sharing safe, a graph-immutability guarantee would be more useful.
+That would require an explicit policy for pre-existing inputs and nested containers, not just changing the modifier copy operation.
+An explicit shallow-copy API with a documented caller obligation is also viable; recursive freezing is not a prerequisite for that API.
 
-Restore prior performance where practical.
-Any remaining tradeoff should be explicit, measured in absolute cost as well as ratios, and evaluated for customers rather than only this workspace.
+## Measurement context and limitations
+
+### Versions and code states
+
+Investigation date: October 9, 2026.
+Migration PR: [microsoft/FluidFramework#28422](https://github.com/microsoft/FluidFramework/pull/28422).
+
+| State | Fluid commit | Meaning |
+| --- | --- | --- |
+| Baseline | `97f7061ed43804399da0479b3995ffb5f3e6c186` | TypeBox 0.34.13 |
+| Initial migration | `706cb4fbb2b71acf8be98af08b5c1779b13eacaa` | TypeBox 1.3.34, local metadata patch, one-copy modifier helpers |
+| Implemented shallow-copy workaround | `2c0f6be801c` | Descriptor-copy modifiers and regression tests; no compiler-name fix |
+
+The application measurements used separately compiled baseline and migration sources with existing workspace dependencies, native Node.js 24.15.0, serial processes, and repeated runs in reversed order.
+Production emulation disabled debug assertions for initialization and microbenchmarks.
+Warm initialization used 10 warmups and 50 samples.
+Valid-input validation used seven batches of 20,000 checks with varied payload objects.
+Coverage measurements were separate.
+
+Counter resets and the initial shallow-copy comparisons used temporary experimental modifications.
+After implementing the actual helper, compilation, lint, 25 focused tests, and modifier/schema-construction microbenchmarks were rerun.
+**The complete performance matrix has not been rerun against that final helper with copying as the only variable.**
+The temporary runtime-performance harnesses were removed; the timing tables are investigation results, not a checked-in reproducible benchmark suite.
+Retained fixtures and harnesses are follow-up work for Fluid before requesting detailed upstream performance tuning.
+
+### Application startup and validation defaults
+
+With validation enabled, constructing a tree builds codecs for supported data-format versions and compiles 88 validators:
+
+| Tree initialization, excluding imports and coverage | Baseline | Initial migration |
+| --- | ---: | ---: |
+| First creation | 30-31 ms | 55-56 ms |
+| Warm creation, median | 5.2-5.7 ms | 18.1-18.4 ms |
+
+The name-reset experiment reduced warm initialization to about 11.4 ms; adding experimental shallow copies reduced it to about 10.1 ms.
+Neither restored baseline performance.
+
+By default, SharedTree disables validation (`FormatValidatorNoOp`), but still constructs schemas.
+Those consumers benefit from cheaper modifiers without incurring TypeBox compilation or checking.
+Consumers that enable validation (`FormatValidatorBasic`) incur all three phases.
+[Codec construction](../../src/codec/codec.ts) compiles validators once and reuses them; validation does not rebuild them.
+
+### CI symptoms are not the primary evidence
+
+The investigation began with three memory benchmarks exceeding a 2,000 ms timeout in [coverage build 427665](https://dev.azure.com/fluidframework/public/_build/results?buildId=427665&view=ms.vss-test-web.build-test-results-tab).
+They took 2,236/2,260/2,240 ms; earlier branch build 427619 passed them at 1,397/1,470/1,567 ms.
+Locally, the same tests passed without instrumentation at 333/153/111 ms on the baseline and 379/184/145 ms on the initial migration.
+
+**Local slowdowns were reproduced; the two-second CI timeout was not reproduced in isolation.**
+Coverage, process concurrency, and explicit garbage collection in the memory harness affect those tests.
+Reduced copying plausibly lowers garbage-collection pressure, but that contribution was not isolated.
+The evidence is from Node.js, not a browser or a complete production application.
+
+## Proposed next steps
+
+**For TypeBox discussion:** agree on modifier sharing semantics, deterministic compilation, the freezing contract, and package side-effect metadata.
+The examples above can become small regression tests.
+Investigate validation-code optimizations once standalone representative workloads are available.
+
+**For Fluid:** retain reduced benchmark fixtures; rerun the exact candidate release without local dependency patches; measure full consumer bundles; and run codec, persisted-format compatibility, refinement, snapshot, and coverage tests.
+Isolate each optimization before combining them, and agree on explicit performance and bundle-size budgets for any remaining regression.
+
+Our recommendation is to hold this migration until the customer-impacting issues are fixed in a published dependency or the remaining tradeoffs are explicitly accepted.
+This is a proposed Fluid merge gate, not a configured pipeline gate or a request for TypeBox to adopt Fluid-specific performance guarantees.
