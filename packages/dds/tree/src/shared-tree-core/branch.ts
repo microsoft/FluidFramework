@@ -148,7 +148,7 @@ export class SharedTreeBranch<
 	> = this.#events;
 	public readonly editor: TEditor;
 	private disposed = false;
-	private readonly unsubscribeBranchTrimmer?: () => void;
+	private unsubscribeBranchTrimmer?: () => void;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
@@ -441,9 +441,27 @@ export class SharedTreeBranch<
 		}
 
 		this.unsubscribeBranchTrimmer?.();
+		this.unsubscribeBranchTrimmer = undefined;
 
 		this.disposed = true;
 		this.#events.emit("dispose");
+	}
+
+	/**
+	 * Stops forwarding this branch's trimmer notifications without disposing the branch.
+	 *
+	 * @remarks
+	 * Removes the trimmer subscription that can retain this branch.
+	 * This does not stop history trimming or remove other references to the branch.
+	 * The branch no longer receives `ancestryTrimmed` events, so consumers cannot use those events
+	 * to release repair data incrementally.
+	 * Forks still subscribe to the same trimmer.
+	 *
+	 * Repeated calls have no effect. Safe to call before {@link dispose}.
+	 */
+	public detachTrimmer(): void {
+		this.unsubscribeBranchTrimmer?.();
+		this.unsubscribeBranchTrimmer = undefined;
 	}
 
 	private assertNotDisposed(): void {
