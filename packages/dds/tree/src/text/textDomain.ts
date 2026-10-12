@@ -519,7 +519,7 @@ export namespace PlainText {
 		 * @param sourceStart - The starting index of the range to move, inclusive.
 		 * @param sourceEnd - The ending index of the range to move, exclusive.
 		 * @remarks
-		 * See {@link (TreeArrayNode:interface).moveRangeToIndex} for details about destination gap semantics.
+		 * See {@link (TreeArrayNode:interface).(moveRangeToIndex:1)} for details about destination gap semantics.
 		 * @privateRemarks
 		 * `TreeArrayNode` exposes more move options than we expose here for a few reasons:
 		 *
