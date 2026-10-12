@@ -11,6 +11,15 @@ const config: Linter.Config[] = [
 	...recommended,
 	...sharedConfig,
 	{
+		files: ["playwright.config.ts", "tests/*.ts"],
+		languageOptions: {
+			parserOptions: {
+				projectService: false,
+				project: "./tsconfig.playwright.json",
+			},
+		},
+	},
+	{
 		files: ["**/*.jsx", "**/*.tsx"],
 		rules: {
 			"react-hooks/exhaustive-deps": ["error"],
