@@ -5,11 +5,8 @@
 ---
 Plain and formatted text nodes support moving character ranges
 
-The `PlainText.Members` API now exposes `moveRangeToIndex`, matching the equivalent `TreeArrayNode` operation.
-Because `FormattedText.Members` extends `PlainText.Members`, both plain and formatted text nodes can now reorder ranges of text without removing and reinserting characters.
-
-The destination gap is a position between characters before the move, not an index in the resulting text.
-For example, moving `"ab"` between `"d"` and `"e"` uses destination gap `4`:
+The [PlainText.Members](https://fluidframework.com/docs/api/tree/plaintext-namespace/members-interface) API now exposes `moveRangeToIndex`, matching the existing [TreeArrayNode.moveRangeToIndex](https://fluidframework.com/docs/api/tree/treearraynode-interface#moverangetoindex-methodsignature) operation.
+Both plain text and [formatted text](https://fluidframework.com/docs/api/tree/formattedtext-namespace/members-interface) nodes can now reorder ranges of text without removing and reinserting characters.
 
 ```typescript
 import { PlainText } from "@fluidframework/tree/alpha";
