@@ -7,104 +7,151 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type ChangeFamily,
 	CommitKind,
 	type GraphCommit,
 	type LabelTree,
-	type RevertibleAlpha,
 	type RevertOptionsAlpha,
+	type RevertToOptionsAlpha,
+	type RevertibleAlpha,
 	RevertibleStatus,
 	type RevisionTag,
-	type TaggedChange,
 	diffHistories,
+	findAncestor,
 	getDeltaChangeProfile,
 	isAncestor,
+	makeAnonChange,
 	rebaseChange,
 	tagChange,
 } from "../core/index.js";
 import { intoDelta } from "../feature-libraries/index.js";
-import type { SharedTreeBranch } from "../shared-tree-core/index.js";
-import type { UntypedTreeView } from "../simple-tree/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
-import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
+import { snapshotCustomMetadata } from "./customMetadata.js";
+import {
+	toRevertibleSupport,
+	type RevertMetrics,
+	type RevertibleBranch,
+	type RevertibleFactoryContext,
+	type RevertibleSupportController,
+	type RevertibleSupportHost,
+} from "./revertibleSupport.js";
+import { hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
-type TreeBranch = SharedTreeBranch<
-	SharedTreeEditBuilder,
-	SharedTreeChange,
-	SharedTreeChangeProcessingContext
->;
-
-/**
- * Metrics derived from a revert operation.
- */
-export interface RevertMetrics {
-	/**
-	 * The age of the revertible commit relative to the head of the branch to which the reversion will be applied.
-	 */
-	readonly age: number;
-}
-
-interface HistoryRecoveryHost {
-	readonly changeFamily: ChangeFamily<
-		SharedTreeEditBuilder,
-		SharedTreeChange,
-		SharedTreeChangeProcessingContext
-	>;
-	readonly mintRevisionTag: () => RevisionTag;
-	readonly getBranch: () => TreeBranch;
-	readonly checkCanRevert: () => void;
-	readonly applyRevert: (
-		change: TaggedChange<SharedTreeChange>,
-		kind: CommitKind,
-		labelTree: LabelTree | undefined,
-		customMetadata: JsonCompatibleReadOnlyObject | undefined,
-	) => void;
-	readonly resolveTarget: (targetView: UntypedTreeView) => {
-		readonly controller: HistoryRecoveryController;
-		readonly branchHead: GraphCommit<SharedTreeChange>;
-	};
-	readonly logRevert: (metrics: RevertMetrics) => void;
-}
-
-/**
- * Owns the history retained for revertibles and the algorithms used to recover earlier changes.
- */
-export class HistoryRecoveryController {
+class DefaultRevertibleSupport implements RevertibleSupportController {
 	private readonly revertibles = new Map<RevisionTag, RevertibleAlpha>();
-	private readonly revertibleCommitBranches = new Map<RevisionTag, TreeBranch>();
+	private readonly revertibleCommitBranches = new Map<RevisionTag, RevertibleBranch>();
 
-	public constructor(private readonly host: HistoryRecoveryHost) {}
+	public constructor(private readonly host: RevertibleSupportHost) {}
 
-	public createRevertible(
+	public createFactory(
 		commit: GraphCommit<SharedTreeChange>,
 		kind: CommitKind,
-		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
 		labelTree: LabelTree | undefined,
-	): RevertibleAlpha {
-		const { revision } = commit;
-		if (this.revertibleCommitBranches.has(revision)) {
-			throw new UsageError(
-				"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
-			);
-		}
-
-		const revertible = this.makeRevertible(revision, kind, onRevertibleDisposed, labelTree);
-		this.revertibleCommitBranches.set(revision, this.host.getBranch().fork(commit));
-		this.revertibles.set(revision, revertible);
-		return revertible;
+	): RevertibleFactoryContext {
+		const capturedLabelTree = labelTree === undefined ? undefined : cloneLabelTree(labelTree);
+		let withinEventContext = true;
+		return {
+			factory: (onRevertibleDisposed) => {
+				if (!withinEventContext) {
+					throw new UsageError(
+						"Cannot get a revertible outside of the context of a changed event.",
+					);
+				}
+				const { revision } = commit;
+				if (this.revertibleCommitBranches.has(revision)) {
+					throw new UsageError(
+						"Cannot generate the same revertible more than once. Note that this can happen when multiple changed event listeners are registered.",
+					);
+				}
+				const revertible = this.makeRevertible(
+					revision,
+					kind,
+					onRevertibleDisposed,
+					capturedLabelTree,
+				);
+				this.revertibleCommitBranches.set(revision, this.host.getBranch().fork(commit));
+				this.revertibles.set(revision, revertible);
+				return revertible;
+			},
+			endEventContext: () => {
+				withinEventContext = false;
+			},
+		};
 	}
 
 	public disposeRevertibleForRemovedCommit(revision: RevisionTag): void {
 		this.revertibles.get(revision)?.dispose();
 	}
 
+	public cloneRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
+		labelTree: LabelTree | undefined,
+		sourceBranch: RevertibleBranch,
+	): RevertibleAlpha {
+		this.revertibleCommitBranches.set(revision, sourceBranch.fork());
+		const cloned = this.makeRevertible(revision, kind, onRevertibleDisposed, labelTree);
+		this.revertibles.set(revision, cloned);
+		return cloned;
+	}
+
 	public dispose(): void {
 		for (const revertible of this.revertibles.values()) {
 			revertible.dispose();
 		}
+	}
+
+	public revertTo(revisionString: string, options: RevertToOptionsAlpha | undefined): void {
+		this.host.checkCanRevert(
+			"Reverting to a revision",
+			"Reverting to a revision is not supported during transactions.",
+		);
+		const customMetadata = snapshotCustomMetadata(options?.customMetadata);
+		const revision = this.host.tryRecompressRevision(revisionString);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+
+		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
+		const targetCommit = findAncestor(
+			[this.host.getBranch().getHead(), commitsToUndo],
+			(commit) => {
+				if (commit.revision === revision) {
+					return true;
+				}
+				if (hasSchemaChange(commit.change)) {
+					assert(commit.revision !== "root", "Unexpected schema change in root commit.");
+					const schemaRevision = this.host.decompressRevision(commit.revision);
+					throw new UsageError(
+						`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${schemaRevision}.`,
+					);
+				}
+				return false;
+			},
+		);
+		if (targetCommit === undefined) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		if (commitsToUndo.length === 0) {
+			return;
+		}
+
+		const revisionForInvert = this.host.mintRevisionTag();
+		const toUndo = this.host.changeFamily.rebaser.compose(commitsToUndo);
+		const inverse = this.host.changeFamily.rebaser.invert(
+			makeAnonChange(toUndo),
+			false,
+			revisionForInvert,
+		);
+		this.host
+			.getBranch()
+			.apply(
+				tagChange(inverse, revisionForInvert),
+				CommitKind.Default,
+				customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] },
+			);
 	}
 
 	private makeRevertible(
@@ -142,8 +189,7 @@ export class HistoryRecoveryController {
 					revertible.dispose();
 				}
 			},
-			clone: (targetView: UntypedTreeView) => {
-				// TODO:#23442: Reuse one retained branch per revision when cloning revertibles to forked branches.
+			clone: (targetView) => {
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				if (revertibleBranch === undefined) {
 					throw new UsageError("Unable to clone a revertible that has been disposed.");
@@ -157,12 +203,12 @@ export class HistoryRecoveryController {
 					);
 				}
 
-				target.controller.revertibleCommitBranches.set(revision, revertibleBranch.fork());
-				return target.controller.makeRevertible(
+				return target.controller.cloneRevertible(
 					revision,
 					kind,
 					onRevertibleDisposed,
 					labelTree,
+					revertibleBranch,
 				);
 			},
 			dispose: () => {
@@ -191,7 +237,10 @@ export class HistoryRecoveryController {
 		labelTree: LabelTree | undefined,
 		customMetadata: JsonCompatibleReadOnlyObject | undefined,
 	): RevertMetrics {
-		this.host.checkCanRevert();
+		this.host.checkCanRevert(
+			"Reverting a commit",
+			"Undo is not yet supported during transactions.",
+		);
 
 		const revertibleBranch = this.revertibleCommitBranches.get(revision);
 		assert(revertibleBranch !== undefined, "Expected to find a revertible commit.");
@@ -248,28 +297,11 @@ export class HistoryRecoveryController {
 	}
 }
 
-function snapshotCustomMetadata(
-	customMetadata: JsonCompatibleReadOnlyObject | undefined,
-): JsonCompatibleReadOnlyObject | undefined {
-	if (customMetadata === undefined) {
-		return undefined;
-	}
-	let serialized: string | undefined;
-	try {
-		serialized = JSON.stringify(customMetadata);
-	} catch (error: unknown) {
-		throw new UsageError(
-			`"customMetadata" must be JSON-serializable: ${error instanceof Error ? error.message : String(error)}`,
-		);
-	}
-	if (serialized === undefined) {
-		throw new UsageError(`"customMetadata" must be JSON-serializable.`);
-	}
-	const snapshot: unknown = JSON.parse(serialized);
-	if (typeof snapshot !== "object" || snapshot === null || Array.isArray(snapshot)) {
-		throw new UsageError(`"customMetadata" must be a JSON object.`);
-	}
-	return snapshot as JsonCompatibleReadOnlyObject;
+function cloneLabelTree(tree: LabelTree): LabelTree {
+	return {
+		label: tree.label,
+		sublabels: tree.sublabels.map(cloneLabelTree),
+	};
 }
 
 function sharedTreeChangeHasApplicationFacingChanges(change: SharedTreeChange): boolean {
@@ -285,3 +317,12 @@ function sharedTreeChangeHasApplicationFacingChanges(change: SharedTreeChange): 
 	}
 	return false;
 }
+
+/**
+ * Enables creation and application of revertibles.
+ *
+ * @alpha
+ */
+export const RevertibleSupportEnabled = toRevertibleSupport(
+	(getHost) => new DefaultRevertibleSupport(getHost()),
+);

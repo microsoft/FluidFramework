@@ -43,13 +43,11 @@ import {
 	TreeStoredSchemaRepository,
 	type TreeStoredSchemaSubscription,
 	combineVisitors,
-	diffHistories,
 	makeDetachedFieldIndex,
 	rootFieldKey,
 	tagChange,
 	visitDelta,
 	type RevertibleAlphaFactory,
-	type RevertibleAlpha,
 	type RevertToOptionsAlpha,
 	type CustomMetadataTree,
 	type GraphCommit,
@@ -58,6 +56,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	LeafNodeStoredSchema,
+	diffHistories,
 	type ChangeMetadata,
 	type LabelTree,
 	type TransactionLabels,
@@ -125,7 +124,14 @@ import {
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { snapshotCustomMetadata } from "./customMetadata.js";
 import { DefaultTreeBranchHistory } from "./history.js";
+import {
+	buildRevertibleSupport,
+	type RevertibleSupport,
+	type RevertibleSupportController,
+	type RevertMetrics as SupportRevertMetrics,
+} from "./revertibleSupport.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
@@ -138,38 +144,8 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
 import { makeSerializedChangeCodec, type SerializedChangeCodec } from "./serializedChange.js";
-import { HistoryRecoveryController } from "./historyRecoveryController.js";
 
-/**
- * Returns a defensive copy of the given metadata, validating that it can be persisted.
- * @remarks
- * The round-trip through JSON ensures that the value read back locally is exactly the value that peers and
- * future summaries will see, and that later mutation of the caller's object cannot affect an existing commit.
- * @throws A `UsageError` if the value cannot be represented as a JSON object.
- */
-function snapshotCustomMetadata(
-	customMetadata: JsonCompatibleReadOnlyObject | undefined,
-): JsonCompatibleReadOnlyObject | undefined {
-	if (customMetadata === undefined) {
-		return undefined;
-	}
-	let serialized: string | undefined;
-	try {
-		serialized = JSON.stringify(customMetadata);
-	} catch (error: unknown) {
-		throw new UsageError(
-			`"customMetadata" must be JSON-serializable: ${error instanceof Error ? error.message : String(error)}`,
-		);
-	}
-	if (serialized === undefined) {
-		throw new UsageError(`"customMetadata" must be JSON-serializable.`);
-	}
-	const snapshot: unknown = JSON.parse(serialized);
-	if (typeof snapshot !== "object" || snapshot === null || Array.isArray(snapshot)) {
-		throw new UsageError(`"customMetadata" must be a JSON object.`);
-	}
-	return snapshot as JsonCompatibleReadOnlyObject;
-}
+const noRevertible = (): undefined => undefined;
 
 /**
  * Wraps metadata for an operation which produces a single commit.
@@ -199,13 +175,6 @@ function* collectTreeLabels(node: LabelTree): IterableIterator<unknown> {
  * (by the framework or by external listeners reading {@link TransactionLabels.tree})
  * cannot affect the labels the revertible will emit.
  */
-function cloneLabelTree(tree: LabelTree): LabelTree {
-	return {
-		label: tree.label,
-		sublabels: tree.sublabels.map(cloneLabelTree),
-	};
-}
-
 /**
  * Builds the labels set for a change event from the label tree.
  * If the tree exists and contains at least one defined label, returns a set of all
@@ -366,7 +335,8 @@ export function createTreeCheckout(
 	idCompressor: IIdCompressor,
 	mintRevisionTag: () => RevisionTag,
 	revisionTagCodec: RevisionTagCodec,
-	args?: {
+	args: {
+		revertibleSupport: RevertibleSupport;
 		branch?: SharedTreeBranch<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
@@ -391,27 +361,27 @@ export function createTreeCheckout(
 		getFinalizedCommit?: () => GraphCommit<SharedTreeChange>;
 	},
 ): TreeCheckout {
-	const schema = args?.schema ?? new TreeStoredSchemaRepository();
-	const forest = args?.forest ?? buildForest(new Breakable("TreeCheckout"), schema);
+	const schema = args.schema ?? new TreeStoredSchemaRepository();
+	const forest = args.forest ?? buildForest(new Breakable("TreeCheckout"), schema);
 	const defaultCodecOptions: CodecWriteOptions = {
 		jsonValidator: FormatValidatorNoOp,
 		minVersionForCollab: FluidClientVersion.v2_0,
 	};
-	const codecOptions: CodecWriteOptions = { ...defaultCodecOptions, ...args?.codecOptions };
+	const codecOptions: CodecWriteOptions = { ...defaultCodecOptions, ...args.codecOptions };
 	const changeFamily =
-		args?.changeFamily ??
+		args.changeFamily ??
 		new SharedTreeChangeFamily(
 			revisionTagCodec,
-			args?.fieldBatchCodec ?? fieldBatchCodecBuilder.build(codecOptions),
+			args.fieldBatchCodec ?? fieldBatchCodecBuilder.build(codecOptions),
 			codecOptions,
-			args?.chunkCompressionStrategy,
+			args.chunkCompressionStrategy,
 			idCompressor,
 		);
 
 	// TODO: If a branch is passed in, is it supposed to be local main?
 	// Otherwise shouldn't we set `isSharedBranch` to false?
 	const branch =
-		args?.branch ??
+		args.branch ??
 		new SharedTreeBranch(
 			{
 				change: changeFamily.rebaser.compose([]),
@@ -433,13 +403,26 @@ export function createTreeCheckout(
 		revisionTagCodec,
 		idCompressor,
 		codecOptions.jsonValidator,
-		args?.removedRoots,
+		args.revertibleSupport,
+		args.removedRoots,
 		true,
-		args?.getFinalizedCommit,
+		args.getFinalizedCommit,
 	);
 }
 
-export type { RevertMetrics } from "./historyRecoveryController.js";
+/**
+ * Metrics derived from a revert operation.
+ *
+ * @see {@link TreeCheckout.revertRevertible}.
+ */
+export interface RevertMetrics extends SupportRevertMetrics {
+	/**
+	 * The age of the revertible commit relative to the head of the branch to which the reversion will be applied.
+	 */
+	readonly age: number;
+
+	// TODO: add other stats as needed for telemetry, etc.
+}
 
 /**
  * Get the {@link TreeCheckout} associated with a given {@link UntypedTreeView}.
@@ -587,10 +570,10 @@ export class TreeCheckout implements ITreeCheckout {
 		IEmitter<LocalCommitEvents>
 	>();
 
-	private readonly historyRecovery: HistoryRecoveryController;
+	private readonly revertibleSupport: RevertibleSupportController;
 
 	/**
-	 * The name of the telemetry event logged when a revertible is reverted.
+	 * The name of the telemetry event logged for calls to {@link TreeCheckout.revertRevertible}.
 	 * @privateRemarks Exposed for testing purposes.
 	 */
 	public static readonly revertTelemetryEventName = "RevertRevertible";
@@ -623,6 +606,7 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
 		private readonly jsonValidator: FormatValidator,
+		private readonly revertibleSupportType: RevertibleSupport,
 		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		public readonly disposeForksAfterTransaction = true,
 		/** Supplies the boundary for {@link TreeCheckout.getFinalizedCommit}, instead of the current graph root. */
@@ -634,14 +618,20 @@ export class TreeCheckout implements ITreeCheckout {
 		);
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
-		this.historyRecovery = new HistoryRecoveryController({
+		this.revertibleSupport = buildRevertibleSupport(this.revertibleSupportType, () => ({
 			changeFamily: this.changeFamily,
 			mintRevisionTag: this.mintRevisionTag,
+			tryRecompressRevision: (revision) =>
+				this.idCompressor.tryRecompress(revision as StableId),
+			decompressRevision: (revision) => {
+				assert(revision !== "root", "Cannot decompress the root revision.");
+				return this.idCompressor.decompress(revision);
+			},
 			getBranch: () => this.#transaction.branch,
-			checkCanRevert: () => {
-				this.editLock.checkUnlocked("Reverting a commit");
+			checkCanRevert: (description, transactionError) => {
+				this.editLock.checkUnlocked(description);
 				if (this.transaction.size > 0) {
-					throw new UsageError("Undo is not yet supported during transactions.");
+					throw new UsageError(transactionError);
 				}
 			},
 			applyRevert: (change, kind, labelTree, customMetadata) => {
@@ -654,10 +644,10 @@ export class TreeCheckout implements ITreeCheckout {
 				}
 			},
 			resolveTarget: (targetView) => {
-				const targetCheckout = getCheckout(targetView);
+				const target = getCheckout(targetView);
 				return {
-					controller: targetCheckout.historyRecovery,
-					branchHead: targetCheckout.#transaction.branch.getHead(),
+					controller: target.revertibleSupport,
+					branchHead: target.#transaction.branch.getHead(),
 				};
 			},
 			logRevert: (metrics) => {
@@ -666,7 +656,7 @@ export class TreeCheckout implements ITreeCheckout {
 					...metrics,
 				});
 			},
-		});
+		}));
 		this.registerForBranchEvents();
 	}
 
@@ -921,30 +911,10 @@ export class TreeCheckout implements ITreeCheckout {
 			for (const commit of event.newCommits) {
 				const kind = event.type === "append" ? event.kind : CommitKind.Default;
 				const { change, revision } = commit;
-
-				// Snapshot the label tree for this commit before any listener runs, so the captured
-				// value is stable against mutations to `metadata.labels.tree` (which aliases the
-				// live `labelTreeNode`).
-				const commitLabelTree =
-					this.labelTreeNode === undefined ? undefined : cloneLabelTree(this.labelTreeNode);
-
-				const getRevertible = hasSchemaChange(change)
+				const factoryContext = hasSchemaChange(change)
 					? undefined
-					: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
-							if (!withinEventContext) {
-								throw new UsageError(
-									"Cannot get a revertible outside of the context of a changed event.",
-								);
-							}
-							return this.historyRecovery.createRevertible(
-								commit,
-								kind,
-								onRevertibleDisposed,
-								commitLabelTree,
-							);
-						};
-
-				let withinEventContext = true;
+					: this.revertibleSupport.createFactory(commit, kind, this.labelTreeNode);
+				const getRevertible = factoryContext?.factory;
 
 				const events = createEmitter<LocalCommitEvents>();
 				this.localCommitEventEmitters.set(commit.revision, events);
@@ -964,21 +934,24 @@ export class TreeCheckout implements ITreeCheckout {
 							{ idCompressor: this.idCompressor },
 						);
 					},
-					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
+					getRevertible: getRevertible ?? noRevertible,
 					label: this.labelTreeNode?.label,
 					labels: buildLabelsSet(this.labelTreeNode),
 					events,
 				};
 
-				this.emitChangedLocked(() => {
-					this.#events.emit("changed", metadata, getRevertible);
-				});
-				withinEventContext = false;
+				try {
+					this.emitChangedLocked(() => {
+						this.#events.emit("changed", metadata, getRevertible);
+					});
+				} finally {
+					factoryContext?.endEventContext();
+				}
 			}
 		} else if (event.type === "remove") {
 			// Commits that are rolled back should no longer be revertible
 			for (const commit of event.removedCommits) {
-				this.historyRecovery.disposeRevertibleForRemovedCommit(commit.revision);
+				this.revertibleSupport.disposeRevertibleForRemovedCommit(commit.revision);
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
@@ -1391,6 +1364,7 @@ export class TreeCheckout implements ITreeCheckout {
 			this.revisionTagCodec,
 			this.idCompressor,
 			this.jsonValidator,
+			this.revertibleSupportType,
 			this._removedRoots.clone(),
 		);
 		this.#events.emit("fork", checkout);
@@ -1457,55 +1431,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.checkNotDisposed(
 			"The branch has already been disposed and prior revisions cannot be reverted to.",
 		);
-		this.editLock.checkUnlocked("Reverting to a revision");
-		if (this.#transaction.size > 0) {
-			throw new UsageError("Reverting to a revision is not supported during transactions.");
-		}
-		const customMetadata = snapshotCustomMetadata(options?.customMetadata);
-		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
-		if (revision === undefined) {
-			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
-		}
-		// Populated with the commits that came after the target commit, from oldest to newest.
-		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
-		const targetCommit = findAncestor(
-			[this.#transaction.activeBranch.getHead(), commitsToUndo],
-			(commit) => {
-				if (commit.revision === revision) {
-					return true;
-				}
-				if (hasSchemaChange(commit.change)) {
-					assert(
-						commit.revision !== "root",
-						0xd4f /* Unexpected schema change in root commit */,
-					);
-					const schemaRevision = this.idCompressor.decompress(commit.revision);
-					throw new UsageError(
-						`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${schemaRevision}.`,
-					);
-				}
-				return false;
-			},
-		);
-		if (targetCommit === undefined) {
-			throw new UsageError(`No commit found with revision: ${revisionString}`);
-		}
-		if (!hasSome(commitsToUndo)) {
-			// The target commit is already the head of the branch, so there is nothing to revert.
-			return;
-		}
-		const revisionForInvert = this.mintRevisionTag();
-		const toUndo = this.changeFamily.rebaser.compose(commitsToUndo);
-		const inverse = this.changeFamily.rebaser.invert(
-			makeAnonChange(toUndo),
-			false,
-			revisionForInvert,
-		);
-		this.#transaction.branch.apply(
-			tagChange(inverse, revisionForInvert),
-			CommitKind.Default,
-			toMetadataTree(customMetadata),
-		);
+		this.revertibleSupport.revertTo(revisionString, options);
 	}
 
 	private rebase(view: UntypedTreeView): void {
@@ -1624,7 +1550,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.disposed = true;
 		this.#transaction.branch.dispose();
 		this.#transaction.dispose();
-		this.historyRecovery.dispose();
+		this.revertibleSupport.dispose();
 		for (const view of this.views) {
 			view.dispose();
 		}

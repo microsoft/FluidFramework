@@ -179,6 +179,8 @@ import {
 	buildConfiguredForest,
 	type ForestType,
 	ForestTypeReference,
+	RevertibleSupportEnabled,
+	type RevertibleSupport,
 	type SharedTreeOptionsInternal,
 	type TreeTransactor,
 } from "../shared-tree/index.js";
@@ -672,9 +674,12 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 		protected readonly onLoad?: (tree: ISharedTree) => void,
 		options: SharedTreeOptionsInternal = {},
 	) {
-		const optionsUpdated: SharedTreeOptionsInternal = {
+		const optionsUpdated: SharedTreeOptionsInternal & {
+			revertibleSupport: RevertibleSupport;
+		} = {
 			...options,
 			jsonValidator: FormatValidatorBasic,
+			revertibleSupport: options.revertibleSupport ?? RevertibleSupportEnabled,
 		};
 		this.inner = configuredSharedTreeInternal(
 			optionsUpdated,
@@ -936,6 +941,7 @@ function createCheckoutWithContent(
 			: new RevisionTagCodec(idCompressor),
 		{
 			...checkoutArgs,
+			revertibleSupport: RevertibleSupportEnabled,
 			forest,
 			schema,
 		},

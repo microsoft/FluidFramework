@@ -3,42 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import {
-	type ISharedObject,
-	type ISharedObjectKind,
-	makeSharedObjectKind,
-	type KernelArgs,
-	type SharedKernelFactory,
-	type SharedObjectOptions,
-	type FactoryOut,
-	type SharedObjectKindAlpha,
+import type {
+	ISharedObject,
+	ISharedObjectKind,
+	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { FluidClientVersion, type FormatVersion } from "./codec/index.js";
 import {
-	detachedFieldIndexCodecBuilder,
-	DetachedFieldIndexFormatVersion,
-} from "./core/index.js";
-import {
-	SharedTreeKernel,
 	type ITreePrivate,
 	type SharedTreeOptions,
 	type SharedTreeOptionsBeta,
-	type SharedTreeOptionsInternal,
-	type SharedTreeKernelView,
+	RevertibleSupportEnabled,
 } from "./shared-tree/index.js";
-import {
-	editManagerCodecName,
-	EditManagerFormatVersion,
-	messageCodecName,
-	MessageFormatVersion,
-} from "./shared-tree-core/index.js";
-import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
 import type { ITree } from "./simple-tree/index.js";
-import { Breakable, copyProperty } from "./util/index.js";
+import { configuredSharedTreeInternal, resolveOptions } from "./treeFactoryCore.js";
 
 /**
  * {@link ITreePrivate} extended with ISharedObject.
@@ -46,65 +25,6 @@ import { Breakable, copyProperty } from "./util/index.js";
  * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
  */
 export interface ISharedTree extends ISharedObject, ITreePrivate {}
-
-/**
- * Creates a factory for shared tree kernels with the given options.
- * @remarks
- * Exposes {@link ITreePrivate} to allow access to internals in tests without a cast.
- * Code exposing this beyond this package will need to update to a more public type.
- */
-function treeKernelFactory(
-	options: SharedTreeOptionsInternal,
-): SharedKernelFactory<SharedTreeKernelView> {
-	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
-		if (args.idCompressor === undefined) {
-			throw new UsageError("IdCompressor must be enabled to use SharedTree");
-		}
-
-		const { minVersionForCollab, ...otherOptions } = options;
-
-		const adjustedOptions = {
-			...otherOptions,
-			// Cases:
-			// A. If options specifies minVersionForCollab, it takes precedence over args.minVersionForCollab.
-			// This value is set when:
-			// - A customer using the declarative SharedTree API specifies the setting at the Shared Tree level.
-			//   There is currently no way to set it via the declarative API, but it could be added in the future.
-			// - treeKernelFactory is invoked in a fuzz test with a specific minVersionForCollab
-			// B. Otherwise, we use args.minVersionForCollab, which is propagated from the ContainerRuntime.
-			// C. If neither specifies it, we fall back to a default value default of 2.0 since that is the oldest version that supports SharedTree.
-			minVersionForCollab:
-				minVersionForCollab ?? args.minVersionForCollab ?? FluidClientVersion.v2_0,
-		};
-
-		return new SharedTreeKernel(
-			new Breakable("SharedTree", args.logger),
-			args.sharedObject,
-			args.serializer,
-			args.submitLocalMessage,
-			args.lastSequenceNumber,
-			args.initialSequenceNumber,
-			args.idCompressor,
-			adjustedOptions,
-		);
-	}
-
-	return {
-		create: (args: KernelArgs): FactoryOut<SharedTreeKernelView> => {
-			const k = treeFromKernelArgs(args);
-			return { kernel: k, view: k.view };
-		},
-
-		async loadCore(
-			args: KernelArgs,
-			storage: IChannelStorageService,
-		): Promise<FactoryOut<SharedTreeKernelView>> {
-			const k = treeFromKernelArgs(args);
-			await k.loadCore(storage);
-			return { kernel: k, view: k.view };
-		},
-	};
-}
 
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees
@@ -197,48 +117,11 @@ export function configuredSharedTreeAlpha(
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
-	const internalOptions = resolveOptions(options);
+	const internalOptions = resolveOptions(
+		options,
+		options.revertibleSupport ?? RevertibleSupportEnabled,
+	);
 	return configuredSharedTreeInternal(internalOptions);
 }
 
-export function configuredSharedTreeInternal(
-	options: SharedTreeOptionsInternal,
-): ISharedObjectKind<ITree> & SharedObjectKindAlpha<ITree> {
-	const sharedObjectOptions: SharedObjectOptions<ITree> = {
-		type: SharedTreeFactoryType,
-		attributes: SharedTreeAttributes,
-		telemetryContextPrefix: "fluid_sharedTree_",
-		factory: treeKernelFactory(options),
-	};
-
-	return makeSharedObjectKind<ITree>(sharedObjectOptions);
-}
-
-export function resolveOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
-	const internal: SharedTreeOptionsInternal = {
-		...resolveFormatOptions(options),
-	};
-	for (const optionName of Object.keys(options)) {
-		copyProperty(options, optionName, internal);
-	}
-	return internal;
-}
-
-function resolveFormatOptions(options: SharedTreeOptions): SharedTreeOptionsInternal {
-	const enableSharedBranches = options.enableSharedBranches ?? false;
-
-	if (enableSharedBranches) {
-		return sharedBranchesOptions;
-	}
-
-	return {};
-}
-
-const sharedBranchesOptions: SharedTreeOptionsInternal = {
-	writeVersionOverrides: new Map<string, FormatVersion>([
-		[editManagerCodecName, EditManagerFormatVersion.vSharedBranches],
-		[messageCodecName, MessageFormatVersion.vSharedBranches],
-		[detachedFieldIndexCodecBuilder.name, DetachedFieldIndexFormatVersion.v2],
-	]),
-	allowPossiblyIncompatibleWriteVersionOverrides: true,
-};
+export { configuredSharedTreeInternal, resolveOptions } from "./treeFactoryCore.js";

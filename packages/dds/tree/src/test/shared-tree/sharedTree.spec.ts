@@ -64,6 +64,7 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type ITreePrivate,
+	RevertibleSupportEnabled,
 	Tree,
 	TreeBeta,
 	type TreeCheckout,
@@ -3412,7 +3413,10 @@ describe("SharedTree", () => {
 				"based on a commit outside the collab window",
 			] as const) {
 				it(subCase, async () => {
-					const internalOption = resolveOptions({ enableSharedBranches: true });
+					const internalOption = resolveOptions(
+						{ enableSharedBranches: true },
+						RevertibleSupportEnabled,
+					);
 					const provider = await TestTreeProvider.create(
 						1,
 						SummarizeType.onDemand,

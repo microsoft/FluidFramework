@@ -105,6 +105,7 @@ import type {
 	ForestTypeOptimized,
 } from "./forestTypeOptimized.js";
 import { ForestTypeReference } from "./forestTypeReference.js";
+import type { RevertibleSupport } from "./revertibleSupport.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -213,9 +214,14 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
+		assert(
+			optionsParam.revertibleSupport !== undefined,
+			"SharedTree requires a configured revertible support provider.",
+		);
 		const options: Required<SharedTreeOptionsInternal> = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
+			revertibleSupport: optionsParam.revertibleSupport,
 		};
 		if (lt(options.minVersionForCollab, FluidClientVersion.v2_0)) {
 			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
@@ -319,6 +325,7 @@ export class SharedTreeKernel
 		);
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
+			revertibleSupport: options.revertibleSupport,
 			branch: this.getLocalBranch(),
 			changeFamily,
 			schema,
@@ -672,6 +679,13 @@ export interface SharedTreeOptions
 	readonly retainHistory?: boolean;
 
 	/**
+	 * Selects whether this tree supports creating and applying revertibles.
+	 *
+	 * @defaultValue {@link RevertibleSupportEnabled}
+	 */
+	readonly revertibleSupport?: RevertibleSupport;
+
+	/**
 	 * When `true`, validates that commits being submitted for the first time can be applied without errors to a view.
 	 * In the event that a commit cannot be applied, SharedTree will throw an error and will enter a "broken" state, preventing the offending commit (and any further commits) from being submitted.
 	 *
@@ -728,7 +742,9 @@ export interface SharedTreeFormatOptions {
 	treeEncodeType: TreeCompressionStrategy;
 }
 
-export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
+export const defaultSharedTreeOptions: Required<
+	Omit<SharedTreeOptionsInternal, "revertibleSupport">
+> = {
 	jsonValidator: FormatValidatorNoOp,
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,

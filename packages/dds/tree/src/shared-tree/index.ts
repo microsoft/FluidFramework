@@ -24,6 +24,9 @@ export { type ForestType, buildConfiguredForest } from "./forestType.js";
 export { ForestTypeReference } from "./forestTypeReference.js";
 export { ForestTypeOptimized } from "./forestTypeOptimized.js";
 export { ForestTypeExpensiveDebug } from "./forestTypeExpensiveDebug.js";
+export { type RevertibleSupport } from "./revertibleSupport.js";
+export { RevertibleSupportEnabled } from "./revertibleSupportEnabled.js";
+export { RevertibleSupportDisabled } from "./revertibleSupportDisabled.js";
 
 export {
 	createTreeCheckout,

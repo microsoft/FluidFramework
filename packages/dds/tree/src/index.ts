@@ -62,6 +62,9 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	type RevertibleSupport,
+	RevertibleSupportEnabled,
+	RevertibleSupportDisabled,
 	minimize,
 } from "./shared-tree/index.js";
 
@@ -337,6 +340,7 @@ export {
 	configuredSharedTreeBeta,
 	configuredSharedTreeBetaLegacy,
 } from "./treeFactory.js";
+export { configuredSharedTreeWithoutHistoryAlpha } from "./configuredSharedTreeWithoutHistory.js";
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
