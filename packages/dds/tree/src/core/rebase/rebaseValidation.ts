@@ -12,6 +12,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * The levels of rebase validation that can be {@link RebaseValidation | configured}.
+ * @remarks
+ * All validation is tree-shaken out of production/optimized builds.
  * @alpha
  */
 export enum RebaseValidationLevel {
@@ -19,7 +21,7 @@ export enum RebaseValidationLevel {
 	None = 0,
 	/** A minimal amount of rebase validation is performed, with minimal performance overhead. */
 	Cheap = 1,
-	/** The highest level of rebase validation, with the highest potential performance overhead. */
+	/** Extensive rebase validation is performed, with the highest performance overhead. */
 	Strict = 2,
 }
 
@@ -31,18 +33,22 @@ export interface RebaseValidationAlpha {
 	/**
 	 * The current level of rebase validation.
 	 * Configurable via {@link RebaseValidationAlpha.setLevel}.
+	 * @remarks
+	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly currentLevel: RebaseValidationLevel;
 
 	/**
 	 * The levels of rebase validation that can be {@link RebaseValidationAlpha.setLevel | set}.
+	 * @remarks
+	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly Level: {
 		/** No rebase validation is performed. */
 		readonly None: RebaseValidationLevel.None;
 		/** A minimal amount of rebase validation is performed, with minimal performance overhead. */
 		readonly Cheap: RebaseValidationLevel.Cheap;
-		/** Full rebase validation is performed, with the highest level of scrutiny and potential performance overhead. */
+		/** Extensive rebase validation is performed, with the highest performance overhead. */
 		readonly Strict: RebaseValidationLevel.Strict;
 	};
 
@@ -55,6 +61,7 @@ export interface RebaseValidationAlpha {
 	 *
 	 * @remarks
 	 * The default validation level is {@link RebaseValidationLevel.Cheap}.
+	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
 
@@ -68,6 +75,7 @@ export interface RebaseValidationAlpha {
 	 *
 	 * @remarks
 	 * The default validation level is {@link RebaseValidationLevel.Cheap}.
+	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
 }
@@ -113,8 +121,10 @@ export const RebaseValidation: RebaseValidationAlpha = {
 
 /**
  * Runs a debug assertion when the validation level is at least {@link RebaseValidationLevel.Cheap | basic}.
- * @param prefix - A string to prepend to the debug assertion message if the assertion fails.
+ * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
+ * @remarks
+ * All validation is tree-shaken out of production/optimized builds.
  */
 export function cheapRebaseValidation(prefix: string, predicate: () => true | string): void {
 	debugAssert(() =>
@@ -126,8 +136,10 @@ export function cheapRebaseValidation(prefix: string, predicate: () => true | st
 
 /**
  * Runs a debug assertion when the validation level is {@link RebaseValidationLevel.Strict | full}.
- * @param prefix - A string to prepend to the debug assertion message if the assertion fails.
+ * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
+ * @remarks
+ * All validation is tree-shaken out of production/optimized builds.
  */
 export function strictRebaseValidation(prefix: string, predicate: () => true | string): void {
 	debugAssert(() =>
