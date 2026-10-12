@@ -1,5 +1,85 @@
 # fluid-framework
 
+## 3.5.0
+
+### Minor Changes
+
+- Add a format validator for environments that disallow dynamic code generation ([#28430](https://github.com/microsoft/FluidFramework/pull/28430)) [e3c7f0105f](https://github.com/microsoft/FluidFramework/commit/e3c7f0105fc5b16e7edff852733f4b7aeee5a5f1)
+
+  The new alpha `FormatValidatorInterpreted` validates persisted SharedTree data using TypeBox's JSON schema interpreter.
+  Unlike `FormatValidatorBasic`, it does not generate JavaScript functions at runtime, so it works with Content Security Policies that omit `unsafe-eval`.
+  Interpreted validation is slower than compiled validation, so applications without this restriction should continue to use `FormatValidatorBasic`.
+  SharedTree sandbox protocol validation now uses the interpreted validator so it also works in these restricted environments.
+
+  ```typescript
+  import {
+    FormatValidatorInterpreted,
+    configuredSharedTreeAlpha,
+  } from "@fluidframework/tree/alpha";
+
+  const SharedTree = configuredSharedTreeAlpha({
+    jsonValidator: FormatValidatorInterpreted,
+  });
+  ```
+
+- Preserve tagged diagnostics when reporting sandbox session errors ([#28401](https://github.com/microsoft/FluidFramework/pull/28401)) [bcd245bd23](https://github.com/microsoft/FluidFramework/commit/bcd245bd234ed5b0549000f63cc8a2b5d142c70d)
+
+  Sandbox session errors retain their original cause and tagged telemetry properties.
+  Failure notifications include a validated classification code and separate protocol-only and sensitive diagnostic fields.
+  The Host tags protocol-only text received from the Guest as `SandboxGuestData`, and sensitive text as `UserData`.
+  Applications that use the Guest as a security boundary must treat this tag as untrusted, potentially sensitive data.
+  The Host does not send sensitive diagnostics to the Guest.
+  Unknown error messages are not included in the telemetry-safe session error message.
+  Blob-resolution errors are logged on the Host, while the Guest receives a fixed message that the service failed to resolve the handle.
+
+- SharedTree commit settlement events and no-change constraints are available in beta and legacy ([#28254](https://github.com/microsoft/FluidFramework/pull/28254)) [f557bb4670](https://github.com/microsoft/FluidFramework/commit/f557bb4670380db6a4bd47884403b8f3b4be6098)
+
+  You can now observe whether a local SharedTree commit is applied or dropped after the sequencing service orders it without using alpha APIs.
+  `CommitOutcome` and `LocalCommitEvents` are available from the `/beta` and `/legacy` entry points of `@fluidframework/tree` and `fluid-framework`.
+  The `changed` event is available on `TreeViewBeta` and `UntypedTreeView`, with `ChangeMetadataBeta` and `TreeBranchEventsBeta` describing its beta API.
+
+  ```typescript
+  import { asBeta, CommitOutcome } from "fluid-framework/beta";
+
+  // ...
+  const betaView = asBeta(view);
+  const unsubscribe = betaView.events.on("changed", (metadata) => {
+    if (metadata.isLocal) {
+      metadata.events.on("settled", (outcome) => {
+        if (outcome === CommitOutcome.FullyApplied) {
+          console.log("Changes saved.");
+        } else {
+          console.log("Changes rejected.");
+        }
+      });
+    }
+  });
+  ```
+
+  Register the `changed` listener before making the edit or running the transaction.
+  Do not edit the tree synchronously from a settlement callback; schedule any retry asynchronously.
+
+  You can also use `NoChangeConstraint` through the beta transaction APIs to require that the document has not changed before a transaction is applied.
+  `TransactionConstraintBeta` includes this constraint, which you can supply in `RunTransactionParamsBeta.preconditions`.
+  These APIs are available through both `/beta` and `/legacy`.
+
+  ```typescript
+  betaView.runTransaction(
+    () => {
+      // Make edits.
+    },
+    { preconditions: [{ type: "noChange" }] },
+  );
+  ```
+
+  You can separately constrain a later revert by returning `preconditionsOnRevert: [{ type: "noChange" }]` from the transaction callback.
+  This option is available on `TransactionCallbackStatusBeta` and requires that the document has not changed since the transaction before applying its revert.
+
+- Export stored content and schema from alpha viewable trees ([#28383](https://github.com/microsoft/FluidFramework/pull/28383)) [8150149578](https://github.com/microsoft/FluidFramework/commit/8150149578686358518caedf1c4019f78c55011d)
+
+  The new `ViewableTreeAlpha` interface provides `exportVerbose` and `exportSimpleSchema` methods.
+  Use `asAlpha(viewableTree)` to inspect stored tree content and schema without first creating a schematized view.
+
 ## 3.4.0
 
 ### Minor Changes
