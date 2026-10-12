@@ -5,6 +5,7 @@
 
 import {
 	makeChangeAtomId,
+	strictRebaseValidation,
 	type ChangeAtomId,
 	type FieldKindIdentifier,
 } from "../../core/index.js";
@@ -24,7 +25,7 @@ import type {
 	NodeChangeset,
 	NodeId,
 } from "./modularChangeTypes.js";
-import { fullChangeValidation, makeChangesetInversions } from "./modularChangeUtils.js";
+import { isChangesetValid, makeChangesetInversions } from "./modularChangeUtils.js";
 import { pruneChangeset } from "./prune.js";
 
 export function removeAllDetachesFilter(
@@ -53,7 +54,9 @@ export function filterEdits(
 	filterFieldEdits: (fieldChange: FieldChange, fieldId: FieldId) => FieldChange,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ModularChangeset {
-	fullChangeValidation("Malformed filterEdits input", change, fieldKinds);
+	strictRebaseValidation("Malformed filterEdits input", () =>
+		isChangesetValid(change, fieldKinds),
+	);
 
 	const filteredFieldChanges = filterFieldMapEdits(
 		change.fieldChanges,

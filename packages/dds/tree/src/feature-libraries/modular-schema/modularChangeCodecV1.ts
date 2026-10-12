@@ -14,17 +14,19 @@ import {
 	extractJsonValidator,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	ChangeDecodingContext,
-	ChangesetLocalId,
-	EncodedRevisionTag,
-	FieldKey,
-	FieldKindIdentifier,
-	ITreeCursorSynchronous,
-	RevisionInfo,
-	RevisionTag,
-	RevisionTagSchema,
+import {
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type ChangesetLocalId,
+	type EncodedRevisionTag,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type ITreeCursorSynchronous,
+	type RevisionInfo,
+	type RevisionTag,
+	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocator,
@@ -72,9 +74,8 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import {
-	basicChangeValidation,
 	fieldKindsFromConfiguration,
-	fullChangeValidation,
+	isChangesetValid,
 	nodeChangeFromId,
 } from "./modularChangeUtils.js";
 
@@ -658,10 +659,8 @@ export function makeModularChangeCodecV1(
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
-			fullChangeValidation(
-				"Malformed V1 encode input",
-				change,
-				fieldKindsFromConfiguration(fieldKinds),
+			strictRebaseValidation("Malformed V1 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
 			);
 			return encodeChange(
 				change,
@@ -682,10 +681,8 @@ export function makeModularChangeCodecV1(
 				fieldsCodec,
 				chunkCompressionStrategy,
 			);
-			basicChangeValidation(
-				"Malformed V1 decode output",
-				decoded,
-				fieldKindsFromConfiguration(fieldKinds),
+			cheapRebaseValidation("Malformed V1 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
 			);
 			return decoded;
 		},

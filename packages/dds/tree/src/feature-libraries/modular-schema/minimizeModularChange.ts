@@ -11,6 +11,7 @@ import {
 	newChangeAtomIdRangeMap,
 	newChangeAtomIdTransform,
 	offsetChangeAtomId,
+	strictRebaseValidation,
 	visitDelta,
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
@@ -55,8 +56,8 @@ import type {
 	NodeId,
 } from "./modularChangeTypes.js";
 import {
-	fullChangeValidation,
 	getChangeHandler,
+	isChangesetValid,
 	nodeChangeFromId,
 	normalizeNodeId,
 } from "./modularChangeUtils.js";
@@ -95,7 +96,9 @@ class ModularChangeMinimizer {
 		private readonly change: ModularChangeset,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	) {
-		fullChangeValidation("Malformed minimize input", change, fieldKinds);
+		strictRebaseValidation("Malformed minimize input", () =>
+			isChangesetValid(change, fieldKinds),
+		);
 		this.outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 		const nodeInfo = getNodeInfo(change, fieldKinds);
 		this.builtNodeIds = nodeInfo.builtNodeIds;
@@ -116,7 +119,9 @@ class ModularChangeMinimizer {
 
 		(residualChange as Mutable<ModularChangeset>).builds = this.squashBuilds(forestFactory);
 
-		fullChangeValidation("Malformed minimize output", residualChange, this.fieldKinds);
+		strictRebaseValidation("Malformed minimize output", () =>
+			isChangesetValid(residualChange, this.fieldKinds),
+		);
 		return residualChange;
 	}
 

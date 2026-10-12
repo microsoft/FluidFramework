@@ -7,8 +7,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
-	cheapRebaseValidation,
-	strictRebaseValidation,
 	newChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
@@ -474,22 +472,6 @@ export function validateChangeset(
 	if (result !== true) {
 		throw new Error(`Malformed changeset: ${result}`);
 	}
-}
-
-export function basicChangeValidation(
-	prefix: string,
-	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): void {
-	cheapRebaseValidation(prefix, () => isChangesetValid(change, fieldKinds));
-}
-
-export function fullChangeValidation(
-	prefix: string,
-	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): void {
-	strictRebaseValidation(prefix, () => isChangesetValid(change, fieldKinds));
 }
 
 export function isChangesetValid(

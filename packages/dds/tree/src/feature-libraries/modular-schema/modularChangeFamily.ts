@@ -48,6 +48,7 @@ import {
 	comparePartialChangesetLocalIds,
 	type ProcessChangeFn,
 	RebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -113,7 +114,6 @@ import {
 	updateConstraintsForFields,
 	type CrossFieldTable,
 	isChangesetValid,
-	fullChangeValidation,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
 import { pruneChangeset } from "./prune.js";
@@ -159,9 +159,13 @@ export class ModularChangeFamily
 		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
 	): (change: ModularChangeset) => ModularChangeset {
 		return (change: ModularChangeset) => {
-			fullChangeValidation("Malformed buildProcessor input", change, this.fieldKinds);
+			strictRebaseValidation("Malformed buildProcessor input", () =>
+				isChangesetValid(change, this.fieldKinds),
+			);
 			const processed = processFn(change, this);
-			fullChangeValidation("Malformed buildProcessor output", processed, this.fieldKinds);
+			strictRebaseValidation("Malformed buildProcessor output", () =>
+				isChangesetValid(processed, this.fieldKinds),
+			);
 			return processed;
 		};
 	}
@@ -245,8 +249,12 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
-		fullChangeValidation("Malformed composePair input1", change1, this.fieldKinds);
-		fullChangeValidation("Malformed composePair input2", change2, this.fieldKinds);
+		strictRebaseValidation("Malformed composePair input1", () =>
+			isChangesetValid(change1, this.fieldKinds),
+		);
+		strictRebaseValidation("Malformed composePair input2", () =>
+			isChangesetValid(change2, this.fieldKinds),
+		);
 
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys } =
 			this.composeAllFields(change1, change2, revInfos, idState);
@@ -276,7 +284,9 @@ export class ModularChangeFamily
 			refreshers: allRefreshers,
 		});
 
-		fullChangeValidation("Malformed composePair output", composed, this.fieldKinds);
+		strictRebaseValidation("Malformed composePair output", () =>
+			isChangesetValid(composed, this.fieldKinds),
+		);
 		return composed;
 	}
 
@@ -768,15 +778,11 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		ignoreNoChangeViolation: boolean = false,
 	): ModularChangeset {
-		fullChangeValidation(
-			"Malformed rebase input change",
-			taggedChange.change,
-			this.fieldKinds,
+		strictRebaseValidation("Malformed rebase input change", () =>
+			isChangesetValid(taggedChange.change, this.fieldKinds),
 		);
-		fullChangeValidation(
-			"Malformed rebase input base",
-			potentiallyConflictedOver.change,
-			this.fieldKinds,
+		strictRebaseValidation("Malformed rebase input base", () =>
+			isChangesetValid(potentiallyConflictedOver.change, this.fieldKinds),
 		);
 
 		// Our current cell ordering scheme in sequences depends on being able to rebase over a change with conflicts.
@@ -1332,7 +1338,9 @@ export class ModularChangeFamily
 		change: ModularChangeset,
 		replacer: RevisionReplacer,
 	): ModularChangeset {
-		fullChangeValidation("Malformed changeRevision input", change, this.fieldKinds);
+		strictRebaseValidation("Malformed changeRevision input", () =>
+			isChangesetValid(change, this.fieldKinds),
+		);
 
 		const updatedFields = this.replaceFieldMapRevisions(change.fieldChanges, replacer);
 		const updatedNodes = replaceIdMapRevisions(change.nodeChanges, replacer, (nodeChangeset) =>
@@ -1374,7 +1382,9 @@ export class ModularChangeFamily
 
 		updated.revisions = [{ revision: replacer.updatedRevision }];
 
-		fullChangeValidation("Malformed changeRevision output", updated, this.fieldKinds);
+		strictRebaseValidation("Malformed changeRevision output", () =>
+			isChangesetValid(updated, this.fieldKinds),
+		);
 		return updated;
 	}
 
@@ -1438,14 +1448,18 @@ export class ModularChangeFamily
 	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.
 	 */
 	private muteChange(change: ModularChangeset): ModularChangeset {
-		fullChangeValidation("Malformed muteChange input", change, this.fieldKinds);
+		strictRebaseValidation("Malformed muteChange input", () =>
+			isChangesetValid(change, this.fieldKinds),
+		);
 		const muted: Mutable<ModularChangeset> = {
 			...change,
 			crossFieldKeys: newCrossFieldKeyTable(),
 			fieldChanges: this.muteFieldChanges(change.fieldChanges),
 			nodeChanges: brand(change.nodeChanges.mapValues((v) => this.muteNodeChange(v))),
 		};
-		fullChangeValidation("Malformed muteChange output", muted, this.fieldKinds);
+		strictRebaseValidation("Malformed muteChange output", () =>
+			isChangesetValid(muted, this.fieldKinds),
+		);
 		return muted;
 	}
 
@@ -2177,7 +2191,9 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		codecOptions: CodecWriteOptions,
 	) {
 		super((change: TaggedChange<ModularChangeset>) => {
-			fullChangeValidation("Malformed built change", change.change, fieldKinds);
+			strictRebaseValidation("Malformed built change", () =>
+				isChangesetValid(change.change, fieldKinds),
+			);
 			changeReceiver(change);
 		});
 		this.idAllocator = idAllocatorFromMaxId();

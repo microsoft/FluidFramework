@@ -9,11 +9,13 @@ import {
 	type JsonCodecPart,
 	withSchemaValidation,
 } from "../../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	ChangeDecodingContext,
-	RevisionTag,
-	RevisionTagSchema,
+import {
+	type ChangeEncodingContext,
+	type ChangeDecodingContext,
+	type RevisionTag,
+	type RevisionTagSchema,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 } from "../../core/index.js";
 import type { FieldBatchCodec } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
@@ -26,11 +28,7 @@ import {
 } from "./modularChangeCodecV1.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
-import {
-	fieldKindsFromConfiguration,
-	fullChangeValidation,
-	basicChangeValidation,
-} from "./modularChangeUtils.js";
+import { fieldKindsFromConfiguration, isChangesetValid } from "./modularChangeUtils.js";
 
 type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
@@ -59,10 +57,8 @@ export function makeModularChangeCodecV2(
 
 	const modularChangeCodec: ModularChangeCodec = {
 		encode: (change, context) => {
-			fullChangeValidation(
-				"Malformed V2 encode input",
-				change,
-				fieldKindsFromConfiguration(fieldKinds),
+			strictRebaseValidation("Malformed V2 encode input", () =>
+				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
 			);
 			const encoded = encodeChange(
 				change,
@@ -89,10 +85,8 @@ export function makeModularChangeCodecV2(
 			if (encodedChange.noChangeConstraint !== undefined) {
 				decoded.noChangeConstraint = encodedChange.noChangeConstraint;
 			}
-			basicChangeValidation(
-				"Malformed V2 decode output",
-				decoded,
-				fieldKindsFromConfiguration(fieldKinds),
+			cheapRebaseValidation("Malformed V2 decode output", () =>
+				isChangesetValid(decoded, fieldKindsFromConfiguration(fieldKinds)),
 			);
 			return decoded;
 		},
