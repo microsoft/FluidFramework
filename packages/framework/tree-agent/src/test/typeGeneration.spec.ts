@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { PlainText, SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	getSimpleSchema,
 	independentView,
@@ -99,6 +99,17 @@ describe("Type generation", () => {
 	});
 
 	describe("for schemas with methods", () => {
+		it("includes plain text range moves", () => {
+			const schemaString = getDomainSchemaString(
+				PlainText.Tree,
+				PlainText.Tree.fromString("abc"),
+			);
+			assert.match(
+				schemaString,
+				/moveRangeToIndex\(destinationGap: number, sourceStart: number, sourceEnd: number\): void;/,
+			);
+		});
+
 		it("works on object nodes", () => {
 			class ObjWithMethod extends sf.object("ObjWithMethod", {}) {
 				public method(n: string): boolean {

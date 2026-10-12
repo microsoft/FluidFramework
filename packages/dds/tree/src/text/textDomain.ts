@@ -96,6 +96,20 @@ class TextNode
 		);
 		methods.exposeMethod(
 			TextNode,
+			"moveRangeToIndex",
+			buildFunc(
+				{
+					description:
+						"Move a range of characters (Unicode code points) to a destination gap. sourceStart is inclusive and sourceEnd is exclusive. destinationGap is between characters before the move, not an index in the resulting text.",
+					returns: tf.void(),
+				},
+				["destinationGap", tf.number()],
+				["sourceStart", tf.number()],
+				["sourceEnd", tf.number()],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
 			"fullString",
 			buildFunc({
 				description: "Return a copy of this text node's content as a string.",
