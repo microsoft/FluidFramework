@@ -1,0 +1,34 @@
+{
+	"name": "@fluidframework/agency-trust-policy",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Standalone pnpm trust-policy checker for the Agency plugin.",
+	"license": "MIT",
+	"type": "module",
+	"bin": {
+		"check-trust-policy": "./lib/run.js"
+	},
+	"scripts": {
+		"build": "tsc --project tsconfig.json",
+		"pretest": "npm run build",
+		"test": "node --test lib/test/trust-policy.test.js",
+		"check": "tsc --project tsconfig.json --noEmit"
+	},
+	"engines": {
+		"node": ">=22.22.2"
+	},
+	"dependencies": {
+		"@oclif/core": "^4.10.5"
+	},
+	"devDependencies": {
+		"@types/node": "~22.19.17",
+		"typescript": "~5.9.3"
+	},
+	"oclif": {
+		"bin": "check-trust-policy",
+		"commands": {
+			"strategy": "single",
+			"target": "./lib/trust-policy.js"
+		}
+	}
+}

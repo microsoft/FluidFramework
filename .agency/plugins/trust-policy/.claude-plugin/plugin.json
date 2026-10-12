@@ -1,0 +1,5 @@
+{
+	"name": "trust-policy",
+	"description": "Audit pnpm dependencies for package trust downgrades.",
+	"version": "0.1.0"
+}
