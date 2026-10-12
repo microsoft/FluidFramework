@@ -164,8 +164,6 @@ describe("textDomainFormatted", () => {
 	it("fromString applies the provided format", () => {
 		const format = {
 			bold: true,
-			italic: true,
-			underline: true,
 			size: 24,
 			font: "Times New Roman",
 		};
@@ -278,9 +276,7 @@ describe("textDomainFormatted", () => {
 				4,
 				new FormattedTextTest.CharacterFormat({
 					bold: false,
-					italic: true,
-					underline: false,
-					size: 12,
+					size: 24,
 					font: "Arial",
 				}),
 			);
@@ -289,28 +285,26 @@ describe("textDomainFormatted", () => {
 				[...text.charactersWithFormatting()].map((atom) => [
 					atom.content.content,
 					atom.format.bold,
-					atom.format.italic,
+					atom.format.size,
 				]),
 				[
-					["h", true, false],
-					["e", false, true],
-					["l", false, true],
-					["l", false, true],
-					["o", true, false],
+					["h", true, 12],
+					["e", false, 24],
+					["l", false, 24],
+					["l", false, 24],
+					["o", true, 12],
 				],
 			);
 		});
 
 		it("applies to the whole text when the range is omitted", () => {
 			const text = FormattedTextTest.Tree.fromString("abc");
-			text.formatRange(0, 3, { bold: true, italic: true });
+			text.formatRange(0, 3, { bold: true, size: 24 });
 			text.reformat(
 				undefined,
 				undefined,
 				new FormattedTextTest.CharacterFormat({
 					bold: false,
-					italic: false,
-					underline: false,
 					size: 12,
 					font: "Arial",
 				}),
@@ -318,35 +312,33 @@ describe("textDomainFormatted", () => {
 			assert.deepEqual(
 				[...text.charactersWithFormatting()].map((atom) => [
 					atom.format.bold,
-					atom.format.italic,
+					atom.format.size,
 				]),
 				[
-					[false, false],
-					[false, false],
-					[false, false],
+					[false, 12],
+					[false, 12],
+					[false, 12],
 				],
 			);
 		});
 
 		it("uses the default format when no format is provided", () => {
 			const text = FormattedTextTest.Tree.fromString("hello");
-			text.formatRange(0, 5, { bold: true, italic: true });
+			text.formatRange(0, 5, { bold: true, size: 24 });
 			text.reformat(1, 4);
 			assert.deepEqual(
 				[...text.charactersWithFormatting()].map((atom) => [
 					atom.content.content,
 					atom.format.bold,
-					atom.format.italic,
-					atom.format.underline,
 					atom.format.size,
 					atom.format.font,
 				]),
 				[
-					["h", true, true, false, 12, "Arial"],
-					["e", false, false, false, 12, "Arial"],
-					["l", false, false, false, 12, "Arial"],
-					["l", false, false, false, 12, "Arial"],
-					["o", true, true, false, 12, "Arial"],
+					["h", true, 24, "Arial"],
+					["e", false, 12, "Arial"],
+					["l", false, 12, "Arial"],
+					["l", false, 12, "Arial"],
+					["o", true, 24, "Arial"],
 				],
 			);
 		});
@@ -374,9 +366,7 @@ describe("textDomainFormatted", () => {
 				content: FormattedText.StringTextAtom.fromCharacter("c"),
 				format: {
 					bold: false,
-					italic: true,
-					underline: false,
-					size: 12,
+					size: 24,
 					font: "Arial",
 				},
 			},
@@ -385,12 +375,12 @@ describe("textDomainFormatted", () => {
 		assert.deepEqual(
 			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
-				atom.format.italic,
+				atom.format.size,
 			]),
 			[
-				["a", false],
-				["c", true],
-				["b", false],
+				["a", 12],
+				["c", 24],
+				["b", 12],
 			],
 		);
 	});
@@ -398,16 +388,14 @@ describe("textDomainFormatted", () => {
 	it("insertAt applies the provided format", () => {
 		const text = FormattedTextTest.Tree.fromString("ab");
 		text.insertAt(2, "cd", {
-			bold: false,
-			italic: false,
-			underline: true,
+			bold: true,
 			size: 12,
 			font: "Arial",
 		});
 		assert.deepEqual(
 			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
-				atom.format.underline,
+				atom.format.bold,
 			]),
 			[
 				["a", false],
@@ -431,8 +419,6 @@ describe("textDomainFormatted", () => {
 			],
 			{
 				bold: true,
-				italic: false,
-				underline: false,
 				size: 12,
 				font: "Arial",
 			},
@@ -448,17 +434,13 @@ describe("textDomainFormatted", () => {
 	it("getUniformRun", () => {
 		const text = FormattedTextTest.Tree.fromString("abc");
 		text.insertAt(3, "de", {
-			bold: false,
-			italic: false,
-			underline: true,
+			bold: true,
 			size: 12,
 			font: "Arial",
 		});
 		text.insertAt(5, "f", {
-			bold: false,
-			italic: true,
-			underline: true,
-			size: 12,
+			bold: true,
+			size: 24,
 			font: "Arial",
 		});
 		assert.equal(text.getUniformRun(0, 5), 3);
@@ -487,17 +469,13 @@ describe("textDomainFormatted", () => {
 	it("getString with getUniformRun", () => {
 		const text = FormattedTextTest.Tree.fromString("abc");
 		text.insertAt(3, "de", {
-			bold: false,
-			italic: false,
-			underline: true,
+			bold: true,
 			size: 12,
 			font: "Arial",
 		});
 		text.insertAt(5, "f", {
-			bold: false,
-			italic: true,
-			underline: true,
-			size: 12,
+			bold: true,
+			size: 24,
 			font: "Arial",
 		});
 		let index = 0;
@@ -517,13 +495,11 @@ describe("textDomainFormatted", () => {
 		text.insertWithFormattingAt(3, [
 			{
 				content: new FormattedTextTest.StringLineAtom({
-					tag: FormattedTextTest.LineTag("h5"),
+					tag: FormattedTextTest.LineTag("h2"),
 					indent: 0,
 				}),
 				format: new FormattedTextTest.CharacterFormat({
 					bold: false,
-					italic: false,
-					underline: false,
 					size: 12,
 					font: "Arial",
 				}),
