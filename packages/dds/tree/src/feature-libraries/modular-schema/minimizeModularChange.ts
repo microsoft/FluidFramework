@@ -4,6 +4,7 @@
  */
 
 import {
+	cheapRebaseValidation,
 	deltaFieldMapHasChanges,
 	makeAnonChange,
 	makeChangeAtomId,
@@ -11,7 +12,6 @@ import {
 	newChangeAtomIdRangeMap,
 	newChangeAtomIdTransform,
 	offsetChangeAtomId,
-	strictRebaseValidation,
 	visitDelta,
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
@@ -96,7 +96,7 @@ class ModularChangeMinimizer {
 		private readonly change: ModularChangeset,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	) {
-		strictRebaseValidation("Malformed minimize input", () =>
+		cheapRebaseValidation("Malformed minimize input", () =>
 			isChangesetValid(change, fieldKinds),
 		);
 		this.outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
@@ -119,7 +119,7 @@ class ModularChangeMinimizer {
 
 		(residualChange as Mutable<ModularChangeset>).builds = this.squashBuilds(forestFactory);
 
-		strictRebaseValidation("Malformed minimize output", () =>
+		cheapRebaseValidation("Malformed minimize output", () =>
 			isChangesetValid(residualChange, this.fieldKinds),
 		);
 		return residualChange;

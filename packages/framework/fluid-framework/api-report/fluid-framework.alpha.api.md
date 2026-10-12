@@ -1498,28 +1498,6 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 // @alpha @deprecated
 export const minimize: TransactionPostProcessor;
 
-// @alpha
-export const ModularChangeValidation: ModularChangeValidationAlpha;
-
-// @alpha
-export interface ModularChangeValidationAlpha {
-    readonly currentLevel: ModularChangeValidationLevel;
-    readonly Level: {
-        readonly None: ModularChangeValidationLevel.None;
-        readonly Basic: ModularChangeValidationLevel.Basic;
-        readonly Full: ModularChangeValidationLevel.Full;
-    };
-    readonly runWithLevel: <TOut>(level: ModularChangeValidationLevel, callback: () => TOut) => TOut;
-    readonly setLevel: (level: ModularChangeValidationLevel) => ModularChangeValidationLevel;
-}
-
-// @alpha
-export enum ModularChangeValidationLevel {
-    Basic = 1,
-    Full = 2,
-    None = 0
-}
-
 // @public
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
@@ -1700,6 +1678,28 @@ export interface ReadonlyArrayNode<out T = TreeNode | TreeLeafValue> extends Flu
 export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
 TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
+
+// @alpha
+export const RebaseValidation: RebaseValidationAlpha;
+
+// @alpha
+export interface RebaseValidationAlpha {
+    readonly currentLevel: RebaseValidationLevel;
+    readonly Level: {
+        readonly None: RebaseValidationLevel.None;
+        readonly Cheap: RebaseValidationLevel.Cheap;
+        readonly Strict: RebaseValidationLevel.Strict;
+    };
+    readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
+    readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
+}
+
+// @alpha
+export enum RebaseValidationLevel {
+    Cheap = 1,
+    None = 0,
+    Strict = 2
+}
 
 // @alpha @sealed @system
 export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {

@@ -172,6 +172,7 @@ describe("SharedTree", () => {
 
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
+			// Smoke tests run with debug assertions disabled, so rebase validation cannot be enabled.
 			RebaseValidation.runWithLevel(RebaseValidation.Level.None, () => {
 				const tree = treeTestFactory();
 				assert.deepEqual(

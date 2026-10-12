@@ -16,7 +16,7 @@ debugAssert(() =>
 	),
 );
 
-// Checks that the prefix is removed in production builds when passed to a free function which uses it in a predicate passed to debugAssert
+// Checks that the prefix is removed in production builds when passed to a free function which uses the prefix in a predicate passed to debugAssert
 function testConstantRouting(prefix: string): void {
 	debugAssert(() => prefixPredicate(prefix, () => "This should be removed in production 4"));
 }
