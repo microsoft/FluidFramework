@@ -137,6 +137,13 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "world");
 	});
 
+	it("moves a range of characters", () => {
+		const text = FormattedTextTest.Tree.fromString("abcdef");
+
+		text.moveRangeToIndex(1, 3, 5);
+		assert.equal(text.fullString(), "adebcf");
+	});
+
 	it("default formatting", () => {
 		class Custom extends FormattedText.createSchema(
 			new SchemaFactoryBeta("test.formatted.custom"),

@@ -135,6 +135,13 @@ class TextNode
 	public removeRange(index: number | undefined, end: number | undefined): void {
 		this.content.removeRange(index, end);
 	}
+	public moveRangeToIndex(
+		destinationGap: number,
+		sourceStart: number,
+		sourceEnd: number,
+	): void {
+		this.content.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
+	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
 	}
@@ -491,6 +498,32 @@ export namespace PlainText {
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
 		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
+
+		/**
+		 * Moves the specified character range to `destinationGap`.
+		 * @param destinationGap - The location between existing characters to move the range to.
+		 * @param sourceStart - The starting index of the range to move, inclusive.
+		 * @param sourceEnd - The ending index of the range to move, exclusive.
+		 * @remarks
+		 * See {@link (TreeArrayNode:interface).moveRangeToIndex} for details about destination gap semantics.
+		 * @privateRemarks
+		 * `TreeArrayNode` exposes more move options than we expose here for a few reasons:
+		 *
+		 * 1. Single-character moves are not expected to be particularly useful for text,
+		 * so we only expose range moves.
+		 * We may want to reevaluate this for formatted text, where moving individual embedded items
+		 * may be useful.
+		 *
+		 * 2. The convenience APIs for moving to the start or end do not seem likely to be common
+		 * needs for text.
+		 * They also do not currently provide distinct merge semantics or additional expressiveness.
+		 *
+		 * 3. The overloads that support moving between different source nodes introduce additional
+		 * complications, such as whether to support moves between plain and formatted text,
+		 * between schemas with different embedded item types, or in combination with extrinsic ranges.
+		 * Since it is currently practical to defer that complexity, these overloads are not included.
+		 */
+		moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
 
 		/**
 		 * Subscribe to shallow character-level changes on this text node — inserts and removes only.

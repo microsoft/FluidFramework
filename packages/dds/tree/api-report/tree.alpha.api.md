@@ -1092,6 +1092,7 @@ export namespace PlainText {
         createInsertionAnchor(index: number): ArrayPlaceAnchor;
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
+        moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
         onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
         removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
     }

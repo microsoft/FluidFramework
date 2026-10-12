@@ -223,6 +223,14 @@ export namespace FormattedText {
 				this.content.removeRange(index, end);
 			}
 
+			public moveRangeToIndex(
+				destinationGap: number,
+				sourceStart: number,
+				sourceEnd: number,
+			): void {
+				this.content.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
+			}
+
 			public characters(): Iterable<string> {
 				return mapIterable(this.content, (atom) => atom.content.content);
 			}
