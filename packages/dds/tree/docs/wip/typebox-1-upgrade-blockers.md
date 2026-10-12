@@ -9,15 +9,22 @@ Browser bundle size, schema construction, validator compilation, and repeated va
 
 We found reproducible local performance regressions in three distinct phases.
 We also evaluated a local packaging patch, then removed it because its measured benefit was small and it would not reach consumers of our published packages.
-We would prefer fixes in TypeBox's public APIs and published package over maintaining our own modifier implementations.
+We would prefer fixes in TypeBox's public APIs over maintaining our own schema-builder implementations.
+Packaging is a non-blocking note: the measured default SharedTree bundle is smaller without the patch, and further metadata-patch savings are small.
 
 | Finding | Evidence | Request |
 | --- | --- | --- |
 | [Optional/readonly modifiers deep-copy nested schemas](#1-optional-and-readonly-modifiers-deep-copy-nested-schemas) | Source inspection and identity reproduction; shallow copies greatly reduce our schema-construction cost | Offer an efficient shallow-copy path with documented sharing semantics |
 | [Generated names change between identical compilations](#2-identical-compilations-generate-different-source) | Source reproduction; resetting names reduces repeated compilation from 15.4 to 7.9 ms | Make generated names local to each compilation |
 | [Warm validation is slower](#3-warm-validation-is-slower) | Regex key checks roughly double two isolated validator timings, but removing them changes measured connected-workload totals by only a few percent; integer declarations fix a separate issue | Optimize fixed-key objects upstream; retain integer declarations; no demonstrated need for another local workaround |
-| [Tree-shaking metadata improvement](#4-tree-shaking-support-needs-to-ship-in-the-package) | A now-removed local patch saved 389 gzip bytes without validation and 62 with validation | Consider appropriate side-effect metadata upstream; measured savings do not justify a local patch or a migration blocker |
 | [Immutable mode leaves nested schema containers mutable](#5-immutabletypes-does-not-freeze-the-complete-schema-graph) | Direct freezing and mutation reproduction | Clarify the contract; consider graph immutability if this mode is intended to support safe sharing |
+
+**Non-blocking upstream follow-ups:**
+
+| Topic | Evidence and request |
+| --- | --- |
+| [Lightweight public schema builders](#lightweight-public-schema-builders) | Replacing our helpers with public builders adds 9,350 gzip bytes to the measured default SharedTree bundle; provide lightweight public paths so we can remove the workarounds |
+| [Packaging note](#packaging-note) | The unpatched default bundle saves 1,800 gzip bytes versus the baseline; the removed metadata patch saves only another 389 bytes, or 62 with validation |
 
 **Scope:** These are performance, packaging, and API-contract concerns.
 Follow-up probes also found acceptance differences from 0.34.13, including near-integer numbers, sparse tuples, and non-JSON record inputs; see section 3.
@@ -414,9 +421,94 @@ They do not establish a SharedTree-wide 2x regression, nor prove that every vali
 Initialization, compatibility differences, and any customer-specific latency budget should be assessed separately.
 The harness and raw results are retained in the investigation session, not installed as a permanent benchmark suite.
 
-## 4. Tree-shaking support needs to ship in the package
+## 4. Non-blocking upstream follow-ups
 
-### Packaging concern
+### Lightweight public schema builders
+
+**Status: non-blocking with Fluid's current workarounds; retain as an upstream API/dependency concern.**
+This is separate from whether TypeBox publishes side-effect metadata.
+Our [TypeBox utilities](../../src/util/typebox.ts) avoid loading general-purpose machinery for the limited schema operations SharedTree needs:
+
+| Local helper | Public builder and dependency avoided | Upstream request |
+| --- | --- | --- |
+| `typeboxOptional` / `typeboxReadonly` | Public modifiers reach the general type-instantiation engine and deep-copy nested schemas | Provide lightweight modifiers with documented sharing and metadata semantics; section 1 covers the measured copying cost |
+| `typeboxInterface` | Public `Type.Interface` reaches general instantiation and intersection evaluation | Provide a lightweight path for composing known object properties without the general engine |
+| `stringKeyRecord` | Public `Type.Record` supports multiple key forms, including template literals and their parser | Provide a string-key record path that does not depend on template-literal parsing and preserves the value schema's enclosing reference context |
+
+In 1.3.34, `build/type/engine/optional/instantiate_add.mjs` imports the general instantiator, and `build/type/engine/interface/instantiate.mjs` imports instantiation and evaluation helpers.
+The record dispatcher in `build/type/engine/record/from_key.mjs` imports `from_key_template_literal.mjs`, which imports pattern parsing and template-literal evaluation.
+These source dependencies explain the workarounds, but do not prove how much code survives a consumer's bundler.
+Do not equate loading these modules with running their parser on every string-key record.
+
+#### Measured cost of replacing the helpers
+
+A controlled follow-up on October 12, 2026 compared the current helpers with public builders using **unpatched TypeBox 1.3.34**.
+The SharedTree sources were at `664487c5160`, including the merged integer and compilation-cache backports.
+Only the helper implementations changed between variants; all other sources, dependencies, and bundler settings were held constant.
+These measurements isolate the helper choice, not the metadata patch discussed below.
+
+For small builder-only bundles, we exported a function accepting a value schema and constructing:
+
+- Modifiers: `Type.Object({ child: optional(readonly(value)) })`.
+- Interface: an object combining inherited property `inherited: value` with own property `own: Type.Number()`, and `additionalProperties: false`.
+- Record: an arbitrary-string-key record with the supplied value schema.
+
+| Builder-only entry | Helpers, minified bytes | Public builders, minified bytes | Helpers, gzip bytes | Public builders, gzip bytes | Gzip increase |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Optional + readonly | 2,941 | 4,416 | 1,388 | 1,730 | +342 |
+| Interface | 2,760 | 41,140 | 1,312 | 11,078 | +9,766 |
+| String-key record | 2,146 | 41,053 | 1,096 | 11,038 | +9,942 |
+
+For representative SharedTree bundles, we used the existing `SharedTree` export entry and a second entry also exporting `FormatValidatorBasic`.
+Each single-helper variant replaces only that helper family; the final variant replaces all four helpers.
+All values in this table are **gzip bytes**, with changes relative to the current-helper bundle in the same column:
+
+| Builder configuration | SharedTree | Change | SharedTree + validation | Change |
+| --- | ---: | ---: | ---: | ---: |
+| Current helpers | 115,100 | - | 128,428 | - |
+| Public optional/readonly only | 115,078 | -22 | 128,453 | +25 |
+| Public interface only | 124,555 | +9,455 | 137,827 | +9,399 |
+| Public string-key record only | 124,545 | +9,445 | 137,820 | +9,392 |
+| All public builders | 124,450 | +9,350 (+8.1%) | 137,759 | +9,331 (+7.3%) |
+
+The default bundle grows from 401,972 to 437,809 minified bytes with all public builders; the validation-enabled bundle grows from 452,355 to 488,087.
+The interface and record costs overlap substantially and must not be added together.
+The small modifier-only bundle savings mostly disappear in SharedTree, where dependencies are shared with other code.
+For modifiers, the schema-construction measurements in section 1 remain the stronger justification for our workaround.
+For interface and string-key record builders, these bundle measurements provide direct evidence beyond their source import graphs.
+
+**Method and checks:** production Webpack 5.109.0 browser bundles, Node.js 24.15.0, `terser-webpack-plugin` 5.3.15, Terser 5.37.0, and gzip level 9.
+We used the repository's resolver settings, disabled build caching and minifier worker parallelism, and excluded source maps and separate license files.
+A measurement-only loader substituted `Type.Optional`, `Type.Readonly`, `Type.Interface`, and `Type.Record(Type.String(), value, options)` in the compiled helper module.
+Neither repository code nor installed dependencies were modified.
+We checked module provenance, executed every bundle, verified the small entries produced identical schema JSON and accepted/rejected representative values, and checked email-format validation in each validation-enabled bundle.
+Repeated builds of both the helper and all-public SharedTree variants produced identical minified and gzip byte counts; a second complete measurement pass also reproduced the numbers.
+The harness and raw results are retained in the investigation session.
+
+These are controlled export-bundle measurements, not a fresh packed customer installation or proof that every public-builder substitution preserves every helper behavior.
+They do not isolate how many bytes belong specifically to the template-literal parser versus the rest of its shared dependencies.
+They also do not establish a construction-time cost for interface or record builders.
+The conclusion is that **keeping our interface and record helpers avoids a measurable bundle increase**, not that current consumers suffer that increase.
+This remains non-blocking while the helpers are retained.
+
+The helpers depend on TypeBox's metadata and schema representation.
+They cover our narrower use cases, not all behavior of the public builders.
+An upstream solution should let Fluid use supported APIs without losing the construction benefit or reintroducing unnecessary dependencies.
+Tests should cover metadata/settings preservation, object-property composition, inferred types, and record values that reference their enclosing schema.
+Bundle comparisons should use representative entry points as well as small builder-only probes.
+
+**Tracking:** keep this request open in this report until the helpers can be replaced by suitable public APIs.
+[sinclairzx81/typebox#1617](https://github.com/sinclairzx81/typebox/issues/1617) is the existing packaging reference, not evidence that these builder-specific requests are resolved.
+No separate builder-specific upstream issue is linked here yet.
+As section 3 shows, substituting public builders did not change generated validators for the four measured fixtures; this concern is about schema construction, dependencies, and maintaining workarounds, not the remaining validation-time regression.
+
+### Packaging note
+
+**Status: not a migration blocker and not a reason to restore the local dependency patch.**
+The important default SharedTree case is a measured size win: 1,800 fewer gzip bytes than the 0.34.13 baseline without any metadata patch.
+The patch saves only another 389 gzip bytes in that case and 62 when validation is included.
+The validation-enabled bundle's 896-byte gzip increase is retained below for completeness, not treated as a blocker.
+These are the historical controlled measurements described below, not a new measurement of every subsequent branch change.
 
 The local dependency patch evaluated below added this package metadata:
 
@@ -436,7 +528,7 @@ The patched measurements below are retained as historical evidence, not the curr
 Existing upstream tracking: [sinclairzx81/typebox#1617](https://github.com/sinclairzx81/typebox/issues/1617).
 We have not verified its current resolution status in a published package.
 
-### Measured SharedTree bundle sizes
+#### Measured SharedTree bundle sizes
 
 **These measurements do not show a large bundle-size regression.**
 The default SharedTree bundle became smaller even without the patch.
@@ -469,7 +561,7 @@ The patch therefore helps, but does not remove the small gzip regression when va
 It is not responsible for the overall size reduction in the default bundle.
 The baseline-to-upgrade comparison includes Fluid's migration changes and local modifier helpers; it does not isolate the cost of substituting the TypeBox package alone.
 
-### Methodology and reproducibility
+#### Methodology and reproducibility
 
 Measured on October 9, 2026 with Node.js 24.15.0, TypeScript 6.0.3, Webpack 5.109.0, `terser-webpack-plugin` 5.3.15, and Terser 5.37.0.
 
@@ -508,14 +600,14 @@ Repeated patched builds produced identical byte counts and gzip sizes for both s
 It uses the current workspace's other dependencies and Fluid's custom modifiers, not TypeBox's public modifiers throughout.
 Different application exports, dependency versions, bundlers, or compression settings can produce different results.
 
-### Relation to the earlier modifier-only experiment
+#### Relation to the earlier modifier-only experiment
 
 The earlier minimal object-schema probe, using public optional/readonly modifiers and our metadata patch, measured 2,943 minified bytes / 1,082 gzip bytes.
 Using our helpers instead measured 1,512 / 739 bytes.
 Those are different entry points from the SharedTree bundles above and must not be treated as their TypeBox contribution or patch savings.
 Webpack removed unused general type-instantiation machinery in that probe; imports into the machinery do not establish that it survives tree shaking.
 
-### Suggested change and verification
+#### Optional upstream improvement
 
 Publish accurate side-effect metadata, auditing required initialization rather than marking everything side-effect-free.
 Test public entry points such as `typebox/type` and verify built-in format validation in optimized bundles.
@@ -617,13 +709,16 @@ The evidence is from Node.js, not a browser or a complete production application
 
 ## Proposed next steps
 
-**For TypeBox discussion:** agree on modifier sharing semantics, deterministic compilation, the freezing contract, and package side-effect metadata.
+**For TypeBox discussion:** agree on modifier sharing semantics, deterministic compilation, and the freezing contract.
 The examples above can become small regression tests.
 Investigate validation-code optimizations once standalone representative workloads are available.
+Track lightweight public schema builders as a non-blocking request so Fluid can eventually remove its utility workarounds.
+Treat package side-effect metadata as an optional packaging improvement, not a migration prerequisite.
 
 **For Fluid:** retain reduced benchmark fixtures; rerun the exact candidate release without local dependency patches; measure full consumer bundles; and run codec, persisted-format compatibility, refinement, snapshot, and coverage tests.
 Isolate each optimization before combining them, and agree on explicit performance and bundle-size budgets for any remaining regression.
 
 The remaining fixed-key validation overhead alone is not a demonstrated migration blocker in the actual-operation workloads above.
-Before merging, explicitly accept the remaining initialization, compatibility, and packaging tradeoffs against agreed budgets, or address them.
+The measured packaging results and currently mitigated builder dependencies are also non-blocking.
+Before merging, explicitly accept the remaining initialization and compatibility tradeoffs against agreed budgets, or address them.
 This is a proposed Fluid merge gate, not a configured pipeline gate or a request for TypeBox to adopt Fluid-specific performance guarantees.
