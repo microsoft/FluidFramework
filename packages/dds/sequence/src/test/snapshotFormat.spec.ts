@@ -214,25 +214,27 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 			});
 		}
 
-		it("remembers each successfully written format when runtime overrides are removed", async () => {
-			const runtime = createRuntime({ runtime: true });
-			const sharedString = createString({ runtime: true }, runtime);
-			assertSnapshotFormat(sharedString, sharedString.getAttachSummary().summary, true);
+		it("defers reading the format configuration until it is needed", async () => {
+			let configurationReads = 0;
+			const logger = mixinMonitoringContext(createChildLogger({}), {
+				getRawConfig: (name) => {
+					if (name === snapshotFormatConfig) {
+						configurationReads++;
+						return true;
+					}
+					return undefined;
+				},
+			}).logger;
+			const runtime = new MockFluidDataStoreRuntime({ attachState, logger });
+			const sharedString = factory.create(runtime, "shared-string");
+			assert.equal(configurationReads, 0);
 
-			runtime.options.newMergeTreeSnapshotFormat = undefined;
-			const inheritedFlat = await sharedString.summarize();
-			assertSnapshotFormat(sharedString, inheritedFlat.summary, true);
-
-			runtime.options.newMergeTreeSnapshotFormat = false;
-			const explicitLegacy = await sharedString.summarize();
-			assertSnapshotFormat(sharedString, explicitLegacy.summary, false);
-
-			runtime.options.newMergeTreeSnapshotFormat = undefined;
-			const inheritedLegacy = await sharedString.summarize();
-			assertSnapshotFormat(sharedString, inheritedLegacy.summary, false);
+			const summary = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, summary.summary, true);
+			assert.equal(configurationReads, 1);
 		});
 
-		it("keeps format memory per instance without changing DDS attributes", async () => {
+		it("keeps the loaded format per instance without changing DDS attributes", async () => {
 			const originalAttributes = { ...factory.attributes };
 			const source = createString({ runtime: true });
 			const sourceSummary = await source.summarize();
@@ -254,27 +256,41 @@ for (const attachState of [AttachState.Detached, AttachState.Attached]) {
 }
 
 describe("SharedString snapshot format on attach", () => {
-	it("retains the detached summary selection after the explicit flag is removed and the DDS attaches", async () => {
-		const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
-		runtime.options = { newMergeTreeSnapshotFormat: true };
-		const sharedString = new SharedStringFactory().create(runtime, "shared-string");
-		sharedString.insertText(0, "before");
-		assertSnapshotFormat(sharedString, sharedString.getAttachSummary().summary, true);
+	for (const useFlatFormat of [false, true]) {
+		it(`retains the loaded ${useFlatFormat ? "flat" : "legacy"} format when a detached DDS attaches without an override`, async () => {
+			const sourceRuntime = new MockFluidDataStoreRuntime({
+				attachState: AttachState.Detached,
+			});
+			const source = new SharedStringFactory({
+				newMergeTreeSnapshotFormat: useFlatFormat,
+			}).create(sourceRuntime, "source");
+			source.insertText(0, "before");
+			const summary = source.getAttachSummary();
+			assertSnapshotFormat(source, summary.summary, useFlatFormat);
 
-		runtime.options.newMergeTreeSnapshotFormat = undefined;
-		const containerRuntimeFactory = new MockContainerRuntimeFactory();
-		containerRuntimeFactory.createContainerRuntime(runtime);
-		sharedString.connect({
-			deltaConnection: runtime.createDeltaConnection(),
-			objectStorage: new MockStorage(),
+			const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+			const factory = new SharedStringFactory();
+			const sharedString = await factory.load(
+				runtime,
+				"shared-string",
+				{
+					deltaConnection: runtime.createDeltaConnection(),
+					objectStorage: MockStorage.createFromSummary(summary.summary),
+				},
+				factory.attributes,
+			);
+			assert.equal(sharedString.isAttached(), false);
+
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			containerRuntimeFactory.createContainerRuntime(runtime);
+			runtime.setAttachState(AttachState.Attached);
+			assert.equal(sharedString.isAttached(), true);
+			sharedString.insertText(sharedString.getLength(), " after");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedString.getText(), "before after");
+			const attachedSummary = await sharedString.summarize();
+			assertSnapshotFormat(sharedString, attachedSummary.summary, useFlatFormat);
 		});
-		runtime.setAttachState(AttachState.Attached);
-		assert.equal(sharedString.isAttached(), true);
-		sharedString.insertText(sharedString.getLength(), " after");
-		containerRuntimeFactory.processAllMessages();
-
-		assert.equal(sharedString.getText(), "before after");
-		const summary = await sharedString.summarize();
-		assertSnapshotFormat(sharedString, summary.summary, true);
-	});
+	}
 });

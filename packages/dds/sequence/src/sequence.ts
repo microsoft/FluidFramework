@@ -488,6 +488,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap;
+	/**
+	 * The loaded snapshot format, consulted by the lazy options reader after construction.
+	 */
 	private newMergeTreeSnapshotFormat = false;
 	private readonly sequenceOptions: Readonly<Partial<SequenceOptions>>;
 	constructor(
@@ -731,9 +734,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		builder.addWithStats(contentPath, this.summarizeMergeTree(serializer));
 
-		const summary = builder.getSummaryTree();
-		this.newMergeTreeSnapshotFormat = this.sequenceOptions.newMergeTreeSnapshotFormat === true;
-		return summary;
+		return builder.getSummaryTree();
 	}
 
 	/**

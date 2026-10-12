@@ -30,12 +30,13 @@ export interface SharedStringOptions {
 	 *
 	 * @remarks
 	 * `true` selects the flat format, and `false` selects the legacy format.
-	 * When omitted, the runtime option takes precedence over the loaded or most recently generated format.
+	 * When omitted, the runtime option takes precedence over the loaded snapshot format.
 	 * New SharedStrings use the legacy format by default.
 	 *
 	 * The `Fluid.Sequence.newMergeTreeSnapshotFormat` configuration flag overrides this factory option.
 	 * This factory option overrides the `newMergeTreeSnapshotFormat` runtime option.
-	 * Changing a setting does not force an otherwise unchanged DDS to generate a new summary.
+	 * Configuration and runtime options are expected to stay fixed for each DDS instance.
+	 * Format selection does not force an otherwise unchanged DDS to generate a new summary.
 	 */
 	readonly newMergeTreeSnapshotFormat?: boolean;
 }

@@ -37,15 +37,13 @@ function observeSnapshots(
 	factoryFormat: boolean | undefined,
 	loadedFormat = false,
 ): SharedStringClass {
-	let rememberedFormat = loadedFormat;
 	const summarize = channel.getAttachSummary.bind(channel);
 	channel.getAttachSummary = (...args) => {
 		const explicitFlag: unknown = runtime.options.newMergeTreeSnapshotFormat;
 		assert(explicitFlag === undefined || typeof explicitFlag === "boolean");
-		const expectedFormat = factoryFormat ?? explicitFlag ?? rememberedFormat;
+		const expectedFormat = factoryFormat ?? explicitFlag ?? loadedFormat;
 		const result = summarize(...args);
 		assertSnapshotFormat(channel, result.summary, expectedFormat);
-		rememberedFormat = expectedFormat;
 		return result;
 	};
 	return channel;
