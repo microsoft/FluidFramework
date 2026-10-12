@@ -9,10 +9,10 @@ import { FormattedText } from "../../text/index.js";
 const sf = new SchemaFactoryBeta("test.FormattedTextTest");
 
 /**
- * Example parameterization of the generic {@link FormattedText}, used to test it.
+ * A minimal parameterization of the generic {@link FormattedText} schema.
+ * The tests use it to test {@link FormattedText}.
  * @remarks
- * This is a minimal version of `FormattedTextDefault` from `@fluidframework/quill-react`, reduced to the cases the tests use.
- * Changes to its stored schema are caught by the "formattedText-test" schema compatibility snapshots.
+ * The "formattedText-test" schema compatibility snapshots find changes to its stored schema.
  */
 export namespace FormattedTextTest {
 	/**
