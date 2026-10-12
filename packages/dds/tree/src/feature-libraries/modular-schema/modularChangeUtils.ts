@@ -44,6 +44,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
+import { BTree, EmptyBTree } from "@tylerbu/sorted-btree-es6";
 
 export function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
@@ -649,4 +650,25 @@ export function getFieldsForCrossFieldKey(
 
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
+}
+
+function normalizeChangeset(change: ModularChangeset): ModularChangeset {
+	const normal: Mutable<ModularChangeset> = {
+		...change,
+	};
+	delete normal.builds;
+	delete normal.refreshers;
+	return normal;
+}
+
+function assertEqual<T>(actual: T, expected: T): void {
+	assertStructuralEquality(actual, expected, (item: unknown) =>
+		item instanceof BTree ? item.toArray() : item,
+	);
+}
+
+export function assertEquivalent(change1: ModularChangeset, change2: ModularChangeset): void {
+	const normalized1 = normalizeChangeset(change1);
+	const normalized2 = normalizeChangeset(change2);
+	assertEqual(normalized1, normalized2);
 }

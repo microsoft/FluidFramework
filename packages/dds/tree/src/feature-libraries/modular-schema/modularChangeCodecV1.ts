@@ -662,7 +662,7 @@ export function makeModularChangeCodecV1(
 			strictRebaseValidation("Malformed V1 encode input", () =>
 				isChangesetValid(change, fieldKindsFromConfiguration(fieldKinds)),
 			);
-			return encodeChange(
+			const encoded = encodeChange(
 				change,
 				context,
 				fieldChangesetCodecs,
@@ -670,6 +670,8 @@ export function makeModularChangeCodecV1(
 				fieldsCodec,
 				chunkCompressionStrategy,
 			);
+			cheapRebaseValidation("V1 encode output does not round-trip correctly", () => "TODO");
+			return encoded;
 		},
 		decode: (encodedChange, context) => {
 			const decoded = decodeChange(

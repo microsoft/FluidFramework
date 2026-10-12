@@ -68,6 +68,7 @@ export function makeModularChangeCodecV2(
 				fieldsCodec,
 				chunkCompressionStrategy,
 			) as EncodedModularChangesetV2;
+			cheapRebaseValidation("V2 encode output does not round-trip correctly", () => "TODO");
 			encoded.noChangeConstraint = change.noChangeConstraint;
 			return encoded;
 		},
