@@ -1,0 +1,347 @@
+# @fluid-example/sandboxed-inventory-app
+
+An example of using the SharedTree sandboxing APIs to edit one inventory from a Host page and an isolated Guest iframe.
+
+> **Implementation status: synchronized Host and Guest inventories.**
+> The Host loads a Fluid container and synchronizes edits with an independent Guest tree in an isolated iframe.
+> Bootstrap validation, connection status, startup deadlines, and initialization error cleanup are implemented.
+> Restart Guest and the remaining recovery controls are not implemented yet.
+> The intended behavior and acceptance criteria below remain implementation guidance.
+
+## Run the example
+
+From the repository root:
+
+```bash
+corepack enable
+pnpm install
+pnpm run build:fast --nolint @fluid-example/sandboxed-inventory-app
+```
+
+Then run the example:
+
+```bash
+cd examples/data-objects/sandboxed-inventory-app
+pnpm start
+```
+
+Open <http://localhost:8080>.
+You should see Host and Guest panes side by side.
+The Host starts with `nut` and `bolt`, each with quantity `0`.
+You can edit the Host inventory as soon as it appears, even while the Guest connection status is **Connecting**.
+When the Guest status shows **Connected**, you can also edit the Guest inventory.
+Edits in each pane reach the other asynchronously.
+Decrement is disabled at zero.
+The Guest heading inside the iframe is rendered by its separate bundle, not by the Host.
+No separate Fluid service is needed with the default session-storage-backed service.
+The Host stores the container ID in the URL hash so reloading the page loads the same document.
+
+To collaborate across browser sessions, start Tinylicious in a separate terminal and select it when starting the example:
+
+```bash
+pnpm exec tinylicious
+```
+
+```bash
+pnpm start:tinylicious
+```
+
+Share the resulting URL, including its container ID, with another browser session.
+Use a fresh URL without a container ID when switching between service types.
+
+The development server disables hot module replacement and live reload so they cannot replace a Guest outside application-managed teardown.
+Refresh the top-level page after changing the code.
+
+### Build and test
+
+After building, run these commands from this directory:
+
+```bash
+# Run the Mocha/jsdom unit tests.
+pnpm test:mocha
+
+# Install Chromium once, then run the limited browser suite.
+pnpm exec playwright install chromium
+pnpm test:playwright
+
+# Run both suites.
+pnpm test
+
+# Type-check the browser tests, lint, and check formatting.
+pnpm check:types:test:playwright
+pnpm eslint
+pnpm check:format
+
+# Build optimized pages and bundles into dist/.
+pnpm webpack
+```
+
+After source or unit-test changes, rebuild with `pnpm build:esm` followed by `pnpm build:test:esm` before running Mocha.
+Playwright starts and stops its own development server.
+The current Mocha tests cover inventory controls and tree observations in both React Strict Mode settings, Host loading/error rendering, and in-process container creation and loading.
+They also create a real sandbox Host to verify V3 compatibility and check that disposing it leaves the application-owned view usable.
+Bootstrap tests validate message shapes, expected senders and origins, session identifiers, port counts, initialization order, timeouts, and cleanup after partial failure or late completion.
+In-process tests use real sandbox endpoints and message channels for representative edits.
+The two browser tests cover session-backed creation and reload, bidirectional editing through the transferred port, and actual iframe isolation.
+They do not yet cover restart controls.
+
+The source compiler configuration follows `inventory-app` by disabling `exactOptionalPropertyTypes`.
+Some existing Fluid dependency declarations are incompatible with that option; other strict checks and dependency declaration checking remain enabled.
+
+### Page build and cross-origin script loading
+
+[webpack.config.cjs](./webpack.config.cjs) generates separate HTML pages with only their respective entry bundle:
+[src/index.tsx](./src/index.tsx) for the Host and [src/guest.tsx](./src/guest.tsx) for the Guest.
+Both use [src/page.ejs](./src/page.ejs) as their HTML template.
+The Guest entry point does not import container-loading or service-client utilities.
+
+The opaque-origin Guest loads its bundle as a module using cross-origin resource sharing (CORS).
+The development server permits anonymous cross-origin access to `/guest.bundle.js` only, using `Access-Control-Allow-Origin: *`.
+It does not disable host/origin checks for other routes or add `allow-same-origin` to the iframe.
+If you serve the production output yourself, configure the same CORS response header for the Guest bundle.
+
+## Purpose and scope
+
+You will use two editable inventory views displayed side by side:
+
+- **Host:** The application-owned tree view connected to Fluid services.
+- **Guest:** An independent tree view inside an iframe, synchronized with the Host through a `MessagePort`.
+
+The example adapts the schema and interactions from [inventory-app](../inventory-app/README.md) without changing that example.
+Both pages compile the same schema and React components into separate JavaScript contexts.
+The Guest does not load a Fluid container or connect to Fluid services.
+
+This example will focus on initialization, editing, errors, and session replacement.
+It will not include blob handling, undo/redo controls, or a protocol-message log.
+
+## Intended usage
+
+### Service selection
+
+The Host uses the existing example service-selection and container-loading conventions:
+
+- Use the session-storage-backed service by default, or select it with `?fluidClient=session`.
+- Use `?fluidClient=tinylicious` with a running Tinylicious service to collaborate across browser sessions.
+- Use `?fluidClient=ephemeral` for an in-memory service.
+  Reloading creates a new service, so remove the old container ID before reloading in this mode.
+- Store the container ID in the Host page's URL hash.
+  A missing ID creates a new document; an existing ID loads that document.
+
+The Host explicitly configures `oldestSupportedClient: "3.4.0"`.
+Sandboxing requires the ID compressor's V3 serialization format.
+This example does not change the shared example helper's default compatibility setting.
+The Host and Guest use the same version of the tree package.
+
+### Editing walkthrough
+
+1. Open the Host page.
+   A new document starts with `nut` and `bolt`, each with quantity `0`.
+2. Increment a quantity in the Host pane without waiting for the Guest.
+   The Host changes immediately, even while the Guest is loading.
+3. Wait for the Guest status to change from **Connecting** to **Connected** before editing the Guest.
+   It receives the current Host inventory, including edits made while it was starting.
+4. Edit a quantity in the Guest pane.
+   The Guest changes immediately, and the Host receives the change asynchronously.
+5. Add and remove parts from either pane.
+   Both views should converge after their messages are processed.
+6. **Planned:** Select **Restart Guest**.
+   The Host view and container remain in place while a new Guest loads the current Host state.
+
+Display this warning beside the restart control:
+
+> Restart Guest does not wait for pending edits. Guest edits not yet received by the Host may be lost.
+
+Restart is not rollback.
+A Guest change that the Host already accepted remains in the Host, even if its acknowledgment never reached the Guest.
+
+## Architecture
+
+```text
+Fluid services
+      |
+Host page
+  Application-owned inventory TreeView
+  Host inventory UI
+  Sandboxing.Host
+      |
+      | MessageChannel: tree synchronization
+      |
+Guest iframe: sandbox="allow-scripts"
+  Sandboxing.Guest
+  Independent inventory TreeView
+  Guest inventory UI
+```
+
+Use the exported alpha [Sandboxing API](../../../packages/dds/tree/src/sandboxing/sandboxing.ts), not its implementation classes or test helpers.
+The API synchronizes trees across an existing boundary; the application creates the iframe and its browser isolation.
+
+The iframe must use `sandbox="allow-scripts"` without `allow-same-origin`.
+This gives the Guest an opaque origin, even when its HTML and scripts are served from the same server as the Host.
+Neither page reads the other's DOM or passes live tree objects across the boundary.
+
+### Host startup contract
+
+The Host loads or creates its container once per page startup, outside React rendering and effects.
+Show the existing example loading view until its inventory view is ready.
+Retain the container, including its application-owned view, in the ready state rather than returning only the inventory root.
+Enable Host editing as soon as this view is available, independently of Guest loading, initialization, or rendering.
+The Guest's `connected` message updates only the Guest connection status; it does not enable the Host controls.
+Show and log startup failures instead of rendering an editable inventory or loading the Guest iframe.
+After Host startup, mount one Guest session using the retained application view.
+React effect cleanup removes that session before another setup can run, including in React Strict Mode.
+
+### Bootstrap contract
+
+Application bootstrap messages and tree synchronization messages have separate responsibilities:
+
+1. The Host installs its iframe `load` handler and bootstrap message listener before navigating the iframe and assigns a fresh identifier to the session attempt.
+2. The Guest installs its message listener synchronously during entry-point execution, before returning or awaiting any work.
+   This lets it receive the port when the iframe finishes loading, without a readiness message.
+3. On the iframe's first `load` event, the Host creates a `MessageChannel` and calls `Sandboxing.createHost` with its application-owned view and one port.
+4. The Host transfers the other port to the current Guest window.
+   An opaque-origin recipient requires `"*"` as the target origin.
+   Do not use this requirement as a reason to accept arbitrary senders.
+5. The Guest validates the expected parent window, parent origin, session identifier, and transferred port.
+   It calls `Sandboxing.createGuest` with `FormatValidatorBasic`, creates a view with the inventory configuration, and renders it.
+6. The Guest reports successful initialization through `window.postMessage`.
+   The Host validates the message shape, current iframe window, origin, and session identifier before displaying **Connected**.
+   This status describes the Guest only; Host editing does not wait for it.
+
+The `"null"` origin reported by an opaque-origin Guest does not uniquely identify that Guest.
+Only validated messages from the expected window and current session may advance initialization or change its status.
+Duplicate initialization, unexpected ports, and stale messages must not create extra endpoints or replace a newer session.
+Close unused transferred ports.
+
+The application bootstrap envelope contains a protocol identifier, session identifier, and one of `initialize`, `connected`, or `error`.
+Only `initialize` carries a port, and it must carry exactly one.
+The Host puts the session identifier and its HTTP(S) origin in the Guest URL fragment.
+The Guest reads those values without accessing the parent document or storage.
+It accepts initialization only once from its expected parent window and origin.
+Invalid or out-of-order bootstrap messages are logged and ignored, and their unused ports are closed.
+
+The Guest entry point must not defer listener installation to an asynchronous task or a React effect.
+The iframe's `load` event is a document-loading notification, not a guarantee that arbitrary asynchronous application work has finished.
+It can also fire when content or scripts fail to load, so it must not mark the Guest as connected.
+Repeated `load` events do not create additional endpoints or transfer another port.
+
+Both pages use a 30-second startup deadline.
+The Host deadline includes script loading, port transfer, and Guest rendering.
+It remains active after `load` until a validated `connected` message arrives, and catches loading failures that the browser does not report as iframe errors.
+The Guest reports `connected` only after its typed view and inventory UI have been committed to the DOM.
+The Guest entry point uses React's `flushSync` only for bootstrap state transitions so this report cannot precede rendering.
+Initialization failure or timeout closes owned ports and removes the failed iframe before the Host endpoint is disposed.
+The application-owned Host view remains editable.
+Until the restart control is implemented, reload the Host page to start a new session after failure.
+
+[src/bootstrap.ts](./src/bootstrap.ts) defines the application messages.
+[src/hostSession.ts](./src/hostSession.ts) owns the iframe and Host endpoint, while [src/guestSession.ts](./src/guestSession.ts) owns Guest initialization.
+The React [Guest frame component](./src/guestFrame.tsx) mounts and cleans up the session without owning the container.
+
+Keep port transfer and status messages outside the port owned by the tree protocol.
+Do not extend or wrap tree protocol messages to add application controls.
+
+### Status and failure contract
+
+| State | Meaning | Expected behavior |
+| --- | --- | --- |
+| Connecting | The Guest has not completed initialization. | Show progress and enforce a bounded startup timeout. The Host remains editable once its own view is ready. |
+| Connected | The Guest has initialized its view and can synchronize edits. | Enable Guest editing. This state does not claim that all edits have been sequenced by Fluid services. |
+| Error | Guest loading, initialization, or synchronization failed. | Show the error, stop Guest editing, release the failed session's resources, and allow replacement when the Host view remains usable. |
+
+Handle initial Host/container loading errors separately from Guest errors.
+If no usable Host view exists, report the startup failure instead of offering Guest restart as a remedy.
+
+Supply `handleProtocolError` on both sandbox endpoints.
+Treat a reported protocol or synchronization error as terminal for that session; do not reset and reuse the failed endpoints.
+Reject or handle pending asynchronous work explicitly rather than leaving unhandled rejections.
+Late initialization completions and failure callbacks from an old session must not change the replacement session's state.
+
+Guest startup failure must not dispose the application-owned Host view.
+The sandbox APIs do not yet guarantee isolation of every main-tree merge failure.
+If the underlying Host tree becomes unusable, report that failure rather than claiming a Guest restart repaired it.
+
+### Ownership and restart contract
+
+The Host application owns the container and its inventory view.
+Each sandbox session owns its Host endpoint, Guest iframe, channel, bootstrap listeners, and startup timer.
+The Guest owns its endpoint, independent tree views, and React root within its iframe.
+
+For an immediate restart:
+
+1. Mark the old session as inactive so late callbacks cannot affect the UI.
+2. Remove the old iframe to stop Guest execution before disposing its Host endpoint and reclaiming the Guest's ID space shard.
+3. Release the old Host endpoint, listeners, timers, and any ports not already owned and closed by an endpoint.
+4. Create a new iframe, channel, and Host/Guest pair using the retained application-owned view.
+
+Do not wait for pending Guest edits, a shutdown acknowledgment, or an iframe unload handler.
+Use `Guest.dispose()` for explicit Guest-side cleanup when that context is still available, but do not depend on it running during iframe removal.
+Guest disposal alone does not notify or dispose the Host.
+
+Cleanup must be idempotent and work after partial initialization.
+Do not allow overlapping restart operations to leave multiple active sessions.
+Host edits made while the Guest is being replaced must be included in initialization or subsequent updates to the new Guest.
+
+### Acknowledgment semantics
+
+`Guest.updateHostPromise` waits for the Host to acknowledge pending Guest changes.
+`Host.updateGuestPromise` waits for the Guest to acknowledge pending Host updates.
+Both may be `undefined` when there is no pending work.
+An existing pending promise also covers additional changes made while it remains pending.
+
+Neither promise guarantees Fluid-service sequencing, durable storage, or convergence with every collaborating client.
+Pending acknowledgment promises reject when their session fails or is disposed.
+A rejection does not prove that the corresponding edits were never applied.
+
+## Acceptance criteria and test strategy
+
+The following table describes the full acceptance criteria, including behavior not yet implemented.
+See [Build and test](#build-and-test) for current coverage.
+Most behavior will be tested with Mocha, adding jsdom and React testing utilities where DOM behavior is involved.
+Pure validation and lifecycle logic should not require a real browser.
+
+| Case | Expected result | Primary test layer |
+| --- | --- | --- |
+| Inventory model | New documents contain the initial parts; quantity edits, insertion, and removal update the model. | Mocha |
+| Inventory UI | Controls edit the intended nodes, tree observations update the display, and both panes have clear labels. | Mocha + jsdom |
+| Status UI | Connecting, Connected, Error, and the restart warning render correctly; failed Guest views cannot be edited through the UI. | Mocha + jsdom |
+| Bootstrap validation | Invalid senders, origins, sessions, message shapes, duplicate initialization, and unexpected ports cannot advance the session. | Mocha |
+| Startup failure | Initialization rejection and timeout become visible errors, release partial resources, and leave an otherwise usable Host view intact. | Mocha, with jsdom for UI assertions |
+| Restart ordering | The old iframe stops before Host disposal; new endpoints are created without waiting for Guest acknowledgment. | Mocha |
+| Host lifetime | Restart preserves the application-owned view and accepted edits; Host edits made during replacement reach the new Guest. | Mocha with an in-process integration case where needed |
+| Repeated restart | Cleanup is idempotent; old callbacks and messages cannot update the new session or create duplicate endpoints. | Mocha |
+| Resource cleanup | Success, failure, and partial initialization release their owned listeners, timers, ports, and session resources on teardown. | Mocha |
+| Editing across endpoints | Representative changes propagate in both directions, and interleaved changes converge using real sandbox endpoints and message channels. | Focused in-process Mocha integration |
+
+Use a limited Playwright suite for the browser-only guarantees:
+
+1. Load the real Host and Guest bundles, transfer a port into the iframe, and propagate representative edits in both directions.
+2. Verify both the intended sandbox flags and actual denial of Guest access to the parent DOM and storage.
+3. Replace the real iframe, preserve accepted Host edits, and resume synchronization without stale updates or unexpected page errors.
+4. Load the production build and initialize its opaque-origin Guest.
+
+Checking an iframe attribute in jsdom is not evidence that browser isolation works.
+Where jsdom cannot faithfully model a behavior, document the limitation and add only the necessary browser coverage.
+Do not duplicate the tree package's comprehensive protocol tests or replay every unit-test case through Playwright.
+
+Use controlled timers where appropriate and bounded, condition-based waits rather than arbitrary sleeps.
+Tests must clean up their own DOM roots, sessions, channels, listeners, and timers.
+Do not require every unacknowledged edit to be lost on restart: an edit may already have reached the Host.
+
+## Development workflow
+
+Follow the [Coding Guidelines](../../../docs/content/Guidelines/Coding-Guidelines.md) for implementation and test code.
+Follow the [Documentation Guidelines](../../../docs/content/Guidelines/Documentation-Guidelines.md), including their linked guides, for this README and source-code documentation.
+
+For each behavior, document its contract, write a focused failing test, confirm the expected failure, implement the behavior, and refactor with tests passing.
+Keep the documentation aligned with implemented behavior throughout development.
+The example has executable unit and browser tests.
+Add the remaining behavior tests with each subsequent feature, rather than postponing them until the application is complete.
+
+Before considering the example complete, validate its type-check/build, lint/format checks, Mocha suite, limited Playwright suite, production bundle, and Tinylicious startup.
+Keep the runnable commands above up to date as those features are added.
+
+## Limitations
+
+Browser-enforced iframe isolation and tree protocol hardening are separate concerns.
+This example must not be presented as production-safe hosting for arbitrary untrusted Guest code.
+See the [sandboxing design notes](../../../packages/dds/tree/src/sandboxing/sandboxing.md#remaining-work-before-production) for the current validation, resource-limit, and fault-isolation work that remains.
