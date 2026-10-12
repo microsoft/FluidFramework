@@ -27,9 +27,9 @@ import {
 	rebaseBranch,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
+	cheapRebaseValidation,
 } from "../core/index.js";
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
-import { basicValidation } from "../feature-libraries/index.js";
 
 export type BranchId = SessionSpaceCompressedId | "main";
 export type EncodedBranchId = OpSpaceCompressedId;
@@ -417,7 +417,7 @@ export class SharedTreeBranch<
 				upTo,
 				onto.getHead(),
 				(prefix, changeToValidate) =>
-					basicValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
+					cheapRebaseValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
 			),
 		);
 

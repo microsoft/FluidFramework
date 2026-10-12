@@ -28,7 +28,7 @@ import {
 } from "../../shared-tree/index.js";
 import { nodeFlowCensusFromDelta } from "../nodeFlowCensusFromDelta.js";
 import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
-import { makeAnonChange } from "../../core/index.js";
+import { makeAnonChange, RebaseValidation } from "../../core/index.js";
 import {
 	compareStrings,
 	createTupleComparator,
@@ -36,7 +36,7 @@ import {
 	newTupleBTree,
 	type TupleBTree,
 } from "../../util/index.js";
-import { intoDelta, ModularChangeValidation } from "../../feature-libraries/index.js";
+import { intoDelta } from "../../feature-libraries/index.js";
 import {
 	allEndpoints,
 	assertNoFlow,
@@ -2916,9 +2916,9 @@ describe("transaction minimize post-processor", () => {
 				unminimizedBuildExpectations: { builds: 1, tops: 2 },
 				expectSurvivingMarker: true,
 			} as const satisfies TransactionScenario<typeof NodeArray>;
-			// The basic modular change validation level detects an inconsistent node location.
+			// The default (cheap) rebase validation level detects an inconsistent node location.
 			// The validation is temporarily disabled until the issue is fixed in PR 26206
-			ModularChangeValidation.runWithLevel(ModularChangeValidation.Level.None, () => {
+			RebaseValidation.runWithLevel(RebaseValidation.Level.None, () => {
 				testNodeFlow(scenario, "Deeply nesting boxes attach");
 			});
 		});

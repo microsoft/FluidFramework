@@ -72,3 +72,10 @@ export {
 	isAncestor,
 	diffHistories,
 } from "./utils.js";
+export {
+	cheapRebaseValidation,
+	strictRebaseValidation,
+	RebaseValidation,
+	type RebaseValidationAlpha,
+	RebaseValidationLevel,
+} from "./rebaseValidation.js";

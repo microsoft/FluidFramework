@@ -7,6 +7,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
+	cheapRebaseValidation,
+	strictRebaseValidation,
 	newChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
@@ -44,7 +46,6 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldKindConfiguration } from "./fieldKindConfiguration.js";
-import { basicValidation, fullValidation } from "./modularChangeValidation.js";
 
 export function hasConflicts(change: ModularChangeset): boolean {
 	return (change.constraintViolationCount ?? 0) > 0;
@@ -480,7 +481,7 @@ export function basicChangeValidation(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
-	basicValidation(prefix, () => isChangesetValid(change, fieldKinds));
+	cheapRebaseValidation(prefix, () => isChangesetValid(change, fieldKinds));
 }
 
 export function fullChangeValidation(
@@ -488,7 +489,7 @@ export function fullChangeValidation(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
-	fullValidation(prefix, () => isChangesetValid(change, fieldKinds));
+	strictRebaseValidation(prefix, () => isChangesetValid(change, fieldKinds));
 }
 
 export function isChangesetValid(

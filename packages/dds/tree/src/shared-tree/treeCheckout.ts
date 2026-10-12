@@ -73,6 +73,7 @@ import {
 	type LocalCommitEvents,
 	getDeltaChangeProfile,
 	findAncestor,
+	cheapRebaseValidation,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -85,7 +86,6 @@ import {
 	TreeStatus,
 	intoDelta,
 	jsonableTreeFromCursor,
-	basicValidation,
 } from "../feature-libraries/index.js";
 import {
 	SquashingTransactionStack,
@@ -1670,7 +1670,8 @@ export class TreeCheckout implements ITreeCheckout {
 			this.#transaction.branch.getHead(),
 			target,
 			target,
-			(prefix, change) => basicValidation(prefix, () => this.changeFamily.validator(change)),
+			(prefix, change) =>
+				cheapRebaseValidation(prefix, () => this.changeFamily.validator(change)),
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -1829,7 +1830,7 @@ export class TreeCheckout implements ITreeCheckout {
 					this.mintRevisionTag,
 					ignoreNoChangeViolation,
 					(prefix, changeToValidate) =>
-						basicValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
+						cheapRebaseValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
 				).change,
 				revisionForInvert,
 			);

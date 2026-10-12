@@ -47,6 +47,7 @@ import {
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
 	type ProcessChangeFn,
+	RebaseValidation,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -117,7 +118,6 @@ import {
 import { invertModularChange } from "./invert.js";
 import { pruneChangeset } from "./prune.js";
 import { removeAllAttachesFilter, removeAllDetachesFilter } from "./filterEdits.js";
-import { ModularChangeValidation } from "./modularChangeValidation.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2297,7 +2297,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		const revInfo = [...revisions].map((revision) => ({ revision }));
 		const composedChange: Mutable<ModularChangeset> = {
 			// The ModularChangeset instances composed here are not expected to be well-formed
-			...ModularChangeValidation.runWithLevel(ModularChangeValidation.Level.None, () =>
+			...RebaseValidation.runWithLevel(RebaseValidation.Level.None, () =>
 				this.rebaser.compose(changeMaps),
 			),
 			revisions: revInfo,

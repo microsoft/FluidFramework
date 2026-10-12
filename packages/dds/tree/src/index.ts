@@ -26,12 +26,12 @@ export {
 	type RevertibleAlpha,
 	type RevertOptionsAlpha,
 	type RevertToOptionsAlpha,
+	RebaseValidation,
+	type RebaseValidationAlpha,
+	RebaseValidationLevel,
 } from "./core/index.js";
 
 export {
-	ModularChangeValidation,
-	type ModularChangeValidationAlpha,
-	ModularChangeValidationLevel,
 	TreeStatus,
 	TreeCompressionStrategy,
 	type TreeIndex,

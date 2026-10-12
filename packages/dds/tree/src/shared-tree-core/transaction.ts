@@ -21,11 +21,11 @@ import {
 	type GraphCommit,
 	type ProcessChangeFn,
 	type RevisionTag,
+	cheapRebaseValidation,
 } from "../core/index.js";
 import { getLast, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import type { SharedTreeBranch, SharedTreeBranchEvents } from "./branch.js";
-import { basicValidation } from "../feature-libraries/index.js";
 
 /**
  * A {@link CustomMetadataTree} under construction.
@@ -504,7 +504,7 @@ export class SquashingTransactionStack<
 								}
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
 								const squash = rebaser.compose(transactionSteps);
-								basicValidation("Malformed composed transaction", () =>
+								cheapRebaseValidation("Malformed composed transaction", () =>
 									changeFamily.validator(squash),
 								);
 
@@ -557,7 +557,9 @@ export class SquashingTransactionStack<
 										branch.getHead(),
 										branch.getHead(),
 										(prefix, changeToValidate) =>
-											basicValidation(prefix, () => changeFamily.validator(changeToValidate)),
+											cheapRebaseValidation(prefix, () =>
+												changeFamily.validator(changeToValidate),
+											),
 									);
 									assert(
 										rebased.newSourceHead.revision === transactionRevision,

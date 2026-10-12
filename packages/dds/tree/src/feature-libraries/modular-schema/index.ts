@@ -92,10 +92,3 @@ export type {
 export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
 export { minimizeModularChangeset } from "./minimizeModularChange.js";
 export { DefaultAtomIdAliasAllocator } from "./defaultAtomIdAliasAllocator.js";
-export {
-	basicValidation,
-	fullValidation,
-	ModularChangeValidation,
-	type ModularChangeValidationAlpha,
-	ModularChangeValidationLevel,
-} from "./modularChangeValidation.js";

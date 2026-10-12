@@ -41,6 +41,7 @@ import {
 	rootFieldKey,
 	storedEmptyFieldSchema,
 	EmptyKey,
+	RebaseValidation,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -51,7 +52,6 @@ import {
 	ComparisonForest,
 	flexTreeSlot,
 	MockNodeIdentifierManager,
-	ModularChangeValidation,
 	TreeCompressionStrategy,
 	TreeStatus,
 } from "../../feature-libraries/index.js";
@@ -172,7 +172,7 @@ describe("SharedTree", () => {
 
 	describe("viewWith", () => {
 		it("@Smoke initialize tree", () => {
-			ModularChangeValidation.runWithLevel(ModularChangeValidation.Level.None, () => {
+			RebaseValidation.runWithLevel(RebaseValidation.Level.None, () => {
 				const tree = treeTestFactory();
 				assert.deepEqual(
 					tree.contentSnapshot().schema.rootFieldSchema,
