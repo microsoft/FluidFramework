@@ -13,6 +13,7 @@ const disabledController: RevertibleSupportController = {
 		throw new UsageError("History recovery is disabled for this SharedTree.");
 	},
 	disposeRevertibleForRemovedCommit: () => {},
+	getRevertTo: () => undefined,
 	revertTo: () => {
 		throw new UsageError("History recovery is disabled for this SharedTree.");
 	},

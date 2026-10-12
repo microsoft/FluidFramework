@@ -26,7 +26,6 @@ import {
 import { intoDelta } from "../feature-libraries/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
-import { snapshotCustomMetadata } from "./customMetadata.js";
 import {
 	toRevertibleSupport,
 	type RevertMetrics,
@@ -103,41 +102,107 @@ class DefaultRevertibleSupport implements RevertibleSupportController {
 		}
 	}
 
+	public getRevertTo(
+		revisionString: string,
+	): ((options?: RevertToOptionsAlpha) => void) | undefined {
+		if (!this.host.canRevert()) {
+			return undefined;
+		}
+		const revision = this.host.tryRecompressRevision(revisionString);
+		if (revision === undefined) {
+			return undefined;
+		}
+		const branch = this.host.getBranch();
+		const head = branch.getHead();
+		const pathResult = this.tryGetRevertPath(revision, branch);
+		if (pathResult.type !== "success") {
+			return undefined;
+		}
+		const path = pathResult.commitsToUndo;
+		let wasUsed = false;
+		return (options) => {
+			if (wasUsed) {
+				throw new UsageError(
+					"The same `revertTo` method cannot be called more than once. Access it on the commit metadata before each call.",
+				);
+			}
+			wasUsed = true;
+			const customMetadata = this.host.snapshotCustomMetadata(options);
+			if (
+				!this.host.canRevert() ||
+				this.host.getBranch() !== branch ||
+				branch.getHead() !== head ||
+				path.some((commit) => commit.wasTrimmed)
+			) {
+				throw new UsageError(
+					"The target branch has changed since `revertTo` was requested. Avoid retaining references directly to the `revertTo` property.",
+				);
+			}
+			this.applyRevertPath(path, customMetadata);
+		};
+	}
+
 	public revertTo(revisionString: string, options: RevertToOptionsAlpha | undefined): void {
+		const customMetadata = this.host.snapshotCustomMetadata(options);
+		this.host.checkNotDisposed(
+			"The branch has already been disposed and prior revisions cannot be reverted to.",
+		);
 		this.host.checkCanRevert(
 			"Reverting to a revision",
 			"Reverting to a revision is not supported during transactions.",
 		);
-		const customMetadata = snapshotCustomMetadata(options?.customMetadata);
 		const revision = this.host.tryRecompressRevision(revisionString);
 		if (revision === undefined) {
 			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
 		}
 
+		const pathResult = this.tryGetRevertPath(revision, this.host.getBranch());
+		if (pathResult.type === "schemaChange") {
+			throw new UsageError(
+				`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${pathResult.revision}.`,
+			);
+		} else if (pathResult.type === "targetNotFound") {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		this.applyRevertPath(pathResult.commitsToUndo, customMetadata);
+	}
+
+	private tryGetRevertPath(
+		revision: RevisionTag,
+		branch: RevertibleBranch,
+	):
+		| { readonly type: "success"; readonly commitsToUndo: GraphCommit<SharedTreeChange>[] }
+		| { readonly type: "schemaChange"; readonly revision: string }
+		| { readonly type: "targetNotFound" } {
 		const commitsToUndo: GraphCommit<SharedTreeChange>[] = [];
-		const targetCommit = findAncestor(
-			[this.host.getBranch().getHead(), commitsToUndo],
-			(commit) => {
+		let schemaChangeRevision: string | undefined;
+		if (
+			findAncestor([branch.getHead(), commitsToUndo], (commit) => {
 				if (commit.revision === revision) {
 					return true;
 				}
 				if (hasSchemaChange(commit.change)) {
 					assert(commit.revision !== "root", "Unexpected schema change in root commit.");
-					const schemaRevision = this.host.decompressRevision(commit.revision);
-					throw new UsageError(
-						`Cannot revert to revision ${revisionString} because the schema changed at intermediate commit ${schemaRevision}.`,
-					);
+					schemaChangeRevision = this.host.decompressRevision(commit.revision);
+					return true;
 				}
 				return false;
-			},
-		);
-		if (targetCommit === undefined) {
-			throw new UsageError(`No commit found with revision: ${revisionString}`);
+			}) === undefined
+		) {
+			return { type: "targetNotFound" };
 		}
+		return schemaChangeRevision === undefined
+			? { type: "success", commitsToUndo }
+			: { type: "schemaChange", revision: schemaChangeRevision };
+	}
+
+	private applyRevertPath(
+		commitsToUndo: GraphCommit<SharedTreeChange>[],
+		customMetadata: JsonCompatibleReadOnlyObject | undefined,
+	): void {
 		if (commitsToUndo.length === 0) {
 			return;
 		}
-
 		const revisionForInvert = this.host.mintRevisionTag();
 		const toUndo = this.host.changeFamily.rebaser.compose(commitsToUndo);
 		const inverse = this.host.changeFamily.rebaser.invert(
@@ -145,13 +210,12 @@ class DefaultRevertibleSupport implements RevertibleSupportController {
 			false,
 			revisionForInvert,
 		);
-		this.host
-			.getBranch()
-			.apply(
-				tagChange(inverse, revisionForInvert),
-				CommitKind.Default,
-				customMetadata === undefined ? undefined : { metadata: customMetadata, children: [] },
-			);
+		this.host.applyRevert(
+			tagChange(inverse, revisionForInvert),
+			CommitKind.Default,
+			undefined,
+			customMetadata,
+		);
 	}
 
 	private makeRevertible(
@@ -181,7 +245,7 @@ class DefaultRevertibleSupport implements RevertibleSupportController {
 					revision,
 					kind,
 					labelTree,
-					snapshotCustomMetadata(options.customMetadata),
+					this.host.snapshotCustomMetadata(options),
 				);
 				this.host.logRevert(metrics);
 

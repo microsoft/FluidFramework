@@ -628,12 +628,16 @@ export class TreeCheckout implements ITreeCheckout {
 				return this.idCompressor.decompress(revision);
 			},
 			getBranch: () => this.#transaction.branch,
+			canRevert: () =>
+				!this.disposed && this.#transaction.size === 0 && !this.editLock.isLocked,
+			checkNotDisposed: (usageError) => this.checkNotDisposed(usageError),
 			checkCanRevert: (description, transactionError) => {
 				this.editLock.checkUnlocked(description);
 				if (this.transaction.size > 0) {
 					throw new UsageError(transactionError);
 				}
 			},
+			snapshotCustomMetadata: (options) => this.snapshotCustomMetadata(options),
 			applyRevert: (change, kind, labelTree, customMetadata) => {
 				const previousLabelTreeNode = this.labelTreeNode;
 				this.labelTreeNode = labelTree;
@@ -661,7 +665,17 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public get branchHistory(): DefaultTreeBranchHistory {
-		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
+		if (this._branchHistory === undefined) {
+			const branch = this.branch;
+			this._branchHistory = new DefaultTreeBranchHistory(
+				branch,
+				this.idCompressor,
+				(revisionString) =>
+					branch === this.branch
+						? this.revertibleSupport.getRevertTo(revisionString)
+						: undefined,
+			);
+		}
 		return this._branchHistory;
 	}
 
@@ -1026,6 +1040,7 @@ export class TreeCheckout implements ITreeCheckout {
 		codec: SerializedChangeCodec = this.serializedChangeCodec,
 		onError?: DecodeErrorHandler,
 	): void {
+		this.editLock.checkUnlocked("Applying a change");
 		const { change, customMetadata } = codec.decode(
 			serializedChange,
 			{
@@ -1142,7 +1157,7 @@ export class TreeCheckout implements ITreeCheckout {
 			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
 			// Like the validation described above, rejecting malformed metadata breaks the checkout rather
 			// than being recoverable. Tracked by https://github.com/microsoft/FluidFramework/issues/28085.
-			customMetadata: snapshotCustomMetadata(params?.customMetadata),
+			customMetadata: this.snapshotCustomMetadata(params),
 		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
@@ -1265,6 +1280,27 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 	}
 
+	/**
+	 * Reads and snapshots metadata under the edit lock, since getters and serialization hooks can run application code.
+	 */
+	private snapshotCustomMetadata(
+		options: { readonly customMetadata?: JsonCompatibleReadOnlyObject } | undefined,
+	): JsonCompatibleReadOnlyObject | undefined {
+		const editLock = this.editLock;
+		const wasLocked = editLock.isLocked;
+		if (!wasLocked) {
+			editLock.lock("custom metadata evaluation");
+		}
+		try {
+			return snapshotCustomMetadata(options?.customMetadata);
+		} finally {
+			// Preserve an outer lock, including its original error reason.
+			if (!wasLocked) {
+				editLock.unlock();
+			}
+		}
+	}
+
 	// For the new TreeViewAlpha API
 	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
@@ -1378,6 +1414,7 @@ export class TreeCheckout implements ITreeCheckout {
 			SharedTreeChangeProcessingContext
 		>,
 	): void {
+		this.editLock.checkUnlocked("Switching branches");
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
@@ -1428,9 +1465,6 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public revertTo(revisionString: string, options?: RevertToOptionsAlpha): void {
-		this.checkNotDisposed(
-			"The branch has already been disposed and prior revisions cannot be reverted to.",
-		);
 		this.revertibleSupport.revertTo(revisionString, options);
 	}
 
@@ -1529,6 +1563,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void {
 		this.checkNotDisposed();
+		this.editLock.checkUnlocked("Updating the schema");
 		if (allowNonSupersetSchema !== true) {
 			assert(
 				allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema.clone(), newSchema),
@@ -1834,6 +1869,10 @@ class EditLock {
 	private status:
 		| { readonly isLocked: false }
 		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
+
+	public get isLocked(): boolean {
+		return this.status.isLocked;
+	}
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.

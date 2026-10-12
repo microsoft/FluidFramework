@@ -62,10 +62,15 @@ export interface RevertibleSupportHost {
 	readonly tryRecompressRevision: (revision: string) => RevisionTag | undefined;
 	readonly decompressRevision: (revision: RevisionTag) => string;
 	readonly getBranch: () => RevertibleBranch;
+	readonly canRevert: () => boolean;
+	readonly checkNotDisposed: (usageError: string) => void;
 	readonly checkCanRevert: (
 		description: "Reverting a commit" | "Reverting to a revision",
 		transactionError: string,
 	) => void;
+	readonly snapshotCustomMetadata: (
+		options: { readonly customMetadata?: JsonCompatibleReadOnlyObject } | undefined,
+	) => JsonCompatibleReadOnlyObject | undefined;
 	readonly applyRevert: (
 		change: TaggedChange<SharedTreeChange>,
 		kind: CommitKind,
@@ -93,6 +98,7 @@ export interface RevertibleSupportController {
 		sourceBranch: RevertibleBranch,
 	): RevertibleAlpha;
 	disposeRevertibleForRemovedCommit(revision: RevisionTag): void;
+	getRevertTo(revision: string): ((options?: RevertToOptionsAlpha) => void) | undefined;
 	revertTo(revision: string, options: RevertToOptionsAlpha | undefined): void;
 	dispose(): void;
 }

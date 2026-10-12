@@ -607,6 +607,9 @@ export interface FormatValidator extends ErasedType<"FormatValidator"> {
 export const FormatValidatorBasic: FormatValidator;
 
 // @alpha
+export const FormatValidatorInterpreted: FormatValidator;
+
+// @alpha
 export const FormatValidatorNoOp: FormatValidator;
 
 // @alpha
@@ -2016,6 +2019,7 @@ export interface TreeBranchCommitMetadata {
     readonly custom: JsonCompatibleReadOnlyObject | undefined;
     readonly customTree: CustomMetadataTree | undefined;
     getParent(): TreeBranchCommitMetadata | undefined;
+    revertTo?(options?: RevertToOptionsAlpha): void;
     readonly revision: CommitRevision;
 }
 

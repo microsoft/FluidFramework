@@ -208,6 +208,7 @@ export {
 	FluidClientVersion, 
 	FormatValidator, 
 	FormatValidatorBasic, 
+	FormatValidatorInterpreted, 
 	FormatValidatorNoOp, 
 	FormatVersion, 
 	FormattedText, 
