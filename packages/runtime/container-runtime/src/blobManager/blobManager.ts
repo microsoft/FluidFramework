@@ -775,26 +775,8 @@ export class BlobManager {
 				this.internalEvents.on("processedBlobAttach", onProcessedBlobAttach);
 				signal?.addEventListener("abort", onSignalAbort);
 
-				const onUploadError = (error: unknown): void => {
-					if (!uploadHasBecomeIrrelevant) {
-						removeListeners();
-						// If the storage call errors, we can't recover. Reject to throw back to the caller.
-						this.localBlobCache.delete(localId);
-						this.pendingBlobsWithAttachedHandles.delete(localId);
-						// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-						reject(error);
-					}
-				};
-
-				let uploadP: Promise<ICreateBlobResponseWithTTL>;
-				try {
-					uploadP = this.storage.createBlob(blob);
-				} catch (error) {
-					onUploadError(error);
-					return;
-				}
-
-				uploadP
+				this.storage
+					.createBlob(blob)
 					.then((createBlobResponse: ICreateBlobResponseWithTTL) => {
 						if (!uploadHasBecomeIrrelevant) {
 							removeListeners();
@@ -808,7 +790,16 @@ export class BlobManager {
 							resolve();
 						}
 					})
-					.catch(onUploadError);
+					.catch((error) => {
+						if (!uploadHasBecomeIrrelevant) {
+							removeListeners();
+							// If the storage call errors, we can't recover. Reject to throw back to the caller.
+							this.localBlobCache.delete(localId);
+							this.pendingBlobsWithAttachedHandles.delete(localId);
+							// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+							reject(error);
+						}
+					});
 			});
 		};
 
