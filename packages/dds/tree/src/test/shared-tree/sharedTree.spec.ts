@@ -1032,7 +1032,13 @@ describe("SharedTree", () => {
 		}
 
 		it("branch history remains safe to read after trunk trimming", () => {
-			const provider = new TestTreeProviderLite(2);
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
 			const viewInit = provider.trees[0].viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
@@ -1058,22 +1064,28 @@ describe("SharedTree", () => {
 
 			provider.synchronizeMessages();
 
-			// These two edits will have ref numbers that correspond to the last of the above edits
-			view1.root.insertAtStart("D1");
-			view2.root.insertAtStart("D2");
-
-			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 4);
-			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 4);
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 3);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 3);
 
 			// Capture all commit metadata objects reachable before trimming
 			const view1HistoryBeforeTrimming = getHistory(view1.branchHistory.getHead());
 			const view2HistoryBeforeTrimming = getHistory(view2.branchHistory.getHead());
+			const trimmedCommit = view1HistoryBeforeTrimming.at(-1);
+			assert(trimmedCommit !== undefined);
+			const revertTo = trimmedCommit.revertTo;
+			assert(revertTo !== undefined);
+			const boundaryCommit = view1HistoryBeforeTrimming.at(-2);
+			assert(boundaryCommit !== undefined);
+			const head = provider.trees[0].kernel.checkout.mainBranch.getHead();
 
-			// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
+			// Branch creation advances the minimum sequence number without changing the main branch's head.
+			provider.trees[0].createSharedBranch();
+			provider.trees[1].createSharedBranch();
 			provider.synchronizeMessages();
 			// Test-check: trimming should have occurred
-			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 2);
-			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 2);
+			assert.equal(provider.trees[0].kernel.checkout.branchHistory.length, 1);
+			assert.equal(provider.trees[1].kernel.checkout.branchHistory.length, 1);
+			assert.equal(provider.trees[0].kernel.checkout.mainBranch.getHead(), head);
 
 			// Check that the newly reachable history post-trimming is safe to read
 			checkHistorySafety(
@@ -1090,6 +1102,14 @@ describe("SharedTree", () => {
 			for (const commit of view2HistoryBeforeTrimming) {
 				checkHistorySafety(commit);
 			}
+
+			assert.equal(trimmedCommit.revertTo, undefined);
+			assert.throws(() => revertTo(), validateUsageError(/branch has changed/));
+			assert.deepEqual([...view1.root], ["C", "B", "A"]);
+
+			assert(boundaryCommit.revertTo !== undefined);
+			boundaryCommit.revertTo();
+			assert.deepEqual([...view1.root], ["B", "A"]);
 		});
 
 		// This covers in-memory retention only. See the "retainHistory persistence" suite below for the
