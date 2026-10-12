@@ -59,6 +59,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchHistory,
+	type TreePositionResolver,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
@@ -573,6 +574,7 @@ export class SchematizingSimpleTreeView<
 
 	public dispose(): void {
 		this.disposed = true;
+		this.checkout.disposePositions();
 		this.disposeFlexView();
 		for (const unregister of this.unregisterCallbacks) {
 			unregister();
@@ -653,5 +655,20 @@ export class SchematizingSimpleTreeView<
 
 	public get branchHistory(): TreeBranchHistory {
 		return this.checkout.branchHistory;
+	}
+
+	public get positions(): TreePositionResolver {
+		this.ensureUndisposed();
+		const resolver = this.checkout.positions;
+		return {
+			getCurrentRevision: () => {
+				this.ensureUndisposed();
+				return resolver.getCurrentRevision();
+			},
+			resolvePositions: (revision, positions) => {
+				this.ensureUndisposed();
+				return resolver.resolvePositions(revision, positions);
+			},
+		};
 	}
 }

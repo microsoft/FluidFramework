@@ -131,6 +131,7 @@ import {
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { DefaultTreeBranchHistory } from "./history.js";
+import { DefaultTreePositionResolver, type PositionRevisionSource } from "./positions.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import {
@@ -636,6 +637,8 @@ export class TreeCheckout implements ITreeCheckout {
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
 	private _branchHistory?: DefaultTreeBranchHistory;
+	private _positions?: DefaultTreePositionResolver;
+	private positionRevisionSource?: () => PositionRevisionSource;
 
 	public constructor(
 		private branch: SharedTreeBranch<
@@ -673,6 +676,29 @@ export class TreeCheckout implements ITreeCheckout {
 	public get branchHistory(): DefaultTreeBranchHistory {
 		this._branchHistory ??= new DefaultTreeBranchHistory(this.branch, this.idCompressor);
 		return this._branchHistory;
+	}
+
+	public get positions(): DefaultTreePositionResolver {
+		this.checkNotDisposed("Cannot use position resolution after the view has been disposed.");
+		this._positions ??= new DefaultTreePositionResolver(this, this.branch, this.idCompressor);
+		return this._positions;
+	}
+
+	public disposePositions(): void {
+		this._positions?.dispose();
+		this._positions = undefined;
+	}
+
+	public setPositionRevisionSource(source: () => PositionRevisionSource): void {
+		this.positionRevisionSource = source;
+	}
+
+	public getPositionRevisionSource(): PositionRevisionSource | undefined {
+		return this.positionRevisionSource?.();
+	}
+
+	public getPositionHead(): GraphCommit<SharedTreeChange> {
+		return this.branch.getHead();
 	}
 
 	/**
@@ -1532,6 +1558,8 @@ export class TreeCheckout implements ITreeCheckout {
 		this.branch = branch;
 		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
+		this.disposePositions();
+		this.positionRevisionSource = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
 
@@ -1737,6 +1765,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("dispose");
 		this._branchHistory?.dispose();
 		this._branchHistory = undefined;
+		this.disposePositions();
 	}
 
 	public getRemovedRoots(): [string | number | undefined, number, JsonableTree][] {

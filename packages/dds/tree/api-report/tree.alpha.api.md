@@ -622,6 +622,13 @@ export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema<S
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
+// @alpha
+export interface HistoricalSequencePosition {
+    readonly affinity: "before" | "after";
+    readonly index: number;
+    readonly sequence: TreeArrayNode;
+}
+
 // @alpha @input
 export interface ICodecOptions {
     readonly jsonValidator: FormatValidator;
@@ -1122,6 +1129,14 @@ export namespace PlainText {
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
+// @alpha
+export type PositionResolution = {
+    readonly status: "resolved";
+    readonly positions: readonly ResolvedSequencePosition[];
+} | {
+    readonly status: "revision-unavailable";
+};
+
 // @alpha @system
 export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TreeFieldFromImplicitField<ReadSchema<TSchema>>;
 
@@ -1171,6 +1186,16 @@ export function replaceHandles<T>(tree: unknown, replacer: HandleConverter<T>): 
 
 // @alpha
 export function replaceVerboseTreeHandles<T>(tree: VerboseTree, replacer: HandleConverter<T>): VerboseTree<T>;
+
+// @alpha
+export type ResolvedSequencePosition = {
+    readonly status: "resolved";
+    readonly sequence: TreeArrayNode;
+    readonly index: number;
+} | {
+    readonly status: "unavailable";
+    readonly reason: "sequence-deleted" | "invalid-position" | "unsupported-change";
+};
 
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -2183,6 +2208,15 @@ export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema
 // @alpha @input
 export type TreeParsingOptions = TreeEncodingOptions<KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys>;
 
+// @alpha @sealed
+export interface TreePositionResolver {
+    getCurrentRevision(): TreePositionRevision | undefined;
+    resolvePositions(revision: TreePositionRevision, positions: readonly HistoricalSequencePosition[]): PositionResolution;
+}
+
+// @alpha
+export type TreePositionRevision = string;
+
 // @beta
 export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
     [Symbol.iterator](): FluidIterableIterator<[
@@ -2346,6 +2380,7 @@ export interface UntypedTreeViewAlpha extends Omit<UntypedTreeView, "runTransact
     fork(): UntypedTreeViewAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(view: UntypedTreeView): boolean;
+    readonly positions: TreePositionResolver;
     revertTo(revision: CommitRevision, options?: RevertToOptionsAlpha): void;
     rewindTo(revision: CommitRevision): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
