@@ -3,7 +3,7 @@
 	"root": {
 		"kind": 1,
 		"simpleAllowedTypes": {
-			"com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.Text": {
+			"com.fluidframework.text.formatted<test.FormattedTextTest>.Text": {
 				"isStaged": false
 			}
 		}
@@ -32,77 +32,77 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.h1": {
+		"test.FormattedTextTest.lineTag.h1": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.h2": {
+		"test.FormattedTextTest.lineTag.h2": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.h3": {
+		"test.FormattedTextTest.lineTag.h3": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.h4": {
+		"test.FormattedTextTest.lineTag.h4": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.h5": {
+		"test.FormattedTextTest.lineTag.h5": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.li": {
+		"test.FormattedTextTest.lineTag.li": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.ol": {
+		"test.FormattedTextTest.lineTag.ol": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.checked": {
+		"test.FormattedTextTest.lineTag.checked": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.unchecked": {
+		"test.FormattedTextTest.lineTag.unchecked": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.blockquote": {
+		"test.FormattedTextTest.lineTag.blockquote": {
 			"object": {
 				"kind": 2,
 				"fields": {},
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.default.lineTag.codeBlock": {
+		"test.FormattedTextTest.lineTag.codeBlock": {
 			"object": {
 				"kind": 2,
 				"fields": {},
@@ -115,44 +115,44 @@
 				"leafKind": 0
 			}
 		},
-		"com.fluidframework.text.formatted.default.StringLineAtom": {
+		"test.FormattedTextTest.StringLineAtom": {
 			"object": {
 				"kind": 2,
 				"fields": {
 					"tag": {
 						"kind": 1,
 						"simpleAllowedTypes": {
-							"com.fluidframework.text.formatted.default.lineTag.h1": {
+							"test.FormattedTextTest.lineTag.h1": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.h2": {
+							"test.FormattedTextTest.lineTag.h2": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.h3": {
+							"test.FormattedTextTest.lineTag.h3": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.h4": {
+							"test.FormattedTextTest.lineTag.h4": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.h5": {
+							"test.FormattedTextTest.lineTag.h5": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.li": {
+							"test.FormattedTextTest.lineTag.li": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.ol": {
+							"test.FormattedTextTest.lineTag.ol": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.checked": {
+							"test.FormattedTextTest.lineTag.checked": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.unchecked": {
+							"test.FormattedTextTest.lineTag.unchecked": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.blockquote": {
+							"test.FormattedTextTest.lineTag.blockquote": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.lineTag.codeBlock": {
+							"test.FormattedTextTest.lineTag.codeBlock": {
 								"isStaged": false
 							}
 						},
@@ -177,7 +177,7 @@
 				"leafKind": 2
 			}
 		},
-		"com.fluidframework.text.formatted.default.CharacterFormat": {
+		"test.FormattedTextTest.CharacterFormat": {
 			"object": {
 				"kind": 2,
 				"fields": {
@@ -230,7 +230,7 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringAtom": {
+		"com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
 			"object": {
 				"kind": 2,
 				"fields": {
@@ -240,7 +240,7 @@
 							"com.fluidframework.text.formatted.StringTextAtom": {
 								"isStaged": false
 							},
-							"com.fluidframework.text.formatted.default.StringLineAtom": {
+							"test.FormattedTextTest.StringLineAtom": {
 								"isStaged": false
 							}
 						},
@@ -249,7 +249,7 @@
 					"format": {
 						"kind": 1,
 						"simpleAllowedTypes": {
-							"com.fluidframework.text.formatted.default.CharacterFormat": {
+							"test.FormattedTextTest.CharacterFormat": {
 								"isStaged": false
 							}
 						},
@@ -259,24 +259,24 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringArray": {
+		"com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
 			"array": {
 				"kind": 1,
 				"simpleAllowedTypes": {
-					"com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringAtom": {
+					"com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
 						"isStaged": false
 					}
 				}
 			}
 		},
-		"com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.Text": {
+		"com.fluidframework.text.formatted<test.FormattedTextTest>.Text": {
 			"object": {
 				"kind": 2,
 				"fields": {
 					"content": {
 						"kind": 1,
 						"simpleAllowedTypes": {
-							"com.fluidframework.text.formatted<com.fluidframework.text.formatted.default>.StringArray": {
+							"com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
 								"isStaged": false
 							}
 						},
