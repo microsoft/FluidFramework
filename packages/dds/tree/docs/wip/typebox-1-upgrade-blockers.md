@@ -491,6 +491,58 @@ They also do not establish a construction-time cost for interface or record buil
 The conclusion is that **keeping our interface and record helpers avoids a measurable bundle increase**, not that current consumers suffer that increase.
 This remains non-blocking while the helpers are retained.
 
+#### Does the side-effects metadata patch remove the builder overhead?
+
+**No. It saves little in the complete bundles and does not replace the interface/record workarounds.**
+We repeated the same builder matrix using an isolated copy of TypeBox, first unchanged and then with only `"sideEffects": ["./build/format/_registry.mjs"]` added to its package manifest.
+The unchanged copy exactly reproduced the unpatched measurements above.
+Repository sources and the installed TypeBox package remained unchanged.
+
+The following complete-bundle variants passed execution and export checks, including valid and invalid email-format checks when validation was included.
+All sizes are **gzip bytes**; a positive saving means the patch reduced the bundle size.
+
+| Bundle | Builder configuration | Unpatched | Patched | Patch saving |
+| --- | --- | ---: | ---: | ---: |
+| SharedTree | Current helpers | 115,100 | 114,709 | 391 |
+| SharedTree | Public optional/readonly only | 115,078 | 114,709 | 369 |
+| SharedTree | All public builders | 124,450 | 124,120 | 330 |
+| SharedTree + validation | Current helpers | 128,428 | 128,425 | 3 |
+| SharedTree + validation | Public optional/readonly only | 128,453 | 128,431 | 22 |
+| SharedTree + validation | All public builders | 137,759 | 137,837 | -78 |
+
+With the patch, switching from current helpers to all public builders still adds **9,411 gzip bytes** to SharedTree and **9,412** with validation.
+Those differences are comparable to the unpatched 9,350 and 9,331 bytes, not an elimination of the overhead.
+All-public minified sizes fell from 437,809 to 437,020 bytes for SharedTree and from 488,087 to 487,897 with validation.
+A smaller minified bundle does not guarantee smaller gzip output, as the validation-enabled result illustrates.
+
+For builder-only entries, the patch reduced the helper bundles by 433-442 gzip bytes.
+The public optional/readonly bundle fell from 1,730 to 1,294 gzip bytes, leaving a 348-byte gap versus the patched helper bundle's 946 bytes.
+Thus the metadata patch also fails to remove the isolated modifier gap.
+
+**Additional limitation: six patched variants failed to execute.**
+The public-interface-only and public-record-only variants each threw `ReferenceError: Cannot access '...' before initialization` during bundle evaluation in all three contexts: builder-only, SharedTree, and SharedTree with validation.
+Every corresponding unpatched variant passed.
+For completeness, their emitted sizes are below, but these are **broken bundles, not usable savings**:
+
+| Failing patched variant | Unpatched gzip bytes | Patched gzip bytes |
+| --- | ---: | ---: |
+| Builder-only public interface | 11,078 | 10,705 |
+| Builder-only public record | 11,038 | 10,692 |
+| SharedTree, public interface only | 124,555 | 124,339 |
+| SharedTree, public record only | 124,545 | 124,321 |
+| SharedTree + validation, public interface only | 137,827 | 137,986 |
+| SharedTree + validation, public record only | 137,820 | 137,994 |
+
+The all-public complete bundles passed the checks despite these single-helper failures, so the failure is sensitive to the bundled module graph.
+We have not isolated its initialization-order cause; it is not evidence that every possible side-effect annotation or bundler configuration is unsafe.
+It does show that this proposed metadata patch needs broader correctness testing before upstream adoption.
+Two complete patched measurement passes reproduced the sizes and failures; extra helper/all-public repeats also matched.
+The earlier packaging study below tested the current helpers, not these public-builder combinations, and its passing checks should not be generalized to them.
+
+These results reinforce keeping the patch removed and tracking lightweight public builders separately from package metadata.
+
+#### Upstream request and tracking
+
 The helpers depend on TypeBox's metadata and schema representation.
 They cover our narrower use cases, not all behavior of the public builders.
 An upstream solution should let Fluid use supported APIs without losing the construction benefit or reintroducing unnecessary dependencies.
@@ -509,6 +561,7 @@ The important default SharedTree case is a measured size win: 1,800 fewer gzip b
 The patch saves only another 389 gzip bytes in that case and 62 when validation is included.
 The validation-enabled bundle's 896-byte gzip increase is retained below for completeness, not treated as a blocker.
 These are the historical controlled measurements described below, not a new measurement of every subsequent branch change.
+The October 12 [builder comparison](#does-the-side-effects-metadata-patch-remove-the-builder-overhead) measures the patch on newer branch sources: savings remain small, the public-builder overhead remains, and some public-builder combinations fail to execute.
 
 The local dependency patch evaluated below added this package metadata:
 
