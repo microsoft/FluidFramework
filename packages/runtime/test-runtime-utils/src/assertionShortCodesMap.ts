@@ -2003,7 +2003,6 @@ export const shortCodeMap = {
 	"0xd53": "Child offsets incorrectly calculated.",
 	"0xd54": "Must be sharded",
 	"0xd55": "Compressor is not sharded.",
-	"0xd56": "Validated blob placeholder must have a registered buffer",
 	"0xd57": "Resolve function should have been assigned",
 	"0xd58": "Reject function should have been assigned",
 	"0xd59": "Guest accessed before initialization",
@@ -2021,5 +2020,6 @@ export const shortCodeMap = {
 	"0xd67": "Cannot initialize a forbidden root with content",
 	"0xd68": "SharedTree change format versions must be numbers",
 	"0xd69": "SharedTree change codec family has no supported formats",
-	"0xd6a": "Serialized change codec requires an encoded schema"
+	"0xd6a": "Serialized change codec requires an encoded schema",
+	"0xd6b": "Validated blob placeholder must have a registered buffer"
 };
