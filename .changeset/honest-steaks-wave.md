@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Added checks against document corruption in debug builds
+Adds checks against document corruption in debug builds
 
 This version adds additional runtime checks to detect errors in the rebasing (commit merging) layer.
 These checks are tree-shaken out of production builds, so they have no impact on shipped applications.

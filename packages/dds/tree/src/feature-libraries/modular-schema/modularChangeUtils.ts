@@ -15,7 +15,7 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 } from "../../core/index.js";
-import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
+import { brand, hasSome, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
 	newChangeAtomIdBTree,
@@ -557,11 +557,12 @@ function validateFieldChanges(
 		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 		for (const { nodeId } of handler.getNestedChanges(fieldChange.change)) {
 			const normalizedNodeId = normalizeNodeId(nodeId, change.nodeAliases);
-			const parentFieldId = normalizeFieldId(
-				getParentFieldId(change, normalizedNodeId),
-				change.nodeAliases,
-			);
-			if (!areEqualFieldIds(parentFieldId, fieldId)) {
+			const parentFieldId = getFromChangeAtomIdMap(change.nodeToParent, normalizedNodeId);
+			if (parentFieldId === undefined) {
+				return `NodeId ${JSON.stringify(normalizedNodeId)} is missing from the nodeToParent table`;
+			}
+			const normalizedParentFieldId = normalizeFieldId(parentFieldId, change.nodeAliases);
+			if (!areEqualFieldIds(normalizedParentFieldId, fieldId)) {
 				return "Inconsistent node location";
 			}
 
@@ -571,32 +572,32 @@ function validateFieldChanges(
 			unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
 		}
 
-		// These checks are disabled because inserts often cause mismatches between the cross-field key table and the field changeset.
-		// These mismatches are considered harmless
 		// They will be addressed by PR 26206
-		// if (!(options.ignoreCrossFieldTable ?? false)) {
-		// 	const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
-		// 	for (const keyRange of keysInChange) {
-		// 		const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
-		// 		if (!hasSome(fields)) {
-		// 			return `Cross-field key ${JSON.stringify(keyRange.key)} is missing in the cross-field key table`;
-		// 		}
-		// 		if (fields.some((f) => !areEqualFieldIds(f, fieldId))) {
-		// 			return `Cross-field key table is pointing to the wrong field for key ${JSON.stringify(keyRange.key)}`;
-		// 		}
-		// 	}
+		if (!(options.ignoreCrossFieldTable ?? false)) {
+			const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
+			for (const keyRange of keysInChange) {
+				const fields = getFieldsForCrossFieldKey(change, keyRange.key, keyRange.count);
+				if (!hasSome(fields)) {
+					return `Cross-field key ${JSON.stringify(keyRange.key)} is missing in the cross-field key table`;
+				}
+				if (fields.some((f) => !areEqualFieldIds(f, fieldId))) {
+					return `Cross-field key table is pointing to the wrong field for key ${JSON.stringify(keyRange.key)}`;
+				}
+			}
 
-		// 	const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
-		// 	const keysInTable = change.crossFieldKeys
-		// 		.entries()
-		// 		.filter(({ value }) =>
-		// 			areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
-		// 		);
-		// 	const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
-		// 	if (countInChange !== countInTable) {
-		// 		return `Mismatch between cross-field key table and changeset for field ${JSON.stringify(fieldId)}`;
-		// 	}
-		// }
+			// This check is disabled because inserts often cause mismatches between the cross-field key table and the field changeset.
+			// These mismatches are considered harmless, though its possible that other issues left undetected due to this being disabled.
+			// const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
+			// const keysInTable = change.crossFieldKeys
+			// 	.entries()
+			// 	.filter(({ value }) =>
+			// 		areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
+			// 	);
+			// const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
+			// if (countInChange !== countInTable) {
+			// 	return `Mismatch between cross-field key table and changeset for field ${JSON.stringify(fieldId)}`;
+			// }
+		}
 	}
 	return true;
 }

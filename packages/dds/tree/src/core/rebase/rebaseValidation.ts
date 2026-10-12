@@ -27,6 +27,8 @@ export enum RebaseValidationLevel {
 
 /**
  * The entry point for configuring and querying the status of rebase validation.
+ * This validation can be used in debug builds to assist in root cause analysis of Fluid Framework bugs.
+ *
  * @alpha
  */
 export interface RebaseValidationAlpha {
@@ -53,8 +55,7 @@ export interface RebaseValidationAlpha {
 	};
 
 	/**
-	 * Sets the desired level of rebase validation for rebase instances.
-	 * This can be used in debug builds to assist in root cause analysis of Fluid Framework bugs.
+	 * Sets the desired level of rebase validation.
 	 * @param level - The desired level of rebase validation.
 	 * @returns The previous level in effect immediately before this call.
 	 * @throws for levels higher than `None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
@@ -66,8 +67,7 @@ export interface RebaseValidationAlpha {
 	readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
 
 	/**
-	 * Sets the desired level of rebase validation for rebase instances for the duration of the provided callback.
-	 * This can be used in debug builds to assist in root cause analysis of Fluid Framework bugs.
+	 * Sets the desired level of rebase validation until the provided callback returns and restores the current level of rebase validation after that.
 	 * @param level - The desired level of rebase validation.
 	 * @param callback - The function to execute while the specified validation level is in effect.
 	 * @returns the value returned by the callback function (if any).
@@ -88,6 +88,7 @@ let rebaseValidationLevel = RebaseValidationLevel.Cheap;
 
 /**
  * The entry point for configuring and querying the status of rebase validation.
+ * This validation can be used in debug builds to assist in root cause analysis of Fluid Framework bugs.
  * @alpha
  */
 export const RebaseValidation: RebaseValidationAlpha = {
