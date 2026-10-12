@@ -46,69 +46,6 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"test.FormattedTextTest.lineTag.h3": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.h4": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.h5": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.li": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.ol": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.checked": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.unchecked": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.blockquote": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
-		"test.FormattedTextTest.lineTag.codeBlock": {
-			"object": {
-				"kind": 2,
-				"fields": {},
-				"allowUnknownOptionalFields": false
-			}
-		},
 		"com.fluidframework.leaf.number": {
 			"leaf": {
 				"kind": 3,
@@ -126,33 +63,6 @@
 								"isStaged": false
 							},
 							"test.FormattedTextTest.lineTag.h2": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.h3": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.h4": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.h5": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.li": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.ol": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.checked": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.unchecked": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.blockquote": {
-								"isStaged": false
-							},
-							"test.FormattedTextTest.lineTag.codeBlock": {
 								"isStaged": false
 							}
 						},
@@ -189,24 +99,6 @@
 							}
 						},
 						"storedKey": "bold"
-					},
-					"italic": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"com.fluidframework.leaf.boolean": {
-								"isStaged": false
-							}
-						},
-						"storedKey": "italic"
-					},
-					"underline": {
-						"kind": 1,
-						"simpleAllowedTypes": {
-							"com.fluidframework.leaf.boolean": {
-								"isStaged": false
-							}
-						},
-						"storedKey": "underline"
 					},
 					"size": {
 						"kind": 1,
