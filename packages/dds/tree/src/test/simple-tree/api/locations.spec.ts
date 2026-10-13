@@ -76,7 +76,7 @@ function indices(
 
 function expectUnavailable(
 	result: TreeLocationResolution,
-	reason: "target-deleted" | "invalid-location" | "unsupported-change",
+	reason: "target-deleted" | "invalid-location",
 ): void {
 	assert.deepEqual(result, {
 		status: "resolved",
@@ -504,9 +504,13 @@ describe("TreeLocationResolver", () => {
 		);
 	});
 
-	it("reports schema-changing history explicitly", () => {
+	it("resolves node and gap locations across schema widening and subsequent edits", () => {
 		const { provider, views } = setup();
-		const batch = captureGaps(views[0], [1]);
+		const batch = capture(views[0].locations, [
+			{ kind: "node", node: views[0].root },
+			{ kind: "node", node: views[0].root.left },
+			{ kind: "sequence", node: views[0].root.left, index: 1, affinity: "after" },
+		]);
 		views[0].dispose();
 		const upgraded = new SchemaFactory("com.example.locations");
 		class Updated extends upgraded.object("Document", {
@@ -518,7 +522,76 @@ describe("TreeLocationResolver", () => {
 			new TreeViewConfiguration({ schema: Updated }),
 		);
 		view.upgradeSchema();
-		expectUnavailable(view.locations.resolve(batch), "unsupported-change");
+		assert.deepEqual(resolved(view.locations.resolve(batch)), [
+			{ kind: "node", node: view.root },
+			{ kind: "node", node: view.root.left },
+			{ kind: "sequence", node: view.root.left, index: 1, affinity: "after" },
+		]);
+		view.root.left.insertAtStart("x");
+		view.root.right.moveRangeToIndex(1, 1, 4, view.root.left);
+		assert.deepEqual(resolved(view.locations.resolve(batch)), [
+			{ kind: "node", node: view.root },
+			{ kind: "node", node: view.root.left },
+			{ kind: "sequence", node: view.root.right, index: 2, affinity: "after" },
+		]);
+	});
+
+	it("replays data entries interleaved with schema changes in the same commit", () => {
+		const { provider, views } = setup();
+		const batch = capture(views[0].locations, [
+			{ kind: "node", node: views[0].root.left },
+			{ kind: "sequence", node: views[0].root.left, index: 2, affinity: "after" },
+		]);
+		const checkout = provider.trees[0].kernel.checkout;
+		checkout.transaction.start();
+		views[0].root.left.insertAtStart("x");
+		views[0].dispose();
+		const upgraded = new SchemaFactory("com.example.locations");
+		class Updated extends upgraded.object("Document", {
+			left: Text,
+			right: Text,
+			title: upgraded.optional(upgraded.string),
+		}) {}
+		const updatedConfig = new TreeViewConfiguration({ schema: Updated });
+		const view = provider.trees[0].kernel.viewWith(updatedConfig);
+		view.upgradeSchema();
+		view.root.right.moveRangeToIndex(1, 1, 4, view.root.left);
+		checkout.transaction.commit();
+		assert.deepEqual(
+			checkout.getLocationHead().change.changes.map((change) => change.type),
+			["data", "schema", "data"],
+		);
+		assert.deepEqual(resolved(view.locations.resolve(batch)), [
+			{ kind: "node", node: view.root.left },
+			{ kind: "sequence", node: view.root.right, index: 3, affinity: "after" },
+		]);
+		views[1].dispose();
+		const receiver = provider.trees[1].kernel.viewWith(updatedConfig);
+		provider.synchronizeMessages();
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+			{ kind: "node", node: receiver.root.left },
+			{ kind: "sequence", node: receiver.root.right, index: 3, affinity: "after" },
+		]);
+	});
+
+	it("reports normal view incompatibility instead of rejecting historical schema changes", () => {
+		const { provider, views } = setup();
+		const batch = captureGaps(views[0], [1]);
+		const receiver = views[1].locations;
+		views[0].dispose();
+		const upgraded = new SchemaFactory("com.example.locations");
+		class Updated extends upgraded.object("Document", {
+			left: Text,
+			right: Text,
+			title: upgraded.optional(upgraded.string),
+		}) {}
+		const view = provider.trees[0].kernel.viewWith(
+			new TreeViewConfiguration({ schema: Updated }),
+		);
+		view.upgradeSchema();
+		provider.synchronizeMessages();
+		assert.equal(views[1].compatibility.canView, false);
+		assert.throws(() => receiver.resolve(batch), /view schema is incompatible/);
 	});
 
 	it("rejects retained resolver references after view disposal", () => {

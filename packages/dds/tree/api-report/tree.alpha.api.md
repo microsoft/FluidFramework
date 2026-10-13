@@ -1195,7 +1195,7 @@ export type ResolvedTreeLocation = {
     readonly location: TreeLocation;
 } | {
     readonly status: "unavailable";
-    readonly reason: "target-deleted" | "invalid-location" | "unsupported-change";
+    readonly reason: "target-deleted" | "invalid-location";
 };
 
 // @public @deprecated

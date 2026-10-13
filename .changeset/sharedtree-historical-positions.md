@@ -47,4 +47,4 @@ Indices count array elements; editors must convert other coordinate units.
 Captures contain opaque JSON-serializable node references and a shared revision.
 Capture returns `undefined` while edits are pending or on local forks.
 References expire with retained collaboration history and must not be persisted or interpreted by applications.
-Schema-changing commits are not supported for location resolution.
+Locations remain resolvable across schema widening, provided the receiving view can view the current stored schema.

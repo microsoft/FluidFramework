@@ -106,7 +106,8 @@ If neither the associated content nor the gap's containing array survives, the g
 
 Malformed references and invalid indices produce `invalid-location`.
 Deleted targets produce `target-deleted`.
-Crossing a schema-changing commit produces `unsupported-change`.
+Schema changes do not change existing node identities or locations and do not make captures unavailable.
+The receiving view must still be compatible with the current stored schema; an incompatible view throws the normal view-compatibility usage error.
 No failure path silently selects a replacement node or clamps an index.
 Resolving during a transaction, capturing nodes from another view, and using disposed resolvers are API misuse and throw usage errors.
 
@@ -120,6 +121,7 @@ Captures are not authenticated proofs of historical existence; applications rema
 Resolution walks the current retained commit graph back to the captured sequenced revision.
 It uses the currently rebased local suffix, not transient rollback and reapplication events.
 It then replays the intervening data changes in order through a temporary `AnchorSet`.
+Schema entries are skipped, while all data entries are replayed, including entries in the same commit as a schema change.
 No historical forest is constructed.
 The receiver's current forest is accessed only after replay to obtain the resulting SimpleTree objects.
 

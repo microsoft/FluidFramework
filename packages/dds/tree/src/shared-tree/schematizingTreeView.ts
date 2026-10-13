@@ -667,6 +667,7 @@ export class SchematizingSimpleTreeView<
 			},
 			resolve: (capture) => {
 				this.ensureUndisposed();
+				throwIfSchemaIsIncompatible(this.compatibility);
 				return resolver.resolve(capture);
 			},
 		};

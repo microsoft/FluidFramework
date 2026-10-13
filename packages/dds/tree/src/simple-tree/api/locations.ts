@@ -108,7 +108,7 @@ export type ResolvedTreeLocation =
 	  }
 	| {
 			readonly status: "unavailable";
-			readonly reason: "target-deleted" | "invalid-location" | "unsupported-change";
+			readonly reason: "target-deleted" | "invalid-location";
 	  };
 
 /**
@@ -135,7 +135,8 @@ export type TreeLocationResolution =
  * Resolution includes pending local edits and replays the intervening retained history using sparse anchors.
  * It does not reconstruct a historical forest, retain history, or create live tracking references for callers.
  * Replay cost is linear in the intervening changes and depends on the number of locations.
- * Locations crossing schema changes are reported as unsupported.
+ * Schema changes do not change node identity or location and are skipped during replay.
+ * The receiving view must be compatible with the current stored schema.
  * @sealed @alpha
  */
 export interface TreeLocationResolver {
@@ -154,7 +155,7 @@ export interface TreeLocationResolver {
 	 * Resolves a captured batch into this view's current local state.
 	 * @param capture - The sender's capture, including its revision and opaque node references.
 	 * @returns Results in capture order or an explicit unavailable-revision result.
-	 * @throws A usage error during a transaction or after disposal.
+	 * @throws A usage error during a transaction, after disposal, or if the receiving view cannot view the current stored schema.
 	 * @remarks
 	 * Wait for editor-model updates before using the result in an editor.
 	 * Wire encodings are checked, but captures are not authenticated proofs of historical node existence.

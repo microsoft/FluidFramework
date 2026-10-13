@@ -118,9 +118,7 @@ function decodeReference(
 	return { path, length };
 }
 
-function unavailable(
-	reason: "target-deleted" | "invalid-location" | "unsupported-change",
-): ResolvedTreeLocation {
+function unavailable(reason: "target-deleted" | "invalid-location"): ResolvedTreeLocation {
 	return { status: "unavailable", reason };
 }
 
@@ -245,24 +243,19 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			commits.push(commit);
 			commit = commit.parent;
 		}
-		if (
-			commits.some((entry) => entry.change.changes.some((change) => change.type === "schema"))
-		) {
-			return {
-				status: "resolved",
-				locations: capture.locations.map(() => unavailable("unsupported-change")),
-			};
-		}
 		const deltas: { delta: DeltaRoot; revision: RevisionTag }[] = [];
 		let replay: LocationReplay | undefined;
 		try {
 			for (const entry of commits.reverse()) {
 				for (const change of entry.change.changes) {
-					assert(change.type === "data", "Schema changes must not reach location replay");
-					deltas.push({
-						delta: intoDelta(tagChange(change.innerChange, entry.revision)),
-						revision: entry.revision,
-					});
+					// Schema changes do not change node identity or location.
+					// Preserve all data entries, including those interleaved with schema edits.
+					if (change.type === "data") {
+						deltas.push({
+							delta: intoDelta(tagChange(change.innerChange, entry.revision)),
+							revision: entry.revision,
+						});
+					}
 				}
 			}
 			const detached = this.checkout.removedRoots.clone();
