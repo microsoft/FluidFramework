@@ -4,8 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import * as Type from "@sinclair/typebox";
-import type { TAnySchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TSchema } from "typebox";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
@@ -33,7 +33,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	>,
 	version: typeof MessageFormatVersion.vSharedBranches,
 ): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext> {
-	const schema: TAnySchema = Message(changeCodec.encodedSchema ?? Type.Any());
+	const schema: TSchema = Message(changeCodec.encodedSchema ?? Type.Any());
 
 	return {
 		schema,

@@ -4,11 +4,11 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import * as Type from "@sinclair/typebox";
-import type { TSchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TSchema } from "typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { type JsonCompatibleReadOnly, typeboxOptional } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";
 import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
@@ -58,11 +58,11 @@ export interface Message {
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 	Type.Object({
-		revision: Type.Optional(RevisionTagSchema),
+		revision: typeboxOptional(RevisionTagSchema),
 		originatorId: SessionIdSchema,
-		changeset: Type.Optional(tChange),
-		branchId: Type.Optional(Type.Number()),
-		branchName: Type.Optional(Type.String()),
-		customMetadata: Type.Optional(EncodedCustomMetadataTree),
+		changeset: typeboxOptional(tChange),
+		branchId: typeboxOptional(Type.Number()),
+		branchName: typeboxOptional(Type.String()),
+		customMetadata: typeboxOptional(EncodedCustomMetadataTree),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

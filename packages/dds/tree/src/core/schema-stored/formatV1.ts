@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import * as Type from "@sinclair/typebox";
-import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TObjectOptions, Static } from "typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import { type Brand, brandedStringType } from "../../util/index.js";
+import {
+	type Brand,
+	brandedStringType,
+	stringKeyRecord,
+	typeboxInterface,
+	typeboxOptional,
+} from "../../util/index.js";
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
@@ -51,10 +57,14 @@ const FieldSchemaFormatBase = Type.Object({
 	types: Type.Array(TreeNodeSchemaIdentifierSchema),
 });
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: TObjectOptions = { additionalProperties: false };
 
 export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
+export const FieldSchemaFormat = typeboxInterface(
+	[FieldSchemaFormatBase],
+	{},
+	noAdditionalProps,
+);
 
 /**
  * Persisted version of {@link ValueSchema}.
@@ -78,15 +88,15 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 		/**
 		 * Object node union member.
 		 */
-		object: Type.Optional(Type.Record(Type.String(), FieldSchemaFormat)),
+		object: typeboxOptional(stringKeyRecord(FieldSchemaFormat)),
 		/**
 		 * Map node union member.
 		 */
-		map: Type.Optional(FieldSchemaFormat),
+		map: typeboxOptional(FieldSchemaFormat),
 		/**
 		 * Leaf node union member.
 		 */
-		leaf: Type.Optional(Type.Enum(PersistedValueSchema)),
+		leaf: typeboxOptional(Type.Enum(PersistedValueSchema)),
 	},
 	unionOptions,
 );

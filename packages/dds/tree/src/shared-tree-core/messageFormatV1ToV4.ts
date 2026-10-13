@@ -4,11 +4,11 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import * as Type from "@sinclair/typebox";
-import type { TSchema } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { TSchema } from "typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import { type JsonCompatibleReadOnly, typeboxOptional } from "../util/index.js";
 
 import { EncodedCustomMetadataTree } from "./customMetadataFormat.js";
 import { MessageFormatVersion } from "./messageFormat.js";
@@ -64,9 +64,9 @@ export const Message = <ChangeSchema extends TSchema>(
 		originatorId: SessionIdSchema,
 		changeset: tChange,
 		...(includeCustomMetadata
-			? { customMetadata: Type.Optional(EncodedCustomMetadataTree) }
+			? { customMetadata: typeboxOptional(EncodedCustomMetadataTree) }
 			: {}),
-		version: Type.Optional(
+		version: typeboxOptional(
 			Type.Union([
 				Type.Literal(MessageFormatVersion.v1),
 				Type.Literal(MessageFormatVersion.v2),

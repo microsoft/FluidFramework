@@ -5,8 +5,8 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static } from "typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 import type { ChunkedCursor } from "../../../../core/index.js";
@@ -32,7 +32,7 @@ import {
 	FieldBatchFormatVersion,
 	type TreeChunk,
 } from "../../../../feature-libraries/index.js";
-import { brand, ReferenceCountedBase } from "../../../../util/index.js";
+import { brand, ReferenceCountedBase, typeboxOptional } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 
 const Constant = Type.Literal(0);
@@ -40,8 +40,8 @@ const StringShape = Type.String();
 
 const EncodedChunkShape = Type.Object(
 	{
-		a: Type.Optional(Constant),
-		b: Type.Optional(StringShape),
+		a: typeboxOptional(Constant),
+		b: typeboxOptional(StringShape),
 	},
 	unionOptions,
 );

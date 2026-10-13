@@ -11,7 +11,7 @@ import {
 	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
-import type { TSchema } from "@sinclair/typebox";
+import type { TSchema } from "typebox";
 
 import {
 	VersionDispatchingCodecBuilder,

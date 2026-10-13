@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import * as Type from "@sinclair/typebox";
-import type { Static } from "@sinclair/typebox";
+import * as Type from "typebox/type";
+import type { Static } from "typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
 import type {
@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
-import { brand } from "../../../../util/index.js";
+import { brand, typeboxOptional } from "../../../../util/index.js";
 
 export const Constant = Type.Literal(0);
 
@@ -29,8 +29,8 @@ export const StringShape = Type.String();
 
 const EncodedChunkShape = Type.Object(
 	{
-		a: Type.Optional(Constant),
-		b: Type.Optional(StringShape),
+		a: typeboxOptional(Constant),
+		b: typeboxOptional(StringShape),
 	},
 	unionOptions,
 );

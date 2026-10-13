@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { TUnsafe } from "@sinclair/typebox";
+import type { TUnsafe } from "typebox";
 
 import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {

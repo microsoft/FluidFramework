@@ -6,16 +6,15 @@
 import { strict as assert } from "node:assert";
 import { mock } from "node:test";
 
-import * as Type from "@sinclair/typebox";
-// eslint-disable-next-line import-x/no-internal-modules -- TypeBox documents this compiler entrypoint.
-import { TypeCompiler, TypeCompilerUnknownTypeError } from "@sinclair/typebox/compiler";
+import * as Type from "typebox/type";
+import { BuildResult } from "typebox/schema";
 
 import { extractJsonValidator } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 
 describe("TypeBox validator compilation cache", () => {
 	it("compiles a shared schema once and preserves validation", () => {
-		const compile = mock.method(TypeCompiler, "Compile");
+		const compile = mock.method(BuildResult.prototype, "Evaluate");
 		try {
 			const schema = Type.Object({ count: Type.Integer({ minimum: 0 }) });
 			const validator = extractJsonValidator(FormatValidatorBasic);
@@ -35,7 +34,7 @@ describe("TypeBox validator compilation cache", () => {
 	});
 
 	it("compiles distinct schema identities independently", () => {
-		const compile = mock.method(TypeCompiler, "Compile");
+		const compile = mock.method(BuildResult.prototype, "Evaluate");
 		try {
 			const validator = extractJsonValidator(FormatValidatorBasic);
 			validator.compile(Type.Number());
@@ -51,12 +50,21 @@ describe("TypeBox validator compilation cache", () => {
 	});
 
 	it("propagates compilation errors without caching failures", () => {
-		const compile = mock.method(TypeCompiler, "Compile");
+		const failure = new Error("Validator evaluation failed.");
+		const compile = mock.method(BuildResult.prototype, "Evaluate", () => {
+			throw failure;
+		});
 		try {
 			const validator = extractJsonValidator(FormatValidatorBasic);
-			const schema = Type.Unsafe({ type: "invalid" });
-			assert.throws(() => validator.compile(schema), TypeCompilerUnknownTypeError);
-			assert.throws(() => validator.compile(schema), TypeCompilerUnknownTypeError);
+			const schema = Type.Number();
+			assert.throws(
+				() => validator.compile(schema),
+				(error: unknown) => error === failure,
+			);
+			assert.throws(
+				() => validator.compile(schema),
+				(error: unknown) => error === failure,
+			);
 			assert.equal(compile.mock.callCount(), 2);
 		} finally {
 			compile.mock.restore();

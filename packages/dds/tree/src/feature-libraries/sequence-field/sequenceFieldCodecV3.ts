@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TAnySchema } from "@sinclair/typebox";
-
 import {
 	DiscriminatedUnionDispatcher,
 	type IJsonCodec,
@@ -15,7 +13,6 @@ import type {
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
 	EncodedNodeChangeset,
 	type FieldChangeEncodingContext,
@@ -35,8 +32,8 @@ export function makeV3Codec(
 	>,
 ): IJsonCodec<
 	Changeset,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
+	Encoded.Changeset<typeof EncodedNodeChangeset>,
+	Encoded.Changeset<typeof EncodedNodeChangeset>,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
 > {
@@ -86,17 +83,13 @@ export function makeV3Codec(
 		},
 	});
 
-	/**
-	 * If we want to make the node change aspect of this codec more type-safe, we could adjust generics
-	 * to be in terms of the schema rather than the concrete type of the node change.
-	 */
-	type NodeChangeSchema = TAnySchema;
+	type NodeChangeSchema = typeof EncodedNodeChangeset;
 
 	return {
 		encode: (
 			changeset: Changeset,
 			context: FieldChangeEncodingContext,
-		): JsonCompatibleReadOnly & Encoded.Changeset<NodeChangeSchema> => {
+		): Encoded.Changeset<NodeChangeSchema> => {
 			const jsonMarks: Encoded.Changeset<NodeChangeSchema> = [];
 			for (const mark of changeset) {
 				const encodedMark: Encoded.Mark<NodeChangeSchema> = {

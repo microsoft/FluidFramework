@@ -34,7 +34,70 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/explicit-module-boundary-types": "off",
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
+						"*/index.js",
+					],
+				},
+			],
 			"jsdoc/require-description": "warn",
+			"no-restricted-syntax": [
+				"error",
+				{
+					selector: "ExportAllDeclaration",
+					message:
+						"Exporting * is not permitted. You should export only named items you intend to export.",
+				},
+				"ForInStatement",
+				// This mirrors eslint-config-fluid 15 until Tree consumes the published package:
+				// named type imports come from `typebox`, while runtime schema builders use
+				// `import * as Type from "typebox/type"`.
+				{
+					selector: 'ImportDeclaration[source.value="typebox"] > ImportNamespaceSpecifier',
+					message:
+						"Import TypeBox types by name with `import type` from `typebox`, and import the runtime namespace from `typebox/type`.",
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox"] > ImportDefaultSpecifier',
+					message:
+						"Do not use the TypeBox aggregate. Import the runtime namespace from `typebox/type`.",
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox/type"] > ImportDefaultSpecifier',
+					message: 'Import the TypeBox runtime with `import * as Type from "typebox/type"`.',
+				},
+				{
+					selector: 'ImportDeclaration[source.value="typebox/type"] > ImportSpecifier',
+					message:
+						'Import the TypeBox runtime with `import * as Type from "typebox/type"`; import types by name from `typebox`.',
+				},
+				{
+					selector:
+						'ImportDeclaration[source.value="typebox"]:not([importKind="type"]) > ImportSpecifier:not([importKind="type"])',
+					message:
+						'Runtime TypeBox imports must use `import * as Type from "typebox/type"`; only type imports may come from `typebox`.',
+				},
+				{
+					// The import policy above reserves `Type` for the TypeBox runtime namespace.
+					selector:
+						'CallExpression[callee.object.name="Type"][callee.property.name=/^(Interface|Optional|Readonly|Record)$/]',
+					message:
+						"Use the specialized helpers in `src/util/typebox.ts`; these general TypeBox builders load the type-instantiation engine.",
+				},
+			],
 			"unicorn/no-null": "off",
 		},
 	},
@@ -58,6 +121,26 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/strict-boolean-expressions": "warn",
 			// Import namespace validation is also expensive and low-value for test-only imports.
 			"import-x/namespace": "warn",
+			"import-x/no-internal-modules": [
+				"error",
+				{
+					allow: [
+						"@fluid*/**",
+						"@fluidframework/*/internal{,/**}",
+						"@fluid-experimental/**",
+						"@fluid-internal/**",
+						"typebox/compile",
+						"typebox/error",
+						"typebox/format",
+						"typebox/guard",
+						"typebox/schema",
+						"typebox/system",
+						"typebox/type",
+						"typebox/value",
+						"*/index.js",
+					],
+				},
+			],
 			// Regex optimization suggestions are not important for test code paths.
 			"unicorn/better-regex": "warn",
 			// #endregion
