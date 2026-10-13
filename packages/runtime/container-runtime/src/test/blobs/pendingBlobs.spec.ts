@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { isLocalFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import type { IPendingBlobs, SerializableLocalBlobRecord } from "../../blobManager/index.js";
 
@@ -963,6 +964,79 @@ for (const createBlobPayloadPending of [false, true]) {
 					outstandingWorkTransitions,
 					[false],
 					"Restored blobs are already outstanding at load, so sharing them must only end that span",
+				);
+			});
+
+			it("Keeps counting until the last restored blob completes", async () => {
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					pendingBlobs: await twoPendingBlobs(),
+					createBlobPayloadPending,
+				});
+				mockOrderingService.pause();
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
+				assert.strictEqual(blobManager.unsharedBlobCount, 2);
+
+				const sharingP = blobManager.sharePendingBlobs();
+
+				// Complete exactly one of the two blobs. Which one lands first depends on whether it needed
+				// uploading first, so these assertions deliberately depend only on the count.
+				await mockOrderingService.waitSequenceOne();
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+				assert.strictEqual(
+					blobManager.hasOutstandingBlobWork,
+					true,
+					"The aggregate must stay true while any restored blob is still unshared",
+				);
+				assert.deepStrictEqual(
+					outstandingWorkTransitions,
+					[],
+					"Completing one of several blobs is not an aggregate transition",
+				);
+
+				await mockOrderingService.waitSequenceOne();
+				await sharingP;
+
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.deepStrictEqual(
+					outstandingWorkTransitions,
+					[false],
+					"The aggregate clears exactly once, when the last blob completes",
+				);
+			});
+
+			it("Stops counting a restored blob whose sharing fails terminally", async () => {
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					// A single blob keeps the assertions deterministic: sharePendingBlobs() rejects via
+					// Promise.all, so with a second blob the rejection could surface while that blob's flow
+					// was still in flight.
+					pendingBlobs: {
+						["blob1"]: {
+							state: "localOnly",
+							blob: getSerializedBlobForString("hello"),
+						},
+					},
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
+				assert.strictEqual(blobManager.unsharedBlobCount, 1);
+
+				const sharingP = blobManager.sharePendingBlobs();
+				await mockBlobStorage.waitCreateOne({
+					error: new LoggingError("fake driver error"),
+				});
+				await assert.rejects(sharingP, { message: "fake driver error" });
+
+				// A restored blob is counted from load rather than from the start of sharing, so a terminal
+				// failure has to end that span just as it does for a freshly created blob. There is no retry
+				// path once sharing fails, so leaving it counted would report outstanding work for the rest
+				// of the container's life.
+				assert.strictEqual(blobManager.unsharedBlobCount, 0);
+				assert.strictEqual(blobManager.hasOutstandingBlobWork, false);
+				assert.deepStrictEqual(
+					outstandingWorkTransitions,
+					[false],
+					"The blob was already outstanding at load, so the failure must only end that span",
 				);
 			});
 
