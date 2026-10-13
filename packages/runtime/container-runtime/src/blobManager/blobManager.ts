@@ -491,6 +491,18 @@ export class BlobManager {
 	};
 
 	/**
+	 * Discard the local record of a blob that is not going to become shared, dropping it from the caches
+	 * and from the outstanding work tally. These belong together: a discarded blob has no flow left to
+	 * complete it, so leaving it counted would keep the container dirty forever. Safe for a blob that was
+	 * never counted, since the tally update is idempotent.
+	 */
+	private readonly discardLocalBlob = (localId: string): void => {
+		this.localBlobCache.delete(localId);
+		this.pendingBlobsWithAttachedHandles.delete(localId);
+		this.stopTrackingUnsharedBlob(localId);
+	};
+
+	/**
 	 * Returns whether a blob with the given localId can be retrieved by the BlobManager via getBlob().
 	 */
 	public hasBlob(localId: string): boolean {
@@ -690,8 +702,7 @@ export class BlobManager {
 		signal?: AbortSignal,
 	): Promise<void> => {
 		if (signal?.aborted === true) {
-			this.localBlobCache.delete(localId);
-			this.pendingBlobsWithAttachedHandles.delete(localId);
+			this.discardLocalBlob(localId);
 			throw createAbortError();
 		}
 		const localBlobRecordInitial = this.localBlobCache.get(localId);
@@ -738,9 +749,7 @@ export class BlobManager {
 				const onSignalAbort = (): void => {
 					removeListeners();
 					uploadHasBecomeIrrelevant = true;
-					this.localBlobCache.delete(localId);
-					this.pendingBlobsWithAttachedHandles.delete(localId);
-					this.stopTrackingUnsharedBlob(localId);
+					this.discardLocalBlob(localId);
 					reject(createAbortError());
 				};
 				const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
@@ -776,9 +785,7 @@ export class BlobManager {
 						if (!uploadHasBecomeIrrelevant) {
 							removeListeners();
 							// If the storage call errors, we can't recover. Reject to throw back to the caller.
-							this.localBlobCache.delete(localId);
-							this.pendingBlobsWithAttachedHandles.delete(localId);
-							this.stopTrackingUnsharedBlob(localId);
+							this.discardLocalBlob(localId);
 							// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 							reject(error);
 						}
@@ -846,9 +853,7 @@ export class BlobManager {
 					};
 					const onSignalAbort = (): void => {
 						removeListeners();
-						this.localBlobCache.delete(localId);
-						this.pendingBlobsWithAttachedHandles.delete(localId);
-						this.stopTrackingUnsharedBlob(localId);
+						this.discardLocalBlob(localId);
 						reject(createAbortError());
 					};
 					const removeListeners = (): void => {
