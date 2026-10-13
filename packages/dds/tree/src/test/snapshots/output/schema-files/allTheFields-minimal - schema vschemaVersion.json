@@ -42,6 +42,7 @@
       "test.allTheFields"
     ]
   },
+  "schemaHash": "592b2433e20896b3e83b75252f4c3273c91f28b7457f8d4c5df9c2ddd142ce9e",
   "schemaVersion": [
     [
       "com.fluidframework.test",

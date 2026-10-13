@@ -25,6 +25,7 @@
       "test.hasOptionalField"
     ]
   },
+  "schemaHash": "848713871bc012e0c6ace39a484663f0a5a17362de731f1d189f8d3f98548930",
   "schemaVersion": [
     [
       "com.fluidframework.test",

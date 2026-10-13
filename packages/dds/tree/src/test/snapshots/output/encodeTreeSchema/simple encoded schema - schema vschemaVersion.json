@@ -65,6 +65,7 @@
       "com.fluidframework.leaf.string"
     ]
   },
+  "schemaHash": "dac60b632e42ceb09de96832457a925c3445a51bd83e433780a0484666b69000",
   "schemaVersion": [
     [
       "com.fluidframework.test",

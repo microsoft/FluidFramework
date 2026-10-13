@@ -23,6 +23,7 @@
       "test.MapWithStaged"
     ]
   },
+  "schemaHash": "489fd0273cbb20a0e24bdb483e60e6b15f1e1d147f8815037adc8ddba22a85df",
   "schemaVersion": [
     [
       "com.fluidframework.test",

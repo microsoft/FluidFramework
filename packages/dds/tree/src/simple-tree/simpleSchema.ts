@@ -325,6 +325,11 @@ export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
 	readonly schemaVersion?: SchemaVersionMap;
 
 	/**
+	 * Expected fingerprint of the effective stored schema.
+	 */
+	readonly schemaHash?: string;
+
+	/**
 	 * The tree field representing the root of the tree.
 	 */
 	readonly root: SimpleFieldSchema<Type>;

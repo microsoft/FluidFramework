@@ -212,6 +212,8 @@ export {
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
+export { computeSchemaHash, schemaHasher } from "./schemaHash.js";
+export type { SchemaHasher } from "../schemaHash.js";
 export type { TreeChangeEvents } from "./treeChangeEvents.js";
 export {
 	incrementalEncodingPolicyForAllowedTypes,

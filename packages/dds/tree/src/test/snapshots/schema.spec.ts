@@ -8,6 +8,7 @@ import { type LibraryId, SchemaFormatVersion } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { schemaCodecBuilder } from "../../feature-libraries/schema-index/codec.js";
 import { testTrees } from "../testTrees.js";
+import { getSchemaHashInput, schemaHasher } from "../../simple-tree/index.js";
 
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 
@@ -21,6 +22,7 @@ describe("schema snapshots", () => {
 					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
 						? {
 								...schemaData,
+								schemaHash: schemaHasher(getSchemaHashInput(schemaData)),
 								schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
 							}
 						: schemaData;

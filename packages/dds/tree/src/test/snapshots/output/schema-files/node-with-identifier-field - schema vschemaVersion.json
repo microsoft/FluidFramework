@@ -25,6 +25,7 @@
       "test.hasIdentifierField"
     ]
   },
+  "schemaHash": "717de62c9173638e3b9ef976550c84c4bd32e3a4df29e1ce94b785afe973f51c",
   "schemaVersion": [
     [
       "com.fluidframework.test",

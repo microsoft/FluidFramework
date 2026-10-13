@@ -40,7 +40,11 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../../shared-tree-core/index.js";
-import { toInitialSchema } from "../../../simple-tree/index.js";
+import {
+	getSchemaHashInput,
+	schemaHasher,
+	toInitialSchema,
+} from "../../../simple-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import {
 	snapshotCodecFormats,
@@ -59,6 +63,7 @@ describe("schemaSummarizer", () => {
 					schemaFormat.formatVersion === SchemaFormatVersion.v3Experimental
 						? {
 								...schema,
+								schemaHash: schemaHasher(getSchemaHashInput(schema)),
 								schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
 							}
 						: schema;

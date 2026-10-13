@@ -65,6 +65,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
 	protected schemaVersionData: SchemaVersionMap | undefined;
+	protected schemaHashData: string | undefined;
 	protected readonly _events = createEmitter<SchemaEvents>();
 	public readonly events: Listenable<SchemaEvents> = this._events;
 
@@ -82,6 +83,7 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
 	public constructor(data?: TreeStoredSchema) {
+		this.schemaHashData = data?.schemaHash;
 		if (data === undefined) {
 			this.rootFieldSchemaData = storedEmptyFieldSchema;
 			this.schemaVersionData = undefined;
@@ -118,12 +120,17 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		return this.schemaVersionData;
 	}
 
+	public get schemaHash(): string | undefined {
+		return this.schemaHashData;
+	}
+
 	public apply(newSchema: TreeStoredSchema): void {
 		this._events.emit("beforeSchemaChange", newSchema);
 		const clone = new TreeStoredSchemaRepository(newSchema);
 		// In the future, we could use btree's delta functionality to do a more efficient update
 		this.rootFieldSchemaData = clone.rootFieldSchemaData;
 		this.schemaVersionData = clone.schemaVersionData;
+		this.schemaHashData = clone.schemaHashData;
 		this.nodeSchemaData = clone.nodeSchemaData;
 		this._events.emit("afterSchemaChange", newSchema);
 	}
@@ -135,7 +142,11 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 
 export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 	// A version-only schema is initialized state and must not be overwritten by initialization.
-	return data.nodeSchema.size === 0 && data.schemaVersion === undefined;
+	return (
+		data.nodeSchema.size === 0 &&
+		data.schemaVersion === undefined &&
+		data.schemaHash === undefined
+	);
 }
 
 function cloneSchemaVersion(

@@ -36,6 +36,7 @@
       "test.NestedStagedOptional"
     ]
   },
+  "schemaHash": "94358e4d4317d1b17412c9b7b7830c1a8c8068e46475dc4e3181b587eeb085a2",
   "schemaVersion": [
     [
       "com.fluidframework.test",

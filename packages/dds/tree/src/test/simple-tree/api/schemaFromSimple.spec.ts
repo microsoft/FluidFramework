@@ -63,11 +63,13 @@ describe("schemaFromSimple", () => {
 				const simple = {
 					...getSimpleSchema([]),
 					...(schemaVersion === undefined ? {} : { schemaVersion }),
+					...(schemaVersion === undefined ? {} : { schemaHash: "test-hash" }),
 				};
 				const snapshot = encodeSchemaCompatibilitySnapshot(simple);
 				const decoded = decodeSchemaCompatibilitySnapshot(snapshot);
 				const generated = generateSchemaFromSimpleSchema(decoded);
 				assert.deepEqual(generated.schemaVersion, schemaVersion);
+				assert.equal(generated.schemaHash, simple.schemaHash);
 				assert.equal(Object.hasOwn(generated, "schemaVersion"), schemaVersion !== undefined);
 				assert.deepEqual(encodeSchemaCompatibilitySnapshot(generated), snapshot);
 			});

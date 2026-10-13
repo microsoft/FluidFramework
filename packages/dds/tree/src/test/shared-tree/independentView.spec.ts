@@ -36,6 +36,8 @@ import {
 	TreeViewConfigurationAlpha,
 	asTreeViewAlpha,
 	type LibraryId,
+	computeSchemaHash,
+	schemaHasher,
 } from "../../simple-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor } from "../utils.js";
@@ -112,6 +114,8 @@ describe("independentView", () => {
 			const config = new TreeViewConfigurationAlpha({
 				schema: SchemaFactory.number,
 				schemaVersion: { [testLibraryId]: 1 },
+				schemaHash: computeSchemaHash(SchemaFactory.number),
+				schemaHasher,
 			});
 			const view = asTreeViewAlpha(tree.viewWith(config));
 
@@ -130,6 +134,8 @@ describe("independentView", () => {
 				new TreeViewConfigurationAlpha({
 					schema: factory.string,
 					schemaVersion: { [testLibraryId]: 1 },
+					schemaHash: computeSchemaHash(factory.string),
+					schemaHasher,
 				}),
 			);
 			originalView.initialize("id");
@@ -140,6 +146,8 @@ describe("independentView", () => {
 					new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
 						schemaVersion: { [testLibraryId]: 2 },
+						schemaHash: computeSchemaHash(factory.identifier),
+						schemaHasher,
 					}),
 				),
 			);

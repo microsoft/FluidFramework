@@ -67,6 +67,7 @@ describe("snapshotCompatibilityChecker", () => {
 		const view = new TreeViewConfigurationAlpha({
 			schema: SchemaFactory.number,
 			schemaVersion: { [testLibraryId]: 2 },
+			schemaHash: "test-hash",
 		});
 		const snapshot = exportCompatibilitySchemaSnapshot(view);
 		assert.deepEqual((snapshot as { schemaVersion: unknown }).schemaVersion, [["test", 2]]);
@@ -80,6 +81,7 @@ describe("snapshotCompatibilityChecker", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
 			schemaVersion: { [testLibraryId]: 1 },
+			schemaHash: "test-hash",
 		}) as { schemaVersion: [string, number][] };
 		snapshot.schemaVersion[0][1] = -1;
 
@@ -93,6 +95,7 @@ describe("snapshotCompatibilityChecker", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
 			schemaVersion: { ["test" as LibraryId]: 1 },
+			schemaHash: "test-hash",
 		}) as { schemaVersion: [string, number][] };
 		snapshot.schemaVersion[0][1] = Number.MAX_SAFE_INTEGER + 1;
 
@@ -111,6 +114,33 @@ describe("snapshotCompatibilityChecker", () => {
 				}),
 			/must be a non-negative safe integer/,
 		);
+	});
+
+	it("rejects versioned snapshots without a non-empty hash", () => {
+		for (const schemaVersion of [{ ["test" as LibraryId]: 1 }, {}]) {
+			for (const schemaHash of [undefined, ""]) {
+				assert.throws(
+					() =>
+						exportCompatibilitySchemaSnapshot({
+							schema: SchemaFactory.number,
+							schemaVersion,
+							schemaHash,
+						}),
+					/non-empty schema hash/,
+				);
+				const snapshot = exportCompatibilitySchemaSnapshot({
+					schema: SchemaFactory.number,
+					schemaVersion,
+					schemaHash: "test-hash",
+				}) as { schemaHash?: string };
+				if (schemaHash === undefined) {
+					delete snapshot.schemaHash;
+				} else {
+					snapshot.schemaHash = schemaHash;
+				}
+				assert.throws(() => importCompatibilitySchemaSnapshot(snapshot), /non-empty string/);
+			}
+		}
 	});
 
 	describe("parse and snapshot preserve test schemas", () => {

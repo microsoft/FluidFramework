@@ -23,6 +23,7 @@
       "test.numericRecord"
     ]
   },
+  "schemaHash": "525e3a1c258aa3b809a133dba1f1e2266b031e2c195732cee0bdad65bd96fecd",
   "schemaVersion": [
     [
       "com.fluidframework.test",

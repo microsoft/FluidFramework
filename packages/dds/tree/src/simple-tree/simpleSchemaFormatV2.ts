@@ -19,13 +19,16 @@ export const SimpleSchemaFormatVersion = {
 } as const;
 
 /**
- * Persisted format for the compatibility impacting subset of simple schema with application-defined schema versions.
+ * Persisted format for the compatibility impacting subset of simple schema with a hash and optional application-defined versions.
  * @see {@link SimpleTreeSchema}.
  */
 export const SimpleTreeSchemaFormat = Type.Object(
 	{
 		version: Type.Literal(SimpleSchemaFormatVersion.v2),
-		schemaVersion: Type.Array(Type.Tuple([Type.String(), Type.Integer({ minimum: 0 })])),
+		schemaVersion: Type.Optional(
+			Type.Array(Type.Tuple([Type.String(), Type.Integer({ minimum: 0 })])),
+		),
+		schemaHash: Type.String({ minLength: 1 }),
 		root: SimpleFieldSchemaFormat,
 		definitions: SimpleSchemaDefinitionsFormat,
 	},

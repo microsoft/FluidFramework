@@ -264,6 +264,9 @@ export function allowsSchemaUpgrade(
 	original: TreeStoredSchema,
 	updated: TreeStoredSchema,
 ): boolean {
+	if (original.schemaHash !== undefined && updated.schemaHash === undefined) {
+		return false;
+	}
 	const versionsDecrease = ifSchemaVersionsDecrease(
 		original.schemaVersion,
 		updated.schemaVersion,

@@ -69,6 +69,7 @@ export function generateSchemaFromSimpleSchema(simple: SimpleTreeSchema): TreeSc
 		definitions,
 		// preserving compatibility and snapshot versions without changing unversioned output
 		...(simple.schemaVersion === undefined ? {} : { schemaVersion: simple.schemaVersion }),
+		...(simple.schemaHash === undefined ? {} : { schemaHash: simple.schemaHash }),
 	};
 }
 

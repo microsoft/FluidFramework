@@ -273,6 +273,9 @@ export namespace Component {
     export type LazyArray<T> = () => readonly (() => T)[];
 }
 
+// @alpha
+export function computeSchemaHash(schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy): string;
+
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
@@ -457,7 +460,7 @@ export function eraseSchemaDetailsSubclassable<TNode, ExtraSchemaProperties = un
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
 // @alpha
-export function exportCompatibilitySchemaSnapshot(config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion">): JsonCompatibleReadOnly;
+export function exportCompatibilitySchemaSnapshot(config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion" | "schemaHash">): JsonCompatibleReadOnly;
 
 // @beta
 export namespace ExtensibleUnionNode {
@@ -1284,6 +1287,8 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly schemaHash?: string;
+    readonly schemaHasher?: SchemaHasher;
     readonly schemaVersion?: SchemaVersionMap;
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
@@ -1984,6 +1989,12 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
 }
 
+// @alpha
+export type SchemaHasher = (schema: JsonCompatibleReadOnly) => string;
+
+// @alpha
+export const schemaHasher: SchemaHasher;
+
 // @public @system
 const schemaIdentifierBrand: unique symbol;
 
@@ -2182,6 +2193,7 @@ export interface SimpleRecordNodeSchema<Type extends SchemaType = SchemaType, ou
 export interface SimpleTreeSchema<Type extends SchemaType = SchemaType> {
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<Type>>;
     readonly root: SimpleFieldSchema<Type>;
+    readonly schemaHash?: string;
     readonly schemaVersion?: SchemaVersionMap;
 }
 
@@ -2871,7 +2883,9 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
+    readonly schemaHash: string | undefined;
     readonly schemaVersion: SchemaVersionMap | undefined;
+    readonly storedSchemaHash: string | undefined;
     readonly storedSchemaVersion: SchemaVersionMap | undefined;
 }
 
@@ -2901,6 +2915,8 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly schemaHash: string | undefined;
+    readonly schemaHasher: SchemaHasher | undefined;
     readonly schemaVersion: SchemaVersionMap | undefined;
     readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
@@ -3042,6 +3058,7 @@ export interface ViewableTree {
 export interface ViewableTreeAlpha extends ViewableTree {
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
+    readonly storedSchemaHash: string | undefined;
     readonly storedSchemaVersion: SchemaVersionMap | undefined;
 }
 

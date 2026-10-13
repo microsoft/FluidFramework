@@ -71,6 +71,7 @@ const versionedTestCases: EncodingTestData<TreeStoredSchema, FormatV3> = {
 		name,
 		{
 			...schema,
+			schemaHash: "test-hash",
 			schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
 		},
 	]),
@@ -97,6 +98,7 @@ describe("SchemaIndex", () => {
 		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 		const schema: TreeStoredSchema = {
 			...schema2,
+			schemaHash: "test-hash",
 			schemaVersion: {
 				["test.z" as LibraryId]: 2,
 				["test.a" as LibraryId]: 1,
@@ -113,6 +115,7 @@ describe("SchemaIndex", () => {
 			["test.z", 2],
 		]);
 		assert.deepEqual(codec.decode(encoded).schemaVersion, schema.schemaVersion);
+		assert.equal(codec.decode(encoded).schemaHash, schema.schemaHash);
 	});
 
 	it("encodes unversioned schemas with the experimental format", () => {
@@ -127,11 +130,27 @@ describe("SchemaIndex", () => {
 		assert.deepEqual(codec.decode(encoded), schema2);
 	});
 
+	it("preserves optional hashes on unversioned experimental schemas", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+		const schema = { ...schema2, schemaHash: "test-hash" };
+		assert.deepEqual(codec.decode(codec.encode(schema)), schema);
+		assert.throws(() => codec.encode({ ...schema2, schemaHash: "" }), /non-empty/);
+		assert.throws(() =>
+			codec.decode({
+				version: SchemaFormatVersion.v3Experimental,
+				nodes: {},
+				root: { kind: "x", types: [] },
+				schemaHash: "",
+			}),
+		);
+	});
+
 	it("rejects unsorted application schema versions", () => {
 		const codec = schemaCodecBuilder.buildDecoder(codecOptions);
 		const encoded = {
 			version: SchemaFormatVersion.v3Experimental,
 			nodes: {},
+			schemaHash: "test-hash",
 			root: { kind: "x" as FieldKindIdentifier, types: [] },
 			schemaVersion: [
 				["test.z", 1],
@@ -146,6 +165,7 @@ describe("SchemaIndex", () => {
 		const encoded = {
 			version: SchemaFormatVersion.v3Experimental,
 			nodes: {},
+			schemaHash: "test-hash",
 			root: { kind: "x" as FieldKindIdentifier, types: [] },
 			schemaVersion: [["test", -1]],
 		} satisfies FormatV3;
@@ -157,6 +177,7 @@ describe("SchemaIndex", () => {
 		const encoded = {
 			version: SchemaFormatVersion.v3Experimental,
 			nodes: {},
+			schemaHash: "test-hash",
 			root: { kind: "x" as FieldKindIdentifier, types: [] },
 			schemaVersion: [["test", Number.MAX_SAFE_INTEGER + 1]],
 		} satisfies FormatV3;
@@ -180,6 +201,7 @@ describe("SchemaIndex", () => {
 		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 		const schema: TreeStoredSchema = {
 			...schema2,
+			schemaHash: "test-hash",
 			schemaVersion: { ["test" as LibraryId]: 1 },
 		};
 
@@ -189,6 +211,27 @@ describe("SchemaIndex", () => {
 			SchemaFormatVersion.v3Experimental,
 		);
 		assert.deepEqual(codec.decode(encoded).schemaVersion, schema.schemaVersion);
+	});
+
+	it("rejects versioned stored schemas without a non-empty hash", () => {
+		const codec = schemaCodecBuilder.build(versionedCodecOptions);
+		for (const schemaVersion of [{ ["test" as LibraryId]: 1 }, {}]) {
+			for (const schemaHash of [undefined, ""]) {
+				assert.throws(
+					() => codec.encode({ ...schema2, schemaVersion, schemaHash }),
+					/non-empty schema hash/,
+				);
+				assert.throws(() =>
+					codec.decode({
+						version: SchemaFormatVersion.v3Experimental,
+						nodes: {},
+						root: { kind: "x", types: [] },
+						schemaVersion: Object.entries(schemaVersion),
+						...(schemaHash === undefined ? {} : { schemaHash }),
+					}),
+				);
+			}
+		}
 	});
 
 	it("accepts valid data - schema v1", () => {

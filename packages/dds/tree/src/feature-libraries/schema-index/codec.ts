@@ -46,11 +46,13 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 }
 
 function encodeRepoV3(repo: TreeStoredSchema): FormatV3 {
+	validateStoredSchemaHash(repo.schemaVersion !== undefined, repo.schemaHash);
 	const { nodes, root } = encodeRepoV2(repo);
 	return {
 		version: SchemaFormatVersion.v3Experimental,
 		nodes,
 		root,
+		...(repo.schemaHash === undefined ? {} : { schemaHash: repo.schemaHash }),
 		...(repo.schemaVersion === undefined
 			? {}
 			: {
@@ -114,8 +116,12 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
 }
 
 function decodeV3(f: FormatV3): TreeStoredSchema {
+	validateStoredSchemaHash(f.schemaVersion !== undefined, f.schemaHash);
 	if (f.schemaVersion === undefined) {
-		return decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root });
+		return {
+			...decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root }),
+			...(f.schemaHash === undefined ? {} : { schemaHash: f.schemaHash }),
+		};
 	}
 	let previous: string | undefined;
 	const entries: [LibraryId, number][] = [];
@@ -134,7 +140,16 @@ function decodeV3(f: FormatV3): TreeStoredSchema {
 	return {
 		...decodeV2({ version: SchemaFormatVersion.v2, nodes: f.nodes, root: f.root }),
 		schemaVersion: Object.freeze(Object.fromEntries(entries)) as SchemaVersionMap,
+		schemaHash: f.schemaHash,
 	};
+}
+
+function validateStoredSchemaHash(versioned: boolean, hash: string | undefined): void {
+	if ((versioned || hash !== undefined) && (typeof hash !== "string" || hash.length === 0)) {
+		throw new UsageError(
+			"Versioned stored schemas require a non-empty schema hash, and optional hashes must be non-empty strings.",
+		);
+	}
 }
 
 /**

@@ -64,18 +64,26 @@ export function encodeSchemaCompatibilitySnapshot(
 		definitions: encodedDefinitions,
 	};
 
-	if (simpleSchema.schemaVersion === undefined) {
+	if (simpleSchema.schemaVersion === undefined && simpleSchema.schemaHash === undefined) {
 		return {
 			version: Format.SimpleSchemaFormatVersion.v1,
 			...encodedSchema,
 		} satisfies Format.SimpleTreeSchemaFormat;
 	}
+	if (typeof simpleSchema.schemaHash !== "string" || simpleSchema.schemaHash.length === 0) {
+		throw new UsageError("Versioned schema snapshots require a non-empty schema hash.");
+	}
 
 	return {
 		version: FormatV2.SimpleSchemaFormatVersion.v2,
-		schemaVersion: Object.entries(simpleSchema.schemaVersion).sort(([a], [b]) =>
-			compareStrings(a, b),
-		),
+		schemaHash: simpleSchema.schemaHash,
+		...(simpleSchema.schemaVersion === undefined
+			? {}
+			: {
+					schemaVersion: Object.entries(simpleSchema.schemaVersion).sort(([a], [b]) =>
+						compareStrings(a, b),
+					),
+				}),
 		...encodedSchema,
 	} satisfies FormatV2.SimpleTreeSchemaFormat;
 }
@@ -113,8 +121,18 @@ export function decodeSchemaCompatibilitySnapshot(
 		encodedSchema.version === FormatV2.SimpleSchemaFormatVersion.v2
 			? decodeSchemaVersion(encodedSchema.schemaVersion)
 			: undefined;
+	if (
+		encodedSchema.version === FormatV2.SimpleSchemaFormatVersion.v2 &&
+		(typeof encodedSchema.schemaHash !== "string" || encodedSchema.schemaHash.length === 0)
+	) {
+		throw new UsageError("A schema hash must be a non-empty string.");
+	}
 	return {
 		...(schemaVersion === undefined ? {} : { schemaVersion }),
+		...(encodedSchema.version === FormatV2.SimpleSchemaFormatVersion.v2 &&
+		encodedSchema.schemaHash !== undefined
+			? { schemaHash: encodedSchema.schemaHash }
+			: {}),
 		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
 			transformMapValues(objectToMap(encodedSchema.definitions), (value, key) => {

@@ -5,6 +5,7 @@
     "kind": "Optional",
     "types": []
   },
+  "schemaHash": "ca0693067621f0d9e1096cc236ebb0e5f9d96597df7ad0115e9733fc221d8f17",
   "schemaVersion": [
     [
       "com.fluidframework.test",

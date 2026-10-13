@@ -1986,6 +1986,7 @@ describe("sharedTreeView", () => {
 				rootFieldSchema: schema.rootFieldSchema,
 				nodeSchema: schema.nodeSchema,
 				schemaVersion: { ["com.fluidframework.test" as LibraryId]: 1 },
+				schemaHash: "test-hash",
 			});
 
 			const schemaChangeEvents = provider.logger

@@ -105,12 +105,17 @@ export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 	schemaVersion?: SchemaVersionMap,
+	schemaHash?: string,
 ): TreeStoredSchema {
 	const stored = toStoredSchema(
 		root,
 		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
 	);
-	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
+	return {
+		...stored,
+		...(schemaVersion === undefined ? {} : { schemaVersion }),
+		...(schemaHash === undefined ? {} : { schemaHash }),
+	};
 }
 
 /**
@@ -120,12 +125,17 @@ export function toInitialSchema(
 	root: ImplicitFieldSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 	schemaVersion?: SchemaVersionMap,
+	schemaHash?: string,
 ): TreeStoredSchema {
 	const stored = toStoredSchema(
 		root,
 		resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades),
 	);
-	return schemaVersion === undefined ? stored : { ...stored, schemaVersion };
+	return {
+		...stored,
+		...(schemaVersion === undefined ? {} : { schemaVersion }),
+		...(schemaHash === undefined ? {} : { schemaHash }),
+	};
 }
 
 /**
@@ -250,6 +260,7 @@ export function transformSimpleSchema(
 		root,
 		definitions,
 		...(schema.schemaVersion === undefined ? {} : { schemaVersion: schema.schemaVersion }),
+		...(schema.schemaHash === undefined ? {} : { schemaHash: schema.schemaHash }),
 	};
 }
 
@@ -272,6 +283,7 @@ export function simpleStoredSchemaToStoredSchema(
 		...(treeSchema.schemaVersion === undefined
 			? {}
 			: { schemaVersion: treeSchema.schemaVersion }),
+		...(treeSchema.schemaHash === undefined ? {} : { schemaHash: treeSchema.schemaHash }),
 	};
 	return result;
 }

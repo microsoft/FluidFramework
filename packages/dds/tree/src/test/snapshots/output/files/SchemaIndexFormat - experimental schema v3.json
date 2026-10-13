@@ -155,6 +155,10 @@
         "minItems": 2,
         "maxItems": 2
       }
+    },
+    "schemaHash": {
+      "minLength": 1,
+      "type": "string"
     }
   },
   "required": [

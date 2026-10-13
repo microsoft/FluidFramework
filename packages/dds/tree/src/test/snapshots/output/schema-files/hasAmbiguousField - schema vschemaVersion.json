@@ -31,6 +31,7 @@
       "test.hasAmbiguousField"
     ]
   },
+  "schemaHash": "1ae9ba6c1aab2a10a76779ab425dee9f9be4b3cb467529dc525f3835fe7c8263",
   "schemaVersion": [
     [
       "com.fluidframework.test",

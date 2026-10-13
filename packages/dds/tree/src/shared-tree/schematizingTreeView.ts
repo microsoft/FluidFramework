@@ -63,6 +63,7 @@ import {
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
+	validateSchemaHash,
 } from "../simple-tree/index.js";
 import type { SchemaVersionMap } from "../core/index.js";
 import {
@@ -205,6 +206,9 @@ export class SchematizingSimpleTreeView<
 			stagedUpgradePolicy,
 			schemaVersion:
 				config instanceof TreeViewConfigurationAlpha ? config.schemaVersion : undefined,
+			schemaHash: config instanceof TreeViewConfigurationAlpha ? config.schemaHash : undefined,
+			schemaHasher:
+				config instanceof TreeViewConfigurationAlpha ? config.schemaHasher : undefined,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
 
@@ -259,6 +263,14 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.storedSchema.schemaVersion;
 	}
 
+	public get schemaHash(): string | undefined {
+		return this.viewSchema.schemaHash;
+	}
+
+	public get storedSchemaHash(): string | undefined {
+		return this.checkout.storedSchema.schemaHash;
+	}
+
 	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
@@ -267,12 +279,12 @@ export class SchematizingSimpleTreeView<
 			throw new UsageError("Tree cannot be initialized more than once.");
 		}
 
+		const schema = validateSchemaHash(
+			toInitialSchema(this.config.schema, this.stagedUpgradePolicy, this.schemaVersion),
+			this.schemaHash,
+			this.config instanceof TreeViewConfigurationAlpha ? this.config.schemaHasher : undefined,
+		);
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(
-				this.config.schema,
-				this.stagedUpgradePolicy,
-				this.schemaVersion,
-			);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -330,10 +342,11 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(
-			this.viewSchema.root,
-			this.effectiveUpgradePolicy,
-			this.schemaVersion,
+		const newSchema = validateSchemaHash(
+			toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy, this.schemaVersion),
+			this.schemaHash,
+			this.config instanceof TreeViewConfigurationAlpha ? this.config.schemaHasher : undefined,
+			this.checkout.storedSchema.schemaHash !== undefined,
 		);
 		const storedSchema = this.checkout.storedSchema.clone();
 		// Select whether to retain updateSchema's additive-only assertion. Version-enabled upgrades
@@ -348,7 +361,7 @@ export class SchematizingSimpleTreeView<
 				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
 		}
-		if (this.compatibility.isEquivalent) {
+		if (this.compatibility.isEquivalent && storedSchema.schemaHash === newSchema.schemaHash) {
 			// No-op
 			return;
 		}

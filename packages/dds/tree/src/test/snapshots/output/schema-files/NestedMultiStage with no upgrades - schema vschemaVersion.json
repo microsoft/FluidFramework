@@ -35,6 +35,7 @@
       "test.NestedMultiStage"
     ]
   },
+  "schemaHash": "1b0778e09a86e10adc16a89ae16db5518fe3bde0d5aac0267872e7a717b74acc",
   "schemaVersion": [
     [
       "com.fluidframework.test",

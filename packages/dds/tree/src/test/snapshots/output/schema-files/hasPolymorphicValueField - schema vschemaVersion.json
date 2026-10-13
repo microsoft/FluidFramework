@@ -31,6 +31,7 @@
       "test.hasPolymorphicValueField"
     ]
   },
+  "schemaHash": "86a7b5843bb854e5f4131c5612b5f742f580df42b10a9d1385bccdbf96deeef0",
   "schemaVersion": [
     [
       "com.fluidframework.test",

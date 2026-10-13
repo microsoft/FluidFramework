@@ -25,6 +25,7 @@
       "test.hasMinimalValueField"
     ]
   },
+  "schemaHash": "2206b2a691e0984d8a0ceea5f3dcb4e2d6d21e11eef63df5f00ecd1e3c13fcf7",
   "schemaVersion": [
     [
       "com.fluidframework.test",

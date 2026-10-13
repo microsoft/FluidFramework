@@ -21,6 +21,7 @@ export const Format = Type.Object(
 		schemaVersion: Type.Optional(
 			Type.Array(Type.Tuple([Type.String(), Type.Integer({ minimum: 0 })])),
 		),
+		schemaHash: Type.Optional(Type.String({ minLength: 1 })),
 	},
 	noAdditionalProps,
 );

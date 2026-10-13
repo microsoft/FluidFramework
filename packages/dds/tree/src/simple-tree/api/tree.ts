@@ -123,6 +123,11 @@ export interface ViewableTreeAlpha extends ViewableTree {
 	readonly storedSchemaVersion: SchemaVersionMap | undefined;
 
 	/**
+	 * Fingerprint in the document's stored schema, or `undefined` for schemas without a hash.
+	 */
+	readonly storedSchemaHash: string | undefined;
+
+	/**
 	 * Exports root in the same format as {@link (TreeAlpha:interface).(exportVerbose:1)} using stored keys.
 	 * @remarks
 	 * This is `undefined` if and only if the root field is empty (this can only happen if the root field is optional).
@@ -1037,6 +1042,11 @@ export interface TreeViewAlpha<
 	readonly schemaVersion: SchemaVersionMap | undefined;
 
 	/**
+	 * Expected effective-schema hash declared by this view's configuration.
+	 */
+	readonly schemaHash: string | undefined;
+
+	/**
 	 * Application-defined versions in the document's stored schema.
 	 *
 	 * @remarks
@@ -1044,6 +1054,12 @@ export interface TreeViewAlpha<
 	 * Subscribe to {@link TreeViewEvents.schemaChanged} to observe changes.
 	 */
 	readonly storedSchemaVersion: SchemaVersionMap | undefined;
+
+	/**
+	 * Fingerprint in the document's stored schema.
+	 * Subscribe to {@link TreeViewEvents.schemaChanged} to observe changes.
+	 */
+	readonly storedSchemaHash: string | undefined;
 
 	get root(): ReadableField<TSchema>;
 

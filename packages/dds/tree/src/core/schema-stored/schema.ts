@@ -457,6 +457,24 @@ export interface TreeStoredSchema extends StoredSchemaCollection {
 	 * Application-defined versions associated with this schema.
 	 */
 	readonly schemaVersion?: SchemaVersionMap;
+
+	/**
+	 * Application-supplied fingerprint of the effective stored schema.
+	 *
+	 * @remarks
+	 * Generate this with {@link computeSchemaHash} during development, using the same staged-upgrade flags
+	 * as initialization or upgrade, and store the result in application source.
+	 * The hash includes persisted metadata but excludes application versions and non-persisted view metadata.
+	 * Supply the expected hash and the separately imported {@link schemaHasher} in {@link TreeViewConfigurationAlpha}.
+	 * Before initializing or upgrading a schema that uses hashing, SharedTree checks the hash against the effective schema
+	 * and throws a `UsageError` on a mismatch before changing the tree.
+	 * This detects schema changes for which the application has not updated its expected hash.
+	 * The hash is persisted alongside {@link TreeStoredSchema.schemaVersion} to identify the stored schema.
+	 * Unversioned schemas may opt into hashing, while versioned schemas require it.
+	 * Once a stored schema has a hash, upgrades cannot remove it.
+	 *
+	 */
+	readonly schemaHash?: string;
 }
 
 /**

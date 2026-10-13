@@ -338,6 +338,9 @@ export class SharedTreeKernel
 			get storedSchemaVersion() {
 				return schema.schemaVersion;
 			},
+			get storedSchemaHash() {
+				return schema.schemaHash;
+			},
 			contentSnapshot: () => this.contentSnapshot(),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
@@ -490,6 +493,7 @@ export function exportSimpleSchema(
 		...(storedSchema.schemaVersion === undefined
 			? {}
 			: { schemaVersion: storedSchema.schemaVersion }),
+		...(storedSchema.schemaHash === undefined ? {} : { schemaHash: storedSchema.schemaHash }),
 		root: exportSimpleFieldSchemaStored(storedSchema.rootFieldSchema),
 		definitions: new Map(
 			[...storedSchema.nodeSchema].map(([key, schema]) => {
