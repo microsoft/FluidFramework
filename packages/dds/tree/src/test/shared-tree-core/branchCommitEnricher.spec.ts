@@ -28,6 +28,7 @@ const commit0: GraphCommit<MockEnrichableChange> = {
 		updateCount: 0,
 	},
 	revision: revision0,
+	customMetadata: undefined,
 };
 
 const commit1: GraphCommit<MockEnrichableChange> = {
@@ -38,6 +39,7 @@ const commit1: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision1,
 	parent: commit0,
+	customMetadata: undefined,
 };
 const commit2: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -47,6 +49,7 @@ const commit2: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision2,
 	parent: commit1,
+	customMetadata: undefined,
 };
 const commit3: GraphCommit<MockEnrichableChange> = {
 	change: {
@@ -56,6 +59,7 @@ const commit3: GraphCommit<MockEnrichableChange> = {
 	},
 	revision: revision3,
 	parent: commit2,
+	customMetadata: undefined,
 };
 
 const expectedEnriched1: MockEnrichableChange = {
@@ -75,7 +79,7 @@ describe("BranchCommitEnricher", () => {
 	it("Can enrich zero commits", () => {
 		const changeEnricher = new MockChangeEnricher();
 		const branchEnricher = new BranchCommitEnricher(changeEnricher);
-		branchEnricher.prepareChanges([]);
+		branchEnricher.prepareChanges([], false);
 		assert.equal(changeEnricher.calls, 0);
 		assert.equal(changeEnricher.enriched, 0);
 		assert.equal(changeEnricher.applied, 0);
@@ -84,7 +88,7 @@ describe("BranchCommitEnricher", () => {
 	it("Can enrich a single commit", () => {
 		const changeEnricher = new MockChangeEnricher();
 		const branchEnricher = new BranchCommitEnricher(changeEnricher);
-		branchEnricher.prepareChanges([commit1]);
+		branchEnricher.prepareChanges([commit1], false);
 		const actualEnriched1 = branchEnricher.retrieveChange(commit1);
 		assert.deepEqual(actualEnriched1, expectedEnriched1);
 		assert.equal(changeEnricher.calls, 1);
@@ -95,7 +99,7 @@ describe("BranchCommitEnricher", () => {
 	it("Can enrich multiple commits", () => {
 		const changeEnricher = new MockChangeEnricher();
 		const branchEnricher = new BranchCommitEnricher(changeEnricher);
-		branchEnricher.prepareChanges([commit1, commit2, commit3]);
+		branchEnricher.prepareChanges([commit1, commit2, commit3], false);
 		const actualEnriched1 = branchEnricher.retrieveChange(commit1);
 		assert.deepEqual(actualEnriched1, expectedEnriched1);
 		const actualEnriched2 = branchEnricher.retrieveChange(commit2);

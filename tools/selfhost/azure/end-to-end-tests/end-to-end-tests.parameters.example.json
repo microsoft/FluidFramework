@@ -1,0 +1,12 @@
+{
+	"subscriptionId": "00000000-0000-0000-0000-000000000000",
+	"resourceGroup": "my-fluid-rg",
+	"aks": {
+		"name": "my-fluid-aks"
+	},
+	"frontDoor": {
+		"profileName": "my-fluid-afd"
+	},
+	"tenantId": "fluid",
+	"lowIoWriteEnabled": true
+}

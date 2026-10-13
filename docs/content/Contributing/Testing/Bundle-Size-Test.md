@@ -18,7 +18,8 @@ Bundle size reporting is driven by the [pr-bundle-size-comments.yml](../../../..
 When a PR's build is queued, the workflow posts an initial "Pending" comment.
 Once the PR (head) and baseline artifacts are both available, it compares them using `flub report comparePipelineBundleArtifacts` and updates the comment with:
 
-- The **base** and **head** commit SHAs used for the comparison (the base is the PR's merge-base with its target branch).
+- The **base** and **head** commit SHAs used for the comparison.
+  Since a PR build builds the PR merged into the target branch tip, the base is that tip rather than the PR's merge-base.
 - A **Notable changes** summary listing bundles that were added, removed, or whose parsed size changed by at least 500 bytes.
 - A collapsible **Per-bundle deltas** section with the full inventory, showing both parsed and gzipped sizes for each bundle.
 

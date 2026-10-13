@@ -303,6 +303,7 @@ export function rebaseBranch<TChange>(
 				revision: c.revision,
 				change,
 				parent: newHead,
+				customMetadata: c.customMetadata,
 			};
 			sourceCommits.push(newHead);
 			editsToCompose.push(tagChange(change, c.revision));

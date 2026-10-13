@@ -667,7 +667,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myList: factory.array(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural list schema are not typed as classes.
+				// @ts-expect-error structural list schemas are not typed as classes.
 				class NotAClass extends factory.array(factory.number) {}
 			}
 
@@ -740,7 +740,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myMap: factory.map(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural map schema are not typed as classes.
+				// @ts-expect-error structural map schemas are not typed as classes.
 				class NotAClass extends factory.map(factory.number) {}
 			}
 		});
@@ -811,7 +811,7 @@ describe("schemaFactory", () => {
 			factory.object("Foo", { myMap: factory.record(factory.number) });
 
 			function broken() {
-				// @ts-expect-error structural map schema are not typed as classes.
+				// @ts-expect-error structural map schemas are not typed as classes.
 				class NotAClass extends factory.record(factory.number) {}
 			}
 		});
@@ -842,9 +842,17 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 			class NamedRecord extends factory.record("name", factory.number) {}
 			const namedInstance = new NamedRecord({ x: 5 });
-			const x: number = namedInstance.x;
-			// TODO: AB#47136: this (and likely the line above as well) should not compile as the typing is incorrect (y is undefined, not number)
-			const y: number = namedInstance.y;
+			const x = namedInstance.x;
+			type _checkX = requireTrue<areSafelyAssignable<typeof x, number | undefined>>;
+			assert.equal(x, 5);
+
+			const y = namedInstance.y;
+			type _checkY = requireTrue<areSafelyAssignable<typeof y, number | undefined>>;
+			assert.equal(y, undefined);
+
+			// @ts-expect-error Record reads may be undefined.
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- Intentionally testing an unchecked record read.
+			const invalid: number = namedInstance.x;
 			delete namedInstance.x;
 		});
 
@@ -1510,7 +1518,7 @@ describe("schemaFactory", () => {
 						view.root = testObject;
 					},
 					validateUsageError(
-						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1529,7 +1537,7 @@ describe("schemaFactory", () => {
 						view.root.foo = "test";
 					},
 					validateUsageError(
-						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1637,7 +1645,7 @@ describe("schemaFactory", () => {
 						view.root = testMap;
 					},
 					validateUsageError(
-						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1656,7 +1664,7 @@ describe("schemaFactory", () => {
 						view.root.set("foo", "test");
 					},
 					validateUsageError(
-						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1694,7 +1702,7 @@ describe("schemaFactory", () => {
 						view.root = testRecord;
 					},
 					validateUsageError(
-						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});
@@ -1713,7 +1721,7 @@ describe("schemaFactory", () => {
 						view.root.foo = "test";
 					},
 					validateUsageError(
-						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+						/Tree does not conform to schema\. A node type is not allowed in its field\./,
 					),
 				);
 			});

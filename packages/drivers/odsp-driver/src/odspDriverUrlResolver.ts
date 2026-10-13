@@ -99,9 +99,6 @@ const isFluidPackage = (pkg: Record<string, unknown>): boolean =>
 export class OdspDriverUrlResolver implements IUrlResolver {
 	constructor() {}
 
-	/**
-	 * {@inheritDoc @fluidframework/driver-definitions#IUrlResolver.resolve}
-	 */
 	public async resolve(request: IRequest): Promise<IOdspResolvedUrl> {
 		if (request.headers?.[DriverHeader.createNew]) {
 			const [siteURL, queryString] = request.url.split("?");

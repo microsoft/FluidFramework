@@ -1,0 +1,34 @@
+[
+	{
+		"type": "initialize",
+		"initialClient": {
+			"clientId": "A",
+			"clientConfiguration": { "version": "previous" },
+			"canBeStashed": false
+		},
+		"clients": []
+	},
+	{ "type": "noop", "clientId": "A" },
+	{
+		"type": "attach",
+		"clients": [
+			{
+				"clientId": "summarizer",
+				"clientConfiguration": { "version": "current" },
+				"canBeStashed": false
+			},
+			{
+				"clientId": "B",
+				"clientConfiguration": { "version": "previous" },
+				"canBeStashed": false
+			}
+		]
+	},
+	{
+		"type": "addClient",
+		"addedClientId": "C",
+		"canBeStashed": false,
+		"clientConfiguration": { "version": "current" }
+	},
+	{ "type": "synchronize" }
+]

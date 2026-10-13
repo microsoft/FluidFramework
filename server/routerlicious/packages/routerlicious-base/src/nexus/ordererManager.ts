@@ -129,6 +129,19 @@ export class OrdererManager implements IOrdererManager {
 		return kafkaOrderer;
 	}
 
+	/**
+	 * The orderer manager in Nexus routes messages to Kafka or a local or proxy orderer, but does
+	 * not observe the resulting sequenced operations. An in-process local orderer can track the
+	 * sequence numbers it broadcasts; this manager cannot reliably obtain an equivalent current
+	 * value across all of its orderer connection types.
+	 */
+	public async getCheckpointSequenceNumber(
+		_tenantId: string,
+		_documentId: string,
+	): Promise<number | undefined> {
+		return undefined;
+	}
+
 	public async removeOrderer(tenantId: string, documentId: string): Promise<void> {
 		if (!this.options.enableConnectionCleanup) {
 			return;

@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
+import type {
+	IProvideLayerCompatDetails,
+	IProvideLayerCompatSupportRequirements,
+} from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
 import type {
@@ -35,9 +38,10 @@ import {
 } from "./testProxies.js";
 
 const documentServiceFactoryFailProxy = failSometimeProxy<
-	IDocumentServiceFactory & IProvideLayerCompatDetails
+	IDocumentServiceFactory & IProvideLayerCompatDetails & IProvideLayerCompatSupportRequirements
 >({
 	ILayerCompatDetails: AbsentProperty,
+	ILayerCompatSupportRequirements: AbsentProperty,
 });
 
 describe("loader unit test", () => {
@@ -235,7 +239,9 @@ describe("DisableLoadConnectionRetries", () => {
 
 	it("load rejects when connectToStorage fails with retryable error and flag is enabled", async () => {
 		const documentServiceFactory = failSometimeProxy<
-			IDocumentServiceFactory & IProvideLayerCompatDetails
+			IDocumentServiceFactory &
+				IProvideLayerCompatDetails &
+				IProvideLayerCompatSupportRequirements
 		>({
 			createDocumentService: async () =>
 				failSometimeProxy<IDocumentService>({
@@ -250,6 +256,7 @@ describe("DisableLoadConnectionRetries", () => {
 					dispose: () => {},
 				}),
 			ILayerCompatDetails: AbsentProperty,
+			ILayerCompatSupportRequirements: AbsentProperty,
 		});
 
 		const loader = new Loader({
@@ -271,7 +278,9 @@ describe("DisableLoadConnectionRetries", () => {
 
 	it("load rejects when connectToDeltaStream fails with retryable error and flag is enabled", async () => {
 		const documentServiceFactory = failSometimeProxy<
-			IDocumentServiceFactory & IProvideLayerCompatDetails
+			IDocumentServiceFactory &
+				IProvideLayerCompatDetails &
+				IProvideLayerCompatSupportRequirements
 		>({
 			createDocumentService: async () =>
 				failSometimeProxy<IDocumentService>({
@@ -286,6 +295,7 @@ describe("DisableLoadConnectionRetries", () => {
 					dispose: () => {},
 				}),
 			ILayerCompatDetails: AbsentProperty,
+			ILayerCompatSupportRequirements: AbsentProperty,
 		});
 
 		const loader = new Loader({

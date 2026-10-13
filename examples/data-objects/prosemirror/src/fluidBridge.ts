@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils/legacy";
 // eslint-disable-next-line import-x/no-internal-modules -- #26905: `merge-tree` internals used in examples
 import { createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
 import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
@@ -146,15 +145,16 @@ export class ProseMirrorTransactionBuilder {
 				//
 				// For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
 
-				assert(i < this.things.length, "Trying to insert removal node out-of-bounds!");
+				if (i >= this.things.length) {
+					throw new Error("Trying to insert removal node out-of-bounds!");
+				}
 
 				i = this.splitAt(position, i);
 				let length = range.segment.cachedLength;
 				while (length > 0) {
-					assert(
-						this.things[i].type === "ether",
-						"Current thing does not have 'ether' node type!",
-					);
+					if (this.things[i].type !== "ether") {
+						throw new Error("Current thing does not have 'ether' node type!");
+					}
 
 					if (this.things[i].length <= length) {
 						// Ether node is fully encompassing
@@ -195,18 +195,16 @@ export class ProseMirrorTransactionBuilder {
 				//
 				// For positions we *will* need to include any newly inserted nodes. We can count these as "new" ether
 
-				assert(
-					i < this.things.length,
-					"Trying to insert annotations field on out-of-bounds node!",
-				);
+				if (i >= this.things.length) {
+					throw new Error("Trying to insert annotations field on out-of-bounds node!");
+				}
 
 				i = this.splitAt(position, i);
 				let length = range.segment.cachedLength;
 				while (length > 0) {
-					assert(
-						this.things[i].type === "ether",
-						"Current thing does not have 'ether' node type!",
-					);
+					if (this.things[i].type !== "ether") {
+						throw new Error("Current thing does not have 'ether' node type!");
+					}
 
 					if (this.things[i].length <= length) {
 						// Ether node is fully encompasing

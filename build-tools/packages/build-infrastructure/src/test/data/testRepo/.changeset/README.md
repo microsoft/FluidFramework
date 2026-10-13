@@ -4,8 +4,7 @@ This folder contains changesets, which are markdown files that hold two key bits
 
 1. a version type (following semver), and
 2. change information to be added to a changelog. You can find the full documentation for it
-   [in the changesets section of our wiki](https://github.com/microsoft/FluidFramework/wiki/Changesets) or in [the official changesets documentation.](https://github.com/changesets/changesets)
+   [in the repo changeset documentation](../../../../../../../../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes/Changesets.md) or in [the official changesets documentation.](https://github.com/changesets/changesets)
 
-There is also a list of [frequently asked questions](https://github.com/microsoft/FluidFramework/wiki/Changesets-FAQ) in
-the wiki.
-
+There is also a list of [frequently asked questions](../../../../../../../../docs/content/Contributing/Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md) in
+the documentation.

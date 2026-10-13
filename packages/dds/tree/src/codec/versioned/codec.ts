@@ -4,7 +4,7 @@
  */
 
 import { assert, debugAssert } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollabIterable,
 	lowestMinVersionForCollab,
@@ -22,6 +22,7 @@ import {
 	type JsonCompatibleReadOnlyObject,
 } from "../../util/index.js";
 import {
+	type DecodeErrorHandler,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
@@ -64,7 +65,11 @@ function makeVersionedCodec<
 			);
 			return encoded;
 		},
-		decode: (data: TValidate, context: TDecodeContext): TDecoded => {
+		decode: (
+			data: TValidate,
+			context: TDecodeContext,
+			onError?: DecodeErrorHandler,
+		): TDecoded => {
 			const versioned = data as Versioned; // Validated by withSchemaValidation
 			if (!supportedVersions.has(versioned.version)) {
 				throw new UsageError(
@@ -72,7 +77,7 @@ function makeVersionedCodec<
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 				);
 			}
-			const decoded = inner.decode(data, context);
+			const decoded = inner.decode(data, context, onError);
 			return decoded;
 		},
 	};
@@ -179,7 +184,7 @@ export interface CodecVersionBase<
 	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
 	 * as well as previously stabilized formats that are discontinued (meaning we always prefer to use some other format for encoding).
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab: OldestSupportedClientVersion | undefined;
 	readonly formatVersion: TFormatVersion;
 	readonly codec: T;
 }
@@ -465,7 +470,7 @@ export class VersionDispatchingCodecBuilder<
 		return [
 			applied,
 			{
-				decode: (data: JsonCompatibleReadOnly, context: TDecodeContext): TDecoded => {
+				decode: (data: JsonCompatibleReadOnly, context: TDecodeContext, onError): TDecoded => {
 					const versioned = data as Partial<Versioned>;
 					const codec = fromFormatVersion.get(versioned.version);
 					if (codec === undefined) {
@@ -474,7 +479,7 @@ export class VersionDispatchingCodecBuilder<
 The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 						);
 					}
-					return codec.codec.decode(data, context);
+					return codec.codec.decode(data, context, onError);
 				},
 			},
 		];
@@ -499,7 +504,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		return this.buildDecoderInternal(options)[1];
 	}
 
-	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree<TFormatVersion> {
+	public getCodecTree(clientVersion: OldestSupportedClientVersion): CodecTree<TFormatVersion> {
 		// TODO: add support for children codecs.
 		const selected = getWriteVersionNoOverrides(this.registry, clientVersion);
 		return {
@@ -611,9 +616,9 @@ function getWriteVersion<T extends CodecVersionBase>(
  */
 function getWriteVersionNoOverrides<T extends CodecVersionBase>(
 	versions: readonly T[],
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: OldestSupportedClientVersion,
 ): T {
-	const stableVersions: [MinimumMinorSemanticVersion | MinimumVersionForCollab, T][] = [];
+	const stableVersions: [MinimumMinorSemanticVersion | OldestSupportedClientVersion, T][] = [];
 	for (const version of versions) {
 		if (version.minVersionForCollab !== undefined) {
 			stableVersions.push([version.minVersionForCollab, version]);

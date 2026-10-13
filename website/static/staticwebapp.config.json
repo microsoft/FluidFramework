@@ -4,7 +4,7 @@
 	},
 	"globalHeaders": {
 		"cache-control": "must-revalidate, max-age=3600",
-		"Content-Security-Policy": "script-src 'self' 'sha256-faMHt+UAWeoFU7ZBnPhfAu9zOnnNUwL4RYp09gSUEjU=' 'sha256-O8zYuOjyuzUZDv3fub7DKfAs5TEd1dG+fz+hCSCFmQA=' 'unsafe-inline' 'unsafe-eval' https:; base-uri 'self'; object-src 'none'; require-trusted-types-for 'script'; trusted-types default dompurify ff#webpack; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
+		"Content-Security-Policy": "script-src 'self' 'sha256-mYM+syEXk07N3DrSMHlnyV1NqEMQfdAyo48mM5mxU0k=' 'sha256-0xt7rjlfRsoD7aukiSWSNvMBWU159Lh5cl3WNaV1g+w=' 'unsafe-inline' 'unsafe-eval' https:; base-uri 'self'; object-src 'none'; require-trusted-types-for 'script'; trusted-types default dompurify ff#webpack; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
 	},
 	"navigationFallback": {
 		"rewrite": "/api/fallback"

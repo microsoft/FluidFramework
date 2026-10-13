@@ -14,19 +14,20 @@ import {
 	type TreeValue,
 } from "../core/index.js";
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
-import { TreeAlpha, Tree as TreeStatic } from "../shared-tree/index.js";
+import { TreeAlpha, Tree as TreeStatic, TreeBeta } from "../shared-tree/index.js";
 import {
+	createArrayInsertionAnchor,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
-	TreeBeta,
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetails,
 	isObjectNodeSchema,
 	eraseSchemaDetailsSubclassable,
 } from "../simple-tree/index.js";
 import type {
+	ArrayPlaceAnchor,
 	TreeNodeSchema,
 	LazyItem,
 	ImplicitAllowedTypes,
@@ -120,7 +121,7 @@ export class StringTextAtomNode
  * This is generic over formatting an embedded object/atom types.
  *
  * @privateRemarks
- * See {@link FormattedTextDefault} for an example parameterization.
+ * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization.
  *
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
@@ -144,7 +145,7 @@ export namespace FormattedText {
 	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedText.Members} and whose statics implement {@link FormattedText.Statics}.
 	 *
 	 * @privateRemarks
-	 * See {@link FormattedTextDefault} for an example parameterization of this factory.
+	 * See `FormattedTextDefault` in `@fluidframework/quill-react` for an example parameterization of this factory.
 	 *
 	 * TODO: The choice to always include the built-in {@link FormattedText.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */
@@ -220,6 +221,14 @@ export namespace FormattedText {
 
 			public removeRange(index: number | undefined, end: number | undefined): void {
 				this.content.removeRange(index, end);
+			}
+
+			public moveRangeToIndex(
+				destinationGap: number,
+				sourceStart: number,
+				sourceEnd: number,
+			): void {
+				this.content.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
 			}
 
 			public characters(): Iterable<string> {
@@ -390,7 +399,7 @@ export namespace FormattedText {
 			public onCharactersChanged(
 				callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 			): () => void {
-				return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+				return TreeBeta.on(this.content, "nodeChanged", ({ delta }) =>
 					processCharactersChangedDelta(
 						delta,
 						(index) => this.getAtomCharacterAt(index),
@@ -399,10 +408,14 @@ export namespace FormattedText {
 				);
 			}
 
+			public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+				return createArrayInsertionAnchor(this.content, index);
+			}
+
 			public onContentChanged(
 				callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 			): () => void {
-				return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
+				return TreeBeta.on(this.content, "treeChanged", ({ delta }) =>
 					processCharactersChangedDelta(
 						delta,
 						(index) => this.getAtomCharacterAt(index),

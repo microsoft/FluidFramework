@@ -17,6 +17,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
+	type CustomMetadataTree,
 	type GraphCommit,
 	type RevisionTag,
 	type TaggedChange,
@@ -56,6 +57,10 @@ export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
+			/** The commits removed from the head of the branch by this operation */
+			removedCommits: readonly GraphCommit<TChange>[];
+			/** The commits appended to the head of the branch by this operation */
+			newCommits: readonly GraphCommit<TChange>[];
 	  };
 
 /**
@@ -120,6 +125,16 @@ export interface BranchTrimmingEvents {
 
 /**
  * A branch of changes that can be applied to a SharedTree.
+ * @remarks
+ * A `SharedTreeBranch` tracks a linear history of commits terminating at a {@link SharedTreeBranch.getHead | head} commit,
+ * and provides an {@link SharedTreeBranch.editor | editor} for {@link SharedTreeBranch.apply | applying} new changes onto that history.
+ *
+ * A branch may be {@link SharedTreeBranch.fork | forked} into a new, independent branch.
+ * Changes applied to one branch do not affect the other until the two are reconciled:
+ * {@link SharedTreeBranch.merge | merging} incorporates another branch's divergent commits into this branch,
+ * while {@link SharedTreeBranch.rebaseOnto | rebasing} replays this branch's divergent commits onto another branch's head.
+ *
+ * See {@link SharedTreeBranchEvents} for events emitted by SharedTreeBranch instances.
  */
 export class SharedTreeBranch<
 	TEditor extends ChangeFamilyEditor,
@@ -152,7 +167,7 @@ export class SharedTreeBranch<
 		>,
 	) {
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
-			this.apply(change),
+			this.apply(change, CommitKind.Default, undefined),
 		);
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);
@@ -173,9 +188,15 @@ export class SharedTreeBranch<
 	 * Apply a change to this branch.
 	 * @param change - the change to apply
 	 * @param kind - the kind of change to apply
+	 * @param customMetadata - {@link GraphCommit.customMetadata | metadata} to attach to the new commit.
+	 * Callers reconstructing an existing commit, rather than minting one, must pass that commit's metadata.
 	 * @returns the change that was applied and the new head commit of the branch
 	 */
-	public apply(change: TaggedChange<TChange>, kind: CommitKind = CommitKind.Default): void {
+	public apply(
+		change: TaggedChange<TChange>,
+		kind: CommitKind,
+		customMetadata: CustomMetadataTree | undefined,
+	): void {
 		this.assertNotDisposed();
 
 		const revisionTag = change.revision;
@@ -184,6 +205,7 @@ export class SharedTreeBranch<
 		const newHead = mintCommit(this.head, {
 			revision: revisionTag,
 			change: change.change,
+			customMetadata,
 		});
 
 		const changeEvent = {
@@ -211,6 +233,26 @@ export class SharedTreeBranch<
 	 */
 	public getHead(): GraphCommit<TChange> {
 		return this.head;
+	}
+
+	/**
+	 * Gets the number of commits in this branch.
+	 * This includes commits on ancestor branches but excludes the sentinel commit at the root of all branches.
+	 * @remarks
+	 * This method has linear complexity in the number of commits in the branch.
+	 * See {@link BranchCommitCounter} for a cached version.
+	 */
+	public getCommitCount(): number {
+		let count = 0;
+		for (
+			let commit: GraphCommit<TChange> | undefined = this.head;
+			commit !== undefined;
+			commit = commit.parent
+		) {
+			count++;
+		}
+		// Exclude the sentinel commit that serves as the base to all branches.
+		return count - 1;
 	}
 
 	/**

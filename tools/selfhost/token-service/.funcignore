@@ -1,0 +1,6 @@
+.git*
+.vscode
+local.settings.json
+test
+client
+*.md

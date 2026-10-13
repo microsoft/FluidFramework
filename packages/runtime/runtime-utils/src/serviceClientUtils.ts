@@ -29,7 +29,7 @@ import type {
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
 	IFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { DataStoreKindImplementation } from "./serviceClientBase.js";
@@ -84,7 +84,7 @@ export interface ContainerRuntimeLoaderParams {
 	registry: IFluidDataStoreRegistry;
 	provideEntryPoint: (runtime: IContainerRuntimeBase) => Promise<FluidObject>;
 	existing: boolean;
-	minVersionForCollab: MinimumVersionForCollab;
+	minVersionForCollab: OldestSupportedClientVersion;
 	/**
 	 * The type string of the root data store to create. Only set when `existing` is false.
 	 */
@@ -121,7 +121,7 @@ export type ContainerRuntimeLoader = (
  */
 export function makeCodeLoader<T>(
 	registry: DataStoreRegistry<T>,
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: OldestSupportedClientVersion,
 	loadRuntime: ContainerRuntimeLoader,
 	root?: DataStoreKind<T>,
 ): ICodeDetailsLoader {

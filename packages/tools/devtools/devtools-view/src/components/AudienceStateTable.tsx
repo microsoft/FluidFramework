@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHeader,
-	TableRow,
-	makeStyles,
-	tokens,
-} from "@fluentui/react-components";
-import { EditRegular, Person12Regular, Search12Regular } from "@fluentui/react-icons";
 import { type ReactElement, useContext } from "react";
 
+import { FluentReactComponents, FluentReactIcons } from "../FluentUi.cjs";
 import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
 
 import type { TransformedAudienceStateData } from "./AudienceView.js";
@@ -25,6 +16,10 @@ import {
 	userIdTooltipText,
 } from "./TooltipTexts.js";
 import { LabelCellLayout } from "./utility-components/index.js";
+
+const { Table, TableBody, TableCell, TableHeader, TableRow, makeStyles, tokens } =
+	FluentReactComponents;
+const { EditRegular, Person12Regular, Search12Regular } = FluentReactIcons;
 
 const audienceStateStyle = makeStyles({
 	currentUser: {
@@ -76,7 +71,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): ReactElement
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						// TODO: Replace TableCell with TableHeaderCell once https://github.com/microsoft/fluentui/issues/31588 is fixed.
-						<TableCell key={columnIndex}>
+						<TableCell key={columnIndex} role="columnheader">
 							{column.columnKey === "clientId" && (
 								<LabelCellLayout
 									icon={<Person12Regular />}

@@ -219,3 +219,27 @@ export async function getChangedFilePaths(
 	const fileNames = files.map((file) => file.filename);
 	return fileNames;
 }
+
+/**
+ * Get the parent commit SHAs of a commit, in order.
+ *
+ * @param github - Details about the GitHub repo and auth to use.
+ * @param sha - The commit to look up.
+ * @returns The parent SHAs, or `undefined` if the commit isn't found.
+ */
+export async function getCommitParents(
+	{ owner, repo, token }: GitHubProps,
+	sha: string,
+): Promise<string[] | undefined> {
+	const octokit = new Octokit({ auth: token });
+
+	try {
+		const { data } = await octokit.repos.getCommit({ owner, repo, ref: sha });
+		return data.parents.map((parent) => parent.sha);
+	} catch (error) {
+		if ((error as { status?: number }).status === 404) {
+			return undefined;
+		}
+		throw error;
+	}
+}

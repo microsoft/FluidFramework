@@ -54,9 +54,9 @@ export async function getInstalledPackageVersion(
 	if (packageJsonPath === undefined) {
 		throw new Error(`Unable to find package ${packageName} from ${cwd}`);
 	}
-	const packageJson: PackageJson = JSON.parse(
+	const packageJson = JSON.parse(
 		await readFile(path.join(packageJsonPath, "package.json"), "utf8"),
-	);
+	) as PackageJson;
 	return packageJson.version;
 }
 
@@ -131,6 +131,13 @@ export async function globFn(pattern: string, options: glob.IOptions = {}): Prom
 	});
 }
 
+/**
+ * Loads a module using its module format.
+ *
+ * @param modulePath - The path of the module to load.
+ * @param moduleType - The package module type. A `.js` file is treated as ESM when this is `"module"`.
+ * @returns The module namespace for an ESM module, or the `module.exports` value for a CommonJS module.
+ */
 export async function loadModule(modulePath: string, moduleType?: string): Promise<unknown> {
 	const ext = path.extname(modulePath);
 	const esm = ext === ".mjs" || (ext === ".js" && moduleType === "module");

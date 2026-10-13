@@ -13,6 +13,7 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/inte
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	defaultTestOldestSupportedClient,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
@@ -103,6 +104,7 @@ describeCompat(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: outerDataObjectFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],
@@ -128,6 +130,7 @@ describeCompat(
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				{
 					defaultFactory: innerDataObjectFactory,
+					oldestSupportedClient: defaultTestOldestSupportedClient,
 					registryEntries: [
 						[outerDataObjectFactory.type, Promise.resolve(outerDataObjectFactory)],
 						[innerDataObjectFactory.type, Promise.resolve(innerDataObjectFactory)],

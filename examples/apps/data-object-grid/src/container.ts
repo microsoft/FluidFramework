@@ -39,17 +39,11 @@ export class DataObjectGridContainerRuntimeFactory extends ModelContainerRuntime
 		);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const dataObjectGrid = await runtime.createDataStore(DataObjectGrid.getFactory().type);
 		await dataObjectGrid.trySetAlias(dataObjectGridId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
 	protected async createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,

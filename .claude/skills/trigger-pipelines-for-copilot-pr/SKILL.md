@@ -20,7 +20,7 @@ First comment:
 Second comment:
 
 ```
-/azp run Build - api-markdown-documenter,Build - benchmark-tool,Build - build-common,Build - build-tools,Build - common-utils,Build - eslint-config-fluid,Build - eslint-plugin-fluid
+/azp run Build - api-markdown-documenter,Build - benchmark-tool,Build - build-common,Build - build-tools,Build - common-utils,Build - eslint-config-fluid
 ```
 
 Posting those comments will trigger all our pipelines, which is necessary for PRs that are created by Copilot.

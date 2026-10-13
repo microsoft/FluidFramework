@@ -8,6 +8,7 @@ import { parentPort } from "worker_threads";
 import { apiExtractorWorker } from "./apiExtractorWorker.js";
 import { lint } from "./eslintWorker.js";
 import { compile, fluidCompile } from "./tscWorker.js";
+import { serializeWorkerError, type WorkerError } from "./workerError.js";
 
 export interface WorkerMessage {
 	workerName: string;
@@ -17,7 +18,7 @@ export interface WorkerMessage {
 
 export interface WorkerExecResult {
 	code: number;
-	error?: Error; // unhandled exception, main thread should rerun it.
+	error?: WorkerError; // unhandled exception, main thread should rerun it.
 	memoryUsage?: NodeJS.MemoryUsage;
 }
 
@@ -40,14 +41,11 @@ async function messageHandler(msg: WorkerMessage): Promise<WorkerExecResult> {
 		} else {
 			throw new Error(`Invalid workerName ${msg.workerName}`);
 		}
-	} catch (e: any) {
+	} catch (e) {
 		// any unhandled exception thrown is going to rerun on main thread.
 		res = {
-			error: {
-				name: e.name,
-				message: e.message,
-				stack: e.stack,
-			},
+			// Non-object and non-string fields remain undefined, preserving the existing IPC shape.
+			error: serializeWorkerError(e),
 			code: -1,
 		};
 	}

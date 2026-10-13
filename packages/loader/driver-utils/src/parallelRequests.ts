@@ -471,6 +471,7 @@ async function getSingleOpBatch(
 						retry,
 						driverVersion,
 						...props,
+						opsFetchFailure: "tooManyRetries",
 					},
 				);
 			}

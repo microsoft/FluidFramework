@@ -1,6 +1,8 @@
 # @fluidframework/eslint-config-fluid
 
 This package contains a shared ESLint config used by all the packages in the Fluid Framework repo.
+It also contains the custom Fluid ESLint rules, registered under the existing
+`@fluid-internal/fluid` plugin namespace.
 
 ## Requirements
 
@@ -60,7 +62,21 @@ eslint-config-fluid/
 │       ├── base.mts            # Base config builder with all plugins
 │       ├── overrides.mts       # Shared overrides (test files, React, JS files)
 │       └── factory.mts         # Config factory functions
+├── src/
+│   ├── rules/                  # Custom Fluid rule implementations
+│   └── test/                   # Config and custom rule tests
 ```
+
+### Custom Fluid Rules
+
+The shared configs register these rules under `@fluid-internal/fluid`:
+
+- `no-file-path-links-in-jsdoc`
+- `no-hyphen-after-jsdoc-tag`
+- `no-markdown-links-in-jsdoc`
+- `no-member-release-tags`
+- `no-restricted-tags-imports`
+- `no-unchecked-record-access`
 
 This structure ensures:
 
@@ -121,27 +137,29 @@ ESLint provides a way to print the config that would apply to a file (`--print-c
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
-<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS) -->
-
+<!-- markdown-magic:begin {"transform":"package-scripts","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `build` | `npm run print-config` |
-| `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
-| `clean` | `rimraf --glob dist "**/*.build.log"` |
+| Script Name | Script Body |
+| - | - |
+| `build` | `npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier` |
+| `build:readme` | `markdown-magic --files "**/*.md"` |
+| `build:test:examples` | `tsc --project ./src/rules/test/test-cases/tsconfig.json` |
+| `clean` | `rimraf --glob dist "**/*.build.log" nyc` |
 | `format` | `npm run prettier:fix` |
-| `prettier` | `prettier --check .` |
-| `prettier:fix` | `prettier --write .` |
-| `print-configs` | `tsx scripts/print-configs.ts printed-configs` |
-| `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
-| `test:mocha` | `mocha "src/test/**/*.test.mts"` |
+| `install-no-frozen` | `pnpm --config.minimum-release-age=10080 i --no-frozen-lockfile` |
+| `prettier` | `prettier --check . --cache --ignore-path ../../../.prettierignore` |
+| `prettier:fix` | `prettier --write . --cache --ignore-path ../../../.prettierignore` |
+| `print-configs` | `jiti scripts/print-configs.ts printed-configs` |
+| `test` | `npm run test:eslint9 && npm run test:eslint8` |
+| `test:eslint8` | `cross-env ESLINT_PACKAGE=eslint8 mocha "src/rules/test/**/*.test.js"` |
+| `test:eslint9` | `npm run test:mocha` |
+| `test:mocha` | `mocha "src/{rules/test,test}/**/*.test.{js,mts}"` |
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.

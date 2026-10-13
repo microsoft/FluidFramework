@@ -9,6 +9,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     constructor(props: BaseContainerRuntimeFactoryProps);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
+    // (undocumented)
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry;
     instantiateFirstTime(runtime: IContainerRuntime): Promise<void>;
     instantiateFromExisting(runtime: IContainerRuntime): Promise<void>;
@@ -19,7 +20,9 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 export interface BaseContainerRuntimeFactoryProps {
     // @deprecated (undocumented)
     dependencyContainer?: IFluidDependencySynthesizer;
-    minVersionForCollab?: MinimumVersionForCollab | undefined;
+    // @deprecated
+    minVersionForCollab?: OldestSupportedClientVersion | undefined;
+    oldestSupportedClient?: OldestSupportedClientVersion | undefined;
     provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
@@ -30,6 +33,7 @@ export interface BaseContainerRuntimeFactoryProps {
 // @beta @legacy
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps);
+    // (undocumented)
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -38,16 +42,10 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 }
 
 // @beta @legacy
-export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps extends Omit<BaseContainerRuntimeFactoryProps, "provideEntryPoint"> {
     // (undocumented)
     defaultFactory: IFluidDataStoreFactory;
-    // @deprecated (undocumented)
-    dependencyContainer?: IFluidDependencySynthesizer;
     provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-    registryEntries: NamedFluidDataStoreRegistryEntries;
-    // @deprecated
-    requestHandlers?: RuntimeRequestHandler[];
-    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @beta @legacy
@@ -104,7 +102,9 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     protected hasInitialized(): Promise<void>;
     // (undocumented)
     get id(): string;
+    // (undocumented)
     get IFluidHandle(): IFluidHandleInternal<this>;
+    // (undocumented)
     get IFluidLoadable(): this;
     initializeInternal(existing: boolean): Promise<void>;
     protected initializeP: Promise<void> | undefined;
@@ -132,10 +132,13 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     createPeerInstance(peerContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // @deprecated
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime, initialState?: I["InitialState"]): Promise<TObj>;
+    // (undocumented)
     get IFluidDataStoreFactory(): this;
     get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined;
+    // (undocumented)
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
+    // (undocumented)
     readonly type: string;
 }
 

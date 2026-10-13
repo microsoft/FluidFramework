@@ -59,7 +59,7 @@ interface IClaimEntry<T> {
  */
 interface IPendingClaim<T> {
 	value: T;
-	resolve: (result: ClaimConfirmation<T>) => void;
+	resolve: (result: ClaimConfirmation) => void;
 }
 
 const snapshotFileName = "header";
@@ -99,14 +99,11 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		this.runtime.on("dispose", () => this.abortAllPending());
 	}
 
-	/**
-	 * {@inheritDoc IClaims.trySetClaim}
-	 */
-	public trySetClaim(key: string, value: T): ClaimResult<T> {
+	public trySetClaim(key: string, value: T): ClaimResult {
 		// Write-once: reject if key already exists.
 		const existing = this.claims.get(key);
 		if (existing !== undefined) {
-			return { status: "AlreadyClaimed", currentValue: existing.value };
+			return { status: "AlreadyClaimed" };
 		}
 
 		return this.compareAndSetClaim(key, value);
@@ -117,13 +114,13 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 	 *
 	 * @experimental
 	 */
-	public compareAndSetClaim(key: string, value: T): ClaimResult<T> {
+	public compareAndSetClaim(key: string, value: T): ClaimResult {
 		const entry = this.claims.get(key);
 
 		// Detached: apply directly, no op needed (no other clients exist).
 		if (!this.isAttached()) {
 			this.claims.set(key, { value, sequenceNumber: 0 });
-			return { status: "Accepted", currentValue: value };
+			return { status: "Accepted" };
 		}
 
 		return this.submitClaim(key, value, {
@@ -137,13 +134,13 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 	/**
 	 * Shared submit logic for both write-once and CAS operations.
 	 */
-	private submitClaim(key: string, value: T, op: IClaimOperation<T>): ClaimResult<T> {
+	private submitClaim(key: string, value: T, op: IClaimOperation<T>): ClaimResult {
 		// If there is already a pending local claim for this key, reject.
 		if (this.pendingClaims.has(key)) {
 			throw new UsageError(`Claims: a claim for key "${key}" is already pending locally`);
 		}
 
-		const promise = new Promise<ClaimConfirmation<T>>((resolve) => {
+		const promise = new Promise<ClaimConfirmation>((resolve) => {
 			this.pendingClaims.set(key, { value, resolve });
 		});
 
@@ -152,16 +149,10 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		return { status: "Pending", promise };
 	}
 
-	/**
-	 * {@inheritDoc IClaims.get}
-	 */
 	public get(key: string): T | undefined {
 		return this.claims.get(key)?.value;
 	}
 
-	/**
-	 * {@inheritDoc IClaims.has}
-	 */
 	public has(key: string): boolean {
 		return this.claims.has(key);
 	}
@@ -243,12 +234,9 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		this.pendingClaims.delete(key);
 
 		if (isWinner) {
-			pending.resolve({ status: "Accepted", currentValue: pending.value });
+			pending.resolve({ status: "Accepted" });
 		} else {
-			// The current committed value for the key. May be undefined if the key
-			// was never claimed (e.g., a trySetClaim op that lost the race).
-			const currentValue = this.claims.get(key)?.value;
-			pending.resolve({ status: "AlreadyClaimed", currentValue });
+			pending.resolve({ status: "AlreadyClaimed" });
 		}
 	}
 
@@ -281,9 +269,6 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
-	 */
 	protected rollback(content: unknown, _localOpMetadata: unknown): void {
 		const op = content as IClaimOperation<T>;
 		assert(op.type === "claim", 0xd03 /* Claims: unexpected op type in rollback */);

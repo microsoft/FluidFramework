@@ -7,10 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { Tree } from "../../../shared-tree/index.js";
+import { Tree, TreeBeta } from "../../../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
-	TreeBeta,
 	type ConciseTree,
 	type NodeFromSchema,
 	type NodeKind,
@@ -36,8 +35,8 @@ function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
 describe("RecordNode", () => {
 	{
 		// Assignable to TypeScript record
-		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
-		const _record2: Record<string, number> = new CustomizableNumberRecord({});
+		const _record1: Record<string, number | undefined> = PojoEmulationNumberRecord.create({});
+		const _record2: Record<string, number | undefined> = new CustomizableNumberRecord({});
 	}
 
 	describe("construction", () => {
@@ -104,6 +103,7 @@ describe("RecordNode", () => {
 			});
 
 			delete myRecord.b;
+			assert(myRecord.a !== undefined);
 			myRecord.a.foo = 100;
 
 			myRecord.c = new InnerObject({ foo: 200, bar: "New entry!" });
@@ -232,10 +232,17 @@ describe("RecordNode", () => {
 			});
 
 			it("setting value to undefined behaves as a delete", () => {
-				const record = init(schemaType, { foo: 1 });
+				const record = init(schemaType, { foo: 1, bar: 2 });
 				assert.equal(record.foo, 1);
-				(record as Record<string, number | undefined>).foo = undefined;
+
+				record.foo = undefined;
+
 				assert.equal(record.foo, undefined);
+				// Confirm the entry was removed, rather than being present with an undefined value.
+				assert(!("foo" in record));
+				assert.deepEqual(Object.keys(record), ["bar"]);
+				assert.deepEqual(Object.entries(record), [["bar", 2]]);
+				assert.deepEqual(Object.values(record), [2]);
 			});
 
 			it("can delete values", () => {

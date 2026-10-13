@@ -62,7 +62,7 @@ import {
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
-	type MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -259,9 +259,6 @@ export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
-	 */
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	public get connected(): boolean {
@@ -270,9 +267,6 @@ export class FluidDataStoreRuntime
 
 	public readonly policies: IFluidDataStorePolicies;
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isReadOnly}
-	 */
 	public readonly isReadOnly = (): boolean => this._readonly;
 
 	public get clientId(): string | undefined {
@@ -391,7 +385,7 @@ export class FluidDataStoreRuntime
 	 * and we keep this property as private, but consumers may optimistically cast
 	 * to the internal interface to access this property.
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: OldestSupportedClientVersion;
 
 	/**
 	 * Create an instance of a DataStore runtime.
@@ -568,16 +562,10 @@ export class FluidDataStoreRuntime
 		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
-	 */
 	public get inStagingMode(): boolean {
 		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
-	 */
 	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}

@@ -3,25 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Button,
-	Combobox,
-	type ComboboxProps,
-	CounterBadge,
-	DataGrid,
-	DataGridBody,
-	DataGridCell,
-	DataGridHeader,
-	DataGridHeaderCell,
-	DataGridRow,
-	Dropdown,
-	type DropdownProps,
-	Option,
-	type TableColumnDefinition,
-	createTableColumn,
-	makeStyles,
-	shorthands,
-	tokens,
+import type {
+	ComboboxProps,
+	DropdownProps,
+	TableColumnDefinition,
 } from "@fluentui/react-components";
 import {
 	DevtoolsDisposed,
@@ -42,6 +27,7 @@ import {
 	useState,
 } from "react";
 
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
@@ -49,6 +35,24 @@ import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
 import { SplitPane } from "./SplitPane.cjs";
 import { Waiting } from "./Waiting.js";
 import { ScreenReaderAnnouncement } from "./utility-components/index.js";
+
+const {
+	Button,
+	Combobox,
+	CounterBadge,
+	DataGrid,
+	DataGridBody,
+	DataGridCell,
+	DataGridHeader,
+	DataGridHeaderCell,
+	DataGridRow,
+	Dropdown,
+	Option,
+	createTableColumn,
+	makeStyles,
+	shorthands,
+	tokens,
+} = FluentReactComponents;
 
 /**
  * Set the default displayed size to 100.
@@ -97,6 +101,16 @@ export function TelemetryView(): ReactElement {
 	const [maxEventsToDisplay, setMaxEventsToDisplay] = useState<number>(DEFAULT_PAGE_SIZE);
 	const [selectedIndex, setSelectedIndex] = useState<number | undefined>();
 	const [refreshStatusMessage, setRefreshStatusMessage] = useState("");
+	/** Stores the pending status reset. The component cancels this timer before replacement and on unmount. */
+	const refreshStatusTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+	useEffect(() => {
+		return (): void => {
+			if (refreshStatusTimerRef.current !== undefined) {
+				clearTimeout(refreshStatusTimerRef.current);
+			}
+		};
+	}, []);
 
 	useEffect(() => {
 		/**
@@ -180,7 +194,10 @@ export function TelemetryView(): ReactElement {
 		usageLogger?.sendTelemetryEvent({ eventName: "RefreshTelemetryButtonClicked" });
 		setRefreshStatusMessage("Telemetry events refreshed");
 		// Clear the message after a delay so subsequent clicks trigger a new announcement
-		setTimeout(() => setRefreshStatusMessage(""), 1000);
+		if (refreshStatusTimerRef.current !== undefined) {
+			clearTimeout(refreshStatusTimerRef.current);
+		}
+		refreshStatusTimerRef.current = setTimeout(() => setRefreshStatusMessage(""), 1000);
 	};
 
 	return (

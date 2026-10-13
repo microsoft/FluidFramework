@@ -35,6 +35,7 @@ import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions
 import { SharedString } from "@fluidframework/sequence/internal";
 import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
@@ -178,6 +179,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [
 				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
 			],

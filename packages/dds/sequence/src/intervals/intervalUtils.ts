@@ -133,13 +133,6 @@ export interface ISerializableInterval extends IInterval {
 	 * @returns a new interval object with identical semantics.
 	 */
 	clone(): ISerializableInterval;
-
-	/**
-	 * Unions this interval with `b`, returning a new interval.
-	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
-	 * intermediate values between the two intervals.
-	 */
-	union(b: IInterval): ISerializableInterval;
 }
 
 /**

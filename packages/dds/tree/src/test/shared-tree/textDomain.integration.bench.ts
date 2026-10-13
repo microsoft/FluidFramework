@@ -20,7 +20,10 @@ import {
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -48,11 +51,13 @@ import {
 	type TreeView,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { FormattedTextDefault, PlainText } from "../../text/index.js";
+import { PlainText } from "../../text/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { iterationSettings } from "../memory/utils.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FormattedTextTest } from "../text/formattedTextTest.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 import {
@@ -577,12 +582,12 @@ describe("TextDomain benchmarks", () => {
 
 		const plainTextViewConfiguration = new TreeViewConfiguration({ schema: PlainText.Tree });
 		const formattedTextViewConfiguration = new TreeViewConfiguration({
-			schema: FormattedTextDefault.Tree,
+			schema: FormattedTextTest.Tree,
 		});
 
 		/**
 		 * The subset of the text-node API the whole-document benchmarks use. Both {@link PlainText.Tree}
-		 * and {@link FormattedTextDefault.Tree} share these, so the read/edit helpers below work
+		 * and {@link FormattedTextTest.Tree} share these, so the read/edit helpers below work
 		 * against either domain (and against an unhydrated node).
 		 */
 		type TextRoot = TreeNode & {
@@ -651,7 +656,7 @@ describe("TextDomain benchmarks", () => {
 			readonly summary: ISummaryTree;
 			readonly idCompressor: ReturnType<typeof createIdCompressor>;
 		} {
-			const idCompressor = createIdCompressor();
+			const idCompressor = createIdCompressor(SerializationVersion.V3);
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			containerRuntimeFactory.createContainerRuntime(runtime);
@@ -738,25 +743,25 @@ describe("TextDomain benchmarks", () => {
 					buildDocument: (size) =>
 						buildTextView(
 							formattedTextViewConfiguration,
-							FormattedTextDefault.Tree.fromString(makeTestString(size)),
+							FormattedTextTest.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 					buildForest: (size) =>
 						getForestOf(
 							buildTextView(
 								formattedTextViewConfiguration,
-								FormattedTextDefault.Tree.fromString(makeTestString(size)),
+								FormattedTextTest.Tree.fromString(makeTestString(size)),
 								forest,
 							),
 						),
 					// The concrete schema node implements the `TextRoot` surface, but the compiler can't see it
 					// as that structural type, so erase through `unknown`.
 					makeUnhydratedRoot: (size) =>
-						FormattedTextDefault.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+						FormattedTextTest.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
 					attachSummary: (size) =>
 						getTextAttachSummary(
 							formattedTextViewConfiguration,
-							FormattedTextDefault.Tree.fromString(makeTestString(size)),
+							FormattedTextTest.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 				},

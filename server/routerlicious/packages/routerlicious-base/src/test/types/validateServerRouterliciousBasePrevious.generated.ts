@@ -207,6 +207,7 @@ declare type current_as_old_for_Class_NexusRunnerFactory = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_OrdererManager": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_OrdererManager = requireAssignableTo<TypeOnly<old.OrdererManager>, TypeOnly<current.OrdererManager>>
 
 /*

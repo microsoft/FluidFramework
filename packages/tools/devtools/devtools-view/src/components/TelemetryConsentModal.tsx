@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Button, Checkbox, makeStyles, shorthands, tokens } from "@fluentui/react-components";
 import type { ReactElement } from "react";
 
+import { FluentReactComponents } from "../FluentUi.cjs";
 import { useTelemetryOptIn } from "../TelemetryUtils.js";
+
+const { Button, Checkbox, makeStyles, shorthands, tokens } = FluentReactComponents;
 
 const useStyles = makeStyles({
 	root: {

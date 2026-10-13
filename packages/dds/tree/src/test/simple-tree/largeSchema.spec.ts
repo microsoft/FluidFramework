@@ -12,7 +12,7 @@ import {
 
 // Test the limits of how large/deep a schema can be before hitting TypeScript compiler limits.
 // For large schema, TypeScript can report "Type instantiation is excessively deep and possibly infinite.ts(2589)":
-// These tests ensure that large schema remain supported and don't hit this limit too early.
+// These tests ensure that large schemas remain supported and don't hit this limit too early.
 // In the past recursive processing of AllowedTypes arrays hit this limit around 43 items.
 // These tests are larger than that to ensure that issue does not return and similar limitations ones are not introduced.
 

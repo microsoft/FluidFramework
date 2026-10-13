@@ -21,6 +21,8 @@ import {
 	type InsertableTypedNode,
 	type TreeNodeSchema,
 	type NodeFromSchema,
+	type ITree,
+	type ITreeAlpha,
 	type TreeViewAlpha,
 	type TransactionConstraint,
 	type rollback,
@@ -406,19 +408,24 @@ describe("treeApi", () => {
 
 		// Hydrated
 		const array = view.root;
-		const context = TreeAlpha.branch(array);
-		assert(context !== undefined);
+		const context = TreeAlpha.context(array);
+		assert(context.isView());
+		assert(context.isBranch()); // Test the deprecated compatibility alias.
 
 		// Unhydrated
-		assert.equal(TreeAlpha.branch(new ArrayNode([1, 2, 3])), undefined);
+		assert.equal(TreeAlpha.context(new ArrayNode([1, 2, 3])).isView(), false);
+		assert.equal(TreeAlpha.context(new ArrayNode([1, 2, 3])).isBranch(), false);
 	});
 
 	it("can cast to alpha", () => {
 		const schemaFactory = new SchemaFactory(undefined);
+		const provider = new TestTreeProviderLite();
+		const tree: ITree = provider.trees[0];
 		const view = getView(
 			new TreeViewConfiguration({ schema: schemaFactory.null, enableSchemaValidation: true }),
 		);
 		view.initialize(null);
+		assert.equal(asAlpha(tree) satisfies ITreeAlpha, tree);
 		assert.equal(asAlpha(view) satisfies TreeViewAlpha<typeof schemaFactory.null>, view);
 	});
 });

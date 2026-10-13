@@ -18,6 +18,7 @@ import type {
 import {
 	createIdCompressor,
 	type IIdCompressor,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import type {
 	ISummaryTreeWithStats,
@@ -36,6 +37,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	currentVersion,
@@ -125,7 +127,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 		logger,
 		indexes,
 		TreeCompressionStrategy.Uncompressed,
-		createIdCompressor(),
+		createIdCompressor(SerializationVersion.V3),
 		new TreeStoredSchemaRepository(),
 		codecOptions ?? testCodecOptions,
 		enrichmentConfig,
@@ -142,7 +144,7 @@ export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>
 	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>,
 ): TestSharedTreeCore {
 	return new TestSharedTreeCore(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		new MockFluidDataStoreRuntime(),
 		undefined,
 		indexes,
 		undefined,
@@ -218,11 +220,10 @@ function createTreeInner(
 	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
 	return [
 		new SharedTreeCore(
-			new Breakable("createTreeInner"),
+			new Breakable("createTreeInner", createChildLogger({ logger })),
 			sharedObject,
 			serializer,
 			submitLocalMessage,
-			logger,
 			summarizables,
 			changeFamily,
 			codecOptions,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { createRequire } from "node:module";
 import { approveAll, CopilotClient, defineTool } from "@github/copilot-sdk";
 
 /**
@@ -86,6 +87,7 @@ export async function runAiSession(
 
 	const client = new CopilotClient({
 		...(githubToken !== undefined ? { githubToken } : {}),
+		cliPath: resolveCopilotCliPath(),
 		// Suppress Node's "ExperimentalWarning: SQLite is an experimental feature"
 		// that the bundled Copilot CLI subprocess emits on stderr.
 		env: {
@@ -145,6 +147,13 @@ export async function runAiSession(
 			ui.verbose?.(`Failed to stop Copilot client cleanly: ${String(error)}`);
 		}
 	}
+}
+
+export function resolveCopilotCliPath(): string {
+	// Resolve from the SDK's dependency context so pnpm selects its nested Copilot CLI.
+	// import.meta.resolve's parentURL overload is experimental, so use createRequire here.
+	const requireFromSdk = createRequire(import.meta.resolve("@github/copilot-sdk"));
+	return requireFromSdk.resolve("@github/copilot/npm-loader.js");
 }
 
 const AUTH_REMEDIATION =

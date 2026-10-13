@@ -9,7 +9,6 @@ import type {
 	IEventProvider,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
 import { type ISharedMap, type IValueChanged, MapFactory } from "@fluidframework/map/legacy";
@@ -155,7 +154,9 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			map.bindToContext();
 		}
 
-		assert(runtime.entryPoint !== undefined, "EntryPoint was undefined");
+		if (runtime.entryPoint === undefined) {
+			throw new Error("EntryPoint was undefined");
+		}
 		const handle = runtime.entryPoint;
 
 		const instance = new GroceryList(runtime, handle, map);

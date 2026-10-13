@@ -4,7 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import type {
 	IContainerRuntimeBase,
@@ -50,7 +50,7 @@ export class VirtualDataObjectFactory extends DataObjectFactory<VirtualDataStore
 		_initialState?: any,
 		_loadingGroupId?: string | undefined,
 	): Promise<VirtualDataStore> {
-		assert(false, "Not implemented");
+		fail("Not implemented");
 	}
 
 	public async createPeerInstance(
@@ -58,7 +58,7 @@ export class VirtualDataObjectFactory extends DataObjectFactory<VirtualDataStore
 		_initialState?: any,
 		_loadingGroupId?: string | undefined,
 	): Promise<VirtualDataStore> {
-		assert(false, "Not implemented");
+		fail("Not implemented");
 	}
 
 	public async createRootInstance(
@@ -66,7 +66,7 @@ export class VirtualDataObjectFactory extends DataObjectFactory<VirtualDataStore
 		_runtime,
 		_initialState?: any,
 	): Promise<VirtualDataStore> {
-		assert(false, "Not implemented");
+		fail("Not implemented");
 	}
 }
 

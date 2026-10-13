@@ -4,6 +4,8 @@
  */
 
 import type {
+	ITree,
+	ITreeAlpha,
 	TreeView,
 	TreeViewAlpha,
 	TreeViewBeta,
@@ -15,13 +17,32 @@ import type {
 	TreeArrayNodeAlpha,
 	TreeMapNode,
 	TreeMapNodeAlpha,
+	ViewableTree,
+	ViewableTreeAlpha,
 } from "./simple-tree/index.js";
 
 /**
  * Module entry points for retrieving alternate (alpha/beta) versions of tree APIs.
  * For each API (usually a class) that has an alpha/beta version, add overloads to the function(s) below.
  * These functions should only be used by external consumers, not referenced internally within the tree package, to avoid circular import dependencies.
+ *
+ * These are only valid if all implementations are guaranteed to implement the alpha API:
+ * cases like SchemaFactory which allow users to construct non-alpha versions must not be added here.
  */
+
+/**
+ * Retrieve the {@link ITreeAlpha | alpha API} for an {@link ITree}.
+ * @alpha
+ */
+export function asAlpha(tree: ITree): ITreeAlpha;
+
+/**
+ * Retrieve the {@link ViewableTreeAlpha | alpha API} for a {@link ViewableTree}.
+ * @param tree - The tree whose alpha API is requested.
+ * @returns The alpha API for `tree`.
+ * @alpha
+ */
+export function asAlpha(tree: ViewableTree): ViewableTreeAlpha;
 
 /**
  * Retrieve the {@link TreeViewAlpha | alpha API} for a {@link TreeView}.

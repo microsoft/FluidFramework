@@ -10,6 +10,7 @@ import {
 	CheckpointManager,
 	createDeliCheckpointManagerFromCollection,
 	DeliLambda,
+	type IDeliCheckpointManager,
 	MoiraLambda,
 	ScribeLambda,
 	ScriptoriumLambda,
@@ -88,7 +89,9 @@ class LocalSocketPublisher implements IPublisher {
 
 	public to(topic: string): ITopic {
 		return {
-			emit: (event: string, ...args: any[]) => this.publisher.publish(topic, event, ...args),
+			emit: (event: string, ...args: any[]) => {
+				this.publisher.publish(topic, event, ...args);
+			},
 		};
 	}
 
@@ -163,6 +166,13 @@ export class LocalOrderer implements IOrderer {
 	private readonly dbObject: IDocument;
 	private existing: boolean;
 
+	/**
+	 * Tracks the sequence number of the latest Deli checkpoint successfully persisted by the local
+	 * orderer. Read-mode clients do not submit a join op, so they need this value to know how far
+	 * they must catch up.
+	 */
+	private checkpointSequenceNumber: number | undefined;
+
 	constructor(
 		private readonly setup: ILocalOrdererSetup,
 		private readonly details: IDocumentDetails,
@@ -179,6 +189,8 @@ export class LocalOrderer implements IOrderer {
 	) {
 		this.existing = details.existing;
 		this.dbObject = this.getDeliState();
+		const deliState: IDeliState = JSON.parse(this.dbObject.deli);
+		this.checkpointSequenceNumber = deliState.sequenceNumber;
 		this.socketPublisher = new LocalSocketPublisher(this.pubSub);
 
 		this.setupKafkas();
@@ -196,6 +208,22 @@ export class LocalOrderer implements IOrderer {
 		const socketSubscriber = new WebSocketSubscriber(socket);
 		const orderer = this.connectInternal(socketSubscriber, clientId, client);
 		return orderer;
+	}
+
+	/**
+	 * Gets the sequence number of the latest successfully persisted Deli checkpoint.
+	 *
+	 * @remarks
+	 *
+	 * Because the local orderer observes every sequenced operation, it could instead report the
+	 * latest sequence number. This method deliberately reports the latest persisted checkpoint so
+	 * local servers behave more like production services, which may only be able to provide a
+	 * checkpoint that lags behind the current sequence number.
+	 *
+	 * @returns The sequence number a connecting client must process through to be caught up.
+	 */
+	public getCheckpointSequenceNumber(): number | undefined {
+		return this.checkpointSequenceNumber;
 	}
 
 	public connectInternal(
@@ -289,12 +317,22 @@ export class LocalOrderer implements IOrderer {
 					this.documentId,
 					checkpointService,
 				);
+				const trackingCheckpointManager: IDeliCheckpointManager = {
+					writeCheckpoint: async (checkpoint, isLocal, reason) => {
+						await checkpointManager.writeCheckpoint(checkpoint, isLocal, reason);
+						this.checkpointSequenceNumber = checkpoint.sequenceNumber;
+					},
+					deleteCheckpoint: async (checkpoint, isLocal) => {
+						await checkpointManager.deleteCheckpoint(checkpoint, isLocal);
+						this.checkpointSequenceNumber = undefined;
+					},
+				};
 				return new DeliLambda(
 					context,
 					this.tenantId,
 					this.documentId,
 					lastCheckpoint,
-					checkpointManager,
+					trackingCheckpointManager,
 					undefined,
 					this.deltasKafka,
 					undefined,

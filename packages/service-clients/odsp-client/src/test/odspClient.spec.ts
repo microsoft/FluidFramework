@@ -114,7 +114,7 @@ describe("OdspClient", () => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			{ sweepEnabled, throwOnTombstoneLoad },
 			expectedConfigs,
-			"Expected GC to be disabled per compatibilityModeRuntimeOptions",
+			"Expected GC to be disabled by the defaults for oldestSupportedClient",
 		);
 	});
 });

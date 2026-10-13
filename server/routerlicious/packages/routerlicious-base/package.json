@@ -51,7 +51,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^3.1.0",
-		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-kafka-orderer": "workspace:~",
 		"@fluidframework/server-lambdas": "workspace:~",
@@ -132,6 +131,9 @@
 	"typeValidation": {
 		"broken": {
 			"Class_NexusResources": {
+				"forwardCompat": false
+			},
+			"Class_OrdererManager": {
 				"forwardCompat": false
 			},
 			"Class_AlfredResources": {

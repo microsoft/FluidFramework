@@ -8,13 +8,12 @@ import { strict as assert } from "node:assert";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ExtensibleUnionNode } from "../extensibleUnionNode.js";
-import { Tree, TreeAlpha } from "../shared-tree/index.js";
+import { Tree, TreeAlpha, TreeBeta } from "../shared-tree/index.js";
 import {
 	allowUnused,
 	snapshotSchemaCompatibility,
 	KeyEncodingOptions,
 	SchemaFactoryBeta,
-	TreeBeta,
 	TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import type { requireAssignableTo } from "../util/index.js";

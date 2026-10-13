@@ -11,10 +11,15 @@ import type {
 } from "@fluidframework/server-services-core";
 
 export class TestDocumentManager implements IDocumentManager {
-	// eslint-disable-next-line @rushstack/no-new-null
-	public async readDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
+	/* eslint-disable @rushstack/no-new-null */
+	public async readDocument(
+		tenantId: string,
+		documentId: string,
+		options?: { accessToken?: string },
+	): Promise<IDocument | null> {
 		throw new NetworkError(501, "Not implemented", false, true);
 	}
+	/* eslint-enable @rushstack/no-new-null */
 
 	public async readStaticProperties(
 		tenantId: string,

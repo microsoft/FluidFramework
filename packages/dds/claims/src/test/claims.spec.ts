@@ -53,7 +53,6 @@ describe("Claims", () => {
 			const result = claims.trySetClaim("key", "value");
 			assert.strictEqual(result.status, "Accepted");
 			assert(result.status === "Accepted");
-			assert.strictEqual(result.currentValue, "value");
 			assert.strictEqual(claims.get("key"), "value");
 		});
 
@@ -90,7 +89,6 @@ describe("Claims", () => {
 
 			assert.strictEqual(confirmation.status, "Accepted");
 			assert(confirmation.status === "Accepted");
-			assert.strictEqual(confirmation.currentValue, "myValue");
 			assert.strictEqual(claims.get("myKey"), "myValue");
 		});
 
@@ -105,7 +103,7 @@ describe("Claims", () => {
 			const result = claims.trySetClaim("myKey", "secondValue");
 			assert.strictEqual(result.status, "AlreadyClaimed");
 			assert(result.status === "AlreadyClaimed");
-			assert.strictEqual(result.currentValue, "firstValue");
+			assert.strictEqual(claims.get("myKey"), "firstValue");
 		});
 
 		it("Emits 'claimed' event when claim is accepted", async () => {
@@ -170,11 +168,9 @@ describe("Claims", () => {
 			// Client 1 submitted first, so it should win.
 			assert.strictEqual(confirmation1.status, "Accepted");
 			assert(confirmation1.status === "Accepted");
-			assert.strictEqual(confirmation1.currentValue, "value1");
 
 			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
 			assert(confirmation2.status === "AlreadyClaimed");
-			assert.strictEqual(confirmation2.currentValue, "value1");
 
 			// Both clients should see the same committed value.
 			assert.strictEqual(claims1.get("raceKey"), "value1");
@@ -714,7 +710,6 @@ describe("Claims", () => {
 
 			assert.strictEqual(confirmation.status, "Accepted");
 			assert(confirmation.status === "Accepted");
-			assert.strictEqual(confirmation.currentValue, handle);
 			// After roundtrip, get returns deserialized handle — compare by path.
 			const stored = claims.get("handleKey") as { absolutePath: string };
 			assert.strictEqual(stored.absolutePath, handle.absolutePath);

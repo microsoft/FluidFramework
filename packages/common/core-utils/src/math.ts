@@ -10,6 +10,6 @@ import { assert } from "./assert.js";
  * @internal
  */
 export function clamp(value: number, min: number, max: number): number {
-	assert(min <= max, "clamp requires min <= max");
+	assert(min <= max, 0xd18 /* clamp requires min <= max */);
 	return Math.min(Math.max(value, min), max);
 }

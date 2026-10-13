@@ -13,7 +13,7 @@
  * Before a release, policy-check should be run, which will convert any asserts still using strings to
  * use numbered error codes instead.
  * @param debugMessageBuilder - An optional function that can be used to build a debug message to include in the error in development builds.
- * Only executed if `condition` is false. `debugMessageBuilder` is not executed in production builds, see `skipInProduction` for details.
+ * Only executed if `condition` is false. `debugMessageBuilder` is not executed in production builds, see {@link skipInProduction} for details.
  * @remarks
  * Use this instead of the node 'assert' package, which requires polyfills and has a big impact on bundle sizes.
  *
@@ -24,11 +24,7 @@
  * In cases where the assert is very unlikely to have an impact on production code but is still useful as documentation and for debugging, consider using {@link debugAssert} instead
  * to optimize bundle size.
  *
- * This API is not intended for use outside of the Fluid Framework client codebase: it will most likely be made internal in the future.
- * @privateRemarks
- * This should be deprecated (as a non internal API) then moved to purely internal.
- * When done, the `skipInProduction` reference above should be turned into a link.
- * @legacy @beta
+ * @internal
  */
 export function assert(
 	condition: boolean,
@@ -76,6 +72,26 @@ function failPrivate(message: string | number, debugMessageBuilder?: () => strin
  */
 export function fail(message: string | number, debugMessageBuilder?: () => string): never {
 	failPrivate(message, debugMessageBuilder);
+}
+
+/**
+ * Appends additional diagnostic text in non-production builds.
+ *
+ * @param message - The message to include in all builds.
+ * @param debugMessageBuilder - Builds the additional text to include only in non-production builds.
+ * @returns The message with the additional diagnostic text when non-production conditionals are enabled.
+ *
+ * @internal
+ */
+export function appendDebugMessage(
+	message: string,
+	debugMessageBuilder: () => string,
+): string {
+	let messageWithDebugDetails = message;
+	skipInProduction(() => {
+		messageWithDebugDetails = `${messageWithDebugDetails} ${debugMessageBuilder()}`;
+	});
+	return messageWithDebugDetails;
 }
 
 function onAssertionError(error: Error): void {
@@ -129,6 +145,33 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
 }
 
 /**
+ * Utility function to add extra context to {@link debugAssert | debug assertion} messages.
+ * @param prefixString - The prefix to add to the debug assertion message. Prepended to the failure description with an additional `": "` delimiter.
+ * @param predicateOutput - The output of the predicate function: either `true` or an object describing the failure.
+ * @returns `true` when `predicateOutput` is `true`; otherwise, the failure description with the added prefix.
+ * @example
+ * ```ts
+ * function computeBaz(foo: Thing, bar: Thing) {
+ *     debugAssert(() => prefixPredicate("Malformed foo in computeBaz", validateThing(foo)));
+ *     debugAssert(() => prefixPredicate("Malformed bar in computeBaz", validateThing(bar)));
+ *     // ...
+ * }
+ * ```
+ * @internal
+ */
+export function prefixPredicate(
+	prefixString: string,
+	predicateOutput: true | { toString(): string },
+): true | string {
+	const result = predicateOutput;
+	if (result === true) {
+		return true;
+	}
+	const innerMessage = result.toString();
+	return `${prefixString}: ${innerMessage}`;
+}
+
+/**
  * Asserts that can be conditionally enabled in debug/development builds but will be optimized out of production builds.
  *
  * Enabled when {@link nonProductionConditionalsIncluded} is true.
@@ -147,6 +190,8 @@ export function onAssertionFailure(handler: (error: Error) => void): () => void 
  *
  * Apps (or other performance sensitive scenarios) packaged in a way that does not {@link nonProductionConditionalsIncluded|skip non-production code}
  * can use the same approaches to disable these asserts to reduce performance overhead.
+ *
+ * See {@link prefixPredicate} for a helper for adding extra context to debug assertion messages.
  *
  * @privateRemarks
  * This design was chosen to accomplish two main goals:

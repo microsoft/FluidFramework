@@ -46,6 +46,8 @@ export function makeMitigatedChangeFamily<
 		},
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
+		hasSchemaChange: (change: TChange): boolean =>
+			unmitigatedChangeFamily.hasSchemaChange(change),
 		buildProcessor: (
 			processFn: ProcessChangeFn<TChange, TChangeProcessingContext>,
 		): ((change: TChange) => TChange) => {

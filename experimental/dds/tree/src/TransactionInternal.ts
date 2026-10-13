@@ -70,9 +70,6 @@ export interface EditingResultBase {
  * @internal
  */
 export interface FailedEditingResult extends EditingResultBase {
-	/**
-	 * {@inheritDoc EditingResultBase.status}
-	 */
 	readonly status: EditStatus.Invalid | EditStatus.Malformed;
 	/**
 	 * Information about what caused the transaction to fail.
@@ -95,9 +92,6 @@ export interface FailedEditingResult extends EditingResultBase {
  * @alpha
  */
 export interface ValidEditingResult extends EditingResultBase {
-	/**
-	 * {@inheritDoc EditingResultBase.status}
-	 */
 	readonly status: EditStatus.Applied;
 	/**
 	 * The new revision produced by the transaction.
@@ -474,15 +468,16 @@ export namespace TransactionInternal {
 		 */
 		public validateOnClose(state: ValidState): ChangeResult {
 			// Making the policy choice that storing a detached sequences in an edit but not using it is an error.
-			return this.detached.size !== 0
-				? Result.error({
-						status: EditStatus.Malformed,
-						failure: {
-							kind: FailureKind.UnusedDetachedSequence,
-							sequenceId: this.detached.keys().next().value,
-						},
-					})
-				: Result.ok(state.view);
+			for (const sequenceId of this.detached.keys()) {
+				return Result.error({
+					status: EditStatus.Malformed,
+					failure: {
+						kind: FailureKind.UnusedDetachedSequence,
+						sequenceId,
+					},
+				});
+			}
+			return Result.ok(state.view);
 		}
 
 		/**

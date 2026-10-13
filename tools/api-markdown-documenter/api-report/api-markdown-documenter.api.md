@@ -58,6 +58,12 @@ export { ApiItem }
 
 export { ApiItemKind }
 
+// @public @sealed
+interface ApiItemLinkTarget {
+    readonly documentPath: string;
+    readonly headingId?: string;
+}
+
 // @public
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
     readonly defaultSectionLayout: (apiItem: ApiItem, childSections: Section[] | undefined, config: ApiItemTransformationConfiguration) => Section[];
@@ -119,10 +125,12 @@ export interface ApiItemTransformations {
 
 declare namespace ApiItemUtilities {
     export {
+        ApiItemLinkTarget,
         createQualifiedDocumentNameForApiItem,
         filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
+        getLinkTargetForApiItem,
         shouldItemBeIncluded,
         ancestryHasModifierTag,
         getCustomBlockComments,
@@ -249,6 +257,7 @@ export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfigura
 
 // @public @sealed
 export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+    // (undocumented)
     readonly kind: HierarchyKind.Document;
 }
 
@@ -282,6 +291,7 @@ export enum FolderDocumentPlacement {
 // @public @sealed
 export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
     readonly documentPlacement: FolderDocumentPlacement;
+    // (undocumented)
     readonly kind: HierarchyKind.Folder;
 }
 
@@ -311,6 +321,9 @@ function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 function getLinkForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, textOverride?: string): Link;
+
+// @public
+function getLinkTargetForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ApiItemLinkTarget;
 
 // @public
 function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
@@ -531,6 +544,7 @@ export interface SectionHeading extends Node_2 {
 
 // @public @sealed
 export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+    // (undocumented)
     readonly kind: HierarchyKind.Section;
 }
 

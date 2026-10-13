@@ -1,16 +1,28 @@
 ---
 name: review
-description: "Use when asked to review code, review a branch, or do a code review. Spawns Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents while the orchestrator reviews architecture, tests, performance, and security."
+description: "Review changes relative to a prior state, such as a diff, pull request, branch, commit, or working-tree changes. Use for change-focused code review and regression analysis. Do not use to assess an existing file, API, design, implementation, or other artifact without a comparison; if the request is ambiguous, ask whether the user wants a change review and what prior state to compare against."
 argument-hint: "[branch-name]"
 ---
 ```text
-/review                              # review current branch vs main
-/review my-feature-branch            # review a specific branch vs main
+/review                              # review current branch vs its resolved target
+/review my-feature-branch            # review a specific branch vs its resolved target
 ```
 
 Spawns dedicated Breaker (correctness) and API Analyst (compatibility/conventions) sub-agents in parallel while the orchestrator performs the Inspector pass (architecture, tests, performance, security). Depth is user-selected.
 
 Optimize for high-confidence, concise findings. Silence is better than speculation.
+
+## Scope Gate
+
+This skill reviews a change set relative to a prior state.
+Use it only when the request identifies or clearly implies changes to review, such as a diff, pull request, branch, commit, patch, or working-tree changes.
+
+Do not use this skill for a general assessment of an existing file, API, architecture, design, implementation, document, or other artifact when no comparison is requested.
+Handle that request directly using the relevant domain guidance instead.
+
+If "review" could mean either a general assessment or a change review, ask the user which they want.
+If they want a change review but have not identified the comparison, ask what prior state or base should be used.
+Do not proceed to Step 1 until the request is confirmed as a change review.
 
 ## Input
 
@@ -19,8 +31,8 @@ Target: `$ARGUMENTS`
 Parse `$ARGUMENTS`:
 
 1. Review target (positional argument):
-   - Non-empty text (e.g., `my-feature-branch`) -> diff that branch vs main
-   - Empty -> diff current branch vs main
+   - Non-empty text (e.g., `my-feature-branch`) -> diff that branch vs its resolved target
+   - Empty -> diff current branch vs its resolved target
 
 ## Step 1: Confirm Mode
 
@@ -45,21 +57,29 @@ Tasks to create by mode:
 - Deep: Gather changes -> Read diffs and full files -> Detect API surface changes -> Extract sections for sub-agents -> Perform review (spawn Breaker + API Analyst, run Inspector) -> De-duplicate and classify -> Report
 </required>
 
-## Step 2: Setup & Gather Changes
+## Step 2: Resolve Base & Gather Changes
+
+Read `.claude/skills/comparison-base/SKILL.md` and execute it before gathering changes. This is required; do not duplicate or approximate its target-selection logic in this skill. Use `HEAD` as `$REVIEW_REF` for the current branch, or pass the named review branch as its input. Retain all resolver outputs for the report and subsequent commands.
+
+Choose the diff endpoint once and use it for the entire review:
+
+- Local review (`$IS_LOCAL_REVIEW` is `true`): compare `$BASE_COMMIT` with the working tree so staged and unstaged changes are included. Also collect untracked files with `git ls-files --others --exclude-standard`; treat each as a full-file addition.
+- Remote review: use the exact two-dot range `$BASE_COMMIT..$REVIEW_REF`. Do not switch to a three-dot diff later: that would recompute a potentially different merge-base.
 
 ```bash
-git fetch origin main && git log origin/main..HEAD --oneline && git diff --stat origin/main...HEAD
+git log "$BASE_COMMIT..$REVIEW_REF" --oneline
+
+# Local review
+git diff --stat "$BASE_COMMIT"
+git diff --numstat "$BASE_COMMIT"
+git ls-files --others --exclude-standard
+
+# Remote review
+git diff --stat "$BASE_COMMIT..$REVIEW_REF"
+git diff --numstat "$BASE_COMMIT..$REVIEW_REF"
 ```
 
-If a branch name was provided as argument, replace `HEAD` with `origin/<branch-name>` and add it to the fetch:
-
-```bash
-git fetch origin main <branch-name> && git log origin/main..origin/<branch-name> --oneline && git diff --stat origin/main...origin/<branch-name>
-```
-
-If on `main` and no branch name was provided, ask the user which branch to review.
-
-Store the commit log, file list from `--stat`, and total `$LINES_CHANGED`.
+Store the PR URL (if any), target repository/branch, selected comparison commit, commit log, file list, and total `$LINES_CHANGED` (sum additions and deletions from `--numstat`; handle binary entries separately). For a local review, add every untracked file to the file list and count all of its lines as additions; detect untracked binary files separately.
 
 Empty diff gate: Zero changed files -> report "No changes to review" and stop.
 
@@ -72,10 +92,14 @@ Exclude non-reviewable files from the file list: type declarations (`.d.ts`), lo
 Read per-file diffs in batches (~50 files or ~500 changed lines per batch, whichever is smaller):
 
 ```bash
-git diff origin/main...HEAD -- <file1> <file2> ...
+# Local review (tracked files)
+git diff "$BASE_COMMIT" -- <file1> <file2> ...
+
+# Remote review
+git diff "$BASE_COMMIT..$REVIEW_REF" -- <file1> <file2> ...
 ```
 
-For named branches, use `origin/main...origin/<branch>`.
+For local untracked files, read their full workspace contents and present them as full-file additions. They have no Git diff until staged.
 
 ### Standard mode: selective full-file reads
 
@@ -83,7 +107,7 @@ After reading diffs, identify files where fuller context is needed — typically
 
 ### Deep mode: full-file reads for all changed files
 
-Read every changed file in full (the version on the review branch). Use `git show HEAD:<file>` or `git show origin/<branch>:<file>` as appropriate.
+For a local review, read every changed file from the workspace so unstaged and untracked content is included. For a remote review, read the committed version using `git show "${REVIEW_REF}:<file>"`.
 
 ### Shared plumbing trap
 
@@ -98,7 +122,12 @@ No code gate: If no executable logic files remain after exclusions (only docs/co
 Check whether any API report files changed (names only, not content — these are excluded from diff reading in Step 3):
 
 ```bash
-git diff --name-only origin/main...HEAD | grep -E '\.api\.md$' || true
+# Local review: also filter the untracked-file list gathered in Step 2
+git diff --name-only "$BASE_COMMIT" | grep -E '\.api\.md$' || true
+git ls-files --others --exclude-standard | grep -E '\.api\.md$' || true
+
+# Remote review
+git diff --name-only "$BASE_COMMIT..$REVIEW_REF" | grep -E '\.api\.md$' || true
 ```
 
 If any matched, flag those packages for the API Analyst (triggers extra scrutiny on release tags, breaking changes, and conventions).
@@ -219,8 +248,8 @@ Each sub-agent prompt includes — literally pasted into the prompt text:
 5. API conventions (API Analyst only) — paste the contents of `api-conventions.md`
 6. Output format: `[SEVERITY] file:line — description — suggested fix`
 7. Review mode instruction:
-   - If reviewing the current branch: `"This is a LOCAL review — the workspace checkout matches the code under review. You may read workspace files for additional context (callers, type definitions, adjacent logic) when the embedded material is insufficient."`
-   - If reviewing a named branch: `"This is a REMOTE review — the workspace checkout may be on a different branch. Do NOT read workspace files. ALL code you need is embedded above. Base your analysis ONLY on the diff and extracted sections provided."`
+   - If `$IS_LOCAL_REVIEW` is `true`: `"This is a LOCAL review — the workspace checkout matches the code under review. You may read workspace files for additional context (callers, type definitions, adjacent logic) when the embedded material is insufficient."`
+   - Otherwise: `"This is a REMOTE review — the workspace checkout may be on a different branch. Do NOT read workspace files. ALL code you need is embedded above. Base your analysis ONLY on the diff and extracted sections provided."`
 
 Perform the Inspector pass yourself while sub-agents run. Wait for all to complete.
 
@@ -258,6 +287,7 @@ If zero findings remain after the evidence gate, use the exact summary line:
 # Code Review Report
 
 **Target**: Branch: <branch-name>
+**Base**: <target-repository>:<target-branch> at <comparison-commit>
 **Mode**: quick | standard | deep
 **Lines reviewed**: $LINES_REVIEWED ($LINES_CHANGED changed)
 
@@ -308,6 +338,6 @@ What next?
 
 - Empty diff: Report "No changes to review" and stop.
 - >10,000 lines changed: Ask user to narrow scope.
-- On main with no branch argument: Ask which branch to review.
+- Comparison-base resolution issue: Follow the edge-case handling in `.claude/skills/comparison-base/SKILL.md`.
 - No executable code after exclusions: Skip Breaker. API Analyst reduced pass. Inspector only.
 - Sub-agent timeout: Note "Review incomplete" for that area.

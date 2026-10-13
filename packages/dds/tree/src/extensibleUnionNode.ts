@@ -5,7 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { TreeAlpha, Tree } from "./shared-tree/index.js";
+import { TreeAlpha, Tree, TreeBeta } from "./shared-tree/index.js";
 import type {
 	TreeNodeSchema,
 	TreeNodeFromImplicitAllowedTypes,
@@ -19,7 +19,6 @@ import {
 	eraseSchemaDetailsSubclassable,
 	getInnerNode,
 	SchemaFactory,
-	TreeBeta,
 } from "./simple-tree/index.js";
 import type { UnionToIntersection } from "./util/index.js";
 

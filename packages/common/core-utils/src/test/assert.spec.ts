@@ -6,12 +6,14 @@
 import { strict } from "node:assert";
 
 import {
+	appendDebugMessage,
 	assert,
 	configureDebugAsserts,
 	debugAssert,
 	emulateProductionBuild,
 	nonProductionConditionalsIncluded,
 	onAssertionFailure,
+	prefixPredicate,
 } from "../assert.js";
 
 describe("assert", () => {
@@ -88,6 +90,29 @@ describe("assert", () => {
 		strict.deepEqual(log, []);
 	});
 
+	it("appendDebugMessage", () => {
+		strict.equal(
+			appendDebugMessage("message", () => "details"),
+			"message details",
+		);
+
+		const log: string[] = [];
+		emulateProductionBuild(true);
+		try {
+			strict.equal(
+				appendDebugMessage("message", () => {
+					log.push("built");
+					return "details";
+				}),
+				"message",
+			);
+		} finally {
+			emulateProductionBuild(false);
+		}
+
+		strict.deepEqual(log, []);
+	});
+
 	it("onAssertionFailure", () => {
 		const log: string[] = [];
 		const handler = (error: Error): void => {
@@ -124,5 +149,11 @@ describe("assert", () => {
 		strict.throws(() => assert(false, "D"));
 
 		strict.deepEqual(log, ["A", "B", "B", "C"]);
+	});
+
+	it("prefixPredicate", () => {
+		strict.equal(prefixPredicate("Prefix", true), true);
+		strict.equal(prefixPredicate("Prefix", "details"), "Prefix: details");
+		strict.equal(prefixPredicate("Prefix", { toString: () => "details" }), "Prefix: details");
 	});
 });

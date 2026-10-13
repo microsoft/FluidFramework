@@ -7,13 +7,12 @@ import { strict as assert } from "node:assert";
 
 import type { requireAssignableTo } from "@fluidframework/build-tools";
 
-import { Tree } from "../../../shared-tree/index.js";
+import { Tree, TreeBeta } from "../../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import {
-	TreeBeta,
 	TreeViewConfiguration,
 	allowUnused,
 	eraseSchemaDetails,

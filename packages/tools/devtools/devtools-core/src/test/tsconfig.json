@@ -1,10 +1,13 @@
 {
-	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"extends": [
+		"../../../../../../common/build/build-common/tsconfig.node20.json",
+		"../../../../../../common/build/build-common/tsconfig.test.json",
+	],
 	"include": ["./**/*"],
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["chai", "mocha"],
+		"types": ["chai", "mocha", "node"],
 		"noImplicitAny": true,
 		"noUnusedLocals": true,
 		"noImplicitOverride": true,

@@ -55,7 +55,9 @@ The script detects changed packages, installs dependencies if needed, runs `flui
 
 # Step 3: Review output
 
-Report to the user: packages changed, what was auto-fixed, any checks still failing, and uncommitted files. (Changeset guidance is handled by the `api-changes` skill if API reports changed; otherwise the script warning is sufficient.)
+Report to the user: packages changed, what was auto-fixed, any checks still failing, and uncommitted files.
+Check changeset warnings against the [release-group guidance](../../../.changeset/README.md#when-should-i-use-a-changeset).
+If API reports changed, use the `api-changes` skill for details.
 
 If you see unexpected generated artifacts unrelated to the branch's changes (especially in `*.api.md` files), stale build artifacts from a previous session or the incremental TypeScript bug are likely the cause. For `@fluidframework/tree` or its aggregator (`fluid-framework`), a scoped per-package clean is **not reliable** — you must do a full clean build from the repo root:
 

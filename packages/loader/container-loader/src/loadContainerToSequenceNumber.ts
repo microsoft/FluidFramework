@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { performanceNow } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/driver-utils/internal";
+import { createChildLogger, isILoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	IContainerDriverServices,
@@ -24,10 +26,11 @@ import {
  * This is distinct from normal container loading. The supplied
  * {@link IContainerDriverServices.documentServiceFactory} must be able to materialize the document
  * at {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} - i.e. it must implement the
- * point-in-time capability the loader detects. For ODSP, pass an
- * `OdspPointInTimeDocumentServiceFactory` directly.
+ * point-in-time capability the loader detects. For ODSP, call
+ * `createOdspDocumentServiceFactory` with the implementation imported from
+ * `@fluidframework/odsp-driver/legacy/point-in-time`.
  *
- * @internal
+ * @legacy @beta
  */
 export interface ILoadContainerToSequenceNumberProps
 	extends IContainerHostProps,
@@ -58,11 +61,15 @@ export interface ILoadContainerToSequenceNumberProps
  * The supplied {@link IContainerDriverServices.documentServiceFactory} must support point-in-time
  * loading: it must be able to serve a snapshot at or before
  * {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} and replay the document forward
- * through that sequence number. For ODSP, pass an `OdspPointInTimeDocumentServiceFactory` (from
- * `@fluidframework/odsp-driver`) directly - the loader materializes the point-in-time view itself,
- * so no wrapping or decoration is required.
+ * through that sequence number. For ODSP, inject `createPointInTimeDocumentService` from the
+ * dedicated point-in-time entrypoint through `createOdspDocumentServiceFactory` options. The loader
+ * materializes the point-in-time view itself, so no wrapping or decoration is required.
  *
- * @internal
+ * @param props - The load options, point-in-time-capable driver services, target sequence number, and
+ * optional cancellation signal.
+ * @returns A disconnected, read-only container materialized at the requested sequence number.
+ *
+ * @legacy @beta
  */
 export async function loadContainerToSequenceNumber(
 	props: ILoadContainerToSequenceNumberProps,
@@ -77,7 +84,7 @@ export async function loadContainerToSequenceNumber(
 	const capableFactory = asPointInTimeCapableFactory(documentServiceFactory);
 	if (capableFactory === undefined) {
 		throw new UsageError(
-			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, pass an OdspPointInTimeDocumentServiceFactory.",
+			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, call createOdspDocumentServiceFactory with a point-in-time implementation.",
 		);
 	}
 
@@ -87,11 +94,44 @@ export async function loadContainerToSequenceNumber(
 		capableFactory,
 		loadToSequenceNumber,
 	);
+	const logger = createChildLogger({
+		logger: props.logger,
+		namespace: "fluid:telemetry",
+	});
 
-	return loadContainerPaused(
-		{ ...props, documentServiceFactory: pointInTimeFactory },
-		props.request,
-		loadToSequenceNumber,
-		props.signal,
-	);
+	const startTime = performanceNow();
+	try {
+		const container = await loadContainerPaused(
+			{ ...props, documentServiceFactory: pointInTimeFactory },
+			props.request,
+			loadToSequenceNumber,
+			props.signal,
+		);
+		const baseSnapshotSequenceNumber = container.deltaManager.initialSequenceNumber;
+		const finalSequenceNumber = container.deltaManager.lastSequenceNumber;
+		logger.sendPerformanceEvent({
+			eventName: "VersionMarkPointInTimeLoad",
+			outcome: "succeeded",
+			replayedOpCount: finalSequenceNumber - baseSnapshotSequenceNumber,
+			duration: performanceNow() - startTime,
+		});
+		return container;
+	} catch (error) {
+		const telemetryProperties = isILoggingError(error) ? error.getTelemetryProperties() : {};
+		const availabilityOutcome = telemetryProperties.versionMarkAvailabilityOutcome;
+		const baseSnapshotSequenceNumber =
+			telemetryProperties.versionMarkBaseSnapshotSequenceNumber;
+		logger.sendErrorEvent({
+			eventName: "VersionMarkPointInTimeLoad",
+			outcome: "failed",
+			targetSequenceNumber: loadToSequenceNumber,
+			...(typeof availabilityOutcome === "string" ? { availabilityOutcome } : {}),
+			...(typeof baseSnapshotSequenceNumber === "number"
+				? { baseSnapshotSequenceNumber }
+				: {}),
+			duration: performanceNow() - startTime,
+			errorType: (error as Partial<{ errorType: string }> | undefined)?.errorType,
+		});
+		throw error;
+	}
 }

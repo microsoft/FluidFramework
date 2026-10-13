@@ -44,6 +44,7 @@ import {
 } from "../../simple-tree/toStoredSchema.js";
 import { brand } from "../../util/index.js";
 import {
+	getStagedSchemaUpgrades,
 	HasStagedAllowedTypes,
 	HasStagedAllowedTypesAfterUpdate,
 	HasStagedOptionalField,
@@ -141,7 +142,7 @@ describe("toStoredSchema", () => {
 						// The restrictive case, used for initial schemas and upgrades, does not include any staged schema features.
 						// The permissive case, used for unhydrated trees, includes all staged schema features.
 						// They should be equal if and only if there are no staged schema features.
-						if (testCase.hasStagedSchema) {
+						if (getStagedSchemaUpgrades(testCase.schema).size > 0) {
 							assert.notDeepEqual(restrictive, permissive);
 						} else {
 							assert.deepEqual(restrictive, permissive);
@@ -189,7 +190,7 @@ describe("toStoredSchema", () => {
 						const simpleFromRestrictive = exportSimpleSchema(restrictive);
 						const simpleFromPermissive = exportSimpleSchema(permissive);
 
-						if (testCase.hasStagedSchema) {
+						if (getStagedSchemaUpgrades(testCase.schema).size > 0) {
 							assert.notDeepEqual(simpleFromRestrictive, simpleFromPermissive);
 						} else {
 							assert.deepEqual(simpleFromRestrictive, simpleFromPermissive);
@@ -229,7 +230,7 @@ describe("toStoredSchema", () => {
 			it("partially includes staged schema by upgrade identity", () => {
 				// Test that the filtering logic in `toStoredSchema` works correctly.
 				// These test trees compare the upgrade identity of the staged schema to implement the filter.
-				// Schema that are included by the filter should be present in the resulting stored schema, and any other staged schema should not.
+				// Schemas that are included by the filter should be present in the resulting stored schema, and any other staged schema should not.
 				// See testTrees.ts for the test cases: "NestedMultiStage with one upgrade" and "NestedStagedOptional with one upgrade".
 				const allowedTypesNode = getObjectNodeSchema(
 					getTestDocumentSchemaData("NestedMultiStage with one upgrade"),

@@ -8,7 +8,6 @@
 		"types": ["node"],
 		"noImplicitAny": true,
 		"noUnusedLocals": false, // Checked in lint instead so unused variables do not block compilation
-		"target": "ES2022",
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 		// vscode-jsonrpc (transitive dep via @github/copilot-sdk) uses IterableIterator in its

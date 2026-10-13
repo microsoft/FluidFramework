@@ -33,8 +33,9 @@ For further guidelines, it is highly recommended to refer to this [guide](./Comp
 When you deprecate a public or beta (including legacy) API:
 
 1. You should create a GitHub issue to track the cleanup of the API.
-1. You _must_ introduce a [changeset](./Breaking-vs-Non-Breaking-Changes/Changesets.md) calling attention to the change (see also [changeset FAQ](./Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md)). If an issue was filed, you may keep changeset light and reference the issue.
-   Otherwise, add details to the changeset.
+1. You _must_ document the deprecation through the [release group's process](../../../.changeset/README.md#when-should-i-use-a-changeset).
+   If it uses changesets, see the [changeset FAQ](./Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md).
+   Include the details, or link to the tracking issue.
 
 #### Creating a GitHub Issue
 
@@ -109,5 +110,5 @@ For beta and legacy API removals have special considerations due to accelerated 
 
 ### Communication
 
-When removing an API, be sure to create a [changeset](./Breaking-vs-Non-Breaking-Changes/Changesets.md) with noting the removed API.
+When removing an API, document the removal through the [release group's process](../../../.changeset/README.md#when-should-i-use-a-changeset).
 Refer to the issue or release notes that contains the details of the API change.

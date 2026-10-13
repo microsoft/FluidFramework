@@ -37,6 +37,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		 * commits are applied and automatically rebased).
 		 */
 		private readonly enricher: ChangeEnricher<TChange>,
+		/**
+		 * Attempt to {@link SharedTreeOptions.validateRebasedCommitsBeforeResubmission|validate} commits before resubmission in order to fail (throw) locally rather than risk corrupting persisted data.
+		 */
+		private readonly forceValidation: boolean,
 	) {}
 
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
@@ -95,6 +99,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		const enriched = this.enricher.enrich(
 			startingState,
 			newCommits.slice(0, staleChanges.length),
+			this.forceValidation,
 		);
 		for (const [index, { pending, newCommit }] of staleChanges.entries()) {
 			const enrichedChange = enriched[index];

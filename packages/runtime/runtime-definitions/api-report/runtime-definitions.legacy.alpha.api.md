@@ -98,6 +98,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
+    readonly versionMarkResolver: IVersionMarkResolver;
 }
 
 // @beta @sealed @legacy (undocumented)
@@ -236,7 +237,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: OldestSupportedClientVersion;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -394,14 +395,21 @@ export interface ITelemetryContext {
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryBaseEventPropertyType>): void;
 }
 
+// @beta @sealed @legacy
+export interface IVersionMarkResolver {
+    onBatchSequenced(listener: (batchId: string, sequenceNumber: number, timestamp?: number) => void): () => void;
+    resolve(batchId: string, sequenceNumberLowerBound: number): Promise<ResolveResult>;
+    sealAndCaptureVersionMark(): VersionMarkCapture;
+}
+
 // @beta @legacy
 export interface LocalAttributionKey {
     // (undocumented)
     type: "local";
 }
 
-// @public @input
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+// @public @deprecated @input
+export type MinimumVersionForCollab = OldestSupportedClientVersion;
 
 // @beta @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
@@ -415,6 +423,9 @@ string,
 Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 ];
 
+// @public @input
+export type OldestSupportedClientVersion = `3.${bigint}.0` | `2.${bigint}.${bigint}`;
+
 // @beta @legacy
 export interface OpAttributionKey {
     seq: number;
@@ -423,6 +434,19 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
+
+// @beta @legacy
+export type ResolveResult = {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+} | {
+    readonly kind: "pending";
+    readonly reason?: string;
+} | {
+    readonly kind: "unresolvable";
+    readonly reason?: string;
+};
 
 // @beta @sealed @legacy
 export interface StageControls {
@@ -444,6 +468,17 @@ export type StagingModeChangedEvent = {
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
+
+// @beta @legacy
+export type VersionMarkCapture = {
+    readonly kind: "pending";
+    readonly batchId: string;
+    readonly sequenceNumberLowerBound: number;
+} | {
+    readonly kind: "resolved";
+    readonly sequenceNumber: number;
+    readonly timestamp?: number;
+};
 
 // @beta @legacy
 export const VisibilityState: {

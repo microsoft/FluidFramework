@@ -42,9 +42,9 @@ import {
 	): Promise<SchemaValidationResult> {
 		let schemaValidator = new SchemaValidator();
 
-		// @ts-expect-error - per the catch and no throw below
 		return async
-			? schemaValidator
+			? // @ts-expect-error - per the catch and no throw below
+				schemaValidator
 					.validate(template, templatePrevious, async, skipSemver)
 					.catch((error) => {
 						expect(error.message).to.have.string(asyncErrorMessage);

@@ -10,6 +10,10 @@ import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-u
  * An object which can enter a "broken" state where trying to use it is a UsageError.
  * @remarks
  * Use {@link WithBreakable} to apply this to another object.
+ *
+ * A common pattern is to pass a single breaker to all code which shares mutable state and thus could be put into an invalidate state together.
+ * Thus a breaker often represents a scope for or dependency on mutable state which also forms a scope for fault isolation.
+ * As such a scope can have issues (if it couldn't it would need a breaker), an optional {@link Breakable.logger} is included which can be used to log telemetry within this scope.
  * @sealed
  */
 export class Breakable {
@@ -26,7 +30,11 @@ export class Breakable {
 		 * Optional logger for telemetry.
 		 * @remarks
 		 * When provided, subsystems that have access to a Breakable can use this logger to emit telemetry
-		 * without requiring additional plumbing.
+		 * without requiring additional plumbing of a logger which also corresponds to the same scope/context of this Breakable.
+		 *
+		 * Currently, Breakable itself does not eagerly log breakages into the logger, but we may want to change that in the future.
+		 * Instead it is assumed that fatal errors will result in exceptions logged through other means,
+		 * and the logger here is exposed for users of breaker to log telemetry as desired (for example reporting non-fatal errors or other telemetry).
 		 */
 		public readonly logger?: TelemetryLoggerExt,
 	) {}

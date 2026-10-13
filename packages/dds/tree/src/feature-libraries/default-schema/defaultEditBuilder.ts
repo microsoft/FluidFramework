@@ -88,6 +88,10 @@ export class DefaultChangeFamily
 		);
 	}
 
+	public hasSchemaChange(change: DefaultChangeset): boolean {
+		return this.modularFamily.hasSchemaChange(change);
+	}
+
 	public buildProcessor(
 		processFn: ProcessChangeFn<DefaultChangeset, DefaultChangeProcessingContext>,
 	): (change: DefaultChangeset) => DefaultChangeset {

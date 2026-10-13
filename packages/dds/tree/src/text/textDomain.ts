@@ -14,15 +14,17 @@ import {
 import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
-import { TreeAlpha } from "../shared-tree/index.js";
 import {
+	createArrayInsertionAnchor,
 	eraseSchemaDetails,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 } from "../simple-tree/index.js";
+import { TreeBeta } from "../shared-tree/index.js";
 import type {
+	ArrayPlaceAnchor,
 	ArrayNodeDeltaOp,
 	ArrayNodeTreeChangedDeltaOp,
 	TreeNode,
@@ -94,6 +96,20 @@ class TextNode
 		);
 		methods.exposeMethod(
 			TextNode,
+			"moveRangeToIndex",
+			buildFunc(
+				{
+					description:
+						"Move a range of characters (Unicode code points) to a destination gap. sourceStart is inclusive and sourceEnd is exclusive. destinationGap is between characters before the move, not an index in the resulting text.",
+					returns: tf.void(),
+				},
+				["destinationGap", tf.number()],
+				["sourceStart", tf.number()],
+				["sourceEnd", tf.number()],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
 			"fullString",
 			buildFunc({
 				description: "Return a copy of this text node's content as a string.",
@@ -132,6 +148,13 @@ class TextNode
 	}
 	public removeRange(index: number | undefined, end: number | undefined): void {
 		this.content.removeRange(index, end);
+	}
+	public moveRangeToIndex(
+		destinationGap: number,
+		sourceStart: number,
+		sourceEnd: number,
+	): void {
+		this.content.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
 	}
 	public characters(): Iterable<string> {
 		return this.content[Symbol.iterator]();
@@ -176,9 +199,13 @@ class TextNode
 	public onCharactersChanged(
 		callback: (ops: readonly PlainText.TextOp[] | undefined) => void,
 	): () => void {
-		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+		return TreeBeta.on(this.content, "nodeChanged", ({ delta }) =>
 			processCharactersChangedDelta(delta, (i) => this.content[i], callback),
 		);
+	}
+
+	public createInsertionAnchor(index: number): ArrayPlaceAnchor {
+		return createArrayInsertionAnchor(this.content, index);
 	}
 
 	public static fromString(value: string): TextNode {
@@ -316,7 +343,7 @@ export function processCharactersChangedDelta(
  * The main challenges here are related to annotations, but some policies for what to do in the case of corrupt/invalid text should also be included.
  * There are quite a few ways invariants could break, including:
  * - concurrent edits without proper constraints.
- * - collaboration with clients using compatible schema with different constraints.
+ * - collaboration with clients using compatible schemas with different constraints.
  * - opening documents which contain invalid content (e.g. from older versions of the software, manual edits to the persisted format, or simply an existing corrupt case which was saved).
  * - a user inserting/constructing/importing invalid content.
  *
@@ -487,6 +514,32 @@ export namespace PlainText {
 		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
 
 		/**
+		 * Moves the specified character range to `destinationGap`.
+		 * @param destinationGap - The location between existing characters to move the range to.
+		 * @param sourceStart - The starting index of the range to move, inclusive.
+		 * @param sourceEnd - The ending index of the range to move, exclusive.
+		 * @remarks
+		 * See {@link (TreeArrayNode:interface).(moveRangeToIndex:1)} for details about destination gap semantics.
+		 * @privateRemarks
+		 * `TreeArrayNode` exposes more move options than we expose here for a few reasons:
+		 *
+		 * 1. Single-character moves are not expected to be particularly useful for text,
+		 * so we only expose range moves.
+		 * We may want to reevaluate this for formatted text, where moving individual embedded items
+		 * may be useful.
+		 *
+		 * 2. The convenience APIs for moving to the start or end do not seem likely to be common
+		 * needs for text.
+		 * They also do not currently provide distinct merge semantics or additional expressiveness.
+		 *
+		 * 3. The overloads that support moving between different source nodes introduce additional
+		 * complications, such as whether to support moves between plain and formatted text,
+		 * between schemas with different embedded item types, or in combination with extrinsic ranges.
+		 * Since it is currently practical to defer that complexity, these overloads are not included.
+		 */
+		moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
+
+		/**
 		 * Subscribe to shallow character-level changes on this text node — inserts and removes only.
 		 * @param callback - Called after each change with a sequence of {@link PlainText.TextOp}s describing what changed,
 		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
@@ -501,6 +554,13 @@ export namespace PlainText {
 		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
 		 */
 		onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
+
+		/**
+		 * Creates an anchor that tracks an insertion point at `index` as the text is edited.
+		 * @param index - The character index of the insertion point to track.
+		 * @returns An anchor whose index updates as the text is edited. Call {@link ArrayPlaceAnchor.dispose} when it is no longer needed.
+		 */
+		createInsertionAnchor(index: number): ArrayPlaceAnchor;
 	}
 
 	/**

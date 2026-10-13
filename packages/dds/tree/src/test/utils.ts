@@ -31,11 +31,12 @@ import {
 	assertIsStableId,
 	createIdCompressor,
 	type IIdCompressorCore,
+	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	FlushMode,
-	MinimumVersionForCollab,
+	type OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -172,7 +173,7 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	independentView,
+	createIndependentTreeViewAlpha,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
 	buildConfiguredForest,
@@ -186,7 +187,8 @@ import {
 	type TreeViewConfiguration,
 	SchemaFactory,
 	type TreeView,
-	type TreeBranchAlpha,
+	type TreeBranchHistory,
+	type UntypedTreeViewAlpha,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
@@ -492,7 +494,7 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
-			const idCompressor = createIdCompressor(sessionId);
+			const idCompressor = createIdCompressor(sessionId, SerializationVersion.V3);
 			this.compressorMap.set(`tree-${i}`, idCompressor);
 			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
@@ -613,6 +615,16 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boo
 		}
 	}
 	return false;
+}
+
+/**
+ * Asserts that the array contains no duplicate items, using `Set` equality.
+ * @throws An `Error` with `errorMessage` if a duplicate item is found.
+ */
+export function assertUnique<T>(items: readonly T[], errorMessage: string): void {
+	if (new Set(items).size !== items.length) {
+		throw new Error(errorMessage);
+	}
 }
 
 /**
@@ -762,6 +774,9 @@ export function expectSchemaEqual(
 	);
 }
 
+/**
+ * Compares the visible content, stored schema, and retained detached content of two checkouts.
+ */
 export function validateViewConsistency(
 	treeA: ITreeCheckout,
 	treeB: ITreeCheckout,
@@ -776,7 +791,7 @@ export function validateViewConsistency(
 		{
 			tree: toJsonableTree(treeB),
 			schema: treeB.storedSchema,
-			removed: treeA.getRemovedRoots(),
+			removed: treeB.getRemovedRoots(),
 		},
 		idDifferentiator,
 	);
@@ -849,16 +864,44 @@ export function prepareTreeForCompare(tree: JsonableTree[]): object[] {
 	});
 }
 
+/**
+ * Options for a test checkout with initialized content.
+ */
+interface CheckoutWithContentOptions {
+	/**
+	 * The compressor used by the forest, revision codec, and checkout to create new revisions.
+	 * Supply a separate compressor for tests that need their own ID session or an ID space shard.
+	 * @defaultValue {@link testIdCompressor}.
+	 */
+	idCompressor?: IIdCompressor;
+	/** Events supplied to the checkout's branch. */
+	events?: Listenable<CheckoutEvents> &
+		IEmitter<CheckoutEvents> &
+		HasListeners<CheckoutEvents>;
+	/**
+	 * The forest implementation to use.
+	 * @defaultValue {@link ForestTypeReference}.
+	 */
+	forestType?: ForestType;
+	/**
+	 * The policy for incremental encoding.
+	 * @defaultValue {@link defaultIncrementalEncodingPolicy}.
+	 */
+	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+	/** Options for encoding and decoding tree changes. */
+	codecOptions?: Partial<CodecWriteOptions>;
+}
+
+/**
+ * Creates a test checkout with the given stored schema and initial tree content.
+ *
+ * @param content - The stored schema and initial tree content.
+ * @param args - Options for the checkout.
+ * @returns A checkout initialized with `content`.
+ */
 export function checkoutWithContent(
 	content: TreeStoredContent,
-	args?: {
-		events?: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-		forestType?: ForestType;
-		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
-		codecOptions?: Partial<CodecWriteOptions>;
-	},
+	args?: CheckoutWithContentOptions,
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
 	return checkout;
@@ -866,37 +909,35 @@ export function checkoutWithContent(
 
 function createCheckoutWithContent(
 	content: TreeStoredContent,
-	args?: {
-		events?: Listenable<CheckoutEvents> &
-			IEmitter<CheckoutEvents> &
-			HasListeners<CheckoutEvents>;
-		forestType?: ForestType;
-		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
-		codecOptions?: Partial<CodecWriteOptions>;
-	},
+	args?: CheckoutWithContentOptions,
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
 	const schema = new TreeStoredSchemaRepository(content.schema);
+	const { idCompressor = testIdCompressor, ...checkoutArgs } = args ?? {};
 
+	const logger = createMockLoggerExt();
+	const breaker = new Breakable("createCheckoutWithContent", logger);
 	const forest = buildConfiguredForest(
-		new Breakable("buildTestForest"),
+		breaker,
 		args?.forestType ?? ForestTypeReference,
 		schema,
-		testIdCompressor,
+		idCompressor,
 		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
 	);
 	initializeForest(forest, fieldCursor);
 
-	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
-		testIdCompressor,
-		mintRevisionTag,
-		testRevisionTagCodec,
+		idCompressor,
+		idCompressor === testIdCompressor
+			? mintRevisionTag
+			: () => idCompressor.generateCompressedId(),
+		idCompressor === testIdCompressor
+			? testRevisionTagCodec
+			: new RevisionTagCodec(idCompressor),
 		{
-			...args,
+			...checkoutArgs,
 			forest,
 			schema,
-			logger,
 		},
 	);
 	return { checkout, logger };
@@ -935,9 +976,10 @@ export function buildTestForest(options: {
 	schema?: TreeStoredSchemaRepository;
 	additionalAsserts: boolean;
 	roots?: MapTree;
+	breaker?: Breakable;
 }): IEditableForest {
 	return new ObjectForest(
-		new Breakable("buildTestForest"),
+		options.breaker ?? new Breakable("buildTestForest"),
 		options.schema,
 		undefined,
 		options.additionalAsserts,
@@ -974,13 +1016,20 @@ export const IdentifierSchema = sf.object("identifier-object", {
  * @param json - The JSON-compatible object to initialize the tree with.
  * @param optionalRoot - If `true`, the root field is optional; otherwise, it is required. Defaults to `false`.
  */
-export function makeTreeFromJson(json: JsonCompatible, optionalRoot = false): ITreeCheckout {
-	return checkoutWithContent({
-		schema: toInitialSchema(
-			optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
-		),
-		initialTree: singleJsonCursor(json),
-	});
+export function makeTreeFromJson(
+	json: JsonCompatible,
+	optionalRoot = false,
+	minVersionForCollab: OldestSupportedClientVersion = FluidClientVersion.v2_0,
+): ITreeCheckout {
+	return checkoutWithContent(
+		{
+			schema: toInitialSchema(
+				optionalRoot ? SchemaFactory.optional(JsonAsTree.Tree) : JsonAsTree.Tree,
+			),
+			initialTree: singleJsonCursor(json),
+		},
+		{ codecOptions: { minVersionForCollab } },
+	);
 }
 
 export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
@@ -1470,14 +1519,14 @@ export function makeTestFieldBatchContexts(opts: {
  */
 export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & {
-		idCompressor?: IIdCompressor | undefined;
-		minVersionForCollab?: MinimumVersionForCollab;
-	} = {},
+	options: ForestOptions &
+		Partial<CodecWriteOptions> & {
+			idCompressor?: IIdCompressor | undefined;
+		} = {},
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations
 	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
-	const view = independentView(config, {
+	const view = createIndependentTreeViewAlpha(config, {
 		...options,
 		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
 		minVersionForCollab,
@@ -1525,6 +1574,14 @@ export class MockTreeCheckout implements ITreeCheckout {
 		},
 	) {}
 
+	public rewindTo(): void {
+		throw new Error("'rewindTo' not implemented.");
+	}
+
+	public revertTo(): void {
+		throw new Error("'revertTo' not implemented.");
+	}
+
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot> {
@@ -1557,8 +1614,11 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public fork(): ITreeCheckout {
 		throw new Error("Method 'branch' not implemented in MockTreeCheckout.");
 	}
-	public isBranch(): this is TreeBranchAlpha {
+	public isBranch(): this is UntypedTreeViewAlpha {
 		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");
+	}
+	public isView(): this is UntypedTreeViewAlpha {
+		throw new Error("Method 'isView' not implemented in MockTreeCheckout.");
 	}
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
 		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
@@ -1583,6 +1643,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public isMissingEditsFrom(branch: unknown): never {
 		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
+	}
+	public get branchHistory(): TreeBranchHistory {
+		throw new Error("'history' property not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

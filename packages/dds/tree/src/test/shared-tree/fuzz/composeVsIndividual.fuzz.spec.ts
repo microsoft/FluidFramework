@@ -18,7 +18,12 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
+import {
+	SharedTreeTestFactory,
+	toJsonableTree,
+	validateViewConsistency,
+	validateTree,
+} from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -33,13 +38,8 @@ import {
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
-	applyUndoRedoEdit,
 } from "./fuzzEditReducers.js";
-import {
-	createOnCreate,
-	deterministicIdCompressorFactory,
-	isRevertibleSharedTreeView,
-} from "./fuzzUtils.js";
+import { createOnCreate, deterministicIdCompressorFactory } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 
 /**
@@ -70,18 +70,20 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 			"Transactions are simulated manually in these tests and should not be generated.",
 		);
 	},
-	undoRedo: (state, { operation }) => {
-		const tree = state.main ?? assert.fail();
-		assert(isRevertibleSharedTreeView(tree.checkout));
-		applyUndoRedoEdit(tree.checkout.undoStack, tree.checkout.redoStack, operation);
-		return state;
+	undoRedo: () => {
+		assert.fail("Revert operations are not expected in these tests.");
+	},
+	revertTo: () => {
+		assert.fail("RevertTo operations are not expected in these tests.");
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
 		return state;
 	},
 	schemaChange: (state, operation) => {
-		return state;
+		assert.fail(
+			"Mid-transaction schema view replacement is not supported by this fuzz harness.",
+		);
 	},
 	constraint: (state, operation) => {
 		applyConstraint(state, operation);
@@ -159,8 +161,10 @@ describe("Fuzz - composed vs individual changes", () => {
 			const childTreeView = toJsonableTree(finalState.branch.checkout);
 			finalState.branch.checkout.transaction.commit();
 			const tree = finalState.main ?? assert.fail();
-			tree.checkout.merge(finalState.branch.checkout);
+			tree.checkout.merge(finalState.branch.checkout, /* disposeMerged */ false);
 			validateTree(tree.checkout, childTreeView);
+			validateViewConsistency(tree.checkout, finalState.branch.checkout);
+			finalState.branch.dispose();
 		});
 		createDDSFuzzSuite(model, {
 			defaultTestCount: runsPerBatch,

@@ -6,7 +6,7 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import { Parser } from "@json2csv/plainjs";
 
 import { BaseFileLogger } from "./baseFileLogger.js";
@@ -27,13 +27,13 @@ export class CSVFileLogger extends BaseFileLogger {
 		// No flushing is performed since we need all log entries to determine set of CSV columns
 	}
 
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const prop in event) {
 			// Include "prop" as a column, moving it to the end of the column set if already included.
 			this.columns.add(prop);
 		}
-		super.send(event);
+		super.send(event, logLevel);
 	}
 
 	public async close(): Promise<void> {

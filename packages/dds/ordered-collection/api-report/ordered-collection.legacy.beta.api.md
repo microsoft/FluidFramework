@@ -20,6 +20,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected completeCore(acquireId: string): void;
     // (undocumented)
     protected isActive(): boolean;
+    // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;

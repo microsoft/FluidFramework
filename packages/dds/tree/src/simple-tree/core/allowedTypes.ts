@@ -131,7 +131,7 @@ export interface AnnotatedAllowedTypes<T = readonly AnnotatedAllowedType[]>
 	 * See {@link evaluateLazySchema} the implications of evaluating lazy schema references.
 	 *
 	 * It is recommend to work in terms of {@link TreeNodeSchema}
-	 * rather than identifiers where possible since its more type safe and it is possible that two schema with the same identifier exist.
+	 * rather than identifiers where possible since its more type safe and it is possible that two schemas with the same identifier exist.
 	 */
 	evaluateIdentifiers(): ReadonlySet<string>;
 }
@@ -450,7 +450,7 @@ export class SchemaUpgrade {
  *
  * Implicitly treats a single type as an array of one type.
  *
- * Arrays of schema can be used to specify multiple types are allowed, which result in unions of those types in the Tree APIs.
+ * Arrays of schemas can be used to specify multiple types are allowed, which result in unions of those types in the Tree APIs.
  *
  * When saved into variables, avoid type-erasing the details, as doing so loses the compile time schema awareness of APIs derived from the types.
  *
@@ -600,7 +600,7 @@ export function checkForUninitializedSchema(
  * Indicates that the provided schema is the "most derived" version in its class hierarchy.
  *
  * @param oneTimeInitialize - If true this runs {@link TreeNodeValid.oneTimeInitialize} which does even more initialization and validation.
- * `oneTimeInitialize` can't safely be run until all transitively referenced schema are defined, so which cases can safely use it are more limited.
+ * `oneTimeInitialize` can't safely be run until all transitively referenced schemas are defined, so which cases can safely use it are more limited.
  * When legal for the caller to set this to true, it is preferred, but it is often not safe due to possible forward references.
  * @remarks
  * See {@link MostDerivedData} and {@link SchemaFactory} for details on what a "most derived" schema is and why it matters.
@@ -620,7 +620,7 @@ export function markSchemaMostDerived(
 	schema: TreeNodeSchema,
 	oneTimeInitialize = false,
 ): void {
-	// Leaf schema are not classes, and thus do not need to be marked as most derived.
+	// Leaf schemas are not classes, and thus do not need to be marked as most derived.
 	if (schema.kind === NodeKind.Leaf) {
 		return;
 	}
@@ -653,7 +653,7 @@ export type TreeNodeFromImplicitAllowedTypes<
  * When a schema is used to describe data which is an input into an API, the API is {@link https://en.wikipedia.org/wiki/Type_variance | contravariant} over the schema.
  * (See also {@link https://www.typescriptlang.org/docs/handbook/2/generics.html#variance-annotations | TypeScript Variance Annotations}).
  *
- * Since these schema are expressed using TypeScript types, it is possible for the user of the API to provide non-exact values of these types which has implications that depended on the variance.
+ * Since these schemas are expressed using TypeScript types, it is possible for the user of the API to provide non-exact values of these types which has implications that depended on the variance.
  *
  * Consider a field with schema type of `A | B` (where A and B are types of schema).
  *

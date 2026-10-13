@@ -9,21 +9,21 @@ export {
 	type SharedTreeOptions,
 	type SharedTreeOptionsBeta,
 	SharedTreeKernel,
-	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
-	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
 	type ITreeInternal,
-	ForestTypeOptimized,
-	ForestTypeExpensiveDebug,
-	ForestTypeReference,
 	exportSimpleSchema,
 	type SharedTreeKernelView,
 	persistedToSimpleSchema,
 	getCodecTreeForSharedTreeFormat,
 } from "./sharedTree.js";
+
+export { type ForestType, buildConfiguredForest } from "./forestType.js";
+export { ForestTypeReference } from "./forestTypeReference.js";
+export { ForestTypeOptimized } from "./forestTypeOptimized.js";
+export { ForestTypeExpensiveDebug } from "./forestTypeExpensiveDebug.js";
 
 export {
 	createTreeCheckout,
@@ -48,6 +48,8 @@ export { minimize } from "./transactionMinimize.js";
 export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";
 
+export { TreeBeta } from "./treeBeta.js";
+
 export {
 	TreeAlpha,
 	type TreeIdentifierUtils,
@@ -57,17 +59,25 @@ export {
 export {
 	independentInitializedView,
 	type ViewContent,
+	createIndependentTreeViewAlpha,
 	independentView,
 	type IndependentViewOptions,
 	type IndependentViewTelemetryOptions,
-	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
+	createIndependentTreeBeta,
+	createIndependentTreeView,
 	type CreateIndependentTreeAlphaOptions,
 } from "./independentView.js";
 
 export type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
+export {
+	makeSerializedChangeCodec,
+	type SerializedChangeCodec,
+} from "./serializedChange.js";
 
 export {
 	getCodecTreeForChangeFormat,
 	type SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+
+export { createViewableTreeAlpha } from "./viewableTree.js";

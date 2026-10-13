@@ -5,6 +5,7 @@
 
 import * as crypto from "crypto";
 
+import { Uint8ArrayToArrayBufferLike } from "@fluid-internal/client-utils";
 import { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -31,6 +32,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/inter
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { defaultTestOldestSupportedClient } from "@fluidframework/test-utils/internal";
 
 import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
@@ -399,7 +401,7 @@ class LoadTestDataStoreModel {
 		// upload a unique blob, since they may be deduped otherwise
 		const buffer = Buffer.alloc(blobSize, `${this.config.runId}/${blobNumber}:`);
 		assert(buffer.byteLength === blobSize, "incorrect buffer size");
-		const handle = await this.runtime.uploadBlob(buffer);
+		const handle = await this.runtime.uploadBlob(Uint8ArrayToArrayBufferLike(buffer));
 		if (!this.runtime.disposed) {
 			this.root.set(this.blobKey(blobNumber), handle);
 		}
@@ -934,6 +936,12 @@ export const createFluidExport = (
 ): ContainerRuntimeFactoryWithDefaultDataStore =>
 	new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: LoadTestDataStoreInstantiationFactory,
+		// createBlobPayloadPending requires runtime 2.40 or later; other option combinations
+		// preserve the historical implicit runtime defaults.
+		oldestSupportedClient:
+			runtimeOptions?.createBlobPayloadPending === true
+				? "2.40.0"
+				: defaultTestOldestSupportedClient,
 		registryEntries: [
 			LoadTestDataStoreInstantiationFactory.registryEntry,
 			VirtualDataStoreFactory.registryEntry,

@@ -45,4 +45,4 @@ jobs:
           wrong_pr_description_message: |
             Your PR description contains placeholder content from the PR template. Remove or replace the placeholder
             content. More information at:
-            https://github.com/microsoft/FluidFramework/wiki/Commit-message-style#pr-template-content
+            https://github.com/microsoft/FluidFramework/blob/main/docs/content/Contributing/Commit-Message-Style.md#pr-template-content

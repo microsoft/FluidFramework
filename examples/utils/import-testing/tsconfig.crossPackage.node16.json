@@ -1,9 +1,8 @@
 {
-	"extends": "./tsconfig.json",
-	"include": ["src/crossPackage/**/*"],
-	"exclude": [],
+	"extends": "./tsconfig.crossPackage.base.json",
 	"compilerOptions": {
-		"rootDir": "./src/crossPackage",
 		"outDir": "./lib/crossPackage/node16",
+		"module": "node16",
+		"moduleResolution": "node16",
 	},
 }

@@ -36,9 +36,6 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskListCollection = await runtime.createDataStore(
 			BaseDocumentInstantiationFactory.type,
@@ -46,9 +43,6 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		await taskListCollection.trySetAlias(taskListCollectionId);
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
-	 */
 	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {
 		runtime.on("signal", (message) => {
 			// TODO: Check the message type? clientId?  And route to the TaskList for interpretation?
@@ -57,9 +51,6 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		});
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
 	protected async createModel(
 		runtime: IContainerRuntime,
 		container: IContainer,

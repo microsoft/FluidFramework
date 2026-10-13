@@ -82,6 +82,10 @@ describe("versionUtils", () => {
 			createTest("2.20.0", -1, adjustPublicMajor, "~2.13.0");
 			createTest("2.20.0", -2, adjustPublicMajor, "~2.5.0");
 			createTest("2.20.0", -3, adjustPublicMajor, "^2.0.0-rc.5.0.0");
+			// Major versions beyond 2 should not fall into the legacy 2.x minor-decade/RC scheme; N-1 of a 3.x
+			// base version should simply resolve to the latest published 2.x release.
+			createTest("3.0.0", -1, adjustPublicMajor, "^2.0.0");
+			createTest("3.5.0", -1, adjustPublicMajor, "^2.0.0");
 		});
 
 		describe("bumping public releases (adjustPublicMajor = true)", () => {

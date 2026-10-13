@@ -10,7 +10,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
@@ -59,7 +59,7 @@ const supportedVersions = new Set<EditManagerSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToEditManagerSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: OldestSupportedClientVersion,
 ): EditManagerSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return EditManagerSummaryFormatVersion.v2;
@@ -83,11 +83,11 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 			SummaryData<TChangeset>,
 			JsonCompatibleReadOnly,
 			JsonCompatibleReadOnly,
-			EditManagerEncodingContext,
+			EditManagerEncodingContext<TChangeset>,
 			EditManagerDecodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: OldestSupportedClientVersion,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 		/** See {@link IdentifierHealingConfig}. */
 		private readonly healing?: IdentifierHealingConfig,
@@ -109,9 +109,10 @@ export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 		builder: SummaryTreeBuilder;
 	}): void {
 		const { stringify, builder } = props;
-		const context: EditManagerEncodingContext = {
+		const context: EditManagerEncodingContext<TChangeset> = {
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
+			hasSchemaChange: (change) => this.editManager.changeFamily.hasSchemaChange(change),
 			isSummary: true,
 		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);

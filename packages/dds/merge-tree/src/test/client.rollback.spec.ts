@@ -337,7 +337,7 @@ describe("client.rollback", () => {
 					break;
 				}
 				default: {
-					assert(false, `Unexpected text segment: ${text}`);
+					assert.fail(`Unexpected text segment: ${text}`);
 				}
 			}
 		});

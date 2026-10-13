@@ -263,19 +263,17 @@ export abstract class BaseCommand<T extends typeof Command>
 	 * This method overrides the oclif Command error method so we can do some formatting on the strings.
 	 */
 	public error(input: unknown, options?: unknown): void {
-		if (!this.suppressLogging) {
-			if (typeof input === "string") {
-				// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
-				// not worth replicating in this call.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-				super.error(chalk.red(input), options as any);
-			}
-
+		if (typeof input === "string") {
 			// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
 			// not worth replicating in this call.
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-			return super.error(input as Error, options as any);
+			return super.error(chalk.red(input), options as any);
 		}
+
+		// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
+		// not worth replicating in this call.
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+		return super.error(input as Error, options as any);
 	}
 
 	/**

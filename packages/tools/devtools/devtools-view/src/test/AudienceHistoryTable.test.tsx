@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
+import { strict as assert } from "node:assert";
 
-import "@testing-library/jest-dom";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 
 import {
 	AudienceHistoryTable,
@@ -18,7 +18,7 @@ import { assertNoAccessibilityViolations } from "./utils/index.js";
 describe("AudienceHistoryTable component tests", () => {
 	async function getTableBodyRows(): Promise<HTMLCollection> {
 		const tableElement = await screen.findByRole("table");
-		expect(tableElement.children).toHaveLength(2); // Header and body
+		assert.equal(tableElement.children.length, 2); // Header and body
 
 		const tableBodyElement = tableElement.children[1];
 		return tableBodyElement.children;
@@ -28,7 +28,7 @@ describe("AudienceHistoryTable component tests", () => {
 		render(<AudienceHistoryTable audienceHistoryItems={[]} />);
 
 		const tableBodyRows = await getTableBodyRows();
-		expect(tableBodyRows).toHaveLength(0);
+		assert.equal(tableBodyRows.length, 0);
 	});
 
 	it("Non-empty list", async (): Promise<void> => {
@@ -53,21 +53,62 @@ describe("AudienceHistoryTable component tests", () => {
 		render(<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems} />);
 
 		const tableBodyRows = await getTableBodyRows();
-		expect(tableBodyRows).toHaveLength(3);
+		assert.equal(tableBodyRows.length, 3);
 	});
 });
 
 describe("AudienceHistoryTable Accessibility Check", () => {
-	it("AudienceHistoryTable is accessible", async () => {
-		const { container } = render(<AudienceHistoryTable audienceHistoryItems={[]} />);
-		await assertNoAccessibilityViolations(container);
-	});
+	const populatedItems: TransformedAudienceHistoryData[] = [
+		{ clientId: "client-1", time: "yesterday", changeKind: "joined" },
+		{ clientId: "client-1", time: "today", changeKind: "left" },
+	];
 
-	it("Can tab/arrow navigate through AudienceHistoryTable", async () => {
-		render(<AudienceHistoryTable audienceHistoryItems={[]} />);
-		const user = userEvent.setup();
-		await user.tab();
-		const tooltip = screen.getByRole("button", { name: /client id/i });
-		expect(tooltip).toHaveFocus();
-	});
+	for (const audienceHistoryItems of [[], populatedItems]) {
+		it(`Defines accessible column headers for ${audienceHistoryItems.length === 0 ? "an empty" : "a populated"} table`, async () => {
+			const { container } = render(
+				<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems} />,
+			);
+			const table = screen.getByRole<HTMLTableElement>("table", {
+				name: "Audience history table",
+			});
+			const columnNames = ["Event", "Client ID", "Time"];
+			const headers = within(table).getAllByRole("columnheader");
+			assert.equal(headers.length, columnNames.length);
+
+			for (const [index, header] of headers.entries()) {
+				assert.equal(header.parentElement, table.tHead?.rows[0]);
+				assert.equal(
+					within(table).getByRole("columnheader", { name: new RegExp(columnNames[index]) }),
+					header,
+				);
+			}
+
+			const rows = [...table.tBodies[0].rows];
+			assert.equal(rows.length, audienceHistoryItems.length);
+			for (const row of rows) {
+				const cells = within(row).getAllByRole<HTMLTableCellElement>("cell");
+				assert.equal(cells.length, headers.length);
+				for (const [index, cell] of cells.entries()) {
+					assert.equal(cell.tagName, "TD");
+					assert.equal(cell.cellIndex, index);
+				}
+			}
+
+			await assertNoAccessibilityViolations(container);
+		}).timeout(10000);
+	}
+
+	for (const key of ["{Enter}", " "]) {
+		it(`Opens the header tooltip with the ${key === " " ? "Space" : "Enter"} key`, async () => {
+			render(<AudienceHistoryTable audienceHistoryItems={[]} />);
+			const user = userEvent.setup();
+			await user.tab();
+			const tooltipButton = screen.getByRole("button", { name: /client id/i });
+			assert.equal(document.activeElement, tooltipButton);
+			await user.keyboard(key);
+			await screen.findByRole("note");
+			await user.keyboard("{Escape}");
+			await waitFor(() => assert.equal(screen.queryByRole("note"), null));
+		}).timeout(10000);
+	}
 });

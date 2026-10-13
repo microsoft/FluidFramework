@@ -8,7 +8,7 @@ Accessibility testing ensures that our components are usable by people with a wi
 We use a combination of automated tools and manual checks to validate accessibility:
 
 - Accessibility Insights for Web: This Chrome extension helps developers find and fix accessibility issues in web apps. It provides a fast way to detect issues and verify that the components are accessible.
-- Jest and React Testing Library: Our accessibility tests are designed and automated using the axe-core library, which helps identify common accessibility issues.
+- Mocha and React Testing Library: Our accessibility tests use the axe-core library to identify common accessibility issues.
 ### Running Accessibility Tests
 To run the accessibility tests locally, follow these steps:
 
@@ -49,7 +49,7 @@ it("Can tab/arrow navigate through the ComponentName", async () => {
     await user.tab();
     // Add assertions for navigation
     const someElement = screen.getByRole("button", { name: /Button Name/ });
-    expect(someElement).toHaveFocus();
+    assert.equal(document.activeElement, someElement);
 });
 ```
 

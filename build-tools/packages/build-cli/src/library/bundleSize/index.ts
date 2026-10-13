@@ -13,6 +13,7 @@ export { compareJsonReportsByPackage } from "./compareJsonReports.js";
 export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export {
 	bundleSizeArtifactsBaselinePipeline,
+	bundleSizeArtifactsGitHubRepo,
 	bundleSizeArtifactsPrPipeline,
 } from "./pipelineConstants.js";
 export {

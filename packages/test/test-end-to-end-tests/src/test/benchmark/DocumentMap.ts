@@ -35,6 +35,7 @@ import {
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
+	defaultTestOldestSupportedClient,
 	ChannelFactoryRegistry,
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -151,6 +152,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		});
 		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory: this.dataObjectFactory,
+			oldestSupportedClient: defaultTestOldestSupportedClient,
 			registryEntries: [
 				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
 			],

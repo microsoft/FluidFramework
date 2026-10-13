@@ -38,6 +38,7 @@ export interface ModularChangeset extends Readonly<HasFieldChanges> {
 
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
+	 * The `FieldId` values are not guaranteed to be canonical.
 	 */
 	// TODO: Should this be merged with `nodeChanges`?
 	readonly nodeToParent: ChangeAtomIdBTree<FieldId>;

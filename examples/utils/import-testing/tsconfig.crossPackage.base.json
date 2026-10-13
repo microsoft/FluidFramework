@@ -1,0 +1,8 @@
+{
+	"extends": "./tsconfig.json",
+	"include": ["src/crossPackage/**/*"],
+	"exclude": [],
+	"compilerOptions": {
+		"rootDir": "./src/crossPackage",
+	},
+}

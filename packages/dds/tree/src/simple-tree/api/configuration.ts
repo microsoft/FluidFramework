@@ -88,7 +88,7 @@ export interface ITreeConfigurationOptions {
 	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
 	 * class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
 	 * const config = new TreeViewConfiguration({
-	 * 	// This combination of schema can lead to ambiguous cases and will error if `preventAmbiguity` is true.
+	 * 	// This combination of schemas can lead to ambiguous cases and will error if `preventAmbiguity` is true.
 	 * 	schema: [Feet, Meters],
 	 * 	preventAmbiguity: false,
 	 * });
@@ -110,7 +110,7 @@ export interface ITreeConfigurationOptions {
 	 * 	meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
 	 * }) {}
 	 * const config = new TreeViewConfiguration({
-	 * 	// This combination of schema is not ambiguous because `Feet` and `Meters` have different required keys.
+	 * 	// This combination of schemas is not ambiguous because `Feet` and `Meters` have different required keys.
 	 * 	schema: [Feet, Meters],
 	 * 	preventAmbiguity: true,
 	 * });
@@ -158,21 +158,21 @@ export interface ITreeViewConfiguration<
 
 /**
  * Property-bag configuration for {@link TreeViewConfigurationAlpha} construction.
+ * @input
  * @alpha
  */
 export interface ITreeViewConfigurationAlpha<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends ITreeViewConfiguration<TSchema> {
 	/**
-	 * Policy for generating stored schema from the view schema.
+	 * Policy for generating stored schema from the view schema during staged schema upgrades.
 	 *
 	 * @remarks
-	 * If omitted or `undefined`, defaults to {@link StagedSchemaUpgradePolicyFactory.restrictive}
-	 * which does not enable any staged schema upgrades.
-	 *
 	 * If provided, this policy is used when generating stored schema to include in documents via
 	 * `initialize` / `upgradeSchema` as well as in {@link snapshotSchemaCompatibility} to validate
 	 * the compatibility of such documents.
+	 *
+	 * @defaultValue {@link StagedSchemaUpgradePolicyFactory.restrictive}
 	 *
 	 * @example Enabling specific staged upgrades
 	 * ```typescript

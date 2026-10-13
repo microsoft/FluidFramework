@@ -33,6 +33,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
+	defaultTestOldestSupportedClient,
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -121,6 +122,7 @@ describeCompat(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory: dataStoreFactory1,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: registryStoreEntries,
 				runtimeOptions,
 			},
@@ -397,6 +399,7 @@ describeCompat(
 			ContainerRuntimeFactoryWithDefaultDataStore,
 			{
 				defaultFactory: tableFactory,
+				oldestSupportedClient: defaultTestOldestSupportedClient,
 				registryEntries: registry,
 				runtimeOptions: {
 					enableRuntimeIdCompressor: "on",

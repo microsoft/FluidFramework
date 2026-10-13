@@ -95,6 +95,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultAtomIdAliasAllocator,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
 	minimizeModularChangeset,
@@ -155,7 +156,7 @@ export {
 
 export {
 	SchemaValidationError,
-	type SchemaValidationErrorContext,
+	type SchemaValidationErrorDetails,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
@@ -213,6 +214,7 @@ export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 export {
 	type KeyFinder,
 	AnchorTreeIndex,
+	KeyFinderDependencyScope,
 	hasElement,
 	type TreeIndex,
 	type TreeIndexNodes,

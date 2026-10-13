@@ -1,11 +1,11 @@
 {
-	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"extends": "../../../common/build/build-common/tsconfig.node20.json",
 	"exclude": ["src/test/**/*"],
 	"include": ["src/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["node"],
+		"types": ["mocha", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
 }

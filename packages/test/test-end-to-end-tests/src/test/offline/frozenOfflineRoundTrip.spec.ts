@@ -168,5 +168,59 @@ describeCompat(
 				);
 			}
 		});
+
+		it("captures recently sequenced ops for a fully offline frozen load", async () => {
+			const recentEntries = new Map<string, string>();
+			for (let i = 0; i < 10; i++) {
+				const key = `recent-${i}`;
+				const value = `value-${i}`;
+				recentEntries.set(key, value);
+				map1.set(key, value);
+			}
+			map1.set("recent-overwrite", "initial");
+			map1.set("recent-overwrite", "final");
+			recentEntries.set("recent-overwrite", "final");
+
+			// Wait only until the operations are sequenced, then capture immediately.
+			// On ODSP this deliberately exercises the window where PUSH has broadcast
+			// the operations but delta storage may not expose them yet.
+			if (container1.isDirty) {
+				await new Promise<void>((resolve) => {
+					container1.once("saved", () => resolve());
+				});
+			}
+
+			const capturedFullState = await captureFullContainerState({
+				urlResolver: provider.urlResolver,
+				documentServiceFactory: provider.documentServiceFactory,
+				request: { url },
+			});
+			const parsedState = JSON.parse(capturedFullState) as {
+				savedOps: unknown[];
+			};
+			assert(
+				parsedState.savedOps.length > 0,
+				"Expected recent changes to be represented by post-snapshot operations",
+			);
+
+			const codeLoader = new LocalCodeLoader([
+				[provider.defaultCodeDetails, provider.createFluidEntryPoint(testContainerConfig)],
+			]);
+			const offlineContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState: capturedFullState,
+			});
+			const offlineEntry = (await offlineContainer.getEntryPoint()) as ITestFluidObject;
+			const offlineMap = await offlineEntry.getSharedObject<ISharedMap>(mapId);
+
+			for (const [key, value] of recentEntries) {
+				assert.strictEqual(
+					offlineMap.get(key),
+					value,
+					`Expected offline capture to include ${key}`,
+				);
+			}
+			offlineContainer.close();
+		});
 	},
 );

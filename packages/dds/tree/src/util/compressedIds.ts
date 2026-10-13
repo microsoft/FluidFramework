@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { LogLevel, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IIdCompressor,
@@ -12,6 +11,7 @@ import type {
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
 import { isFinalId, isStableId } from "@fluidframework/id-compressor/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { v5 as uuidV5 } from "uuid";
 
 /**
@@ -172,7 +172,7 @@ export interface IdentifierHealingConfig {
 	 * Optional logger used by {@link forceDecodeEncodedIdWithoutSession} to record telemetry
 	 * when the heal-on-decode recovery path is taken (a non-final identifier is healed).
 	 */
-	readonly logger?: ITelemetryBaseLogger;
+	readonly logger?: TelemetryLoggerExt;
 }
 
 /**
@@ -207,17 +207,11 @@ export function forceDecodeEncodedIdWithoutSession(
 	// `id` is a non-final op-space compressed id.
 	if (healing !== undefined) {
 		const healed = uuidV5(`${healing.sharedObjectId}|${id}`, healingNamespace);
-		healing.logger?.send(
-			{
-				category: "generic",
-				eventName: "HealUnresolvableIdentifierOnDecode",
-			},
-			// This telemetry should be very low-volume (and possibly never happen at all),
-			// as should only occur when loading documents that were corrupted by a now fixed bug and have not been re-summarized since healing was added.
-			// It is useful for monitoring and diagnosing for this to be reported in the same cases in which the error case would be reported,
-			// which is the essential level.
-			LogLevel.essential,
-		);
+		// This telemetry should be very low-volume (and possibly never happen at all),
+		// as should only occur when loading documents that were corrupted by a now fixed bug and have not been re-summarized since healing was added.
+		// It is useful for monitoring and diagnosing for this to be reported in the same cases in which the error case would be reported,
+		// which is the essential level.
+		healing.logger?.sendTelemetryEvent({ eventName: "HealUnresolvableIdentifierOnDecode" });
 		return healed;
 	}
 	throw new Error(

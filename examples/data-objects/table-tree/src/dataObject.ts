@@ -3,12 +3,21 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Update import once TreeDataObject is exported in our non-internal package.
-// eslint-disable-next-line import-x/no-internal-modules
-import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
+import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { FluidClientVersion } from "@fluidframework/tree/alpha";
+import {
+	configuredSharedTreeBetaLegacy,
+	TreeViewConfiguration,
+	type TreeView,
+} from "@fluidframework/tree/legacy";
 
 import { Column, Row, Table } from "./schema.js";
+
+const SharedTree = configuredSharedTreeBetaLegacy({
+	// TableSchema column insertions use no-change-on-revert constraints to protect existing cells.
+	// SharedTree supports these constraints only when all collaborating clients are version 2.80 or newer.
+	minVersionForCollab: FluidClientVersion.v2_80,
+});
 
 /**
  * A data object for managing a shared table using `SharedTree`.

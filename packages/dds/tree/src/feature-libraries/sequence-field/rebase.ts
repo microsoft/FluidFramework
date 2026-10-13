@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 import { type IdAllocator, type Mutable, brand } from "../../util/index.js";
@@ -252,7 +252,7 @@ function addMovedMarkEffect(mark: Mark, effect: Detach): Mark {
 	} else if (isTombstone(mark)) {
 		return { ...mark, ...effect };
 	}
-	assert(false, 0x818 /* Unexpected combination of mark effects at source and destination */);
+	fail(0x818 /* Unexpected combination of mark effects at source and destination */);
 }
 
 /**

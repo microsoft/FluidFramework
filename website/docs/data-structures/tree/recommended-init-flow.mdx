@@ -126,13 +126,13 @@ export class CollaborationFluidClient {
 
 	private async createFluidContainer(): Promise<IFluidContainer<typeof AppSchema>> {
 		const client = this.initClient();
-		const { container } = await client.createContainer(AppSchema, FluidCompatibilityMode);
+		const { container } = await client.createContainer(AppSchema, "2.0.0");
 		return container;
 	}
 
 	private async loadFluidContainer(containerId: string): Promise<IFluidContainer<typeof AppSchema>> {
 		const client = this.initClient();
-		const { container } = await client.getContainer(containerId, AppSchema, FluidCompatibilityMode);
+		const { container } = await client.getContainer(containerId, AppSchema, "2.0.0");
 		return container;
 	}
 

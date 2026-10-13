@@ -86,8 +86,8 @@ describe("SharedTreeObject factories", () => {
 
 	it("can re-use content objects", () => {
 		const root = hydrate(Schema, initialTree());
-		// The `create` functions stamp the content with a `[typeNameSymbol]`.
-		// This test ensures that they shallow copy the content before doing the stamp.
+		// Constructing a node must not stamp schema-disambiguating metadata onto the input object.
+		// The same object can be updated and reused to construct a node with a different schema.
 		const content = { content: 43 };
 		root.poly = new ChildA(content);
 		content.content = 44;

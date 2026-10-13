@@ -4,12 +4,14 @@
  */
 
 export {
+	type ApiItemLinkTarget,
 	createQualifiedDocumentNameForApiItem,
 	doesItemRequireOwnDocument,
 	doesItemKindRequireOwnDocument,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
+	getLinkTargetForApiItem,
 	isItemOrAncestorExcluded,
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";

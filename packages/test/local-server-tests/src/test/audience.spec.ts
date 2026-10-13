@@ -19,6 +19,7 @@ import {
 import { SharedMap } from "@fluidframework/map/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+	defaultTestOldestSupportedClient,
 	TestFluidObjectFactory,
 	timeoutPromise,
 	waitForContainerConnection,
@@ -38,6 +39,7 @@ describe("Audience correctness", () => {
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: factory,
+		oldestSupportedClient: defaultTestOldestSupportedClient,
 		registryEntries: [[factory.type, Promise.resolve(factory)]],
 	});
 

@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHeader,
-	TableHeaderCell,
-	TableRow,
-	tokens,
-} from "@fluentui/react-components";
-import {
+import type { ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
+import { type ReactElement, useContext } from "react";
+
+import { FluentReactComponents, FluentReactIcons } from "../FluentUi.cjs";
+import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
+
+import { LabelCellLayout } from "./utility-components/index.js";
+
+const { Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, tokens } =
+	FluentReactComponents;
+const {
 	AlertBadgeRegular,
 	Attach20Regular,
 	Clock12Regular,
@@ -21,13 +22,7 @@ import {
 	PlugConnected20Regular,
 	PlugDisconnected20Regular,
 	Warning20Regular,
-} from "@fluentui/react-icons";
-import type { ConnectionStateChangeLogEntry } from "@fluidframework/devtools-core/internal";
-import { type ReactElement, useContext } from "react";
-
-import { ThemeContext, ThemeOption } from "../ThemeHelper.js";
-
-import { LabelCellLayout } from "./utility-components/index.js";
+} = FluentReactIcons;
 
 /**
  * Returns the text color based on the current color theme of the devtools.

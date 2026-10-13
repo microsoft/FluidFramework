@@ -6,9 +6,14 @@
 // Entrypoint for browser-specific code in the package.
 // (See 'Isomorphic Code' section in the package README.md.)
 
+// This export is needed for api-extractor compliance.
+export type { IsoBuffer as IsoBufferInterface } from "./buffer.js";
+export type {
+	IsoBufferConstructor,
+	IsoBufferEncoding,
+} from "./bufferBrowser.js";
 export {
 	bufferToString,
-	isArrayBuffer,
 	IsoBuffer,
 	stringToBuffer,
 	Uint8ArrayToString,
@@ -16,7 +21,11 @@ export {
 export { gitHashFile, hashFile } from "./hashFileBrowser.js";
 
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64EncodingBrowser.js";
-export { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
+export {
+	AnyUint8ArrayToArrayBuffer,
+	ArrayBufferLikeToArrayBuffer,
+	Uint8ArrayToArrayBufferLike,
+} from "./bufferShared.js";
 export { EventEmitter } from "./eventEmitter.cjs";
 export { performanceNow } from "./performanceIsomorphic.js";
 export { type ITraceEvent, Trace } from "./trace.js";
@@ -35,6 +44,8 @@ export {
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
 	type ILayerCompatSupportRequirements,
+	type IProvideLayerCompatSupportRequirements,
+	defaultLayerCompatDetails,
 	LayerCompatibilityPolicyWindowMonths,
 } from "./layerCompat.js";
 export { generation } from "./layerGenerationState.js";

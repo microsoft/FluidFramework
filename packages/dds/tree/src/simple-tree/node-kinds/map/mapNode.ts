@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
+import type { FluidIterableIterator, FluidReadonlyMap } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -25,7 +25,7 @@ import {
 import type {
 	NodeSchemaOptionsAlpha,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by TSDoc {@link} in this file.
-	RunTransactionParamsAlpha,
+	RunTransactionParamsBeta,
 } from "../../api/index.js";
 import {
 	CompatibilityLevel,
@@ -33,8 +33,7 @@ import {
 	type InnerNode,
 	NodeKind,
 	type TreeNodeSchema,
-	// eslint-disable-next-line import-x/no-deprecated
-	typeNameSymbol,
+	schemaIdentifierBrand,
 	type TreeNode,
 	typeSchemaSymbol,
 	getInnerNode,
@@ -82,7 +81,7 @@ import type {
  * @sealed @public
  */
 export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
-	extends ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+	extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
 		TreeNode {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
@@ -118,8 +117,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	 * Note: no guarantees are made regarding the order of the keys returned.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
-	keys(): IterableIterator<string>;
-
+	keys(): FluidIterableIterator<string>;
 	/**
 	 * Returns an iterable of values in the map.
 	 *
@@ -127,7 +125,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	 * Note: no guarantees are made regarding the order of the values returned.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
-	values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
+	values(): FluidIterableIterator<TreeNodeFromImplicitAllowedTypes<T>>;
 
 	/**
 	 * Returns an iterable of key, value pairs for every entry in the map.
@@ -136,7 +134,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 	 * Note: no guarantees are made regarding the order of the entries returned.
 	 * If your usage scenario depends on consistent ordering, you will need to sort these yourself.
 	 */
-	entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
+	entries(): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]>;
 
 	/**
 	 * Executes the provided function once per each key/value pair in this map.
@@ -149,7 +147,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 		callbackfn: (
 			value: TreeNodeFromImplicitAllowedTypes<T>,
 			key: string,
-			map: ReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
+			map: FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
 		) => void,
 		// Typing inherited from `ReadonlyMap`.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -211,7 +209,7 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 *
 	 * These last two points mean that, upon sequencing of an edit made with this API,
 	 * there is no guarantee that the entry for the given key will be the current one (if any) or the fallback one.
-	 * If such a guarantee is important, then consider using {@link RunTransactionParamsAlpha.preconditions}
+	 * If such a guarantee is important, then consider using {@link RunTransactionParamsBeta.preconditions}
 	 * to ensure the edit only applies when appropriate.
 	 *
 	 * This API is **not** equivalent to the following alternative:
@@ -270,12 +268,33 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
-// TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
+// TreeMapNode is invariant over schema type, so for this handler to work with all schemas, the only possible type for the schema is `any`.
 // This is not ideal, but no alternatives are possible.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handler: ProxyHandler<TreeMapNodeAlpha<any>> = {
 	getPrototypeOf: () => {
 		return Map.prototype;
+	},
+	get: (target, key, receiver) => {
+		const value = Reflect.get(target, key, receiver) as unknown;
+		if (value !== undefined) {
+			return value;
+		}
+		// If the property is a function on Map.prototype but not on the target,
+		// return a function that throws a descriptive TypeError when called.
+		if (
+			typeof key === "string" &&
+			!(key in target) &&
+			key in Map.prototype &&
+			typeof (Map.prototype as unknown as Record<string, unknown>)[key] === "function"
+		) {
+			return () => {
+				throw new TypeError(
+					`MapNode does not support '${key}'. Use the MapNode API (e.g., set, get, delete, keys, values, entries).`,
+				);
+			};
+		}
+		return value;
 	},
 };
 
@@ -288,7 +307,9 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		super(input ?? []);
 	}
 
-	public [Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
+	public [Symbol.iterator](): FluidIterableIterator<
+		[string, TreeNodeFromImplicitAllowedTypes<T>]
+	> {
 		return this.entries();
 	}
 
@@ -305,7 +326,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		const field = this.innerNode.getBoxed(brand(key));
 		this.editor(key).set(undefined, field.length === 0);
 	}
-	public *entries(): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
+	public *entries(): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<T>]> {
 		const node = this.innerNode;
 		for (const key of node.keys()) {
 			yield [
@@ -322,9 +343,9 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
 	}
-	public keys(): IterableIterator<string> {
+	public *keys(): Generator<string, void, undefined> {
 		const node = this.innerNode;
-		return node.keys();
+		yield* node.keys();
 	}
 	public set(key: string, value: InsertableTreeNodeFromImplicitAllowedTypes<T>): this {
 		const kernel = getKernel(this);
@@ -374,7 +395,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	public get size(): number {
 		return count(this.innerNode.keys());
 	}
-	public *values(): IterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
+	public *values(): FluidIterableIterator<TreeNodeFromImplicitAllowedTypes<T>> {
 		for (const [, value] of this.entries()) {
 			yield value;
 		}
@@ -485,8 +506,7 @@ export function mapSchema<
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
 			persistedMetadata;
 
-		// eslint-disable-next-line import-x/no-deprecated
-		public get [typeNameSymbol](): TName {
+		public get [schemaIdentifierBrand](): TName {
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): typeof schemaErased {
