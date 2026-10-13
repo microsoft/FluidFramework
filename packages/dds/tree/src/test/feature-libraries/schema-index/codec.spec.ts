@@ -20,7 +20,8 @@ import {
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
-import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js"; // eslint-disable-line import-x/no-internal-modules
+/* eslint-disable-next-line import-x/no-internal-modules */
+import { schemaCodecBuilder } from "../../../feature-libraries/schema-index/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { Format as FormatV1 } from "../../../feature-libraries/schema-index/formatV1.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -118,7 +119,7 @@ describe("SchemaIndex", () => {
 		assert.equal(codec.decode(encoded).schemaHash, schema.schemaHash);
 	});
 
-	it("encodes unversioned schemas with the experimental format", () => {
+	it("round-trips schemas without application versions or hashes when the experimental format is explicitly selected", () => {
 		const codec = schemaCodecBuilder.build(versionedCodecOptions);
 
 		const encoded = codec.encode(schema2);
