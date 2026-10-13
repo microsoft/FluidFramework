@@ -148,20 +148,18 @@ export class SharedTreeBranch<
 	> = this.#events;
 	public readonly editor: TEditor;
 	private disposed = false;
+	private branchTrimmer?: Listenable<BranchTrimmingEvents>;
 	private unsubscribeBranchTrimmer?: () => void;
 	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
-	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
-	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
 		public readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		private readonly mintRevisionTag: () => RevisionTag,
-		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
@@ -169,6 +167,27 @@ export class SharedTreeBranch<
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
 			this.apply(change, CommitKind.Default, undefined),
 		);
+	}
+
+	/**
+	 * Sets the source of ancestry trimming notifications for this branch.
+	 *
+	 * @remarks
+	 * Replacing or clearing the trimmer removes the previous subscription.
+	 * Forks inherit the current trimmer and have independent subscriptions.
+	 * Clearing is safe at any time, including after disposal.
+	 * Clearing only stops forwarding notifications; it does not prevent history trimming.
+	 * Setting a non-undefined trimmer requires an undisposed branch.
+	 *
+	 * @param branchTrimmer - The event source for ancestry trimming notifications, or `undefined` to clear it.
+	 */
+	public set trimmer(branchTrimmer: Listenable<BranchTrimmingEvents> | undefined) {
+		if (branchTrimmer !== undefined) {
+			this.assertNotDisposed();
+		}
+
+		this.unsubscribeBranchTrimmer?.();
+		this.branchTrimmer = branchTrimmer;
 		this.unsubscribeBranchTrimmer = branchTrimmer?.on("ancestryTrimmed", (commit) => {
 			this.#events.emit("ancestryTrimmed", commit);
 		});
@@ -267,12 +286,8 @@ export class SharedTreeBranch<
 		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
 	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		this.assertNotDisposed();
-		const fork = new SharedTreeBranch(
-			commit,
-			this.changeFamily,
-			mintRevisionTag,
-			this.branchTrimmer,
-		);
+		const fork = new SharedTreeBranch(commit, this.changeFamily, mintRevisionTag);
+		fork.trimmer = this.branchTrimmer;
 		this.#events.emit("fork", fork);
 		return fork;
 	}
@@ -440,28 +455,10 @@ export class SharedTreeBranch<
 			return;
 		}
 
-		this.unsubscribeBranchTrimmer?.();
-		this.unsubscribeBranchTrimmer = undefined;
+		this.trimmer = undefined;
 
 		this.disposed = true;
 		this.#events.emit("dispose");
-	}
-
-	/**
-	 * Stops forwarding this branch's trimmer notifications without disposing the branch.
-	 *
-	 * @remarks
-	 * Removes the trimmer subscription that can retain this branch.
-	 * This does not stop history trimming or remove other references to the branch.
-	 * The branch no longer receives `ancestryTrimmed` events, so consumers cannot use those events
-	 * to release repair data incrementally.
-	 * Forks still subscribe to the same trimmer.
-	 *
-	 * Repeated calls have no effect. Safe to call before {@link dispose}.
-	 */
-	public detachTrimmer(): void {
-		this.unsubscribeBranchTrimmer?.();
-		this.unsubscribeBranchTrimmer = undefined;
 	}
 
 	private assertNotDisposed(): void {

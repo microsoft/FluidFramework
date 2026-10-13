@@ -375,7 +375,7 @@ describe("Branches", () => {
 		});
 	});
 
-	describe("trimmer detachment", () => {
+	describe("trimmer", () => {
 		function createWithTrimmer(): {
 			branch: DefaultBranch;
 			trimmer: ReturnType<typeof createEmitter<BranchTrimmingEvents>>;
@@ -387,18 +387,14 @@ describe("Branches", () => {
 				revision: nullRevisionTag,
 				customMetadata: undefined,
 			};
-			const branch = new SharedTreeBranch(
-				initCommit,
-				defaultChangeFamily,
-				mintRevisionTag,
-				trimmer,
-			);
+			const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
+			branch.trimmer = trimmer;
 			const received: RevisionTag[][] = [];
 			branch.events.on("ancestryTrimmed", (revs) => received.push(revs));
 			return { branch, trimmer, received };
 		}
 
-		it("forwards trimmer events before detaching", () => {
+		it("forwards trimmer events", () => {
 			const { branch, trimmer, received } = createWithTrimmer();
 			const revision = mintRevisionTag();
 			trimmer.emit("ancestryTrimmed", [revision]);
@@ -406,14 +402,32 @@ describe("Branches", () => {
 			branch.dispose();
 		});
 
-		it("detaches the branch from its trimmer", () => {
+		it("replaces the trimmer subscription", () => {
 			const { branch, trimmer, received } = createWithTrimmer();
-			branch.detachTrimmer();
+			const replacementTrimmer = createEmitter<BranchTrimmingEvents>();
+			branch.trimmer = replacementTrimmer;
 			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
-			assert.equal(received.length, 0);
+			const revision = mintRevisionTag();
+			replacementTrimmer.emit("ancestryTrimmed", [revision]);
+			assert.deepEqual(received, [[revision]]);
+			branch.dispose();
+		});
+
+		it("clearing the trimmer stops forwarding notifications", () => {
+			const { branch, trimmer, received } = createWithTrimmer();
+			branch.trimmer = undefined;
+			branch.trimmer = undefined;
+			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
+			assert.deepEqual(received, []);
+			branch.dispose();
+		});
+
+		it("existing forks retain their trimmer subscriptions after the parent clears its trimmer", () => {
+			const { branch, trimmer, received } = createWithTrimmer();
 			const fork = branch.fork();
 			const forkReceived: RevisionTag[][] = [];
 			fork.events.on("ancestryTrimmed", (revs) => forkReceived.push(revs));
+			branch.trimmer = undefined;
 			const revision = mintRevisionTag();
 			trimmer.emit("ancestryTrimmed", [revision]);
 			assert.deepEqual(received, []);
@@ -422,13 +436,25 @@ describe("Branches", () => {
 			branch.dispose();
 		});
 
-		it("detachTrimmer is idempotent", () => {
+		it("forks created after clearing the trimmer do not subscribe to it", () => {
 			const { branch, trimmer, received } = createWithTrimmer();
-			branch.detachTrimmer();
-			branch.detachTrimmer();
-			branch.dispose();
+			branch.trimmer = undefined;
+			const fork = branch.fork();
+			const forkReceived: RevisionTag[][] = [];
+			fork.events.on("ancestryTrimmed", (revs) => forkReceived.push(revs));
 			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
-			assert.equal(received.length, 0);
+			assert.deepEqual(received, []);
+			assert.deepEqual(forkReceived, []);
+			fork.dispose();
+			branch.dispose();
+		});
+
+		it("allows clearing the trimmer after disposal", () => {
+			const { branch } = createWithTrimmer();
+			branch.dispose();
+			assert.doesNotThrow(() => {
+				branch.trimmer = undefined;
+			});
 		});
 	});
 

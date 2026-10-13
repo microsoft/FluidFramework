@@ -185,9 +185,9 @@ export class SchematizingSimpleTreeView<
 		private readonly onDispose?: () => void,
 		/**
 		 * Whether disposing the view also disposes its checkout.
-		 * Defaults to the checkout's {@link TreeCheckout.disposeWithView} policy.
+		 * Defaults to the checkout's {@link TreeCheckout.disposesWithView} policy.
 		 */
-		private readonly disposeCheckoutOnDispose: boolean = checkout.disposeWithView,
+		private readonly disposeCheckoutOnDispose: boolean = checkout.disposesWithView,
 	) {
 		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {

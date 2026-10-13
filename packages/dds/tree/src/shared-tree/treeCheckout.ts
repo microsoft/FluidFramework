@@ -645,7 +645,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Shared checkouts persist after view disposal.
 	 * Subclasses can override this policy when the caller owns the checkout independently of its views.
 	 */
-	public get disposeWithView(): boolean {
+	public get disposesWithView(): boolean {
 		return !this.isSharedBranch;
 	}
 
@@ -1430,7 +1430,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Creates a schematized view of this checkout.
 	 * @param config - The schema and behavior configuration for the view.
 	 * @param disposeCheckoutOnViewDispose - Whether disposing the view also disposes this checkout.
-	 * Defaults to this checkout's {@link TreeCheckout.disposeWithView} policy.
+	 * Defaults to this checkout's {@link TreeCheckout.disposesWithView} policy.
 	 * @remarks
 	 * Extends {@link ViewTree.viewWith} to include `disposeCheckoutOnViewDispose` parameter.
 	 */
@@ -1486,22 +1486,23 @@ export class TreeCheckout implements ITreeCheckout {
 	>;
 
 	public fork(): TreeCheckout {
-		return this.forkWith(TreeCheckout);
+		return this.forkWith((...args) => new TreeCheckout(...args));
 	}
 
 	/**
-	 * Forks this checkout using the supplied constructor.
+	 * Forks this checkout using the supplied factory.
 	 *
 	 * @remarks
 	 * Allows subclasses to reuse checkout cloning and validation.
 	 * By default, the fork has its own branch, stored schema, forest, and repair data.
 	 * Broken-state validation applies here so subclass fork entry points cannot bypass it.
+	 * If the factory throws, the newly created branch is disposed and the error is rethrown.
 	 *
-	 * @param checkoutConstructor - The constructor to use for the forked checkout.
+	 * @param checkoutFactory - The factory to use for the forked checkout.
 	 */
 	@throwIfBroken
 	public forkWith<T extends TreeCheckout>(
-		checkoutConstructor: new (
+		checkoutFactory: (
 			branch: SharedTreeBranch<
 				SharedTreeEditBuilder,
 				SharedTreeChange,
@@ -1534,7 +1535,7 @@ export class TreeCheckout implements ITreeCheckout {
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		let checkout: T;
 		try {
-			checkout = new checkoutConstructor(
+			checkout = checkoutFactory(
 				branch,
 				false,
 				this.changeFamily,
