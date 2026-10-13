@@ -848,7 +848,7 @@ export function getFirstAttachField(
 	id: ChangeAtomId,
 	count: number,
 ): RangeQueryResult<FieldId | undefined> {
-	return table.getFirst({ target: NodeMoveType.Attach, ...id }, count);
+	return table.getFirst({ ...id, target: NodeMoveType.Attach }, count);
 }
 
 export function getNewRootIdFromOldRootId(
