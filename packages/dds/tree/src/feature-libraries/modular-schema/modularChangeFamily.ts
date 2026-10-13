@@ -398,7 +398,6 @@ export class ModularChangeFamily
 			change2,
 			crossFieldTable.composedRootNodes,
 			crossFieldTable.attachDetachRenames,
-			crossFieldTable.deletedRenames,
 		);
 
 		return {
@@ -2328,7 +2327,6 @@ function newComposeTable(
 		movedNodeToParent: newChangeAtomIdBTree(),
 		composedRootNodes,
 		attachDetachRenames: newChangeAtomIdTransform(),
-		deletedRenames: newChangeAtomIdRangeMap(),
 		addedCrossFieldKeys: newCrossFieldRangeTable(),
 		removedCrossFieldKeys,
 		pendingCompositions,
@@ -2357,12 +2355,6 @@ interface ComposeTable {
 	 * Maps from attach ID in change1 to a corresponding detach ID in change2.
 	 */
 	readonly attachDetachRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
-
-	/**
-	 * The set of root IDs (in the input context of the composed change)
-	 * which should have any associated rename removed from the composed change.
-	 */
-	readonly deletedRenames: ChangeAtomIdRangeMap<true>;
 	readonly removedCrossFieldKeys: CrossFieldRangeTable<boolean>;
 	readonly addedCrossFieldKeys: CrossFieldRangeTable<FieldId>;
 	readonly pendingCompositions: PendingCompositions;
@@ -3688,7 +3680,6 @@ function applyPendingComposedRenames(
 	change2: ModularChangeset,
 	composedRoots: RootNodeTable,
 	attachDetachRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
-	deletedRenames: ChangeAtomIdRangeMap<true>,
 ): void {
 	for (const entry of attachDetachRenames.entries()) {
 		composeRootRename(
@@ -3701,10 +3692,6 @@ function applyPendingComposedRenames(
 			RenameSource.AttachDetach,
 			(collisionType: RenameCollisionType) => fail("Unexpected rename collision"),
 		);
-	}
-
-	for (const entry of deletedRenames.entries()) {
-		deleteNodeRenameFrom(composedRoots, entry.start, entry.length);
 	}
 }
 
