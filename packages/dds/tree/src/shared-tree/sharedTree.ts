@@ -345,7 +345,7 @@ export class SharedTreeKernel
 	}
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
-		checkout.setPositionRevisionSource(() => ({
+		checkout.setLocationRevisionSource(() => ({
 			branchId: branchId === "main" ? "main" : this.idCompressor.decompress(branchId),
 			head: this.getTrunkHead(branchId),
 			isSequenced: this.isBranchSequenced(branchId),

@@ -42,7 +42,7 @@ import type { SimpleTreeSchema } from "../simpleSchema.js";
 import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
-import type { TreePositionResolver } from "./positions.js";
+import type { TreeLocationResolver } from "./locations.js";
 import type { StagedUpgradeStatus } from "./schemaCompatibilityTester.js";
 import type {
 	RunTransactionParamsAlpha,
@@ -551,9 +551,9 @@ export interface UntypedTreeViewAlpha
 	readonly branchHistory: TreeBranchHistory;
 
 	/**
-	 * Resolves historical array positions into this view's current local state.
+	 * Captures node selections and sequence gaps, and resolves them into this view's current local state.
 	 */
-	readonly positions: TreePositionResolver;
+	readonly locations: TreeLocationResolver;
 
 	/**
 	 * Returns true if this view has the given schema as its root schema.

@@ -39,11 +39,14 @@ export type {
 export { asTreeViewAlpha } from "./tree.js";
 export type {
 	TreePositionRevision,
-	HistoricalSequencePosition,
-	ResolvedSequencePosition,
-	PositionResolution,
-	TreePositionResolver,
-} from "./positions.js";
+	TreeNodeReference,
+	TreeLocation,
+	CapturedTreeLocation,
+	CapturedTreeLocations,
+	ResolvedTreeLocation,
+	TreeLocationResolution,
+	TreeLocationResolver,
+} from "./locations.js";
 export { type SchemaStatics, schemaStatics } from "./schemaStatics.js";
 export {
 	SchemaFactory,

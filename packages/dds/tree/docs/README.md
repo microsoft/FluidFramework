@@ -7,7 +7,7 @@ List of technical/design documents (to be organized into appropriate sections at
 -   [Cell Model of Collaborative Editing](./main/cell-model-of-collaborative-editing.md)
 -   [Data Model](./main/data-model.md)
 -   [Indexes and Branches](./main/indexes-and-branches.md)
--   [Historical Sequence Positions](./main/historical-positions.md)
+-   [Historical Tree Locations](./main/historical-locations.md)
 -   [Modular Change Family](./main/modular-change-family.md)
 -   [Schema 2](./main/schema2.md)
 -   [Semantic Format](./main/semantic-format.md)
