@@ -935,8 +935,9 @@ export class BlobManager {
 		this.redirectTable.set(localId, storageId);
 		// set identity (id -> id) entry
 		this.redirectTable.set(storageId, storageId);
-		// The blob is fully shared now, so stop counting it synchronously with op processing rather than
-		// waiting for the uploadAndAttach promise to settle in a later microtask.
+		// The blob is fully shared now, so stop counting it here, synchronously with op processing. This is
+		// the point every success path passes through, including a blob shared by a prior client that this
+		// client never ran a sharing flow for, and it publishes the change without waiting for a microtask.
 		//
 		// This must run after the redirectTable is populated: stopping can drop the aggregate to zero, which
 		// is published synchronously to the BlobManager's host, and a host reacting to that signal may look
