@@ -123,6 +123,13 @@ describe("textDomain", () => {
 		});
 	}
 
+	it("moves a range of characters", () => {
+		const text = PlainText.Tree.fromString("abcdef");
+
+		text.moveRangeToIndex(1, 3, 5);
+		assert.equal(text.fullString(), "adebcf");
+	});
+
 	it("@Smoke expensiveInternalValidationAssert", () => {
 		if (nonProductionConditionalsIncluded()) {
 			assert.throws(() => expensiveInternalValidationAssert(() => "fail"), /fail/);
