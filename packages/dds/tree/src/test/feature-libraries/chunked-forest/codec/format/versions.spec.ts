@@ -4,7 +4,7 @@
  */
 
 import type {
-	EncodedFieldBatchV1OrV2,
+	EncodedFieldBatchAnyVersion,
 	EncodedFieldBatchV1AndV2,
 	EncodedFieldBatchV2,
 	EncodedFieldBatchV1,
@@ -24,9 +24,11 @@ import {
 // This is not quite as trivial as it should be since the way we model unions is prone to this kind of issue,
 // so this validates that the fix for that (the Never added in EncodedChunkShapeV1) is working as intended.
 
-// Validated the documented properties of EncodedFieldBatchV1OrV2 and
+// Validated the documented properties of EncodedFieldBatchAnyVersion and
 // EncodedFieldBatchV1AndV2 regarding what types they are equivalent to.
-allowUnused<requireTrue<areSafelyAssignable<EncodedFieldBatchV2, EncodedFieldBatchV1OrV2>>>();
+allowUnused<
+	requireTrue<areSafelyAssignable<EncodedFieldBatchV2, EncodedFieldBatchAnyVersion>>
+>();
 allowUnused<requireTrue<areSafelyAssignable<EncodedFieldBatchV1, EncodedFieldBatchV1AndV2>>>();
 
 // Validate the "Never" in V1's shape is working to ensure V2 is NOT assignable to V1.
