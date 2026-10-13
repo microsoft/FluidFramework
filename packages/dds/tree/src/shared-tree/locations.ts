@@ -17,9 +17,15 @@ import {
 	tagChange,
 	topDownPath,
 } from "../core/index.js";
-import { intoDelta, TreeStatus } from "../feature-libraries/index.js";
+import {
+	ContextSlot,
+	getOrCreateHydratedFlexTreeNode,
+	intoDelta,
+	TreeStatus,
+} from "../feature-libraries/index.js";
 import {
 	getKernel,
+	getOrCreateNodeFromInnerNode,
 	isArrayNodeSchema,
 	isTreeNode,
 	treeNodeApi,
@@ -29,8 +35,6 @@ import {
 	type TreeLocationResolver,
 	type TreeLocationResolution,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { treeNodeFromAnchor } from "../simple-tree/core/index.js";
 import { brand } from "../util/index.js";
 
 import {
@@ -360,29 +364,26 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 				}
 				cursor.enterNode(step.parentIndex);
 			}
-			const anchor = cursor.buildAnchor();
-			try {
-				const anchorNode = this.checkout.forest.anchors.locate(anchor);
-				assert(anchorNode !== undefined, "Expected a resolved node anchor");
-				const node = treeNodeFromAnchor(anchorNode);
-				if (!isTreeNode(node)) {
-					return unavailable("invalid-location");
-				}
-				if (location.gap === undefined) {
-					return { status: "resolved", location: { kind: "node", node } };
-				}
-				const schema = treeNodeApi.schema(node);
-				if (
-					!isArrayNodeSchema(schema) ||
-					!treeNodeApi.is(node, schema) ||
-					location.gap.index > node.length
-				) {
-					return unavailable("invalid-location");
-				}
-				return { status: "resolved", location: { kind: "sequence", node, ...location.gap } };
-			} finally {
-				this.checkout.forest.anchors.forget(anchor);
+			const context = this.checkout.forest.anchors.slots.get(ContextSlot);
+			assert(context !== undefined, "Expected a FlexTree context for the receiving view");
+			const node = getOrCreateNodeFromInnerNode(
+				getOrCreateHydratedFlexTreeNode(context, cursor),
+			);
+			if (!isTreeNode(node)) {
+				return unavailable("invalid-location");
 			}
+			if (location.gap === undefined) {
+				return { status: "resolved", location: { kind: "node", node } };
+			}
+			const schema = treeNodeApi.schema(node);
+			if (
+				!isArrayNodeSchema(schema) ||
+				!treeNodeApi.is(node, schema) ||
+				location.gap.index > node.length
+			) {
+				return unavailable("invalid-location");
+			}
+			return { status: "resolved", location: { kind: "sequence", node, ...location.gap } };
 		} finally {
 			cursor.free();
 		}

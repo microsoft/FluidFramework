@@ -111,6 +111,21 @@ function expectUnavailable(
 }
 
 describe("TreeLocationResolver", () => {
+	it("materializes unread receiver nodes and reuses their cached SimpleTree objects", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const batch = capture(sender.locations, [
+			{ kind: "node", node: sender.root.left },
+			{ kind: "sequence", node: sender.root.left, index: 1 },
+		]);
+		const first = resolved(receiver.locations.resolve(batch));
+		const second = resolved(receiver.locations.resolve(batch));
+		assert.equal(first[0].node, first[1].node);
+		assert.equal(second[0].node, first[0].node);
+		assert.equal(second[1].node, first[0].node);
+		assert.equal(first[0].node, receiver.root.left);
+	});
+
 	it("defaults omitted and undefined affinity to before across JSON transport", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
