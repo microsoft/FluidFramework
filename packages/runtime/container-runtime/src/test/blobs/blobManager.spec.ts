@@ -846,13 +846,12 @@ for (const createBlobPayloadPending of [false, true]) {
 		// These tests pin down exactly when BlobManager's aggregate outstanding-work state starts and stops.
 		describe("Unshared blob tracking", () => {
 			/**
-			 * Creates a blob and starts sharing its payload, in whichever way is appropriate for the mode
-			 * under test: pending-payload creation does nothing until the handle is attached to the graph,
-			 * whereas legacy creation starts the flow synchronously inside createBlob().
+			 * Creates a blob and starts sharing its payload, in whichever way suits the mode under test:
+			 * pending-payload creation does nothing until the handle is attached to the graph, whereas
+			 * legacy creation starts the flow synchronously inside createBlob().
 			 *
-			 * The handle promise is returned wrapped in an object, because in the legacy mode it doesn't
-			 * settle until the whole sharing flow is over - returning it bare would make awaiting this
-			 * helper wait for that.
+			 * The handle promise is returned wrapped, because in legacy mode it does not settle until the
+			 * whole sharing flow is over - returning it bare would make awaiting this helper wait for that.
 			 */
 			const createAndStartSharing = async (
 				blobManager: BlobManager,
@@ -922,9 +921,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert(attachMessage !== undefined, "Expected a BlobAttach op awaiting sequencing");
 				const { localId, blobId: storageId } = attachMessage.metadata;
 
-				// Capture the lookup at exactly the moment the aggregate clears, not afterwards. A host told
-				// that its blob work is durable must be able to resolve the blob right then, so any window
-				// where the two disagree is the regression under test.
+				// Capture the lookup at the moment the aggregate clears, not afterwards: a host told its
+				// blob work is durable must be able to resolve the blob right then.
 				let observedSharedSignal = false;
 				let storageIdWhenShared: string | undefined;
 				blobManager.events.on("outstandingBlobWorkChanged", () => {
@@ -1207,10 +1205,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				mockOrderingService.pause();
 				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
 
-				// Both TTL checks run the same comparison against the same record, so elapsed time is the
-				// only thing that can distinguish the one before the op is sent from the one inside
-				// reSubmit. Only Date is faked; the real timer queue is left alone so the upload and
-				// attach promises still settle normally.
+				// Both TTL checks compare the same record, so elapsed time is the only thing distinguishing
+				// the one before the op is sent from the one inside reSubmit. Only Date is faked, leaving
+				// the real timer queue alone so the upload and attach promises still settle.
 				const clock = useFakeTimers({ now: Date.now(), toFake: ["Date"] });
 				try {
 					const { handleP } = await createAndStartSharing(blobManager, "hello");

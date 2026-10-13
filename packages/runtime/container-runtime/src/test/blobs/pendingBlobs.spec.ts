@@ -934,8 +934,8 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 
 				// A consumer can only subscribe once it holds the BlobManager, by which point the restored
-				// blobs are already counted. The event carries no initial state, so the current value must be
-				// readable directly - otherwise a consumer would start out believing there is no work.
+				// blobs are already counted. The event carries no initial state, so the current value must
+				// be readable directly.
 				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
 
 				assert.strictEqual(
@@ -1006,9 +1006,8 @@ for (const createBlobPayloadPending of [false, true]) {
 
 			it("Stops counting a restored blob whose sharing fails terminally", async () => {
 				const { mockBlobStorage, blobManager } = createTestMaterial({
-					// A single blob keeps the assertions deterministic: sharePendingBlobs() rejects via
-					// Promise.all, so with a second blob the rejection could surface while that blob's flow
-					// was still in flight.
+					// A single blob keeps this deterministic: sharePendingBlobs() rejects via Promise.all,
+					// so with a second blob the rejection could surface while that flow was still running.
 					pendingBlobs: {
 						["blob1"]: {
 							state: "localOnly",
@@ -1027,10 +1026,9 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 				await assert.rejects(sharingP, { message: "fake driver error" });
 
-				// A restored blob is counted from load rather than from the start of sharing, so a terminal
-				// failure has to end that span just as it does for a freshly created blob. There is no retry
-				// path once sharing fails, so leaving it counted would report outstanding work for the rest
-				// of the container's life.
+				// A restored blob is counted from load rather than from the start of sharing, and there is
+				// no retry path once sharing fails, so leaving it counted would report outstanding work for
+				// the rest of the container's life.
 				assert.strictEqual(blobManager.unsharedBlobCount, 0);
 				assert.strictEqual(blobManager.hasOutstandingBlobWork, false);
 				assert.deepStrictEqual(
@@ -1065,9 +1063,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					createBlobPayloadPending,
 				});
 
-				// Capture the lookup at exactly the moment the aggregate clears, not afterwards. A host told
-				// that its blob work is durable must be able to resolve the blob right then, so any window
-				// where the two disagree is the regression under test.
+				// Capture the lookup at the moment the aggregate clears, not afterwards: a host told its
+				// blob work is durable must be able to resolve the blob right then.
 				let observedSharedSignal = false;
 				let storageIdWhenShared: string | undefined;
 				blobManager.events.on("outstandingBlobWorkChanged", () => {
