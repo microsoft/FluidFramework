@@ -1062,32 +1062,6 @@ for (const createBlobPayloadPending of [false, true]) {
 				assert.deepStrictEqual(outstandingWorkTransitions, [true, false]);
 			});
 
-			it("Stops counting when storage throws synchronously", async () => {
-				const error = new LoggingError("synchronous storage failure");
-				const { blobManager } = createTestMaterial({
-					createBlobPayloadPending,
-					storageCreateBlob: () => {
-						throw error;
-					},
-				});
-				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);
-
-				const handleP = blobManager.createBlob(textToBlob("hello"));
-				const sharingP = createBlobPayloadPending
-					? ensureBlobsShared([await handleP])
-					: handleP;
-				await assert.rejects(sharingP, { message: error.message });
-
-				// A synchronous throw escapes the upload flow without running its usual cleanup, so the
-				// blob is left behind in the local cache. Tracking must still end, since no further work
-				// is pending - otherwise the blob would be counted for the lifetime of the container.
-				// Note that the real storage stack cannot produce this: ContainerStorageAdapter.createBlob
-				// is async, so it converts a driver's synchronous throw into a rejection before the
-				// BlobManager sees it. Only a mock passed directly as storage can reach this path.
-				assert.strictEqual(blobManager.unsharedBlobCount, 0);
-				assert.deepStrictEqual(outstandingWorkTransitions, [true, false]);
-			});
-
 			it("Never counts an upload that was aborted before it started", async () => {
 				const { blobManager } = createTestMaterial({ createBlobPayloadPending });
 				const outstandingWorkTransitions = recordOutstandingBlobWork(blobManager);

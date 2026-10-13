@@ -441,9 +441,7 @@ interface TestMaterial {
 	blobManager: BlobManager;
 }
 
-type TestMaterialOverrides = Partial<Omit<TestMaterial, "blobManager">> & {
-	readonly storageCreateBlob?: IContainerStorageService["createBlob"];
-};
+type TestMaterialOverrides = Partial<Omit<TestMaterial, "blobManager">>;
 
 export const createTestMaterial = (
 	overrides?: TestMaterialOverrides | undefined,
@@ -458,20 +456,13 @@ export const createTestMaterial = (
 	const blobManagerLoadInfo = overrides?.blobManagerLoadInfo ?? {};
 	const pendingBlobs = overrides?.pendingBlobs ?? undefined;
 	const createBlobPayloadPending = overrides?.createBlobPayloadPending ?? false;
-	const storage =
-		overrides?.storageCreateBlob === undefined
-			? mockBlobStorage
-			: {
-					createBlob: overrides.storageCreateBlob,
-					readBlob: mockBlobStorage.readBlob,
-				};
 
 	const blobManager = new BlobManager({
 		// The routeContext is only needed by the BlobHandles to determine isAttached, so this
 		// cast is good enough
 		routeContext: mockRuntime as unknown as IFluidHandleContext,
 		blobManagerLoadInfo,
-		storage,
+		storage: mockBlobStorage,
 		sendBlobAttachMessage: (localId: string, storageId: string) =>
 			mockOrderingService.sendBlobAttachMessage(clientId, localId, storageId),
 		blobRequested: () => undefined,

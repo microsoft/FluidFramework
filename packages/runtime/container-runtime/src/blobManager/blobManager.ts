@@ -676,40 +676,16 @@ export class BlobManager {
 	 * Upload and attach the localBlobCache entry for the given localId.
 	 *
 	 * Counts the blob as outstanding blob work for the duration of the flow (see
-	 * {@link BlobManager.hasOutstandingBlobWork}). The blob is not fully durable after a successful upload
-	 * because the service does not retain it until the BlobAttach op is ack'd.
+	 * {@link BlobManager.hasOutstandingBlobWork}). Tracking starts once we commit to the flow, and stops
+	 * alongside the localBlobCache update that ends it - a terminal upload failure, an abort, or the blob
+	 * becoming fully shared (which processBlobAttachMessage handles). The blob is not fully durable after a
+	 * successful upload because the service does not retain it until the BlobAttach op is ack'd.
 	 *
 	 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
 	 * when called. Returns a promise that resolves when the blob completes uploading and attaching, or else
 	 * rejects if an error is encountered or the signal is aborted.
 	 */
 	private readonly uploadAndAttach = async (
-		localId: string,
-		signal?: AbortSignal,
-	): Promise<void> => {
-		// An upload that was aborted before it began never becomes outstanding work, so don't count it at
-		// all - otherwise it would produce a spurious aggregate transition for work that never started.
-		if (signal?.aborted !== true) {
-			this.startTrackingUnsharedBlob(localId);
-		}
-		try {
-			await this.uploadAndAttachCore(localId, signal);
-		} finally {
-			// Every way out of the flow ends this BlobManager's responsibility for the blob: it either
-			// became fully shared (in which case processBlobAttachMessage already stopped tracking it, and
-			// this is a no-op), or it terminally failed/aborted and was dropped from the local cache.
-			this.stopTrackingUnsharedBlob(localId);
-		}
-	};
-
-	/**
-	 * Upload and attach the localBlobCache entry for the given localId.
-	 *
-	 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
-	 * when called. Returns a promise that resolves when the blob completes uploading and attaching, or else
-	 * rejects if an error is encountered or the signal is aborted.
-	 */
-	private readonly uploadAndAttachCore = async (
 		localId: string,
 		signal?: AbortSignal,
 	): Promise<void> => {
@@ -725,6 +701,11 @@ export class BlobManager {
 			0xc80 /* Expect uploadAndAttach to be called with either localOnly or uploaded state */,
 		);
 		const { blob } = localBlobRecordInitial;
+
+		// From here on this BlobManager is responsible for getting the blob shared, so it counts as
+		// outstanding work. An upload aborted before it began returns above without ever counting, so it
+		// produces no spurious aggregate transition for work that never started.
+		this.startTrackingUnsharedBlob(localId);
 
 		/**
 		 * Expects the localBlobCache entry for the given localId to be in either localOnly or uploaded state
@@ -759,6 +740,7 @@ export class BlobManager {
 					uploadHasBecomeIrrelevant = true;
 					this.localBlobCache.delete(localId);
 					this.pendingBlobsWithAttachedHandles.delete(localId);
+					this.stopTrackingUnsharedBlob(localId);
 					reject(createAbortError());
 				};
 				const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
@@ -796,6 +778,7 @@ export class BlobManager {
 							// If the storage call errors, we can't recover. Reject to throw back to the caller.
 							this.localBlobCache.delete(localId);
 							this.pendingBlobsWithAttachedHandles.delete(localId);
+							this.stopTrackingUnsharedBlob(localId);
 							// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 							reject(error);
 						}
@@ -865,6 +848,7 @@ export class BlobManager {
 						removeListeners();
 						this.localBlobCache.delete(localId);
 						this.pendingBlobsWithAttachedHandles.delete(localId);
+						this.stopTrackingUnsharedBlob(localId);
 						reject(createAbortError());
 					};
 					const removeListeners = (): void => {
