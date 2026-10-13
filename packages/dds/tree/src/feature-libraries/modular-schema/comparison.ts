@@ -10,6 +10,7 @@ import {
 	MapNodeStoredSchema,
 	Multiplicity,
 	ObjectNodeStoredSchema,
+	type LibraryId,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -272,6 +273,25 @@ export function allowsSchemaUpgrade(
 		updated.schemaVersion,
 	);
 	if (!versionsDecrease && allowsRepoSuperset(policy, original, updated)) {
+		if (
+			original.schemaHash !== undefined &&
+			original.schemaHash !== updated.schemaHash &&
+			allowsRepoSuperset(policy, updated, original)
+		) {
+			// Reversible metadata changes need version ordering even when content schemas are equivalent.
+			return (
+				updated.schemaVersion !== undefined &&
+				Object.entries(updated.schemaVersion).some(([libraryId, version]) => {
+					const previous = original.schemaVersion?.[libraryId as LibraryId];
+					return (
+						original.schemaVersion === undefined ||
+						!Object.hasOwn(original.schemaVersion, libraryId) ||
+						previous === undefined ||
+						version > previous
+					);
+				})
+			);
+		}
 		return true;
 	}
 

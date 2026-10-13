@@ -95,6 +95,116 @@ describe("schema hashes", () => {
 		);
 	});
 
+	for (const schemaVersion of [undefined, {}, versions]) {
+		it(`requires a version increase for reversible metadata changes (${JSON.stringify(schemaVersion)})`, () => {
+			const a = factory.required(factory.number, { persistedMetadata: { app: "A" } });
+			const b = factory.required(factory.number, { persistedMetadata: { app: "B" } });
+			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+			const initial = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: a,
+					schemaVersion,
+					schemaHash: computeSchemaHash(a),
+					schemaHasher,
+				}),
+			);
+			initial.initialize(1);
+			initial.dispose();
+			const sameVersion = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: b,
+					schemaVersion,
+					schemaHash: computeSchemaHash(b),
+					schemaHasher,
+				}),
+			);
+			assert.equal(sameVersion.compatibility.canUpgrade, false);
+			assert.equal(tree.storedSchemaHash, computeSchemaHash(a));
+			sameVersion.dispose();
+			const increasedVersion = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: b,
+					schemaVersion: { [libraryId]: 2 },
+					schemaHash: computeSchemaHash(b),
+					schemaHasher,
+				}),
+			);
+			assert.equal(increasedVersion.compatibility.canUpgrade, true);
+			increasedVersion.upgradeSchema();
+			assert.equal(tree.storedSchemaHash, computeSchemaHash(b));
+			increasedVersion.dispose();
+			const reversal = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: a,
+					schemaVersion: { [libraryId]: 2 },
+					schemaHash: computeSchemaHash(a),
+					schemaHasher,
+				}),
+			);
+			assert.equal(reversal.compatibility.canUpgrade, false);
+			assert.throws(() => reversal.upgradeSchema(), /cannot be upgraded/);
+			assert.equal(tree.storedSchemaHash, computeSchemaHash(b));
+		});
+	}
+
+	it("allows metadata changes alongside a strictly additive schema upgrade", () => {
+		const a = factory.required(factory.number, { persistedMetadata: { app: "A" } });
+		const b = factory.required([factory.number, factory.string], {
+			persistedMetadata: { app: "B" },
+		});
+		const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+		const initial = tree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: a,
+				schemaVersion: versions,
+				schemaHash: computeSchemaHash(a),
+				schemaHasher,
+			}),
+		);
+		initial.initialize(1);
+		initial.dispose();
+		const next = tree.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: b,
+				schemaVersion: versions,
+				schemaHash: computeSchemaHash(b),
+				schemaHasher,
+			}),
+		);
+		assert.equal(next.compatibility.canUpgrade, true);
+		next.upgradeSchema();
+		assert.equal(tree.storedSchemaHash, computeSchemaHash(b));
+		assert.equal(next.root, 1);
+	});
+
+	it("allows hashing opt-in and version-only updates with equal canonical hashes", () => {
+		const a = factory.required(factory.number, {
+			persistedMetadata: { a: 1, b: 2 },
+		});
+		const b = factory.required(factory.number, {
+			persistedMetadata: { b: 2, a: 1 },
+		});
+		const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+		const initial = tree.viewWith(new TreeViewConfigurationAlpha({ schema: a }));
+		initial.initialize(1);
+		initial.dispose();
+		for (const schemaVersion of [undefined, versions, { [libraryId]: 2 }]) {
+			const next = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: b,
+					schemaVersion,
+					schemaHash: computeSchemaHash(b),
+					schemaHasher,
+				}),
+			);
+			assert.equal(next.compatibility.canUpgrade, true);
+			next.upgradeSchema();
+			assert.equal(tree.storedSchemaHash, computeSchemaHash(a));
+			assert.deepEqual(tree.storedSchemaVersion, schemaVersion);
+			next.dispose();
+		}
+	});
+
 	it("initializes using the configured staged-upgrade flags", () => {
 		const root = factory.types([factory.number, factory.staged(factory.string)]);
 		const policy = StagedSchemaUpgradePolicy.permissive;
@@ -410,7 +520,7 @@ describe("schema hashes", () => {
 			const next = asTreeViewAlpha(
 				tree.viewWith(new TreeViewConfigurationAlpha({ schema: factory.number, ...props })),
 			);
-			assert.equal(next.compatibility.canUpgrade, props.schemaHash !== undefined);
+			assert.equal(next.compatibility.canUpgrade, props.schemaHash === hash);
 			let changes = 0;
 			next.events.on("changed", () => changes++);
 			assert.throws(

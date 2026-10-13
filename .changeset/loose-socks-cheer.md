@@ -13,6 +13,7 @@ Increasing a version is required when a schema change keeps every existing docum
 Existing versions cannot decrease or be removed.
 This prevents older applications from reversing the change and repeatedly conflicting with newer applications.
 For changes that only expand what may be stored, increasing a version is optional but can still be useful for identifying application schema revisions in telemetry and compatibility snapshots.
+When a hashed schema changes only persisted metadata without expanding what may be stored, at least one application version must increase.
 Versioned schemas use an experimental persisted format.
 Every client that loads or collaborates on a versioned document must use the same Fluid Framework version until this format is stabilized.
 Applications using schema versions must configure SharedTree to write the experimental schema format, as shown below.
