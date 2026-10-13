@@ -16,14 +16,21 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  * All validation is tree-shaken out of production/optimized builds.
  * @alpha
  */
-export enum RebaseValidationLevel {
+export const RebaseValidationLevel = {
 	/** No rebase validation is performed. */
-	None = 0,
+	None: 0,
 	/** A minimal amount of rebase validation is performed, with minimal performance overhead. */
-	Cheap = 1,
+	Cheap: 1,
 	/** Extensive rebase validation is performed, with the highest performance overhead. */
-	Strict = 2,
-}
+	Strict: 2,
+} as const;
+
+/**
+ * A level of rebase validation supported by {@link RebaseValidation}.
+ * @alpha
+ */
+export type RebaseValidationLevel =
+	(typeof RebaseValidationLevel)[keyof typeof RebaseValidationLevel];
 
 /**
  * The entry point for configuring and querying the status of rebase validation.
@@ -45,14 +52,7 @@ export interface RebaseValidationAlpha {
 	 * @remarks
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
-	readonly Level: {
-		/** No rebase validation is performed. */
-		readonly None: RebaseValidationLevel.None;
-		/** A minimal amount of rebase validation is performed, with minimal performance overhead. */
-		readonly Cheap: RebaseValidationLevel.Cheap;
-		/** Extensive rebase validation is performed, with the highest performance overhead. */
-		readonly Strict: RebaseValidationLevel.Strict;
-	};
+	readonly Level: typeof RebaseValidationLevel;
 
 	/**
 	 * Sets the desired level of rebase validation.
@@ -61,7 +61,7 @@ export interface RebaseValidationAlpha {
 	 * @throws for levels higher than `None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
 	 *
 	 * @remarks
-	 * The default validation level is {@link RebaseValidationLevel.Cheap}.
+	 * The default validation level is {@link RebaseValidationAlpha.Level | Cheap}.
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
@@ -74,7 +74,7 @@ export interface RebaseValidationAlpha {
 	 * @throws for levels higher than `None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
 	 *
 	 * @remarks
-	 * The default validation level is {@link RebaseValidationLevel.Cheap}.
+	 * The default validation level is {@link RebaseValidationAlpha.Level | Cheap}.
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
@@ -84,7 +84,22 @@ export interface RebaseValidationAlpha {
  * Indicates whether rebase validation is currently enabled.
  * See {@link RebaseValidationAlpha.setLevel} for more information.
  */
-let rebaseValidationLevel = RebaseValidationLevel.Cheap;
+let rebaseValidationLevel: RebaseValidationLevel = RebaseValidationLevel.Cheap;
+
+/**
+ * Implements {@link RebaseValidationAlpha.setLevel} without referencing the configuration object,
+ * thus making tree-shaking of the validation logic possible.
+ */
+function setLevel(level: RebaseValidationLevel): RebaseValidationLevel {
+	if (level !== RebaseValidationLevel.None && !nonProductionConditionalsIncluded()) {
+		throw new UsageError(
+			"rebase validation cannot be enabled because debug asserts have been optimized out",
+		);
+	}
+	const old = rebaseValidationLevel;
+	rebaseValidationLevel = level;
+	return old;
+}
 
 /**
  * The entry point for configuring and querying the status of rebase validation.
@@ -95,23 +110,10 @@ export const RebaseValidation: RebaseValidationAlpha = {
 	get currentLevel(): RebaseValidationLevel {
 		return rebaseValidationLevel;
 	},
-	Level: {
-		None: RebaseValidationLevel.None,
-		Cheap: RebaseValidationLevel.Cheap,
-		Strict: RebaseValidationLevel.Strict,
-	},
-	setLevel: (level: RebaseValidationLevel): RebaseValidationLevel => {
-		if (level !== RebaseValidationLevel.None && !nonProductionConditionalsIncluded()) {
-			throw new UsageError(
-				"rebase validation cannot be enabled because debug asserts have been optimized out",
-			);
-		}
-		const old = rebaseValidationLevel;
-		rebaseValidationLevel = level;
-		return old;
-	},
+	Level: RebaseValidationLevel,
+	setLevel,
 	runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut): TOut => {
-		const old = RebaseValidation.setLevel(level);
+		const old = setLevel(level);
 		try {
 			return callback();
 		} finally {
@@ -121,7 +123,7 @@ export const RebaseValidation: RebaseValidationAlpha = {
 };
 
 /**
- * Runs a debug assertion when the validation level is at least {@link RebaseValidationLevel.Cheap | basic}.
+ * Runs a debug assertion when the validation level is at least {@link RebaseValidationAlpha.Level | Cheap}.
  * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
  * @remarks
@@ -136,7 +138,7 @@ export function cheapRebaseValidation(prefix: string, predicate: () => true | st
 }
 
 /**
- * Runs a debug assertion when the validation level is {@link RebaseValidationLevel.Strict | full}.
+ * Runs a debug assertion when the validation level is {@link RebaseValidationAlpha.Level | Strict}.
  * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
  * @remarks

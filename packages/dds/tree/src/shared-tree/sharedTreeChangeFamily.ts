@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, skipInProduction } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
@@ -440,24 +440,8 @@ export function isSharedTreeChangeValid(change: SharedTreeChange): true | string
 	return true;
 }
 
-/**
- * {@link isSharedTreeChangeValid}, but only in builds which include non-production conditional code.
- * Otherwise `undefined`.
- *
- * @remarks
- * Use this instead of referring to {@link isSharedTreeChangeValid} from code which can run in production.
- *
- * {@link isSharedTreeChangeValid} transitively pulls in the entirety of the changeset validation logic,
- * which is sizable (roughly 2KB minified) and is only ever invoked from within
- * {@link @fluidframework/core-utils#debugAssert} callbacks.
- * Naming it anywhere else - even in an argument which is only ever consumed inside a debug assert -
- * creates a reference that bundlers must preserve, which defeats that tree-shaking.
- *
- * Capturing the reference inside a `debugAssert` callback keeps it out of production builds:
- * the callback (and therefore the only reference to {@link isSharedTreeChangeValid}) is removed along with
- * the `debugAssert` call, leaving this `undefined`.
- */
-export let debugOnlySharedTreeChangeValidator:
-	| ((change: SharedTreeChange) => true | string)
-	| undefined;
-debugAssert(() => ((debugOnlySharedTreeChangeValidator = isSharedTreeChangeValid), true));
+export let debugOnlySharedTreeChangeValidator: (change: SharedTreeChange) => true | string =
+	() => true;
+skipInProduction(() => {
+	debugOnlySharedTreeChangeValidator = isSharedTreeChangeValid;
+});

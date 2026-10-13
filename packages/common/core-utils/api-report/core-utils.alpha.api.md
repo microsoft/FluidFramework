@@ -13,6 +13,9 @@ export function nonProductionConditionalsIncluded(): boolean;
 // @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
+// @alpha
+export function skipInProduction(conditional: () => void): void;
+
 // (No @packageDocumentation comment for this package)
 
 ```

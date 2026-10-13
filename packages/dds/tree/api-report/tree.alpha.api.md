@@ -1137,21 +1137,20 @@ export const RebaseValidation: RebaseValidationAlpha;
 // @alpha
 export interface RebaseValidationAlpha {
     readonly currentLevel: RebaseValidationLevel;
-    readonly Level: {
-        readonly None: RebaseValidationLevel.None;
-        readonly Cheap: RebaseValidationLevel.Cheap;
-        readonly Strict: RebaseValidationLevel.Strict;
-    };
+    readonly Level: typeof RebaseValidationLevel;
     readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
     readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
 }
 
 // @alpha
-export enum RebaseValidationLevel {
-    Cheap = 1,
-    None = 0,
-    Strict = 2
-}
+export const RebaseValidationLevel: {
+    readonly None: 0;
+    readonly Cheap: 1;
+    readonly Strict: 2;
+};
+
+// @alpha
+export type RebaseValidationLevel = (typeof RebaseValidationLevel)[keyof typeof RebaseValidationLevel];
 
 // @alpha @sealed @system
 export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAllowedTypes = ImplicitAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<T> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<T>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<SchemaType.View, TCustomMetadata> {
