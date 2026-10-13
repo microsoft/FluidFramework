@@ -155,6 +155,7 @@ export class SharedTreeCore<
 	 * @param editManager - The edit manager
 	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
 	 * @param editor - Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * @param validator - A predicate that checks if a change is valid.
 	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
 	public constructor(
@@ -172,6 +173,7 @@ export class SharedTreeCore<
 		schemaPolicy: SchemaPolicy,
 		enrichmentConfig?: EnrichmentConfig<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
+		validator?: (change: TChange) => true | string,
 	) {
 		super(
 			summarizablesTreeKey,
@@ -206,6 +208,7 @@ export class SharedTreeCore<
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
 			coreOptions.retainHistory ?? false,
+			validator,
 		);
 
 		this.registerSharedBranch("main");

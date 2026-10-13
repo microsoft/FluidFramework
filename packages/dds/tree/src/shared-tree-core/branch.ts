@@ -27,7 +27,6 @@ import {
 	rebaseBranch,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
-	cheapRebaseValidation,
 } from "../core/index.js";
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 
@@ -166,6 +165,7 @@ export class SharedTreeBranch<
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
+		private readonly validator?: (change: TChange) => true | string,
 	) {
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
 			this.apply(change, CommitKind.Default, undefined),
@@ -273,6 +273,8 @@ export class SharedTreeBranch<
 			this.changeFamily,
 			mintRevisionTag,
 			this.branchTrimmer,
+			undefined,
+			this.validator,
 		);
 		this.#events.emit("fork", fork);
 		return fork;
@@ -416,8 +418,7 @@ export class SharedTreeBranch<
 				head,
 				upTo,
 				onto.getHead(),
-				(prefix, changeToValidate) =>
-					cheapRebaseValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
+				this.validator,
 			),
 		);
 

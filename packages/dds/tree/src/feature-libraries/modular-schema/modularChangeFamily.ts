@@ -152,9 +152,6 @@ export class ModularChangeFamily
 		return false;
 	}
 
-	public readonly validator = (change: ModularChangeset): true | string =>
-		isChangesetValid(change, this.fieldKinds);
-
 	public buildProcessor(
 		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
 	): (change: ModularChangeset) => ModularChangeset {

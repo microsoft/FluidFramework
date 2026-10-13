@@ -73,7 +73,6 @@ import {
 	type LocalCommitEvents,
 	getDeltaChangeProfile,
 	findAncestor,
-	cheapRebaseValidation,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -139,6 +138,7 @@ import {
 	SharedTreeChangeFamily,
 	getConstraintStatus,
 	hasSchemaChange,
+	isSharedTreeChangeValid,
 } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -426,6 +426,9 @@ export function createTreeCheckout(
 			},
 			changeFamily,
 			() => idCompressor.generateCompressedId(),
+			undefined,
+			undefined,
+			isSharedTreeChangeValid,
 		);
 
 	return new TreeCheckout(
@@ -828,35 +831,40 @@ export class TreeCheckout implements ITreeCheckout {
 		SharedTreeChange,
 		SharedTreeChangeProcessingContext
 	> {
-		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
-			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
-			return (result, viewUpdate: SharedTreeChange | undefined) => {
-				const newHead = this.#transaction.branch.getHead();
-				switch (result) {
-					case InternalTransactionResult.Abort: {
-						restoreRemovedRoots();
-						if (viewUpdate !== undefined) {
-							this.applyInternalChange(viewUpdate, newHead.revision);
+		return new SquashingTransactionStack(
+			branch,
+			this.mintRevisionTag,
+			() => {
+				// When each transaction is started, make a restorable checkpoint of the current state of removed roots
+				const restoreRemovedRoots = this._removedRoots.createCheckpoint();
+				return (result, viewUpdate: SharedTreeChange | undefined) => {
+					const newHead = this.#transaction.branch.getHead();
+					switch (result) {
+						case InternalTransactionResult.Abort: {
+							restoreRemovedRoots();
+							if (viewUpdate !== undefined) {
+								this.applyInternalChange(viewUpdate, newHead.revision);
+							}
+							break;
 						}
-						break;
-					}
-					case InternalTransactionResult.Commit: {
-						if (viewUpdate !== undefined) {
-							this.applyInternalChange(viewUpdate, newHead.revision);
+						case InternalTransactionResult.Commit: {
+							if (viewUpdate !== undefined) {
+								this.applyInternalChange(viewUpdate, newHead.revision);
+							}
+							if (this.transaction.size === 0) {
+								// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
+								this.validateCommit(newHead);
+							}
+							break;
 						}
-						if (this.transaction.size === 0) {
-							// The changes in a transaction squash commit have already applied to the checkout and are known to be valid, so we can validate the squash commit automatically.
-							this.validateCommit(newHead);
+						default: {
+							unreachableCase(result);
 						}
-						break;
 					}
-					default: {
-						unreachableCase(result);
-					}
-				}
-			};
-		});
+				};
+			},
+			isSharedTreeChangeValid,
+		);
 	}
 
 	@throwIfBroken
@@ -1670,8 +1678,7 @@ export class TreeCheckout implements ITreeCheckout {
 			this.#transaction.branch.getHead(),
 			target,
 			target,
-			(prefix, change) =>
-				cheapRebaseValidation(prefix, () => this.changeFamily.validator(change)),
+			isSharedTreeChangeValid,
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -1829,8 +1836,7 @@ export class TreeCheckout implements ITreeCheckout {
 					headCommit,
 					this.mintRevisionTag,
 					ignoreNoChangeViolation,
-					(prefix, changeToValidate) =>
-						cheapRebaseValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
+					isSharedTreeChangeValid,
 				).change,
 				revisionForInvert,
 			);

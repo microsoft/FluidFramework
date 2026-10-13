@@ -29,6 +29,7 @@ import {
 	type TreeCompressionStrategy,
 	fieldKindConfigurations,
 	fieldKinds,
+	isModularChangesetValid,
 	makeModularChangeCodecFamily,
 } from "../feature-libraries/index.js";
 import {
@@ -107,18 +108,6 @@ export class SharedTreeChangeFamily
 	public hasSchemaChange(change: SharedTreeChange): boolean {
 		return hasSchemaChange(change);
 	}
-
-	public readonly validator = (change: SharedTreeChange): true | string => {
-		for (const innerChange of change.changes) {
-			if (innerChange.type === "data") {
-				const result = this.modularChangeFamily.validator(innerChange.innerChange);
-				if (result !== true) {
-					return result;
-				}
-			}
-		}
-		return true;
-	};
 
 	public buildProcessor(
 		processFn: ProcessChangeFn<SharedTreeChange, SharedTreeChangeProcessingContext>,
@@ -432,4 +421,21 @@ export function getConstraintStatus(change: SharedTreeChange): ConstraintStatus 
 		return ConstraintStatus.ExplicitViolation;
 	}
 	return ConstraintStatus.Satisfied;
+}
+
+/**
+ * Validation function to check if a change is well-formed.
+ * @param change - The change to validate.
+ * @returns `true` if the change is well-formed, otherwise a string describing the validation error.
+ */
+export function isSharedTreeChangeValid(change: SharedTreeChange): true | string {
+	for (const innerChange of change.changes) {
+		if (innerChange.type === "data") {
+			const result = isModularChangesetValid(innerChange.innerChange, fieldKinds);
+			if (result !== true) {
+				return result;
+			}
+		}
+	}
+	return true;
 }

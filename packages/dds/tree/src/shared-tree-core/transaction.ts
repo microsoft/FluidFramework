@@ -391,6 +391,7 @@ export class SquashingTransactionStack<
 	 * Construct a new {@link SquashingTransactionStack}.
 	 * @param branch - The {@link SquashingTransactionStack.branch | branch} that will be forked off of when a transaction begins.
 	 * @param onPush - A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
+	 * @param validator - A predicate that checks if a change is valid.
 	 * @remarks To post-process the squashed change produced when a transaction is committed (for example, to "minimize"
 	 * it so that it contains no extraneous information), start the transaction with a
 	 * {@link SquashingTransactionOptions.postProcessor | post-processor}. The post-processor is injected via the transaction
@@ -400,6 +401,7 @@ export class SquashingTransactionStack<
 		public readonly branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		mintRevisionTag: () => RevisionTag,
 		onPush?: () => OnPopWithViewUpdate<TChange> | void,
+		validator: (change: TChange) => true | string = () => true,
 	) {
 		// A stack of the post-processors to apply when each in-progress transaction commits, ordered from outermost to
 		// innermost. Each in-progress transaction contributes exactly one entry: either the processor to apply when it
@@ -505,7 +507,7 @@ export class SquashingTransactionStack<
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
 								const squash = rebaser.compose(transactionSteps);
 								cheapRebaseValidation("Malformed composed transaction", () =>
-									changeFamily.validator(squash),
+									validator(squash),
 								);
 
 								// Apply this transaction's post-processor (if any) to the squashed change (for example, to
@@ -556,10 +558,7 @@ export class SquashingTransactionStack<
 										unrebasedHead,
 										branch.getHead(),
 										branch.getHead(),
-										(prefix, changeToValidate) =>
-											cheapRebaseValidation(prefix, () =>
-												changeFamily.validator(changeToValidate),
-											),
+										validator,
 									);
 									assert(
 										rebased.newSourceHead.revision === transactionRevision,

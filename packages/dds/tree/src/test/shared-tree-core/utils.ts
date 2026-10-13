@@ -62,6 +62,8 @@ import {
 	fieldKindConfigurations,
 	fieldBatchCodecBuilder,
 	makeModularChangeCodecFamily,
+	isModularChangesetValid,
+	fieldKinds,
 } from "../../feature-libraries/index.js";
 import {
 	changeFormatVersionForEditManager,
@@ -234,6 +236,7 @@ function createTreeInner(
 			defaultSchemaPolicy,
 			enrichmentConfig ?? { enricher: new NoOpChangeEnricher<DefaultChangeset>() },
 			editor,
+			(change) => isModularChangesetValid(change, fieldKinds),
 		),
 		changeFamily,
 	];
@@ -314,6 +317,8 @@ export class TestSharedTreeCore extends SharedObject {
 		this.transaction = new SquashingTransactionStack(
 			this.getLocalBranch(),
 			this.kernel.mintRevisionTag,
+			undefined,
+			(change) => isModularChangesetValid(change, fieldKinds),
 		);
 	}
 

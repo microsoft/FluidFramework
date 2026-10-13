@@ -18,6 +18,7 @@ import {
 	tagRollbackInverse,
 } from "./changeRebaser.js";
 import { type GraphCommit, type RevisionTag, mintCommit } from "./types.js";
+import { cheapRebaseValidation } from "./rebaseValidation.js";
 
 /**
  * Contains information about how the commit graph changed as the result of rebasing a source branch onto another target branch.
@@ -184,7 +185,7 @@ export function rebaseBranch<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
-	validator?: (prefix: string, change: TChange) => void,
+	validator?: (change: TChange) => true | string,
 ): BranchRebaseResult<TChange>;
 export function rebaseBranch<TChange>(
 	mintRevisionTag: () => RevisionTag,
@@ -192,7 +193,7 @@ export function rebaseBranch<TChange>(
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
-	validator: (prefix: string, change: TChange) => void = () => {},
+	validator: (change: TChange) => true | string = () => true,
 ): BranchRebaseResult<TChange> {
 	// Get both source and target as path arrays
 	const sourcePath: GraphCommit<TChange>[] = [];
@@ -333,7 +334,7 @@ export function rebaseBranch<TChange>(
 		"sourceChange",
 		() => {
 			const composed = changeRebaser.compose(editsToCompose);
-			validator("Malformed rebase net change", composed);
+			cheapRebaseValidation("Malformed rebase net change", () => validator(composed));
 			return composed;
 		},
 	);
@@ -356,7 +357,7 @@ export function rebaseChange<TChange>(
 	targetHead: GraphCommit<TChange>,
 	mintRevisionTag: () => RevisionTag,
 	ignoreNoChangeViolation?: boolean,
-	validator: (prefix: string, change: TChange) => void = () => {},
+	validator: (change: TChange) => true | string = () => true,
 ): RebaseChangeResult<TChange> {
 	const sourcePath: GraphCommit<TChange>[] = [];
 	const targetPath: GraphCommit<TChange>[] = [];
@@ -382,7 +383,7 @@ export function rebaseChange<TChange>(
 		[...inverses, ...targetPath],
 		ignoreNoChangeViolation,
 	);
-	validator("Malformed rebase change result", rebased);
+	cheapRebaseValidation("Malformed rebase change result", () => validator(rebased));
 	return {
 		change: rebased,
 		telemetryProperties,

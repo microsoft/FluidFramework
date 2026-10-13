@@ -71,10 +71,6 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			throw new Error("buildProcessor return invocation");
 		};
 	},
-	validator: (change: string): true | string => {
-		assert.equal(change, arg1);
-		return "Malformed";
-	},
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 	hasSchemaChange: () => false,
@@ -119,10 +115,6 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			return "buildProcessor";
 		};
 	},
-	validator: (change: string): true | string => {
-		assert.equal(change, arg1);
-		return true;
-	},
 };
 
 const errorLog: unknown[] = [];
@@ -160,8 +152,6 @@ describe("makeMitigatedChangeFamily", () => {
 			mitigatedReturningRebaser.changeRevision(arg1, arg2),
 			returningRebaser.changeRevision(arg1, arg2),
 		);
-		assert.equal(mitigatedReturningFamily.validator(arg1), returningFamily.validator(arg1));
-		assert.equal(mitigatedThrowingFamily.validator(arg1), throwingFamily.validator(arg1));
 		const mitigatedProcessor = mitigatedReturningFamily.buildProcessor(arg1);
 		const returningProcessor = returningFamily.buildProcessor(arg1);
 		assert.equal(mitigatedProcessor(arg2), returningProcessor(arg2));
