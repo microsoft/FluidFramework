@@ -13,6 +13,8 @@ import {
 
 import { asAlpha } from "../../../api.js";
 import type { RevertibleAlpha } from "../../../core/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { CapturedTreeLocationsInternal } from "../../../shared-tree/locations.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -20,17 +22,35 @@ import {
 	type TreeLocation,
 	type TreeLocationResolver,
 	type TreeLocationResolution,
-	type TreeNodeReference,
-	type TreePositionRevision,
+	type ResolvedTreeLocation,
 	type TreeViewAlpha,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
+import type { requireFalse } from "../../../util/index.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
 
 const sf = new SchemaFactory("com.example.locations");
 class Text extends sf.array("Text", sf.string) {}
 class Document extends sf.object("Document", { left: Text, right: Text }) {}
 const config = new TreeViewConfiguration({ schema: Document });
+
+type _CaptureHidesRevision = requireFalse<
+	"revision" extends keyof CapturedTreeLocations ? true : false
+>;
+type _CaptureHidesLocations = requireFalse<
+	"locations" extends keyof CapturedTreeLocations ? true : false
+>;
+type _CaptureCannotBeConstructed = requireFalse<
+	{ revision: string; locations: [] } extends CapturedTreeLocations ? true : false
+>;
+
+function capturedData(captured: CapturedTreeLocations): CapturedTreeLocationsInternal {
+	return captured as unknown as CapturedTreeLocationsInternal;
+}
+
+function eraseCapture(data: CapturedTreeLocationsInternal): CapturedTreeLocations {
+	return data as unknown as CapturedTreeLocations;
+}
 
 function setup(): { provider: TestTreeProviderLite; views: TreeViewAlpha<typeof Document>[] } {
 	const provider = new TestTreeProviderLite(2);
@@ -60,7 +80,9 @@ function captureGaps(
 	);
 }
 
-function resolved(result: TreeLocationResolution): readonly TreeLocation[] {
+function resolved(
+	result: TreeLocationResolution,
+): readonly Extract<ResolvedTreeLocation, { status: "resolved" }>["location"][] {
 	assert(result.status === "resolved");
 	return result.locations.map((entry) => {
 		assert(entry.status === "resolved");
@@ -89,6 +111,54 @@ function expectUnavailable(
 }
 
 describe("TreeLocationResolver", () => {
+	it("defaults omitted and undefined affinity to before across JSON transport", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const batch = capture(sender.locations, [
+			{ kind: "sequence", node: sender.root.left, index: 2 },
+			{ kind: "sequence", node: sender.root.left, index: 2, affinity: undefined },
+			{ kind: "sequence", node: sender.root.left, index: 2, affinity: "before" },
+			{ kind: "sequence", node: sender.root.left, index: 2, affinity: "after" },
+		]);
+		receiver.root.left.insertAt(2, "x");
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+			{ kind: "sequence", node: receiver.root.left, index: 2, affinity: "before" },
+			{ kind: "sequence", node: receiver.root.left, index: 2, affinity: "before" },
+			{ kind: "sequence", node: receiver.root.left, index: 2, affinity: "before" },
+			{ kind: "sequence", node: receiver.root.left, index: 3, affinity: "after" },
+		]);
+	});
+
+	it("uses before affinity by default at cross-array move boundaries", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const batch = capture(sender.locations, [
+			{ kind: "sequence", node: sender.root.left, index: 1 },
+			{ kind: "sequence", node: sender.root.left, index: 3 },
+		]);
+		receiver.root.right.moveRangeToIndex(1, 1, 3, receiver.root.left);
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+			{ kind: "sequence", node: receiver.root.left, index: 1, affinity: "before" },
+			{ kind: "sequence", node: receiver.root.right, index: 3, affinity: "before" },
+		]);
+	});
+
+	it("does not replace invalid affinities with the default", () => {
+		const { views } = setup();
+		for (const affinity of ["invalid", null, 0]) {
+			const location: TreeLocation = {
+				kind: "sequence",
+				node: views[0].root.left,
+				index: 0,
+				affinity: affinity as "before",
+			};
+			assert.throws(
+				() => views[0].locations.capture([location]),
+				validateUsageError(/affinity/),
+			);
+		}
+	});
+
 	it("agrees with an independent gap model across randomized inserts, deletions, and moves", () => {
 		for (let seed = 0; seed < 8; seed++) {
 			const { views } = setup();
@@ -181,8 +251,11 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: sender.root.left, index: 4, affinity: "after" },
 			{ kind: "sequence", node: sender.root.left, index: 0, affinity: "before" },
 		]);
-		assert.equal(typeof batch.locations[0].node, "string");
-		assert.equal(receiver.locations.capture([]).revision, batch.revision);
+		assert.equal(typeof capturedData(batch).locations[0].node, "string");
+		assert.equal(
+			capturedData(receiver.locations.capture([])).revision,
+			capturedData(batch).revision,
+		);
 		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
 			{ kind: "node", node: receiver.root },
 			{ kind: "node", node: receiver.root.left },
@@ -323,8 +396,8 @@ describe("TreeLocationResolver", () => {
 		assert.deepEqual(indices(receiver.locations, batch), [3, 6]);
 		provider.synchronizeMessages();
 		assert.equal(
-			receiver.locations.capture([]).revision,
-			sender.locations.capture([]).revision,
+			capturedData(receiver.locations.capture([])).revision,
+			capturedData(sender.locations.capture([])).revision,
 		);
 	});
 
@@ -380,7 +453,8 @@ describe("TreeLocationResolver", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
 		const batch = captureGaps(sender, [2]);
-		const location = batch.locations[0];
+		const data = capturedData(batch);
+		const location = data.locations[0];
 		assert(location.kind === "sequence");
 		for (const reference of [
 			"not json",
@@ -390,24 +464,28 @@ describe("TreeLocationResolver", () => {
 			'{"version":1,"path":[]}',
 		]) {
 			expectUnavailable(
-				receiver.locations.resolve({
-					...batch,
-					locations: [{ ...location, node: reference as TreeNodeReference }],
-				}),
+				receiver.locations.resolve(
+					eraseCapture({
+						...data,
+						locations: [{ ...location, node: reference }],
+					}),
+				),
 				"invalid-location",
 			);
 		}
 		for (const index of [-1, 5, 1.5, Number.NaN, Infinity]) {
 			expectUnavailable(
-				receiver.locations.resolve({
-					...batch,
-					locations: [{ ...location, index }],
-				}),
+				receiver.locations.resolve(
+					eraseCapture({
+						...data,
+						locations: [{ ...location, index }],
+					}),
+				),
 				"invalid-location",
 			);
 		}
 		assert.deepEqual(
-			receiver.locations.resolve({ ...batch, revision: "wrong" as TreePositionRevision }),
+			receiver.locations.resolve(eraseCapture({ ...data, revision: "wrong" })),
 			{ status: "revision-unavailable" },
 		);
 	});
@@ -432,7 +510,10 @@ describe("TreeLocationResolver", () => {
 			);
 			return { rollback: true };
 		});
-		assert.equal(view.locations.capture([]).revision, batch.revision);
+		assert.equal(
+			capturedData(view.locations.capture([])).revision,
+			capturedData(batch).revision,
+		);
 		assert.deepEqual(indices(view.locations, batch), [0, 2, 4]);
 		const fork = view.fork();
 		assert.throws(
@@ -528,7 +609,9 @@ describe("TreeLocationResolver", () => {
 		provider.synchronizeMessages();
 		const newer = sender.locations.capture([]);
 		expectUnavailable(
-			receiver.locations.resolve({ ...batch, revision: newer.revision }),
+			receiver.locations.resolve(
+				eraseCapture({ ...capturedData(batch), revision: capturedData(newer).revision }),
+			),
 			"invalid-location",
 		);
 	});
@@ -697,7 +780,7 @@ describe("TreeLocationResolver", () => {
 		view.initialize({ left: [], right: [] });
 		assert.throws(() => view.locations.capture([]), validateUsageError(/pending local edits/));
 		provider.synchronizeMessages();
-		assert.deepEqual(captureGaps(view, [0]).locations.length, 1);
+		assert.deepEqual(resolved(view.locations.resolve(captureGaps(view, [0]))).length, 1);
 	});
 
 	it("rejects detached and independent views", () => {

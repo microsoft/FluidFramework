@@ -24,13 +24,10 @@ import {
 	isTreeNode,
 	treeNodeApi,
 	type TreeLocation,
-	type CapturedTreeLocation,
 	type CapturedTreeLocations,
-	type TreeNodeReference,
 	type ResolvedTreeLocation,
 	type TreeLocationResolver,
 	type TreeLocationResolution,
-	type TreePositionRevision,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { treeNodeFromAnchor } from "../simple-tree/core/index.js";
@@ -58,13 +55,28 @@ interface DecodedReference {
 	readonly length: number | undefined;
 }
 
+type CapturedTreeLocation =
+	| { readonly kind: "node"; readonly node: string }
+	| {
+			readonly kind: "sequence";
+			readonly node: string;
+			readonly index: number;
+			readonly affinity: "before" | "after";
+	  };
+
+/**
+ * Private representation of the type-erased presence payload.
+ * Only this implementation and its wire-format tests may depend on its shape.
+ */
+export interface CapturedTreeLocationsInternal {
+	readonly revision: string;
+	readonly locations: readonly CapturedTreeLocation[];
+}
+
 /**
  * Validates the private, versioned wire format before handing paths to core anchors.
  */
-function decodeReference(
-	reference: TreeNodeReference,
-	revision: TreePositionRevision,
-): DecodedReference | undefined {
+function decodeReference(reference: string, revision: string): DecodedReference | undefined {
 	if (typeof reference !== "string") {
 		return undefined;
 	}
@@ -147,11 +159,11 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		}
 	}
 
-	private revisionKey(commit: GraphCommit<SharedTreeChange>): TreePositionRevision {
+	private revisionKey(commit: GraphCommit<SharedTreeChange>): string {
 		return JSON.stringify([
 			"main",
 			commit.revision === "root" ? "root" : this.idCompressor.decompress(commit.revision),
-		]) as TreePositionRevision;
+		]);
 	}
 
 	private getMainSource(): LocationRevisionSource {
@@ -186,7 +198,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			);
 		}
 		const revision = this.revisionKey(source.head);
-		return {
+		const capture: CapturedTreeLocationsInternal = {
 			revision,
 			locations: locations.map((location): CapturedTreeLocation => {
 				if (!isTreeNode(location.node)) {
@@ -209,10 +221,12 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 						!Number.isSafeInteger(location.index) ||
 						location.index < 0 ||
 						location.index > location.node.length ||
-						(location.affinity !== "before" && location.affinity !== "after"))
+						(location.affinity !== undefined &&
+							location.affinity !== "before" &&
+							location.affinity !== "after"))
 				) {
 					throw new UsageError(
-						"A sequence location requires an array, an in-bounds gap index, and an affinity.",
+						"A sequence location requires an array, an in-bounds gap index, and a valid affinity if provided.",
 					);
 				}
 				const node = JSON.stringify({
@@ -223,21 +237,23 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 						step.parentIndex,
 					]),
 					...(location.kind === "sequence" ? { length: location.node.length } : {}),
-				}) as TreeNodeReference;
+				});
 				return location.kind === "node"
 					? { kind: "node", node }
 					: {
 							kind: "sequence",
 							node,
 							index: location.index,
-							affinity: location.affinity,
+							affinity: location.affinity ?? "before",
 						};
 			}),
 		};
+		return capture as unknown as CapturedTreeLocations;
 	}
 
-	public resolve(capture: CapturedTreeLocations): TreeLocationResolution {
+	public resolve(captured: CapturedTreeLocations): TreeLocationResolution {
 		const source = this.getMainSource();
+		const capture = captured as unknown as CapturedTreeLocationsInternal;
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		let commit = this.checkout.getLocationHead();
 		let sequenced = false;

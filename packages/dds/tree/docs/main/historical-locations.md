@@ -9,30 +9,30 @@ Local forks, independent views, and non-main shared branches are deliberately ex
 
 ## Public concepts
 
-`TreeLocation` distinguishes `{ kind: "node", node }` from `{ kind: "sequence", node, index, affinity }`.
+`TreeLocation` is an `@input` type distinguishing `{ kind: "node", node }` from `{ kind: "sequence", node, index, affinity? }`.
 A node location selects the whole object, map, record, or array.
 A sequence location selects a gap in an array.
 Primitive leaves are not `TreeNode` objects and cannot identify a particular occurrence by value.
 An ordinary string leaf does not expose independently editable character locations through this API.
 
-`CapturedTreeLocations` contains one revision and an ordered list of `CapturedTreeLocation` values.
-Each location replaces the local node object with an opaque `TreeNodeReference` string.
-References and revisions are nominally typed, JSON-serializable strings.
-Their encodings are not part of the public contract: applications must not construct, inspect, or modify them.
-The entire capture can be sent through JSON without serialization helpers or live anchor handles.
-The references must stay paired with their captured revision.
+`CapturedTreeLocations` is a sealed, type-erased presence payload.
+Its API extends `ErasedType` and exposes no properties or representation details.
+It is JSON-serializable and designed to be safely transmitted between clients of the same SharedTree.
+Applications must not construct, inspect, or modify its representation.
+The entire capture can be sent through JSON without serialization helpers, live node objects, or local anchor handles.
 
 `ResolvedTreeLocation` contains either a current `TreeLocation` or an explicit unavailable reason.
 Node results can be narrowed with `Tree.is(node, MySchema)`.
 A batch can mix object selections and text endpoints, and results preserve input order and selection direction.
 These APIs are alpha-only.
+The capture, resolver, and result types are `@sealed`; inputs and readable outputs are distinct so optional input defaults do not weaken output guarantees.
 
 ```typescript
 // Use an attached main view, after its edits are acknowledged and outside a transaction.
 const capture = view.locations.capture([
     { kind: "node", node: image },
-    { kind: "sequence", node: characters, index: focus, affinity: "after" },
-    { kind: "sequence", node: characters, index: anchor, affinity: "after" },
+    { kind: "sequence", node: characters, index: focus },
+    { kind: "sequence", node: characters, index: anchor },
 ]);
 sendPresence({ capture });
 
@@ -99,6 +99,8 @@ Structural symbols and embedded objects participate in that conversion.
 
 Insertion before a gap shifts it.
 At the gap, `"before"` stays before the insertion and `"after"` stays after it.
+Omitted or undefined affinity defaults to `"before"` during capture.
+Resolved sequence locations always report the effective affinity explicitly.
 Deletion collapses gaps within the removed span to the deletion boundary.
 Later edits transform the collapsed gap; undo does not recover the old offset inside removed content.
 
@@ -121,6 +123,7 @@ Capturing or resolving during a transaction, capturing nodes from another view, 
 
 ## Anchor-based implementation
 
+Internally, the opaque capture groups one revision with an ordered list of historical locations.
 Capture encodes a versioned path using stored field keys, plus revision binding and sequence-length metadata for gap validation.
 The encoding is private and can change without exposing `UpPath`, `FieldKey`, or anchor handles to consumers.
 On receipt, the resolver validates the encoding and reconstructs an internal up-path.

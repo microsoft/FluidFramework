@@ -15,8 +15,8 @@ The application supplies the messaging and selection display; no receiver-side n
 // Use an attached main view with acknowledged edits and no open transaction.
 const capture = view.locations.capture([
     { kind: "node", node: selectedImage },
-    { kind: "sequence", node: characters, index: focusIndex, affinity: "after" },
-    { kind: "sequence", node: characters, index: anchorIndex, affinity: "after" },
+    { kind: "sequence", node: characters, index: focusIndex },
+    { kind: "sequence", node: characters, index: anchorIndex },
 ]);
 publishSelection({ capture });
 
@@ -43,9 +43,11 @@ if (result.status === "resolved") {
 ```
 
 Indices count array elements; editors must convert other coordinate units.
-Captures contain opaque JSON-serializable node references and a shared revision.
+Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
+Their representation is hidden with `ErasedType`; applications should transmit them unchanged.
+Sequence affinity defaults to `"before"`; specify `"after"` to stay after content inserted at the gap.
 This initial prototype supports only the main view of an attached SharedTree.
 Capture throws `UsageError` while local edits are pending; both capture and resolution throw on local forks, non-main shared branches, or during open transactions.
 Resolution on the main view still includes the receiver's pending edits.
-References expire with retained collaboration history and must not be persisted or interpreted by applications.
+Captures expire with retained collaboration history and must not be persisted or interpreted by applications.
 Locations remain resolvable across schema widening, provided the receiving view can view the current stored schema.

@@ -38,10 +38,7 @@ export type {
 } from "./tree.js";
 export { asTreeViewAlpha } from "./tree.js";
 export type {
-	TreePositionRevision,
-	TreeNodeReference,
 	TreeLocation,
-	CapturedTreeLocation,
 	CapturedTreeLocations,
 	ResolvedTreeLocation,
 	TreeLocationResolution,

@@ -9,32 +9,12 @@ import type { TreeNode } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
 
 /**
- * An opaque, serializable identifier for a sequenced state of the main branch.
- * @remarks
- * Obtained as part of {@link TreeLocationResolver.capture}.
- * Tokens expire with retained history and must not be used for persisted locations.
- * @alpha
- */
-export type TreePositionRevision = string &
-	ErasedType<"@fluidframework/tree.TreePositionRevision">;
-
-/**
- * An opaque, serializable reference to a node at a captured revision.
- * @remarks
- * Only meaningful with the revision and SharedTree branch from its {@link CapturedTreeLocations}.
- * This is not a persistent identifier or a live tracking reference.
- * Applications may transmit this string through JSON, but must not construct, parse, or modify its encoding.
- * @alpha
- */
-export type TreeNodeReference = string & ErasedType<"@fluidframework/tree.TreeNodeReference">;
-
-/**
- * A whole node, or a gap between elements of an array, in the current local view.
+ * Input describing a whole node, or a gap between elements of an array, in the current local view.
  * @remarks
  * A node location can refer to any SimpleTree {@link TreeNode}, including an entire array.
  * Primitive leaf values do not identify a particular occurrence and are not node locations.
  * Sequence indices count array elements, not UTF-16 units or grapheme clusters unless the schema uses those units.
- * @alpha
+ * @input @alpha
  */
 export type TreeLocation =
 	| {
@@ -50,47 +30,27 @@ export type TreeLocation =
 			readonly index: number;
 			/**
 			 * The side of content inserted at the gap on which the position stays.
+			 * Defaults to "before" when omitted or undefined.
 			 * At move boundaries, "before" follows the preceding element and "after" follows the following element.
 			 * Array boundaries provide sentinels when there is no adjacent element.
+			 * @defaultValue "before"
 			 */
-			readonly affinity: "before" | "after";
+			readonly affinity?: "before" | "after" | undefined;
 	  };
 
 /**
- * A serializable location expressed entirely in a captured revision's coordinates.
+ * Opaque, JSON-serializable presence data produced by {@link TreeLocationResolver.capture}.
  * @remarks
- * Created by {@link TreeLocationResolver.capture}, not by looking up a node on the receiving client.
- * @alpha
+ * Designed to be safely transmitted between clients of the same SharedTree in presence messages,
+ * including through a JSON serialization round trip, and passed to {@link TreeLocationResolver.resolve}.
+ * It contains no live node objects or local anchor handles.
+ * Applications must not inspect, construct, or modify its representation.
+ * Captures are ephemeral and can become unavailable when collaboration history is trimmed.
+ * They must not be used as persisted references.
+ * @sealed @alpha
  */
-export type CapturedTreeLocation =
-	| {
-			readonly kind: "node";
-			readonly node: TreeNodeReference;
-	  }
-	| {
-			readonly kind: "sequence";
-			readonly node: TreeNodeReference;
-			readonly index: number;
-			readonly affinity: "before" | "after";
-	  };
-
-/**
- * An ordered batch of locations captured at one sequenced revision.
- * @remarks
- * The whole batch can be transmitted through JSON.
- * Keep references paired with their captured revision.
- * @alpha
- */
-export interface CapturedTreeLocations {
-	/**
-	 * The main branch's sequenced state in which all locations were captured.
-	 */
-	readonly revision: TreePositionRevision;
-	/**
-	 * The captured node selections and sequence gaps, in input order.
-	 */
-	readonly locations: readonly CapturedTreeLocation[];
-}
+export interface CapturedTreeLocations
+	extends ErasedType<"@fluidframework/tree.CapturedTreeLocations"> {}
 
 /**
  * The current local location or an explicit unavailable result.
@@ -99,12 +59,25 @@ export interface CapturedTreeLocations {
  * Deletion is terminal for a captured node location, even if a later undo restores the node.
  * Sequence locations follow moved content, including into another array.
  * Deletions collapse sequence gaps to the deletion boundary.
- * @alpha
+ * @sealed @alpha
  */
 export type ResolvedTreeLocation =
 	| {
 			readonly status: "resolved";
-			readonly location: TreeLocation;
+			readonly location:
+				| {
+						readonly kind: "node";
+						readonly node: TreeNode;
+				  }
+				| {
+						readonly kind: "sequence";
+						readonly node: TreeArrayNode;
+						readonly index: number;
+						/**
+						 * The captured affinity, including the default "before" if none was supplied.
+						 */
+						readonly affinity: "before" | "after";
+				  };
 	  }
 	| {
 			readonly status: "unavailable";
@@ -116,7 +89,7 @@ export type ResolvedTreeLocation =
  * @remarks
  * An unavailable revision can be not yet received, expired, or from a different branch.
  * Retry after applying pending inbound operations, or request a fresh capture if the revision has expired.
- * @alpha
+ * @sealed @alpha
  */
 export type TreeLocationResolution =
 	| {
@@ -167,7 +140,7 @@ export interface TreeLocationResolver {
 
 	/**
 	 * Resolves a captured batch into this view's current local state.
-	 * @param capture - The sender's capture, including its revision and opaque node references.
+	 * @param capture - The opaque presence data produced by the sender's capture.
 	 * @returns Results in capture order or an explicit unavailable-revision result.
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} on a view other than the main view of an attached SharedTree,
 	 * during a transaction, after disposal, or if the receiving view cannot view the current stored schema.

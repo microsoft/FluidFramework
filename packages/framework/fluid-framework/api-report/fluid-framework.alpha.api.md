@@ -185,21 +185,8 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @alpha
-export type CapturedTreeLocation = {
-    readonly kind: "node";
-    readonly node: TreeNodeReference;
-} | {
-    readonly kind: "sequence";
-    readonly node: TreeNodeReference;
-    readonly index: number;
-    readonly affinity: "before" | "after";
-};
-
-// @alpha
-export interface CapturedTreeLocations {
-    readonly locations: readonly CapturedTreeLocation[];
-    readonly revision: TreePositionRevision;
+// @alpha @sealed
+export interface CapturedTreeLocations extends ErasedType<"@fluidframework/tree.CapturedTreeLocations"> {
 }
 
 // @alpha @sealed
@@ -1751,10 +1738,18 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 // @alpha
 export function replaceVerboseTreeHandles<T>(tree: VerboseTree, replacer: HandleConverter<T>): VerboseTree<T>;
 
-// @alpha
+// @alpha @sealed
 export type ResolvedTreeLocation = {
     readonly status: "resolved";
-    readonly location: TreeLocation;
+    readonly location: {
+        readonly kind: "node";
+        readonly node: TreeNode;
+    } | {
+        readonly kind: "sequence";
+        readonly node: TreeArrayNode;
+        readonly index: number;
+        readonly affinity: "before" | "after";
+    };
 } | {
     readonly status: "unavailable";
     readonly reason: "target-deleted" | "invalid-location";
@@ -2755,7 +2750,7 @@ export type TreeIndexNodes<TNode> = readonly [first: TNode, ...rest: TNode[]];
 // @public
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 
-// @alpha
+// @alpha @input
 export type TreeLocation = {
     readonly kind: "node";
     readonly node: TreeNode;
@@ -2763,10 +2758,10 @@ export type TreeLocation = {
     readonly kind: "sequence";
     readonly node: TreeArrayNode;
     readonly index: number;
-    readonly affinity: "before" | "after";
+    readonly affinity?: "before" | "after" | undefined;
 };
 
-// @alpha
+// @alpha @sealed
 export type TreeLocationResolution = {
     readonly status: "resolved";
     readonly locations: readonly ResolvedTreeLocation[];
@@ -2820,9 +2815,6 @@ export interface TreeNodeApi {
 // @public
 export type TreeNodeFromImplicitAllowedTypes<TSchema extends ImplicitAllowedTypes = TreeNodeSchema> = TSchema extends TreeNodeSchema ? NodeFromSchema<TSchema> : TSchema extends AllowedTypes ? NodeFromSchema<FlexListToUnion<TSchema>> : unknown;
 
-// @alpha
-export type TreeNodeReference = string & ErasedType<"@fluidframework/tree.TreeNodeReference">;
-
 // @public @sealed
 export type TreeNodeSchema<Name extends string = string, Kind extends NodeKind = NodeKind, TNode extends TreeNode | TreeLeafValue = TreeNode | TreeLeafValue, TBuild = never, ImplicitlyConstructable extends boolean = boolean, Info = unknown, TCustomMetadata = unknown> = (TNode extends TreeNode ? TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info, never, TCustomMetadata> : never) | TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info, never, TCustomMetadata>;
 
@@ -2856,9 +2848,6 @@ export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema
 
 // @alpha @input
 export type TreeParsingOptions = TreeEncodingOptions<KeyEncodingOptions.usePropertyKeys | KeyEncodingOptions.knownStoredKeys>;
-
-// @alpha
-export type TreePositionRevision = string & ErasedType<"@fluidframework/tree.TreePositionRevision">;
 
 // @beta
 export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes> | undefined> {
