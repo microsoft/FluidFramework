@@ -118,7 +118,7 @@ export function createExtrinsicRangeManager<
 		// Mainly for:
 		// insert: add a specified constant if current value is > a specified value.
 		// remove: subtract a specified constant if current value is > a specified value.
-		// while the specified values are also updated be rebase like array indexes.
+		// while the specified values are also updated by rebase like array indexes.
 		start: SchemaFactory.number,
 		end: SchemaFactory.number,
 	}) {}
