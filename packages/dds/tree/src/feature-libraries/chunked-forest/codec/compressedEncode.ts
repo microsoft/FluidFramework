@@ -39,8 +39,7 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
-	type EncodedChunkShapeV2,
-	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchAnyVersion,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
 	type FieldBatchFormatVersion,
@@ -58,7 +57,7 @@ import {
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
-): EncodedFieldBatchV1OrV2 {
+): EncodedFieldBatchAnyVersion {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -432,11 +431,11 @@ export class NestedArrayEncoder implements FieldEncoder {
 /**
  * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
  */
-export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShapeV2> {
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShapeV2 {
+	): EncodedChunkShape {
 		return {
 			e: 0 /* EncodedIncrementalChunkShape */,
 		};
@@ -475,7 +474,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 
 		const chunkReferenceIds = context.incrementalEncoder.encodeIncrementalField(
 			cursor,
-			(chunk: TreeChunk) => compressedEncode([chunk.cursor()], context),
+			(chunk: TreeChunk) => context.encodeIncrementalChunk([chunk.cursor()]),
 		);
 		outputBuffer.push(chunkReferenceIds);
 	},
@@ -568,6 +567,17 @@ export class EncoderContext
 			this.idCompressor,
 			this.isSummary ? EncodedIdType.Originatorless : EncodedIdType.OriginatorDependent,
 		);
+	}
+
+	/**
+	 * Encodes the chunk of an incremental field. {@link incrementalFieldEncoder} calls this method.
+	 * @remarks
+	 * The chunk is a separate batch. The base method encodes the chunk with this context. A format
+	 * that chooses its encoders for each batch can override this method. The override encodes the
+	 * chunk with encoders that it chooses for the chunk.
+	 */
+	public encodeIncrementalChunk(fieldBatch: FieldBatch): EncodedFieldBatchAnyVersion {
+		return compressedEncode(fieldBatch, this);
 	}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

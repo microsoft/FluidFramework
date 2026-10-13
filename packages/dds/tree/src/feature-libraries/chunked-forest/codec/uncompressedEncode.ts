@@ -16,6 +16,7 @@ import type {
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV1AndV2,
 	EncodedFieldBatchV2,
+	EncodedFieldBatchVTextExperimental,
 	EncodedNestedArrayShape,
 	EncodedNodeShape,
 	ShapeIndex,
@@ -36,6 +37,16 @@ export function uncompressedEncodeV1(batch: FieldBatch): EncodedFieldBatchV1 {
  */
 export function uncompressedEncodeV2(batch: FieldBatch): EncodedFieldBatchV2 {
 	return uncompressedEncode(batch, brand(FieldBatchFormatVersion.v2));
+}
+
+/**
+ * Encode data from `cursor` in the simplest way supported by `EncodedChunk` using {@link FieldBatchFormatVersion.vTextExperimental}.
+ * @remarks See {@link uncompressedEncode} for more details.
+ */
+export function uncompressedEncodeVTextExperimental(
+	batch: FieldBatch,
+): EncodedFieldBatchVTextExperimental {
+	return uncompressedEncode(batch, brand(FieldBatchFormatVersion.vTextExperimental));
 }
 
 /**
