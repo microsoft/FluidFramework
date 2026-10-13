@@ -98,6 +98,7 @@ export interface RevertibleSupportController {
 		sourceBranch: RevertibleBranch,
 	): RevertibleAlpha;
 	disposeRevertibleForRemovedCommit(revision: RevisionTag): void;
+	checkCanRewind(): void;
 	getRevertTo(revision: string): ((options?: RevertToOptionsAlpha) => void) | undefined;
 	revertTo(revision: string, options: RevertToOptionsAlpha | undefined): void;
 	dispose(): void;

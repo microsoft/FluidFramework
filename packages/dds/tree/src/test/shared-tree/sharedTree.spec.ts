@@ -64,7 +64,9 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type ITreePrivate,
+	RevertibleSupportDisabled,
 	RevertibleSupportEnabled,
+	type SharedTreeOptions,
 	Tree,
 	TreeBeta,
 	type TreeCheckout,
@@ -155,6 +157,16 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
+	it("does not allow caller options to override injected revertible support", () => {
+		const options: SharedTreeOptions = {
+			revertibleSupport: RevertibleSupportEnabled,
+		};
+
+		const resolved = resolveOptions(options, RevertibleSupportDisabled);
+
+		assert.equal(resolved.revertibleSupport, RevertibleSupportDisabled);
+	});
+
 	it("rejects compatibility versions before SharedTree 2.0", () => {
 		assert.throws(
 			() =>

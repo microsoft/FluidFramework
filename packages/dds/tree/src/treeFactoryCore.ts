@@ -105,7 +105,9 @@ export function resolveOptions(
 		revertibleSupport,
 	};
 	for (const optionName of Object.keys(options)) {
-		copyProperty(options, optionName, internal);
+		if (optionName !== "revertibleSupport") {
+			copyProperty(options, optionName, internal);
+		}
 	}
 	return internal;
 }

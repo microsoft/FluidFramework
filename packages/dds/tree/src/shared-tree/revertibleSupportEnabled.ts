@@ -83,6 +83,8 @@ class DefaultRevertibleSupport implements RevertibleSupportController {
 		this.revertibles.get(revision)?.dispose();
 	}
 
+	public checkCanRewind(): void {}
+
 	public cloneRevertible(
 		revision: RevisionTag,
 		kind: CommitKind,

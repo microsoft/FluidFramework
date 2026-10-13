@@ -1446,6 +1446,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public rewindTo(revisionString: string): void {
+		this.revertibleSupport.checkCanRewind();
 		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
 		if (this.#transaction.size > 0) {
 			throw new UsageError("Rewinding is not supported during transactions.");

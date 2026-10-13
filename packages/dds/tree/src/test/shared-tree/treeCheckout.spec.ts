@@ -1641,6 +1641,19 @@ describe("sharedTreeView", () => {
 			);
 		});
 
+		it("disabled support rejects rewinding", () => {
+			const view = createDisabledView();
+			view.initialize(1);
+			const revision = view.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			const fork = view.checkout.fork().viewWith(view.config);
+
+			assert.throws(
+				() => fork.rewindTo(revision),
+				validateUsageError("History recovery is disabled for this SharedTree."),
+			);
+		});
+
 		it("initialization events omit revertibles", () => {
 			const view = getView(new TreeViewConfiguration({ schema: revertibleSchema.number }));
 			const log: string[] = [];
