@@ -110,7 +110,10 @@ import {
 	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
-import { isSharedTreeChangeValid, SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import {
+	debugOnlySharedTreeChangeValidator,
+	SharedTreeChangeFamily,
+} from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
@@ -318,7 +321,7 @@ export class SharedTreeKernel
 			defaultSchemaPolicy,
 			undefined,
 			undefined,
-			isSharedTreeChangeValid,
+			debugOnlySharedTreeChangeValidator,
 		);
 
 		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {

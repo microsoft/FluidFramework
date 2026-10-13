@@ -136,9 +136,9 @@ import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily
 import {
 	ConstraintStatus,
 	SharedTreeChangeFamily,
+	debugOnlySharedTreeChangeValidator,
 	getConstraintStatus,
 	hasSchemaChange,
-	isSharedTreeChangeValid,
 } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -428,7 +428,7 @@ export function createTreeCheckout(
 			() => idCompressor.generateCompressedId(),
 			undefined,
 			undefined,
-			isSharedTreeChangeValid,
+			debugOnlySharedTreeChangeValidator,
 		);
 
 	return new TreeCheckout(
@@ -863,7 +863,7 @@ export class TreeCheckout implements ITreeCheckout {
 					}
 				};
 			},
-			isSharedTreeChangeValid,
+			debugOnlySharedTreeChangeValidator,
 		);
 	}
 
@@ -1678,7 +1678,7 @@ export class TreeCheckout implements ITreeCheckout {
 			this.#transaction.branch.getHead(),
 			target,
 			target,
-			isSharedTreeChangeValid,
+			debugOnlySharedTreeChangeValidator,
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -1836,7 +1836,7 @@ export class TreeCheckout implements ITreeCheckout {
 					headCommit,
 					this.mintRevisionTag,
 					ignoreNoChangeViolation,
-					isSharedTreeChangeValid,
+					debugOnlySharedTreeChangeValidator,
 				).change,
 				revisionForInvert,
 			);
