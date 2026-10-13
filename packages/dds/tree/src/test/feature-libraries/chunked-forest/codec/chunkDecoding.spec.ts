@@ -51,6 +51,7 @@ import {
 	type EncodedChunkShape,
 	type EncodedChunkShapeVTextExperimental,
 	type EncodedFieldBatchAnyVersion,
+	type EncodedFieldBatchVTextExperimental,
 	type EncodedNodeShape,
 	type EncodedSpecializedNodeShape,
 	FieldBatchFormatVersion,
@@ -1222,7 +1223,7 @@ describe("chunkDecoding", () => {
 			//
 			// `f` is part of the vTextExperimental format, so the batch is tagged with that
 			// version to match the on-the-wire contract.
-			const batch = {
+			const batch: EncodedFieldBatchVTextExperimental = {
 				version: FieldBatchFormatVersion.vTextExperimental,
 				identifiers: [],
 				shapes: [
@@ -1232,7 +1233,7 @@ describe("chunkDecoding", () => {
 					{ f: { base: 0, fields: [["bold", 2]] } },
 				],
 				data: [[3]],
-			} as unknown as EncodedFieldBatchAnyVersion;
+			};
 
 			const result = decode(batch, idDecodingContext);
 
