@@ -651,22 +651,104 @@ describe("VersionMarkResolver", () => {
 			});
 		});
 
-		it("unresolvable when the range was trimmed (empty read despite sequenced ops)", async () => {
-			// tip (20) is well past `from` (1), so ops should exist; an empty read means the range was trimmed.
+		it("pending when an empty read starts before the tip", async () => {
+			// Empty history is ambiguous: a just-submitted batch may not be visible to the reader yet.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 20 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
-				kind: "unresolvable",
-				reason: "historyTrimmed",
+			const batchId = generateBatchId("missing", 9);
+			assert.deepEqual(await resolver.resolve(batchId, 1), {
+				kind: "pending",
+				reason: "emptyHistoryRead",
+			});
+
+			// The pending mark can still resolve when the batch subsequently sequences live.
+			resolver.processInboundBatch(batchId, 21, 21000);
+			assert.deepEqual(await resolver.resolve(batchId, 1), {
+				kind: "resolved",
+				sequenceNumber: 21,
+				timestamp: 21000,
 			});
 		});
 
-		it("unresolvable on an empty read when `from` equals the tip (boundary)", async () => {
-			// tip (6) == `from` (6): the lower bound is at the tip, so an op could exist there. An empty
-			// read therefore means the range was trimmed, not that nothing is sequenced yet → unresolvable.
+		it("pending on an empty read when `from` equals the tip", async () => {
+			// Even at the tip, an empty read may reflect a temporary visibility delay.
 			const reader = makeReader([]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 6 });
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 6), {
+				kind: "pending",
+				reason: "emptyHistoryRead",
+			});
+		});
+
+		it("resolves from history when a batch becomes visible after an empty read", async () => {
+			let attempt = 0;
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					attempt++;
+					return makeStream(
+						attempt === 1
+							? []
+							: [
+									[
+										makeOp({
+											sequenceNumber: 20,
+											clientId: "target",
+											clientSequenceNumber: 1,
+											metadata: { batch: true },
+										}),
+										makeOp({
+											sequenceNumber: 21,
+											clientId: "target",
+											clientSequenceNumber: 2,
+											metadata: { batch: false },
+										}),
+									],
+								],
+					);
+				},
+			};
+			const resolver = makeResolver({ reader, currentSequenceNumber: 21 });
+			const batchId = generateBatchId("target", 1);
+
+			assert.deepEqual(await resolver.resolve(batchId, 5), {
+				kind: "pending",
+				reason: "emptyHistoryRead",
+			});
+			assert.deepEqual(await resolver.resolve(batchId, 5), {
+				kind: "resolved",
+				sequenceNumber: 21,
+				timestamp: 21000,
+			});
+		});
+
+		it("reports a trim gap when it becomes visible after an empty read", async () => {
+			let attempt = 0;
+			const reader: IHistoricalOpReader = {
+				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
+					attempt++;
+					return makeStream(
+						attempt === 1
+							? []
+							: [
+									[
+										makeOp({
+											sequenceNumber: 10,
+											clientId: "other",
+											clientSequenceNumber: 1,
+										}),
+									],
+								],
+					);
+				},
+			};
+			const resolver = makeResolver({ reader, currentSequenceNumber: 12 });
+			const batchId = generateBatchId("missing", 9);
+
+			assert.deepEqual(await resolver.resolve(batchId, 1), {
+				kind: "pending",
+				reason: "emptyHistoryRead",
+			});
+			assert.deepEqual(await resolver.resolve(batchId, 1), {
 				kind: "unresolvable",
 				reason: "historyTrimmed",
 			});
@@ -995,7 +1077,7 @@ describe("VersionMarkResolver", () => {
 			]);
 		});
 
-		it("reports a terminal history-trimmed outcome as unresolvable", async () => {
+		it("reports an empty history read as pending", async () => {
 			const logger = new MockLogger();
 			const resolver = makeResolver({
 				reader: makeReader([]),
@@ -1004,18 +1086,18 @@ describe("VersionMarkResolver", () => {
 			});
 
 			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 1), 5), {
-				kind: "unresolvable",
-				reason: "historyTrimmed",
+				kind: "pending",
+				reason: "emptyHistoryRead",
 			});
 			logger.assertMatch([
 				{
 					eventName: "Resolve",
 					category: "generic",
-					outcome: "unresolvable",
+					outcome: "pending",
 					path: "history",
 					historyAttempted: true,
 					sequenceNumberLowerBound: 5,
-					reason: "historyTrimmed",
+					reason: "emptyHistoryRead",
 				},
 			]);
 		});

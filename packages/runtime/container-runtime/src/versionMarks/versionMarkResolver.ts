@@ -281,10 +281,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 			return { kind: "pending", reason: "awaitingSequence" };
 		}
 		if (firstScannedSequenceNumber === undefined) {
-			// Empty read though ops should exist in `[from, tip]` → trimmed. ODSP-specific: a strict driver
-			// empties a `from`-misaligned trimmed range (validateMessages); a return-from-earliest driver
-			// would instead surface the trim via the `firstScannedSequenceNumber > from` branch below.
-			return { kind: "unresolvable", reason: "historyTrimmed" };
+			// An empty read is ambiguous: the range may have been trimmed, or a just-submitted batch may
+			// not be visible to the historical-op reader yet. Keep the mark pending so it can be retried or
+			// promoted when the batch sequences live.
+			return { kind: "pending", reason: "emptyHistoryRead" };
 		}
 		if (firstScannedSequenceNumber > from) {
 			// A trim gap at the anchor: the mark's ops (at/after its lower bound) are gone.
