@@ -4,6 +4,8 @@ Text editors can transmit presence for entire SimpleTree nodes as well as gaps b
 `TreeViewAlpha.locations.capture` captures the sender's selection and a sequenced revision together.
 `resolve` translates that capture into the receiver's current local state, including pending local edits.
 It returns ordinary SimpleTree objects and does not require an application-level lookup of the source node.
+This initial prototype supports capture and resolution only on the main view of an attached SharedTree.
+Local forks, independent views, and non-main shared branches are deliberately excluded.
 
 ## Public concepts
 
@@ -26,14 +28,13 @@ A batch can mix object selections and text endpoints, and results preserve input
 These APIs are alpha-only.
 
 ```typescript
+// Use an attached main view, after its edits are acknowledged and outside a transaction.
 const capture = view.locations.capture([
     { kind: "node", node: image },
     { kind: "sequence", node: characters, index: focus, affinity: "after" },
     { kind: "sequence", node: characters, index: anchor, affinity: "after" },
 ]);
-if (capture !== undefined) {
-    sendPresence({ capture });
-}
+sendPresence({ capture });
 
 // On another client, after synchronizing the editor model with the local tree:
 const result = view.locations.resolve(message.capture);
@@ -59,9 +60,16 @@ The messaging and rendering functions in this example are application pseudocode
 
 ## Revisions and ordering
 
-Capture returns `undefined` unless the view matches its shared branch's sequenced state with no open transaction.
-Pending edits, unattached trees, unacknowledged branch creation, local forks, and the uninitialized root sentinel cannot produce captures.
+Capture throws `UsageError` unless the attached main view matches its sequenced state with no open transaction.
+Pending local edits, local forks, independent views, non-main shared branches, and the uninitialized root sentinel cannot produce captures.
 A local commit ID alone is insufficient: rebasing can change its context without changing its identifier.
+The prototype relies on main's established sequenced history rather than supporting arbitrary branch perspectives.
+Non-main shared branches are excluded even after acknowledgement because a history-rewriting rebase could change the interpretation of a captured revision.
+Supporting them or speculative sender states requires additional perspective information and reconstruction; neither is part of this prototype.
+
+Resolution has the same main-view, attachment, and no-open-transaction requirements, but permits pending local edits on the receiver.
+It transforms the captured locations through those edits.
+Unsupported local view states throw `UsageError`; missing or expired source revisions are normal asynchronous outcomes and return `revision-unavailable`.
 
 Read the selection and call `capture` synchronously after any edits needed to materialize shared content have been acknowledged.
 If publication must wait, recompute the selection before capturing.
@@ -109,7 +117,7 @@ Deleted targets produce `target-deleted`.
 Schema changes do not change existing node identities or locations and do not make captures unavailable.
 The receiving view must still be compatible with the current stored schema; an incompatible view throws the normal view-compatibility usage error.
 No failure path silently selects a replacement node or clamps an index.
-Resolving during a transaction, capturing nodes from another view, and using disposed resolvers are API misuse and throw usage errors.
+Capturing or resolving during a transaction, capturing nodes from another view, and using disposed resolvers are API misuse and throw usage errors.
 
 ## Anchor-based implementation
 

@@ -9,7 +9,7 @@ import type { TreeNode } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
 
 /**
- * An opaque, serializable identifier for a sequenced state of a shared branch.
+ * An opaque, serializable identifier for a sequenced state of the main branch.
  * @remarks
  * Obtained as part of {@link TreeLocationResolver.capture}.
  * Tokens expire with retained history and must not be used for persisted locations.
@@ -83,7 +83,7 @@ export type CapturedTreeLocation =
  */
 export interface CapturedTreeLocations {
 	/**
-	 * The shared branch's sequenced state in which all locations were captured.
+	 * The main branch's sequenced state in which all locations were captured.
 	 */
 	readonly revision: TreePositionRevision;
 	/**
@@ -132,6 +132,7 @@ export type TreeLocationResolution =
  * @remarks
  * Capture uses the sender's SimpleTree objects; resolution returns the receiver's SimpleTree objects.
  * No application-level node lookup is required on the receiving client.
+ * This prototype supports only the main view of an attached SharedTree, not local forks or other shared branches.
  * Resolution includes pending local edits and replays the intervening retained history using sparse anchors.
  * It does not reconstruct a historical forest, retain history, or create live tracking references for callers.
  * Replay cost is linear in the intervening changes and depends on the number of locations.
@@ -143,20 +144,36 @@ export interface TreeLocationResolver {
 	/**
 	 * Captures locations and their revision from the same sequenced state.
 	 * @param locations - Local node selections or sequence gaps, in application-defined order.
-	 * @returns A serializable capture, or undefined if edits or branch creation are pending,
-	 * a transaction is open, or the view is not an attached shared branch.
-	 * @throws A usage error for invalid locations, nodes outside this view's document, or a disposed view.
+	 * @returns A serializable capture.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if any of the limitations below are violated,
+	 * a location is invalid, a node is outside this view's document, or the view is disposed.
 	 * @remarks
-	 * Recompute the selection when publication must wait; do not reuse indices from an earlier state.
+	 * This initial prototype has the following limitations:
+	 *
+	 * - Only the main view of an attached SharedTree is supported. Local forks, independent views,
+	 * and non-main shared branches are not supported, even when they have no pending edits.
+	 * - The main view must have a sequenced revision and no pending local edits.
+	 * Wait for local edits to be acknowledged before calling this method.
+	 * - No transaction may be open, including a transaction that has not made any edits.
+	 * - Node locations require SimpleTree nodes; primitive leaf values cannot identify a particular occurrence.
+	 * Sequence locations require array nodes and count array elements, not arbitrary text offsets.
+	 *
+	 * Unsupported view states throw rather than returning undefined.
+	 * After waiting for acknowledgement, recompute the selection and capture it synchronously;
+	 * do not reuse indices measured before the wait.
+	 * Captures are ephemeral and expire with retained history; they are not persistent anchors.
 	 */
-	capture(locations: readonly TreeLocation[]): CapturedTreeLocations | undefined;
+	capture(locations: readonly TreeLocation[]): CapturedTreeLocations;
 
 	/**
 	 * Resolves a captured batch into this view's current local state.
 	 * @param capture - The sender's capture, including its revision and opaque node references.
 	 * @returns Results in capture order or an explicit unavailable-revision result.
-	 * @throws A usage error during a transaction, after disposal, or if the receiving view cannot view the current stored schema.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} on a view other than the main view of an attached SharedTree,
+	 * during a transaction, after disposal, or if the receiving view cannot view the current stored schema.
 	 * @remarks
+	 * Unlike capture, resolution supports pending local edits on the main view.
+	 * Not-yet-received, expired, or wrong-context revisions return `revision-unavailable`; these are not usage errors.
 	 * Wait for editor-model updates before using the result in an editor.
 	 * Wire encodings are checked, but captures are not authenticated proofs of historical node existence.
 	 */

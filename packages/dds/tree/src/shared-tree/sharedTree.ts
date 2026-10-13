@@ -345,11 +345,12 @@ export class SharedTreeKernel
 	}
 
 	private registerCheckout(branchId: BranchId, checkout: TreeCheckout): void {
-		checkout.setLocationRevisionSource(() => ({
-			branchId: branchId === "main" ? "main" : this.idCompressor.decompress(branchId),
-			head: this.getTrunkHead(branchId),
-			isSequenced: this.isBranchSequenced(branchId),
-		}));
+		if (branchId === "main") {
+			checkout.setLocationRevisionSource(() => ({
+				head: this.getTrunkHead(),
+				isAttached: this.sharedObject.isAttached(),
+			}));
+		}
 		this.checkouts.set(branchId, checkout);
 	}
 

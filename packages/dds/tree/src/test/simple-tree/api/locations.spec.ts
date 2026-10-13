@@ -5,6 +5,11 @@
 
 import { strict as assert } from "node:assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	MockFluidDataStoreRuntime,
+	validateUsageError,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../../api.js";
 import type { RevertibleAlpha } from "../../../core/index.js";
@@ -20,7 +25,7 @@ import {
 	type TreeViewAlpha,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
-import { TestTreeProviderLite } from "../../utils.js";
+import { getView, TestTreeProviderLite } from "../../utils.js";
 
 const sf = new SchemaFactory("com.example.locations");
 class Text extends sf.array("Text", sf.string) {}
@@ -40,7 +45,6 @@ function capture(
 	locations: readonly TreeLocation[],
 ): CapturedTreeLocations {
 	const result = resolver.capture(locations);
-	assert(result !== undefined);
 	// Model the JSON transport boundary; the resolver must validate the wire encoding.
 	return JSON.parse(JSON.stringify(result)) as CapturedTreeLocations;
 }
@@ -178,7 +182,7 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: sender.root.left, index: 0, affinity: "before" },
 		]);
 		assert.equal(typeof batch.locations[0].node, "string");
-		assert.equal(receiver.locations.capture([])?.revision, batch.revision);
+		assert.equal(receiver.locations.capture([]).revision, batch.revision);
 		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
 			{ kind: "node", node: receiver.root },
 			{ kind: "node", node: receiver.root.left },
@@ -193,7 +197,10 @@ describe("TreeLocationResolver", () => {
 		const after = captureGaps(sender, [0, 1, 2, 3, 4]);
 		const before = captureGaps(sender, [2], "before");
 		receiver.root.left.insertAt(2, "i", "j");
-		assert.equal(receiver.locations.capture([]), undefined);
+		assert.throws(
+			() => receiver.locations.capture([]),
+			validateUsageError(/pending local edits/),
+		);
 		assert.deepEqual(indices(receiver.locations, after), [0, 1, 4, 5, 6]);
 		assert.deepEqual(indices(receiver.locations, before), [2]);
 		receiver.root.left.removeRange(0, 4);
@@ -305,13 +312,19 @@ describe("TreeLocationResolver", () => {
 		receiver.root.left.insertAtEnd("local");
 		do {
 			provider.synchronizeMessages({ count: 1 });
-		} while (sender.locations.capture([]) === undefined);
-		assert.equal(receiver.locations.capture([]), undefined);
+		} while (
+			provider.trees[0].kernel.getLocalBranch().getHead() !==
+			provider.trees[0].kernel.getTrunkHead()
+		);
+		assert.throws(
+			() => receiver.locations.capture([]),
+			validateUsageError(/pending local edits/),
+		);
 		assert.deepEqual(indices(receiver.locations, batch), [3, 6]);
 		provider.synchronizeMessages();
 		assert.equal(
-			receiver.locations.capture([])?.revision,
-			sender.locations.capture([])?.revision,
+			receiver.locations.capture([]).revision,
+			sender.locations.capture([]).revision,
 		);
 	});
 
@@ -399,20 +412,37 @@ describe("TreeLocationResolver", () => {
 		);
 	});
 
-	it("does not publish during transactions or from forks and does not retain aborted edits", () => {
+	it("rejects open transactions and does not retain aborted edits", () => {
 		const { views } = setup();
 		const view = views[0];
 		const batch = captureGaps(view, [0, 2, 4]);
 		view.runTransaction(() => {
-			assert.equal(view.locations.capture([]), undefined);
-			assert.throws(() => view.locations.resolve(batch), /during a transaction/);
+			assert.throws(
+				() => view.locations.capture([]),
+				validateUsageError(/during a transaction/),
+			);
+			assert.throws(
+				() => view.locations.resolve(batch),
+				validateUsageError(/during a transaction/),
+			);
 			view.root.left.removeRange();
+			assert.throws(
+				() => view.locations.capture([]),
+				validateUsageError(/during a transaction/),
+			);
 			return { rollback: true };
 		});
-		assert.equal(view.locations.capture([])?.revision, batch.revision);
+		assert.equal(view.locations.capture([]).revision, batch.revision);
 		assert.deepEqual(indices(view.locations, batch), [0, 2, 4]);
 		const fork = view.fork();
-		assert.equal(fork.locations.capture([]), undefined);
+		assert.throws(
+			() => fork.locations.capture([]),
+			validateUsageError(/only supported on the main view/),
+		);
+		assert.throws(
+			() => fork.locations.resolve(batch),
+			validateUsageError(/only supported on the main view/),
+		);
 		fork.dispose();
 	});
 
@@ -497,7 +527,6 @@ describe("TreeLocationResolver", () => {
 		sender.root.right.insertAtStart("x");
 		provider.synchronizeMessages();
 		const newer = sender.locations.capture([]);
-		assert(newer !== undefined);
 		expectUnavailable(
 			receiver.locations.resolve({ ...batch, revision: newer.revision }),
 			"invalid-location",
@@ -603,7 +632,7 @@ describe("TreeLocationResolver", () => {
 		assert.throws(() => resolver.resolve(batch), /disposed TreeView/);
 	});
 
-	it("scopes captures to acknowledged shared branches", () => {
+	it("rejects non-main shared branches before and after acknowledgement", () => {
 		const provider = new TestTreeProviderLite(
 			2,
 			configuredSharedTree({ enableSharedBranches: true }).getFactory(),
@@ -614,16 +643,87 @@ describe("TreeLocationResolver", () => {
 		const mainCapture = captureGaps(main, [1]);
 		const branch = provider.trees[0].createSharedBranch();
 		const first = asAlpha(provider.trees[0].viewSharedBranchWith(branch, config));
-		assert.equal(first.locations.capture([]), undefined);
+		assert.throws(
+			() => first.locations.capture([]),
+			validateUsageError(/only supported on the main view/),
+		);
+		assert.throws(
+			() => first.locations.resolve(mainCapture),
+			validateUsageError(/only supported on the main view/),
+		);
 		provider.synchronizeMessages();
 		const second = asAlpha(provider.trees[1].viewSharedBranchWith(branch, config));
-		const batch = captureGaps(first, [1]);
-		assert.notEqual(batch.revision, mainCapture.revision);
-		assert.deepEqual(second.locations.resolve(mainCapture), {
-			status: "revision-unavailable",
-		});
+		assert.throws(
+			() => first.locations.capture([]),
+			validateUsageError(/only supported on the main view/),
+		);
+		assert.throws(
+			() => first.locations.resolve(mainCapture),
+			validateUsageError(/only supported on the main view/),
+		);
+		assert.throws(
+			() => second.locations.capture([]),
+			validateUsageError(/only supported on the main view/),
+		);
+		assert.throws(
+			() => second.locations.resolve(mainCapture),
+			validateUsageError(/only supported on the main view/),
+		);
 		second.root.left.insertAtStart("x");
-		assert.deepEqual(indices(second.locations, batch), [2]);
-		assert.deepEqual(main.locations.resolve(batch), { status: "revision-unavailable" });
+		provider.synchronizeMessages();
+		assert.throws(
+			() => second.locations.capture([]),
+			validateUsageError(/only supported on the main view/),
+		);
+		assert.deepEqual(indices(main.locations, mainCapture), [1]);
+	});
+
+	it("rejects pending edits and permits capture once they are acknowledged", () => {
+		const { provider, views } = setup();
+		const view = views[0];
+		view.root.left.insertAtStart("x");
+		assert.throws(() => captureGaps(view, [1]), validateUsageError(/pending local edits/));
+		provider.synchronizeMessages();
+		assert.deepEqual(indices(views[1].locations, captureGaps(view, [1])), [1]);
+	});
+
+	it("rejects capture before initialization has a sequenced revision", () => {
+		const provider = new TestTreeProviderLite();
+		const view = provider.trees[0].kernel.viewWith(config);
+		assert.throws(
+			() => view.locations.capture([]),
+			validateUsageError(/before the main view has a sequenced revision/),
+		);
+		view.initialize({ left: [], right: [] });
+		assert.throws(() => view.locations.capture([]), validateUsageError(/pending local edits/));
+		provider.synchronizeMessages();
+		assert.deepEqual(captureGaps(view, [0]).locations.length, 1);
+	});
+
+	it("rejects detached and independent views", () => {
+		const { views } = setup();
+		const batch = captureGaps(views[0], [1]);
+		const runtime = new MockFluidDataStoreRuntime({ attachState: AttachState.Detached });
+		const tree = configuredSharedTree({}).getFactory().create(runtime, "tree");
+		const detached = asAlpha(tree.viewWith(config));
+		detached.initialize({ left: ["a"], right: [] });
+		assert.throws(
+			() => detached.locations.capture([]),
+			validateUsageError(/require an attached SharedTree/),
+		);
+		assert.throws(
+			() => detached.locations.resolve(batch),
+			validateUsageError(/require an attached SharedTree/),
+		);
+		const independent = getView(config);
+		independent.initialize({ left: ["a"], right: [] });
+		assert.throws(
+			() => independent.locations.capture([]),
+			validateUsageError(/only supported on the main view/),
+		);
+		assert.throws(
+			() => independent.locations.resolve(batch),
+			validateUsageError(/only supported on the main view/),
+		);
 	});
 });

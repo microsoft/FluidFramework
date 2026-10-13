@@ -83,7 +83,6 @@ export class EditManager<
 		BranchId,
 		SharedBranch<TEditor, TChangeset, TChangeProcessingContext>
 	>();
-	private readonly unsequencedBranchCreations = new Set<BranchId>();
 
 	/**
 	 * Tracks where on the trunk of the main branch all registered branches are based.
@@ -498,7 +497,6 @@ export class EditManager<
 	): void {
 		if (sessionId === this.localSessionId) {
 			assert(this.sharedBranches.has(branchId), 0xc59 /* Expected branch to already exist */);
-			this.unsequencedBranchCreations.delete(branchId);
 			return;
 		}
 
@@ -507,10 +505,7 @@ export class EditManager<
 		this.createAndAddSharedBranch(branchId, branchName, sessionId, mainBranch, branchTrunk);
 	}
 
-	public addNewBranch(branchId: BranchId, branchName?: string, pendingCreation = true): void {
-		if (pendingCreation) {
-			this.unsequencedBranchCreations.add(branchId);
-		}
+	public addNewBranch(branchId: BranchId, branchName?: string): void {
 		const main = this.getSharedBranch("main") ?? fail(0xc5a /* Main branch must exist */);
 		this.createAndAddSharedBranch(
 			branchId,
@@ -525,14 +520,9 @@ export class EditManager<
 		return [...this.sharedBranches.keys()];
 	}
 
-	public isBranchCreationSequenced(branchId: BranchId): boolean {
-		return this.sharedBranches.has(branchId) && !this.unsequencedBranchCreations.has(branchId);
-	}
-
 	public removeBranch(branchId: BranchId): void {
 		assert(branchId !== "main", 0xc5b /* Cannot remove main branch */);
 		const hadBranch = this.sharedBranches.delete(branchId);
-		this.unsequencedBranchCreations.delete(branchId);
 		assert(hadBranch, 0xc5c /* Expected branch to exist */);
 	}
 

@@ -544,15 +544,9 @@ export class SharedTreeCore<
 		return this.editManager.getLocalBranch("main");
 	}
 
-	/** Gets the head of a shared branch's sequenced trunk. Defaults to the main branch. */
-	public getTrunkHead(branchId: BranchId = "main"): GraphCommit<TChange> {
-		return this.editManager.getTrunkHead(branchId);
-	}
-
-	public isBranchSequenced(branchId: BranchId): boolean {
-		return (
-			this.sharedObject.isAttached() && this.editManager.isBranchCreationSequenced(branchId)
-		);
+	/** Gets the head of the main branch's sequenced trunk. */
+	public getTrunkHead(): GraphCommit<TChange> {
+		return this.editManager.getTrunkHead("main");
 	}
 
 	public getSharedBranchIds(): string[] {
@@ -574,7 +568,7 @@ export class SharedTreeCore<
 	}
 
 	protected addBranch(branchId: BranchId, branchName?: string): void {
-		this.editManager.addNewBranch(branchId, branchName, this.sharedObject.isAttached());
+		this.editManager.addNewBranch(branchId, branchName);
 	}
 
 	public getSharedBranch(

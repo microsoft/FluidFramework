@@ -45,12 +45,12 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Supplies the canonical sequenced state independently of the view's local head.
+ * Supplies the main branch's canonical sequenced state independently of its local head.
+ * Only the main checkout receives this source; forks and other shared branches cannot resolve locations.
  */
 export interface LocationRevisionSource {
-	readonly branchId: string;
 	readonly head: GraphCommit<SharedTreeChange>;
-	readonly isSequenced: boolean;
+	readonly isAttached: boolean;
 }
 
 interface DecodedReference {
@@ -147,29 +147,45 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		}
 	}
 
-	private revisionKey(
-		source: LocationRevisionSource,
-		commit: GraphCommit<SharedTreeChange>,
-	): TreePositionRevision {
+	private revisionKey(commit: GraphCommit<SharedTreeChange>): TreePositionRevision {
 		return JSON.stringify([
-			source.branchId,
+			"main",
 			commit.revision === "root" ? "root" : this.idCompressor.decompress(commit.revision),
 		]) as TreePositionRevision;
 	}
 
-	public capture(locations: readonly TreeLocation[]): CapturedTreeLocations | undefined {
+	private getMainSource(): LocationRevisionSource {
 		this.checkUsable();
 		const source = this.checkout.getLocationRevisionSource();
-		if (
-			source === undefined ||
-			!source.isSequenced ||
-			source.head.revision === "root" ||
-			this.checkout.transaction.size > 0 ||
-			source.head !== this.checkout.getLocationHead()
-		) {
-			return undefined;
+		if (source === undefined) {
+			throw new UsageError(
+				"Location capture and resolution are only supported on the main view.",
+			);
 		}
-		const revision = this.revisionKey(source, source.head);
+		if (!source.isAttached) {
+			throw new UsageError("Location capture and resolution require an attached SharedTree.");
+		}
+		if (this.checkout.transaction.size > 0) {
+			throw new UsageError(
+				"Location capture and resolution are not supported during a transaction.",
+			);
+		}
+		return source;
+	}
+
+	public capture(locations: readonly TreeLocation[]): CapturedTreeLocations {
+		const source = this.getMainSource();
+		if (source.head !== this.checkout.getLocationHead()) {
+			throw new UsageError(
+				"Cannot capture locations while the main view has pending local edits.",
+			);
+		}
+		if (source.head.revision === "root") {
+			throw new UsageError(
+				"Cannot capture locations before the main view has a sequenced revision.",
+			);
+		}
+		const revision = this.revisionKey(source.head);
 		return {
 			revision,
 			locations: locations.map((location): CapturedTreeLocation => {
@@ -221,20 +237,13 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 	}
 
 	public resolve(capture: CapturedTreeLocations): TreeLocationResolution {
-		this.checkUsable();
-		if (this.checkout.transaction.size > 0) {
-			throw new UsageError("Cannot resolve historical locations during a transaction.");
-		}
-		const source = this.checkout.getLocationRevisionSource();
-		if (source?.isSequenced !== true) {
-			return { status: "revision-unavailable" };
-		}
+		const source = this.getMainSource();
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		let commit = this.checkout.getLocationHead();
 		let sequenced = false;
 		while (true) {
 			sequenced ||= commit === source.head;
-			if (sequenced && this.revisionKey(source, commit) === capture.revision) {
+			if (sequenced && this.revisionKey(commit) === capture.revision) {
 				break;
 			}
 			if (commit.wasTrimmed || commit.parent === undefined) {

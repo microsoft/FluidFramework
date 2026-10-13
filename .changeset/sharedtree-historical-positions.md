@@ -12,14 +12,13 @@ The following pseudocode illustrates publishing a selection and using the resolu
 The application supplies the messaging and selection display; no receiver-side node lookup is needed.
 
 ```typescript
+// Use an attached main view with acknowledged edits and no open transaction.
 const capture = view.locations.capture([
     { kind: "node", node: selectedImage },
     { kind: "sequence", node: characters, index: focusIndex, affinity: "after" },
     { kind: "sequence", node: characters, index: anchorIndex, affinity: "after" },
 ]);
-if (capture !== undefined) {
-    publishSelection({ capture });
-}
+publishSelection({ capture });
 
 // On receipt, with the editor model synchronized to the local tree:
 const result = view.locations.resolve(message.capture);
@@ -45,6 +44,8 @@ if (result.status === "resolved") {
 
 Indices count array elements; editors must convert other coordinate units.
 Captures contain opaque JSON-serializable node references and a shared revision.
-Capture returns `undefined` while edits are pending or on local forks.
+This initial prototype supports only the main view of an attached SharedTree.
+Capture throws `UsageError` while local edits are pending; both capture and resolution throw on local forks, non-main shared branches, or during open transactions.
+Resolution on the main view still includes the receiver's pending edits.
 References expire with retained collaboration history and must not be persisted or interpreted by applications.
 Locations remain resolvable across schema widening, provided the receiving view can view the current stored schema.

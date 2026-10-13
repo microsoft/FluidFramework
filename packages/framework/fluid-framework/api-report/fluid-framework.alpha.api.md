@@ -2776,7 +2776,7 @@ export type TreeLocationResolution = {
 
 // @alpha @sealed
 export interface TreeLocationResolver {
-    capture(locations: readonly TreeLocation[]): CapturedTreeLocations | undefined;
+    capture(locations: readonly TreeLocation[]): CapturedTreeLocations;
     resolve(capture: CapturedTreeLocations): TreeLocationResolution;
 }
 
