@@ -89,8 +89,8 @@ export const EncodedFieldBatchVTextExperimental = EncodedFieldBatchGeneric(
  * @remarks
  * Currently we use the same code-paths to decode all supported versions. To accomplish
  * that, they accept this type. When adding a new format, if continuing this pattern,
- * the batch type to this union. If the format diverges sufficiently that this approach
- * no longer makes sense, rename this type accordingly, and setup new code paths for
+ * add the batch type to this union. If the format diverges sufficiently that this approach
+ * no longer makes sense, rename this type accordingly, and set up new code paths for
  * handling the new format.
  */
 export type EncodedFieldBatchAnyVersion =
