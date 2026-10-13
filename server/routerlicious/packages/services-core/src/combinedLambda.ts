@@ -13,9 +13,6 @@ import type { IQueuedMessage } from "./queue";
 export class CombinedLambda implements IPartitionLambda {
 	constructor(protected readonly lambdas: IPartitionLambda[]) {}
 
-	/**
-	 * {@inheritDoc IPartitionLambda.handler}
-	 */
 	public handler(message: IQueuedMessage) {
 		const promises: Promise<void>[] = [];
 

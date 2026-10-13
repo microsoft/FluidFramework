@@ -229,7 +229,7 @@ function handleShard(state: ShardingFuzzTestState, op: ShardOperation): Sharding
 		throw error;
 	}
 
-	for (const serialized of serializedShards) {
+	for (const { serialized } of serializedShards) {
 		const shard = IdCompressor.deserialize({
 			serialized,
 			requestedWriteVersion: SerializationVersion.V3,

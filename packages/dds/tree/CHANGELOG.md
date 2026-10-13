@@ -1,5 +1,135 @@
 # @fluidframework/tree
 
+## 3.5.0
+
+### Minor Changes
+
+- Add a format validator for environments that disallow dynamic code generation ([#28430](https://github.com/microsoft/FluidFramework/pull/28430)) [e3c7f0105f](https://github.com/microsoft/FluidFramework/commit/e3c7f0105fc5b16e7edff852733f4b7aeee5a5f1)
+
+  The new alpha `FormatValidatorInterpreted` validates persisted SharedTree data using TypeBox's JSON schema interpreter.
+  Unlike `FormatValidatorBasic`, it does not generate JavaScript functions at runtime, so it works with Content Security Policies that omit `unsafe-eval`.
+  Interpreted validation is slower than compiled validation, so applications without this restriction should continue to use `FormatValidatorBasic`.
+  SharedTree sandbox protocol validation now uses the interpreted validator so it also works in these restricted environments.
+
+  ```typescript
+  import {
+    FormatValidatorInterpreted,
+    configuredSharedTreeAlpha,
+  } from "@fluidframework/tree/alpha";
+
+  const SharedTree = configuredSharedTreeAlpha({
+    jsonValidator: FormatValidatorInterpreted,
+  });
+  ```
+
+- Preserve tagged diagnostics when reporting sandbox session errors ([#28401](https://github.com/microsoft/FluidFramework/pull/28401)) [bcd245bd23](https://github.com/microsoft/FluidFramework/commit/bcd245bd234ed5b0549000f63cc8a2b5d142c70d)
+
+  Sandbox session errors retain their original cause and tagged telemetry properties.
+  Failure notifications include a validated classification code and separate protocol-only and sensitive diagnostic fields.
+  The Host tags protocol-only text received from the Guest as `SandboxGuestData`, and sensitive text as `UserData`.
+  Applications that use the Guest as a security boundary must treat this tag as untrusted, potentially sensitive data.
+  The Host does not send sensitive diagnostics to the Guest.
+  Unknown error messages are not included in the telemetry-safe session error message.
+  Blob-resolution errors are logged on the Host, while the Guest receives a fixed message that the service failed to resolve the handle.
+
+- SharedTree commit settlement events and no-change constraints are available in beta and legacy ([#28254](https://github.com/microsoft/FluidFramework/pull/28254)) [f557bb4670](https://github.com/microsoft/FluidFramework/commit/f557bb4670380db6a4bd47884403b8f3b4be6098)
+
+  You can now observe whether a local SharedTree commit is applied or dropped after the sequencing service orders it without using alpha APIs.
+  `CommitOutcome` and `LocalCommitEvents` are available from the `/beta` and `/legacy` entry points of `@fluidframework/tree` and `fluid-framework`.
+  The `changed` event is available on `TreeViewBeta` and `UntypedTreeView`, with `ChangeMetadataBeta` and `TreeBranchEventsBeta` describing its beta API.
+
+  ```typescript
+  import { asBeta, CommitOutcome } from "fluid-framework/beta";
+
+  // ...
+  const betaView = asBeta(view);
+  const unsubscribe = betaView.events.on("changed", (metadata) => {
+    if (metadata.isLocal) {
+      metadata.events.on("settled", (outcome) => {
+        if (outcome === CommitOutcome.FullyApplied) {
+          console.log("Changes saved.");
+        } else {
+          console.log("Changes rejected.");
+        }
+      });
+    }
+  });
+  ```
+
+  Register the `changed` listener before making the edit or running the transaction.
+  Do not edit the tree synchronously from a settlement callback; schedule any retry asynchronously.
+
+  You can also use `NoChangeConstraint` through the beta transaction APIs to require that the document has not changed before a transaction is applied.
+  `TransactionConstraintBeta` includes this constraint, which you can supply in `RunTransactionParamsBeta.preconditions`.
+  These APIs are available through both `/beta` and `/legacy`.
+
+  ```typescript
+  betaView.runTransaction(
+    () => {
+      // Make edits.
+    },
+    { preconditions: [{ type: "noChange" }] },
+  );
+  ```
+
+  You can separately constrain a later revert by returning `preconditionsOnRevert: [{ type: "noChange" }]` from the transaction callback.
+  This option is available on `TransactionCallbackStatusBeta` and requires that the document has not changed since the transaction before applying its revert.
+
+- Export stored content and schema from alpha viewable trees ([#28383](https://github.com/microsoft/FluidFramework/pull/28383)) [8150149578](https://github.com/microsoft/FluidFramework/commit/8150149578686358518caedf1c4019f78c55011d)
+
+  The new `ViewableTreeAlpha` interface provides `exportVerbose` and `exportSimpleSchema` methods.
+  Use `asAlpha(viewableTree)` to inspect stored tree content and schema without first creating a schematized view.
+
+## 3.4.0
+
+### Minor Changes
+
+- Add experimental SharedTree sandboxing APIs ([#28382](https://github.com/microsoft/FluidFramework/pull/28382)) [e41dc04d41](https://github.com/microsoft/FluidFramework/commit/e41dc04d41d1cb21ccd48a2a1b44d817f1a33c0c)
+
+  The new alpha `Sandboxing.createHost` and `Sandboxing.createGuest` APIs synchronize a SharedTree [`ViewableTree`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface) across a `MessagePort`.
+  The Host remains connected to Fluid services while the Guest exposes a normal schema-aware tree view on the other side of the message channel.
+
+  > [!IMPORTANT]
+  > To use Sandboxing, you must set the container runtime's [`oldestSupportedClient`](https://fluidframework.com/docs/api/container-runtime/loadcontainerruntimeparams-interface#oldestsupportedclient-propertysignature) option to `"3.4.0"` or later.
+
+  ```typescript
+  import { asBeta } from "@fluidframework/tree/beta";
+  import { FormatValidatorBasic, Sandboxing } from "@fluidframework/tree/alpha";
+
+  // Create the application-owned view that remains connected to Fluid services.
+  const hostView = asBeta(tree.viewWith(config));
+
+  // Create the message channel that crosses the sandbox boundary.
+  const channel = new MessageChannel();
+
+  // Connect the Host endpoint to the collaborative tree.
+  const host = Sandboxing.createHost({ main: hostView, port: channel.port1 });
+
+  // Create the independent Guest tree on the other side of the channel.
+  const guest = await Sandboxing.createGuest({
+    port: channel.port2,
+    treeOptions: { jsonValidator: FormatValidatorBasic },
+  });
+
+  // Open a schema-aware view for application code running in the sandbox.
+  const guestView = guest.tree.viewWith(config);
+  ```
+
+- Add an alpha incremental-summary field property ([#28285](https://github.com/microsoft/FluidFramework/pull/28285)) [5d1392bb81](https://github.com/microsoft/FluidFramework/commit/5d1392bb8170cb3dbdc6745b8e01227a20a4d75f)
+
+  The new alpha `summarizeIncrementally` property on [`FieldPropsAlpha`](https://fluidframework.com/docs/api/tree/fieldpropsalpha-interface) marks a field as an incremental-summary boundary without requiring direct use of allowed-types metadata or the [`incrementalSummaryHint`](https://fluidframework.com/docs/api/tree/#incrementalsummaryhint-variable) symbol.
+  This property is the preferred way to configure incremental summarization.
+  [`SchemaFactoryAlpha.requiredRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#requiredrecursive-property) and [`optionalRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#optionalrecursive-property) provide the same field configuration for recursive allowed types with relaxed compile-time constraints.
+  The [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property) and [`stagedOptionalRecursive`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptionalrecursive-property) field constructors also accept this option.
+
+  ```typescript
+  const sf = new SchemaFactoryAlpha("example");
+
+  class Document extends sf.objectAlpha("Document", {
+    sections: sf.required(sf.map(Section), { summarizeIncrementally: true }),
+  }) {}
+  ```
+
 ## 3.3.0
 
 ### Minor Changes
@@ -20,6 +150,14 @@
   [`UntypedTreeViewAlpha.revertTo()`](https://fluidframework.com/docs/api/tree/untypedtreeviewalpha-interface#revertto-methodsignature) now throws a usage error if any commit being reverted contains a schema change.
   The operation leaves the document unchanged, preserving transaction atomicity for commits that contain both schema and data changes.
   You can still revert data changes made after a schema upgrade by targeting the revision of that upgrade or a later revision.
+
+- createIndependentTreeAlpha no longer has the unused TSchema type parameter ([#28349](https://github.com/microsoft/FluidFramework/pull/28349)) [071fa2a9008](https://github.com/microsoft/FluidFramework/commit/071fa2a90080b9e8996a6dbe86c183dea6815aeb)
+
+  The unused `TSchema` type parameter has been removed from `createIndependentTreeAlpha`.
+  Calls that explicitly supply a type argument to `createIndependentTreeAlpha` must remove it.
+
+  `createIndependentTreeBeta` keeps its deprecated type parameter temporarily for compatibility, but the type parameter continues to have no effect.
+  Callers should omit it.
 
 - Record node property read types now include undefined ([#28163](https://github.com/microsoft/FluidFramework/pull/28163)) [2de794b4a74](https://github.com/microsoft/FluidFramework/commit/2de794b4a74774f3686c65e64b8fee7d7e14e481)
 

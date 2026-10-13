@@ -33,9 +33,6 @@ export class Json1Factory implements IChannelFactory {
 		return Json1Factory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,

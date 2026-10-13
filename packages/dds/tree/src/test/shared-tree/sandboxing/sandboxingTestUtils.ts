@@ -11,7 +11,6 @@ import {
 
 import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Sandbox test helpers use alpha view APIs.
 import type { TreeViewAlpha } from "../../../simple-tree/api/index.js";
 import {
@@ -23,9 +22,13 @@ import {
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { StringArray, TestTreeProviderLite } from "../../utils.js";
 
-import { normalizeProtocolError, throwProtocolError } from "./common.js";
-import { GuestImplementation } from "./guest.js";
-import { HostImplementation } from "./host.js";
+import {
+	GuestImplementation,
+	HostImplementation,
+	normalizeProtocolError,
+	sandboxFormatValidator,
+	throwProtocolError,
+} from "../../../sandboxing/index.js";
 
 /**
  * The ports and test controls for one Host and Guest session.
@@ -163,13 +166,11 @@ export async function setup(initialState: string[]) {
  */
 export async function createGuestForHost(
 	port: MessagePort,
-	hostCompressor: ReturnType<TestTreeProviderLite["getCompressor"]>,
-	logger: TelemetryLoggerExt = createChildLogger({ namespace: "Guest" }),
+	logger?: TelemetryLoggerExt,
 	handleProtocolError: (error: Error) => void = throwProtocolError,
 ): Promise<GuestImplementation> {
 	return GuestImplementation.create({
-		treeOptions: { jsonValidator: FormatValidatorBasic },
-		idCompressor: hostCompressor,
+		treeOptions: { jsonValidator: sandboxFormatValidator },
 		port,
 		logger,
 		handleProtocolError,
@@ -184,6 +185,7 @@ export async function createGuestForHost(
  * @param sessionPortsBuilder - A function that builds the ports and test controls.
  * @param logging - Whether to enable diagnostic logging.
  * @param handleProtocolError - A function that handles protocol errors.
+ * @param hostLogger - An optional telemetry logger for the Host.
  * @returns The session components and test controls.
  * @typeParam TInterop - The test controls for the session's transport.
  * @typeParam TSchema - The schema of the shared tree.
@@ -194,6 +196,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 	sessionPortsBuilder: SessionPortsBuilder<TInterop>,
 	logging: boolean = false,
 	handleProtocolError: (error: Error) => void = throwProtocolError,
+	hostLogger?: TelemetryLoggerExt,
 ) {
 	const logger = (message: string) => {
 		if (logging) {
@@ -206,7 +209,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 	const provider = new TestTreeProviderLite(
 		2,
 		configuredSharedTree({
-			jsonValidator: FormatValidatorBasic,
+			jsonValidator: sandboxFormatValidator,
 			minVersionForCollab: FluidClientVersion.v2_80,
 		}).getFactory(),
 	);
@@ -220,9 +223,7 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 	const host = new HostImplementation({
 		main,
 		port: sessionPorts.hostPort,
-		bindingHandle: provider.trees[1].handle,
-		idCompressor: provider.getCompressor(provider.trees[1]),
-		logger: createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
+		logger: hostLogger ?? createChildLogger({ logger: telemetryLogger, namespace: "Host" }),
 		handleProtocolError,
 	});
 	const local: TreeViewAlpha<TSchema> = host.synchronization.localCheckout.viewWithInternal(
@@ -235,7 +236,6 @@ export async function setupCustom<TInterop, const TSchema extends ImplicitFieldS
 	try {
 		const guestPromise = createGuestForHost(
 			sessionPorts.guestPort,
-			provider.getCompressor(provider.trees[1]),
 			createChildLogger({ logger: telemetryLogger, namespace: "Guest" }),
 			handleProtocolError,
 		);

@@ -321,9 +321,6 @@ export abstract class SharedObjectCore<
 		this.initializeLocalCore();
 	}
 
-	/**
-	 * {@inheritDoc (ISharedObject:interface).bindToContext}
-	 */
 	public bindToContext(): void {
 		// ensure the method only runs once by removing the implementation
 		// without this the method suffers from re-entrancy issues
@@ -336,9 +333,6 @@ export abstract class SharedObjectCore<
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
-	 */
 	public connect(services: IChannelServices): void {
 		// handle the case where load is called
 		// before connect; loading detached data stores
@@ -350,34 +344,22 @@ export abstract class SharedObjectCore<
 		this.setBoundAndHandleAttach();
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).isAttached}
-	 */
 	public isAttached(): boolean {
 		return this._isBoundToContext && this.runtime.attachState !== AttachState.Detached;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 */
 	public abstract getAttachSummary(
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats;
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
-	 */
 	public abstract summarize(
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats>;
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
-	 */
 	public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
 
 	/**
@@ -437,18 +419,25 @@ export abstract class SharedObjectCore<
 	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
-			// NOTE: We may also be encoding in the ContainerRuntime layer.
-			// Once the layer-compat window passes we can remove the encoding codepath here altogether
-			const onlyBind =
-				(this.runtime as IFluidDataStoreRuntimeInternalConfig)
-					.submitMessagesWithoutEncodingHandles === true;
-			const contentToSubmit = onlyBind
-				? bindHandles(content, this.handle)
-				: makeHandlesSerializable(content, this.serializer, this.handle);
-
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(contentToSubmit, localOpMetadata);
+			const contentToSubmit = this.#prepareMessage(content);
+			this.#submitMessage(contentToSubmit, localOpMetadata);
 		}
+	}
+
+	#prepareMessage(content: unknown): unknown {
+		// NOTE: We may also be encoding in the ContainerRuntime layer.
+		// Once the layer-compat window passes we can remove the encoding codepath here altogether
+		const onlyBind =
+			(this.runtime as IFluidDataStoreRuntimeInternalConfig)
+				.submitMessagesWithoutEncodingHandles === true;
+		return onlyBind
+			? bindHandles(content, this.handle)
+			: makeHandlesSerializable(content, this.serializer, this.handle);
+	}
+
+	#submitMessage(content: unknown, localOpMetadata: unknown): void {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		this.services!.deltaConnection.submit(content, localOpMetadata);
 	}
 
 	/**
@@ -535,6 +524,24 @@ export abstract class SharedObjectCore<
 		});
 	}
 
+	readonly #deltaHandler: IDeltaHandler = {
+		processMessages: (messagesCollection: IRuntimeMessageCollection) => {
+			this.processMessages(messagesCollection);
+		},
+		setConnectionState: (connected: boolean) => {
+			this.setConnectionState(connected);
+		},
+		reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
+			this.reSubmit(content, localOpMetadata, squash);
+		},
+		applyStashedOp: (content: unknown): void => {
+			this.applyStashedOp(parseHandles(content, this.serializer));
+		},
+		rollback: (content: unknown, localOpMetadata: unknown) => {
+			this.rollback(content, localOpMetadata);
+		},
+	};
+
 	private attachDeltaHandler(): void {
 		// Services should already be there in case we are attaching delta handler.
 		assert(
@@ -542,23 +549,7 @@ export abstract class SharedObjectCore<
 			0x07a /* "Services should be there to attach delta handler" */,
 		);
 		// attachDeltaHandler is only called after services is assigned
-		this.services.deltaConnection.attach({
-			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
-				this.processMessages(messagesCollection);
-			},
-			setConnectionState: (connected: boolean) => {
-				this.setConnectionState(connected);
-			},
-			reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
-				this.reSubmit(content, localOpMetadata, squash);
-			},
-			applyStashedOp: (content: unknown): void => {
-				this.applyStashedOp(parseHandles(content, this.serializer));
-			},
-			rollback: (content: unknown, localOpMetadata: unknown) => {
-				this.rollback(content, localOpMetadata);
-			},
-		} satisfies IDeltaHandler);
+		this.services.deltaConnection.attach(this.#deltaHandler);
 	}
 
 	/**
@@ -783,9 +774,6 @@ export abstract class SharedObject<
 		this._serializer = new FluidSerializer(this.runtime.channelsRoutingContext);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 */
 	public getAttachSummary(
 		fullTree: boolean = false,
 		trackState: boolean = false,
@@ -810,9 +798,6 @@ export abstract class SharedObject<
 		return result;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
-	 */
 	public async summarize(
 		fullTree: boolean = false,
 		trackState: boolean = false,
@@ -838,9 +823,6 @@ export abstract class SharedObject<
 		return result;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
-	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
 		// Set _isGCing to true. This flag is used to ensure that we only use GCHandleVisitor in this codepath and not when trying to truly serialize.
 		assert(

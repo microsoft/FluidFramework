@@ -79,16 +79,10 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 
 	private _disposed: boolean = false;
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
-	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
-	 */
 	public dispose(): void {
 		if (this._disposed) {
 			return;

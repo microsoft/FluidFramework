@@ -208,6 +208,69 @@ describe("Container close/dispose telemetry", () => {
 });
 
 describe("Container", () => {
+	it("mirrors old-runtime dirty state into the pending-op channel", () => {
+		const container = createTestContainer(new MockLogger());
+		interface ContainerWithDirtyInternals {
+			updateDirtyContainerState: (dirty: boolean) => void;
+			connectionStateHandler: {
+				pendingOpsSaved: () => void;
+			};
+			pendingOpStateEvents: {
+				on: (event: "saved", listener: () => void) => void;
+			};
+		}
+		const internals = container as unknown as ContainerWithDirtyInternals;
+		const notifications: string[] = [];
+		internals.connectionStateHandler.pendingOpsSaved = () => {
+			notifications.push("connectionStateHandler");
+		};
+		internals.pendingOpStateEvents.on("saved", () => {
+			notifications.push("pendingOpState");
+		});
+		container.on("saved", () => {
+			notifications.push("container");
+		});
+
+		internals.updateDirtyContainerState(true);
+		internals.updateDirtyContainerState(false);
+
+		assert.strictEqual(container.isDirty, false);
+		assert.deepStrictEqual(notifications, [
+			"connectionStateHandler",
+			"pendingOpState",
+			"container",
+		]);
+		container.dispose();
+	});
+
+	it("does not emit saved when old-runtime op cleanup synchronously creates new work", () => {
+		const container = createTestContainer(new MockLogger());
+		interface ContainerWithDirtyInternals {
+			updateDirtyContainerState: (dirty: boolean) => void;
+			connectionStateHandler: {
+				pendingOpsSaved: () => void;
+			};
+		}
+		const internals = container as unknown as ContainerWithDirtyInternals;
+
+		internals.updateDirtyContainerState(true);
+		let savedEvents = 0;
+		container.on("saved", () => savedEvents++);
+		internals.connectionStateHandler.pendingOpsSaved = () => {
+			internals.updateDirtyContainerState(true);
+		};
+
+		internals.updateDirtyContainerState(false);
+
+		assert.strictEqual(
+			container.isDirty,
+			true,
+			"Reentrant work must keep the container dirty",
+		);
+		assert.strictEqual(savedEvents, 0, "Must not emit a stale saved transition");
+		container.dispose();
+	});
+
 	describe("waitContainerToCatchUp", () => {
 		it("Closed Container fails", async () => {
 			const mockContainer = new MockContainer();

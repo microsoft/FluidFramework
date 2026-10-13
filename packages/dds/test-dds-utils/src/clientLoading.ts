@@ -16,12 +16,21 @@ import type {
 } from "@fluidframework/test-runtime-utils/internal";
 
 /**
+ * @typeParam TClientConfiguration - Consumer-defined configuration recorded by the fuzz harness.
  * @internal
  */
-export interface Client<TChannelFactory extends IChannelFactory> {
+export interface Client<
+	TChannelFactory extends IChannelFactory,
+	TClientConfiguration = unknown,
+> {
 	channel: ReturnType<TChannelFactory["create"]>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
 	containerRuntime: MockContainerRuntimeForReconnection;
+	/**
+	 * Recorded configuration used to construct this client.
+	 * Absent when client configuration is not enabled.
+	 */
+	readonly clientConfiguration?: TClientConfiguration;
 }
 
 /**
@@ -52,12 +61,18 @@ export type FuzzSerializedIdCompressor =
 /**
  * @internal
  */
-export type ClientWithStashData<TChannelFactory extends IChannelFactory> =
-	Client<TChannelFactory> & Partial<Record<"stashData", ClientStashData>>;
+export type ClientWithStashData<
+	TChannelFactory extends IChannelFactory,
+	TClientConfiguration = unknown,
+> = Client<TChannelFactory, TClientConfiguration> &
+	Partial<Record<"stashData", ClientStashData>>;
 
-export const hasStashData = <TChannelFactory extends IChannelFactory>(
-	client?: Client<TChannelFactory>,
-): client is Required<ClientWithStashData<TChannelFactory>> =>
+export const hasStashData = <
+	TChannelFactory extends IChannelFactory,
+	TClientConfiguration = unknown,
+>(
+	client?: Client<TChannelFactory, TClientConfiguration>,
+): client is Client<TChannelFactory, TClientConfiguration> & { stashData: ClientStashData } =>
 	client !== undefined &&
 	"stashData" in client &&
 	client.stashData !== null &&

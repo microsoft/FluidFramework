@@ -216,9 +216,6 @@ export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<Fle
  * A FlexTreeNode that is hydrated, meaning it is associated with a {@link FlexTreeHydratedContext}.
  */
 export interface HydratedFlexTreeNode extends FlexTreeNode {
-	/**
-	 * {@inheritDoc FlexTreeNode.context}
-	 */
 	readonly context: FlexTreeHydratedContext;
 
 	/**

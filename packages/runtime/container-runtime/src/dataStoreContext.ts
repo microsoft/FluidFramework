@@ -1366,16 +1366,10 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		return this.initialSnapshotDetailsP;
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
 	public getAttachSummary(): ISummaryTreeWithStats {
 		throw new Error("Cannot attach remote store");
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
-	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
 	}
@@ -1449,9 +1443,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		}
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
-	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
 			this.channel !== undefined,
@@ -1479,9 +1470,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return attachSummary;
 	}
 
-	/**
-	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
-	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		assert(
 			this.channel !== undefined,

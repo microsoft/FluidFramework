@@ -1,5 +1,13 @@
 # @fluidframework/test-runtime-utils
 
+## 3.5.0
+
+Dependency updates only.
+
+## 3.4.0
+
+Dependency updates only.
+
 ## 3.3.0
 
 ### Minor Changes

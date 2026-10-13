@@ -30,9 +30,6 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 		return this.runtime.clientId;
 	}
 
-	/**
-	 * {@inheritDoc IAppModel.handleClaimLeadership}
-	 */
 	public handleClaimLeadership(): void {
 		const clientID = this.runtime.clientId;
 		if (clientID === undefined) {
@@ -41,9 +38,6 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 		this.baseDocument.setLeader(clientID);
 		console.log(`Setting leader to ${clientID}`);
 	}
-	/**
-	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
-	 */
 	public readonly getContainerResolvedUrl = (): IResolvedUrl | undefined => {
 		return this.container?.resolvedUrl;
 	};

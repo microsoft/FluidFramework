@@ -70,9 +70,6 @@ export interface EditingResultBase {
  * @internal
  */
 export interface FailedEditingResult extends EditingResultBase {
-	/**
-	 * {@inheritDoc EditingResultBase.status}
-	 */
 	readonly status: EditStatus.Invalid | EditStatus.Malformed;
 	/**
 	 * Information about what caused the transaction to fail.
@@ -95,9 +92,6 @@ export interface FailedEditingResult extends EditingResultBase {
  * @alpha
  */
 export interface ValidEditingResult extends EditingResultBase {
-	/**
-	 * {@inheritDoc EditingResultBase.status}
-	 */
 	readonly status: EditStatus.Applied;
 	/**
 	 * The new revision produced by the transaction.

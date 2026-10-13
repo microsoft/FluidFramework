@@ -24,6 +24,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     // (undocumented)
     get IFluidDependencySynthesizer(): this;
     register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap, T>>): void;
+    // (undocumented)
     synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
     unregister(type: keyof TMap): void;
 }

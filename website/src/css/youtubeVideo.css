@@ -1,0 +1,35 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+.youtube-video {
+	position: relative;
+}
+
+.youtube-video > iframe {
+	display: block;
+	border: 0;
+}
+
+.youtube-video__play-button {
+	/* Keep the preview visible, but route pointer input to the native play button. */
+	position: absolute;
+	inset: 0;
+
+	width: 100%;
+	height: 100%;
+
+	padding: 0;
+	border: 0;
+	border-radius: inherit;
+
+	background: transparent;
+	cursor: pointer;
+}
+
+/* Keep a visible boundary when focus moves into the cross-origin player. */
+.youtube-video:focus-within {
+	outline: 3px solid var(--ifm-color-primary);
+	outline-offset: 3px;
+}
