@@ -20,6 +20,8 @@ Its API extends `ErasedType` and exposes no properties or representation details
 It is JSON-serializable and designed to be safely transmitted between clients of the same SharedTree.
 Applications must not construct, inspect, or modify its representation.
 The entire capture can be sent through JSON without serialization helpers, live node objects, or local anchor handles.
+Put the capture directly in the containing presence message and serialize that message once.
+The capture and its nested metadata are plain objects and arrays, not pre-stringified JSON.
 
 `ResolvedTreeLocation` contains either a current `TreeLocation` or an explicit unavailable reason.
 Node results can be narrowed with `Tree.is(node, MySchema)`.
@@ -125,6 +127,7 @@ Capturing or resolving during a transaction, capturing nodes from another view, 
 
 Internally, the opaque capture groups one revision with an ordered list of historical locations.
 Capture encodes a versioned path using stored field keys, plus revision binding and sequence-length metadata for gap validation.
+These are structured values; revision comparisons use their fields rather than object identity so a JSON round trip preserves their meaning.
 The encoding is private and can change without exposing `UpPath`, `FieldKey`, or anchor handles to consumers.
 On receipt, the resolver validates the encoding and reconstructs an internal up-path.
 Captures are not authenticated proofs of historical existence; applications remain responsible for their message envelope and sender identity.

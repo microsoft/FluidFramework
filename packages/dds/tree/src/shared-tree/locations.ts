@@ -59,11 +59,23 @@ interface DecodedReference {
 	readonly length: number | undefined;
 }
 
+interface CapturedRevision {
+	readonly branchId: "main";
+	readonly revision: string;
+}
+
+interface CapturedNodeReference {
+	readonly version: 1;
+	readonly revision: CapturedRevision;
+	readonly path: readonly (readonly [field: string, index: number])[];
+	readonly length?: number;
+}
+
 type CapturedTreeLocation =
-	| { readonly kind: "node"; readonly node: string }
+	| { readonly kind: "node"; readonly node: CapturedNodeReference }
 	| {
 			readonly kind: "sequence";
-			readonly node: string;
+			readonly node: CapturedNodeReference;
 			readonly index: number;
 			readonly affinity: "before" | "after";
 	  };
@@ -73,33 +85,24 @@ type CapturedTreeLocation =
  * Only this implementation and its wire-format tests may depend on its shape.
  */
 export interface CapturedTreeLocationsInternal {
-	readonly revision: string;
+	readonly revision: CapturedRevision;
 	readonly locations: readonly CapturedTreeLocation[];
 }
 
 /**
  * Validates the private, versioned wire format before handing paths to core anchors.
  */
-function decodeReference(reference: string, revision: string): DecodedReference | undefined {
-	if (typeof reference !== "string") {
-		return undefined;
-	}
-	let value: unknown;
-	try {
-		value = JSON.parse(reference);
-	} catch (error) {
-		if (error instanceof SyntaxError) {
-			return undefined;
-		}
-		throw error;
-	}
+function decodeReference(
+	value: unknown,
+	revision: CapturedRevision,
+): DecodedReference | undefined {
 	if (
 		typeof value !== "object" ||
 		value === null ||
 		!("version" in value) ||
 		value.version !== 1 ||
 		!("revision" in value) ||
-		value.revision !== revision ||
+		!matchesRevision(value.revision, revision) ||
 		!("path" in value) ||
 		!Array.isArray(value.path)
 	) {
@@ -134,6 +137,17 @@ function decodeReference(reference: string, revision: string): DecodedReference 
 	return { path, length };
 }
 
+function matchesRevision(candidate: unknown, expected: CapturedRevision): boolean {
+	return (
+		typeof candidate === "object" &&
+		candidate !== null &&
+		"branchId" in candidate &&
+		candidate.branchId === expected.branchId &&
+		"revision" in candidate &&
+		candidate.revision === expected.revision
+	);
+}
+
 function unavailable(reason: "target-deleted" | "invalid-location"): ResolvedTreeLocation {
 	return { status: "unavailable", reason };
 }
@@ -163,11 +177,12 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		}
 	}
 
-	private revisionKey(commit: GraphCommit<SharedTreeChange>): string {
-		return JSON.stringify([
-			"main",
-			commit.revision === "root" ? "root" : this.idCompressor.decompress(commit.revision),
-		]);
+	private revisionKey(commit: GraphCommit<SharedTreeChange>): CapturedRevision {
+		return {
+			branchId: "main",
+			revision:
+				commit.revision === "root" ? "root" : this.idCompressor.decompress(commit.revision),
+		};
 	}
 
 	private getMainSource(): LocationRevisionSource {
@@ -233,7 +248,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 						"A sequence location requires an array, an in-bounds gap index, and a valid affinity if provided.",
 					);
 				}
-				const node = JSON.stringify({
+				const node: CapturedNodeReference = {
 					version: 1,
 					revision,
 					path: topDownPath(kernel.anchorNode).map((step) => [
@@ -241,7 +256,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 						step.parentIndex,
 					]),
 					...(location.kind === "sequence" ? { length: location.node.length } : {}),
-				});
+				};
 				return location.kind === "node"
 					? { kind: "node", node }
 					: {
@@ -263,7 +278,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		let sequenced = false;
 		while (true) {
 			sequenced ||= commit === source.head;
-			if (sequenced && this.revisionKey(commit) === capture.revision) {
+			if (sequenced && matchesRevision(capture.revision, this.revisionKey(commit))) {
 				break;
 			}
 			if (commit.wasTrimmed || commit.parent === undefined) {

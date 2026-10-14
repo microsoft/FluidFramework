@@ -48,8 +48,8 @@ function capturedData(captured: CapturedTreeLocations): CapturedTreeLocationsInt
 	return captured as unknown as CapturedTreeLocationsInternal;
 }
 
-function eraseCapture(data: CapturedTreeLocationsInternal): CapturedTreeLocations {
-	return data as unknown as CapturedTreeLocations;
+function eraseCapture(data: unknown): CapturedTreeLocations {
+	return data as CapturedTreeLocations;
 }
 
 function setup(): { provider: TestTreeProviderLite; views: TreeViewAlpha<typeof Document>[] } {
@@ -111,6 +111,38 @@ function expectUnavailable(
 }
 
 describe("TreeLocationResolver", () => {
+	it("embeds plain capture objects in a larger presence message with a single serialization", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const selection = sender.locations.capture([
+			{ kind: "node", node: sender.root.left },
+			{ kind: "sequence", node: sender.root.left, index: 2 },
+		]);
+		const message = JSON.parse(
+			JSON.stringify({
+				type: "presence",
+				selection,
+				metadata: { color: "blue" },
+			}),
+		) as { type: string; selection: CapturedTreeLocations; metadata: { color: string } };
+		const data = capturedData(message.selection);
+		assert.equal(typeof data, "object");
+		assert.equal(typeof data.revision, "object");
+		assert.equal(typeof data.locations[0].node, "object");
+		assert.equal(typeof data.locations[0].node.revision, "object");
+		assert(Array.isArray(data.locations[0].node.path));
+		assert.deepEqual(message.metadata, { color: "blue" });
+		assert.equal(message.type, "presence");
+		assert.deepEqual(resolved(receiver.locations.resolve(message.selection)), [
+			{ kind: "node", node: receiver.root.left },
+			{ kind: "sequence", node: receiver.root.left, index: 2, affinity: "before" },
+		]);
+		assert.deepEqual(
+			receiver.locations.resolve(selection),
+			receiver.locations.resolve(message.selection),
+		);
+	});
+
 	it("materializes unread receiver nodes and reuses their cached SimpleTree objects", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
@@ -266,8 +298,8 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: sender.root.left, index: 4, affinity: "after" },
 			{ kind: "sequence", node: sender.root.left, index: 0, affinity: "before" },
 		]);
-		assert.equal(typeof capturedData(batch).locations[0].node, "string");
-		assert.equal(
+		assert.equal(typeof capturedData(batch).locations[0].node, "object");
+		assert.deepEqual(
 			capturedData(receiver.locations.capture([])).revision,
 			capturedData(batch).revision,
 		);
@@ -410,7 +442,7 @@ describe("TreeLocationResolver", () => {
 		);
 		assert.deepEqual(indices(receiver.locations, batch), [3, 6]);
 		provider.synchronizeMessages();
-		assert.equal(
+		assert.deepEqual(
 			capturedData(receiver.locations.capture([])).revision,
 			capturedData(sender.locations.capture([])).revision,
 		);
@@ -472,11 +504,11 @@ describe("TreeLocationResolver", () => {
 		const location = data.locations[0];
 		assert(location.kind === "sequence");
 		for (const reference of [
-			"not json",
-			"null",
-			"{}",
-			'{"version":999}',
-			'{"version":1,"path":[]}',
+			null,
+			{},
+			{ version: 999 },
+			{ version: 1, revision: data.revision, path: [] },
+			JSON.stringify(location.node),
 		]) {
 			expectUnavailable(
 				receiver.locations.resolve(
@@ -499,10 +531,17 @@ describe("TreeLocationResolver", () => {
 				"invalid-location",
 			);
 		}
-		assert.deepEqual(
-			receiver.locations.resolve(eraseCapture({ ...data, revision: "wrong" })),
-			{ status: "revision-unavailable" },
-		);
+		for (const revision of [
+			"wrong",
+			null,
+			{},
+			{ ...data.revision, branchId: "other" },
+			{ branchId: "main", revision: 0 },
+		]) {
+			assert.deepEqual(receiver.locations.resolve(eraseCapture({ ...data, revision })), {
+				status: "revision-unavailable",
+			});
+		}
 	});
 
 	it("rejects open transactions and does not retain aborted edits", () => {
@@ -525,7 +564,7 @@ describe("TreeLocationResolver", () => {
 			);
 			return { rollback: true };
 		});
-		assert.equal(
+		assert.deepEqual(
 			capturedData(view.locations.capture([])).revision,
 			capturedData(batch).revision,
 		);

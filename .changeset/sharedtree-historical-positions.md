@@ -45,6 +45,7 @@ if (result.status === "resolved") {
 Indices count array elements; editors must convert other coordinate units.
 Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
 Their representation is hidden with `ErasedType`; applications should transmit them unchanged.
+Put the capture directly in the containing presence message; it does not require separate JSON stringification.
 Sequence affinity defaults to `"before"`; specify `"after"` to stay after content inserted at the gap.
 This initial prototype supports only the main view of an attached SharedTree.
 Capture throws `UsageError` while local edits are pending; both capture and resolution throw on local forks, non-main shared branches, or during open transactions.

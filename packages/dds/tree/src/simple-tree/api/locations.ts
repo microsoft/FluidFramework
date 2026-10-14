@@ -43,6 +43,8 @@ export type TreeLocation =
  * @remarks
  * Designed to be safely transmitted between clients of the same SharedTree in presence messages,
  * including through a JSON serialization round trip, and passed to {@link TreeLocationResolver.resolve}.
+ * Place the capture directly in a larger presence message and serialize that message once;
+ * the capture does not need separate JSON stringification.
  * It contains no live node objects or local anchor handles.
  * Applications must not inspect, construct, or modify its representation.
  * Captures are ephemeral and can become unavailable when collaboration history is trimmed.
