@@ -59,20 +59,26 @@ describe("schemaFromSimple", () => {
 			{ ["com.example" as LibraryId]: 1 },
 			Object.fromEntries([["__proto__", 2]]),
 		] satisfies (SchemaVersionMap | undefined)[]) {
-			it(`preserves schema versions ${JSON.stringify(schemaVersion)} through snapshots`, () => {
-				const simple = {
-					...getSimpleSchema([]),
-					...(schemaVersion === undefined ? {} : { schemaVersion }),
-					...(schemaVersion === undefined ? {} : { schemaHash: "test-hash" }),
-				};
-				const snapshot = encodeSchemaCompatibilitySnapshot(simple);
-				const decoded = decodeSchemaCompatibilitySnapshot(snapshot);
-				const generated = generateSchemaFromSimpleSchema(decoded);
-				assert.deepEqual(generated.schemaVersion, schemaVersion);
-				assert.equal(generated.schemaHash, simple.schemaHash);
-				assert.equal(Object.hasOwn(generated, "schemaVersion"), schemaVersion !== undefined);
-				assert.deepEqual(encodeSchemaCompatibilitySnapshot(generated), snapshot);
-			});
+			for (const schemaHash of [undefined, "test-hash"]) {
+				it(`preserves schema versions ${JSON.stringify(schemaVersion)} and hash ${schemaHash} through snapshots`, () => {
+					const simple = {
+						...getSimpleSchema([]),
+						...(schemaVersion === undefined ? {} : { schemaVersion }),
+						...(schemaHash === undefined ? {} : { schemaHash }),
+					};
+					if (schemaVersion !== undefined && schemaHash === undefined) {
+						assert.throws(() => encodeSchemaCompatibilitySnapshot(simple), /non-empty string/);
+						return;
+					}
+					const snapshot = encodeSchemaCompatibilitySnapshot(simple);
+					const decoded = decodeSchemaCompatibilitySnapshot(snapshot);
+					const generated = generateSchemaFromSimpleSchema(decoded);
+					assert.deepEqual(generated.schemaVersion, schemaVersion);
+					assert.equal(generated.schemaHash, simple.schemaHash);
+					assert.equal(Object.hasOwn(generated, "schemaVersion"), schemaVersion !== undefined);
+					assert.deepEqual(encodeSchemaCompatibilitySnapshot(generated), snapshot);
+				});
+			}
 		}
 
 		it("recursive", () => {

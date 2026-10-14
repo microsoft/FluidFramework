@@ -90,10 +90,13 @@ const config = new TreeViewConfigurationAlpha({
 ```
 
 The configured and stored versions are available from [`TreeViewAlpha`](https://fluidframework.com/docs/api/fluid-framework/treeviewalpha-interface), and the stored versions are also available from [`ITreeAlpha`](https://fluidframework.com/docs/api/fluid-framework/itreealpha-interface).
-Schema compatibility snapshots now include the configured version map and expected schema hash.
+Schema compatibility snapshots preserve configured version maps and their associated expected schema hashes.
+Applications using version maps must supply a schema hash when initializing or upgrading a tree; applications without version maps may opt into hashing.
+The new snapshot v2 supports schema hashes with optional application versions.
+Snapshots with application versions require a non-empty hash; unversioned snapshots may omit it.
 
 Initialization and upgrades throw a `UsageError` before changing the tree if a schema that requires hashing has a missing or incorrect hash or hasher.
 A valid hash does not replace the existing compatibility and version-increase rules.
 The hash is stored alongside the schema versions in operations and summaries.
 The configured and stored hashes are available on `TreeViewAlpha`; the stored hash is also available on `ITreeAlpha`.
-Versioned stored schemas and compatibility snapshots must include a non-empty hash.
+Versioned stored schemas and versioned compatibility snapshots must include a non-empty hash.
