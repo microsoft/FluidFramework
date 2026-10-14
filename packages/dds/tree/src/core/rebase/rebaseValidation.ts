@@ -11,7 +11,7 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
- * The levels of rebase validation that can be {@link RebaseValidation | configured}.
+ * The levels of rebase validation that can be {@link RebaseValidationAlpha.setLevel | set}.
  * @remarks
  * All validation is tree-shaken out of production/optimized builds.
  * @alpha
@@ -55,35 +55,32 @@ export interface RebaseValidationAlpha {
 	readonly Level: typeof RebaseValidationLevel;
 
 	/**
-	 * Sets the desired level of rebase validation.
+	 * Sets the desired {@link RebaseValidationAlpha.Level | level} of rebase validation.
 	 * @param level - The desired level of rebase validation.
 	 * @returns The previous level in effect immediately before this call.
-	 * @throws for levels higher than `None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
+	 * @throws for levels higher than `RebaseValidation.Level.None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
 	 *
 	 * @remarks
-	 * The default validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Cheap`.
+	 * The default validation level is `RebaseValidation.Level.Cheap`.
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
 
 	/**
-	 * Sets the desired level of rebase validation until the provided callback returns and restores the current level of rebase validation after that.
+	 * Sets the desired {@link RebaseValidationAlpha.Level | level} of rebase validation until the provided callback returns.
+	 * Restores the current level of rebase validation after that.
 	 * @param level - The desired level of rebase validation.
 	 * @param callback - The function to execute while the specified validation level is in effect.
 	 * @returns the value returned by the callback function (if any).
-	 * @throws for levels higher than `None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
+	 * @throws for levels higher than `RebaseValidation.Level.None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
 	 *
 	 * @remarks
-	 * The default validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Cheap`.
+	 * The default validation level is `RebaseValidation.Level.Cheap`.
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
 }
 
-/**
- * Indicates whether rebase validation is currently enabled.
- * See {@link RebaseValidationAlpha.setLevel} for more information.
- */
 let rebaseValidationLevel: RebaseValidationLevel = RebaseValidationLevel.Cheap;
 
 /**
@@ -93,7 +90,7 @@ let rebaseValidationLevel: RebaseValidationLevel = RebaseValidationLevel.Cheap;
 function setLevel(level: RebaseValidationLevel): RebaseValidationLevel {
 	if (level !== RebaseValidationLevel.None && !nonProductionConditionalsIncluded()) {
 		throw new UsageError(
-			"rebase validation cannot be enabled because debug asserts have been optimized out",
+			"Rebase validation cannot be enabled because debug asserts have been optimized out",
 		);
 	}
 	const old = rebaseValidationLevel;
@@ -104,6 +101,8 @@ function setLevel(level: RebaseValidationLevel): RebaseValidationLevel {
 /**
  * The entry point for configuring and querying the status of rebase validation.
  * This validation can be used in debug builds to assist in root cause analysis of Fluid Framework bugs.
+ * @remarks
+ * All validation is tree-shaken out of production/optimized builds.
  * @alpha
  */
 export const RebaseValidation: RebaseValidationAlpha = {
@@ -123,7 +122,7 @@ export const RebaseValidation: RebaseValidationAlpha = {
 };
 
 /**
- * Runs a debug assertion when the validation {@link RebaseValidationAlpha.Level | level} is at least `RebaseValidation.Level.Cheap`.
+ * Runs a debug assertion when the validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Cheap` or `RebaseValidation.Level.Strict`.
  * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
  * @remarks

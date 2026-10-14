@@ -156,6 +156,8 @@ export class SharedTreeBranch<
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
 	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
 	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
+	 * @param telemetryEventBatcher - an optional telemetry event batcher for collecting rebase statistics.
+	 * @param validator - an optional function to validate a change is well-formed.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,

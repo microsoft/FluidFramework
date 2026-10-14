@@ -427,6 +427,8 @@ export function getConstraintStatus(change: SharedTreeChange): ConstraintStatus 
  * Validation function to check if a change is well-formed.
  * @param change - The change to validate.
  * @returns `true` if the change is well-formed, otherwise a string describing the validation error.
+ * @remarks
+ * See {@link debugOnlySharedTreeChangeValidator} for the equivalent debug-only validation function.
  */
 export function isSharedTreeChangeValid(change: SharedTreeChange): true | string {
 	for (const innerChange of change.changes) {
@@ -440,6 +442,14 @@ export function isSharedTreeChangeValid(change: SharedTreeChange): true | string
 	return true;
 }
 
+/**
+ * Debug-only validation function to check if a change is well-formed.
+ * @param change - The change to validate.
+ * @returns In production builds, always returns `true`.
+ * In debug builds, returns `true` if the change is well-formed, otherwise a string describing the validation error.
+ * @remarks
+ * Using this function over {@link isSharedTreeChangeValid} allows tree-shaking of the validation logic in production builds.
+ */
 export let debugOnlySharedTreeChangeValidator: (change: SharedTreeChange) => true | string =
 	() => true;
 skipInProduction(() => {

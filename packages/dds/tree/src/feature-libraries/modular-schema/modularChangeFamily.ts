@@ -157,11 +157,11 @@ export class ModularChangeFamily
 		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
 	): (change: ModularChangeset) => ModularChangeset {
 		return (change: ModularChangeset) => {
-			strictRebaseValidation("Malformed buildProcessor input", () =>
+			strictRebaseValidation("Malformed processor input", () =>
 				isChangesetValid(change, this.fieldKinds),
 			);
 			const processed = processFn(change, this);
-			strictRebaseValidation("Malformed buildProcessor output", () =>
+			strictRebaseValidation("Malformed processor output", () =>
 				isChangesetValid(processed, this.fieldKinds),
 			);
 			return processed;

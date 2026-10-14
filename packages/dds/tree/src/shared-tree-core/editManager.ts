@@ -123,7 +123,7 @@ export class EditManager<
 	 * @param mintRevisionTag - a function which generates globally unique revision tags
 	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
 	 * @param retainHistory - when `true`, trunk commits are never trimmed/evicted.
-	 * @param validator - A predicate that checks if a change is valid.
+	 * @param validator - an optional function to validate a change is well-formed.
 	 */
 	public constructor(
 		public readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,

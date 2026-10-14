@@ -391,7 +391,7 @@ export class SquashingTransactionStack<
 	 * Construct a new {@link SquashingTransactionStack}.
 	 * @param branch - The {@link SquashingTransactionStack.branch | branch} that will be forked off of when a transaction begins.
 	 * @param onPush - A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
-	 * @param validator - A predicate that checks if a change is valid.
+	 * @param validator - an optional function to validate a change is well-formed.
 	 * @remarks To post-process the squashed change produced when a transaction is committed (for example, to "minimize"
 	 * it so that it contains no extraneous information), start the transaction with a
 	 * {@link SquashingTransactionOptions.postProcessor | post-processor}. The post-processor is injected via the transaction
