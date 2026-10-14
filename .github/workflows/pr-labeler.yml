@@ -21,7 +21,7 @@ jobs:
     # does not have a way to set labels at creation either), so skipping based on labels does not work.
     steps:
       # release notes: https://github.com/actions/labeler/releases/tag/v6.0.1
-      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
         if: "github.event.pull_request.title != 'Automation: main-next integrate'"
         with:
           configuration-path: ".github/labeler-areas.yml"
@@ -36,7 +36,7 @@ jobs:
     name: Label changeset-required
     steps:
       # release notes: https://github.com/actions/labeler/releases/tag/v6.0.1
-      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+      - uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
         with:
           configuration-path: ".github/labeler-changesets.yml"
           repo-token: "${{ github.token }}"
