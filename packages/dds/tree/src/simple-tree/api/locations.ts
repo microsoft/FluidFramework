@@ -33,7 +33,7 @@ export type TreeLocation =
 			 */
 			readonly kind: "sequence";
 			/**
-			 * The parent node containing the sequence.
+			 * The array node whose elements define the sequence.
 			 */
 			readonly node: TreeArrayNode;
 			/**
@@ -41,6 +41,7 @@ export type TreeLocation =
 			 *
 			 * Gaps are the positions at which content can be inserted.
 			 * Sequences of length N have N+1 valid gap indices, ranging from 0 to N inclusive.
+			 * Deletions collapse sequence gaps within the removed span to the deletion boundary.
 			 *
 			 * @example
 			 * In the sequence ["a", "b", "c"], index 0 refers to the gap before "a", index 1
@@ -50,7 +51,7 @@ export type TreeLocation =
 			/**
 			 * The side of content inserted at the gap on which the position stays.
 			 * Defaults to "before" when omitted or undefined.
-			 * At move boundaries (when the end of a moved range coincides with a gap),
+			 * At move boundaries (when the start or end of a moved range coincides with a gap),
 			 * "before" follows the preceding element and "after" follows the following element.
 			 * Array boundaries ("before" index 0 and "after" index N) have no adjacent element.
 			 * @example
@@ -59,7 +60,7 @@ export type TreeLocation =
 			 * it would now refer to the gap between "a" and "x".
 			 *
 			 * If the captured location instead used the "after" affinity in the same scenario, its resolved location would be between "x" and "b".
- 			 * @defaultValue "before"
+			 * @defaultValue "before"
 			 */
 			readonly affinity?: "before" | "after" | undefined;
 
@@ -67,10 +68,12 @@ export type TreeLocation =
 			 * Dictates how the location should behave when ranges of content surrounding the location are moved.
 			 *
 			 * "follow" indicates that the location should move along with the surrounding content when it is relocated.
+			 * Defaults to "follow" when omitted.
+			 * At a moved range's boundaries, affinity determines which adjacent element the location follows.
 			 * We do not currently support any other policy.
 			 *
-			 * There may be additional policies in the future (e.g. one representing a desire where the location refers to
-			 * the gap within the sequence originally identified by the capture, not one related to the nearby content of that gap).
+			 * A possible future policy could keep the location in the original sequence rather than follow moved content.
+			 * @defaultValue "follow"
 			 */
 			readonly movePolicy?: "follow";
 	  };
@@ -140,8 +143,8 @@ export type TreeLocationResolution =
  * @remarks
  * Capture uses the sender's SimpleTree objects; resolution returns the receiver's SimpleTree objects.
  * No application-level node lookup is required on the receiving client.
- * This prototype currently supports capturing only the main view of an attached SharedTree,
- * not local forks (i.e. main view with pending local edits) or other shared branches.
+ * Capture currently supports only the main view of an attached SharedTree with no pending local edits.
+ * Local forks and non-main shared branches are unsupported.
  *
  * Resolution includes pending local edits and replays the intervening retained history using a sparse representation
  * to update the captured locations into the view that calls `resolve`.

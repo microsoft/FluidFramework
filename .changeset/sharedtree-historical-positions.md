@@ -48,4 +48,4 @@ Indices count array elements; editors must convert other coordinate units.
 Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
 Their representation is hidden with `ErasedType`; applications should transmit them unchanged (but are free to
 nest them within other presence data).
-For more details on the full API surface and current limitations, see in-code docs.
+For more details on the full API surface and current limitations, see the [TreeLocationResolver documentation](../packages/dds/tree/src/simple-tree/api/locations.ts).
