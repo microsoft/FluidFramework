@@ -285,6 +285,16 @@ describe("textDomainFormatted", () => {
 				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
 			);
 		});
+
+		it("throws when a leaf value is provided", () => {
+			const text = UnionFormatText.fromString("a");
+			assert.throws(
+				() => text.formatRange(0, 1, 999),
+				validateUsageError(
+					"formatRange is for applying a subset of format properties: it is invalid to pass it a leaf node. Use `reformat` instead.",
+				),
+			);
+		});
 	});
 
 	describe("reformat", () => {
