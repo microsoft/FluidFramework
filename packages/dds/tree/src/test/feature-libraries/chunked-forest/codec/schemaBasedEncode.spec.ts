@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import { currentVersion } from "../../../../codec/index.js";
 import type {
 	ITreeCursorSynchronous,
 	TreeChunk,
@@ -458,7 +457,10 @@ describe("schemaBasedEncoding", () => {
 		assert.deepEqual(bufferFull, [[0]]);
 	});
 
-	for (const version of fieldBatchCodecBuilder.registry.map((entry) => entry.formatVersion)) {
+	for (const {
+		formatVersion: version,
+		minVersionForCollab,
+	} of fieldBatchCodecBuilder.registry) {
 		describe(`test trees FieldBatchFormatVersion V${version}`, () => {
 			useSnapshotDirectory(`chunked-forest-schema-compressed/V${version}`);
 			// TODO: test non size 1 batches
@@ -491,7 +493,9 @@ describe("schemaBasedEncoding", () => {
 					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
 					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
-						minVersionForCollab: currentVersion,
+						minVersionForCollab:
+							minVersionForCollab ??
+							fail("test only supports versions with a minVersionForCollab"),
 					});
 					// End to end test
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
