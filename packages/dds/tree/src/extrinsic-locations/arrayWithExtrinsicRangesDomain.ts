@@ -22,23 +22,13 @@ export function createExtrinsicRangeManager<
 	TArrayDataSchema extends ImplicitAllowedTypes,
 >(RangeData: TRangeDataSchema, ArrayData: TArrayDataSchema) {
 	/**
-	 * @privateRemarks
-	 * Extra wrapper layer to make schema evolution and API erasure easier.
-	 *
-	 * Not using this form now, but left as reminder.
-	 */
-	// class ExtrinsicRangeManager extends sf.object("Manager", {
-	// 	content: SchemaFactory.required([() => ExtrinsicRangeManagerInner], { key: EmptyKey }),
-	// }) {}
-
-	/**
 	 * Array insertion type.
 	 */
 	type TNew = [TArrayDataSchema] extends [ImplicitAllowedTypes]
 		? InsertableTreeNodeFromImplicitAllowedTypes<TArrayDataSchema>
 		: InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>;
 
-	class ExtrinsicRangeManagerInner extends sf.object("ManagerInner", {
+	class ExtrinsicRangeManager extends sf.object("Manager", {
 		content: SchemaFactory.required([() => MainArray], { key: EmptyKey }),
 		ranges: [() => ExtrinsicRanges],
 	}) {
@@ -123,5 +113,15 @@ export function createExtrinsicRangeManager<
 		end: SchemaFactory.number,
 	}) {}
 
-	return { ExtrinsicRangeManagerInner, MainArray, ExtrinsicRanges, ExtrinsicRange };
+	return { ExtrinsicRangeManager, MainArray, ExtrinsicRanges, ExtrinsicRange };
+}
+
+/**
+ * An "Extrinsic Range" is a range within a {@link TreeArrayNode} that is tracked extrinsically, meaning its start and end positions are maintained independently of the array's internal structure.
+ * @remarks
+ * The approach taken here is to record the current end points of the ranges as numbers (indexes) into the array,
+ * and update them whenever the array is modified, ensuring that the extrinsic ranges remain consistent with the underlying array structure.
+ */
+export namespace ArrayWithExtrinsicRanges {
+	// TODO: export createSchema, Members, Statics etc. with type erasure in the style used for formatted text.
 }
