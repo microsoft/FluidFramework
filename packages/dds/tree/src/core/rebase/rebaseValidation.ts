@@ -61,7 +61,7 @@ export interface RebaseValidationAlpha {
 	 * @throws for levels higher than `None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
 	 *
 	 * @remarks
-	 * The default validation level is {@link RebaseValidationAlpha.Level | Cheap}.
+	 * The default validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Cheap`.
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly setLevel: (level: RebaseValidationLevel) => RebaseValidationLevel;
@@ -74,7 +74,7 @@ export interface RebaseValidationAlpha {
 	 * @throws for levels higher than `None` if {@link @fluidframework/core-utils#debugAssert} calls have been optimized out.
 	 *
 	 * @remarks
-	 * The default validation level is {@link RebaseValidationAlpha.Level | Cheap}.
+	 * The default validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Cheap`.
 	 * All validation is tree-shaken out of production/optimized builds.
 	 */
 	readonly runWithLevel: <TOut>(level: RebaseValidationLevel, callback: () => TOut) => TOut;
@@ -123,7 +123,7 @@ export const RebaseValidation: RebaseValidationAlpha = {
 };
 
 /**
- * Runs a debug assertion when the validation level is at least {@link RebaseValidationAlpha.Level | Cheap}.
+ * Runs a debug assertion when the validation {@link RebaseValidationAlpha.Level | level} is at least `RebaseValidation.Level.Cheap`.
  * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
  * @remarks
@@ -138,7 +138,7 @@ export function cheapRebaseValidation(prefix: string, predicate: () => true | st
 }
 
 /**
- * Runs a debug assertion when the validation level is {@link RebaseValidationAlpha.Level | Strict}.
+ * Runs a debug assertion when the validation {@link RebaseValidationAlpha.Level | level} is `RebaseValidation.Level.Strict`.
  * @param prefix - A string to prepend to the debug assertion message if the assertion fails. Used to provide context for the assertion.
  * @param predicate - A function that returns `true` if the assertion passes, or an error message if it fails.
  * @remarks
