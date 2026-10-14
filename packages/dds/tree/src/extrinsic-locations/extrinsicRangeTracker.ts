@@ -33,6 +33,25 @@ interface RangeAnchors {
 }
 
 /**
+ * Runs an edit with the constraints required to maintain persisted range indexes.
+ * @param node - Node whose tree context contains all edited content and ranges.
+ * @param edit - Synchronous edit, including any initialization of range storage.
+ * @returns The result of the edit.
+ */
+export function runRangeTransaction<T>(node: TreeNode, edit: () => T): T {
+	const context = TreeAlpha.context(node);
+	return context.isView()
+		? context.runTransaction<T, never>(
+				() => ({
+					value: edit(),
+					preconditionsOnRevert: [{ type: "noChange" }],
+				}),
+				{ preconditions: [{ type: "noChange" }] },
+			).value
+		: edit();
+}
+
+/**
  * Maintains tree-backed range endpoints while editing an array, without defining its schema.
  * @remarks
  * Reuse one instance for each content array and range collection so all operations share the active editing scope.
@@ -115,17 +134,7 @@ export class ExtrinsicRangeTracker<
 				}
 			}
 		};
-		if (context.isView()) {
-			context.runTransaction(
-				() => {
-					apply();
-					return { preconditionsOnRevert: [{ type: "noChange" }] };
-				},
-				{ preconditions: [{ type: "noChange" }] },
-			);
-		} else {
-			apply();
-		}
+		runRangeTransaction(this.content, apply);
 	}
 
 	/**

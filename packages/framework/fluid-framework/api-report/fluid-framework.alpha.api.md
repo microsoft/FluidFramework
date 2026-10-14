@@ -771,6 +771,7 @@ export const ForestTypeReference: ForestType;
 // @alpha
 export namespace FormattedText {
     export function createSchema<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema>;
+    export function createSchemaWithRanges<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[], const RangeDataSchema extends ImplicitAllowedTypes>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>, rangeDataSchema: RangeDataSchema): FormattedTextSchemaWithRanges<TUserScope, FormatSchema, ExtraAtomsSchema, RangeDataSchema>;
     // @sealed
     export interface FormattedAtom<TFormat, TText> {
         readonly content: TText;
@@ -788,6 +789,7 @@ export namespace FormattedText {
     const // @sealed
     StringTextAtom: StringTextAtomStatics & TreeNodeSchema<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, TextAtom & TreeNode & WithType<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, unknown>, never, false>;
     export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
+    export type FormattedTextSchemaWithRanges<TUserScope extends string, FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[], RangeDataSchema extends ImplicitAllowedTypes> = Statics<ErasedNode<MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>, FormattedTextSchemaIdentifier<TUserScope>>, FormatSchema> & ErasedSchemaSubclassable<MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>, FormattedTextSchemaIdentifier<TUserScope>>;
     // @sealed
     export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends PlainText.Members {
         charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
@@ -799,6 +801,17 @@ export namespace FormattedText {
         insertWithFormattingAt(index: number, additionalCharacters: Iterable<FormattedAtomInsertable<InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>, InsertableTreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>>): void;
         onContentChanged(callback: (ops: readonly PlainText.TextOp[] | undefined) => void): () => void;
         reformat(startIndex?: number | undefined, endIndex?: number | undefined, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): void;
+    }
+    // @sealed
+    export interface MembersWithRanges<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[], RangeDataSchema extends ImplicitAllowedTypes> extends Members<FormatSchema, ExtraAtomsSchema> {
+        addExtrinsicRange(start: number, end: number, data: InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>): ArrayWithExtrinsicRanges.Range<RangeDataSchema>;
+        getExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>): {
+            readonly start: number;
+            readonly end: number;
+        };
+        readonly ranges: readonly ArrayWithExtrinsicRanges.Range<RangeDataSchema>[];
+        removeExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>): void;
+        setExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>, start: number, end: number): void;
     }
     // @sealed
     export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
