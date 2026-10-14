@@ -288,7 +288,7 @@ export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObj
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
 // @alpha
-export function configuredSharedTreeWithoutHistoryAlpha(options?: Omit<SharedTreeOptions, "revertibleSupport">): SharedObjectKind<ITree>;
+export function configuredSharedTreeWithFeaturesAlpha(options?: SharedTreeFeatureOptions): SharedObjectKind<ITree>;
 
 // @public
 export enum ConnectionState {
@@ -2101,6 +2101,11 @@ export const SharedTree: SharedObjectKind<ITree>;
 
 // @alpha
 export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
+
+// @alpha @input
+export interface SharedTreeFeatureOptions extends SharedTreeOptions {
+    readonly revertibleSupport?: RevertibleSupport;
+}
 
 // @alpha @input
 export interface SharedTreeFormatOptions {

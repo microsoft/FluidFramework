@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { configuredSharedTreeWithoutHistoryAlpha } from "@fluidframework/tree/alpha";
+import { configuredSharedTreeWithFeaturesAlpha } from "@fluidframework/tree/alpha";
 
-export const SharedTree = configuredSharedTreeWithoutHistoryAlpha();
+export const SharedTree = configuredSharedTreeWithFeaturesAlpha();

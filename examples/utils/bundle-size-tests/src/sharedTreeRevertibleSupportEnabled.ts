@@ -4,10 +4,10 @@
  */
 
 import {
-	configuredSharedTreeAlpha,
+	configuredSharedTreeWithFeaturesAlpha,
 	RevertibleSupportEnabled,
 } from "@fluidframework/tree/alpha";
 
-export const SharedTree = configuredSharedTreeAlpha({
+export const SharedTree = configuredSharedTreeWithFeaturesAlpha({
 	revertibleSupport: RevertibleSupportEnabled,
 });

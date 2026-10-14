@@ -98,7 +98,6 @@ describe("SharedTree revertible support bundles", () => {
 			"sharedTreeRevertibleSupportEnabled",
 		);
 		assertIncludesModule(enabledSharedTreeModules, enabledSupport);
-		assertExcludesModule(enabledSharedTreeModules, disabledSupport);
 
 		const disabledSharedTreeSize = getEntrypointSize(
 			stats,

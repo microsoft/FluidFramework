@@ -82,6 +82,14 @@ export interface IndependentViewOptions
 
 	/**
 	 * Selects whether this tree supports creating and applying revertibles.
+	 *
+	 * @remarks
+	 * {@link RevertibleSupportDisabled} removes the runtime state and processing used for history
+	 * recovery. It does not exclude the enabled implementation from the bundle because
+	 * {@link createIndependentTreeViewAlpha} references {@link RevertibleSupportEnabled} as its
+	 * default.
+	 *
+	 * @defaultValue {@link RevertibleSupportEnabled}
 	 */
 	revertibleSupport?: RevertibleSupport | undefined;
 }
@@ -94,6 +102,14 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions &
 	IndependentViewTelemetryOptions & {
 		/**
 		 * Selects whether this tree supports creating and applying revertibles.
+		 *
+		 * @remarks
+		 * {@link RevertibleSupportDisabled} removes the runtime state and processing used for history
+		 * recovery. It does not exclude the enabled implementation from the bundle because
+		 * {@link createIndependentTreeAlpha} references {@link RevertibleSupportEnabled} as its
+		 * default.
+		 *
+		 * @defaultValue {@link RevertibleSupportEnabled}
 		 */
 		revertibleSupport?: RevertibleSupport | undefined;
 	} & (

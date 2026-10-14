@@ -35,8 +35,13 @@ export type RevertibleBranch = SharedTreeBranch<
  *
  * @remarks
  * Current options are {@link RevertibleSupportEnabled} and {@link RevertibleSupportDisabled}.
- * The implementations are in separate modules so bundlers can remove enabled history-recovery
- * code when disabled support is selected.
+ * The implementations are in separate modules so a composition root that does not reference
+ * {@link RevertibleSupportEnabled} can exclude enabled history-recovery code from its bundle.
+ *
+ * Passing {@link RevertibleSupportDisabled} to {@link configuredSharedTreeAlpha} disables runtime
+ * history recovery, but does not exclude the enabled implementation from the bundle because that
+ * factory references it as the default. Use {@link configuredSharedTreeWithFeaturesAlpha}, which
+ * defaults omitted feature providers to disabled implementations, to control bundle inclusion.
  *
  * @sealed @alpha
  */

@@ -278,7 +278,7 @@ export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObj
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
 // @alpha
-export function configuredSharedTreeWithoutHistoryAlpha(options?: Omit<SharedTreeOptions, "revertibleSupport">): SharedObjectKind<ITree>;
+export function configuredSharedTreeWithFeaturesAlpha(options?: SharedTreeFeatureOptions): SharedObjectKind<ITree>;
 
 // @alpha
 export const contentSchemaSymbol: unique symbol;
@@ -1495,6 +1495,11 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha
 export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
+
+// @alpha @input
+export interface SharedTreeFeatureOptions extends SharedTreeOptions {
+    readonly revertibleSupport?: RevertibleSupport;
+}
 
 // @alpha @input
 export interface SharedTreeFormatOptions {

@@ -83,6 +83,15 @@ export function configuredSharedTreeBetaLegacy(
 
 /**
  * {@link configuredSharedTreeBeta} but including the alpha {@link SharedTreeOptions}.
+ *
+ * @remarks
+ * History recovery is enabled by default. Passing {@link RevertibleSupportDisabled} disables its
+ * runtime state and processing, but does not exclude the enabled implementation from the bundle
+ * because this factory references {@link RevertibleSupportEnabled} as its default.
+ *
+ * Use {@link configuredSharedTreeWithFeaturesAlpha} to omit history recovery by default and import
+ * {@link RevertibleSupportEnabled} only when it is needed.
+ *
  * @alpha
  */
 export function configuredSharedTreeAlpha(

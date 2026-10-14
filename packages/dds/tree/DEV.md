@@ -2,6 +2,10 @@
 
 ## Tree
 
+See [SharedTree Tree-Shaking Architecture](./tree-shaking.md) for the optional-feature composition model, subsystem diagrams, and guidance for adding tree-shakable features.
+New SharedTree runtime features that must be independently tree-shakable must use the provider-injection pattern documented there.
+Do not add feature-specific configured factories or factories for combinations of optional features.
+
 ### Optional history recovery
 
 `TreeCheckout` depends on the provider contract in `revertibleSupport.ts`.
@@ -12,10 +16,13 @@ changed events; explicit history-recovery calls throw a `UsageError`.
 
 Support selection is propagated to forks and independent checkouts.
 Applications that need to exclude enabled history recovery from their shipped bundle must use
-`configuredSharedTreeWithoutHistoryAlpha`; passing a disabled provider through the general
-configured factory does not establish the same composition-root guarantee.
+`configuredSharedTreeWithFeaturesAlpha` and omit `revertibleSupport`.
+The explicit factory uses disabled implementations for omitted features; applications import and
+pass only the enabled providers they need.
+Passing a disabled provider through the default configured factory does not establish the same
+composition-root guarantee because that factory imports enabled support as its default.
 Reverts remain ordinary local changes, so selecting either provider has no wire-format or summary
 format impact.
 
 The emitted-artifact probes in `examples/utils/bundle-size-tests` verify that the no-history
-SharedTree factory cannot reach `revertibleSupportEnabled.js`.
+explicit composition cannot reach `revertibleSupportEnabled.js`.

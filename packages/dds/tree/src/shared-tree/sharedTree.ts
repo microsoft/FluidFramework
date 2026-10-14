@@ -681,6 +681,15 @@ export interface SharedTreeOptions
 	/**
 	 * Selects whether this tree supports creating and applying revertibles.
 	 *
+	 * @remarks
+	 * {@link RevertibleSupportDisabled} removes the runtime state and processing used for history
+	 * recovery. Passing it to {@link configuredSharedTreeAlpha} does not exclude the enabled
+	 * implementation from the bundle because that factory references {@link RevertibleSupportEnabled}
+	 * as its default.
+	 *
+	 * Use {@link configuredSharedTreeWithFeaturesAlpha} to omit history recovery by default or
+	 * explicitly include {@link RevertibleSupportEnabled}.
+	 *
 	 * @defaultValue {@link RevertibleSupportEnabled}
 	 */
 	readonly revertibleSupport?: RevertibleSupport;
@@ -713,6 +722,28 @@ export interface SharedTreeOptions
 	 * We recommend {@link ForestOptions.forest|configuring SharedTree} with the {@link ForestTypeOptimized|optimized forest implementation} to reduce the performance impact of this validation.
 	 */
 	readonly validateRebasedCommitsBeforeResubmission?: boolean;
+}
+
+/**
+ * Options for explicitly enabling SharedTree optional features.
+ *
+ * @remarks
+ * {@link configuredSharedTreeWithFeaturesAlpha} uses lightweight disabled implementations for
+ * omitted features. Applications import and supply only the enabled implementations they need,
+ * which determines which optional feature code is included in their bundle.
+ *
+ * @alpha @input
+ */
+export interface SharedTreeFeatureOptions extends SharedTreeOptions {
+	/**
+	 * Enables creating and applying revertibles.
+	 *
+	 * Pass {@link RevertibleSupportEnabled} to include history recovery. Omit this option to use
+	 * {@link RevertibleSupportDisabled}.
+	 *
+	 * @defaultValue {@link RevertibleSupportDisabled}
+	 */
+	readonly revertibleSupport?: RevertibleSupport;
 }
 
 export interface SharedTreeOptionsInternal
