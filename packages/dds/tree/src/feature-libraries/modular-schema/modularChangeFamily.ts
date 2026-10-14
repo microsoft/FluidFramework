@@ -2303,7 +2303,6 @@ function newComposeTable(
 			baseChange.rebaseVersion,
 			newChange.rebaseVersion,
 		) as RebaseVersion,
-		movedNodeIds: newChangeAtomIdRangeMap(),
 		baseChange,
 		newChange,
 		fieldToContext: new Map(),
@@ -2321,9 +2320,6 @@ function newComposeTable(
 
 interface ComposeTable {
 	readonly rebaseVersion: RebaseVersion;
-
-	// Entries are keyed on detach ID
-	readonly movedNodeIds: ChangeAtomIdRangeMap<NodeId>;
 	readonly baseChange: ModularChangeset;
 	readonly newChange: ModularChangeset;
 
@@ -2340,8 +2336,6 @@ interface ComposeTable {
 	 * Maps from attach ID in change1 to a corresponding detach ID in change2.
 	 */
 	readonly attachDetachRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
-
-	// XXX: This could probably be merged with movedNodeIds.
 	readonly baseAttachIdToNewNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly removedCrossFieldKeys: CrossFieldRangeTable<boolean>;
 	readonly addedCrossFieldKeys: CrossFieldRangeTable<FieldId>;
@@ -2639,7 +2633,11 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		} else {
 			// The base detach was part of a move.
 			// We check if we've previously seen a node change at the move destination.
-			result = this.table.movedNodeIds.getFirst(baseDetachId, countToProcess);
+			result = rangeQueryChangeAtomIdMap(
+				this.table.baseAttachIdToNewNodeId,
+				newIdEntry.value,
+				countToProcess,
+			);
 			countToProcess = result.length;
 		}
 
@@ -2763,10 +2761,9 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			1,
 		);
 
-		if (detachFields.length > 0) {
-			// The base attach is part of a move in the base changeset.
-			this.table.movedNodeIds.set(baseDetachId, 1, newChanges);
+		setInChangeAtomIdMap(this.table.baseAttachIdToNewNodeId, baseAttachId, newChanges);
 
+		if (detachFields.length > 0) {
 			if (newChanges !== undefined) {
 				this.invalidateBaseFields(detachFields);
 			}
@@ -2776,9 +2773,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				baseDetachId,
 			);
 
-			if (baseNodeId === undefined) {
-				setInChangeAtomIdMap(this.table.baseAttachIdToNewNodeId, baseAttachId, newChanges);
-			} else {
+			if (baseNodeId !== undefined) {
 				addNodesToCompose(this.table, baseNodeId, newChanges);
 			}
 		}
