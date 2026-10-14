@@ -269,7 +269,7 @@ describe("textDomainFormatted", () => {
 			]);
 			assert.throws(
 				() => text.formatRange(0, 2, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
 			);
 		});
 
@@ -282,7 +282,7 @@ describe("textDomainFormatted", () => {
 			// The range spans object formats at either end with a non-object format in the middle.
 			assert.throws(
 				() => text.formatRange(0, 3, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
 			);
 		});
 	});
