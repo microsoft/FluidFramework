@@ -657,19 +657,15 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.branchHistory;
 	}
 
-	public get locations(): TreeLocationResolver {
-		this.ensureUndisposed();
-		const resolver = this.checkout.locations;
-		return {
-			capture: (locations) => {
-				this.ensureUndisposed();
-				return resolver.capture(locations);
-			},
-			resolve: (capture) => {
-				this.ensureUndisposed();
-				throwIfSchemaIsIncompatible(this.compatibility);
-				return resolver.resolve(capture);
-			},
-		};
-	}
+	public readonly locations: TreeLocationResolver = {
+		capture: (locations) => {
+			this.ensureUndisposed();
+			return this.checkout.locations.capture(locations);
+		},
+		resolve: (capture) => {
+			this.ensureUndisposed();
+			throwIfSchemaIsIncompatible(this.compatibility);
+			return this.checkout.locations.resolve(capture);
+		},
+	};
 }
