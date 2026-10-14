@@ -320,7 +320,7 @@ let emulateProductionBuildCount = 0;
  * Great care must be taken when using this to ensure that bugs are not introduced which only occur when `conditional` is not run.
  * One way to do this is to provide an alternative way to disable the effects of `conditional` in development builds so both configurations can be tested.
  * See {@link emulateProductionBuild} for a way to emulate production build behavior in development.
- * @alpha
+ * @internal
  */
 export function skipInProduction(conditional: () => void): void {
 	skipInProductionInner(() => {
