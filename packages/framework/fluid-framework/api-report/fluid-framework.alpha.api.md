@@ -158,6 +158,36 @@ export interface ArrayPlaceAnchor {
 }
 
 // @alpha
+export namespace ArrayWithExtrinsicRanges {
+    export function createSchema<const TUserScope extends string, const TRangeDataSchema extends ImplicitAllowedTypes, const TContentSchema extends ImplicitAllowedTypes>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, rangeDataSchema: TRangeDataSchema, contentSchema: TContentSchema): Schema<TUserScope, TRangeDataSchema, TContentSchema>;
+    // @sealed
+    export interface Members<TRangeDataSchema extends ImplicitAllowedTypes, TContentSchema extends ImplicitAllowedTypes> {
+        addExtrinsicRange(start: number, end: number, data: InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>): Range<TRangeDataSchema>;
+        readonly content: ReadonlyArrayNode<[
+        TContentSchema
+        ] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TContentSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>>;
+        getExtrinsicRange(range: Range<TRangeDataSchema>): {
+            readonly start: number;
+            readonly end: number;
+        };
+        readonly ranges: readonly Range<TRangeDataSchema>[];
+        removeExtrinsicRange(range: Range<TRangeDataSchema>): void;
+        setExtrinsicRange(range: Range<TRangeDataSchema>, start: number, end: number): void;
+        transactOnContent(edit: (content: TreeArrayNode<TContentSchema>) => void): void;
+    }
+    // @sealed
+    export interface Range<TRangeDataSchema extends ImplicitAllowedTypes> {
+        readonly data: TreeNodeFromImplicitAllowedTypes<TRangeDataSchema>;
+    }
+    export type Schema<TUserScope extends string, TRangeDataSchema extends ImplicitAllowedTypes, TContentSchema extends ImplicitAllowedTypes> = Statics<ErasedNode<Members<TRangeDataSchema, TContentSchema>, SchemaIdentifier<TUserScope>>, TContentSchema> & ErasedSchemaSubclassable<Members<TRangeDataSchema, TContentSchema>, SchemaIdentifier<TUserScope>>;
+    export type SchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.extrinsicRanges<${TUserScope}>`, "Manager">;
+    // @sealed
+    export interface Statics<TNode, TContentSchema extends ImplicitAllowedTypes> {
+        create(content?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TContentSchema>>): TNode;
+    }
+}
+
+// @alpha
 export function asAlpha(tree: ITree): ITreeAlpha;
 
 // @alpha

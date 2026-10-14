@@ -39,12 +39,66 @@ Thus we will be able to make a more informed choice about if and how to pursue o
 
 ## Status
 
-Early `@alpha` work in progress.
+An early `@alpha` minimum viable product (MVP) is available as `ArrayWithExtrinsicRanges`.
+It implements Phase 1, step 1 below using numeric endpoints and document-wide `noChange` constraints.
 
 For now, work is focused on `Extrinsic Ranges`.
 
-Currently the initial support is an extrinsic range manager node wraps both the array and a collections of ranges, which it keeps up to date when you edit the array through it.
-See [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts)
+`ArrayWithExtrinsicRanges.createSchema` creates a scoped, subclassable schema for an array and a collection of ranges with application-defined data.
+The erased API exposes the content directly as a `ReadonlyArrayNode`, range handles with application-defined data, and methods to read and edit range positions.
+Use `getExtrinsicRange` to read a snapshot of a range's current endpoints.
+Use `transactOnContent` to edit the content through a synchronous callback with the existing mutable array API.
+You can also add, reposition, and remove ranges within that callback.
+Use a distinct `SchemaFactoryBeta` scope for each parameterization.
+Use the returned schema's `create` method to construct an array, then `addExtrinsicRange` to add ranges.
+See [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts) and the [executable usage example](../test/extrinsic-locations/arrayWithExtrinsicRanges.example.spec.ts).
+
+Ranges use half-open intervals `[start, end)`.
+Both endpoints follow the same insertion-point semantics as array insertion anchors:
+an insertion at an endpoint leaves the endpoint after the inserted content.
+Insertion at the start is therefore excluded, insertion at the end is included, and an empty range stays empty.
+Removing content collapses endpoints inside the removed span to its start.
+Ranges survive removal of all their covered content and retain their data and identity until explicitly removed.
+Moves use array insertion-anchor semantics: ranges remain with their manager rather than following moved content.
+When moving between managed arrays, nest both managers' `transactOnContent` callbacks so both arrays are edited within their editing scopes.
+Nested callbacks on the same manager are rejected.
+
+Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
+Each structural edit is a transaction guarded by a document-wide `noChange` constraint.
+The transaction includes both the content edits and the final endpoint updates.
+Content changes are immediately visible, and events are delivered normally during the callback so application caches can invalidate.
+While the editing scope is active, manager methods resolve positions through temporary array insertion anchors.
+The stored numeric endpoints are synchronized after the callback finishes and before `transactOnContent` returns.
+Endpoint writeback can emit further events; manager methods continue to use anchors until writeback finishes.
+Do not retain the mutable content array for editing outside the callback.
+Callbacks must not return promises.
+Concurrent changes anywhere in the document can reject the entire transaction; applications must observe commit outcomes if they need to report or retry rejected edits.
+Undo is also guarded by `noChange` so that it cannot restore stale endpoints after another edit.
+Immediate undo and redo are supported, but selective undo across intervening edits can be rejected.
+Object content and range data can be edited directly without changing array positions.
+Unhydrated nodes do not support rollback; if a callback throws, completed edits and their endpoint updates remain.
+For hydrated nodes, errors have the same effect as errors in `TreeViewAlpha.runTransaction`.
+
+There is a known anchor event-ordering bug: listeners registered before an anchor can read its previous position alongside updated content.
+Position reads after an edit returns within the callback are current.
+Skipped regression tests document the event-ordering bug for an independent fix.
+
+All writers must use the editing API to preserve the invariants.
+Type erasure does not prevent another view schema, import operation, or agent from changing the stored fields directly.
+Native location tracking, more permissive concurrency, and production stabilization remain future work.
+
+### Internal integration
+
+[`ExtrinsicRangeTracker`](./extrinsicRangeTracker.ts) implements the editing and tracking logic independently of the enclosing schema.
+It takes a content array, a tree array of range nodes with writable numeric `start` and `end` fields, and a factory for creating range nodes from endpoints and application data.
+The factory determines how application data is stored; the helper does not require a `data` field.
+The two arrays must be unhydrated or belong to the same hydrated tree context.
+Reuse one tracker per pair of arrays so range operations and content edits share the same active anchors.
+The helper looks up the current tree context for each editing scope, so you can keep using it after hydrating its arrays together.
+
+`ArrayWithExtrinsicRanges` caches a tracker and delegates its editing and position-reading methods to it.
+The tracker is exported only from its implementation module, not from package barrels or entrypoints, and has no release tag.
+It is an implementation detail that can change as integrations and optimizations evolve.
 
 For now everything in the implementation and the rest of this document is focused on "option 1" from above, where the application (with the help from the utilities we include in this directory) maintains the data invariants by updating both the locations as needed.
 
@@ -76,11 +130,13 @@ Changing the shape means rebased are more complex.
 Do the later parts of this work (which impact merge results, not just optimized encoding) need to wait for
 ongoing rebaser/changeset work?
 
-### Planed work
+### Planned work
 
 Currently actionable work (Phase 1):
 
-1. An extrinsic range MVP leveraging the "NoChangeConstraint" which can maintain its data invariants. I think we can do this with no currently unreleased features (just needs sufficient min version for collab for the constraint). This will not be robust to AI editing of the data generally, but we can expose methods which are safe for it to use. (Won't work for agents without view schema, but I don't think that's a priority). This will just store index numbers. Share code with sequence to ensure matching behavior.
+1. **Implemented:** An extrinsic range MVP using `NoChangeConstraint` to maintain its data invariants.
+It stores numeric endpoints and uses temporary array insertion anchors, which process sequence deltas, while editing content.
+The manager methods preserve the invariants; direct edits to stored fields, including edits by agents that bypass these methods, do not.
 2. Schema versioning to allow for schema changes which change the field kind without strict field kind ordering rules to prevent cycles.
 3. Add Experimental (alpha) field kind: index. Support edits like "if larger than A, add B" (where A is adjusted when rebasing over other edits).
 4. Ensure stabilization and rollout of new field kinds is practical and robust (good errors, no asserts etc.)

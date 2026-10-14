@@ -186,6 +186,7 @@ export {
 	ArrayNodePojoEmulationSchema, 
 	ArrayNodeSchema, 
 	ArrayPlaceAnchor, 
+	ArrayWithExtrinsicRanges,
 	ChangeMetadata, 
 	CodecName, 
 	CodecWriteOptions, 
