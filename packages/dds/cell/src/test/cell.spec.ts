@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
+	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
@@ -485,6 +486,71 @@ describe("Cell", () => {
 			// Verify that the deleted value is processed by both clients.
 			assert.equal(cell1.get(), undefined, "The first client did not process the delete");
 			assert.equal(cell2.get(), undefined, "The second client did not process the delete");
+		});
+	});
+
+	describe("Pending op bookkeeping", () => {
+		it("drains many pending sets via incremental ACKs without assert and preserves ordering", () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const cell1 = createConnectedCell("cell1", containerRuntimeFactory);
+			const cell2 = createConnectedCell("cell2", containerRuntimeFactory);
+
+			const values = ["v0", "v1", "v2", "v3", "v4"];
+			for (const v of values) {
+				cell1.set(v);
+			}
+
+			// Incrementally ACK each pending op one at a time.
+			// This exercises the per-ACK pendingMessageIds.shift() path and would assert-fail
+			// (0x471 "Unexpected pending message received") if the pending list order or the
+			// pendingNode bookkeeping were wrong.
+			for (const _ of values) {
+				containerRuntimeFactory.processSomeMessages(1);
+				// Local cell continues to reflect its latest local write throughout.
+				assert.equal(
+					cell1.get(),
+					values.at(-1),
+					"local cell should retain latest pending value while ACKs drain",
+				);
+			}
+
+			// After all ACKs, both cells must converge on the final value in order.
+			assert.equal(cell1.get(), values.at(-1), "cell1 final value");
+			assert.equal(cell2.get(), values.at(-1), "cell2 final value");
+		});
+
+		it("rolls back multiple pending sets in LIFO order against the expected pending id", () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 });
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime: MockContainerRuntime =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services = {
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			const cell = new SharedCell("cell-rollback", dataStoreRuntime, CellFactory.Attributes);
+			cell.connect(services);
+
+			// Three pending sets; nothing has been flushed/sequenced yet.
+			cell.set("a");
+			cell.set("b");
+			cell.set("c");
+			assert.equal(cell.get(), "c", "latest local value should be visible before rollback");
+
+			// Rolls back in LIFO order; each rollback should match the last pending id (popped from the list).
+			// If pendingMessageIds was tracked incorrectly, rollback() would throw
+			// "Rollback op does not match last pending".
+			assert.doesNotThrow(
+				() => containerRuntime.rollback?.(),
+				"rollback should pop pending ids in LIFO order",
+			);
+
+			// After rollback, the cell value reverts to the pre-first-set value (undefined).
+			assert.equal(
+				cell.get(),
+				undefined,
+				"cell should be empty after rolling back all pending sets",
+			);
 		});
 	});
 
