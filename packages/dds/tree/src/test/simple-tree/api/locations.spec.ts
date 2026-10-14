@@ -111,6 +111,21 @@ function expectUnavailable(
 }
 
 describe("TreeLocationResolver", () => {
+	it("reuses one locations object per view", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const resolver = sender.locations;
+		assert.equal(sender.locations, resolver);
+		assert.notEqual(receiver.locations, resolver);
+		const { capture: captureLocations, resolve } = resolver;
+		const batch = captureLocations([{ kind: "node", node: sender.root.left }]);
+		assert.deepEqual(resolved(resolve(batch)), [{ kind: "node", node: sender.root.left }]);
+		assert.equal(sender.locations, resolver);
+		sender.dispose();
+		assert.throws(() => captureLocations([]), /disposed TreeView/);
+		assert.throws(() => resolve(batch), /disposed TreeView/);
+	});
+
 	it("embeds plain capture objects in a larger presence message with a single serialization", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
