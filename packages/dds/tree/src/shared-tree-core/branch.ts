@@ -150,10 +150,6 @@ export class SharedTreeBranch<
 	private disposed = false;
 	private readonly unsubscribeBranchTrimmer?: () => void;
 	/**
-	 * An optional function to validate a change is well-formed.
-	 */
-	readonly #validator?: (change: TChange) => true | string;
-	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
@@ -161,7 +157,6 @@ export class SharedTreeBranch<
 	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
 	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
 	 * @param telemetryEventBatcher - an optional telemetry event batcher for collecting rebase statistics.
-	 * @param validator - an optional function to validate a change is well-formed.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
@@ -171,9 +166,7 @@ export class SharedTreeBranch<
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
-		validator?: (change: TChange) => true | string,
 	) {
-		this.#validator = validator;
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
 			this.apply(change, CommitKind.Default, undefined),
 		);
@@ -280,8 +273,6 @@ export class SharedTreeBranch<
 			this.changeFamily,
 			mintRevisionTag,
 			this.branchTrimmer,
-			undefined,
-			this.#validator,
 		);
 		this.#events.emit("fork", fork);
 		return fork;
@@ -419,14 +410,7 @@ export class SharedTreeBranch<
 		}
 
 		const { duration, output } = measure(() =>
-			rebaseBranch(
-				this.mintRevisionTag,
-				this.changeFamily.rebaser,
-				head,
-				upTo,
-				onto.getHead(),
-				this.#validator,
-			),
+			rebaseBranch(this.mintRevisionTag, this.changeFamily, head, upTo, onto.getHead()),
 		);
 
 		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });

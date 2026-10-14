@@ -69,6 +69,8 @@ export class SharedTreeChangeFamily
 	>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 
+	public readonly validator = debugOnlySharedTreeChangeValidator;
+
 	public constructor(
 		revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,

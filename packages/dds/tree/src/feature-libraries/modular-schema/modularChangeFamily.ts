@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, skipInProduction } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 import { lt } from "semver-ts";
@@ -47,9 +47,7 @@ import {
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
 	type ProcessChangeFn,
-	RebaseValidation,
 	strictRebaseValidation,
-	type RebaseValidationLevel,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -115,6 +113,7 @@ import {
 	updateConstraintsForFields,
 	type CrossFieldTable,
 	isChangesetValid,
+	debugOnlyChangesetValidator,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
 import { pruneChangeset } from "./prune.js";
@@ -132,6 +131,10 @@ export class ModularChangeFamily
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
+
+	public readonly validator = (change: ModularChangeset): true | string => {
+		return debugOnlyChangesetValidator(change, this.fieldKinds);
+	};
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
@@ -2309,18 +2312,8 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 			);
 		});
 		const revInfo = [...revisions].map((revision) => ({ revision }));
-		// The ModularChangeset instances being composed here are not expected to be well-formed
-		let oldLevel: RebaseValidationLevel;
-		skipInProduction(() => {
-			oldLevel = RebaseValidation.currentLevel;
-			RebaseValidation.setLevel(RebaseValidation.Level.None);
-		});
-		const composed = this.rebaser.compose(changeMaps);
-		skipInProduction(() => {
-			RebaseValidation.setLevel(oldLevel);
-		});
 		const composedChange: Mutable<ModularChangeset> = {
-			...composed,
+			...this.rebaser.compose(changeMaps),
 			revisions: revInfo,
 		};
 

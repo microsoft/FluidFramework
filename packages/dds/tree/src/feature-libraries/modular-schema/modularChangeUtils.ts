@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, skipInProduction } from "@fluidframework/core-utils/internal";
 import {
 	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	newChangeAtomIdRangeMap,
+	RebaseValidation,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -474,6 +475,23 @@ export function validateChangeset(
 	}
 }
 
+/**
+ * Debug-only validation function to check if a change is well-formed.
+ * @param change - The change to validate.
+ * @returns In production builds, always returns `true`.
+ * In debug builds, returns `true` if the change is well-formed, otherwise a string describing the validation error.
+ * @remarks
+ * Using this function over {@link isSharedTreeChangeValid} allows tree-shaking of the validation logic in production builds.
+ */
+export let debugOnlyChangesetValidator: (
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	options?: ValidationOptions,
+) => true | string = () => true;
+skipInProduction(() => {
+	debugOnlyChangesetValidator = isChangesetValid;
+});
+
 export function isChangesetValid(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
@@ -572,7 +590,6 @@ function validateFieldChanges(
 			unreachableNodes.delete([normalizedNodeId.revision, normalizedNodeId.localId]);
 		}
 
-		// They will be addressed by PR 26206
 		if (!(options.ignoreCrossFieldTable ?? false)) {
 			const keysInChange = handler.getCrossFieldKeys(fieldChange.change);
 			for (const keyRange of keysInChange) {
@@ -587,16 +604,23 @@ function validateFieldChanges(
 
 			// This check is disabled because inserts often cause mismatches between the cross-field key table and the field changeset.
 			// These mismatches are considered harmless, though its possible that other issues left undetected due to this being disabled.
-			// const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
-			// const keysInTable = change.crossFieldKeys
-			// 	.entries()
-			// 	.filter(({ value }) =>
-			// 		areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
-			// 	);
-			// const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
-			// if (countInChange !== countInTable) {
-			// 	return `Mismatch between cross-field key table and changeset for field ${JSON.stringify(fieldId)}`;
-			// }
+			// They will be addressed by PR 26206
+			skipInProduction(() => {
+				// This check is linear in the size of the changeset, and can be called linearly many times.
+				// It is therefore only run in strict validation mode
+				if (RebaseValidation.currentLevel === RebaseValidation.Level.Strict) {
+					const countInChange = keysInChange.reduce((acc, { count }) => acc + count, 0);
+					const keysInTable = change.crossFieldKeys
+						.entries()
+						.filter(({ value }) =>
+							areEqualFieldIds(normalizeFieldId(value, change.nodeAliases), fieldId),
+						);
+					const countInTable = keysInTable.reduce((acc, { length }) => acc + length, 0);
+					if (countInChange !== countInTable) {
+						return `Mismatch between cross-field key table and changeset for field ${JSON.stringify(fieldId)}`;
+					}
+				}
+			});
 		}
 	}
 	return true;

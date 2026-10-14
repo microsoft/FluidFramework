@@ -118,17 +118,11 @@ export class EditManager<
 		| undefined;
 
 	/**
-	 * An optional function to validate a change is well-formed.
-	 */
-	readonly #validator?: (change: TChangeset) => true | string;
-
-	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
 	 * @param mintRevisionTag - a function which generates globally unique revision tags
 	 * @param onSharedBranchCreated - called when a new shared branch is created. This is not called for the main branch.
 	 * @param retainHistory - when `true`, trunk commits are never trimmed/evicted.
-	 * @param validator - an optional function to validate a change is well-formed.
 	 */
 	public constructor(
 		public readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeProcessingContext>,
@@ -137,9 +131,7 @@ export class EditManager<
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
 		logger?: TelemetryLoggerExt,
 		private readonly retainHistory: boolean = false,
-		validator?: (change: TChangeset) => true | string,
 	) {
-		this.#validator = validator;
 		this.trunkBase = {
 			revision: rootRevision,
 			change: changeFamily.rebaser.compose([]),
@@ -164,7 +156,6 @@ export class EditManager<
 			mintRevisionTag,
 			this._events,
 			this.telemetryEventBatcher,
-			this.#validator,
 		);
 
 		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
@@ -758,11 +749,6 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		{ sequenceId: SequenceId; sessionId: SessionId }
 	>();
 
-	/**
-	 * An optional function to validate a change is well-formed.
-	 */
-	readonly #validator?: (change: TChangeset) => true | string;
-
 	public constructor(
 		public readonly parentBranch:
 			| SharedBranch<TEditor, TChangeset, TChangeProcessingContext>
@@ -776,16 +762,13 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		private readonly mintRevisionTag: () => RevisionTag,
 		branchTrimmer: Listenable<BranchTrimmingEvents>,
 		telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStatsWithDuration> | undefined,
-		validator?: (change: TChangeset) => true | string,
 	) {
-		this.#validator = validator;
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
 			mintRevisionTag,
 			branchTrimmer,
 			telemetryEventBatcher,
-			this.#validator,
 		);
 
 		this.sequenceIdToCommit.set(baseCommitSequenceId, this.trunk.getHead());
@@ -901,15 +884,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
 			sessionId,
-			() =>
-				new SharedTreeBranch(
-					baseRevisionInTrunk,
-					this.changeFamily,
-					this.mintRevisionTag,
-					undefined,
-					undefined,
-					this.#validator,
-				),
+			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
 		);
 		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
 		return peerLocalBranch;
@@ -1232,14 +1207,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset, TChangeProces
 			}
 			this.peerLocalBranches.set(
 				sessionId,
-				new SharedTreeBranch(
-					branchHead,
-					this.changeFamily,
-					this.mintRevisionTag,
-					undefined,
-					undefined,
-					this.#validator,
-				),
+				new SharedTreeBranch(branchHead, this.changeFamily, this.mintRevisionTag),
 			);
 		}
 	}
