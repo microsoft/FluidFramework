@@ -17,7 +17,10 @@ import type { RevertibleAlpha } from "../../../core/index.js";
 import type { CapturedTreeLocationsInternal } from "../../../shared-tree/locations.js";
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	TreeViewConfiguration,
+	type TreeArrayNode,
+	type TextLocationNode,
 	type CapturedTreeLocations,
 	type TreeLocation,
 	type TreeLocationResolver,
@@ -25,6 +28,12 @@ import {
 	type ResolvedTreeLocation,
 	type TreeViewAlpha,
 } from "../../../simple-tree/index.js";
+import {
+	PlainText,
+	FormattedText,
+	isTextLocationNode,
+	textLocationArray,
+} from "../../../text/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
 import type { requireFalse } from "../../../util/index.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
@@ -89,6 +98,411 @@ function resolved(
 		return entry.location;
 	});
 }
+
+describe("TreeLocationResolver text", () => {
+	class Format extends sf.object("LocationFormat", { bold: sf.boolean }) {}
+	class Embedded extends sf.object("LocationEmbedded", { content: sf.string }) {}
+	const Formatted = FormattedText.createSchema(
+		new SchemaFactoryAlpha("com.example.locations.text"),
+		Format,
+		[Embedded],
+		{ bold: false },
+	);
+	class FormattedSubclass extends FormattedText.createSchema(
+		new SchemaFactoryAlpha("com.example.locations.text.subclass"),
+		Format,
+		[Embedded],
+		{ bold: false },
+	) {}
+
+	function characters(node: TextLocationNode): TreeArrayNode {
+		assert(isTextLocationNode(node));
+		return node[textLocationArray];
+	}
+
+	for (const [name, schema] of [
+		["plain", PlainText.Tree],
+		["formatted", Formatted],
+		["formatted subclass", FormattedSubclass],
+	] as const) {
+		describe(name, () => {
+			class Paragraph extends sf.object(`Paragraph ${name}`, {
+				text: [PlainText.Tree, Formatted, FormattedSubclass],
+			}) {}
+			class Paragraphs extends sf.array(`Paragraphs ${name}`, Paragraph) {}
+			class Root extends sf.object(`Text document ${name}`, {
+				paragraphs: Paragraphs,
+			}) {}
+
+			function setupText(
+				left = "abcd",
+				right = "xy",
+			): {
+				provider: TestTreeProviderLite;
+				views: TreeViewAlpha<typeof Root>[];
+			} {
+				const provider = new TestTreeProviderLite(2);
+				const views = provider.trees.map((tree) =>
+					tree.kernel.viewWith(new TreeViewConfiguration({ schema: Root })),
+				);
+				views[0].initialize({
+					paragraphs: [
+						new Paragraph({ text: schema.fromString(left) }),
+						new Paragraph({ text: schema.fromString(right) }),
+					],
+				});
+				provider.synchronizeMessages();
+				return { provider, views };
+			}
+
+			it("returns public receiver text objects and keeps node and array captures distinct", () => {
+				const { views } = setupText();
+				const [sender, receiver] = views;
+				const source = sender.root.paragraphs[0].text;
+				const batch = capture(sender.locations, [
+					{ kind: "text", node: source, index: 0 },
+					{ kind: "text", node: source, index: 4, affinity: "after", movePolicy: "follow" },
+					{ kind: "node", node: source },
+					{ kind: "sequence", node: characters(source), index: 2 },
+				]);
+				const data = capturedData(batch);
+				assert.equal(typeof data.revision, "object");
+				assert.equal(typeof data.locations[0].node, "object");
+				assert(Array.isArray(data.locations[0].node.path));
+				assert(!Object.hasOwn(data.locations[1], "movePolicy"));
+				// Resolve before reading the receiver's text: the adapter must work on newly materialized nodes.
+				const results = resolved(receiver.locations.resolve(batch));
+				const destination = receiver.root.paragraphs[0].text;
+				assert.notEqual(source, destination);
+				assert.equal(destination.fullString(), "abcd");
+				assert.deepEqual(results, [
+					{ kind: "text", node: destination, index: 0, affinity: "before" },
+					{ kind: "text", node: destination, index: 4, affinity: "after" },
+					{ kind: "node", node: destination },
+					{ kind: "sequence", node: characters(destination), index: 2, affinity: "before" },
+				]);
+			});
+
+			it("tracks both affinities in empty text and uses code points rather than UTF-16 offsets", () => {
+				const { views } = setupText("");
+				const [sender, receiver] = views;
+				const batch = capture(sender.locations, [
+					{ kind: "text", node: sender.root.paragraphs[0].text, index: 0 },
+					{ kind: "text", node: sender.root.paragraphs[0].text, index: 0, affinity: "after" },
+				]);
+				const text = receiver.root.paragraphs[0].text;
+				text.insertAt(0, "\u{1F600}e\u0301");
+				assert.equal(text.fullString(), "\u{1F600}e\u0301");
+				assert.equal(text.fullString().length, 4);
+				assert.equal(text.characterCount(), 3);
+				assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+					{ kind: "text", node: text, index: 0, affinity: "before" },
+					{ kind: "text", node: text, index: 3, affinity: "after" },
+				]);
+			});
+
+			it("captures emoji gaps in character coordinates and rejects UTF-16 end offsets", () => {
+				const { views } = setupText("a\u{1F600}b");
+				const [sender, receiver] = views;
+				const text = sender.root.paragraphs[0].text;
+				const batch = capture(sender.locations, [
+					{ kind: "text", node: text, index: 2, affinity: "after" },
+					{ kind: "text", node: text, index: 3 },
+				]);
+				assert.throws(
+					() => sender.locations.capture([{ kind: "text", node: text, index: 4 }]),
+					validateUsageError(/in-bounds gap index/),
+				);
+				const destination = receiver.root.paragraphs[0].text;
+				destination.insertAt(2, "X");
+				assert.equal(destination.fullString(), "a\u{1F600}Xb");
+				assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+					{ kind: "text", node: destination, index: 3, affinity: "after" },
+					{ kind: "text", node: destination, index: 4, affinity: "before" },
+				]);
+			});
+
+			it("tracks insertions and deletion collapse with explicit and default affinities", () => {
+				const { views } = setupText();
+				const [sender, receiver] = views;
+				const source = sender.root.paragraphs[0].text;
+				const batch = capture(sender.locations, [
+					{ kind: "text", node: source, index: 2 },
+					{ kind: "text", node: source, index: 2, affinity: undefined },
+					{ kind: "text", node: source, index: 2, affinity: "before" },
+					{ kind: "text", node: source, index: 2, affinity: "after" },
+				]);
+				const text = receiver.root.paragraphs[0].text;
+				text.insertAt(2, "ij");
+				assert.equal(text.fullString(), "abijcd");
+				assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+					{ kind: "text", node: text, index: 2, affinity: "before" },
+					{ kind: "text", node: text, index: 2, affinity: "before" },
+					{ kind: "text", node: text, index: 2, affinity: "before" },
+					{ kind: "text", node: text, index: 4, affinity: "after" },
+				]);
+				text.removeRange(0, 4);
+				assert.equal(text.fullString(), "cd");
+				assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+					{ kind: "text", node: text, index: 0, affinity: "before" },
+					{ kind: "text", node: text, index: 0, affinity: "before" },
+					{ kind: "text", node: text, index: 0, affinity: "before" },
+					{ kind: "text", node: text, index: 0, affinity: "after" },
+				]);
+			});
+
+			it("follows cross-text moves with affinity at both range boundaries", () => {
+				const { provider, views } = setupText();
+				const [sender, receiver] = views;
+				const source = sender.root.paragraphs[0].text;
+				const batch = capture(
+					sender.locations,
+					(["before", "after"] as const).flatMap((affinity) =>
+						[1, 2, 3].map((index) => ({
+							kind: "text" as const,
+							node: source,
+							index,
+							affinity,
+						})),
+					),
+				);
+				const left = receiver.root.paragraphs[0].text;
+				const right = receiver.root.paragraphs[1].text;
+				// left: a[b|c]d --> ad; right: xy --> xb|cy.
+				// At a|bcd: before --> a|d, after --> x|bcy.
+				// At abc|d: before --> xbc|y, after --> a|d.
+				// This base has no public text move API; exercise the underlying sequence operation.
+				characters(right).moveRangeToIndex(1, 1, 3, characters(left));
+				assert.equal(left.fullString(), "ad");
+				assert.equal(right.fullString(), "xbcy");
+				const expected = [
+					{ kind: "text", node: left, index: 1, affinity: "before" },
+					{ kind: "text", node: right, index: 2, affinity: "before" },
+					{ kind: "text", node: right, index: 3, affinity: "before" },
+					{ kind: "text", node: right, index: 1, affinity: "after" },
+					{ kind: "text", node: right, index: 2, affinity: "after" },
+					{ kind: "text", node: left, index: 1, affinity: "after" },
+				];
+				assert.deepEqual(resolved(receiver.locations.resolve(batch)), expected);
+				provider.synchronizeMessages();
+				assert.deepEqual(resolved(receiver.locations.resolve(batch)), expected);
+			});
+
+			for (const transaction of [false, true]) {
+				it(`follows characters after deleting their source paragraph (transaction: ${transaction})`, () => {
+					const { provider, views } = setupText();
+					const [sender, receiver] = views;
+					const batch = capture(sender.locations, [
+						{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
+						{ kind: "node", node: sender.root.paragraphs[0].text },
+					]);
+					// source: ab|cd --> empty --> deleted paragraph
+					// destination: xy --> xab|cdy (new text in the transaction case).
+					const edit = (): void => {
+						if (transaction) {
+							receiver.root.paragraphs[1].text = schema.fromString("xy");
+						}
+						characters(receiver.root.paragraphs[1].text).moveRangeToIndex(
+							1,
+							0,
+							4,
+							characters(receiver.root.paragraphs[0].text),
+						);
+						receiver.root.paragraphs.removeAt(0);
+					};
+					if (transaction) {
+						receiver.runTransaction(edit);
+					} else {
+						edit();
+					}
+					const destination = receiver.root.paragraphs[0].text;
+					assert.equal(destination.fullString(), "xabcdy");
+					const expected = {
+						status: "resolved",
+						locations: [
+							{
+								status: "resolved",
+								location: { kind: "text", node: destination, index: 3, affinity: "before" },
+							},
+							{ status: "unavailable", reason: "target-deleted" },
+						],
+					};
+					assert.deepEqual(receiver.locations.resolve(batch), expected);
+					provider.synchronizeMessages();
+					assert.deepEqual(receiver.locations.resolve(batch), expected);
+				});
+			}
+
+			it("rebases pending receiver text edits over remote edits", () => {
+				const { provider, views } = setupText();
+				const [sender, receiver] = views;
+				const batch = capture(sender.locations, [
+					{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
+					{ kind: "text", node: sender.root.paragraphs[0].text, index: 4, affinity: "after" },
+				]);
+				sender.root.paragraphs[0].text.insertAt(0, "R");
+				const remoteRevision = sender.branchHistory.getHead()?.revision;
+				assert(remoteRevision !== undefined);
+				receiver.root.paragraphs[0].text.insertAt(4, "L");
+				do {
+					assert(provider.peekNextMessage() !== undefined);
+					provider.synchronizeMessages({ count: 1 });
+				} while (receiver.branchHistory.getHead()?.getParent()?.revision !== remoteRevision);
+				const destination = receiver.root.paragraphs[0].text;
+				assert.equal(destination.fullString(), "RabcdL");
+				assert.throws(
+					() => receiver.locations.capture([]),
+					validateUsageError(/pending local edits/),
+				);
+				assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+					{ kind: "text", node: destination, index: 3, affinity: "before" },
+					{ kind: "text", node: destination, index: 6, affinity: "after" },
+				]);
+			});
+
+			it("validates text gap coordinates, affinity, and received move policy", () => {
+				const { views } = setupText();
+				const [sender, receiver] = views;
+				const node = sender.root.paragraphs[0].text;
+				for (const index of [-1, 0.5, Number.NaN, Number.POSITIVE_INFINITY, 5]) {
+					assert.throws(
+						() => sender.locations.capture([{ kind: "text", node, index }]),
+						validateUsageError(/in-bounds gap index/),
+					);
+				}
+				assert.throws(
+					() =>
+						sender.locations.capture([
+							{ kind: "text", node, index: 1, affinity: "invalid" as "before" },
+						]),
+					validateUsageError(/valid affinity/),
+				);
+				assert.throws(
+					() =>
+						sender.locations.capture([
+							{ kind: "text", node, index: 1, movePolicy: "stay" as "follow" },
+						]),
+					validateUsageError(/Only the "follow" move policy/),
+				);
+				const batch = capture(sender.locations, [{ kind: "text", node, index: 1 }]);
+				const data = capturedData(batch);
+				for (const movePolicy of ["stay", null, 0, {}]) {
+					expectUnavailable(
+						receiver.locations.resolve(
+							eraseCapture({
+								...data,
+								locations: [{ ...data.locations[0], movePolicy }],
+							}),
+						),
+						"invalid-location",
+					);
+				}
+				assert.deepEqual(
+					receiver.locations.resolve(
+						eraseCapture({
+							...data,
+							locations: [{ ...data.locations[0], movePolicy: "follow" }],
+						}),
+					),
+					receiver.locations.resolve(batch),
+				);
+			});
+		});
+	}
+
+	it("preserves formatted positions through formatRange and reformat, including embedded atoms", () => {
+		const provider = new TestTreeProviderLite(2);
+		const views = provider.trees.map((tree) =>
+			tree.kernel.viewWith(new TreeViewConfiguration({ schema: Formatted })),
+		);
+		views[0].initialize(Formatted.fromString("a\u{1F600}"));
+		views[0].root.insertAt(1, [new Embedded({ content: "[image]" })]);
+		provider.synchronizeMessages();
+		const [sender, receiver] = views;
+		assert.equal(sender.root.fullString(), "a[image]\u{1F600}");
+		assert.equal(sender.root.characterCount(), 3);
+		const batch = capture(sender.locations, [
+			{ kind: "text", node: sender.root, index: 1 },
+			{ kind: "text", node: sender.root, index: 2, affinity: "after" },
+			{ kind: "text", node: sender.root, index: 3 },
+		]);
+		const expected = [
+			{ kind: "text", node: receiver.root, index: 1, affinity: "before" },
+			{ kind: "text", node: receiver.root, index: 2, affinity: "after" },
+			{ kind: "text", node: receiver.root, index: 3, affinity: "before" },
+		];
+		receiver.root.formatRange(0, 3, { bold: true });
+		assert(receiver.root.charactersWithFormatting().every((atom) => atom.format.bold));
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), expected);
+		receiver.root.reformat(0, 3, { bold: false });
+		assert(receiver.root.charactersWithFormatting().every((atom) => !atom.format.bold));
+		assert.equal(receiver.root.fullString(), "a[image]\u{1F600}");
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), expected);
+		receiver.root.removeRange(1, 2);
+		assert.equal(receiver.root.fullString(), "a\u{1F600}");
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+			{ kind: "text", node: receiver.root, index: 1, affinity: "before" },
+			{ kind: "text", node: receiver.root, index: 1, affinity: "after" },
+			{ kind: "text", node: receiver.root, index: 2, affinity: "before" },
+		]);
+	});
+
+	it("falls back to sequence output in an ordinary array and restores text output at a supported destination", () => {
+		class Root extends sf.object("Text to array", { text: PlainText.Tree, array: Text }) {}
+		const provider = new TestTreeProviderLite(2);
+		const views = provider.trees.map((tree) =>
+			tree.kernel.viewWith(new TreeViewConfiguration({ schema: Root })),
+		);
+		views[0].initialize({ text: PlainText.Tree.fromString("abcd"), array: ["x", "y"] });
+		provider.synchronizeMessages();
+		const [sender, receiver] = views;
+		const batch = capture(sender.locations, [
+			{ kind: "text", node: sender.root.text, index: 2 },
+			{ kind: "sequence", node: characters(sender.root.text), index: 2 },
+		]);
+		// text: ab|cd --> ad; ordinary array: xy --> xb|cy.
+		receiver.root.array.moveRangeToIndex(1, 1, 3, characters(receiver.root.text));
+		assert.equal(receiver.root.text.fullString(), "ad");
+		assert.equal(receiver.root.array.join(""), "xbcy");
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+			{ kind: "sequence", node: receiver.root.array, index: 2, affinity: "before" },
+			{ kind: "sequence", node: receiver.root.array, index: 2, affinity: "before" },
+		]);
+		characters(receiver.root.text).moveRangeToIndex(1, 1, 3, receiver.root.array);
+		assert.equal(receiver.root.text.fullString(), "abcd");
+		assert.equal(receiver.root.array.join(""), "xy");
+		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
+			{ kind: "text", node: receiver.root.text, index: 2, affinity: "before" },
+			{ kind: "sequence", node: characters(receiver.root.text), index: 2, affinity: "before" },
+		]);
+	});
+
+	it("rejects lookalike schemas rather than recognizing public method names", () => {
+		class Lookalike extends sf.object("Lookalike text", { content: Text }) {
+			public fullString(): string {
+				return this.content.join("");
+			}
+			public characterCount(): number {
+				return this.content.length;
+			}
+		}
+		const provider = new TestTreeProviderLite(1);
+		const view = provider.trees[0].kernel.viewWith(
+			new TreeViewConfiguration({ schema: Lookalike }),
+		);
+		view.initialize({ content: ["a", "b"] });
+		provider.synchronizeMessages();
+		assert(!isTextLocationNode(view.root));
+		assert.throws(
+			() =>
+				view.locations.capture([
+					// @ts-expect-error Invalid text input must also be rejected at runtime.
+					{ kind: "text", node: view.root, index: 1 },
+				]),
+			validateUsageError(/supported text node/),
+		);
+	});
+});
 
 function indices(
 	resolver: TreeLocationResolver,

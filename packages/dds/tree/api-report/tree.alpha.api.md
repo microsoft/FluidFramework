@@ -1187,6 +1187,11 @@ export type ResolvedTreeLocation = {
         readonly node: TreeArrayNode;
         readonly index: number;
         readonly affinity: "before" | "after";
+    } | {
+        readonly kind: "text";
+        readonly node: TextLocationNode;
+        readonly index: number;
+        readonly affinity: "before" | "after";
     };
 } | {
     readonly status: "unavailable";
@@ -1871,6 +1876,9 @@ export namespace TableSchema {
     }
 }
 
+// @alpha @sealed
+export type TextLocationNode = TreeNode & PlainText.Members;
+
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
@@ -2139,6 +2147,13 @@ export type TreeLocation = {
     readonly node: TreeArrayNode;
     readonly index: number;
     readonly affinity?: "before" | "after" | undefined;
+    readonly movePolicy?: "follow";
+} | {
+    readonly kind: "text";
+    readonly node: TextLocationNode;
+    readonly index: number;
+    readonly affinity?: "before" | "after" | undefined;
+    readonly movePolicy?: "follow";
 };
 
 // @alpha @sealed

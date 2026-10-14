@@ -5,11 +5,21 @@
 
 import type { ErasedType } from "@fluidframework/core-interfaces";
 
+import type { PlainText } from "../../text/index.js";
 import type { TreeNode } from "../core/index.js";
 import type { TreeArrayNode } from "../node-kinds/index.js";
 
 /**
- * Input describing a whole node, or a gap between elements of an array, in the current local view.
+ * A public text node supported by text locations.
+ * @remarks
+ * Supports {@link PlainText.(Tree:variable)} and schemas produced by {@link FormattedText.createSchema}, including subclasses.
+ * Implementing the same public methods on an unrelated schema does not make it a supported text node.
+ * @sealed @alpha
+ */
+export type TextLocationNode = TreeNode & PlainText.Members;
+
+/**
+ * Input describing a whole node, a gap between elements of an array, or a text gap in the current local view.
  * @remarks
  * A node location can refer to any SimpleTree {@link TreeNode}, including an entire array.
  * Primitive leaf values do not identify a particular occurrence and are not node locations.
@@ -76,6 +86,36 @@ export type TreeLocation =
 			 * @defaultValue "follow"
 			 */
 			readonly movePolicy?: "follow";
+	  }
+	| {
+			/**
+			 * Selects a gap between independently editable text characters or atoms.
+			 * Use "node" instead to select the entire text node.
+			 */
+			readonly kind: "text";
+			/**
+			 * The public text node, not its underlying character array.
+			 */
+			readonly node: TextLocationNode;
+			/**
+			 * A gap index from zero through `node.characterCount()`, inclusive.
+			 * Uses the same coordinates as the text editing APIs.
+			 * Plain text normally counts Unicode code points; formatted text counts atoms, including embedded objects.
+			 * There is no implicit UTF-16 or grapheme conversion, and no position inside an atom.
+			 */
+			readonly index: number;
+			/**
+			 * The side of inserted content on which the gap stays, with the same semantics as sequence locations.
+			 * At move boundaries, "before" follows the preceding atom and "after" follows the following atom.
+			 * @defaultValue "before"
+			 */
+			readonly affinity?: "before" | "after" | undefined;
+			/**
+			 * Follows moved content, with the same semantics as sequence locations.
+			 * Only "follow" is supported.
+			 * @defaultValue "follow"
+			 */
+			readonly movePolicy?: "follow";
 	  };
 
 /**
@@ -97,6 +137,9 @@ export interface CapturedTreeLocations
  * Node locations follow node identity through moves; deletion does not select a replacement.
  * Deletion is terminal for a captured node location, even if a later undo restores the node.
  * Sequence locations follow moved content, including into another array.
+ * Text locations return the destination's public text node, including when the original text node was deleted.
+ * If moved text ends up in an array without a supported text owner, resolution returns a sequence location.
+ * Sequence captures always return sequence locations, even when the array belongs to a text node.
  * @sealed @alpha
  */
 export type ResolvedTreeLocation =
@@ -110,6 +153,15 @@ export type ResolvedTreeLocation =
 				| {
 						readonly kind: "sequence";
 						readonly node: TreeArrayNode;
+						readonly index: number;
+						/**
+						 * The captured affinity, including the default "before" if none was supplied.
+						 */
+						readonly affinity: "before" | "after";
+				  }
+				| {
+						readonly kind: "text";
+						readonly node: TextLocationNode;
 						readonly index: number;
 						/**
 						 * The captured affinity, including the default "before" if none was supplied.
@@ -139,7 +191,7 @@ export type TreeLocationResolution =
 	  };
 
 /**
- * Captures and resolves ephemeral node selections and sequence positions.
+ * Captures and resolves ephemeral node selections, sequence positions, and text positions.
  * @remarks
  * Capture uses the sender's SimpleTree objects; resolution returns the receiver's SimpleTree objects.
  * No application-level node lookup is required on the receiving client.
@@ -154,7 +206,7 @@ export type TreeLocationResolution =
 export interface TreeLocationResolver {
 	/**
 	 * Captures locations and their revision from the same sequenced state.
-	 * @param locations - Local node selections or sequence gaps, in application-defined order.
+	 * @param locations - Local node selections, sequence gaps, or text gaps, in application-defined order.
 	 * @returns A serializable capture.
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if any of the limitations below are violated,
 	 * a location is invalid, a node is outside this view's document, or the view is disposed.
@@ -168,6 +220,7 @@ export interface TreeLocationResolver {
 	 * - No transaction may be open, including a transaction that has not made any edits.
 	 * - Node locations require SimpleTree nodes; primitive leaf values cannot identify a particular occurrence.
 	 * Sequence locations require array nodes and count array elements, not arbitrary text offsets.
+	 * Text locations require supported text nodes and count independently editable characters or atoms.
 	 *
 	 * Unsupported view states throw rather than returning undefined.
 	 * Captures are ephemeral and may be unresolvable as retained history is trimmed; they are not persistent anchors.

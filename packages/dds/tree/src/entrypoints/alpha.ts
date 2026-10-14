@@ -290,6 +290,7 @@ export {
 	StagedSchemaUpgradePolicyFactory, 
 	StagedUpgradeStatus, 
 	StringSchema, 
+	TextLocationNode,
 	TransactionCallbackStatusAlpha, 
 	TransactionConstraintAlpha, 
 	TransactionLabels, 
