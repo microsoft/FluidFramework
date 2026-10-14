@@ -638,16 +638,25 @@ describe("VersionMarkResolver", () => {
 		});
 	});
 
-	describe("resolveFromHistory - not found: pending vs unresolvable", () => {
-		it("unresolvable when a trim gap sits at the anchor (first op past `from`)", async () => {
-			// from = 1, but the earliest available op is 10 → [1, 10) was trimmed, taking the mark's batch.
+	describe("resolveFromHistory - not found remains pending", () => {
+		it("remains pending after a history gap and resolves if the batch later sequences", async () => {
+			// from = 1, but the earliest available op is 10. The gap does not prove that this batch had
+			// sequenced in [1, 10); it may still sequence later.
 			const reader = makeReader([
 				[makeOp({ sequenceNumber: 10, clientId: "other", clientSequenceNumber: 1 })],
 			]);
 			const resolver = makeResolver({ reader, currentSequenceNumber: 12 });
-			assert.deepEqual(await resolver.resolve(generateBatchId("missing", 9), 1), {
-				kind: "unresolvable",
-				reason: "historyTrimmed",
+			const batchId = generateBatchId("missing", 9);
+			assert.deepEqual(await resolver.resolve(batchId, 1), {
+				kind: "pending",
+				reason: "historyGapObserved",
+			});
+
+			resolver.processInboundBatch(batchId, 13, 13000);
+			assert.deepEqual(await resolver.resolve(batchId, 1), {
+				kind: "resolved",
+				sequenceNumber: 13,
+				timestamp: 13000,
 			});
 		});
 
@@ -721,7 +730,7 @@ describe("VersionMarkResolver", () => {
 			});
 		});
 
-		it("reports a trim gap when it becomes visible after an empty read", async () => {
+		it("remains pending when a history gap becomes visible after an empty read", async () => {
 			let attempt = 0;
 			const reader: IHistoricalOpReader = {
 				async fetchMessages(): Promise<IStream<ISequencedDocumentMessage[]>> {
@@ -749,8 +758,8 @@ describe("VersionMarkResolver", () => {
 				reason: "emptyHistoryRead",
 			});
 			assert.deepEqual(await resolver.resolve(batchId, 1), {
-				kind: "unresolvable",
-				reason: "historyTrimmed",
+				kind: "pending",
+				reason: "historyGapObserved",
 			});
 		});
 
@@ -788,8 +797,7 @@ describe("VersionMarkResolver", () => {
 		});
 
 		it("asserts when the reader returns an op before the requested range start", async () => {
-			// The trim inference relies on the reader never returning an op earlier than `from`. A reader
-			// that violates this (returns seq 5 when from = 10) must fail loudly, not silently misclassify.
+			// A reader that violates the requested range (returns seq 5 when from = 10) must fail loudly.
 			const reader = makeReader([
 				[makeOp({ sequenceNumber: 5, clientId: "other", clientSequenceNumber: 1 })],
 			]);
