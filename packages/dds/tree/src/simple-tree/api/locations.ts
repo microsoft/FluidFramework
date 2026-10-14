@@ -18,37 +18,69 @@ import type { TreeArrayNode } from "../node-kinds/index.js";
  */
 export type TreeLocation =
 	| {
+			/**
+			 * Selects a node.
+			 */
 			readonly kind: "node";
+			/**
+			 * The node being referred to.
+			 */
 			readonly node: TreeNode;
 	  }
 	| {
+			/**
+			 * Selects a gap (insertion point) within a sequence.
+			 */
 			readonly kind: "sequence";
+			/**
+			 * The parent node containing the sequence.
+			 */
 			readonly node: TreeArrayNode;
 			/**
 			 * A gap index from zero through the array length, inclusive.
+			 *
+			 * Gaps are the positions at which content can be inserted.
+			 * Sequences of length N have N+1 valid gap indices, ranging from 0 to N inclusive.
+			 *
+			 * @example
+			 * In the sequence ["a", "b", "c"], index 0 refers to the gap before "a", index 1
+			 * refers to the gap between "a" and "b", and so on.
 			 */
 			readonly index: number;
 			/**
 			 * The side of content inserted at the gap on which the position stays.
 			 * Defaults to "before" when omitted or undefined.
-			 * At move boundaries, "before" follows the preceding element and "after" follows the following element.
-			 * Array boundaries provide sentinels when there is no adjacent element.
-			 * @defaultValue "before"
+			 * At move boundaries (when the end of a moved range coincides with a gap),
+			 * "before" follows the preceding element and "after" follows the following element.
+			 * Array boundaries ("before" index 0 and "after" index N) have no adjacent element.
+			 * @example
+			 * Suppose a local view has the sequence ["a", "b", "c"] and specifies a `TreeLocation` with `index` 1 and `affinity` "before".
+			 * If that location is resolved in a view which had inserted "x" at index 1 (such that the sequence becomes ["a", "x", "b", "c"]),
+			 * it would now refer to the gap between "a" and "x".
+			 *
+			 * If the captured location instead used the "after" affinity in the same scenario, its resolved location would be between "x" and "b".
+ 			 * @defaultValue "before"
 			 */
 			readonly affinity?: "before" | "after" | undefined;
+
+			/**
+			 * Dictates how the location should behave when ranges of content surrounding the location are moved.
+			 *
+			 * "follow" indicates that the location should move along with the surrounding content when it is relocated.
+			 * We do not currently support any other policy.
+			 *
+			 * There may be additional policies in the future (e.g. one representing a desire where the location refers to
+			 * the gap within the sequence originally identified by the capture, not one related to the nearby content of that gap).
+			 */
+			readonly movePolicy?: "follow";
 	  };
 
 /**
- * Opaque, JSON-serializable presence data produced by {@link TreeLocationResolver.capture}.
+ * Opaque, JSON-serializable data produced by {@link TreeLocationResolver.capture}.
  * @remarks
  * Designed to be safely transmitted between clients of the same SharedTree in presence messages,
  * including through a JSON serialization round trip, and passed to {@link TreeLocationResolver.resolve}.
- * Place the capture directly in a larger presence message and serialize that message once;
- * the capture does not need separate JSON stringification.
- * It contains no live node objects or local anchor handles.
- * Applications must not inspect, construct, or modify its representation.
- * Captures are ephemeral and can become unavailable when collaboration history is trimmed.
- * They must not be used as persisted references.
+ * Applications should treat captures as opaque and not attempt to interpret their contents.
  * @sealed @alpha
  */
 export interface CapturedTreeLocations
@@ -56,11 +88,12 @@ export interface CapturedTreeLocations
 
 /**
  * The current local location or an explicit unavailable result.
+ *
+ * See documentation on {@link TreeLocation} for details on location field semantics.
  * @remarks
  * Node locations follow node identity through moves; deletion does not select a replacement.
  * Deletion is terminal for a captured node location, even if a later undo restores the node.
  * Sequence locations follow moved content, including into another array.
- * Deletions collapse sequence gaps to the deletion boundary.
  * @sealed @alpha
  */
 export type ResolvedTreeLocation =
@@ -107,12 +140,12 @@ export type TreeLocationResolution =
  * @remarks
  * Capture uses the sender's SimpleTree objects; resolution returns the receiver's SimpleTree objects.
  * No application-level node lookup is required on the receiving client.
- * This prototype supports only the main view of an attached SharedTree, not local forks or other shared branches.
- * Resolution includes pending local edits and replays the intervening retained history using sparse anchors.
- * It does not reconstruct a historical forest, retain history, or create live tracking references for callers.
+ * This prototype currently supports capturing only the main view of an attached SharedTree,
+ * not local forks (i.e. main view with pending local edits) or other shared branches.
+ *
+ * Resolution includes pending local edits and replays the intervening retained history using a sparse representation
+ * to update the captured locations into the view that calls `resolve`.
  * Replay cost is linear in the intervening changes and depends on the number of locations.
- * Schema changes do not change node identity or location and are skipped during replay.
- * The receiving view must be compatible with the current stored schema.
  * @sealed @alpha
  */
 export interface TreeLocationResolver {
@@ -134,9 +167,7 @@ export interface TreeLocationResolver {
 	 * Sequence locations require array nodes and count array elements, not arbitrary text offsets.
 	 *
 	 * Unsupported view states throw rather than returning undefined.
-	 * After waiting for acknowledgement, recompute the selection and capture it synchronously;
-	 * do not reuse indices measured before the wait.
-	 * Captures are ephemeral and expire with retained history; they are not persistent anchors.
+	 * Captures are ephemeral and may be unresolvable as retained history is trimmed; they are not persistent anchors.
 	 */
 	capture(locations: readonly TreeLocation[]): CapturedTreeLocations;
 
@@ -149,8 +180,6 @@ export interface TreeLocationResolver {
 	 * @remarks
 	 * Unlike capture, resolution supports pending local edits on the main view.
 	 * Not-yet-received, expired, or wrong-context revisions return `revision-unavailable`; these are not usage errors.
-	 * Wait for editor-model updates before using the result in an editor.
-	 * Wire encodings are checked, but captures are not authenticated proofs of historical node existence.
 	 */
 	resolve(capture: CapturedTreeLocations): TreeLocationResolution;
 }
