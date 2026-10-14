@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "acrName": {
+      "value": "youracrname"
+    },
+    "acrLocation": {
+      "value": "eastus"
+    },
+    "aksClusterName": {
+      "value": "your-aks-cluster"
+    },
+    "aksLocation": {
+      "value": "eastus2"
+    },
+    "kubernetesVersion": {
+      "value": "1.35"
+    },
+    "nodeVmSize": {
+      "value": "Standard_D4as_v4"
+    },
+    "nodeCount": {
+      "value": 3
+    },
+    "dnsPrefix": {
+      "value": "aks-cluster"
+    },
+    "sshPublicKey": {
+      "value": "ssh-rsa REPLACE_WITH_YOUR_SSH_PUBLIC_KEY"
+    }
+  }
+}
