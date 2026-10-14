@@ -39,7 +39,6 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
-	type EncodedChunkShapeV2,
 	type EncodedFieldBatchAnyVersion,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
@@ -432,11 +431,11 @@ export class NestedArrayEncoder implements FieldEncoder {
 /**
  * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
  */
-export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShapeV2> {
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShapeV2 {
+	): EncodedChunkShape {
 		return {
 			e: 0 /* EncodedIncrementalChunkShape */,
 		};
