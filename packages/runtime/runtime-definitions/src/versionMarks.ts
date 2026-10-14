@@ -13,7 +13,7 @@
  * - `resolved`: the mark resolved and can be used.
  * - `pending`: the mark has not resolved yet but should be retained because it may become resolvable later.
  * - `unresolvable`: definitive evidence shows that resolution is terminal; stop retrying and leave the
- *   mark unresolved.
+ * mark unresolved.
  *
  * The current resolver does not infer terminality from a historical scan miss. Empty reads, sequence gaps,
  * and batches absent from otherwise available history remain `pending` because the batch can still sequence

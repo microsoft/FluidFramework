@@ -267,12 +267,12 @@ describeCompat("Version marks", "NoCompat", function (getTestObjectProvider, api
 		const mark = creator.containerRuntime.versionMarkResolver.sealAndCaptureVersionMark();
 		assert(mark.kind === "pending", "the disconnected edits should produce a pending mark");
 
-		let unrelatedBatchId: string | undefined;
+		const unrelatedBatch: { id: string | undefined } = { id: undefined };
 		let unsubscribeUnrelated = (): void => {};
 		const unrelatedSequenced = new Promise<void>((resolve) => {
 			unsubscribeUnrelated = observer.containerRuntime.versionMarkResolver.onBatchSequenced(
 				(batchId) => {
-					if (batchId === unrelatedBatchId) {
+					if (batchId === unrelatedBatch.id) {
 						resolve();
 					}
 				},
@@ -285,7 +285,7 @@ describeCompat("Version marks", "NoCompat", function (getTestObjectProvider, api
 			unrelatedMark.kind === "pending",
 			"the unrelated edit should produce a pending mark",
 		);
-		unrelatedBatchId = unrelatedMark.batchId;
+		unrelatedBatch.id = unrelatedMark.batchId;
 		await unrelatedSequenced;
 		unsubscribeUnrelated();
 		const pending = await observer.containerRuntime.versionMarkResolver.resolve(
