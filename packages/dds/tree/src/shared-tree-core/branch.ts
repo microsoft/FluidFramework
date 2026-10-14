@@ -150,6 +150,10 @@ export class SharedTreeBranch<
 	private disposed = false;
 	private readonly unsubscribeBranchTrimmer?: () => void;
 	/**
+	 * An optional function to validate a change is well-formed.
+	 */
+	readonly #validator?: (change: TChange) => true | string;
+	/**
 	 * Construct a new branch.
 	 * @param head - the head of the branch
 	 * @param changeFamily - determines the set of changes that this branch can commit
@@ -167,8 +171,9 @@ export class SharedTreeBranch<
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
 			keyof RebaseStatsWithDuration
 		>,
-		private readonly validator?: (change: TChange) => true | string,
+		validator?: (change: TChange) => true | string,
 	) {
+		this.#validator = validator;
 		this.editor = this.changeFamily.buildEditor(mintRevisionTag, (change) =>
 			this.apply(change, CommitKind.Default, undefined),
 		);
@@ -276,7 +281,7 @@ export class SharedTreeBranch<
 			mintRevisionTag,
 			this.branchTrimmer,
 			undefined,
-			this.validator,
+			this.#validator,
 		);
 		this.#events.emit("fork", fork);
 		return fork;
@@ -420,7 +425,7 @@ export class SharedTreeBranch<
 				head,
 				upTo,
 				onto.getHead(),
-				this.validator,
+				this.#validator,
 			),
 		);
 
