@@ -196,6 +196,78 @@ describe("TreeLocationResolver", () => {
 		]);
 	});
 
+	it("omits the supported move policy from captures and accepts it explicitly on receipt", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const implicit = capture(sender.locations, [
+			{ kind: "sequence", node: sender.root.left, index: 2 },
+		]);
+		const explicit = capture(sender.locations, [
+			{ kind: "sequence", node: sender.root.left, index: 2, movePolicy: "follow" },
+		]);
+		assert.deepEqual(explicit, implicit);
+		const data = capturedData(explicit);
+		assert(!Object.hasOwn(data.locations[0], "movePolicy"));
+		receiver.root.right.moveRangeToIndex(1, 1, 3, receiver.root.left);
+		for (const policy of [{}, { movePolicy: undefined }, { movePolicy: "follow" }]) {
+			const incoming = eraseCapture({
+				...data,
+				locations: [{ ...data.locations[0], ...policy }],
+			});
+			assert.deepEqual(resolved(receiver.locations.resolve(incoming)), [
+				{ kind: "sequence", node: receiver.root.right, index: 2, affinity: "before" },
+			]);
+		}
+	});
+
+	it("reports unknown received move policies as unresolvable without rejecting other locations", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const batch = captureGaps(sender, [2]);
+		const data = capturedData(batch);
+		for (const movePolicy of ["stay", null, 0, {}]) {
+			assert.deepEqual(
+				receiver.locations.resolve(
+					eraseCapture({
+						...data,
+						locations: [{ ...data.locations[0], movePolicy }, data.locations[0]],
+					}),
+				),
+				{
+					status: "resolved",
+					locations: [
+						{ status: "unavailable", reason: "invalid-location" },
+						{
+							status: "resolved",
+							location: {
+								kind: "sequence",
+								node: receiver.root.left,
+								index: 2,
+								affinity: "after",
+							},
+						},
+					],
+				},
+			);
+		}
+	});
+
+	it("does not silently discard an unsupported capture move policy", () => {
+		const { views } = setup();
+		assert.throws(
+			() =>
+				views[0].locations.capture([
+					{
+						kind: "sequence",
+						node: views[0].root.left,
+						index: 2,
+						movePolicy: "stay" as "follow",
+					},
+				]),
+			validateUsageError(/Only the "follow" move policy is supported/),
+		);
+	});
+
 	it("does not replace invalid affinities with the default", () => {
 		const { views } = setup();
 		for (const affinity of ["invalid", null, 0]) {
@@ -240,7 +312,9 @@ describe("TreeLocationResolver", () => {
 			const random = makeRandom(seed);
 			for (let edit = 0; edit < 40; edit++) {
 				const source = random.integer(0, 1);
-				const operation = random.pick(arrays[source].length === 0 ? ["insert"] : ["insert", "delete", "move"]);
+				const operation = random.pick(
+					arrays[source].length === 0 ? ["insert"] : ["insert", "delete", "move"],
+				);
 				if (operation === "insert") {
 					const at = random.integer(0, arrays[source].length);
 					arrays[source].insertAt(at, "x");

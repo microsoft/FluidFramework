@@ -78,6 +78,8 @@ type CapturedTreeLocation =
 			readonly node: CapturedNodeReference;
 			readonly index: number;
 			readonly affinity: "before" | "after";
+			/** Omitted by this implementation; future senders may specify a policy. */
+			readonly movePolicy?: unknown;
 	  };
 
 /**
@@ -236,6 +238,13 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 				}
 				if (
 					location.kind === "sequence" &&
+					location.movePolicy !== undefined &&
+					location.movePolicy !== "follow"
+				) {
+					throw new UsageError('Only the "follow" move policy is supported.');
+				}
+				if (
+					location.kind === "sequence" &&
 					(!isArrayNodeSchema(kernel.schema) ||
 						!Number.isSafeInteger(location.index) ||
 						location.index < 0 ||
@@ -320,6 +329,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 				}
 				if (
 					location.kind !== "sequence" ||
+					(location.movePolicy !== undefined && location.movePolicy !== "follow") ||
 					reference.length === undefined ||
 					!Number.isSafeInteger(location.index) ||
 					location.index < 0 ||
