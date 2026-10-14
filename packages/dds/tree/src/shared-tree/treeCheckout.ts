@@ -680,7 +680,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public get locations(): DefaultTreeLocationResolver {
 		this.checkNotDisposed("Cannot use location resolution after the view has been disposed.");
-		this._locations ??= new DefaultTreeLocationResolver(this, this.idCompressor);
+		this._locations ??= new DefaultTreeLocationResolver(
+			this,
+			this.idCompressor,
+			this.jsonValidator,
+		);
 		return this._locations;
 	}
 

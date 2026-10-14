@@ -14,7 +14,15 @@ import {
 import { asAlpha } from "../../../api.js";
 import type { RevertibleAlpha } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { CapturedTreeLocationsInternal } from "../../../shared-tree/locations.js";
+import type { CapturedTreeLocationsInternal } from "../../../shared-tree/locationFormat.js";
+import {
+	extractJsonValidator,
+	FormatValidatorNoOp,
+	type FormatValidator,
+} from "../../../codec/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { capturedTreeLocationsSchema } from "../../../shared-tree/locationFormat.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -61,8 +69,14 @@ function eraseCapture(data: unknown): CapturedTreeLocations {
 	return data as CapturedTreeLocations;
 }
 
-function setup(): { provider: TestTreeProviderLite; views: TreeViewAlpha<typeof Document>[] } {
-	const provider = new TestTreeProviderLite(2);
+function setup(jsonValidator?: FormatValidator): {
+	provider: TestTreeProviderLite;
+	views: TreeViewAlpha<typeof Document>[];
+} {
+	const provider =
+		jsonValidator === undefined
+			? new TestTreeProviderLite(2)
+			: new TestTreeProviderLite(2, configuredSharedTree({ jsonValidator }).getFactory());
 	const views = provider.trees.map((tree) => tree.kernel.viewWith(config));
 	views[0].initialize({ left: ["a", "b", "c", "d"], right: ["x", "y"] });
 	provider.synchronizeMessages();
@@ -137,11 +151,18 @@ describe("TreeLocationResolver text", () => {
 			function setupText(
 				left = "abcd",
 				right = "xy",
+				jsonValidator?: FormatValidator,
 			): {
 				provider: TestTreeProviderLite;
 				views: TreeViewAlpha<typeof Root>[];
 			} {
-				const provider = new TestTreeProviderLite(2);
+				const provider =
+					jsonValidator === undefined
+						? new TestTreeProviderLite(2)
+						: new TestTreeProviderLite(
+								2,
+								configuredSharedTree({ jsonValidator }).getFactory(),
+							);
 				const views = provider.trees.map((tree) =>
 					tree.kernel.viewWith(new TreeViewConfiguration({ schema: Root })),
 				);
@@ -154,6 +175,105 @@ describe("TreeLocationResolver text", () => {
 				provider.synchronizeMessages();
 				return { provider, views };
 			}
+
+			for (const [validatorName, jsonValidator] of [
+				["basic", FormatValidatorBasic],
+				["no-op", FormatValidatorNoOp],
+			] as const) {
+				it(`preserves text reference semantics with the ${validatorName} validator`, () => {
+					const { views } = setupText("abcd", "xy", jsonValidator);
+					const [sender, receiver] = views;
+					const batch = capture(sender.locations, [
+						{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
+					]);
+					assert(
+						extractJsonValidator(FormatValidatorBasic)
+							.compile(capturedTreeLocationsSchema)
+							.check(batch),
+					);
+					const data = capturedData(batch);
+					const valid = data.locations[0];
+					assert(valid.kind === "text");
+					const expected = {
+						kind: "text",
+						node: receiver.root.paragraphs[0].text,
+						index: 2,
+						affinity: "before",
+					};
+					assert.deepEqual(resolved(receiver.locations.resolve(batch)), [expected]);
+					for (const malformed of [
+						{ ...valid, node: { ...valid.node, version: 2 } },
+						{
+							...valid,
+							node: { ...valid.node, revision: { ...data.revision, revision: "different" } },
+						},
+						{ ...valid, node: { ...valid.node, path: [["otherRoot", 0]] } },
+						{ ...valid, node: { ...valid.node, length: undefined } },
+						{ ...valid, index: 5 },
+						{ ...valid, affinity: "unknown" },
+						{ ...valid, movePolicy: "stay" },
+					]) {
+						assert.deepEqual(
+							receiver.locations.resolve(
+								eraseCapture({
+									...data,
+									locations: [malformed, valid],
+								}),
+							),
+							{
+								status: "resolved",
+								locations: [
+									{ status: "unavailable", reason: "invalid-location" },
+									{ status: "resolved", location: expected },
+								],
+							},
+						);
+					}
+				});
+			}
+
+			it("rejects malformed text wire entries independently with schema validation enabled", () => {
+				const { views } = setupText("abcd", "xy", FormatValidatorBasic);
+				const [sender, receiver] = views;
+				const data = capturedData(
+					capture(sender.locations, [
+						{ kind: "text", node: sender.root.paragraphs[0].text, index: 2 },
+					]),
+				);
+				const valid = data.locations[0];
+				for (const malformed of [
+					null,
+					{ ...valid, index: -1 },
+					{ ...valid, index: 0.5 },
+					{ ...valid, node: null },
+					{ ...valid, node: { ...valid.node, path: [] } },
+					{ ...valid, node: { ...valid.node, length: "four" } },
+				]) {
+					assert.deepEqual(
+						receiver.locations.resolve(
+							eraseCapture({
+								...data,
+								locations: [malformed, valid],
+							}),
+						),
+						{
+							status: "resolved",
+							locations: [
+								{ status: "unavailable", reason: "invalid-location" },
+								{
+									status: "resolved",
+									location: {
+										kind: "text",
+										node: receiver.root.paragraphs[0].text,
+										index: 2,
+										affinity: "before",
+									},
+								},
+							],
+						},
+					);
+				}
+			});
 
 			it("returns public receiver text objects and keeps node and array captures distinct", () => {
 				const { views } = setupText();
@@ -525,6 +645,135 @@ function expectUnavailable(
 }
 
 describe("TreeLocationResolver", () => {
+	it("encodes captures matching the TypeBox wire schema without changing the JSON representation", () => {
+		const { views } = setup();
+		const batch = capture(views[0].locations, [
+			{ kind: "node", node: views[0].root },
+			{ kind: "sequence", node: views[0].root.left, index: 1 },
+		]);
+		assert(
+			extractJsonValidator(FormatValidatorBasic)
+				.compile(capturedTreeLocationsSchema)
+				.check(batch),
+		);
+	});
+
+	it("returns unavailable results for malformed envelopes with schema validation enabled", () => {
+		const { views } = setup(FormatValidatorBasic);
+		const resolver = views[0].locations;
+		const valid = capturedData(captureGaps(views[0], [1]));
+		for (const malformed of [
+			null,
+			undefined,
+			"capture",
+			{},
+			[],
+			{ ...valid, revision: null },
+			{ ...valid, revision: { branchId: "main", revision: 4 } },
+			{ ...valid, locations: null },
+			{ ...valid, locations: {} },
+		]) {
+			assert.deepEqual(resolver.resolve(eraseCapture(malformed)), {
+				status: "revision-unavailable",
+			});
+		}
+	});
+
+	it("validates each wire location independently with the configured validator", () => {
+		const { views } = setup(FormatValidatorBasic);
+		const [sender, receiver] = views;
+		const data = capturedData(captureGaps(sender, [1]));
+		const valid = data.locations[0];
+		assert(valid.kind === "sequence");
+		for (const malformed of [
+			null,
+			{},
+			{ ...valid, kind: "unknown" },
+			{ ...valid, index: -1 },
+			{ ...valid, index: 0.5 },
+			{ ...valid, index: Number.MAX_SAFE_INTEGER + 1 },
+			{ ...valid, affinity: "unknown" },
+			{ ...valid, node: { ...valid.node, length: -1 } },
+			{ ...valid, node: { ...valid.node, path: [] } },
+			{ ...valid, node: { ...valid.node, path: [["rootFieldKey"]] } },
+			{ ...valid, node: { ...valid.node, path: [[42, 0]] } },
+			{ ...valid, node: { ...valid.node, path: [["rootFieldKey", -1]] } },
+			{
+				...valid,
+				node: { ...valid.node, path: [["rootFieldKey", Number.MAX_SAFE_INTEGER + 1]] },
+			},
+		]) {
+			assert.deepEqual(
+				receiver.locations.resolve(
+					eraseCapture({
+						...data,
+						locations: [malformed, valid],
+					}),
+				),
+				{
+					status: "resolved",
+					locations: [
+						{ status: "unavailable", reason: "invalid-location" },
+						{
+							status: "resolved",
+							location: {
+								kind: "sequence",
+								node: receiver.root.left,
+								index: 1,
+								affinity: "after",
+							},
+						},
+					],
+				},
+			);
+		}
+	});
+
+	for (const [name, jsonValidator] of [
+		["basic", FormatValidatorBasic],
+		["no-op", FormatValidatorNoOp],
+	] as const) {
+		it(`enforces reference semantics with the ${name} validator`, () => {
+			const { views } = setup(jsonValidator);
+			const [sender, receiver] = views;
+			const data = capturedData(captureGaps(sender, [1]));
+			const valid = data.locations[0];
+			assert(valid.kind === "sequence");
+			assert.deepEqual(indices(receiver.locations, eraseCapture(data)), [1]);
+			for (const location of [
+				{ ...valid, node: { ...valid.node, version: 2 } },
+				{
+					...valid,
+					node: { ...valid.node, revision: { ...data.revision, revision: "different" } },
+				},
+				{ ...valid, node: { ...valid.node, path: [["otherRoot", 0]] } },
+				{ ...valid, node: { ...valid.node, path: [["rootFieldKey", 1]] } },
+				{ ...valid, node: { ...valid.node, length: undefined } },
+				{ ...valid, index: 5 },
+				{ ...valid, movePolicy: "stay" },
+			]) {
+				expectUnavailable(
+					receiver.locations.resolve(
+						eraseCapture({
+							...data,
+							locations: [location],
+						}),
+					),
+					"invalid-location",
+				);
+			}
+			assert.deepEqual(
+				receiver.locations.resolve(
+					eraseCapture({
+						...data,
+						revision: { ...data.revision, branchId: "other" },
+					}),
+				),
+				{ status: "revision-unavailable" },
+			);
+		});
+	}
+
 	it("reuses one locations object per view", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
@@ -1042,7 +1291,7 @@ describe("TreeLocationResolver", () => {
 	});
 
 	it("validates wire references, gaps, and revision pairing", () => {
-		const { views } = setup();
+		const { views } = setup(FormatValidatorBasic);
 		const [sender, receiver] = views;
 		const batch = captureGaps(sender, [2]);
 		const data = capturedData(batch);

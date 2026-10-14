@@ -8,6 +8,11 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	extractJsonValidator,
+	type FormatValidator,
+	type SchemaValidationFunction,
+} from "../codec/index.js";
+import {
 	type GraphCommit,
 	type DeltaRoot,
 	type RevisionTag,
@@ -45,6 +50,14 @@ import {
 } from "./locationReplay.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { TreeCheckout } from "./treeCheckout.js";
+import {
+	capturedTreeLocationSchema,
+	capturedTreeLocationsEnvelopeSchema,
+	type CapturedTreeLocation,
+	type CapturedTreeLocationsInternal,
+	type CapturedRevision,
+	type CapturedNodeReference,
+} from "./locationFormat.js";
 
 /**
  * Supplies the main branch's canonical sequenced state independently of its local head.
@@ -60,95 +73,31 @@ interface DecodedReference {
 	readonly length: number | undefined;
 }
 
-interface CapturedRevision {
-	readonly branchId: "main";
-	readonly revision: string;
-}
-
-interface CapturedNodeReference {
-	readonly version: 1;
-	readonly revision: CapturedRevision;
-	readonly path: readonly (readonly [field: string, index: number])[];
-	readonly length?: number;
-}
-
-type CapturedTreeLocation =
-	| { readonly kind: "node"; readonly node: CapturedNodeReference }
-	| {
-			readonly kind: "sequence" | "text";
-			readonly node: CapturedNodeReference;
-			readonly index: number;
-			readonly affinity: "before" | "after";
-			/** Omitted by this implementation; future senders may specify a policy. */
-			readonly movePolicy?: unknown;
-	  };
-
 /**
- * Private representation of the type-erased presence payload.
- * Only this implementation and its wire-format tests may depend on its shape.
- */
-export interface CapturedTreeLocationsInternal {
-	readonly revision: CapturedRevision;
-	readonly locations: readonly CapturedTreeLocation[];
-}
-
-/**
- * Validates the private, versioned wire format before handing paths to core anchors.
+ * Checks reference semantics and converts a schema-validated path into an up-path.
  */
 function decodeReference(
-	value: unknown,
+	value: CapturedNodeReference,
 	revision: CapturedRevision,
 ): DecodedReference | undefined {
-	if (
-		typeof value !== "object" ||
-		value === null ||
-		!("version" in value) ||
-		value.version !== 1 ||
-		!("revision" in value) ||
-		!matchesRevision(value.revision, revision) ||
-		!("path" in value) ||
-		!Array.isArray(value.path)
-	) {
+	if (value.version !== 1 || !matchesRevision(value.revision, revision)) {
 		return undefined;
 	}
 	let path: UpPath | undefined;
-	const steps: readonly unknown[] = value.path;
-	for (const step of steps) {
-		if (!Array.isArray(step) || step.length !== 2) {
-			return undefined;
-		}
-		const [field, index]: readonly unknown[] = step;
-		if (
-			typeof field !== "string" ||
-			typeof index !== "number" ||
-			!Number.isSafeInteger(index) ||
-			index < 0 ||
-			(path === undefined && (field !== rootFieldKey || index !== 0))
-		) {
+	for (const [field, index] of value.path) {
+		if (path === undefined && (field !== rootFieldKey || index !== 0)) {
 			return undefined;
 		}
 		path = { parent: path, parentField: brand(field), parentIndex: index };
 	}
-	const length = "length" in value ? value.length : undefined;
-	if (
-		path === undefined ||
-		(length !== undefined &&
-			(typeof length !== "number" || !Number.isSafeInteger(length) || length < 0))
-	) {
+	if (path === undefined) {
 		return undefined;
 	}
-	return { path, length };
+	return { path, length: value.length };
 }
 
-function matchesRevision(candidate: unknown, expected: CapturedRevision): boolean {
-	return (
-		typeof candidate === "object" &&
-		candidate !== null &&
-		"branchId" in candidate &&
-		candidate.branchId === expected.branchId &&
-		"revision" in candidate &&
-		candidate.revision === expected.revision
-	);
+function matchesRevision(candidate: CapturedRevision, expected: CapturedRevision): boolean {
+	return candidate.branchId === expected.branchId && candidate.revision === expected.revision;
 }
 
 function unavailable(reason: "target-deleted" | "invalid-location"): ResolvedTreeLocation {
@@ -158,14 +107,33 @@ function unavailable(reason: "target-deleted" | "invalid-location"): ResolvedTre
 /**
  * Resolves sender-side historical paths by replaying the current branch's retained changes.
  * No graph references are retained between calls, so this cannot pin collaboration history.
+ * @remarks
+ * Only main's sequenced history is supported: a logical revision alone does not identify
+ * a speculative or history-rebased branch state.
+ * Resolution uses the current rebased local suffix, not transient rollback/reapplication events.
+ * The repair-identity index is rewound before replay; tree contents are not reconstructed.
+ * Sparse anchors track the historical paths forward, then the current forest supplies SimpleTree objects.
+ * Cost depends on repair-index size, intervening delta traversal, path depth, and location count.
+ * There is no persistent index, background subscription, or additional summary data.
  */
 export class DefaultTreeLocationResolver implements TreeLocationResolver {
 	private disposed = false;
+	private readonly envelopeValidator: SchemaValidationFunction<
+		typeof capturedTreeLocationsEnvelopeSchema
+	>;
+	private readonly locationValidator: SchemaValidationFunction<
+		typeof capturedTreeLocationSchema
+	>;
 
 	public constructor(
 		private readonly checkout: TreeCheckout,
 		private readonly idCompressor: IIdCompressor,
-	) {}
+		jsonValidator: FormatValidator,
+	) {
+		const validator = extractJsonValidator(jsonValidator);
+		this.envelopeValidator = validator.compile(capturedTreeLocationsEnvelopeSchema);
+		this.locationValidator = validator.compile(capturedTreeLocationSchema);
+	}
 
 	public dispose(): void {
 		this.disposed = true;
@@ -297,7 +265,10 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 
 	public resolve(captured: CapturedTreeLocations): TreeLocationResolution {
 		const source = this.getMainSource();
-		const capture = captured as unknown as CapturedTreeLocationsInternal;
+		const capture: unknown = captured;
+		if (!this.envelopeValidator.check(capture)) {
+			return { status: "revision-unavailable" };
+		}
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		let commit = this.checkout.getLocationHead();
 		let sequenced = false;
@@ -335,43 +306,45 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			}
 			const activeReplay = new LocationReplay(detached);
 			replay = activeReplay;
-			const tracked = capture.locations.map((location): TrackedLocation | undefined => {
-				const reference = decodeReference(location.node, capture.revision);
-				if (reference === undefined) {
-					return undefined;
-				}
-				if (location.kind === "node") {
-					return activeReplay.track(reference.path);
-				}
-				if (
-					(location.kind !== "sequence" && location.kind !== "text") ||
-					(location.movePolicy !== undefined && location.movePolicy !== "follow") ||
-					reference.length === undefined ||
-					!Number.isSafeInteger(location.index) ||
-					location.index < 0 ||
-					location.index > reference.length ||
-					(location.affinity !== "before" && location.affinity !== "after")
-				) {
-					return undefined;
-				}
-				return activeReplay.track(reference.path, {
-					index: location.index,
-					affinity: location.affinity,
-				});
-			});
+			const tracked = capture.locations.map(
+				(location): { location: TrackedLocation; text: boolean } | undefined => {
+					if (!this.locationValidator.check(location)) {
+						return undefined;
+					}
+					const reference = decodeReference(location.node, capture.revision);
+					if (reference === undefined) {
+						return undefined;
+					}
+					if (location.kind === "node") {
+						return { location: activeReplay.track(reference.path), text: false };
+					}
+					if (
+						(location.kind !== "sequence" && location.kind !== "text") ||
+						(location.movePolicy !== undefined && location.movePolicy !== "follow") ||
+						reference.length === undefined ||
+						location.index > reference.length ||
+						(location.affinity !== "before" && location.affinity !== "after")
+					) {
+						return undefined;
+					}
+					return {
+						location: activeReplay.track(reference.path, {
+							index: location.index,
+							affinity: location.affinity,
+						}),
+						text: location.kind === "text",
+					};
+				},
+			);
 			for (const { delta, revision } of deltas) {
 				activeReplay.apply(delta, revision);
 			}
 			return {
 				status: "resolved",
-				locations: tracked.map((location, index) =>
-					location === undefined
+				locations: tracked.map((entry) =>
+					entry === undefined
 						? unavailable("invalid-location")
-						: this.materialize(
-								activeReplay,
-								location,
-								capture.locations[index]?.kind === "text",
-							),
+						: this.materialize(activeReplay, entry.location, entry.text),
 				),
 			};
 		} finally {

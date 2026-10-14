@@ -52,6 +52,7 @@ export type TreeLocation =
 			 * Gaps are the positions at which content can be inserted.
 			 * Sequences of length N have N+1 valid gap indices, ranging from 0 to N inclusive.
 			 * Deletions collapse sequence gaps within the removed span to the deletion boundary.
+			 * Subsequent edits transform the collapsed gap; undo does not restore its former offset inside deleted content.
 			 *
 			 * @example
 			 * In the sequence ["a", "b", "c"], index 0 refers to the gap before "a", index 1
@@ -124,6 +125,7 @@ export type TreeLocation =
  * Designed to be safely transmitted between clients of the same SharedTree in presence messages,
  * including through a JSON serialization round trip, and passed to {@link TreeLocationResolver.resolve}.
  * Applications should treat captures as opaque and not attempt to interpret their contents.
+ * Captures do not force retention of history, do not require disposal, and must not be used as long-term persisted references.
  * @sealed @alpha
  */
 export interface CapturedTreeLocations
@@ -140,6 +142,7 @@ export interface CapturedTreeLocations
  * Text locations return the destination's public text node, including when the original text node was deleted.
  * If moved text ends up in an array without a supported text owner, resolution returns a sequence location.
  * Sequence captures always return sequence locations, even when the array belongs to a text node.
+ * Results contain the receiving view's local objects; use {@link TreeNodeApi.is} to narrow them to an application schema.
  * @sealed @alpha
  */
 export type ResolvedTreeLocation =
@@ -179,6 +182,7 @@ export type ResolvedTreeLocation =
  * @remarks
  * An unavailable revision can be not yet received, expired, or from a different branch.
  * Retry after applying pending inbound operations, or request a fresh capture if the revision has expired.
+ * Successful batches preserve input order; each location has its own availability result.
  * @sealed @alpha
  */
 export type TreeLocationResolution =
@@ -236,6 +240,8 @@ export interface TreeLocationResolver {
 	 * @remarks
 	 * Unlike capture, resolution supports pending local edits on the main view.
 	 * Not-yet-received, expired, or wrong-context revisions return `revision-unavailable`; these are not usage errors.
+	 * Structural validation follows SharedTree's configured JSON validator.
+	 * When validation is enabled (i.e. a non-no-op JSON validator is configured), malformed envelopes return `revision-unavailable` and malformed locations return `invalid-location`.
 	 */
 	resolve(capture: CapturedTreeLocations): TreeLocationResolution;
 }
