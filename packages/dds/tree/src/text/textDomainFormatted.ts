@@ -329,7 +329,7 @@ export namespace FormattedText {
 					return [key, value] as const;
 				});
 
-				type Operation = (child: TreeNode) => void;
+				type Operation = (formatNode: TreeNode) => void;
 				const perSchemaOperation = new Map<TreeNodeSchema, Operation>();
 				const buildOperation = (atomFormatSchema: TreeNodeSchema): Operation => {
 					switch (atomFormatSchema.kind) {
@@ -342,6 +342,8 @@ export namespace FormattedText {
 							);
 						}
 						case NodeKind.Object: {
+							// Narrow the typing to allow easy access to object specific APIs.
+							assert(isObjectNodeSchema(atomFormatSchema), "Expected an object schema.");
 							// Precompute values to assign to each modified field.
 							// Since this runs once per schema (instead of once per character),
 							// we precompute as much as we can here.
@@ -349,7 +351,6 @@ export namespace FormattedText {
 								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
 								TreeNode | TreeValue | undefined,
 							][] = fieldFormats.map(([key, value]) => {
-								assert(isObjectNodeSchema(atomFormatSchema), "Expected an object schema.");
 								const field = atomFormatSchema.fields.get(key);
 								if (field === undefined) {
 									throw new UsageError(`Unknown format key: ${key}`);
