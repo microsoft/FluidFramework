@@ -1497,7 +1497,6 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Allows subclasses to reuse checkout cloning and validation.
 	 * By default, the fork has its own branch, stored schema, forest, and repair data.
 	 * Broken-state validation applies here so subclass fork entry points cannot bypass it.
-	 * If the factory throws, the newly created branch is disposed and the error is rethrown.
 	 *
 	 * @param checkoutFactory - The factory to use for the forked checkout.
 	 */
@@ -1534,24 +1533,18 @@ export class TreeCheckout implements ITreeCheckout {
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
-		let checkout: T;
-		try {
-			checkout = checkoutFactory(
-				branch,
-				false,
-				this.changeFamily,
-				storedSchema,
-				forest,
-				this.mintRevisionTag,
-				this.revisionTagCodec,
-				this.idCompressor,
-				this.jsonValidator,
-				this._removedRoots.clone(),
-			);
-		} catch (error) {
-			branch.dispose();
-			throw error;
-		}
+		const checkout = checkoutFactory(
+			branch,
+			false,
+			this.changeFamily,
+			storedSchema,
+			forest,
+			this.mintRevisionTag,
+			this.revisionTagCodec,
+			this.idCompressor,
+			this.jsonValidator,
+			this._removedRoots.clone(),
+		);
 		this.#events.emit("fork", checkout);
 		return checkout;
 	}

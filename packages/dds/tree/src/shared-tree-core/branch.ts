@@ -174,10 +174,9 @@ export class SharedTreeBranch<
 	 *
 	 * @remarks
 	 * Replacing or clearing the trimmer removes the previous subscription.
-	 * Forks inherit the current trimmer and have independent subscriptions.
-	 * Clearing is safe at any time, including after disposal.
+	 * Forks of this branch will be initialized with independent subscriptions to this branch's trimmer.
+	 * Disposing a branch clears the trimmer and setting the trimmer to any value other than `undefined` thereafter will throw an error.
 	 * Clearing only stops forwarding notifications; it does not prevent history trimming.
-	 * Setting a non-undefined trimmer requires an undisposed branch.
 	 *
 	 * @param branchTrimmer - The event source for ancestry trimming notifications, or `undefined` to clear it.
 	 */

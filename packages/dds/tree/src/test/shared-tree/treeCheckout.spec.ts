@@ -152,30 +152,6 @@ describe("sharedTreeView", () => {
 			checkout.dispose();
 			view.dispose();
 		});
-
-		it("disposes the forked branch when the checkout factory throws", () => {
-			const view = getView(config);
-			view.initialize([]);
-
-			let forkedBranchDisposed = false;
-			view.checkout.mainBranch.events.on("fork", (branch) => {
-				branch.events.on("dispose", () => {
-					forkedBranchDisposed = true;
-				});
-			});
-
-			const expectedError = new Error("checkout factory failed");
-
-			assert.throws(
-				() =>
-					view.checkout.forkWith(() => {
-						throw expectedError;
-					}),
-				(error) => error === expectedError,
-			);
-			assert.equal(forkedBranchDisposed, true);
-			view.dispose();
-		});
 	});
 
 	describe("finalized history", () => {
