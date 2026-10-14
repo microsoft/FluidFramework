@@ -1439,6 +1439,7 @@ export class TreeCheckout implements ITreeCheckout {
 		config: TreeViewConfiguration<ReadSchema<TRoot>>,
 		disposeCheckoutOnViewDispose?: boolean,
 	): SchematizingSimpleTreeView<TRoot> {
+		this.checkNotDisposed("The checkout has already been disposed and cannot create a view.");
 		const view = new SchematizingSimpleTreeView(
 			this,
 			config,

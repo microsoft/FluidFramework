@@ -1439,6 +1439,15 @@ describe("sharedTreeView", () => {
 	});
 
 	describe("disposal", () => {
+		itView("disposed checkouts cannot create views", ({ view, tree, forkCheckout }) => {
+			const checkout = forkCheckout(tree);
+			checkout.dispose();
+			assert.throws(
+				() => checkout.viewWith(view.config),
+				validateUsageError("The checkout has already been disposed and cannot create a view."),
+			);
+		});
+
 		itView("rejects forks after disposal", ({ view, tree, forkCheckout }) => {
 			view.dispose();
 			if (!tree.disposed) {
