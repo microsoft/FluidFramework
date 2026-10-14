@@ -143,7 +143,7 @@ describe("TreeLocationResolver", () => {
 		);
 	});
 
-	it("materializes unread receiver nodes and reuses their cached SimpleTree objects", () => {
+	it("materializes unread receiver nodes", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
 		const batch = capture(sender.locations, [
@@ -153,8 +153,8 @@ describe("TreeLocationResolver", () => {
 		const first = resolved(receiver.locations.resolve(batch));
 		const second = resolved(receiver.locations.resolve(batch));
 		assert.equal(first[0].node, first[1].node);
-		assert.equal(second[0].node, first[0].node);
-		assert.equal(second[1].node, first[0].node);
+		assert.equal(first[0].node, second[0].node);
+		assert.equal(first[1].node, second[1].node);
 		assert.equal(first[0].node, receiver.root.left);
 	});
 
@@ -183,7 +183,13 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: sender.root.left, index: 1 },
 			{ kind: "sequence", node: sender.root.left, index: 3 },
 		]);
+		// Move left[1..3) into right at gap 1:
+		// left:  a [b c] d  -->  a d
+		// right: x     y   -->  x [b c] y
+		// Before-affinity gaps: left a|bcd --> left a|d; left abc|d --> right xbc|y.
 		receiver.root.right.moveRangeToIndex(1, 1, 3, receiver.root.left);
+		assert.equal(receiver.root.left.join(""), "ad");
+		assert.equal(receiver.root.right.join(""), "xbcy");
 		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
 			{ kind: "sequence", node: receiver.root.left, index: 1, affinity: "before" },
 			{ kind: "sequence", node: receiver.root.right, index: 3, affinity: "before" },
@@ -229,11 +235,13 @@ describe("TreeLocationResolver", () => {
 					affinity,
 				})),
 			);
+
+			// Perform a series of randomized edits on the receiver's arrays.
 			const random = makeRandom(seed);
 			for (let edit = 0; edit < 40; edit++) {
 				const source = random.integer(0, 1);
-				const operation = arrays[source].length === 0 ? 0 : random.integer(0, 2);
-				if (operation === 0) {
+				const operation = random.pick(arrays[source].length === 0 ? ["insert"] : ["insert", "delete", "move"]);
+				if (operation === "insert") {
 					const at = random.integer(0, arrays[source].length);
 					arrays[source].insertAt(at, "x");
 					for (const gap of expected) {
@@ -249,14 +257,14 @@ describe("TreeLocationResolver", () => {
 					const end = random.integer(start + 1, arrays[source].length);
 					const target = 1 - source;
 					const at = random.integer(0, arrays[target].length);
-					if (operation === 1) {
+					if (operation === "delete") {
 						arrays[source].removeRange(start, end);
 					} else {
 						arrays[target].moveRangeToIndex(at, start, end, arrays[source]);
 					}
 					for (const gap of expected) {
 						const follows =
-							operation === 2 &&
+							operation === "move" &&
 							gap.array === source &&
 							(gap.affinity === "after"
 								? start <= gap.index && gap.index < end
@@ -267,7 +275,7 @@ describe("TreeLocationResolver", () => {
 						} else if (gap.array === source && gap.index > start) {
 							gap.index -= Math.min(gap.index, end) - start;
 						} else if (
-							operation === 2 &&
+							operation === "move" &&
 							gap.array === target &&
 							(gap.index > at || (gap.index === at && gap.affinity === "after"))
 						) {
@@ -316,7 +324,11 @@ describe("TreeLocationResolver", () => {
 		const [sender, receiver] = views;
 		const after = captureGaps(sender, [0, 1, 2, 3, 4]);
 		const before = captureGaps(sender, [2], "before");
+		// Captured gap 2 (|): ab|cd
+		// Insert "ij": before --> ab|ijcd; after --> abij|cd.
+		// Remove [0..4): both --> |cd.
 		receiver.root.left.insertAt(2, "i", "j");
+		assert.equal(receiver.root.left.join(""), "abijcd");
 		assert.throws(
 			() => receiver.locations.capture([]),
 			validateUsageError(/pending local edits/),
@@ -324,6 +336,7 @@ describe("TreeLocationResolver", () => {
 		assert.deepEqual(indices(receiver.locations, after), [0, 1, 4, 5, 6]);
 		assert.deepEqual(indices(receiver.locations, before), [2]);
 		receiver.root.left.removeRange(0, 4);
+		assert.equal(receiver.root.left.join(""), "cd");
 		assert.deepEqual(indices(receiver.locations, after), [0, 0, 0, 1, 2]);
 	});
 
@@ -332,7 +345,17 @@ describe("TreeLocationResolver", () => {
 		const [sender, receiver] = views;
 		const after = captureGaps(sender, [1, 2, 3]);
 		const before = captureGaps(sender, [1, 2, 3], "before");
+		// Move left[1..3) into right at gap 1:
+		// left:  a [b c] d  -->  a d
+		// right: x     y   -->  x [b c] y
+		//
+		// Captured gap      "before" result    "after" result
+		// left a|bcd   -->  left  a|d          right x|bcy
+		// left ab|cd   -->  right xb|cy        right xb|cy
+		// left abc|d   -->  right xbc|y        left  a|d
 		receiver.root.right.moveRangeToIndex(1, 1, 3, receiver.root.left);
+		assert.equal(receiver.root.left.join(""), "ad");
+		assert.equal(receiver.root.right.join(""), "xbcy");
 		assert.deepEqual(resolved(receiver.locations.resolve(after)), [
 			{ kind: "sequence", node: receiver.root.right, index: 1, affinity: "after" },
 			{ kind: "sequence", node: receiver.root.right, index: 2, affinity: "after" },
@@ -351,6 +374,9 @@ describe("TreeLocationResolver", () => {
 			const [sender, receiver] = views;
 			const gap = captureGaps(sender, [2]);
 			const node = capture(sender.locations, [{ kind: "node", node: sender.root.left }]);
+			// left:  ab|cd  --move all-->  []  --replace-->  ["replacement"]
+			// right: xy    ----------->  xab|cdy
+			// The gap follows the characters; the original left-array node is deleted.
 			const edit = (): void => {
 				receiver.root.right.moveRangeToIndex(1, 0, 4, receiver.root.left);
 				receiver.root.left = new Text(["replacement"]);
@@ -360,6 +386,8 @@ describe("TreeLocationResolver", () => {
 			} else {
 				edit();
 			}
+			assert.equal(receiver.root.left.join(""), "replacement");
+			assert.equal(receiver.root.right.join(""), "xabcdy");
 			assert.deepEqual(resolved(receiver.locations.resolve(gap)), [
 				{ kind: "sequence", node: receiver.root.right, index: 3, affinity: "after" },
 			]);
@@ -371,10 +399,15 @@ describe("TreeLocationResolver", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
 		const batch = captureGaps(sender, [2]);
+		// right: xy --replace--> []
+		// left:  a[b|c]d  --move [1..3)-->  ad
+		// right: []      -------------->  b|c
 		receiver.runTransaction(() => {
 			receiver.root.right = new Text([]);
 			receiver.root.right.moveRangeToIndex(0, 1, 3, receiver.root.left);
 		});
+		assert.equal(receiver.root.left.join(""), "ad");
+		assert.equal(receiver.root.right.join(""), "bc");
 		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
 			{ kind: "sequence", node: receiver.root.right, index: 1, affinity: "after" },
 		]);
@@ -397,8 +430,13 @@ describe("TreeLocationResolver", () => {
 			{ kind: "node", node: item.text },
 			{ kind: "sequence", node: item.text, index: 1, affinity: "after" },
 		]);
+		// a: [item { text: a|b }]  --move item-->  []
+		// b: []                  ------------>  [item { text: a|b }]
+		// Insert at text gap 0: a|b --> xa|b. Both item and text retain their identity.
 		receiver.root.b.moveToStart(0, receiver.root.a);
 		receiver.root.b[0].text.insertAtStart("x");
+		assert.equal(receiver.root.a.length, 0);
+		assert.equal(receiver.root.b[0].text.join(""), "xab");
 		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
 			{ kind: "node", node: receiver.root.b[0] },
 			{ kind: "node", node: receiver.root.b[0].text },
@@ -424,18 +462,22 @@ describe("TreeLocationResolver", () => {
 		assert.deepEqual(indices(views[1].locations, batch), [0, 2]);
 	});
 
-	it("uses the current rebased local suffix, not transient rollback operations", () => {
+	it("resolves through a remote edit and a rebased pending local edit", () => {
 		const { provider, views } = setup();
 		const [sender, receiver] = views;
 		const batch = captureGaps(sender, [2, 4]);
+		// Each bracketed word is one array element:
+		// captured: a b | c d | --> receiver: [remote] a b | c d [local] |
+		// History after receiving the remote edit: base -> remote -> local (still pending).
 		sender.root.left.insertAtStart("remote");
+		const remoteRevision = sender.branchHistory.getHead()?.revision;
+		assert(remoteRevision !== undefined);
 		receiver.root.left.insertAtEnd("local");
 		do {
+			assert(provider.peekNextMessage() !== undefined);
 			provider.synchronizeMessages({ count: 1 });
-		} while (
-			provider.trees[0].kernel.getLocalBranch().getHead() !==
-			provider.trees[0].kernel.getTrunkHead()
-		);
+		} while (receiver.branchHistory.getHead()?.getParent()?.revision !== remoteRevision);
+		assert.deepEqual([...receiver.root.left], ["remote", "a", "b", "c", "d", "local"]);
 		assert.throws(
 			() => receiver.locations.capture([]),
 			validateUsageError(/pending local edits/),
@@ -448,7 +490,7 @@ describe("TreeLocationResolver", () => {
 		);
 	});
 
-	it("retries a future revision after receiving its operations", () => {
+	it("can previously unresolvable locations once their revision is made available", () => {
 		const { provider, views } = setup();
 		const [sender, receiver] = views;
 		const runtime = provider.trees[1].containerRuntime;
@@ -592,10 +634,15 @@ describe("TreeLocationResolver", () => {
 				undo = metadata.getRevertible();
 			}
 		});
+		// ab|cd --remove "bc"--> a|d --undo--> a|bcd ("before")
+		//                                   abc|d ("after")
+		// Undo restores the text, not the gap's former offset inside the deleted span.
 		view.root.left.removeRange(1, 3);
+		assert.equal(view.root.left.join(""), "ad");
 		off();
 		assert(undo !== undefined);
 		undo.revert();
+		assert.equal(view.root.left.join(""), "abcd");
 		assert.deepEqual(indices(view.locations, before), [1]);
 		assert.deepEqual(indices(view.locations, after), [3]);
 	});
@@ -693,8 +740,12 @@ describe("TreeLocationResolver", () => {
 			{ kind: "node", node: view.root.left },
 			{ kind: "sequence", node: view.root.left, index: 1, affinity: "after" },
 		]);
+		// left:  a|bcd --insert "x"--> xa|bcd --move [1..4)--> xd
+		// right: xy                         ---------------> xa|bcy
 		view.root.left.insertAtStart("x");
 		view.root.right.moveRangeToIndex(1, 1, 4, view.root.left);
+		assert.equal(view.root.left.join(""), "xd");
+		assert.equal(view.root.right.join(""), "xabcy");
 		assert.deepEqual(resolved(view.locations.resolve(batch)), [
 			{ kind: "node", node: view.root },
 			{ kind: "node", node: view.root.left },
@@ -709,6 +760,9 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: views[0].root.left, index: 2, affinity: "after" },
 		]);
 		const checkout = provider.trees[0].kernel.checkout;
+		// One commit: insert "x" -> widen schema -> move left[1..4) to right gap 1.
+		// left:  ab|cd --> xab|cd --> xab|cd --> xd
+		// right: xy    --------------------> xab|cy
 		checkout.transaction.start();
 		views[0].root.left.insertAtStart("x");
 		views[0].dispose();
@@ -723,6 +777,8 @@ describe("TreeLocationResolver", () => {
 		view.upgradeSchema();
 		view.root.right.moveRangeToIndex(1, 1, 4, view.root.left);
 		checkout.transaction.commit();
+		assert.equal(view.root.left.join(""), "xd");
+		assert.equal(view.root.right.join(""), "xabcy");
 		assert.deepEqual(
 			checkout.getLocationHead().change.changes.map((change) => change.type),
 			["data", "schema", "data"],
