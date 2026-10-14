@@ -715,7 +715,6 @@ export function assignRootChange(
 
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
 	setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
-
 	table.detachLocations.set(detachId, 1, detachLocation);
 }
 

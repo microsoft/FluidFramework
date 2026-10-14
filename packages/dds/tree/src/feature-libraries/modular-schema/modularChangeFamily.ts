@@ -273,7 +273,7 @@ export class ModularChangeFamily
 		const revInfos = composeRevInfos(change1.revisions, change2.revisions);
 
 		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys, rootNodes } =
-			this.composeAllFields(change1, change2, revInfos, idState);
+			this.composeAllEdits(change1, change2, revInfos, idState);
 
 		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers(
 			change1,
@@ -306,7 +306,7 @@ export class ModularChangeFamily
 		return composed;
 	}
 
-	private composeAllFields(
+	private composeAllEdits(
 		potentiallyConflictedChange1: ModularChangeset,
 		potentiallyConflictedChange2: ModularChangeset,
 		revInfos: readonly RevisionInfo[],
@@ -340,24 +340,12 @@ export class ModularChangeFamily
 			mergeTupleBTrees(change1.nodeAliases, change2.nodeAliases),
 		);
 
-		const pendingCompositions: PendingCompositions = {
-			nodeIdsToCompose: [],
-			affectedBaseFields: newFieldIdKeyBTree(),
-		};
-
+		const pendingCompositions = getPendingCompositionsForRoots(change1, change2);
 		const removedCrossFieldKeys: CrossFieldRangeTable<boolean> = newCrossFieldRangeTable();
-
-		const composedRoots = composeRootTables(
-			change1,
-			change2,
-			composedNodeToParent,
-			pendingCompositions,
-		);
 
 		const crossFieldTable = newComposeTable(
 			change1,
 			change2,
-			composedRoots,
 			removedCrossFieldKeys,
 			pendingCompositions,
 		);
@@ -391,13 +379,12 @@ export class ModularChangeFamily
 			}
 		}
 
-		// We update the initial composed root renames created by `composeRootRenames`,
-		// applying pending additions and removals created through `ComposeNodeManager` while composing fields.
-		applyPendingComposedRenames(
+		const composedRoots = composeRootTables(
 			change1,
 			change2,
-			crossFieldTable.composedRootNodes,
 			crossFieldTable.attachDetachRenames,
+			crossFieldTable.baseAttachIdToNewNodeId,
+			composedNodeToParent,
 		);
 
 		return {
@@ -2308,7 +2295,6 @@ interface RebaseFieldContext {
 function newComposeTable(
 	baseChange: ModularChangeset,
 	newChange: ModularChangeset,
-	composedRootNodes: RootNodeTable,
 	removedCrossFieldKeys: CrossFieldRangeTable<boolean>,
 	pendingCompositions: PendingCompositions,
 ): ComposeTable {
@@ -2325,9 +2311,9 @@ function newComposeTable(
 		newToBaseNodeId: newChangeAtomIdBTree(),
 		composedNodes: new Set(),
 		movedNodeToParent: newChangeAtomIdBTree(),
-		composedRootNodes,
 		attachDetachRenames: newChangeAtomIdTransform(),
 		addedCrossFieldKeys: newCrossFieldRangeTable(),
+		baseAttachIdToNewNodeId: newChangeAtomIdBTree(),
 		removedCrossFieldKeys,
 		pendingCompositions,
 	};
@@ -2349,12 +2335,14 @@ interface ComposeTable {
 	readonly newToBaseNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly movedNodeToParent: ChangeAtomIdBTree<NodeLocation>;
-	readonly composedRootNodes: RootNodeTable;
 
 	/**
 	 * Maps from attach ID in change1 to a corresponding detach ID in change2.
 	 */
 	readonly attachDetachRenames: ChangeAtomIdRangeMap<ChangeAtomId>;
+
+	// XXX: This could probably be merged with movedNodeIds.
+	readonly baseAttachIdToNewNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly removedCrossFieldKeys: CrossFieldRangeTable<boolean>;
 	readonly addedCrossFieldKeys: CrossFieldRangeTable<FieldId>;
 	readonly pendingCompositions: PendingCompositions;
@@ -2390,7 +2378,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		private readonly allowInval: boolean = true,
 	) {}
 
-	// TODO: Should this just return an empty DetachNodeEntry instead of undefined?
+	// XXX: Should this just return an empty DetachNodeEntry instead of undefined?
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
@@ -2655,6 +2643,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			countToProcess = result.length;
 		}
 
+		// XXX: Can we remove this?
 		// TODO: Consider moving this to a separate method so that this method can be side-effect free.
 		if (result.value !== undefined) {
 			setInChangeAtomIdMap(this.table.movedNodeToParent, result.value, {
@@ -2764,6 +2753,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			1,
 		);
 
+		// XXX: getFirstDetachField
 		const detachFields = getFieldsForCrossFieldKey(
 			this.table.baseChange,
 			{
@@ -2787,14 +2777,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			);
 
 			if (baseNodeId === undefined) {
-				assignRootChange(
-					this.table.composedRootNodes,
-					this.table.movedNodeToParent,
-					baseDetachId,
-					newChanges,
-					this.fieldId,
-					this.table.rebaseVersion,
-				);
+				setInChangeAtomIdMap(this.table.baseAttachIdToNewNodeId, baseAttachId, newChanges);
 			} else {
 				addNodesToCompose(this.table, baseNodeId, newChanges);
 			}
@@ -3556,15 +3539,18 @@ function composeCrossFieldKeyTables(
 	return composedTable;
 }
 
-function composeRootTables(
+/**
+ * Adds to `pendingCompositions` based on root node information which might not otherwise be found
+ * during the field composition walk.
+ */
+function getPendingCompositionsForRoots(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
-	composedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
-	pendingCompositions: PendingCompositions,
-): RootNodeTable {
-	const composedTable = cloneRootTable(change1.rootNodes);
-
-	composeRootRenames(change1, change2, composedTable);
+): PendingCompositions {
+	const pendingCompositions: PendingCompositions = {
+		nodeIdsToCompose: [],
+		affectedBaseFields: newFieldIdKeyBTree(),
+	};
 
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
 		const detachId2 = { revision: revision2, localId: id2 };
@@ -3572,25 +3558,10 @@ function composeRootTables(
 		const nodeId1 = getFromChangeAtomIdMap(change1.rootNodes.nodeChanges, detachId1);
 
 		if (nodeId1 === undefined) {
-			const fieldId = getFieldsForCrossFieldKey(
-				change1,
-				{ ...detachId1, target: NodeMoveType.Detach },
-				1,
-			)[0];
-
-			if (fieldId === undefined) {
-				assignRootChange(
-					composedTable,
-					composedNodeToParent,
-					detachId1,
-					nodeId2,
-					change1.rootNodes.detachLocations.getFirst(detachId1, 1).value ??
-						change2.rootNodes.detachLocations.getFirst(detachId2, 1).value,
-					Math.max(change1.rebaseVersion, change2.rebaseVersion) as RebaseVersion,
-				);
-			} else {
-				// In this case, this node is attached in the input context of change1,
-				// and is represented in detachFieldId.
+			const fieldId = getFirstDetachField(change1.crossFieldKeys, detachId1, 1).value;
+			if (fieldId !== undefined) {
+				// In this case, this node is attached in the input context of `change1`,
+				// and is represented in `fieldId`, so we must ensure composition visits that field.
 				pendingCompositions.affectedBaseFields.set(
 					[fieldId.nodeId?.revision, fieldId.nodeId?.localId, fieldId.field],
 					true,
@@ -3600,13 +3571,116 @@ function composeRootTables(
 			pendingCompositions.nodeIdsToCompose.push([nodeId1, nodeId2]);
 		}
 	}
+	return pendingCompositions;
+}
 
-	return composedTable;
+/**
+ * Updates `composedRoots` and `composedNodeToParent` to reflect root node changes from `change2`.
+ * `composedRoots.nodeChanges` is assumed to start with a clone of `change1.rootNodes.nodeChanges`.
+ * @returns
+ */
+function composeRootNodeChanges(
+	change1: ModularChangeset,
+	change2: ModularChangeset,
+	baseDetachIdToNewNodeId: ChangeAtomIdBTree<ChangeAtomId>,
+	composedRoots: RootNodeTable,
+	composedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
+): void {
+	const rebaseVersion = Math.max(
+		change1.rebaseVersion,
+		change2.rebaseVersion,
+	) as RebaseVersion;
+	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
+		const detachId2 = { revision: revision2, localId: id2 };
+		const detachId1 = firstDetachIdFromAttachId(change1.rootNodes, detachId2, 1).value;
+		const nodeId1 = getFromChangeAtomIdMap(change1.rootNodes.nodeChanges, detachId1);
+
+		// If `nodeId1` is defined, then the composed change represents the node with `nodeId1`,
+		// so we shouldn't add an entry for `nodeId2`.
+		if (nodeId1 === undefined) {
+			// XXX: getFirstDetachField
+			const fieldId = getFieldsForCrossFieldKey(
+				change1,
+				{ ...detachId1, target: NodeMoveType.Detach },
+				1,
+			)[0];
+
+			if (fieldId === undefined) {
+				// This node was already detached in `change1`'s input context,
+				// so it should be represented as detached in the composed change.
+				const detachLocation =
+					change1.rootNodes.detachLocations.getFirst(detachId1, 1).value ??
+					change2.rootNodes.detachLocations.getFirst(detachId2, 1).value;
+
+				assignRootChange(
+					composedRoots,
+					composedNodeToParent,
+					detachId1,
+					nodeId2,
+					detachLocation,
+					rebaseVersion,
+				);
+			}
+		}
+	}
+
+	for (const [[revision1, id1], nodeId2] of baseDetachIdToNewNodeId.entries()) {
+		const baseAttachId = { revision: revision1, localId: id1 };
+		const baseInputId = firstDetachIdFromAttachId(change1.rootNodes, baseAttachId, 1).value;
+		const detachField = getFirstDetachField(change1.crossFieldKeys, baseInputId, 1).value;
+
+		if (detachField === undefined) {
+			// `nodeId2` was attached, but not detached by the base change,
+			// and so is detached in the base and composed changes' input context.
+			const nodeId1 = getFromChangeAtomIdMap(change1.rootNodes.nodeChanges, baseInputId);
+
+			if (nodeId1 === undefined) {
+				const attachField =
+					getFirstAttachField(change1.crossFieldKeys, baseAttachId, 1).value ??
+					fail("Expected attach field for base attach ID");
+
+				const detachLocation =
+					change1.rootNodes.detachLocations.getFirst(baseInputId, 1).value ?? attachField;
+
+				assignRootChange(
+					composedRoots,
+					composedNodeToParent,
+					baseInputId,
+					nodeId2,
+					detachLocation,
+					rebaseVersion,
+				);
+			}
+		} else {
+			// XXX: Update node2's parent location to detachField, unless it has already been composed with a node1.
+		}
+	}
+}
+
+function composeRootTables(
+	change1: ModularChangeset,
+	change2: ModularChangeset,
+	composedAttachToDetach: ChangeAtomIdRangeMap<ChangeAtomId>,
+	baseAttachIdToNewNodeId: ChangeAtomIdBTree<ChangeAtomId>,
+	composedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
+): RootNodeTable {
+	const composedRoots = cloneRootTable(change1.rootNodes);
+	composeRootNodeChanges(
+		change1,
+		change2,
+		baseAttachIdToNewNodeId,
+		composedRoots,
+		composedNodeToParent,
+	);
+	composeRootRenames(change1, change2, composedAttachToDetach, composedRoots);
+
+	return composedRoots;
 }
 
 function composeRootRenames(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
+	composedAttachToDetach: ChangeAtomIdRangeMap<ChangeAtomId>,
 	composedRoots: RootNodeTable,
 ): void {
 	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
@@ -3621,6 +3695,8 @@ function composeRootRenames(
 			handleComposeRenameCollision,
 		);
 	}
+
+	applyAttachDetachRenames(change1, change2, composedAttachToDetach, composedRoots);
 }
 
 function handleComposeRenameCollision(
@@ -3675,11 +3751,11 @@ function handleComposeRenameCollision(
 	}
 }
 
-function applyPendingComposedRenames(
+function applyAttachDetachRenames(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
-	composedRoots: RootNodeTable,
 	attachDetachRenames: ChangeAtomIdRangeMap<ChangeAtomId>,
+	composedRoots: RootNodeTable,
 ): void {
 	for (const entry of attachDetachRenames.entries()) {
 		composeRootRename(
