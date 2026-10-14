@@ -60,6 +60,7 @@ function getContentsWithStashedOpHandling(
 					contents,
 					localOpMetadata: metadata,
 					clientSequenceNumber: messageContent.clientSequenceNumber,
+					indexInBatch: messageContent.indexInBatch,
 				});
 			}
 		} else {

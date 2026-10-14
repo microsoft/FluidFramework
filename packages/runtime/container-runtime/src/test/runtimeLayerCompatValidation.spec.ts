@@ -17,6 +17,7 @@ import {
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
+import { runtimeMessagesHaveIndexInBatch } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildLogger,
 	createChildMonitoringContext,
@@ -41,6 +42,7 @@ import {
 	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
 	runtimeCoreCompatDetails,
+	runtimeCompatDetailsForDataStore,
 	disableStrictLoaderLayerCompatibilityCheckKey,
 } from "../runtimeLayerCompatState.js";
 
@@ -138,6 +140,13 @@ async function createAndLoadDataStore(
 }
 
 describe("Runtime Layer compatibility", () => {
+	it("advertises runtime batch indexes to the DataStore layer", () => {
+		assert(
+			runtimeCompatDetailsForDataStore.supportedFeatures.has(runtimeMessagesHaveIndexInBatch),
+			"Runtime should advertise indexInBatch support",
+		);
+	});
+
 	/**
 	 * These tests ensure that the validation logic for layer compatibility is correct
 	 * and has the correct error / properties.

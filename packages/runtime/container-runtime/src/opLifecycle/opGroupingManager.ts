@@ -6,6 +6,7 @@
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedRuntimeMessage } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildLogger,
 	type TelemetryLoggerExt,
@@ -178,18 +179,20 @@ export class OpGroupingManager {
 		return groupedBatch;
 	}
 
-	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
+	public ungroupOp(op: ISequencedDocumentMessage): ISequencedRuntimeMessage[] {
 		assert(isGroupContents(op.contents), 0x947 /* can only ungroup a grouped batch */);
 		const contents: IGroupedBatchMessageContents = op.contents;
 
-		let fakeCsn = 1;
-		return contents.contents.map((subMessage) => ({
-			...op,
-			clientSequenceNumber: fakeCsn++,
-			contents: subMessage.contents,
-			metadata: subMessage.metadata,
-			compression: subMessage.compression,
-		}));
+		return contents.contents.map((subMessage, index) => {
+			return {
+				...op,
+				clientSequenceNumber: index + 1,
+				indexInBatch: index,
+				contents: subMessage.contents,
+				metadata: subMessage.metadata,
+				compression: subMessage.compression,
+			};
+		});
 	}
 
 	public groupedBatchingEnabled(): boolean {
