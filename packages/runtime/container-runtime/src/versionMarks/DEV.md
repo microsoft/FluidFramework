@@ -326,8 +326,10 @@ simply absent), so the distinction uses a **read-derived availability signal**: 
 (`getCurrentSequenceNumber`) plus where the scan's first op landed relative to `from = sequenceNumberLowerBound`:
 
 - `from > tip` — nothing is sequenced at/after the lower bound yet, so the batch cannot have landed → **`pending`**.
-- Empty read while ops should exist (`from <= tip`) — the requested range came back empty, which for a strict driver
-  (ODSP's `validateMessages` empties a from-misaligned trimmed range) means the range was trimmed → **`unresolvable`**.
+- Empty read while ops should exist (`from <= tip`) — the result is ambiguous. A strict driver can return an empty
+  result for a trimmed range, but the historical reader can also temporarily lag a recently sequenced batch.
+  Without an observed gap, the resolver cannot prove that the batch's ops are gone → **`pending`** with reason
+  `emptyHistoryRead`.
 - First available op is past `from` — a trim gap at the anchor; the mark's batch (sequenced just after the reference
   point) was trimmed → **`unresolvable`**. A found batch resolves before this check, so a gap **on a miss** genuinely
   means the batch's ops are gone, not merely preceded by other clients' ops (which are still present at `from`).
@@ -697,11 +699,11 @@ known sequence number and exercise loading. They do not create that sequence num
   `batchId`. This would keep the ordered flush-then-read operation inside one runtime hook instead of requiring the
   resolver to call two hooks in sequence.
 - Reevaluate whether distinguishing `pending` from `unresolvable` is valuable enough to justify the driver-dependent
-  heuristics in `classifyMiss`. The current implementation makes educated guesses from empty reads and sequence gaps, so
-  its confidence depends on how each driver's delta storage reports trimmed ranges. Consider returning the conservative
-  `pending` result for ambiguous misses, collapsing the states, or deferring a definitive `unresolvable` result until
-  delta storage exposes an explicit retention boundary. This is separate from a missing historical reader, described
-  below.
+  heuristic in `classifyMiss`. The current implementation conservatively returns `pending` for empty reads and infers
+  `unresolvable` only from an observed sequence gap. Whether that gap is observable still depends on how each driver's
+  delta storage reports trimmed ranges. Consider collapsing the states or deferring every definitive `unresolvable`
+  result until delta storage exposes an explicit retention boundary. This is separate from a missing historical reader,
+  described below.
 - In a future beta-breaking release, make `timestamp` required on the resolved variants of `VersionMarkCapture` and
   `ResolveResult`, and make the third `onBatchSequenced` listener argument required. It is optional today only so
   existing callers, callbacks, mocks, and stored resolved records remain source-compatible. Before taking the break,
@@ -846,6 +848,8 @@ where the capturing client dies before its own ack and no other live client prom
 resolve the stored `batchId` from retained ops even though that op will not reappear on the live inbound stream.
 
 Resolution is still bounded by op retention. Once the target range has been trimmed, there is no runtime-owned durable
-`batchId -> { sequenceNumber, timestamp }` index to recover it, so the resolver returns `unresolvable`. As described
-above, the current trim detection is read-derived and driver-dependent; a future explicit op-availability API would make
-that classification contractual.
+`batchId -> { sequenceNumber, timestamp }` index to recover it. The resolver returns `unresolvable` only when a
+nonempty historical read exposes a gap between the requested lower bound and the first available op. If the driver
+instead returns an empty result for the trimmed range, the resolver cannot distinguish trimming from temporary
+historical-read lag and keeps the mark `pending` with reason `emptyHistoryRead`. As described above, a future explicit
+op-availability API would make the classification contractual and allow empty trimmed ranges to become terminal.
