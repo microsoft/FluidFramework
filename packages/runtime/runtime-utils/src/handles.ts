@@ -167,6 +167,10 @@ function hasDataStorePackagePath(
  * Returns the package path of the data store containing the object referenced by a handle.
  *
  * @remarks
+ * Use this path in telemetry to identify the containing data store package, for example, when a component
+ * takes a long time to load. The result is informational only: this lookup does not measure load time or
+ * change how the runtime loads objects.
+ *
  * The handle must belong to the supplied container runtime's container. This function does not verify that
  * relationship or resolve the handle. It does not check whether a descendant object exists or return a DDS
  * package path. An invalid handle or a runtime without the internal package-path lookup causes a TypeError.
