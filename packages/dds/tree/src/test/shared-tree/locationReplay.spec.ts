@@ -9,15 +9,22 @@ import {
 	EmptyKey,
 	type DeltaFieldMap,
 	type DeltaMark,
-	type DeltaRoot,
 	type FieldKey,
 	type UpPath,
+	type ReadOnlyDetachedFieldIndex,
+	type RevertibleAlpha,
 	rootFieldKey,
 	makeDetachedFieldIndex,
+	applyDelta,
+	createAnnouncedVisitor,
+	tagChange,
 } from "../../core/index.js";
+import { intoDelta } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { LocationReplay, rewindDetachedRoots } from "../../shared-tree/locationReplay.js";
+import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
+import { getView, mintRevisionTag } from "../utils.js";
 
 const array: UpPath = { parent: undefined, parentField: rootFieldKey, parentIndex: 0 };
 
@@ -124,37 +131,133 @@ describe("LocationReplay", () => {
 	});
 
 	for (const intermediateExisted of [false, true]) {
-		it(`reconstructs the correct repair state when an intermediate rename ID ${intermediateExisted ? "existed" : "did not exist"}`, () => {
-			const delta: DeltaRoot = {
-				fields: new Map([
-					[
-						rootFieldKey,
-						{
-							marks: [
-								{ count: 1, detach: { minor: 0 } },
-								{ count: 1, attach: { minor: 2 } },
-							],
-						},
-					],
-				]),
-				rename: [
-					{ oldId: { minor: 0 }, newId: { minor: 1 }, count: 1 },
-					{ oldId: { minor: 1 }, newId: { minor: 2 }, count: 1 },
-				],
-			};
+		it(`tracks renames when an intermediate ID ${intermediateExisted ? "existed" : "did not exist"}`, () => {
 			const current = makeDetachedFieldIndex();
 			if (intermediateExisted) {
 				current.createEntry({ minor: 1 }, undefined);
 			}
-			rewindDetachedRoots(current, delta);
-			assert.equal(current.tryGetEntry({ minor: 1 }) !== undefined, intermediateExisted);
-			assert.equal(current.tryGetEntry({ minor: 0 }), undefined);
-			assert.equal(current.tryGetEntry({ minor: 2 }), undefined);
 			const replay = new LocationReplay(current);
 			const node = replay.track(array);
-			replay.apply(delta, "root");
+			replay.apply(
+				{
+					fields: new Map([
+						[
+							rootFieldKey,
+							{
+								marks: [
+									{ count: 1, detach: { minor: 0 } },
+									{ count: 1, attach: { minor: 2 } },
+								],
+							},
+						],
+					]),
+					rename: [
+						{ oldId: { minor: 0 }, newId: { minor: 1 }, count: 1 },
+						{ oldId: { minor: 1 }, newId: { minor: 2 }, count: 1 },
+					],
+				},
+				"root",
+			);
 			assert.deepEqual(replay.snapshot(node), intermediateExisted ? undefined : array);
 			replay.dispose();
+		});
+	}
+});
+
+describe("rewindDetachedRoots", () => {
+	const sf = new SchemaFactory("com.example.rewindDetachedRoots");
+	class Text extends sf.array("Text", sf.string) {}
+	class Document extends sf.object("Document", { left: Text, right: Text }) {}
+	const identities = (index: ReadOnlyDetachedFieldIndex): string[] =>
+		[...index.clone().entries()].map(({ id }) => JSON.stringify([id.major, id.minor])).sort();
+
+	for (const operation of [
+		"insert",
+		"remove",
+		"move",
+		"transient",
+		"replace",
+		"restore",
+	] as const) {
+		it(`restores repair identities and permits forward replay after ${operation}`, () => {
+			const view = getView(new TreeViewConfiguration({ schema: Document }));
+			view.initialize({ left: ["a", "b", "c"], right: ["x", "y"] });
+			let restore: RevertibleAlpha | undefined;
+			const off = view.events.on("changed", (metadata) => {
+				if (metadata.isLocal) {
+					restore = metadata.getRevertible();
+				}
+			});
+			view.root.left.removeAt(2);
+			off();
+			assert(restore !== undefined);
+			const checkout = view.checkout;
+			const before = identities(checkout.removedRoots);
+			const base = checkout.mainBranch.getHead();
+			switch (operation) {
+				case "insert": {
+					view.root.left.insertAt(1, "new");
+					break;
+				}
+				case "remove": {
+					view.root.left.removeRange();
+					break;
+				}
+				case "move": {
+					view.root.right.moveRangeToIndex(1, 0, 2, view.root.left);
+					break;
+				}
+				case "transient": {
+					view.runTransaction(() => {
+						view.root.left.insertAt(1, "new");
+						view.root.right.moveToStart(1, view.root.left);
+						view.root.right.removeAt(0);
+					});
+					break;
+				}
+				case "replace": {
+					view.root.left = new Text(["replacement"]);
+					break;
+				}
+				case "restore": {
+					restore.revert();
+					break;
+				}
+				default: {
+					assert.fail("Unknown operation");
+				}
+			}
+			const commit = checkout.mainBranch.getHead();
+			assert.equal(commit.parent, base);
+			const after = identities(checkout.removedRoots);
+			const rewound = checkout.removedRoots.clone();
+			rewindDetachedRoots(
+				rewound,
+				commit,
+				checkout.mainBranch.changeFamily.rebaser,
+				mintRevisionTag(),
+			);
+			assert.deepEqual(identities(rewound), before);
+			for (const change of commit.change.changes) {
+				assert(change.type === "data");
+				const delta = intoDelta(tagChange(change.innerChange, commit.revision));
+				try {
+					applyDelta(
+						delta,
+						commit.revision,
+						{
+							acquireVisitor: () => createAnnouncedVisitor({}),
+						},
+						rewound,
+					);
+				} finally {
+					for (const { trees } of [...(delta.build ?? []), ...(delta.refreshers ?? [])]) {
+						trees.referenceRemoved();
+					}
+				}
+			}
+			assert.deepEqual(identities(rewound), after);
+			view.dispose();
 		});
 	}
 });

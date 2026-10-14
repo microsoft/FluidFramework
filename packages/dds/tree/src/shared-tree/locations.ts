@@ -14,6 +14,7 @@ import {
 } from "../codec/index.js";
 import {
 	type GraphCommit,
+	type ChangeRebaser,
 	type DeltaRoot,
 	type RevisionTag,
 	type UpPath,
@@ -128,6 +129,8 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		private readonly checkout: TreeCheckout,
 		private readonly idCompressor: IIdCompressor,
 		jsonValidator: FormatValidator,
+		private readonly rebaser: ChangeRebaser<SharedTreeChange>,
+		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		const validator = extractJsonValidator(jsonValidator);
 		this.envelopeValidator = validator.compile(capturedTreeLocationsEnvelopeSchema);
@@ -270,6 +273,10 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		const deltas: { delta: DeltaRoot; revision: RevisionTag }[] = [];
 		let replay: LocationReplay | undefined;
 		try {
+			const detached = this.checkout.removedRoots.clone();
+			for (const entry of commits) {
+				rewindDetachedRoots(detached, entry, this.rebaser, this.mintRevisionTag());
+			}
 			for (const entry of commits.reverse()) {
 				for (const change of entry.change.changes) {
 					// Schema changes do not change node identity or location.
@@ -281,12 +288,6 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 						});
 					}
 				}
-			}
-			const detached = this.checkout.removedRoots.clone();
-			for (let i = deltas.length - 1; i >= 0; i--) {
-				const entry = deltas[i];
-				assert(entry !== undefined, "Expected a delta while reconstructing repair identities");
-				rewindDetachedRoots(detached, entry.delta);
 			}
 			const activeReplay = new LocationReplay(detached);
 			replay = activeReplay;

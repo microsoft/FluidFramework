@@ -684,6 +684,8 @@ export class TreeCheckout implements ITreeCheckout {
 			this,
 			this.idCompressor,
 			this.jsonValidator,
+			this.changeFamily.rebaser,
+			this.mintRevisionTag,
 		);
 		return this._locations;
 	}

@@ -10,9 +10,9 @@ import {
 	EmptyKey,
 	type Anchor,
 	type DeltaRoot,
-	type DeltaFieldMap,
-	type DeltaDetachedNodeId,
 	type DetachedFieldIndex,
+	type ChangeRebaser,
+	type TaggedChange,
 	type FieldKey,
 	type RevisionTag,
 	type UpPath,
@@ -21,10 +21,13 @@ import {
 	compareUpPaths,
 	createAnnouncedVisitor,
 	getDetachedFieldContainingPath,
-	offsetDetachId,
+	tagChange,
+	applyDelta,
 	rootField,
 	visitDelta,
 } from "../core/index.js";
+import { intoDelta } from "../feature-libraries/index.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 
 /**
  * A sparse node anchor, with optional gap information for sequence locations.
@@ -177,83 +180,37 @@ export class LocationReplay {
 }
 
 /**
- * Reconstructs historical repair-root identities, without reconstructing their contents.
- * Reversing the current index avoids guessing whether an intermediate rename ID already
- * existed at the source revision (which changes the meaning of a rename chain).
+ * Rolls back a commit's repair-root bookkeeping without reconstructing a forest.
+ * Call in reverse history order. Rollback inversion, unlike ordinary undo,
+ * also destroys content built by the original change.
  */
-export function rewindDetachedRoots(index: DetachedFieldIndex, delta: DeltaRoot): void {
-	const attaches: DeltaDetachedNodeId[] = [];
-	const detaches: DeltaDetachedNodeId[] = [];
-	const range = (id: DeltaDetachedNodeId, count: number): DeltaDetachedNodeId[] =>
-		Array.from({ length: count }, (_, i) => offsetDetachId(id, i));
-	const add = (id: DeltaDetachedNodeId): void => {
-		if (index.tryGetEntry(id) === undefined) {
-			index.createEntry(id, undefined);
-		}
-	};
-	const remove = (id: DeltaDetachedNodeId): void => {
-		if (index.tryGetEntry(id) !== undefined) {
-			index.deleteEntry(id);
-		}
-	};
-	const collect = (fields: DeltaFieldMap | undefined): void => {
-		for (const changes of fields?.values() ?? []) {
-			for (const mark of changes.marks) {
-				if (mark.attach !== undefined) {
-					attaches.push(...range(mark.attach, mark.count));
+export function rewindDetachedRoots(
+	index: DetachedFieldIndex,
+	commit: TaggedChange<SharedTreeChange>,
+	rebaser: ChangeRebaser<SharedTreeChange>,
+	rollbackRevision: RevisionTag,
+): void {
+	const inverse = rebaser.invert(commit, true, rollbackRevision);
+	for (const change of inverse.changes) {
+		if (change.type === "data") {
+			const delta = intoDelta(tagChange(change.innerChange, rollbackRevision));
+			try {
+				applyDelta(
+					delta,
+					rollbackRevision,
+					{
+						acquireVisitor: () => createAnnouncedVisitor({}),
+					},
+					index,
+				);
+			} finally {
+				for (const { trees } of delta.build ?? []) {
+					trees.referenceRemoved();
 				}
-				if (mark.detach !== undefined) {
-					detaches.push(...range(mark.detach, mark.count));
+				for (const { trees } of delta.refreshers ?? []) {
+					trees.referenceRemoved();
 				}
-				collect(mark.fields);
 			}
-		}
-	};
-	collect(delta.fields);
-	for (const global of delta.global ?? []) {
-		collect(global.fields);
-	}
-	for (const destroy of delta.destroy ?? []) {
-		for (const id of range(destroy.id, destroy.count)) {
-			add(id);
-		}
-	}
-	for (const id of attaches) {
-		add(id);
-	}
-	let renames = (delta.rename ?? [])
-		.flatMap((rename) =>
-			range(rename.oldId, rename.count).map((oldId, i) => ({
-				oldId,
-				newId: offsetDetachId(rename.newId, i),
-			})),
-		)
-		.filter(({ oldId, newId }) => oldId.major !== newId.major || oldId.minor !== newId.minor);
-	while (renames.length > 0) {
-		const delayed: typeof renames = [];
-		for (const rename of renames) {
-			if (
-				index.tryGetEntry(rename.newId) !== undefined &&
-				index.tryGetEntry(rename.oldId) === undefined
-			) {
-				remove(rename.newId);
-				add(rename.oldId);
-			} else {
-				delayed.push(rename);
-			}
-		}
-		assert(
-			delayed.length < renames.length,
-			"Reversing detached-root renames must make progress",
-		);
-		renames = delayed;
-	}
-	for (const id of detaches) {
-		remove(id);
-	}
-	for (const build of delta.build ?? []) {
-		for (const id of range(build.id, build.trees.topLevelLength)) {
-			remove(id);
 		}
 	}
 }
