@@ -44,7 +44,9 @@ describe("RebaseValidation", () => {
 				for (const level of [RebaseValidation.Level.Cheap, RebaseValidation.Level.Strict]) {
 					assert.throws(
 						() => RebaseValidation.setLevel(level),
-						validateUsageError(/rebase validation cannot be enabled/),
+						validateUsageError(
+							"Rebase validation cannot be enabled because debug asserts have been optimized out",
+						),
 					);
 					assert.equal(RebaseValidation.currentLevel, original);
 				}
@@ -114,7 +116,9 @@ describe("RebaseValidation", () => {
 				for (const level of [RebaseValidation.Level.Cheap, RebaseValidation.Level.Strict]) {
 					assert.throws(
 						() => RebaseValidation.runWithLevel(level, () => assert.fail("must not run")),
-						validateUsageError(/rebase validation cannot be enabled/),
+						validateUsageError(
+							"Rebase validation cannot be enabled because debug asserts have been optimized out",
+						),
 					);
 					assert.equal(RebaseValidation.currentLevel, original);
 				}
