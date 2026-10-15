@@ -797,6 +797,9 @@ export interface FormatValidator extends ErasedType<"FormatValidator"> {
 export const FormatValidatorBasic: FormatValidator;
 
 // @alpha
+export const FormatValidatorInterpreted: FormatValidator;
+
+// @alpha
 export const FormatValidatorNoOp: FormatValidator;
 
 // @alpha
