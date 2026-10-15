@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	compareArrays,
@@ -30,6 +31,8 @@ import {
 	createCustomizedFluidFrameworkScopedFactory,
 	eraseSchemaDetails,
 	isObjectNodeSchema,
+	isMapNodeSchema,
+	isRecordNodeSchema,
 	eraseSchemaDetailsSubclassable,
 	NodeKind,
 } from "../simple-tree/index.js";
@@ -137,6 +140,20 @@ export class StringTextAtomNode
  */
 export namespace FormattedText {
 	/**
+	 * A subset of formatting properties or map entries to update with {@link FormattedText.Members.formatRange}.
+	 * @remarks
+	 * Map formats accept a readonly map or an object whose properties specify entries.
+	 * An `undefined` value removes a map or record entry, or clears an optional object field.
+	 * @alpha
+	 */
+	export type FormatUpdate<TFormat> =
+		TFormat extends FluidReadonlyMap<string, infer TValue>
+			?
+					| FluidReadonlyMap<string, TValue | undefined>
+					| Readonly<Record<string, TValue | undefined>>
+			: Partial<TFormat>;
+
+	/**
 	 * Creates a schema for a formatted text node, parameterized by the formatting and the embedded object (atom) types.
 	 *
 	 * @param inputSchemaFactory - The {@link SchemaFactoryBeta} used to scope the generated schema.
@@ -144,7 +161,7 @@ export namespace FormattedText {
 	 * This scope is used to distinguish different usages of `createSchema` from each-other, and must be kept the same between versions for nodes to remain compatible.
 	 * It must be different to distinguish different formatted text schema within the same document.
 	 * @param formatSchema - Schema describing the formatting associated with each atom of text.
-	 * Use an {@link NodeKind.Object|Object node} to support {@link FormattedText.Members.formatRange}.
+	 * Use an object, record, or map node to support {@link FormattedText.Members.formatRange}.
 	 * @param extraAtoms - Additional atom schema to allow as text content beyond the built-in {@link FormattedText.(StringTextAtom:variable)}.
 	 * Use this to embed richer content (for example line breaks or inline objects) alongside plain characters.
 	 * @param defaultFormatInsertable - The formatting applied to text inserted via non-formatted APIs
@@ -307,7 +324,7 @@ export namespace FormattedText {
 			public formatRange(
 				start: number | undefined,
 				end: number | undefined,
-				format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
+				format: FormatUpdate<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
 			): void {
 				if (TreeStatic.is(format, SchemaFactory.leaves)) {
 					throw new UsageError(
@@ -315,31 +332,50 @@ export namespace FormattedText {
 					);
 				}
 
-				const fieldFormatsRaw = Object.entries(format) as [
-					keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-					unknown,
-				][];
-				const fieldFormats = fieldFormatsRaw.map(([key, value]) => {
-					// Object.entries should only return string keyed enumerable own properties.
-					// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-					assert(
-						typeof key === "string",
-						0xcc8 /* Object.entries returned a non-string key. */,
-					);
-					return [key, value] as const;
-				});
+				const fieldFormats: readonly (readonly [string, unknown])[] =
+					typeof format === "object" &&
+					format !== null &&
+					"get" in format &&
+					typeof format.get === "function" &&
+					Symbol.iterator in format
+						? [...(format as Iterable<readonly [string, unknown]>)]
+						: Object.entries(format);
 
 				type Operation = (formatNode: TreeNode) => void;
 				const perSchemaOperation = new Map<TreeNodeSchema, Operation>();
 				const buildOperation = (atomFormatSchema: TreeNodeSchema): Operation => {
 					switch (atomFormatSchema.kind) {
 						case NodeKind.Leaf:
-						case NodeKind.Array:
-						case NodeKind.Record:
-						case NodeKind.Map: {
+						case NodeKind.Array: {
 							throw new UsageError(
 								`formatRange encountered an existing \`${NodeKind[atomFormatSchema.kind]}\` format node: these are not supported. Consider using \`reformat\` instead.`,
 							);
+						}
+						case NodeKind.Record:
+						case NodeKind.Map: {
+							assert(
+								isMapNodeSchema(atomFormatSchema) || isRecordNodeSchema(atomFormatSchema),
+								"Expected a map or record schema.",
+							);
+							const field = SchemaFactory.optional(atomFormatSchema.info);
+							const createdValues = fieldFormats.map(
+								([key, value]) => [key, TreeBeta.create(field, value as never)] as const,
+							);
+							if (isMapNodeSchema(atomFormatSchema)) {
+								return (formatNode: TreeNode) => {
+									assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a map node.");
+									for (const [key, value] of createdValues) {
+										// TreeBeta.create above validated the value against this map's entry schema.
+										formatNode.set(key, TreeBeta.clone(value) as never);
+									}
+								};
+							}
+							return (formatNode: TreeNode) => {
+								assert(TreeStatic.is(formatNode, atomFormatSchema), "Expected a record node.");
+								for (const [key, value] of createdValues) {
+									formatNode[key] = TreeBeta.clone(value);
+								}
+							};
 						}
 						case NodeKind.Object: {
 							// Narrow the typing to allow easy access to object specific APIs.
@@ -347,19 +383,17 @@ export namespace FormattedText {
 							// Precompute values to assign to each modified field.
 							// Since this runs once per schema (instead of once per character),
 							// we precompute as much as we can here.
-							const createdValues: [
-								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-								TreeNode | TreeValue | undefined,
-							][] = fieldFormats.map(([key, value]) => {
-								const field = atomFormatSchema.fields.get(key);
-								if (field === undefined) {
-									throw new UsageError(`Unknown format key: ${key}`);
-								}
+							const createdValues: [string, TreeNode | TreeValue | undefined][] =
+								fieldFormats.map(([key, value]) => {
+									const field = atomFormatSchema.fields.get(key);
+									if (field === undefined) {
+										throw new UsageError(`Unknown format key: ${key}`);
+									}
 
-								// Create validates the type/schema internally, so this cast is safe.
-								const createdValue = TreeBeta.create(field, value as never);
-								return [key, createdValue] as const;
-							});
+									// Create validates the type/schema internally, so this cast is safe.
+									const createdValue = TreeBeta.create(field, value as never);
+									return [key, createdValue] as const;
+								});
 
 							// Return the per character operation that will be applied to each with this schema.
 							return (formatNode: TreeNode) => {
@@ -367,12 +401,9 @@ export namespace FormattedText {
 									// Ensures that if the input is a node, it is cloned before being inserted into the tree.
 									// Note that since this uses field schema, `undefined` can pass through this if allowed by the schema.
 									const clonedValue = TreeBeta.clone(createdValue);
-									(
-										formatNode as unknown as Record<
-											keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-											TreeNode | TreeValue | undefined
-										>
-									)[key] = clonedValue;
+									(formatNode as unknown as Record<string, TreeNode | TreeValue | undefined>)[
+										key
+									] = clonedValue;
 								}
 							};
 						}
@@ -870,9 +901,11 @@ export namespace FormattedText {
 		 * @param format - The formatting to apply to the specified range.
 		 * For each atom, every property of `format` will be cloned and assigned to the atom's format's corresponding subtree, overwriting any existing values for those properties.
 		 * All enumerable own properties of `format` will be applied, including those with `undefined` values.
+		 * For map formats, `format` can also be a readonly map, in which case its entries are applied instead.
+		 * Setting a map or record entry to `undefined` removes it.
 		 * @remarks
 		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
-		 * This edits existing formatting subtrees on each atom, and only works when those atoms are object nodes.
+		 * This edits existing formatting subtrees on each atom, and only works when those formats are object, record, or map nodes.
 		 *
 		 * This is typically used to set some formatting property, like `bold` on a range of text without impacting other formatting properties.
 		 * @privateRemarks
@@ -885,7 +918,7 @@ export namespace FormattedText {
 		formatRange(
 			startIndex: number | undefined,
 			endIndex: number | undefined,
-			format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
+			format: FormatUpdate<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
 		): void;
 
 		/**

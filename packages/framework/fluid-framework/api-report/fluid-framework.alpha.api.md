@@ -755,13 +755,14 @@ export namespace FormattedText {
     }
     // @sealed
     export type FormattedTextSchema<TUserScope extends string, FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = Statics<ErasedNode<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>, FormatSchema> & ErasedSchemaSubclassable<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>;
+    export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
     const // @sealed
     StringTextAtom: StringTextAtomStatics & TreeNodeSchema<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, TextAtom & TreeNode & WithType<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, unknown>, never, false>;
-    export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
+    export type FormatUpdate<TFormat> = TFormat extends FluidReadonlyMap<string, infer TValue> ? FluidReadonlyMap<string, TValue | undefined> | Readonly<Record<string, TValue | undefined>> : Partial<TFormat>;
     // @sealed
     export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends PlainText.Members {
         charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
-        formatRange(startIndex: number | undefined, endIndex: number | undefined, format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
+        formatRange(startIndex: number | undefined, endIndex: number | undefined, format: FormatUpdate<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
         getString(startIndex: number, endIndex?: number): string;
         getUniformRun(startIndex: number, endIndex?: number): number;
         // @override
@@ -794,9 +795,6 @@ export interface FormatValidator extends ErasedType<"FormatValidator"> {
 
 // @alpha
 export const FormatValidatorBasic: FormatValidator;
-
-// @alpha
-export const FormatValidatorInterpreted: FormatValidator;
 
 // @alpha
 export const FormatValidatorNoOp: FormatValidator;

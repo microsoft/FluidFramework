@@ -226,6 +226,136 @@ describe("textDomainFormatted", () => {
 	});
 
 	describe("formatRange", () => {
+		for (const kind of ["record", "map"] as const) {
+			describeHydration(`${kind} formats`, (_init, hydrated) => {
+				const factory = new SchemaFactoryBeta(`test.formatted.${kind}`);
+				class Detail extends factory.object("Detail", { color: SchemaFactory.string }) {}
+				const allowedTypes = [SchemaFactory.boolean, SchemaFactory.string, Detail] as const;
+				const RecordFormat = factory.record("RecordFormat", allowedTypes);
+				const MapFormat = factory.map("MapFormat", allowedTypes);
+				const defaultFormat = { bold: false, font: "Arial" };
+				class Text extends FormattedText.createSchema(
+					factory,
+					[RecordFormat, MapFormat],
+					[],
+					kind === "record" ? new RecordFormat(defaultFormat) : new MapFormat(defaultFormat),
+				) {}
+
+				function makeText(): Text {
+					const text = Text.fromString("abcd");
+					if (hydrated) {
+						hydrateNode(text);
+					}
+					return text;
+				}
+
+				it("adds and overwrites entries without changing other formatting", () => {
+					const text = makeText();
+					text.formatRange(1, 3, { bold: true, color: "red" });
+					assert.equal(text.fullString(), "abcd");
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: false, font: "Arial" },
+							{ bold: true, font: "Arial", color: "red" },
+							{ bold: true, font: "Arial", color: "red" },
+							{ bold: false, font: "Arial" },
+						],
+					);
+				});
+
+				it("removes entries with undefined and ignores missing entries", () => {
+					const text = makeText();
+					text.formatRange(1, 3, { bold: undefined, missing: undefined });
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: false, font: "Arial" },
+							{ font: "Arial" },
+							{ font: "Arial" },
+							{ bold: false, font: "Arial" },
+						],
+					);
+				});
+
+				it("supports different format schemas in the same range", () => {
+					const text = makeText();
+					text.reformat(1, 2, new RecordFormat({ bold: false, font: "Times" }));
+					text.reformat(2, 3, new MapFormat({ bold: false, font: "Courier" }));
+					text.formatRange(0, 4, { bold: true });
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						[
+							{ bold: true, font: "Arial" },
+							{ bold: true, font: "Times" },
+							{ bold: true, font: "Courier" },
+							{ bold: true, font: "Arial" },
+						],
+					);
+				});
+
+				it("clones node values independently for each atom", () => {
+					const text = makeText();
+					const detail = new Detail({ color: "red" });
+					text.formatRange(undefined, undefined, { detail });
+					const copies = text.charactersWithFormatting().map((atom) => {
+						const value = Object.fromEntries(atom.format).detail;
+						assert(value instanceof Detail);
+						assert.notEqual(value, detail);
+						return value;
+					});
+					assert.equal(new Set(copies).size, 4);
+					copies[0].color = "blue";
+					assert.deepEqual(
+						copies.map((copy) => copy.color),
+						["blue", "red", "red", "red"],
+					);
+					assert.equal(detail.color, "red");
+				});
+
+				it("rejects values not allowed by the entry schema", () => {
+					const text = makeText();
+					assert.throws(() =>
+						// @ts-expect-error Testing invalid input.
+						text.formatRange(0, 2, { bold: 42 }),
+					);
+					assert.deepEqual(
+						text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+						Array.from({ length: 4 }, () => ({ bold: false, font: "Arial" })),
+					);
+				});
+
+				if (kind === "map") {
+					it("accepts map entries, including deletion", () => {
+						const text = makeText();
+						text.formatRange(1, 3, new Map([["bold", true]]));
+						text.formatRange(2, 3, new Map([["bold", undefined]]));
+						assert.deepEqual(
+							text.charactersWithFormatting().map((atom) => Object.fromEntries(atom.format)),
+							[
+								{ bold: false, font: "Arial" },
+								{ bold: true, font: "Arial" },
+								{ font: "Arial" },
+								{ bold: false, font: "Arial" },
+							],
+						);
+					});
+
+					it("accepts a map node as the update", () => {
+						const text = makeText();
+						const format = new MapFormat({ bold: true });
+						text.formatRange(1, 3, format);
+						assert.deepEqual(
+							text
+								.charactersWithFormatting()
+								.map((atom) => Object.fromEntries(atom.format).bold),
+							[false, true, true, false],
+						);
+					});
+				}
+			});
+		}
+
 		it("basic use", () => {
 			const text = FormattedTextTest.Tree.fromString("hello");
 			text.formatRange(1, 4, { bold: true });
