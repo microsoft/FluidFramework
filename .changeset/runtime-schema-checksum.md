@@ -8,13 +8,11 @@ Add optional checksums to help catch unintended schema changes
 SharedTree adds an optional schema checksum to help catch unintended view schema changes, ideally during the testing stage.
 
 The checksum is a hash saved in application code to guard against unintended schema changes.
-To enable this check, provide the saved hash as `schemaHash` and a hashing function as `schemaHasher` in the optional [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property) object.
-Providing a `schemaHasher` also enables telemetry with the schema hash during initialization and schema upgrades.
-You can provide only `schemaHasher` to get this telemetry without enabling the hash check.
+To enable this check, provide the saved hash as `schemaHash` and the separately imported [`computeSchemaHash`](https://fluidframework.com/docs/api/tree#computeschemahash-function) function as `schemaHasher` in the optional [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property) object.
+Providing a `schemaHasher` enables telemetry with the schema hash during initialization and schema upgrades, even without an expected `schemaHash`.
 
 #### Configure the expected hash
 
-Set [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property) to an expected hash and the separately imported [`computeSchemaHash`](https://fluidframework.com/docs/api/tree#computeschemahash-function) function.
 To set the initial hash, use a non-empty placeholder and run a test that constructs the view.
 Replace the placeholder with the computed hash from the error message.
 
