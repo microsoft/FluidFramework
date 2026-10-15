@@ -47,7 +47,6 @@ import { testDocumentIndependentView } from "../testTrees.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
-	expectSchemaEqual,
 	fieldCursorFromInsertable,
 	getView,
 	jsonTreeFromCheckout,
@@ -84,10 +83,10 @@ function checkoutWithInitialTree(
 const emptySchema = toInitialSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
-	describe("initialize", () => {
+	describe("construction", () => {
 		describe("schema hash", () => {
 			const root = schema.required(schema.number, {
-				persistedMetadata: { description: "initial schema" },
+				persistedMetadata: { description: "view schema" },
 			});
 			it("allows a matching hash", () => {
 				const view = getView(
@@ -100,39 +99,37 @@ describe("SchematizingSimpleTreeView", () => {
 					}),
 				);
 
-				view.initialize(5);
-
-				assert.equal(view.root, 5);
-				assert.equal(view.compatibility.canInitialize, false);
-				expectSchemaEqual(view.checkout.storedSchema, toInitialSchema(root));
+				assert.equal(view.compatibility.canInitialize, true);
+				view.dispose();
 			});
 
-			it("rejects an incorrect hash before initialization", () => {
-				const view = getView(
-					new TreeViewConfigurationAlpha({
-						schema: root,
-						schemaIdentity: {
-							schemaHash: computeSchemaHash(schema.string),
-							schemaHasher: computeSchemaHash,
-						},
-					}),
-				);
-				const beforeSchema = view.checkout.storedSchema.clone();
-				const beforeContent = jsonTreeFromCheckout(view.checkout);
-				view.events.on("commitApplied", () => assert.fail("Unexpected commit"));
-
+			it("rejects an incorrect hash when constructing the view", () => {
+				const viewConfig = new TreeViewConfigurationAlpha({
+					schema: root,
+					schemaIdentity: {
+						schemaHash: computeSchemaHash(schema.string),
+						schemaHasher: computeSchemaHash,
+					},
+				});
+				const checkout = checkoutWithInitialTree(config, 5);
+				const beforeSchema = checkout.storedSchema.clone();
+				const beforeContent = jsonTreeFromCheckout(checkout);
 				assert.throws(
-					() => view.initialize(5),
+					() =>
+						new SchematizingSimpleTreeView(
+							checkout,
+							viewConfig,
+							new MockNodeIdentifierManager(),
+						),
 					validateUsageError(/Schema hash does not match/),
 				);
-
-				view.breaker.clearError();
-				assert.deepEqual(view.checkout.storedSchema.clone(), beforeSchema);
-				assert.deepEqual(jsonTreeFromCheckout(view.checkout), beforeContent);
-				assert.equal(view.compatibility.canInitialize, true);
+				assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
+				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
 			});
 		});
+	});
 
+	describe("initialize", () => {
 		it("Initialize document", () => {
 			const emptyContent = {
 				schema: emptySchema,
@@ -556,68 +553,6 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	describe("upgradeSchema", () => {
-		describe("schema hash", () => {
-			const newSchema = schema.required([schema.number, schema.string], {
-				persistedMetadata: { description: "upgraded schema" },
-			});
-			it("allows a matching hash", () => {
-				const checkout = checkoutWithInitialTree(config, 5);
-				const view = new SchematizingSimpleTreeView(
-					checkout,
-					new TreeViewConfigurationAlpha({
-						schema: newSchema,
-						schemaIdentity: {
-							schemaHash: computeSchemaHash(newSchema),
-							schemaHasher: computeSchemaHash,
-						},
-					}),
-					new MockNodeIdentifierManager(),
-				);
-				let commits = 0;
-				view.events.on("commitApplied", () => commits++);
-				assert.equal(view.compatibility.isEquivalent, false);
-
-				view.upgradeSchema();
-
-				assert.equal(view.root, 5);
-				assert.equal(view.compatibility.isEquivalent, true);
-				assert.equal(commits, 1);
-				expectSchemaEqual(checkout.storedSchema, toInitialSchema(newSchema));
-
-				view.upgradeSchema();
-				assert.equal(commits, 1);
-			});
-
-			it("rejects an incorrect hash before upgrading", () => {
-				const checkout = checkoutWithInitialTree(config, 5);
-				const view = new SchematizingSimpleTreeView(
-					checkout,
-					new TreeViewConfigurationAlpha({
-						schema: newSchema,
-						schemaIdentity: {
-							schemaHash: computeSchemaHash(schema.string),
-							schemaHasher: computeSchemaHash,
-						},
-					}),
-					new MockNodeIdentifierManager(),
-				);
-				const beforeSchema = checkout.storedSchema.clone();
-				const beforeContent = jsonTreeFromCheckout(checkout);
-				view.events.on("commitApplied", () => assert.fail("Unexpected commit"));
-				assert.equal(view.compatibility.isEquivalent, false);
-
-				assert.throws(
-					() => view.upgradeSchema(),
-					validateUsageError(/Schema hash does not match/),
-				);
-
-				view.breaker.clearError();
-				assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
-				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
-				assert.equal(view.compatibility.isEquivalent, false);
-			});
-		});
-
 		const builder = new SchemaFactory("test");
 		const root = builder.number;
 

@@ -63,7 +63,6 @@ import {
 	type TreeSchema,
 	type SchemaUpgrade,
 	type StagedUpgradeStatus,
-	validateSchemaHash,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -194,8 +193,6 @@ export class SchematizingSimpleTreeView<
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
-		checkout.forest.anchors.slots.set(ViewSlot, this);
-
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
 		const stagedUpgradePolicy =
@@ -205,6 +202,16 @@ export class SchematizingSimpleTreeView<
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
+		if (configAlpha.schemaIdentity !== undefined) {
+			const { schemaHash: expectedHash, schemaHasher: hasher } = configAlpha.schemaIdentity;
+			const actualHash = hasher(configAlpha.schema, this.stagedUpgradePolicy);
+			if (actualHash !== expectedHash) {
+				throw new UsageError(
+					`Schema hash does not match the configured schema. Expected ${JSON.stringify(expectedHash)}, computed ${JSON.stringify(actualHash)}.`,
+				);
+			}
+		}
+		checkout.forest.anchors.slots.set(ViewSlot, this);
 
 		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
 		this.viewSchema = configAlpha;
@@ -258,7 +265,6 @@ export class SchematizingSimpleTreeView<
 		}
 
 		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
-		this.validateSchemaHash(this.stagedUpgradePolicy);
 		this.runSchemaEdit(() => {
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
@@ -317,9 +323,7 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const upgradePolicy = this.effectiveUpgradePolicy;
-		this.validateSchemaHash(upgradePolicy);
-		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -332,12 +336,6 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
-	}
-
-	private validateSchemaHash(stagedSchemaUpgrades: StagedSchemaUpgradePolicy): void {
-		if (this.config instanceof TreeViewConfigurationAlpha) {
-			validateSchemaHash(this.config.schema, this.config.schemaIdentity, stagedSchemaUpgrades);
-		}
 	}
 
 	public isStagedUpgradeEnabled(upgrade: SchemaUpgrade): StagedUpgradeStatus {

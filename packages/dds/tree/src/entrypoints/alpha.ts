@@ -268,7 +268,6 @@ export {
 	RunTransactionParamsAlpha, 
 	Sandboxing, 
 	SchemaFactoryAlpha, 
-	SchemaHasher,
 	SchemaStaticsAlpha, 
 	SchemaType, 
 	SharedTreeAlpha, 

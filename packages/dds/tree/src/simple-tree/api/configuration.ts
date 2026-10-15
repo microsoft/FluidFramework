@@ -12,6 +12,7 @@ import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
 	StagedSchemaUpgradePolicy,
+	type SchemaUpgrade,
 	type TreeNodeSchema,
 } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
@@ -33,7 +34,6 @@ import {
 } from "../toStoredSchema.js";
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import type { SchemaHasher } from "../schemaHash.js";
 
 /**
  * Options when constructing a tree view.
@@ -186,24 +186,26 @@ export interface ITreeViewConfigurationAlpha<
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 
 	/**
-	 * Provides schema identity information to check initialization and upgrades.
+	 * Provides schema identity information to check when constructing a view.
 	 */
 	readonly schemaIdentity?: {
 		/**
-		 * The expected schema hash, computed with {@link computeSchemaHash}
+		 * An optional hash used to detect unintended schema changes during testing.
 		 *
 		 * @remarks
-		 * Compute the hash during development and save it in application source.
-		 * During initialization or upgrade, SharedTree compares it with the hash of the
-		 * provided schema, computed by the provided {@link SchemaHasher} function.
-		 * This check helps guard against unintended schema changes.
+		 * When constructing a view, SharedTree computes the actual hash from the provided schema and configured staged upgrade policy using the provided hashing function.
+		 * If the actual hash does not match this value, view construction throws a UsageError containing the expected and computed hashes.
+		 * If the schema change is intentional, update this value with the computed hash from the error.
 		 */
 		readonly schemaHash: string;
 		/**
 		 * The separately imported {@link computeSchemaHash} function used to check
 		 * {@link ITreeViewConfigurationAlpha.schemaIdentity | schemaHash}
 		 */
-		readonly schemaHasher: SchemaHasher;
+		readonly schemaHasher: (
+			schema: ImplicitFieldSchema,
+			stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+		) => string;
 	};
 }
 

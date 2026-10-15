@@ -1292,7 +1292,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
     readonly schemaIdentity?: {
         readonly schemaHash: string;
-        readonly schemaHasher: SchemaHasher;
+        readonly schemaHasher: (schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy) => string;
     };
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
@@ -1987,9 +1987,6 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
     static typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
     typesRecursive: <const T extends readonly Unenforced<AnnotatedAllowedType | LazyItem<TreeNodeSchema>>[]>(t: T, metadata?: AllowedTypesMetadata) => AllowedTypesFullFromMixedUnsafe<T>;
 }
-
-// @alpha
-export type SchemaHasher = (schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy) => string;
 
 // @public @system
 const schemaIdentifierBrand: unique symbol;
