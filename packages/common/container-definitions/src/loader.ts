@@ -248,7 +248,7 @@ export interface IContainerEvents extends IEvent {
 	(event: "dirty", listener: (dirty: boolean) => void);
 
 	/**
-	 * Emitted when all local changes/edits have been acknowledged by the service.
+	 * Emitted when the container has no local work left outstanding.
 	 * I.e., when {@link IContainer.isDirty} transitions from `true` to `false`.
 	 *
 	 * @remarks Listener parameters:
@@ -380,6 +380,13 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 
 	/**
 	 * Whether or not there are any local changes that have not been saved.
+	 *
+	 * @remarks
+	 * This covers all local work the container must still complete before its state is durable in the
+	 * service, not only operations. In particular, it remains `true` while an attachment blob is still
+	 * being uploaded or shared with the other clients, even though no operation is outstanding for it.
+	 *
+	 * Disposing the container while this is `true` discards the outstanding work.
 	 */
 	readonly isDirty: boolean;
 

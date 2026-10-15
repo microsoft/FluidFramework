@@ -1657,6 +1657,256 @@ describe("Runtime", () => {
 			});
 		});
 
+		describe("Dirty flag - outstanding blob work", () => {
+			type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
+				submit(
+					containerRuntimeMessage: LocalContainerRuntimeMessage,
+					localOpMetadata: unknown,
+					metadata: Record<string, unknown> | undefined,
+				): void;
+			};
+
+			interface BlobWorkControls {
+				readonly hasOutstandingBlobWork: boolean;
+				startTrackingUnsharedBlob(localId: string): void;
+				stopTrackingUnsharedBlob(localId: string): void;
+			}
+
+			/**
+			 * Drives the real BlobManager bookkeeping behind `hasOutstandingBlobWork` so these tests
+			 * exercise the same `outstandingBlobWorkChanged` event the blob flow raises in production,
+			 * rather than a stand-in for it. The blob upload flow itself is covered by the BlobManager
+			 * tests; what is under test here is how the runtime folds that signal into dirty state.
+			 */
+			const getBlobWorkControls = (containerRuntime: ContainerRuntime): BlobWorkControls =>
+				(containerRuntime as unknown as { blobManager: BlobWorkControls }).blobManager;
+
+			const submitOp = (containerRuntime: ContainerRuntime): void => {
+				(containerRuntime as unknown as ContainerRuntimeWithSubmit).submit(
+					{ type: ContainerMessageType.Rejoin, contents: undefined },
+					undefined,
+					undefined,
+				);
+			};
+
+			const processLocalOp = (containerRuntime: ContainerRuntime): void => {
+				containerRuntime.process(
+					{
+						type: "op",
+						clientId: mockClientId,
+						sequenceNumber: 0,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+						minimumSequenceNumber: 0,
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					true /* local */,
+				);
+			};
+
+			/**
+			 * Loads a runtime and records every dirty-state transition it publishes.
+			 *
+			 * @param context - The container context to load against, allowing a caller to simulate an
+			 * older loader or a different config.
+			 * @returns The runtime plus the transitions it published, in the order they were published.
+			 */
+			const loadRuntimeTrackingDirtyState = async (
+				context: Partial<IContainerContextInternal>,
+			): Promise<{
+				containerRuntime: ContainerRuntime;
+				/**
+				 * The host-facing "dirty"/"saved" transitions, as booleans.
+				 */
+				dirtyTransitions: boolean[];
+				/**
+				 * The op-only transitions reported to the loader.
+				 */
+				opDirtyStates: boolean[];
+			}> => {
+				const opDirtyStates: boolean[] = [];
+				if (context.updatePendingOpState !== undefined) {
+					(
+						context as { updatePendingOpState?: (pending: boolean) => void }
+					).updatePendingOpState = (pending: boolean): void => {
+						opDirtyStates.push(pending);
+					};
+				}
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				const dirtyTransitions: boolean[] = [];
+				containerRuntime.on("dirty", () => dirtyTransitions.push(true));
+				containerRuntime.on("saved", () => dirtyTransitions.push(false));
+				return { containerRuntime, dirtyTransitions, opDirtyStates };
+			};
+
+			it("is dirty while a blob is outstanding, and saved once it is shared", async () => {
+				const { containerRuntime, dirtyTransitions, opDirtyStates } =
+					await loadRuntimeTrackingDirtyState(getMockContext());
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					false,
+					"Should start clean with no ops and no blobs",
+				);
+				opDirtyStates.length = 0;
+
+				const blobWork = getBlobWorkControls(containerRuntime);
+				blobWork.startTrackingUnsharedBlob("blob-1");
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					true,
+					"An outstanding blob must hold the container dirty even with no ops",
+				);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true],
+					"Should publish the dirty transition",
+				);
+
+				blobWork.stopTrackingUnsharedBlob("blob-1");
+				assert.strictEqual(containerRuntime.isDirty, false, "Sharing the blob should save");
+				assert.deepStrictEqual(dirtyTransitions, [true, false]);
+				assert.deepStrictEqual(
+					opDirtyStates,
+					[],
+					"Blob work must not be reported as op-only state",
+				);
+			});
+
+			it("stays dirty until the last of several blobs is shared", async () => {
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
+					getMockContext(),
+				);
+				const blobWork = getBlobWorkControls(containerRuntime);
+
+				blobWork.startTrackingUnsharedBlob("blob-1");
+				blobWork.startTrackingUnsharedBlob("blob-2");
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true],
+					"The second blob must not re-publish dirty",
+				);
+
+				blobWork.stopTrackingUnsharedBlob("blob-1");
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					true,
+					"Must stay dirty while another blob is still outstanding",
+				);
+				assert.deepStrictEqual(dirtyTransitions, [true], "Must not publish a premature saved");
+
+				blobWork.stopTrackingUnsharedBlob("blob-2");
+				assert.strictEqual(containerRuntime.isDirty, false);
+				assert.deepStrictEqual(dirtyTransitions, [true, false]);
+			});
+
+			it("stays dirty when ops are acknowledged while a blob is still outstanding", async () => {
+				const { containerRuntime, dirtyTransitions, opDirtyStates } =
+					await loadRuntimeTrackingDirtyState(getMockContext());
+				const blobWork = getBlobWorkControls(containerRuntime);
+
+				submitOp(containerRuntime);
+				clock.tick(0);
+				await Promise.resolve();
+				blobWork.startTrackingUnsharedBlob("blob-1");
+				assert.deepStrictEqual(dirtyTransitions, [true], "The op should have published dirty");
+				opDirtyStates.length = 0;
+				dirtyTransitions.length = 0;
+
+				processLocalOp(containerRuntime);
+				assert.deepStrictEqual(
+					opDirtyStates,
+					[false],
+					"The loader must still see op-only state go clean",
+				);
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					true,
+					"The outstanding blob must keep the container dirty after its ops are acknowledged",
+				);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[],
+					"Must not publish saved while a blob is still outstanding",
+				);
+
+				blobWork.stopTrackingUnsharedBlob("blob-1");
+				assert.strictEqual(containerRuntime.isDirty, false);
+				assert.deepStrictEqual(dirtyTransitions, [false], "Should publish saved exactly once");
+			});
+
+			it("keeps dirty state op-only when the kill switch is set", async () => {
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
+					getMockContext({
+						settings: { "Fluid.ContainerRuntime.DisableBlobAwareDirtyState": true },
+					}),
+				);
+				const blobWork = getBlobWorkControls(containerRuntime);
+
+				blobWork.startTrackingUnsharedBlob("blob-1");
+				assert.strictEqual(
+					blobWork.hasOutstandingBlobWork,
+					true,
+					"The BlobManager should still track the blob; only its effect on dirty state is disabled",
+				);
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					false,
+					"The kill switch must restore op-only dirty state",
+				);
+				assert.deepStrictEqual(dirtyTransitions, []);
+			});
+
+			it("keeps dirty state op-only for a loader that cannot track op-only state", async () => {
+				// An older loader uses the host-facing dirty state for op-specific decisions, so the
+				// runtime must not broaden it there.
+				const legacyContext = getMockContext();
+				delete (legacyContext as { updatePendingOpState?: unknown }).updatePendingOpState;
+				const { containerRuntime, dirtyTransitions } =
+					await loadRuntimeTrackingDirtyState(legacyContext);
+				const blobWork = getBlobWorkControls(containerRuntime);
+
+				blobWork.startTrackingUnsharedBlob("blob-1");
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					false,
+					"Blob work must not reach an older loader's dirty state",
+				);
+				assert.deepStrictEqual(dirtyTransitions, []);
+			});
+
+			it("suppresses blob-driven publication while dirty events are disabled", async () => {
+				// Op replay disables dirty events to avoid noise, restores the last emitted state, then
+				// publishes any net change itself. Blob-driven publication doesn't go through
+				// updateDocumentDirtyState, so it has to honor that suppression on its own.
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
+					getMockContext(),
+				);
+				const blobWork = getBlobWorkControls(containerRuntime);
+				const eventGate = containerRuntime as unknown as { emitDirtyDocumentEvent: boolean };
+
+				eventGate.emitDirtyDocumentEvent = false;
+				blobWork.startTrackingUnsharedBlob("blob-1");
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[],
+					"Must not publish dirty state while dirty events are disabled",
+				);
+
+				eventGate.emitDirtyDocumentEvent = true;
+				blobWork.stopTrackingUnsharedBlob("blob-1");
+				blobWork.startTrackingUnsharedBlob("blob-2");
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true],
+					"Must resume publishing once dirty events are re-enabled",
+				);
+			});
+		});
+
 		describe("Staged changes flag", () => {
 			const createMockContext = (
 				attachState: AttachState,

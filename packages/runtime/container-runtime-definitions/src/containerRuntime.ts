@@ -191,8 +191,13 @@ export interface IContainerRuntime
 	readonly attachState: AttachState;
 
 	/**
-	 * Returns true if document is dirty, i.e. there are some pending local changes that
-	 * either were not sent out to delta stream or were not yet acknowledged.
+	 * Returns true if document is dirty, i.e. there is some pending local work that the service has not
+	 * yet persisted.
+	 *
+	 * @remarks
+	 * This includes local changes that either were not sent out to delta stream or were not yet
+	 * acknowledged, as well as attachment blobs that are still being uploaded or shared with the other
+	 * clients.
 	 */
 	readonly isDirty: boolean;
 
