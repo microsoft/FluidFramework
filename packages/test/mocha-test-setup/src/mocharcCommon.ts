@@ -33,9 +33,11 @@ export interface FluidTestMochaConfig {
  * @param additionalRequiredModules - modules to require in addition to the standard set.
  * @param testReportPrefix - prefix for the test output report file names.
  * @remarks
- * Additional configuration can be provided via environment variables: see {@link file://./README.md}.
+ * See [Running tests](../README.md#running-tests)
+ * for test selection, performance measurements, and environment variable configuration.
  *
- * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
+ * Mocha’s CLI `spec` arguments add to the configured selection rather than replacing it.
+ * For exact control over `spec` (including via the CLI), replace or delete the `spec` property in the returned configuration.
  */
 export function getFluidTestMochaConfig(
 	packageDir: string,
