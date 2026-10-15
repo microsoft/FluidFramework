@@ -15,7 +15,8 @@
 * **build-infrastructure:** isolate tests from shared git fixture ([#28206](https://github.com/microsoft/FluidFramework/issues/28206)) ([110e13f](https://github.com/microsoft/FluidFramework/commit/110e13f0ff489630fef099fa642ecac83ffe3208))
 * **build-tools:** hash ESM webpack config exports ([#28236](https://github.com/microsoft/FluidFramework/issues/28236)) ([6ae0c28](https://github.com/microsoft/FluidFramework/commit/6ae0c2854782e02ca2ec40d8610804ae9e71187a))
 * **build-tools:** normalize backslashes in resolved ${repoRoot} paths on Windows ([#28214](https://github.com/microsoft/FluidFramework/issues/28214)) ([4b5e110](https://github.com/microsoft/FluidFramework/commit/4b5e1101912828a3d13087e8418fff23a8a530cd))
-* **build-tools:** reject backslashes in declarative task globs and normalize Dockerfile package paths ([#28216](https://github.com/microsoft/FluidFramework/issues/28216)) ([66d337c](https://github.com/microsoft/FluidFramework/commit/66d337c9fc338cbb3d7db50e0797b9bd62ca7ba7))
+* **fluid-build:** Reject backslashes in declarative task globs instead of relying on OS-specific behavior. ([#28216](https://github.com/microsoft/FluidFramework/issues/28216)) ([66d337c](https://github.com/microsoft/FluidFramework/commit/66d337c9fc338cbb3d7db50e0797b9bd62ca7ba7))
+* **check:policy:** Normalize Dockerfile package paths consistently when fixing policy violations. ([#28216](https://github.com/microsoft/FluidFramework/issues/28216)) ([66d337c](https://github.com/microsoft/FluidFramework/commit/66d337c9fc338cbb3d7db50e0797b9bd62ca7ba7))
 * **build-tools:** Track API reports in incremental build state ([#28208](https://github.com/microsoft/FluidFramework/issues/28208)) ([054eee0](https://github.com/microsoft/FluidFramework/commit/054eee0ed8cb111e74c0c3310ea44e183978d754))
 * **bundle-size:** baseline PR comparisons on the commit the PR build merged ([#27965](https://github.com/microsoft/FluidFramework/issues/27965)) ([194cbdd](https://github.com/microsoft/FluidFramework/commit/194cbddaf1c4440e9a8df342696766acc754ab18))
 * upgrade fast-uri to 4.1.3 ([#28345](https://github.com/microsoft/FluidFramework/issues/28345)) ([ca15148](https://github.com/microsoft/FluidFramework/commit/ca15148559242a888faf66748b771a95aa21d0fd))
@@ -24,6 +25,10 @@
 ### Performance Improvements
 
 * **build-cli:** speed up assert-tag validation ([#28253](https://github.com/microsoft/FluidFramework/issues/28253)) ([6189091](https://github.com/microsoft/FluidFramework/commit/61890915bcd0e4ed30e31927584ab2b78f642313))
+
+### Other Changes
+
+* **build-tools:** Enable type-safety ESLint rules.
 
 ## [0.67.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.66.0...build-tools_v0.67.0) (2026-08-14)
 
