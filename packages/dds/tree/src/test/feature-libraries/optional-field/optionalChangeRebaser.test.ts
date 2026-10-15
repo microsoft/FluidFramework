@@ -74,30 +74,6 @@ function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
 const mintRevisionTag = makeRevisionTagMinter();
 const tag1 = mintRevisionTag();
 
-const OptionalChange = {
-	set(
-		wasEmpty: boolean,
-		ids: {
-			fill: ChangeAtomId;
-			detach: ChangeAtomId;
-		},
-	) {
-		return optionalFieldEditor.set(wasEmpty, ids);
-	},
-
-	clear(wasEmpty: boolean, detachId: ChangeAtomId) {
-		return optionalFieldEditor.clear(wasEmpty, detachId);
-	},
-
-	pin(pinId: ChangeAtomId, clearId: ChangeAtomId) {
-		return optionalFieldEditor.pin(pinId, clearId);
-	},
-
-	buildChildChange(childChange: NodeId) {
-		return optionalFieldEditor.buildChildChanges([[0, childChange]]);
-	},
-};
-
 // function toDelta(
 // 	change: OptionalChangeset,
 // 	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
@@ -303,7 +279,7 @@ const generateChildStateForRebaseVersion = function* (
 			type: "field",
 			field: { parent: undefined, field: rootFieldKey },
 			fieldKind: optional.identifier,
-			change: brand(OptionalChange.clear(true, detach)),
+			change: brand(optionalFieldEditor.clear(true, detach)),
 			revision,
 		};
 		const modularEdit = editor.buildChanges([fieldEdit]);
@@ -343,7 +319,7 @@ const generateChildStateForRebaseVersion = function* (
 					field: brand("foo"),
 				},
 				fieldKind: optional.identifier,
-				change: brand(OptionalChange.clear(true, mintId(revision))),
+				change: brand(optionalFieldEditor.clear(true, mintId(revision))),
 				revision,
 			};
 			const modularEdit = editor.buildChanges([fieldEdit, nestedFieldEdit]);
@@ -368,7 +344,7 @@ const generateChildStateForRebaseVersion = function* (
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
-				change: brand(OptionalChange.clear(false, detach)),
+				change: brand(optionalFieldEditor.clear(false, detach)),
 				revision,
 			};
 			const modularEdit = editor.buildChanges([fieldEdit]);
@@ -396,7 +372,7 @@ const generateChildStateForRebaseVersion = function* (
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
-				change: brand(OptionalChange.pin(pinId, clearId)),
+				change: brand(optionalFieldEditor.pin(pinId, clearId)),
 				revision,
 			};
 
@@ -433,7 +409,7 @@ const generateChildStateForRebaseVersion = function* (
 			field: { parent: undefined, field: rootFieldKey },
 			fieldKind: optional.identifier,
 			change: brand(
-				OptionalChange.set(isEmpty, {
+				optionalFieldEditor.set(isEmpty, {
 					fill,
 					detach,
 				}),
@@ -512,7 +488,7 @@ const generateChildStateForRebaseVersion = function* (
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: optional.identifier,
-				change: brand(OptionalChange.set(isEmpty, { fill: attach, detach })),
+				change: brand(optionalFieldEditor.set(isEmpty, { fill: attach, detach })),
 				revision: attachRevision,
 			};
 			const modularEdit = editor.buildChanges([rename, fieldEdit]);
@@ -556,7 +532,7 @@ const generateChildStateForRebaseVersion = function* (
 					field: brand("foo"),
 				},
 				fieldKind: optional.identifier,
-				change: brand(OptionalChange.clear(true, mintId(revision))),
+				change: brand(optionalFieldEditor.clear(true, mintId(revision))),
 				revision,
 			};
 			const modularEdit = editor.buildChanges([nestedFieldEdit]);

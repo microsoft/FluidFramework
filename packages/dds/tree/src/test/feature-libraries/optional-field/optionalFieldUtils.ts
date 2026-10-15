@@ -32,109 +32,103 @@ import type {
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { SizedNestedMap, type Mutable } from "../../../util/index.js";
 
-export const Change = {
-	/**
-	 * Creates an empty changeset
-	 */
-	empty: (): OptionalChangeset => ({}),
-	/**
-	 * Creates a changeset that moves a node from `src` to `dst`.
-	 * @param src - The register to move a node from. The register must be full in the input context of the changeset.
-	 * @param dst - The register to move that node to.
-	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
-	 */
-	replace: (
-		src: ChangesetLocalId | ChangeAtomId,
-		dst: ChangesetLocalId | ChangeAtomId,
-		isEmpty: boolean,
-	): OptionalChangeset => {
-		return {
-			valueReplace: {
-				isEmpty,
-				src: asChangeAtomId(src),
-				dst: asChangeAtomId(dst),
-			},
-		};
-	},
-	/**
-	 * Creates a changeset that clears a register and moves the contents to another register.
-	 * @param dst - The register to move the contents of the target register to.
-	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
-	 */
-	clear: (
-		dst: ChangeAtomId | ChangesetLocalId,
-		isEmpty: boolean = false,
-	): OptionalChangeset => ({
-		valueReplace: { isEmpty, dst: asChangeAtomId(dst) },
-	}),
-	/**
-	 * Creates a changeset that reserves a register.
-	 * @param target - The register to reserve. The register must NOT be full in the input context of the changeset.
-	 * @param dst - The register that the contents of the target register should be moved to should it become populated.
-	 * The register must be empty in the input context of the changeset, or emptied as part of the changeset.
-	 */
-	reserve: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
-		return {
-			valueReplace: { isEmpty: true, dst: asChangeAtomId(dst) },
-		};
-	},
-	/**
-	 * Creates a changeset that pins the current node to the field.
-	 * @param dst - The register that the contents of the field should be moved to should it become populated
-	 * with a different node that the current one (which will take its place).
-	 */
-	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
-		const id = asChangeAtomId(dst);
-		return {
-			valueReplace: { isEmpty: false, dst: id, src: id },
-		};
-	},
-	/**
-	 * Creates a changeset that applies a change to a child node in the given register.
-	 * @param location - The register that contains the child node to be changed.
-	 * That register must be full in the input context of the changeset.
-	 * @param change - A change to apply to a child node.
-	 */
-	childAt: (location: RegisterId | ChangesetLocalId, change: NodeId): OptionalChangeset => {
-		assert(location === "self");
-		return {
-			childChange: change,
-		};
-	},
-	/**
-	 * Creates a changeset that applies the given change to the child node in the "self" register.
-	 * @remarks The "self" register must be full in the input context of the changeset.
-	 * @param change - A change to apply to a child node in the "self" register.
-	 */
-	child: (change: NodeId): OptionalChangeset => Change.childAt("self", change),
-	/**
-	 * Combines multiple changesets for the same input context into a single changeset.
-	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.
-	 * @returns A single changeset that applies all of the given changes.
-	 */
-	atOnce: (...changes: OptionalChangeset[]): OptionalChangeset => {
-		let childChange: ChangeAtomId | undefined;
-		let replace: Mutable<Replace> | undefined;
-		for (const change of changes) {
-			if (change.childChange !== undefined) {
-				assert(childChange === undefined, "Multiple child changes are not supported");
-				childChange = change.childChange;
-			}
-			if (change.valueReplace !== undefined) {
-				assert(replace === undefined, "Multiple reserved detach ids");
-				replace = change.valueReplace;
-			}
-		}
-		const changeset: Mutable<OptionalChangeset> = {};
-		if (replace !== undefined) {
-			changeset.valueReplace = replace;
-		}
-		if (childChange !== undefined) {
-			changeset.childChange = childChange;
-		}
-		return changeset;
-	},
-};
+// export const Change = {
+// 	/**
+// 	 * Creates an empty changeset
+// 	 */
+// 	empty: (): OptionalChangeset => ({}),
+// 	/**
+// 	 * Creates a changeset replaces the contents of the field (if any) with a specific node.
+// 	 * @param src - The detached root ID associated with the node to attach.
+// 	 * @param dst - The detached root ID to assign to the detached node.
+// 	 */
+// 	replace: (
+// 		src: ChangesetLocalId | ChangeAtomId,
+// 		dst: ChangesetLocalId | ChangeAtomId,
+// 		isEmpty: boolean,
+// 	): OptionalChangeset => {
+// 		return {
+// 			valueReplace: {
+// 				isEmpty,
+// 				src: asChangeAtomId(src),
+// 				dst: asChangeAtomId(dst),
+// 			},
+// 		};
+// 	},
+// 	/**
+// 	 * Creates a changeset that clears a register and moves the contents to another register.
+// 	 * @param dst - The detached root ID to assign to the detached node.
+// 	 */
+// 	clear: (
+// 		dst: ChangeAtomId | ChangesetLocalId,
+// 		isEmpty: boolean = false,
+// 	): OptionalChangeset => ({
+// 		valueReplace: { isEmpty, dst: asChangeAtomId(dst) },
+// 	}),
+// 	/**
+// 	 * Creates a changeset that detaches the specific node currently in the field.
+// 	 * @param dst - The detached root ID to assign to the detached node.
+// 	 * No such root ID should already be in use, or the changeset should first attach or rename the existing root associated with that ID.
+// 	 */
+// 	detach: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => ({
+// 		nodeDetach: asChangeAtomId(dst),
+// 	}),
+// 	/**
+// 	 * Creates a changeset that would clear the field if it were populated.
+// 	 * The field must be empty in the input context of the changeset.
+// 	 * @param dst - The detached root ID to assign to the detached node.
+// 	 * No such root ID should already be in use, or the changeset should first attach or rename the existing root associated with that ID.
+// 	 */
+// 	reserve: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
+// 		return {
+// 			valueReplace: { isEmpty: true, dst: asChangeAtomId(dst) },
+// 		};
+// 	},
+// 	/**
+// 	 * Creates a changeset that pins the current node to the field.
+// 	 * @param dst - The register that the contents of the field should be moved to should it become populated
+// 	 * with a different node that the current one (which will take its place).
+// 	 */
+// 	pin: (dst: ChangeAtomId | ChangesetLocalId): OptionalChangeset => {
+// 		const id = asChangeAtomId(dst);
+// 		return {
+// 			valueReplace: { isEmpty: false, dst: id, src: id },
+// 		};
+// 	},
+// 	/**
+// 	 * Creates a changeset that applies the given change to the child node in the "self" register.
+// 	 * @remarks The "self" register must be full in the input context of the changeset.
+// 	 * @param change - A change to apply to a child node in the "self" register.
+// 	 */
+// 	child: (change: NodeId): OptionalChangeset => ({ childChange: change }),
+// 	/**
+// 	 * Combines multiple changesets for the same input context into a single changeset.
+// 	 * @param changes - The change to apply as part of the changeset. Interpreted as applying to the same input context.
+// 	 * @returns A single changeset that applies all of the given changes.
+// 	 */
+// 	atOnce: (...changes: OptionalChangeset[]): OptionalChangeset => {
+// 		let childChange: ChangeAtomId | undefined;
+// 		let replace: Mutable<Replace> | undefined;
+// 		for (const change of changes) {
+// 			if (change.childChange !== undefined) {
+// 				assert(childChange === undefined, "Multiple child changes are not supported");
+// 				childChange = change.childChange;
+// 			}
+// 			if (change.valueReplace !== undefined) {
+// 				assert(replace === undefined, "Multiple reserved detach ids");
+// 				replace = change.valueReplace;
+// 			}
+// 		}
+// 		const changeset: Mutable<OptionalChangeset> = {};
+// 		if (replace !== undefined) {
+// 			changeset.valueReplace = replace;
+// 		}
+// 		if (childChange !== undefined) {
+// 			changeset.childChange = childChange;
+// 		}
+// 		return changeset;
+// 	},
+// };
 
 // Optional changesets may be equivalent but not evaluate to be deep-equal, as some ordering is irrelevant.
 export function assertTaggedEqual(
