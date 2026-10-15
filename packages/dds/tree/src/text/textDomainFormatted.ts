@@ -135,7 +135,6 @@ export class StringTextAtomNode
  *
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
- * - Sort out API around overwriting subsets of formatting information.
  * @alpha
  */
 export namespace FormattedText {
