@@ -849,7 +849,7 @@ function newRebaseManager(): TestRebaseManager {
 		getNewChangesForBaseAttach(
 			baseAttachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<DetachedNodeEntry | undefined> {
+		): RangeQueryResult<DetachedNodeEntry> {
 			throw new Error("Function not implemented.");
 		},
 

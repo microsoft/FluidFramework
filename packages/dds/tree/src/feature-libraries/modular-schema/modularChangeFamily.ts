@@ -2372,11 +2372,10 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		private readonly allowInval: boolean = true,
 	) {}
 
-	// XXX: Should this just return an empty DetachNodeEntry instead of undefined?
 	public getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<DetachedNodeEntry | undefined> {
+	): RangeQueryResult<DetachedNodeEntry> {
 		let countToProcess = count;
 
 		const detachEntry = firstDetachIdFromAttachId(
@@ -2404,7 +2403,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		countToProcess = newRenameEntry.length;
 
-		let result: RangeQueryResult<DetachedNodeEntry | undefined>;
+		let result: RangeQueryResult<DetachedNodeEntry>;
 		// eslint-disable-next-line unicorn/prefer-ternary
 		if (newNodeId !== undefined || newRenameEntry.value !== undefined) {
 			result = {
@@ -2414,7 +2413,8 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		} else {
 			// This handles the case where the base changeset has moved these nodes,
 			// meaning they were attached in the input context of the base changeset.
-			result = this.table.entries.getFirst(baseAttachId, countToProcess);
+			const entry = this.table.entries.getFirst(baseAttachId, countToProcess);
+			result = { ...entry, value: entry.value ?? {} };
 		}
 
 		// TODO: Consider moving these two checks into a separate method so that this function has no side effects.
@@ -2751,23 +2751,15 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			1,
 		);
 
-		// XXX: getFirstDetachField
-		const detachFields = getFieldsForCrossFieldKey(
-			this.table.baseChange,
-			{
-				...baseDetachId,
-				target: NodeMoveType.Detach,
-			},
+		const detachField = getFirstDetachField(
+			this.table.baseChange.crossFieldKeys,
+			baseDetachId,
 			1,
-		);
+		).value;
 
 		setInChangeAtomIdMap(this.table.baseAttachIdToNewNodeId, baseAttachId, newChanges);
 
-		if (detachFields.length > 0) {
-			if (newChanges !== undefined) {
-				this.invalidateBaseFields(detachFields);
-			}
-		} else {
+		if (detachField === undefined) {
 			const baseNodeId = getFromChangeAtomIdMap(
 				this.table.baseChange.rootNodes.nodeChanges,
 				baseDetachId,
@@ -2776,6 +2768,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			if (baseNodeId !== undefined) {
 				addNodesToCompose(this.table, baseNodeId, newChanges);
 			}
+		} else if (newChanges !== undefined) {
+			this.invalidateBaseFields([detachField]);
 		}
 	}
 
@@ -3593,12 +3587,7 @@ function composeRootNodeChanges(
 		// If `nodeId1` is defined, then the composed change represents the node with `nodeId1`,
 		// so we shouldn't add an entry for `nodeId2`.
 		if (nodeId1 === undefined) {
-			// XXX: getFirstDetachField
-			const fieldId = getFieldsForCrossFieldKey(
-				change1,
-				{ ...detachId1, target: NodeMoveType.Detach },
-				1,
-			)[0];
+			const fieldId = getFirstDetachField(change1.crossFieldKeys, detachId1, 1).value;
 
 			if (fieldId === undefined) {
 				// This node was already detached in `change1`'s input context,

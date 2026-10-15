@@ -114,11 +114,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (overAttach !== undefined) {
 			const movedChangeEntry = nodeManager.getNewChangesForBaseAttach(overAttach, 1).value;
 
-			if (movedChangeEntry?.nodeChange !== undefined) {
+			if (movedChangeEntry.nodeChange !== undefined) {
 				rebased.childChange = movedChangeEntry.nodeChange;
 			}
 
-			if (movedChangeEntry?.detachId !== undefined) {
+			if (movedChangeEntry.detachId !== undefined) {
 				rebased.nodeDetach = movedChangeEntry.detachId;
 				if (newChange.valueReplace !== undefined) {
 					// Now that the rebased change has a node detach,
