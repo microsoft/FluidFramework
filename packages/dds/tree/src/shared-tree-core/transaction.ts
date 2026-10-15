@@ -552,14 +552,10 @@ export class SquashingTransactionStack<
 									// We need to rebase the transaction commit on top of the new changes
 									const rebased = rebaseBranch(
 										mintRevisionTag,
-										rebaser,
+										changeFamily,
 										unrebasedHead,
 										branch.getHead(),
 										branch.getHead(),
-										(prefix, changeToValidate) =>
-											cheapRebaseValidation(prefix, () =>
-												changeFamily.validator(changeToValidate),
-											),
 									);
 									assert(
 										rebased.newSourceHead.revision === transactionRevision,

@@ -3,11 +3,10 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Adds checks against document corruption in debug builds
+Adds debug-only checks to facilitate root cause analysis of SharedTree bugs
 
 This version adds additional runtime checks to detect errors in the rebasing (commit merging) layer.
 These checks are tree-shaken out of production builds, so they have no impact on shipped applications.
-These checks can be used to facilitate root cause analysis when faced with a SharedTree bug that can be reproduced in non-production builds.
 
 There are three levels of checking available:
 * `RebaseValidation.Level.None`: No rebase validation is performed.
@@ -15,4 +14,5 @@ There are three levels of checking available:
 * `RebaseValidation.Level.Strict`: Extensive rebase validation is performed, with the highest performance overhead.
 
 The level is set to `RebaseValidation.Level.Cheap` by default.
-It can be adjusted by calling `RebaseValidation.setLevel` or `RebaseValidation.runWithLevel`.
+Debug builds may therefore experience asserts in scenarios where they did not before.
+The level can be adjusted by calling `RebaseValidation.setLevel` or `RebaseValidation.runWithLevel`.

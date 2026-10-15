@@ -55,7 +55,6 @@ export type DefaultChangeProcessingContext = ModularChangeFamily;
 export class DefaultChangeFamily
 	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext>
 {
-	public readonly validator: (change: DefaultChangeset) => true | string;
 	private readonly modularFamily: ModularChangeFamily;
 
 	public constructor(
@@ -65,6 +64,8 @@ export class DefaultChangeFamily
 		this.modularFamily = new ModularChangeFamily(fieldKinds, codecs, codecOptions);
 		this.validator = this.modularFamily.validator;
 	}
+
+	public readonly validator: (change: DefaultChangeset) => true | string;
 
 	public get rebaser(): ChangeRebaser<DefaultChangeset> {
 		return this.modularFamily.rebaser;

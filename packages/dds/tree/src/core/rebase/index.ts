@@ -76,6 +76,6 @@ export {
 	cheapRebaseValidation,
 	strictRebaseValidation,
 	RebaseValidation,
-	type RebaseValidationAlpha,
 	RebaseValidationLevel,
+	type RebaseValidationAlpha,
 } from "./rebaseValidation.js";

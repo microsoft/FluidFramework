@@ -27,7 +27,6 @@ import {
 	rebaseBranch,
 	tagRollbackInverse,
 	type RebaseStatsWithDuration,
-	cheapRebaseValidation,
 } from "../core/index.js";
 import { hasSome, defineLazyCachedProperty } from "../util/index.js";
 
@@ -157,6 +156,7 @@ export class SharedTreeBranch<
 	 * @param mintRevisionTag - used to generate a `RevisionTag` for each change.
 	 * @param branchTrimmer - an optional event emitter that informs the branch it has been trimmed. If this is not supplied, then the branch must
 	 * never be trimmed. See {@link BranchTrimmingEvents} for details on trimming.
+	 * @param telemetryEventBatcher - an optional telemetry event batcher for collecting rebase statistics.
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
@@ -410,15 +410,7 @@ export class SharedTreeBranch<
 		}
 
 		const { duration, output } = measure(() =>
-			rebaseBranch(
-				this.mintRevisionTag,
-				this.changeFamily.rebaser,
-				head,
-				upTo,
-				onto.getHead(),
-				(prefix, changeToValidate) =>
-					cheapRebaseValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
-			),
+			rebaseBranch(this.mintRevisionTag, this.changeFamily, head, upTo, onto.getHead()),
 		);
 
 		this.telemetryEventBatcher?.accumulateAndLog({ duration, ...output.telemetryProperties });

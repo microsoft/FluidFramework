@@ -27,6 +27,9 @@ const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
+	validator: () => {
+		throw new Error("validator");
+	},
 	hasSchemaChange: () => {
 		throw new Error("hasSchemaChange");
 	},
@@ -71,12 +74,9 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			throw new Error("buildProcessor return invocation");
 		};
 	},
-	validator: (change: string): true | string => {
-		assert.equal(change, arg1);
-		return "Malformed";
-	},
 };
 const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
+	validator: (change) => (change === "valid" ? true : "invalid change"),
 	hasSchemaChange: () => false,
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
@@ -119,10 +119,6 @@ const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 			return "buildProcessor";
 		};
 	},
-	validator: (change: string): true | string => {
-		assert.equal(change, arg1);
-		return true;
-	},
 };
 
 const errorLog: unknown[] = [];
@@ -137,6 +133,11 @@ const mitigatedThrowingRebaser = mitigatedThrowingFamily.rebaser;
 const returningRebaser = returningFamily.rebaser;
 
 describe("makeMitigatedChangeFamily", () => {
+	it("preserves validation results and exceptions", () => {
+		assert.equal(mitigatedReturningFamily.validator("valid"), true);
+		assert.equal(mitigatedReturningFamily.validator("invalid"), "invalid change");
+		assert.throws(() => mitigatedThrowingFamily.validator("invalid"), /validator/);
+	});
 	it("does not interfere so long as nothing is thrown", () => {
 		assert.equal(
 			mitigatedReturningFamily.buildEditor(mintRevisionTag, arg1),
@@ -160,8 +161,6 @@ describe("makeMitigatedChangeFamily", () => {
 			mitigatedReturningRebaser.changeRevision(arg1, arg2),
 			returningRebaser.changeRevision(arg1, arg2),
 		);
-		assert.equal(mitigatedReturningFamily.validator(arg1), returningFamily.validator(arg1));
-		assert.equal(mitigatedThrowingFamily.validator(arg1), throwingFamily.validator(arg1));
 		const mitigatedProcessor = mitigatedReturningFamily.buildProcessor(arg1);
 		const returningProcessor = returningFamily.buildProcessor(arg1);
 		assert.equal(mitigatedProcessor(arg2), returningProcessor(arg2));

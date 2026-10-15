@@ -73,7 +73,6 @@ import {
 	type LocalCommitEvents,
 	getDeltaChangeProfile,
 	findAncestor,
-	cheapRebaseValidation,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1666,12 +1665,10 @@ export class TreeCheckout implements ITreeCheckout {
 		const target = viewCheckout.#transaction.branch.getHead();
 		const rebased = rebaseBranch(
 			this.mintRevisionTag,
-			this.changeFamily.rebaser,
+			this.changeFamily,
 			this.#transaction.branch.getHead(),
 			target,
 			target,
-			(prefix, change) =>
-				cheapRebaseValidation(prefix, () => this.changeFamily.validator(change)),
 		);
 
 		if (rebased.sourceChange === undefined) {
@@ -1823,14 +1820,12 @@ export class TreeCheckout implements ITreeCheckout {
 
 			change = tagChange(
 				rebaseChange(
-					this.changeFamily.rebaser,
+					this.changeFamily,
 					change,
 					commitToRevert,
 					headCommit,
 					this.mintRevisionTag,
 					ignoreNoChangeViolation,
-					(prefix, changeToValidate) =>
-						cheapRebaseValidation(prefix, () => this.changeFamily.validator(changeToValidate)),
 				).change,
 				revisionForInvert,
 			);

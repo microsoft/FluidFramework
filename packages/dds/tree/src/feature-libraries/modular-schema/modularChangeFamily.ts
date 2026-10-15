@@ -47,7 +47,6 @@ import {
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
 	type ProcessChangeFn,
-	RebaseValidation,
 	strictRebaseValidation,
 } from "../../core/index.js";
 import {
@@ -114,6 +113,7 @@ import {
 	updateConstraintsForFields,
 	type CrossFieldTable,
 	isChangesetValid,
+	debugOnlyChangesetValidator,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
 import { pruneChangeset } from "./prune.js";
@@ -131,6 +131,10 @@ export class ModularChangeFamily
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
 
 	public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>;
+
+	public readonly validator = (change: ModularChangeset): true | string => {
+		return debugOnlyChangesetValidator(change, this.fieldKinds);
+	};
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
@@ -152,18 +156,15 @@ export class ModularChangeFamily
 		return false;
 	}
 
-	public readonly validator = (change: ModularChangeset): true | string =>
-		isChangesetValid(change, this.fieldKinds);
-
 	public buildProcessor(
 		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
 	): (change: ModularChangeset) => ModularChangeset {
 		return (change: ModularChangeset) => {
-			strictRebaseValidation("Malformed buildProcessor input", () =>
+			strictRebaseValidation("Malformed processor input", () =>
 				isChangesetValid(change, this.fieldKinds),
 			);
 			const processed = processFn(change, this);
-			strictRebaseValidation("Malformed buildProcessor output", () =>
+			strictRebaseValidation("Malformed processor output", () =>
 				isChangesetValid(processed, this.fieldKinds),
 			);
 			return processed;
@@ -2312,10 +2313,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		});
 		const revInfo = [...revisions].map((revision) => ({ revision }));
 		const composedChange: Mutable<ModularChangeset> = {
-			// The ModularChangeset instances composed here are not expected to be well-formed
-			...RebaseValidation.runWithLevel(RebaseValidation.Level.None, () =>
-				this.rebaser.compose(changeMaps),
-			),
+			...this.rebaser.compose(changeMaps),
 			revisions: revInfo,
 		};
 
