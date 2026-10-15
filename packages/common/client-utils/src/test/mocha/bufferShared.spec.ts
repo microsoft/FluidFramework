@@ -4,7 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
+import { Buffer } from "node:buffer";
 
+import { bufferToString } from "../../bufferNode.js";
 import {
 	AnyUint8ArrayToArrayBuffer,
 	ArrayBufferLikeToArrayBuffer,
@@ -46,6 +48,30 @@ describe("bufferShared", () => {
 			new Uint8Array(source)[0] = 10;
 			assertBufferContents(result, values);
 		});
+	});
+
+	/**
+	 * `AnyUint8ArrayToArrayBuffer` behaves differently between Node and browser targets. In the
+	 * browser case, AnyUint8ArrayToArrayBuffer will return a buffer containing only the logical
+	 * bytes. In the node case, it returns the underlying buffer which may be larger than the
+	 * portion owned by the input object. We effectively forget the input owner.
+	 */
+	it("AnyUint8ArrayToArrayBuffer preserves blob contents from a Node.js Buffer view", () => {
+		const content = JSON.stringify({ value: "payload" });
+		const backing = Buffer.alloc(content.length + 16, "!");
+		backing.write(content, 8, "utf8");
+		const nodeView = backing.subarray(8, 8 + content.length);
+		const browserView = new Uint8Array(
+			nodeView.buffer,
+			nodeView.byteOffset,
+			nodeView.byteLength,
+		);
+
+		assert.equal(bufferToString(AnyUint8ArrayToArrayBuffer(browserView), "utf8"), content);
+
+		const result = AnyUint8ArrayToArrayBuffer(nodeView);
+		assert.equal(bufferToString(result, "utf8"), content);
+		assert.equal(result.byteLength, nodeView.byteLength);
 	});
 
 	for (const [name, createBuffer] of [

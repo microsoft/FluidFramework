@@ -24,6 +24,52 @@ describe("Buffer isomorphism", () => {
 		assert.equal(browserBuffer.constructor.name, "IsoBuffer");
 	});
 
+	/**
+	 * A hypothetical bug involving base64 encoded content in a Node environment. Allocates a
+	 * buffer for the same content using the Node and browser variants (in a Node test environment),
+	 * slices them both to clone the data. In the Node case this does not actually clone anything
+	 * but creates an alias. Later the "original" content is modified. In the case of Node this
+	 * corrupts the "clone" as it is merely pointing to the old array.
+	 */
+	it("reproduces an IdCompressor alignment failure from an aliased Node.js Buffer body", () => {
+		const serialized = BufferBrowser.bufferToString(
+			new Float64Array([2, 0, 0, 0]).buffer,
+			"base64",
+		);
+		const content = JSON.stringify(serialized);
+		const nodeBody = BufferNode.IsoBuffer.from(content, "utf8");
+		const browserBody = BufferBrowser.IsoBuffer.from(content, "utf8");
+
+		// Fetch shims can use slice(0) to clone typed-array response bodies.
+		// eslint-disable-next-line unicorn/prefer-spread -- Exercise the shim's slice semantics.
+		const nodeClone = nodeBody.slice(0);
+		// eslint-disable-next-line unicorn/prefer-spread -- Exercise the shim's slice semantics.
+		const browserClone = browserBody.slice(0);
+		nodeBody[9] = "=".codePointAt(0) ?? oob();
+		browserBody[9] = "=".codePointAt(0) ?? oob();
+
+		const nodeSerialized: unknown = JSON.parse(
+			BufferBrowser.bufferToString(nodeClone, "utf8"),
+		);
+		const browserSerialized: unknown = JSON.parse(
+			BufferBrowser.bufferToString(browserClone, "utf8"),
+		);
+		assert(typeof nodeSerialized === "string");
+		assert(typeof browserSerialized === "string");
+		assert.equal(nodeClone.byteLength, browserClone.byteLength);
+		assert.equal(browserSerialized, serialized);
+
+		const nodeDecoded = BufferBrowser.stringToBuffer(nodeSerialized, "base64");
+		const browserDecoded = BufferBrowser.stringToBuffer(browserSerialized, "base64");
+		assert.equal(nodeDecoded.byteLength, 6);
+		assert.equal(browserDecoded.byteLength, 32);
+		assert.throws(() => new Float64Array(nodeDecoded), {
+			name: "RangeError",
+			message: "byte length of Float64Array should be a multiple of 8",
+		});
+		assert.doesNotThrow(() => new Float64Array(browserDecoded));
+	});
+
 	it("from string utf-8/16 is compatible", () => {
 		const testArray = [
 			"",
