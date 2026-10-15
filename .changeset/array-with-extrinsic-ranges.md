@@ -8,7 +8,10 @@ Track ranges and their data across array edits
 The new alpha `ArrayWithExtrinsicRanges` API lets you associate application-defined data, such as review comments, with ranges in an array.
 Create a scoped schema and read its content directly as a `ReadonlyArrayNode`.
 Edit content with `transactOnContent`, which supplies the mutable array API and keeps range endpoints consistent with insertions, removals, and moves.
-Read current endpoint snapshots through `getExtrinsicRange` rather than fields on range handles.
+The `ranges` property exposes a live `RangeCollection` with methods to create, look up, reposition, and remove ranges, and enumerate keys.
+Range handles expose live, read-only `start` and `end` properties and editable application-defined data.
+Copy endpoints to retain a snapshot.
+Handles remain bound to their original range; reading endpoints after removal or replacement throws a `UsageError`.
 Removing all content covered by a range collapses the range without deleting its data.
 
 The following example is also covered by an executable test:
@@ -34,25 +37,30 @@ const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewW
 view.initialize(Document.create(["Plan", "Build", "Ship"]));
 
 const document = view.root;
-const comment = document.addExtrinsicRange(1, 3, { message: "Check these steps" });
+const comment = document.ranges.trackNewRange(
+	"comment",
+	{ start: 1, end: 3 },
+	{ message: "Check these steps" },
+);
 document.transactOnContent((content) => {
 	content.insertAt(0, TreeArrayNode.spread(["Design", "Review"]));
-	const { start, end } = document.getExtrinsicRange(comment);
+	const { start, end } = comment;
 	assert.deepEqual([start, end], [3, 5]);
 	assert.deepEqual(content.slice(start, end), ["Build", "Ship"]);
 });
 
 document.transactOnContent((content) => content.removeRange(3, 5));
-assert.deepEqual(document.getExtrinsicRange(comment), { start: 3, end: 3 });
-assert.equal(document.ranges[0], comment);
+assert.deepEqual([comment.start, comment.end], [3, 3]);
+assert.equal(document.ranges.getRange("comment")?.data, comment.data);
 assert.equal(comment.data.message, "Check these steps");
 
-document.setExtrinsicRange(comment, 2, 3);
+document.ranges.setRangeBounds("comment", { start: 2, end: 3 });
 comment.data.message = "Check the plan instead";
-const position = document.getExtrinsicRange(comment);
+const position = document.ranges.getRange("comment");
+assert(position !== undefined);
 assert.deepEqual(document.content.slice(position.start, position.end), ["Plan"]);
-document.removeExtrinsicRange(comment);
-assert.equal(document.ranges.length, 0);
+document.ranges.removeTrackedRange("comment");
+assert.deepEqual([...document.ranges.keys()], []);
 view.dispose();
 ```
 
@@ -64,7 +72,7 @@ Observe commit outcomes if your application needs to report or retry rejected ed
 Undo also requires the document to be unchanged since the edit; selective undo across intervening edits can be rejected.
 The callback must be synchronous, and the mutable array must not be retained for later edits.
 Content events are delivered normally during the callback; stored endpoints are synchronized before `transactOnContent` returns.
-Manager methods use temporary anchors to resolve positions while editing.
+Range handles use temporary anchors to resolve positions while editing.
 A known anchor event-ordering bug can cause change-event listeners registered before the editing scope to read stale positions; reads after an edit returns within the callback are current.
 Callbacks on the same manager cannot be nested.
 For moves between managed arrays, nest both managers' callbacks so both sets of ranges are maintained.

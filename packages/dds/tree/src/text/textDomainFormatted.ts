@@ -14,10 +14,9 @@ import {
 	type TreeValue,
 } from "../core/index.js";
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
-import type { ArrayWithExtrinsicRanges } from "../extrinsic-locations/index.js";
+import type { RangeCollection } from "../extrinsic-locations/index.js";
 import {
 	ExtrinsicRangeTracker,
-	runRangeTransaction,
 	// eslint-disable-next-line import-x/no-internal-modules -- Shared implementation details, intentionally not package exported.
 } from "../extrinsic-locations/extrinsicRangeTracker.js";
 import { TreeAlpha, Tree as TreeStatic, TreeBeta } from "../shared-tree/index.js";
@@ -260,7 +259,6 @@ export namespace FormattedText {
 			ExtrinsicRange,
 			InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
 		>;
-
 		const sf = createFormattedScopedFactory(inputSchemaFactory);
 
 		const defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
@@ -298,7 +296,7 @@ export namespace FormattedText {
 			})
 			implements MembersWithRanges<FormatSchema, ExtraAtomsSchema, RangeDataSchema>
 		{
-			#rangeTracker: { ranges: Ranges; tracker: Tracker } | undefined;
+			#rangeTracker: Tracker | undefined;
 
 			#getRanges(): Ranges | undefined {
 				const ranges = this.rangeStorage;
@@ -307,92 +305,45 @@ export namespace FormattedText {
 				}
 				assert(
 					TreeStatic.is(ranges, Ranges),
-					"Range storage must use the expected array schema.",
+					"Range storage must use the expected map schema.",
 				);
 				return ranges;
 			}
 
-			#withRangeTracker<T>(action: (tracker: Tracker) => T): T {
+			#getRangeTracker(): Tracker {
 				assert(includeRanges, "Range methods require a range-enabled schema.");
-				const apply = (ranges: Ranges): T => {
-					if (this.#rangeTracker?.ranges !== ranges) {
-						this.#rangeTracker = {
-							ranges,
-							tracker: new ExtrinsicRangeTracker<
-								StringArray,
-								ExtrinsicRange,
-								InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
-							>(
-								this.content,
-								ranges,
-								(start, end, data) => new ExtrinsicRange({ start, end, data }),
-							),
-						};
-					}
-					return action(this.#rangeTracker.tracker);
-				};
-				const existing = this.#getRanges();
-				if (existing !== undefined) {
-					return apply(existing);
-				}
-				return runRangeTransaction(this, () => {
-					const ranges = new Ranges([]);
-					this.rangeStorage = ranges;
-					return apply(ranges);
-				});
+				return (this.#rangeTracker ??= new ExtrinsicRangeTracker<
+					StringArray,
+					ExtrinsicRange,
+					InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
+				>(
+					this.content,
+					() => this.#getRanges(),
+					() => {
+						let ranges = this.#getRanges();
+						if (ranges === undefined) {
+							ranges = new Ranges({});
+							this.rangeStorage = ranges;
+						}
+						return ranges;
+					},
+					(start, end, data) => new ExtrinsicRange({ start, end, data }),
+				));
 			}
 
 			#editContent(edit: (content: StringArray) => void): void {
 				if (includeRanges) {
-					this.#withRangeTracker((tracker) => tracker.transactOnContent(edit));
+					this.#getRangeTracker().transactOnContent(edit);
 				} else {
 					edit(this.content);
 				}
 			}
 
-			public get ranges(): readonly ArrayWithExtrinsicRanges.Range<RangeDataSchema>[] {
-				return [...(this.#getRanges() ?? [])];
-			}
-
-			public addExtrinsicRange(
-				start: number,
-				end: number,
-				data: InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
-			): ArrayWithExtrinsicRanges.Range<RangeDataSchema> {
-				validateIndexRange(start, end, this.content, "FormattedText.addExtrinsicRange");
-				return this.#withRangeTracker((tracker) =>
-					tracker.addExtrinsicRange(start, end, data),
-				);
-			}
-
-			public getExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>): {
-				readonly start: number;
-				readonly end: number;
-			} {
-				if (this.#getRanges() === undefined) {
-					throw new UsageError("The extrinsic range does not belong to this text.");
-				}
-				return this.#withRangeTracker((tracker) => tracker.getExtrinsicRange(range));
-			}
-
-			public setExtrinsicRange(
-				range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>,
-				start: number,
-				end: number,
-			): void {
-				if (this.#getRanges() === undefined) {
-					throw new UsageError("The extrinsic range does not belong to this text.");
-				}
-				this.#withRangeTracker((tracker) => tracker.setExtrinsicRange(range, start, end));
-			}
-
-			public removeExtrinsicRange(
-				range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>,
-			): void {
-				if (this.#getRanges() === undefined) {
-					throw new UsageError("The extrinsic range does not belong to this text.");
-				}
-				this.#withRangeTracker((tracker) => tracker.removeExtrinsicRange(range));
+			public get ranges(): RangeCollection<
+				TreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
+				InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
+			> {
+				return this.#getRangeTracker();
 			}
 
 			public insertAt(
@@ -844,7 +795,7 @@ export namespace FormattedText {
 			start: SchemaFactory.number,
 			end: SchemaFactory.number,
 		}) {}
-		class Ranges extends sf.array("ExtrinsicRanges", [() => ExtrinsicRange]) {}
+		class Ranges extends sf.map("ExtrinsicRanges", [() => ExtrinsicRange]) {}
 
 		/**
 		 * Schema for a text node.
@@ -966,7 +917,7 @@ export namespace FormattedText {
 	/**
 	 * Formatted text with separately stored ranges and application-defined range data.
 	 * @remarks
-	 * Range endpoints follow insertion-point semantics, as in {@link ArrayWithExtrinsicRanges.Range}.
+	 * Range endpoints follow the insertion-point semantics of {@link RangeCollection}.
 	 * Ranges remain with this text rather than following moved content.
 	 * Content events are not buffered, and reentrant structural edits on this text are not supported.
 	 * Position reads from change-event listeners are subject to the known array-anchor event-ordering limitation.
@@ -981,55 +932,13 @@ export namespace FormattedText {
 		RangeDataSchema extends ImplicitAllowedTypes,
 	> extends Members<FormatSchema, ExtraAtomsSchema> {
 		/**
-		 * Snapshot of the range handles in creation order.
-		 * Range handles retain their identity as their endpoints change.
+		 * Live collection for reading and editing extrinsic ranges.
+		 * Reading this property does not initialize stored range data.
 		 */
-		readonly ranges: readonly ArrayWithExtrinsicRanges.Range<RangeDataSchema>[];
-
-		/**
-		 * Adds a range without changing the text.
-		 * @param start - Inclusive start atom index.
-		 * @param end - Exclusive end atom index. Empty ranges are allowed.
-		 * @param data - Application-defined range data.
-		 * @returns A handle to the inserted range.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the endpoints are invalid.
-		 */
-		addExtrinsicRange(
-			start: number,
-			end: number,
-			data: InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
-		): ArrayWithExtrinsicRanges.Range<RangeDataSchema>;
-
-		/**
-		 * Reads the current endpoints of a range.
-		 * @param range - A range belonging to this text.
-		 * @returns A snapshot of the inclusive start and exclusive end atom indexes.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the range does not belong to this text.
-		 */
-		getExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>): {
-			readonly start: number;
-			readonly end: number;
-		};
-
-		/**
-		 * Repositions a range without changing its data or identity.
-		 * @param range - A range belonging to this text.
-		 * @param start - New inclusive start atom index.
-		 * @param end - New exclusive end atom index.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the range is foreign or the endpoints are invalid.
-		 */
-		setExtrinsicRange(
-			range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>,
-			start: number,
-			end: number,
-		): void;
-
-		/**
-		 * Removes a range without changing the text.
-		 * @param range - A range belonging to this text.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the range does not belong to this text.
-		 */
-		removeExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>): void;
+		readonly ranges: RangeCollection<
+			TreeNodeFromImplicitAllowedTypes<RangeDataSchema>,
+			InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>
+		>;
 	}
 
 	/**

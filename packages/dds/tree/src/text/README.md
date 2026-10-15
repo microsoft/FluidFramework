@@ -36,18 +36,27 @@ const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewW
 );
 view.initialize(Text.fromString("Hello world"));
 const text = view.root;
-const comment = text.addExtrinsicRange(6, 11, { message: "Review this word" });
+const comment = text.ranges.trackNewRange(
+	"comment",
+	{ start: 6, end: 11 },
+	{ message: "Review this word" },
+);
 
 text.insertAt(0, "Say: ");
-const { start, end } = text.getExtrinsicRange(comment); // { start: 11, end: 16 }
+const { start, end } = comment; // { start: 11, end: 16 }
 text.formatRange(start, end, { bold: true });
 text.getString(start, end); // "world"
 ```
 
-Use `setExtrinsicRange` to reposition a range and `removeExtrinsicRange` to remove it without changing the text.
-The `ranges` property returns a snapshot of the range handles in creation order.
-Handles retain their identity through edits, and their `data` follows the supplied schema.
-Read endpoints through `getExtrinsicRange`, not through fields on the handle.
+The `ranges` property returns a stable, live `RangeCollection`.
+Use `ranges.getRange(key)` to look up a range and `ranges.keys()` to enumerate keys in unspecified order.
+Use `ranges.setRangeBounds(key, { start, end })` to reposition a range and `ranges.removeTrackedRange(key)` to remove it without changing the text.
+Range handles expose live, read-only `start` and `end` properties, and their `data` follows the supplied schema.
+Copy the endpoints to retain a snapshot.
+Handles refer to particular ranges, not subsequent ranges created at the same key.
+Reading an endpoint throws a `UsageError` if its range was removed or replaced.
+Undo that restores the same range makes the handle valid again.
+Repeated lookups need not return the same handle object.
 
 Positions count text atoms, not UTF-16 code units.
 Each Unicode code point in a string becomes one atom; embedded objects and custom multi-character atoms each occupy one position.

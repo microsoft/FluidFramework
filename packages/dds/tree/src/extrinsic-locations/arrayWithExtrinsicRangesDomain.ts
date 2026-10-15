@@ -20,6 +20,7 @@ import {
 } from "../simple-tree/index.js";
 
 import { ExtrinsicRangeTracker } from "./extrinsicRangeTracker.js";
+import type { RangeCollection } from "./rangeCollection.js";
 
 /**
  * Schema and APIs for an array with separately stored ranges.
@@ -51,7 +52,7 @@ export namespace ArrayWithExtrinsicRanges {
 	 * @remarks
 	 * Generated identifiers use the scope `com.fluidframework.extrinsicRanges<user-scope>`.
 	 * Use a different factory scope for each distinct parameterization in a document.
-	 * Subclasses must not replace the `content` or `ranges` members, which are stored fields.
+	 * Subclasses must not replace the `content`, `rangeStorage`, or `ranges` members.
 	 * @alpha
 	 */
 	export function createSchema<
@@ -79,45 +80,25 @@ export namespace ArrayWithExtrinsicRanges {
 		class Manager
 			extends sf.object("Manager", {
 				content: SchemaFactory.required([() => Content], { key: EmptyKey }),
-				ranges: [() => Ranges],
+				rangeStorage: SchemaFactory.required([() => Ranges], { key: "ranges" }),
 			})
 			implements Members<TRangeDataSchema, TContentSchema>
 		{
 			#tracker: Tracker | undefined;
 
 			public static create(content: Iterable<ContentInsertable> = []): Manager {
-				return new this({ content: [...content], ranges: [] });
+				return new this({ content: [...content], rangeStorage: {} });
 			}
 
 			public transactOnContent(edit: (content: TreeArrayNode<TContentSchema>) => void): void {
 				this.#getTracker().transactOnContent(edit);
 			}
 
-			public getExtrinsicRange(range: Range<TRangeDataSchema>): {
-				readonly start: number;
-				readonly end: number;
-			} {
-				return this.#getTracker().getExtrinsicRange(range);
-			}
-
-			public addExtrinsicRange(
-				start: number,
-				end: number,
-				data: InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>,
-			): Range<TRangeDataSchema> {
-				return this.#getTracker().addExtrinsicRange(start, end, data);
-			}
-
-			public setExtrinsicRange(
-				range: Range<TRangeDataSchema>,
-				start: number,
-				end: number,
-			): void {
-				this.#getTracker().setExtrinsicRange(range, start, end);
-			}
-
-			public removeExtrinsicRange(range: Range<TRangeDataSchema>): void {
-				this.#getTracker().removeExtrinsicRange(range);
+			public get ranges(): RangeCollection<
+				TreeNodeFromImplicitAllowedTypes<TRangeDataSchema>,
+				InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>
+			> {
+				return this.#getTracker();
 			}
 
 			#getTracker(): Tracker {
@@ -127,14 +108,15 @@ export namespace ArrayWithExtrinsicRanges {
 					InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>
 				>(
 					this.content,
-					this.ranges,
+					() => this.rangeStorage,
+					() => this.rangeStorage,
 					(start, end, data) => new ExtrinsicRange({ start, end, data }),
 				));
 			}
 		}
 
 		class Content extends sf.array("Content", contentSchema) {}
-		class Ranges extends sf.array("Ranges", [() => ExtrinsicRange]) {}
+		class Ranges extends sf.map("Ranges", [() => ExtrinsicRange]) {}
 		class ExtrinsicRange extends sf.object("Range", {
 			data: SchemaFactory.required(rangeDataSchema),
 			start: SchemaFactory.number,
@@ -149,29 +131,6 @@ export namespace ArrayWithExtrinsicRanges {
 			Members<TRangeDataSchema, TContentSchema>,
 			Statics<Node, TContentSchema>
 		>()(Manager);
-	}
-
-	/**
-	 * A handle to a half-open range `[start, end)` within the content array.
-	 * @remarks
-	 * Read its current endpoints with {@link ArrayWithExtrinsicRanges.Members.getExtrinsicRange}.
-	 * Range objects retain their identity as their endpoints are updated.
-	 * Both endpoints follow insertion-point semantics: an insertion exactly at an endpoint moves it
-	 * after the inserted content.
-	 * Thus insertion at the start is excluded, insertion at the end is included,
-	 * and an empty range stays empty.
-	 * Removal collapses endpoints inside the removed span to the start of that span.
-	 * A range belongs to its container, not to the content it covers.
-	 * @sealed
-	 * @alpha
-	 */
-	export interface Range<TRangeDataSchema extends ImplicitAllowedTypes> {
-		/**
-		 * Application-defined data.
-		 * @remarks
-		 * You can edit fields of object data without changing the range endpoints.
-		 */
-		readonly data: TreeNodeFromImplicitAllowedTypes<TRangeDataSchema>;
 	}
 
 	/**
@@ -196,20 +155,23 @@ export namespace ArrayWithExtrinsicRanges {
 				: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>
 		>;
 		/**
-		 * Live, read-only view of the extrinsic ranges, in creation order.
+		 * Live collection for reading and editing extrinsic ranges.
 		 */
-		readonly ranges: readonly Range<TRangeDataSchema>[];
+		readonly ranges: RangeCollection<
+			TreeNodeFromImplicitAllowedTypes<TRangeDataSchema>,
+			InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>
+		>;
 		/**
 		 * Edits the content array and persists the resulting range endpoints in the same transaction.
 		 * @param edit - Synchronous callback with mutable access to the content array.
 		 * @remarks
 		 * Content edits and their events occur normally during the callback.
-		 * Range positions returned by {@link ArrayWithExtrinsicRanges.Members.getExtrinsicRange}
+		 * Range positions returned by {@link RangeCollection.getRange}
 		 * track those edits using temporary array insertion anchors.
 		 * The underlying stored endpoint fields are not synchronized until the callback finishes.
 		 * Do not retain the mutable array for editing after the callback returns.
 		 *
-		 * Range methods on this manager can be used inside the callback.
+		 * Methods on this manager's range collection can be used inside the callback.
 		 * Calls on the same manager cannot be nested.
 		 * For moves between managed arrays, nest the two managers' callbacks so both arrays
 		 * are edited only while their respective callbacks are active.
@@ -222,49 +184,6 @@ export namespace ArrayWithExtrinsicRanges {
 		 * manager or if the callback returns a promise.
 		 */
 		transactOnContent(edit: (content: TreeArrayNode<TContentSchema>) => void): void;
-		/**
-		 * Gets a snapshot of a range's current endpoints.
-		 * @param range - A range currently belonging to this array.
-		 * @returns The inclusive start and exclusive end indexes in the current content.
-		 * This snapshot does not change when the array is edited.
-		 * @remarks
-		 * A known array-anchor event-ordering bug can cause change-event listeners registered
-		 * before the editing scope to observe stale positions.
-		 * Reads after a content edit returns within the callback are current.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the range does not belong to this array.
-		 */
-		getExtrinsicRange(range: Range<TRangeDataSchema>): {
-			readonly start: number;
-			readonly end: number;
-		};
-		/**
-		 * Adds a range with application-defined data.
-		 * @param start - Inclusive start index.
-		 * @param end - Exclusive end index. Empty ranges are allowed.
-		 * @param data - Data to associate with the range.
-		 * @returns The live range object, which can be passed to the range editing methods.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the range is invalid.
-		 */
-		addExtrinsicRange(
-			start: number,
-			end: number,
-			data: InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>,
-		): Range<TRangeDataSchema>;
-		/**
-		 * Changes a range's endpoints without changing its data or identity.
-		 * @param range - A range currently belonging to this array.
-		 * @param start - New inclusive start index.
-		 * @param end - New exclusive end index.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the range does not belong to
-		 * this array or the new endpoints are invalid.
-		 */
-		setExtrinsicRange(range: Range<TRangeDataSchema>, start: number, end: number): void;
-		/**
-		 * Removes a range without changing the content.
-		 * @param range - A range currently belonging to this array.
-		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the range does not belong to this array.
-		 */
-		removeExtrinsicRange(range: Range<TRangeDataSchema>): void;
 	}
 
 	/**
@@ -278,7 +197,7 @@ export namespace ArrayWithExtrinsicRanges {
 		 * @param content - Initial content. Defaults to an empty array.
 		 * @returns A new, unhydrated node of this schema.
 		 * @remarks
-		 * Use {@link ArrayWithExtrinsicRanges.Members.addExtrinsicRange} to add ranges after construction.
+		 * Use {@link RangeCollection.trackNewRange} to add ranges after construction.
 		 */
 		create(
 			content?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TContentSchema>>,

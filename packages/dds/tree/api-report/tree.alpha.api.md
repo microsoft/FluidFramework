@@ -162,22 +162,11 @@ export namespace ArrayWithExtrinsicRanges {
     export function createSchema<const TUserScope extends string, const TRangeDataSchema extends ImplicitAllowedTypes, const TContentSchema extends ImplicitAllowedTypes>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, rangeDataSchema: TRangeDataSchema, contentSchema: TContentSchema): Schema<TUserScope, TRangeDataSchema, TContentSchema>;
     // @sealed
     export interface Members<TRangeDataSchema extends ImplicitAllowedTypes, TContentSchema extends ImplicitAllowedTypes> {
-        addExtrinsicRange(start: number, end: number, data: InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>): Range<TRangeDataSchema>;
         readonly content: ReadonlyArrayNode<[
         TContentSchema
         ] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TContentSchema> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>>;
-        getExtrinsicRange(range: Range<TRangeDataSchema>): {
-            readonly start: number;
-            readonly end: number;
-        };
-        readonly ranges: readonly Range<TRangeDataSchema>[];
-        removeExtrinsicRange(range: Range<TRangeDataSchema>): void;
-        setExtrinsicRange(range: Range<TRangeDataSchema>, start: number, end: number): void;
+        readonly ranges: RangeCollection<TreeNodeFromImplicitAllowedTypes<TRangeDataSchema>, InsertableTreeNodeFromImplicitAllowedTypes<TRangeDataSchema>>;
         transactOnContent(edit: (content: TreeArrayNode<TContentSchema>) => void): void;
-    }
-    // @sealed
-    export interface Range<TRangeDataSchema extends ImplicitAllowedTypes> {
-        readonly data: TreeNodeFromImplicitAllowedTypes<TRangeDataSchema>;
     }
     export type Schema<TUserScope extends string, TRangeDataSchema extends ImplicitAllowedTypes, TContentSchema extends ImplicitAllowedTypes> = Statics<ErasedNode<Members<TRangeDataSchema, TContentSchema>, SchemaIdentifier<TUserScope>>, TContentSchema> & ErasedSchemaSubclassable<Members<TRangeDataSchema, TContentSchema>, SchemaIdentifier<TUserScope>>;
     export type SchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.extrinsicRanges<${TUserScope}>`, "Manager">;
@@ -610,14 +599,7 @@ export namespace FormattedText {
     }
     // @sealed
     export interface MembersWithRanges<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[], RangeDataSchema extends ImplicitAllowedTypes> extends Members<FormatSchema, ExtraAtomsSchema> {
-        addExtrinsicRange(start: number, end: number, data: InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>): ArrayWithExtrinsicRanges.Range<RangeDataSchema>;
-        getExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>): {
-            readonly start: number;
-            readonly end: number;
-        };
-        readonly ranges: readonly ArrayWithExtrinsicRanges.Range<RangeDataSchema>[];
-        removeExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>): void;
-        setExtrinsicRange(range: ArrayWithExtrinsicRanges.Range<RangeDataSchema>, start: number, end: number): void;
+        readonly ranges: RangeCollection<TreeNodeFromImplicitAllowedTypes<RangeDataSchema>, InsertableTreeNodeFromImplicitAllowedTypes<RangeDataSchema>>;
     }
     // @sealed
     export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
@@ -1165,6 +1147,26 @@ export namespace PlainText {
 
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
+
+// @alpha @sealed
+export interface RangeAnchors<TData> extends RangeEndpoints {
+    readonly data: TData;
+}
+
+// @alpha @sealed
+export interface RangeCollection<TData, TInsertableData = TData> {
+    getRange(key: string): RangeAnchors<TData> | undefined;
+    keys(): IterableIterator<string>;
+    removeTrackedRange(key: string): void;
+    setRangeBounds(key: string, bounds: RangeEndpoints): void;
+    trackNewRange(key: string, bounds: RangeEndpoints, data: TInsertableData): RangeAnchors<TData>;
+}
+
+// @alpha @sealed
+export interface RangeEndpoints {
+    readonly end: number;
+    readonly start: number;
+}
 
 // @alpha @system
 export type ReadableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = TreeFieldFromImplicitField<ReadSchema<TSchema>>;

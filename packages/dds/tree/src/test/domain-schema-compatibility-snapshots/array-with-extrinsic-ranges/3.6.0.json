@@ -67,8 +67,8 @@
 			}
 		},
 		"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Ranges": {
-			"array": {
-				"kind": 1,
+			"map": {
+				"kind": 0,
 				"simpleAllowedTypes": {
 					"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Range": {
 						"isStaged": false
@@ -89,7 +89,7 @@
 						},
 						"storedKey": ""
 					},
-					"ranges": {
+					"rangeStorage": {
 						"kind": 1,
 						"simpleAllowedTypes": {
 							"com.fluidframework.extrinsicRanges<test.extrinsicRanges>.Ranges": {

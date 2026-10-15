@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces";
 import { assert, isPromiseLike } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -10,16 +11,16 @@ import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	createArrayInsertionAnchor,
 	type ArrayPlaceAnchor,
-	type ImplicitAllowedTypes,
 	type TreeArrayNode,
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { validateIndexRange } from "../util/index.js";
+import type { RangeAnchors, RangeCollection, RangeEndpoints } from "./rangeCollection.js";
 
 /**
  * Persisted indexes delimiting a half-open range.
  */
-interface RangeEndpoints {
+interface StoredRangeEndpoints {
 	start: number;
 	end: number;
 }
@@ -27,9 +28,17 @@ interface RangeEndpoints {
 /**
  * Temporary anchors used while editing content.
  */
-interface RangeAnchors {
+interface ActiveRangeAnchors {
 	start: ArrayPlaceAnchor;
 	end: ArrayPlaceAnchor;
+}
+
+/**
+ * Tree-backed map whose range layout is supplied by the caller.
+ */
+interface RangeMap<TRange> extends TreeNode, FluidReadonlyMap<string, TRange> {
+	set(key: string, value: TRange): void;
+	delete(key: string): void;
 }
 
 /**
@@ -55,7 +64,7 @@ export function runRangeTransaction<T>(node: TreeNode, edit: () => T): T {
  * Maintains tree-backed range endpoints while editing an array, without defining its schema.
  * @remarks
  * Reuse one instance for each content array and range collection so all operations share the active editing scope.
- * Both arrays must be unhydrated or belong to the same hydrated tree context.
+ * The content array and range map must be unhydrated or belong to the same hydrated tree context.
  * Their enclosing schema and the range nodes' additional fields are chosen by the caller.
  *
  * Structural content edits must use {@link ExtrinsicRangeTracker.transactOnContent}.
@@ -67,20 +76,23 @@ export function runRangeTransaction<T>(node: TreeNode, edit: () => T): T {
  */
 export class ExtrinsicRangeTracker<
 	TContent extends TreeArrayNode,
-	TRange extends TreeNode & RangeEndpoints,
+	TRange extends TreeNode & StoredRangeEndpoints & { readonly data: unknown },
 	TRangeData,
-> {
-	#anchors: Map<TRange, RangeAnchors> | undefined;
+> implements RangeCollection<TRange["data"], TRangeData>
+{
+	#anchors: Map<TRange, ActiveRangeAnchors> | undefined;
 
 	/**
-	 * Creates a tracker over existing arrays, including any ranges already stored in the collection.
+	 * Creates a tracker over existing content and a string-keyed map of extrinsic ranges.
 	 * @param content - Array whose insertion points the ranges refer to.
-	 * @param ranges - Tree-backed collection of range nodes with writable numeric `start` and `end` fields.
+	 * @param getRanges - Reads the current optional range storage without creating it.
+	 * @param ensureRanges - Gets or initializes storage inside a guarded transaction.
 	 * @param createRange - Creates an unhydrated range node containing the supplied endpoints and application data.
 	 */
 	public constructor(
 		private readonly content: TContent,
-		private readonly ranges: TreeArrayNode<ImplicitAllowedTypes, TRange, TRange>,
+		private readonly getRanges: () => RangeMap<TRange> | undefined,
+		private readonly ensureRanges: () => RangeMap<TRange>,
 		private readonly createRange: (start: number, end: number, data: TRangeData) => TRange,
 	) {}
 
@@ -98,16 +110,17 @@ export class ExtrinsicRangeTracker<
 			throw new UsageError("Cannot nest transactOnContent calls on the same array.");
 		}
 		const context = TreeAlpha.context(this.content);
-		assert(
-			context === TreeAlpha.context(this.ranges),
-			"Content and ranges must belong to the same tree context.",
-		);
 		const apply = (): void => {
-			const anchors = new Map<TRange, RangeAnchors>();
+			const ranges = this.ensureRanges();
+			assert(
+				context === TreeAlpha.context(ranges),
+				"Content and ranges must belong to the same tree context.",
+			);
+			const anchors = new Map<TRange, ActiveRangeAnchors>();
 			this.#anchors = anchors;
 			let completed = false;
 			try {
-				for (const range of this.ranges) {
+				for (const range of ranges.values()) {
 					this.#setAnchors(range, range.start, range.end);
 				}
 				const result: unknown = edit(this.content);
@@ -138,13 +151,39 @@ export class ExtrinsicRangeTracker<
 	}
 
 	/**
-	 * Gets a snapshot of a range's current endpoints.
-	 * @param range - A stored range node, possibly exposed through a type that hides its endpoints.
-	 * Membership is checked by object identity.
-	 * @returns The current inclusive start and exclusive end indexes.
+	 * {@inheritDoc RangeCollection.getRange}
 	 */
-	public getExtrinsicRange(range: object): Readonly<RangeEndpoints> {
-		const node = this.#findRange(range);
+	public getRange(key: string): RangeAnchors<TRange["data"]> | undefined {
+		const node = this.getRanges()?.get(key);
+		return node === undefined ? undefined : this.#createHandle(key, node);
+	}
+
+	/**
+	 * {@inheritDoc RangeCollection.keys}
+	 */
+	public keys(): IterableIterator<string> {
+		return this.getRanges()?.keys() ?? [][Symbol.iterator]();
+	}
+
+	#createHandle(key: string, node: TRange): RangeAnchors<TRange["data"]> {
+		const getBounds = (): RangeEndpoints => this.#getRangeBounds(key, node);
+		return {
+			get start() {
+				return getBounds().start;
+			},
+			get end() {
+				return getBounds().end;
+			},
+			get data() {
+				return node.data;
+			},
+		};
+	}
+
+	#getRangeBounds(key: string, node: TRange): RangeEndpoints {
+		if (this.getRanges()?.get(key) !== node) {
+			throw new UsageError("The extrinsic range is no longer tracked.");
+		}
 		const anchors = this.#anchors?.get(node);
 		assert(
 			this.#anchors === undefined || anchors !== undefined,
@@ -157,31 +196,31 @@ export class ExtrinsicRangeTracker<
 	}
 
 	/**
-	 * Creates and inserts a range using the supplied node factory.
-	 * @param start - Inclusive start index.
-	 * @param end - Exclusive end index.
-	 * @param data - Application data passed to the node factory.
-	 * @returns The inserted range node.
+	 * {@inheritDoc RangeCollection.trackNewRange}
 	 */
-	public addExtrinsicRange(start: number, end: number, data: TRangeData): TRange {
-		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.addExtrinsicRange");
+	public trackNewRange(
+		key: string,
+		{ start, end }: RangeEndpoints,
+		data: TRangeData,
+	): RangeAnchors<TRange["data"]> {
+		if (this.getRanges()?.has(key) === true) {
+			throw new UsageError("An extrinsic range is already tracked at this key.");
+		}
+		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.trackNewRange");
 		const range = this.createRange(start, end, data);
 		this.#applyEdit(() => {
 			this.#setAnchors(range, start, end);
-			this.ranges.insertAtEnd(range);
+			this.#requireRanges().set(key, range);
 		});
-		return range;
+		return this.#createHandle(key, range);
 	}
 
 	/**
-	 * Repositions a range without replacing its node.
-	 * @param range - A range currently in the collection.
-	 * @param start - New inclusive start index.
-	 * @param end - New exclusive end index.
+	 * {@inheritDoc RangeCollection.setRangeBounds}
 	 */
-	public setExtrinsicRange(range: object, start: number, end: number): void {
-		const node = this.#findRange(range);
-		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.setExtrinsicRange");
+	public setRangeBounds(key: string, { start, end }: RangeEndpoints): void {
+		const node = this.#findRange(key);
+		validateIndexRange(start, end, this.content, "ExtrinsicRangeTracker.setRangeBounds");
 		this.#applyEdit(() => {
 			this.#setAnchors(node, start, end);
 		});
@@ -189,10 +228,10 @@ export class ExtrinsicRangeTracker<
 
 	/**
 	 * Removes a range without editing the content.
-	 * @param range - A range currently in the collection.
+	 * @param key - Key of a tracked extrinsic range.
 	 */
-	public removeExtrinsicRange(range: object): void {
-		const node = this.#findRange(range);
+	public removeTrackedRange(key: string): void {
+		const node = this.#findRange(key);
 		this.#applyEdit(() => {
 			assert(this.#anchors !== undefined, "Range edits must run in an editing scope.");
 			const anchors = this.#anchors.get(node);
@@ -200,16 +239,22 @@ export class ExtrinsicRangeTracker<
 			anchors.start.dispose();
 			anchors.end.dispose();
 			this.#anchors.delete(node);
-			this.ranges.removeAt(this.ranges.indexOf(node));
+			this.#requireRanges().delete(key);
 		});
 	}
 
-	#findRange(range: object): TRange {
-		const node = this.ranges.find((candidate) => candidate === range);
+	#findRange(key: string): TRange {
+		const node = this.getRanges()?.get(key);
 		if (node === undefined) {
-			throw new UsageError("The extrinsic range does not belong to this array.");
+			throw new UsageError("The extrinsic range key is not tracked.");
 		}
 		return node;
+	}
+
+	#requireRanges(): RangeMap<TRange> {
+		const ranges = this.getRanges();
+		assert(ranges !== undefined, "Range edits require initialized storage.");
+		return ranges;
 	}
 
 	#setAnchors(range: TRange, start: number, end: number): void {

@@ -30,23 +30,27 @@ describe("FormattedText with ranges example", () => {
 		);
 		view.initialize(Text.fromString("Hello world"));
 		const text = view.root;
-		const comment = text.addExtrinsicRange(6, 11, { message: "Review this word" });
+		const comment = text.ranges.trackNewRange(
+			"comment",
+			{ start: 6, end: 11 },
+			{ message: "Review this word" },
+		);
 
 		text.insertAt(0, "Say: ");
-		const { start, end } = text.getExtrinsicRange(comment);
+		const { start, end } = comment;
 		assert.deepEqual([start, end], [11, 16]);
 		assert.equal(text.getString(start, end), "world");
 		text.formatRange(start, end, { bold: true });
 		assert.equal(text.charactersWithFormatting()[start]?.format.bold, true);
-		assert.deepEqual(text.getExtrinsicRange(comment), { start, end });
+		assert.deepEqual([comment.start, comment.end], [start, end]);
 
 		text.removeRange(start, end);
-		assert.deepEqual(text.getExtrinsicRange(comment), { start: 11, end: 11 });
-		text.setExtrinsicRange(comment, 5, 10);
+		assert.deepEqual([comment.start, comment.end], [11, 11]);
+		text.ranges.setRangeBounds("comment", { start: 5, end: 10 });
 		comment.data.message = "Review the greeting instead";
 		assert.equal(text.getString(5, 10), "Hello");
-		text.removeExtrinsicRange(comment);
-		assert.deepEqual(text.ranges, []);
+		text.ranges.removeTrackedRange("comment");
+		assert.equal([...text.ranges.keys()].length, 0);
 		view.dispose();
 	});
 });

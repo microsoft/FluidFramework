@@ -6,7 +6,10 @@
 Track application-defined ranges through formatted text edits
 
 The alpha API `FormattedText.createSchemaWithRanges` accepts the same arguments as `FormattedText.createSchema`, followed by a schema for range data.
-It adds `ranges` snapshots and methods to add, read, reposition, and remove range handles.
+Its `ranges` property exposes a live `RangeCollection` with methods to create, look up, reposition, and remove ranges, and enumerate keys.
+Range handles expose live, read-only `start` and `end` properties.
+Copy endpoints to retain a snapshot.
+Handles remain bound to their original range; reading endpoints after removal or replacement throws a `UsageError`.
 Existing text editing methods update range endpoints automatically, and formatting does not change them.
 
 ```typescript
@@ -33,10 +36,14 @@ const view = createIndependentTreeAlpha({ minVersionForCollab: "2.80.0" }).viewW
 );
 view.initialize(Text.fromString("Hello world"));
 const text = view.root;
-const comment = text.addExtrinsicRange(6, 11, { message: "Review this word" });
+const comment = text.ranges.trackNewRange(
+	"comment",
+	{ start: 6, end: 11 },
+	{ message: "Review this word" },
+);
 
 text.insertAt(0, "Say: ");
-const { start, end } = text.getExtrinsicRange(comment); // { start: 11, end: 16 }
+const { start, end } = comment; // { start: 11, end: 16 }
 text.formatRange(start, end, { bold: true });
 text.getString(start, end); // "world"
 ```

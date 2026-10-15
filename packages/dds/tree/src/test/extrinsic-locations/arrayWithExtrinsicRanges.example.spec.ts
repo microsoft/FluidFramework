@@ -25,25 +25,30 @@ describe("ArrayWithExtrinsicRanges example", () => {
 		view.initialize(Document.create(["Plan", "Build", "Ship"]));
 
 		const document = view.root;
-		const comment = document.addExtrinsicRange(1, 3, { message: "Check these steps" });
+		const comment = document.ranges.trackNewRange(
+			"comment",
+			{ start: 1, end: 3 },
+			{ message: "Check these steps" },
+		);
 		document.transactOnContent((content) => {
 			content.insertAt(0, TreeArrayNode.spread(["Design", "Review"]));
-			const { start, end } = document.getExtrinsicRange(comment);
+			const { start, end } = comment;
 			assert.deepEqual([start, end], [3, 5]);
 			assert.deepEqual(content.slice(start, end), ["Build", "Ship"]);
 		});
 
 		document.transactOnContent((content) => content.removeRange(3, 5));
-		assert.deepEqual(document.getExtrinsicRange(comment), { start: 3, end: 3 });
-		assert.equal(document.ranges[0], comment);
+		assert.deepEqual([comment.start, comment.end], [3, 3]);
+		assert.equal(document.ranges.getRange("comment")?.data, comment.data);
 		assert.equal(comment.data.message, "Check these steps");
 
-		document.setExtrinsicRange(comment, 2, 3);
+		document.ranges.setRangeBounds("comment", { start: 2, end: 3 });
 		comment.data.message = "Check the plan instead";
-		const position = document.getExtrinsicRange(comment);
+		const position = document.ranges.getRange("comment");
+		assert(position !== undefined);
 		assert.deepEqual(document.content.slice(position.start, position.end), ["Plan"]);
-		document.removeExtrinsicRange(comment);
-		assert.equal(document.ranges.length, 0);
+		document.ranges.removeTrackedRange("comment");
+		assert.equal([...document.ranges.keys()].length, 0);
 		view.dispose();
 	});
 });

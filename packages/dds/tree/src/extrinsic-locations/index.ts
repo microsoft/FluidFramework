@@ -4,3 +4,4 @@
  */
 
 export { ArrayWithExtrinsicRanges } from "./arrayWithExtrinsicRangesDomain.js";
+export type { RangeAnchors, RangeCollection, RangeEndpoints } from "./rangeCollection.js";

@@ -45,12 +45,16 @@ It implements Phase 1, step 1 below using numeric endpoints and document-wide `n
 For now, work is focused on `Extrinsic Ranges`.
 
 `ArrayWithExtrinsicRanges.createSchema` creates a scoped, subclassable schema for an array and a collection of ranges with application-defined data.
-The erased API exposes the content directly as a `ReadonlyArrayNode`, range handles with application-defined data, and methods to read and edit range positions.
-Use `getExtrinsicRange` to read a snapshot of a range's current endpoints.
+The erased API exposes the content directly as a `ReadonlyArrayNode` and a `RangeCollection` through `ranges`.
+Use `ranges.trackNewRange(key, { start, end }, data)` to create a range and `ranges.getRange(key)` to look one up.
+Both return `RangeAnchors` handles whose read-only `start` and `end` properties resolve current positions.
+Copy these properties to retain a snapshot.
+Use `ranges.setRangeBounds(key, { start, end })` to reposition a range and `ranges.removeTrackedRange(key)` to remove it.
+Use `ranges.keys()` to enumerate tracked keys in unspecified order.
 Use `transactOnContent` to edit the content through a synchronous callback with the existing mutable array API.
 You can also add, reposition, and remove ranges within that callback.
 Use a distinct `SchemaFactoryBeta` scope for each parameterization.
-Use the returned schema's `create` method to construct an array, then `addExtrinsicRange` to add ranges.
+Use the returned schema's `create` method to construct an array, then `ranges.trackNewRange` to add ranges.
 See [arrayWithExtrinsicRangesDomain.ts](./arrayWithExtrinsicRangesDomain.ts) and the [executable usage example](../test/extrinsic-locations/arrayWithExtrinsicRanges.example.spec.ts).
 
 Ranges use half-open intervals `[start, end)`.
@@ -59,6 +63,10 @@ an insertion at an endpoint leaves the endpoint after the inserted content.
 Insertion at the start is therefore excluded, insertion at the end is included, and an empty range stays empty.
 Removing content collapses endpoints inside the removed span to its start.
 Ranges survive removal of all their covered content and retain their data and identity until explicitly removed.
+Handles refer to particular ranges, not subsequent ranges created at the same key.
+Reading an endpoint of a removed or replaced range throws a `UsageError`.
+Undo that restores the same range makes its handles valid again.
+Repeated lookups need not return the same handle object.
 Moves use array insertion-anchor semantics: ranges remain with their manager rather than following moved content.
 When moving between managed arrays, nest both managers' `transactOnContent` callbacks so both arrays are edited within their editing scopes.
 Nested callbacks on the same manager are rejected.
@@ -67,9 +75,9 @@ Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
 Each structural edit is a transaction guarded by a document-wide `noChange` constraint.
 The transaction includes both the content edits and the final endpoint updates.
 Content changes are immediately visible, and events are delivered normally during the callback so application caches can invalidate.
-While the editing scope is active, manager methods resolve positions through temporary array insertion anchors.
+While the editing scope is active, range handles resolve positions through temporary array insertion anchors.
 The stored numeric endpoints are synchronized after the callback finishes and before `transactOnContent` returns.
-Endpoint writeback can emit further events; manager methods continue to use anchors until writeback finishes.
+Endpoint writeback can emit further events; range handles continue to use anchors until writeback finishes.
 Do not retain the mutable content array for editing outside the callback.
 Callbacks must not return promises.
 Concurrent changes anywhere in the document can reject the entire transaction; applications must observe commit outcomes if they need to report or retry rejected edits.

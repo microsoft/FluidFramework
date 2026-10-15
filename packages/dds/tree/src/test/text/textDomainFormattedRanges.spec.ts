@@ -5,12 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
+import type { RangeCollection, RangeEndpoints } from "../../extrinsic-locations/index.js";
+
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion } from "../../codec/index.js";
-import type { ArrayWithExtrinsicRanges } from "../../extrinsic-locations/index.js";
 import {
 	allowUnused,
 	SchemaFactoryBeta,
@@ -46,11 +47,8 @@ const legacyConfig = new TreeViewConfiguration({
 	enableSchemaValidation: true,
 });
 
-function endpoints(
-	text: Text,
-	range: ArrayWithExtrinsicRanges.Range<typeof Comment>,
-): [number, number] {
-	const { start, end } = text.getExtrinsicRange(range);
+function endpoints(text: Text, key: string): [number, number] {
+	const { start, end } = rangeBounds(text.ranges, key);
 	return [start, end];
 }
 
@@ -68,8 +66,19 @@ function setup(): { provider: TestTreeProviderLite; view: TreeViewAlpha<typeof T
 function snapshot(text: Text): object {
 	return {
 		text: text.fullString(),
-		ranges: text.ranges.map((range) => [...endpoints(text, range), range.data.message]),
+		ranges: [...text.ranges.keys()]
+			.sort()
+			.map((key) => [key, ...endpoints(text, key), text.ranges.getRange(key)?.data.message]),
 	};
+}
+
+function rangeBounds(
+	ranges: Pick<RangeCollection<unknown>, "getRange">,
+	key: string,
+): RangeEndpoints {
+	const range = ranges.getRange(key);
+	assert(range !== undefined);
+	return { start: range.start, end: range.end };
 }
 
 describe("FormattedText with extrinsic ranges", () => {
@@ -84,23 +93,27 @@ describe("FormattedText with extrinsic ranges", () => {
 
 		it("@Smoke tracks all structural text editing methods", () => {
 			const text = create();
-			const range = text.addExtrinsicRange(1, 4, { message: "comment" });
+			const range = text.ranges.trackNewRange(
+				"range",
+				{ start: 1, end: 4 },
+				{ message: "comment" },
+			);
 			text.insertAt(0, "X");
-			assert.deepEqual(endpoints(text, range), [2, 5]);
+			assert.deepEqual(endpoints(text, "range"), [2, 5]);
 			text.insertWithFormattingAt(2, [
 				{ content: FormattedText.StringTextAtom.fromCharacter("Y"), format: { bold: true } },
 			]);
 			assert.equal(text.fullString(), "XaYbcdef");
-			assert.deepEqual(endpoints(text, range), [3, 6]);
+			assert.deepEqual(endpoints(text, "range"), [3, 6]);
 			assert.equal(text.charactersWithFormatting()[2]?.format.bold, true);
 			text.removeRange(3, 6);
-			assert.deepEqual(endpoints(text, range), [3, 3]);
+			assert.deepEqual(endpoints(text, "range"), [3, 3]);
 			text.moveRangeToIndex(0, 3, 4);
 			assert.equal(text.fullString(), "eXaYf");
-			assert.deepEqual(endpoints(text, range), [4, 4]);
+			assert.deepEqual(endpoints(text, "range"), [4, 4]);
 			text.removeRange(undefined, undefined);
-			assert.deepEqual(endpoints(text, range), [0, 0]);
-			assert.equal(text.ranges[0], range);
+			assert.deepEqual(endpoints(text, "range"), [0, 0]);
+			assert.equal(text.ranges.getRange("range")?.data, range.data);
 		});
 
 		for (const [index, expected] of [
@@ -113,90 +126,159 @@ describe("FormattedText with extrinsic ranges", () => {
 		] as const) {
 			it(`tracks insertion at atom index ${index}`, () => {
 				const text = create();
-				const range = text.addExtrinsicRange(1, 3, { message: "range" });
+				text.ranges.trackNewRange("range", { start: 1, end: 3 }, { message: "range" });
 				text.insertAt(index, "X");
-				assert.deepEqual(endpoints(text, range), expected);
+				assert.deepEqual(endpoints(text, "range"), expected);
 			});
 		}
 
 		it("keeps ranges with the text rather than following moved atoms", () => {
 			const text = create();
-			const range = text.addExtrinsicRange(1, 3, { message: "range" });
+			text.ranges.trackNewRange("range", { start: 1, end: 3 }, { message: "range" });
 			text.moveRangeToIndex(0, 5, 6);
-			assert.deepEqual(endpoints(text, range), [2, 4]);
-			assert.equal(text.getString(...endpoints(text, range)), "bc");
+			assert.deepEqual(endpoints(text, "range"), [2, 4]);
+			assert.equal(text.getString(...endpoints(text, "range")), "bc");
 			text.moveRangeToIndex(6, 2, 4);
 			assert.equal(text.fullString(), "fadebc");
-			assert.deepEqual(endpoints(text, range), [2, 2]);
+			assert.deepEqual(endpoints(text, "range"), [2, 2]);
 		});
 
 		it("counts Unicode code points and embedded objects as atoms", () => {
 			const text = create("a\u{1F600}b");
-			const range = text.addExtrinsicRange(1, 2, { message: "emoji" });
+			text.ranges.trackNewRange("range", { start: 1, end: 2 }, { message: "emoji" });
 			text.insertAt(1, [new Embedded({ label: "object" })]);
 			assert.equal(text.fullString(), "a[object]\u{1F600}b");
 			assert.equal(text.characterCount(), 4);
-			assert.deepEqual(endpoints(text, range), [2, 3]);
-			assert.equal(text.getString(...endpoints(text, range)), "\u{1F600}");
+			assert.deepEqual(endpoints(text, "range"), [2, 3]);
+			assert.equal(text.getString(...endpoints(text, "range")), "\u{1F600}");
 		});
 
 		it("preserves endpoints through both formatting APIs", () => {
 			const text = create();
-			const range = text.addExtrinsicRange(1, 4, { message: "range" });
+			const range = text.ranges.trackNewRange(
+				"range",
+				{ start: 1, end: 4 },
+				{ message: "range" },
+			);
 			text.formatRange(0, 3, { bold: true });
 			assert.equal(text.charactersWithFormatting()[1]?.format.bold, true);
 			text.reformat(1, 2);
 			assert.equal(text.charactersWithFormatting()[1]?.format.bold, false);
-			assert.deepEqual(endpoints(text, range), [1, 4]);
-			assert.equal(text.ranges[0], range);
+			assert.deepEqual(endpoints(text, "range"), [1, 4]);
+			assert.equal(text.ranges.getRange("range")?.data, range.data);
 		});
 
-		it("sets and removes ranges by identity while preserving editable data", () => {
+		it("sets and removes ranges by key while preserving editable data", () => {
 			const text = create();
-			const first = text.addExtrinsicRange(1, 3, { message: "same" });
+			const first = text.ranges.trackNewRange(
+				"first",
+				{ start: 1, end: 3 },
+				{ message: "same" },
+			);
 			const captured = text.ranges;
-			const second = text.addExtrinsicRange(1, 3, { message: "same" });
-			assert.deepEqual(captured, [first]);
+			const second = text.ranges.trackNewRange(
+				"second",
+				{ start: 1, end: 3 },
+				{ message: "same" },
+			);
+			assert.equal(captured, text.ranges);
+			assert.equal(captured.getRange("first")?.data, first.data);
+			assert.equal(captured.getRange("second")?.data, second.data);
 			first.data.message = "updated";
-			text.setExtrinsicRange(first, 0, 6);
-			assert.deepEqual(endpoints(text, first), [0, 6]);
-			assert.deepEqual(endpoints(text, second), [1, 3]);
+			text.ranges.setRangeBounds("first", { start: 0, end: 6 });
+			assert.deepEqual(endpoints(text, "first"), [0, 6]);
+			assert.deepEqual(endpoints(text, "second"), [1, 3]);
 			assert.equal(first.data.message, "updated");
-			text.removeExtrinsicRange(first);
-			assert.deepEqual(text.ranges, [second]);
+			text.ranges.removeTrackedRange("first");
+			assert.deepEqual([...captured.keys()], ["second"]);
+			assert.equal(captured.getRange("second")?.data, second.data);
+			assert.equal(text.ranges.getRange("first"), undefined);
 			assert.throws(
-				() => text.getExtrinsicRange(first),
-				validateUsageError(/does not belong/),
+				() => text.ranges.setRangeBounds("first", { start: 0, end: 1 }),
+				validateUsageError(/not tracked/),
 			);
 			assert.throws(
-				() => text.setExtrinsicRange(first, 0, 1),
-				validateUsageError(/does not belong/),
+				() => text.ranges.removeTrackedRange("first"),
+				validateUsageError(/not tracked/),
 			);
+		});
+
+		it("keeps the collection live without eagerly creating range storage", () => {
+			const text = create();
+			const initial = JSON.stringify(text);
+			const ranges = text.ranges;
+			assert.equal([...ranges.keys()].length, 0);
+			assert.deepEqual([...ranges.keys()], []);
+			assert.equal(ranges.getRange("missing"), undefined);
+			assert.equal(ranges.getRange("missing") !== undefined, false);
+			assert.equal(JSON.stringify(text), initial);
+			const expected = new Map(
+				["review/42", "", "__proto__", "constructor"].map((key) => [
+					key,
+					text.ranges.trackNewRange(key, { start: 0, end: 1 }, { message: key }),
+				]),
+			);
+			assert.equal(text.ranges, ranges);
+			assert.equal([...ranges.keys()].length, 4);
+			assert.deepEqual([...ranges.keys()].sort(), [...expected.keys()].sort());
+			for (const [key, range] of expected) {
+				assert.equal(ranges.getRange(key)?.data, range.data);
+				assert.deepEqual([range.start, range.end], [0, 1]);
+			}
+			text.ranges.removeTrackedRange("");
+			assert.equal([...ranges.keys()].length, 3);
+			assert.equal(ranges.getRange("") !== undefined, false);
+			assert.equal(ranges.getRange(""), undefined);
+		});
+
+		it("rejects duplicate keys without replacing data and can reuse a removed key", () => {
+			const text = create();
+			const original = text.ranges.trackNewRange(
+				"review",
+				{ start: 1, end: 3 },
+				{ message: "original" },
+			);
+			const initial = JSON.stringify(text);
 			assert.throws(
-				() => text.removeExtrinsicRange(first),
-				validateUsageError(/does not belong/),
+				() =>
+					text.ranges.trackNewRange(
+						"review",
+						{ start: 0, end: 1 },
+						{ message: "replacement" },
+					),
+				validateUsageError(/already tracked/),
 			);
+			assert.equal(JSON.stringify(text), initial);
+			assert.equal(text.ranges.getRange("review")?.data, original.data);
+			assert.deepEqual(rangeBounds(text.ranges, "review"), { start: 1, end: 3 });
+			text.ranges.removeTrackedRange("review");
+			const replacement = text.ranges.trackNewRange(
+				"review",
+				{ start: 0, end: 2 },
+				{ message: "replacement" },
+			);
+			assert.notEqual(replacement, original);
+			text.insertAt(0, "X");
+			assert.deepEqual(rangeBounds(text.ranges, "review"), { start: 1, end: 3 });
+			assert.equal(text.ranges.getRange("review")?.data, replacement.data);
 		});
 
 		it("does not create range storage on reads, formatting, or invalid range operations", () => {
 			const text = create();
 			const initial = JSON.stringify(text);
 			assert.equal(initial.includes('"rangeStorage"'), false);
-			assert.deepEqual(text.ranges, []);
+			assert.equal([...text.ranges.keys()].length, 0);
 			const other = create();
-			const foreign = other.addExtrinsicRange(0, 1, { message: "foreign" });
-			for (const range of [foreign, { data: new Comment({ message: "fabricated" }) }]) {
+			other.ranges.trackNewRange("foreign", { start: 0, end: 1 }, { message: "foreign" });
+			for (const key of ["foreign", "missing"]) {
+				assert.equal(text.ranges.getRange(key), undefined);
 				assert.throws(
-					() => text.getExtrinsicRange(range),
-					validateUsageError(/does not belong/),
+					() => text.ranges.setRangeBounds(key, { start: 0, end: 1 }),
+					validateUsageError(/not tracked/),
 				);
 				assert.throws(
-					() => text.setExtrinsicRange(range, 0, 1),
-					validateUsageError(/does not belong/),
-				);
-				assert.throws(
-					() => text.removeExtrinsicRange(range),
-					validateUsageError(/does not belong/),
+					() => text.ranges.removeTrackedRange(key),
+					validateUsageError(/not tracked/),
 				);
 			}
 			for (const [start, end] of [
@@ -207,7 +289,7 @@ describe("FormattedText with extrinsic ranges", () => {
 				[0, Number.NaN],
 			]) {
 				assert.throws(
-					() => text.addExtrinsicRange(start, end, { message: "invalid" }),
+					() => text.ranges.trackNewRange("invalid", { start, end }, { message: "invalid" }),
 					UsageError,
 				);
 			}
@@ -232,7 +314,7 @@ describe("FormattedText with extrinsic ranges", () => {
 
 		it("delivers invalidation events synchronously, including during an input iterator", () => {
 			const text = create();
-			const range = text.addExtrinsicRange(1, 4, { message: "range" });
+			text.ranges.trackNewRange("range", { start: 1, end: 4 }, { message: "range" });
 			let cached = text.fullString();
 			let events = 0;
 			const off = text.onContentChanged(() => {
@@ -250,7 +332,7 @@ describe("FormattedText with extrinsic ranges", () => {
 			text.insertAt(0, input);
 			assert.equal(events, 2);
 			assert.equal(cached, "Xabcdef");
-			assert.deepEqual(endpoints(text, range), [2, 5]);
+			assert.deepEqual(endpoints(text, "range"), [2, 5]);
 			off();
 		});
 	});
@@ -269,9 +351,9 @@ describe("FormattedText with extrinsic ranges", () => {
 			RecursiveComment,
 		) {}
 		const text = RecursiveText.fromString("outer");
-		const range = text.addExtrinsicRange(
-			0,
-			5,
+		const range = text.ranges.trackNewRange(
+			"range",
+			{ start: 0, end: 5 },
 			new RecursiveComment({ text: RecursiveText.fromString("inner") }),
 		);
 		assert.equal(range.data.text?.fullString(), "inner");
@@ -279,23 +361,35 @@ describe("FormattedText with extrinsic ranges", () => {
 			tracked: NodeFromSchema<typeof Text>,
 			legacy: NodeFromSchema<typeof LegacyText>,
 		): void => {
-			const handle = tracked.addExtrinsicRange(0, 0, { message: "typed" });
+			const handle = tracked.ranges.trackNewRange(
+				"handle",
+				{ start: 0, end: 0 },
+				{ message: "typed" },
+			);
 			const message: string = handle.data.message;
 			const bold: boolean | undefined = tracked.charactersWithFormatting()[0]?.format.bold;
 			allowUnused(message);
 			allowUnused(bold);
 			// @ts-expect-error Legacy text does not expose range methods.
-			allowUnused(legacy.addExtrinsicRange);
+			allowUnused(legacy.trackNewRange);
 			// @ts-expect-error Legacy text does not expose range storage.
 			allowUnused(legacy.ranges);
-			// @ts-expect-error Endpoints are only available through the text's methods.
-			allowUnused(handle.start);
+			const start: number = handle.start;
+			allowUnused(start);
+			// @ts-expect-error Endpoints must be changed through the collection.
+			handle.start = 1;
 			// @ts-expect-error Range data retains its schema.
-			tracked.addExtrinsicRange(0, 0, "not a comment");
+			tracked.ranges.trackNewRange("not a comment", { start: 0, end: 0 }, "not a comment");
 			// @ts-expect-error Formatting retains its schema.
 			tracked.insertAt(0, "x", { bold: 1 });
 			// @ts-expect-error Range membership cannot be edited directly.
-			allowUnused(tracked.ranges.push);
+			allowUnused(tracked.ranges.set);
+			// @ts-expect-error Range removal must go through the text's method.
+			allowUnused(tracked.ranges.delete);
+			// @ts-expect-error Range operations use keys, not handles.
+			tracked.ranges.getRange(handle);
+			// @ts-expect-error Keys must be strings.
+			tracked.ranges.trackNewRange(42, { start: 0, end: 0 }, { message: "invalid" });
 		};
 		allowUnused(check);
 		assert(Text.fromString("") instanceof Text);
@@ -324,14 +418,14 @@ describe("FormattedText with extrinsic ranges", () => {
 		assert.equal(JSON.stringify(upgraded.root), initial);
 		assert.equal(upgraded.root.fullString(), "a[object]\u{1F600}b");
 		assert.equal(upgraded.root.charactersWithFormatting()[1]?.format.bold, true);
-		assert.deepEqual(upgraded.root.ranges, []);
+		assert.equal([...upgraded.root.ranges.keys()].length, 0);
 		assert.equal(JSON.stringify(upgraded.root), initial);
 		provider.synchronizeMessages();
 		assert.equal(contentEvents, 0);
 		assert.equal(legacy.compatibility.canView, false);
-		const range = upgraded.root.addExtrinsicRange(1, 3, { message: "migrated" });
+		upgraded.root.ranges.trackNewRange("range", { start: 1, end: 3 }, { message: "migrated" });
 		upgraded.root.insertAt(0, "X");
-		assert.deepEqual(endpoints(upgraded.root, range), [2, 4]);
+		assert.deepEqual(endpoints(upgraded.root, "range"), [2, 4]);
 		provider.synchronizeMessages();
 		off();
 		assert.throws(() => legacyRoot.insertAt(0, "not allowed"));
@@ -357,18 +451,30 @@ describe("FormattedText with extrinsic ranges", () => {
 					if (editFirst) {
 						edit(view.root);
 						expected = snapshot(view.root);
-						other.root.addExtrinsicRange(1, 4, { message: "first" });
+						other.root.ranges.trackNewRange(
+							"first",
+							{ start: 1, end: 4 },
+							{ message: "first" },
+						);
 					} else {
-						other.root.addExtrinsicRange(1, 4, { message: "first" });
+						other.root.ranges.trackNewRange(
+							"first",
+							{ start: 1, end: 4 },
+							{ message: "first" },
+						);
 						expected = snapshot(other.root);
 						edit(view.root);
 					}
 					provider.synchronizeMessages();
 					assert.deepEqual(snapshot(view.root), expected);
 					assert.deepEqual(snapshot(other.root), expected);
-					const range = view.root.addExtrinsicRange(0, 1, { message: "after rebase" });
+					view.root.ranges.trackNewRange(
+						"range",
+						{ start: 0, end: 1 },
+						{ message: "after rebase" },
+					);
 					view.root.insertAt(0, "Y");
-					assert.deepEqual(endpoints(view.root, range), [1, 2]);
+					assert.deepEqual(endpoints(view.root, "range"), [1, 2]);
 					provider.synchronizeMessages();
 					assert.deepEqual(snapshot(other.root), snapshot(view.root));
 				});
@@ -383,68 +489,125 @@ describe("FormattedText with extrinsic ranges", () => {
 			provider.synchronizeMessages();
 			assert.equal(view.root.fullString(), "Xabcdef");
 			assert.deepEqual(snapshot(other.root), snapshot(view.root));
-			const range = other.root.addExtrinsicRange(1, 4, { message: "winner's storage" });
+			other.root.ranges.trackNewRange(
+				"range",
+				{ start: 1, end: 4 },
+				{ message: "winner's storage" },
+			);
 			other.root.insertAt(0, "Z");
-			assert.deepEqual(endpoints(other.root, range), [2, 5]);
+			assert.deepEqual(endpoints(other.root, "range"), [2, 5]);
 			provider.synchronizeMessages();
 			assert.deepEqual(snapshot(other.root), snapshot(view.root));
 		});
 
+		for (const sameKey of [true, false]) {
+			it(`rejects concurrent first-range creation atomically, same key: ${sameKey}`, () => {
+				const { provider, view } = setup();
+				const other = provider.trees[1].viewWith(config);
+				const ranges = other.root.ranges;
+				view.root.ranges.trackNewRange("review", { start: 1, end: 3 }, { message: "first" });
+				const rejected = ranges.trackNewRange(
+					sameKey ? "review" : "other",
+					{ start: 0, end: 2 },
+					{ message: "second" },
+				);
+				provider.synchronizeMessages();
+				assert.deepEqual(snapshot(view.root), {
+					text: "abcdef",
+					ranges: [["review", 1, 3, "first"]],
+				});
+				assert.deepEqual(snapshot(other.root), snapshot(view.root));
+				assert.equal(ranges.getRange("review")?.data.message, "first");
+				assert.equal([...ranges.keys()].length, 1);
+				assert.equal(ranges.getRange("other") !== undefined, false);
+				assert.throws(() => rejected.start, validateUsageError(/no longer tracked/));
+				assert.throws(() => rejected.end, validateUsageError(/no longer tracked/));
+				other.root.ranges.trackNewRange(
+					"retry",
+					{ start: 0, end: 1 },
+					{ message: "after rejection" },
+				);
+				other.root.insertAt(0, "X");
+				assert.deepEqual(rangeBounds(other.root.ranges, "retry"), { start: 1, end: 2 });
+				provider.synchronizeMessages();
+				assert.deepEqual(snapshot(other.root), snapshot(view.root));
+			});
+		}
+
 		it("replicates tracked edits and range updates sequentially", () => {
 			const { provider, view } = setup();
-			view.root.addExtrinsicRange(1, 4, { message: "range" });
+			view.root.ranges.trackNewRange("range", { start: 1, end: 4 }, { message: "range" });
 			provider.synchronizeMessages();
 			const other = provider.trees[1].viewWith(config);
 			view.root.insertAt(0, "X");
 			provider.synchronizeMessages();
 			assert.deepEqual(snapshot(other.root), {
 				text: "Xabcdef",
-				ranges: [[2, 5, "range"]],
+				ranges: [["range", 2, 5, "range"]],
 			});
 			other.root.removeRange(1, 4);
 			provider.synchronizeMessages();
-			assert.deepEqual(snapshot(view.root), { text: "Xdef", ranges: [[1, 2, "range"]] });
+			assert.deepEqual(snapshot(view.root), {
+				text: "Xdef",
+				ranges: [["range", 1, 2, "range"]],
+			});
 		});
 
 		for (const [name, edit] of Object.entries({
 			firstContentEdit: edits.insert,
 			firstRange: (text: Text): void => {
-				text.addExtrinsicRange(1, 4, { message: "range" });
+				text.ranges.trackNewRange("range", { start: 1, end: 4 }, { message: "range" });
 			},
 		})) {
 			it(`undoes and redoes ${name} including storage initialization`, () => {
 				const { provider, view } = setup();
 				const initial = JSON.stringify(view.root);
+				const ranges = view.root.ranges;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				edit(view.root);
+				const handle = ranges.getRange("range");
 				const edited = JSON.stringify(view.root);
 				provider.synchronizeMessages();
 				const undo = undoStack.pop();
 				assert(undo !== undefined);
 				undo.revert();
 				assert.equal(JSON.stringify(view.root), initial);
-				assert.deepEqual(view.root.ranges, []);
+				assert.equal([...ranges.keys()].length, 0);
+				if (handle !== undefined) {
+					assert.throws(() => handle.start, validateUsageError(/no longer tracked/));
+				}
 				const redo = redoStack.pop();
 				assert(redo !== undefined);
 				redo.revert();
 				assert.equal(JSON.stringify(view.root), edited);
-				const range = view.root.addExtrinsicRange(0, 1, { message: "after redo" });
+				assert.equal(ranges, view.root.ranges);
+				assert.deepEqual([...ranges.keys()], [...view.root.ranges.keys()]);
+				if (handle !== undefined) {
+					assert.deepEqual([handle.start, handle.end], [1, 4]);
+				}
+				view.root.ranges.trackNewRange(
+					"after-redo",
+					{ start: 0, end: 1 },
+					{ message: "after redo" },
+				);
 				view.root.insertAt(0, "Y");
-				assert.deepEqual(endpoints(view.root, range), [1, 2]);
+				assert.deepEqual(endpoints(view.root, "after-redo"), [1, 2]);
 				unsubscribe();
 			});
 
-			it(`rebuilds the tracker after undoing ${name} and editing again`, () => {
+			it(`reuses the tracker after undoing ${name} and editing again`, () => {
 				const { provider, view } = setup();
+				const ranges = view.root.ranges;
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				edit(view.root);
 				provider.synchronizeMessages();
 				const undo = undoStack.pop();
 				assert(undo !== undefined);
 				undo.revert();
-				const range = view.root.addExtrinsicRange(1, 4, { message: "replacement" });
+				ranges.trackNewRange("range", { start: 1, end: 4 }, { message: "replacement" });
+				assert.equal(ranges, view.root.ranges);
 				view.root.insertAt(0, "X");
-				assert.deepEqual(endpoints(view.root, range), [2, 5]);
+				assert.deepEqual(endpoints(view.root, "range"), [2, 5]);
 				unsubscribe();
 			});
 		}
@@ -452,17 +615,29 @@ describe("FormattedText with extrinsic ranges", () => {
 		it("rolls back initialization with the outer transaction and can edit afterward", () => {
 			const { view } = setup();
 			const initial = JSON.stringify(view.root);
+			const ranges = view.root.ranges;
 			const result = view.runTransaction(() => {
-				const temporary = view.root.addExtrinsicRange(1, 4, { message: "temporary" });
+				view.root.ranges.trackNewRange(
+					"temporary",
+					{ start: 1, end: 4 },
+					{ message: "temporary" },
+				);
+				assert.equal(ranges.getRange("temporary") !== undefined, true);
 				view.root.insertAt(0, "X");
-				assert.deepEqual(endpoints(view.root, temporary), [2, 5]);
+				assert.deepEqual(endpoints(view.root, "temporary"), [2, 5]);
 				return { rollback: true };
 			});
 			assert.equal(result.success, false);
 			assert.equal(JSON.stringify(view.root), initial);
-			const range = view.root.addExtrinsicRange(1, 4, { message: "replacement" });
+			assert.equal([...ranges.keys()].length, 0);
+			view.root.ranges.trackNewRange(
+				"range",
+				{ start: 1, end: 4 },
+				{ message: "replacement" },
+			);
+			assert.equal(ranges.getRange("range")?.data.message, "replacement");
 			view.root.insertAt(0, "Y");
-			assert.deepEqual(endpoints(view.root, range), [2, 5]);
+			assert.deepEqual(endpoints(view.root, "range"), [2, 5]);
 		});
 
 		it("rejects undoing initial storage creation after an intervening range edit", () => {
@@ -471,10 +646,13 @@ describe("FormattedText with extrinsic ranges", () => {
 			view.root.insertAt(0, "X");
 			const undo = undoStack.pop();
 			assert(undo !== undefined);
-			view.root.addExtrinsicRange(1, 4, { message: "keep" });
+			view.root.ranges.trackNewRange("keep", { start: 1, end: 4 }, { message: "keep" });
 			provider.synchronizeMessages();
 			undo.revert();
-			assert.deepEqual(snapshot(view.root), { text: "Xabcdef", ranges: [[1, 4, "keep"]] });
+			assert.deepEqual(snapshot(view.root), {
+				text: "Xabcdef",
+				ranges: [["keep", 1, 4, "keep"]],
+			});
 			unsubscribe();
 		});
 	});
