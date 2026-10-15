@@ -722,9 +722,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
 	 * staged schema upgrades matching the configured policy are included in the target stored schema.
-	 * Staged upgrades that are already enabled in the document are also included by default. Set
-	 * {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `false` when
-	 * creating the policy to only include staged upgrades selected explicitly by the policy.
+	 * Set {@link (StagedSchemaUpgradePolicy:interface).includeAlreadyEnabledUpgrades} to `true` to
+	 * also include staged upgrades that are already enabled in the document.
 	 *
 	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *

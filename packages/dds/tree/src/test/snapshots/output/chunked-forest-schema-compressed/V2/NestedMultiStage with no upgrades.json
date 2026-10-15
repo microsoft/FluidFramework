@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.null",
+        "value": [
+          null
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.NestedMultiStage",
+        "value": false,
+        "fields": [
+          [
+            "a",
+            2
+          ],
+          [
+            "b",
+            0
+          ],
+          [
+            "c",
+            0
+          ]
+        ]
+      }
+    },
+    {
+      "a": 3
+    },
+    {
+      "d": 0
+    }
+  ],
+  "data": [
+    [
+      1,
+      0
+    ]
+  ]
+}

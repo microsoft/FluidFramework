@@ -137,15 +137,14 @@ ESLint provides a way to print the config that would apply to a file (`--print-c
 print out the applied config as a JSON file. As we make changes to the config, we can print out the config again and get
 a diff to review as part of a PR -- just like we do with API reports for code changes.
 
-<!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS) -->
-
+<!-- markdown-magic:begin {"transform":"package-scripts","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
+| Script Name | Script Body |
+| - | - |
 | `build` | `npm run build:readme && npm run build:test:examples && npm run print-configs && npm run prettier` |
 | `build:readme` | `markdown-magic --files "**/*.md"` |
 | `build:test:examples` | `tsc --project ./src/rules/test/test-cases/tsconfig.json` |
@@ -161,7 +160,6 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `test:mocha` | `mocha "src/{rules/test,test}/**/*.test.{js,mts}"` |
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.

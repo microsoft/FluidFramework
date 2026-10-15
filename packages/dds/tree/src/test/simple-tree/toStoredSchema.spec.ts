@@ -44,6 +44,7 @@ import {
 } from "../../simple-tree/toStoredSchema.js";
 import { brand } from "../../util/index.js";
 import {
+	getStagedSchemaUpgrades,
 	HasStagedAllowedTypes,
 	HasStagedAllowedTypesAfterUpdate,
 	HasStagedOptionalField,
@@ -141,7 +142,7 @@ describe("toStoredSchema", () => {
 						// The restrictive case, used for initial schemas and upgrades, does not include any staged schema features.
 						// The permissive case, used for unhydrated trees, includes all staged schema features.
 						// They should be equal if and only if there are no staged schema features.
-						if (testCase.hasStagedSchema) {
+						if (getStagedSchemaUpgrades(testCase.schema).size > 0) {
 							assert.notDeepEqual(restrictive, permissive);
 						} else {
 							assert.deepEqual(restrictive, permissive);
@@ -189,7 +190,7 @@ describe("toStoredSchema", () => {
 						const simpleFromRestrictive = exportSimpleSchema(restrictive);
 						const simpleFromPermissive = exportSimpleSchema(permissive);
 
-						if (testCase.hasStagedSchema) {
+						if (getStagedSchemaUpgrades(testCase.schema).size > 0) {
 							assert.notDeepEqual(simpleFromRestrictive, simpleFromPermissive);
 						} else {
 							assert.deepEqual(simpleFromRestrictive, simpleFromPermissive);

@@ -1,0 +1,46 @@
+---
+title: Events
+sidebar_position: 5
+---
+
+SharedTree's events are subscribed to via "on" methods which return an unsubscribe function.
+The returned unsubscribe function should be called when the event subscription is no longer needed.
+
+```typescript
+const unsubscribe = Tree.on(myTreeNode, "nodeChanged", () => {...});
+
+// Later at some point when the event subscription is not needed anymore
+unsubscribe();
+```
+
+## Whole-Tree Events
+
+[`TreeView`](../../api/fluid-framework/treeview-interface) exposes [events for the whole tree](../../api/fluid-framework/treeviewevents-interface).
+
+## Node-Level Events
+
+The [`Tree`](../../api/fluid-framework/#tree-variable) singleton provides [APIs for working with nodes](../../api/fluid-framework/treenodeapi-interface)
+including [events](../../api/fluid-framework/treechangeevents-interface).
+
+`Tree` supports two node-level events, subscribed to via `Tree.on`:
+
+-   `nodeChanged` fires when one or more properties of `node` change.
+-   `treeChanged` fires when one or more properties of `node` or any node in its subtree changes.
+
+See the API docs for each event for further details.
+
+## Editing in response to change events
+
+Editing the tree from inside one of its change-event callbacks is forbidden and throws a `UsageError`.
+
+More generally, edits should not be made in response to changes to the document.
+Doing so tends to:
+
+-   duplicate edits across multiple clients (each client reacts to the same change),
+-   cause infinite edit loops (an edit triggers a change event, whose handler makes another edit),
+-   dirty last-change attribution (the document appears last edited by a user who did not make the change), and
+-   be problematic in read-only contexts.
+
+Instead, use alternative patterns such as lazily fixing content when it is next edited by a user, or asking a user whether they want to repair the document.
+
+If you are confident the desired change is atomic (even accounting for the different application versions that might be involved) and/or won't trigger issues with other clients, you can work around the in-callback restriction by asynchronously deferring the edit, but this pattern is not recommended.
