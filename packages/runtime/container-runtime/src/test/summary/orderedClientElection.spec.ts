@@ -13,6 +13,8 @@ import {
 	type ISerializedElection,
 	type ITrackedClient,
 	OrderedClientElection,
+	SummarizerClientElection,
+	summarizerClientType,
 } from "../../summary/index.js";
 
 import { TestQuorumClients } from "./testQuorumClients.js";
@@ -28,11 +30,19 @@ describe("Ordered Client Collection", () => {
 		},
 	};
 
-	function addClient(clientId: string, sequenceNumber: number, interactive = true) {
+	function addClient(
+		clientId: string,
+		sequenceNumber: number,
+		interactive = true,
+		type?: string,
+	) {
 		if (sequenceNumber > currentSequenceNumber) {
 			currentSequenceNumber = sequenceNumber;
 		}
-		const details: ISequencedClient["client"]["details"] = { capabilities: { interactive } };
+		const details: ISequencedClient["client"]["details"] = {
+			capabilities: { interactive },
+			type,
+		};
 		const c: Partial<ISequencedClient["client"]> = { details };
 		const client: ISequencedClient = {
 			client: c as ISequencedClient["client"],
@@ -57,6 +67,7 @@ describe("Ordered Client Collection", () => {
 		function createOrderedClientElection(
 			initialClients: [id: string, seq: number, int: boolean][] = [],
 			initialState?: ISerializedElection,
+			isEligibleFn = (c: ITrackedClient) => c.client.details.capabilities.interactive,
 		): IOrderedClientElection {
 			for (const [id, seq, int] of initialClients) {
 				addClient(id, seq, int);
@@ -72,7 +83,7 @@ describe("Ordered Client Collection", () => {
 				testDeltaManager,
 				testQuorum,
 				initialState ?? currentSequenceNumber,
-				(c: ITrackedClient) => c.client.details.capabilities.interactive,
+				isEligibleFn,
 			);
 			election.on("election", () => electionEventCount++);
 			return election;
@@ -203,6 +214,98 @@ describe("Ordered Client Collection", () => {
 					},
 				]);
 				assertOrderedEligibleClientIds("a", "b", "c");
+			});
+
+			for (const electedParentId of [undefined, "missing", "ineligible"]) {
+				it(`Should use the restored interactive client as parent when the recorded parent is ${electedParentId}`, () => {
+					createOrderedClientElection(
+						[
+							["a", 1, true],
+							["ineligible", 2, false],
+							["b", 3, true],
+						],
+						{ electedClientId: "b", electedParentId, electionSequenceNumber: 100 },
+					);
+					assert.deepEqual(election.serialize(), {
+						electedClientId: "b",
+						electedParentId: "b",
+						electionSequenceNumber: 100,
+					});
+					removeClient("b");
+					assertElectionState(1, "a", 101);
+					assert.equal(election.electedParent?.clientId, "a");
+				});
+
+				it(`Should preserve a restored summarizer when the recorded parent is ${electedParentId}`, () => {
+					addClient("ineligible", 1, false);
+					addClient("s", 3, false, summarizerClientType);
+					createOrderedClientElection(
+						[],
+						{ electedClientId: "s", electedParentId, electionSequenceNumber: 100 },
+						SummarizerClientElection.isClientEligible,
+					);
+					assert.deepEqual(election.serialize(), {
+						electedClientId: "s",
+						electedParentId: undefined,
+						electionSequenceNumber: 100,
+					});
+					addClient("b", 101);
+					assert.equal(election.electedClient?.clientId, "s");
+					assert.equal(election.electedParent?.clientId, "b");
+					resetElectedClient(102);
+					assert.equal(election.electedClient?.clientId, "s");
+					removeClient("s");
+					assertElectionState(1, "b", 103);
+					assert.equal(election.electedParent?.clientId, "b");
+				});
+			}
+
+			for (const hasParent of [false, true]) {
+				it(`Should elect an existing summarizer on fresh initialization ${hasParent ? "with" : "without"} an interactive parent`, () => {
+					if (hasParent) {
+						addClient("a", 1);
+					}
+					addClient("s", 2, false, summarizerClientType);
+					createOrderedClientElection(
+						[],
+						undefined,
+						SummarizerClientElection.isClientEligible,
+					);
+					assertElectionState(hasParent ? 2 : 1, "s", 2);
+					assert.equal(election.electedParent?.clientId, hasParent ? "a" : undefined);
+					if (!hasParent) {
+						addClient("a", 3);
+					}
+					addClient("b", 4);
+					assert.equal(election.electedClient?.clientId, "s");
+					assert.equal(election.electedParent?.clientId, "a");
+					removeClient("s");
+					assertElectionState(2, "a", 5);
+					assert.equal(election.electedParent?.clientId, "a");
+				});
+			}
+
+			it("Should advance past an ineligible elected client rather than reuse its older parent", () => {
+				createOrderedClientElection(
+					[
+						["a", 1, true],
+						["ineligible", 2, false],
+						["b", 3, true],
+					],
+					{
+						electedClientId: "ineligible",
+						electedParentId: "a",
+						electionSequenceNumber: 100,
+					},
+				);
+				assert.deepEqual(election.serialize(), {
+					electedClientId: "b",
+					electedParentId: "b",
+					electionSequenceNumber: 100,
+				});
+				removeClient("b");
+				assertElectionState(1, "a", 101);
+				assert.equal(election.electedParent?.clientId, "a");
 			});
 
 			it("Should log error and elect undefined when initially elected client is ineligible and last", () => {
