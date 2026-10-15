@@ -191,7 +191,6 @@ export function checkSchemaCompatibility(
 		viewSchema.root,
 		upgradePolicy,
 		viewSchema.schemaVersion,
-		viewSchema.schemaHash,
 	);
 
 	const canUpgrade = allowsSchemaUpgrade(policy, stored, wouldUpgradeTo);
@@ -202,8 +201,7 @@ export function checkSchemaCompatibility(
 		canView &&
 		canUpgrade &&
 		allowsRepoSuperset(policy, wouldUpgradeTo, stored) &&
-		areSchemaVersionsEqual(wouldUpgradeTo.schemaVersion, stored.schemaVersion) &&
-		wouldUpgradeTo.schemaHash === stored.schemaHash;
+		areSchemaVersionsEqual(wouldUpgradeTo.schemaVersion, stored.schemaVersion);
 
 	return {
 		canView,

@@ -85,8 +85,6 @@ import {
 	FieldKind,
 	type TreeBranchCommitMetadata,
 	type ViewableTree,
-	computeSchemaHash,
-	schemaHasher,
 } from "../../simple-tree/index.js";
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import {
@@ -411,15 +409,12 @@ describe("SharedTree", () => {
 			new TreeViewConfigurationAlpha({
 				schema: numberSchema,
 				schemaVersion: { [libraryId]: 1 },
-				schemaHash: computeSchemaHash(numberSchema),
-				schemaHasher,
 			}),
 		);
 
 		assert.equal(tree.storedSchemaVersion, undefined);
 		view.initialize(1);
 		assert.deepEqual(tree.storedSchemaVersion, { test: 1 });
-		assert.equal(tree.storedSchemaHash, computeSchemaHash(numberSchema));
 	});
 
 	it("can be connected to another tree", async () => {

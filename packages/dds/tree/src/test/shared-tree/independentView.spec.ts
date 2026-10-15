@@ -36,8 +36,6 @@ import {
 	TreeViewConfigurationAlpha,
 	asTreeViewAlpha,
 	type LibraryId,
-	computeSchemaHash,
-	schemaHasher,
 } from "../../simple-tree/index.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor } from "../utils.js";
@@ -114,8 +112,6 @@ describe("independentView", () => {
 			const config = new TreeViewConfigurationAlpha({
 				schema: SchemaFactory.number,
 				schemaVersion: { [testLibraryId]: 1 },
-				schemaHash: computeSchemaHash(SchemaFactory.number),
-				schemaHasher,
 			});
 			const view = asTreeViewAlpha(tree.viewWith(config));
 
@@ -134,8 +130,6 @@ describe("independentView", () => {
 				new TreeViewConfigurationAlpha({
 					schema: factory.string,
 					schemaVersion: { [testLibraryId]: 1 },
-					schemaHash: computeSchemaHash(factory.string),
-					schemaHasher,
 				}),
 			);
 			originalView.initialize("id");
@@ -146,8 +140,6 @@ describe("independentView", () => {
 					new TreeViewConfigurationAlpha({
 						schema: factory.identifier,
 						schemaVersion: { [testLibraryId]: 2 },
-						schemaHash: computeSchemaHash(factory.identifier),
-						schemaHasher,
 					}),
 				),
 			);
@@ -155,6 +147,85 @@ describe("independentView", () => {
 
 			upgradedView.upgradeSchema();
 			assert.deepEqual(upgradedView.storedSchemaVersion, { test: 2 });
+		});
+
+		for (const schemaVersion of [undefined, {}, { ["test" as LibraryId]: 1 }]) {
+			it(`does not alternate metadata-only updates at equal versions (${JSON.stringify(schemaVersion)})`, () => {
+				const factory = new SchemaFactoryAlpha("metadata-upgrade");
+				const a = factory.required(factory.number, { persistedMetadata: { app: "A" } });
+				const b = factory.required(factory.number, { persistedMetadata: { app: "B" } });
+				const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+				const initial = tree.viewWith(
+					new TreeViewConfigurationAlpha({
+						schema: a,
+						schemaVersion,
+					}),
+				);
+				initial.initialize(1);
+				initial.dispose();
+
+				for (const schema of [b, a, b]) {
+					const view = tree.viewWith(
+						new TreeViewConfigurationAlpha({
+							schema,
+							schemaVersion,
+						}),
+					);
+					let changes = 0;
+					view.events.on("schemaChanged", () => changes++);
+					assert.equal(view.compatibility.isEquivalent, true);
+					view.upgradeSchema();
+					assert.equal(changes, 0);
+					assert.deepEqual(tree.exportSimpleSchema().root.persistedMetadata, { app: "A" });
+					view.dispose();
+				}
+
+				const advanced = tree.viewWith(
+					new TreeViewConfigurationAlpha({
+						schema: b,
+						schemaVersion: { ["test" as LibraryId]: 2 },
+					}),
+				);
+				assert.equal(advanced.compatibility.isEquivalent, false);
+				assert.equal(advanced.compatibility.canUpgrade, true);
+				advanced.upgradeSchema();
+				assert.deepEqual(tree.exportSimpleSchema().root.persistedMetadata, { app: "B" });
+				assert.deepEqual(tree.storedSchemaVersion, { test: 2 });
+				advanced.dispose();
+
+				const older = tree.viewWith(
+					new TreeViewConfigurationAlpha({
+						schema: a,
+						schemaVersion,
+					}),
+				);
+				assert.equal(older.compatibility.canUpgrade, false);
+				assert.throws(() => older.upgradeSchema(), /cannot be upgraded/);
+				assert.deepEqual(tree.exportSimpleSchema().root.persistedMetadata, { app: "B" });
+			});
+		}
+
+		it("allows metadata changes alongside an additive schema upgrade without increasing versions", () => {
+			const factory = new SchemaFactoryAlpha("additive-metadata-upgrade");
+			const a = factory.required(factory.number, { persistedMetadata: { app: "A" } });
+			const b = factory.required([factory.number, factory.string], {
+				persistedMetadata: { app: "B" },
+			});
+			const schemaVersion = { ["test" as LibraryId]: 1 };
+			const tree = createIndependentTreeAlpha({ idCompressor: testIdCompressor });
+			const initial = tree.viewWith(
+				new TreeViewConfigurationAlpha({ schema: a, schemaVersion }),
+			);
+			initial.initialize(1);
+			initial.dispose();
+			const upgraded = tree.viewWith(
+				new TreeViewConfigurationAlpha({ schema: b, schemaVersion }),
+			);
+			assert.equal(upgraded.compatibility.canUpgrade, true);
+			upgraded.upgradeSchema();
+			assert.deepEqual(tree.exportSimpleSchema().root.persistedMetadata, { app: "B" });
+			assert.deepEqual(tree.storedSchemaVersion, schemaVersion);
+			assert.equal(upgraded.root, 1);
 		});
 
 		it("uninitialized: staged schema upgrade", () => {

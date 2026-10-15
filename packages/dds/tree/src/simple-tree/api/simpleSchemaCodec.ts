@@ -42,8 +42,8 @@ import * as FormatV2 from "../simpleSchemaFormatV2.js";
  * @returns A serializable representation of the schema.
  *
  * @privateRemarks
- * Encodes schemas without versions or hashes to v1.
- * Schemas with hashes and possibly application versions use v2.
+ * Encodes schemas without application versions to v1.
+ * Schemas with application versions use v2.
  *
  * TODO: a simple high level API for snapshot based schema compatibility checking should replace the need to export this.
  *
@@ -65,31 +65,18 @@ export function encodeSchemaCompatibilitySnapshot(
 		definitions: encodedDefinitions,
 	};
 
-	if (simpleSchema.schemaVersion === undefined && simpleSchema.schemaHash === undefined) {
+	if (simpleSchema.schemaVersion === undefined) {
 		return {
 			version: Format.SimpleSchemaFormatVersion.v1,
 			...encodedSchema,
 		} satisfies Format.SimpleTreeSchemaFormat;
 	}
-	if (
-		(simpleSchema.schemaVersion !== undefined || simpleSchema.schemaHash !== undefined) &&
-		(typeof simpleSchema.schemaHash !== "string" || simpleSchema.schemaHash.length === 0)
-	) {
-		throw new UsageError(
-			"A schema hash must be a non-empty string when application versions or a hash are provided.",
-		);
-	}
 
 	return {
 		version: FormatV2.SimpleSchemaFormatVersion.v2,
-		...(simpleSchema.schemaHash === undefined ? {} : { schemaHash: simpleSchema.schemaHash }),
-		...(simpleSchema.schemaVersion === undefined
-			? {}
-			: {
-					schemaVersion: Object.entries(simpleSchema.schemaVersion).sort(([a], [b]) =>
-						compareStrings(a, b),
-					),
-				}),
+		schemaVersion: Object.entries(simpleSchema.schemaVersion).sort(([a], [b]) =>
+			compareStrings(a, b),
+		),
 		...encodedSchema,
 	} satisfies FormatV2.SimpleTreeSchemaFormat;
 }
@@ -127,19 +114,8 @@ export function decodeSchemaCompatibilitySnapshot(
 		encodedSchema.version === FormatV2.SimpleSchemaFormatVersion.v2
 			? decodeSchemaVersion(encodedSchema.schemaVersion)
 			: undefined;
-	if (
-		encodedSchema.version === FormatV2.SimpleSchemaFormatVersion.v2 &&
-		(encodedSchema.schemaVersion !== undefined || encodedSchema.schemaHash !== undefined) &&
-		(typeof encodedSchema.schemaHash !== "string" || encodedSchema.schemaHash.length === 0)
-	) {
-		throw new UsageError("A schema hash must be a non-empty string.");
-	}
 	return {
 		...(schemaVersion === undefined ? {} : { schemaVersion }),
-		...(encodedSchema.version === FormatV2.SimpleSchemaFormatVersion.v2 &&
-		encodedSchema.schemaHash !== undefined
-			? { schemaHash: encodedSchema.schemaHash }
-			: {}),
 		root: decodeSimpleFieldSchema(encodedSchema.root),
 		definitions: new Map(
 			transformMapValues(objectToMap(encodedSchema.definitions), (value, key) => {

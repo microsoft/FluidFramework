@@ -90,13 +90,11 @@ export function checkCompatibility(
 	const viewAsAlpha = new TreeViewConfigurationAlpha({
 		schema: clientViewConfiguration.schema,
 		schemaVersion: clientViewConfiguration.schemaVersion,
-		schemaHash: clientViewConfiguration.schemaHash,
 	});
 	const stored = toInitialSchema(
 		documentViewConfiguration.schema,
 		undefined,
 		documentViewConfiguration.schemaVersion,
-		documentViewConfiguration.schemaHash,
 	);
 	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
@@ -131,13 +129,12 @@ export function checkCompatibility(
  * @alpha
  */
 export function exportCompatibilitySchemaSnapshot(
-	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion" | "schemaHash">,
+	config: Pick<ITreeViewConfigurationAlpha, "schema" | "schemaVersion">,
 ): JsonCompatibleReadOnly {
 	const treeSchema = createTreeSchema(config.schema);
 	return encodeSchemaCompatibilitySnapshot({
 		...treeSchema,
 		schemaVersion: validateSchemaVersion(config.schemaVersion),
-		...(config.schemaHash === undefined ? {} : { schemaHash: config.schemaHash }),
 	});
 }
 
@@ -150,8 +147,7 @@ export function exportCompatibilitySchemaSnapshot(
  *
  * @param config - The JSON representation of the schema.
  * @returns The schema.
- * Only the schema, schema version, and schema hash fields of the {@link TreeViewConfigurationAlpha} are populated.
- * Supply a separately imported hasher before using the result to initialize or upgrade a versioned tree.
+ * Only the schema and schema version fields of the {@link TreeViewConfigurationAlpha} are populated.
  * @throws Will throw a usage error if the encoded schema is not in the expected format.
  *
  * @example Load and parse a snapshot of a Point2D schema.
@@ -175,7 +171,6 @@ export function importCompatibilitySchemaSnapshot(
 	return new TreeViewConfigurationAlpha({
 		schema: viewSchema.root,
 		schemaVersion: simpleSchema.schemaVersion,
-		schemaHash: simpleSchema.schemaHash,
 	});
 }
 

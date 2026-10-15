@@ -14,8 +14,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { pkgVersion } from "../../../packageVersion.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import { ValueSchema } from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	checkCompatibility,
 	importCompatibilitySchemaSnapshot,
@@ -37,6 +37,7 @@ import {
 	allowUnused,
 	type LibraryId,
 	decodeSchemaCompatibilitySnapshot,
+	encodeSchemaCompatibilitySnapshot,
 	FieldKind,
 	NodeKind,
 } from "../../../simple-tree/index.js";
@@ -67,18 +68,16 @@ describe("snapshotCompatibilityChecker", () => {
 		);
 	});
 
-	it("round-trips v2 application versions with their expected hash", () => {
+	it("parse and snapshot can roundtrip schema versions", () => {
 		const testLibraryId = "test" as LibraryId;
 		const view = new TreeViewConfigurationAlpha({
 			schema: SchemaFactory.number,
 			schemaVersion: { [testLibraryId]: 2 },
-			schemaHash: "test-hash",
 		});
 		const snapshot = exportCompatibilitySchemaSnapshot(view);
 		assert.deepEqual(snapshot, {
 			version: 2,
 			schemaVersion: [["test", 2]],
-			schemaHash: "test-hash",
 			root: {
 				kind: FieldKind.Required,
 				simpleAllowedTypes: {
@@ -94,12 +93,44 @@ describe("snapshotCompatibilityChecker", () => {
 
 		const parsedView = importCompatibilitySchemaSnapshot(snapshot);
 		assert.deepEqual(parsedView.schemaVersion, { test: 2 });
-		assert.equal(parsedView.schemaHash, "test-hash");
 		assert.deepEqual(exportCompatibilitySchemaSnapshot(parsedView), snapshot);
 		for (const validator of [undefined, FormatValidatorBasic]) {
 			const decoded = decodeSchemaCompatibilitySnapshot(snapshot, validator);
 			assert.deepEqual(decoded.schemaVersion, { test: 2 });
-			assert.equal(decoded.schemaHash, "test-hash");
+			assert.deepEqual(encodeSchemaCompatibilitySnapshot(decoded), snapshot);
+		}
+	});
+
+	it("round-trips empty application-version maps", () => {
+		const snapshot = exportCompatibilitySchemaSnapshot({
+			schema: SchemaFactory.number,
+			schemaVersion: {},
+		});
+		assert.equal((snapshot as { version: number }).version, 2);
+		assert.deepEqual(Object.keys(snapshot as object).sort(), [
+			"definitions",
+			"root",
+			"schemaVersion",
+			"version",
+		]);
+		for (const validator of [undefined, FormatValidatorBasic]) {
+			const decoded = decodeSchemaCompatibilitySnapshot(snapshot, validator);
+			assert.deepEqual(decoded.schemaVersion, {});
+			assert.deepEqual(encodeSchemaCompatibilitySnapshot(decoded), snapshot);
+		}
+	});
+
+	it("decodes unversioned v2 snapshots and emits unchanged v1 output", () => {
+		const snapshot = exportCompatibilitySchemaSnapshot({
+			schema: SchemaFactory.number,
+			schemaVersion: {},
+		}) as { version: number; schemaVersion?: [string, number][] };
+		delete snapshot.schemaVersion;
+		const unversioned = exportCompatibilitySchemaSnapshot({ schema: SchemaFactory.number });
+		for (const validator of [undefined, FormatValidatorBasic]) {
+			const decoded = decodeSchemaCompatibilitySnapshot(snapshot, validator);
+			assert.equal(decoded.schemaVersion, undefined);
+			assert.deepEqual(encodeSchemaCompatibilitySnapshot(decoded), unversioned);
 		}
 	});
 
@@ -108,7 +139,6 @@ describe("snapshotCompatibilityChecker", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
 			schemaVersion: { [testLibraryId]: 1 },
-			schemaHash: "test-hash",
 		}) as { schemaVersion: [string, number][] };
 		snapshot.schemaVersion[0][1] = -1;
 
@@ -122,7 +152,6 @@ describe("snapshotCompatibilityChecker", () => {
 		const snapshot = exportCompatibilitySchemaSnapshot({
 			schema: SchemaFactory.number,
 			schemaVersion: { ["test" as LibraryId]: 1 },
-			schemaHash: "test-hash",
 		}) as { schemaVersion: [string, number][] };
 		snapshot.schemaVersion[0][1] = Number.MAX_SAFE_INTEGER + 1;
 
@@ -131,6 +160,7 @@ describe("snapshotCompatibilityChecker", () => {
 			/must be non-negative safe integers/,
 		);
 	});
+
 	it("rejects negative schema versions when exporting", () => {
 		assert.throws(
 			() =>
@@ -140,86 +170,6 @@ describe("snapshotCompatibilityChecker", () => {
 				}),
 			/must be a non-negative safe integer/,
 		);
-	});
-
-	for (const schemaVersion of [undefined, {}, { ["test" as LibraryId]: 1 }]) {
-		it(`round-trips v2 hash-bearing snapshots with versions ${JSON.stringify(schemaVersion)}`, () => {
-			const snapshot = exportCompatibilitySchemaSnapshot({
-				schema: SchemaFactory.number,
-				schemaVersion,
-				schemaHash: "test-hash",
-			});
-			assert.equal((snapshot as { version: unknown }).version, 2);
-			const parsedView = importCompatibilitySchemaSnapshot(snapshot);
-			assert.deepEqual(parsedView.schemaVersion, schemaVersion);
-			assert.equal(parsedView.schemaHash, "test-hash");
-			assert.deepEqual(exportCompatibilitySchemaSnapshot(parsedView), snapshot);
-			for (const validator of [undefined, FormatValidatorBasic]) {
-				const decoded = decodeSchemaCompatibilitySnapshot(snapshot, validator);
-				assert.deepEqual(decoded.schemaVersion, schemaVersion);
-				assert.equal(decoded.schemaHash, "test-hash");
-			}
-		});
-
-		it(`checks hash requirements with versions ${JSON.stringify(schemaVersion)}`, () => {
-			const snapshot = exportCompatibilitySchemaSnapshot({
-				schema: SchemaFactory.number,
-				schemaVersion,
-				schemaHash: "test-hash",
-			}) as { schemaHash?: string };
-			delete snapshot.schemaHash;
-			if (schemaVersion !== undefined) {
-				assert.throws(
-					() =>
-						exportCompatibilitySchemaSnapshot({
-							schema: SchemaFactory.number,
-							schemaVersion,
-						}),
-					/non-empty string/,
-				);
-				assert.throws(() => importCompatibilitySchemaSnapshot(snapshot), /non-empty string/);
-				for (const validator of [undefined, FormatValidatorBasic]) {
-					assert.throws(
-						() => decodeSchemaCompatibilitySnapshot(snapshot, validator),
-						/non-empty string/,
-					);
-				}
-				return;
-			}
-			const parsedView = importCompatibilitySchemaSnapshot(snapshot);
-			assert.deepEqual(parsedView.schemaVersion, schemaVersion);
-			assert.equal(parsedView.schemaHash, undefined);
-			for (const validator of [undefined, FormatValidatorBasic]) {
-				const decoded = decodeSchemaCompatibilitySnapshot(snapshot, validator);
-				assert.deepEqual(decoded.schemaVersion, schemaVersion);
-				assert.equal(decoded.schemaHash, undefined);
-			}
-		});
-	}
-
-	it("rejects empty snapshot hashes when provided", () => {
-		for (const schemaVersion of [undefined, {}, { ["test" as LibraryId]: 1 }]) {
-			assert.throws(
-				() =>
-					exportCompatibilitySchemaSnapshot({
-						schema: SchemaFactory.number,
-						schemaVersion,
-						schemaHash: "",
-					}),
-				/non-empty string/,
-			);
-			const snapshot = exportCompatibilitySchemaSnapshot({
-				schema: SchemaFactory.number,
-				schemaVersion,
-				schemaHash: "test-hash",
-			}) as { schemaHash?: string };
-			snapshot.schemaHash = "";
-			assert.throws(() => importCompatibilitySchemaSnapshot(snapshot), /non-empty string/);
-			assert.throws(
-				() => decodeSchemaCompatibilitySnapshot(snapshot, FormatValidatorBasic),
-				/not valid according to the schema format/,
-			);
-		}
 	});
 
 	describe("parse and snapshot preserve test schemas", () => {

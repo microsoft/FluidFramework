@@ -26,9 +26,6 @@ export function createViewableTreeAlpha(
 		get storedSchemaVersion() {
 			return checkout.storedSchema.schemaVersion;
 		},
-		get storedSchemaHash() {
-			return checkout.storedSchema.schemaHash;
-		},
 		viewWith<TRoot extends ImplicitFieldSchema>(
 			config: TreeViewConfiguration<TRoot>,
 		): TreeView<TRoot> {

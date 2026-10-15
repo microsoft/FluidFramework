@@ -25,7 +25,6 @@
       "test.hasDescriptions"
     ]
   },
-  "schemaHash": "65eb603f0bd7c9b7bfb81697d33d30d093fb92dc620659d5edb4a56b28e1d458",
   "schemaVersion": [
     [
       "com.fluidframework.test",

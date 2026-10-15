@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { getSchemaHashInput, validateSchemaHash } from "./schemaHash.js";
-
 export {
 	schemaIdentifierBrand,
 	typeSchemaSymbol,
@@ -207,9 +205,6 @@ export {
 	type VoidTransactionCallbackStatusBeta,
 	rollback,
 	generateSchemaFromSimpleSchema,
-	computeSchemaHash,
-	schemaHasher,
-	type SchemaHasher,
 	replaceConciseTreeHandles,
 	replaceHandles,
 	replaceVerboseTreeHandles,

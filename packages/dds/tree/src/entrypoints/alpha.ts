@@ -268,7 +268,6 @@ export {
 	RunTransactionParamsAlpha, 
 	Sandboxing,
 	SchemaFactoryAlpha, 
-	SchemaHasher,
 	SchemaStaticsAlpha, 
 	SchemaType, 
 	SchemaVersionMap,
@@ -324,7 +323,6 @@ export {
 	cloneWithReplacements, 
 	codePointCount, 
 	comparePersistedSchema, 
-	computeSchemaHash,
 	configuredSharedTreeAlpha, 
 	contentSchemaSymbol, 
 	createArrayInsertionAnchor, 
@@ -353,7 +351,6 @@ export {
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	schemaHasher,
 	trackDirtyNodes, 
 	utf16LengthForCodePoints
 	// #endregion

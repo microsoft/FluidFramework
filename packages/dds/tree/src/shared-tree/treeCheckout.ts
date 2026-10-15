@@ -2100,7 +2100,6 @@ function isInitialStoredSchema(schema: TreeStoredSchema): boolean {
 	const root = schema.rootFieldSchema;
 	return (
 		schema.schemaVersion === undefined &&
-		schema.schemaHash === undefined &&
 		schema.nodeSchema.size === 0 &&
 		root.kind === storedEmptyFieldSchema.kind &&
 		root.types.size === 0 &&
