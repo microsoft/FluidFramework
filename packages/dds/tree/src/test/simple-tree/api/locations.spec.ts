@@ -14,19 +14,19 @@ import {
 import { asAlpha } from "../../../api.js";
 import type { RevertibleAlpha } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { CapturedTreeLocationsInternal } from "../../../shared-tree/locationFormat.js";
+import type { CapturedTreeLocationInternal } from "../../../shared-tree/locationFormat.js";
 import {
 	extractJsonValidator,
 	FormatValidatorNoOp,
 	type FormatValidator,
 } from "../../../codec/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { capturedTreeLocationsSchema } from "../../../shared-tree/locationFormat.js";
+import { capturedTreeLocationEncodingSchema } from "../../../shared-tree/locationFormat.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
-	type CapturedTreeLocations,
+	type CapturedTreeLocation,
 	type TreeLocation,
 	type TreeLocationResolver,
 	type TreeLocationResolution,
@@ -34,7 +34,7 @@ import {
 	type TreeViewAlpha,
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
-import type { requireFalse } from "../../../util/index.js";
+import { isReadonlyArray, type requireFalse } from "../../../util/index.js";
 import { getView, TestTreeProviderLite } from "../../utils.js";
 
 const sf = new SchemaFactory("com.example.locations");
@@ -43,21 +43,24 @@ class Document extends sf.object("Document", { left: Text, right: Text }) {}
 const config = new TreeViewConfiguration({ schema: Document });
 
 type _CaptureHidesRevision = requireFalse<
-	"revision" extends keyof CapturedTreeLocations ? true : false
+	"revision" extends keyof CapturedTreeLocation ? true : false
 >;
-type _CaptureHidesLocations = requireFalse<
-	"locations" extends keyof CapturedTreeLocations ? true : false
+type _CaptureHidesLocation = requireFalse<
+	"location" extends keyof CapturedTreeLocation ? true : false
 >;
 type _CaptureCannotBeConstructed = requireFalse<
-	{ revision: string; locations: [] } extends CapturedTreeLocations ? true : false
+	{ revision: string; location: {} } extends CapturedTreeLocation ? true : false
+>;
+type _ResolvedLocationCannotBeUnavailable = requireFalse<
+	"unavailable" extends ResolvedTreeLocation["status"] ? true : false
 >;
 
-function capturedData(captured: CapturedTreeLocations): CapturedTreeLocationsInternal {
-	return captured as unknown as CapturedTreeLocationsInternal;
+function capturedData(captured: CapturedTreeLocation): CapturedTreeLocationInternal {
+	return captured as unknown as CapturedTreeLocationInternal;
 }
 
-function eraseCapture(data: unknown): CapturedTreeLocations {
-	return data as CapturedTreeLocations;
+function eraseCapture(data: unknown): CapturedTreeLocation {
+	return data as CapturedTreeLocation;
 }
 
 function setup(jsonValidator?: FormatValidator): {
@@ -77,17 +80,17 @@ function setup(jsonValidator?: FormatValidator): {
 function capture(
 	resolver: TreeLocationResolver,
 	locations: readonly TreeLocation[],
-): CapturedTreeLocations {
+): readonly CapturedTreeLocation[] {
 	const result = resolver.capture(locations);
 	// Model the JSON transport boundary; the resolver must validate the wire encoding.
-	return JSON.parse(JSON.stringify(result)) as CapturedTreeLocations;
+	return JSON.parse(JSON.stringify(result)) as readonly CapturedTreeLocation[];
 }
 
 function captureGaps(
 	view: TreeViewAlpha<typeof Document>,
 	offsets: readonly number[],
 	affinity: "before" | "after" = "after",
-): CapturedTreeLocations {
+): readonly CapturedTreeLocation[] {
 	return capture(
 		view.locations,
 		offsets.map((index) => ({ kind: "sequence", node: view.root.left, index, affinity })),
@@ -95,10 +98,10 @@ function captureGaps(
 }
 
 function resolved(
-	result: TreeLocationResolution,
-): readonly Extract<ResolvedTreeLocation, { status: "resolved" }>["location"][] {
-	assert(result.status === "resolved");
-	return result.locations.map((entry) => {
+	result: TreeLocationResolution | readonly TreeLocationResolution[],
+): readonly ResolvedTreeLocation["location"][] {
+	const results = isReadonlyArray(result) ? result : [result];
+	return results.map((entry) => {
 		assert(entry.status === "resolved");
 		return entry.location;
 	});
@@ -106,7 +109,7 @@ function resolved(
 
 function indices(
 	resolver: TreeLocationResolver,
-	batch: CapturedTreeLocations,
+	batch: readonly CapturedTreeLocation[],
 ): readonly number[] {
 	return resolved(resolver.resolve(batch)).map((location) => {
 		assert(location.kind === "sequence");
@@ -115,16 +118,210 @@ function indices(
 }
 
 function expectUnavailable(
-	result: TreeLocationResolution,
+	result: TreeLocationResolution | readonly TreeLocationResolution[],
 	reason: "target-deleted" | "invalid-location",
 ): void {
-	assert.deepEqual(result, {
-		status: "resolved",
-		locations: [{ status: "unavailable", reason }],
-	});
+	assert.deepEqual(
+		result,
+		isReadonlyArray(result)
+			? [{ status: "unavailable", reason }]
+			: { status: "unavailable", reason },
+	);
 }
 
 describe("TreeLocationResolver", () => {
+	it("captures and resolves single locations with the same semantics as arrays", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const inputs: readonly TreeLocation[] = [
+			{ kind: "node", node: sender.root.left },
+			{ kind: "sequence", node: sender.root.left, index: 2 },
+			{ kind: "sequence", node: sender.root.left, index: 2, affinity: "after" },
+		];
+		const singles = inputs.map((location) => sender.locations.capture(location));
+		const batch = capture(sender.locations, inputs);
+		assert.deepEqual(batch, singles);
+		receiver.root.left.insertAt(2, "x");
+		const results: readonly TreeLocationResolution[] = receiver.locations.resolve(batch);
+		assert.deepEqual(
+			results,
+			singles.map((entry) => receiver.locations.resolve(entry)),
+		);
+		assert.deepEqual(resolved(results), [
+			{ kind: "node", node: receiver.root.left },
+			{ kind: "sequence", node: receiver.root.left, index: 2, affinity: "before" },
+			{ kind: "sequence", node: receiver.root.left, index: 3, affinity: "after" },
+		]);
+	});
+
+	it("provides node and gap capture helpers with identical defaults and validation", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const { captureNode, captureGap } = sender.locations;
+		assert.deepEqual(
+			captureNode(sender.root.left),
+			sender.locations.capture({
+				kind: "node",
+				node: sender.root.left,
+			}),
+		);
+		for (const options of [
+			undefined,
+			{ affinity: undefined, movePolicy: undefined },
+			{ affinity: "before", movePolicy: "follow" },
+			{ affinity: "after" },
+		] as const) {
+			const captured: CapturedTreeLocation = captureGap(sender.root.left, 2, options);
+			assert.deepEqual(
+				captured,
+				sender.locations.capture({
+					kind: "sequence",
+					node: sender.root.left,
+					index: 2,
+					...options,
+				}),
+			);
+			const result: TreeLocationResolution = receiver.locations.resolve(
+				eraseCapture(JSON.parse(JSON.stringify(captured))),
+			);
+			assert.deepEqual(resolved(result), [
+				{
+					kind: "sequence",
+					node: receiver.root.left,
+					index: 2,
+					affinity: options?.affinity ?? "before",
+				},
+			]);
+		}
+		assert.throws(() => captureGap(sender.root.left, -1), /in-bounds gap/);
+		assert.throws(() => captureNode(receiver.root), /must belong/);
+		assert.throws(
+			() => captureGap(sender.root.left, 1, { movePolicy: "stay" as "follow" }),
+			/Only the "follow" move policy/,
+		);
+		sender.dispose();
+		assert.throws(() => captureNode(receiver.root), /disposed TreeView/);
+		assert.throws(() => captureGap(receiver.root.left, 1), /disposed TreeView/);
+	});
+
+	it("returns mutable arrays without retaining their contents", () => {
+		const { views } = setup();
+		const [sender, receiver] = views;
+		const inputs: readonly TreeLocation[] = [{ kind: "node", node: sender.root }];
+		const captures: CapturedTreeLocation[] = sender.locations.capture(inputs);
+		const node = captures[0];
+		captures.push(sender.locations.captureGap(sender.root.left, 1));
+		const results: TreeLocationResolution[] = receiver.locations.resolve(captures);
+		assert.equal(results.length, 2);
+		captures.splice(0, 1);
+		results.splice(0);
+		assert.deepEqual(receiver.locations.resolve(node), {
+			status: "resolved",
+			location: { kind: "node", node: receiver.root },
+		});
+		assert.equal(receiver.locations.resolve(captures).length, 1);
+		assert.deepEqual(sender.locations.capture(inputs), [node]);
+	});
+
+	it("returns empty arrays while preserving view-state checks", () => {
+		const { views } = setup();
+		const view = views[0];
+		assert.deepEqual(view.locations.capture([]), []);
+		assert.deepEqual(view.locations.resolve([]), []);
+		view.runTransaction(() => {
+			assert.throws(() => view.locations.capture([]), /during a transaction/);
+			assert.throws(() => view.locations.resolve([]), /during a transaction/);
+		});
+		view.dispose();
+		assert.throws(() => view.locations.capture([]), /disposed TreeView/);
+		assert.throws(() => view.locations.resolve([]), /disposed TreeView/);
+	});
+
+	it("combines captures from different revisions and preserves order and individual failures", () => {
+		const { provider, views } = setup(FormatValidatorBasic);
+		const [sender, receiver] = views;
+		const old = sender.locations.captureGap(sender.root.left, 2);
+		sender.root.left.insertAtStart("s");
+		provider.synchronizeMessages();
+		const newer = sender.locations.captureGap(sender.root.left, 3, { affinity: "after" });
+		const deleted = sender.locations.captureNode(sender.root.right);
+		const data = capturedData(newer);
+		const wrongRevision = eraseCapture({
+			...data,
+			revision: { ...data.revision, branchId: "other" },
+		});
+		const malformed = eraseCapture({ ...data, location: null });
+		const invalidEnvelope = eraseCapture(null);
+		receiver.root.left.insertAt(3, "r");
+		receiver.root.right = new Text([]);
+		const captures = [
+			newer,
+			wrongRevision,
+			old,
+			malformed,
+			deleted,
+			newer,
+			invalidEnvelope,
+			old,
+		];
+		const results = receiver.locations.resolve(captures);
+		assert.deepEqual(
+			results,
+			captures.map((entry) => receiver.locations.resolve(entry)),
+		);
+		assert.deepEqual(
+			results.map((entry) =>
+				entry.status === "resolved"
+					? entry.location.kind === "sequence"
+						? entry.location.index
+						: entry.location.kind
+					: entry,
+			),
+			[
+				4,
+				{ status: "revision-unavailable" },
+				3,
+				{ status: "unavailable", reason: "invalid-location" },
+				{ status: "unavailable", reason: "target-deleted" },
+				4,
+				{ status: "revision-unavailable" },
+				3,
+			],
+		);
+	});
+
+	it("shares rollback inversion for captures with the same revision", () => {
+		const { provider, views } = setup();
+		const [sender, receiver] = views;
+		const captures = sender.locations.capture([
+			{ kind: "node", node: sender.root.left },
+			{ kind: "sequence", node: sender.root.left, index: 2 },
+		]);
+		receiver.root.left.insertAtStart("r");
+		const rebaser = provider.trees[1].kernel.checkout.mainBranch.changeFamily.rebaser;
+		const invert = rebaser.invert;
+		let inversions = 0;
+		rebaser.invert = (...args) => {
+			inversions++;
+			return invert.apply(rebaser, args);
+		};
+		try {
+			receiver.locations.resolve(captures[0]);
+			const singleCost = inversions;
+			assert(singleCost > 0);
+			inversions = 0;
+			receiver.locations.resolve([...captures, ...captures]);
+			assert.equal(inversions, singleCost);
+			inversions = 0;
+			for (const captured of captures) {
+				receiver.locations.resolve(captured);
+			}
+			assert.equal(inversions, captures.length * singleCost);
+		} finally {
+			rebaser.invert = invert;
+		}
+	});
+
 	it("encodes captures matching the TypeBox wire schema without changing the JSON representation", () => {
 		const { views } = setup();
 		const batch = capture(views[0].locations, [
@@ -132,41 +329,46 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: views[0].root.left, index: 1 },
 		]);
 		assert(
-			extractJsonValidator(FormatValidatorBasic)
-				.compile(capturedTreeLocationsSchema)
-				.check(batch),
+			batch.every((entry) =>
+				extractJsonValidator(FormatValidatorBasic)
+					.compile(capturedTreeLocationEncodingSchema)
+					.check(entry),
+			),
 		);
 	});
 
 	it("returns unavailable results for malformed envelopes with schema validation enabled", () => {
 		const { views } = setup(FormatValidatorBasic);
 		const resolver = views[0].locations;
-		const valid = capturedData(captureGaps(views[0], [1]));
+		const valid = capturedData(captureGaps(views[0], [1])[0]);
 		for (const malformed of [
 			null,
 			undefined,
 			"capture",
 			{},
-			[],
 			{ ...valid, revision: null },
 			{ ...valid, revision: { branchId: "main", revision: 4 } },
-			{ ...valid, locations: null },
-			{ ...valid, locations: {} },
 		]) {
 			assert.deepEqual(resolver.resolve(eraseCapture(malformed)), {
 				status: "revision-unavailable",
 			});
+			assert.deepEqual(resolver.resolve([eraseCapture(malformed), eraseCapture(valid)]), [
+				{ status: "revision-unavailable" },
+				resolver.resolve(eraseCapture(valid)),
+			]);
 		}
 	});
 
 	it("validates each wire location independently with the configured validator", () => {
 		const { views } = setup(FormatValidatorBasic);
 		const [sender, receiver] = views;
-		const data = capturedData(captureGaps(sender, [1]));
-		const valid = data.locations[0];
+		const data = capturedData(captureGaps(sender, [1])[0]);
+		const valid = data.location;
 		assert(valid.kind === "sequence");
 		for (const malformed of [
 			null,
+			undefined,
+			[],
 			{},
 			{ ...valid, kind: "unknown" },
 			{ ...valid, index: -1 },
@@ -184,27 +386,22 @@ describe("TreeLocationResolver", () => {
 			},
 		]) {
 			assert.deepEqual(
-				receiver.locations.resolve(
-					eraseCapture({
-						...data,
-						locations: [malformed, valid],
-					}),
-				),
-				{
-					status: "resolved",
-					locations: [
-						{ status: "unavailable", reason: "invalid-location" },
-						{
-							status: "resolved",
-							location: {
-								kind: "sequence",
-								node: receiver.root.left,
-								index: 1,
-								affinity: "after",
-							},
+				receiver.locations.resolve([
+					eraseCapture({ ...data, location: malformed }),
+					eraseCapture(data),
+				]),
+				[
+					{ status: "unavailable", reason: "invalid-location" },
+					{
+						status: "resolved",
+						location: {
+							kind: "sequence",
+							node: receiver.root.left,
+							index: 1,
+							affinity: "after",
 						},
-					],
-				},
+					},
+				],
 			);
 		}
 	});
@@ -216,10 +413,10 @@ describe("TreeLocationResolver", () => {
 		it(`enforces reference semantics with the ${name} validator`, () => {
 			const { views } = setup(jsonValidator);
 			const [sender, receiver] = views;
-			const data = capturedData(captureGaps(sender, [1]));
-			const valid = data.locations[0];
+			const data = capturedData(captureGaps(sender, [1])[0]);
+			const valid = data.location;
 			assert(valid.kind === "sequence");
-			assert.deepEqual(indices(receiver.locations, eraseCapture(data)), [1]);
+			assert.deepEqual(indices(receiver.locations, [eraseCapture(data)]), [1]);
 			for (const location of [
 				{ ...valid, node: { ...valid.node, version: 2 } },
 				{
@@ -236,7 +433,7 @@ describe("TreeLocationResolver", () => {
 					receiver.locations.resolve(
 						eraseCapture({
 							...data,
-							locations: [location],
+							location,
 						}),
 					),
 					"invalid-location",
@@ -282,13 +479,17 @@ describe("TreeLocationResolver", () => {
 				selection,
 				metadata: { color: "blue" },
 			}),
-		) as { type: string; selection: CapturedTreeLocations; metadata: { color: string } };
-		const data = capturedData(message.selection);
+		) as {
+			type: string;
+			selection: readonly CapturedTreeLocation[];
+			metadata: { color: string };
+		};
+		const data = capturedData(message.selection[0]);
 		assert.equal(typeof data, "object");
 		assert.equal(typeof data.revision, "object");
-		assert.equal(typeof data.locations[0].node, "object");
-		assert.equal(typeof data.locations[0].node.revision, "object");
-		assert(Array.isArray(data.locations[0].node.path));
+		assert.equal(typeof data.location.node, "object");
+		assert.equal(typeof data.location.node.revision, "object");
+		assert(Array.isArray(data.location.node.path));
 		assert.deepEqual(message.metadata, { color: "blue" });
 		assert.equal(message.type, "presence");
 		assert.deepEqual(resolved(receiver.locations.resolve(message.selection)), [
@@ -364,13 +565,13 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: sender.root.left, index: 2, movePolicy: "follow" },
 		]);
 		assert.deepEqual(explicit, implicit);
-		const data = capturedData(explicit);
-		assert(!Object.hasOwn(data.locations[0], "movePolicy"));
+		const data = capturedData(explicit[0]);
+		assert(!Object.hasOwn(data.location, "movePolicy"));
 		receiver.root.right.moveRangeToIndex(1, 1, 3, receiver.root.left);
 		for (const policy of [{}, { movePolicy: undefined }, { movePolicy: "follow" }]) {
 			const incoming = eraseCapture({
 				...data,
-				locations: [{ ...data.locations[0], ...policy }],
+				location: { ...data.location, ...policy },
 			});
 			assert.deepEqual(resolved(receiver.locations.resolve(incoming)), [
 				{ kind: "sequence", node: receiver.root.right, index: 2, affinity: "before" },
@@ -382,30 +583,25 @@ describe("TreeLocationResolver", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
 		const batch = captureGaps(sender, [2]);
-		const data = capturedData(batch);
+		const data = capturedData(batch[0]);
 		for (const movePolicy of ["stay", null, 0, {}]) {
 			assert.deepEqual(
-				receiver.locations.resolve(
-					eraseCapture({
-						...data,
-						locations: [{ ...data.locations[0], movePolicy }, data.locations[0]],
-					}),
-				),
-				{
-					status: "resolved",
-					locations: [
-						{ status: "unavailable", reason: "invalid-location" },
-						{
-							status: "resolved",
-							location: {
-								kind: "sequence",
-								node: receiver.root.left,
-								index: 2,
-								affinity: "after",
-							},
+				receiver.locations.resolve([
+					eraseCapture({ ...data, location: { ...data.location, movePolicy } }),
+					eraseCapture(data),
+				]),
+				[
+					{ status: "unavailable", reason: "invalid-location" },
+					{
+						status: "resolved",
+						location: {
+							kind: "sequence",
+							node: receiver.root.left,
+							index: 2,
+							affinity: "after",
 						},
-					],
-				},
+					},
+				],
 			);
 		}
 	});
@@ -538,10 +734,10 @@ describe("TreeLocationResolver", () => {
 			{ kind: "sequence", node: sender.root.left, index: 4, affinity: "after" },
 			{ kind: "sequence", node: sender.root.left, index: 0, affinity: "before" },
 		]);
-		assert.equal(typeof capturedData(batch).locations[0].node, "object");
+		assert.equal(typeof capturedData(batch[0]).location.node, "object");
 		assert.deepEqual(
-			capturedData(receiver.locations.capture([])).revision,
-			capturedData(batch).revision,
+			capturedData(receiver.locations.captureNode(receiver.root)).revision,
+			capturedData(batch[0]).revision,
 		);
 		assert.deepEqual(resolved(receiver.locations.resolve(batch)), [
 			{ kind: "node", node: receiver.root },
@@ -717,8 +913,8 @@ describe("TreeLocationResolver", () => {
 		assert.deepEqual(indices(receiver.locations, batch), [3, 6]);
 		provider.synchronizeMessages();
 		assert.deepEqual(
-			capturedData(receiver.locations.capture([])).revision,
-			capturedData(sender.locations.capture([])).revision,
+			capturedData(receiver.locations.captureNode(receiver.root)).revision,
+			capturedData(sender.locations.captureNode(sender.root)).revision,
 		);
 	});
 
@@ -726,11 +922,17 @@ describe("TreeLocationResolver", () => {
 		const { provider, views } = setup();
 		const [sender, receiver] = views;
 		const runtime = provider.trees[1].containerRuntime;
+		const known = receiver.locations.captureNode(receiver.root);
 		runtime.connected = false;
 		sender.root.left.insertAtEnd("new");
 		provider.synchronizeMessages();
 		const batch = captureGaps(sender, [5]);
-		assert.deepEqual(receiver.locations.resolve(batch), { status: "revision-unavailable" });
+		assert.deepEqual(receiver.locations.resolve(batch), [{ status: "revision-unavailable" }]);
+		assert.deepEqual(receiver.locations.resolve([batch[0], known, batch[0]]), [
+			{ status: "revision-unavailable" },
+			receiver.locations.resolve(known),
+			{ status: "revision-unavailable" },
+		]);
 		runtime.connected = true;
 		provider.synchronizeMessages();
 		assert.deepEqual(indices(receiver.locations, batch), [5]);
@@ -745,8 +947,14 @@ describe("TreeLocationResolver", () => {
 			receiver.root.right.insertAtStart("r");
 			provider.synchronizeMessages();
 		}
-		assert.deepEqual(receiver.locations.resolve(old), { status: "revision-unavailable" });
-		assert.deepEqual(indices(receiver.locations, captureGaps(sender, [0, 12])), [0, 12]);
+		assert.deepEqual(receiver.locations.resolve(old), [{ status: "revision-unavailable" }]);
+		const fresh = captureGaps(sender, [0, 12]);
+		assert.deepEqual(indices(receiver.locations, fresh), [0, 12]);
+		assert.deepEqual(receiver.locations.resolve([fresh[0], old[0], fresh[1]]), [
+			receiver.locations.resolve(fresh[0]),
+			{ status: "revision-unavailable" },
+			receiver.locations.resolve(fresh[1]),
+		]);
 	});
 
 	it("validates local capture inputs and foreign view objects", () => {
@@ -774,8 +982,8 @@ describe("TreeLocationResolver", () => {
 		const { views } = setup(FormatValidatorBasic);
 		const [sender, receiver] = views;
 		const batch = captureGaps(sender, [2]);
-		const data = capturedData(batch);
-		const location = data.locations[0];
+		const data = capturedData(batch[0]);
+		const location = data.location;
 		assert(location.kind === "sequence");
 		for (const reference of [
 			null,
@@ -788,7 +996,7 @@ describe("TreeLocationResolver", () => {
 				receiver.locations.resolve(
 					eraseCapture({
 						...data,
-						locations: [{ ...location, node: reference }],
+						location: { ...location, node: reference },
 					}),
 				),
 				"invalid-location",
@@ -799,7 +1007,7 @@ describe("TreeLocationResolver", () => {
 				receiver.locations.resolve(
 					eraseCapture({
 						...data,
-						locations: [{ ...location, index }],
+						location: { ...location, index },
 					}),
 				),
 				"invalid-location",
@@ -839,8 +1047,8 @@ describe("TreeLocationResolver", () => {
 			return { rollback: true };
 		});
 		assert.deepEqual(
-			capturedData(view.locations.capture([])).revision,
-			capturedData(batch).revision,
+			capturedData(view.locations.captureNode(view.root)).revision,
+			capturedData(batch[0]).revision,
 		);
 		assert.deepEqual(indices(view.locations, batch), [0, 2, 4]);
 		const fork = view.fork();
@@ -940,10 +1148,10 @@ describe("TreeLocationResolver", () => {
 		const batch = captureGaps(sender, [1]);
 		sender.root.right.insertAtStart("x");
 		provider.synchronizeMessages();
-		const newer = sender.locations.capture([]);
+		const newer = sender.locations.captureNode(sender.root);
 		expectUnavailable(
 			receiver.locations.resolve(
-				eraseCapture({ ...capturedData(batch), revision: capturedData(newer).revision }),
+				eraseCapture({ ...capturedData(batch[0]), revision: capturedData(newer).revision }),
 			),
 			"invalid-location",
 		);

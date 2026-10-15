@@ -39,17 +39,17 @@ export const capturedTreeLocationSchema = Type.Union([
 ]);
 
 /**
- * Validate the envelope separately so malformed locations do not reject their siblings.
+ * Validate the envelope separately to distinguish unavailable revisions from malformed locations.
  */
-export const capturedTreeLocationsEnvelopeSchema = Type.Object({
+export const capturedTreeLocationEnvelopeSchema = Type.Object({
 	revision: revisionSchema,
-	locations: Type.Array(Type.Unknown()),
+	location: Type.Unknown(),
 });
 
 /** Complete encoding schema; decoding validates the envelope and entries separately. */
-export const capturedTreeLocationsSchema = Type.Object({
-	...capturedTreeLocationsEnvelopeSchema.properties,
-	locations: Type.Array(capturedTreeLocationSchema),
+export const capturedTreeLocationEncodingSchema = Type.Object({
+	...capturedTreeLocationEnvelopeSchema.properties,
+	location: capturedTreeLocationSchema,
 });
 
 /**
@@ -62,7 +62,6 @@ export const capturedTreeLocationsSchema = Type.Object({
  * Version, revision binding, root path, policy support, and historical bounds remain semantic checks.
  * Captures do not authenticate historical existence or sender identity.
  */
-export type CapturedTreeLocationsInternal = Static<typeof capturedTreeLocationsSchema>;
-export type CapturedTreeLocation = Static<typeof capturedTreeLocationSchema>;
+export type CapturedTreeLocationInternal = Static<typeof capturedTreeLocationEncodingSchema>;
 export type CapturedRevision = Static<typeof revisionSchema>;
 export type CapturedNodeReference = Static<typeof nodeReferenceSchema>;
