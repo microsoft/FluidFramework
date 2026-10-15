@@ -65,6 +65,8 @@ export {
 	createSchemaUpgrade,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
+export { validateSchemaHash } from "./schemaHash.js";
+export type { SchemaHasher } from "./schemaHash.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
 export {
 	type CommitRevision,
@@ -75,6 +77,8 @@ export {
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	computeViewSchemaHash,
+	computeSchemaHash,
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,
 	type SchemaCompatibilityStatus,

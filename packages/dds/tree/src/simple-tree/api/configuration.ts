@@ -33,6 +33,7 @@ import {
 } from "../toStoredSchema.js";
 import { createTreeSchema, type TreeSchema } from "../treeSchema.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { SchemaHasher } from "../schemaHash.js";
 
 /**
  * Options when constructing a tree view.
@@ -183,6 +184,26 @@ export interface ITreeViewConfigurationAlpha<
 	 * ```
 	 */
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
+
+	/**
+	 * Provides schema identity information to check initialization and upgrades.
+	 */
+	readonly schemaIdentity?: {
+		/**
+		 * The expected schema hash, computed with {@link computeViewSchemaHash}
+		 *
+		 * @remarks
+		 * Compute the hash during development and save it in application source.
+		 * During initialization or upgrade, SharedTree compares it with the hash of the
+		 * provided schema, computed by the provided `schemaHasher` function.
+		 * This check helps guard against unintended schema changes.
+		 */
+		readonly schemaHash: string;
+		/**
+		 * The separately imported {@link computeSchemaHash} function used to check `schemaHash`
+		 */
+		readonly schemaHasher: SchemaHasher;
+	};
 }
 
 /**
@@ -287,6 +308,11 @@ export class TreeViewConfigurationAlpha<
 	 */
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.schemaIdentity}
+	 */
+	public readonly schemaIdentity: ITreeViewConfigurationAlpha["schemaIdentity"];
+
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
@@ -295,6 +321,22 @@ export class TreeViewConfigurationAlpha<
 
 		this.stagedUpgradePolicy =
 			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
+		if (props.schemaIdentity !== undefined) {
+			const identity = props.schemaIdentity;
+			if (identity === null || typeof identity !== "object") {
+				throw new UsageError("schemaIdentity must be an object.");
+			}
+			if (typeof identity.schemaHash !== "string" || identity.schemaHash.length === 0) {
+				throw new UsageError("schemaIdentity.schemaHash must be a non-empty string.");
+			}
+			if (typeof identity.schemaHasher !== "function") {
+				throw new UsageError("schemaIdentity.schemaHasher must be a function.");
+			}
+			this.schemaIdentity = Object.freeze({
+				schemaHash: identity.schemaHash,
+				schemaHasher: identity.schemaHasher,
+			});
+		}
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root, this.stagedUpgradePolicy);
