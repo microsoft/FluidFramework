@@ -28,6 +28,7 @@ class CompactStatsPlugin {
 		compiler.hooks.done.tap("CompactStatsPlugin", (stats) => {
 			const statsJson = stats.toJson({
 				all: false,
+				assets: true,
 				chunks: true,
 				chunkModules: true,
 				entrypoints: true,
@@ -45,8 +46,16 @@ class CompactStatsPlugin {
 				entrypoints: Object.fromEntries(
 					Object.entries(statsJson.entrypoints ?? {}).map(([name, entrypoint]) => [
 						name,
-						{ chunks: entrypoint.chunks },
+						{
+							chunks: entrypoint.chunks,
+							assets: entrypoint.assets?.map((asset) =>
+								typeof asset === "string" ? asset : asset.name,
+							),
+						},
 					]),
+				),
+				assets: Object.fromEntries(
+					(statsJson.assets ?? []).map((asset) => [asset.name, asset.size]),
 				),
 				modules: compactModules(statsJson.modules),
 			};
@@ -201,7 +210,7 @@ const bundleAnalysisConfig = {
 
 // These full emitted-package probes make the analyzer's raw stats exceed Node's maximum string
 // length when included in the main compilation. Build them separately and retain only the module
-// reachability data needed by forestProviderBundles.spec.ts.
+// reachability data needed by the provider bundle regression tests.
 const forestProviderProbeConfig = {
 	name: "forest-provider-probes",
 	entry: {
@@ -209,6 +218,8 @@ const forestProviderProbeConfig = {
 		sharedTreeExpensiveDebugForest: "./src/sharedTreeExpensiveDebugForest",
 		sharedTreeOptimizedForest: "./src/sharedTreeOptimizedForest",
 		sharedTreeReferenceForest: "./src/sharedTreeReferenceForest",
+		sharedTreeRevertibleSupportDisabled: "./src/sharedTreeRevertibleSupportDisabled",
+		sharedTreeRevertibleSupportEnabled: "./src/sharedTreeRevertibleSupportEnabled",
 	},
 	mode: "production",
 	module: {

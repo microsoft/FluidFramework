@@ -43,6 +43,8 @@ import {
 import { initialize, initializerFromChunk } from "./schematizeTree.js";
 import { createViewableTreeAlpha } from "./viewableTree.js";
 import { buildConfiguredForest } from "./forestType.js";
+import type { RevertibleSupport } from "./revertibleSupport.js";
+import { RevertibleSupportEnabled } from "./revertibleSupportEnabled.js";
 import {
 	defaultSharedTreeOptions,
 	exportSimpleSchema,
@@ -77,6 +79,19 @@ export interface IndependentViewOptions
 	 * If not provided, a new one will be created.
 	 */
 	idCompressor?: IIdCompressor | undefined;
+
+	/**
+	 * Selects whether this tree supports creating and applying revertibles.
+	 *
+	 * @remarks
+	 * {@link RevertibleSupportDisabled} removes the runtime state and processing used for history
+	 * recovery. It does not exclude the enabled implementation from the bundle because
+	 * {@link createIndependentTreeViewAlpha} references {@link RevertibleSupportEnabled} as its
+	 * default.
+	 *
+	 * @defaultValue {@link RevertibleSupportEnabled}
+	 */
+	revertibleSupport?: RevertibleSupport | undefined;
 }
 
 /**
@@ -84,8 +99,20 @@ export interface IndependentViewOptions
  * @alpha
  */
 export type CreateIndependentTreeAlphaOptions = ForestOptions &
-	IndependentViewTelemetryOptions &
-	(
+	IndependentViewTelemetryOptions & {
+		/**
+		 * Selects whether this tree supports creating and applying revertibles.
+		 *
+		 * @remarks
+		 * {@link RevertibleSupportDisabled} removes the runtime state and processing used for history
+		 * recovery. It does not exclude the enabled implementation from the bundle because
+		 * {@link createIndependentTreeAlpha} references {@link RevertibleSupportEnabled} as its
+		 * default.
+		 *
+		 * @defaultValue {@link RevertibleSupportEnabled}
+		 */
+		revertibleSupport?: RevertibleSupport | undefined;
+	} & (
 		| (IndependentViewOptions & {
 				/**
 				 * Optional content for initializing the tree.
@@ -291,6 +318,7 @@ export function createIndependentTreeCheckout(
 	);
 
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
+		revertibleSupport: options?.revertibleSupport ?? RevertibleSupportEnabled,
 		forest,
 		schema: schemaRepository,
 		codecOptions: options,

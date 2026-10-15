@@ -36,6 +36,7 @@ import {
 	createTreeCheckout,
 	defaultSharedTreeOptions,
 	ForestTypeExpensiveDebug,
+	RevertibleSupportEnabled,
 	initialize,
 	initializerFromChunk,
 	SchematizingSimpleTreeView,
@@ -850,6 +851,7 @@ function independentInitializedViewInternal<const TSchema extends ImplicitFieldS
 	);
 
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
+		revertibleSupport: RevertibleSupportEnabled,
 		forest,
 		schema: schemaRepository,
 	});

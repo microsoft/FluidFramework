@@ -40,6 +40,8 @@ import {
 	createTreeCheckout,
 	type SharedTreeChange,
 	ForestTypeOptimized,
+	RevertibleSupportDisabled,
+	RevertibleSupportEnabled,
 } from "../../shared-tree/index.js";
 import {
 	createTransactionPostProcessor,
@@ -133,7 +135,10 @@ describe("sharedTreeView", () => {
 				testIdCompressor,
 				mintRevisionTag,
 				testRevisionTagCodec,
-				{ getFinalizedCommit: () => boundary },
+				{
+					revertibleSupport: RevertibleSupportEnabled,
+					getFinalizedCommit: () => boundary,
+				},
 			);
 			boundary = checkout.mainBranch.getHead();
 			const view = checkout.viewWith(config);
@@ -1589,6 +1594,66 @@ describe("sharedTreeView", () => {
 	describe("revertibles", () => {
 		const revertibleSchema = new SchemaFactory("revertibles");
 
+		function createDisabledView() {
+			const checkout = createTreeCheckout(
+				testIdCompressor,
+				mintRevisionTag,
+				testRevisionTagCodec,
+				{ revertibleSupport: RevertibleSupportDisabled },
+			);
+			return checkout.viewWith(new TreeViewConfiguration({ schema: revertibleSchema.number }));
+		}
+
+		it("disabled support omits factories for local changes", () => {
+			const view = createDisabledView();
+			view.initialize(1);
+			let changed = false;
+			view.events.on("changed", (metadata, getRevertible) => {
+				assert(metadata.isLocal);
+				assert.equal(metadata.getRevertible(), undefined);
+				assert.equal(getRevertible, undefined);
+				changed = true;
+			});
+
+			view.root = 2;
+
+			assert(changed);
+			assert.equal(view.branchHistory.getHead()?.revertTo, undefined);
+		});
+
+		it("disabled support is inherited by forks", () => {
+			const view = createDisabledView();
+			view.initialize(1);
+			const fork = view.checkout.fork().viewWith(view.config);
+			let changed = false;
+			fork.events.on("changed", (metadata, getRevertible) => {
+				assert(metadata.isLocal);
+				assert.equal(metadata.getRevertible(), undefined);
+				assert.equal(getRevertible, undefined);
+				changed = true;
+			});
+
+			fork.root = 2;
+			assert(changed);
+			assert.throws(
+				() => fork.revertTo("unused"),
+				validateUsageError("History recovery is disabled for this SharedTree."),
+			);
+		});
+
+		it("disabled support rejects rewinding", () => {
+			const view = createDisabledView();
+			view.initialize(1);
+			const revision = view.branchHistory.getHead()?.revision;
+			assert(revision !== undefined);
+			const fork = view.checkout.fork().viewWith(view.config);
+
+			assert.throws(
+				() => fork.rewindTo(revision),
+				validateUsageError("History recovery is disabled for this SharedTree."),
+			);
+		});
+
 		it("initialization events omit revertibles", () => {
 			const view = getView(new TreeViewConfiguration({ schema: revertibleSchema.number }));
 			const log: string[] = [];
@@ -2792,6 +2857,7 @@ function itView<
 			mintRevisionTag,
 			testRevisionTagCodec,
 			{
+				revertibleSupport: RevertibleSupportEnabled,
 				forest: buildTestForest({ additionalAsserts: true, schema, breaker }),
 				schema,
 			},

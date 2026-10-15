@@ -32,6 +32,7 @@ import {
 
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion } from "../../codec/index.js";
+import { configuredSharedTreeWithFeaturesAlpha } from "../../configuredSharedTreeWithFeatures.js";
 import {
 	CommitKind,
 	CommitOutcome,
@@ -64,6 +65,9 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	type ITreePrivate,
+	RevertibleSupportDisabled,
+	RevertibleSupportEnabled,
+	type SharedTreeOptions,
 	Tree,
 	TreeBeta,
 	type TreeCheckout,
@@ -154,6 +158,32 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
+	it("disables optional features omitted from explicit composition", () => {
+		const ExplicitSharedTree =
+			configuredSharedTreeWithFeaturesAlpha() as SharedObjectKindAlpha<ISharedTree> &
+				ISharedObjectKind<ISharedTree>;
+		const { trees } = new TestTreeProviderLite(1, ExplicitSharedTree.getFactory());
+		const view = asAlpha(
+			trees[0].viewWith(new TreeViewConfiguration({ schema: numberSchema })),
+		);
+		view.initialize(1);
+
+		assert.throws(
+			() => view.revertTo("unused"),
+			validateUsageError("History recovery is disabled for this SharedTree."),
+		);
+	});
+
+	it("does not allow caller options to override injected revertible support", () => {
+		const options: SharedTreeOptions = {
+			revertibleSupport: RevertibleSupportEnabled,
+		};
+
+		const resolved = resolveOptions(options, RevertibleSupportDisabled);
+
+		assert.equal(resolved.revertibleSupport, RevertibleSupportDisabled);
+	});
+
 	it("rejects compatibility versions before SharedTree 2.0", () => {
 		assert.throws(
 			() =>
@@ -3432,7 +3462,10 @@ describe("SharedTree", () => {
 				"based on a commit outside the collab window",
 			] as const) {
 				it(subCase, async () => {
-					const internalOption = resolveOptions({ enableSharedBranches: true });
+					const internalOption = resolveOptions(
+						{ enableSharedBranches: true },
+						RevertibleSupportEnabled,
+					);
 					const provider = await TestTreeProvider.create(
 						1,
 						SummarizeType.onDemand,

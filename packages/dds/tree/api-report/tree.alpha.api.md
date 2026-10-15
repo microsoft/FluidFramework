@@ -278,6 +278,9 @@ export function configuredSharedTreeAlpha(options: SharedTreeOptions): SharedObj
 export function configuredSharedTreeBeta(options: SharedTreeOptionsBeta): SharedObjectKind<ITree>;
 
 // @alpha
+export function configuredSharedTreeWithFeaturesAlpha(options?: SharedTreeFeatureOptions): SharedObjectKind<ITree>;
+
+// @alpha
 export const contentSchemaSymbol: unique symbol;
 
 // @alpha
@@ -290,7 +293,9 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view:
 export function createIndependentTreeAlpha(options?: CreateIndependentTreeAlphaOptions): ViewableTreeAlpha;
 
 // @alpha
-export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & ((IndependentViewOptions & {
+export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & {
+    revertibleSupport?: RevertibleSupport | undefined;
+} & ((IndependentViewOptions & {
     content?: never;
 }) | (ICodecOptions & {
     content: ViewContent;
@@ -657,6 +662,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(confi
 // @alpha @input
 export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions>, IndependentViewTelemetryOptions {
     idCompressor?: IIdCompressor | undefined;
+    revertibleSupport?: RevertibleSupport | undefined;
 }
 
 // @alpha @input
@@ -1216,6 +1222,16 @@ export enum RevertibleStatus {
 }
 
 // @alpha @sealed
+export interface RevertibleSupport extends ErasedType<"RevertibleSupport"> {
+}
+
+// @alpha
+export const RevertibleSupportDisabled: RevertibleSupport;
+
+// @alpha
+export const RevertibleSupportEnabled: RevertibleSupport;
+
+// @alpha @sealed
 export interface RevertOptionsAlpha {
     readonly customMetadata?: JsonCompatibleReadOnlyObject;
     readonly dispose?: boolean;
@@ -1482,6 +1498,11 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
 
 // @alpha @input
+export interface SharedTreeFeatureOptions extends SharedTreeOptions {
+    readonly revertibleSupport?: RevertibleSupport;
+}
+
+// @alpha @input
 export interface SharedTreeFormatOptions {
     treeEncodeType: TreeCompressionStrategy;
 }
@@ -1490,6 +1511,7 @@ export interface SharedTreeFormatOptions {
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableSharedBranches?: boolean;
     readonly retainHistory?: boolean;
+    readonly revertibleSupport?: RevertibleSupport;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
     readonly validateCommitsOnFirstSubmission?: boolean;
     readonly validateRebasedCommitsBeforeResubmission?: boolean;
