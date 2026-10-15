@@ -693,7 +693,7 @@ function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 const throws = (): never => {
 	throw new Error("Unexpected call inside dummy chunk");
 };
-function hollowOutChunk(chunk: TreeChunk): TreeChunk {
+function makeDummyChunk(chunk: TreeChunk): TreeChunk {
 	return {
 		topLevelLength: chunk.topLevelLength,
 		cursor: throws,
@@ -703,7 +703,14 @@ function hollowOutChunk(chunk: TreeChunk): TreeChunk {
 	};
 }
 
-function normalizeChangeset(
+/**
+ * Normalizes a modular changeset by remapping node and field IDs and replacing tree chunks with dummy objects.
+ * @param change - The modular changeset to normalize.
+ * @param fieldKinds - A map of field kind identifiers to their corresponding flex field kinds.
+ * @param dropRevertConstraint - Whether to drop revert constraints.
+ * @returns The normalized modular changeset.
+ */
+export function normalizeChangesetWithDummyChunks(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	dropRevertConstraint: boolean,
@@ -801,10 +808,10 @@ function normalizeChangeset(
 	};
 	// The TreeChunk objects need to be deep cloned to avoid comparison issues on reference counting
 	if (change.builds !== undefined) {
-		normal.builds = brand(change.builds.mapValues(hollowOutChunk));
+		normal.builds = brand(change.builds.mapValues(makeDummyChunk));
 	}
 	if (change.refreshers !== undefined) {
-		normal.refreshers = brand(change.refreshers.mapValues(hollowOutChunk));
+		normal.refreshers = brand(change.refreshers.mapValues(makeDummyChunk));
 	}
 
 	if (dropRevertConstraint) {
@@ -819,8 +826,16 @@ export function areEquivalent(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	ignoreRevertConstraint: boolean = true,
 ): boolean {
-	const normalized1 = normalizeChangeset(change1, fieldKinds, ignoreRevertConstraint);
-	const normalized2 = normalizeChangeset(change2, fieldKinds, ignoreRevertConstraint);
+	const normalized1 = normalizeChangesetWithDummyChunks(
+		change1,
+		fieldKinds,
+		ignoreRevertConstraint,
+	);
+	const normalized2 = normalizeChangesetWithDummyChunks(
+		change2,
+		fieldKinds,
+		ignoreRevertConstraint,
+	);
 	const diff = merge(normalized1, normalized2, (item: object) =>
 		item instanceof BTree ? item.toArray() : item,
 	);
