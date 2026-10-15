@@ -16,6 +16,8 @@ import {
 	memoryUseOfValue,
 	ValueType,
 	type CollectedData,
+	currentBenchmarkMode,
+	BenchmarkMode,
 } from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -47,7 +49,6 @@ import {
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
-	type TreeNode,
 	type TreeView,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
@@ -125,10 +126,10 @@ describe("TextDomain benchmarks", () => {
 		 * A deeper text node results in a longer path in the generated operation, which we expect to increase op size.
 		 */
 		const depthConfigurations = [
-			{ depth: 1, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
-			{ depth: 5, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
-			{ depth: 25, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
-			{ depth: 125, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: false },
+			{ depth: 1, runInCorrectnessMode: true },
+			{ depth: 5, runInCorrectnessMode: true },
+			{ depth: 25, runInCorrectnessMode: true },
+			{ depth: 125, runInCorrectnessMode: false },
 		] as const;
 
 		/**
@@ -137,48 +138,40 @@ describe("TextDomain benchmarks", () => {
 		const characterCountConfigurations = [
 			{
 				characterCount: 1,
-				benchmarkType: BenchmarkType.Measurement,
 				runInCorrectnessMode: true,
 			},
 			{
 				characterCount: 10,
-				benchmarkType: BenchmarkType.Perspective,
 				runInCorrectnessMode: true,
 			},
 			{
 				characterCount: 100,
-				benchmarkType: BenchmarkType.Measurement,
 				runInCorrectnessMode: true,
 			},
 			{
 				characterCount: 1000,
-				benchmarkType: BenchmarkType.Perspective,
 				runInCorrectnessMode: false,
 			},
 		] as const;
 
 		/**
-		 * Key length variants to test. Each entry specifies the key string to use at runtime.
+		 * Property key lengths to test.
 		 */
 		const keyConfigurations = [
 			{
 				keyLength: 1,
-				benchmarkType: BenchmarkType.Measurement,
 				runInCorrectnessMode: true,
 			},
 			{
 				keyLength: 10,
-				benchmarkType: BenchmarkType.Perspective,
 				runInCorrectnessMode: true,
 			},
 			{
 				keyLength: 100,
-				benchmarkType: BenchmarkType.Measurement,
 				runInCorrectnessMode: true,
 			},
 			{
 				keyLength: 1000,
-				benchmarkType: BenchmarkType.Perspective,
 				runInCorrectnessMode: false,
 			},
 		] as const;
@@ -494,22 +487,18 @@ describe("TextDomain benchmarks", () => {
 		const testConfigurations = [
 			{
 				stringLength: 1,
-				benchmarkType: BenchmarkType.Measurement,
 				runInCorrectnessMode: true,
 			},
 			{
 				stringLength: 10,
-				benchmarkType: BenchmarkType.Perspective,
 				runInCorrectnessMode: true,
 			},
 			{
 				stringLength: 100,
-				benchmarkType: BenchmarkType.Measurement,
 				runInCorrectnessMode: true,
 			},
 			{
 				stringLength: 1000,
-				benchmarkType: BenchmarkType.Perspective,
 				runInCorrectnessMode: false,
 			},
 		] as const;
@@ -562,7 +551,8 @@ describe("TextDomain benchmarks", () => {
 		// TODO: formatted text benchmarks.
 	});
 
-	// Testing Suite that focuses on whole-document performance/memory measurements for text at varying doc sizes.
+	// Whole-document benchmarks vary document size and forest implementation.
+	// Most apply to both plain and formatted text.
 	describe("TextDomain whole-document benchmarks", () => {
 		/** Upper bound on each duration benchmark's wall-clock so the full sweep stays tractable. */
 		const maxBenchmarkDurationSeconds = 5;
@@ -571,11 +561,13 @@ describe("TextDomain benchmarks", () => {
 		const documentSizeConfigurations = [
 			{ size: 10, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
 			{ size: 100, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
-			{ size: 1000, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
+			{ size: 1000, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: false },
 			{ size: 10000, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: false },
 		] as const;
 		const filteredDocumentSizeConfigurations = documentSizeConfigurations.filter(
-			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
+			(configuration) =>
+				currentBenchmarkMode === BenchmarkMode.Performance ||
+				configuration.runInCorrectnessMode,
 		);
 
 		// #region Document construction helpers
@@ -586,30 +578,19 @@ describe("TextDomain benchmarks", () => {
 		});
 
 		/**
-		 * The subset of the text-node API the whole-document benchmarks use. Both {@link PlainText.Tree}
-		 * and {@link FormattedTextTest.Tree} share these, so the read/edit helpers below work
-		 * against either domain (and against an unhydrated node).
+		 * A plain or formatted text root, hydrated or unhydrated.
 		 */
-		type TextRoot = TreeNode & {
-			insertAt(index: number, additionalCharacters: string): void;
-			removeRange(start: number | undefined, end: number | undefined): void;
-			characterCount(): number;
-			fullString(): string;
-		};
+		type TextRoot = PlainText.Tree | FormattedTextTest.Tree;
 
 		/**
-		 * A retained text-document view. Formatted and plain have different node schemas, so the view's
-		 * schema parameter is erased to the common handle here; what they share and all the benchmarks use
-		 * is a {@link TextRoot} at the root. Narrowing `root` to `TextRoot` lets the benchmarks read/edit the
-		 * document without a per-access cast.
+		 * A common view type for accessing the {@link TextRoot} of either text implementation.
+		 * The benchmarks do not use this type to initialize or replace the root.
 		 */
-		type TextDocumentView = TreeView<ImplicitFieldSchema> & { readonly root: TextRoot };
+		type TextDocumentView = TreeView<typeof PlainText.Tree | typeof FormattedTextTest.Tree>;
 
 		/**
-		 * Reaches the forest backing a view. The view is a `SchematizingSimpleTreeView` whose `checkout`
-		 * exposes the `IForestSubscription`. This is an internal coupling, but it lets the forest-footprint
-		 * benchmark return the forest alone (dropping the view and checkout) so only forest storage is
-		 * measured.
+		 * Gets the forest through the view's internal checkout.
+		 * The forest-footprint benchmark retains only the forest, not the view or checkout.
 		 */
 		function getForestOf(view: object): IForestSubscription {
 			return (view as { readonly checkout: { readonly forest: IForestSubscription } }).checkout
@@ -617,25 +598,24 @@ describe("TextDomain benchmarks", () => {
 		}
 
 		/**
-		 * Builds an independent text document of `content` on the optimized chunked forest, returning the
-		 * view (which retains the checkout and forest). Its schema is erased to {@link TextDocumentView} — the
-		 * common handle whose root is a {@link TextRoot} — so the two domains share one `buildDocument`
-		 * signature. The single unsafe cast in this whole flow lives here, at the construction boundary.
+		 * Builds an independent text document on the specified forest.
+		 * The returned view retains the checkout and forest.
 		 */
-		function buildTextView<TSchema extends ImplicitFieldSchema>(
+		function buildTextView<
+			TSchema extends typeof PlainText.Tree | typeof FormattedTextTest.Tree,
+		>(
 			viewConfiguration: TreeViewConfiguration<TSchema>,
 			content: InsertableTreeFieldFromImplicitField<TSchema>,
 			forest: ForestType,
 		): TextDocumentView {
 			const view = createIndependentTreeAlpha({ forest }).viewWith(viewConfiguration);
 			view.initialize(content);
-			// `viewWith` types the view over the caller's `TSchema`, but the two domains use different node
-			// schemas whose nodes both implement the `TextRoot` editing surface. The compiler can't prove
-			// that for the open generic, so erase through `unknown` to the shared `TextDocumentView` handle.
+			// TreeView is invariant in its schema.
+			// The benchmarks only need the root's common API after schema-specific initialization.
 			return view as unknown as TextDocumentView;
 		}
 
-		/** The view's root node, typed as the shared {@link TextRoot} editing surface used by both domains. */
+		/** Gets the view's plain or formatted text root. */
 		function getRootOf(view: TextDocumentView): TextRoot {
 			return view.root;
 		}
@@ -677,12 +657,11 @@ describe("TextDomain benchmarks", () => {
 		}
 
 		/**
-		 * A text domain to benchmark: a name plus factories that build a `size` character document in each
-		 * of the forms the whole-document benchmarks need.
+		 * A text implementation paired with a forest, with factories for the whole-document benchmarks.
 		 */
-		interface TextDomain {
+		interface TextBenchmarkVariant {
 			readonly name: string;
-			/** The forest this domain's documents are built on (used by the load benchmark's factory). */
+			/** The forest used for document construction and loading. */
 			readonly forest: ForestType;
 			/** Builds a hydrated document of `size` characters, whose root is a {@link TextRoot}. */
 			buildDocument(size: number): TextDocumentView;
@@ -700,15 +679,14 @@ describe("TextDomain benchmarks", () => {
 			};
 		}
 
-		// The forests swept: the optimized "chunked" forest the app ships with, and the reference
-		// "ObjectForest". Each text domain is built once per forest so the two can be compared side by side.
-		const forests = [
+		/** Forest implementations tested with both plain and formatted text. */
+		const forestConfigurations = [
 			{ name: "chunked", forest: ForestTypeOptimized },
 			{ name: "object", forest: ForestTypeReference },
 		] as const;
 
-		const textDomains: readonly TextDomain[] = forests.flatMap(
-			({ name: forestName, forest }) => [
+		const textBenchmarkVariants: readonly TextBenchmarkVariant[] =
+			forestConfigurations.flatMap(({ name: forestName, forest }) => [
 				{
 					name: `plain (${forestName})`,
 					forest,
@@ -726,10 +704,7 @@ describe("TextDomain benchmarks", () => {
 								forest,
 							),
 						),
-					// The concrete schema node implements the `TextRoot` surface, but the compiler can't see it
-					// as that structural type, so erase through `unknown`.
-					makeUnhydratedRoot: (size) =>
-						PlainText.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+					makeUnhydratedRoot: (size) => PlainText.Tree.fromString(makeTestString(size)),
 					attachSummary: (size) =>
 						getTextAttachSummary(
 							plainTextViewConfiguration,
@@ -754,10 +729,8 @@ describe("TextDomain benchmarks", () => {
 								forest,
 							),
 						),
-					// The concrete schema node implements the `TextRoot` surface, but the compiler can't see it
-					// as that structural type, so erase through `unknown`.
 					makeUnhydratedRoot: (size) =>
-						FormattedTextTest.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+						FormattedTextTest.Tree.fromString(makeTestString(size)),
 					attachSummary: (size) =>
 						getTextAttachSummary(
 							formattedTextViewConfiguration,
@@ -765,8 +738,7 @@ describe("TextDomain benchmarks", () => {
 							forest,
 						),
 				},
-			],
-		);
+			]);
 
 		/**
 		 * Types `count` single characters at the middle of the document. One `insertAt` per character,
@@ -788,14 +760,14 @@ describe("TextDomain benchmarks", () => {
 
 		// The serialized attach-summary byte size of a document
 		describe("Summary size", () => {
-			for (const domain of textDomains) {
-				describe(domain.name, () => {
+			for (const variant of textBenchmarkVariants) {
+				describe(variant.name, () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 						benchmarkIt({
 							type: benchmarkType,
 							title: `summary size of ${size}-character document`,
 							run: async () => {
-								const { summary } = domain.attachSummary(size);
+								const { summary } = variant.attachSummary(size);
 								const summarySize = IsoBuffer.from(JSON.stringify(summary)).byteLength;
 								return [
 									{
@@ -817,14 +789,14 @@ describe("TextDomain benchmarks", () => {
 		// the memory uniquely retained by the returned view, which transitively holds the checkout, forest,
 		// and simple-tree nodes.
 		describe("Memory use of fresh document", () => {
-			for (const domain of textDomains) {
-				describe(domain.name, () => {
+			for (const variant of textBenchmarkVariants) {
+				describe(variant.name, () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 						benchmarkIt({
 							type: benchmarkType,
 							title: `memory of ${size}-character document`,
 							...benchmarkMemoryUse({
-								...memoryUseOfValue(() => domain.buildDocument(size)),
+								...memoryUseOfValue(() => variant.buildDocument(size)),
 								...iterationSettings,
 							}),
 						});
@@ -833,17 +805,16 @@ describe("TextDomain benchmarks", () => {
 			}
 		});
 
-		// A forest only memory footprint. Comparing to the results of the full memory footprint from the test
-		// above will show how much of the memory footprint is just the forest
+		// Compare the forest's retained memory with the whole document's retained memory above.
 		describe("Forest footprint", () => {
-			for (const domain of textDomains) {
-				describe(domain.name, () => {
+			for (const variant of textBenchmarkVariants) {
+				describe(variant.name, () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 						benchmarkIt({
 							type: benchmarkType,
 							title: `forest footprint of ${size}-character document`,
 							...benchmarkMemoryUse({
-								...memoryUseOfValue(() => domain.buildForest(size)),
+								...memoryUseOfValue(() => variant.buildForest(size)),
 								...iterationSettings,
 							}),
 						});
@@ -856,15 +827,15 @@ describe("TextDomain benchmarks", () => {
 		// the whole document. The document is built once and read repeatedly, so this measures that repeated
 		// read in isolation, excluding the build cost.
 		describe("End-to-end read (fullString)", () => {
-			for (const domain of textDomains) {
-				describe(domain.name, () => {
+			for (const variant of textBenchmarkVariants) {
+				describe(variant.name, () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 						benchmarkIt({
 							type: benchmarkType,
 							title: `fullString of ${size}-character document`,
 							...benchmarkDurationBatchless({
 								benchmarkFn: (state) => {
-									const root = getRootOf(domain.buildDocument(size));
+									const root = getRootOf(variant.buildDocument(size));
 									let running: boolean;
 									do {
 										running = state.time(() => {
@@ -881,19 +852,18 @@ describe("TextDomain benchmarks", () => {
 		});
 
 		// Time per keystroke when typing into the middle of a document of N characters. The document is built
-		// once; each timed sample types one character and an untimed remove restores the document to `size`,
-		// and the document is rebuilt every `size` edits to flush the removed-roots repair the removes
-		// accumulate.
+		// once; each timed sample types one character and an untimed remove restores the document to `size`.
+		// Rebuild every `size` edits to discard the removed roots retained for undo.
 		describe("End-to-end edit (typing)", () => {
-			for (const domain of textDomains) {
-				describe(domain.name, () => {
+			for (const variant of textBenchmarkVariants) {
+				describe(variant.name, () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 						benchmarkIt({
 							type: benchmarkType,
 							title: `type 1 character into ${size}-character document`,
 							...benchmarkDurationBatchless({
 								benchmarkFn: (state) => {
-									let root = getRootOf(domain.buildDocument(size));
+									let root = getRootOf(variant.buildDocument(size));
 									let editsSinceBuild = 0;
 									let running: boolean;
 									do {
@@ -905,7 +875,7 @@ describe("TextDomain benchmarks", () => {
 										root.removeRange(typedIndex, typedIndex + 1);
 										if (++editsSinceBuild >= size) {
 											// Rebuild to flush the removed roots the restores accumulate.
-											root = getRootOf(domain.buildDocument(size));
+											root = getRootOf(variant.buildDocument(size));
 											editsSinceBuild = 0;
 										}
 									} while (running);
@@ -918,11 +888,62 @@ describe("TextDomain benchmarks", () => {
 			}
 		});
 
-		// Time to construct the tree a view renders over and read its content, in the two backing states a
-		// react view can encounter: an unhydrated node versus a hydrated document.
+		// Only formatted text supports formatRange.
+		// Each timed sample toggles bold across the whole document so every sample changes the formatting.
+		// Rebuild the document periodically, outside the timed region, to bound its edit history.
+		describe("End-to-end edit (formatRange)", () => {
+			/** Samples between document rebuilds, to bound the edit log the reused document accumulates. */
+			const samplesPerRebuild = 16;
+			const formattedTextVariants = textBenchmarkVariants.filter((variant) =>
+				variant.name.startsWith("formatted"),
+			);
+			for (const variant of formattedTextVariants) {
+				describe(variant.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `formatRange over ${size}-character document`,
+							...benchmarkDurationBatchless({
+								benchmarkFn: (state) => {
+									const buildRoot = () => {
+										const formattedRoot = variant.buildDocument(size).root;
+										assert(Tree.is(formattedRoot, FormattedTextTest.Tree));
+										return formattedRoot;
+									};
+									let root = buildRoot();
+
+									let bold = true;
+									let samplesSinceBuild = 0;
+									let running: boolean;
+									do {
+										running = state.time(() => {
+											root.formatRange(undefined, undefined, { bold });
+										});
+										bold = !bold;
+										if (++samplesSinceBuild >= samplesPerRebuild) {
+											root = buildRoot();
+											bold = true;
+											samplesSinceBuild = 0;
+										}
+									} while (running);
+								},
+								maxBenchmarkDurationSeconds,
+								// The largest size of these tests is quite slow but is realistic and needs to be optimized.
+								// As the scaling for chunked forest is showing to be worse than linear with respect to string length,
+								// Keeping this test is valuable, but slow, so save some time with a reduced minimum sample count.
+								// TODO: optimize this scenario, and remove this reduced sample count setting.
+								minSampleCount: 3,
+							}),
+						});
+					}
+				});
+			}
+		});
+
+		// Time construction and fullString together, for an unhydrated node or a hydrated document.
 		describe("View hydration", () => {
-			for (const domain of textDomains) {
-				describe(domain.name, () => {
+			for (const variant of textBenchmarkVariants) {
+				describe(variant.name, () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 						benchmarkIt({
 							type: benchmarkType,
@@ -932,7 +953,7 @@ describe("TextDomain benchmarks", () => {
 									let running: boolean;
 									do {
 										running = state.time(() => {
-											const root = domain.makeUnhydratedRoot(size);
+											const root = variant.makeUnhydratedRoot(size);
 											root.fullString();
 										});
 									} while (running);
@@ -949,7 +970,7 @@ describe("TextDomain benchmarks", () => {
 									let running: boolean;
 									do {
 										running = state.time(() => {
-											getRootOf(domain.buildDocument(size)).fullString();
+											getRootOf(variant.buildDocument(size)).fullString();
 										});
 									} while (running);
 								},
@@ -962,15 +983,15 @@ describe("TextDomain benchmarks", () => {
 		});
 
 		describe("Load time from summary", () => {
-			for (const domain of textDomains) {
-				describe(domain.name, () => {
+			for (const variant of textBenchmarkVariants) {
+				describe(variant.name, () => {
 					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
 						benchmarkIt({
 							type: benchmarkType,
 							title: `load ${size}-character document from summary`,
 							...benchmarkDuration({
 								benchmarkFnCustom: async (state) => {
-									const { summary, idCompressor } = domain.attachSummary(size);
+									const { summary, idCompressor } = variant.attachSummary(size);
 									const summaryTree = convertSummaryTreeToITree(summary);
 									await state.timeAllBatchesAsync(async () => {
 										const services: IChannelServices = {
@@ -980,11 +1001,11 @@ describe("TextDomain benchmarks", () => {
 											),
 											objectStorage: new MockStorage(summaryTree),
 										};
-										// Load with the same compressor that produced the summary, on the domain's forest.
+										// Load with the same compressor and forest type used to produce the summary.
 										const datastoreRuntime = new MockFluidDataStoreRuntime({
 											idCompressor,
 										});
-										const factory = getTreeFactory(domain.forest);
+										const factory = getTreeFactory(variant.forest);
 										await factory.load(datastoreRuntime, "test", services, factory.attributes);
 									});
 								},
