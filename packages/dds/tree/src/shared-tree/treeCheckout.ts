@@ -700,6 +700,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public getLocationRevisionSource(): LocationRevisionSource | undefined {
+		this.editLock.checkUnlocked("Capturing or resolving locations");
 		return this.locationRevisionSource?.();
 	}
 

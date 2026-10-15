@@ -178,6 +178,7 @@ export interface TreeLocationResolver {
 	 * - The main view must have a sequenced revision and no pending local edits.
 	 * Wait for local edits to be acknowledged before calling this method.
 	 * - No transaction may be open, including a transaction that has not made any edits.
+	 * - Calls from change-event callbacks are not supported, including callbacks raised after a batch has been applied.
 	 * - Node locations require SimpleTree nodes; primitive leaf values cannot identify a particular occurrence.
 	 * Sequence locations require array nodes and count array elements, not arbitrary text offsets.
 	 *
@@ -229,9 +230,10 @@ export interface TreeLocationResolver {
 	 * @param capture - The opaque presence data produced by the sender's capture.
 	 * @returns The local location or an explicit unavailable result.
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} on a view other than the main view of an attached SharedTree,
-	 * during a transaction, after disposal, or if the receiving view cannot view the current stored schema.
+	 * during a transaction or change-event callback, after disposal, or if the receiving view cannot view the current stored schema.
 	 * @remarks
 	 * Unlike capture, resolution supports pending local edits on the main view.
+	 * Calls from change-event callbacks are not supported, including callbacks raised after a batch has been applied.
 	 * Not-yet-received, expired, or wrong-context revisions return `revision-unavailable`; these are not usage errors.
 	 * Structural validation follows SharedTree's configured JSON validator.
 	 * When validation is enabled (i.e. a non-no-op JSON validator is configured), malformed envelopes return `revision-unavailable` and malformed locations return `invalid-location`.

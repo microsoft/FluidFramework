@@ -48,10 +48,8 @@ const selectedNode = view.locations.captureNode(selectedImage);
 ```
 
 `capture` and `resolve` accept either one location or an array and return the corresponding single result or array.
-The array overloads have identical per-location semantics and are more performant for many locations because they share setup and, for captures from the same revision, replay work.
-Captured locations can be combined into arrays even when they come from different calls or revisions.
+The array overloads have identical per-location semantics and are more performant for many locations captured from the same revision.
 
-Indices count array elements; editors must convert other coordinate units.
 Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
 Their representation is hidden with `ErasedType`; applications should transmit them unchanged (but are free to
 nest them within other presence data).

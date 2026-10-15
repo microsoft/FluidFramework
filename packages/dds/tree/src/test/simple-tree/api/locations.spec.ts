@@ -130,6 +130,70 @@ function expectUnavailable(
 }
 
 describe("TreeLocationResolver", () => {
+	for (const event of ["changed", "afterBatch"] as const) {
+		it(`rejects capture and resolution during remote ${event} callbacks`, () => {
+			class Arrays extends sf.array("EventArrays", Text) {}
+			const provider = new TestTreeProviderLite(2);
+			const views = provider.trees.map((tree) =>
+				tree.kernel.viewWith(new TreeViewConfiguration({ schema: Arrays })),
+			);
+			const [sender, receiver] = views;
+			sender.initialize([["a"], ["b"]]);
+			provider.synchronizeMessages();
+			const checkout = provider.trees[1].kernel.checkout;
+			const node = receiver.root[0];
+			const resolver = receiver.locations;
+			const captured = resolver.captureNode(node);
+			let callbacks = 0;
+			const check = (): void => {
+				callbacks++;
+				assert.deepEqual(
+					receiver.root.map((array) => array.join("")),
+					event === "changed" ? ["a", "b"] : ["x", "a", "b"],
+				);
+				for (const operation of [
+					() => resolver.capture({ kind: "node", node }),
+					() => resolver.capture([{ kind: "node", node }]),
+					() => resolver.captureNode(node),
+					() => resolver.captureGap(node, 0),
+					() => resolver.resolve(captured),
+					() => resolver.resolve([captured]),
+				]) {
+					assert.throws(
+						operation,
+						validateUsageError(
+							/Capturing or resolving locations is forbidden during a change event callback/,
+						),
+					);
+				}
+			};
+			const off =
+				event === "changed"
+					? receiver.events.on("changed", (metadata) => {
+							if (!metadata.isLocal) {
+								check();
+							}
+						})
+					: checkout.events.on("afterBatch", check);
+			// The branch head advances before "changed", but the forest still has the old array indices.
+			sender.root.insertAtStart(new Text(["x"]));
+			provider.synchronizeMessages();
+			off();
+			assert.equal(callbacks, 1);
+			assert.equal(receiver.root[1], node);
+			assert.deepEqual(resolver.resolve(captured), {
+				status: "resolved",
+				location: { kind: "node", node },
+			});
+			assert.deepEqual(
+				resolver.resolve(resolver.captureNode(node)),
+				resolver.resolve(captured),
+			);
+			sender.dispose();
+			receiver.dispose();
+		});
+	}
+
 	it("captures and resolves single locations with the same semantics as arrays", () => {
 		const { views } = setup();
 		const [sender, receiver] = views;
