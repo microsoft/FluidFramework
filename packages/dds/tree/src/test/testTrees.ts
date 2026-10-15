@@ -69,6 +69,8 @@ import { brand, Breakable } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FormattedTextTest } from "./text/formattedTextTest.js";
 import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
 
 interface NamedCase {
@@ -457,6 +459,7 @@ export const testSchema: readonly TestSimpleTreeSchema[] = [
 	{ name: "stagedOptionalRoot", schema: stagedOptionalRoot, ambiguous: false },
 	{ name: "nestedStagedOptional", schema: NestedStagedOptional, ambiguous: false },
 	{ name: "nestedMultiStage", schema: NestedMultiStage, ambiguous: false },
+	{ name: "formattedText", schema: FormattedTextTest.Tree, ambiguous: true },
 ];
 
 /**
@@ -529,6 +532,26 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 		{ b: null, c: null },
 		false,
 	),
+	testSimpleTree(
+		"formatted-text",
+		FormattedTextTest.Tree,
+		() => {
+			const text = FormattedTextTest.Tree.fromString("Hello, world!");
+			text.insertAt(text.characterCount(), [
+				new FormattedTextTest.StringLineAtom({
+					tag: FormattedTextTest.LineTag("h1"),
+					indent: 0,
+				}),
+			]);
+			text.insertAt(text.characterCount(), "This is formatted text.", {
+				bold: true,
+				size: 14,
+				font: "Courier",
+			});
+			return text;
+		},
+		true,
+	),
 ];
 
 /**
@@ -537,6 +560,15 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
  */
 export const testTrees: readonly TestTree[] = [
 	...testSimpleTrees.map(convertSimpleTreeTest),
+	// Ambiguous schema with unambiguous content, which testSimpleTrees cannot express.
+	// Identical characters with identical formatting.
+	// Field batch encoding does not yet produce uniform chunks, so this currently encodes like any other formatted text.
+	// It exists to cover uniform-chunk encoding once field batches support it.
+	convertSimpleTreeTest(
+		testSimpleTree("formatted-text-uniform", FormattedTextTest.Tree, () =>
+			FormattedTextTest.Tree.fromString("a".repeat(20)),
+		),
+	),
 	test(
 		"numericSequence",
 		{

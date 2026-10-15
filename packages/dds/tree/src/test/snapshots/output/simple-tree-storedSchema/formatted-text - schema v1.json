@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.boolean": {
+      "leaf": 2
+    },
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "com.fluidframework.text.formatted.StringTextAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray": {
+      "object": {
+        "": {
+          "kind": "Sequence",
+          "types": [
+            "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.StringTextAtom",
+            "test.FormattedTextTest.StringLineAtom"
+          ]
+        },
+        "format": {
+          "kind": "Value",
+          "types": [
+            "test.FormattedTextTest.CharacterFormat"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<test.FormattedTextTest>.Text": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray"
+          ]
+        }
+      }
+    },
+    "test.FormattedTextTest.CharacterFormat": {
+      "object": {
+        "bold": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        },
+        "font": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        },
+        "size": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        }
+      }
+    },
+    "test.FormattedTextTest.StringLineAtom": {
+      "object": {
+        "indent": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "tag": {
+          "kind": "Value",
+          "types": [
+            "test.FormattedTextTest.lineTag.h1",
+            "test.FormattedTextTest.lineTag.h2"
+          ]
+        }
+      }
+    },
+    "test.FormattedTextTest.lineTag.h1": {
+      "object": {}
+    },
+    "test.FormattedTextTest.lineTag.h2": {
+      "object": {}
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.text.formatted<test.FormattedTextTest>.Text"
+    ]
+  }
+}

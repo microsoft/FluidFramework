@@ -1,0 +1,319 @@
+{
+  "version": 1,
+  "identifiers": [
+    ""
+  ],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringTextAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.string",
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<test.FormattedTextTest>.Text",
+        "value": false,
+        "fields": [
+          [
+            0,
+            7
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.FormattedTextTest.StringLineAtom",
+        "value": false,
+        "fields": [
+          [
+            "tag",
+            1
+          ],
+          [
+            "indent",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.FormattedTextTest.lineTag.h1",
+        "value": false
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<test.FormattedTextTest>.StringArray",
+        "value": false,
+        "fields": [
+          [
+            0,
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "a": 9
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted<test.FormattedTextTest>.StringAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            1
+          ],
+          [
+            "format",
+            10
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.FormattedTextTest.CharacterFormat",
+        "value": false,
+        "fields": [
+          [
+            "bold",
+            11
+          ],
+          [
+            "size",
+            2
+          ],
+          [
+            "font",
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.boolean",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      4,
+      [
+        0,
+        "H",
+        false,
+        12,
+        "Arial",
+        0,
+        "e",
+        false,
+        12,
+        "Arial",
+        0,
+        "l",
+        false,
+        12,
+        "Arial",
+        0,
+        "l",
+        false,
+        12,
+        "Arial",
+        0,
+        "o",
+        false,
+        12,
+        "Arial",
+        0,
+        ",",
+        false,
+        12,
+        "Arial",
+        0,
+        " ",
+        false,
+        12,
+        "Arial",
+        0,
+        "w",
+        false,
+        12,
+        "Arial",
+        0,
+        "o",
+        false,
+        12,
+        "Arial",
+        0,
+        "r",
+        false,
+        12,
+        "Arial",
+        0,
+        "l",
+        false,
+        12,
+        "Arial",
+        0,
+        "d",
+        false,
+        12,
+        "Arial",
+        0,
+        "!",
+        false,
+        12,
+        "Arial",
+        5,
+        6,
+        0,
+        false,
+        12,
+        "Arial",
+        0,
+        "T",
+        true,
+        14,
+        "Courier",
+        0,
+        "h",
+        true,
+        14,
+        "Courier",
+        0,
+        "i",
+        true,
+        14,
+        "Courier",
+        0,
+        "s",
+        true,
+        14,
+        "Courier",
+        0,
+        " ",
+        true,
+        14,
+        "Courier",
+        0,
+        "i",
+        true,
+        14,
+        "Courier",
+        0,
+        "s",
+        true,
+        14,
+        "Courier",
+        0,
+        " ",
+        true,
+        14,
+        "Courier",
+        0,
+        "f",
+        true,
+        14,
+        "Courier",
+        0,
+        "o",
+        true,
+        14,
+        "Courier",
+        0,
+        "r",
+        true,
+        14,
+        "Courier",
+        0,
+        "m",
+        true,
+        14,
+        "Courier",
+        0,
+        "a",
+        true,
+        14,
+        "Courier",
+        0,
+        "t",
+        true,
+        14,
+        "Courier",
+        0,
+        "t",
+        true,
+        14,
+        "Courier",
+        0,
+        "e",
+        true,
+        14,
+        "Courier",
+        0,
+        "d",
+        true,
+        14,
+        "Courier",
+        0,
+        " ",
+        true,
+        14,
+        "Courier",
+        0,
+        "t",
+        true,
+        14,
+        "Courier",
+        0,
+        "e",
+        true,
+        14,
+        "Courier",
+        0,
+        "x",
+        true,
+        14,
+        "Courier",
+        0,
+        "t",
+        true,
+        14,
+        "Courier",
+        0,
+        ".",
+        true,
+        14,
+        "Courier"
+      ]
+    ]
+  ]
+}
