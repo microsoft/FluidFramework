@@ -40,10 +40,10 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
+	assertStructuralEquality,
 	brand,
 	idAllocatorFromMaxId,
 } from "../../../util/index.js";
-import { assertStructuralEquality } from "../../objMerge.js";
 
 export const Change = {
 	build,
