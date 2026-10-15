@@ -387,6 +387,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * being uploaded or shared with the other clients, even though no operation is outstanding for it.
 	 *
 	 * Disposing the container while this is `true` discards the outstanding work.
+	 *
+	 * Coverage of attachment blobs additionally requires `@fluidframework/container-loader` at the same
+	 * version as this package or newer, because the runtime depends on the loader tracking its operation
+	 * state separately. An older loader keeps the previous operation-only behavior, so this can report
+	 * `false` while a blob is still being shared.
 	 */
 	readonly isDirty: boolean;
 

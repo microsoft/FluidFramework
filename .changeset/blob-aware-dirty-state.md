@@ -33,3 +33,9 @@ container.on("saved", () => {
 This also means helpers that wait for a container to be saved now wait for blob uploads to complete.
 Code that deliberately stalls a blob upload and then waits for `saved` will wait until that upload
 finishes.
+
+Hosts that compose their own loader and runtime should note that blob coverage also requires
+`@fluidframework/container-loader` from this release or later.
+Against an older loader the runtime keeps the previous operation-only behavior, so `isDirty` can report
+`false` while a blob is still being shared.
+Service clients such as `@fluidframework/azure-client` ship a matching loader, so they are unaffected.
