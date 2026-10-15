@@ -186,7 +186,7 @@ export interface ITreeViewConfigurationAlpha<
 	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 
 	/**
-	 * Provides schema identity information to check when constructing a view.
+	 * Provides hashing for schema telemetry and optional checks when constructing a view.
 	 */
 	readonly schemaIdentity?: {
 		/**
@@ -197,10 +197,10 @@ export interface ITreeViewConfigurationAlpha<
 		 * If the actual hash does not match this value, view construction throws a UsageError containing the expected and computed hashes.
 		 * If the schema change is intentional, update this value with the computed hash from the error.
 		 */
-		readonly schemaHash: string;
+		readonly schemaHash?: string;
 		/**
-		 * The separately imported {@link computeSchemaHash} function used to check
-		 * {@link ITreeViewConfigurationAlpha.schemaIdentity | schemaHash}
+		 * The separately imported {@link computeSchemaHash} function used for schema telemetry
+		 * and to check {@link ITreeViewConfigurationAlpha.schemaIdentity | schemaHash}, when provided.
 		 */
 		readonly schemaHasher: (
 			schema: ImplicitFieldSchema,
@@ -329,14 +329,17 @@ export class TreeViewConfigurationAlpha<
 			if (identity === null || typeof identity !== "object") {
 				throw new UsageError("schemaIdentity must be an object.");
 			}
-			if (typeof identity.schemaHash !== "string" || identity.schemaHash.length === 0) {
+			if (
+				identity.schemaHash !== undefined &&
+				(typeof identity.schemaHash !== "string" || identity.schemaHash.length === 0)
+			) {
 				throw new UsageError("schemaIdentity.schemaHash must be a non-empty string.");
 			}
 			if (typeof identity.schemaHasher !== "function") {
 				throw new UsageError("schemaIdentity.schemaHasher must be a function.");
 			}
 			this.schemaIdentity = Object.freeze({
-				schemaHash: identity.schemaHash,
+				...(identity.schemaHash === undefined ? {} : { schemaHash: identity.schemaHash }),
 				schemaHasher: identity.schemaHasher,
 			});
 		}

@@ -787,7 +787,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 // @alpha @input
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
     readonly schemaIdentity?: {
-        readonly schemaHash: string;
+        readonly schemaHash?: string;
         readonly schemaHasher: (schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy) => string;
     };
     readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;

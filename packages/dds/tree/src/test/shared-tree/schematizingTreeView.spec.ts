@@ -5,7 +5,11 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	createMockLoggerExt,
+	TelemetryDataTag,
+	UsageError,
+} from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
@@ -14,6 +18,7 @@ import {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	Tree,
+	createIndependentTreeAlpha,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
 import {
@@ -126,6 +131,105 @@ describe("SchematizingSimpleTreeView", () => {
 				assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
 				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
 			});
+
+			it("skips the construction check when no expected hash is provided", () => {
+				const view = getView(
+					new TreeViewConfigurationAlpha({
+						schema: root,
+						schemaIdentity: {
+							schemaHasher: () => assert.fail("Unexpected construction hash check"),
+						},
+					}),
+				);
+				view.dispose();
+			});
+
+			it("requires a hasher when schema identity is provided", () => {
+				assert.throws(
+					() =>
+						new TreeViewConfigurationAlpha({
+							schema: root,
+							// @ts-expect-error A hasher is required even without an expected hash.
+							schemaIdentity: {},
+						}),
+					validateUsageError(/schemaIdentity.schemaHasher must be a function/),
+				);
+			});
+		});
+	});
+
+	describe("schema hash telemetry", () => {
+		it("logs the initialization hash without an expected hash", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const view = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: schema.number,
+					schemaIdentity: { schemaHasher: computeSchemaHash },
+				}),
+			);
+
+			view.initialize(5);
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaInitialized"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: computeSchemaHash(schema.number),
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
+			view.dispose();
+		});
+
+		it("logs the upgrade target hash but not no-op upgrades", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const initialView = tree.viewWith(config);
+			initialView.initialize(5);
+			initialView.dispose();
+			const upgradedSchema = [schema.number, schema.string];
+			const view = tree.viewWith(
+				new TreeViewConfigurationAlpha({
+					schema: upgradedSchema,
+					schemaIdentity: { schemaHasher: computeSchemaHash },
+				}),
+			);
+
+			view.upgradeSchema();
+			view.upgradeSchema();
+
+			const events = logger
+				.events()
+				.filter((event) => event.eventName.endsWith("SchemaUpgraded"));
+			assert.equal(events.length, 1);
+			assert.deepEqual(events[0]?.schemaHash, {
+				value: computeSchemaHash(upgradedSchema),
+				tag: TelemetryDataTag.SchemaArtifact,
+			});
+			view.dispose();
+		});
+
+		it("does not log hashes without schema identity", () => {
+			const logger = createMockLoggerExt();
+			const tree = createIndependentTreeAlpha({ logger });
+			const initialView = tree.viewWith(config);
+			initialView.initialize(5);
+			initialView.dispose();
+			const view = tree.viewWith(configGeneralized);
+			view.upgradeSchema();
+
+			assert.equal(
+				logger
+					.events()
+					.filter(
+						(event) =>
+							event.eventName.endsWith("SchemaInitialized") ||
+							event.eventName.endsWith("SchemaUpgraded"),
+					).length,
+				0,
+			);
+			view.dispose();
 		});
 	});
 
