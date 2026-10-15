@@ -5,33 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { FluidClientVersion } from "../../../codec/index.js";
-import { FormatValidatorBasic } from "../../../external-utilities/index.js";
-import { schemaCodecBuilder } from "../../../feature-libraries/index.js";
 import {
 	computeSchemaHash,
-	computeViewSchemaHash,
 	SchemaFactoryAlpha,
 	StagedSchemaUpgradePolicy,
-	toInitialSchema,
 } from "../../../simple-tree/index.js";
 
 describe("schema hash functions", () => {
 	const sf = new SchemaFactoryAlpha("test");
-
-	it("computes the same hash from a view schema and its encoded schema", () => {
-		class Item extends sf.object("Item", {
-			name: sf.string,
-			value: sf.optional([sf.number, sf.boolean]),
-		}) {}
-		const codec = schemaCodecBuilder.build({
-			minVersionForCollab: FluidClientVersion.v2_0,
-			jsonValidator: FormatValidatorBasic,
-		});
-		const encoded = codec.encode(toInitialSchema(Item));
-
-		assert.equal(computeViewSchemaHash(Item), computeSchemaHash(encoded));
-	});
 
 	it("ignores allowed-type and object-key order", () => {
 		const first = new SchemaFactoryAlpha("test");
@@ -46,12 +27,8 @@ describe("schema hash functions", () => {
 		}) {}
 
 		assert.equal(
-			computeViewSchemaHash([Original, first.null]),
-			computeViewSchemaHash([second.null, Reordered]),
-		);
-		assert.equal(
-			computeSchemaHash({ outer: { name: "record", value: 1 }, enabled: true }),
-			computeSchemaHash({ enabled: true, outer: { value: 1, name: "record" } }),
+			computeSchemaHash([Original, first.null]),
+			computeSchemaHash([second.null, Reordered]),
 		);
 	});
 
@@ -65,16 +42,8 @@ describe("schema hash functions", () => {
 		const reorderedArray = sf.required(sf.number, {
 			persistedMetadata: { labels: ["second", "first"], description: "value" },
 		});
-		const options = { minVersionForCollab: FluidClientVersion.v2_43 };
-
-		assert.equal(
-			computeViewSchemaHash(original, undefined, options),
-			computeViewSchemaHash(reorderedKeys, undefined, options),
-		);
-		assert.notEqual(
-			computeViewSchemaHash(original, undefined, options),
-			computeViewSchemaHash(reorderedArray, undefined, options),
-		);
+		assert.equal(computeSchemaHash(original), computeSchemaHash(reorderedKeys));
+		assert.notEqual(computeSchemaHash(original), computeSchemaHash(reorderedArray));
 	});
 
 	it("includes only enabled staged allowed types", () => {
@@ -84,15 +53,12 @@ describe("schema hash functions", () => {
 		const stagedSchema = sf.types([sf.number, stagedString]);
 		const enabled = StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade);
 
-		assert.equal(computeViewSchemaHash(stagedSchema), computeViewSchemaHash(sf.number));
+		assert.equal(computeSchemaHash(stagedSchema), computeSchemaHash(sf.number));
 		assert.equal(
-			computeViewSchemaHash(stagedSchema, enabled),
-			computeViewSchemaHash([sf.number, sf.string]),
+			computeSchemaHash(stagedSchema, enabled),
+			computeSchemaHash([sf.number, sf.string]),
 		);
-		assert.notEqual(
-			computeViewSchemaHash(stagedSchema),
-			computeViewSchemaHash(stagedSchema, enabled),
-		);
+		assert.notEqual(computeSchemaHash(stagedSchema), computeSchemaHash(stagedSchema, enabled));
 	});
 
 	it("includes only enabled staged optional fields", () => {
@@ -101,14 +67,11 @@ describe("schema hash functions", () => {
 		assert(upgrade !== false);
 		const enabled = StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade);
 
-		assert.equal(computeViewSchemaHash(stagedSchema), computeViewSchemaHash(sf.number));
+		assert.equal(computeSchemaHash(stagedSchema), computeSchemaHash(sf.number));
 		assert.equal(
-			computeViewSchemaHash(stagedSchema, enabled),
-			computeViewSchemaHash(sf.optional(sf.number)),
+			computeSchemaHash(stagedSchema, enabled),
+			computeSchemaHash(sf.optional(sf.number)),
 		);
-		assert.notEqual(
-			computeViewSchemaHash(stagedSchema),
-			computeViewSchemaHash(stagedSchema, enabled),
-		);
+		assert.notEqual(computeSchemaHash(stagedSchema), computeSchemaHash(stagedSchema, enabled));
 	});
 });

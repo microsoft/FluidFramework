@@ -12,12 +12,7 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import { tagSchemaArtifacts, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	anchorSlot,
-	rootFieldKey,
-	type RevertToOptionsAlpha,
-	type TreeStoredSchema,
-} from "../core/index.js";
+import { anchorSlot, rootFieldKey, type RevertToOptionsAlpha } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -263,7 +258,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
-		this.validateSchemaHash(schema);
+		this.validateSchemaHash(this.stagedUpgradePolicy);
 		this.runSchemaEdit(() => {
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
@@ -322,8 +317,9 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.effectiveUpgradePolicy);
-		this.validateSchemaHash(newSchema);
+		const upgradePolicy = this.effectiveUpgradePolicy;
+		this.validateSchemaHash(upgradePolicy);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, upgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -338,9 +334,9 @@ export class SchematizingSimpleTreeView<
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
-	private validateSchemaHash(schema: TreeStoredSchema): void {
+	private validateSchemaHash(stagedSchemaUpgrades: StagedSchemaUpgradePolicy): void {
 		if (this.config instanceof TreeViewConfigurationAlpha) {
-			validateSchemaHash(schema, this.config.schemaIdentity, this.checkout.schemaEncoder);
+			validateSchemaHash(this.config.schema, this.config.schemaIdentity, stagedSchemaUpgrades);
 		}
 	}
 

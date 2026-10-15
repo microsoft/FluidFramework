@@ -190,7 +190,7 @@ export interface ITreeViewConfigurationAlpha<
 	 */
 	readonly schemaIdentity?: {
 		/**
-		 * The expected schema hash, computed with {@link computeViewSchemaHash}
+		 * The expected schema hash, computed with {@link computeSchemaHash}
 		 *
 		 * @remarks
 		 * Compute the hash during development and save it in application source.

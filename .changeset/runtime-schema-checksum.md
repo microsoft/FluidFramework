@@ -12,13 +12,11 @@ If the hashes differ, SharedTree throws a `UsageError` before it changes the doc
 
 #### Generate a hash during development
 
-First, use [`computeViewSchemaHash`](https://fluidframework.com/docs/api/tree#computeviewschemahash-function) to compute a hash from the view schema with the appropriate [staged upgrade policy](https://fluidframework.com/docs/api/tree/stagedschemaupgradepolicy-interface).
-Pass the same [encoding options](https://fluidframework.com/docs/api/tree/codecwriteoptions-interface) used to configure the tree.
+First, use [`computeSchemaHash`](https://fluidframework.com/docs/api/tree#computeschemahash-function) to compute a hash from the view schema with the appropriate [staged upgrade policy](https://fluidframework.com/docs/api/tree/stagedschemaupgradepolicy-interface).
 
 ```typescript
 import {
-	computeViewSchemaHash,
-	FluidClientVersion,
+	computeSchemaHash,
 	SchemaFactoryAlpha,
 	StagedSchemaUpgradePolicy,
 } from "fluid-framework/alpha";
@@ -30,9 +28,8 @@ const stagedUpgradePolicy = StagedSchemaUpgradePolicy.enabledStagedUpgrades(
 	stagedNumber.metadata.stagedSchemaUpgrade!,
 );
 
-const encodingOptions = { minVersionForCollab: FluidClientVersion.v2_0 };
-console.log(computeViewSchemaHash(Note, stagedUpgradePolicy, encodingOptions));
-// a4a68c3fdf9fcc59d6256840e4e00e978743c1dfae52fbed620c1c4634a67839
+console.log(computeSchemaHash(Note, stagedUpgradePolicy));
+// c918013b30e1f898bc02a3c222531dff36fbf83dbc1507b1c7962c1101b25c7a
 ```
 
 #### Save the hash in application source code
@@ -41,7 +38,7 @@ Save the printed hash as a constant with the schema:
 
 ```typescript
 const expectedSchemaHash =
-	"a4a68c3fdf9fcc59d6256840e4e00e978743c1dfae52fbed620c1c4634a67839";
+	"c918013b30e1f898bc02a3c222531dff36fbf83dbc1507b1c7962c1101b25c7a";
 ```
 
 Keep this value fixed until a schema change is intended.
@@ -49,11 +46,10 @@ The logging code is only needed during development.
 
 #### Pass the hash to the tree view configuration
 
-Set [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property) to the saved hash and the [`computeSchemaHash`](https://fluidframework.com/docs/api/tree#computeschemahash-variable) function:
+Set [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property) to the saved hash and the same [`computeSchemaHash`](https://fluidframework.com/docs/api/tree#computeschemahash-function) function:
 
 ```typescript
 import {
-	computeSchemaHash,
 	TreeViewConfigurationAlpha,
 } from "fluid-framework/alpha";
 

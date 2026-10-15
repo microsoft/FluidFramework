@@ -267,10 +267,7 @@ export namespace Component {
 }
 
 // @alpha
-export const computeSchemaHash: SchemaHasher;
-
-// @alpha
-export function computeViewSchemaHash(schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy, encodingOptions?: Partial<Omit<CodecWriteOptions, "jsonValidator">>): string;
+export function computeSchemaHash(schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy): string;
 
 // @beta
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
@@ -1430,7 +1427,7 @@ export class SchemaFactoryBeta<out TScope extends string | undefined = string | 
 }
 
 // @alpha
-export type SchemaHasher = (schema: JsonCompatibleReadOnly) => string;
+export type SchemaHasher = (schema: ImplicitFieldSchema, stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy) => string;
 
 // @public @system
 const schemaIdentifierBrand: unique symbol;

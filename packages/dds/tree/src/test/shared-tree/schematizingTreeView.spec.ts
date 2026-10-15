@@ -8,7 +8,6 @@ import { strict as assert, fail } from "node:assert";
 import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion } from "../../codec/index.js";
 import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
@@ -39,7 +38,6 @@ import {
 	SchemaFactoryBeta,
 	TreeViewConfigurationAlpha,
 	computeSchemaHash,
-	computeViewSchemaHash,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
 import { brand } from "../../util/index.js";
@@ -91,18 +89,15 @@ describe("SchematizingSimpleTreeView", () => {
 			const root = schema.required(schema.number, {
 				persistedMetadata: { description: "initial schema" },
 			});
-			const encodingOptions = { minVersionForCollab: FluidClientVersion.v2_0 };
-
 			it("allows a matching hash", () => {
 				const view = getView(
 					new TreeViewConfigurationAlpha({
 						schema: root,
 						schemaIdentity: {
-							schemaHash: computeViewSchemaHash(root),
+							schemaHash: computeSchemaHash(root),
 							schemaHasher: computeSchemaHash,
 						},
 					}),
-					encodingOptions,
 				);
 
 				view.initialize(5);
@@ -117,37 +112,10 @@ describe("SchematizingSimpleTreeView", () => {
 					new TreeViewConfigurationAlpha({
 						schema: root,
 						schemaIdentity: {
-							schemaHash: computeViewSchemaHash(schema.string),
+							schemaHash: computeSchemaHash(schema.string),
 							schemaHasher: computeSchemaHash,
 						},
 					}),
-					encodingOptions,
-				);
-				const beforeSchema = view.checkout.storedSchema.clone();
-				const beforeContent = jsonTreeFromCheckout(view.checkout);
-				view.events.on("commitApplied", () => assert.fail("Unexpected commit"));
-
-				assert.throws(
-					() => view.initialize(5),
-					validateUsageError(/Schema hash does not match/),
-				);
-
-				view.breaker.clearError();
-				assert.deepEqual(view.checkout.storedSchema.clone(), beforeSchema);
-				assert.deepEqual(jsonTreeFromCheckout(view.checkout), beforeContent);
-				assert.equal(view.compatibility.canInitialize, true);
-			});
-
-			it("rejects mismatched encoding before initialization", () => {
-				const schemaHash = computeViewSchemaHash(root, undefined, {
-					minVersionForCollab: FluidClientVersion.v2_43,
-				});
-				const view = getView(
-					new TreeViewConfigurationAlpha({
-						schema: root,
-						schemaIdentity: { schemaHash, schemaHasher: computeSchemaHash },
-					}),
-					encodingOptions,
 				);
 				const beforeSchema = view.checkout.storedSchema.clone();
 				const beforeContent = jsonTreeFromCheckout(view.checkout);
@@ -599,7 +567,7 @@ describe("SchematizingSimpleTreeView", () => {
 					new TreeViewConfigurationAlpha({
 						schema: newSchema,
 						schemaIdentity: {
-							schemaHash: computeViewSchemaHash(newSchema),
+							schemaHash: computeSchemaHash(newSchema),
 							schemaHasher: computeSchemaHash,
 						},
 					}),
@@ -627,38 +595,9 @@ describe("SchematizingSimpleTreeView", () => {
 					new TreeViewConfigurationAlpha({
 						schema: newSchema,
 						schemaIdentity: {
-							schemaHash: computeViewSchemaHash(schema.string),
+							schemaHash: computeSchemaHash(schema.string),
 							schemaHasher: computeSchemaHash,
 						},
-					}),
-					new MockNodeIdentifierManager(),
-				);
-				const beforeSchema = checkout.storedSchema.clone();
-				const beforeContent = jsonTreeFromCheckout(checkout);
-				view.events.on("commitApplied", () => assert.fail("Unexpected commit"));
-				assert.equal(view.compatibility.isEquivalent, false);
-
-				assert.throws(
-					() => view.upgradeSchema(),
-					validateUsageError(/Schema hash does not match/),
-				);
-
-				view.breaker.clearError();
-				assert.deepEqual(checkout.storedSchema.clone(), beforeSchema);
-				assert.deepEqual(jsonTreeFromCheckout(checkout), beforeContent);
-				assert.equal(view.compatibility.isEquivalent, false);
-			});
-
-			it("rejects mismatched encoding before upgrading", () => {
-				const checkout = checkoutWithInitialTree(config, 5);
-				const schemaHash = computeViewSchemaHash(newSchema, undefined, {
-					minVersionForCollab: FluidClientVersion.v2_43,
-				});
-				const view = new SchematizingSimpleTreeView(
-					checkout,
-					new TreeViewConfigurationAlpha({
-						schema: newSchema,
-						schemaIdentity: { schemaHash, schemaHasher: computeSchemaHash },
 					}),
 					new MockNodeIdentifierManager(),
 				);

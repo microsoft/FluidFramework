@@ -77,7 +77,6 @@ export {
 	type TreeViewEvents,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
-	computeViewSchemaHash,
 	computeSchemaHash,
 	type ITreeViewConfiguration,
 	type ITreeViewConfigurationAlpha,

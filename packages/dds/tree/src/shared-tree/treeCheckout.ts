@@ -23,7 +23,6 @@ import {
 	type CodecWriteOptions,
 	type DecodeErrorHandler,
 	type FormatValidator,
-	type IEncoder,
 } from "../codec/index.js";
 import {
 	type Anchor,
@@ -83,7 +82,6 @@ import {
 	createNodeIdentifierManager,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
-	schemaCodecBuilder,
 	TreeStatus,
 	intoDelta,
 	jsonableTreeFromCursor,
@@ -442,7 +440,6 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		true,
 		args?.getFinalizedCommit,
-		schemaCodecBuilder.build(codecOptions),
 	);
 }
 
@@ -663,17 +660,6 @@ export class TreeCheckout implements ITreeCheckout {
 		public readonly disposeForksAfterTransaction = true,
 		/** Supplies the boundary for {@link TreeCheckout.getFinalizedCommit}, instead of the current graph root. */
 		private readonly getFinalizedCommitOverride?: () => GraphCommit<SharedTreeChange>,
-		/**
-		 * Encodes schema using this checkout's write format.
-		 */
-		public readonly schemaEncoder: IEncoder<
-			TreeStoredSchema,
-			JsonCompatibleReadOnly,
-			void
-		> = schemaCodecBuilder.build({
-			minVersionForCollab: FluidClientVersion.v2_0,
-			jsonValidator: FormatValidatorNoOp,
-		}),
 	) {
 		this.serializedChangeCodec = makeSerializedChangeCodec(
 			this.changeFamily,
@@ -1512,9 +1498,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this.idCompressor,
 			this.jsonValidator,
 			this._removedRoots.clone(),
-			true,
-			undefined,
-			this.schemaEncoder,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;

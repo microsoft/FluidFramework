@@ -324,7 +324,6 @@ export {
 	codePointCount, 
 	comparePersistedSchema, 
 	computeSchemaHash,
-	computeViewSchemaHash,
 	configuredSharedTreeAlpha, 
 	contentSchemaSymbol, 
 	createArrayInsertionAnchor, 
