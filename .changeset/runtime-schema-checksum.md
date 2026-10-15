@@ -36,9 +36,9 @@ const expectedSchemaHash = "replace-with-computed-hash-from-error";
 const config = new TreeViewConfigurationAlpha({
 	schema: Note,
 	stagedUpgradePolicy,
-	schemaIdentity: {
-		schemaHash: expectedSchemaHash,
-		schemaHasher: computeSchemaHash,
+	schemaIdentity: { // Optional.
+		schemaHash: expectedSchemaHash, // Optional: enables the hash check.
+		schemaHasher: computeSchemaHash, // Required when schemaIdentity is provided.
 	},
 });
 const view = tree.viewWith(config);
