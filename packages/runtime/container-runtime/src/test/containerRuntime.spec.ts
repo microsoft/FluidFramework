@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type ICriticalContainerError,
@@ -1776,6 +1776,55 @@ describe("Runtime", () => {
 				);
 			});
 
+			it("starts dirty, and publishes a single saved, when blobs are restored from pending local state", async () => {
+				// A restored blob is already counted by the time the runtime subscribes to the BlobManager's
+				// outstandingBlobWorkChanged event, so the baseline the runtime seeds at load is the only signal
+				// for it. Load offline so the blob stays unshared: restored blobs being shared is covered by the
+				// BlobManager tests, and mock storage cannot upload them.
+				const loaderDirtyStates: boolean[] = [];
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState({
+					...getMockContext({ connected: false }),
+					updateDirtyContainerState: (dirty: boolean): void => {
+						loaderDirtyStates.push(dirty);
+					},
+					pendingLocalState: {
+						pendingAttachmentBlobs: {
+							"blob-1": {
+								state: "localOnly",
+								blob: bufferToString(stringToBuffer("hello", "utf8"), "base64"),
+							},
+						},
+					},
+				});
+				const blobWork = getBlobWorkControls(containerRuntime);
+
+				assert.strictEqual(
+					blobWork.hasOutstandingBlobWork,
+					true,
+					"The restored blob should count as outstanding work",
+				);
+				assert.strictEqual(
+					containerRuntime.isDirty,
+					true,
+					"A restored unshared blob must hold the container dirty from load",
+				);
+				assert.deepStrictEqual(
+					loaderDirtyStates,
+					[true],
+					"The loader should be told about the dirty baseline exactly once",
+				);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[],
+					"The baseline must not also be published as a dirty transition",
+				);
+
+				blobWork.stopTrackingUnsharedBlob("blob-1");
+				assert.strictEqual(containerRuntime.isDirty, false, "Sharing the blob should save");
+				assert.deepStrictEqual(dirtyTransitions, [false], "Should publish saved exactly once");
+				assert.deepStrictEqual(loaderDirtyStates, [true, false]);
+			});
+
 			it("stays dirty until the last of several blobs is shared", async () => {
 				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
 					getMockContext(),
@@ -1904,6 +1953,111 @@ describe("Runtime", () => {
 					[true],
 					"Must resume publishing once dirty events are re-enabled",
 				);
+			});
+
+			/**
+			 * Replaces the op replay that a reconnect runs with `duringReplay`, so a test can change blob
+			 * work while replay has dirty events disabled. Replaying real ops never starts or stops a blob.
+			 */
+			const stubOpReplay = (
+				containerRuntime: ContainerRuntime,
+				duringReplay: () => void,
+			): void => {
+				const { pendingStateManager } = containerRuntime as unknown as {
+					pendingStateManager: Pick<PendingStateManager, "replayPendingStates">;
+				};
+				sandbox.stub(pendingStateManager, "replayPendingStates").callsFake(() => {
+					duringReplay();
+					return [];
+				});
+			};
+
+			it("publishes blob-driven dirty state after op replay rather than during it", async () => {
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
+					getMockContext(),
+				);
+				const blobWork = getBlobWorkControls(containerRuntime);
+				changeConnectionState(containerRuntime, false, mockClientId);
+
+				let transitionsDuringReplay: boolean[] | undefined;
+				stubOpReplay(containerRuntime, () => {
+					blobWork.startTrackingUnsharedBlob("blob-1");
+					transitionsDuringReplay = [...dirtyTransitions];
+				});
+				changeConnectionState(containerRuntime, true, mockClientId);
+
+				assert.deepStrictEqual(
+					transitionsDuringReplay,
+					[],
+					"Must not publish dirty while replay has dirty events disabled",
+				);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true],
+					"Replay must publish the net change itself once it completes",
+				);
+				assert.strictEqual(containerRuntime.isDirty, true);
+			});
+
+			it("does not leave a stale dirty when the last blob stops during op replay", async () => {
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
+					getMockContext(),
+				);
+				const blobWork = getBlobWorkControls(containerRuntime);
+				blobWork.startTrackingUnsharedBlob("blob-1");
+				changeConnectionState(containerRuntime, false, mockClientId);
+
+				let transitionsDuringReplay: boolean[] | undefined;
+				stubOpReplay(containerRuntime, () => {
+					blobWork.stopTrackingUnsharedBlob("blob-1");
+					transitionsDuringReplay = [...dirtyTransitions];
+				});
+				changeConnectionState(containerRuntime, true, mockClientId);
+
+				assert.deepStrictEqual(
+					transitionsDuringReplay,
+					[true],
+					"Must not publish saved while replay has dirty events disabled",
+				);
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true, false],
+					"Replay must publish saved itself once it completes, or the container stays dirty",
+				);
+				assert.strictEqual(containerRuntime.isDirty, false);
+			});
+
+			it("does not re-publish dirty when replay resubmits a non-dirtyable op during blob work", async () => {
+				// While dirty events are disabled, resubmitting an op overwrites the last emitted state with
+				// the op-only state. That is clean for a GC op, so replay has to restore the aggregate state
+				// it saved, or the outstanding blob would be announced as dirty a second time.
+				const { containerRuntime, dirtyTransitions } = await loadRuntimeTrackingDirtyState(
+					getMockContext(),
+				);
+				getBlobWorkControls(containerRuntime).startTrackingUnsharedBlob("blob-1");
+				assert.deepStrictEqual(dirtyTransitions, [true]);
+
+				changeConnectionState(containerRuntime, false, mockClientId);
+				(containerRuntime as unknown as ContainerRuntimeWithSubmit).submit(
+					{
+						type: ContainerMessageType.GC,
+						contents: { type: "TombstoneLoaded", nodePath: "/test" },
+					},
+					undefined,
+					undefined,
+				);
+				// Not connected, so nothing is sent on flush - the op is just queued in PendingStateManager
+				(containerRuntime as unknown as ContainerRuntime_WithPrivates).flush();
+				changeConnectionState(containerRuntime, true, mockClientId);
+				(containerRuntime as unknown as ContainerRuntime_WithPrivates).flush();
+
+				assert.strictEqual(submittedOps.length, 1, "The queued op should have been replayed");
+				assert.deepStrictEqual(
+					dirtyTransitions,
+					[true],
+					"Replaying a non-dirtyable op must not re-publish dirty while the blob is outstanding",
+				);
+				assert.strictEqual(containerRuntime.isDirty, true);
 			});
 		});
 
