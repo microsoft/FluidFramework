@@ -30,10 +30,11 @@ import { toInitialSchema } from "../toStoredSchema.js";
  * enabled staged upgrades before it is hashed.
  *
  * @param schema - the view schema to hash
- * @param stagedSchemaUpgrades - the staged upgrades to include
+ * @param stagedSchemaUpgrades - the {@link SchemaUpgrade | staged upgrades} to include,
+ * or a {@link (StagedSchemaUpgradePolicy:interface)} that selects them
  * If not provided, no staged upgrades are included.
- * @param encodingOptions - the encoding options used by the tree, with version 2.0 compatibility
- * as the default
+ * @param encodingOptions - the {@link CodecWriteOptions | encoding options} used by the tree,
+ * with {@link FluidClientVersion.v2_0 | version 2.0 compatibility} as the default
  *
  * @returns the SHA-256 hash of the encoded schema, in hexadecimal
  *

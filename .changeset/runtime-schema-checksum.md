@@ -5,17 +5,15 @@
 ---
 Add optional checksums to help catch unintended schema changes
 
-SharedTree adds an optional schema checksum to help catch unintended view schema changes.
+SharedTree adds an optional schema checksum to help catch unintended view schema changes, ideally during the testing stage.
 The checksum is a hash computed during development and saved in application source code.
-During initialization or schema upgrade, SharedTree computes the hash of the provided schema and compares it with the saved hash.
+During [initialization](https://fluidframework.com/docs/api/tree/treeview-interface#initialize-methodsignature) or [schema upgrade](https://fluidframework.com/docs/api/tree/treeview-interface#upgradeschema-methodsignature), SharedTree computes the hash of the provided schema and compares it with the saved hash.
 If the hashes differ, SharedTree throws a `UsageError` before it changes the document.
-
-The optional `schemaIdentity` property in `TreeViewConfigurationAlpha` enables this check.
 
 #### Generate a hash during development
 
-First, use `computeViewSchemaHash` to compute a hash from the view schema with the appropriate staged upgrade policy.
-Pass the same encoding options used to configure the tree.
+First, use [`computeViewSchemaHash`](https://fluidframework.com/docs/api/tree#computeviewschemahash-function) to compute a hash from the view schema with the appropriate [staged upgrade policy](https://fluidframework.com/docs/api/tree/stagedschemaupgradepolicy-interface).
+Pass the same [encoding options](https://fluidframework.com/docs/api/tree/codecwriteoptions-interface) used to configure the tree.
 
 ```typescript
 import {
@@ -51,7 +49,7 @@ The logging code is only needed during development.
 
 #### Pass the hash to the tree view configuration
 
-Set `schemaIdentity` to the saved hash and the `computeSchemaHash` function:
+Set [`schemaIdentity`](https://fluidframework.com/docs/api/tree/treeviewconfigurationalpha-class#schemaidentity-property) to the saved hash and the [`computeSchemaHash`](https://fluidframework.com/docs/api/tree#computeschemahash-variable) function:
 
 ```typescript
 import {

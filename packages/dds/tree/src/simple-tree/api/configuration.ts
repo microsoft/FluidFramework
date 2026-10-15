@@ -195,12 +195,13 @@ export interface ITreeViewConfigurationAlpha<
 		 * @remarks
 		 * Compute the hash during development and save it in application source.
 		 * During initialization or upgrade, SharedTree compares it with the hash of the
-		 * provided schema, computed by the provided `schemaHasher` function.
+		 * provided schema, computed by the provided {@link SchemaHasher} function.
 		 * This check helps guard against unintended schema changes.
 		 */
 		readonly schemaHash: string;
 		/**
-		 * The separately imported {@link computeSchemaHash} function used to check `schemaHash`
+		 * The separately imported {@link computeSchemaHash} function used to check
+		 * {@link ITreeViewConfigurationAlpha.schemaIdentity | schemaHash}
 		 */
 		readonly schemaHasher: SchemaHasher;
 	};
