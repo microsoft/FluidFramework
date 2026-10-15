@@ -3515,12 +3515,7 @@ function addPendingCompositionsForRoots(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
 	composeTable: ComposeTable,
-): PendingCompositions {
-	const pendingCompositions: PendingCompositions = {
-		nodeIdsToCompose: [],
-		affectedBaseFields: newFieldIdKeyBTree(),
-	};
-
+): void {
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
 		const detachId2 = { revision: revision2, localId: id2 };
 		const detachId1 = firstDetachIdFromAttachId(change1.rootNodes, detachId2, 1).value;
@@ -3531,7 +3526,7 @@ function addPendingCompositionsForRoots(
 			if (fieldId !== undefined) {
 				// In this case, this node is attached in the input context of `change1`,
 				// and is represented in `fieldId`, so we must ensure composition visits that field.
-				pendingCompositions.affectedBaseFields.set(
+				composeTable.pendingCompositions.affectedBaseFields.set(
 					[fieldId.nodeId?.revision, fieldId.nodeId?.localId, fieldId.field],
 					true,
 				);
@@ -3540,7 +3535,6 @@ function addPendingCompositionsForRoots(
 			addNodesToCompose(composeTable, nodeId1, nodeId2);
 		}
 	}
-	return pendingCompositions;
 }
 
 /**
