@@ -386,6 +386,11 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * service, not only operations. In particular, it remains `true` while an attachment blob is still
 	 * being uploaded or shared with the other clients, even though no operation is outstanding for it.
 	 *
+	 * For attachment blobs, this tracks whether sharing is still in progress, not whether it succeeded.
+	 * If sharing a blob fails or is cancelled, the blob stops keeping the container dirty and its handle
+	 * may be unusable.
+	 * Observe the handle's `payloadShared` and `payloadShareFailed` events for an individual blob's outcome.
+	 *
 	 * Disposing the container while this is `true` discards the outstanding work.
 	 *
 	 * Coverage of attachment blobs additionally requires `@fluidframework/container-loader` at the same
