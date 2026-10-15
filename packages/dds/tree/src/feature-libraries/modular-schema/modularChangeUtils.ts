@@ -338,6 +338,10 @@ export function validateChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): void {
+	for (const nodeIdKey of change.nodeChanges.keys()) {
+		assert(change.nodeToParent.has(nodeIdKey), "Every node should have a location entry");
+	}
+
 	const unreachableNodes: ChangeAtomIdBTree<NodeLocation> = brand(change.nodeToParent.clone());
 
 	const unreachableCFKs = change.crossFieldKeys.clone();
@@ -711,7 +715,6 @@ export function assignRootChange(
 
 	setInChangeAtomIdMap(table.nodeChanges, detachId, nodeId);
 	setInChangeAtomIdMap(nodeToParent, nodeId, { root: detachId });
-
 	table.detachLocations.set(detachId, 1, detachLocation);
 }
 
@@ -844,7 +847,7 @@ export function getFirstAttachField(
 	id: ChangeAtomId,
 	count: number,
 ): RangeQueryResult<FieldId | undefined> {
-	return table.getFirst({ target: NodeMoveType.Attach, ...id }, count);
+	return table.getFirst({ ...id, target: NodeMoveType.Attach }, count);
 }
 
 export function getNewRootIdFromOldRootId(

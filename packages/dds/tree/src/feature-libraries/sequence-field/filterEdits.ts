@@ -56,9 +56,13 @@ function filterMark(
 			const result = filterAttach(attachId, mark.count);
 
 			let filtered: Mark;
-			switch (result.value) {
+			switch (result.value.action) {
 				case EditFilterStatus.Preserve: {
-					filtered = mark;
+					if (result.value.convertFromMove === true) {
+						filtered = { ...mark, cellId: attachId };
+					} else {
+						filtered = mark;
+					}
 					break;
 				}
 				case EditFilterStatus.Remove: {
@@ -66,7 +70,7 @@ function filterMark(
 					break;
 				}
 				default: {
-					unreachableCase(result.value);
+					unreachableCase(result.value.action);
 				}
 			}
 

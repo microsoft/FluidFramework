@@ -114,11 +114,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (overAttach !== undefined) {
 			const movedChangeEntry = nodeManager.getNewChangesForBaseAttach(overAttach, 1).value;
 
-			if (movedChangeEntry?.nodeChange !== undefined) {
+			if (movedChangeEntry.nodeChange !== undefined) {
 				rebased.childChange = movedChangeEntry.nodeChange;
 			}
 
-			if (movedChangeEntry?.detachId !== undefined) {
+			if (movedChangeEntry.detachId !== undefined) {
 				rebased.nodeDetach = movedChangeEntry.detachId;
 				if (newChange.valueReplace !== undefined) {
 					// Now that the rebased change has a node detach,
@@ -635,7 +635,7 @@ function filterEdits(
 
 		if (detachResult?.action === EditFilterStatus.Remove) {
 			assert(
-				attachId === undefined || attachResult === EditFilterStatus.Remove,
+				attachId === undefined || attachResult?.action === EditFilterStatus.Remove,
 				0xd0e /* Cannot remove detach without also removing attach */,
 			);
 
@@ -643,9 +643,18 @@ function filterEdits(
 			if (detachResult.shouldRemoveChild === true) {
 				delete filtered.childChange;
 			}
-		} else if (attachResult === EditFilterStatus.Remove) {
+		} else if (attachResult?.action === EditFilterStatus.Remove) {
 			filtered.valueReplace = { ...change.valueReplace };
 			delete (filtered.valueReplace as Mutable<Replace>).src;
+		}
+
+		if (
+			!options.preserveOtherEdits &&
+			filtered.valueReplace !== undefined &&
+			filtered.valueReplace.isEmpty &&
+			filtered.valueReplace.src === undefined
+		) {
+			delete filtered.valueReplace;
 		}
 	}
 

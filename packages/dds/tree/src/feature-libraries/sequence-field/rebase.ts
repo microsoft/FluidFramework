@@ -516,7 +516,7 @@ function getMovedEffect(
 ): Detach | undefined {
 	const entry = moveEffects.getNewChangesForBaseAttach({ revision, localId }, count);
 	assert(entry.length === count, 0x6f3 /* Expected effect to cover entire mark */);
-	const detachId = entry.value?.detachId;
+	const detachId = entry.value.detachId;
 	if (detachId === undefined) {
 		return undefined;
 	}
@@ -544,5 +544,5 @@ function getMovedNodeChanges(
 	revision: RevisionTag | undefined,
 	localId: MoveId,
 ): NodeId | undefined {
-	return moveEffects.getNewChangesForBaseAttach({ revision, localId }, 1).value?.nodeChange;
+	return moveEffects.getNewChangesForBaseAttach({ revision, localId }, 1).value.nodeChange;
 }

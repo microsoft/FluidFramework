@@ -31,9 +31,10 @@ export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export {
 	type ChildChangeInfo,
 	EditFilterStatus,
+	type FilterAttachFunc,
+	type FilterAttachResult,
 	type FilterDetachFunc,
 	type FilterDetachResult,
-	type FilterAttachFunc,
 	type FieldChangeHandler,
 	type FieldChangeEncodingContext,
 	type FieldChangeDecodingContext,

@@ -120,7 +120,7 @@ export interface RebaseNodeManager {
 	getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<DetachedNodeEntry | undefined>;
+	): RangeQueryResult<DetachedNodeEntry>;
 
 	// XXX: It's not clear if this must be called even when newDetachId and nodeChange are undefined.
 	// XXX: It's not clear if it's okay to call this once with a newDetachId then once with a nodeChange.
