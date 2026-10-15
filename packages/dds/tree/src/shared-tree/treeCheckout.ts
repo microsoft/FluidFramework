@@ -638,12 +638,20 @@ export class TreeCheckout implements ITreeCheckout {
 	private _branchHistory?: DefaultTreeBranchHistory;
 
 	/**
-	 * Whether disposing a view also disposes this checkout.
+	 * Whether disposing a view also disposes this checkout by default.
 	 *
 	 * @remarks
-	 * Non-shared checkouts default to being owned by their view.
-	 * Shared checkouts persist after view disposal.
-	 * Subclasses can override this policy when the caller owns the checkout independently of its views.
+	 * By default, this is false when {@link TreeCheckout.isSharedBranch} is true, and true otherwise.
+	 * A shared branch is stored in the document and shared with other clients.
+	 * This does not mean that multiple views share a checkout object.
+	 * A view of a shared branch does not own the checkout.
+	 * Disposing that view leaves the checkout available for a new view.
+	 * A view of a local fork owns its checkout by default and disposes it when the view is disposed.
+	 *
+	 * A checkout supports only one live view at a time.
+	 * This value does not provide reference counting.
+	 * Subclasses can override this value to let the checkout's owner control its lifetime separately from its views.
+	 * When this value is false, the owner must dispose the checkout.
 	 */
 	public get disposesWithView(): boolean {
 		return !this.isSharedBranch;
