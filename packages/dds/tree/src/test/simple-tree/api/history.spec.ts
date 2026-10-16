@@ -68,7 +68,7 @@ function setRootValue(branch: BranchType, value: number): void {
 describe("TreeBranchHistoryImpl", () => {
 	it("commitCount reflects the number of commits in the branch", () => {
 		const branch = createBranch();
-		const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
+		const history = new DefaultTreeBranchHistory(branch, testIdCompressor, () => undefined);
 		assert.equal(history.length, 0);
 
 		setRootValue(branch, 3);
@@ -81,7 +81,7 @@ describe("TreeBranchHistoryImpl", () => {
 	describe("getHeadCommit", () => {
 		it("returns metadata for the current head commit", () => {
 			const branch = createBranch();
-			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(branch, testIdCompressor, () => undefined);
 
 			const beforeInit = history.getHead();
 			assert.equal(beforeInit, undefined);
@@ -104,8 +104,16 @@ describe("TreeBranchHistoryImpl", () => {
 			setRootValue(branchA, 3);
 			const branchB = branchA.fork();
 
-			const historyA = new DefaultTreeBranchHistory(branchA, testIdCompressor);
-			const historyB = new DefaultTreeBranchHistory(branchB, testIdCompressor);
+			const historyA = new DefaultTreeBranchHistory(
+				branchA,
+				testIdCompressor,
+				() => undefined,
+			);
+			const historyB = new DefaultTreeBranchHistory(
+				branchB,
+				testIdCompressor,
+				() => undefined,
+			);
 
 			const headA = historyA.getHead();
 			const headB = historyB.getHead();
@@ -125,7 +133,7 @@ describe("TreeBranchHistoryImpl", () => {
 
 		it("exposes ancestor commits via the parent field", () => {
 			const branch = createBranch();
-			const history = new DefaultTreeBranchHistory(branch, testIdCompressor);
+			const history = new DefaultTreeBranchHistory(branch, testIdCompressor, () => undefined);
 			setRootValue(branch, 3);
 			const afterInit = history.getHead();
 			assert(afterInit !== undefined);

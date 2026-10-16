@@ -36,13 +36,16 @@ import {
 	isTreeNode,
 	treeNodeApi,
 	type TreeLocation,
-	type CapturedTreeLocations,
-	type ResolvedTreeLocation,
+	type TextLocationNode,
+	type CapturedTreeLocation,
+	type TreeGapCaptureOptions,
+	type TreeNode,
+	type TreeArrayNode,
 	type TreeLocationResolver,
 	type TreeLocationResolution,
 } from "../simple-tree/index.js";
 import { isTextLocationNode, textLocationArray } from "../text/index.js";
-import { brand } from "../util/index.js";
+import { brand, isReadonlyArray } from "../util/index.js";
 
 import {
 	LocationReplay,
@@ -53,9 +56,8 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { TreeCheckout } from "./treeCheckout.js";
 import {
 	capturedTreeLocationSchema,
-	capturedTreeLocationsEnvelopeSchema,
-	type CapturedTreeLocation,
-	type CapturedTreeLocationsInternal,
+	capturedTreeLocationEnvelopeSchema,
+	type CapturedTreeLocationInternal,
 	type CapturedRevision,
 	type CapturedNodeReference,
 } from "./locationFormat.js";
@@ -101,7 +103,7 @@ function matchesRevision(candidate: CapturedRevision, expected: CapturedRevision
 	return candidate.branchId === expected.branchId && candidate.revision === expected.revision;
 }
 
-function unavailable(reason: "target-deleted" | "invalid-location"): ResolvedTreeLocation {
+function unavailable(reason: "target-deleted" | "invalid-location"): TreeLocationResolution {
 	return { status: "unavailable", reason };
 }
 
@@ -120,7 +122,7 @@ function unavailable(reason: "target-deleted" | "invalid-location"): ResolvedTre
 export class DefaultTreeLocationResolver implements TreeLocationResolver {
 	private disposed = false;
 	private readonly envelopeValidator: SchemaValidationFunction<
-		typeof capturedTreeLocationsEnvelopeSchema
+		typeof capturedTreeLocationEnvelopeSchema
 	>;
 	private readonly locationValidator: SchemaValidationFunction<
 		typeof capturedTreeLocationSchema
@@ -134,7 +136,7 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		private readonly mintRevisionTag: () => RevisionTag,
 	) {
 		const validator = extractJsonValidator(jsonValidator);
-		this.envelopeValidator = validator.compile(capturedTreeLocationsEnvelopeSchema);
+		this.envelopeValidator = validator.compile(capturedTreeLocationEnvelopeSchema);
 		this.locationValidator = validator.compile(capturedTreeLocationSchema);
 	}
 
@@ -178,7 +180,11 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		return source;
 	}
 
-	public capture(locations: readonly TreeLocation[]): CapturedTreeLocations {
+	public capture(location: TreeLocation): CapturedTreeLocation;
+	public capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
+	public capture(
+		locations: TreeLocation | readonly TreeLocation[],
+	): CapturedTreeLocation | CapturedTreeLocation[] {
 		const source = this.getMainSource();
 		if (source.head !== this.checkout.getLocationHead()) {
 			throw new UsageError(
@@ -191,97 +197,162 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			);
 		}
 		const revision = this.revisionKey(source.head);
-		const capture: CapturedTreeLocationsInternal = {
-			revision,
-			locations: locations.map((location): CapturedTreeLocation => {
-				if (!isTreeNode(location.node)) {
-					throw new UsageError("A captured location requires a SimpleTree node.");
+		const captureOne = (location: TreeLocation): CapturedTreeLocation => {
+			if (!isTreeNode(location.node)) {
+				throw new UsageError("A captured location requires a SimpleTree node.");
+			}
+			if (
+				location.kind !== "node" &&
+				location.kind !== "sequence" &&
+				location.kind !== "text"
+			) {
+				throw new UsageError("Unrecognized tree location kind.");
+			}
+			let target = location.node;
+			if (location.kind === "text") {
+				if (!isTextLocationNode(location.node)) {
+					throw new UsageError("A text location requires a supported text node.");
 				}
-				if (
-					location.kind !== "node" &&
-					location.kind !== "sequence" &&
-					location.kind !== "text"
-				) {
-					throw new UsageError("Unrecognized tree location kind.");
-				}
-				let target = location.node;
-				if (location.kind === "text") {
-					if (!isTextLocationNode(location.node)) {
-						throw new UsageError("A text location requires a supported text node.");
-					}
-					target = location.node[textLocationArray];
-				}
-				const kernel = getKernel(target);
-				if (
-					!kernel.isHydrated() ||
-					kernel.anchorNode.anchorSet !== this.checkout.forest.anchors ||
-					kernel.getStatus() !== TreeStatus.InDocument
-				) {
-					throw new UsageError("The captured node must belong to this view's document.");
-				}
-				if (
-					location.kind !== "node" &&
-					location.movePolicy !== undefined &&
-					location.movePolicy !== "follow"
-				) {
-					throw new UsageError('Only the "follow" move policy is supported.');
-				}
-				const length =
-					isArrayNodeSchema(kernel.schema) && treeNodeApi.is(target, kernel.schema)
-						? target.length
-						: undefined;
-				if (
-					location.kind !== "node" &&
-					(length === undefined ||
-						!Number.isSafeInteger(location.index) ||
-						location.index < 0 ||
-						location.index > length ||
-						(location.affinity !== undefined &&
-							location.affinity !== "before" &&
-							location.affinity !== "after"))
-				) {
-					throw new UsageError(
-						"A sequence or text location requires an array, an in-bounds gap index, and a valid affinity if provided.",
-					);
-				}
-				const node: CapturedNodeReference = {
-					version: 1,
-					revision,
-					path: topDownPath(kernel.anchorNode).map((step) => [
-						step.parentField,
-						step.parentIndex,
-					]),
-					...(location.kind === "node" ? {} : { length }),
-				};
-				return location.kind === "node"
-					? { kind: "node", node }
-					: {
-							kind: location.kind,
-							node,
-							index: location.index,
-							affinity: location.affinity ?? "before",
-						};
-			}),
+				target = location.node[textLocationArray];
+			}
+			const kernel = getKernel(target);
+			if (
+				!kernel.isHydrated() ||
+				kernel.anchorNode.anchorSet !== this.checkout.forest.anchors ||
+				kernel.getStatus() !== TreeStatus.InDocument
+			) {
+				throw new UsageError("The captured node must belong to this view's document.");
+			}
+			if (
+				location.kind !== "node" &&
+				location.movePolicy !== undefined &&
+				location.movePolicy !== "follow"
+			) {
+				throw new UsageError('Only the "follow" move policy is supported.');
+			}
+			const length =
+				isArrayNodeSchema(kernel.schema) && treeNodeApi.is(target, kernel.schema)
+					? target.length
+					: undefined;
+			if (
+				location.kind !== "node" &&
+				(length === undefined ||
+					!Number.isSafeInteger(location.index) ||
+					location.index < 0 ||
+					location.index > length ||
+					(location.affinity !== undefined &&
+						location.affinity !== "before" &&
+						location.affinity !== "after"))
+			) {
+				throw new UsageError(
+					"A sequence or text location requires an array, an in-bounds gap index, and a valid affinity if provided.",
+				);
+			}
+			const node: CapturedNodeReference = {
+				version: 1,
+				revision,
+				path: topDownPath(kernel.anchorNode).map((step) => [
+					step.parentField,
+					step.parentIndex,
+				]),
+				...(location.kind === "node" ? {} : { length }),
+			};
+			const capture: CapturedTreeLocationInternal = {
+				revision,
+				location:
+					location.kind === "node"
+						? { kind: "node", node }
+						: {
+								kind: location.kind,
+								node,
+								index: location.index,
+								affinity: location.affinity ?? "before",
+							},
+			};
+			return capture as unknown as CapturedTreeLocation;
 		};
-		return capture as unknown as CapturedTreeLocations;
+		return isReadonlyArray(locations) ? locations.map(captureOne) : captureOne(locations);
 	}
 
-	public resolve(captured: CapturedTreeLocations): TreeLocationResolution {
+	public captureNode(node: TreeNode): CapturedTreeLocation {
+		return this.capture({ kind: "node", node });
+	}
+
+	public captureGap(
+		node: TreeArrayNode,
+		index: number,
+		options?: TreeGapCaptureOptions,
+	): CapturedTreeLocation {
+		return this.capture({ kind: "sequence", node, index, ...options });
+	}
+
+	public captureTextGap(
+		node: TextLocationNode,
+		index: number,
+		options?: TreeGapCaptureOptions,
+	): CapturedTreeLocation {
+		return this.capture({ kind: "text", node, index, ...options });
+	}
+
+	public resolve(capture: CapturedTreeLocation): TreeLocationResolution;
+	public resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
+	public resolve(
+		captured: CapturedTreeLocation | readonly CapturedTreeLocation[],
+	): TreeLocationResolution | TreeLocationResolution[] {
 		const source = this.getMainSource();
-		const capture: unknown = captured;
-		if (!this.envelopeValidator.check(capture)) {
+		const captures = isReadonlyArray(captured) ? captured : [captured];
+		const groups = new Map<
+			string,
+			{
+				revision: CapturedRevision;
+				locations: unknown[];
+				indices: number[];
+			}
+		>();
+		const results: TreeLocationResolution[] = captures.map((capture: unknown, index) => {
+			if (this.envelopeValidator.check(capture)) {
+				const { revision } = capture;
+				const key = JSON.stringify([revision.branchId, revision.revision]);
+				let group = groups.get(key);
+				if (group === undefined) {
+					group = { revision, locations: [], indices: [] };
+					groups.set(key, group);
+				}
+				group.locations.push(capture.location);
+				group.indices.push(index);
+			}
 			return { status: "revision-unavailable" };
+		});
+		for (const { revision, locations, indices } of groups.values()) {
+			const resolved = this.#resolveRevision(revision, locations, source);
+			for (const [index, result] of resolved.entries()) {
+				const target = indices[index];
+				assert(target !== undefined, "Expected a result index for every captured location");
+				results[target] = result;
+			}
 		}
+		if (isReadonlyArray(captured)) {
+			return results;
+		}
+		assert(results[0] !== undefined, "Expected a result for a single captured location");
+		return results[0];
+	}
+
+	#resolveRevision(
+		revision: CapturedRevision,
+		locations: readonly unknown[],
+		source: LocationRevisionSource,
+	): TreeLocationResolution[] {
 		const commits: GraphCommit<SharedTreeChange>[] = [];
 		let commit = this.checkout.getLocationHead();
 		let sequenced = false;
 		while (true) {
 			sequenced ||= commit === source.head;
-			if (sequenced && matchesRevision(capture.revision, this.revisionKey(commit))) {
+			if (sequenced && matchesRevision(revision, this.revisionKey(commit))) {
 				break;
 			}
 			if (commit.wasTrimmed || commit.parent === undefined) {
-				return { status: "revision-unavailable" };
+				return locations.map(() => ({ status: "revision-unavailable" }));
 			}
 			commits.push(commit);
 			commit = commit.parent;
@@ -307,12 +378,12 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 			}
 			const activeReplay = new LocationReplay(detached);
 			replay = activeReplay;
-			const tracked = capture.locations.map(
+			const tracked = locations.map(
 				(location): { location: TrackedLocation; text: boolean } | undefined => {
 					if (!this.locationValidator.check(location)) {
 						return undefined;
 					}
-					const reference = decodeReference(location.node, capture.revision);
+					const reference = decodeReference(location.node, revision);
 					if (reference === undefined) {
 						return undefined;
 					}
@@ -337,17 +408,14 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 					};
 				},
 			);
-			for (const { delta, revision } of deltas) {
-				activeReplay.apply(delta, revision);
+			for (const { delta, revision: deltaRevision } of deltas) {
+				activeReplay.apply(delta, deltaRevision);
 			}
-			return {
-				status: "resolved",
-				locations: tracked.map((entry) =>
-					entry === undefined
-						? unavailable("invalid-location")
-						: this.materialize(activeReplay, entry.location, entry.text),
-				),
-			};
+			return tracked.map((entry) =>
+				entry === undefined
+					? unavailable("invalid-location")
+					: this.#materialize(activeReplay, entry.location, entry.text),
+			);
 		} finally {
 			replay?.dispose();
 			for (const { delta } of deltas) {
@@ -361,11 +429,11 @@ export class DefaultTreeLocationResolver implements TreeLocationResolver {
 		}
 	}
 
-	private materialize(
+	#materialize(
 		replay: LocationReplay,
 		location: TrackedLocation,
 		text: boolean,
-	): ResolvedTreeLocation {
+	): TreeLocationResolution {
 		const path = replay.snapshot(location);
 		if (path === undefined) {
 			return unavailable("target-deleted");

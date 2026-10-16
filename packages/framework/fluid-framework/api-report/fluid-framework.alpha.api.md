@@ -186,7 +186,7 @@ export enum AttachState {
 }
 
 // @alpha @sealed
-export interface CapturedTreeLocations extends ErasedType<"@fluidframework/tree.CapturedTreeLocations"> {
+export interface CapturedTreeLocation extends ErasedType<"@fluidframework/tree.CapturedTreeLocation"> {
 }
 
 // @alpha @sealed
@@ -1644,6 +1644,7 @@ export namespace PlainText {
         createInsertionAnchor(index: number): ArrayPlaceAnchor;
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
+        moveRangeToIndex(destinationGap: number, sourceStart: number, sourceEnd: number): void;
         onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
         removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
     }
@@ -1739,8 +1740,7 @@ export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any
 export function replaceVerboseTreeHandles<T>(tree: VerboseTree, replacer: HandleConverter<T>): VerboseTree<T>;
 
 // @alpha @sealed
-export type ResolvedTreeLocation = {
-    readonly status: "resolved";
+export interface ResolvedTreeLocation {
     readonly location: {
         readonly kind: "node";
         readonly node: TreeNode;
@@ -1755,10 +1755,8 @@ export type ResolvedTreeLocation = {
         readonly index: number;
         readonly affinity: "before" | "after";
     };
-} | {
-    readonly status: "unavailable";
-    readonly reason: "target-deleted" | "invalid-location";
-};
+    readonly status: "resolved";
+}
 
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -2651,6 +2649,7 @@ export interface TreeBranchCommitMetadata {
     readonly custom: JsonCompatibleReadOnlyObject | undefined;
     readonly customTree: CustomMetadataTree | undefined;
     getParent(): TreeBranchCommitMetadata | undefined;
+    revertTo?(options?: RevertToOptionsAlpha): void;
     readonly revision: CommitRevision;
 }
 
@@ -2730,6 +2729,12 @@ export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
 // @public
 export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = FieldSchema> = TSchema extends FieldSchema<infer Kind, infer Types> ? ApplyKind<TreeNodeFromImplicitAllowedTypes<Types>, Kind> : TSchema extends ImplicitAllowedTypes ? TreeNodeFromImplicitAllowedTypes<TSchema> : TreeNode | TreeLeafValue | undefined;
 
+// @alpha @input
+export interface TreeGapCaptureOptions {
+    readonly affinity?: "before" | "after" | undefined;
+    readonly movePolicy?: "follow" | undefined;
+}
+
 // @alpha @sealed
 export interface TreeIdentifierUtils {
     (node: TreeNode): string | undefined;
@@ -2762,32 +2767,33 @@ export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
 export type TreeLocation = {
     readonly kind: "node";
     readonly node: TreeNode;
-} | {
+} | (TreeGapCaptureOptions & {
     readonly kind: "sequence";
     readonly node: TreeArrayNode;
     readonly index: number;
-    readonly affinity?: "before" | "after" | undefined;
-    readonly movePolicy?: "follow";
-} | {
+}) | (TreeGapCaptureOptions & {
     readonly kind: "text";
     readonly node: TextLocationNode;
     readonly index: number;
-    readonly affinity?: "before" | "after" | undefined;
-    readonly movePolicy?: "follow";
-};
+});
 
 // @alpha @sealed
-export type TreeLocationResolution = {
-    readonly status: "resolved";
-    readonly locations: readonly ResolvedTreeLocation[];
+export type TreeLocationResolution = ResolvedTreeLocation | {
+    readonly status: "unavailable";
+    readonly reason: "target-deleted" | "invalid-location";
 } | {
     readonly status: "revision-unavailable";
 };
 
 // @alpha @sealed
 export interface TreeLocationResolver {
-    capture(locations: readonly TreeLocation[]): CapturedTreeLocations;
-    resolve(capture: CapturedTreeLocations): TreeLocationResolution;
+    capture(location: TreeLocation): CapturedTreeLocation;
+    capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
+    captureGap(node: TreeArrayNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
+    captureNode(node: TreeNode): CapturedTreeLocation;
+    captureTextGap(node: TextLocationNode, index: number, options?: TreeGapCaptureOptions): CapturedTreeLocation;
+    resolve(capture: CapturedTreeLocation): TreeLocationResolution;
+    resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
 }
 
 // @public @sealed

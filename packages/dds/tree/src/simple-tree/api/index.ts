@@ -40,7 +40,8 @@ export { asTreeViewAlpha } from "./tree.js";
 export type {
 	TreeLocation,
 	TextLocationNode,
-	CapturedTreeLocations,
+	CapturedTreeLocation,
+	TreeGapCaptureOptions,
 	ResolvedTreeLocation,
 	TreeLocationResolution,
 	TreeLocationResolver,

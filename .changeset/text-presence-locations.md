@@ -8,14 +8,16 @@ Capture and resolve presence positions in plain and formatted text
 The alpha `TreeLocationResolver` supports `kind: "text"` locations on `PlainText.Tree` and schemas produced by `FormattedText.createSchema`, including subclasses.
 Resolution returns the receiving client's public text node, the current gap index, and the effective affinity.
 Use `kind: "node"` to select an entire text node instead.
+The `captureTextGap` helper captures a single text gap with the same semantics as `capture({ kind: "text", ... })`.
 
 ```typescript
-const selection = view.locations.capture([
-	{ kind: "text", node: view.root.text, index: 2, affinity: "after" },
-]);
+const selection = view.locations.captureTextGap(view.root.text, 2, { affinity: "after" });
 // Send selection through the application's presence transport.
 const result = otherView.locations.resolve(selection);
 ```
+
+Single and array overloads support text locations.
+Each capture is independently serializable, and arrays can combine text, node, and sequence captures from different revisions.
 
 Indices use the same coordinates as text editing methods: gaps from zero through `characterCount()`, inclusive.
 Plain text normally counts Unicode code points.

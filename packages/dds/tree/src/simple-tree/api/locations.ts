@@ -19,7 +19,7 @@ import type { TreeArrayNode } from "../node-kinds/index.js";
 export type TextLocationNode = TreeNode & PlainText.Members;
 
 /**
- * Input describing a whole node, a gap between elements of an array, or a text gap in the current local view.
+ * Input describing a whole node, an array gap, or a text gap in the current local view.
  * @remarks
  * A node location can refer to any SimpleTree {@link TreeNode}, including an entire array.
  * Primitive leaf values do not identify a particular occurrence and are not node locations.
@@ -37,7 +37,7 @@ export type TreeLocation =
 			 */
 			readonly node: TreeNode;
 	  }
-	| {
+	| (TreeGapCaptureOptions & {
 			/**
 			 * Selects a gap (insertion point) within a sequence.
 			 */
@@ -59,36 +59,8 @@ export type TreeLocation =
 			 * refers to the gap between "a" and "b", and so on.
 			 */
 			readonly index: number;
-			/**
-			 * The side of content inserted at the gap on which the position stays.
-			 * Defaults to "before" when omitted or undefined.
-			 * At move boundaries (when the start or end of a moved range coincides with a gap),
-			 * "before" follows the preceding element and "after" follows the following element.
-			 * Array boundaries ("before" index 0 and "after" index N) have no adjacent element.
-			 * @example
-			 * Suppose a local view has the sequence ["a", "b", "c"] and specifies a `TreeLocation` with `index` 1 and `affinity` "before".
-			 * If that location is resolved in a view which had inserted "x" at index 1 (such that the sequence becomes ["a", "x", "b", "c"]),
-			 * it would now refer to the gap between "a" and "x".
-			 *
-			 * If the captured location instead used the "after" affinity in the same scenario, its resolved location would be between "x" and "b".
-			 * @defaultValue "before"
-			 */
-			readonly affinity?: "before" | "after" | undefined;
-
-			/**
-			 * Dictates how the location should behave when ranges of content surrounding the location are moved.
-			 *
-			 * "follow" indicates that the location should move along with the surrounding content when it is relocated.
-			 * Defaults to "follow" when omitted.
-			 * At a moved range's boundaries, affinity determines which adjacent element the location follows.
-			 * We do not currently support any other policy.
-			 *
-			 * A possible future policy could keep the location in the original sequence rather than follow moved content.
-			 * @defaultValue "follow"
-			 */
-			readonly movePolicy?: "follow";
-	  }
-	| {
+	  })
+	| (TreeGapCaptureOptions & {
 			/**
 			 * Selects a gap between independently editable text characters or atoms.
 			 * Use "node" instead to select the entire text node.
@@ -103,36 +75,60 @@ export type TreeLocation =
 			 * Uses the same coordinates as the text editing APIs.
 			 * Plain text normally counts Unicode code points; formatted text counts atoms, including embedded objects.
 			 * There is no implicit UTF-16 or grapheme conversion, and no position inside an atom.
+			 * Deletion and affinity have the same semantics as sequence gaps.
 			 */
 			readonly index: number;
-			/**
-			 * The side of inserted content on which the gap stays, with the same semantics as sequence locations.
-			 * At move boundaries, "before" follows the preceding atom and "after" follows the following atom.
-			 * @defaultValue "before"
-			 */
-			readonly affinity?: "before" | "after" | undefined;
-			/**
-			 * Follows moved content, with the same semantics as sequence locations.
-			 * Only "follow" is supported.
-			 * @defaultValue "follow"
-			 */
-			readonly movePolicy?: "follow";
-	  };
+	  });
 
 /**
- * Opaque, JSON-serializable data produced by {@link TreeLocationResolver.capture}.
+ * Options for capturing a gap between array elements or text atoms.
+ * @input @alpha
+ */
+export interface TreeGapCaptureOptions {
+	/**
+	 * The side of content inserted at the gap on which the position stays.
+	 * Defaults to "before" when omitted or undefined.
+	 * At move boundaries (when the start or end of a moved range coincides with a gap),
+	 * "before" follows the preceding element and "after" follows the following element.
+	 * Array boundaries ("before" index 0 and "after" index N) have no adjacent element.
+	 * @example
+	 * Suppose a local view has the sequence ["a", "b", "c"] and specifies a `TreeLocation` with `index` 1 and `affinity` "before".
+	 * If that location is resolved in a view which had inserted "x" at index 1 (such that the sequence becomes ["a", "x", "b", "c"]),
+	 * it would now refer to the gap between "a" and "x".
+	 *
+	 * If the captured location instead used the "after" affinity in the same scenario, its resolved location would be between "x" and "b".
+	 * @defaultValue "before"
+	 */
+	readonly affinity?: "before" | "after" | undefined;
+
+	/**
+	 * Dictates how the location should behave when ranges of content surrounding the location are moved.
+	 *
+	 * "follow" indicates that the location should move along with the surrounding content when it is relocated.
+	 * Defaults to "follow" when omitted.
+	 * At a moved range's boundaries, affinity determines which adjacent element the location follows.
+	 * We do not currently support any other policy.
+	 *
+	 * A possible future policy could keep the location in the original sequence rather than follow moved content.
+	 * @defaultValue "follow"
+	 */
+	readonly movePolicy?: "follow" | undefined;
+}
+
+/**
+ * Opaque, JSON-serializable data for one location produced by {@link TreeLocationResolver.(capture:1)}.
  * @remarks
  * Designed to be safely transmitted between clients of the same SharedTree in presence messages,
- * including through a JSON serialization round trip, and passed to {@link TreeLocationResolver.resolve}.
+ * including through a JSON serialization round trip, and passed to {@link TreeLocationResolver.(resolve:1)}.
  * Applications should treat captures as opaque and not attempt to interpret their contents.
  * Captures do not force retention of history, do not require disposal, and must not be used as long-term persisted references.
  * @sealed @alpha
  */
-export interface CapturedTreeLocations
-	extends ErasedType<"@fluidframework/tree.CapturedTreeLocations"> {}
+export interface CapturedTreeLocation
+	extends ErasedType<"@fluidframework/tree.CapturedTreeLocation"> {}
 
 /**
- * The current local location or an explicit unavailable result.
+ * A successfully resolved location in the current local view.
  *
  * See documentation on {@link TreeLocation} for details on location field semantics.
  * @remarks
@@ -145,50 +141,51 @@ export interface CapturedTreeLocations
  * Results contain the receiving view's local objects; use {@link TreeNodeApi.is} to narrow them to an application schema.
  * @sealed @alpha
  */
-export type ResolvedTreeLocation =
-	| {
-			readonly status: "resolved";
-			readonly location:
-				| {
-						readonly kind: "node";
-						readonly node: TreeNode;
-				  }
-				| {
-						readonly kind: "sequence";
-						readonly node: TreeArrayNode;
-						readonly index: number;
-						/**
-						 * The captured affinity, including the default "before" if none was supplied.
-						 */
-						readonly affinity: "before" | "after";
-				  }
-				| {
-						readonly kind: "text";
-						readonly node: TextLocationNode;
-						readonly index: number;
-						/**
-						 * The captured affinity, including the default "before" if none was supplied.
-						 */
-						readonly affinity: "before" | "after";
-				  };
-	  }
-	| {
-			readonly status: "unavailable";
-			readonly reason: "target-deleted" | "invalid-location";
-	  };
+export interface ResolvedTreeLocation {
+	/**
+	 * Indicates that the captured location resolved successfully.
+	 */
+	readonly status: "resolved";
+	/**
+	 * The location in the receiving view, after applying intervening edits.
+	 */
+	readonly location:
+		| {
+				readonly kind: "node";
+				readonly node: TreeNode;
+		  }
+		| {
+				readonly kind: "sequence";
+				readonly node: TreeArrayNode;
+				readonly index: number;
+				/**
+				 * The captured affinity, including the default "before" if none was supplied.
+				 */
+				readonly affinity: "before" | "after";
+		  }
+		| {
+				readonly kind: "text";
+				readonly node: TextLocationNode;
+				readonly index: number;
+				/**
+				 * The captured affinity, including the default "before" if none was supplied.
+				 */
+				readonly affinity: "before" | "after";
+		  };
+}
 
 /**
- * Resolution results in capture order, or an unavailable source revision.
+ * The current local location, an unavailable target, or an unavailable source revision.
  * @remarks
  * An unavailable revision can be not yet received, expired, or from a different branch.
  * Retry after applying pending inbound operations, or request a fresh capture if the revision has expired.
- * Successful batches preserve input order; each location has its own availability result.
  * @sealed @alpha
  */
 export type TreeLocationResolution =
+	| ResolvedTreeLocation
 	| {
-			readonly status: "resolved";
-			readonly locations: readonly ResolvedTreeLocation[];
+			readonly status: "unavailable";
+			readonly reason: "target-deleted" | "invalid-location";
 	  }
 	| {
 			readonly status: "revision-unavailable";
@@ -209,8 +206,8 @@ export type TreeLocationResolution =
  */
 export interface TreeLocationResolver {
 	/**
-	 * Captures locations and their revision from the same sequenced state.
-	 * @param locations - Local node selections, sequence gaps, or text gaps, in application-defined order.
+	 * Captures a location and its revision from the current sequenced state.
+	 * @param location - A local node selection, sequence gap, or text gap.
 	 * @returns A serializable capture.
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if any of the limitations below are violated,
 	 * a location is invalid, a node is outside this view's document, or the view is disposed.
@@ -222,6 +219,7 @@ export interface TreeLocationResolver {
 	 * - The main view must have a sequenced revision and no pending local edits.
 	 * Wait for local edits to be acknowledged before calling this method.
 	 * - No transaction may be open, including a transaction that has not made any edits.
+	 * - Calls from change-event callbacks are not supported, including callbacks raised after a batch has been applied.
 	 * - Node locations require SimpleTree nodes; primitive leaf values cannot identify a particular occurrence.
 	 * Sequence locations require array nodes and count array elements, not arbitrary text offsets.
 	 * Text locations require supported text nodes and count independently editable characters or atoms.
@@ -229,19 +227,86 @@ export interface TreeLocationResolver {
 	 * Unsupported view states throw rather than returning undefined.
 	 * Captures are ephemeral and may be unresolvable as retained history is trimmed; they are not persistent anchors.
 	 */
-	capture(locations: readonly TreeLocation[]): CapturedTreeLocations;
+	capture(location: TreeLocation): CapturedTreeLocation;
 
 	/**
-	 * Resolves a captured batch into this view's current local state.
+	 * Captures multiple locations from the current sequenced state.
+	 * @param locations - Local node selections, sequence gaps, or text gaps.
+	 * @returns Independently usable serializable captures in input order. An empty input returns an empty array.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} under the same conditions as the single-location overload,
+	 * including when any input location is invalid.
+	 * @remarks
+	 * Each location has identical semantics, defaults, and preconditions to the single-location overload of {@link TreeLocationResolver.(capture:1)}.
+	 * The array overload is more performant when capturing many locations.
+	 */
+	capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
+
+	/**
+	 * Captures a whole node.
+	 * @param node - The node being referred to.
+	 * @returns A serializable capture.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} under the same conditions as {@link TreeLocationResolver.(capture:1)}.
+	 * @remarks
+	 * Equivalent to `capture({ kind: "node", node })`, with the same semantics and preconditions.
+	 */
+	captureNode(node: TreeNode): CapturedTreeLocation;
+
+	/**
+	 * Captures a gap between array elements.
+	 * @param node - The array whose elements define the sequence.
+	 * @param index - A gap index from zero through the array length, inclusive.
+	 * @param options - Affinity and move policy. Defaults to "before" affinity and "follow" move policy.
+	 * @returns A serializable capture.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} under the same conditions as {@link TreeLocationResolver.(capture:1)}.
+	 * @remarks
+	 * Equivalent to `capture({ kind: "sequence", node, index, ...options })`, with the same semantics and preconditions.
+	 */
+	captureGap(
+		node: TreeArrayNode,
+		index: number,
+		options?: TreeGapCaptureOptions,
+	): CapturedTreeLocation;
+
+	/**
+	 * Captures a gap in a public text node.
+	 * @param node - A supported plain or formatted text node.
+	 * @param index - A gap index from zero through `node.characterCount()`, inclusive.
+	 * @param options - Affinity and move policy. Defaults to "before" affinity and "follow" move policy.
+	 * @returns An independently serializable capture.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} under the same conditions as {@link TreeLocationResolver.(capture:1)}.
+	 * @remarks
+	 * Equivalent to `capture({ kind: "text", node, index, ...options })`, with the same semantics and preconditions.
+	 * Indices count independently editable characters or atoms, not UTF-16 units or grapheme clusters.
+	 */
+	captureTextGap(
+		node: TextLocationNode,
+		index: number,
+		options?: TreeGapCaptureOptions,
+	): CapturedTreeLocation;
+
+	/**
+	 * Resolves a captured location into this view's current local state.
 	 * @param capture - The opaque presence data produced by the sender's capture.
-	 * @returns Results in capture order or an explicit unavailable-revision result.
+	 * @returns The local location or an explicit unavailable result.
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} on a view other than the main view of an attached SharedTree,
-	 * during a transaction, after disposal, or if the receiving view cannot view the current stored schema.
+	 * during a transaction or change-event callback, after disposal, or if the receiving view cannot view the current stored schema.
 	 * @remarks
 	 * Unlike capture, resolution supports pending local edits on the main view.
+	 * Calls from change-event callbacks are not supported, including callbacks raised after a batch has been applied.
 	 * Not-yet-received, expired, or wrong-context revisions return `revision-unavailable`; these are not usage errors.
 	 * Structural validation follows SharedTree's configured JSON validator.
 	 * When validation is enabled (i.e. a non-no-op JSON validator is configured), malformed envelopes return `revision-unavailable` and malformed locations return `invalid-location`.
 	 */
-	resolve(capture: CapturedTreeLocations): TreeLocationResolution;
+	resolve(capture: CapturedTreeLocation): TreeLocationResolution;
+
+	/**
+	 * Resolves captured locations into this view's current local state.
+	 * @param captures - Opaque presence data, which may come from different capture calls and revisions.
+	 * @returns Results in input order. An empty input returns an empty array.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} under the same conditions as the single-capture overload.
+	 * @remarks
+	 * Each capture has identical resolution semantics to the single-capture overload of {@link TreeLocationResolver.(resolve:1)}.
+	 * The array overload is more performant when resolving many locations from the same revision.
+	 */
+	resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
 }

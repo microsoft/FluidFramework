@@ -24,27 +24,32 @@ const capture = view.locations.capture([
 publishSelection({ capture });
 
 // On receipt, with the editor model synchronized to the local tree:
-const result = view.locations.resolve(message.capture);
-if (result.status === "resolved") {
-    for (const entry of result.locations) {
-        if (entry.status === "resolved") {
-            const location = entry.location;
-            if (location.kind === "node") {
-                highlightNode(location.node); // A local SimpleTree object.
-            } else {
-                showCaret(location.node, location.index); // Current array and gap.
-            }
+const results = view.locations.resolve(message.capture);
+for (const entry of results) {
+    if (entry.status === "resolved") {
+        const location = entry.location;
+        if (location.kind === "node") {
+            highlightNode(location.node); // A local SimpleTree object.
+        } else {
+            showCaret(location.node, location.index); // Current array and gap.
         }
-        // Otherwise, entry.status is "unavailable" and entry.reason explains why.
     }
+    // Otherwise, entry.status is "unavailable" and entry.reason explains why,
+    // or entry.status is "revision-unavailable".
+    // The receiving client may be behind the sender: retry after applying
+    // the inbound operations for that revision.
+    // If the revision has expired instead and been trimmed, wait for a fresh presence update.
 }
-// Otherwise, result.status is "revision-unavailable".
-// The receiving client may be behind the sender: retry after applying
-// the inbound operations for that revision.
-// If the revision has expired instead and been trimmed, wait for a fresh presence update.
+
+// Single locations do not require arrays.
+const caret = view.locations.captureGap(characters, focusIndex);
+const caretResult = view.locations.resolve(caret);
+const selectedNode = view.locations.captureNode(selectedImage);
 ```
 
-Indices count array elements; editors must convert other coordinate units.
+`capture` and `resolve` accept either one location or an array and return the corresponding single result or array.
+The array overloads have identical per-location semantics and are more performant for many locations captured from the same revision.
+
 Captures are opaque JSON-serializable payloads designed for transmission between clients of the same SharedTree.
 Their representation is hidden with `ErasedType`; applications should transmit them unchanged (but are free to
 nest them within other presence data).

@@ -137,6 +137,28 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "world");
 	});
 
+	it("moves a range of characters", () => {
+		const text = FormattedTextTest.Tree.fromString("abcdef");
+		text.formatRange(3, 5, { bold: true });
+
+		text.moveRangeToIndex(1, 3, 5);
+		assert.equal(text.fullString(), "adebcf");
+		assert.deepEqual(
+			[...text.charactersWithFormatting()].map((atom) => [
+				atom.content.content,
+				atom.format.bold,
+			]),
+			[
+				["a", false],
+				["d", true],
+				["e", true],
+				["b", false],
+				["c", false],
+				["f", false],
+			],
+		);
+	});
+
 	it("default formatting", () => {
 		class Custom extends FormattedText.createSchema(
 			new SchemaFactoryBeta("test.formatted.custom"),
@@ -247,7 +269,7 @@ describe("textDomainFormatted", () => {
 			]);
 			assert.throws(
 				() => text.formatRange(0, 2, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
 			);
 		});
 
@@ -260,7 +282,17 @@ describe("textDomainFormatted", () => {
 			// The range spans object formats at either end with a non-object format in the middle.
 			assert.throws(
 				() => text.formatRange(0, 3, { bold: true }),
-				validateUsageError(/formatRange currently only supports object nodes for the format./),
+				validateUsageError(/formatRange encountered an existing `Leaf` format node/),
+			);
+		});
+
+		it("throws when a leaf value is provided", () => {
+			const text = UnionFormatText.fromString("a");
+			assert.throws(
+				() => text.formatRange(0, 1, 999),
+				validateUsageError(
+					"formatRange is for applying a subset of format properties: it is invalid to pass it a leaf node. Use `reformat` instead.",
+				),
 			);
 		});
 	});
