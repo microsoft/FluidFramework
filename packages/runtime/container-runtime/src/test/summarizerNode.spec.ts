@@ -357,6 +357,24 @@ describe("Runtime", () => {
 			});
 
 			describe("Refresh Latest Summary", () => {
+				it("tracks full summaries independently of handle reuse and ignores duplicate ACKs", async () => {
+					createRoot();
+					rootNode.startSummary(10, logger, 0);
+					const full = await rootNode.summarize(true, true);
+					assert.equal(full.summary.type, SummaryType.Tree);
+					rootNode.completeSummary("full");
+
+					const accepted = await rootNode.refreshLatestSummary("full", 10);
+					assert(accepted.isSummaryTracked, "A full summary must remain tracked");
+					rootNode.startSummary(11, logger, 10);
+					const incremental = await rootNode.summarize(false, true);
+					assert.equal(incremental.summary.type, SummaryType.Handle);
+					rootNode.clearSummary();
+					const duplicate = await rootNode.refreshLatestSummary("full", 10);
+					assert(!duplicate.isSummaryTracked, "A proposal can only be adopted once");
+					assertSummarizeCalls(1, 0, 0);
+				});
+
 				it("Should not refresh latest if already passed ref seq number", async () => {
 					createRoot({ refSeq: summaryRefSeq });
 					const result = await rootNode.refreshLatestSummary("test-handle", summaryRefSeq);
