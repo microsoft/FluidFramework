@@ -48,4 +48,3 @@ view.initialize({ text: "Hello" });
 Keep the expected hash fixed until a schema change is intentional.
 If a test reports a mismatch, review the schema change.
 If the change is intentional, update the expected hash with the computed hash from the error message.
-There is no need to call or log the hashing function yourself.
