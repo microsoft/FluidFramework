@@ -2,7 +2,7 @@
 "@fluidframework/runtime-utils": minor
 "__section": legacy
 ---
-Identify a data store's package path, for use in telemtry
+Identify a data store's package path, for use in telemetry
 
 The legacy-beta `getDataStorePackagePath` function lets callers add the containing data store's package path to diagnostic telemetry.
 For example, the path can identify the package containing a component that takes a long time to load.
