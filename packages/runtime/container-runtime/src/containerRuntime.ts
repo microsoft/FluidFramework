@@ -4546,7 +4546,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * {@inheritDoc IContainerRuntimeBaseInternal.getDataStorePackagePath}
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBaseInternal.getDataStorePackagePath}
 	 */
 	public async getDataStorePackagePath(
 		nodePath: string,
