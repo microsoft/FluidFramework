@@ -42,7 +42,6 @@ export interface ISnapshotContentsWithProps extends ISnapshot {
  * Recreates blobs section of the tree.
  * @param node - tree node to read blob section from
  */
-/* eslint-disable @fluid-internal/fluid/no-unchecked-record-access -- Required records are validated by the existing parser assertions. */
 function readBlobSection(node: NodeTypes): {
 	blobContents: Map<string, ArrayBuffer>;
 	slowBlobStructureCount: number;
@@ -77,38 +76,38 @@ function readBlobSection(node: NodeTypes): {
 			const records = getNodeProps(blob);
 			assertBlobCoreInstance(records.data, "data should be of BlobCore type");
 			const id = getStringInstance(records.id, "blob id should be string");
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- records.data is validated above.
 			blobContents.set(id, ArrayBufferLikeToArrayBuffer(records.data.arrayBuffer));
 		}
 	}
 	return { blobContents, slowBlobStructureCount };
 }
-/* eslint-enable @fluid-internal/fluid/no-unchecked-record-access */
 
 /**
  * Recreates ops section of the tree.
  * @param node - tree node to read ops section from
  */
-/* eslint-disable @fluid-internal/fluid/no-unchecked-record-access -- Required records are validated by the existing parser assertions. */
 function readOpsSection(node: NodeTypes): ISequencedDocumentMessage[] {
 	assertNodeCoreInstance(node, "Deltas should be of type NodeCore");
 	const ops: ISequencedDocumentMessage[] = [];
 	const records = getNodeProps(node);
 	assertNumberInstance(records.firstSequenceNumber, "Seq number should be a number");
 	assertNodeCoreInstance(records.deltas, "Deltas should be a Node");
+	// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- records.deltas is validated above.
 	for (let i = 0; i < records.deltas.length; ++i) {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @fluid-internal/fluid/no-unchecked-record-access -- JSON.parse is intentionally untyped, and records.deltas is validated above.
 		ops.push(JSON.parse(records.deltas.getString(i)));
 	}
 	// Due to a bug at service side, in an edge case service was serializing deltas even
 	// when there are no ops. So just make the code resilient to that bug. Service has also
 	// fixed that bug.
 	assert(
+		// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- records.firstSequenceNumber is validated above.
 		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
 }
-/* eslint-enable @fluid-internal/fluid/no-unchecked-record-access */
 
 /**
  * Recreates snapshot tree out of tree representation.
@@ -239,7 +238,6 @@ function readTreeSection(node: NodeCore): {
  * Recreates snapshot tree out of tree representation.
  * @param node - tree node to de-serialize from
  */
-/* eslint-disable @fluid-internal/fluid/no-unchecked-record-access -- Required records are validated by the existing parser assertions. */
 function readSnapshotSection(node: NodeTypes): {
 	sequenceNumber: number;
 	snapshotTree: ISnapshotTree;
@@ -254,6 +252,7 @@ function readSnapshotSection(node: NodeTypes): {
 	const { snapshotTree, slowTreeStructureCount, treeStructureCountWithGroupId } =
 		readTreeSection(records.treeNodes);
 	snapshotTree.id = getStringInstance(records.id, "snapshotId should be string");
+	// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access -- records.sequenceNumber is validated above.
 	const sequenceNumber = records.sequenceNumber.valueOf();
 	return {
 		sequenceNumber,
@@ -262,7 +261,6 @@ function readSnapshotSection(node: NodeTypes): {
 		treeStructureCountWithGroupId,
 	};
 }
-/* eslint-enable @fluid-internal/fluid/no-unchecked-record-access */
 
 /**
  * Converts snapshot from binary compact representation to tree/blobs/ops.
