@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	Client,
 	DetachedReferencePosition,
@@ -20,44 +19,6 @@ import {
 	type SequenceInterval,
 } from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
-
-export interface RandomIntervalOptions {
-	random: IRandom;
-	count: number;
-	min: number;
-	max: number;
-}
-
-/**
- * Asserts that the results match the expected endpoints or intervals.
- * @param results - The generated intervals to compare.
- * @param expectedEndpoints - The expected start and end points or intervals.
- */
-export function assertOrderedSequenceIntervals(
-	sharedString: ISharedString,
-	results: SequenceInterval[],
-	expectedEndpoints: { start: number; end: number }[] | SequenceInterval[],
-): void {
-	assert.equal(results.length, expectedEndpoints.length, "Mismatched result count");
-	for (let i = 0; i < results.length; ++i) {
-		assert(results[i]);
-		const { start, end } = expectedEndpoints[i];
-		assert.strictEqual(
-			typeof start === "number"
-				? sharedString.localReferencePositionToPosition(results[i].start)
-				: results[i].start,
-			start,
-			"mismatched start",
-		);
-		assert.strictEqual(
-			typeof end === "number"
-				? sharedString.localReferencePositionToPosition(results[i].end)
-				: results[i].end,
-			end,
-			"mismatched end",
-		);
-	}
-}
 
 let currentId = 0;
 /**
@@ -82,31 +43,6 @@ export function createTestSequenceInterval(
 		IntervalType.SlideOnRemove,
 	);
 	return interval;
-}
-
-/**
- * Generates random intervals based on the randomness-related options.
- * @param options - The options for generating random intervals.
- * @returns An array of generated Interval objects.
- */
-export function generateRandomIntervals(
-	sharedString: ISharedString,
-	options: RandomIntervalOptions,
-) {
-	const intervals: SequenceInterval[] = [];
-	const { random, count, min, max } = options;
-
-	for (let i = 0; i < count; ++i) {
-		const start = random.integer(
-			Math.max(min, 0),
-			Math.min(max, sharedString.getLength() - 1),
-		);
-		const end = random.integer(start, Math.min(max, sharedString.getLength() - 1));
-		const interval = createTestSequenceInterval(sharedString, start, end);
-		intervals.push(interval);
-	}
-
-	return intervals;
 }
 
 /**

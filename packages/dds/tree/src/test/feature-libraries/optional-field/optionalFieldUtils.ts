@@ -10,13 +10,11 @@ import {
 	type ChangesetLocalId,
 	type RevisionTag,
 	type TaggedChange,
-	asChangeAtomId,
 	makeAnonChange,
 	tagChange,
 	tagRollbackInverse,
 	taggedAtomId,
 } from "../../../core/index.js";
-import type { NodeId } from "../../../feature-libraries/index.js";
 import {
 	DefaultRevisionReplacer,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -26,11 +24,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalField.js";
 import type {
-	Replace,
 	OptionalChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { SizedNestedMap, type Mutable } from "../../../util/index.js";
+import { SizedNestedMap } from "../../../util/index.js";
 
 // export const Change = {
 // 	/**

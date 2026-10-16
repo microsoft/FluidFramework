@@ -15,7 +15,7 @@ import {
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
-const CellCount = Type.Number({ multipleOf: 1, minimum: 1 });
+const CellCount = Type.Integer({ minimum: 1 });
 
 const MoveId = ChangesetLocalIdSchema;
 const HasMoveId = Type.Object({ id: MoveId });

@@ -67,12 +67,15 @@ const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
 	remove: 1,
 	intraFieldMove: 1,
 	crossFieldMove: 1,
+	schema: 1,
 };
 
 describe("Fuzz - revert", () => {
 	describe("revert sequenced commits last-to-first", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
-			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
+			// The legacy policy can drop undo edits over schema changes, so restoring all initial content
+			// requires a fixed schema during this history.
+			takeAsync(opsPerRun, makeOpGenerator({ ...undoRedoWeights, schema: 0 }));
 
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,

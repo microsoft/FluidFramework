@@ -51,6 +51,8 @@
 }
 
 .ffcom-key-feature-card-body-label {
+	margin: 0 0 var(--ifm-paragraph-margin-bottom);
+
 	font-family: "Segoe UI";
 	font-style: normal;
 	font-weight: 600;

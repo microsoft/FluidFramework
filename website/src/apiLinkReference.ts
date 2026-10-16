@@ -186,6 +186,26 @@ export interface ResolvedApiLink {
 }
 
 /**
+ * The result of trying to resolve an API declaration reference that is not documented.
+ */
+export interface UnresolvedApiLink {
+	/**
+	 * Indicates that the API declaration reference did not resolve.
+	 */
+	readonly found: false;
+
+	/**
+	 * The declaration's dotted member path with selector syntax omitted.
+	 */
+	readonly defaultText: string;
+}
+
+/**
+ * The result of trying to resolve an API declaration reference.
+ */
+export type ApiLinkResolution = (ResolvedApiLink & { readonly found: true }) | UnresolvedApiLink;
+
+/**
  * Resolves an API declaration reference from one version's API link manifest.
  */
 export function resolveApiLinkTarget(
@@ -193,11 +213,28 @@ export function resolveApiLinkTarget(
 	packageName: string,
 	api: string,
 ): ResolvedApiLink {
+	const result = tryResolveApiLinkTarget(manifest, packageName, api);
+	if (!result.found) {
+		throw new Error(`No API documentation found for "${packageName}/${api}".`);
+	}
+	return { target: result.target, defaultText: result.defaultText };
+}
+
+/**
+ * Tries to resolve an API declaration reference from one version's API link manifest.
+ *
+ * @remarks Parsing errors, unsupported selectors, and ambiguous references remain errors.
+ */
+export function tryResolveApiLinkTarget(
+	manifest: Readonly<ApiLinkManifest>,
+	packageName: string,
+	api: string,
+): ApiLinkResolution {
 	const referencePath = parseApiReference(api);
 	const apiName = referencePath.map((segment) => segment.name).join(".");
 	const candidates = manifest[packageName]?.[apiName];
 	if (candidates === undefined) {
-		throw new Error(`No API documentation found for "${packageName}/${api}".`);
+		return { found: false, defaultText: apiName };
 	}
 
 	let matchingCandidates = candidates.filter((candidate) =>
@@ -207,7 +244,7 @@ export function resolveApiLinkTarget(
 		),
 	);
 	if (matchingCandidates.length === 0) {
-		throw new Error(`No API documentation found for "${packageName}/${api}".`);
+		return { found: false, defaultText: apiName };
 	}
 
 	const requestedOverload = referencePath.at(-1)?.overloadIndex;
@@ -216,7 +253,7 @@ export function resolveApiLinkTarget(
 			(candidate) => candidate.path.at(-1)?.overloadIndex === requestedOverload,
 		);
 		if (matchingCandidates.length === 0) {
-			throw new Error(`No API documentation found for "${packageName}/${api}".`);
+			return { found: false, defaultText: apiName };
 		}
 	}
 
@@ -241,15 +278,15 @@ export function resolveApiLinkTarget(
 			(candidate) => candidate.path.at(-1)?.overloadIndex === 1,
 		);
 		if (overloadOne !== undefined) {
-			return { target: overloadOne, defaultText: apiName };
+			return { found: true, target: overloadOne, defaultText: apiName };
 		}
 	}
 
 	const target = matchingCandidates[0];
 	if (target === undefined) {
-		throw new Error(`No API documentation found for "${packageName}/${api}".`);
+		return { found: false, defaultText: apiName };
 	}
-	return { target, defaultText: apiName };
+	return { found: true, target, defaultText: apiName };
 }
 
 function parseApiReference(api: string): readonly ApiReferenceSegment[] {

@@ -94,8 +94,8 @@ const incrementalOptions = [
 	"checkJs",
 ].sort(); // sort it so that the result of the filter is sorted as well.
 
-function filterIncrementalOptions(options: any): Record<string, unknown> {
-	const newOptions: any = {};
+function filterIncrementalOptions(options: Record<string, unknown>): Record<string, unknown> {
+	const newOptions: Record<string, unknown> = {};
 	for (const key of incrementalOptions) {
 		if (options[key] !== undefined) {
 			newOptions[key] = options[key];
@@ -159,6 +159,20 @@ function createGetCanonicalFileName(tsLib: tsTypes): (x: string) => string {
 				fileNameLowerCaseRegExp.test(x) ? x.replace(fileNameLowerCaseRegExp, toLowerCase) : x;
 }
 
+/**
+ * The TypeScript compiler internals used by {@link createGetSourceFileVersion}.
+ *
+ * @remarks
+ * `getSourceFileVersionAsHashFromText` is an internal (non public) TypeScript API added in
+ * TypeScript 5.0. It is absent from the published typings, and callers must handle its absence.
+ */
+interface TsInternals {
+	getSourceFileVersionAsHashFromText?: (
+		host: { createHash: (data: string) => string },
+		text: string,
+	) => string;
+}
+
 function createGetSourceFileVersion(tsLib: tsTypes): (buffer: Buffer) => string {
 	// The TypeScript compiler performs some light preprocessing of the source file
 	// text before calculating the file hashes that appear in *.tsbuildinfo.
@@ -167,7 +181,10 @@ function createGetSourceFileVersion(tsLib: tsTypes): (buffer: Buffer) => string 
 	// this preprocessing in 'fluid-build'.  Both options are fragile, but since
 	// we're already calling into the TypeScript compiler, calling internals is
 	// convenient.
-	const maybeGetHash = tsLib["getSourceFileVersionAsHashFromText"];
+	//
+	// The internal API is not part of the published typings, so an assertion is needed to reach
+	// it. Its absence is handled below.
+	const maybeGetHash = (tsLib as TsInternals).getSourceFileVersionAsHashFromText;
 
 	if (!maybeGetHash) {
 		// This internal function is added 5.0+
@@ -376,15 +393,21 @@ export function getTscUtils(path: string): TscUtil {
 			return tscUtilFromLibPath;
 		}
 
+		// The module is loaded dynamically from the given package's scope, so its type is not
+		// statically known here.
 		// eslint-disable-next-line @typescript-eslint/no-var-requires
-		const tsLib: tsTypes = require(tsPath);
+		const tsLib = require(tsPath) as tsTypes;
 		const tscUtil = createTscUtil(tsLib);
 		tscUtilPathCache.set(path, tscUtil);
 		tscUtilLibPathCache.set(tsPath, tscUtil);
 		return tscUtil;
-	} catch (e: any) {
-		e.message = `Failed to load typescript module for '${path}'. 'typescript' dependency may be missing.: ${e.message}`;
-		throw e;
+	} catch (e) {
+		const prefix = `Failed to load typescript module for '${path}'. 'typescript' dependency may be missing.`;
+		if (e instanceof Error) {
+			e.message = `${prefix}: ${e.message}`;
+			throw e;
+		}
+		throw new Error(`${prefix}: ${String(e)}`);
 	}
 }
 

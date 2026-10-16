@@ -8,6 +8,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FieldKey } from "../../../core/index.js";
 
 import type { KeyDownPath } from "./fuzzEditGenerators.js";
+import type { CommitRevision } from "../../../simple-tree/index.js";
 
 export type Operation = TreeOperation | Synchronize;
 
@@ -15,6 +16,7 @@ export type TreeOperation =
 	| TreeEdit
 	| TransactionBoundary
 	| UndoRedo
+	| RevertTo
 	| SchemaChange
 	| Constraint
 	| ForkMergeOperation;
@@ -43,6 +45,12 @@ export interface TransactionBoundary {
 export interface UndoRedo {
 	type: "undoRedo";
 	operation: "undo" | "redo";
+}
+
+export interface RevertTo {
+	type: "revertTo";
+	/** The revision to revert the tree to. */
+	revision: CommitRevision;
 }
 
 export interface SchemaChange {
@@ -174,6 +182,10 @@ export interface CrossFieldMove extends Move {
 }
 
 export interface SchemaOp {
+	/**
+	 * Unqualified name of the new node type in the treeFuzz scope.
+	 * The qualified identifier must not already exist in the selected checkout's schema.
+	 */
 	type: string;
 }
 

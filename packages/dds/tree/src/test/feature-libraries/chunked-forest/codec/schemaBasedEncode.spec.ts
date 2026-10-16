@@ -7,6 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	createIdCompressor,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -465,6 +466,7 @@ describe("schemaBasedEncoding", () => {
 				it(name, () => {
 					const idCompressor = createIdCompressor(
 						assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+						SerializationVersion.V3,
 					);
 					const storedSchema = schemaData;
 					const tree = treeFactory(idCompressor);
@@ -487,9 +489,12 @@ describe("schemaBasedEncoding", () => {
 						});
 					const idCompressorCore = toIdCompressorWithCore(idCompressor);
 					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
+					// Select each format with an override so every registered format, including experimental ones, is snapshotted.
 					const codec = fieldBatchCodecBuilder.build({
 						jsonValidator: ajvValidator,
 						minVersionForCollab: currentVersion,
+						writeVersionOverrides: new Map([[fieldBatchCodecBuilder.name, version]]),
+						allowPossiblyIncompatibleWriteVersionOverrides: true,
 					});
 					// End to end test
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.

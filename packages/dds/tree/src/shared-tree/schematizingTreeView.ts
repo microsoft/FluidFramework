@@ -59,6 +59,10 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchHistory,
+	type TreeLocationResolver,
+	type TreeLocation,
+	type CapturedTreeLocation,
+	type TreeLocationResolution,
 	type UntypedTreeViewAlpha,
 	type TreeSchema,
 	type SchemaUpgrade,
@@ -68,6 +72,7 @@ import {
 	type Breakable,
 	breakingClass,
 	disposeSymbol,
+	isReadonlyArray,
 	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
@@ -167,10 +172,27 @@ export class SchematizingSimpleTreeView<
 	public readonly breaker: Breakable;
 
 	public constructor(
+		/**
+		 * The checkout that supplies the tree content and branch operations for the view.
+		 */
 		public readonly checkout: TreeCheckout,
+		/**
+		 * The schema and behavior configuration for the view.
+		 */
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
+		/**
+		 * The manager that generates and stabilizes node identifiers.
+		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
+		/**
+		 * An optional callback to invoke when the view is disposed.
+		 */
 		private readonly onDispose?: () => void,
+		/**
+		 * Whether disposing the view also disposes its checkout.
+		 * Defaults to true for checkouts that are not shared branches.
+		 */
+		private readonly disposeCheckoutOnDispose: boolean = !checkout.isSharedBranch,
 	) {
 		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
@@ -218,7 +240,7 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.checkout.applySerializedChange(change);
+		this.checkout.applyChange(change);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
@@ -322,7 +344,7 @@ export class SchematizingSimpleTreeView<
 
 	private get effectiveUpgradePolicy(): StagedSchemaUpgradePolicy {
 		const configuredPolicy = this.stagedUpgradePolicy;
-		if (configuredPolicy.includeAlreadyEnabledUpgrades === false) {
+		if (configuredPolicy.includeAlreadyEnabledUpgrades !== true) {
 			return configuredPolicy;
 		}
 		const enabledUpgrades = this.currentEnabledUpgrades;
@@ -556,6 +578,7 @@ export class SchematizingSimpleTreeView<
 
 	public dispose(): void {
 		this.disposed = true;
+		this.checkout.disposeLocations();
 		this.disposeFlexView();
 		for (const unregister of this.unregisterCallbacks) {
 			unregister();
@@ -564,8 +587,8 @@ export class SchematizingSimpleTreeView<
 		this.currentCompatibility = undefined;
 		this.currentEnabledUpgrades = undefined;
 		this.onDispose?.();
-		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
-			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (this.disposeCheckoutOnDispose && !this.checkout.disposed) {
+			// Branch views normally own their checkout, unlike views created for a retained checkout.
 			this.checkout.dispose();
 		}
 	}
@@ -637,4 +660,43 @@ export class SchematizingSimpleTreeView<
 	public get branchHistory(): TreeBranchHistory {
 		return this.checkout.branchHistory;
 	}
+
+	public readonly locations: TreeLocationResolver = (() => {
+		const getCheckout = (): TreeCheckout => {
+			this.ensureUndisposed();
+			return this.checkout;
+		};
+		const checkSchema = (): void => throwIfSchemaIsIncompatible(this.compatibility);
+		// Keep usage errors outside breakingClass's method wrappers, as with the other view helpers.
+		function capture(location: TreeLocation): CapturedTreeLocation;
+		function capture(locations: readonly TreeLocation[]): CapturedTreeLocation[];
+		function capture(
+			locations: TreeLocation | readonly TreeLocation[],
+		): CapturedTreeLocation | CapturedTreeLocation[] {
+			const checkout = getCheckout();
+			return isReadonlyArray(locations)
+				? checkout.locations.capture(locations)
+				: checkout.locations.capture(locations);
+		}
+
+		function resolve(captured: CapturedTreeLocation): TreeLocationResolution;
+		function resolve(captures: readonly CapturedTreeLocation[]): TreeLocationResolution[];
+		function resolve(
+			captures: CapturedTreeLocation | readonly CapturedTreeLocation[],
+		): TreeLocationResolution | TreeLocationResolution[] {
+			const checkout = getCheckout();
+			checkSchema();
+			return isReadonlyArray(captures)
+				? checkout.locations.resolve(captures)
+				: checkout.locations.resolve(captures);
+		}
+
+		return {
+			capture,
+			resolve,
+			captureNode: (node) => capture({ kind: "node", node }),
+			captureGap: (node, index, options) =>
+				capture({ kind: "sequence", node, index, ...options }),
+		};
+	})();
 }

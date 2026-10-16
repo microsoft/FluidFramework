@@ -82,7 +82,7 @@ export type EncodedRevisionInfo = Static<typeof EncodedRevisionInfo>;
 /**
  * Index of field in an EncodedFieldBatch.
  */
-export const EncodedTreeIndex = Type.Number({ multipleOf: 1, minimum: 0 });
+export const EncodedTreeIndex = Type.Integer({ minimum: 0 });
 
 export const CommitBuilds = Type.Array(
 	Type.Tuple([
@@ -130,7 +130,7 @@ export const EncodedModularChangesetV1 = Type.Object(
 		/**
 		 * The number of constraints within this changeset that are violated.
 		 */
-		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
+		violations: Type.Optional(Type.Integer({ minimum: 0 })),
 	},
 	noAdditionalProps,
 );

@@ -5,6 +5,7 @@
 
 export {
 	AnchorTreeIndex,
+	KeyFinderDependencyScope,
 	type KeyFinder,
 	hasElement,
 } from "./anchorTreeIndex.js";

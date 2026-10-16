@@ -13,6 +13,7 @@ export {
 	nonProductionConditionalsIncluded,
 	emulateProductionBuild,
 	onAssertionFailure,
+	prefixPredicate,
 } from "./assert.js";
 export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";

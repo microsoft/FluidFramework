@@ -33,9 +33,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	 */
 	public readonly root: string;
 
-	/**
-	 * {@inheritDoc IBuildProject.configuration}
-	 */
 	public readonly configuration: BuildProjectConfig;
 
 	/**
@@ -97,25 +94,16 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 
 	private readonly _workspaces: Map<WorkspaceName, IWorkspace>;
 
-	/**
-	 * {@inheritDoc IBuildProject.workspaces}
-	 */
 	public get workspaces(): Map<WorkspaceName, IWorkspace> {
 		return this._workspaces;
 	}
 
 	private readonly _releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
-	/**
-	 * {@inheritDoc IBuildProject.releaseGroups}
-	 */
 	public get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup> {
 		return this._releaseGroups;
 	}
 
-	/**
-	 * {@inheritDoc IBuildProject.packages}
-	 */
 	public get packages(): Map<PackageName, P> {
 		const pkgs: Map<PackageName, P> = new Map();
 		for (const ws of this.workspaces.values()) {
@@ -131,9 +119,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 		return pkgs;
 	}
 
-	/**
-	 * {@inheritDoc IBuildProject.relativeToRepo}
-	 */
 	public relativeToRepo(p: string): string {
 		// Replace \ in result with / in case OS is Windows.
 		return path.relative(this.root, p).replaceAll("\\", "/");
@@ -151,9 +136,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	private gitRepository: SimpleGit | undefined;
 	private _checkedForGitRepo = false;
 
-	/**
-	 * {@inheritDoc IBuildProject.getGitRepository}
-	 */
 	public async getGitRepository(): Promise<Readonly<SimpleGit>> {
 		if (this.gitRepository !== undefined) {
 			return this.gitRepository;
@@ -171,9 +153,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 		throw new NotInGitRepository(this.root);
 	}
 
-	/**
-	 * {@inheritDoc IBuildProject.getPackageReleaseGroup}
-	 */
 	public getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup> {
 		const found = this.releaseGroups.get(pkg.releaseGroup);
 		if (found === undefined) {

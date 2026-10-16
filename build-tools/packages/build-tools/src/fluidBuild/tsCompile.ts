@@ -103,9 +103,9 @@ export function tsCompile(
 						const rawFile = originalReadFile(fileName);
 						if (fileName === packageJsonPath && rawFile !== undefined) {
 							// Reading local package.json: override type field
-							const packageJson = JSON.parse(rawFile);
+							const packageJson = JSON.parse(rawFile) as Record<string, unknown>;
 							packageJsonTypeOverrideUsage =
-								(packageJson.type ?? "commonjs") !== packageJsonTypeOverride
+								(packageJson["type"] ?? "commonjs") !== packageJsonTypeOverride
 									? "used"
 									: "already present";
 							return JSON.stringify({ ...packageJson, type: packageJsonTypeOverride });

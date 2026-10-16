@@ -5,7 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 
 import { FluidClientVersion } from "../../../codec/index.js";
 import { storedEmptyFieldSchema } from "../../../core/index.js";
@@ -234,7 +237,7 @@ describe("staged allowed type upgrade", () => {
 		assert.equal(viewMigrated.root, "test");
 	});
 
-	it("includes an already enabled allowed type in upgradeSchema by default", () => {
+	it("excludes an already enabled allowed type from upgradeSchema by default", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeBase, treeEnabled, treeDefault] = provider.trees;
 
@@ -255,8 +258,11 @@ describe("staged allowed type upgrade", () => {
 		const viewDefault = treeDefault.viewWith(
 			new TreeViewConfigurationAlpha({ schema: schemaWithStagedType }),
 		);
-		assert.equal(viewDefault.compatibility.canUpgrade, true);
-		assert.doesNotThrow(() => viewDefault.upgradeSchema());
+		assert.equal(viewDefault.compatibility.canUpgrade, false);
+		assert.throws(
+			() => viewDefault.upgradeSchema(),
+			/cannot be upgraded to the requested schema/,
+		);
 	});
 
 	it("using independent view user apis", () => {
@@ -276,7 +282,7 @@ describe("staged allowed type upgrade", () => {
 		});
 
 		// TODO: this is a legacy API: we need a stable alternative.
-		const idCompressor = createIdCompressor();
+		const idCompressor = createIdCompressor(SerializationVersion.V3);
 
 		const content: ViewContent = {
 			tree: TreeAlpha.exportCompressed(viewBase.root, {
@@ -543,7 +549,7 @@ describe("staged optional upgrade", () => {
 		assert.equal(viewOptional.root, undefined);
 	});
 
-	it("includes an already enabled upgrade in upgradeSchema by default", () => {
+	it("excludes an already enabled upgrade from upgradeSchema by default", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
 
@@ -564,15 +570,18 @@ describe("staged optional upgrade", () => {
 		viewStaged.dispose();
 		provider.synchronizeMessages();
 
-		// A new view without the upgrade token preserves the enabled upgrade.
+		// A new view without the upgrade token excludes the enabled upgrade.
 		const viewStagedDefault = treeOptional.viewWith(
 			new TreeViewConfigurationAlpha({ schema: stagedOptionalSchema }),
 		);
-		assert.equal(viewStagedDefault.compatibility.canUpgrade, true);
-		assert.doesNotThrow(() => viewStagedDefault.upgradeSchema());
+		assert.equal(viewStagedDefault.compatibility.canUpgrade, false);
+		assert.throws(
+			() => viewStagedDefault.upgradeSchema(),
+			/cannot be upgraded to the requested schema/,
+		);
 	});
 
-	it("can exclude already enabled upgrades from upgradeSchema", () => {
+	it("can include already enabled upgrades in upgradeSchema", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
 
@@ -592,20 +601,17 @@ describe("staged optional upgrade", () => {
 		viewStaged.dispose();
 		provider.synchronizeMessages();
 
-		const viewStagedNarrow = treeOptional.viewWith(
+		const viewStagedPreserving = treeOptional.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: stagedOptionalSchema,
 				stagedUpgradePolicy: {
-					includeAlreadyEnabledUpgrades: false,
+					includeAlreadyEnabledUpgrades: true,
 					...StagedSchemaUpgradePolicy.enabledStagedUpgrades(),
 				},
 			}),
 		);
-		assert.equal(viewStagedNarrow.compatibility.canUpgrade, false);
-		assert.throws(
-			() => viewStagedNarrow.upgradeSchema(),
-			/cannot be upgraded to the requested schema/,
-		);
+		assert.equal(viewStagedPreserving.compatibility.canUpgrade, true);
+		assert.doesNotThrow(() => viewStagedPreserving.upgradeSchema());
 	});
 
 	it("checks compatibility through staged optional rollout", () => {
@@ -672,11 +678,11 @@ describe("staged optional upgrade", () => {
 			isEquivalent: true,
 		});
 
-		// stagedOptionalSchema preserves the already enabled optional upgrade by default.
+		// stagedOptionalSchema excludes the already enabled optional upgrade by default.
 		expectCompatibility(stagedOptionalSchema, {
 			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
+			canUpgrade: false,
+			isEquivalent: false,
 			enabledUpgrades: new Map([[optionalUpgrade, "enabled"]]),
 		});
 

@@ -39,7 +39,6 @@ import { filterEdits } from "./filterEdits.js";
 import { invertModularChange } from "./invert.js";
 import { intoDelta } from "./modularChangeFamily.js";
 import type {
-	CrossFieldKeyTable,
 	FieldChange,
 	FieldChangeMap,
 	FieldId,
@@ -54,7 +53,6 @@ import {
 	getAttachFieldForDetach,
 	getChangeHandler,
 	getDetachFieldForAttach,
-	getFirstAttachField,
 	getFirstDetachField,
 	getNewRootIdFromOldRootId,
 	getOldRootIdFromNewRootId,

@@ -17,27 +17,25 @@ import {
 import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
-import { asAlpha } from "../../../api.js";
-import type {
-	TreeStoredSchemaRepository,
-	TreeNodeSchemaIdentifier,
-} from "../../../core/index.js";
-import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
+import type { TreeStoredSchemaRepository } from "../../../core/index.js";
+import { Tree, type ITreePrivate, type TreeCheckout } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import type { TreeNode, TreeNodeSchema } from "../../../simple-tree/index.js";
+import type { CommitRevision } from "../../../simple-tree/index.js";
+import type { TreeNode } from "../../../simple-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
 	type FuzzNode,
-	createTreeViewSchema,
+	createFuzzSchema,
 	type FuzzNodeSchema,
 	type fuzzFieldSchema,
 	nodeSchemaFromTreeSchema,
 	getStaticsForTree,
 	type SchemaFactoryConstructor,
 	type TreePackageStatics,
+	convertToFuzzView,
 } from "./fuzzUtils.js";
 import {
 	type Insert,
@@ -60,6 +58,7 @@ import {
 	GeneratedFuzzValueType,
 	type NodeRange,
 	type ForkMergeOperation,
+	type RevertTo,
 } from "./operationTypes.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
@@ -70,8 +69,7 @@ export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
 	 *
-	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
-	 * once schema ops are supported.
+	 * For shared checkouts, recreated from the stored schema when {@link viewFromState} observes a schema change.
 	 */
 	currentSchema: FuzzNodeSchema;
 };
@@ -84,8 +82,7 @@ export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSch
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
 	 *
-	 * TODO: The schema for each client should be properly updated if "afterSchemaChange" (or equivalent event) occurs
-	 * once schema ops are supported.
+	 * Schema changes during transactions are not supported by the fuzz harness.
 	 */
 	currentSchema: FuzzNodeSchema;
 };
@@ -122,87 +119,67 @@ export function viewFromState(
 	forkedBranchIndex?: number | undefined,
 ): FuzzView {
 	state.clientViews ??= new Map();
+	const statics = getStaticsForTree(client.channel);
 
 	// If the forked view info contains the branch number, return that branch. Otherwise return the main client view
 	if (forkedBranchIndex !== undefined) {
 		const forkedViews = state.forkedViews?.get(client.channel);
 		assert(
-			forkedViews !== undefined && forkedViews.length >= forkedBranchIndex,
+			forkedViews !== undefined &&
+				forkedBranchIndex >= 0 &&
+				forkedViews.length > forkedBranchIndex,
 			"branch does not exist",
 		);
-		return forkedViews[forkedBranchIndex];
+		return refreshFuzzView(forkedViews[forkedBranchIndex], statics);
 	}
 
-	const view =
-		state.transactionViews?.get(client.channel) ??
-		(getOrCreate(state.clientViews, client.channel, (sharedTree) => {
-			const statics = getStaticsForTree(sharedTree);
-			const tree = sharedTree.kernel;
-			const treeSchema = simpleSchemaFromStoredSchema(
-				tree.storedSchema,
-				statics.newSchemaFactory,
-			);
-			const config = statics.newTreeViewConfiguration({
-				schema: treeSchema,
-			});
+	const transactionView = state.transactionViews?.get(client.channel);
+	if (transactionView !== undefined) {
+		return refreshFuzzView(transactionView, statics);
+	}
 
-			const treeView = asAlpha(tree.viewWith(config));
-			treeView.events.on("schemaChanged", () => {
-				if (!treeView.compatibility.canView) {
-					treeView.dispose();
-					state.clientViews?.delete(client.channel);
-				}
-			});
+	const rootView = refreshFuzzView(
+		getOrCreate(state.clientViews, client.channel, (sharedTree) => {
+			return fuzzViewFromCheckout(sharedTree.kernel.checkout, statics);
+		}),
+		statics,
+	);
+	state.clientViews.set(client.channel, rootView);
+	return rootView;
+}
 
-			assert(treeView.compatibility.isEquivalent);
-			const fuzzView = treeView as FuzzView;
-			assert.equal(fuzzView.currentSchema, undefined);
-			const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
-
-			fuzzView.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
-			return fuzzView;
-		}) as unknown as FuzzView);
+function fuzzViewFromCheckout(checkout: TreeCheckout, statics: TreePackageStatics): FuzzView {
+	const schema = simpleSchemaFromStoredSchema(checkout.storedSchema, statics.newSchemaFactory);
+	const view = checkout.viewWith(statics.newTreeViewConfiguration({ schema }));
+	assert(view.compatibility.isEquivalent);
+	convertToFuzzView(
+		view,
+		nodeSchemaFromTreeSchema(schema) ?? assert.fail("nodeSchema should not be undefined"),
+	);
 	return view;
 }
-function filterFuzzNodeSchemas(
-	nodeSchemas: Iterable<TreeNodeSchemaIdentifier>,
-	prefix: string,
-	omitInitialNodeSchemas: string[],
-): TreeNodeSchemaIdentifier[] {
-	const values: TreeNodeSchemaIdentifier[] = [];
 
-	for (const key of nodeSchemas) {
-		if (
-			typeof key === "string" &&
-			key.startsWith(prefix) &&
-			!omitInitialNodeSchemas.some((InitialNodeSchema) => key.includes(InitialNodeSchema))
-		) {
-			values.push(key);
-		}
+function refreshFuzzView(view: FuzzView, statics: TreePackageStatics): FuzzView {
+	if (view.compatibility.isEquivalent) {
+		return view;
 	}
-
-	return values;
+	assert.equal(
+		view.checkout.transaction.size,
+		0,
+		"Cannot replace a view during a transaction",
+	);
+	// Disposing a non-shared view also disposes its checkout, so only shared views can be replaced.
+	assert(view.checkout.isSharedBranch, "Cannot replace a view on a non-shared checkout");
+	const checkout = view.checkout;
+	view.dispose();
+	return fuzzViewFromCheckout(checkout, statics);
 }
+
 export function simpleSchemaFromStoredSchema(
 	storedSchema: TreeStoredSchemaRepository,
 	schemaFactoryConstructor: SchemaFactoryConstructor,
 ): typeof fuzzFieldSchema {
-	const schemaFactory = schemaFactoryConstructor("treeFuzz");
-	const nodeSchemas = filterFuzzNodeSchemas(storedSchema.nodeSchema.keys(), "treeFuzz", [
-		"treeFuzz.FuzzNumberNode",
-		"treeFuzz.FuzzStringNode",
-		"treeFuzz.node",
-		"treeFuzz.FuzzHandleNode",
-		"treeFuzz.arrayChildren",
-	]);
-	const fuzzNodeSchemas: TreeNodeSchema[] = [];
-	for (const nodeSchema of nodeSchemas) {
-		class GUIDNodeSchema extends schemaFactory.object(nodeSchema.slice("treeFuzz.".length), {
-			value: schemaFactory.number,
-		}) {}
-		fuzzNodeSchemas.push(GUIDNodeSchema);
-	}
-	return createTreeViewSchema(fuzzNodeSchemas, schemaFactoryConstructor);
+	return createFuzzSchema([...storedSchema.nodeSchema.keys()], schemaFactoryConstructor);
 }
 
 /**
@@ -274,6 +251,7 @@ export interface EditGeneratorOpWeights {
 	nodeConstraint: number;
 	fork: number;
 	merge: number;
+	revertTo: number;
 }
 const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	set: 0,
@@ -293,6 +271,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	nodeConstraint: 0,
 	fork: 0,
 	merge: 0,
+	revertTo: 0,
 };
 
 export interface EditGeneratorOptions {
@@ -300,8 +279,11 @@ export interface EditGeneratorOptions {
 	maxRemoveCount: number;
 }
 
-export function getAllowableNodeTypes(state: FuzzTestState): string[] {
-	const fuzzView = viewFromState(state, state.client);
+export function getAllowableNodeTypes(
+	state: FuzzTestState,
+	forkedBranchIndex?: number,
+): string[] {
+	const fuzzView = viewFromState(state, state.client, forkedBranchIndex);
 	const nodeSchema = fuzzView.currentSchema;
 	const nodeTypes = [];
 	for (const leafNodeSchema of nodeSchema.info.optionalChild.allowedTypeSet) {
@@ -320,8 +302,8 @@ export const makeTreeEditGenerator = (
 		...opWeightsArg,
 	};
 
-	const generatedValue = (state: FuzzTestState): GeneratedFuzzNode => {
-		const allowableNodeTypes = getAllowableNodeTypes(state);
+	const generatedValue = (state: FuzzTestStateForFieldEdit): GeneratedFuzzNode => {
+		const allowableNodeTypes = getAllowableNodeTypes(state, state.branchIndex);
 		const nodeTypeToGenerate = state.random.pick(allowableNodeTypes);
 
 		switch (nodeTypeToGenerate) {
@@ -674,6 +656,23 @@ export const makeUndoRedoEditGenerator = (
 	]);
 };
 
+export const revertToGenerator = (state: FuzzTestState): RevertTo => {
+	const allRevisions: CommitRevision[] = [];
+	const head = viewFromState(state).branchHistory.getHead();
+	for (
+		let revisionMetadata = head;
+		revisionMetadata !== undefined;
+		revisionMetadata = revisionMetadata.getParent()
+	) {
+		if (revisionMetadata.revertTo !== undefined) {
+			allRevisions.push(revisionMetadata.revision);
+		}
+	}
+	assert(allRevisions.length > 0, "No revisions available to revert to.");
+	const revision = state.random.pick(allRevisions);
+	return { type: "revertTo", revision };
+};
+
 export const makeConstraintEditGenerator = (
 	opWeightsArg: Partial<EditGeneratorOpWeights>,
 ): Generator<Constraint, FuzzTestState> => {
@@ -727,6 +726,7 @@ export function makeOpGenerator(
 		start,
 		undo,
 		redo,
+		revertTo,
 		fieldSelection,
 		schema,
 		synchronizeTrees,
@@ -756,7 +756,22 @@ export function makeOpGenerator(
 					}),
 					synchronizeTrees,
 				],
-				[() => schemaEditGenerator, schema],
+				[
+					() => revertToGenerator,
+					revertTo,
+					(state: FuzzTestState) =>
+						viewFromState(state).branchHistory.getHead()?.revertTo !== undefined,
+				],
+				[
+					() => schemaEditGenerator,
+					schema,
+					// SharedTree's fuzz harness does not currently support schema edits during an active transaction.
+					// This limitation exists because schema upgrades need to reconstruct the view of the client applying the edit,
+					// which would lose any ongoing transaction edits (which are applied to a fork of the view that must be disposed).
+					(state: FuzzTestState) =>
+						viewFromState(state).checkout.isSharedBranch &&
+						viewFromState(state).checkout.transaction.size === 0,
+				],
 				[
 					() => makeConstraintEditGenerator(weights),
 					constraintWeight,

@@ -86,6 +86,9 @@ It authenticates end users with Microsoft Entra ID and issues short-lived Fluid 
 your tenant key, so the key never reaches a client. Deployed separately from the main script —
 many teams will front Fluid with a backend they already run instead.
 
+**[copy-data/](./copy-data/README.md)** — Creates tenants and copies document data from Azure Fluid
+Relay to a self-hosted deployment.
+
 **`release-artifacts/`** — Where release bundles land. Generated, not edited by hand.
 
 ## Reference documents

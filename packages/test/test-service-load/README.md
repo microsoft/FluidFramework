@@ -6,16 +6,13 @@ NodeJs-based test to simulate many clients and a high rate of op generation.
 
 ## Pre-requisites
 
--   Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
+-   Run the `@ff-internal/tenant-setup` script to check out a test tenant.
+    It populates the `login__odsp__fic__test__users` environment variable with the test usernames
+    available to the run, along with the supporting token-fetching entrypoint.
+    The orchestrator reads that list and assigns one user to each test runner, so load is
+    distributed evenly across the available users.
+-   For non-ODSP drivers, run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve the required secrets.
     _You do not need to run it more than once, it will persist the keys for future sessions._
--   If you are using a username not already present in `testConfig.json`,
-    then you'll need to add the password to the `login__odsp__test__accounts` environment variable. The format is simple:
-
-```json
-{"user@foo.com": "pwd_foo", "user@bar.com": "pwd_bar", ...}
-```
-
-If you intend to check in the new username, please reach out to someone on the team who can add the creds to Azure Key Vault.
 
 ## Usage
 
@@ -69,6 +66,11 @@ If present, the test will load an existing data store for the given test id rath
 If present, launch in Test Runner mode with the given runId (to distinguish from other concurrent test runners).
 `--url` is required, since the test runner needs to know which data store to connect to.
 
+#### --username
+
+Test Runner mode only. The ODSP test user the runner connects as.
+The orchestrator assigns this automatically from `login__odsp__fic__test__users`; it isn't typically passed manually.
+
 #### --debug, -dbg
 
 Launches each test runner with `--inspect-brk` and a unique Node debugging port. (Not compatible with `--runId`)
@@ -88,8 +90,7 @@ The value passed here should be a filter string for the logger namespace.
 > To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
 > provide something like: `-l 'fluid:telemetry:Container:*'`.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
-
+<!-- markdown-magic:begin {"transform":"readme-footer","headingLevel":2} -->
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
@@ -97,16 +98,16 @@ The value passed here should be a filter string for the logger namespace.
 
 You can [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid Framework in these ways:
 
--   Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
--   [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
--   Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
--   [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
+- Answer questions in [GitHub Discussions](https://github.com/microsoft/FluidFramework/discussions).
+- [Submit bug reports](https://github.com/microsoft/FluidFramework/issues) and help verify fixes.
+- Review [source code changes](https://github.com/microsoft/FluidFramework/pulls).
+- [Contribute bug fixes](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md).
 
 For detailed instructions, read the [repo documentation](https://github.com/microsoft/FluidFramework/blob/main/docs/content/Home.md).
 
 This project follows the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information, read the [Code of Conduct frequently asked questions](https://opensource.microsoft.com/codeofconduct/faq/).
-For questions or comments, contact [opencode@microsoft.com](mailto:opencode@microsoft.com).
+For questions or comments, contact <opencode@microsoft.com>.
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
@@ -127,5 +128,4 @@ Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guid
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
 <!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+<!-- markdown-magic:end -->

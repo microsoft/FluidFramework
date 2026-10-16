@@ -19,6 +19,7 @@ import {
 	type NestedMap,
 	RangeMap,
 	brand,
+	brandedIntegerType,
 	brandedNumberType,
 	brandedStringType,
 	comparePartialStrings,
@@ -75,9 +76,7 @@ export interface ChangeAtomId {
 	readonly localId: ChangesetLocalId;
 }
 
-export const ChangesetLocalIdSchema = brandedNumberType<ChangesetLocalId>({
-	multipleOf: 1,
-});
+export const ChangesetLocalIdSchema = brandedIntegerType<ChangesetLocalId>();
 
 export const EncodedChangeAtomId = Type.Union([
 	Type.Tuple([ChangesetLocalIdSchema, RevisionTagSchema]),
@@ -137,7 +136,20 @@ export function taggedOptAtomId(
 }
 
 export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
-	return { ...id, localId: brand(id.localId + offset) };
+	return { ...id, localId: offsetChangesetLocalId(id.localId, offset) };
+}
+
+/**
+ * Offsets a changeset local ID by the specified amount.
+ * @param value - The original changeset local ID.
+ * @param offset - The amount by which to offset the local ID.
+ * @returns The offset changeset local ID.
+ */
+export function offsetChangesetLocalId(
+	value: ChangesetLocalId,
+	offset: number,
+): ChangesetLocalId {
+	return brand(value + offset);
 }
 
 // #region These comparison functions are used instead of e.g. `compareNumbers` as a performance optimization
@@ -290,11 +302,8 @@ export interface CommitMetadata {
  * Information about a change that has been applied by the local client.
  * @sealed @alpha
  */
-export interface LocalChangeMetadata extends CommitMetadata {
-	/**
-	 * Whether the change was made on the local machine/client or received from a remote client.
-	 */
-	readonly isLocal: true;
+export interface LocalChangeMetadata
+	extends Extract<ChangeMetadataBeta, { readonly isLocal: true }> {
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for local changes.
@@ -360,16 +369,11 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	 * ```
 	 */
 	readonly labels: TransactionLabels;
-
-	/**
-	 * Events related to a local change that has been applied.
-	 */
-	readonly events: Listenable<LocalCommitEvents>;
 }
 
 /**
  * Events related to a local commit that has been applied.
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface LocalCommitEvents {
 	/**
@@ -385,8 +389,8 @@ export interface LocalCommitEvents {
 	 * It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
 	 * @example Notifying the user of the outcome and allowing them to retry:
 	 * ```typescript
-	 * // Use `asAlpha` API to access the settled event API
-	 * const view = asAlpha(tree.viewWith(config));
+	 * // Use `asBeta` API to access the noChange precondition
+	 * const view = asBeta(tree.viewWith(config));
 	 *
 	 * // Function to clear all contents of the tree, with a precondition that no changes have occurred.
 	 * const clearAllContents = () => {
@@ -468,7 +472,7 @@ export type TransactionLabels = Set<unknown> & { tree?: LabelTree };
 
 /**
  * Details about what changes from a commit were applied or not.
- * @alpha
+ * @beta
  */
 export enum CommitOutcome {
 	/**
@@ -494,8 +498,8 @@ export enum CommitOutcome {
 	 * (and no implicit constraints were violated.)
 	 *
 	 * Explicit constraints are those that are explicitly added
-	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
-	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 * through {@link RunTransactionParamsBeta.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusBeta.preconditionsOnRevert | preconditionsOnRevert}.
 	 *
 	 * The new content may be edited (and potentially inserted) by subsequent commits,
 	 * assuming those commits are not themselves subject to constraint violations.
@@ -516,11 +520,8 @@ export enum CommitOutcome {
  * Information about a change that has been applied by a remote client.
  * @sealed @alpha
  */
-export interface RemoteChangeMetadata extends CommitMetadata {
-	/**
-	 * Whether the change was made on the local machine/client or received from a remote client.
-	 */
-	readonly isLocal: false;
+export interface RemoteChangeMetadata
+	extends Extract<ChangeMetadataBeta, { readonly isLocal: false }> {
 	/**
 	 * Returns a serializable object that encodes the change.
 	 * @remarks This is only available for {@link LocalChangeMetadata | local changes}.
@@ -542,6 +543,33 @@ export interface RemoteChangeMetadata extends CommitMetadata {
 	 */
 	readonly labels: TransactionLabels;
 }
+
+/**
+ * Information about a local or remote change that has been applied.
+ * @remarks
+ * For local changes, use {@link LocalCommitEvents.settled | the settled event} to observe the outcome after sequencing.
+ * See {@link ChangeMetadata} for additional alpha APIs.
+ * @sealed @beta
+ */
+export type ChangeMetadataBeta = CommitMetadata &
+	(
+		| {
+				/**
+				 * Whether the change was made on the local machine/client or received from a remote client.
+				 */
+				readonly isLocal: true;
+				/**
+				 * Events related to a local change that has been applied.
+				 */
+				readonly events: Listenable<LocalCommitEvents>;
+		  }
+		| {
+				/**
+				 * Whether the change was made on the local machine/client or received from a remote client.
+				 */
+				readonly isLocal: false;
+		  }
+	);
 
 /**
  * Information about a {@link LocalChangeMetadata | local} or {@link RemoteChangeMetadata | remote} change that has been applied.

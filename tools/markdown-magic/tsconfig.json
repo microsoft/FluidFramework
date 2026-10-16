@@ -1,0 +1,18 @@
+{
+	"extends": "../../common/build/build-common/tsconfig.node16.json",
+	"compilerOptions": {
+		"composite": false,
+		"declaration": false,
+		"declarationMap": false,
+		"incremental": false,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"noEmit": true,
+		"noImplicitAny": true,
+		"rootDir": ".",
+		// See DEV.md for the third-party declaration resolution issue that requires this setting.
+		"skipLibCheck": true,
+		"types": ["node"],
+	},
+	"include": ["src", "test"],
+}

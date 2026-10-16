@@ -6,6 +6,7 @@
 import type { RevisionMetadataSource, RevisionTag, TaggedChange } from "../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { RebaseRevisionMetadata } from "../feature-libraries/modular-schema/index.js";
+import { idAllocatorFromMaxId, type IdAllocator } from "../util/index.js";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
@@ -136,7 +137,7 @@ export interface FieldStateTree<TContent, TChangeset, TMeta = undefined> {
 export type ChildStateGenerator<TContent, TChangeset, TMeta = undefined> = (
 	state: FieldStateTree<TContent, TChangeset, TMeta>,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: (count?: number) => number,
+	idAllocator: IdAllocator,
 ) => Iterable<FieldStateTree<TContent, TChangeset, TMeta>>;
 
 function* depthFirstWalk<TContent, TChangeset, TMeta>(
@@ -144,21 +145,21 @@ function* depthFirstWalk<TContent, TChangeset, TMeta>(
 	generateChildStates: ChildStateGenerator<TContent, TChangeset, TMeta>,
 	depth: number,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: () => number,
+	idAllocator: IdAllocator,
 ): Iterable<FieldStateTree<TContent, TChangeset, TMeta>> {
 	yield initialState;
 	if (depth > 0) {
 		for (const childState of generateChildStates(
 			initialState,
 			tagFromIntention,
-			mintIntention,
+			idAllocator,
 		)) {
 			yield* depthFirstWalk(
 				childState,
 				generateChildStates,
 				depth - 1,
 				tagFromIntention,
-				mintIntention,
+				idAllocator,
 			);
 		}
 	}
@@ -182,14 +183,14 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset, TMeta = u
 	generateChildStates: ChildStateGenerator<TContent, TChangeset, TMeta>,
 	numberOfEdits: number,
 	tagPrefix: string,
-	intentionMinter?: (count?: number) => number,
+	idAllocator?: IdAllocator,
 ): Iterable<NamedChangeset<TChangeset, TMeta>[]> {
 	for (const state of depthFirstWalk(
 		initialState,
 		generateChildStates,
 		numberOfEdits,
 		(intention: number) => `${tagPrefix}${intention}` as unknown as RevisionTag,
-		intentionMinter ?? makeIntentionMinter(),
+		idAllocator ?? idAllocatorFromMaxId(),
 	)) {
 		const edits: NamedChangeset<TChangeset, TMeta>[] = [];
 		for (

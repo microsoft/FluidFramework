@@ -1054,6 +1054,82 @@ describe("ArrayNode", () => {
 					assert.deepEqual([...array], [2, 3, 1]);
 				});
 
+				// Hydrated and unhydrated implementations must produce the same contents for every valid range move.
+				// Enumerate the small input domain to cover interior gaps, boundaries, empty/full ranges,
+				// and forward/backward moves, with both overloads for specifying the same source array.
+				for (const specifySource of [false, true]) {
+					it(`moves ranges correctly for every valid destination gap (${
+						specifySource ? "specified" : "implicit"
+					} source)`, () => {
+						const initialState = [0, 1, 2, 3, 4, 5];
+						for (let sourceStart = 0; sourceStart <= initialState.length; sourceStart++) {
+							for (
+								let sourceEnd = sourceStart;
+								sourceEnd <= initialState.length;
+								sourceEnd++
+							) {
+								for (
+									let destinationGap = 0;
+									destinationGap <= initialState.length;
+									destinationGap++
+								) {
+									const array = init(schemaType, initialState);
+									const expected = [...initialState];
+									// Gaps within the source range, including its boundaries, leave content unchanged.
+									if (destinationGap < sourceStart || destinationGap > sourceEnd) {
+										const moved = expected.splice(sourceStart, sourceEnd - sourceStart);
+										// The gap is measured before removal; forward moves need a shifted insertion index.
+										const destinationIndex =
+											destinationGap > sourceEnd
+												? destinationGap - moved.length
+												: destinationGap;
+										expected.splice(destinationIndex, 0, ...moved);
+									}
+									if (specifySource) {
+										array.moveRangeToIndex(destinationGap, sourceStart, sourceEnd, array);
+									} else {
+										array.moveRangeToIndex(destinationGap, sourceStart, sourceEnd);
+									}
+									assert.deepEqual(
+										[...array],
+										expected,
+										JSON.stringify({
+											sourceStart,
+											sourceEnd,
+											destinationGap,
+										}),
+									);
+								}
+							}
+						}
+					});
+				}
+
+				it("preserves large arrays when the destination gap is inside the moved range", () => {
+					// The unhydrated editor switches from splice to slice-based insertion at 1000 items.
+					// Keep a suffix after the moved range to expose unintended relocation on that path.
+					const initialState = Array.from({ length: 1002 }, (_, index) => index);
+					const array = init(schemaType, initialState);
+					array.moveRangeToIndex(1, 0, 1000);
+					assert.deepEqual([...array], initialState);
+				});
+
+				it("validates indices before overlapping range moves", () => {
+					const array = init(schemaType, [1, 2, 3]);
+					// Both gaps are numerically inside their source ranges, but invalid inputs must still throw.
+					assert.throws(
+						() => array.moveRangeToIndex(2, 1, 4),
+						validateUsageError(
+							/Index value passed to TreeArrayNode.moveRangeToIndex is out of bounds./,
+						),
+					);
+					assert.throws(
+						() => array.moveRangeToIndex(1.5, 0, 2),
+						validateUsageError(/Expected a safe integer/),
+					);
+					assert.deepEqual([...array], [1, 2, 3]);
+				});
+
 				it("cross-field move", () => {
 					const schema = schemaFactory.object("parent", {
 						array1: schemaFactory.array(schemaFactory.number),
@@ -1062,6 +1138,22 @@ describe("ArrayNode", () => {
 					const { array1, array2 } = init(schema, { array1: [1, 2], array2: [1, 2] });
 					array1.moveRangeToIndex(0, 0, 2, array2);
 					assert.deepEqual([...array1], [1, 2, 1, 2]);
+				});
+
+				it("cross-field move with overlapping indices", () => {
+					// Equal numeric positions in different arrays are not overlapping locations.
+					// The same-array no-op shortcut must not suppress this actual transfer.
+					const schema = schemaFactory.object("parent", {
+						array1: schemaFactory.array(schemaFactory.number),
+						array2: schemaFactory.array(schemaFactory.number),
+					});
+					const { array1, array2 } = init(schema, {
+						array1: [4, 5, 6],
+						array2: [1, 2, 3],
+					});
+					array1.moveRangeToIndex(1, 0, 2, array2);
+					assert.deepEqual([...array1], [4, 1, 2, 5, 6]);
+					assert.deepEqual([...array2], [3]);
 				});
 
 				it("move within empty field", () => {

@@ -26,6 +26,16 @@ export interface FluidTestMochaConfig {
 	"forbid-only"?: boolean;
 }
 
+/* eslint-disable @fluid-internal/fluid/no-markdown-links-in-jsdoc --
+This configuration helper is not published in API docs so we can keep its README link source-relative.
+Sadly there seems to be no way to link the readme file with {@link} tags nor raw file urls that can actually be clicked in VS-Code
+(directly or via intellisense) without giving errors due to needing to navigate up via `..` which is blocked.
+There also seems to be no way to make this link go to the relevant anchor in the README file as vscode interprets it as part of the file name,
+rather than recognizing it as an anchor within the file.
+I still think using this non anchored markdown link is better than linking to a URL on github which points either to this branch,
+or main where these docs don't even exist yet.
+Thus I feel this lint suppression allows for a better link, and thus is justified.
+*/
 /**
  * Get the mocha configuration for running tests using the conventions followed in the Fluid Framework repository.
  *
@@ -33,10 +43,13 @@ export interface FluidTestMochaConfig {
  * @param additionalRequiredModules - modules to require in addition to the standard set.
  * @param testReportPrefix - prefix for the test output report file names.
  * @remarks
- * Additional configuration can be provided via environment variables: see {@link file://./README.md}.
+ * See the "Running tests" section in [README.md](../README.md)
+ * for test selection, performance measurements, and environment variable configuration.
  *
- * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
+ * Mocha’s CLI `spec` arguments add to the configured selection rather than replacing it.
+ * For exact control over `spec` (including via the CLI), replace or delete the `spec` property in the returned configuration.
  */
+/* eslint-enable @fluid-internal/fluid/no-markdown-links-in-jsdoc -- see the disable for details */
 export function getFluidTestMochaConfig(
 	packageDir: string,
 	additionalRequiredModules?: string[],
@@ -120,6 +133,7 @@ export function getFluidTestMochaConfig(
 		};
 		config.reporter = `mocha-multi-reporters`;
 		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
+
 		const outputFilePrefix = reportPrefix !== undefined ? `${reportPrefix}-` : "";
 		if (process.env.SILENT_TEST_OUTPUT === undefined) {
 			console.log(
@@ -128,12 +142,18 @@ export function getFluidTestMochaConfig(
 		}
 		const suiteName =
 			reportPrefix !== undefined ? `${packageJson.name} - ${reportPrefix}` : packageJson.name;
+		// This must be the exact module specifier mocha-multi-reporters will `require(...)` to load the reporter
+		// (see its source: https://github.com/stevemao/mocha-multi-reporters/blob/master/lib/MultiReporters.js),
+		// i.e. it can't be shortened to some arbitrary friendly name. It also determines the reporter-specific
+		// option key mocha-multi-reporters expects below (and in test-config.json): it camelCases this exact
+		// string and appends "ReporterOptions" (e.g. "@foo/bar/baz" -> "fooBarBazReporterOptions").
+		const xunitReporterName = "@fluid-internal/mocha-test-setup/xunit-reporter";
 		config["reporter-options"] = [
 			`configFile=${path.join(
 				import.meta.dirname,
 				"..",
 				"test-config.json",
-			)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+			)},cmrOutput=${xunitReporterName}+output+${outputFilePrefix}:${xunitReporterName}+suiteName+${suiteName}`,
 		];
 	}
 

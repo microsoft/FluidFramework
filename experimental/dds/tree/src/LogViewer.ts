@@ -365,9 +365,6 @@ export class CachingLogViewer extends TypedEventEmitter<ICachingLogViewerEvents>
 		}
 	}
 
-	/**
-	 * {@inheritDoc LogViewer.getRevisionViewInMemory}
-	 */
 	public getRevisionViewInMemory(revision: number): RevisionView {
 		return this.getEditResultInMemory(revision).view;
 	}

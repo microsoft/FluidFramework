@@ -314,12 +314,12 @@ export function testRebaserAxioms(): void {
 
 		// Hand-crafted version of the above tests to add coverage for returns
 		it("Return ↷ [Return, Return⁻¹] === Return", () => {
-			const move: SF.Changeset = Mark.move(1, { revision: tag0, localId: brand(0) });
-			const r: SF.Changeset = testInvert(tagChange(move, tag0), tag3, false);
-			const base1 = tagChange(r, tag1);
+			const move = tagChange(Mark.move(1, { revision: tag0, localId: brand(0) }), tag0);
+			const r = tagChange(testInvert(move, tag3, false), tag3);
+			const base1 = tagChange(testInvert(move, tag1, false), tag1);
 			const base2 = tagChange(testInvert(base1, tag2, true), tag2);
-			const actual = rebaseOverChanges(tagChange(r, tag3), [base1, base2]);
-			assertChangesetsEqual(actual.change, r);
+			const actual = rebaseOverChanges(r, [base1, base2]);
+			assertChangesetsEqual(actual.change, r.change);
 		});
 
 		/**
@@ -575,7 +575,7 @@ const editor = family.buildEditor(mintRevisionTag, () => undefined);
 const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = function* (
 	state: SequenceFieldTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
-	mintIntention: (count?: number) => number,
+	idAllocator: IdAllocator,
 ): Iterable<SequenceFieldTestState> {
 	const { currentState, config } = state.content;
 
@@ -583,7 +583,7 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 	// Undo the most recent edit
 	if (state.mostRecentEdit !== undefined) {
 		assert(state.parent?.content !== undefined, "Must have parent state to undo");
-		const undoIntention = mintIntention();
+		const undoIntention = idAllocator.allocate();
 		const undoTag = tagFromIntention(undoIntention);
 		const modularEdit = family.invert(state.mostRecentEdit.changeset, false, undoTag);
 		yield {
@@ -606,12 +606,12 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 			}));
 			const insertedString = inserted.map((n) => n.id).join(",");
 			for (let i = 0; i <= currentState.length; i += 1) {
-				const insertIntention = mintIntention();
+				const insertIntention = idAllocator.allocate();
 				const insertRevision = tagFromIntention(insertIntention);
 				const newState = [...currentState];
 				newState.splice(i, 0, ...inserted);
 
-				const localId: ChangesetLocalId = brand(mintIntention(nodeCount));
+				const localId: ChangesetLocalId = brand(idAllocator.allocate(nodeCount));
 				const build = editor.buildTrees(
 					localId,
 					chunkFromJsonTrees(inserted.map((n) => n.id)),
@@ -628,7 +628,10 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 					change: brand(fieldChange),
 					revision: insertRevision,
 				};
-				const modularEdit = editor.buildChanges([build, fieldEdit]);
+				const modularEdit = editor.buildChanges(
+					[build, fieldEdit],
+					brand(idAllocator.getMaxId()),
+				);
 				yield {
 					content: {
 						currentState: newState,
@@ -651,16 +654,26 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 			const stateWithoutDetached = [...currentState];
 			const detached = stateWithoutDetached.splice(iSrc, nodeCount);
 			const detachedString = detached.map((n) => n.id).join(",");
-			const removeIntention = mintIntention();
+			const removeIntention = idAllocator.allocate();
 			const removeRevision = tagFromIntention(removeIntention);
 			const fieldRemoveEdit: FieldEditDescription = {
 				type: "field",
 				field: { parent: undefined, field: rootFieldKey },
 				fieldKind: sequence.identifier,
-				change: brand(Change.remove(iSrc, nodeCount, removeRevision)),
+				change: brand(
+					Change.remove(
+						iSrc,
+						nodeCount,
+						removeRevision,
+						brand(idAllocator.allocate(nodeCount)),
+					),
+				),
 				revision: removeRevision,
 			};
-			const modularRemoveEdit = editor.buildChanges([fieldRemoveEdit]);
+			const modularRemoveEdit = editor.buildChanges(
+				[fieldRemoveEdit],
+				brand(idAllocator.getMaxId()),
+			);
 			yield {
 				content: {
 					currentState: stateWithoutDetached,
@@ -676,7 +689,7 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 
 			// Move nodeCount nodes
 			for (let iDst = 0; iDst <= currentState.length; iDst += 1) {
-				const moveInIntention = mintIntention();
+				const moveInIntention = idAllocator.allocate();
 				const moveRevision = tagFromIntention(moveInIntention);
 				const newState = [...stateWithoutDetached];
 				let adjustedDst = iDst;
@@ -692,10 +705,21 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 					type: "field",
 					field: { parent: undefined, field: rootFieldKey },
 					fieldKind: sequence.identifier,
-					change: brand(Change.move(iSrc, nodeCount, iDst, moveRevision)),
+					change: brand(
+						Change.move(
+							iSrc,
+							nodeCount,
+							iDst,
+							moveRevision,
+							brand(idAllocator.allocate(nodeCount)),
+						),
+					),
 					revision: moveRevision,
 				};
-				const modularMoveEdit = editor.buildChanges([fieldMoveEdit]);
+				const modularMoveEdit = editor.buildChanges(
+					[fieldMoveEdit],
+					brand(idAllocator.getMaxId()),
+				);
 				yield {
 					content: {
 						currentState: newState,
@@ -714,7 +738,7 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 
 	// Make nested changes to a node
 	for (let i = 0; i < currentState.length; i += 1) {
-		const modifyIntention = mintIntention();
+		const modifyIntention = idAllocator.allocate();
 		const modifyRevision = tagFromIntention(modifyIntention);
 		const nestedChange = config.allocator.allocate();
 		const newState = [...currentState];
@@ -741,10 +765,13 @@ const generateChildStates: ChildStateGenerator<TestState, DefaultChangeset> = fu
 				field: brand("foo"),
 			},
 			fieldKind: sequence.identifier,
-			change: brand(Change.remove(0, 1, modifyRevision, brand(mintIntention()))),
+			change: brand(Change.remove(0, 1, modifyRevision, brand(idAllocator.allocate()))),
 			revision: modifyRevision,
 		};
-		const modularEdit = editor.buildChanges([shallowFieldEdit, nestedFieldEdit]);
+		const modularEdit = editor.buildChanges(
+			[shallowFieldEdit, nestedFieldEdit],
+			brand(idAllocator.getMaxId()),
+		);
 		yield {
 			content: {
 				currentState: newState,

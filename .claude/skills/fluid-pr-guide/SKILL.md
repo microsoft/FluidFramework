@@ -3,7 +3,9 @@ name: fluid-pr-guide
 description: Use when composing, writing, drafting, or reviewing a PR title, PR description, or PR body in Fluid Framework — provides title style, body template, and section guidance.
 ---
 
-There is no enforced title policy in this repo. Two styles appear in roughly equal proportion — use whichever fits the change. Do not mix them (e.g., don't add a `fix:` prefix to an otherwise plain-imperative title just because it's a bug fix).
+Use **Option A** for build-tools PRs because this group [generates changelogs from commits](../../../build-tools/README.md#documenting-build-tools-changes).
+For other PRs, use either style unless the package documents a different requirement.
+Do not mix the two styles.
 
 **Option A — Conventional Commits prefix:**
 

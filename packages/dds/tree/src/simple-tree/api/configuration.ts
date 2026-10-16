@@ -88,7 +88,7 @@ export interface ITreeConfigurationOptions {
 	 * class Feet extends schemaFactory.object("Feet", { length: schemaFactory.number }) {}
 	 * class Meters extends schemaFactory.object("Meters", { length: schemaFactory.number }) {}
 	 * const config = new TreeViewConfiguration({
-	 * 	// This combination of schema can lead to ambiguous cases and will error if `preventAmbiguity` is true.
+	 * 	// This combination of schemas can lead to ambiguous cases and will error if `preventAmbiguity` is true.
 	 * 	schema: [Feet, Meters],
 	 * 	preventAmbiguity: false,
 	 * });
@@ -110,7 +110,7 @@ export interface ITreeConfigurationOptions {
 	 * 	meters: schemaFactory.required(schemaFactory.number, { key: "length" }),
 	 * }) {}
 	 * const config = new TreeViewConfiguration({
-	 * 	// This combination of schema is not ambiguous because `Feet` and `Meters` have different required keys.
+	 * 	// This combination of schemas is not ambiguous because `Feet` and `Meters` have different required keys.
 	 * 	schema: [Feet, Meters],
 	 * 	preventAmbiguity: true,
 	 * });

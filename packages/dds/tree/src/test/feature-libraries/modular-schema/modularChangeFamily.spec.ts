@@ -31,16 +31,13 @@ import {
 	type RevisionInfo,
 	type NormalizedFieldUpPath,
 	type NormalizedUpPath,
-	type ChangeAtomIdMap,
 } from "../../../core/index.js";
 import {
 	type FieldChangeHandler,
 	genericFieldKind,
 	type ModularChangeset,
 	FlexFieldKind,
-	defaultChunkPolicy,
 	type TreeChunk,
-	chunkFieldSingle,
 	fieldBatchCodecBuilder,
 	type NodeId,
 	type FieldKindConfiguration,
@@ -51,13 +48,10 @@ import {
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type EditDescription,
-	jsonableTreeFromFieldCursor,
-	cursorForJsonableTreeField,
 	DefaultRevisionReplacer,
 	fieldKindConfigurations,
 	newChangeAtomIdBTree,
 	ModularChangeFormatVersion,
-	type ChangeAtomIdBTree,
 } from "../../../feature-libraries/index.js";
 import type {
 	EncodedModularChangesetV1,
@@ -71,25 +65,15 @@ import {
 	updateRefreshers,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { getChangeHandler } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
-import {
-	newCrossFieldRangeTable,
-	type CrossFieldKeyTable,
-	type FieldChangeMap,
-	type FieldId,
-	type NodeChangeset,
-	type NodeLocation,
+import type {
+	NodeChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
 	brand,
 	brandConst,
-	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
-	setInNestedMap,
 	tryGetFromNestedMap,
-	type Mutable,
 } from "../../../util/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor } from "../../json/index.js";

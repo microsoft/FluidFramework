@@ -30,7 +30,7 @@ import {
 } from "./fuzzEditGenerators.js";
 import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
-	createTreeViewSchema,
+	createFuzzSchema,
 	defaultTreePackageStatics,
 	deterministicIdCompressorFactory,
 	failureDirectory,
@@ -179,7 +179,7 @@ class CompatTestTreeFactory implements IChannelFactory<ISharedTree> {
 
 		const view = tree.viewWith(
 			statics.newTreeViewConfiguration({
-				schema: createTreeViewSchema([], statics.newSchemaFactory),
+				schema: createFuzzSchema([], statics.newSchemaFactory),
 			}),
 		);
 		(view as FuzzView).initialize(this.initialState);

@@ -96,6 +96,7 @@ export {
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
+	DefaultAtomIdAliasAllocator,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
 	minimizeModularChangeset,
@@ -214,6 +215,7 @@ export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
 export {
 	type KeyFinder,
 	AnchorTreeIndex,
+	KeyFinderDependencyScope,
 	hasElement,
 	type TreeIndex,
 	type TreeIndexNodes,

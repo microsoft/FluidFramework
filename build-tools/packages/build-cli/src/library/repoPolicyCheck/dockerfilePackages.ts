@@ -11,7 +11,10 @@ import { type Handler, readFile, writeFile } from "./common.js";
 const serverPath = "server/routerlicious/";
 
 function getDockerfileCopyText(packageFilePath: string): string {
-	const packageDir = packageFilePath.split("/").slice(0, -1).join("/");
+	const packageDir = TscUtils.normalizeSlashes(packageFilePath)
+		.split("/")
+		.slice(0, -1)
+		.join("/");
 	return `COPY ${packageDir}/package*.json ${packageDir}/`;
 }
 
@@ -50,7 +53,7 @@ export const handler: Handler = {
 	resolver: (file: string, gitRoot: string): { resolved: boolean } => {
 		// strip server path since all paths are relative to server directory
 		const dockerfileCopyText = getDockerfileCopyText(
-			path.relative(gitRoot, file).replace(serverPath, ""),
+			TscUtils.normalizeSlashes(path.relative(gitRoot, file)).replace(serverPath, ""),
 		);
 		const dockerFilePath = path.join(
 			path.relative(process.cwd(), path.join(gitRoot, serverPath)),
