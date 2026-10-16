@@ -37,17 +37,18 @@ describe("FormattedText with ranges example", () => {
 		);
 
 		text.insertAt(0, "Say: ");
-		const { start, end } = comment;
+		const start = comment.start.index;
+		const end = comment.end.index;
 		assert.deepEqual([start, end], [11, 16]);
 		assert.equal(text.getString(start, end), "world");
 		text.formatRange(start, end, { bold: true });
 		assert.equal(text.charactersWithFormatting()[start]?.format.bold, true);
-		assert.deepEqual([comment.start, comment.end], [start, end]);
+		assert.deepEqual([comment.start.index, comment.end.index], [start, end]);
 
 		text.removeRange(start, end);
-		assert.deepEqual([comment.start, comment.end], [11, 11]);
+		assert.deepEqual([comment.start.index, comment.end.index], [11, 11]);
 		text.ranges.setRangeBounds("comment", { start: 5, end: 10 });
-		comment.data.message = "Review the greeting instead";
+		comment.data = { message: "Review the greeting instead" };
 		assert.equal(text.getString(5, 10), "Hello");
 		text.ranges.removeTrackedRange("comment");
 		assert.equal([...text.ranges.keys()].length, 0);

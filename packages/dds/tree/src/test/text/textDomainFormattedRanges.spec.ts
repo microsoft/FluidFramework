@@ -78,7 +78,7 @@ function rangeBounds(
 ): RangeEndpoints {
 	const range = ranges.getRange(key);
 	assert(range !== undefined);
-	return { start: range.start, end: range.end };
+	return { start: range.start.index, end: range.end.index };
 }
 
 describe("FormattedText with extrinsic ranges", () => {
@@ -90,6 +90,36 @@ describe("FormattedText with extrinsic ranges", () => {
 			}
 			return text;
 		}
+
+		it("replaces range data through retained handles without changing endpoints", () => {
+			const text = create();
+			const range = text.ranges.trackNewRange(
+				"range",
+				{ start: 1, end: 4 },
+				{ message: "original" },
+			);
+			const other = text.ranges.getRange("range");
+			assert(other !== undefined);
+			const { start, end } = range;
+			range.data = { message: "replacement" };
+			assert(range.data instanceof Comment);
+			assert.equal(other.data, range.data);
+			assert.equal(other.data.message, "replacement");
+			range.data = new Comment({ message: "replacement node" });
+			assert.equal(other.data.message, "replacement node");
+			assert.equal(range.start, start);
+			assert.equal(range.end, end);
+			assert.deepEqual([start.index, end.index], [1, 4]);
+			text.insertAt(0, "X");
+			assert.deepEqual([start.index, end.index], [2, 5]);
+			assert.equal(other.data.message, "replacement node");
+			assert.throws(() => {
+				// @ts-expect-error Invalid replacement data must also be rejected at runtime.
+				range.data = { message: 0 };
+			});
+			assert.equal(other.data.message, "replacement node");
+			assert.deepEqual([start.index, end.index], [2, 5]);
+		});
 
 		it("@Smoke tracks all structural text editing methods", () => {
 			const text = create();
@@ -223,7 +253,7 @@ describe("FormattedText with extrinsic ranges", () => {
 			assert.deepEqual([...ranges.keys()].sort(), [...expected.keys()].sort());
 			for (const [key, range] of expected) {
 				assert.equal(ranges.getRange(key)?.data, range.data);
-				assert.deepEqual([range.start, range.end], [0, 1]);
+				assert.deepEqual([range.start.index, range.end.index], [0, 1]);
 			}
 			text.ranges.removeTrackedRange("");
 			assert.equal([...ranges.keys()].length, 3);
@@ -374,10 +404,16 @@ describe("FormattedText with extrinsic ranges", () => {
 			allowUnused(legacy.trackNewRange);
 			// @ts-expect-error Legacy text does not expose range storage.
 			allowUnused(legacy.ranges);
-			const start: number = handle.start;
+			const start: number = handle.start.index;
 			allowUnused(start);
 			// @ts-expect-error Endpoints must be changed through the collection.
 			handle.start = 1;
+			handle.data = { message: "replacement" };
+			handle.data = new Comment({ message: "replacement node" });
+			// @ts-expect-error Endpoint indexes cannot be assigned.
+			handle.end.index = 1;
+			// @ts-expect-error Replacement data retains its schema.
+			handle.data = { message: 42 };
 			// @ts-expect-error Range data retains its schema.
 			tracked.ranges.trackNewRange("not a comment", { start: 0, end: 0 }, "not a comment");
 			// @ts-expect-error Formatting retains its schema.
@@ -520,8 +556,8 @@ describe("FormattedText with extrinsic ranges", () => {
 				assert.equal(ranges.getRange("review")?.data.message, "first");
 				assert.equal([...ranges.keys()].length, 1);
 				assert.equal(ranges.getRange("other") !== undefined, false);
-				assert.throws(() => rejected.start, validateUsageError(/no longer tracked/));
-				assert.throws(() => rejected.end, validateUsageError(/no longer tracked/));
+				assert.throws(() => rejected.start.index, validateUsageError(/no longer tracked/));
+				assert.throws(() => rejected.end.index, validateUsageError(/no longer tracked/));
 				other.root.ranges.trackNewRange(
 					"retry",
 					{ start: 0, end: 1 },
@@ -553,6 +589,28 @@ describe("FormattedText with extrinsic ranges", () => {
 			});
 		});
 
+		it("merges data replacement with concurrent text edits", () => {
+			const { provider, view } = setup();
+			view.root.ranges.trackNewRange("range", { start: 1, end: 4 }, { message: "original" });
+			provider.synchronizeMessages();
+			const fork = view.fork();
+			const range = fork.root.ranges.getRange("range");
+			assert(range !== undefined);
+			range.data = { message: "replacement" };
+			view.root.insertAt(0, "X");
+			provider.synchronizeMessages();
+			fork.rebaseOnto(view);
+			assert.equal(range.data.message, "replacement");
+			assert.deepEqual([range.start.index, range.end.index], [2, 5]);
+			view.merge(fork);
+			provider.synchronizeMessages();
+			const other = provider.trees[1].viewWith(config);
+			assert.deepEqual(snapshot(other.root), {
+				text: "Xabcdef",
+				ranges: [["range", 2, 5, "replacement"]],
+			});
+		});
+
 		for (const [name, edit] of Object.entries({
 			firstContentEdit: edits.insert,
 			firstRange: (text: Text): void => {
@@ -574,7 +632,7 @@ describe("FormattedText with extrinsic ranges", () => {
 				assert.equal(JSON.stringify(view.root), initial);
 				assert.equal([...ranges.keys()].length, 0);
 				if (handle !== undefined) {
-					assert.throws(() => handle.start, validateUsageError(/no longer tracked/));
+					assert.throws(() => handle.start.index, validateUsageError(/no longer tracked/));
 				}
 				const redo = redoStack.pop();
 				assert(redo !== undefined);
@@ -583,7 +641,7 @@ describe("FormattedText with extrinsic ranges", () => {
 				assert.equal(ranges, view.root.ranges);
 				assert.deepEqual([...ranges.keys()], [...view.root.ranges.keys()]);
 				if (handle !== undefined) {
-					assert.deepEqual([handle.start, handle.end], [1, 4]);
+					assert.deepEqual([handle.start.index, handle.end.index], [1, 4]);
 				}
 				view.root.ranges.trackNewRange(
 					"after-redo",

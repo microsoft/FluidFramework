@@ -418,7 +418,7 @@ export {
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
 export {
 	ArrayWithExtrinsicRanges,
-	type RangeAnchors,
+	type TrackedRange,
 	type RangeCollection,
 	type RangeEndpoints,
 } from "./extrinsic-locations/index.js";

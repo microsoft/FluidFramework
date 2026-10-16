@@ -60,7 +60,7 @@ function rangeBounds(
 ): RangeEndpoints {
 	const range = ranges.getRange(key);
 	assert(range !== undefined);
-	return { start: range.start, end: range.end };
+	return { start: range.start.index, end: range.end.index };
 }
 
 describe("ArrayWithExtrinsicRanges", () => {
@@ -308,13 +308,13 @@ describe("ArrayWithExtrinsicRanges", () => {
 				assert.equal(content, array.content);
 				content.insertAtStart(9);
 				assert.deepEqual(rangeBounds(array.ranges, "range"), { start: 2, end: 5 });
-				assert.deepEqual([range.start, range.end], [2, 5]);
+				assert.deepEqual([range.start.index, range.end.index], [2, 5]);
 				content.removeRange(2, 4);
 				assert.deepEqual(rangeBounds(array.ranges, "range"), { start: 2, end: 3 });
 			});
 			assert.deepEqual(original, { start: 1, end: 4 });
 			assert.deepEqual(rangeBounds(array.ranges, "range"), { start: 2, end: 3 });
-			assert.deepEqual([range.start, range.end], [2, 3]);
+			assert.deepEqual([range.start.index, range.end.index], [2, 3]);
 		});
 
 		it("adds, repositions, and removes ranges in current coordinates during a callback", () => {
@@ -481,6 +481,13 @@ describe("ArrayWithExtrinsicRanges", () => {
 		array.transactOnContent((content) => content.insertAt(1, { value: 2 }));
 		assert.equal(rangeBounds(array.ranges, "range").end, 3);
 		assert.equal(range.data.message, "updated");
+		range.data = { message: "replacement" };
+		assert.equal(range.data.message, "replacement");
+		assert.equal(array.ranges.getRange("range")?.data, range.data);
+		hydrateNode(array);
+		range.data = new Comment({ message: "hydrated replacement" });
+		assert.equal(range.data.message, "hydrated replacement");
+		assert.equal(rangeBounds(array.ranges, "range").end, 3);
 		const first = array.content[0];
 		assert(first instanceof Item);
 		first.value = 10;
@@ -546,8 +553,13 @@ describe("ArrayWithExtrinsicRanges", () => {
 				// @ts-expect-error Content types are preserved.
 				content.insertAt(0, "not a number");
 			});
-			const end: number = range.end;
+			const end: number = range.end.index;
 			allowUnused(end);
+			range.data = "replacement";
+			// @ts-expect-error Endpoint indexes cannot be assigned.
+			range.start.index = 1;
+			// @ts-expect-error Replacement data retains its schema.
+			range.data = 123;
 			// @ts-expect-error Forwarded array edits are not exposed.
 			allowUnused(array.insertAt);
 			// @ts-expect-error Range data types are preserved.
@@ -616,6 +628,23 @@ describe("ArrayWithExtrinsicRanges", () => {
 			provider.synchronizeMessages();
 			assert.deepEqual([...view.root.content], [9, 3, 4]);
 			assert.deepEqual(rangeSnapshot(view.root), [["range", 1, 2, "range"]]);
+		});
+
+		it("merges data replacement with concurrent content edits", () => {
+			const { provider, view } = setup();
+			const fork = view.fork();
+			const range = fork.root.ranges.getRange("range");
+			assert(range !== undefined);
+			range.data = "replacement";
+			view.root.transactOnContent((content) => content.insertAtStart(9));
+			provider.synchronizeMessages();
+			fork.rebaseOnto(view);
+			assert.deepEqual(rangeSnapshot(fork.root), [["range", 2, 5, "replacement"]]);
+			assert.deepEqual([range.start.index, range.end.index], [2, 5]);
+			view.merge(fork);
+			provider.synchronizeMessages();
+			const other = provider.trees[1].viewWith(config);
+			assert.deepEqual(rangeSnapshot(other.root), [["range", 2, 5, "replacement"]]);
 		});
 
 		it("composes edits in an outer transaction and rolls them back together", () => {

@@ -32,21 +32,24 @@ describe("ArrayWithExtrinsicRanges example", () => {
 		);
 		document.transactOnContent((content) => {
 			content.insertAt(0, TreeArrayNode.spread(["Design", "Review"]));
-			const { start, end } = comment;
+			const start = comment.start.index;
+			const end = comment.end.index;
 			assert.deepEqual([start, end], [3, 5]);
 			assert.deepEqual(content.slice(start, end), ["Build", "Ship"]);
 		});
 
 		document.transactOnContent((content) => content.removeRange(3, 5));
-		assert.deepEqual([comment.start, comment.end], [3, 3]);
+		assert.deepEqual([comment.start.index, comment.end.index], [3, 3]);
 		assert.equal(document.ranges.getRange("comment")?.data, comment.data);
 		assert.equal(comment.data.message, "Check these steps");
 
 		document.ranges.setRangeBounds("comment", { start: 2, end: 3 });
-		comment.data.message = "Check the plan instead";
+		comment.data = { message: "Check the plan instead" };
 		const position = document.ranges.getRange("comment");
 		assert(position !== undefined);
-		assert.deepEqual(document.content.slice(position.start, position.end), ["Plan"]);
+		assert.deepEqual(document.content.slice(position.start.index, position.end.index), [
+			"Plan",
+		]);
 		document.ranges.removeTrackedRange("comment");
 		assert.equal([...document.ranges.keys()].length, 0);
 		view.dispose();

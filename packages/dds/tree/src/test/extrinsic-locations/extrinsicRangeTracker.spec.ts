@@ -67,7 +67,7 @@ function rangeBounds(
 ): RangeEndpoints {
 	const range = ranges.getRange(key);
 	assert(range !== undefined);
-	return { start: range.start, end: range.end };
+	return { start: range.start.index, end: range.end.index };
 }
 
 describe("ExtrinsicRangeTracker", () => {
@@ -121,7 +121,7 @@ describe("ExtrinsicRangeTracker", () => {
 			assert.deepEqual([range.start, range.end], [1, 2]);
 			const later = tracker.trackNewRange("later", { start: 0, end: 1 }, "after");
 			tracker.setRangeBounds("later", { start: 1, end: 3 });
-			assert.deepEqual([later.start, later.end], [1, 3]);
+			assert.deepEqual([later.start.index, later.end.index], [1, 3]);
 			tracker.removeTrackedRange("later");
 			assert.deepEqual([...document.review.annotations], [["range", range]]);
 		});
@@ -181,18 +181,68 @@ describe("ExtrinsicRangeTracker", () => {
 			const { tracker } = setup();
 			const range = tracker.getRange("range");
 			assert(range !== undefined);
-			const snapshot = { start: range.start, end: range.end };
+			const startAnchor = range.start;
+			const endAnchor = range.end;
+			const snapshot = { start: startAnchor.index, end: endAnchor.index };
 			tracker.transactOnContent((content) => {
 				content.insertAtStart("X");
-				assert.deepEqual([range.start, range.end], [2, 4]);
+				assert.deepEqual([startAnchor.index, endAnchor.index], [2, 4]);
 				tracker.setRangeBounds("range", { start: 0, end: 2 });
-				assert.deepEqual([range.start, range.end], [0, 2]);
+				assert.deepEqual([startAnchor.index, endAnchor.index], [0, 2]);
 				content.removeAt(0);
-				assert.deepEqual([range.start, range.end], [0, 1]);
+				assert.deepEqual([startAnchor.index, endAnchor.index], [0, 1]);
 			});
-			assert.deepEqual([range.start, range.end], [0, 1]);
+			assert.equal(range.start, startAnchor);
+			assert.equal(range.end, endAnchor);
+			assert.deepEqual([startAnchor.index, endAnchor.index], [0, 1]);
 			assert.deepEqual(snapshot, { start: 1, end: 3 });
 			assert.equal(range.data, "existing");
+		});
+
+		it("rejects disposal of borrowed endpoints without invalidating them", () => {
+			const { tracker } = setup();
+			const range = tracker.getRange("range");
+			assert(range !== undefined);
+			for (const anchor of [range.start, range.end]) {
+				assert.throws(
+					() => anchor.dispose(),
+					validateUsageError(/owned by the tracked range/),
+				);
+				assert.throws(
+					() => anchor.dispose(),
+					validateUsageError(/owned by the tracked range/),
+				);
+			}
+			assert.deepEqual([range.start.index, range.end.index], [1, 3]);
+			tracker.transactOnContent((content) => content.insertAtStart("X"));
+			assert.deepEqual([range.start.index, range.end.index], [2, 4]);
+			tracker.removeTrackedRange("range");
+			assert.throws(() => range.start.index, validateUsageError(/no longer tracked/));
+			assert.throws(() => range.end.index, validateUsageError(/no longer tracked/));
+		});
+
+		it("replaces data without changing the stored range or active endpoint anchors", () => {
+			const { tracker, range: stored } = setup();
+			const range = tracker.getRange("range");
+			const otherHandle = tracker.getRange("range");
+			assert(range !== undefined && otherHandle !== undefined);
+			const { start, end } = range;
+			range.data = "replacement";
+			assert.equal(stored.data, "replacement");
+			assert.equal(otherHandle.data, "replacement");
+			assert.deepEqual([start.index, end.index], [1, 3]);
+			tracker.transactOnContent((content) => {
+				content.insertAtStart("X");
+				range.data = "during editing";
+				assert.equal(otherHandle.data, "during editing");
+				assert.deepEqual([stored.start, stored.end], [1, 3]);
+				assert.deepEqual([start.index, end.index], [2, 4]);
+				content.removeAt(0);
+			});
+			assert.equal(range.start, start);
+			assert.equal(range.end, end);
+			assert.equal(stored.data, "during editing");
+			assert.deepEqual([start.index, end.index], [1, 3]);
 		});
 
 		it("does not retarget retained handles when a key is reused", () => {
@@ -202,16 +252,28 @@ describe("ExtrinsicRangeTracker", () => {
 			tracker.transactOnContent(() => {
 				tracker.removeTrackedRange("range");
 				assert.equal(tracker.getRange("range"), undefined);
-				assert.throws(() => original.start, validateUsageError(/no longer tracked/));
+				assert.throws(() => original.start.index, validateUsageError(/no longer tracked/));
+				assert.throws(
+					() => {
+						original.data = "removed";
+					},
+					validateUsageError(/no longer tracked/),
+				);
 				const replacement = tracker.trackNewRange(
 					"range",
 					{ start: 0, end: 1 },
 					"replacement",
 				);
-				assert.deepEqual([replacement.start, replacement.end], [0, 1]);
-				assert.throws(() => original.end, validateUsageError(/no longer tracked/));
+				assert.deepEqual([replacement.start.index, replacement.end.index], [0, 1]);
+				assert.throws(() => original.end.index, validateUsageError(/no longer tracked/));
+				assert.throws(
+					() => {
+						original.data = "must not retarget";
+					},
+					validateUsageError(/no longer tracked/),
+				);
 			});
-			assert.throws(() => original.start, validateUsageError(/no longer tracked/));
+			assert.throws(() => original.start.index, validateUsageError(/no longer tracked/));
 			assert.equal(original.data, "existing");
 			assert.equal(tracker.getRange("range")?.data, "replacement");
 		});
@@ -267,7 +329,7 @@ describe("ExtrinsicRangeTracker", () => {
 		tracker.transactOnContent((content) => content.insertAtStart("X"));
 		hydrateNode(document);
 		tracker.transactOnContent((content) => content.removeAt(0));
-		assert.deepEqual([range.start, range.end], [0, 2]);
+		assert.deepEqual([range.start.index, range.end.index], [0, 2]);
 		assert.deepEqual(rangeBounds(tracker, "added"), { start: 0, end: 2 });
 	});
 
@@ -338,6 +400,52 @@ describe("ExtrinsicRangeTracker", () => {
 		view.dispose();
 	});
 
+	it("rebases data replacement over concurrent content and unrelated edits", () => {
+		const view = getView(new TreeViewConfiguration({ schema: Document }));
+		view.initialize(createDocument());
+		const fork = view.fork();
+		const tracker = createTracker(fork.root);
+		const range = tracker.getRange("range");
+		assert(range !== undefined);
+		const { start, end } = range;
+		range.data = "replacement";
+		view.root.title = "Updated";
+		createTracker(view.root).transactOnContent((content) => content.insertAtStart("X"));
+
+		fork.rebaseOnto(view);
+
+		assert.equal(range.data, "replacement");
+		assert.equal(fork.root.title, "Updated");
+		assert.equal(fork.root.body.fullString(), "XABC");
+		assert.deepEqual([start.index, end.index], [2, 4]);
+	});
+
+	it("undoes and redoes data replacement across an unrelated edit", () => {
+		const view = getView(new TreeViewConfiguration({ schema: Document }));
+		view.initialize(createDocument());
+		const tracker = createTracker(view.root);
+		const range = tracker.getRange("range");
+		assert(range !== undefined);
+		const { start, end } = range;
+		const { undoStack, redoStack } = createTestUndoRedoStacks(view.events);
+		range.data = "replacement";
+		const undo = undoStack.pop();
+		assert(undo !== undefined);
+		view.root.title = "Updated";
+
+		undo.revert();
+
+		assert.equal(range.data, "existing");
+		assert.equal(view.root.title, "Updated");
+		assert.deepEqual([start.index, end.index], [1, 3]);
+		const redo = redoStack.pop();
+		assert(redo !== undefined);
+		redo.revert();
+		assert.equal(range.data, "replacement");
+		assert.equal(view.root.title, "Updated");
+		assert.deepEqual([start.index, end.index], [1, 3]);
+	});
+
 	it("undoes and redoes content and range edits together", () => {
 		const view = getView(new TreeViewConfiguration({ schema: Document }));
 		view.initialize(createDocument());
@@ -369,15 +477,20 @@ describe("ExtrinsicRangeTracker", () => {
 		assert(range !== undefined);
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 		tracker.removeTrackedRange("range");
-		assert.throws(() => range.start, validateUsageError(/no longer tracked/));
+		assert.throws(() => range.start.index, validateUsageError(/no longer tracked/));
 		const undo = undoStack.pop();
 		assert(undo !== undefined);
 		undo.revert();
-		assert.deepEqual([range.start, range.end], [1, 3]);
+		assert.deepEqual([range.start.index, range.end.index], [1, 3]);
 		const redo = redoStack.pop();
 		assert(redo !== undefined);
 		redo.revert();
-		assert.throws(() => range.end, validateUsageError(/no longer tracked/));
+		assert.throws(() => range.end.index, validateUsageError(/no longer tracked/));
+		const restore = undoStack.pop();
+		assert(restore !== undefined);
+		restore.revert();
+		range.data = "restored";
+		assert.equal(range.data, "restored");
 		unsubscribe();
 		view.dispose();
 	});

@@ -1153,17 +1153,12 @@ export namespace PlainText {
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
 // @alpha @sealed
-export interface RangeAnchors<TData> extends RangeEndpoints {
-    readonly data: TData;
-}
-
-// @alpha @sealed
 export interface RangeCollection<TData, TInsertableData = TData> {
-    getRange(key: string): RangeAnchors<TData> | undefined;
+    getRange(key: string): TrackedRange<TData, TInsertableData> | undefined;
     keys(): IterableIterator<string>;
     removeTrackedRange(key: string): void;
     setRangeBounds(key: string, bounds: RangeEndpoints): void;
-    trackNewRange(key: string, bounds: RangeEndpoints, data: TInsertableData): RangeAnchors<TData>;
+    trackNewRange(key: string, bounds: RangeEndpoints, data: TInsertableData): TrackedRange<TData, TInsertableData>;
 }
 
 // @alpha @sealed
@@ -1916,6 +1911,14 @@ export namespace TableSchema {
 
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
+
+// @alpha @sealed
+export interface TrackedRange<TData, TInsertableData = TData> {
+    get data(): TData;
+    set data(value: TInsertableData);
+    readonly end: ArrayPlaceAnchor;
+    readonly start: ArrayPlaceAnchor;
+}
 
 // @alpha @input
 export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>;

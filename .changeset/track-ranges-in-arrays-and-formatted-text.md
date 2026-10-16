@@ -46,9 +46,10 @@ const comment = text.ranges.trackNewRange(
 	{ message: "Review this word" },
 );
 text.insertAt(0, "Say: ");
-const { start, end } = comment; // { start: 11, end: 16 }
-text.formatRange(start, end, { bold: true });
-text.getString(start, end); // "world"
+const { start, end } = comment; // start.index === 11, end.index === 16
+text.formatRange(start.index, end.index, { bold: true });
+text.getString(start.index, end.index); // "world"
+comment.data = { message: "Updated review comment" };
 ```
 
 To upgrade existing formatted text, keep the same factory scope, formatting schema, and atom schemas, then open a view using the range-enabled schema and call [`view.upgradeSchema()`](https://fluidframework.com/docs/api/tree/treeview-interface#upgradeschema-methodsignature).
@@ -85,8 +86,8 @@ const comment = document.ranges.trackNewRange(
 	{ message: "Check these steps" },
 );
 document.transactOnContent((content) => content.insertAt(0, "Design"));
-const { start, end } = comment; // { start: 2, end: 4 }
-document.content.slice(start, end); // ["Build", "Ship"]
+const { start, end } = comment; // start.index === 2, end.index === 4
+document.content.slice(start.index, end.index); // ["Build", "Ship"]
 ```
 
 The callback must be synchronous, and you must not retain the mutable array for later edits.
@@ -97,9 +98,11 @@ Stored endpoints are synchronized before `transactOnContent` returns.
 #### Shared range behavior
 
 Use `RangeCollection` to create, look up, reposition, and remove ranges, and enumerate keys.
-Range handles expose live, read-only `start` and `end` properties and editable application-defined data.
-Copy endpoints to retain a snapshot.
-Handles remain bound to their original range; reading endpoints after removal or replacement throws a `UsageError`.
+Each `TrackedRange` exposes borrowed `ArrayPlaceAnchor` endpoints through its read-only `start` and `end` properties.
+Read `start.index` and `end.index` for current positions; copy those numbers to retain a snapshot.
+Do not dispose these anchors: doing so throws a `UsageError`. Remove the range with `removeTrackedRange` instead.
+Assign `data` to replace the associated data, or edit fields within object data, without changing the range's identity or endpoints.
+Handles remain bound to their original range; reading endpoint indexes or assigning data after removal or replacement throws a `UsageError`.
 
 Ranges use half-open intervals `[start, end)`.
 Insertion at the start is excluded, insertion at the end is included, and empty ranges stay empty.
@@ -109,7 +112,8 @@ Ranges remain with their array or text rather than following moved content.
 #### Early implementation limitations
 
 All writers must use these APIs instead of modifying the underlying stored fields.
-Structural edits and range edits use document-wide `noChange` transaction constraints, so concurrent changes anywhere in the document can reject the entire edit.
+Structural content edits, range creation/removal, and bound changes use document-wide `noChange` transaction constraints, so concurrent changes anywhere in the document can reject the entire edit.
+Data edits use ordinary tree editing semantics and do not add these constraints.
 Observe commit outcomes if your application needs to report or retry rejected edits.
 Undo also requires the document to be unchanged since the edit; selective undo across intervening edits can be rejected.
 

@@ -43,18 +43,22 @@ const comment = text.ranges.trackNewRange(
 );
 
 text.insertAt(0, "Say: ");
-const { start, end } = comment; // { start: 11, end: 16 }
-text.formatRange(start, end, { bold: true });
-text.getString(start, end); // "world"
+const { start, end } = comment; // start.index === 11, end.index === 16
+text.formatRange(start.index, end.index, { bold: true });
+text.getString(start.index, end.index); // "world"
+comment.data = { message: "Updated review comment" };
 ```
 
 The `ranges` property returns a stable, live `RangeCollection`.
 Use `ranges.getRange(key)` to look up a range and `ranges.keys()` to enumerate keys in unspecified order.
 Use `ranges.setRangeBounds(key, { start, end })` to reposition a range and `ranges.removeTrackedRange(key)` to remove it without changing the text.
-Range handles expose live, read-only `start` and `end` properties, and their `data` follows the supplied schema.
-Copy the endpoints to retain a snapshot.
+Each `TrackedRange` exposes borrowed `ArrayPlaceAnchor` endpoints through its read-only `start` and `end` properties.
+Read `start.index` and `end.index` for current positions; copy those numbers to retain a snapshot.
+Do not dispose the anchors: doing so throws a `UsageError`. Remove the range through its collection instead.
+Assign `data` to replace it with content matching the supplied schema, or edit fields within object data.
+Data edits preserve the range's identity and endpoints.
 Handles refer to particular ranges, not subsequent ranges created at the same key.
-Reading an endpoint throws a `UsageError` if its range was removed or replaced.
+Reading an endpoint index or assigning data throws a `UsageError` if its range was removed or replaced.
 Undo that restores the same range makes the handle valid again.
 Repeated lookups need not return the same handle object.
 
@@ -81,11 +85,11 @@ The original `createSchema` factory retains its existing stored schema and editi
 ### Collaboration and events
 
 Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
-Structural text edits and range edits run in transactions with document-wide `noChange` constraints, including on revert.
+Structural text edits, range creation/removal, and bound changes run in transactions with document-wide `noChange` constraints, including on revert.
 These constraints also apply before the first range exists, so an edit cannot race with range creation and leave stale endpoints.
 Concurrent document changes can reject the whole transaction rather than merge it.
 An intervening change can also reject undo or redo.
-Formatting-only edits do not need range-tracking transactions.
+Formatting-only edits and range data edits do not need range-tracking transactions.
 
 Content events are delivered synchronously without buffering.
 Reentrant structural edits on the same text are not supported.

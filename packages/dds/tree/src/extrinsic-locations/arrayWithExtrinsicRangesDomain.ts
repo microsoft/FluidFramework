@@ -29,7 +29,8 @@ import type { RangeCollection } from "./rangeCollection.js";
  * Edit the array through {@link ArrayWithExtrinsicRanges.Members} to keep these indexes consistent.
  * Removing all content covered by a range collapses it to an empty range rather than deleting it.
  *
- * Each edit uses a document-wide {@link NoChangeConstraint}.
+ * Structural content edits, range creation/removal, and bound changes use a document-wide {@link NoChangeConstraint}.
+ * Range data edits use ordinary tree editing semantics without adding this constraint.
  * Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
  * Concurrent changes anywhere in the document can cause the entire edit to be rejected.
  * Applications must account for this asynchronous rejection, for example by observing commit outcomes.

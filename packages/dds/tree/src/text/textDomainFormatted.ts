@@ -199,7 +199,8 @@ export namespace FormattedText {
 	 * Older writers that do not maintain ranges must not continue editing after the upgrade.
 	 *
 	 * Configure SharedTree with `minVersionForCollab` of at least `2.80.0`.
-	 * Structural text edits and range edits use document-wide `noChange` constraints, including on revert.
+	 * Structural text edits, range creation/removal, and bound changes use document-wide `noChange` constraints, including on revert.
+	 * Range data edits use ordinary tree editing semantics without adding these constraints.
 	 * Concurrent changes can reject the entire edit.
 	 * Range positions use the same atom indexes as the text editing methods.
 	 * @alpha

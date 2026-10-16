@@ -53,9 +53,10 @@ For formatted text, see the [text documentation](../text/README.md).
 The current MVP has the following requirements and limitations:
 
 - SharedTree must be configured with `minVersionForCollab` of at least `2.80.0`.
-- Concurrent changes anywhere in the document can reject an entire content or range edit, even when the changes affect unrelated content.
+- Concurrent changes anywhere in the document can reject an entire structural content edit, range creation/removal, or bound change, even when the changes affect unrelated content.
   Applications that need to report or retry rejected edits must observe commit outcomes.
   Undo and redo can also be rejected after intervening changes.
+  Range data edits use ordinary tree editing semantics and do not add these constraints.
 - All writers must use the provided content and range editing APIs to keep range endpoints correct.
   Other view schemas, import operations, or agents can bypass these APIs and leave stale endpoints.
 - Content-editing callbacks must be synchronous, and editing scopes on the same array cannot be nested.
@@ -71,6 +72,11 @@ The current MVP has the following requirements and limitations:
 
 The MVP implements option 1 above: editing APIs maintain persisted numeric endpoints in a string-keyed map of range nodes.
 The array and formatted-text integrations share the same tracker.
+
+Each `TrackedRange` exposes borrowed endpoint anchors whose `index` getters resolve through the tracker.
+These anchors require no cleanup and must not be disposed by the caller; doing so throws a `UsageError`.
+Remove the persisted range with `RangeCollection.removeTrackedRange` instead.
+Assigning `TrackedRange.data` replaces its data without changing its identity or endpoints.
 
 - [rangeCollection.ts](./rangeCollection.ts): Public collection, endpoint, and live-handle interfaces.
 - [extrinsicRangeTracker.ts](./extrinsicRangeTracker.ts): Internal tracker, guarded transactions, temporary anchors, and storage access.
